@@ -45,7 +45,11 @@ workspaces/
 /state_backups/
 /compliance_reports/
 
-# Never ignore code inside agents
+# Never ignore python code anywhere
+!*.py
+!**/*.py
+!Inference/app/data/
+!Stratex/stratex_freqtrade_adapter/data/
 !Sentinel/sentinel/audit/
 !Sentinel/sentinel/storage/artifacts/
 !FRIDAY/audit/
