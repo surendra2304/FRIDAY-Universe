@@ -1,0 +1,24 @@
+http:
+  routers:
+    mcp-router-http:
+      rule: Host(`friday-universe.duckdns.org`)
+      priority: 1000
+      service: mcp-service
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+    mcp-router-https:
+      rule: Host(`friday-universe.duckdns.org`)
+      priority: 1000
+      service: mcp-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+  services:
+    mcp-service:
+      loadBalancer:
+        servers:
+          - url: http://172.18.0.1:8765
+        passHostHeader: true

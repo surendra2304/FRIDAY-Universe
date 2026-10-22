@@ -1,0 +1,15 @@
+[Unit]
+Description=Oracle Cloud 24/7 Full-Access Agent Server for ChatGPT
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/oracle_mcp
+ExecStart=/usr/bin/python3 /opt/oracle_mcp/server.py
+Restart=always
+RestartSec=5
+Environment=ORACLE_MCP_TOKEN=[REDACTED:mcp_bridge_token]
+
+[Install]
+WantedBy=multi-user.target

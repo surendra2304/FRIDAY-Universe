@@ -1,0 +1,17 @@
+[Unit]
+Description=Project FORGE Autonomous Software Engineering Engine
+After=network.target
+
+[Service]
+Type=simple
+User=forge
+Group=forge
+WorkingDirectory=/opt/forge
+EnvironmentFile=/etc/forge/forge.env
+ExecStart=/opt/forge/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5s
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

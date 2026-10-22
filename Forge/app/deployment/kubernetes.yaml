@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forge-engine
+  labels:
+    app: forge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: forge
+  template:
+    metadata:
+      labels:
+        app: forge
+    spec:
+      containers:
+        - name: forge
+          image: forge-engine:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: FORGE_ENV
+              value: "production"
+            - name: AI_UNIVERSE_URL
+              value: "http://ai-universe.ecosystem.svc.cluster.local:8000"
+            - name: AI_UNIVERSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: forge-secrets
+                  key: ai-universe-key
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2048Mi"
+          volumeMounts:
+            - name: forge-data
+              mountPath: /app/data
+            - name: forge-workspaces
+              mountPath: /app/workspaces
+      volumes:
+        - name: forge-data
+          persistentVolumeClaim:
+            claimName: forge-data-pvc
+        - name: forge-workspaces
+          persistentVolumeClaim:
+            claimName: forge-workspaces-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forge-service
+spec:
+  selector:
+    app: forge
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

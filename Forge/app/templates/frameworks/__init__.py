@@ -1,0 +1,41 @@
+"""
+Framework-Specific Template Exports for Project FORGE.
+"""
+
+from app.templates.frameworks.express import (
+    EXPRESS_ERROR_HANDLER_JS,
+    EXPRESS_PACKAGE_JSON,
+    EXPRESS_ROUTES_API_JS,
+    EXPRESS_SERVER_JS,
+    EXPRESS_TEST_JS,
+)
+from app.templates.frameworks.nextjs import (
+    NEXTJS_API_ROUTE_TS,
+    NEXTJS_LAYOUT_TSX,
+    NEXTJS_PACKAGE_JSON,
+    NEXTJS_PAGE_TSX,
+    NEXTJS_TSCONFIG_JSON,
+)
+from app.templates.frameworks.react import (
+    REACT_COMPONENT_CSS,
+    REACT_COMPONENT_TEST_TSX,
+    REACT_COMPONENT_TSX,
+    REACT_PACKAGE_JSON,
+)
+
+__all__ = [
+    "EXPRESS_ERROR_HANDLER_JS",
+    "EXPRESS_PACKAGE_JSON",
+    "EXPRESS_ROUTES_API_JS",
+    "EXPRESS_SERVER_JS",
+    "EXPRESS_TEST_JS",
+    "NEXTJS_API_ROUTE_TS",
+    "NEXTJS_LAYOUT_TSX",
+    "NEXTJS_PACKAGE_JSON",
+    "NEXTJS_PAGE_TSX",
+    "NEXTJS_TSCONFIG_JSON",
+    "REACT_COMPONENT_CSS",
+    "REACT_COMPONENT_TEST_TSX",
+    "REACT_COMPONENT_TSX",
+    "REACT_PACKAGE_JSON",
+]
