@@ -35,18 +35,21 @@ coverage/
 **/.git/
 **/workspaces/
 workspaces/
+# Ephemeral runtime data, workspaces and artifacts
 **/data/
-data/
-**/artifacts/
-artifacts/
-**/audit/
-audit/
-**/backups/
-backups/
-**/state_backups/
-state_backups/
-**/compliance_reports/
-compliance_reports/
+workspaces/
+**/workspaces/
+/artifacts/
+/audit/
+/backups/
+/state_backups/
+/compliance_reports/
+
+# Never ignore code inside agents
+!Sentinel/sentinel/audit/
+!Sentinel/sentinel/storage/artifacts/
+!FRIDAY/audit/
+!Stratex/audit/
 *.jsonl
 *.csv
 
