@@ -1,0 +1,35 @@
+name: Mirror Agents to Standalone Repositories
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  mirror-subrepos:
+    name: Subtree Sync to Standalone Agent Repos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Monorepo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT_MIRROR || github.token }}
+
+      - name: Configure Git Committer
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Mirror Agent Subtrees
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_MIRROR || github.token }}
+        run: |
+          AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "IntelX" "Futuris" "Forge" "VyralX" "Sentinel" "Cortex")
+          for AGENT in "${AGENTS[@]}"; do
+            if [ -d "$AGENT" ]; then
+              echo "=== Mirroring $AGENT ==="
+              git subtree split --prefix="$AGENT" -b "split-$AGENT" || true
+              git push "https://${GH_TOKEN}@github.com/surendra2304/${AGENT}.git" "split-$AGENT:main" --force || echo "Skipping or unchanged: $AGENT"
+            fi
+          done

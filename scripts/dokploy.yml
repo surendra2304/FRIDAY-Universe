@@ -1,0 +1,22 @@
+http:
+  routers:
+    dokploy-router-secure:
+      rule: Host(`dokploy.friday-universe.duckdns.org`)
+      service: dokploy-service-app
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+    dokploy-router-http:
+      rule: Host(`dokploy.friday-universe.duckdns.org`)
+      service: dokploy-service-app
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+  services:
+    dokploy-service-app:
+      loadBalancer:
+        servers:
+          - url: http://tasks.dokploy:3000
+        passHostHeader: true

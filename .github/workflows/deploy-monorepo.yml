@@ -1,0 +1,46 @@
+name: FRIDAY Universe Fleet Continuous Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-server1:
+    name: Deploy to AMD Server 1 (Core Swarm Leader)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Remote Deployment on Server 1
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 140.245.208.100
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            echo "=== Syncing FRIDAY Universe on Server 1 ==="
+            cd /opt/friday_universe
+            git fetch origin main
+            git reset --hard origin/main
+            sudo chown -R ubuntu:ubuntu /opt/friday_universe
+            echo "=== Restarting Server 1 Agent Services ==="
+            sudo systemctl restart friday-core friday-inference friday-memora friday-stratex friday-intelx friday-futuris friday-forge
+            sudo systemctl is-active friday-core friday-inference friday-memora friday-stratex friday-intelx friday-futuris friday-forge
+
+  deploy-server2:
+    name: Deploy to AMD Server 2 (Specialist Worker)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Remote Deployment on Server 2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 140.245.243.168
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            echo "=== Syncing FRIDAY Universe on Server 2 ==="
+            cd /opt/friday_universe
+            git fetch origin main
+            git reset --hard origin/main
+            sudo chown -R ubuntu:ubuntu /opt/friday_universe
+            echo "=== Restarting Server 2 Agent Services ==="
+            sudo systemctl restart friday-vyralx friday-sentinel friday-cortex
+            sudo systemctl is-active friday-vyralx friday-sentinel friday-cortex

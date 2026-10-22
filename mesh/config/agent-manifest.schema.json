@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentManifest",
+  "description": "Schema for agent registration in the FRIDAY Universe ecosystem",
+  "type": "object",
+  "properties": {
+    "agent_id": {
+      "description": "Unique identifier for the agent",
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$"
+    },
+    "name": {
+      "description": "Human-readable name of the agent",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 50
+    },
+    "description": {
+      "description": "Description of the agent's purpose and capabilities",
+      "type": "string",
+      "maxLength": 500
+    },
+    "capabilities": {
+      "description": "List of capabilities the agent provides",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "intents": {
+      "description": "List of intents the agent can handle",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trust_level": {
+      "description": "Trust level of the agent (1-5)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "health_endpoint": {
+      "description": "Endpoint for health checks",
+      "type": "string",
+      "format": "uri"
+    },
+    "heartbeat_interval": {
+      "description": "Interval for heartbeat messages in seconds",
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 300
+    },
+    "version": {
+      "description": "Version of the agent",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "last_updated": {
+      "description": "Timestamp of the last update",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["agent_id", "name", "capabilities", "trust_level", "health_endpoint", "heartbeat_interval", "version"]
+}

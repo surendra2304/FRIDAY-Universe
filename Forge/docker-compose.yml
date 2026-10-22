@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  forge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: forge
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    environment:
+      - FORGE_ENV=production
+      - PORT=8000
+      - LOG_LEVEL=INFO
+      - INFERENCE_URL=http://inference:8000
+      - MEMORA_URL=http://memora:8000
+      - INTELX_URL=http://intelx:8000
+      - FUTURIS_URL=http://futuris:8000
+      - CORTEX_URL=http://cortex:8000
+      - FRIDAY_URL=http://friday:10000
+    volumes:
+      - forge_data:/app/data
+      - forge_workspaces:/app/workspaces
+      - forge_artifacts:/app/artifacts
+    networks:
+      - friday_mesh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+networks:
+  friday_mesh:
+    external: true
+
+volumes:
+  forge_data:
+  forge_workspaces:
+  forge_artifacts:
