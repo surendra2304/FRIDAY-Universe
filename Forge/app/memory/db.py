@@ -240,21 +240,23 @@ class DatabaseManager:
         self._tried_postgres = True
         url = self.get_effective_url()
 
-        if "postgresql" in url:
+        if "postgresql" in url or "oracle" in url:
             try:
+                if url.startswith("oracle+oracledb://"):
+                    url = "oracle+oracledb_async://" + url[len("oracle+oracledb://"):]
                 engine = create_async_engine(
                     url,
                     pool_pre_ping=True,
                     pool_size=10,
                     max_overflow=20,
-                    connect_args={"timeout": 4},
+                    connect_args={"timeout": 4} if "postgresql" in url else {},
                 )
                 # Quick test connection
                 async with engine.connect() as conn:
-                    await conn.execute(text("SELECT 1"))
+                    await conn.execute(text("SELECT 1 FROM DUAL" if "oracle" in url else "SELECT 1"))
                 self._async_engine = engine
                 self._is_postgres = True
-                logger.info(f"Connected to PostgreSQL database: {self.settings.postgres_db}")
+                logger.info(f"Connected to relational database (PostgreSQL/Oracle) at: {url.split('@')[-1]}")
                 return self._async_engine
             except Exception as e:
                 logger.warning(
