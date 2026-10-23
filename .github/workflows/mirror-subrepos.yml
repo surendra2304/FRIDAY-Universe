@@ -96,9 +96,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Synchronize files in the checked-out working tree only. No remote
-          # default branch is ever updated by this workflow.
-          rsync -a --delete --exclude='.git/' "$GITHUB_WORKSPACE/monorepo/$AGENT/" ./
+          # Synchronize additions and updates in the checked-out working tree only.
+          # Deletions are deliberately not mirrored automatically; they require
+          # explicit review so standalone-only assets cannot be silently removed.
+          # No remote default branch is ever updated by this workflow.
+          rsync -a --exclude='.git/' "$GITHUB_WORKSPACE/monorepo/$AGENT/" ./
           git add --all
           if git diff --cached --quiet; then
             echo "has_diff=false" >> "$GITHUB_OUTPUT"
