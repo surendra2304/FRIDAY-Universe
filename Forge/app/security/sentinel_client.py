@@ -60,9 +60,14 @@ class SentinelClient:
         Fails closed if high-severity CVEs, critical vulnerabilities, or secrets are reported.
         """
         endpoint = f"{self.base_url}/v1/security/audit"
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Content-Type": "application/json",
+            "X-Agent-Name": "forge",
+            "X-Correlation-ID": f"audit_{task_id}",
+        }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
+            headers["X-Agent-Key"] = self.api_key
 
         payload = {
             "service": "forge",

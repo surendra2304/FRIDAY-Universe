@@ -1,16 +1,18 @@
 [Unit]
-Description=Project FORGE Autonomous Software Engineering Engine
+Description=Forge Autonomous Software Synthesizer & Verification Battery (FRIDAY Universe)
 After=network.target
 
 [Service]
 Type=simple
-User=forge
-Group=forge
-WorkingDirectory=/opt/forge
-EnvironmentFile=/etc/forge/forge.env
-ExecStart=/opt/forge/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/friday_universe/Forge
+EnvironmentFile=/etc/default/friday_universe.env
+ExecStart=/opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --workers 1
 Restart=always
 RestartSec=5s
+MemoryMax=180M
+MemoryHigh=150M
 LimitNOFILE=65536
 
 [Install]

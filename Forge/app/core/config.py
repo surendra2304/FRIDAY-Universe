@@ -96,8 +96,18 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("GITHUB_REPO", "github_repo"),
         description="Default GitHub repository (e.g. owner/repo)",
     )
+    friday_url: str = Field(
+        default="http://10.0.0.121:10000",
+        validation_alias=AliasChoices("FRIDAY_URL", "FORGE_FRIDAY_URL", "friday_url"),
+        description="Base URL for FRIDAY central orchestrator and action gateway",
+    )
+    friday_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("FRIDAY_API_KEY", "FORGE_FRIDAY_API_KEY", "friday_api_key"),
+        description="API Key for FRIDAY API authentication",
+    )
     ai_universe_url: str = Field(
-        default="http://inference:8000",
+        default="http://10.0.0.121:8001",
         validation_alias=AliasChoices("INFERENCE_URL", "AI_UNIVERSE_URL", "ai_universe_url"),
         description="Base URL for external Inference / AI Universe reasoning engine",
     )
@@ -109,7 +119,7 @@ class Settings(BaseSettings):
         description="API Key for Inference REST API authentication",
     )
     intelx_url: str = Field(
-        default="http://intelx:8000",
+        default="http://10.0.0.121:8005",
         validation_alias=AliasChoices("INTELX_URL", "FORGE_INTELX_URL", "intelx_url"),
         description="Base URL for IntelX technical research intelligence service",
     )
@@ -119,7 +129,7 @@ class Settings(BaseSettings):
         description="API Key for IntelX Technical Research API authentication",
     )
     futuris_url: str = Field(
-        default="http://futuris:8000",
+        default="http://10.0.0.121:8004",
         validation_alias=AliasChoices("FUTURIS_URL", "FORGE_FUTURIS_URL", "futuris_url"),
         description="Base URL for Futuris predictive capacity & success intelligence service",
     )
@@ -130,8 +140,18 @@ class Settings(BaseSettings):
         ),
         description="API Key for Futuris API authentication",
     )
+    stratex_url: str = Field(
+        default="http://10.0.0.121:8003",
+        validation_alias=AliasChoices("STRATEX_URL", "FORGE_STRATEX_URL", "stratex_url"),
+        description="Base URL for Stratex quantitative algorithmic trading and risk desk",
+    )
+    stratex_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("STRATEX_API_KEY", "FORGE_STRATEX_API_KEY", "stratex_api_key"),
+        description="API Key for Stratex API authentication",
+    )
     cortex_url: str = Field(
-        default="http://cortex:8000",
+        default="http://10.0.0.120:8009",
         validation_alias=AliasChoices("CORTEX_URL", "NEXUS_URL", "cortex_url"),
         description="Base URL for Cortex Web Operations engine",
     )
@@ -141,7 +161,7 @@ class Settings(BaseSettings):
         description="API Key for Cortex API authentication",
     )
     memora_url: str = Field(
-        default="http://memora:8000",
+        default="http://10.0.0.121:8002",
         validation_alias=AliasChoices("MEMORA_URL", "FORGE_MEMORA_URL", "memora_url"),
         description="Base URL for Memora persistent memory fabric",
     )
@@ -151,7 +171,7 @@ class Settings(BaseSettings):
         description="Forge's named agent credential for Memora Cloud",
     )
     sentinel_url: str = Field(
-        default="http://sentinel:8000",
+        default="http://10.0.0.120:8008",
         validation_alias=AliasChoices("SENTINEL_URL", "FORGE_SENTINEL_URL", "sentinel_url"),
         description="Base URL for Sentinel security audit and vulnerability analysis gate",
     )
@@ -160,10 +180,26 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("SENTINEL_API_KEY", "FORGE_SENTINEL_API_KEY", "sentinel_api_key"),
         description="API Key for Sentinel API authentication",
     )
+    vyralx_url: str = Field(
+        default="http://10.0.0.120:8010",
+        validation_alias=AliasChoices("VYRALX_URL", "FORGE_VYRALX_URL", "vyralx_url"),
+        description="Base URL for VyralX video production studio",
+    )
+    vyralx_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("VYRALX_API_KEY", "FORGE_VYRALX_API_KEY", "vyralx_api_key"),
+        description="API Key for VyralX API authentication",
+    )
     database_url: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("DATABASE_URL", "FORGE_DATABASE_URL", "database_url"),
-        description="Explicit database connection URL (e.g. postgresql+asyncpg://... or sqlite+aiosqlite://...)",
+        validation_alias=AliasChoices(
+            "DATABASE_URL",
+            "ORACLE_CORE_ASYNC_URL",
+            "ORACLE_CORE_URL",
+            "FORGE_DATABASE_URL",
+            "database_url",
+        ),
+        description="Explicit database connection URL (e.g. oracle+oracledb_async://..., postgresql+asyncpg://..., or sqlite+aiosqlite://...)",
     )
     postgres_host: str = Field(
         default="dokploy-postgres",
