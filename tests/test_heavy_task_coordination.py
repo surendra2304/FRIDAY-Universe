@@ -301,6 +301,27 @@ class HeavyTaskCoordinatorTests(unittest.IsolatedAsyncioTestCase):
                 "FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS": "true",
             })
 
+
+    async def test_misspelled_required_mode_fails_closed(self) -> None:
+        with self.assertRaisesRegex(ValueError, "must be a boolean"):
+            coordinator_from_environment({
+                "FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS": "treu",
+            })
+
+    async def test_invalid_redis_scheme_fails_before_runtime_work(self) -> None:
+        with self.assertRaisesRegex(HeavyTaskBackendError, "must use redis://"):
+            coordinator_from_environment({
+                "FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL": "http://redis.invalid:6379/0",
+                "FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS": "true",
+            })
+
+    async def test_redis_url_without_host_fails_closed(self) -> None:
+        with self.assertRaisesRegex(HeavyTaskBackendError, "must include a Redis hostname"):
+            coordinator_from_environment({
+                "FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL": "redis:///0",
+                "FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS": "true",
+            })
+
     async def test_invalid_key_prefix_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "KEY_PREFIX"):
             coordinator_from_environment({
