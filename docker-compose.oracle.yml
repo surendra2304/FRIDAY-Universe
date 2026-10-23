@@ -10,13 +10,13 @@ services:
     image: redis:7-alpine
     container_name: friday_heavy_task_redis
     restart: unless-stopped
-    command: ["sh", "-ec", "exec redis-server --appendonly yes --save 60 1000 --requirepass \"$FRIDAY_UNIVERSE_REDIS_PASSWORD\""]
+    command: ["sh", "-ec", "exec redis-server --appendonly yes --save 60 1000 --requirepass \"$$FRIDAY_UNIVERSE_REDIS_PASSWORD\""]
     environment:
       FRIDAY_UNIVERSE_REDIS_PASSWORD: ${FRIDAY_UNIVERSE_REDIS_PASSWORD:?Set a strong URL-safe FRIDAY_UNIVERSE_REDIS_PASSWORD}
     volumes:
       - heavy_task_redis_data:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$FRIDAY_UNIVERSE_REDIS_PASSWORD\" ping | grep -q PONG"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$FRIDAY_UNIVERSE_REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 10s
       timeout: 3s
       retries: 5
