@@ -18,7 +18,19 @@ jobs:
   validate:
     name: Validate monorepo-only policy and workflow syntax
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    env:
+      FRIDAY_UNIVERSE_TEST_REDIS_URL: redis://localhost:6379/15
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -29,13 +41,27 @@ jobs:
           python-version: "3.12"
 
       - name: Install YAML parser
-        run: python -m pip install --disable-pip-version-check "PyYAML>=6,<7" "pytest>=8.3,<9"
+        run: python -m pip install --disable-pip-version-check "PyYAML>=6,<7" "pytest>=8.3,<9" "redis>=5,<7"
 
       - name: Run repository regression tests
         run: python -m pytest -q tests
 
       - name: Validate repository and workflow safety
         run: python scripts/validate_fleet.py
+
+      - name: Validate production Compose configuration
+        shell: bash
+        env:
+          FRIDAY_UNIVERSE_REDIS_PASSWORD: ci-url-safe-password-for-compose-validation
+        run: |
+          set -euo pipefail
+          # Production env files are intentionally untracked because they hold
+          # credentials. Empty placeholders let Compose validate references
+          # without copying any real secrets into CI.
+          for agent in FRIDAY Inference Memora Stratex Forge Cortex Sentinel IntelX Futuris VyralX; do
+            touch "$agent/.env"
+          done
+          docker compose -f docker-compose.oracle.yml config --quiet
 
       - name: Assert standalone mirroring remains disabled
         shell: bash
