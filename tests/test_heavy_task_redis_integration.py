@@ -8,18 +8,37 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
+import time
 import unittest
 import uuid
+from pathlib import Path
 
 try:
     import redis.asyncio as redis_async
 except ImportError:  # pragma: no cover - covered by CI dependency installation
     redis_async = None
 
-from mesh.heavy_task import HeavyTaskCoordinator
+from mesh.heavy_task import HeavyTaskCoordinator, HeavyTaskLeaseLost
+
+FUTURIS_ROOT = Path(__file__).resolve().parents[1] / "Futuris"
+if FUTURIS_ROOT.is_dir():
+    sys.path.insert(0, str(FUTURIS_ROOT))
+try:
+    from futuris.infra.cpu import run_cpu_process_cancellable
+except ImportError:  # The lighter validation workflow omits the Futuris CPU extras.
+    run_cpu_process_cancellable = None
 
 REDIS_URL = os.getenv("FRIDAY_UNIVERSE_TEST_REDIS_URL", "").strip()
 REDIS_AVAILABLE = bool(REDIS_URL and redis_async is not None)
+CPU_WORKER_AVAILABLE = run_cpu_process_cancellable is not None
+
+
+def _write_child_pid_then_wait(marker_path: str, duration_seconds: float) -> int:
+    """Module-level picklable CPU job used to prove cancellation kills its child."""
+    Path(marker_path).write_text(str(os.getpid()), encoding="utf-8")
+    time.sleep(duration_seconds)
+    return os.getpid()
 
 
 @unittest.skipUnless(
@@ -97,6 +116,53 @@ class HeavyTaskRedisIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await lease.release())
         stored = await self.client.get(self.coordinator_a.lock_key)
         self.assertEqual(stored, replacement)
+
+
+    @unittest.skipUnless(
+        CPU_WORKER_AVAILABLE,
+        "Futuris worker dependencies are not installed in this test environment",
+    )
+    async def test_lease_loss_terminates_child_before_coordinator_returns(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            marker = str(Path(directory) / "worker.pid")
+
+            async def long_work(lease):
+                lease.ensure_valid()
+                return await run_cpu_process_cancellable(
+                    "lease-loss-integration",
+                    _write_child_pid_then_wait,
+                    marker,
+                    30.0,
+                    _exclusive=True,
+                )
+
+            work = asyncio.create_task(
+                self.coordinator_a.run(
+                    "futuris:model-fit",
+                    long_work,
+                    owner="futuris",
+                    wait_timeout=0,
+                )
+            )
+            deadline = asyncio.get_running_loop().time() + 8
+            while not Path(marker).exists() and asyncio.get_running_loop().time() < deadline:
+                await asyncio.sleep(0.02)
+            self.assertTrue(Path(marker).exists(), "CPU worker process did not start")
+            child_pid = int(Path(marker).read_text(encoding="utf-8"))
+
+            replacement = (
+                '{"nonce":"replacement","task_id":"new-owner","owner":"other-worker"}'
+            )
+            await self.client.set(self.coordinator_a.lock_key, replacement, px=10000)
+
+            with self.assertRaises(HeavyTaskLeaseLost):
+                await asyncio.wait_for(work, timeout=6)
+
+            with self.assertRaises(ProcessLookupError):
+                os.kill(child_pid, 0)
+            self.assertEqual(await self.client.get(self.coordinator_a.lock_key), replacement)
 
     async def test_fencing_counter_survives_release_and_reacquisition(self) -> None:
         first = await self.coordinator_a.acquire("first", owner="worker-a")
