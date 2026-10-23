@@ -359,6 +359,41 @@ class HeavyTaskCoordinator:
                 )
 
 
+def coordinator_from_environment(
+    environ: dict[str, str] | None = None,
+) -> HeavyTaskCoordinator | None:
+    """Resolve the shared coordinator from service configuration.
+
+    Development remains usable without Redis unless the operator explicitly
+    requires distributed serialization. Production deployments should set both
+    FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL and
+    FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS=true. A missing URL in
+    required mode raises immediately rather than silently using a local lock.
+    """
+    env = os.environ if environ is None else environ
+    url = env.get("FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL", "").strip()
+    required_value = env.get("FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS", "")
+    required = required_value.strip().lower() in {"1", "true", "yes", "on"}
+    if not url:
+        if required:
+            raise HeavyTaskBackendError(
+                "FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL is required when distributed "
+                "heavy-task coordination is enabled"
+            )
+        return None
+    prefix = env.get("FRIDAY_UNIVERSE_HEAVY_TASK_KEY_PREFIX", "friday-universe").strip()
+    if not prefix:
+        raise ValueError("FRIDAY_UNIVERSE_HEAVY_TASK_KEY_PREFIX must not be empty")
+    try:
+        return HeavyTaskCoordinator.from_url(url, key_prefix=prefix)
+    except (ValueError, HeavyTaskBackendError):
+        raise
+    except Exception as exc:
+        raise HeavyTaskBackendError(
+            f"unable to configure distributed heavy-task coordination ({type(exc).__name__})"
+        ) from exc
+
+
 class HeavyTaskLease:
     """A renewable lease. Call ensure_valid before irreversible checkpoints."""
 
