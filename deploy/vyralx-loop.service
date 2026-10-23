@@ -1,0 +1,19 @@
+[Unit]
+Description=FRIDAY Universe - VyralX 24/7 Autonomous Content Studio & Publishing Daemon
+After=network.target VyralX.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/friday_universe/VyralX
+Environment="PATH=/opt/friday_universe/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONPATH=/opt/friday_universe/VyralX:/opt/friday_universe"
+EnvironmentFile=/etc/default/friday_universe.env
+ExecStart=/opt/friday_universe/venv/bin/python scripts/autonomous_loop.py --interval-hours 6.0 --batch-size 1
+Restart=always
+RestartSec=30
+TimeoutStopSec=15
+MemoryMax=350M
+
+[Install]
+WantedBy=multi-user.target
