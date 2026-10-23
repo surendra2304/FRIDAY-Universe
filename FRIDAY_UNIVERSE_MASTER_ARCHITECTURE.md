@@ -1,446 +1,420 @@
-# The FRIDAY Universe: Definitive Master Architecture & Technical Codex
+# ==============================================================================
+# THE FRIDAY UNIVERSE: DEFINITIVE MASTER ARCHITECTURE & TECHNICAL CODEX
+# ==============================================================================
+# CLASSIFICATION: Authoritative Production Engineering Standard & System Runbook
+# VERSION: 3.1.0 (Production Dual-Server Fleet & Oracle 23ai Mesh)
+# DATE: October 2026
+# REPOSITORY: https://github.com/surendra2304/FRIDAY-Universe (Branch: main)
+# LOCAL WORKSPACE: D:\FRIDAY Universe
+# REMOTE WORKSPACE: /opt/friday_universe
+# CLOUD INGRESS GATEWAY: https://friday-universe.duckdns.org
+# ==============================================================================
 
-> **Document Version:** 2.5.0  
-> **Classification:** Internal System Architecture & Engineering Standard  
-> **Master PDF Specification:** [`FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf`](file:///D:/FRIDAY%20Universe/FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf) | [`README.pdf`](file:///D:/FRIDAY%20Universe/README.pdf)  
-> **Master Credentials & Access:** [`CREDENTIALS.md`](file:///D:/FRIDAY%20Universe/CREDENTIALS.md) | [`CREDENTIALS.pdf`](file:///D:/FRIDAY%20Universe/CREDENTIALS.pdf)  
-> **Ecosystem Repositories:** [FRIDAY](file:///D:/FRIDAY%20Universe/FRIDAY) | [Inference](file:///D:/FRIDAY%20Universe/Inference) | [Memora](file:///D:/FRIDAY%20Universe/Memora) | [Stratex](file:///D:/FRIDAY%20Universe/Stratex) | [Forge](file:///D:/FRIDAY%20Universe/Forge) | [Cortex](file:///D:/FRIDAY%20Universe/Cortex) | [Sentinel](file:///D:/FRIDAY%20Universe/Sentinel) | [IntelX](file:///D:/FRIDAY%20Universe/IntelX) | [Futuris](file:///D:/FRIDAY%20Universe/Futuris) | [VyralX](file:///D:/FRIDAY%20Universe/VyralX)  
-> **Local Workspace Root:** `D:\FRIDAY Universe`  
-> **Cloud Ingress Gateway:** `https://friday-universe.duckdns.org`  
-> **Dokploy PaaS Portal:** `https://dokploy.friday-universe.duckdns.org`  
-> **Unified MCP Gateway:** `https://friday-universe.duckdns.org/mcp`  
+## 1. SOVEREIGN MULTI-AGENT PHILOSOPHY & MANDATORY INVARIANTS
+
+The **FRIDAY Universe** is an enterprise-grade autonomous AI operating system composed of **ten sovereign agent subsystems**. It is engineered to operate continuously across high-efficiency Oracle Cloud Infrastructure (OCI) Always Free hardware ($0.00 compute boundary). The architecture rejects unconstrained LLM loops, hallucinated consensus, and brittle monoliths in favor of empirical verification, domain boundary isolation, and deterministic execution.
+
+### FIVE MANDATORY OPERATIONAL INVARIANTS:
+
+1. **STRICT CANONICAL PROPER NAMING ONLY:**
+   Never use legacy abbreviations, prefixes, or lowercase hyphenated aliases (e.g., DO NOT use `friday-core`, `friday-inference`, `intelx-engine`, `sentinel-shield`, `vyralx-studio`). Use ONLY these ten exact proper names:
+   - `FRIDAY`
+   - `Inference`
+   - `Memora`
+   - `Stratex`
+   - `Futuris`
+   - `IntelX`
+   - `Forge`
+   - `VyralX`
+   - `Sentinel`
+   - `Cortex`
+
+2. **ZERO PERSISTENT LOCAL SQLITE & POSTGRESQL ON DISK:**
+   - No `.db`, `.sqlite`, or local PostgreSQL files or containers may exist on VM persistent disks (`/opt/friday_universe/*`).
+   - All relational state, vector embeddings, and ledgers reside exclusively in the two Oracle Autonomous 23ai cloud databases (`friday_universe_db` and `vyralx_db`).
+   - If an agent requires local in-memory buffering or an offline cache fallback, it MUST use Linux tmpfs (`/dev/shm/<agent>.db` in RAM). Zero bytes written to disk.
+
+3. **1 GB PHYSICAL RAM BUDGET ($0.00 ALWAYS FREE BOUNDARY):**
+   - Both VMs are Oracle Cloud Always Free AMD Micro instances (`VM.Standard.E2.1.Micro`), capped at **1 OCPU and 1 GB Physical RAM** each (supported by an 8 GB swapfile at `/swapfile`).
+   - Server 1 hosts 7 continuous Python processes in 1 GB RAM; Server 2 hosts 3 processes in 1 GB RAM.
+   - Resource discipline: Single-worker Uvicorn (`--workers 1`), explicit systemd cgroup memory limits (`MemoryMax`), and lazy imports.
+
+4. **SYSTEMD SPECIFIER ESCAPING BUG PREVENTED (`%21%23`):**
+   - Oracle database passwords contain URL-encoded special characters (`%21%23` for `!#`).
+   - Never embed database passwords directly into `.service` unit files (`Environment="DATABASE_URL=..."`) because systemd misinterprets `%` as specifiers (e.g. `%u`, `%2`) and discards the variable.
+   - All environment variables MUST be loaded exclusively via `EnvironmentFile=/etc/default/friday_universe.env` (`chmod 600`).
+
+5. **FAIL-CLOSED DOMAIN AUTHORITY & IMMUTABILITY:**
+   - FRIDAY orchestrates tasks across the ecosystem but cannot override specialist domain boundaries. Stratex retains hardcoded risk stops outside LLM discretion.
+   - Forge code synthesis is strictly fail-closed: synthesized diffs cannot be committed or deployed until approved by Sentinel's security gate.
+   - Always return new objects and data structures rather than mutating state in place.
 
 ---
 
-## 1. Executive Summary & Sovereign Multi-Agent Philosophy
+## 2. DUAL-SERVER INFRASTRUCTURE TOPOGRAPHY
 
-**The FRIDAY Universe** is an autonomous, sovereign multi-agent cognitive architecture comprising **ten specialized subsystems** designed to operate cohesively as an intelligent personal operating system, autonomous software synthesizer, algorithmic trading desk, threat-hunting security operations center, deep research analyst, predictive forecasting engine, and autonomous video production & multi-channel distribution studio.
+The 10 autonomous agents are physically distributed across two AMD Micro VMs in Oracle Cloud (AP-Hyderabad-1):
 
-Unlike naive multi-agent architectures that rely on unconstrained LLM loops, hallucinated consensus, or brittle monoliths, the FRIDAY Universe adheres to five non-negotiable core engineering tenets:
-
-1. **Evidence Over Model Confidence:** Agreement between AI models does not constitute ground truth. All decisions, code executions, trade entries, and security disclosures require verifiable, empirical evidence (AST parsing, unit test executions, cryptographic signatures, HTTP receipts, or exchange ledger balances).
-2. **Domain Authority & Non-Bypassable Safety Gates:** FRIDAY orchestrates tasks across the ecosystem but cannot override specialist domain boundaries. Stratex retains independent hard risk limits outside LLM discretion. Forge executes inside isolated sandboxes with strict path traversal confinement. Sentinel maintains pre-delivery code review veto power.
-3. **Decoupled 3-Tier Memory Authority:** Memory is never scattered across ad-hoc files or mirrored indiscriminately. **Memora** is the sole long-term cross-agent memory authority, enforcing strict server-side scoping (`Private`, `Shared`, `Universal`), cryptographic provenance, and prompt-injection separation between untrusted external data and executable directives.
-4. **Zero-Trust Network Mesh:** Services communicate over a private, non-routable Docker container bridge (`friday_mesh`). No database (PostgreSQL, Redis, Qdrant) or internal specialist API port is exposed to the public internet. Only the reverse proxy (Traefik) binds to external ports `80` and `443`.
-5. **Deterministic Sovereign Hosting:** All workloads run on dedicated, sovereign Oracle Cloud Infrastructure (OCI). No third-party PaaS black boxes (Kubernetes, Vercel, Render) are permitted. All deployments are managed by Dokploy GitOps synchronized with official GitHub repositories.
-
-```mermaid
-flowchart TD
-    subgraph ExternalAccess["External Ingress Layer (Traefik v3)"]
-        User["User / Mobile / ChatGPT Companion"] -->|HTTPS / WSS (Ports 80 / 443)| Ingress["Traefik Reverse Proxy (Let's Encrypt TLS)"]
-        Ingress -->|Forward :10000| FRIDAY["FRIDAY Core (Cognitive Orchestrator)"]
-        Ingress -->|Forward :8765| MCP["Cloud MCP Gateway (/mcp)"]
-        Ingress -->|Forward :3000| Dokploy["Dokploy PaaS Dashboard (dokploy.friday-universe...)"]
-    end
-
-    subgraph CoreMesh["Private Service Mesh (friday_mesh: :8000)"]
-        FRIDAY -->|Task Envelope| Inference["Inference (Model & Reasoning Gateway)"]
-        FRIDAY -->|Task Envelope| Memora["Memora (Central Memory Authority)"]
-        FRIDAY -->|Task Envelope| Stratex["Stratex (Quantitative Trading & Risk Desk)"]
-        FRIDAY -->|Task Envelope| Forge["Forge (Autonomous Software Synthesizer)"]
-        FRIDAY -->|Task Envelope| Cortex["Cortex (Web Operations & Governed CRM)"]
-        FRIDAY -->|Task Envelope| Sentinel["Sentinel (Zero-Trust Security & Gatekeeper)"]
-        FRIDAY -->|Task Envelope| IntelX["IntelX (Deep Research & Fact Verification)"]
-        FRIDAY -->|Task Envelope| Futuris["Futuris (Predictive Forecasting Engine)"]
-        FRIDAY -->|Task Envelope| VyralX["VyralX (Autonomous Video Studio & Distribution)"]
-
-        %% Specialist Cross-Interactions
-        Forge == Pre-Delivery Audit ==> Sentinel
-        Stratex == Risk & Anomaly Audit ==> Sentinel
-        VyralX == Publish Policy Audit ==> Sentinel
-        Cortex -.->|Extract Facts| IntelX
-        VyralX -.->|Topic Research Context| IntelX
-        Stratex -.->|Market Trajectory| Futuris
-        AllSpecialists["All 9 Specialists"] -.->|Route LLM Inquiries| Inference
-        AllSpecialists -.->|Read/Write Scoped Memory| Memora
-    end
-
-    subgraph DataMesh["Shared Unified Storage Layer (PostgreSQL 18)"]
-        Postgres[("PostgreSQL 18 Cluster\n(10 Distinct Logical Databases)")]
-        Redis[("Redis 7\n(Shared Pub/Sub & Caching)")]
-        Qdrant[("Qdrant Vector DB\n(Semantic Memory Index)")]
-        TursoCloud[("Turso LibSQL Cloud\n(Memora & IntelX AWS Mumbai)")]
-
-        Memora --> Postgres
-        Memora --> Redis
-        Memora --> Qdrant
-        Memora -.-> TursoCloud
-        IntelX -.-> TursoCloud
-        FRIDAY --> Postgres
-        Inference --> Postgres
-        Stratex --> Postgres
-        Forge --> Postgres
-        Cortex --> Postgres
-        Sentinel --> Postgres
-        IntelX --> Postgres
-        Futuris --> Postgres
-        VyralX --> Postgres
-    end
-
-    subgraph CloudBackup["Cloud Protection Layer"]
-        Postgres -.->|Nightly Encrypted Backup (GPG AES-256)| OCIObjectStorage["OCI Private Object Storage (axz0jlcap2j6)"]
-    end
+```
++----------------------------------------------------------------------------------------------------+
+|                                    FRIDAY UNIVERSE FLEET                                           |
++----------------------------------------------------------------------------------------------------+
+| SERVER 1: CORE DECISION FLEET                      | SERVER 2: SPECIALIST STUDIO & OPS FLEET       |
+| Public IP:  140.245.208.100                        | Public IP:  140.245.243.168                   |
+| Private IP: 10.0.0.121 (friday-amd-vnic)           | Private IP: 10.0.0.120 (friday-amd-2-vnic)    |
+| OS: Ubuntu 22.04 LTS (AMD64)                       | OS: Ubuntu 22.04 LTS (AMD64)                   |
+| RAM: 1 GB Physical + 8 GB Swap                     | RAM: 1 GB Physical + 8 GB Swap                 |
+| Base Path: /opt/friday_universe                    | Base Path: /opt/friday_universe                |
+| SSH: ssh -i ~/.ssh/friday_universe_oracle.key      | SSH: ssh -i ~/.ssh/friday_universe_oracle.key |
+|                                                    |                                               |
+| Agents Hosted (7 Core Services):                   | Agents Hosted (3 Specialist Services):        |
+|  1. FRIDAY    (:10000) [Gateway & Mesh Hub]        |  8.  VyralX   (:8010) [Video Production]       |
+|  2. Inference (:8001)  [Multi-Model Router]        |  9.  Sentinel (:8008) [Security Gatekeeper]    |
+|  3. Memora    (:8002)  [Vector & Graph Memory]     |  10. Cortex   (:8009) [Autonomous CRM & Web]  |
+|  4. Stratex   (:8003)  [Quantitative Trading]      |                                               |
+|  5. Futuris   (:8004)  [Predictive Forecasting]    |                                               |
+|  6. IntelX    (:8005)  [Evidence & Research]       |                                               |
+|  7. Forge     (:8006)  [Software Synthesizer]      |                                               |
++----------------------------------------------------+-----------------------------------------------+
+| Target DB: friday_universe_db (Oracle 23ai Core)   | Target DBs: vyralx_db (VyralX) / Core (Others) |
++----------------------------------------------------+-----------------------------------------------+
 ```
 
+### Complete Service Execution Matrix:
+
+| Agent Name | Host Server | Mesh Port | Systemd Service Unit | Working Directory & Entrypoint Command | MemoryMax Cap |
+|---|---|---|---|---|---|
+| **FRIDAY** | Server 1 (`140.245.208.100`) | `10000` | `FRIDAY.service` | `cd /opt/friday_universe/FRIDAY && /opt/friday_universe/venv/bin/python -m uvicorn friday.api.server:app --host 0.0.0.0 --port 10000 --workers 1` | `200M` |
+| **Inference** | Server 1 (`140.245.208.100`) | `8001` | `Inference.service` | `cd /opt/friday_universe/Inference && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 1` | `180M` |
+| **Memora** | Server 1 (`140.245.208.100`) | `8002` | `Memora.service` | `cd /opt/friday_universe/Memora && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --workers 1` | `200M` |
+| **Stratex** | Server 1 (`140.245.208.100`) | `8003` | `Stratex.service` | `cd /opt/friday_universe/Stratex && /opt/friday_universe/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8003 --workers 1` | `180M` |
+| **Futuris** | Server 1 (`140.245.208.100`) | `8004` | `Futuris.service` | `cd /opt/friday_universe/Futuris && /opt/friday_universe/venv/bin/python -m uvicorn futuris.api.app:app --host 0.0.0.0 --port 8004 --workers 1` | `180M` |
+| **IntelX** | Server 1 (`140.245.208.100`) | `8005` | `IntelX.service` | `cd /opt/friday_universe/IntelX && /opt/friday_universe/venv/bin/python -m uvicorn intelx.app.main:app --host 0.0.0.0 --port 8005 --workers 1` | `180M` |
+| **Forge** | Server 1 (`140.245.208.100`) | `8006` | `Forge.service` | `cd /opt/friday_universe/Forge && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --workers 1` | `180M` |
+| **VyralX** | Server 2 (`140.245.243.168`) | `8010` | `VyralX.service` | `cd /opt/friday_universe/VyralX && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8010 --workers 1` | `250M` |
+| **Sentinel** | Server 2 (`140.245.243.168`) | `8008` | `Sentinel.service` | `cd /opt/friday_universe/Sentinel && /opt/friday_universe/venv/bin/python -m uvicorn sentinel.apps.api.main:app --host 0.0.0.0 --port 8008 --workers 1` | `200M` |
+| **Cortex** | Server 2 (`140.245.243.168`) | `8009` | `Cortex.service` | `cd /opt/friday_universe/Cortex && /opt/friday_universe/venv/bin/python -m uvicorn apps.api.src.cortex_api.main:app --host 0.0.0.0 --port 8009 --workers 1` | `200M` |
+
 ---
 
-## 2. Infrastructure Topology: Current Interim vs. Target Production State
+## 3. ORACLE AUTONOMOUS 23ai DATABASE ARCHITECTURE
 
-| Dimension | Current Interim State (Present) | Target Production Architecture (Final Goal) | Operational Invariant |
-| :--- | :--- | :--- | :--- |
-| **Compute Hardware** | Interim AMD VM (`VM.Standard.E2.1.Micro`), 1 OCPU, 956 MB RAM, 8 GB swapfile. Host: `140.245.208.100`. | Oracle ARM VM (`VM.Standard.A1.Flex`), 2 OCPUs, 12 GB RAM, Ampere Altra. 150–200 GB NVMe Boot Volume. | Ampere Capacity Sniper runs continuously until ARM instance allocation is secured. |
-| **Agent Workloads** | All 10 agent microservices scaled to **0/0 running replicas** (standby). Only Core Gateway & Dokploy active. | All 10 agent containers run simultaneously with strict RAM resource caps (~8.5 GB total, preserving OS/DB headroom on the 12 GB instance). | Strict memory preservation: 1 GB AMD host must never exceed 800 MB active RAM to prevent OOM crash. |
-| **Storage Architecture** | Disparate local SQLite files + PostgreSQL 18 on `dokploy-postgres` container. | Single unified PostgreSQL 18 cluster with **10 isolated logical databases** and least-privilege service roles. | Zero cross-database SQL queries; inter-agent memory sharing flows exclusively through Memora REST API. |
-| **Local Repositories** | 10 independent Git repositories under `D:\FRIDAY Universe`, all clean on `main`. | Same 10 distinct Git repositories synced with GitHub remotes and Dokploy autoDeploy. | Never merge into a monorepo; preserve discrete Git commit histories and PR verification flows. |
-| **Service Ports & Mesh** | Public HTTPS 443 via Traefik; internal ports `8001–8010`, FRIDAY Core on `10000`. | Internal standardization: all 9 specialist APIs bind container port `:8000` inside `friday_mesh`. | Port 80 permanently 301-redirects to HTTPS; Dokploy dashboard isolated on sub-domain. |
-| **Backup & DR** | Manual snapshots + local SQL dumps in `/root/state_backups`. | Automated, GPG-encrypted (AES-256) nightly dumps to private OCI Object Storage bucket (`axz0jlcap2j6`). | Weekly automated scratch container restores to verify database integrity and row consistency. |
+All persistent state across all agents lives in two Always Free Oracle Autonomous Transaction Processing (ATP) 23ai instances in `ap-hyderabad-1` connecting over TLS Port `1521` (one-way TLS; no client wallet required). Zero local database files are written to VM disk.
+
+### DB 1: `friday_universe_db` (Core Fleet Ecosystem Database)
+- **Host:** `adb.ap-hyderabad-1.oraclecloud.com`
+- **Port:** `1521` (Protocol: TCPS, `ssl_server_dn_match=yes`)
+- **Service Name:** `g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com`
+- **Username / Password:** `ADMIN` / `FridayUniverse2026!#Core`
+- **Full DSN:** `(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))`
+- **Connection Strings:**
+  - Synchronous: `oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@<DSN>`
+  - Asynchronous: `oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@<DSN>`
+- **Tenancy:** Serves `FRIDAY`, `Inference`, `Memora` (native HNSW vectors), `Stratex`, `Futuris`, `IntelX`, `Forge`, `Sentinel`, and `Cortex`.
+- **Core Tables:**
+  - `MEMORA_MEMORIES`, `MEMORA_ENTITIES`, `MEMORA_RELATIONS` (Oracle 23ai native `VECTOR` HNSW index)
+  - `FUTURIS_FORECASTS` and 12 schema tables (`forecasts`, `scenarios`, `outcomes`, `model_registry`, etc.)
+  - `API_KEYS` (unified superset auth table for IntelX and Cortex)
+  - `RESEARCH_RUNS`, `CLAIMS`, `EVIDENCE`, `FINDINGS`, `INTELX_ARTICLES`, `SOURCES`
+  - `FORGE_BUILDS`, `ARTIFACTS`, `TASKS`
+  - `STRATEX_TRADES`, `STRATEGY_PERFORMANCE`, `AUDIT_RECORDS`
+  - `SENTINEL_SCANS`, `SENTINEL_ALERTS`, `SENTINEL_FINDINGS`, `AUDIT_EVENTS`
+  - `TENANTS`, `SITES`, `VISITORS`, `LEADS`, `PROFILES`, `SESSIONS`, `CORTEX_TASK_DAGS`
+
+### DB 2: `vyralx_db` (Specialist Media Production Database)
+- **Host:** `adb.ap-hyderabad-1.oraclecloud.com`
+- **Port:** `1521` (Protocol: TCPS, `ssl_server_dn_match=yes`)
+- **Service Name:** `g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com`
+- **Username / Password:** `ADMIN` / `FridayUniverse2026!#Vyral`
+- **Full DSN:** `(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))`
+- **Connection Strings:**
+  - Synchronous: `oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@<DSN>`
+  - Asynchronous: `oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@<DSN>`
+- **Tenancy:** Strictly dedicated to `VyralX` for heavy video generation pipelines.
+- **Core Tables:** `VYRALX_PROJECTS`, `VYRALX_SCRIPTS`, `VYRALX_STORYBOARDS`, `VYRALX_MEDIA_ASSETS`, `VYRALX_PUBLISH_QUEUE`, `VIDEO_METRICS`, `AGENT_TASKS`.
 
 ---
 
-## 3. Deep Technical Specification: The Ten Sovereign Subsystems
+## 4. DEEP SUBSYSTEM TECHNICAL SPECIFICATIONS
 
-### 3.1 FRIDAY Core — Cognitive Orchestrator & Action Gateway
-- **Repository Path:** `D:\FRIDAY Universe\FRIDAY`
-- **GitHub Origin:** `https://github.com/surendra2304/FRIDAY.git`
-- **Mesh & Public Port:** Port `10000` (Public Route: `/friday`)
-- **Service Entrypoint:** `friday.api.server:app` (Uvicorn ASGI)
-- **Database & Models:** `friday_db` (`tasks`, `task_steps`, `approval_requests`, `tool_invocations`, `audit_records`)
-- **Framework Stack:** `FastAPI`, `Pydantic v2`, `Uvicorn`, `httpx`, `asyncio`, `WebSockets`, `Windows UI Automation`
-- **Primary Mission:** Acts as the primary user-facing orchestrator, voice and multimodal companion, central task planner, action approval authority, and external webhook receiver.
-- **Safety Invariants:**
-  - Non-Bypassable Specialist Gates: Orchestrates tasks across specialist agents via task envelopes but cannot override specialist security, financial, or verification checks.
-  - Decoupled Long-Term Memory: Retains short-lived task checkpoints; all durable long-term memory must be committed to Memora.
-  - Desktop Companion Isolation: Native Windows automation (audio, input, screen capture) runs natively on Windows 11; does not mix Windows-specific code into Linux containers.
-- **Key API Endpoints:**
+### 1. FRIDAY (Cognitive Orchestrator & Action Gateway)
+- **Repo Origin:** `https://github.com/surendra2304/FRIDAY.git`
+- **Location:** `D:\FRIDAY Universe\FRIDAY` (Local) | `/opt/friday_universe/FRIDAY` (Server 1)
+- **Port:** `10000` | **Service:** `FRIDAY.service`
+- **Primary Mission:** Central human-in-the-loop orchestrator, task planner, voice/chat companion, and mesh dispatcher.
+- **Key Routes:**
   - `POST /api/v1/tasks`: Submit structured task envelope for multi-agent execution
   - `GET /api/v1/tasks/{id}`: Poll task progress, current execution step, and partial results
-  - `POST /api/v1/actions/approve`: Approve critical actions requiring human confirmation
-  - `WS /ws/audio`: Full-duplex real-time audio and companion interaction stream
+  - `POST /api/v1/actions/approve`: Operator confirmation for high-risk actions
+  - `GET /health`: Uptime, agent mesh connectivity, and memory consumption
 
----
-
-### 3.2 Inference — Universal Model Routing & Reasoning Gateway
-- **Repository Path:** `D:\FRIDAY Universe\Inference`
-- **GitHub Origin:** `https://github.com/surendra2304/Inference.git`
-- **Mesh & Public Port:** Port `8005` (Container: `:8000`, Public Route: `/inference`)
-- **Service Entrypoint:** `inference.main:app` (Uvicorn ASGI)
-- **Database & Models:** `inference_db` (`routing_policies`, `provider_quotas`, `token_burn_logs`, `latency_metrics`)
-- **Framework Stack:** `FastAPI`, `Groq SDK`, `Mistral SDK`, `OpenAI SDK`, `Google GenAI SDK`, `Redis Token Bucket`
-- **Primary Mission:** Centralized, high-throughput LLM, vision, and embedding inference router providing token budgeting, intelligent multi-provider failover, and prompt governance.
-- **Safety Invariants:**
-  - Canonical Naming: The official system name is **Inference** (never 'AI Universe').
-  - Strict Provider Failover Waterfall: Groq (Llama-3.3-70b, ultra-low latency) → Mistral (Codestral/Large) → OpenAI (GPT-4o) → Google Gemini (Gemini-2.0-Flash/Pro).
-  - Token Quota Enforcement: Calling specialists are assigned per-minute token buckets managed in Redis to prevent API quota exhaustion or rogue recursive LLM loops.
-- **Key API Endpoints:**
+### 2. Inference (Sovereign Model Routing & Reasoning Gateway)
+- **Repo Origin:** `https://github.com/surendra2304/Inference.git`
+- **Location:** `D:\FRIDAY Universe\Inference` (Local) | `/opt/friday_universe/Inference` (Server 1)
+- **Port:** `8001` | **Service:** `Inference.service`
+- **Primary Mission:** High-throughput multi-model inference router with intelligent fallback across LLM providers.
+- **Provider Waterfall:** Groq (Llama-3.3-70b) -> Cerebras (Llama-3.1-8b/70b) -> OpenRouter (DeepSeek-R1 / Sonnet) -> Google Gemini (2.0 Flash / Pro).
+- **Storage:** In-memory `/dev/shm/inference.db` for ephemeral rate limits; telemetry persists to Oracle `INFERENCE_TELEMETRY`.
+- **Key Routes:**
   - `POST /v1/chat/completions`: Standard OpenAI-compatible multi-provider routing endpoint
   - `POST /v1/task/execute`: Universal structured task reasoning & script synthesis API
-  - `POST /v1/embeddings`: Batch text embedding generation for semantic vectors (1536-dim)
-  - `GET /v1/providers/health`: Real-time provider health, token burn rates, and latency metrics
+  - `GET /health`: Provider health, active models, token burn rates, and latency metrics
 
----
-
-### 3.3 Memora — Hierarchical Vector Memory Authority
-- **Repository Path:** `D:\FRIDAY Universe\Memora`
-- **GitHub Origin:** `https://github.com/surendra2304/Memora.git`
-- **Mesh & Public Port:** Port `8007` (Container: `:8000`, Public Route: `/memora`)
-- **Service Entrypoint:** `memora.service.api:app` (Uvicorn ASGI)
-- **Database & Models:** `memora_db` (`memories`, `memory_namespaces`, `access_grants`, `vector_checkpoints`, `audit_records`)
-- **Framework Stack:** `FastAPI`, `SQLAlchemy 2.0 (Async)`, `asyncpg`, `Qdrant Client`, `Redis 7`, `LibSQL/Turso`
-- **Primary Mission:** Sole sovereign long-term memory authority for the entire ecosystem, enforcing cryptographic provenance, multi-tier scoping, and prompt injection isolation.
-- **Safety Invariants:**
-  - 3-Tier Scoping: **Private** (accessible only to originating specialist), **Shared** (explicit ACL grant), **Universal** (all ecosystem agents).
-  - Prompt Injection Isolation: Untrusted external facts/crawls are stored with strict data tags and never interpolated directly into executable system directives.
-  - Cryptographic Provenance: Every stored memory record carries an HMAC-SHA256 signature calculated with the service master key to prevent database tampering.
-- **Key API Endpoints:**
+### 3. Memora (Cognitive Memory Fabric & Vector Database)
+- **Repo Origin:** `https://github.com/surendra2304/Memora.git`
+- **Location:** `D:\FRIDAY Universe\Memora` (Local) | `/opt/friday_universe/Memora` (Server 1)
+- **Port:** `8002` | **Service:** `Memora.service`
+- **Primary Mission:** Cross-agent memory authority enforcing cryptographic provenance, multi-tier scoping, and prompt injection isolation.
+- **Storage:** Oracle Database 23ai native `VECTOR` indexing (HNSW, Cosine distance) in `friday_universe_db` (`MEMORA_MEMORIES`, `MEMORA_ENTITIES`, `MEMORA_RELATIONS`).
+- **3-Tier Scoping:** `Private` (originating agent only), `Shared` (explicit ACL grant), `Universal` (all ecosystem agents).
+- **Key Routes:**
   - `POST /v1/memories`: Ingest scoped memory with namespace, metadata, and cryptographic signature
-  - `POST /v1/memories/search`: Hybrid semantic retrieval combining Qdrant dense vectors & relational SQL filters
-  - `GET /v1/memories/{id}`: Retrieve verified memory record with signature check
-  - `POST /v1/memories/purge`: Governed TTL expiration and privacy-compliant purging
+  - `POST /v1/memories/search`: Hybrid semantic retrieval combining dense vectors & SQL filters
+  - `GET /health`: Vector index health, memory count, and backend connection verification
 
----
-
-### 3.4 Stratex — Quantitative Algorithmic Trading & Risk Desk
-- **Repository Path:** `D:\FRIDAY Universe\Stratex`
-- **GitHub Origin:** `https://github.com/surendra2304/Stratex.git`
-- **Mesh & Public Port:** Port `8009` (Container: `:8000`, Public Route: `/stratex`)
-- **Service Entrypoint:** `stratex.main:app` (Uvicorn ASGI)
-- **Database & Models:** `stratex_db` (`orders`, `positions`, `risk_rules`, `trade_audits`, `venue_states`, `pnl_snapshots`)
-- **Framework Stack:** `FastAPI`, `pandas`, `numpy`, `ccxt`, `Binance Futures SDK`, `Pydantic v2`
-- **Primary Mission:** Algorithmic execution desk, continuous market surveillance, risk governance, and quantitative backtesting harness.
-- **Safety Invariants:**
-  - **ZERO LIVE-MONEY INVARIANT:** Bound strictly to Binance Futures Testnet (`https://testnet.binancefuture.com`); real capital executions are disabled.
-  - Hard Immutable Risk Stops: Max position size ($1,000 testnet margin), max leverage (5x), mandatory stop-loss (2%), and portfolio drawdown cap (5%) are hardcoded.
-  - Atomic Emergency Halt: `POST /api/v1/emergency-halt` instantly issues cancel-all across testnet venues and transitions order state machine to LOCKED.
-- **Key API Endpoints:**
+### 4. Stratex (Quantitative Algorithmic Trading & Risk Desk)
+- **Repo Origin:** `https://github.com/surendra2304/Stratex.git`
+- **Location:** `D:\FRIDAY Universe\Stratex` (Local) | `/opt/friday_universe/Stratex` (Server 1)
+- **Port:** `8003` | **Service:** `Stratex.service`
+- **Primary Mission:** Algorithmic execution desk, continuous market surveillance, risk governance, and quantitative backtesting.
+- **Safety Invariants:** Bound strictly to Binance Futures Testnet (`https://testnet.binancefuture.com`). Zero real money risk. Hardcoded max position ($1,000 margin), max leverage (5x), mandatory stop-loss (2%), portfolio drawdown cap (5%).
+- **Storage:** Oracle `STRATEX_TRADES`, `STRATEGY_PERFORMANCE`, `AUDIT_RECORDS`.
+- **Key Routes:**
   - `POST /api/v1/orders`: Authenticated order dispatch with pre-trade risk validation
-  - `GET /api/v1/positions`: Real-time open positions, mark prices & unrealized PnL
-  - `POST /api/v1/emergency-halt`: Master emergency kill-switch (cancel all open orders)
-  - `GET /api/v1/risk/status`: Live margin utilization, leverage & drawdown audit
+  - `POST /api/v1/emergency-halt`: Atomic emergency kill-switch (cancels all orders, locks ledger)
+  - `GET /health`: Risk status, active positions, mark prices, and unrealized PnL
 
----
-
-### 3.5 Forge — Autonomous Software Synthesizer & Verification Battery
-- **Repository Path:** `D:\FRIDAY Universe\Forge`
-- **GitHub Origin:** `https://github.com/surendra2304/Forge.git`
-- **Mesh & Public Port:** Port `8003` (Container: `:8000`, Public Route: `/forge`)
-- **Service Entrypoint:** `forge.api.server:app` (Uvicorn ASGI)
-- **Database & Models:** `forge_db` (`build_tasks`, `dag_nodes`, `verification_runs`, `artifact_manifests`, `patch_history`)
-- **Framework Stack:** `FastAPI`, `tree-sitter`, `ast`, `pytest`, `Docker SDK`, `httpx`, `Alembic`
-- **Primary Mission:** Full-stack autonomous software engineer: specification parsing, multi-file code synthesis, automated test generation, and objective quality verification.
-- **Safety Invariants:**
-  - **Strict Sandbox Confinement:** All edits restricted to `workspaces/task_{id}`; path traversal attempts raise fatal `SandboxViolationError`.
-  - Command Execution Blacklist: Blocks dangerous system commands (`sudo`, `rm -rf /`, raw block redirection) at policy layer.
-  - **10-Point Objective Verification:** BuildChecker, LintChecker, TestChecker, SecurityChecker, BrowserChecker must all return exit code 0 before task completion.
-- **Key API Endpoints:**
-  - `POST /api/v1/synthesize`: Submit software specification for multi-step DAG build
-  - `GET /api/v1/tasks/{id}/verify`: Execute 10-point verification battery on workspace
-  - `POST /api/v1/patches/apply`: Apply unified diff inside isolated task sandbox
-  - `GET /api/v1/artifacts/{id}`: Download verified release bundle and test report
-
----
-
-### 3.6 Cortex — Multi-Tenant Web Engine & Governed CRM
-- **Repository Path:** `D:\FRIDAY Universe\Cortex`
-- **GitHub Origin:** `https://github.com/surendra2304/Cortex.git`
-- **Mesh & Public Port:** Port `8002` (Container: `:8000`, Public Route: `/cortex`)
-- **Service Entrypoint:** `cortex_api.main:app` (Uvicorn ASGI)
-- **Database & Models:** `cortex_db` (`tenants`, `sites`, `api_keys`, `visitors`, `leads`, `events`, `webhooks`, `action_audits`)
-- **Framework Stack:** `FastAPI`, `Next.js` (Exported SPA in `apps/dashboard/out`), `SQLAlchemy 2.0`, `jose JWT`, `Redis`
-- **Primary Mission:** Powers ecosystem web presence, landing pages, interactive operator dashboards, lead capture, CRM telemetry, and governed website optimizations.
-- **Safety Invariants:**
-  - **Strict Multi-Tenant Scoping:** Every single query across visitors, leads, sessions, and events enforces `tenant_id` at database layer; cross-tenant reads return 404.
-  - Zero Dev Auth Bypass: Development auth bypass (`CORTEX_DEV_AUTH_BYPASS`) is strictly disabled in production.
-  - Cryptographic JWT Verification: All API keys and admin JWTs are verified against RSA-256 public keys on all routes.
-- **Key API Endpoints:**
-  - `GET /api/v1/sites`: Enumerate hosted sovereign web properties and domains
-  - `POST /api/v1/leads`: Ingest and score public inbound business leads
-  - `GET /api/v1/dashboard/metrics`: Real-time visitor analytics, conversion & CRM status
-  - `POST /api/v1/webhooks/incoming`: Receive verified external webhook events
-
----
-
-### 3.7 Sentinel — Zero-Trust Security Operations & Gatekeeper
-- **Repository Path:** `D:\FRIDAY Universe\Sentinel`
-- **GitHub Origin:** `https://github.com/surendra2304/Sentinel.git`
-- **Mesh & Public Port:** Port `8008` (Container: `:8000`, Public Route: `/sentinel`)
-- **Service Entrypoint:** `sentinel/main.py` (Uvicorn ASGI)
-- **Database & Models:** `sentinel_db` (`assessments`, `scans`, `vulnerabilities`, `policy_rules`, `audit_records`)
-- **Framework Stack:** `FastAPI`, `safety`, `pip-audit`, `bandit`, `cryptography`, `OpenSSL`, `Pydantic`
-- **Primary Mission:** Ecosystem security officer, continuous vulnerability scanner, dependency auditor, AST policy enforcer, and gatekeeper for all external and cross-service operations.
-- **Safety Invariants:**
-  - **Pre-Delivery Code Gate:** Inspects artifacts from Forge before merge; vetoes delivery if unauthorized network calls, hardcoded secrets, or high-severity CVEs exist.
-  - **Zero-Trust Token Governance:** Periodically scans git hygiene across all 10 repositories to verify no `.env` files, API keys, or private SSH keys are staged.
-  - **Fail-Closed Security Posture:** If Sentinel is unreachable or reports an indeterminate scan, downstream deliveries and external publishings are unconditionally halted.
-- **Key API Endpoints:**
-  - `POST /v1/security/audit`: Perform comprehensive AST and CVE scan on artifact diff
-  - `POST /v1/secrets/scan`: Scan text or repository tree for exposed secrets/keys
-  - `GET /v1/posture/report`: Ecosystem-wide zero-trust compliance & CVE posture
-  - `POST /v1/policy/evaluate`: Evaluate action payload against mandatory security rules
-
----
-
-### 3.8 IntelX — Deep Web Research & Fact Verification Specialist
-- **Repository Path:** `D:\FRIDAY Universe\IntelX`
-- **GitHub Origin:** `https://github.com/surendra2304/IntelX.git`
-- **Mesh & Public Port:** Port `8006` (Container: `:8000`, Public Route: `/intelx`)
-- **Service Entrypoint:** `intelx.cli.main:serve` (Uvicorn ASGI)
-- **Database & Models:** `intelx_db` (`sources`, `documents`, `claims`, `evidence_links`, `contradictions`, `research_runs`)
-- **Framework Stack:** `FastAPI`, `httpx`, `BeautifulSoup4`, `readability-lxml`, `SQLAlchemy 2.0`, `DuckDuckGo / SearXNG`
-- **Primary Mission:** Autonomous web research, multi-source intelligence gathering, claim extraction, evidence linking, contradiction detection, and citation provenance.
-- **Safety Invariants:**
-  - **Rigorous SSRF Defenses:** Blocks crawler requests to loopback (`127.0.0.1`), private RFC1918 subnets, and cloud metadata endpoints (`169.254.169.254`).
-  - **Separation of Evidence from Inference:** Raw source facts are cryptographically cited and never conflated with model-generated syntheses.
-  - **Cloud Redundancy:** Research summaries and verified claims are mirrored to Turso LibSQL cloud database in AWS Mumbai (`ap-south-1`).
-- **Key API Endpoints:**
-  - `POST /v1/research/query`: Initiate multi-source deep intelligence gathering on topic
-  - `POST /v1/verify/claim`: Extract claim from statement and corroborate across verified sources
-  - `GET /v1/research/runs/{id}`: Poll research brief status, cited URLs & confidence scores
-  - `POST /v1/crawl/extract`: Safely fetch, parse and extract clean readable text from URL
-
----
-
-### 3.9 Futuris — Predictive Trajectory Analysis & Calibration Engine
-- **Repository Path:** `D:\FRIDAY Universe\Futuris`
-- **GitHub Origin:** `https://github.com/surendra2304/Futuris.git`
-- **Mesh & Public Port:** Port `8004` (Container: `:8000`, Public Route: `/futuris`)
-- **Service Entrypoint:** `futuris.cli:serve` (Uvicorn ASGI)
-- **Database & Models:** `futuris_db` (`forecasts`, `scenarios`, `outcomes`, `calibration_scores`, `model_versions`)
-- **Framework Stack:** `FastAPI`, `numpy`, `scipy`, `statsmodels`, `aiosqlite`, `asyncpg`, `Pydantic v2`
-- **Primary Mission:** Scenario forecasting, probabilistic modeling, uncertainty estimation, Brier score calibration, and long-term predictive trajectory tracking.
-- **Safety Invariants:**
-  - **Strict Advisory Invariant:** Forecasts are probabilistic advisory insights only; never trigger financial executions or infrastructure mutations directly.
-  - **Worker Resource Bounds:** Expensive mathematical simulations and Monte Carlo projections offloaded to bounded worker pools to prevent CPU starvation.
-  - **Brier Score Calibration:** Tracks historical probabilistic calibration against realized real-world outcomes to systematically penalize overconfidence.
-- **Key API Endpoints:**
+### 5. Futuris (Predictive Trajectory Analysis & Calibration Engine)
+- **Repo Origin:** `https://github.com/surendra2304/Futuris.git`
+- **Location:** `D:\FRIDAY Universe\Futuris` (Local) | `/opt/friday_universe/Futuris` (Server 1)
+- **Port:** `8004` | **Service:** `Futuris.service`
+- **Primary Mission:** Probabilistic forecasting, scenario simulation, uncertainty estimation, and Brier score calibration.
+- **Storage:** 12 Oracle tables: `forecasts`, `scenarios`, `outcomes`, `observations`, `evaluation_runs`, `evidence_refs`, `forecast_events`, `intelx_notices`, `model_registry`, `signal_sources`, `audit_logs`, `api_keys`.
+- **Dialect Hook:** SQLAlchemy async engine with `@compiles(JSON, "oracle")`.
+- **Key Routes:**
   - `POST /v1/forecast/scenario`: Generate calibrated multi-branch probabilistic forecast
-  - `GET /v1/forecast/regime`: Query macroeconomic or market regime probability distributions
-  - `POST /v1/calibration/evaluate`: Resolve completed real-world event and score forecast accuracy
-  - `GET /v1/metrics/brier`: Retrieve rolling historical Brier calibration reliability metrics
+  - `GET /v1/forecast/regime`: Query macroeconomic and market regime probability distributions
+  - `GET /health`: Returns `{"status":"ok", "storage":{"ready":true, "present":12}}`
 
----
+### 6. IntelX (Deep Evidence Research & Fact Verification)
+- **Repo Origin:** `https://github.com/surendra2304/IntelX.git`
+- **Location:** `D:\FRIDAY Universe\IntelX` (Local) | `/opt/friday_universe/IntelX` (Server 1)
+- **Port:** `8005` | **Service:** `IntelX.service`
+- **Primary Mission:** Deep web research, fact-checking, citation extraction, news ingestion, and claim verification.
+- **Storage:** Oracle `RESEARCH_RUNS`, `CLAIMS`, `EVIDENCE`, `FINDINGS`, `INTELX_ARTICLES`, `SOURCES`, and shared `API_KEYS`.
+- **Dialect Hook:** Uses `func.json_value(ResearchRun.scope_json, literal_column("'$.priority'"))` for Oracle JSON compatibility.
+- **Key Routes:**
+  - `POST /v1/research/query`: Deep intelligence gathering on requested topic
+  - `POST /v1/verify/claim`: Extract claim from text and corroborate across verified sources
+  - `GET /health`: Research engine status, database connection, and news ingester readiness
 
-### 3.10 VyralX — Autonomous Video Production & Distribution Studio
-- **Repository Path:** `D:\FRIDAY Universe\VyralX`
-- **GitHub Origin:** `https://github.com/surendra2304/VyralX.git`
-- **Mesh & Public Port:** Port `8010` (Container: `:8000`, Public Route: `/vyralx`)
-- **Service Entrypoint:** `app.main:app` (API) & `app.worker` (Dedicated Background Worker)
-- **Database & Models:** `vyralx_db` (`tasks`, `projects`, `scenes`, `media_assets`, `render_jobs`, `channels`, `upload_checkpoints`, `metrics`)
-- **Framework Stack:** `FastAPI`, `moviepy`, `ffmpeg`, `ffprobe`, `google-api-python-client`, `httpx`, `eSpeak NG`
-- **Primary Mission:** Autonomous end-to-end video production, AI scriptwriting, audio synthesis, visual assembly, automated captioning, rendering, and multi-channel publication.
-- **Safety Invariants:**
-  - **Resumable Upload Checkpoints:** Interrupted uploads enter an `uncertain` state and are never blindly repeated, preventing duplicate video publication or API quota depletion.
-  - **Source Rights & Verification Gate:** Stock media from Pexels requires verified license confirmation and FFprobe inspection before inclusion; leads remain unverified until imported.
-  - **Sentinel Pre-Publish Audit:** Video assets must pass fail-closed Sentinel policy and loudness QA (-14 LUFS standard) before dispatch.
-- **Key API Endpoints:**
-  - `POST /api/v1/tasks`: Standard FRIDAY task envelope dispatch for video projects
+### 7. Forge (Autonomous Software Synthesizer & Verification Battery)
+- **Repo Origin:** `https://github.com/surendra2304/Forge.git`
+- **Location:** `D:\FRIDAY Universe\Forge` (Local) | `/opt/friday_universe/Forge` (Server 1)
+- **Port:** `8006` | **Service:** `Forge.service`
+- **Primary Mission:** Full-stack autonomous software engineer: specification parsing, multi-file code synthesis, automated test generation, and verification.
+- **Storage:** Oracle `FORGE_BUILDS`, `ARTIFACTS`, `TASKS`. Local memory client falls back to `/dev/shm/forge_memora.db` (zero disk write).
+- **Fail-Closed Security:** Submits all generated diffs to Sentinel (`POST http://10.0.0.120:8008/v1/security/audit`) before commit.
+- **Key Routes:**
+  - `POST /api/v1/synthesize`: Submit software specification for multi-step DAG build
+  - `GET /api/v1/tasks/{id}/verify`: Execute objective verification battery on workspace
+  - `GET /health`: Synthesizer status, uptime, and database connection
+
+### 8. VyralX (Autonomous Video Production & Multi-Channel Studio)
+- **Repo Origin:** `https://github.com/surendra2304/VyralX.git`
+- **Location:** `D:\FRIDAY Universe\VyralX` (Local) | `/opt/friday_universe/VyralX` (Server 2)
+- **Port:** `8010` | **Service:** `VyralX.service`
+- **Primary Mission:** End-to-end video production, AI scriptwriting, audio synthesis, visual assembly, automated captioning, rendering, and YouTube publication.
+- **Storage:** Dedicated `vyralx_db` tables: `VYRALX_PROJECTS`, `VYRALX_SCRIPTS`, `VYRALX_STORYBOARDS`, `VYRALX_MEDIA_ASSETS`, `VYRALX_PUBLISH_QUEUE`, `VIDEO_METRICS`.
+- **Tools:** MoviePy, FFmpeg, FFprobe, eSpeak NG, Google YouTube Data API v3.
+- **Key Routes:**
   - `POST /api/v1/projects`: Create video project with scene plan, format (9:16 Shorts), and narration
-  - `POST /api/v1/render`: Queue background video composition job with FFmpeg presets
-  - `POST /api/v1/publish/youtube`: Resumable chunked upload to YouTube Data API v3 with approval gate
+  - `POST /api/v1/render`: Queue background video composition job with FFmpeg
+  - `POST /api/v1/publish/youtube`: Resumable chunked upload to YouTube with approval gate
+  - `GET /health`: Render pipeline health, ffmpeg binary availability, and DB connection
+
+### 9. Sentinel (Zero-Trust Cybersecurity Gatekeeper & Audit Shield)
+- **Repo Origin:** `https://github.com/surendra2304/Sentinel.git`
+- **Location:** `D:\FRIDAY Universe\Sentinel` (Local) | `/opt/friday_universe/Sentinel` (Server 2)
+- **Port:** `8008` | **Service:** `Sentinel.service`
+- **Primary Mission:** Ecosystem security officer: cryptographic HMAC audit ledger, continuous TLS/DNS monitoring, static code vulnerability analysis, and zero-trust perimeter defense.
+- **Storage:** Oracle `SENTINEL_SCANS`, `SENTINEL_ALERTS`, `SENTINEL_FINDINGS`, `AUDIT_EVENTS` in `friday_universe_db`.
+- **Security:** HMAC-SHA256 signature verification on all audit trails (`SENTINEL_AUDIT_HMAC_KEY`).
+- **Key Routes:**
+  - `POST /v1/security/audit`: Security audit endpoint for Forge diffs and ecosystem changes
+  - `POST /v1/audit/record`: Tamper-evident signed audit record ingestion
+  - `GET /health`: Threat detection engine, continuous TLS monitor, and HMAC verifier status
+
+### 10. Cortex (Autonomous Operations Engine & Governed CRM)
+- **Repo Origin:** `https://github.com/surendra2304/Cortex.git`
+- **Location:** `D:\FRIDAY Universe\Cortex` (Local) | `/opt/friday_universe/Cortex` (Server 2)
+- **Port:** `8009` | **Service:** `Cortex.service`
+- **Primary Mission:** Powers ecosystem web presence, landing pages, operator dashboard API, CRM telemetry, and event-driven self-healing.
+- **Storage:** Tables `TENANTS`, `SITES`, shared `API_KEYS`, `VISITORS`, `LEADS`, `PROFILES`, `SESSIONS`, `CORTEX_TASK_DAGS` in `friday_universe_db`.
+- **Dialect Hook:** SQLAlchemy async engine with `@compiles(JSON, "oracle")`.
+- **Key Routes:**
+  - `GET /`: Landing page / health snapshot
+  - `POST /v1/events`: Ingest web telemetry and lead activity events
+  - `GET /health`: CRM engine status, tenant isolation verify, and self-healing daemon status
 
 ---
 
-## 4. Storage Topology & Database Governance
+## 5. PROVEN PRODUCTION CODING GOTCHAS & SELF-HEALING RUNBOOK
 
-### 4.1 Unified PostgreSQL 18 Engine Architecture
-Rather than running multiple database instances, the FRIDAY Universe consolidates relational data into a single, high-performance PostgreSQL 18 cluster running inside Docker container `dokploy-postgres` on the `dokploy-network`.
+When writing or modifying code in any agent, NEVER violate these proven resolutions:
+
+### 1. SQLAlchemy 2.0 Oracle Native JSON Compilation
+- **Problem:** Default SQLAlchemy `OracleTypeCompiler` throws `Compiler can't render element of type JSON` when generating DDL or queries for tables with `Column(JSON)` or `Column(JSONB)`.
+- **Permanent Solution:** In model definitions, register the Oracle JSON compiler hook:
+  ```python
+  from sqlalchemy.ext.compiler import compiles
+  from sqlalchemy.types import JSON
+
+  @compiles(JSON, "oracle")
+  def _compile_json_oracle(type_, compiler, **kw):
+      return "JSON"  # Oracle 23ai natively supports the JSON data type
+  ```
+
+### 2. Oracle JSON Path Extraction (`ORA-40454`)
+- **Problem:** Writing `ResearchRun.scope_json["priority"]` compiles to `json_getitem_op`, which binds `'$.priority'` as a variable and throws `ORA-40454: path expression not a literal`.
+- **Permanent Solution:** When constructing queries for Oracle dialect, wrap JSON path expressions in `literal_column`:
+  ```python
+  from sqlalchemy import func, literal_column
+  # Correct Oracle 23ai JSON query:
+  func.json_value(ResearchRun.scope_json, literal_column("'$.priority'"))
+  ```
+
+### 3. Async Dialect Conversion
+- **Problem:** `create_async_engine()` crashes if given `oracle+oracledb://`.
+- **Permanent Solution:** Code initializing async engines must dynamically translate:
+  ```python
+  if url.startswith("oracle+oracledb://"):
+      url = "oracle+oracledb_async://" + url[len("oracle+oracledb://"):]
+  ```
+
+### 4. Shared `API_KEYS` Table Schema (IntelX & Cortex)
+- **Problem:** Both IntelX and Cortex require an `api_keys` table in `friday_universe_db`.
+- **Permanent Solution:** The table `API_KEYS` is unified with a superset schema:
+  - Columns: `id`, `tenant_id`, `site_id`, `key_hash`, `key_prefix`, `name`, `role`, `is_active`, `created_at`, `last_used_at`, `revoked`.
+  - Non-shared columns are nullable and carry sensible defaults (`DEFAULT 'default'`, `DEFAULT 'member'`, `DEFAULT TRUE`, `DEFAULT FALSE`), ensuring queries and inserts from both IntelX and Cortex succeed without collisions.
+
+### 5. Memory Squeeze & Caching Policy
+- **Problem:** Physical RAM is capped at 1 GB on each VM.
+- **Permanent Solution:**
+  - Avoid duplicate in-memory data caches.
+  - Periodic Linux cache trimming via cron: `sync; echo 3 > /proc/sys/vm/drop_caches`.
+  - All ephemeral databases reside in `/dev/shm` (RAM tmpfs) instead of disk storage.
+
+---
+
+## 6. GITHUB MONOREPO & CONTINUOUS DEPLOYMENT (CI/CD)
+
+The ecosystem is developed in a unified monorepo with automated bidirectional isolation:
+
+- **Monorepo:** `https://github.com/surendra2304/FRIDAY-Universe` (`main` branch)
+- **Local Workspace:** `D:\FRIDAY Universe`
+
+### Granular CI/CD Workflow (`.github/workflows/deploy-monorepo.yml`):
+- Uses `dorny/paths-filter@v3` to detect changes on a per-agent folder basis (`FRIDAY/**`, `VyralX/**`, etc.).
+- When changes are pushed to `main`, GitHub Actions connects over SSH (`appleboy/ssh-action`) and executes a zero-downtime selective reload ONLY for the affected agent's systemd unit on its target server.
+- Server 1 deployments and Server 2 deployments run in parallel.
+
+### Automated Subtree Mirroring (`.github/workflows/mirror-subrepos.yml`):
+- Every push to `FRIDAY-Universe/main` automatically runs `git subtree split` on each agent folder and force-pushes the split history directly into its standalone repository:
+  - `https://github.com/surendra2304/FRIDAY.git`
+  - `https://github.com/surendra2304/Inference.git`
+  - `https://github.com/surendra2304/Memora.git`
+  - `https://github.com/surendra2304/Stratex.git`
+  - `https://github.com/surendra2304/IntelX.git`
+  - `https://github.com/surendra2304/Futuris.git`
+  - `https://github.com/surendra2304/Forge.git`
+  - `https://github.com/surendra2304/VyralX.git`
+  - `https://github.com/surendra2304/Sentinel.git`
+  - `https://github.com/surendra2304/Cortex.git`
+
+---
+
+## 7. INTER-AGENT RPC & COMMUNICATION MATRIX
 
 ```
-[PostgreSQL 18 Cluster (dokploy-postgres)]
- ├── friday_db    (Role: friday_user   — Restricted to FRIDAY Core)
- ├── inference_db (Role: inference_user— Restricted to Inference)
- ├── memora_db    (Role: memora_user   — Restricted to Memora)
- ├── stratex_db   (Role: stratex_user  — Restricted to Stratex)
- ├── forge_db     (Role: forge_user    — Restricted to Forge)
- ├── cortex_db    (Role: cortex_user   — Restricted to Cortex)
- ├── sentinel_db  (Role: sentinel_user — Restricted to Sentinel)
- ├── intelx_db    (Role: intelx_user   — Restricted to IntelX)
- ├── futuris_db   (Role: futuris_user  — Restricted to Futuris)
- └── vyralx_db   (Role: vyralx_user   — Restricted to VyralX)
+[Public Gateway: https://friday-universe.duckdns.org]
+                         |
+                         v
+                   [ FRIDAY :10000 ]  (Orchestrator)
+                    /      |      \
+                   /       |       \
+                  v        v        v
+        [ Inference ]  [ Memora ]  [ Forge ] <---> [ Sentinel :8008 ]
+          (:8001)        (:8002)     (:8006)       (Zero-Trust Security Gate)
+            |              ^            |
+            v              |            v
+        [ Stratex ] ------>+        [ IntelX ] <--- [ Cortex :8009 ]
+          (:8003)        (Audit)     (:8005)        [ VyralX :8010 ]
+            |                           ^
+            v                           |
+        [ Futuris ] --------------------+
+          (:8004)    (Context Enrichment)
 ```
 
-### 4.2 Database Security Rules
-1. **Least Privilege Enforcement:** Each agent authenticates using its own non-superuser role. No microservice role possesses `GRANT` or `SELECT` privileges on another agent's database.
-2. **Memora Rest Law:** Direct cross-database joins and multi-database queries are physically prohibited. The only legal method for cross-agent memory retrieval is through Memora's authorized REST API.
-3. **Internal Network Confinement:** PostgreSQL port `5432` and Redis port `6379` are bound exclusively to the private Docker bridge and are never published to public host interfaces.
+### Inter-Service Communication Endpoints:
+- `FRIDAY` -> `Inference`: `POST http://10.0.0.121:8001/v1/chat/completions` or `/ask`
+- `FRIDAY` -> `Memora`: `POST http://10.0.0.121:8002/api/v1/memories/search` (vector search)
+- `Stratex` -> `Futuris`: `GET http://10.0.0.121:8004/v1/forecast/regime` (market regime prediction)
+- `Stratex` -> `Sentinel`: `POST http://10.0.0.120:8008/v1/audit/record` (ledger event signing)
+- `Forge` -> `Sentinel`: `POST http://10.0.0.120:8008/v1/security/audit` (code diff vulnerability check)
+- `Cortex` / `VyralX` -> `IntelX`: `POST http://10.0.0.121:8005/v1/research/query` (fact extraction)
 
----
-
-## 5. Networking, Reverse Proxy & Cloud Ingress Architecture
-
-Traefik v3 acts as the edge reverse proxy, terminating TLS/SSL certificates dynamically issued by Let's Encrypt for the `*.friday-universe.duckdns.org` domain, enforcing permanent HTTP-to-HTTPS redirects, and routing incoming traffic based on host and path prefixes.
-
-| Domain / Route | Target Service | Container / Port | SSL / TLS Certificate | Access & Security Policy |
-| :--- | :--- | :--- | :--- | :--- |
-| `https://friday-universe.duckdns.org/` | Root Ecosystem Portal | Host: 8765 | Let's Encrypt Wildcard | Public JSON status describing 10 sovereign agents. |
-| `https://friday-universe.duckdns.org/mcp` | Cloud MCP Gateway | Host: 8765 | Let's Encrypt Wildcard | Strict Bearer token authentication for tool calls. |
-| `https://friday-universe.duckdns.org/mcp/health` | MCP Health Endpoint | Host: 8765 | Let's Encrypt Wildcard | Public HTTP 200 health probe for monitoring. |
-| `https://dokploy.friday-universe.duckdns.org` | Dokploy PaaS Dashboard | Container: 3000 | Let's Encrypt Wildcard | Isolated admin sub-domain. Web session authentication. |
-| `https://friday-universe.duckdns.org/friday` | FRIDAY Core | Container: 10000 | Let's Encrypt Wildcard | Agent standby metadata / API gateway. |
-| `https://friday-universe.duckdns.org/cortex` | Cortex Engine | Container: 8002 | Let's Encrypt Wildcard | Agent standby metadata / Web dashboard API. |
-| `https://friday-universe.duckdns.org/forge` | Forge Synthesizer | Container: 8003 | Let's Encrypt Wildcard | Agent standby metadata / Synthesizer API. |
-| `https://friday-universe.duckdns.org/futuris` | Futuris Engine | Container: 8004 | Let's Encrypt Wildcard | Agent standby metadata / Forecasting API. |
-| `https://friday-universe.duckdns.org/inference` | Inference Router | Container: 8005 | Let's Encrypt Wildcard | Agent standby metadata / Reasoning API. |
-| `https://friday-universe.duckdns.org/intelx` | IntelX Research | Container: 8006 | Let's Encrypt Wildcard | Agent standby metadata / Research API. |
-| `https://friday-universe.duckdns.org/memora` | Memora Vector DB | Container: 8007 | Let's Encrypt Wildcard | Agent standby metadata / Memory API. |
-| `https://friday-universe.duckdns.org/sentinel` | Sentinel Gatekeeper | Container: 8008 | Let's Encrypt Wildcard | Agent standby metadata / Security API. |
-| `https://friday-universe.duckdns.org/stratex` | Stratex Trading Desk | Container: 8009 | Let's Encrypt Wildcard | Agent standby metadata / Trading API. |
-| `https://friday-universe.duckdns.org/vyralx` | VyralX Video Studio | Container: 8010 | Let's Encrypt Wildcard | Agent standby metadata / Video API. |
-
----
-
-## 6. Unified MCP Gateway & Hybrid Control Architecture
-
-The FRIDAY Universe operates a **Consolidated Cloud & Laptop MCP Gateway** providing 15 high-privilege tools across Oracle Cloud Infrastructure, Dokploy PaaS, and Windows 11 laptop automation.
-
-```
-                    ┌────────────────────────────────────────────────────────┐
-                    │               ChatGPT / Antigravity Clients            │
-                    └───────────────────────────┬────────────────────────────┘
-                                                │ (HTTPS JSON-RPC 2.0 + Bearer Token)
-                                                ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│              Oracle Cloud MCP Gateway (https://friday-universe.duckdns.org/mcp)                 │
-├────────────────────────────────┬────────────────────────────────┬───────────────────────────────┤
-│    OCI Infrastructure Tools    │      Dokploy PaaS Tools        │   Workstation Proxy Tools     │
-│   • oci_check_auth             │     • dokploy_check_health     │    • laptop_system_info       │
-│   • oci_list_instances         │     • dokploy_list_apps        │    • laptop_list_workspace   │
-│   • oci_get_instance_details   │     • dokploy_get_app_details  │    • laptop_read_file         │
-│   • get_cloud_vm_status        │     • dokploy_deploy_app       │    • laptop_git_status        │
-│   • ssh_run_diagnostic         │       (confirmation=True guard)│                               │
-│   • postgres_read_diagnostic   │                                │                               │
-└────────────────────────────────┴────────────────────────────────┴───────────────┬───────────────┘
-                                                                                  │ (Reverse Tunnel)
-                                                                                  ▼
-                                       ┌──────────────────────────────────────────────────────────┐
-                                       │    Windows 11 Workstation Bridge (FastMCP via ngrok)     │
-                                       │       https://kite-trouble-decency.ngrok-free.dev/mcp    │
-                                       ├──────────────────────────────────────────────────────────┤
-                                       │ • Drives C: & D: File System Access                      │
-                                       │ • Win32 Foreground Window Activation                     │
-                                       │ • 10-Repository Git Status & Branch Tracking             │
-                                       │ • Process Inspection & Native Automation                 │
-                                       └──────────────────────────────────────────────────────────┘
+### Required Request Headers:
+```http
+Content-Type: application/json
+X-Agent-Name: <calling_agent_proper_name>
+Authorization: Bearer <TARGET_AGENT_API_KEY>
+X-Correlation-ID: <uuidv4>
 ```
 
 ---
 
-## 7. Cross-Subsystem Interaction Matrix & Inter-Agent Contracts
+## 8. ENVIRONMENT VARIABLES CATALOG (`/etc/default/friday_universe.env`)
 
-| Initiating Subsystem | Receiving Subsystem | Primary Workflow & Protocol | Authentication & Payload Details | Circuit Breaker / Failure Mode |
-| :--- | :--- | :--- | :--- | :--- |
-| **`FRIDAY Core`** | All 9 Specialists | Task Dispatch & Job Lifecycle (`HTTP POST /api/v1/tasks`) | Bearer Token (`*_API_KEY`), Correlation ID, task JSON envelope. | 30s timeout; retry with exponential backoff; graceful user error report. |
-| **Specialists** | **`Inference`** | Model Reasoning & Token Generation (`HTTP POST /v1/chat/completions`) | Bearer Token (`INFERENCE_API_KEY`), model requirements, prompt, token budget. | Failover pool: Groq → Mistral → OpenAI → Gemini. |
-| **Specialists** | **`Memora`** | Memory Ingestion & Query (`HTTP POST /v1/memories/search`) | Bearer Token (`MEMORA_API_KEY`), namespace, scope (`Private`/`Shared`/`Universal`). | 3s timeout; log warning; fall back to local transient memory. |
-| **`Forge`** | **`Sentinel`** | Pre-Delivery Security Audit (`HTTP POST /v1/security/audit`) | Bearer Token (`SENTINEL_API_KEY`), workspace path, diff, artifact manifest. | **Strict Fail-Closed:** Delivery blocked if Sentinel reports violations. |
-| **`FRIDAY Core`** | **`Stratex`** | Order Status & Kill-Switch (`HTTP POST /api/v1/emergency-halt`) | Bearer Token (`STRATEX_API_KEY`), explicit admin secret. | Idempotent cancel-all; immediate atomic ledger state lock. |
-| **`Cortex`** | **`IntelX`** | Competitor & Market Fact Check (`HTTP POST /v1/research/query`) | Bearer Token (`INTELX_API_KEY`), topic query, citation limit. | Asynchronous poll; reports confidence level. |
-| **`Stratex`** | **`Futuris`** | Market Regime Probabilities (`HTTP GET /v1/forecast/regime`) | Bearer Token (`FUTURIS_API_KEY`), asset pair, timeframe window. | Fall back to neutral technical indicators if unavailable. |
-| **`VyralX`** | **`Inference`** | Original Script & Scene Plan (`HTTP POST /v1/task/execute`) | Bearer Token (`INFERENCE_API_KEY`), topic prompt, scene structure. | Graceful fallback; cached draft preservation. |
-| **`VyralX`** | **`IntelX`** | Bounded Research Context (`HTTP POST /v1/research/query`) | Bearer Token (`INTELX_API_KEY`), search keywords, citation limit. | Graceful degradation; marked unverified. |
-| **`VyralX`** | **`Sentinel`** | Pre-Publish Rights & Policy Audit (`HTTP POST /v1/security/audit`) | Bearer Token (`SENTINEL_API_KEY`), media metadata, license manifest. | **Fail-Closed:** Publishing blocked on violation. |
-| **`VyralX`** | **`Memora`** | Long-Term Engagement & Video Provenance (`HTTP POST /v1/memories`) | Bearer Token (`MEMORA_API_KEY`), namespace, channel metrics. | 3s timeout; log warning; fall back to transient store. |
+```ini
+# Oracle Cloud 23ai Database URLs (Loaded safely via EnvironmentFile)
+DATABASE_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+ORACLE_CORE_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+ORACLE_CORE_ASYNC_URL=oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+ORACLE_VYRAL_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+ORACLE_VYRAL_ASYNC_URL=oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
 
----
+# Security & Audit Keys
+SENTINEL_AUDIT_HMAC_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e
+SENTINEL_AUDIT_SIGNING_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e
+SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c
 
-## 8. Master Git Workspace & Repository Inventory
-
-| # | Repository Name | Local Filesystem Path | Remote GitHub Origin | Branch | Working Tree State |
-| :-: | :--- | :--- | :--- | :-: | :--- |
-| **1** | **FRIDAY** | `D:\FRIDAY Universe\FRIDAY` | `https://github.com/surendra2304/FRIDAY` | `main` | Clean (aligned with origin/main) |
-| **2** | **Inference** | `D:\FRIDAY Universe\Inference` | `https://github.com/surendra2304/Inference` | `main` | Clean (aligned with origin/main) |
-| **3** | **Memora** | `D:\FRIDAY Universe\Memora` | `https://github.com/surendra2304/Memora` | `main` | Clean (aligned with origin/main) |
-| **4** | **Stratex** | `D:\FRIDAY Universe\Stratex` | `https://github.com/surendra2304/Stratex` | `main` | Clean (aligned with origin/main) |
-| **5** | **Forge** | `D:\FRIDAY Universe\Forge` | `https://github.com/surendra2304/Forge` | `main` | Clean (aligned with origin/main) |
-| **6** | **Cortex** | `D:\FRIDAY Universe\Cortex` | `https://github.com/surendra2304/Cortex` | `main` | Clean (aligned with origin/main) |
-| **7** | **Sentinel** | `D:\FRIDAY Universe\Sentinel` | `https://github.com/surendra2304/Sentinel` | `main` | Clean (aligned with origin/main) |
-| **8** | **IntelX** | `D:\FRIDAY Universe\IntelX` | `https://github.com/surendra2304/IntelX` | `main` | Clean (aligned with origin/main) |
-| **9** | **Futuris** | `D:\FRIDAY Universe\Futuris` | `https://github.com/surendra2304/Futuris` | `main` | Clean (aligned with origin/main) |
-| **10** | **VyralX** | `D:\FRIDAY Universe\VyralX` | `https://github.com/surendra2304/VyralX` | `main` | Clean (aligned with origin/main) |
+# Private Mesh Network URLs (Internal IP Interconnect)
+FRIDAY_URL=http://10.0.0.121:10000
+INFERENCE_URL=http://10.0.0.121:8001
+MEMORA_URL=http://10.0.0.121:8002
+STRATEX_URL=http://10.0.0.121:8003
+FUTURIS_URL=http://10.0.0.121:8004
+INTELX_URL=http://10.0.0.121:8005
+FORGE_URL=http://10.0.0.121:8006
+VYRALX_URL=http://10.0.0.120:8010
+SENTINEL_URL=http://10.0.0.120:8008
+CORTEX_URL=http://10.0.0.120:8009
+```
 
 ---
 
-## 9. Disaster Recovery, Backups & Security Protocols
+## 9. ANTIGRAVITY INITIALIZATION DIRECTIVE
 
-### 9.1 Automated OCI Object Storage Backup Standard
-1. **Encrypted Nightly Streaming Dumps:** PostgreSQL database cluster is exported via `pg_dumpall`, compressed with `gzip`, and encrypted using GPG AES-256 before transit.
-2. **Private Bucket Streaming:** Dumps are streamed to private OCI Object Storage bucket `axz0jlcap2j6` in region `ap-mumbai-1`.
-3. **Retention & Lifecycle Rules:** 30-day rolling expiration for daily snapshots; 365-day archive for monthly milestones.
-4. **Verification Restoration Battery:** Weekly automated restore into an isolated scratch container confirms schema consistency, relational integrity, and row count matches.
-
-### 9.2 Zero-Leak Credential & Secret Management Policy
-1. **Zero Hardcoded Secrets:** No API keys, database passwords, or private keys are ever stored in source repositories or committed to Git.
-2. **Automated Diagnostic Scrubbing:** Regex sanitizers scrub JWTs, GitHub PATs, private keys, and UUID tokens from all MCP diagnostic outputs and logs.
-3. **Immediate Key Rotation Protocol:** Any compromised credential is immediately revoked, rotated, and synchronized across Dokploy and the gateway without restarting live containers.
-
----
-
-## 10. Implementation Roadmap & Ecosystem Milestones
-
-- [x] **Phase 0: Workspace & Git Integrity Audit** — All 10 local repositories verified, lint-cleared, and synchronized on `main` with 0 uncommitted changes.
-- [x] **Phase 1: Dokploy GitOps & Sovereign Routing** — All 10 apps registered in Dokploy; Traefik v3 routing established; all 10 public agent routes return HTTP 200 OK.
-- [x] **Phase 2: Unified MCP Gateway & Workstation Bridge** — Single consolidated MCP endpoint at `https://friday-universe.duckdns.org/mcp` with strict dual-layer bearer auth and write confirmation guards.
-- [x] **Phase 3: PostgreSQL 18 Schema Migration** — Successfully provisioned all 10 isolated logical databases with dedicated service roles, public connect revocation, and Dokploy DATABASE_URL synchronization.
-- [ ] **Phase 4: Oracle Cloud ARM64 Production Cutover** — Claim 2-OCPU, 12 GB RAM A1 Flex instance via capacity sniper; scale all 10 microservices to 1/1 replicas.
-
----
-*Authored and certified by Antigravity Project Coordinator for the FRIDAY Universe.*
+When this prompt is pasted into your chat session:
+1. **Determine which agent you are paired with** from the current directory, file paths, or user request.
+2. **Anchor your operational coordinates:**
+   - Confirm your assigned **Server** (`Server 1: 140.245.208.100` or `Server 2: 140.245.243.168`).
+   - Confirm your assigned **Port**, **Systemd Unit File**, and **Memory Cap**.
+   - Confirm that you strictly uphold the **Zero-Disk SQLite** and **Oracle 23ai persistence** policy.
+3. **Reply stating:**
+   - `Agent Identity:` <Exact Proper Name>
+   - `Host Server:` <Server 1 or Server 2 (Public IP & Private IP)>
+   - `Port & Systemd Service:` <Port & Unit Name>
+   - `Assigned Oracle Database:` <friday_universe_db or vyralx_db>
+   - `Operational Health Status:` READY (All invariants acknowledged)
