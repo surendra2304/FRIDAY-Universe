@@ -41,7 +41,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install YAML parser
-        run: python -m pip install --disable-pip-version-check "PyYAML>=6,<7" "pytest>=8.3,<9" "pytest-asyncio>=0.24,<2" "redis>=5,<7" "prometheus-client>=0.20" "structlog>=24"
+        run: python -m pip install --disable-pip-version-check "PyYAML>=6,<7" "pytest>=8.3,<9" "pytest-asyncio>=0.24,<2" "redis>=5,<7" "prometheus-client>=0.20" "structlog>=24" "pydantic>=2.6,<3" "pydantic-settings>=2.2,<3"
 
       - name: Run repository and cancellable CPU-worker tests
         env:
