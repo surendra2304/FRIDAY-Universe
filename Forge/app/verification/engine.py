@@ -3,6 +3,7 @@ Verification Engine for Project FORGE.
 Orchestrates batteries of objective verification checks and compiles verifiable evidence reports.
 """
 
+import asyncio
 import json
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -83,9 +84,24 @@ class VerificationEngine:
 
         async def guarded(lease: Any) -> Any:
             lease.ensure_valid()
-            result = await operation(lease)
-            lease.ensure_valid()
-            return result
+            try:
+                result = await operation(lease)
+                lease.ensure_valid()
+                return result
+            except asyncio.CancelledError:
+                # Lease loss must stop the actual shell/process workers, not
+                # merely cancel the coroutine waiting for their output. The
+                # terminal and process managers own those child processes.
+                try:
+                    await asyncio.shield(
+                        self.engine.terminate_all_sandboxes(timeout=4.0)
+                    )
+                except Exception:
+                    logger.exception(
+                        "Failed to fully terminate Forge workers after lease loss",
+                        extra={"task_id": task_id},
+                    )
+                raise
 
         return await coordinator.run(
             task_id=task_id,
