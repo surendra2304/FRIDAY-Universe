@@ -22,6 +22,7 @@ import uuid
 from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, TypeVar
+from urllib.parse import urlsplit
 
 logger = logging.getLogger(__name__)
 _ResultT = TypeVar("_ResultT")
@@ -373,7 +374,19 @@ def coordinator_from_environment(
     env = os.environ if environ is None else environ
     url = env.get("FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL", "").strip()
     required_value = env.get("FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS", "")
-    required = required_value.strip().lower() in {"1", "true", "yes", "on"}
+    normalized_required = required_value.strip().lower()
+    true_values = {"1", "true", "yes", "on"}
+    false_values = {"", "0", "false", "no", "off"}
+    if normalized_required in true_values:
+        required = True
+    elif normalized_required in false_values:
+        required = False
+    else:
+        raise ValueError(
+            "FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS must be a boolean "
+            "(true/false, 1/0, yes/no, or on/off)"
+        )
+
     if not url:
         if required:
             raise HeavyTaskBackendError(
@@ -381,6 +394,16 @@ def coordinator_from_environment(
                 "heavy-task coordination is enabled"
             )
         return None
+
+    parsed_url = urlsplit(url)
+    if parsed_url.scheme not in {"redis", "rediss", "unix"}:
+        raise HeavyTaskBackendError(
+            "FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL must use redis://, rediss://, or unix://"
+        )
+    if parsed_url.scheme in {"redis", "rediss"} and not parsed_url.hostname:
+        raise HeavyTaskBackendError(
+            "FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL must include a Redis hostname"
+        )
     prefix = env.get("FRIDAY_UNIVERSE_HEAVY_TASK_KEY_PREFIX", "friday-universe").strip()
     if not prefix or any(char.isspace() for char in prefix) or not prefix.strip(":"):
         raise ValueError(
