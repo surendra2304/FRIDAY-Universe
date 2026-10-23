@@ -7,11 +7,13 @@ lang: en-US
 
 # 1. How the next chat must use this document
 
-This is a continuation handoff, not a claim that FRIDAY Universe is already completely upgraded. The next chat must first inspect the latest repositories, pull requests, CI, local workspace, MCP connection, Dokploy deployment and OCI resources. Do not treat any earlier summary or this document as fresher than live evidence.
+This is a continuation handoff, not a claim that FRIDAY Universe is already completely upgraded. For the current implementation, inspect GitHub repositories, default-branch SHAs, branches, pull requests and CI before changing code. The user's active scope is GitHub-only: do not access or edit the laptop, Oracle Cloud, or Dokploy. Revalidate every historical statement against current GitHub evidence.
 
 ## Non-negotiable instructions
 
-1. Preserve the existing nine repositories and their Git histories. Do not recreate them, rewrite history or replace them with a monorepo.
+**Current execution boundary:** this implementation is restricted to GitHub source, tests, workflows, branches and PRs. Do not access or edit local laptop files or Oracle Cloud/Dokploy infrastructure unless the user separately changes this scope.
+
+1. Preserve the existing ten repositories and their Git histories. Do not recreate them, rewrite history or replace them with a monorepo.
 2. Never run blanket `git reset --hard`, `git clean`, force-push, bulk checkout, or blind pull/merge commands. The local workspace has had substantial uncommitted work, deletions and untracked files.
 3. Preserve and inspect the pre-reconciliation backup before changing local working trees.
 4. Use feature branches and pull requests for substantive changes. Do not push directly to `main` merely because permission allows it.
@@ -19,8 +21,8 @@ This is a continuation handoff, not a claim that FRIDAY Universe is already comp
 6. A green unit-test suite is not proof of a live service working. A merged PR is not proof of a production deployment. A healthy container is not proof that its database contains the correct data.
 7. No live-money trading is authorized. Stratex must remain execution-disabled until the documented venue lifecycle and safety gates have been demonstrated in non-production testing.
 8. Do not include secrets in prompts, PR bodies, logs, Markdown, PDFs, screenshots, Git history or tool output.
-9. The main FRIDAY Universe chat coordinates all nine agents. Do not run parallel chats that edit the same repository or shared infrastructure at the same time.
-10. Do not add unrelated products or agents. Work only on the nine repositories listed in this handoff.
+9. The main FRIDAY Universe chat coordinates all ten agents. Do not run parallel chats that edit the same repository or shared infrastructure at the same time.
+10. Do not add unrelated products or agents. Work only on the ten repositories listed in this handoff.
 
 ## Evidence labels
 
@@ -35,7 +37,7 @@ Use these labels in every status report:
 
 # 2. Executive summary
 
-FRIDAY Universe is a sovereign, self-hosted multi-agent system built from nine independent repositories. FRIDAY is the user-facing orchestrator, Inference is the canonical model/provider reasoning gateway, and Memora is the single long-term cross-agent memory authority. Eight other specialist capabilities (including Inference and Memora among the nine total systems) retain domain responsibilities, independent safety controls, service APIs and their own operational records.
+FRIDAY Universe is a sovereign, self-hosted multi-agent system built from ten independent repositories. FRIDAY is the user-facing orchestrator, Inference is the canonical model/provider reasoning gateway, and Memora is the single long-term cross-agent memory authority. Eight other specialist capabilities (including Inference and Memora among the nine total systems) retain domain responsibilities, independent safety controls, service APIs and their own operational records.
 
 The intended production deployment is on Oracle Cloud Infrastructure. The user's current reported production host is an AMD64 Always Free instance with approximately 1 GB RAM and 50 GB storage. The desired replacement is an ARM64 A1 Flex instance with 2 OCPUs and 12 GB RAM, provisioned through capacity retry/sniper scripts. Do not assume the ARM instance is already allocated: validate OCI state before migration. The user's longer-term plan is to delete the interim AMD host only after verified cutover and consolidate available block-volume capacity onto the ARM instance. The specification originally names a 150 GB target boot volume; the user's later plan refers to using up to 200 GB. The actual allowed boot-volume size and tenancy quota must be checked in OCI rather than assumed.
 
@@ -48,7 +50,7 @@ The major planned upgrade areas are:
 - Keep Memora as the single place for durable cross-agent memories; do not copy every operational record into it.
 - Standardize authenticated inter-agent contracts, deadlines, correlation IDs, errors, retries, idempotency and failure handling.
 - Fix real security and reliability defects, including unsafe defaults, tenant isolation, TLS verification, secret exposure risks and fail-open verification.
-- Make the nine services fit the 2-OCPU/12-GB server with resource budgets, bounded CPU-heavy work and sufficient OS headroom.
+- Make the ten services fit the 2-OCPU/12-GB server with resource budgets, bounded CPU-heavy work and sufficient OS headroom.
 - Operate backups in private OCI Object Storage with encryption, retention, checksums and tested restoration.
 - Work in a safe GitHub feature-branch/PR flow, then deploy the exact reviewed commit via Dokploy and verify the runtime independently.
 
@@ -58,7 +60,7 @@ The work done in the previous session is useful but incomplete. Some narrow PRs 
 
 ## 3.1 Source documents
 
-The attached `FRIDAY_UNIVERSE_MASTER_SPECIFICATION(2).md` is the primary architectural source. It defines the nine services, strict evidence and safety principles, the private `friday_mesh`, centralized Memora memory, one PostgreSQL cluster with nine logical databases, Redis/Qdrant components, Oracle deployment and encrypted backups.
+The attached `FRIDAY_UNIVERSE_MASTER_SPECIFICATION(2).md` is the primary architectural source. It defines the ten services, strict evidence and safety principles, the private `friday_mesh`, centralized Memora memory, one PostgreSQL cluster with ten logical databases, Redis/Qdrant components, Oracle deployment and encrypted backups.
 
 The attached `Stratex_FRIDAY_Universe_Upgrade_Handoff_2026-10-18.pdf` is the specific continuation guide for Stratex. It is subordinate to the overall ecosystem specification and documents the order-management system (OMS), venue boundaries, risk gates, PR checkpoint, test matrix and next steps. Its PR status has to be refreshed because GitHub state changed after that PDF was produced.
 
@@ -67,7 +69,7 @@ The user's conversation instructions after the source specification are also aut
 - The canonical name is **Inference**, not “AI Universe”.
 - Memora is currently the single memory authority and is planned to use PostgreSQL for all agents' private, shared and universal memories.
 - Each agent is intended to have a distinct operational database within a shared PostgreSQL server.
-- The user wants implementation across all nine existing repos, not just a list of recommendations or a small number of unrelated patches.
+- The user wants implementation across all ten existing repos, not just a list of recommendations or a small number of unrelated patches.
 - Work must be verified locally, in GitHub and on Oracle/Dokploy, with no unsupported claim of completion.
 - The user explicitly rejected continuing Antigravity implementation in parallel while this direct ChatGPT workflow is coordinated. Antigravity may be used for setup/infrastructure support only when asked, but must not independently edit the same files concurrently.
 
@@ -81,11 +83,11 @@ The PostgreSQL 18 Docker image changed its recommended data mount layout compare
 
 ## 3.3 Current vs. target is not the same
 
-The source specification says Phase 0 was complete, with all repos lint-clean and tests passing. Later local audit results contradicted that statement: all nine repos had dirty working trees and several were behind GitHub `main`; PR checks also exposed failures. Treat “Phase 0 complete” as a claim from the source document, not as verified current state.
+The source specification says Phase 0 was complete, with all repos lint-clean and tests passing. Later local audit results contradicted that statement: all ten repos had dirty working trees and several were behind GitHub `main`; PR checks also exposed failures. Treat “Phase 0 complete” as a claim from the source document, not as verified current state.
 
 The repository descriptions, target port numbers and schema proposals in the specification are architectural targets; do not assume all existing code currently matches them.
 
-# 4. The nine repositories and responsibilities
+# 4. The ten repositories and responsibilities
 
 ## 4.1 FRIDAY — main orchestrator and user-facing assistant
 
@@ -258,7 +260,7 @@ Use consistent response/error envelopes with machine-readable error code, retria
 
 # 6. Database architecture and migration requirements
 
-## 6.1 One PostgreSQL instance, nine logical databases
+## 6.1 One PostgreSQL instance, ten logical databases
 
 Use a single PostgreSQL 18 server to conserve memory and operational overhead on the one VM, with these database/role pairs:
 
@@ -273,6 +275,7 @@ Use a single PostgreSQL 18 server to conserve memory and operational overhead on
 | `sentinel_db` | `sentinel_user` | Scopes, assessments, scans, findings, policy decisions and audit records |
 | `intelx_db` | `intelx_user` | Research runs, sources, documents, claims, evidence relationships and citations |
 | `futuris_db` | `futuris_user` | Forecasts, scenarios, outcome results, calibration and model versions |
+| `vyralx_db` | `vyralx_user` | Video production tasks, projects, scenes, media assets, render jobs, publishing checkpoints and provenance metadata |
 
 Each service gets only its database credentials. No agent role is a superuser. Do not grant cross-database write access as a shortcut. The only supported cross-agent memory flow is through Memora's authenticated API. Cross-agent operational tasks should use the service API, not direct SQL into another agent's database.
 
@@ -328,7 +331,7 @@ Policy requirements:
 User-reported/current documented context:
 - Interim server: AMD64, approximately 1 GB RAM, 50 GB storage, with 8 GB swap reported in the master spec.
 - Public IP reported in infrastructure notes: `140.245.208.100`.
-- All nine agents reportedly run on that interim host.
+- All ten agents reportedly run on that interim host.
 - Dokploy is installed and synchronizes deployments from GitHub.
 - Target server: ARM64 `VM.Standard.A1.Flex`, 2 OCPUs and 12 GB RAM. A GitHub capacity-sniper script has been used/requested.
 - The user intends to retire the AMD VM only after successful ARM cutover.
@@ -433,7 +436,7 @@ On the user's return:
 3. Test the health endpoint from Windows and test the MCP tool discovery from ChatGPT.
 4. Invoke a harmless read-only `get_system_info`, list the workspace and read a benign file.
 5. Use a harmless terminal command to verify exit code/output.
-6. Inspect the nine-repository Git state without editing anything.
+6. Inspect the ten-repository Git state without editing anything.
 7. Verify access to OCI, SSH and Dokploy separately. Local MCP success alone does not prove cloud tools are connected.
 8. If disconnected, inspect bridge logs, process state, port 8000, ngrok URL/auth configuration and plugin server URL. Do not paste bearer tokens or private keys into chat.
 9. Confirm path confinement and authorization gate with benign negative tests; do not attempt destructive operations as a “test”.
@@ -443,7 +446,7 @@ The user does not need to grant unrestricted access to the entire laptop. Worksp
 
 # 11. Local working tree and recovery snapshot
 
-An earlier successful bridge inspection ran read-only Git commands over all nine local repositories. It found every repo dirty and several branches behind `origin/main`. A pre-reconciliation snapshot was created:
+An earlier successful bridge inspection ran read-only Git commands over all ten local repositories. It found every repo dirty and several branches behind `origin/main`. A pre-reconciliation snapshot was created:
 
 - `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125.zip`
 - matching snapshot directory: `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125`
@@ -475,7 +478,7 @@ Important local actions to inspect:
 
 The following is the latest status queried through the connected GitHub integration for this handoff on 18 October 2026. Always refresh it on resume.
 
-## 12.1 Nine-repository PR matrix
+## 12.1 Ten-repository PR matrix
 
 | Repository | PR | Current state at last query | Latest associated CI observed | Next action |
 |---|---:|---|---|---|
@@ -488,6 +491,7 @@ The following is the latest status queried through the connected GitHub integrat
 | Sentinel | [#3](https://github.com/surendra2304/Sentinel/pull/3) | Merged | Success | Review TLS and approval-route diff. Verify all remaining TLS bypasses, authorization and API behavior; one PR does not close all security findings. |
 | IntelX | [#3](https://github.com/surendra2304/IntelX/pull/3) | Merged | Success | Review configuration change, then plan actual DB/search migration and data validation separately. |
 | Futuris | [#3](https://github.com/surendra2304/Futuris/pull/3) | Open, ready for review | Success | Review and decide merge only after diff/test inspection. It hardens the echoed request ID; it is not the full worker-isolation change. |
+| VyralX | — | Added to the ten-agent architecture after this historical snapshot | Not checked in this historical matrix | Refresh current PRs, task-3 patch status and CI before changing code. |
 
 The CI statuses above were fetched for the associated PR head SHAs, not proof of production runtime health. For Cortex's open PR, the CI run was explicitly failed; the next chat must inspect its failing logs and exact SHA. For Futuris, CI was successful but the PR remained unmerged. Do not say it merged unless live GitHub confirms it.
 
@@ -519,7 +523,7 @@ Do not count PRs or lines of code as the success metric. The target is working a
 
 # 13. Mistakes made in the previous work and how not to repeat them
 
-1. **Small patches were mistaken for the requested full upgrade.** The user asked for a coordinated engineering implementation across all nine repositories. A few targeted fixes and PRs are not the complete deliverable.
+1. **Small patches were mistaken for the requested full upgrade.** The user asked for a coordinated engineering implementation across all ten repositories. A few targeted fixes and PRs are not the complete deliverable.
 2. **PR creation became a proxy for completion.** A PR is just a review container. Each phase must have scope, acceptance tests, change summary, dependency map, validation and runtime evidence as relevant.
 3. **Changes were made through GitHub without a full local reproduction loop.** This caused CI failures and limited confidence in integrations. Now that a local MCP is configured, use it to inspect exact code, run tests, inspect diffs and verify changes. However, the current bridge is failing; do not assume access is live.
 4. **Repositories were edited before the entire call path was mapped.** This is especially dangerous for Stratex, Memora migration, Cortex/Inferences contract and service deployment. Map existing entry points and call sites first.
@@ -539,7 +543,7 @@ Execute in phases. Each phase ends in a reviewable diff, explicit test evidence 
 ## Phase 0 — Recovery and truth baseline (first task on resume)
 
 - Confirm MCP health and callable tools.
-- Inspect all nine local `git status --short`, `git diff`, untracked files and current `HEAD`.
+- Inspect all ten local `git status --short`, `git diff`, untracked files and current `HEAD`.
 - Check the recovery ZIP is present and readable. Make a second backup before reconciliation if any further actions have happened.
 - Fetch GitHub refs safely; compare local/main with origin/main without changing working files.
 - Read current merged PR diffs and refresh all open PRs/CI, especially Cortex #3, Futuris #3, Stratex #7/#9.
@@ -579,7 +583,7 @@ Acceptance: contract tests run in CI; bounded failure tests demonstrate no infin
 ## Phase 3 — PostgreSQL 18 and Memora migration
 
 - Confirm actual current PostgreSQL version, cluster, volume mount, databases, roles and extensions on OCI.
-- Create nine logical databases and least-privilege roles.
+- Create ten logical databases and least-privilege roles.
 - Port application-specific schema/query behavior and migration tests.
 - Migrate existing SQLite data without loss, including actual user memories/records. Do not only change `.env` examples.
 - Keep Memora as the sole long-term memory authority with ACLs and provenance; disable production SQLite/legacy DB fallback after validated cutover.
@@ -690,7 +694,7 @@ Paste this prompt after attaching this PDF, the master specification Markdown, a
 
 > You are resuming the FRIDAY Universe engineering upgrade. Read the entire `FRIDAY Universe — Complete Engineering Handoff`, the user's `FRIDAY_UNIVERSE_MASTER_SPECIFICATION(2).md`, and the Stratex engineering handoff before acting.
 >
-> The ecosystem has exactly nine repositories: FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX and Futuris. FRIDAY is the orchestrator; Inference is the canonical model gateway; Memora is the only long-term cross-agent memory authority. Each agent owns its operational DB; all memory sharing goes through Memora's authenticated scoped API. Target data layer is PostgreSQL 18, one server with nine logical databases/least-privilege roles, only after verified data migration and restore tests.
+> The ecosystem has exactly ten repositories: FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX and Futuris. FRIDAY is the orchestrator; Inference is the canonical model gateway; Memora is the only long-term cross-agent memory authority. Each agent owns its operational DB; all memory sharing goes through Memora's authenticated scoped API. Target data layer is PostgreSQL 18, one server with ten logical databases/least-privilege roles, only after verified data migration and restore tests.
 >
 > Do not make any blind pull, reset, clean, force-push, bulk merge or direct-main edit. The local workspace had many uncommitted changes and a recovery snapshot at `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125.zip`. The current MCP tool call failed at the time this handoff was prepared. Restore the local connection and run a read-only audit before editing.
 >
@@ -698,7 +702,7 @@ Paste this prompt after attaching this PDF, the master specification Markdown, a
 >
 > First restore and verify the FRIDAY Universe MCP, then inventory all local working trees, fetch refs safely, inspect the recovery snapshot, and compare with GitHub. Independently verify OCI, SSH, Dokploy, live PostgreSQL version/data/volume/backup, deployed commit and ARM instance allocation. Do not believe Antigravity's infrastructure report until confirmed live. Treat the Antigravity credentials PDF/Markdown as sensitive: never open its secrets into output, commit it, or attach it to chat; check Git tracking/history and rotate credentials if they were exposed.
 >
-> Work as a coordinated engineering effort, not as nine tiny PRs. Map complete code paths, implement by phased goals, add meaningful unit/integration/contract tests, run them locally, inspect the full diff, push feature branches, create PRs, and merge only after the exact CI head is green and the change is reviewed. Keep deployment separate from code merge and validate it afterwards. Prioritize security/correctness, API contracts, PostgreSQL/Memora migration, full Stratex OMS lifecycle and risk gate, ARM64 deployment, resource budget, backups/restore, and final cross-agent tests. Keep all trading flags disabled and no live-money execution.
+> Work as a coordinated engineering effort, not as ten tiny PRs. Map complete code paths, implement by phased goals, add meaningful unit/integration/contract tests, run them locally, inspect the full diff, push feature branches, create PRs, and merge only after the exact CI head is green and the change is reviewed. Keep deployment separate from code merge and validate it afterwards. Prioritize security/correctness, API contracts, PostgreSQL/Memora migration, full Stratex OMS lifecycle and risk gate, ARM64 deployment, resource budget, backups/restore, and final cross-agent tests. Keep all trading flags disabled and no live-money execution.
 >
 > The target host has 2 OCPUs / 12 GB RAM, so profile memory and CPU. The resource caps listed in the old spec sum to around 12.06 GB and must be re-budgeted with OS headroom. Use one global CPU-heavy-job slot. Keep internal services and DB ports private and only the reverse proxy public. Back up to encrypted private OCI Object Storage and actually test restores.
 >
@@ -715,6 +719,7 @@ Paste this prompt after attaching this PDF, the master specification Markdown, a
 - Sentinel: https://github.com/surendra2304/Sentinel
 - IntelX: https://github.com/surendra2304/IntelX
 - Futuris: https://github.com/surendra2304/Futuris
+- VyralX: https://github.com/surendra2304/VyralX
 
 Relevant PRs at last check:
 
