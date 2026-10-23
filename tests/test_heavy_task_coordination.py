@@ -243,6 +243,53 @@ class HeavyTaskCoordinatorTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await lease.release())
         self.assertFalse(await lease.release())
 
+
+    async def test_run_cancels_work_when_lease_is_lost(self) -> None:
+        started = asyncio.Event()
+        cancelled = asyncio.Event()
+
+        async def long_work(lease):
+            started.set()
+            lease.ensure_valid()
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                cancelled.set()
+                raise
+
+        task = asyncio.create_task(
+            self.coordinator_a.run(
+                "full-security-scan",
+                long_work,
+                owner="sentinel",
+                wait_timeout=0,
+            )
+        )
+        await asyncio.wait_for(started.wait(), timeout=0.5)
+        async with self.redis_a.gate:
+            self.redis_a.values[self.coordinator_a.lock_key] = (
+                '{"nonce":"replacement","task_id":"other-scan","owner":"other"}',
+                time.monotonic() + 3,
+            )
+        with self.assertRaises(HeavyTaskLeaseLost):
+            await asyncio.wait_for(task, timeout=1)
+        self.assertTrue(cancelled.is_set())
+        status = await self.coordinator_b.inspect()
+        self.assertEqual(status["task_id"], "other-scan")
+
+    async def test_run_returns_result_and_releases_lease(self) -> None:
+        async def build(lease):
+            lease.ensure_valid()
+            return {"status": "verified", "checks": 12}
+
+        result = await self.coordinator_a.run(
+            "forge-verification",
+            build,
+            owner="forge",
+        )
+        self.assertEqual(result, {"status": "verified", "checks": 12})
+        self.assertFalse((await self.coordinator_b.inspect())["locked"])
+
     async def test_invalid_task_metadata_is_rejected(self) -> None:
         for task_id in ("", "   ", "task\nname", "x" * 257):
             with self.subTest(task_id=repr(task_id)):
