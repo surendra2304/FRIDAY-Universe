@@ -1,9 +1,9 @@
-name: Monorepo Validation
+name: Monorepo Structure and Safety CI
 
 on:
-  pull_request:
-    branches: [main]
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -11,43 +11,39 @@ permissions:
   contents: read
 
 concurrency:
-  group: monorepo-validation-${{ github.ref }}
+  group: monorepo-safety-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  structure:
-    name: Validate agent structure and sync safety
+  validate:
+    name: Validate monorepo-only policy and workflow syntax
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check out source
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Verify ten agent roots
-        shell: bash
-        run: |
-          set -euo pipefail
-          agents=(FRIDAY Inference Memora Stratex Forge Cortex Sentinel IntelX Futuris VyralX)
-          for agent in "${agents[@]}"; do
-            test -d "$agent" || { echo "::error::Missing agent directory: $agent"; exit 1; }
-            git ls-files --error-unmatch "$agent" >/dev/null
-          done
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - name: Guard against destructive subtree mirroring
+      - name: Install YAML parser
+        run: python -m pip install --disable-pip-version-check "PyYAML>=6,<7"
+
+      - name: Run repository regression tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Validate repository and workflow safety
+        run: python scripts/validate_fleet.py
+
+      - name: Assert standalone mirroring remains disabled
         shell: bash
         run: |
           set -euo pipefail
           workflow=.github/workflows/mirror-subrepos.yml
-          test -f "$workflow"
-          if grep -En 'git push .*--force|git push .*:main.*--force|split-.*:main.*--force' "$workflow"; then
-            echo "::error::Destructive force-push mirroring is forbidden."
+          grep -q 'workflow_dispatch:' "$workflow"
+          if grep -Eq '^[[:space:]]*(push|pull_request):|git[[:space:]]+push|rsync|gh[[:space:]]+pr[[:space:]]+create|GH_PAT_MIRROR' "$workflow"; then
+            echo "::error::The mirror workflow must remain manual-only and perform no cross-repository writes."
             exit 1
           fi
-          grep -q 'pull request\|pull-request\|pr create' "$workflow" || {
-            echo "::error::Mirror workflow must publish reviewable PRs."
-            exit 1
-          }
-          grep -q 'GH_PAT_MIRROR' "$workflow" || {
-            echo "::error::Mirror workflow must require explicit cross-repository write credentials."
-            exit 1
-          }
