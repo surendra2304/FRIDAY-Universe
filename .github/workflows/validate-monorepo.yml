@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: monorepo-validation-${{ github.ref }}
+  group: validate-monorepo-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -33,6 +33,9 @@ jobs:
 
       - name: Run regression tests
         run: python -m unittest discover -s tests -p 'test_fleet_validation.py' -v
+
+      - name: Test distributed heavy-task coordination
+        run: python -m unittest discover -s tests -p 'test_heavy_task_coordination.py' -v
 
       - name: Validate all ten agent roots and workflow syntax
         run: python scripts/validate_fleet.py
