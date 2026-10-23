@@ -36,6 +36,7 @@ AGENT_AUTH_MAP = {
     "FORGE": ("http://forge:8000", "FORGE_API_KEY"),
     "SENTINEL": ("http://sentinel:8000", "SENTINEL_API_KEY"),
     "FRIDAY": ("http://friday:10000", "FRIDAY_API_KEY"),
+    "VYRALX": ("http://vyralx:8000", "VYRALX_API_KEY"),
 }
 
 _LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}

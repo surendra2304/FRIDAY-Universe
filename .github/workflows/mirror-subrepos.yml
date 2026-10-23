@@ -86,26 +86,50 @@ jobs:
           path: standalone/${{ matrix.agent }}
           fetch-depth: 0
 
-      - name: Synchronize subtree and push directly to main
+      - name: Stage monorepo subtree changes into a sync branch
         if: steps.filter.outputs.target_changed == 'true'
         shell: bash
         env:
           AGENT: ${{ matrix.agent }}
           SOURCE_SHA: ${{ github.sha }}
+          MIRROR_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
         working-directory: standalone/${{ matrix.agent }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Synchronize additions, modifications, and deletions from monorepo subtree to standalone repo
-          rsync -a --delete --exclude='.git/' "$GITHUB_WORKSPACE/monorepo/$AGENT/" ./
-          git add --all
+          SYNC_BRANCH="sync/monorepo-${SOURCE_SHA:0:12}"
+          git checkout -B "$SYNC_BRANCH" origin/main
+
+          # Stage additions, modifications, and deletions from the monorepo
+          # subtree into the standalone branch without rsync --delete or
+          # direct main-branch writes. Deletions are reviewed via PR.
+          git --git-dir=.git --work-tree="$GITHUB_WORKSPACE/monorepo/$AGENT" add -A -- .
+
           if git diff --cached --quiet; then
             echo "Standalone $AGENT is already in sync with monorepo subtree. Nothing to push."
             exit 0
           fi
 
           git commit -m "chore(mirror): direct sync $AGENT from monorepo ${SOURCE_SHA:0:12}"
-          git push origin main
-          echo "Successfully pushed latest $AGENT changes directly to main branch."
+          git push origin "HEAD:refs/heads/$SYNC_BRANCH"
+          echo "Successfully pushed latest $AGENT changes to $SYNC_BRANCH."
+
+      - name: Open pull request for ${{ matrix.agent }}
+        if: steps.filter.outputs.target_changed == 'true'
+        shell: bash
+        env:
+          AGENT: ${{ matrix.agent }}
+          SOURCE_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
+        working-directory: standalone/${{ matrix.agent }}
+        run: |
+          set -euo pipefail
+          SYNC_BRANCH="sync/monorepo-${SOURCE_SHA:0:12}"
+          gh pr create \
+            --repo surendra2304/${AGENT} \
+            --base main \
+            --head "$SYNC_BRANCH" \
+            --title "chore(mirror): sync $AGENT from monorepo ${SOURCE_SHA:0:12}" \
+            --body "Automated mirror sync from FRIDAY Universe monorepo commit ${SOURCE_SHA}."

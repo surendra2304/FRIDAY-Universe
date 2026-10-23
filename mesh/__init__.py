@@ -4,9 +4,9 @@ Phase 1: High-Speed Authenticated Event Mesh & Real-Time Keep-Alive.
 
 Features:
 - Standard JSON message envelope with HMAC-SHA256 signatures and UUID correlation
-- 9-Agent manifest registry & capability/intent discovery
+- 10-Agent manifest registry & capability/intent discovery
 - High-throughput transport (NATS JetStream + Authenticated async HTTP fallback)
-- 24/7 Keep-alive monitor & probe loop for all 9 Render cloud services
+- 24/7 Keep-alive monitor & probe loop for all 10 cloud services
 - Cloud-First execution routing with on-demand local daemon management
 """
 

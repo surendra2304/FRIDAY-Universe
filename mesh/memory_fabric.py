@@ -4,7 +4,7 @@ Phase 2: Universal Memory Fabric (Memora Integration).
 Provides 3-tiered memory scoping:
 - Agent (private memory per agent)
 - Group (shared memory for agent sub-teams)
-- Universal (global ecosystem memory shared across all 9 agents)
+- Universal (global ecosystem memory shared across all 10 agents)
 
 Includes:
 - Auto-ingestion of tool executions and error outcomes
@@ -44,6 +44,7 @@ AGENT_GROUPS: Dict[str, List[str]] = {
     "trading": ["STRATEX", "FUTURIS"],
     "research": ["INTELX", "CORTEX"],
     "cognition": ["MEMORA", "FRIDAY", "INFERENCE"],
+    "media": ["VyralX", "CORTEX", "INTELX"],
 }
 
 
@@ -107,7 +108,7 @@ class DistilledLesson:
 
 
 class UniversalMemoryFabric:
-    """Universal Memory Fabric connecting all 9 agents to Memora.
+    """Universal Memory Fabric connecting all 10 agents to Memora.
     Routes to Render Cloud (0% laptop CPU strain) with seamless local fallback.
     """
 
@@ -392,7 +393,7 @@ class UniversalMemoryFabric:
 
 class NightlyLessonDistiller:
     """Nightly Lesson Distiller.
-    Scans episodic execution logs and failure events across all 9 agents,
+    Scans episodic execution logs and failure events across all 10 agents,
     distilling actionable procedural rules into the `lessons_applied` ledger.
     """
 
