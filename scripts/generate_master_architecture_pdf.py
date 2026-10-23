@@ -563,6 +563,39 @@ def build_pdf(pdf_path):
     story.append(make_code_box(env_lines))
     story.append(Spacer(1, 10))
 
+    # =========================================================================
+    # SECTION 8: ANTIGRAVITY AGENT ACTIVE AWAKENING DIRECTIVE
+    # =========================================================================
+    story.append(PageBreak())
+    story.append(Paragraph("8. Antigravity Agent Active Awakening & Reconnaissance Directive", h1_style))
+    story.append(Paragraph(
+        "<b>MANDATORY INSTRUCTION FOR AGENTS RECEIVING THIS CODEX:</b> Agents must not respond with superficial 5-bullet handshakes. "
+        "Upon receipt, the agent must immediately execute active tool-based reconnaissance on its local codebase and output an exhaustive 6-section operational audit.",
+        body_style
+    ))
+    story.append(Spacer(1, 4))
+
+    awakening_headers = ["Phase", "Mandatory Action", "Required Verification Output"]
+    awakening_rows = [
+        [
+            "<b>Phase 1: Code Reconnaissance</b>",
+            "Use <code>read_file</code> and search tools on local entry points (<code>main.py</code>, <code>routers/</code>, <code>models/</code>).",
+            "Extract live routes, data schemas, and environment imports directly from active source code."
+        ],
+        [
+            "<b>Phase 2: Invariant Check</b>",
+            "Audit SQLite paths for disk isolation and verify Oracle 23ai async dialect configuration.",
+            "Verify all ephemeral caching targets <code>/dev/shm</code> tmpfs; zero bytes written to persistent disk."
+        ],
+        [
+            "<b>Phase 3: 6-Part Dossier</b>",
+            "Synthesize deep operational report: Identity, Route Catalog, Persistence, Mesh RPCs, Safety, and Backlog.",
+            "Full multi-page breakdown proving complete technical grounding in the FRIDAY Universe architecture."
+        ]
+    ]
+    story.append(make_table(awakening_headers, awakening_rows, [110, 200, 230]))
+    story.append(Spacer(1, 10))
+
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#CBD5E1"), spaceAfter=6))
     story.append(Paragraph(
         "<i>Document certified and compiled by Antigravity AI Project Coordinator for the FRIDAY Universe. "

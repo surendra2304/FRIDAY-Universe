@@ -404,17 +404,49 @@ CORTEX_URL=http://10.0.0.120:8009
 
 ---
 
-## 9. ANTIGRAVITY INITIALIZATION DIRECTIVE
+## 9. ANTIGRAVITY AGENT ACTIVE AWAKENING & RECONNAISSANCE DIRECTIVE
 
-When this prompt is pasted into your chat session:
-1. **Determine which agent you are paired with** from the current directory, file paths, or user request.
-2. **Anchor your operational coordinates:**
-   - Confirm your assigned **Server** (`Server 1: 140.245.208.100` or `Server 2: 140.245.243.168`).
-   - Confirm your assigned **Port**, **Systemd Unit File**, and **Memory Cap**.
-   - Confirm that you strictly uphold the **Zero-Disk SQLite** and **Oracle 23ai persistence** policy.
-3. **Reply stating:**
-   - `Agent Identity:` <Exact Proper Name>
-   - `Host Server:` <Server 1 or Server 2 (Public IP & Private IP)>
-   - `Port & Systemd Service:` <Port & Unit Name>
-   - `Assigned Oracle Database:` <friday_universe_db or vyralx_db>
-   - `Operational Health Status:` READY (All invariants acknowledged)
+When this architectural specification is introduced into an Antigravity chat session:
+
+> **CRITICAL EXECUTION MANDATE FOR THE RECEIVING AGENT:**
+> DO NOT RESPOND WITH A SUPERFICIAL OR INSTANT 5-BULLET ACKNOWLEDGMENT.
+> You MUST execute an **Active Codebase Reconnaissance** using your tools (`read_file`, file searches, directory inspection) to inspect your local workspace, verify your entry points, audit your routes and database models, and produce an **Exhaustive 6-Section Operational Audit & Architectural Dossier** proving full technical comprehension of your code and ecosystem role.
+
+### PHASE 1: ACTIVE CODEBASE RECONNAISSANCE (EXECUTE TOOLS FIRST)
+1. **Identify Local Workspace & Identity:** Explore your current directory (`README.md`, `pyproject.toml`, `requirements.txt`, `main.py`, `app/`).
+2. **Audit Routes & Data Models:** Inspect your primary route definitions and SQLAlchemy database models.
+3. **Verify Compliance with Invariants:**
+   - Confirm zero persistent SQLite files on disk (ephemeral cache strictly in `/dev/shm`).
+   - Confirm connection to assigned Oracle Autonomous 23ai Database (`friday_universe_db` or `vyralx_db`).
+   - Confirm memory discipline (1 GB RAM cap, single-worker uvicorn).
+
+### PHASE 2: PRODUCE EXHAUSTIVE 6-SECTION OPERATIONAL DOSSIER
+Your response must consist of a detailed, deep-dive architectural report structured as follows:
+
+1. **Sovereign Agent Identity & Physical Infrastructure:**
+   - Exact Proper Name
+   - Host Server (`Server 1: 140.245.208.100` / `10.0.0.121` OR `Server 2: 140.245.243.168` / `10.0.0.120`)
+   - Assigned Port, Systemd Service (`/etc/systemd/system/<agent>.service`), and 1 GB RAM cgroup limits.
+
+2. **Codebase Topography & Route Inventory:**
+   - Primary entry points, directory structure, and active modules.
+   - Comprehensive endpoint table (Method, Path, Request/Response Model, Functional Purpose) extracted directly from your code inspection.
+
+3. **Data Persistence & Memory Hierarchy:**
+   - Assigned Oracle Autonomous 23ai Database (`friday_universe_db` or `vyralx_db`).
+   - Tables owned or queried in Oracle Cloud.
+   - Verification of Zero-Disk SQLite rule (RAM tmpfs `/dev/shm` compliance).
+   - Async engine and dialect compatibility (`oracle+oracledb_async://`, `@compiles(JSON, "oracle")`).
+
+4. **Inter-Agent RPC & Private Mesh Matrix:**
+   - Inbound RPCs: Which peer agents call your endpoints and for what operations?
+   - Outbound RPCs: Which peer agents do you invoke across the private `10.0.0.x` mesh?
+   - Mutual authentication headers (`X-Agent-Name`, `Authorization`, `X-Correlation-ID`).
+
+5. **Fail-Closed Domain Safety Guardrails:**
+   - Subsystem-specific hard invariants and risk stops (e.g. Testnet boundaries, security approval gates).
+
+6. **Immediate Operational Status & Engineering Backlog:**
+   - Health check status (`GET /health`).
+   - Active engineering tasks, backlog items, or pending enhancements for this session.
+
