@@ -1,111 +1,20 @@
-name: Direct Standalone Agent Mirror Sync
+name: Standalone Repository Mirror (Disabled)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'FRIDAY/**'
-      - 'Inference/**'
-      - 'Memora/**'
-      - 'Stratex/**'
-      - 'Forge/**'
-      - 'Cortex/**'
-      - 'Sentinel/**'
-      - 'IntelX/**'
-      - 'Futuris/**'
-      - 'VyralX/**'
-      - '.github/workflows/mirror-subrepos.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: standalone-sync-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  sync-agent-main:
-    name: Sync ${{ matrix.agent }} to main
+  no-op:
+    name: Confirm monorepo-only mode
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        agent: [FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX, Futuris, VyralX]
-
+    timeout-minutes: 1
     steps:
-      - name: Check out monorepo
-        uses: actions/checkout@v4
-        with:
-          path: monorepo
-          fetch-depth: 0
-
-      - name: Determine whether this agent changed
-        id: filter
+      - name: Explain the no-op
         shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
-          HEAD_SHA: ${{ github.sha }}
-          AGENT: ${{ matrix.agent }}
-        working-directory: monorepo
         run: |
           set -euo pipefail
-          if [[ "$EVENT_NAME" == "workflow_dispatch" || ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "target_changed=true" >> "$GITHUB_OUTPUT"
-          elif ! git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- ".github/workflows/mirror-subrepos.yml"; then
-            # A change to the mirror policy requests one full reconciliation.
-            echo "target_changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- "$AGENT"; then
-            echo "target_changed=false" >> "$GITHUB_OUTPUT"
-            echo "No files changed under $AGENT; skipping."
-          else
-            echo "target_changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Require an explicit cross-repository write token
-        if: steps.filter.outputs.target_changed == 'true'
-        shell: bash
-        env:
-          MIRROR_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
-        run: |
-          set -euo pipefail
-          if [[ -z "$MIRROR_TOKEN" ]]; then
-            echo "::error::Set GH_PAT_MIRROR with contents-write access to all ten agent repositories."
-            exit 1
-          fi
-
-      - name: Check out standalone repository
-        if: steps.filter.outputs.target_changed == 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: surendra2304/${{ matrix.agent }}
-          ref: main
-          token: ${{ secrets.GH_PAT_MIRROR }}
-          path: standalone/${{ matrix.agent }}
-          fetch-depth: 0
-
-      - name: Synchronize subtree and push directly to main
-        if: steps.filter.outputs.target_changed == 'true'
-        shell: bash
-        env:
-          AGENT: ${{ matrix.agent }}
-          SOURCE_SHA: ${{ github.sha }}
-        working-directory: standalone/${{ matrix.agent }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Synchronize additions, modifications, and deletions from monorepo subtree to standalone repo
-          rsync -a --delete --exclude='.git/' "$GITHUB_WORKSPACE/monorepo/$AGENT/" ./
-          git add --all
-          if git diff --cached --quiet; then
-            echo "Standalone $AGENT is already in sync with monorepo subtree. Nothing to push."
-            exit 0
-          fi
-
-          git commit -m "chore(mirror): direct sync $AGENT from monorepo ${SOURCE_SHA:0:12}"
-          git push origin main
-          echo "Successfully pushed latest $AGENT changes directly to main branch."
+          echo "::notice::Cross-repository mirroring is disabled."
+          echo "This workflow does not check out, synchronize, push to, or open pull requests in other repositories."
