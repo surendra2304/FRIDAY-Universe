@@ -1,4 +1,5 @@
-# Narrow the three shared-context heavy-task images to their code and shared library.
+# Keep shared-context builds constrained to the three workloads that need the
+# fleet coordination client and the shared mesh package.
 **
 !Forge/
 !Forge/**
@@ -8,3 +9,23 @@
 !Sentinel/**
 !mesh/
 !mesh/**
+
+# Never bake local credentials, VCS data, generated caches, or workspace state
+# into an image built with the monorepo as its context.
+**/.env
+**/.env.*
+**/.git
+**/.git/**
+**/__pycache__/**
+**/.pytest_cache/**
+**/.ruff_cache/**
+**/.mypy_cache/**
+**/.venv/**
+**/venv/**
+**/node_modules/**
+**/workspaces/**
+**/artifacts/**
+**/reports_and_data/**
+**/*.sqlite
+**/*.sqlite3
+**/*.db
