@@ -15,6 +15,7 @@ def _source(path: str) -> str:
 def test_forge_futuris_and_sentinel_use_the_shared_lease_primitive():
     forge = _source("Forge/app/verification/engine.py")
     futuris = _source("Futuris/futuris/core/pipeline.py")
+    forecast_engine = _source("Futuris/futuris/core/engine.py")
     sentinel = _source("Sentinel/sentinel/core/orchestrator/executor.py")
 
     assert "from mesh.heavy_task import" in forge
@@ -22,6 +23,10 @@ def test_forge_futuris_and_sentinel_use_the_shared_lease_primitive():
     assert "forge:verification-battery" in forge
     assert "coordinator.run(" in futuris
     assert 'task_id="futuris:model-fit"' in futuris
+    assert "run_cpu_process_cancellable" in futuris
+    assert "HeavyTaskCoordinator" in forecast_engine
+    assert "run_cpu_process_cancellable" in forecast_engine
+    assert 'task_id="futuris:forecast-engine"' in forecast_engine
     assert "from mesh.heavy_task import" in sentinel
     assert "_requires_shared_heavy_lease" in sentinel
     assert 'task_id="sentinel:security-scan"' in sentinel
