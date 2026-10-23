@@ -42,7 +42,7 @@ ORACLE_VYRAL_URL="oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@${ORACLE
 
 if [ "$SERVER_ROLE" = "1" ]; then
     echo "=== [3/4] Installing Server 1 Packages & Registering Services ==="
-    "$VENV_DIR/bin/pip" install --no-cache-dir structlog flask flask-cors alembic apscheduler prometheus-client websockets beautifulsoup4 pypdf python-docx || true
+    "$VENV_DIR/bin/pip" install --no-cache-dir structlog flask flask-cors alembic apscheduler prometheus-client websockets beautifulsoup4 pypdf python-docx pandas numpy scipy python-binance ccxt openai anthropic google-genai || true
     "$VENV_DIR/bin/pip" install -e "$REPO_DIR/FRIDAY" --no-deps 2>/dev/null || true
 
     # 1. FRIDAY (Port 10000)
@@ -61,6 +61,7 @@ Environment="DATABASE_URL=$ORACLE_CORE_URL"
 ExecStart=$VENV_DIR/bin/python -m uvicorn friday.api.server:app --host 0.0.0.0 --port 10000 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=200M
 
 [Install]
@@ -83,6 +84,7 @@ Environment="DATABASE_URL=$ORACLE_CORE_URL"
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=180M
 
 [Install]
@@ -105,6 +107,7 @@ Environment="DATABASE_URL=$ORACLE_CORE_URL"
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=180M
 
 [Install]
@@ -127,6 +130,7 @@ Environment="DATABASE_URL=$ORACLE_CORE_URL"
 ExecStart=$VENV_DIR/bin/python dashboard.py
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=180M
 
 [Install]
@@ -149,6 +153,7 @@ Environment="DATABASE_URL=$ORACLE_CORE_URL"
 ExecStart=$VENV_DIR/bin/python -m uvicorn futuris.api.app:app --host 0.0.0.0 --port 8004 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=180M
 
 [Install]
@@ -171,6 +176,7 @@ Environment="DATABASE_URL=$ORACLE_CORE_URL"
 ExecStart=$VENV_DIR/bin/python -m uvicorn intelx.app.main:app --host 0.0.0.0 --port 8005 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=180M
 
 [Install]
@@ -193,6 +199,7 @@ Environment="DATABASE_URL=$ORACLE_CORE_URL"
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=180M
 
 [Install]
@@ -226,6 +233,7 @@ Environment="DATABASE_URL=$ORACLE_VYRAL_URL"
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8010 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=250M
 
 [Install]
@@ -252,6 +260,7 @@ Environment="SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c"
 ExecStart=$VENV_DIR/bin/python -m uvicorn sentinel.apps.api.main:app --host 0.0.0.0 --port 8008 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=200M
 
 [Install]
@@ -274,6 +283,7 @@ Environment="DATABASE_URL=$ORACLE_CORE_URL"
 ExecStart=$VENV_DIR/bin/python -m uvicorn apps.api.src.cortex_api.main:app --host 0.0.0.0 --port 8009 --workers 1
 Restart=always
 RestartSec=5
+TimeoutStopSec=10
 MemoryMax=200M
 
 [Install]
