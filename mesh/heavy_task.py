@@ -19,10 +19,12 @@ import random
 import socket
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, TypeVar
 
 logger = logging.getLogger(__name__)
+_ResultT = TypeVar("_ResultT")
 
 _ACQUIRE_SCRIPT = """
 if redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) then
@@ -124,8 +126,8 @@ class HeavyTaskCoordinator:
         self.key_prefix = key_prefix.strip().strip(":")
         if not self.key_prefix:
             raise ValueError("key_prefix must contain non-colon characters")
-        self.lock_key = f"{self.key_prefix}:heavy-task:lease"
-        self.fencing_key = f"{self.key_prefix}:heavy-task:fence"
+        self.lock_key = f"{self.key_prefix}:{{heavy-task}}:lease"
+        self.fencing_key = f"{self.key_prefix}:{{heavy-task}}:fence"
         self.lease_seconds = float(lease_seconds)
         self.lease_ms = int(self.lease_seconds * 1000)
         self.heartbeat_interval = float(heartbeat)
@@ -231,6 +233,56 @@ class HeavyTaskCoordinator:
                 sleep_for = min(sleep_for, max(0.0, deadline - time.monotonic()))
             await asyncio.sleep(sleep_for)
             delay = min(self.max_poll_interval, delay * 1.7)
+
+
+    async def run(
+        self,
+        task_id: str,
+        operation: Callable[["HeavyTaskLease"], Awaitable[_ResultT]],
+        *,
+        owner: str | None = None,
+        wait_timeout: float | None = 0.0,
+    ) -> _ResultT:
+        """Run an async operation under the lease and cancel it if ownership is lost.
+
+        The operation receives its lease and should call ensure_valid() before
+        irreversible checkpoints. When automatic renewal detects ownership loss
+        or a backend outage, the coordinator cancels the operation and raises
+        HeavyTaskLeaseLost instead of returning a success-shaped result.
+        """
+        if not callable(operation):
+            raise ValueError("operation must be an async callable accepting a lease")
+        async with self.hold(
+            task_id,
+            owner=owner,
+            wait_timeout=wait_timeout,
+        ) as lease:
+            work_task = asyncio.create_task(
+                operation(lease),
+                name=f"heavy-task-work:{task_id}",
+            )
+            lost_task = asyncio.create_task(
+                lease._lost_event.wait(),
+                name=f"heavy-task-loss-watch:{task_id}",
+            )
+            try:
+                await asyncio.wait(
+                    {work_task, lost_task},
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                if lease.is_lost:
+                    if not work_task.done():
+                        work_task.cancel()
+                    await asyncio.gather(work_task, return_exceptions=True)
+                    lease.ensure_valid()
+                lease.ensure_valid()
+                return await work_task
+            finally:
+                lost_task.cancel()
+                await asyncio.gather(lost_task, return_exceptions=True)
+                if not work_task.done():
+                    work_task.cancel()
+                    await asyncio.gather(work_task, return_exceptions=True)
 
     @staticmethod
     def _validate_label(value: str, field: str) -> str:
