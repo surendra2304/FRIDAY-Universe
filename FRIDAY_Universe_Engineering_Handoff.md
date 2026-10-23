@@ -37,7 +37,7 @@ Use these labels in every status report:
 
 # 2. Executive summary
 
-FRIDAY Universe is a sovereign, self-hosted multi-agent system built from ten independent repositories. FRIDAY is the user-facing orchestrator, Inference is the canonical model/provider reasoning gateway, and Memora is the single long-term cross-agent memory authority. Eight other specialist capabilities (including Inference and Memora among the nine total systems) retain domain responsibilities, independent safety controls, service APIs and their own operational records.
+FRIDAY Universe is a sovereign, self-hosted multi-agent system built from ten independent repositories. FRIDAY is the user-facing orchestrator, Inference is the canonical model/provider reasoning gateway, and Memora is the single long-term cross-agent memory authority. Eight other specialist capabilities (including Inference and Memora among the ten total systems) retain domain responsibilities, independent safety controls, service APIs and their own operational records.
 
 The intended production deployment is on Oracle Cloud Infrastructure. The user's current reported production host is an AMD64 Always Free instance with approximately 1 GB RAM and 50 GB storage. The desired replacement is an ARM64 A1 Flex instance with 2 OCPUs and 12 GB RAM, provisioned through capacity retry/sniper scripts. Do not assume the ARM instance is already allocated: validate OCI state before migration. The user's longer-term plan is to delete the interim AMD host only after verified cutover and consolidate available block-volume capacity onto the ARM instance. The specification originally names a 150 GB target boot volume; the user's later plan refers to using up to 200 GB. The actual allowed boot-volume size and tenancy quota must be checked in OCI rather than assumed.
 
@@ -654,19 +654,13 @@ No unbounded background promise. If the session ends, leave a durable handoff co
 
 # 16. First-hour resume checklist
 
-- [ ] Read this document and the master specification.
-- [ ] Check current GitHub main SHAs and PR/CI state; update Section 12 in notes if changed.
-- [ ] Start or repair the local MCP bridge; confirm endpoint and tool discovery.
-- [ ] Confirm Antigravity is not independently modifying the repositories.
-- [ ] Recheck the saved recovery ZIP and create a new backup of current local dirty state.
-- [ ] Run status/diff/untracked inventory in all nine repos. Save a manifest; don't change files yet.
-- [ ] Inspect merged PR diffs and check whether local uncommitted changes overlap those files.
-- [ ] Verify credential dossier is ignored/untracked and inspect history for possible secret exposure without outputting credentials.
-- [ ] Verify OCI auth, running instance inventory and whether the ARM allocation is actually complete.
-- [ ] Verify SSH read-only diagnostics and Dokploy app/branch/deployed-SHA mapping.
-- [ ] Verify PostgreSQL actual version, volume mount, databases, roles, extensions, app connections and backups.
-- [ ] Inspect the current failing Cortex PR, open Futuris PR and Stratex PR #7/#9; don't assume old statuses.
-- [ ] Create a prioritized implementation plan only after all above facts are fresh.
+- [ ] Refresh current default-branch SHAs for all ten GitHub repositories.
+- [ ] Inventory open, closed and merged PRs, including the closed Task 1/2/3 work, and inspect exact patches before restoring any code.
+- [ ] Review all latest workflow runs and required checks on their exact head SHAs.
+- [ ] Confirm mirroring opens reviewable PRs and never force-pushes or writes directly to standalone `main`.
+- [ ] Check tracked paths and commit history for possible secret exposure without printing secret values.
+- [ ] Record verified progress, PR URLs, tests and unresolved tasks in the repository handoff.
+- [ ] Do not access laptop files or Oracle Cloud/Dokploy for this GitHub-only execution.
 
 # 17. Required reporting format at every checkpoint
 
