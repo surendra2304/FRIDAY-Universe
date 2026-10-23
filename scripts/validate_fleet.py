@@ -35,6 +35,8 @@ def mirror_workflow_violations(content: str) -> list[str]:
         problems.append("mirror workflow must not push directly to a standalone default branch")
     if "secrets.GH_PAT_MIRROR || github.token" in content:
         problems.append("cross-repository writes must not fall back to GITHUB_TOKEN")
+    if re.search(r"(?m)^\\s*rsync\\s+[^\\n]*--delete\\b", content):
+        problems.append("mirror workflow must not automatically delete standalone-only files")
     if "secrets.GH_PAT_MIRROR" not in content:
         problems.append("mirror workflow must require the explicit cross-repository write token")
     if "gh pr create" not in content:
