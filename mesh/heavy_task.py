@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import math
 import os
 import random
 import socket
@@ -89,6 +90,7 @@ class HeavyTaskCoordinator:
         if (
             isinstance(lease_seconds, bool)
             or not isinstance(lease_seconds, (int, float))
+            or not math.isfinite(lease_seconds)
             or not 3.0 <= lease_seconds <= 86400.0
         ):
             raise ValueError("lease_seconds must be between 3 and 86400 seconds")
@@ -98,6 +100,7 @@ class HeavyTaskCoordinator:
         if (
             isinstance(heartbeat, bool)
             or not isinstance(heartbeat, (int, float))
+            or not math.isfinite(heartbeat)
             or heartbeat <= 0
             or heartbeat >= lease_seconds / 2.0
         ):
@@ -105,18 +108,22 @@ class HeavyTaskCoordinator:
         if (
             isinstance(poll_interval, bool)
             or not isinstance(poll_interval, (int, float))
+            or not math.isfinite(poll_interval)
             or poll_interval <= 0
         ):
             raise ValueError("poll_interval must be positive")
         if (
             isinstance(max_poll_interval, bool)
             or not isinstance(max_poll_interval, (int, float))
+            or not math.isfinite(max_poll_interval)
             or max_poll_interval < poll_interval
         ):
             raise ValueError("max_poll_interval must be at least poll_interval")
 
         self.client = client
-        self.key_prefix = key_prefix.rstrip(":")
+        self.key_prefix = key_prefix.strip().strip(":")
+        if not self.key_prefix:
+            raise ValueError("key_prefix must contain non-colon characters")
         self.lock_key = f"{self.key_prefix}:heavy-task:lease"
         self.fencing_key = f"{self.key_prefix}:heavy-task:fence"
         self.lease_seconds = float(lease_seconds)
@@ -185,6 +192,7 @@ class HeavyTaskCoordinator:
         if wait_timeout is not None and (
             isinstance(wait_timeout, bool)
             or not isinstance(wait_timeout, (int, float))
+            or not math.isfinite(wait_timeout)
             or wait_timeout < 0
         ):
             raise ValueError("wait_timeout must be non-negative or None")
@@ -247,13 +255,17 @@ class HeavyTaskCoordinator:
                 f"Redis inspection failed ({type(exc).__name__})"
             ) from exc
 
-        if raw_value is None or ttl_ms <= 0:
+        if raw_value is None or ttl_ms in (-2, 0):
             return {
                 "locked": False,
                 "task_id": None,
                 "owner": None,
                 "lease_remaining_ms": 0,
             }
+        if ttl_ms < 0:
+            raise HeavyTaskBackendError(
+                "heavy-task lock is missing its expiry; refusing to report a healthy lease"
+            )
         try:
             details = json.loads(raw_value)
         except (TypeError, ValueError) as exc:
