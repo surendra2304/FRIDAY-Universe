@@ -36,9 +36,35 @@ echo "class StrEnum(str, Enum): pass" | sudo tee -a /usr/lib/python3.10/enum.py 
 echo "=== [2/4] Configuring Database DSNs (Oracle Autonomous 23ai) ==="
 ORACLE_CORE_DSN="(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
 ORACLE_CORE_URL="oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@${ORACLE_CORE_DSN}"
+ORACLE_CORE_ASYNC_URL="oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@${ORACLE_CORE_DSN}"
 
 ORACLE_VYRAL_DSN="(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
 ORACLE_VYRAL_URL="oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@${ORACLE_VYRAL_DSN}"
+ORACLE_VYRAL_ASYNC_URL="oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@${ORACLE_VYRAL_DSN}"
+
+ENV_FILE="/etc/default/friday_universe.env"
+if [ "$SERVER_ROLE" = "1" ]; then
+    sudo tee "$ENV_FILE" > /dev/null << EOF
+DATABASE_URL=$ORACLE_CORE_URL
+ORACLE_CORE_URL=$ORACLE_CORE_URL
+ORACLE_CORE_ASYNC_URL=$ORACLE_CORE_ASYNC_URL
+ORACLE_VYRAL_URL=$ORACLE_VYRAL_URL
+EOF
+elif [ "$SERVER_ROLE" = "2" ]; then
+    sudo tee "$ENV_FILE" > /dev/null << EOF
+DATABASE_URL=$ORACLE_VYRAL_URL
+ORACLE_CORE_URL=$ORACLE_CORE_URL
+ORACLE_VYRAL_URL=$ORACLE_VYRAL_URL
+ORACLE_VYRAL_ASYNC_URL=$ORACLE_VYRAL_ASYNC_URL
+SENTINEL_AUDIT_HMAC_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e
+SENTINEL_AUDIT_SIGNING_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e
+SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c
+EOF
+fi
+sudo chmod 600 "$ENV_FILE"
+
+# Purge any local SQLite files to enforce zero persistent local SQLite
+find "$REPO_DIR" -maxdepth 3 \( -name "*.db" -o -name "*.sqlite" -o -name "*.sqlite3" \) -delete 2>/dev/null || true
 
 if [ "$SERVER_ROLE" = "1" ]; then
     echo "=== [3/4] Installing Server 1 Packages & Registering Services ==="
@@ -57,7 +83,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/FRIDAY
 Environment="PYTHONPATH=$REPO_DIR/FRIDAY/src:$REPO_DIR"
 Environment="PORT=10000"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn friday.api.server:app --host 0.0.0.0 --port 10000 --workers 1
 Restart=always
 RestartSec=5
@@ -80,7 +106,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/Inference
 Environment="PYTHONPATH=$REPO_DIR/Inference:$REPO_DIR"
 Environment="PORT=8001"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 1
 Restart=always
 RestartSec=5
@@ -103,7 +129,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/Memora
 Environment="PYTHONPATH=$REPO_DIR/Memora:$REPO_DIR"
 Environment="PORT=8002"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --workers 1
 Restart=always
 RestartSec=5
@@ -126,7 +152,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/Stratex
 Environment="PYTHONPATH=$REPO_DIR/Stratex:$REPO_DIR"
 Environment="PORT=8003"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python dashboard.py
 Restart=always
 RestartSec=5
@@ -149,7 +175,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/Futuris
 Environment="PYTHONPATH=$REPO_DIR/Futuris:$REPO_DIR"
 Environment="PORT=8004"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn futuris.api.app:app --host 0.0.0.0 --port 8004 --workers 1
 Restart=always
 RestartSec=5
@@ -172,7 +198,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/IntelX
 Environment="PYTHONPATH=$REPO_DIR/IntelX:$REPO_DIR"
 Environment="PORT=8005"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn intelx.app.main:app --host 0.0.0.0 --port 8005 --workers 1
 Restart=always
 RestartSec=5
@@ -195,7 +221,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/Forge
 Environment="PYTHONPATH=$REPO_DIR/Forge:$REPO_DIR"
 Environment="PORT=8006"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --workers 1
 Restart=always
 RestartSec=5
@@ -229,7 +255,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/VyralX
 Environment="PYTHONPATH=$REPO_DIR/VyralX:$REPO_DIR"
 Environment="PORT=8010"
-Environment="DATABASE_URL=$ORACLE_VYRAL_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8010 --workers 1
 Restart=always
 RestartSec=5
@@ -253,10 +279,7 @@ WorkingDirectory=$REPO_DIR/Sentinel
 Environment="PYTHONPATH=$REPO_DIR/Sentinel:$REPO_DIR"
 Environment="PORT=8008"
 Environment="STORAGE_BACKEND=memory"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
-Environment="SENTINEL_AUDIT_HMAC_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e"
-Environment="SENTINEL_AUDIT_SIGNING_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e"
-Environment="SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn sentinel.apps.api.main:app --host 0.0.0.0 --port 8008 --workers 1
 Restart=always
 RestartSec=5
@@ -279,7 +302,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/Cortex
 Environment="PYTHONPATH=$REPO_DIR/Cortex:$REPO_DIR"
 Environment="PORT=8009"
-Environment="DATABASE_URL=$ORACLE_CORE_URL"
+EnvironmentFile=/etc/default/friday_universe.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn apps.api.src.cortex_api.main:app --host 0.0.0.0 --port 8009 --workers 1
 Restart=always
 RestartSec=5
