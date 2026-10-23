@@ -218,7 +218,12 @@ class DatabaseManager:
         database_url: str | None = None,
     ):
         self.settings = get_settings()
-        self.db_path = db_path or (self.settings.base_dir / self.settings.database_path)
+        if db_path:
+            self.db_path = db_path
+        elif Path("/dev/shm").exists():
+            self.db_path = Path("/dev/shm/forge.db")
+        else:
+            self.db_path = self.settings.base_dir / self.settings.database_path
         self._custom_url = database_url
         self._schema_ready = False
         self._schema_lock = asyncio.Lock()

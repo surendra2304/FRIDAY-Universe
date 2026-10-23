@@ -215,6 +215,8 @@ class Settings(BaseSettings):
                 f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@"
                 f"{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
             )
+        if Path("/dev/shm").exists():
+            return "sqlite+aiosqlite:////dev/shm/forge.db"
         abs_sqlite = self.base_dir / self.database_path if not self.database_path.is_absolute() else self.database_path
         path_str = str(abs_sqlite).replace("\\", "/")
         return f"sqlite+aiosqlite:///{path_str}"
