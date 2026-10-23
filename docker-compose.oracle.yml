@@ -5,6 +5,25 @@ networks:
     driver: bridge
 
 services:
+  # Private Redis lease store. It has no published host port.
+  friday-heavy-task-redis:
+    image: redis:7-alpine
+    container_name: friday_heavy_task_redis
+    restart: unless-stopped
+    command: ["sh", "-ec", "exec redis-server --appendonly yes --save 60 1000 --requirepass \"$FRIDAY_UNIVERSE_REDIS_PASSWORD\""]
+    environment:
+      FRIDAY_UNIVERSE_REDIS_PASSWORD: ${FRIDAY_UNIVERSE_REDIS_PASSWORD:?Set a strong URL-safe FRIDAY_UNIVERSE_REDIS_PASSWORD}
+    volumes:
+      - heavy_task_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$FRIDAY_UNIVERSE_REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - friday_mesh
+
   # 1. Master Command Center & Gateway
   friday:
     build:
@@ -48,28 +67,40 @@ services:
   # 3. Forge
   forge:
     build:
-      context: ./Forge
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Forge/Dockerfile
     container_name: friday_forge
     restart: unless-stopped
     ports:
       - "8002:8002"
     env_file:
       - ./Forge/.env
+    environment:
+      FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
     networks:
       - friday_mesh
 
   # 4. Futuris
   futuris:
     build:
-      context: ./Futuris
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Futuris/Dockerfile
     container_name: friday_futuris
     restart: unless-stopped
     ports:
       - "8003:8003"
     env_file:
       - ./Futuris/.env
+    environment:
+      FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
     networks:
       - friday_mesh
 
@@ -118,14 +149,20 @@ services:
   # 8. Sentinel
   sentinel:
     build:
-      context: ./Sentinel
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Sentinel/Dockerfile
     container_name: friday_sentinel
     restart: unless-stopped
     ports:
       - "8007:8007"
     env_file:
       - ./Sentinel/.env
+    environment:
+      FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
     networks:
       - friday_mesh
 
@@ -156,3 +193,5 @@ services:
       - ./VyralX/.env
     networks:
       - friday_mesh
+volumes:
+  heavy_task_redis_data:
