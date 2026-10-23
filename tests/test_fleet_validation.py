@@ -17,6 +17,15 @@ class FleetValidationTests(unittest.TestCase):
         self.assertTrue(any("force-push" in problem for problem in problems))
         self.assertTrue(any("directly" in problem for problem in problems))
 
+    def test_mirror_workflow_rejects_automatic_file_deletion(self):
+        unsafe = """
+        agent: [FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX, Futuris, VyralX]
+        token: ${{ secrets.GH_PAT_MIRROR }}
+        rsync -a --delete source/ destination/
+        gh pr create
+        """
+        self.assertTrue(any("delete standalone-only" in problem for problem in mirror_workflow_violations(unsafe)))
+
     def test_mirror_workflow_rejects_token_fallback(self):
         unsafe = """
         agent: [FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX, Futuris, VyralX]
