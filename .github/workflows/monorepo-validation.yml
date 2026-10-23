@@ -46,7 +46,7 @@ jobs:
       - name: Run repository and cancellable CPU-worker tests
         env:
           PYTHONPATH: ${{ github.workspace }}/Futuris
-        run: python -m pytest -q tests Futuris/tests/infra/test_cpu_process.py
+        run: python -m pytest -q tests Futuris/tests/infra/test_cpu_process.py --confcutdir=Futuris/tests/infra
 
       - name: Validate repository and workflow safety
         run: python scripts/validate_fleet.py
