@@ -58,6 +58,10 @@ workspaces/
 *.csv
 
 *.env*
+*.ass
+*.jpg
+temp_*
+**/temp_*/
 
 
 # Secrets and Credentials

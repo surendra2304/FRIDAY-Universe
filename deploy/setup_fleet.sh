@@ -26,8 +26,12 @@ fi
 
 "$VENV_DIR/bin/pip" install --upgrade --no-cache-dir pip setuptools wheel
 "$VENV_DIR/bin/pip" install --no-cache-dir \
-    fastapi uvicorn pydantic oracledb sqlalchemy httpx requests python-dotenv \
-    cryptography rich psutil
+    fastapi uvicorn pydantic pydantic-settings oracledb sqlalchemy httpx requests python-dotenv \
+    cryptography rich psutil aiohttp aiosqlite asyncpg jinja2 python-multipart aiofiles
+
+# Compatibility patch for Python 3.10
+echo "UTC = timezone.utc" | sudo tee -a /usr/lib/python3.10/datetime.py 2>/dev/null || true
+echo "class StrEnum(str, Enum): pass" | sudo tee -a /usr/lib/python3.10/enum.py 2>/dev/null || true
 
 echo "=== [2/4] Configuring Database DSNs (Oracle Autonomous 23ai) ==="
 ORACLE_CORE_DSN="(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
@@ -37,7 +41,9 @@ ORACLE_VYRAL_DSN="(description=(retry_count=20)(retry_delay=3)(address=(protocol
 ORACLE_VYRAL_URL="oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@${ORACLE_VYRAL_DSN}"
 
 if [ "$SERVER_ROLE" = "1" ]; then
-    echo "=== [3/4] Registering Server 1 Core Fleet Services ==="
+    echo "=== [3/4] Installing Server 1 Packages & Registering Services ==="
+    "$VENV_DIR/bin/pip" install --no-cache-dir structlog flask flask-cors alembic apscheduler prometheus-client websockets beautifulsoup4 pypdf python-docx || true
+    "$VENV_DIR/bin/pip" install -e "$REPO_DIR/FRIDAY" --no-deps 2>/dev/null || true
 
     # 1. FRIDAY (Port 10000)
     sudo tee /etc/systemd/system/FRIDAY.service > /dev/null << EOF
@@ -118,7 +124,7 @@ WorkingDirectory=$REPO_DIR/Stratex
 Environment="PYTHONPATH=$REPO_DIR/Stratex:$REPO_DIR"
 Environment="PORT=8003"
 Environment="DATABASE_URL=$ORACLE_CORE_URL"
-ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8003 --workers 1
+ExecStart=$VENV_DIR/bin/python dashboard.py
 Restart=always
 RestartSec=5
 MemoryMax=180M
@@ -201,7 +207,8 @@ EOF
     done
 
 elif [ "$SERVER_ROLE" = "2" ]; then
-    echo "=== [3/4] Registering Server 2 Specialist Fleet Services ==="
+    echo "=== [3/4] Installing Server 2 Packages & Registering Services ==="
+    "$VENV_DIR/bin/pip" install --no-cache-dir pyjwt google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2 redis sse-starlette structlog pyyaml || true
 
     # 1. VyralX (Port 8010)
     sudo tee /etc/systemd/system/VyralX.service > /dev/null << EOF
@@ -239,6 +246,9 @@ Environment="PYTHONPATH=$REPO_DIR/Sentinel:$REPO_DIR"
 Environment="PORT=8008"
 Environment="STORAGE_BACKEND=memory"
 Environment="DATABASE_URL=$ORACLE_CORE_URL"
+Environment="SENTINEL_AUDIT_HMAC_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e"
+Environment="SENTINEL_AUDIT_SIGNING_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e"
+Environment="SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c"
 ExecStart=$VENV_DIR/bin/python -m uvicorn sentinel.apps.api.main:app --host 0.0.0.0 --port 8008 --workers 1
 Restart=always
 RestartSec=5
@@ -279,16 +289,20 @@ EOF
 fi
 
 echo "=== [4/4] Verifying Service Liveness ==="
-sleep 3
+sleep 5
 if [ "$SERVER_ROLE" = "1" ]; then
+    declare -A S1_NAMES=([10000]="FRIDAY" [8001]="Inference" [8002]="Memora" [8003]="Stratex" [8004]="Futuris" [8005]="IntelX" [8006]="Forge")
     for p in 10000 8001 8002 8003 8004 8005 8006; do
-        echo -n "Port $p: "
-        curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:$p/health" || echo "Starting up..."
+        echo -n "${S1_NAMES[$p]} (Port $p): "
+        CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$p/health" || echo "ERR")
+        echo "HTTP $CODE"
     done
 elif [ "$SERVER_ROLE" = "2" ]; then
+    declare -A S2_NAMES=([8010]="VyralX" [8008]="Sentinel" [8009]="Cortex")
     for p in 8010 8008 8009; do
-        echo -n "Port $p: "
-        curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:$p/health" || echo "Starting up..."
+        echo -n "${S2_NAMES[$p]} (Port $p): "
+        CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$p/health" || echo "ERR")
+        echo "HTTP $CODE"
     done
 fi
 
