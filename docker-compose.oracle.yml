@@ -38,15 +38,15 @@ services:
     environment:
       - PORT=10000
       - HOST=0.0.0.0
-      - CORTEX_URL=http://cortex:8001
-      - FORGE_URL=http://forge:8002
-      - FUTURIS_URL=http://futuris:8003
-      - INFERENCE_URL=http://inference:8004
-      - INTELX_URL=http://intelx:8005
-      - MEMORA_URL=http://memora:8006
-      - SENTINEL_URL=http://sentinel:8007
-      - STRATEX_URL=http://stratex:8008
-      - VYRALX_URL=http://vyralx:8010
+      - CORTEX_URL=http://cortex:8000
+      - FORGE_URL=http://forge:8000
+      - FUTURIS_URL=http://futuris:8000
+      - INFERENCE_URL=http://inference:8000
+      - INTELX_URL=http://intelx:8000
+      - MEMORA_URL=http://memora:8000
+      - SENTINEL_URL=http://sentinel:8000
+      - STRATEX_URL=http://stratex:8000
+      - VYRALX_URL=http://vyralx:8000
     networks:
       - friday_mesh
 
@@ -57,8 +57,6 @@ services:
       dockerfile: Dockerfile
     container_name: friday_cortex
     restart: unless-stopped
-    ports:
-      - "8001:8001"
     env_file:
       - ./Cortex/.env
     networks:
@@ -71,8 +69,6 @@ services:
       dockerfile: Forge/Dockerfile
     container_name: friday_forge
     restart: unless-stopped
-    ports:
-      - "8002:8002"
     env_file:
       - ./Forge/.env
     environment:
@@ -91,8 +87,6 @@ services:
       dockerfile: Futuris/Dockerfile
     container_name: friday_futuris
     restart: unless-stopped
-    ports:
-      - "8003:8003"
     env_file:
       - ./Futuris/.env
     environment:
@@ -111,8 +105,6 @@ services:
       dockerfile: Dockerfile
     container_name: friday_inference
     restart: unless-stopped
-    ports:
-      - "8004:8004"
     env_file:
       - ./Inference/.env
     networks:
@@ -125,8 +117,6 @@ services:
       dockerfile: Dockerfile
     container_name: friday_intelx
     restart: unless-stopped
-    ports:
-      - "8005:8005"
     env_file:
       - ./IntelX/.env
     networks:
@@ -139,8 +129,6 @@ services:
       dockerfile: Dockerfile
     container_name: friday_memora
     restart: unless-stopped
-    ports:
-      - "8006:8006"
     env_file:
       - ./Memora/.env
     networks:
@@ -153,8 +141,6 @@ services:
       dockerfile: Sentinel/Dockerfile
     container_name: friday_sentinel
     restart: unless-stopped
-    ports:
-      - "8007:8007"
     env_file:
       - ./Sentinel/.env
     environment:
@@ -173,8 +159,6 @@ services:
       dockerfile: Dockerfile
     container_name: friday_stratex
     restart: unless-stopped
-    ports:
-      - "8008:8008"
     env_file:
       - ./Stratex/.env
     networks:
@@ -187,8 +171,6 @@ services:
       dockerfile: Dockerfile
     container_name: friday_vyralx
     restart: unless-stopped
-    ports:
-      - "8010:8000"
     env_file:
       - ./VyralX/.env
     networks:
