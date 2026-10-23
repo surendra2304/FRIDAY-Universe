@@ -39,6 +39,31 @@ def test_compose_shares_private_authenticated_redis_between_workloads():
     assert "--requirepass" in " ".join(redis["command"])
     assert "heavy_task_redis_data:/data" in redis["volumes"]
 
+    # Only the public FRIDAY gateway is mapped to the host. All specialist APIs
+    # must stay private and reachable through their standardized port 8000.
+    assert services["friday"]["ports"] == ["10000:10000"]
+    internal_urls = {
+        "CORTEX_URL": "http://cortex:8000",
+        "FORGE_URL": "http://forge:8000",
+        "FUTURIS_URL": "http://futuris:8000",
+        "INFERENCE_URL": "http://inference:8000",
+        "INTELX_URL": "http://intelx:8000",
+        "MEMORA_URL": "http://memora:8000",
+        "SENTINEL_URL": "http://sentinel:8000",
+        "STRATEX_URL": "http://stratex:8000",
+        "VYRALX_URL": "http://vyralx:8000",
+    }
+    friday_env = services["friday"]["environment"]
+    assert isinstance(friday_env, list)
+    for variable, url in internal_urls.items():
+        assert f"{variable}={url}" in friday_env
+
+    for specialist in (
+        "cortex", "forge", "futuris", "inference", "intelx",
+        "memora", "sentinel", "stratex", "vyralx",
+    ):
+        assert "ports" not in services[specialist]
+
     for service_name, dockerfile in (
         ("forge", "Forge/Dockerfile"),
         ("futuris", "Futuris/Dockerfile"),
