@@ -1,0 +1,10 @@
+# Narrow the three shared-context heavy-task images to their code and shared library.
+**
+!Forge/
+!Forge/**
+!Futuris/
+!Futuris/**
+!Sentinel/
+!Sentinel/**
+!mesh/
+!mesh/**
