@@ -41,7 +41,10 @@ def test_compose_shares_private_authenticated_redis_between_workloads():
     assert redis["image"] == "redis:7-alpine"
     assert "ports" not in redis
     assert "FRIDAY_UNIVERSE_REDIS_PASSWORD" in redis["environment"]
-    assert "--requirepass" in " ".join(redis["command"])
+    redis_command = " ".join(redis["command"])
+    assert "--requirepass" in redis_command
+    assert "--appendonly yes" in redis_command
+    assert "--appendfsync always" in redis_command
     assert "heavy_task_redis_data:/data" in redis["volumes"]
 
     # Only the public FRIDAY gateway is mapped to the host. All specialist APIs
