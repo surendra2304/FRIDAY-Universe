@@ -382,8 +382,10 @@ def coordinator_from_environment(
             )
         return None
     prefix = env.get("FRIDAY_UNIVERSE_HEAVY_TASK_KEY_PREFIX", "friday-universe").strip()
-    if not prefix:
-        raise ValueError("FRIDAY_UNIVERSE_HEAVY_TASK_KEY_PREFIX must not be empty")
+    if not prefix or any(char.isspace() for char in prefix) or not prefix.strip(":"):
+        raise ValueError(
+            "FRIDAY_UNIVERSE_HEAVY_TASK_KEY_PREFIX must be non-empty and contain no whitespace"
+        )
     try:
         return HeavyTaskCoordinator.from_url(url, key_prefix=prefix)
     except (ValueError, HeavyTaskBackendError):
