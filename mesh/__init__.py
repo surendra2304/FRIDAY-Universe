@@ -53,6 +53,7 @@ _EXPORT_MODULES = {
     "HeavyTaskCoordinator": "heavy_task",
     "HeavyTaskLease": "heavy_task",
     "HeavyTaskLeaseLost": "heavy_task",
+    "coordinator_from_environment": "heavy_task",
 }
 
 __all__ = list(_EXPORT_MODULES)
