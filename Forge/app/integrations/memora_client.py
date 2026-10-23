@@ -89,11 +89,14 @@ class MemoraClient:
         if local_db_path:
             self.local_db_path = local_db_path
         else:
-            cand = Path("d:/FRIDAY Universe/Memora/data/memora.db")
-            if cand.exists():
-                self.local_db_path = str(cand)
+            if Path("/dev/shm").exists():
+                self.local_db_path = "/dev/shm/forge_memora.db"
             else:
-                self.local_db_path = str(settings.data_dir / "memora.db")
+                cand = Path("d:/FRIDAY Universe/Memora/data/memora.db")
+                if cand.exists():
+                    self.local_db_path = str(cand)
+                else:
+                    self.local_db_path = str(settings.data_dir / "memora.db")
 
     def _get_headers(self) -> dict[str, str]:
         headers = {
