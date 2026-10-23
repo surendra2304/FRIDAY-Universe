@@ -8,7 +8,7 @@ services:
     image: redis:7-alpine
     container_name: friday_heavy_task_redis
     restart: unless-stopped
-    command: ["sh", "-ec", "exec redis-server --appendonly yes --save 60 1000 --requirepass \"$$FRIDAY_UNIVERSE_REDIS_PASSWORD\""]
+    command: ["sh", "-ec", "exec redis-server --appendonly yes --appendfsync always --save 60 1000 --requirepass \"$$FRIDAY_UNIVERSE_REDIS_PASSWORD\""]
     environment:
       FRIDAY_UNIVERSE_REDIS_PASSWORD: ${FRIDAY_UNIVERSE_REDIS_PASSWORD:?Set a strong URL-safe FRIDAY_UNIVERSE_REDIS_PASSWORD}
     volumes:
