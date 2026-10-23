@@ -10,6 +10,7 @@ from mesh.heavy_task import (
     HeavyTaskBackendError,
     HeavyTaskCoordinator,
     HeavyTaskLeaseLost,
+    coordinator_from_environment,
 )
 
 
@@ -289,6 +290,23 @@ class HeavyTaskCoordinatorTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(result, {"status": "verified", "checks": 12})
         self.assertFalse((await self.coordinator_b.inspect())["locked"])
+
+
+    async def test_configuration_is_optional_for_local_development(self) -> None:
+        self.assertIsNone(coordinator_from_environment({}))
+
+    async def test_required_mode_fails_closed_without_redis_url(self) -> None:
+        with self.assertRaisesRegex(HeavyTaskBackendError, "REDIS_URL is required"):
+            coordinator_from_environment({
+                "FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS": "true",
+            })
+
+    async def test_invalid_key_prefix_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "key_prefix"):
+            coordinator_from_environment({
+                "FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL": "redis://localhost:6379/0",
+                "FRIDAY_UNIVERSE_HEAVY_TASK_KEY_PREFIX": "bad prefix",
+            })
 
     async def test_invalid_task_metadata_is_rejected(self) -> None:
         for task_id in ("", "   ", "task\nname", "x" * 257):
