@@ -324,3 +324,61 @@ async def test_async_db_connection_wrapper_features():
     await wrapper.rollback()
     mock_conn.rollback.assert_called_once()
 
+
+def test_oracle_json_compilation():
+    """Verify SQLAlchemy JSON type compiles to native JSON on Oracle 23ai dialect."""
+    from sqlalchemy.dialects import oracle
+    from sqlalchemy.types import JSON
+
+    compiled = str(JSON().compile(dialect=oracle.dialect()))
+    assert compiled.upper() == "JSON"
+
+
+def test_oracle_and_postgres_url_translation():
+    """Verify DatabaseManager dynamically translates synchronous URLs to async drivers."""
+    # Test Oracle translation
+    mgr_oracle = DatabaseManager(
+        database_url="oracle+oracledb://ADMIN:secret@(description=...)"
+    )
+    url_oracle = mgr_oracle.get_effective_url()
+    assert url_oracle.startswith("oracle+oracledb://")
+
+    # Test PostgreSQL translation
+    mgr_pg = DatabaseManager(
+        database_url="postgresql://user:pass@host:5432/db"
+    )
+    assert mgr_pg.get_effective_url() == "postgresql://user:pass@host:5432/db"
+
+
+def test_mesh_private_urls_and_config():
+    """Verify Settings loads private mesh URLs and supports Oracle aliases."""
+    settings = Settings()
+    assert "10.0.0.121" in settings.friday_url or "friday" in settings.friday_url
+    assert "10.0.0.121" in settings.stratex_url or "stratex" in settings.stratex_url
+    assert "10.0.0.120" in settings.vyralx_url or "vyralx" in settings.vyralx_url
+    assert "10.0.0.120" in settings.sentinel_url or "sentinel" in settings.sentinel_url
+
+
+@pytest.mark.asyncio
+async def test_sentinel_client_identity_headers(monkeypatch):
+    """Verify Sentinel client dispatches required X-Agent-Name and correlation headers."""
+    import respx
+    from httpx import Response
+
+    client = SentinelClient(base_url="http://10.0.0.120:8008", api_key="test_sentinel_key")
+
+    with respx.mock:
+        route = respx.post("http://10.0.0.120:8008/v1/security/audit").mock(
+            return_value=Response(
+                200,
+                json={"passed": True, "verdict": "APPROVED", "critical_count": 0, "high_count": 0, "findings": []},
+            )
+        )
+        res = await client.audit_diff(task_id="task_test_001", diff_text="+ def foo(): pass\n")
+        assert res.passed is True
+        assert route.called
+        last_req = route.calls.last.request
+        assert last_req.headers["x-agent-name"] == "forge"
+        assert "task_test_001" in last_req.headers["x-correlation-id"]
+        assert "Bearer test_sentinel_key" in last_req.headers["authorization"]
+

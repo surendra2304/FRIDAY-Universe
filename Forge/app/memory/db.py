@@ -16,11 +16,92 @@ from typing import Any
 import aiosqlite
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.types import JSON
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
 
 logger = get_logger("memory.db")
+
+
+@compiles(JSON, "oracle")
+def _compile_json_oracle(_type, _compiler, **_kw):
+    """Oracle 23ai natively supports the JSON data type."""
+    return "JSON"
+
+
+SCHEMA_SQL_ORACLE = """
+CREATE TABLE IF NOT EXISTS projects (
+    id VARCHAR2(64) PRIMARY KEY,
+    name VARCHAR2(255) NOT NULL,
+    description CLOB,
+    workspace_path VARCHAR2(1024) NOT NULL,
+    config CLOB DEFAULT '{}',
+    created_at VARCHAR2(64) NOT NULL,
+    updated_at VARCHAR2(64) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+    id VARCHAR2(64) PRIMARY KEY,
+    goal CLOB NOT NULL,
+    requirements CLOB DEFAULT '[]',
+    mode VARCHAR2(32) DEFAULT 'autonomous',
+    workspace_path VARCHAR2(1024) NOT NULL,
+    max_budget NUMBER(10,2) DEFAULT 10.0,
+    budget_consumed NUMBER(10,2) DEFAULT 0.0,
+    state VARCHAR2(32) DEFAULT 'PENDING',
+    progress_percentage NUMBER(5) DEFAULT 0,
+    error_message CLOB,
+    metadata CLOB DEFAULT '{}',
+    created_at VARCHAR2(64) NOT NULL,
+    updated_at VARCHAR2(64) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS audit_events (
+    id VARCHAR2(64) PRIMARY KEY,
+    task_id VARCHAR2(64) NOT NULL,
+    event_type VARCHAR2(64) NOT NULL,
+    payload CLOB DEFAULT '{}',
+    timestamp VARCHAR2(64) NOT NULL,
+    CONSTRAINT fk_audit_events_task FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS artifacts (
+    id VARCHAR2(64) PRIMARY KEY,
+    task_id VARCHAR2(64) NOT NULL,
+    name VARCHAR2(255) NOT NULL,
+    path VARCHAR2(1024) NOT NULL,
+    file_type VARCHAR2(128) DEFAULT 'text/plain',
+    size_bytes NUMBER(12) DEFAULT 0,
+    checksum VARCHAR2(128),
+    created_at VARCHAR2(64) NOT NULL,
+    CONSTRAINT fk_artifacts_task FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS task_graphs (
+    id VARCHAR2(64) PRIMARY KEY,
+    project_id VARCHAR2(64) NOT NULL,
+    goal CLOB NOT NULL,
+    nodes CLOB DEFAULT '{}',
+    edges CLOB DEFAULT '[]',
+    status VARCHAR2(32) DEFAULT 'PENDING',
+    current_node_id VARCHAR2(64),
+    created_at VARCHAR2(64) NOT NULL,
+    updated_at VARCHAR2(64) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS checkpoints (
+    id VARCHAR2(64) PRIMARY KEY,
+    project_id VARCHAR2(64) NOT NULL,
+    task_id VARCHAR2(64),
+    step_number NUMBER(10) DEFAULT 0,
+    state_data CLOB DEFAULT '{}',
+    checksum VARCHAR2(128),
+    timestamp VARCHAR2(64) NOT NULL,
+    description CLOB
+);
+"""
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS projects (
@@ -247,7 +328,9 @@ class DatabaseManager:
 
         if "postgresql" in url or "oracle" in url:
             try:
-                if url.startswith("oracle+oracledb://"):
+                if url.startswith("postgresql://"):
+                    url = "postgresql+asyncpg://" + url[len("postgresql://"):]
+                elif url.startswith("oracle+oracledb://"):
                     url = "oracle+oracledb_async://" + url[len("oracle+oracledb://"):]
                 engine = create_async_engine(
                     url,
@@ -261,11 +344,13 @@ class DatabaseManager:
                     await conn.execute(text("SELECT 1 FROM DUAL" if "oracle" in url else "SELECT 1"))
                 self._async_engine = engine
                 self._is_postgres = True
-                logger.info(f"Connected to relational database (PostgreSQL/Oracle) at: {url.split('@')[-1]}")
+                self._is_oracle = "oracle" in url
+                db_kind = "Oracle 23ai" if self._is_oracle else "PostgreSQL"
+                logger.info(f"Connected to relational database ({db_kind}) at: {url.split('@')[-1]}")
                 return self._async_engine
             except Exception as e:
                 logger.warning(
-                    f"PostgreSQL unreachable at {url} ({type(e).__name__}: {e}). "
+                    f"Relational database unreachable at {url} ({type(e).__name__}: {e}). "
                     f"Falling back to high-performance SQLite store."
                 )
                 self._is_postgres = False
@@ -273,18 +358,19 @@ class DatabaseManager:
         return None
 
     async def _ensure_schema(self) -> None:
-        """Create tables and indexes idempotently on PostgreSQL or SQLite."""
+        """Create tables and indexes idempotently on Oracle, PostgreSQL, or SQLite."""
         if self._schema_ready:
             return
         async with self._schema_lock:
             if self._schema_ready:
                 return
 
+            schema_to_run = SCHEMA_SQL_ORACLE if getattr(self, "_is_oracle", False) else SCHEMA_SQL
             engine = await self._init_postgres_engine()
             if engine is not None and self._is_postgres:
                 try:
                     async with engine.begin() as conn:
-                        for stmt in SCHEMA_SQL.split(";"):
+                        for stmt in schema_to_run.split(";"):
                             cleaned = stmt.strip()
                             if cleaned and not cleaned.upper().startswith("PRAGMA"):
                                 try:
@@ -294,7 +380,7 @@ class DatabaseManager:
                     self._schema_ready = True
                     return
                 except Exception as e:
-                    logger.warning(f"Error ensuring PostgreSQL schema: {e}. Falling back to SQLite.")
+                    logger.warning(f"Error ensuring schema: {e}. Falling back to SQLite.")
                     self._is_postgres = False
 
             # SQLite schema initialization
