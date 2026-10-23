@@ -302,7 +302,7 @@ class HeavyTaskCoordinatorTests(unittest.IsolatedAsyncioTestCase):
             })
 
     async def test_invalid_key_prefix_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "key_prefix"):
+        with self.assertRaisesRegex(ValueError, "KEY_PREFIX"):
             coordinator_from_environment({
                 "FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL": "redis://localhost:6379/0",
                 "FRIDAY_UNIVERSE_HEAVY_TASK_KEY_PREFIX": "bad prefix",
