@@ -1,35 +1,154 @@
-name: Mirror Agents to Standalone Repositories
+name: Prepare Standalone Agent Sync Pull Requests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths:
+      - 'FRIDAY/**'
+      - 'Inference/**'
+      - 'Memora/**'
+      - 'Stratex/**'
+      - 'Forge/**'
+      - 'Cortex/**'
+      - 'Sentinel/**'
+      - 'IntelX/**'
+      - 'Futuris/**'
+      - 'VyralX/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: standalone-sync-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  mirror-subrepos:
-    name: Subtree Sync to Standalone Agent Repos
+  prepare-sync-pr:
+    name: Prepare ${{ matrix.agent }} sync PR
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: [FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX, Futuris, VyralX]
+
     steps:
-      - name: Checkout Monorepo
+      - name: Check out monorepo
         uses: actions/checkout@v4
         with:
+          path: monorepo
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT_MIRROR || github.token }}
 
-      - name: Configure Git Committer
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Mirror Agent Subtrees
+      - name: Determine whether this agent changed
+        id: filter
+        shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT_MIRROR || github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+          AGENT: ${{ matrix.agent }}
+        working-directory: monorepo
         run: |
-          AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "IntelX" "Futuris" "Forge" "VyralX" "Sentinel" "Cortex")
-          for AGENT in "${AGENTS[@]}"; do
-            if [ -d "$AGENT" ]; then
-              echo "=== Mirroring $AGENT ==="
-              git subtree split --prefix="$AGENT" -b "split-$AGENT" || true
-              git push "https://${GH_TOKEN}@github.com/surendra2304/${AGENT}.git" "split-$AGENT:main" --force || echo "Skipping or unchanged: $AGENT"
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "target_changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- "$AGENT"; then
+            echo "target_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No files changed under $AGENT; skipping."
+          else
+            echo "target_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Require an explicit cross-repository write token
+        if: steps.filter.outputs.target_changed == 'true'
+        shell: bash
+        env:
+          MIRROR_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MIRROR_TOKEN" ]]; then
+            echo "::error::Set GH_PAT_MIRROR with contents-write and pull-request-write access to all ten agent repositories. Refusing to fall back to the read-only GITHUB_TOKEN."
+            exit 1
+          fi
+
+      - name: Check out standalone repository
+        if: steps.filter.outputs.target_changed == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: surendra2304/${{ matrix.agent }}
+          ref: main
+          token: ${{ secrets.GH_PAT_MIRROR }}
+          path: standalone/${{ matrix.agent }}
+          fetch-depth: 0
+
+      - name: Build a reviewable sync commit
+        if: steps.filter.outputs.target_changed == 'true'
+        id: stage
+        shell: bash
+        env:
+          AGENT: ${{ matrix.agent }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        working-directory: standalone/${{ matrix.agent }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Synchronize additions and updates in the checked-out working tree only.
+          # Deletions are deliberately not mirrored automatically; they require
+          # explicit review so standalone-only assets cannot be silently removed.
+          # No remote default branch is ever updated by this workflow.
+          rsync -a --exclude='.git/' "$GITHUB_WORKSPACE/monorepo/$AGENT/" ./
+          git add --all
+          if git diff --cached --quiet; then
+            echo "has_diff=false" >> "$GITHUB_OUTPUT"
+            echo "Standalone $AGENT already matches the monorepo subtree."
+            exit 0
+          fi
+
+          git diff --cached --check
+          BRANCH="automation/monorepo-mirror-${SOURCE_SHA:0:12}-${RUN_ID}"
+          git switch -c "$BRANCH"
+          git commit -m "chore(mirror): sync $AGENT from monorepo ${SOURCE_SHA:0:12}"
+          echo "has_diff=true" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "changed_files=$(git diff-tree --no-commit-id --name-only -r HEAD | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Push sync branch and open pull request
+        if: steps.filter.outputs.target_changed == 'true' && steps.stage.outputs.has_diff == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
+          AGENT: ${{ matrix.agent }}
+          SYNC_BRANCH: ${{ steps.stage.outputs.branch }}
+          SOURCE_SHA: ${{ github.sha }}
+        working-directory: standalone/${{ matrix.agent }}
+        run: |
+          set -euo pipefail
+          REPO="surendra2304/$AGENT"
+
+          # Branches are unique per source revision and workflow run. On rerun,
+          # never replace a branch that may already have been reviewed.
+          if git ls-remote --exit-code --heads origin "refs/heads/$SYNC_BRANCH" >/dev/null 2>&1; then
+            EXISTING_PR="$(gh pr view "$SYNC_BRANCH" --repo "$REPO" --json url --jq .url 2>/dev/null || true)"
+            if [[ -n "$EXISTING_PR" ]]; then
+              echo "An existing sync PR already covers this run: $EXISTING_PR"
+              exit 0
             fi
-          done
+            echo "::error::Sync branch $SYNC_BRANCH already exists without a discoverable PR. Refusing to overwrite it."
+            exit 1
+          fi
+
+          git push origin "HEAD:refs/heads/$SYNC_BRANCH"
+          gh pr create             --repo "$REPO"             --head "$SYNC_BRANCH"             --base main             --title "chore(mirror): sync $AGENT from FRIDAY-Universe"             --body "## Summary
+          - Synchronize the $AGENT subtree from `surendra2304/FRIDAY-Universe`.
+          - Source commit: $SOURCE_SHA.
+          - Publish this change as a pull request; do not overwrite the standalone default branch.
+
+          ## Verification
+          - This PR is intended to trigger the standalone repository's CI.
+          - Merge only after reviewing the file changes and confirming required checks pass.
+
+          This workflow never force-pushes or writes directly to `main`."

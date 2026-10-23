@@ -1,0 +1,38 @@
+name: Monorepo Structure and Safety CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monorepo-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate fleet layout and mirror safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install YAML parser
+        run: python -m pip install --disable-pip-version-check "PyYAML>=6,<7"
+
+      - name: Run regression tests
+        run: python -m unittest discover -s tests -p 'test_fleet_validation.py' -v
+
+      - name: Validate all ten agent roots and workflow syntax
+        run: python scripts/validate_fleet.py
