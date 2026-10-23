@@ -27,31 +27,44 @@ MIRROR_WORKFLOW = Path(".github/workflows/mirror-subrepos.yml")
 
 
 def mirror_workflow_violations(content: str) -> list[str]:
-    """Return unsafe patterns in the standalone-sync workflow."""
+    """Enforce the explicit monorepo-only policy for the legacy mirror workflow.
+
+    The workflow is intentionally a manual no-op. These checks inspect shell
+    commands and event triggers, rather than relying on comments or step names,
+    so a future edit cannot quietly re-enable external repository writes.
+    """
     problems: list[str] = []
+
     if re.search(r"(?m)^\s*git\s+push\b[^\n]*--force(?:-with-lease)?\b", content):
         problems.append("mirror workflow must not force-push")
-    if re.search(r"(?m)^\s*git\s+push\b[^\n]*(?:split-[^\s]*:main|HEAD:refs/heads/main|origin\s+main)\b", content):
+    if re.search(
+        r"(?m)^\s*git\s+push\b[^\n]*(?:split-[^\s]*:main|HEAD:refs/heads/main|origin\s+main)\b",
+        content,
+    ):
         problems.append("mirror workflow must not push directly to a standalone default branch")
-    if "secrets.GH_PAT_MIRROR || github.token" in content:
+    if "secrets.GH_PAT_MIRROR || github.token" in content or re.search(
+        r"secrets\.GH_PAT_MIRROR\s*\|\|\s*(?:github\.token|secrets\.GITHUB_TOKEN)",
+        content,
+    ):
         problems.append("cross-repository writes must not fall back to GITHUB_TOKEN")
-    if re.search(r"(?m)^\s*rsync\s+[^\n]*--delete\b", content):
-        problems.append("mirror workflow must not automatically delete standalone-only files")
-    if "secrets.GH_PAT_MIRROR" not in content:
-        problems.append("mirror workflow must require the explicit cross-repository write token")
-    if "gh pr create" not in content:
-        problems.append("mirror workflow must submit changes through pull requests")
-    matrix_match = re.search(r"(?m)^\s*agent:\s*\[([^\]]+)\]", content)
-    if not matrix_match:
-        problems.append("mirror workflow has no explicit agent matrix")
-    else:
-        declared = tuple(value.strip() for value in matrix_match.group(1).split(",") if value.strip())
-        if set(declared) != set(AGENTS) or len(declared) != len(AGENTS):
-            problems.append(
-                f"mirror matrix must contain exactly the ten agents; found {declared!r}"
-            )
-    return problems
 
+    if re.search(r"(?m)^\s*rsync\b[^\n]*--delete\b", content):
+        problems.append("mirror workflow must not automatically delete standalone-only files")
+    elif re.search(r"(?m)^\s*rsync\b", content):
+        problems.append("mirror workflow must not synchronize files into standalone repositories")
+    if re.search(r"(?m)^\s*git\s+push\b", content):
+        problems.append("mirror workflow must not push to any external repository")
+    if re.search(r"(?m)^\s*gh\s+pr\s+create\b", content):
+        problems.append("mirror workflow must not create pull requests in external repositories")
+    if "secrets.GH_PAT_MIRROR" in content:
+        problems.append("monorepo-only mirror workflow must not use external-repository write credentials")
+
+    if re.search(r"(?m)^\s*(?:push|pull_request):\s*(?:#.*)?$", content):
+        problems.append("mirror workflow must be manual-only, without automatic push or pull_request triggers")
+    if not re.search(r"(?m)^\s*workflow_dispatch:\s*(?:#.*)?$", content):
+        problems.append("mirror workflow must expose only a manual workflow_dispatch entry point")
+
+    return problems
 
 def validate_repository(root: Path) -> list[str]:
     """Check agent completeness, embedded CI configs, and workflow YAML syntax."""

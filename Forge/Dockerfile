@@ -24,12 +24,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -m -u 1000 appuser
 
 # Copy dependency specifications first for layer caching
-COPY requirements.txt .
+COPY Forge/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
-COPY . /app
+COPY Forge/ /app/
+COPY mesh/ /app/mesh/
 
 # Install project package
 RUN pip install --no-cache-dir -e .
