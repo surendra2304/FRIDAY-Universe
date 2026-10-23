@@ -3,13 +3,47 @@ name: FRIDAY Universe Fleet Continuous Deployment
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
+  detect-changes:
+    name: Analyze Changed Agents
+    runs-on: ubuntu-latest
+    outputs:
+      server1: ${{ steps.filter.outputs.server1 }}
+      server2: ${{ steps.filter.outputs.server2 }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Filter Changed Paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            server1:
+              - 'FRIDAY/**'
+              - 'Inference/**'
+              - 'Memora/**'
+              - 'Stratex/**'
+              - 'IntelX/**'
+              - 'Futuris/**'
+              - 'Forge/**'
+              - 'mesh/**'
+              - 'deploy/**'
+            server2:
+              - 'VyralX/**'
+              - 'Sentinel/**'
+              - 'Cortex/**'
+              - 'mesh/**'
+              - 'deploy/**'
+
   deploy-server1:
-    name: Deploy to AMD Server 1 (Core Swarm Leader)
+    name: Deploy Core Fleet (Server 1)
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.server1 == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Remote Deployment on Server 1
+      - name: Update Changed Agents on Server 1
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 140.245.208.100
@@ -18,18 +52,33 @@ jobs:
           script: |
             echo "=== Syncing FRIDAY Universe on Server 1 ==="
             cd /opt/friday_universe
+            OLD_REV=$(git rev-parse HEAD 2>/dev/null || echo "HEAD~1")
             git fetch origin main
             git reset --hard origin/main
-            sudo chown -R ubuntu:ubuntu /opt/friday_universe
-            echo "=== Restarting Server 1 Agent Services ==="
-            sudo systemctl restart friday-core friday-inference friday-memora friday-stratex friday-intelx friday-futuris friday-forge
-            sudo systemctl is-active friday-core friday-inference friday-memora friday-stratex friday-intelx friday-futuris friday-forge
+            
+            CHANGED_AGENTS=$(git diff --name-only $OLD_REV HEAD 2>/dev/null | awk -F/ '{print $1}' | sort -u)
+            echo "Changed folders detected: $CHANGED_AGENTS"
+            
+            SERVER1_AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "IntelX" "Futuris" "Forge")
+            for AGENT in "${SERVER1_AGENTS[@]}"; do
+              if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || [ "$1" = "force" ]; then
+                if systemctl list-unit-files | grep -qw "${AGENT}.service"; then
+                  echo "=== Restarting ${AGENT}.service ==="
+                  sudo systemctl restart "${AGENT}.service"
+                  sudo systemctl is-active "${AGENT}.service" || echo "${AGENT} is not running"
+                else
+                  echo "=== ${AGENT}.service not registered yet. Code pulled cleanly. ==="
+                fi
+              fi
+            done
 
   deploy-server2:
-    name: Deploy to AMD Server 2 (Specialist Worker)
+    name: Deploy Specialist Fleet (Server 2)
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.server2 == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Remote Deployment on Server 2
+      - name: Update Changed Agents on Server 2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 140.245.243.168
@@ -38,9 +87,22 @@ jobs:
           script: |
             echo "=== Syncing FRIDAY Universe on Server 2 ==="
             cd /opt/friday_universe
+            OLD_REV=$(git rev-parse HEAD 2>/dev/null || echo "HEAD~1")
             git fetch origin main
             git reset --hard origin/main
-            sudo chown -R ubuntu:ubuntu /opt/friday_universe
-            echo "=== Restarting Server 2 Agent Services ==="
-            sudo systemctl restart friday-vyralx friday-sentinel friday-cortex
-            sudo systemctl is-active friday-vyralx friday-sentinel friday-cortex
+            
+            CHANGED_AGENTS=$(git diff --name-only $OLD_REV HEAD 2>/dev/null | awk -F/ '{print $1}' | sort -u)
+            echo "Changed folders detected: $CHANGED_AGENTS"
+            
+            SERVER2_AGENTS=("VyralX" "Sentinel" "Cortex")
+            for AGENT in "${SERVER2_AGENTS[@]}"; do
+              if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || [ "$1" = "force" ]; then
+                if systemctl list-unit-files | grep -qw "${AGENT}.service"; then
+                  echo "=== Restarting ${AGENT}.service ==="
+                  sudo systemctl restart "${AGENT}.service"
+                  sudo systemctl is-active "${AGENT}.service" || echo "${AGENT} is not running"
+                else
+                  echo "=== ${AGENT}.service not registered yet. Code pulled cleanly. ==="
+                fi
+              fi
+            done
