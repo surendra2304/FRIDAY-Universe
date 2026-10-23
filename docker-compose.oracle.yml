@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   friday_mesh:
     driver: bridge
@@ -21,6 +19,12 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.15"
+          memory: 256M
+
     networks:
       - friday_mesh
 
@@ -47,6 +51,12 @@ services:
       - SENTINEL_URL=http://sentinel:8000
       - STRATEX_URL=http://stratex:8000
       - VYRALX_URL=http://vyralx:8000
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1G
+
     networks:
       - friday_mesh
 
@@ -59,6 +69,12 @@ services:
     restart: unless-stopped
     env_file:
       - ./Cortex/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -77,6 +93,12 @@ services:
     depends_on:
       friday-heavy-task-redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1536M
+
     networks:
       - friday_mesh
 
@@ -95,6 +117,12 @@ services:
     depends_on:
       friday-heavy-task-redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1024M
+
     networks:
       - friday_mesh
 
@@ -107,6 +135,12 @@ services:
     restart: unless-stopped
     env_file:
       - ./Inference/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -119,6 +153,12 @@ services:
     restart: unless-stopped
     env_file:
       - ./IntelX/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -131,6 +171,12 @@ services:
     restart: unless-stopped
     env_file:
       - ./Memora/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1024M
+
     networks:
       - friday_mesh
 
@@ -149,6 +195,12 @@ services:
     depends_on:
       friday-heavy-task-redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -161,6 +213,12 @@ services:
     restart: unless-stopped
     env_file:
       - ./Stratex/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -173,6 +231,12 @@ services:
     restart: unless-stopped
     env_file:
       - ./VyralX/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+
     networks:
       - friday_mesh
 volumes:
