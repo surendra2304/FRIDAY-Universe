@@ -4,7 +4,10 @@ Orchestrates batteries of objective verification checks and compiles verifiable 
 """
 
 import json
+from collections.abc import Awaitable, Callable
 from typing import Any
+
+from mesh.heavy_task import HeavyTaskCoordinator, coordinator_from_environment
 
 from app.core.logging import get_logger
 from app.core.workspace import WorkspaceManager, workspace_manager
@@ -43,9 +46,15 @@ class VerificationEngine:
         engine: ExecutionEngine | None = None,
         wm: WorkspaceManager | None = None,
         custom_checkers: list[BaseChecker] | None = None,
+        heavy_task_coordinator: HeavyTaskCoordinator | None = None,
     ):
         self.engine = engine or execution_engine
         self.wm = wm or workspace_manager
+        self.heavy_task_coordinator = (
+            heavy_task_coordinator
+            if heavy_task_coordinator is not None
+            else coordinator_from_environment()
+        )
         self.checkers: list[Any] = custom_checkers or [
             BuildChecker(),
             LintChecker(),
@@ -59,7 +68,40 @@ class VerificationEngine:
             AccessibilityChecker(),
         ]
 
+
+    async def _run_with_heavy_lease(
+        self,
+        task_id: str,
+        operation: Callable[[Any], Awaitable[Any]],
+    ) -> Any:
+        """Serialize build/test verification against other fleet-wide heavy work."""
+        coordinator = self.heavy_task_coordinator
+        if coordinator is None:
+            # Local development is allowed only when shared coordination was not
+            # explicitly required in service configuration.
+            return await operation(None)
+
+        async def guarded(lease: Any) -> Any:
+            lease.ensure_valid()
+            result = await operation(lease)
+            lease.ensure_valid()
+            return result
+
+        return await coordinator.run(
+            task_id=task_id,
+            owner="forge",
+            operation=guarded,
+            wait_timeout=None,
+        )
+
     async def capture_baseline(self, task_id: str) -> VerificationReport:
+        """Capture a baseline while holding the global heavy-task lease."""
+        async def execute(_lease: Any) -> VerificationReport:
+            return await self._capture_baseline_uncoordinated(task_id)
+
+        return await self._run_with_heavy_lease("forge:baseline-verification", execute)
+
+    async def _capture_baseline_uncoordinated(self, task_id: str) -> VerificationReport:
         """
         Capture baseline test suite and build verification metrics before any modifications are made.
         Saves baseline_report.json to the task artifacts directory.
@@ -103,6 +145,17 @@ class VerificationEngine:
         return report
 
     async def verify_task(
+        self,
+        task_id: str,
+        baseline_report: VerificationReport | None = None,
+    ) -> VerificationReport:
+        """Run build/test and quality gates while holding the shared fleet lease."""
+        async def execute(_lease: Any) -> VerificationReport:
+            return await self._verify_task_uncoordinated(task_id, baseline_report)
+
+        return await self._run_with_heavy_lease("forge:verification-battery", execute)
+
+    async def _verify_task_uncoordinated(
         self,
         task_id: str,
         baseline_report: VerificationReport | None = None,
