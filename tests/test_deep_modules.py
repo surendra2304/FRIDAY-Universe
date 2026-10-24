@@ -621,6 +621,12 @@ class TestNewDeepModules:
         "Futuris/futuris/services/prediction_market_engine.py",
         "Sentinel/sentinel/apps/api/src/sentinel_api/threat_intel_correlation_engine.py",
         "FRIDAY/apps/core/src/friday_core/universe_knowledge_graph.py",
+        # Wave 42: Event bus, state manager, decision tree, decay predictor, analogical reasoning
+        "FRIDAY/apps/core/src/friday_core/universe_event_bus.py",
+        "FRIDAY/apps/core/src/friday_core/universe_state_manager.py",
+        "Cortex/apps/api/src/cortex_api/decision_tree_visualizer.py",
+        "Memora/apps/api/routers/memory_decay_predictor.py",
+        "Inference/services/analogical_reasoning_engine.py",
     ]
 
     def test_all_new_modules_compile(self):
@@ -638,7 +644,7 @@ class TestNewDeepModules:
 
     def test_new_module_count(self):
         """Test that we have created a substantial number of new modules."""
-        assert len(self.NEW_MODULES) >= 78, f"Expected at least 78 new modules, got {len(self.NEW_MODULES)}"
+        assert len(self.NEW_MODULES) >= 83, f"Expected at least 83 new modules, got {len(self.NEW_MODULES)}"
 
 
 class TestCrossAgentIntegration:
