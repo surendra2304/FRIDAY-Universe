@@ -419,6 +419,10 @@ def create_app() -> FastAPI:
     from app.services.code_merge_conflict_resolver import router as merge_resolver_router
     app.include_router(merge_resolver_router, prefix="/api/v1/forge", tags=["Merge Conflict Resolver"])
 
+    # --- Code Security Scanner Integration ---
+    from app.services.code_security_scanner import router as security_scanner_router
+    app.include_router(security_scanner_router, prefix="/api/v1/forge", tags=["Code Security"])
+
     return app
 
 

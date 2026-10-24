@@ -633,6 +633,12 @@ class TestNewDeepModules:
         "Forge/app/services/code_merge_conflict_resolver.py",
         "Stratex/execution/flash_crash_detector.py",
         "Sentinel/sentinel/apps/api/src/sentinel_api/security_incident_timeline.py",
+        # Wave 44: Audit trail, rate limiter, content moderation, intel quality, code security
+        "FRIDAY/apps/core/src/friday_core/universe_audit_trail.py",
+        "FRIDAY/apps/core/src/friday_core/universe_rate_limiter.py",
+        "VyralX/app/services/content_moderation_engine.py",
+        "IntelX/intelx/services/threat_intel_quality_evaluator.py",
+        "Forge/app/services/code_security_scanner.py",
     ]
 
     def test_all_new_modules_compile(self):
@@ -650,7 +656,7 @@ class TestNewDeepModules:
 
     def test_new_module_count(self):
         """Test that we have created a substantial number of new modules."""
-        assert len(self.NEW_MODULES) >= 88, f"Expected at least 88 new modules, got {len(self.NEW_MODULES)}"
+        assert len(self.NEW_MODULES) >= 93, f"Expected at least 93 new modules, got {len(self.NEW_MODULES)}"
 
 
 class TestCrossAgentIntegration:
