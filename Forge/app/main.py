@@ -411,6 +411,10 @@ def create_app() -> FastAPI:
     from app.services.test_coverage_analyzer import router as test_coverage_router
     app.include_router(test_coverage_router, prefix="/api/v1/forge", tags=["Test Coverage"])
 
+    # --- Code Architecture Analyzer Integration ---
+    from app.services.code_architecture_analyzer import router as arch_analyzer_router
+    app.include_router(arch_analyzer_router, prefix="/api/v1/forge", tags=["Architecture Analysis"])
+
     return app
 
 
