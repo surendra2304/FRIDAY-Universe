@@ -81,7 +81,6 @@ class MeshTelemetryReporter:
             "Authorization": f"Bearer {api_key}",
             "X-Signature": sig,
         }
-        }
 
         packet = {
             "source_agent": "memora",
