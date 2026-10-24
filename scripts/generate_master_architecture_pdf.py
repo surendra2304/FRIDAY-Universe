@@ -327,7 +327,7 @@ def build_pdf(pdf_path):
             "<code>g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com</code><br/>"
             "Host: <code>adb.ap-hyderabad-1.oraclecloud.com</code><br/>"
             "Port: <code>1521</code> (Protocol: TCPS, SSL match: yes)",
-            "<code>ADMIN</code><br/><code><REDACTED></code>",
+            "Credentials injected from a protected environment",
             "FRIDAY, Inference, Memora, Stratex, Futuris, IntelX, Forge, Sentinel, Cortex",
             "• <code>MEMORA_MEMORIES</code> (23ai HNSW native vector)<br/>"
             "• <code>FUTURIS_FORECASTS</code> & 12 schema tables<br/>"
@@ -341,7 +341,7 @@ def build_pdf(pdf_path):
             "<code>g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com</code><br/>"
             "Host: <code>adb.ap-hyderabad-1.oraclecloud.com</code><br/>"
             "Port: <code>1521</code> (Protocol: TCPS, SSL match: yes)",
-            "<code>ADMIN</code><br/><code><REDACTED></code>",
+            "Credentials injected from a protected environment",
             "Exclusively dedicated to <b>VyralX</b>",
             "• <code>VYRALX_PROJECTS</code>, <code>VYRALX_SCRIPTS</code><br/>"
             "• <code>VYRALX_STORYBOARDS</code>, <code>RENDER_JOBS</code><br/>"
