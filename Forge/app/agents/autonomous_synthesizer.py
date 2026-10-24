@@ -15,17 +15,16 @@ import asyncio
 import ast
 import json
 import logging
-import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from app.core.logging import get_logger
-from app.verification.checkers import BuildChecker, LintChecker, SecurityChecker, TestChecker
 
 logger = get_logger("agents.autonomous_synthesizer")
 
@@ -51,36 +50,45 @@ class SynthesisResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     iterations: int = 0
+    static_checks_passed: bool = False
+    runtime_tests_executed: bool = False
 
 
 class AutonomousSynthesizer:
     """Autonomous software synthesizer with iterative refinement."""
 
+    # Only languages with safe syntax-only validation are advertised here.
     SUPPORTED_LANGUAGES = {
-        "python": {"extension": ".py", "runner": "python", "test_runner": "pytest"},
-        "javascript": {"extension": ".js", "runner": "node", "test_runner": "jest"},
-        "typescript": {"extension": ".ts", "runner": "ts-node", "test_runner": "jest"},
-        "go": {"extension": ".go", "runner": "go", "test_runner": "go test"},
-        "rust": {"extension": ".rs", "runner": "cargo", "test_runner": "cargo test"},
+        "python": {"extension": ".py", "kind": "python"},
+        "javascript": {"extension": ".js", "kind": "javascript"},
     }
 
     def __init__(self, max_iterations: int = 5):
-        self.max_iterations = max_iterations
+        self.max_iterations = max(1, min(int(max_iterations), 10))
 
     async def synthesize(self, request: SynthesisRequest) -> SynthesisResult:
         """Synthesize software autonomously with iterative refinement."""
         logger.info(f"Synthesizing: {request.description[:80]}")
 
         result = SynthesisResult(success=False)
-        language_config = self.SUPPORTED_LANGUAGES.get(request.language.lower())
-
-        if not language_config:
-            result.errors.append(f"Unsupported language: {request.language}")
+        if not isinstance(request.description, str) or not request.description.strip():
+            result.errors.append("A non-empty synthesis description is required")
+            return result
+        if len(request.description) > 4000:
+            result.errors.append("Synthesis description exceeds the 4000-character safety limit")
             return result
 
-        # Create workspace
+        language = request.language.strip().lower()
+        language_config = self.SUPPORTED_LANGUAGES.get(language)
+        if not language_config:
+            result.errors.append(
+                f"Unsupported language: {request.language}. Safe syntax validation is available for Python and JavaScript."
+            )
+            return result
+
+        # Never derive filesystem paths from user-supplied descriptions.
         workspace = tempfile.mkdtemp(prefix="forge_synth_")
-        output_path = Path(workspace) / f"synthesized_{request.description[:30].replace(' ', '_')}"
+        output_path = Path(workspace) / "output"
         output_path.mkdir(parents=True, exist_ok=True)
 
         try:
@@ -114,22 +122,25 @@ class AutonomousSynthesizer:
                 if request.security_check:
                     security_ok, security_findings = await self._run_security_check(output_path)
                     if not security_ok:
-                        result.warnings.extend(security_findings)
+                        result.errors.extend(security_findings)
+                        break
 
-                # Step 5: Run tests
-                if request.test_coverage and result.tests_created:
-                    test_ok, test_output = await self._run_tests(output_path, request.language)
-                    if not test_ok:
-                        result.errors.append(f"Tests failed: {test_output}")
-                        # Try to fix tests
-                        fixed = await self._fix_test_error(test_output, request, output_path, language_config)
-                        if not fixed:
-                            break
-                        continue
+                # Generated tests are artifacts only. They are never executed on
+                # the Forge host; runtime execution requires a dedicated sandbox.
+                if request.test_coverage:
+                    if result.tests_created:
+                        result.warnings.append(
+                            "Generated tests were not executed: no isolated runtime sandbox is configured."
+                        )
+                    else:
+                        result.warnings.append(
+                            "No test template exists for this language; only syntax and static security checks ran."
+                        )
 
-                # All checks passed
                 result.success = True
-                result.verification_passed = True
+                result.static_checks_passed = True
+                result.runtime_tests_executed = False
+                result.verification_passed = not request.test_coverage
                 result.files_created = [str(f) for f in output_path.glob(f"*{language_config['extension']}")]
 
                 # Copy to final output if specified
@@ -157,66 +168,72 @@ class AutonomousSynthesizer:
         output_path: Path,
         language_config: dict,
     ) -> str:
-        """Generate code based on request description."""
-        # In production, this would use LLM to generate code
-        # For now, create a simple template
-
+        """Create a starter implementation while treating the request as data."""
+        language = request.language.strip().lower()
         extension = language_config["extension"]
-
-        if request.language.lower() == "python":
-            code = f'''"""
-{request.description}
-
-Autonomously synthesized by Forge.
-"""
-
-def main():
-    """Main entry point."""
-    print("Hello from Forge synthesized code!")
-    print("Description: {request.description}")
-
-if __name__ == "__main__":
-    main()
-'''
-        else:
-            code = f'''// {request.description}
-// Autonomously synthesized by Forge.
-
-function main() {{
-    console.log("Hello from Forge synthesized code!");
-    console.log("Description: {request.description}");
-}}
-
-main();
-'''
-
         output_file = output_path / f"synthesized{extension}"
-        output_file.write_text(code)
+
+        if language == "python":
+            # repr() safely quotes arbitrary request text. Do not paste it into a
+            # source comment or docstring where quote termination becomes code.
+            code = (
+                '"""Starter generated by Forge; request content is data."""\n'
+                f"REQUEST_DESCRIPTION = {request.description!r}\n\n"
+                "def main() -> None:\n"
+                '    """Display the request summary without executing it."""\n'
+                '    print("Hello from Forge synthesized code!")\n'
+                '    print("Description:", REQUEST_DESCRIPTION)\n\n'
+                'if __name__ == "__main__":\n'
+                "    main()\n"
+            )
+        else:
+            description_literal = json.dumps(request.description, ensure_ascii=True)
+            code = (
+                "// Starter generated by Forge; request content is data.\n"
+                f"const requestDescription = {description_literal};\n\n"
+                "function main() {\n"
+                '    console.log("Hello from Forge synthesized code!");\n'
+                '    console.log("Description:", requestDescription);\n'
+                "}\n\n"
+                "main();\n"
+            )
+
+        output_file.write_text(code, encoding="utf-8")
         return code
 
     async def _verify_build(self, output_path: Path, language: str) -> tuple[bool, str]:
-        """Verify that the code builds/compiles."""
-        language_config = self.SUPPORTED_LANGUAGES.get(language.lower())
+        """Syntax-check generated source without executing it."""
+        language_config = self.SUPPORTED_LANGUAGES.get(language.strip().lower())
         if not language_config:
-            return False, "Unsupported language"
+            return False, "Unsupported language; runtime execution is intentionally disabled."
 
-        runner = language_config["runner"]
         extension = language_config["extension"]
-
-        files = list(output_path.glob(f"*{extension}"))
+        files = sorted(output_path.glob(f"*{extension}"))
         if not files:
             return False, "No source files found"
 
+        if language_config["kind"] == "python":
+            command = [sys.executable, "-m", "py_compile", *(str(file) for file in files)]
+        else:
+            node = shutil.which("node")
+            if not node:
+                return False, "Node.js is required for JavaScript syntax checking; source was not executed."
+            command = [node, "--check", str(files[0])]
+
         try:
             result = subprocess.run(
-                [runner, str(files[0])],
+                command,
+                cwd=str(output_path),
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
-            return result.returncode == 0, result.stdout + result.stderr
-        except Exception as e:
-            return False, str(e)
+            return result.returncode == 0, (result.stdout + result.stderr)[-8000:]
+        except subprocess.TimeoutExpired:
+            return False, "Syntax checker timed out after 30 seconds"
+        except OSError as exc:
+            return False, f"Could not start syntax checker: {type(exc).__name__}"
 
     async def _fix_build_error(
         self,
@@ -237,82 +254,63 @@ main();
         output_path: Path,
         language_config: dict,
     ) -> list[str]:
-        """Generate unit tests for the synthesized code."""
-        extension = language_config["extension"]
-        test_files = []
+        """Generate tests as reviewable artifacts without running them on the host."""
+        if request.language.strip().lower() != "python":
+            return []
 
-        if request.language.lower() == "python":
-            test_code = f'''"""
-Tests for: {request.description}
-
-Autonomously generated by Forge.
-"""
-
-import pytest
+        test_code = '''"""Generated test template; run only in an isolated sandbox."""
 from synthesized import main
 
 
 def test_main_runs():
-    """Test that main function runs without error."""
-    main()  # Should not raise
-
-
-def test_main_output():
-    """Test that main produces expected output."""
-    # In production, would capture stdout
-    assert True
+    main()
 '''
-            test_file = output_path / f"test_synthesized.py"
-            test_file.write_text(test_code)
-            test_files.append(str(test_file))
-
-        return test_files
+        test_file = output_path / "test_synthesized.py"
+        test_file.write_text(test_code, encoding="utf-8")
+        return [str(test_file)]
 
     async def _run_security_check(self, output_path: Path) -> tuple[bool, list[str]]:
-        """Run security check on synthesized code."""
-        security_checker = SecurityChecker()
-
-        files = list(output_path.glob("*.py"))
-        findings = []
-
-        for file in files:
+        """Perform a conservative static scan; never execute generated code."""
+        findings: list[str] = []
+        python_dangerous_calls = {"eval", "exec", "compile", "__import__"}
+        dangerous_modules = {"subprocess", "socket", "ctypes"}
+        for file in sorted(output_path.iterdir()):
+            if not file.is_file() or file.suffix not in {".py", ".js"}:
+                continue
             try:
-                content = file.read_text()
+                content = file.read_text(encoding="utf-8")
+            except OSError as exc:
+                findings.append(f"Could not read {file.name}: {type(exc).__name__}")
+                continue
 
-                # Check for dangerous patterns
-                dangerous_patterns = [
-                    r"eval\(", r"exec\(", r"__import__", r"subprocess",
-                    r"os\.system", r"subprocess\.call",
-                ]
+            if file.suffix == ".py":
+                try:
+                    tree = ast.parse(content, filename=file.name)
+                except SyntaxError as exc:
+                    findings.append(f"Syntax error in {file.name}: {exc.msg}")
+                    continue
+                for node in ast.walk(tree):
+                    if not isinstance(node, ast.Call):
+                        continue
+                    target = node.func
+                    if isinstance(target, ast.Name) and target.id in python_dangerous_calls:
+                        findings.append(f"Potentially dangerous call {target.id}() in {file.name}")
+                    elif isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name):
+                        if target.value.id == "os" and target.attr in {"system", "popen", "spawn", "exec"}:
+                            findings.append(f"Potentially dangerous call os.{target.attr}() in {file.name}")
+                        if target.value.id in dangerous_modules:
+                            findings.append(f"Potentially dangerous call {target.value.id}.{target.attr}() in {file.name}")
+            elif re.search(r"\b(eval|Function)\s*\(", content) or re.search(r"\bprocess\.exit\s*\(", content):
+                findings.append(f"Potentially dangerous JavaScript construct found in {file.name}")
 
-                for pattern in dangerous_patterns:
-                    if re.search(pattern, content):
-                        findings.append(f"Dangerous pattern '{pattern}' found in {file.name}")
-
-            except Exception as e:
-                findings.append(f"Error reading {file.name}: {e}")
-
-        return len(findings) == 0, findings
+        return not findings, findings
 
     async def _run_tests(self, output_path: Path, language: str) -> tuple[bool, str]:
-        """Run tests on synthesized code."""
-        language_config = self.SUPPORTED_LANGUAGES.get(language.lower())
-        if not language_config:
-            return False, "Unsupported language"
-
-        test_runner = language_config["test_runner"]
-
-        try:
-            result = subprocess.run(
-                [test_runner, "-v", str(output_path)],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                cwd=str(output_path),
-            )
-            return result.returncode == 0, result.stdout + result.stderr
-        except Exception as e:
-            return False, str(e)
+        """Refuse host execution; callers must integrate a real isolated runner."""
+        return (
+            False,
+            "Runtime tests were not executed. Configure an isolated sandbox before running generated code.",
+        )
 
     async def _fix_test_error(
         self,
