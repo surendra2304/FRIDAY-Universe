@@ -316,7 +316,11 @@ app.include_router(mesh_events_router)
 app.include_router(audit_router)
 app.include_router(v1_resilience_router)
 app.include_router(v1_collaboration_router)
-app.include_router(v1_reflection_router)
+from apps.api.routers.enhanced_memory import router as enhanced_memory_router
+from apps.api.routers.knowledge_graph import router as knowledge_graph_router
+
+app.include_router(enhanced_memory_router, prefix="/api/v1")
+app.include_router(knowledge_graph_router, prefix="/api/v1")
 
 @app.api_route("/api/dashboard/sync", methods=["GET", "POST"], include_in_schema=False)
 def dashboard_sync(agent_name: str = Depends(authenticate_agent)):
