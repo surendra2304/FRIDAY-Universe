@@ -81,9 +81,9 @@ class FleetValidationTests(unittest.TestCase):
             "FRIDAY/tests/test_codex_invariants_and_mesh.py",
         )
         live_key_patterns = (
-            r"(?m)^\\s*SENTINEL_AUDIT_(?:HMAC|SIGNING)_KEY=[A-Fa-f0-9]{32,}\\s*$",
-            r"(?m)^\\s*(?:SENTINEL_API_KEY|FRIDAY_API_KEY|INFERENCE_API_KEY|INTELX_API_KEY|MEMORA_API_KEY|VYRALX_API_KEY)=((?:sentinel|friday|inference|intelx|memora|vyralx)_[A-Za-z0-9_-]{20,})\\s*$",
-            r"oracle\\+oracledb(?:_async)?://ADMIN:[^@\\s\"']+@",
+            r"(?m)^\s*SENTINEL_AUDIT_(?:HMAC|SIGNING)_KEY=[A-Fa-f0-9]{32,}\s*$",
+            r"(?m)^\s*(?:SENTINEL_API_KEY|FRIDAY_API_KEY|INFERENCE_API_KEY|INTELX_API_KEY|MEMORA_API_KEY|VYRALX_API_KEY)=(?:sentinel|friday|inference|intelx|memora|vyralx)_[A-Za-z0-9_-]{20,}\s*$",
+            r"oracle\+oracledb(?:_async)?://ADMIN:[^@\s]+@",
         )
         for relative in sensitive_paths:
             content = (root / relative).read_text(encoding="utf-8")
