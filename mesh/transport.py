@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from mesh.envelope import AgentEnvelope
+from mesh.envelope import AgentEnvelope, verify_envelope
 
 try:
     import nats
@@ -48,16 +48,31 @@ def _is_loopback_url(url: str) -> bool:
 
 class MeshTransport:
     """Transport supporting NATS (if available) with robust authenticated HTTP fallback.
+
     Provides retry backoff, circuit-breaker awareness, and secure signature handling.
+    Inbound envelopes are verified before local dispatch; outgoing envelopes are
+    signed when a shared mesh signing secret is configured.
     """
-    def __init__(self, mode: TransportMode = TransportMode.HTTP, timeout_sec: float = 15.0):
+    def __init__(
+        self,
+        mode: TransportMode = TransportMode.HTTP,
+        timeout_sec: float = 15.0,
+        signing_secret: Optional[str] = None,
+    ):
         self.mode = mode
         self.timeout_sec = timeout_sec
+        self.signing_secret = signing_secret or os.getenv("MESH_SIGNING_SECRET") or os.getenv("FRIDAY_MESH_SIGNING_SECRET")
         self._client: Optional[NATSClient] = None
         self._delivery_log: list[dict[str, Any]] = []
         self._subscriptions: dict[str, list[Callable[[AgentEnvelope], Any]]] = {}
+        self._dispatch_started = time.time()
         if mode == TransportMode.NATS and _nats_available:
             self._client = NATSClient()
+
+    def _sign_outgoing(self, envelope: AgentEnvelope) -> AgentEnvelope:
+        if self.signing_secret and not envelope.signature:
+            envelope.sign(self.signing_secret)
+        return envelope
 
     async def connect(self, url: str = "nats://localhost:4222") -> bool:
         if self.mode == TransportMode.NATS and self._client is not None:
@@ -70,21 +85,8 @@ class MeshTransport:
                 return False
         return True
 
-    async def publish(self, envelope: AgentEnvelope, direct_url: Optional[str] = None) -> dict[str, Any]:
-        """Publish an envelope to the target agent."""
-        t0 = time.time()
+    async def _dispatch_local(self, envelope: AgentEnvelope) -> dict[str, Any]:
         to_agent = envelope.to_agent.upper()
-
-        # 1. Try NATS if configured
-        if self.mode == TransportMode.NATS and self._client is not None and self._client.is_connected:
-            try:
-                subject = f"mesh.{envelope.to_agent.lower()}.{envelope.intent}"
-                await self._client.publish(subject.encode(), envelope.to_json().encode())
-                return {"status": "ACCEPTED_NATS", "subject": subject, "duration_ms": int((time.time() - t0) * 1000)}
-            except Exception:
-                pass  # Fall through to HTTP dispatch
-
-        # 2. Local subscribers dispatch (to target agent, source agent, or wildcard)
         from_agent = envelope.from_agent.upper()
         handled: set[int] = set()
         local_target_deliveries = 0
@@ -101,7 +103,7 @@ class MeshTransport:
                                 handler(envelope)
                             if sub_key == to_agent:
                                 local_target_deliveries += 1
-                        except Exception as exc:
+                        except Exception:
                             if sub_key == to_agent:
                                 local_target_failures += 1
 
@@ -110,10 +112,49 @@ class MeshTransport:
                 "status": "DELIVERED_LOCAL",
                 "message_id": envelope.message_id,
                 "handler_count": local_target_deliveries,
+                "duration_ms": int((time.time() - self._dispatch_started) * 1000),
+            }
+            self._delivery_log.append({"message_id": envelope.message_id, **result})
+            return result
+
+        return {
+            "status": "LOCAL_HANDLER_FAILED" if local_target_failures else "BLOCKED_NO_LOCAL_HANDLER",
+            "message_id": envelope.message_id,
+            "local_handler_failures": local_target_failures,
+            "duration_ms": int((time.time() - self._dispatch_started) * 1000),
+        }
+
+    async def publish(self, envelope: AgentEnvelope, direct_url: Optional[str] = None) -> dict[str, Any]:
+        """Publish an envelope to the target agent."""
+        t0 = time.time()
+        self._dispatch_started = t0
+        envelope = self._sign_outgoing(envelope)
+        to_agent = envelope.to_agent.upper()
+
+        # 1. Try NATS if configured
+        if self.mode == TransportMode.NATS and self._client is not None and self._client.is_connected:
+            try:
+                subject = f"mesh.{envelope.to_agent.lower()}.{envelope.intent}"
+                await self._client.publish(subject.encode(), envelope.to_json().encode())
+                return {"status": "ACCEPTED_NATS", "subject": subject, "duration_ms": int((time.time() - t0) * 1000)}
+            except Exception:
+                pass  # Fall through to HTTP dispatch
+
+        # 2. Local subscribers dispatch (to target agent, source agent, or wildcard)
+        ok, reason = verify_envelope(envelope.to_dict(), self.signing_secret)
+        if not ok:
+            result = {
+                "status": "BLOCKED_INVALID_ENVELOPE",
+                "reason": reason,
+                "message_id": envelope.message_id,
                 "duration_ms": int((time.time() - t0) * 1000),
             }
             self._delivery_log.append({"message_id": envelope.message_id, **result})
             return result
+
+        local_result = await self._dispatch_local(envelope)
+        if local_result["status"] == "DELIVERED_LOCAL":
+            return local_result
 
         # 3. HTTP Gateway Dispatch
         target_info = AGENT_AUTH_MAP.get(to_agent)
@@ -139,7 +180,7 @@ class MeshTransport:
                     "credential_env": key_env_name,
                     "duration_ms": int((time.time() - t0) * 1000),
                     "url": endpoint,
-                    "local_handler_failures": local_target_failures,
+                    "local_handler_failures": local_result.get("local_handler_failures", 0),
                 }
                 self._delivery_log.append({"message_id": envelope.message_id, **result})
                 return result
@@ -169,15 +210,31 @@ class MeshTransport:
                 self._delivery_log.append({"message_id": envelope.message_id, **result})
                 return result
 
-        status = "LOCAL_HANDLER_FAILED" if local_target_failures else "BLOCKED_NO_ENDPOINT"
         result = {
-            "status": status,
+            "status": local_result["status"],
             "message_id": envelope.message_id,
-            "local_handler_failures": local_target_failures,
+            "local_handler_failures": local_result.get("local_handler_failures", 0),
             "duration_ms": int((time.time() - t0) * 1000),
         }
         self._delivery_log.append({"message_id": envelope.message_id, **result})
         return result
+
+    async def receive(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Verify and dispatch an inbound envelope to local subscribers."""
+        t0 = time.time()
+        self._dispatch_started = t0
+        ok, reason = verify_envelope(data, self.signing_secret)
+        if not ok:
+            result = {
+                "status": "BLOCKED_INVALID_ENVELOPE",
+                "reason": reason,
+                "duration_ms": int((time.time() - t0) * 1000),
+            }
+            self._delivery_log.append(result)
+            return result
+
+        envelope = AgentEnvelope.from_dict(data)
+        return await self._dispatch_local(envelope)
 
     async def subscribe(self, agent_name: str, handler: Callable[[AgentEnvelope], Any]) -> None:
         """Subscribe a local handler to receive messages for a specific agent."""
@@ -190,6 +247,9 @@ class MeshTransport:
             async def cb(msg):
                 data = msg.data.decode()
                 env = AgentEnvelope.from_json(data)
+                ok, reason = verify_envelope(env.to_dict(), self.signing_secret)
+                if not ok:
+                    return
                 if asyncio.iscoroutinefunction(handler):
                     await handler(env)
                 else:

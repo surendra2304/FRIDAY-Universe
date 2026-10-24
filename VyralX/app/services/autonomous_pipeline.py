@@ -79,7 +79,15 @@ def sec_to_ass(s: float) -> str:
 
 async def generate_speech_with_word_sync(script: str, voice: str, audio_file: Path) -> list[dict[str, Any]]:
     """Synthesizes speech and extracts exact millisecond word timestamps."""
-    comm = edge_tts.Communicate(script, voice, boundary="WordBoundary")
+    clean_script = (
+        script.replace("\u2011", "-")
+        .replace("\u2013", "-")
+        .replace("\u2014", "-")
+        .replace("’", "'")
+        .replace("“", '"')
+        .replace("”", '"')
+    )
+    comm = edge_tts.Communicate(clean_script, voice, boundary="WordBoundary")
     audio_bytes = b""
     words = []
 
@@ -89,7 +97,14 @@ async def generate_speech_with_word_sync(script: str, voice: str, audio_file: Pa
         elif chunk["type"] == "WordBoundary":
             st = chunk["offset"] / 1e7
             dur = chunk["duration"] / 1e7
-            words.append({"text": chunk["text"], "start": st, "end": st + dur})
+            word_clean = (
+                chunk["text"]
+                .replace("\u2011", "-")
+                .replace("\u2013", "-")
+                .replace("\u2014", "-")
+                .replace("’", "'")
+            )
+            words.append({"text": word_clean, "start": st, "end": st + dur})
 
     audio_file.parent.mkdir(parents=True, exist_ok=True)
     audio_file.write_bytes(audio_bytes)
@@ -148,7 +163,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     for c in cues:
         st = sec_to_ass(c["start"])
         et = sec_to_ass(c["end"])
-        raw_words = c["text"].upper().split()
+        clean_cue = c["text"].replace("\u2011", "-").replace("\u2013", "-").replace("\u2014", "-")
+        raw_words = clean_cue.upper().split()
         styled = []
         for w in raw_words:
             clean = re.sub(r"[^A-Z0-9$]", "", w)
@@ -204,11 +220,8 @@ def render_video_job(job: VideoJob, output_dir: Path) -> Path:
         f"subtitles='{ass_filter_path}':fontsdir='{fonts_dir_escaped}'[v]"
     )
 
-    audio_filter = (
-        "[0:a]volume=0.20[orig_a];"
-        "[1:a]volume=1.0[voice_a];"
-        "[orig_a][voice_a]amix=inputs=2:duration=first:dropout_transition=2,loudnorm=I=-14:LRA=9:TP=-1.5[a]"
-    )
+    # Single clean voice track: Completely mute/exclude original speech to eliminate all voice overlap
+    audio_filter = "[1:a]volume=1.0,loudnorm=I=-14:LRA=9:TP=-1.5[a]"
 
     cmd = [
         "ffmpeg",
@@ -240,6 +253,22 @@ def render_video_job(job: VideoJob, output_dir: Path) -> Path:
     subprocess.run(cmd, check=True)
     size_mb = dest_video.stat().st_size / (1024 * 1024)
     log.info("Render complete: %s (%.2f MB)", dest_video.name, size_mb)
+
+    # 4. Generate pristine viral thumbnail from the raw clean source clip (ZERO burnt subtitles)
+    try:
+        from app.services.thumbnail_designer import generate_genre_thumbnail
+        thumb_dest = output_dir / f"vyralx-commentary-{job.video_id}-thumbnail.jpg"
+        clean_headline = re.sub(r"[#@][\w]+", "", job.title_concept).strip()
+        generate_genre_thumbnail(
+            video_path=job.source_file,
+            output_path=thumb_dest,
+            headline=clean_headline,
+            category="SATISFYING",
+        )
+        log.info("Pristine high-CTR thumbnail created: %s", thumb_dest.name)
+    except Exception as thumb_err:
+        log.warning("Thumbnail generation warning: %s", thumb_err)
+
     return dest_video
 
 

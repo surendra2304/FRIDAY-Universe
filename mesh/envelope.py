@@ -1,5 +1,5 @@
 """Standard JSON message envelope for the FRIDAY Universe mesh.
-Includes HMAC authentication, priority queuing, and correlation tracing.
+Includes HMAC authentication, priority queuing, correlation tracing, and TTL expiry.
 """
 from __future__ import annotations
 
@@ -72,9 +72,13 @@ class AgentEnvelope:
         expected_sig = hmac.new(secret_key.encode("utf-8"), self._signature_bytes(), hashlib.sha256).hexdigest()
         return hmac.compare_digest(self.signature, expected_sig)
 
+    def expired(self, now: Optional[float] = None) -> bool:
+        """Return True when the envelope TTL has elapsed."""
+        current = time.time() if now is None else now
+        return current > self.created_at + float(self.ttl)
+
     @classmethod
-    def from_json(cls, raw: str) -> "AgentEnvelope":
-        data = json.loads(raw)
+    def from_dict(cls, data: dict[str, Any]) -> "AgentEnvelope":
         return cls(
             message_id=data.get("message_id", f"msg_{uuid.uuid4().hex[:12]}"),
             correlation_id=data.get("correlation_id", f"corr_{uuid.uuid4().hex[:8]}"),
@@ -88,6 +92,11 @@ class AgentEnvelope:
             payload=data.get("payload", {}),
             created_at=data.get("created_at", time.time()),
         )
+
+    @classmethod
+    def from_json(cls, raw: str) -> "AgentEnvelope":
+        data = json.loads(raw)
+        return cls.from_dict(data)
 
 
 class EnvelopeError(Exception):
@@ -120,7 +129,7 @@ def build_envelope(
     return env
 
 
-def validate_envelope(data: dict) -> tuple[bool, str]:
+def validate_envelope(data: dict[str, Any]) -> tuple[bool, str]:
     required = ["message_id", "correlation_id", "from_agent", "to_agent", "intent", "priority", "ttl", "payload"]
     for key in required:
         if key not in data:
@@ -129,4 +138,23 @@ def validate_envelope(data: dict) -> tuple[bool, str]:
         return False, "Payload must be a JSON object"
     if not isinstance(data.get("ttl"), (int, float)) or data.get("ttl") <= 0:
         return False, "TTL must be a positive number"
+    if data.get("priority") not in {p.value for p in MessagePriority}:
+        return False, "priority must be one of low, normal, high, urgent, or critical"
+    if "created_at" in data and not isinstance(data.get("created_at"), (int, float)):
+        return False, "created_at must be a numeric timestamp"
+    if not data.get("from_agent") or not data.get("to_agent"):
+        return False, "from_agent and to_agent must be non-empty"
+    return True, ""
+
+
+def verify_envelope(data: dict[str, Any], secret_key: Optional[str] = None) -> tuple[bool, str]:
+    """Validate envelope structure and, when a secret is supplied, its HMAC signature."""
+    ok, reason = validate_envelope(data)
+    if not ok:
+        return False, reason
+    envelope = AgentEnvelope.from_dict(data)
+    if envelope.expired():
+        return False, "Envelope TTL expired"
+    if secret_key is not None and not envelope.verify_signature(secret_key):
+        return False, "Envelope signature verification failed"
     return True, ""

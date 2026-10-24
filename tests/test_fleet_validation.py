@@ -38,6 +38,25 @@ class FleetValidationTests(unittest.TestCase):
         self.assertEqual(len(AGENTS), 10)
         self.assertEqual(len(set(AGENTS)), 10)
 
+    def test_mirror_workflow_is_manual_and_read_only(self):
+        root = Path(__file__).resolve().parents[1]
+        workflow = (root / ".github" / "workflows" / "mirror-subrepos.yml").read_text(encoding="utf-8")
+        self.assertEqual(mirror_workflow_violations(workflow), [])
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("GH_PAT_MIRROR", workflow)
+        self.assertNotIn("gh pr create", workflow)
+        self.assertNotIn("rsync", workflow)
+
+    def test_mirror_workflow_rejects_external_push_without_force(self):
+        unsafe = """
+        on:
+          workflow_dispatch:
+        run: |
+          git push origin feature-branch
+        """
+        problems = mirror_workflow_violations(unsafe)
+        self.assertTrue(any("external repository" in problem for problem in problems))
+
     def test_current_monorepo_structure_and_workflows(self):
         root = Path(__file__).resolve().parents[1]
         self.assertEqual(validate_repository(root), [])

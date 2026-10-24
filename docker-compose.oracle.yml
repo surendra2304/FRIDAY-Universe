@@ -1,10 +1,33 @@
-version: '3.8'
-
 networks:
   friday_mesh:
     driver: bridge
 
 services:
+  # Private Redis lease store. It has no published host port.
+  friday-heavy-task-redis:
+    image: redis:7-alpine
+    container_name: friday_heavy_task_redis
+    restart: unless-stopped
+    command: ["sh", "-ec", "exec redis-server --appendonly yes --appendfsync always --save 60 1000 --requirepass \"$$FRIDAY_UNIVERSE_REDIS_PASSWORD\""]
+    environment:
+      FRIDAY_UNIVERSE_REDIS_PASSWORD: ${FRIDAY_UNIVERSE_REDIS_PASSWORD:?Set a strong URL-safe FRIDAY_UNIVERSE_REDIS_PASSWORD}
+    volumes:
+      - heavy_task_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$FRIDAY_UNIVERSE_REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.15"
+          memory: 256M
+
+    networks:
+      - friday_mesh
+
   # 1. Master Command Center & Gateway
   friday:
     build:
@@ -19,15 +42,21 @@ services:
     environment:
       - PORT=10000
       - HOST=0.0.0.0
-      - CORTEX_URL=http://cortex:8001
-      - FORGE_URL=http://forge:8002
-      - FUTURIS_URL=http://futuris:8003
-      - INFERENCE_URL=http://inference:8004
-      - INTELX_URL=http://intelx:8005
-      - MEMORA_URL=http://memora:8006
-      - SENTINEL_URL=http://sentinel:8007
-      - STRATEX_URL=http://stratex:8008
-      - VYRALX_URL=http://vyralx:8010
+      - CORTEX_URL=http://cortex:8000
+      - FORGE_URL=http://forge:8000
+      - FUTURIS_URL=http://futuris:8000
+      - INFERENCE_URL=http://inference:8000
+      - INTELX_URL=http://intelx:8000
+      - MEMORA_URL=http://memora:8000
+      - SENTINEL_URL=http://sentinel:8000
+      - STRATEX_URL=http://stratex:8000
+      - VYRALX_URL=http://vyralx:8000
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1G
+
     networks:
       - friday_mesh
 
@@ -38,38 +67,62 @@ services:
       dockerfile: Dockerfile
     container_name: friday_cortex
     restart: unless-stopped
-    ports:
-      - "8001:8001"
     env_file:
       - ./Cortex/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
     networks:
       - friday_mesh
 
   # 3. Forge
   forge:
     build:
-      context: ./Forge
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Forge/Dockerfile
     container_name: friday_forge
     restart: unless-stopped
-    ports:
-      - "8002:8002"
     env_file:
       - ./Forge/.env
+    environment:
+      FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1536M
+
     networks:
       - friday_mesh
 
   # 4. Futuris
   futuris:
     build:
-      context: ./Futuris
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Futuris/Dockerfile
     container_name: friday_futuris
     restart: unless-stopped
-    ports:
-      - "8003:8003"
     env_file:
       - ./Futuris/.env
+    environment:
+      FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1024M
+
     networks:
       - friday_mesh
 
@@ -80,10 +133,14 @@ services:
       dockerfile: Dockerfile
     container_name: friday_inference
     restart: unless-stopped
-    ports:
-      - "8004:8004"
     env_file:
       - ./Inference/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -94,10 +151,14 @@ services:
       dockerfile: Dockerfile
     container_name: friday_intelx
     restart: unless-stopped
-    ports:
-      - "8005:8005"
     env_file:
       - ./IntelX/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -108,24 +169,38 @@ services:
       dockerfile: Dockerfile
     container_name: friday_memora
     restart: unless-stopped
-    ports:
-      - "8006:8006"
     env_file:
       - ./Memora/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1024M
+
     networks:
       - friday_mesh
 
   # 8. Sentinel
   sentinel:
     build:
-      context: ./Sentinel
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Sentinel/Dockerfile
     container_name: friday_sentinel
     restart: unless-stopped
-    ports:
-      - "8007:8007"
     env_file:
       - ./Sentinel/.env
+    environment:
+      FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -136,10 +211,14 @@ services:
       dockerfile: Dockerfile
     container_name: friday_stratex
     restart: unless-stopped
-    ports:
-      - "8008:8008"
     env_file:
       - ./Stratex/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
     networks:
       - friday_mesh
 
@@ -150,9 +229,15 @@ services:
       dockerfile: Dockerfile
     container_name: friday_vyralx
     restart: unless-stopped
-    ports:
-      - "8010:8000"
     env_file:
       - ./VyralX/.env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+
     networks:
       - friday_mesh
+volumes:
+  heavy_task_redis_data:
