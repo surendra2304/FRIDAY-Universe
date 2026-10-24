@@ -609,6 +609,12 @@ class TestNewDeepModules:
         "Stratex/execution/regime_change_detector.py",
         "Sentinel/sentinel/apps/api/src/sentinel_api/threat_hunting_automation_engine.py",
         "Futuris/futuris/services/quantum_forecast_engine.py",
+        # Wave 40: Partner network, dream engine, moral reasoning, attention, supply chain
+        "Cortex/apps/api/src/cortex_api/strategic_partner_network_analyzer.py",
+        "Memora/apps/api/routers/memory_dream_engine.py",
+        "Inference/services/moral_reasoning_engine.py",
+        "VyralX/app/services/audience_attention_predictor.py",
+        "IntelX/intelx/services/supply_chain_threat_mapper.py",
     ]
 
     def test_all_new_modules_compile(self):
@@ -626,7 +632,7 @@ class TestNewDeepModules:
 
     def test_new_module_count(self):
         """Test that we have created a substantial number of new modules."""
-        assert len(self.NEW_MODULES) >= 68, f"Expected at least 68 new modules, got {len(self.NEW_MODULES)}"
+        assert len(self.NEW_MODULES) >= 73, f"Expected at least 73 new modules, got {len(self.NEW_MODULES)}"
 
 
 class TestCrossAgentIntegration:
