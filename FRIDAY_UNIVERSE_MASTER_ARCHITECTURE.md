@@ -105,11 +105,11 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 - **Host:** `adb.ap-hyderabad-1.oraclecloud.com`
 - **Port:** `1521` (Protocol: TCPS, `ssl_server_dn_match=yes`)
 - **Service Name:** `g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com`
-- **Username / Password:** `ADMIN` / `FridayUniverse2026!#Core`
+- **Username / Password:** `ADMIN` / provided by secret store; do not commit credentials
 - **Full DSN:** `(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))`
 - **Connection Strings:**
-  - Synchronous: `oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@<DSN>`
-  - Asynchronous: `oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@<DSN>`
+  - Synchronous: `oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>`
+  - Asynchronous: `oracle+oracledb_async://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>`
 - **Tenancy:** Serves `FRIDAY`, `Inference`, `Memora` (native HNSW vectors), `Stratex`, `Futuris`, `IntelX`, `Forge`, `Sentinel`, and `Cortex`.
 - **Core Tables:**
   - `MEMORA_MEMORIES`, `MEMORA_ENTITIES`, `MEMORA_RELATIONS` (Oracle 23ai native `VECTOR` HNSW index)
@@ -125,11 +125,11 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 - **Host:** `adb.ap-hyderabad-1.oraclecloud.com`
 - **Port:** `1521` (Protocol: TCPS, `ssl_server_dn_match=yes`)
 - **Service Name:** `g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com`
-- **Username / Password:** `ADMIN` / `FridayUniverse2026!#Vyral`
+- **Username / Password:** `ADMIN` / provided by secret store; do not commit credentials
 - **Full DSN:** `(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))`
 - **Connection Strings:**
-  - Synchronous: `oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@<DSN>`
-  - Asynchronous: `oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@<DSN>`
+  - Synchronous: `oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>`
+  - Asynchronous: `oracle+oracledb_async://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>`
 - **Tenancy:** Strictly dedicated to `VyralX` for heavy video generation pipelines.
 - **Core Tables:** `VYRALX_PROJECTS`, `VYRALX_SCRIPTS`, `VYRALX_STORYBOARDS`, `VYRALX_MEDIA_ASSETS`, `VYRALX_PUBLISH_QUEUE`, `VIDEO_METRICS`, `AGENT_TASKS`.
 
@@ -378,16 +378,16 @@ X-Correlation-ID: <uuidv4>
 
 ```ini
 # Oracle Cloud 23ai Database URLs (Loaded safely via EnvironmentFile)
-DATABASE_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
-ORACLE_CORE_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
-ORACLE_CORE_ASYNC_URL=oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
-ORACLE_VYRAL_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
-ORACLE_VYRAL_ASYNC_URL=oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+DATABASE_URL=oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>
+ORACLE_CORE_URL=oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>
+ORACLE_CORE_ASYNC_URL=oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>
+ORACLE_VYRAL_URL=oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>
+ORACLE_VYRAL_ASYNC_URL=oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@<DSN>
 
 # Security & Audit Keys
-SENTINEL_AUDIT_HMAC_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e
-SENTINEL_AUDIT_SIGNING_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e
-SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c
+SENTINEL_AUDIT_HMAC_KEY=<injected-at-deployment-time>
+SENTINEL_AUDIT_SIGNING_KEY=<injected-at-deployment-time>
+SENTINEL_API_KEY=<injected-at-deployment-time>
 
 # Private Mesh Network URLs (Internal IP Interconnect)
 FRIDAY_URL=http://10.0.0.121:10000
