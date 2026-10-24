@@ -1967,3 +1967,8 @@ async def emergency_halt_agent(agent: str):
 from friday_core.autonomous_decision_making import router as autonomous_decision_router
 
 app.include_router(autonomous_decision_router, prefix="/api/v1")
+
+# --- Agent Mesh Coordinator Integration ---
+from friday_core.agent_mesh_coordinator import router as mesh_coordinator_router
+
+app.include_router(mesh_coordinator_router, prefix="/api/v1")

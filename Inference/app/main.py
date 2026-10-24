@@ -54,6 +54,7 @@ from app.routers.nexus import nexus_router
 from app.routers.operational import operational_router
 from app.routers.predictions import predictions_router
 from app.routers.argument_evaluator import router as argument_evaluator_router
+from app.routers.belief_updater import router as belief_updater_router
 from app.routers.providers import providers_router
 from app.routers.sentinel import sentinel_router
 from app.routers.trading import router as trading_router
@@ -339,6 +340,7 @@ app.include_router(multi_market_router, dependencies=[Depends(require_inference_
 app.include_router(evolution_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(predictions_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(argument_evaluator_router, dependencies=[Depends(require_inference_api_key)])
+app.include_router(belief_updater_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(ecosystem_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(providers_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(forge_router, dependencies=[Depends(require_inference_api_key)])

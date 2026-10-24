@@ -51,6 +51,7 @@ from app.services.youtube import clear_upload_session_checkpoint, clear_upload_s
 from app.services.pexels import import_video_file, search_videos
 from app.services.rights import append_stock_attribution, find_repeat_use_blockers, is_project_scene_publishable, source_is_publishable, verified_render_sources
 from app.services.viral_predictor import router as viral_predictor_router
+from app.services.channel_growth_strategy import router as channel_growth_strategy_router
 
 settings = get_settings()
 settings.prepare_directories()
@@ -2193,3 +2194,6 @@ async def stop_autonomous_loop():
 
 # --- Viral Predictor Integration ---
 app.include_router(viral_predictor_router, prefix="/api/v1")
+
+# --- Channel Growth Strategy Integration ---
+app.include_router(channel_growth_strategy_router, prefix="/api/v1")

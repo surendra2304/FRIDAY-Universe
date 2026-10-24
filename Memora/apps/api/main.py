@@ -328,8 +328,10 @@ app.include_router(multimodal_memory_router, prefix="/api/v1")
 app.include_router(knowledge_distillation_router, prefix="/api/v1")
 app.include_router(temporal_knowledge_router, prefix="/api/v1")
 from apps.api.routers.knowledge_consolidation import router as knowledge_consolidation_router
+from apps.api.routers.memory_retrieval_optimizer import router as memory_retrieval_optimizer_router
 
 app.include_router(knowledge_consolidation_router, prefix="/api/v1")
+app.include_router(memory_retrieval_optimizer_router, prefix="/api/v1")
 
 @app.api_route("/api/dashboard/sync", methods=["GET", "POST"], include_in_schema=False)
 def dashboard_sync(agent_name: str = Depends(authenticate_agent)):
