@@ -114,8 +114,7 @@ jobs:
           git -C "$DEST" commit -m "chore(mirror): sync $AGENT from monorepo ${SOURCE_SHA:0:12}"
           # One-shot auth header avoids persisting the PAT inside .git/config.
           AUTH_HEADER="$(printf 'x-access-token:%s' "$MIRROR_TOKEN" | base64 -w 0)"
-          git -C "$DEST" -c "http.extraheader=AUTHORIZATION: basic $AUTH_HEADER" \
-            push origin "HEAD:refs/heads/$SYNC_BRANCH"
+          git -C "$DEST" -c "http.extraheader=AUTHORIZATION: basic $AUTH_HEADER" push origin "HEAD:refs/heads/$SYNC_BRANCH"
           unset AUTH_HEADER
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
 
