@@ -17,6 +17,10 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from fastapi import APIRouter, HTTPException
+
+router = APIRouter()
+
 
 @dataclass
 class TestResult:
@@ -485,3 +489,36 @@ class AutomatedTesting:
             "total_flaky_tests": len(self._flaky_tests),
             "total_performance_tests": len(self._performance_results),
         }
+
+
+# ── Router Endpoints ──────────────────────────────────────────────────────────
+
+automated_testing = AutomatedTesting()
+
+
+@router.post("/testing/generate")
+@router.post("/api/v1/forge/testing/generate")
+async def generate_tests_endpoint(payload: dict):
+    """Generate unit tests from code."""
+    code = payload.get("code", "")
+    file_name = payload.get("file_name", "module.py")
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing required 'code' field")
+    return {"generated_tests": automated_testing.generate_tests(code, file_name)}
+
+
+@router.post("/testing/coverage")
+@router.post("/api/v1/forge/testing/coverage")
+async def analyze_coverage_endpoint(payload: dict):
+    """Analyze code coverage."""
+    source_code = payload.get("source_code", "")
+    test_code = payload.get("test_code", "")
+    report = automated_testing.analyze_coverage(source_code, test_code)
+    return report.__dict__
+
+
+@router.get("/testing/report")
+@router.get("/api/v1/forge/testing/report")
+async def get_testing_report_endpoint():
+    """Get automated testing report."""
+    return automated_testing.get_testing_report()
