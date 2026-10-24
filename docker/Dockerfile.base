@@ -1,0 +1,12 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir fastapi uvicorn httpx pyyaml sqlalchemy aiosqlite redis pydantic-settings
+
+# Copy repo
+COPY . /app
+
+# Default command
+CMD ["python3", "-c", "print('FRIDAY Universe container ready')"]
