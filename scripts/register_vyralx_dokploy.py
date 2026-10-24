@@ -3,28 +3,9 @@ import json
 import os
 
 def register_vyralx():
-    cid = subprocess.check_output("docker ps -q --filter name=dokploy-postgres", shell=True).decode().strip().split()[0]
-    
-    # Check if app_vyralx already exists
-    chk_sql = "SELECT count(*) FROM application WHERE \"applicationId\"='app_vyralx' OR name='VyralX';"
-    count = int(subprocess.check_output(['docker', 'exec', cid, 'psql', '-U', 'dokploy', '-d', 'dokploy', '-tAc', chk_sql]).decode().strip() or "0")
-    if count > 0:
-        print("VyralX already registered in Dokploy database! Updating configuration...")
-        update_sql = """
-        UPDATE application 
-        SET "repository"='VyralX', "owner"='surendra2304', "branch"='main', "autoDeploy"=true, "buildType"='dockerfile', "dockerfile"='Dockerfile'
-        WHERE "applicationId"='app_vyralx' OR name='VyralX';
-        """
-        subprocess.check_call(['docker', 'exec', cid, 'psql', '-U', 'dokploy', '-d', 'dokploy', '-c', update_sql])
-        print("VyralX updated successfully in Dokploy.")
-        return
-
-    # Clone structure from app_friday
-    sql_sample = 'SELECT row_to_json(a) FROM application a WHERE "applicationId"=\'app_friday\';'
-    friday = json.loads(subprocess.check_output(['docker', 'exec', cid, 'psql', '-U', 'dokploy', '-d', 'dokploy', '-tAc', sql_sample]).decode().strip())
-
     required_keys = (
         "VYRALX_API_KEY",
+        "VYRALX_DATABASE_URL",
         "FRIDAY_API_KEY",
         "INFERENCE_API_KEY",
         "INTELX_API_KEY",
@@ -46,7 +27,7 @@ HOST=0.0.0.0
 PORT=8000
 LOG_LEVEL=INFO
 API_KEY=${mesh_keys['VYRALX_API_KEY']}
-DATABASE_URL=sqlite:///./data/vyralx.db
+DATABASE_URL=${mesh_keys['VYRALX_DATABASE_URL']}
 DATA_DIR=./data
 MEDIA_DIR=./media
 RENDER_DIR=./renders
@@ -70,6 +51,31 @@ MEMORA_API_KEY=${mesh_keys['MEMORA_API_KEY']}
 SENTINEL_URL=http://sentinel:8000
 SENTINEL_API_KEY=${mesh_keys['SENTINEL_API_KEY']}
 """
+
+    cid = subprocess.check_output("docker ps -q --filter name=dokploy-postgres", shell=True).decode().strip().split()[0]
+    
+    # Check if app_vyralx already exists
+    chk_sql = "SELECT count(*) FROM application WHERE \"applicationId\"='app_vyralx' OR name='VyralX';"
+    count = int(subprocess.check_output(['docker', 'exec', cid, 'psql', '-U', 'dokploy', '-d', 'dokploy', '-tAc', chk_sql]).decode().strip() or "0")
+    if count > 0:
+        print("VyralX already registered in Dokploy database! Updating configuration...")
+        safe_env = vyralx_env.replace("'", "''")
+        update_sql = f"""
+        UPDATE application
+        SET "repository"='VyralX', "owner"='surendra2304', "branch"='main',
+            "autoDeploy"=true, "buildType"='dockerfile', "dockerfile"='Dockerfile',
+            "env"='{safe_env}'
+        WHERE "applicationId"='app_vyralx' OR name='VyralX';
+        """
+        subprocess.check_call(['docker', 'exec', cid, 'psql', '-U', 'dokploy', '-d', 'dokploy', '-c', update_sql])
+        print("VyralX updated successfully in Dokploy.")
+        return
+
+    # Clone structure from app_friday
+    sql_sample = 'SELECT row_to_json(a) FROM application a WHERE "applicationId"=\'app_friday\';'
+    friday = json.loads(subprocess.check_output(['docker', 'exec', cid, 'psql', '-U', 'dokploy', '-d', 'dokploy', '-tAc', sql_sample]).decode().strip())
+
+
 
     friday["applicationId"] = "app_vyralx"
     friday["name"] = "VyralX"
