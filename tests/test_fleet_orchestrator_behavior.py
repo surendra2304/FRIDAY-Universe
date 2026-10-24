@@ -128,5 +128,37 @@ class FleetOrchestratorBehaviorTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(any("invalid_or_unavailable_vote" in item.get("reason", "") for item in result.evidence))
 
 
+    async def test_emergency_halt_does_not_fake_observed_offline_status(self):
+        supervisor = FleetSupervisor(transport=FakeTransport(status="ACCEPTED_HTTP"))
+        supervisor.registry.update_status("FRIDAY", AgentStatus.ONLINE)
+
+        accepted = await supervisor.emergency_halt("friday")
+
+        self.assertTrue(accepted)
+        self.assertEqual(
+            supervisor.registry.get_agent("FRIDAY").status,
+            AgentStatus.ONLINE,
+            "transport acceptance must not masquerade as proof the agent stopped",
+        )
+
+    async def test_emergency_halt_fails_when_transport_blocks_request(self):
+        supervisor = FleetSupervisor(transport=FakeTransport(status="BLOCKED_INVALID_ENVELOPE"))
+        supervisor.registry.update_status("FRIDAY", AgentStatus.ONLINE)
+
+        accepted = await supervisor.emergency_halt("FRIDAY")
+
+        self.assertFalse(accepted)
+        self.assertEqual(supervisor.registry.get_agent("FRIDAY").status, AgentStatus.ONLINE)
+
+    async def test_emergency_halt_rejects_unknown_agent_without_dispatch(self):
+        transport = FakeTransport(status="ACCEPTED_HTTP")
+        supervisor = FleetSupervisor(transport=transport)
+
+        accepted = await supervisor.emergency_halt("NOT_A_REAL_AGENT")
+
+        self.assertFalse(accepted)
+        self.assertEqual(transport.published, [])
+
+
 if __name__ == "__main__":
     unittest.main()
