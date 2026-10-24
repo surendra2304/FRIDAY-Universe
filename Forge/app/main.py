@@ -23,6 +23,7 @@ from app.api.health import health_router
 from app.api.improvement import improvement_router
 from app.api.marketplace import marketplace_router, task_template_router
 from app.api.routes import router as api_router
+from app.api.automated_testing import router as automated_testing_router
 from app.api.synthesis_routes import pipeline_router, synthesis_router
 from app.api.tasks import tasks_router
 from app.api.websocket import ws_router
@@ -364,6 +365,8 @@ def create_app() -> FastAPI:
     app.include_router(ws_router, tags=["WebSockets"])
     app.include_router(streaming_router, tags=["WebSocket Streaming Gateway"])
     app.include_router(dashboard_router, tags=["Web Dashboard"])
+    app.include_router(automated_testing_router, prefix="/api/v1", tags=["Automated Testing v1"])
+    app.include_router(automated_testing_router, prefix="/api", tags=["Automated Testing"])
 
     return app
 

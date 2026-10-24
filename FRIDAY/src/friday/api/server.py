@@ -1961,3 +1961,9 @@ async def emergency_halt_agent(agent: str):
         return {"status": "HALTED" if success else "FAILED", "agent": agent}
     except Exception as exc:
         raise HTTPException(500, f"Emergency halt failed: {exc}")
+
+
+# --- Autonomous Decision Making Integration ---
+from friday_core.autonomous_decision_making import router as autonomous_decision_router
+
+app.include_router(autonomous_decision_router, prefix="/api/v1")

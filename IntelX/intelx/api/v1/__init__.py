@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from intelx.api.v1.cortex import router as cortex_router
 from intelx.api.v1.endpoints import router as endpoints_router
+from intelx.api.v1.expert_network import router as expert_network_router
 from intelx.api.v1.friday import router as friday_router
 from intelx.api.v1.friday_universe import router as friday_universe_router
 from intelx.api.v1.futuris import research_query_router
@@ -24,3 +25,4 @@ v1_router.include_router(research_query_router)
 v1_router.include_router(stratex_router)
 v1_router.include_router(subscriptions_router)
 v1_router.include_router(friday_universe_router)
+v1_router.include_router(expert_network_router)

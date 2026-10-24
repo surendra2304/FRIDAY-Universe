@@ -50,6 +50,7 @@ from app.services.project_pipeline import sync_project_memory
 from app.services.youtube import clear_upload_session_checkpoint, clear_upload_success_checkpoint
 from app.services.pexels import import_video_file, search_videos
 from app.services.rights import append_stock_attribution, find_repeat_use_blockers, is_project_scene_publishable, source_is_publishable, verified_render_sources
+from app.services.viral_predictor import router as viral_predictor_router
 
 settings = get_settings()
 settings.prepare_directories()
@@ -2188,3 +2189,7 @@ async def stop_autonomous_loop():
         return {"status": "STOPPED", "message": "Autonomous channel orchestrator stopped"}
     except Exception as exc:
         raise HTTPException(500, f"Failed to stop autonomous loop: {exc}")
+
+
+# --- Viral Predictor Integration ---
+app.include_router(viral_predictor_router, prefix="/api/v1")
