@@ -1,7 +1,6 @@
-import os
-import sys
-import shutil
+import argparse
 from pathlib import Path
+from xml.sax.saxutils import escape
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -199,7 +198,7 @@ def build_pdf(pdf_path):
         return box
 
     def make_code_box(code_lines):
-        code_p = Paragraph("<br/>".join(code_lines), code_style)
+        code_p = Paragraph("<br/>".join(escape(line) for line in code_lines), code_style)
         box = Table([[code_p]], colWidths=[540])
         box.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F1F5F9')),
@@ -607,20 +606,20 @@ def build_pdf(pdf_path):
     doc.build(story, canvasmaker=NumberedCanvas)
     print(f"Successfully generated Master Architecture PDF: {pdf_path}")
 
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate the sanitized FRIDAY Universe architecture PDF.")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / "FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf",
+        help="Destination path for the generated PDF.",
+    )
+    args = parser.parse_args()
+    output_path = args.output.expanduser().resolve()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    build_pdf(str(output_path))
+    return 0
+
+
 if __name__ == "__main__":
-    out_pdf = r"D:\FRIDAY Universe\FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf"
-    readme_pdf = r"D:\FRIDAY Universe\README.pdf"
-    artifact_dir = Path(r"C:\Users\Surendra\.gemini\antigravity\brain\5178919f-c72f-409f-90f8-4c6c5b761afb")
-
-    # 1. Generate PDF
-    build_pdf(out_pdf)
-
-    # 2. Copy to README.pdf
-    shutil.copy2(out_pdf, readme_pdf)
-    print(f"Successfully updated README.pdf: {readme_pdf}")
-
-    # 3. Copy to Artifact Directory
-    if artifact_dir.exists():
-        art_pdf = artifact_dir / "FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf"
-        shutil.copy2(out_pdf, art_pdf)
-        print(f"Successfully copied to Artifacts: {art_pdf}")
+    raise SystemExit(main())
