@@ -1,19 +1,14 @@
 # The FRIDAY Universe: Definitive Master Architecture & Ecosystem Specification
 
-> **Workspace Root:** `D:\FRIDAY Universe`  
-> **Master Technical Codex (PDF):** [`FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf`](file:///D:/FRIDAY%20Universe/FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf) | [`README.pdf`](file:///D:/FRIDAY%20Universe/README.pdf) (20-Page Definitive Edition)  
-> **Master Technical Codex (Markdown):** [`FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.md`](file:///D:/FRIDAY%20Universe/FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.md)  
-> **Master Credentials & Access:** [`CREDENTIALS.md`](file:///D:/FRIDAY%20Universe/CREDENTIALS.md) | [`CREDENTIALS.pdf`](file:///D:/FRIDAY%20Universe/CREDENTIALS.pdf)  
-> **Ecosystem Repositories:** [FRIDAY](file:///D:/FRIDAY%20Universe/FRIDAY) | [Inference](file:///D:/FRIDAY%20Universe/Inference) | [Memora](file:///D:/FRIDAY%20Universe/Memora) | [Stratex](file:///D:/FRIDAY%20Universe/Stratex) | [Forge](file:///D:/FRIDAY%20Universe/Forge) | [Cortex](file:///D:/FRIDAY%20Universe/Cortex) | [Sentinel](file:///D:/FRIDAY%20Universe/Sentinel) | [IntelX](file:///D:/FRIDAY%20Universe/IntelX) | [Futuris](file:///D:/FRIDAY%20Universe/Futuris) | [VyralX](file:///D:/FRIDAY%20Universe/VyralX)  
+> **Master Technical Codex (Markdown):** [FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.md](./FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.md)
+> **Master Architecture PDF:** The sanitized PDF is generated and credential-scanned by the `Monorepo Structure and Safety CI` workflow. Download the `friday-universe-master-architecture` artifact from its latest passing run.
+> **Deployment credentials:** Inject secrets from a protected environment or secret manager. Live credentials must not be committed to this repository.
+> **Ten agent repositories:** [FRIDAY](https://github.com/surendra2304/FRIDAY) · [Inference](https://github.com/surendra2304/Inference) · [Memora](https://github.com/surendra2304/Memora) · [Stratex](https://github.com/surendra2304/Stratex) · [Forge](https://github.com/surendra2304/Forge) · [Cortex](https://github.com/surendra2304/Cortex) · [Sentinel](https://github.com/surendra2304/Sentinel) · [IntelX](https://github.com/surendra2304/IntelX) · [Futuris](https://github.com/surendra2304/Futuris) · [VyralX](https://github.com/surendra2304/VyralX)
 
-**Document Version:** 2.5.0  
-**Classification:** Internal System Architecture & Engineering Standard  
-**Ecosystem Coordinator:** FRIDAY Antigravity Master Control  
-**Target Environment:** Oracle Cloud Infrastructure — ARM64 (`VM.Standard.A1.Flex`, 2 OCPUs, 12 GB RAM, 150–200 GB NVMe Boot Volume)  
-**Interim Host:** Oracle Cloud Infrastructure — AMD64 (`140.245.208.100`, ~1 GB RAM, 8 GB Swap, 100 GB NVMe Disk)  
-**Local Monorepo Workspace:** `D:\FRIDAY Universe`  
-
----
+**Document Version:** 2.6.0
+**Classification:** Internal System Architecture & Engineering Standard
+**Ecosystem Coordinator:** FRIDAY Universe
+**Target Environment:** Oracle Cloud Infrastructure; deployment details are environment-specific and must be verified against the current OCI console.
 
 ## 1. Executive Summary & Ecosystem Philosophy
 

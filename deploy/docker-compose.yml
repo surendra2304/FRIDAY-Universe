@@ -5,6 +5,25 @@ networks:
     driver: bridge
 
 services:
+  # Private Redis lease store for distributed heavy-task coordination.
+  friday-heavy-task-redis:
+    image: redis:7-alpine
+    container_name: friday_heavy_task_redis
+    restart: unless-stopped
+    command: ["sh", "-ec", "exec redis-server --appendonly yes --appendfsync always --save 60 1000 --requirepass \"$FRIDAY_UNIVERSE_REDIS_PASSWORD\""]
+    environment:
+      FRIDAY_UNIVERSE_REDIS_PASSWORD: ${FRIDAY_UNIVERSE_REDIS_PASSWORD:?Set a strong URL-safe FRIDAY_UNIVERSE_REDIS_PASSWORD}
+    volumes:
+      - heavy_task_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$FRIDAY_UNIVERSE_REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - friday_mesh
+
   # 1. Master Command Center & Gateway
   friday:
     build:
@@ -28,6 +47,8 @@ services:
       - SENTINEL_URL=http://sentinel:8000
       - STRATEX_URL=http://stratex:8000
       - FRIDAY_STRATEX_URL=http://stratex:8000
+      - VYRALX_URL=http://vyralx:8000
+      - FRIDAY_VYRALX_URL=http://vyralx:8000
     networks:
       - friday_mesh
 
@@ -56,6 +77,11 @@ services:
       - .env.production
     environment:
       - PORT=8000
+      - FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      - FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
     networks:
       - friday_mesh
 
@@ -70,6 +96,11 @@ services:
       - .env.production
     environment:
       - PORT=8000
+      - FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      - FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
     networks:
       - friday_mesh
 
@@ -132,8 +163,13 @@ services:
       - PORT=8000
       - ENVIRONMENT=development
       - ENV=development
+      - FRIDAY_UNIVERSE_HEAVY_TASK_REDIS_URL: "redis://:${FRIDAY_UNIVERSE_REDIS_PASSWORD}@friday-heavy-task-redis:6379/0"
+      - FRIDAY_UNIVERSE_REQUIRE_DISTRIBUTED_HEAVY_TASKS: "true"
       - SENTINEL_AUDIT_SIGNING_KEY=${SENTINEL_AUDIT_SIGNING_KEY:?Set a private audit signing key in deploy/.env.production}
       - SENTINEL_AUDIT_HMAC_KEY=${SENTINEL_AUDIT_HMAC_KEY:?Set a private audit HMAC key in deploy/.env.production}
+    depends_on:
+      friday-heavy-task-redis:
+        condition: service_healthy
     networks:
       - friday_mesh
 
@@ -150,3 +186,20 @@ services:
       - PORT=8000
     networks:
       - friday_mesh
+
+  # 10. VyralX
+  vyralx:
+    build:
+      context: ./VyralX
+      dockerfile: Dockerfile
+    container_name: friday_vyralx
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      - PORT=8000
+    networks:
+      - friday_mesh
+
+volumes:
+  heavy_task_redis_data:

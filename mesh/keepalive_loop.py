@@ -1,4 +1,4 @@
-"""Real continuous keep-alive loop — actively probes all 9 cloud agents.
+"""Real continuous keep-alive loop — actively probes all 10 cloud agents.
 Runs asynchronously with concurrent probes, circuit breakers, and status logging.
 """
 from __future__ import annotations
@@ -58,6 +58,7 @@ CLOUD_AGENTS = [
     ("cortex", "http://cortex:8000", "/health"),
     ("forge", "http://forge:8000", "/health"),
     ("sentinel", "http://sentinel:8000", "/health"),
+    ("vyralx", "http://vyralx:8000", "/health"),
 ]
 
 

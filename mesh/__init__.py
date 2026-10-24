@@ -16,6 +16,7 @@ _EXPORT_MODULES = {
     "MessagePriority": "envelope",
     "build_envelope": "envelope",
     "validate_envelope": "envelope",
+    "verify_envelope": "envelope",
     # Registry and discovery
     "AgentDiscovery": "registry",
     "AgentManifest": "registry",
@@ -23,9 +24,15 @@ _EXPORT_MODULES = {
     "ManifestError": "registry",
     "create_default_registry": "registry",
     # Inter-agent transport
+    "AGENT_AUTH_MAP": "transport",
     "MeshTransport": "transport",
     "TransportMode": "transport",
     "get_mesh_transport": "transport",
+    # Cognitive guardrails
+    "AutoFixZone": "cognitive_brain",
+    "CognitiveBrain": "cognitive_brain",
+    "CognitiveDecision": "cognitive_brain",
+    "CognitiveLayer": "cognitive_brain",
     # Health monitoring
     "CircuitBreaker": "keepalive",
     "KeepAliveMonitor": "keepalive",
@@ -54,6 +61,17 @@ _EXPORT_MODULES = {
     "HeavyTaskLease": "heavy_task",
     "HeavyTaskLeaseLost": "heavy_task",
     "coordinator_from_environment": "heavy_task",
+    # Fleet orchestration
+    "AgentCapability": "fleet_orchestrator",
+    "AgentInfo": "fleet_orchestrator",
+    "AgentStatus": "fleet_orchestrator",
+    "ConsensusEngine": "fleet_orchestrator",
+    "ConsensusResult": "fleet_orchestrator",
+    "FleetRegistry": "fleet_orchestrator",
+    "FleetSupervisor": "fleet_orchestrator",
+    "FleetTask": "fleet_orchestrator",
+    "TaskRouter": "fleet_orchestrator",
+    "fleet_orchestrator": "fleet_orchestrator",
 }
 
 __all__ = list(_EXPORT_MODULES)

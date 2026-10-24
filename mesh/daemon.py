@@ -164,6 +164,13 @@ class DaemonSupervisor:
             cwd=str(root / "Cortex"),
             cloud_url="http://cortex:8000",
         )
+        self.daemons["vyralx"] = AgentDaemon(
+            name="VyralX",
+            port=8010,
+            cwd=str(root / "VyralX"),
+            module_path="app.main:app",
+            cloud_url="http://vyralx:8000",
+        )
 
     def get_endpoint(self, agent_name: str) -> str:
         """Get best routing endpoint based on mode and local status."""

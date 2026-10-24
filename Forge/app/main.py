@@ -23,6 +23,8 @@ from app.api.health import health_router
 from app.api.improvement import improvement_router
 from app.api.marketplace import marketplace_router, task_template_router
 from app.api.routes import router as api_router
+from app.api.automated_testing import router as automated_testing_router
+from app.api.code_intelligence import router as code_intelligence_router
 from app.api.synthesis_routes import pipeline_router, synthesis_router
 from app.api.tasks import tasks_router
 from app.api.websocket import ws_router
@@ -364,6 +366,10 @@ def create_app() -> FastAPI:
     app.include_router(ws_router, tags=["WebSockets"])
     app.include_router(streaming_router, tags=["WebSocket Streaming Gateway"])
     app.include_router(dashboard_router, tags=["Web Dashboard"])
+    app.include_router(automated_testing_router, prefix="/api/v1", tags=["Automated Testing v1"])
+    app.include_router(automated_testing_router, prefix="/api", tags=["Automated Testing"])
+    app.include_router(code_intelligence_router, prefix="/api/v1", tags=["Code Intelligence v1"])
+    app.include_router(code_intelligence_router, prefix="/api", tags=["Code Intelligence"])
 
     return app
 
@@ -381,3 +387,57 @@ if __name__ == "__main__":
         port=settings.port,
         reload=settings.debug,
     )
+
+
+# --- Autonomous Software Synthesizer Integration ---
+
+@app.post("/api/v1/synthesize", tags=["Autonomous Synthesis"])
+async def autonomous_synthesize(
+    description: str,
+    language: str = "python",
+    test_coverage: bool = True,
+    security_check: bool = True,
+):
+    """Autonomously synthesize software from a description."""
+    from app.agents.autonomous_synthesizer import autonomous_synthesizer, SynthesisRequest
+    try:
+        request = SynthesisRequest(
+            description=description,
+            language=language,
+            test_coverage=test_coverage,
+            security_check=security_check,
+        )
+        result = await autonomous_synthesizer.synthesize(request)
+        return {
+            "success": result.success,
+            "files_created": result.files_created,
+            "tests_created": result.tests_created,
+            "verification_passed": result.verification_passed,
+            "errors": result.errors,
+            "warnings": result.warnings,
+            "iterations": result.iterations,
+        }
+    except Exception as exc:
+        raise HTTPException(500, f"Synthesis failed: {exc}")
+
+
+@app.post("/api/v1/synthesize/multi-language", tags=["Autonomous Synthesis"])
+async def autonomous_synthesize_multi_language(
+    description: str,
+    languages: list[str] = ["python", "javascript", "typescript"],
+):
+    """Synthesize software in multiple languages simultaneously."""
+    from app.agents.autonomous_synthesizer import autonomous_synthesizer, SynthesisRequest
+    results = {}
+    for lang in languages:
+        try:
+            request = SynthesisRequest(description=description, language=lang)
+            result = await autonomous_synthesizer.synthesize(request)
+            results[lang] = {
+                "success": result.success,
+                "files": result.files_created,
+                "iterations": result.iterations,
+            }
+        except Exception as exc:
+            results[lang] = {"error": str(exc)}
+    return {"languages": languages, "results": results}

@@ -10,7 +10,7 @@ set -euo pipefail
 SERVER_ROLE="${1:-}"
 
 if [[ "$SERVER_ROLE" != "1" && "$SERVER_ROLE" != "2" ]]; then
-    echo "Usage: sudo bash deploy/setup_fleet.sh [1|2]"
+    echo "Usage: export required secrets, then run bash deploy/setup_fleet.sh [1|2]"
     echo "  1 = Deploy Server 1 Core Fleet (FRIDAY, Inference, Memora, Stratex, Futuris, IntelX, Forge)"
     echo "  2 = Deploy Server 2 Specialist Fleet (VyralX, Sentinel, Cortex)"
     exit 1
@@ -35,12 +35,26 @@ echo "class StrEnum(str, Enum): pass" | sudo tee -a /usr/lib/python3.10/enum.py 
 
 echo "=== [2/4] Configuring Database DSNs (Oracle Autonomous 23ai) ==="
 ORACLE_CORE_DSN="(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
-ORACLE_CORE_URL="oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@${ORACLE_CORE_DSN}"
-ORACLE_CORE_ASYNC_URL="oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@${ORACLE_CORE_DSN}"
-
 ORACLE_VYRAL_DSN="(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
-ORACLE_VYRAL_URL="oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@${ORACLE_VYRAL_DSN}"
-ORACLE_VYRAL_ASYNC_URL="oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@${ORACLE_VYRAL_DSN}"
+
+# Credentials come from a protected environment or password manager; never hard-code them here.
+ORACLE_CORE_USERNAME="${ORACLE_CORE_USERNAME:-ADMIN}"
+ORACLE_VYRAL_USERNAME="${ORACLE_VYRAL_USERNAME:-ADMIN}"
+: "${ORACLE_CORE_PASSWORD:?Export ORACLE_CORE_PASSWORD from your secret store before deployment}"
+: "${ORACLE_VYRAL_PASSWORD:?Export ORACLE_VYRAL_PASSWORD from your secret store before deployment}"
+
+urlencode_component() {
+    python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
+}
+CORE_USER_ENCODED="$(urlencode_component "$ORACLE_CORE_USERNAME")"
+CORE_PASSWORD_ENCODED="$(urlencode_component "$ORACLE_CORE_PASSWORD")"
+VYRAL_USER_ENCODED="$(urlencode_component "$ORACLE_VYRAL_USERNAME")"
+VYRAL_PASSWORD_ENCODED="$(urlencode_component "$ORACLE_VYRAL_PASSWORD")"
+
+ORACLE_CORE_URL="oracle+oracledb://${CORE_USER_ENCODED}:${CORE_PASSWORD_ENCODED}@${ORACLE_CORE_DSN}"
+ORACLE_CORE_ASYNC_URL="oracle+oracledb_async://${CORE_USER_ENCODED}:${CORE_PASSWORD_ENCODED}@${ORACLE_CORE_DSN}"
+ORACLE_VYRAL_URL="oracle+oracledb://${VYRAL_USER_ENCODED}:${VYRAL_PASSWORD_ENCODED}@${ORACLE_VYRAL_DSN}"
+ORACLE_VYRAL_ASYNC_URL="oracle+oracledb_async://${VYRAL_USER_ENCODED}:${VYRAL_PASSWORD_ENCODED}@${ORACLE_VYRAL_DSN}"
 
 ENV_FILE="/etc/default/friday_universe.env"
 if [ "$SERVER_ROLE" = "1" ]; then
@@ -51,14 +65,17 @@ ORACLE_CORE_ASYNC_URL=$ORACLE_CORE_ASYNC_URL
 ORACLE_VYRAL_URL=$ORACLE_VYRAL_URL
 EOF
 elif [ "$SERVER_ROLE" = "2" ]; then
+    : "${SENTINEL_AUDIT_HMAC_KEY:?Export a rotated SENTINEL_AUDIT_HMAC_KEY from your secret store}"
+    : "${SENTINEL_AUDIT_SIGNING_KEY:?Export a rotated SENTINEL_AUDIT_SIGNING_KEY from your secret store}"
+    : "${SENTINEL_API_KEY:?Export a rotated SENTINEL_API_KEY from your secret store}"
     sudo tee "$ENV_FILE" > /dev/null << EOF
 DATABASE_URL=$ORACLE_VYRAL_URL
 ORACLE_CORE_URL=$ORACLE_CORE_URL
 ORACLE_VYRAL_URL=$ORACLE_VYRAL_URL
 ORACLE_VYRAL_ASYNC_URL=$ORACLE_VYRAL_ASYNC_URL
-SENTINEL_AUDIT_HMAC_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e
-SENTINEL_AUDIT_SIGNING_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e
-SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c
+SENTINEL_AUDIT_HMAC_KEY=$SENTINEL_AUDIT_HMAC_KEY
+SENTINEL_AUDIT_SIGNING_KEY=$SENTINEL_AUDIT_SIGNING_KEY
+SENTINEL_API_KEY=$SENTINEL_API_KEY
 EOF
 fi
 sudo chmod 600 "$ENV_FILE"

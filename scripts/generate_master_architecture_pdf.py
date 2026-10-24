@@ -1,7 +1,6 @@
-import os
-import sys
-import shutil
+import argparse
 from pathlib import Path
+from xml.sax.saxutils import escape
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -199,7 +198,7 @@ def build_pdf(pdf_path):
         return box
 
     def make_code_box(code_lines):
-        code_p = Paragraph("<br/>".join(code_lines), code_style)
+        code_p = Paragraph("<br/>".join(escape(line) for line in code_lines), code_style)
         box = Table([[code_p]], colWidths=[540])
         box.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F1F5F9')),
@@ -327,7 +326,7 @@ def build_pdf(pdf_path):
             "<code>g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com</code><br/>"
             "Host: <code>adb.ap-hyderabad-1.oraclecloud.com</code><br/>"
             "Port: <code>1521</code> (Protocol: TCPS, SSL match: yes)",
-            "<code>ADMIN</code><br/><code>FridayUniverse2026!#Core</code>",
+            "Credentials injected from a protected environment",
             "FRIDAY, Inference, Memora, Stratex, Futuris, IntelX, Forge, Sentinel, Cortex",
             "• <code>MEMORA_MEMORIES</code> (23ai HNSW native vector)<br/>"
             "• <code>FUTURIS_FORECASTS</code> & 12 schema tables<br/>"
@@ -341,7 +340,7 @@ def build_pdf(pdf_path):
             "<code>g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com</code><br/>"
             "Host: <code>adb.ap-hyderabad-1.oraclecloud.com</code><br/>"
             "Port: <code>1521</code> (Protocol: TCPS, SSL match: yes)",
-            "<code>ADMIN</code><br/><code>FridayUniverse2026!#Vyral</code>",
+            "Credentials injected from a protected environment",
             "Exclusively dedicated to <b>VyralX</b>",
             "• <code>VYRALX_PROJECTS</code>, <code>VYRALX_SCRIPTS</code><br/>"
             "• <code>VYRALX_STORYBOARDS</code>, <code>RENDER_JOBS</code><br/>"
@@ -537,16 +536,16 @@ def build_pdf(pdf_path):
     story.append(Paragraph("Master Environment Variable Catalog (/etc/default/friday_universe.env)", h2_style))
     env_lines = [
         "# Database Credentials (Loaded via EnvironmentFile in systemd units)",
-        "DATABASE_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
-        "ORACLE_CORE_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
-        "ORACLE_CORE_ASYNC_URL=oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
-        "ORACLE_VYRAL_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
-        "ORACLE_VYRAL_ASYNC_URL=oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "DATABASE_URL=oracle+oracledb://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "ORACLE_CORE_URL=oracle+oracledb://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "ORACLE_CORE_ASYNC_URL=oracle+oracledb_async://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "ORACLE_VYRAL_URL=oracle+oracledb://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "ORACLE_VYRAL_ASYNC_URL=oracle+oracledb_async://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
         "",
         "# Cryptographic Security Keys",
-        "SENTINEL_AUDIT_HMAC_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e",
-        "SENTINEL_AUDIT_SIGNING_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e",
-        "SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c",
+        "SENTINEL_AUDIT_HMAC_KEY=INJECTED_AT_DEPLOYMENT_TIME",
+        "SENTINEL_AUDIT_SIGNING_KEY=INJECTED_AT_DEPLOYMENT_TIME",
+        "SENTINEL_API_KEY=INJECTED_AT_DEPLOYMENT_TIME",
         "",
         "# Private Mesh Network URLs (Internal IP Interconnect)",
         "FRIDAY_URL=http://10.0.0.121:10000",
@@ -607,20 +606,20 @@ def build_pdf(pdf_path):
     doc.build(story, canvasmaker=NumberedCanvas)
     print(f"Successfully generated Master Architecture PDF: {pdf_path}")
 
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate the sanitized FRIDAY Universe architecture PDF.")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / "FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf",
+        help="Destination path for the generated PDF.",
+    )
+    args = parser.parse_args()
+    output_path = args.output.expanduser().resolve()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    build_pdf(str(output_path))
+    return 0
+
+
 if __name__ == "__main__":
-    out_pdf = r"D:\FRIDAY Universe\FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf"
-    readme_pdf = r"D:\FRIDAY Universe\README.pdf"
-    artifact_dir = Path(r"C:\Users\Surendra\.gemini\antigravity\brain\5178919f-c72f-409f-90f8-4c6c5b761afb")
-
-    # 1. Generate PDF
-    build_pdf(out_pdf)
-
-    # 2. Copy to README.pdf
-    shutil.copy2(out_pdf, readme_pdf)
-    print(f"Successfully updated README.pdf: {readme_pdf}")
-
-    # 3. Copy to Artifact Directory
-    if artifact_dir.exists():
-        art_pdf = artifact_dir / "FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf"
-        shutil.copy2(out_pdf, art_pdf)
-        print(f"Successfully copied to Artifacts: {art_pdf}")
+    raise SystemExit(main())

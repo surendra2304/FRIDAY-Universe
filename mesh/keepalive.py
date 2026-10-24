@@ -1,4 +1,4 @@
-"""Keep-alive monitoring and health state tracking for all 9 ecosystem agents."""
+"""Keep-alive monitoring and health state tracking for all 10 ecosystem agents."""
 from __future__ import annotations
 
 import time
