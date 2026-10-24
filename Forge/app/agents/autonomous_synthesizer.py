@@ -2,19 +2,17 @@
 app/agents/autonomous_synthesizer.py — Forge Autonomous Software Synthesizer.
 
 Enhances Forge with:
-1. Multi-Language Synthesis: Supports Python, JavaScript, TypeScript, Go, Rust
-2. Autonomous Debugging: Self-diagnoses and fixes compilation errors
+1. Safe starter generation for Python and JavaScript
+2. Syntax-only validation without running generated source
 3. Test Generation: Auto-generates unit tests for synthesized code
-4. Dependency Resolution: Automatically resolves and installs dependencies
+4. Static security checks and retained output artifacts
 5. Code Review Integration: Pre-delivery security and quality checks
-6. Iterative Refinement: Loops until all verification checks pass
+6. Runtime checks are marked unverified until an isolated sandbox is configured
 """
 from __future__ import annotations
 
-import asyncio
 import ast
 import json
-import logging
 import re
 import shutil
 import subprocess
@@ -22,7 +20,6 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 from app.core.logging import get_logger
 
@@ -52,6 +49,7 @@ class SynthesisResult:
     iterations: int = 0
     static_checks_passed: bool = False
     runtime_tests_executed: bool = False
+    output_directory: str = ""
 
 
 class AutonomousSynthesizer:
@@ -141,14 +139,25 @@ class AutonomousSynthesizer:
                 result.static_checks_passed = True
                 result.runtime_tests_executed = False
                 result.verification_passed = not request.test_coverage
-                result.files_created = [str(f) for f in output_path.glob(f"*{language_config['extension']}")]
-
-                # Copy to final output if specified
-                if request.output_path:
-                    final_path = Path(request.output_path)
-                    final_path.parent.mkdir(parents=True, exist_ok=True)
-                    for f in output_path.glob(f"*{language_config['extension']}"):
-                        shutil.copy2(f, final_path / f.name)
+                # Keep results after the temporary verification workspace is removed.
+                final_path = (
+                    Path(request.output_path).expanduser().resolve()
+                    if request.output_path
+                    else Path(tempfile.mkdtemp(prefix="forge_synth_results_"))
+                )
+                final_path.mkdir(parents=True, exist_ok=True)
+                for generated_file in sorted(output_path.iterdir()):
+                    if generated_file.is_file():
+                        shutil.copy2(generated_file, final_path / generated_file.name)
+                result.output_directory = str(final_path)
+                result.files_created = [
+                    str(final_path / generated_file.name)
+                    for generated_file in output_path.glob(f"*{language_config['extension']}")
+                ]
+                result.tests_created = [
+                    str(final_path / generated_file.name)
+                    for generated_file in output_path.glob("test_*.py")
+                ]
 
                 logger.info(f"Synthesis completed successfully in {iteration + 1} iterations")
                 break
