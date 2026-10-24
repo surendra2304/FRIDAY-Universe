@@ -327,7 +327,7 @@ def build_pdf(pdf_path):
             "<code>g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com</code><br/>"
             "Host: <code>adb.ap-hyderabad-1.oraclecloud.com</code><br/>"
             "Port: <code>1521</code> (Protocol: TCPS, SSL match: yes)",
-            "<code>ADMIN</code><br/><code>FridayUniverse2026!#Core</code>",
+            "<code>ADMIN</code><br/><code><REDACTED></code>",
             "FRIDAY, Inference, Memora, Stratex, Futuris, IntelX, Forge, Sentinel, Cortex",
             "• <code>MEMORA_MEMORIES</code> (23ai HNSW native vector)<br/>"
             "• <code>FUTURIS_FORECASTS</code> & 12 schema tables<br/>"
@@ -341,7 +341,7 @@ def build_pdf(pdf_path):
             "<code>g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com</code><br/>"
             "Host: <code>adb.ap-hyderabad-1.oraclecloud.com</code><br/>"
             "Port: <code>1521</code> (Protocol: TCPS, SSL match: yes)",
-            "<code>ADMIN</code><br/><code>FridayUniverse2026!#Vyral</code>",
+            "<code>ADMIN</code><br/><code><REDACTED></code>",
             "Exclusively dedicated to <b>VyralX</b>",
             "• <code>VYRALX_PROJECTS</code>, <code>VYRALX_SCRIPTS</code><br/>"
             "• <code>VYRALX_STORYBOARDS</code>, <code>RENDER_JOBS</code><br/>"
@@ -537,16 +537,16 @@ def build_pdf(pdf_path):
     story.append(Paragraph("Master Environment Variable Catalog (/etc/default/friday_universe.env)", h2_style))
     env_lines = [
         "# Database Credentials (Loaded via EnvironmentFile in systemd units)",
-        "DATABASE_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
-        "ORACLE_CORE_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
-        "ORACLE_CORE_ASYNC_URL=oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
-        "ORACLE_VYRAL_URL=oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
-        "ORACLE_VYRAL_ASYNC_URL=oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "DATABASE_URL=oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "ORACLE_CORE_URL=oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "ORACLE_CORE_ASYNC_URL=oracle+oracledb_async://<USERNAME>:<URL-ENCODED-PASSWORD>@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "ORACLE_VYRAL_URL=oracle+oracledb://<USERNAME>:<URL-ENCODED-PASSWORD>@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
+        "ORACLE_VYRAL_ASYNC_URL=oracle+oracledb_async://<USERNAME>:<URL-ENCODED-PASSWORD>@(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))",
         "",
         "# Cryptographic Security Keys",
-        "SENTINEL_AUDIT_HMAC_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e",
-        "SENTINEL_AUDIT_SIGNING_KEY=c36209e9fbe54d008d51a660d2ecb0b023f9906649f8269e8bb95b217dc3ad3e",
-        "SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c",
+        "SENTINEL_AUDIT_HMAC_KEY=<injected at deployment time>",
+        "SENTINEL_AUDIT_SIGNING_KEY=<injected at deployment time>",
+        "SENTINEL_API_KEY=<injected at deployment time>",
         "",
         "# Private Mesh Network URLs (Internal IP Interconnect)",
         "FRIDAY_URL=http://10.0.0.121:10000",
