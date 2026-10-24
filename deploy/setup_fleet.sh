@@ -10,7 +10,7 @@ set -euo pipefail
 SERVER_ROLE="${1:-}"
 
 if [[ "$SERVER_ROLE" != "1" && "$SERVER_ROLE" != "2" ]]; then
-    echo "Usage: sudo bash deploy/setup_fleet.sh [1|2]"
+    echo "Usage: export required secrets, then run bash deploy/setup_fleet.sh [1|2]"
     echo "  1 = Deploy Server 1 Core Fleet (FRIDAY, Inference, Memora, Stratex, Futuris, IntelX, Forge)"
     echo "  2 = Deploy Server 2 Specialist Fleet (VyralX, Sentinel, Cortex)"
     exit 1
