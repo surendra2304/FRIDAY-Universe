@@ -211,7 +211,7 @@ async def api_mesh_route(task: str, domain: str = "trading"):
     return {
         "routed_to": decision.routed_to,
         "confidence": decision.confidence,
-        "reasoning": decision.reasoning,
+        "reason": decision.reason,
     }
 
 
