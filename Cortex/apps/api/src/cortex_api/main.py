@@ -88,6 +88,7 @@ from cortex_api.advanced_analytics import router as advanced_analytics_router  #
 from cortex_api.recommendation_engine import router as recommendation_engine_router  # noqa: E402
 from cortex_api.ab_test_framework import router as ab_test_framework_router  # noqa: E402
 from cortex_api.predictive_analytics import router as predictive_analytics_router  # noqa: E402
+from cortex_api.marketing_automation import router as marketing_automation_router  # noqa: E402
 from cortex_api.webhooks_router import router as webhooks_router  # noqa: E402
 
 logger = logging.getLogger("cortex-api")
@@ -248,6 +249,7 @@ app.include_router(advanced_analytics_router)
 app.include_router(recommendation_engine_router)
 app.include_router(ab_test_framework_router)
 app.include_router(predictive_analytics_router)
+app.include_router(marketing_automation_router)
 app.include_router(public_gateway_router)
 app.include_router(events_router)
 app.include_router(understand_router)
