@@ -8,22 +8,22 @@ The FRIDAY Universe is a multi-agent AI platform consisting of 10 specialized ag
 
 | # | Agent | Port | Role | Modules |
 |---|-------|------|------|---------|
-| 1 | FRIDAY | 5000 | Multi-Agent Orchestrator | 19 |
-| 2 | Stratex | 5001 | Trading Intelligence | 17 |
-| 3 | VyralX | 5002 | Video Content Intelligence | 76 |
-| 4 | Cortex | 5003 | Decision Intelligence | 41 |
-| 5 | Inference | 5004 | Reasoning Engine | 29 |
-| 6 | Forge | 5005 | Autonomous Coding | 27 |
-| 7 | Memora | 5006 | Memory Intelligence | 33 |
-| 8 | IntelX | 5007 | Threat Intelligence | 13 |
-| 9 | Futuris | 5008 | Predictive Intelligence | 11 |
-| 10 | Sentinel | 5009 | Security Operations | 20 |
+| 1 | FRIDAY | 5000 | Multi-Agent Orchestrator | 21 |
+| 2 | Stratex | 5001 | Trading Intelligence | 18 |
+| 3 | VyralX | 5002 | Video Content Intelligence | 78 |
+| 4 | Cortex | 5003 | Decision Intelligence | 42 |
+| 5 | Inference | 5004 | Reasoning Engine | 30 |
+| 6 | Forge | 5005 | Autonomous Coding | 28 |
+| 7 | Memora | 5006 | Memory Intelligence | 34 |
+| 8 | IntelX | 5007 | Threat Intelligence | 14 |
+| 9 | Futuris | 5008 | Predictive Intelligence | 13 |
+| 10 | Sentinel | 5009 | Security Operations | 22 |
 
-**Total deep modules: 286**
+**Total deep modules: 302**
 
 ## Cross-Cutting Infrastructure
 
-The universe includes 10 cross-cutting modules in `FRIDAY/apps/core/src/friday_core/`:
+The universe includes 12 cross-cutting modules in `FRIDAY/apps/core/src/friday_core/`:
 
 1. `universe_dispatch_bus.py` — Unified dispatch to all 9 specialists with circuit breakers, retry, receipts
 2. `universe_auth.py` — Unified agent authentication with HMAC API key verification and capability-based authorization
@@ -35,6 +35,8 @@ The universe includes 10 cross-cutting modules in `FRIDAY/apps/core/src/friday_c
 8. `universe_health_monitor.py` — Health checking across all agents with scoring
 9. `agent_mesh_router.py` — Agent mesh routing with task-based routing decisions
 10. `error_envelope.py` — Unified error handling with standard codes
+11. `universe_resilience.py` — Universe-wide fault tolerance and graceful degradation
+12. `universe_cost_optimizer.py` — Cross-agent cost tracking and budget management
 
 ## Cross-Agent Integration
 
@@ -54,7 +56,7 @@ The universe includes 10 cross-cutting modules in `FRIDAY/apps/core/src/friday_c
 ## Testing
 
 - **149 tests passing** (17 skipped, 8 subtests)
-- All 54 new deep modules validated with py_compile
+- All 68 new deep modules validated with py_compile
 - Cross-agent integration tests verify dispatch, peer calls, security, and auth
 - Test suite covers all 10 cross-cutting infrastructure modules
 
