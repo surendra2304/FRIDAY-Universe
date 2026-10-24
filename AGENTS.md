@@ -10,7 +10,7 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 **Role:** Central coordinator and meta-agent that manages the FRIDAY Universe.
 **Port:** 5000 | **Stack:** Python, FastAPI, React
 
-**Deep Modules (19):**
+**Deep Modules (21):**
 - `general_cognitive_coordinator.py` — Cross-domain orchestration with sub-task decomposition
 - `autonomous_problem_solver.py` — Autonomous goal-oriented problem solving with multi-step reasoning
 - `multi_agent_collaboration_protocol.py` — Agent-to-agent communication protocol
@@ -25,6 +25,8 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `universe_auth.py` — Unified authentication, capability-based authorization
 - `cross_agent_integration.py` — Specialist-to-specialist peer calls
 - `security_hardening.py` — SSRF protection, path traversal defense, CORS config
+- `universe_resilience.py` — Universe-wide fault tolerance and graceful degradation
+- `universe_cost_optimizer.py` — Cross-agent cost tracking and budget management
 
 **API:** `/api/v1/friday/*`
 
@@ -32,7 +34,7 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 **Role:** Algorithmic trading, portfolio management, market intelligence.
 **Port:** 5001 | **Stack:** Python, Flask, SQLite
 
-**Deep Modules (17):**
+**Deep Modules (18):**
 - `strategy_engine.py` — Multi-strategy trading engine with backtesting
 - `portfolio_optimizer.py` — Portfolio optimization with risk constraints
 - `market_data_processor.py` — Real-time market data processing and feature extraction
@@ -47,6 +49,8 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `capital_allocator.py` — Capital allocation across strategies
 - `portfolio_rebalancing_system.py` — Automated portfolio rebalancing with drift correction
 - `portfolio_optimization_engine.py` — Modern portfolio theory with risk parity allocation
+- `market_microstructure_analyzer.py` — Order book analysis, liquidity detection, market impact
+- `regime_change_detector.py` — Market regime detection, structural break identification
 
 **API:** `/api/v1/trading/*`
 
@@ -210,6 +214,8 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `vulnerability_management_system.py` — Vulnerability lifecycle management with remediation tracking
 - `siem_integration_bridge.py` — SIEM integration with log ingestion and correlation
 - `incident_response_playbook.py` — Automated incident response with playbook execution
+- `security_slade_engine.py` — Security SLA tracking and compliance posture scoring
+- `threat_hunting_automation_engine.py` — Automated threat hunting with hypothesis generation
 
 **API:** `/api/v1/sentinel/*`
 
@@ -297,5 +303,7 @@ All modules are validated with:
 | `universe_health_monitor.py` | Cross-agent health checking |
 | `agent_mesh_router.py` | Agent mesh routing |
 | `error_envelope.py` | Unified error handling |
+| `universe_resilience.py` | Universe-wide fault tolerance |
+| `universe_cost_optimizer.py` | Cross-agent cost tracking |
 
-## Total: 54 new deep modules across 10 agents + 10 cross-cutting infrastructure modules
+## Total: 68 new deep modules across 10 agents + 12 cross-cutting infrastructure modules
