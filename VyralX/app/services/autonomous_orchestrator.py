@@ -29,6 +29,13 @@ from app.services.youtube_analytics import fetch_video_metrics
 logger = logging.getLogger("vyralx.orchestrator")
 
 
+def _as_utc(value: datetime) -> datetime:
+    """Normalize naive and aware datetimes consistently to UTC."""
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 @dataclass
 class ContentIdea:
     """An original-content idea derived from metadata-only trend research."""
@@ -65,10 +72,10 @@ class ContentPlan:
         current = current.astimezone(timezone.utc)
         return sorted(
             (
-                (idea, planned.astimezone(timezone.utc))
+                (idea, _as_utc(planned))
                 for idea in self.ideas
                 if (planned := self.scheduled_dates.get(idea.topic)) is not None
-                and (planned.replace(tzinfo=timezone.utc) if planned.tzinfo is None else planned) <= current
+                and _as_utc(planned) <= current
             ),
             key=lambda pair: pair[1],
         )
@@ -81,10 +88,10 @@ class ContentPlan:
         current = current.astimezone(timezone.utc)
         return sorted(
             (
-                (idea, planned.astimezone(timezone.utc))
+                (idea, _as_utc(planned))
                 for idea in self.ideas
                 if (planned := self.scheduled_dates.get(idea.topic)) is not None
-                and (planned.replace(tzinfo=timezone.utc) if planned.tzinfo is None else planned) > current
+                and _as_utc(planned) > current
             ),
             key=lambda pair: pair[1],
         )
