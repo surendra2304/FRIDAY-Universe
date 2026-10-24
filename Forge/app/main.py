@@ -407,6 +407,10 @@ def create_app() -> FastAPI:
     from app.services.build_pipeline_manager import router as build_pipeline_router
     app.include_router(build_pipeline_router, prefix="/api/v1/forge", tags=["Build Pipeline"])
 
+    # --- Test Coverage Analyzer Integration ---
+    from app.services.test_coverage_analyzer import router as test_coverage_router
+    app.include_router(test_coverage_router, prefix="/api/v1/forge", tags=["Test Coverage"])
+
     return app
 
 
