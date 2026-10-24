@@ -33,7 +33,7 @@ services:
     build:
       context: ./FRIDAY
       dockerfile: Dockerfile
-    container_name: friday_core
+    container_name: FRIDAY
     restart: unless-stopped
     ports:
       - "10000:10000"
@@ -65,7 +65,7 @@ services:
     build:
       context: ./Cortex
       dockerfile: Dockerfile
-    container_name: friday_cortex
+    container_name: Cortex
     restart: unless-stopped
     env_file:
       - ./Cortex/.env
@@ -83,7 +83,7 @@ services:
     build:
       context: .
       dockerfile: Forge/Dockerfile
-    container_name: friday_forge
+    container_name: Forge
     restart: unless-stopped
     env_file:
       - ./Forge/.env
@@ -107,7 +107,7 @@ services:
     build:
       context: .
       dockerfile: Futuris/Dockerfile
-    container_name: friday_futuris
+    container_name: Futuris
     restart: unless-stopped
     env_file:
       - ./Futuris/.env
@@ -131,7 +131,7 @@ services:
     build:
       context: ./Inference
       dockerfile: Dockerfile
-    container_name: friday_inference
+    container_name: Inference
     restart: unless-stopped
     env_file:
       - ./Inference/.env
@@ -149,7 +149,7 @@ services:
     build:
       context: ./IntelX
       dockerfile: Dockerfile
-    container_name: friday_intelx
+    container_name: IntelX
     restart: unless-stopped
     env_file:
       - ./IntelX/.env
@@ -167,7 +167,7 @@ services:
     build:
       context: ./Memora
       dockerfile: Dockerfile
-    container_name: friday_memora
+    container_name: Memora
     restart: unless-stopped
     env_file:
       - ./Memora/.env
@@ -185,7 +185,7 @@ services:
     build:
       context: .
       dockerfile: Sentinel/Dockerfile
-    container_name: friday_sentinel
+    container_name: Sentinel
     restart: unless-stopped
     env_file:
       - ./Sentinel/.env
@@ -209,7 +209,7 @@ services:
     build:
       context: ./Stratex
       dockerfile: Dockerfile
-    container_name: friday_stratex
+    container_name: Stratex
     restart: unless-stopped
     env_file:
       - ./Stratex/.env
@@ -227,7 +227,7 @@ services:
     build:
       context: ./VyralX
       dockerfile: Dockerfile
-    container_name: friday_vyralx
+    container_name: VyralX
     restart: unless-stopped
     env_file:
       - ./VyralX/.env
