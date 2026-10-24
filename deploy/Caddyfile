@@ -1,60 +1,103 @@
-# ==============================================================================
-# FRIDAY Universe - Caddy Reverse Proxy Configuration
-# Automatic SSL (Let's Encrypt HTTPS) for friday-universe.duckdns.org
-# ==============================================================================
-
 friday-universe.duckdns.org {
-    # 1. Direct FRIDAY alias
+    # 1. FRIDAY Orchestrator Command Center
     handle_path /friday* {
-        reverse_proxy localhost:10000
+        reverse_proxy 127.0.0.1:10000 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
     }
 
     # 2. Specialist Agent Dedicated Endpoints
-    handle_path /cortex* {
-        reverse_proxy localhost:8001
-    }
-    handle_path /forge* {
-        reverse_proxy localhost:8002
-    }
-    handle_path /futuris* {
-        reverse_proxy localhost:8003
-    }
     handle_path /inference* {
-        reverse_proxy localhost:8004
-    }
-    handle_path /intelx* {
-        reverse_proxy localhost:8005
+        reverse_proxy 127.0.0.1:8001 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
     }
     handle_path /memora* {
-        reverse_proxy localhost:8006
-    }
-    handle_path /sentinel* {
-        reverse_proxy localhost:8007
+        reverse_proxy 127.0.0.1:8002 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
     }
     handle_path /stratex* {
-        reverse_proxy localhost:8008
+        reverse_proxy 127.0.0.1:8003 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle_path /futuris* {
+        reverse_proxy 127.0.0.1:8004 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle_path /intelx* {
+        reverse_proxy 127.0.0.1:8005 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle_path /forge* {
+        reverse_proxy 127.0.0.1:8006 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle_path /vyralx* {
+        reverse_proxy 10.0.0.120:8010 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle_path /sentinel* {
+        reverse_proxy 10.0.0.120:8008 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
+    }
+    handle_path /cortex* {
+        reverse_proxy 10.0.0.120:8009 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
     }
 
     # 3. Root URL (Default) -> FRIDAY Command Center
     handle {
-        reverse_proxy localhost:10000
+        reverse_proxy 127.0.0.1:10000 {
+            transport http {
+                keepalive 180s
+                keepalive_idle_conns 50
+            }
+        }
     }
 
-    # High-performance compression
     encode zstd gzip
 
-    # Security headers
     header {
         X-Content-Type-Options nosniff
         X-Frame-Options SAMEORIGIN
         Referrer-Policy strict-origin-when-cross-origin
-    }
-
-    # Access logging
-    log {
-        output file /opt/friday_universe/logs/caddy_access.log {
-            roll_size 10mb
-            roll_keep 3
-        }
     }
 }
