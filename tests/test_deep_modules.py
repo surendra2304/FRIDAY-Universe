@@ -574,6 +574,24 @@ class TestNewDeepModules:
         # Sentinel (2)
         "Sentinel/app/services/vulnerability_management_system.py",
         "Sentinel/app/services/siem_integration_bridge.py",
+        # Wave 35: Cross-cutting infrastructure
+        "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py",
+        "FRIDAY/apps/core/src/friday_core/universe_auth.py",
+        "FRIDAY/apps/core/src/friday_core/cross_agent_integration.py",
+        "FRIDAY/apps/core/src/friday_core/security_hardening.py",
+        # Wave 35: Additional agent modules
+        "Forge/app/services/code_analysis_engine.py",
+        "Forge/app/services/build_pipeline_manager.py",
+        "Inference/services/temporal_reasoning_engine.py",
+        "Inference/services/commonsense_reasoning_engine.py",
+        # Wave 36: Cross-agent integration round 2
+        "Stratex/execution/portfolio_optimization_engine.py",
+        "VyralX/app/services/content_performance_analyzer.py",
+        "Cortex/apps/api/src/cortex_api/decision_impact_analyzer.py",
+        "Memora/apps/api/routers/memory_retrieval_engine.py",
+        "IntelX/intelx/services/disinformation_detector.py",
+        "Futuris/futuris/services/skill_acquisition_planner.py",
+        "Sentinel/sentinel/apps/api/src/sentinel_api/incident_response_playbook.py",
     ]
 
     def test_all_new_modules_compile(self):
@@ -591,7 +609,7 @@ class TestNewDeepModules:
 
     def test_new_module_count(self):
         """Test that we have created a substantial number of new modules."""
-        assert len(self.NEW_MODULES) >= 35, f"Expected at least 35 new modules, got {len(self.NEW_MODULES)}"
+        assert len(self.NEW_MODULES) >= 54, f"Expected at least 54 new modules, got {len(self.NEW_MODULES)}"
 
 
 class TestCrossAgentIntegration:

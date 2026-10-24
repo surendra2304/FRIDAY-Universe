@@ -399,6 +399,14 @@ def create_app() -> FastAPI:
     from app.services.performance_profiler import router as perf_profiler_router
     app.include_router(perf_profiler_router, prefix="/api/v1/forge", tags=["Performance Profiling"])
 
+    # --- Code Analysis Engine Integration ---
+    from app.services.code_analysis_engine import router as code_analysis_router
+    app.include_router(code_analysis_router, prefix="/api/v1/forge", tags=["Code Analysis"])
+
+    # --- Build Pipeline Manager Integration ---
+    from app.services.build_pipeline_manager import router as build_pipeline_router
+    app.include_router(build_pipeline_router, prefix="/api/v1/forge", tags=["Build Pipeline"])
+
     return app
 
 
