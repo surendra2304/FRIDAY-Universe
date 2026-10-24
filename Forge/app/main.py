@@ -423,6 +423,10 @@ def create_app() -> FastAPI:
     from app.services.code_security_scanner import router as security_scanner_router
     app.include_router(security_scanner_router, prefix="/api/v1/forge", tags=["Code Security"])
 
+    # --- Code Complexity Quantifier Integration ---
+    from app.services.code_complexity_quantifier import router as complexity_quantifier_router
+    app.include_router(complexity_quantifier_router, prefix="/api/v1/forge", tags=["Code Complexity"])
+
     return app
 
 

@@ -639,6 +639,14 @@ class TestNewDeepModules:
         "VyralX/app/services/content_moderation_engine.py",
         "IntelX/intelx/services/threat_intel_quality_evaluator.py",
         "Forge/app/services/code_security_scanner.py",
+        # Wave 45: Task router, fatigue detector, dream interpreter, prob logic, collab matcher, campaign predictor, complexity quantifier
+        "FRIDAY/apps/core/src/friday_core/universe_task_router.py",
+        "Cortex/apps/api/src/cortex_api/decision_fatigue_detector.py",
+        "Memora/apps/api/routers/memory_dream_interpreter.py",
+        "Inference/services/probabilistic_logic_engine.py",
+        "VyralX/app/services/creator_collaboration_matcher.py",
+        "IntelX/intelx/services/threat_campaign_predictor.py",
+        "Forge/app/services/code_complexity_quantifier.py",
     ]
 
     def test_all_new_modules_compile(self):
@@ -656,7 +664,7 @@ class TestNewDeepModules:
 
     def test_new_module_count(self):
         """Test that we have created a substantial number of new modules."""
-        assert len(self.NEW_MODULES) >= 93, f"Expected at least 93 new modules, got {len(self.NEW_MODULES)}"
+        assert len(self.NEW_MODULES) >= 100, f"Expected at least 100 new modules, got {len(self.NEW_MODULES)}"
 
 
 class TestCrossAgentIntegration:
