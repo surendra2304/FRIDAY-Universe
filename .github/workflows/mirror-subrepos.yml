@@ -4,123 +4,139 @@ on:
   workflow_dispatch:
     inputs:
       agent:
-        description: Agent directory to mirror
+        description: Agent directory to mirror into its standalone repository
         required: true
         type: choice
         options:
           - FRIDAY
-          - Cortex
-          - Forge
-          - Futuris
           - Inference
-          - IntelX
           - Memora
-          - Sentinel
           - Stratex
+          - Forge
+          - Cortex
+          - Sentinel
+          - IntelX
+          - Futuris
           - VyralX
 
 permissions:
   contents: read
 
+concurrency:
+  group: standalone-mirror-${ github.event.inputs.agent }-${ github.ref }
+  cancel-in-progress: false
+
 jobs:
   mirror:
-    name: Mirror ${{ matrix.agent }} via PR
+    name: Mirror selected agent through a reviewed PR
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        agent: ["FRIDAY", "Cortex", "Forge", "Futuris", "Inference", "IntelX", "Memora", "Sentinel", "Stratex", "VyralX"]
+    timeout-minutes: 15
     steps:
-      - name: Filter to selected agent
-        if: matrix.agent == github.event.inputs.agent
-        id: filter
+      - name: Check out the selected monorepo revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${ github.sha }
+          path: monorepo
+          fetch-depth: 1
+
+      - name: Validate selected agent
         shell: bash
         env:
-          AGENT: ${{ matrix.agent }}
-          EVENT_NAME: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
-          HEAD_SHA: ${{ github.sha }}
+          AGENT: ${ github.event.inputs.agent }
         run: |
           set -euo pipefail
-          if [[ "$EVENT_NAME" == "workflow_dispatch" || ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "target_changed=true" >> "$GITHUB_OUTPUT"
-          elif ! git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- ".github/workflows/mirror-subrepos.yml"; then
-            echo "target_changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- "$AGENT"; then
-            echo "target_changed=false" >> "$GITHUB_OUTPUT"
-            echo "No files changed under $AGENT; skipping."
-          else
-            echo "target_changed=true" >> "$GITHUB_OUTPUT"
-          fi
+          case "$AGENT" in
+            FRIDAY|Inference|Memora|Stratex|Forge|Cortex|Sentinel|IntelX|Futuris|VyralX) ;;
+            *) echo "::error::Unknown agent: $AGENT"; exit 2 ;;
+          esac
+          test -d "monorepo/$AGENT"
+          test -f "monorepo/$AGENT/.github/workflows/ci.yml"
 
-      - name: Require an explicit cross-repository write token
-        if: steps.filter.outputs.target_changed == 'true'
+      - name: Require a dedicated cross-repository token
         shell: bash
         env:
-          MIRROR_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
+          MIRROR_TOKEN: ${ secrets.GH_PAT_MIRROR }
         run: |
           set -euo pipefail
           if [[ -z "$MIRROR_TOKEN" ]]; then
-            echo "::error::Set GH_PAT_MIRROR with contents-write access to all ten agent repositories."
+            echo "::error::Configure GH_PAT_MIRROR with contents-write and pull-request access to the ten standalone repositories."
             exit 1
           fi
 
-      - name: Check out monorepo and standalone repository
-        if: steps.filter.outputs.target_changed == 'true'
+      - name: Clone the selected standalone repository
         shell: bash
         env:
-          AGENT: ${{ matrix.agent }}
-          MIRROR_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
+          AGENT: ${ github.event.inputs.agent }
+          SOURCE_SHA: ${ github.sha }
         run: |
           set -euo pipefail
-          git clone --depth 1 "https://github.com/surendra2304/FRIDAY-Universe.git" monorepo
-          git clone --depth 1 "https://github.com/surendra2304/${AGENT}.git" "standalone/${AGENT}"
+          mkdir -p standalone
+          git clone --depth 1 "https://github.com/surendra2304/$AGENT.git" "standalone/$AGENT"
+          git -C "standalone/$AGENT" fetch origin main
+          git -C "standalone/$AGENT" config user.name "github-actions[bot]"
+          git -C "standalone/$AGENT" config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "SYNC_BRANCH=sync/monorepo-\${SOURCE_SHA:0:12}" >> "$GITHUB_ENV"
 
-      - name: Stage monorepo subtree changes into a sync branch
-        if: steps.filter.outputs.target_changed == 'true'
+      - name: Stage safe additions and modifications
+        id: stage
         shell: bash
         env:
-          AGENT: ${{ matrix.agent }}
-          SOURCE_SHA: ${{ github.sha }}
-          MIRROR_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
-        working-directory: standalone/${AGENT}
+          AGENT: ${ github.event.inputs.agent }
+          SOURCE_SHA: ${ github.sha }
+          MIRROR_TOKEN: ${ secrets.GH_PAT_MIRROR }
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          DEST="$GITHUB_WORKSPACE/standalone/$AGENT"
+          SOURCE="$GITHUB_WORKSPACE/monorepo/$AGENT"
 
-          SYNC_BRANCH="sync/monorepo-${SOURCE_SHA:0:12}"
-          git checkout -B "$SYNC_BRANCH" origin/main
+          if git -C "$DEST" ls-remote --exit-code --heads origin "$SYNC_BRANCH" >/dev/null 2>&1; then
+            git -C "$DEST" fetch origin "$SYNC_BRANCH"
+            git -C "$DEST" checkout -B "$SYNC_BRANCH" FETCH_HEAD
+          else
+            git -C "$DEST" checkout -B "$SYNC_BRANCH" origin/main
+          fi
 
-          # Stage additions, modifications, and deletions from the monorepo
-          # subtree into the standalone branch without rsync --delete or
-          # direct main-branch writes. Deletions are reviewed via PR.
-          git --git-dir=.git --work-tree="$GITHUB_WORKSPACE/monorepo/$AGENT" add -A -- .
+          # Never delete standalone-only files automatically; removals require a separate review.
+          rsync -a \
+            --exclude='.env' --exclude='.env.*' --exclude='.git/' \
+            --exclude='__pycache__/' --exclude='.pytest_cache/' --exclude='.ruff_cache/' \
+            --exclude='.mypy_cache/' --exclude='.venv/' --exclude='venv/' \
+            --exclude='node_modules/' --exclude='*.sqlite' --exclude='*.sqlite3' --exclude='*.db' \
+            "$SOURCE/" "$DEST/"
 
-          if git diff --cached --quiet; then
-            echo "Standalone $AGENT is already in sync with monorepo subtree. Nothing to push."
+          git -C "$DEST" add -A -- .
+          if git -C "$DEST" diff --cached --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No safe additions or modifications to stage for $AGENT."
             exit 0
           fi
 
-          git commit -m "chore(mirror): direct sync $AGENT from monorepo ${SOURCE_SHA:0:12}"
-          git push origin "HEAD:refs/heads/$SYNC_BRANCH"
-          echo "Successfully pushed latest $AGENT changes to $SYNC_BRANCH."
+          git -C "$DEST" commit -m "chore(mirror): sync $AGENT from monorepo \${SOURCE_SHA:0:12}"
+          # One-shot auth header avoids persisting the PAT inside .git/config.
+          AUTH_HEADER="$(printf 'x-access-token:%s' "$MIRROR_TOKEN" | base64 -w 0)"
+          git -C "$DEST" -c "http.extraheader=AUTHORIZATION: basic $AUTH_HEADER" \
+            push origin "HEAD:refs/heads/$SYNC_BRANCH"
+          unset AUTH_HEADER
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
 
-      - name: Open pull request for ${{ matrix.agent }}
-        if: steps.filter.outputs.target_changed == 'true'
+      - name: Open or reuse the review pull request
+        if: steps.stage.outputs.has_changes == 'true'
         shell: bash
         env:
-          AGENT: ${{ matrix.agent }}
-          SOURCE_SHA: ${{ github.sha }}
-          GH_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
-        working-directory: standalone/${AGENT}
+          AGENT: ${ github.event.inputs.agent }
+          SYNC_BRANCH: ${ env.SYNC_BRANCH }
+          SOURCE_SHA: ${ github.sha }
+          GH_TOKEN: ${ secrets.GH_PAT_MIRROR }
         run: |
           set -euo pipefail
-          SYNC_BRANCH="sync/monorepo-${SOURCE_SHA:0:12}"
-          gh pr create \
-            --repo surendra2304/${AGENT} \
-            --base main \
-            --head "$SYNC_BRANCH" \
-            --title "chore(mirror): sync $AGENT from monorepo ${SOURCE_SHA:0:12}" \
-            --body "Automated mirror sync from FRIDAY Universe monorepo commit ${SOURCE_SHA}."
+          EXISTING_PR="$(gh pr list --repo "surendra2304/$AGENT" --head "$SYNC_BRANCH" --state open --json url --jq '.[0].url' || true)"
+          if [[ -n "$EXISTING_PR" ]]; then
+            echo "Updated existing PR: $EXISTING_PR"
+          else
+            gh pr create \
+              --repo "surendra2304/$AGENT" \
+              --base main \
+              --head "$SYNC_BRANCH" \
+              --title "chore(mirror): sync $AGENT from monorepo \${SOURCE_SHA:0:12}" \
+              --body "Review additions and modifications from FRIDAY-Universe commit $SOURCE_SHA. This workflow does not automatically delete standalone-only files."
+          fi
