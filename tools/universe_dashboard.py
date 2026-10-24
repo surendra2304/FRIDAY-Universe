@@ -36,12 +36,32 @@ for p in [
     if p not in sys.path:
         sys.path.insert(0, p)
 
+sys.path.insert(0, str(ROOT / "tools"))
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="FRIDAY Universe Dashboard", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Load workflow engine
+try:
+    import universe_workflow_engine
+    _workflow_engine = universe_workflow_engine.UniverseWorkflowEngine()
+except Exception:
+    _workflow_engine = None
+
+# Load self-improvement engine
+try:
+    import universe_self_improvement
+    _self_improvement = universe_self_improvement.AgentSelfImprovement()
+    _knowledge_sharing = universe_self_improvement.KnowledgeSharingEngine()
+    _decision_propagation = universe_self_improvement.DecisionPropagationEngine()
+except Exception:
+    _self_improvement = None
+    _knowledge_sharing = None
+    _decision_propagation = None
 
 
 def _load_engine(name, relpath):
@@ -224,6 +244,158 @@ async def api_state():
     engines["state"].set_state("dashboard_visit", {"timestamp": time.time()}, "FRIDAY")
     all_state = engines["state"].get_all_state()
     return {"states": all_state, "count": len(all_state)}
+
+
+# ── Workflow API Endpoints ───────────────────────────────────────────────────
+
+@app.get("/api/workflow/capabilities")
+async def api_workflow_capabilities():
+    """Get all agent capabilities."""
+    if _workflow_engine is None:
+        return {"error": "Workflow engine not loaded"}
+    return _workflow_engine.discover_all()
+
+@app.get("/api/workflow/agents")
+async def api_workflow_agents():
+    """Get all registered agents with capabilities."""
+    if _workflow_engine is None:
+        return {"error": "Workflow engine not loaded"}
+    agents = _workflow_engine._capabilities.all_agents()
+    return {"agents": [
+        {"name": a.agent_name, "capabilities": a.capabilities,
+         "base_url": a.base_url, "status": a.status}
+        for a in agents
+    ]}
+
+@app.get("/api/workflow/run/trading")
+async def api_workflow_trading():
+    """Run the trading analysis workflow."""
+    if _workflow_engine is None:
+        return {"error": "Workflow engine not loaded"}
+    wf = _workflow_engine.run_trading_analysis()
+    return {"workflow_id": wf.workflow_id, "status": wf.status,
+            "steps_completed": sum(1 for s in wf.steps if s.status == "completed"),
+            "total_steps": len(wf.steps)}
+
+@app.get("/api/workflow/run/security")
+async def api_workflow_security():
+    """Run the security scan workflow."""
+    if _workflow_engine is None:
+        return {"error": "Workflow engine not loaded"}
+    wf = _workflow_engine.run_security_scan()
+    return {"workflow_id": wf.workflow_id, "status": wf.status,
+            "steps_completed": sum(1 for s in wf.steps if s.status == "completed"),
+            "total_steps": len(wf.steps)}
+
+@app.get("/api/workflow/run/content")
+async def api_workflow_content():
+    """Run the content creation workflow."""
+    if _workflow_engine is None:
+        return {"error": "Workflow engine not loaded"}
+    wf = _workflow_engine.run_content_creation()
+    return {"workflow_id": wf.workflow_id, "status": wf.status,
+            "steps_completed": sum(1 for s in wf.steps if s.status == "completed"),
+            "total_steps": len(wf.steps)}
+
+@app.get("/api/workflow/run/code")
+async def api_workflow_code():
+    """Run the code development workflow."""
+    if _workflow_engine is None:
+        return {"error": "Workflow engine not loaded"}
+    wf = _workflow_engine.run_code_development()
+    return {"workflow_id": wf.workflow_id, "status": wf.status,
+            "steps_completed": sum(1 for s in wf.steps if s.status == "completed"),
+            "total_steps": len(wf.steps)}
+
+@app.get("/api/workflow/run/forecast")
+async def api_workflow_forecast():
+    """Run the forecast pipeline workflow."""
+    if _workflow_engine is None:
+        return {"error": "Workflow engine not loaded"}
+    wf = _workflow_engine.run_forecast_pipeline()
+    return {"workflow_id": wf.workflow_id, "status": wf.status,
+            "steps_completed": sum(1 for s in wf.steps if s.status == "completed"),
+            "total_steps": len(wf.steps)}
+
+@app.get("/api/workflow/all")
+async def api_workflow_all():
+    """Run all workflow templates."""
+    if _workflow_engine is None:
+        return {"error": "Workflow engine not loaded"}
+    workflows = []
+    for name, func in [("trading", _workflow_engine.run_trading_analysis),
+                        ("security", _workflow_engine.run_security_scan),
+                        ("content", _workflow_engine.run_content_creation),
+                        ("code", _workflow_engine.run_code_development),
+                        ("forecast", _workflow_engine.run_forecast_pipeline)]:
+        wf = func()
+        workflows.append({"name": name, "status": wf.status,
+                          "steps_completed": sum(1 for s in wf.steps if s.status == "completed"),
+                          "total_steps": len(wf.steps)})
+    return {"workflows": workflows, "count": len(workflows)}
+
+
+# ── Self-Improvement API Endpoints ──────────────────────────────────────────
+
+@app.get("/api/self-improvement/report")
+async def api_self_improvement_report():
+    """Get self-improvement report."""
+    if _self_improvement is None:
+        return {"error": "Self-improvement engine not loaded"}
+    return _self_improvement.get_improvement_report()
+
+@app.get("/api/self-improvement/cycle/{agent}")
+async def api_self_improvement_cycle(agent: str):
+    """Run an improvement cycle for an agent."""
+    if _self_improvement is None:
+        return {"error": "Self-improvement engine not loaded"}
+    return _self_improvement.run_improvement_cycle(agent)
+
+@app.get("/api/knowledge/all")
+async def api_knowledge_all():
+    """Get all shared knowledge."""
+    if _knowledge_sharing is None:
+        return {"error": "Knowledge sharing engine not loaded"}
+    items = _knowledge_sharing.get_knowledge_graph()
+    return {"items": len(items), "knowledge": [
+        {"source": k.source_agent, "target": k.target_agent,
+         "type": k.knowledge_type, "content": k.content[:50]}
+        for k in items
+    ]}
+
+@app.get("/api/knowledge/retrieve/{agent}")
+async def api_knowledge_retrieve(agent: str):
+    """Retrieve knowledge for an agent."""
+    if _knowledge_sharing is None:
+        return {"error": "Knowledge sharing engine not loaded"}
+    items = _knowledge_sharing.retrieve_knowledge(agent)
+    return {"items": len(items), "knowledge": [
+        {"source": k.source_agent, "type": k.knowledge_type, "content": k.content[:50]}
+        for k in items
+    ]}
+
+@app.get("/api/decisions/all")
+async def api_decisions_all():
+    """Get all decisions."""
+    if _decision_propagation is None:
+        return {"error": "Decision propagation engine not loaded"}
+    decisions = _decision_propagation.get_all_decisions()
+    return {"decisions": len(decisions), "items": [
+        {"source": d.source_agent, "type": d.decision_type,
+         "content": d.content[:50], "propagated_to": d.propagated_to}
+        for d in decisions
+    ]}
+
+@app.get("/api/decisions/agent/{agent}")
+async def api_decisions_agent(agent: str):
+    """Get decisions for an agent."""
+    if _decision_propagation is None:
+        return {"error": "Decision propagation engine not loaded"}
+    decisions = _decision_propagation.get_decisions_for_agent(agent)
+    return {"decisions": len(decisions), "items": [
+        {"source": d.source_agent, "type": d.decision_type, "content": d.content[:50]}
+        for d in decisions
+    ]}
 
 
 # ── Dashboard HTML ─────────────────────────────────────────────────────────
