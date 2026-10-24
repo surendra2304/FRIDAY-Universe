@@ -28,6 +28,7 @@ from app.api.code_intelligence import router as code_intelligence_router
 from app.api.synthesis_routes import pipeline_router, synthesis_router
 from app.api.autonomous_code_repair import router as code_repair_router
 from app.api.quantum_flow_optimizer import router as quantum_optimizer_router
+from app.api.realtime_collaboration import router as collaboration_router
 from app.api.tasks import tasks_router
 from app.api.websocket import ws_router
 from app.config.production import production_settings
@@ -345,6 +346,7 @@ def create_app() -> FastAPI:
     app.include_router(tasks_router, prefix="/api/v1", tags=["Tasks v1"])
     app.include_router(code_repair_router, prefix="/api/v1/forge")
     app.include_router(quantum_optimizer_router, prefix="/api/v1/forge/quantum")
+    app.include_router(collaboration_router, prefix="/api/v1/forge/collab")
 
     # /api is the prefix the dashboard and docs/API_REFERENCE.md actually use.
     # Without a core-router mount here every endpoint only api_router owns
