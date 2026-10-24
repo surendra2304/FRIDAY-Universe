@@ -1,6 +1,6 @@
 import subprocess
 import json
-import secrets
+import os
 
 def register_vyralx():
     cid = subprocess.check_output("docker ps -q --filter name=dokploy-postgres", shell=True).decode().strip().split()[0]
@@ -23,12 +23,29 @@ def register_vyralx():
     sql_sample = 'SELECT row_to_json(a) FROM application a WHERE "applicationId"=\'app_friday\';'
     friday = json.loads(subprocess.check_output(['docker', 'exec', cid, 'psql', '-U', 'dokploy', '-d', 'dokploy', '-tAc', sql_sample]).decode().strip())
 
-    vyralx_env = """APP_NAME=VyralX
+    required_keys = (
+        "VYRALX_API_KEY",
+        "FRIDAY_API_KEY",
+        "INFERENCE_API_KEY",
+        "INTELX_API_KEY",
+        "MEMORA_API_KEY",
+        "SENTINEL_API_KEY",
+    )
+    mesh_keys = {}
+    for key_name in required_keys:
+        value = os.environ.get(key_name)
+        if not value:
+            raise RuntimeError(
+                f"Required deployment secret {key_name} is missing; provide it through the protected environment."
+            )
+        mesh_keys[key_name] = value
+
+    vyralx_env = f"""APP_NAME=VyralX
 APP_ENV=production
 HOST=0.0.0.0
 PORT=8000
 LOG_LEVEL=INFO
-API_KEY=vyralx_sec_7890123456789abcdef
+API_KEY=${mesh_keys['VYRALX_API_KEY']}
 DATABASE_URL=sqlite:///./data/vyralx.db
 DATA_DIR=./data
 MEDIA_DIR=./media
@@ -43,15 +60,15 @@ WORKER_REQUIRED=false
 
 # FRIDAY Ecosystem Mesh Connections
 FRIDAY_URL=http://friday:10000
-FRIDAY_API_KEY=friday_Kh3angM6yJ_t41HROO3rmeGyzW1Ihiex45tf
+FRIDAY_API_KEY=${mesh_keys['FRIDAY_API_KEY']}
 INFERENCE_URL=http://inference:8000
-INFERENCE_API_KEY=inference_JrnLmMGomQTeU6aT2XIYrBbLPUvc-gNQ4
+INFERENCE_API_KEY=${mesh_keys['INFERENCE_API_KEY']}
 INTELX_URL=http://intelx:8000
-INTELX_API_KEY=intelx_3lEg1IlOGTdNVTEqwBvTRhgjIkpJ9cZddYNX
+INTELX_API_KEY=${mesh_keys['INTELX_API_KEY']}
 MEMORA_URL=http://memora:8000
-MEMORA_API_KEY=memora_kzZnPXMEtve2dk1tbh8A0bFAL88NSbXFybmJ
+MEMORA_API_KEY=${mesh_keys['MEMORA_API_KEY']}
 SENTINEL_URL=http://sentinel:8000
-SENTINEL_API_KEY=sentinel_jF-bgAo6XWDQqV-TaRW1MiG36QbC3YUY6c
+SENTINEL_API_KEY=${mesh_keys['SENTINEL_API_KEY']}
 """
 
     friday["applicationId"] = "app_vyralx"
