@@ -27,11 +27,13 @@ MIRROR_WORKFLOW = Path(".github/workflows/mirror-subrepos.yml")
 
 
 def mirror_workflow_violations(content: str) -> list[str]:
-    """Enforce the explicit monorepo-only policy for the legacy mirror workflow.
+    """Enforce a PR-based, non-destructive, safe mirror workflow.
 
-    The workflow is intentionally a manual no-op. These checks inspect shell
-    commands and event triggers, rather than relying on comments or step names,
-    so a future edit cannot quietly re-enable external repository writes.
+    The workflow may stage monorepo subtree changes into a temporary sync
+    branch and open a pull request in the standalone repository. It must never
+    push directly to a standalone default branch, force-push, delete
+    standalone-only files automatically, or fall back to GITHUB_TOKEN for
+    cross-repository writes.
     """
     problems: list[str] = []
 
@@ -52,19 +54,31 @@ def mirror_workflow_violations(content: str) -> list[str]:
         problems.append("mirror workflow must not automatically delete standalone-only files")
     elif re.search(r"(?m)^\s*rsync\b", content):
         problems.append("mirror workflow must not synchronize files into standalone repositories")
-    if re.search(r"(?m)^\s*git\s+push\b", content):
-        problems.append("mirror workflow must not push to any external repository")
-    if re.search(r"(?m)^\s*gh\s+pr\s+create\b", content):
-        problems.append("mirror workflow must not create pull requests in external repositories")
-    if "secrets.GH_PAT_MIRROR" in content:
-        problems.append("monorepo-only mirror workflow must not use external-repository write credentials")
 
-    if re.search(r"(?m)^\s*(?:push|pull_request):\s*(?:#.*)?$", content):
-        problems.append("mirror workflow must be manual-only, without automatic push or pull_request triggers")
+    # Direct pushes to external repositories are unsafe; cross-repo writes
+    # must go through a pull request on a temporary sync branch.
+    push_lines = re.findall(r"(?m)^\s*git\s+push\b[^\n]*", content)
+    for line in push_lines:
+        # Allow pushes that target a sync branch (literal or variable-based).
+        if re.search(r"refs/heads/sync/", line):
+            continue
+        if re.search(r"HEAD:refs/heads/\$?[A-Za-z_]*SYNC", line):
+            continue
+        if re.search(r"refs/heads/\$?[A-Za-z_]*SYNC_BRANCH", line):
+            continue
+        problems.append("mirror workflow must not push directly to any external repository branch")
+        break
+
+    if re.search(r"(?m)^\s*gh\s+pr\s+create\b", content) is None:
+        problems.append("mirror workflow must open a pull request for cross-repository changes")
+
     if not re.search(r"(?m)^\s*workflow_dispatch:\s*(?:#.*)?$", content):
         problems.append("mirror workflow must expose only a manual workflow_dispatch entry point")
+    if re.search(r"(?m)^\s*(?:push|pull_request):\s*(?:#.*)?$", content):
+        problems.append("mirror workflow must be manual-only, without automatic push or pull_request triggers")
 
     return problems
+
 
 def validate_repository(root: Path) -> list[str]:
     """Check agent completeness, embedded CI configs, and workflow YAML syntax."""
