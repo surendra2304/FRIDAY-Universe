@@ -41,7 +41,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install YAML parser
-        run: python -m pip install --disable-pip-version-check "PyYAML>=6,<7" "pytest>=8.3,<9" "pytest-asyncio>=0.24,<2" "redis>=5,<7" "prometheus-client>=0.20" "structlog>=24" "pydantic>=2.6,<3" "pydantic-settings>=2.2,<3" "starlette>=0.37,<2"
+        run: python -m pip install --disable-pip-version-check "PyYAML>=6,<7" "pytest>=8.3,<9" "pytest-asyncio>=0.24,<2" "redis>=5,<7" "prometheus-client>=0.20" "structlog>=24" "pydantic>=2.6,<3" "pydantic-settings>=2.2,<3" "starlette>=0.37,<2" "reportlab>=4,<5" "pypdf>=5,<7"
 
       - name: Run repository and cancellable CPU-worker tests
         env:
@@ -65,13 +65,55 @@ jobs:
           done
           docker compose -f docker-compose.oracle.yml config --quiet
 
-      - name: Assert standalone mirroring remains disabled
+      - name: Build and scan the sanitized architecture PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf"
+          python scripts/generate_master_architecture_pdf.py --output "$output"
+          python - "$output" <<'PY'
+          import re
+          import sys
+          from pypdf import PdfReader
+
+          reader = PdfReader(sys.argv[1])
+          text = "\n".join(page.extract_text() or "" for page in reader.pages)
+          prohibited = (
+              r"FridayUniverse2026",
+              r"sentinel_jF-[A-Za-z0-9_-]{16,}",
+              r"friday_Kh[A-Za-z0-9_-]{16,}",
+              r"inference_Jrn[A-Za-z0-9_-]{16,}",
+              r"intelx_3l[A-Za-z0-9_-]{16,}",
+              r"memora_kz[A-Za-z0-9_-]{16,}",
+              r"vyralx_sec_[A-Za-z0-9]{16,}",
+              r"SENTINEL_AUDIT_(?:HMAC|SIGNING)_KEY=[A-Fa-f0-9]{32,}",
+          )
+          matches = [pattern for pattern in prohibited if re.search(pattern, text)]
+          if matches:
+              raise SystemExit(f"PDF contains {len(matches)} prohibited credential pattern(s)")
+          if not text.strip():
+              raise SystemExit("Generated architecture PDF contains no extractable text")
+          print(f"Sanitized PDF verified: {len(reader.pages)} pages")
+          PY
+
+      - name: Upload sanitized architecture PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: friday-universe-master-architecture
+          path: ${ runner.temp }/FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.pdf
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Assert standalone mirror is manual, authenticated and non-destructive
         shell: bash
         run: |
           set -euo pipefail
           workflow=.github/workflows/mirror-subrepos.yml
           grep -q 'workflow_dispatch:' "$workflow"
-          if grep -Eq '^[[:space:]]*(push|pull_request):|git[[:space:]]+push|rsync|gh[[:space:]]+pr[[:space:]]+create|GH_PAT_MIRROR' "$workflow"; then
-            echo "::error::The mirror workflow must remain manual-only and perform no cross-repository writes."
+          grep -q 'rsync -a' "$workflow"
+          grep -q 'gh pr create' "$workflow"
+          grep -q 'http.extraheader=AUTHORIZATION: basic' "$workflow"
+          if grep -Eq '^[[:space:]]*(push|pull_request):|rsync[[:space:]].*--delete|git[[:space:]].*push.*(origin[[:space:]]+main|HEAD:refs/heads/main)' "$workflow"; then
+            echo "::error::Mirror workflow must not auto-trigger, force-delete files, or write directly to a standalone main branch."
             exit 1
           fi
