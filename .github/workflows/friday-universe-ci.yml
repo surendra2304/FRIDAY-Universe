@@ -1,0 +1,88 @@
+name: FRIDAY Universe CI/CD
+
+on:
+  push:
+    branches: [ main, arena/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn httpx pydantic pytest requests numpy scipy matplotlib pandas
+
+      - name: Run basic engine tests
+        run: |
+          python3 -m pytest tests/test_real_functional_engines.py -v --tb=short
+
+      - name: Run cross-agent integration tests
+        run: |
+          python3 -m pytest tests/test_real_cross_agent_integration.py -v --tb=short
+
+      - name: Run advanced engine tests
+        run: |
+          python3 -m pytest tests/test_real_advanced_engines.py -v --tb=short
+
+      - name: Run deep engine tests
+        run: |
+          python3 -m pytest tests/test_real_deep_engines.py -v --tb=short
+
+      - name: Run orchestrator tests
+        run: |
+          python3 -m pytest tests/test_real_universe_orchestrator.py -v --tb=short
+
+      - name: Run realtime pipeline tests
+        run: |
+          python3 -m pytest tests/test_real_realtime_pipeline.py -v --tb=short
+
+      - name: Run dashboard tests
+        run: |
+          python3 -m pytest tests/test_real_universe_dashboard.py -v --tb=short
+
+      - name: Start API server and run HTTP tests
+        run: |
+          PYTHONPATH=FRIDAY/apps/core/src:Inference/app:Inference:Memora:Stratex:Forge/app/services:Sentinel/app/services:IntelX/intelx/services:Futuris/futuris/core:VyralX/app/services \
+          python3 -m uvicorn friday_core.real_api_server:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+          python3 -m pytest tests/test_real_http_api.py tests/test_real_deep_http_api.py tests/test_real_deep_workflow_http.py tests/test_real_dashboard_http.py -v --tb=short
+          kill %1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/*.json
+            .pytest_cache/
+          retention-days: 7
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t friday-universe:3.0.0 .
+
+      - name: Docker compose up
+        run: docker compose up -d --build
+
+      - name: Verify health
+        run: |
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+
+      - name: Docker compose down
+        run: docker compose down

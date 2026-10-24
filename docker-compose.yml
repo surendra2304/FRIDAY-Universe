@@ -1,241 +1,40 @@
 version: "3.8"
 
-# FRIDAY Universe — Full Stack Deployment
-# Deploys all 10 agents + dashboard + Redis + persistence
-
 services:
-  # ── Infrastructure ───────────────────────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ── FRIDAY Core (Orchestrator) ────────────────────────────────────────────
-  friday:
+  friday-universe-api:
     build:
       context: .
-      dockerfile: docker/Dockerfile.friday
+      dockerfile: Dockerfile
+    container_name: friday-universe-api
+    ports:
+      - "8000:8000"
     environment:
-      - AGENT_NAME=friday
-      - PORT=5000
-      - REDIS_URL=redis://redis:6379/0
-    ports:
-      - "5000:5000"
-    depends_on:
-      redis:
-        condition: service_healthy
+      - PYTHONPATH=FRIDAY/apps/core/src:Inference/app:Inference:Memora:Stratex:Forge/app/services:Sentinel/app/services:IntelX/intelx/services:Futuris/futuris/core:VyralX/app/services
+      - FRIDAY_UNIVERSE_VERSION=3.0.0
+    volumes:
+      - ./FRIDAY/.data:/app/FRIDAY-Universe/FRIDAY/.data
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
-      interval: 15s
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 15s
 
-  # ── Inference ────────────────────────────────────────────────────────────
-  inference:
+  friday-universe-dashboard:
     build:
       context: .
-      dockerfile: docker/Dockerfile.inference
-    environment:
-      - AGENT_NAME=inference
-      - PORT=8005
+      dockerfile: Dockerfile
+    container_name: friday-universe-dashboard
+    command: python3 -m http.server 3000 --directory FRIDAY/apps/core/src/friday_core/
     ports:
-      - "8005:8005"
+      - "3000:3000"
+    volumes:
+      - ./FRIDAY/apps/core/src/friday_core:/app/FRIDAY-Universe/FRIDAY/apps/core/src/friday_core
     depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+      - friday-universe-api
+    restart: unless-stopped
 
-  # ── Memora ───────────────────────────────────────────────────────────────
-  memora:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.memora
-    environment:
-      - AGENT_NAME=memora
-      - PORT=8006
-    ports:
-      - "8006:8006"
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  # ── Stratex ───────────────────────────────────────────────────────────────
-  stratex:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.stratex
-    environment:
-      - AGENT_NAME=stratex
-      - PORT=8007
-    ports:
-      - "8007:8007"
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8007/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  # ── Forge ─────────────────────────────────────────────────────────────────
-  forge:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.forge
-    environment:
-      - AGENT_NAME=forge
-      - PORT=8008
-    ports:
-      - "8008:8008"
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8008/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  # ── Cortex ─────────────────────────────────────────────────────────────────
-  cortex:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.cortex
-    environment:
-      - AGENT_NAME=cortex
-      - PORT=8009
-    ports:
-      - "8009:8009"
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8009/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  # ── Sentinel ──────────────────────────────────────────────────────────────
-  sentinel:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.sentinel
-    environment:
-      - AGENT_NAME=sentinel
-      - PORT=8010
-    ports:
-      - "8010:8010"
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  # ── IntelX ────────────────────────────────────────────────────────────────
-  intelx:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.intelx
-    environment:
-      - AGENT_NAME=intelx
-      - PORT=8011
-    ports:
-      - "8011:8011"
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8011/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  # ── Futuris ───────────────────────────────────────────────────────────────
-  futuris:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.futuris
-    environment:
-      - AGENT_NAME=futuris
-      - PORT=8012
-    ports:
-      - "8012:8012"
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8012/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  # ── VyralX ─────────────────────────────────────────────────────────────────
-  vyralx:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.vyralx
-    environment:
-      - AGENT_NAME=vyralx
-      - PORT=8013
-    ports:
-      - "8013:8013"
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8013/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  # ── Dashboard ─────────────────────────────────────────────────────────────
-  dashboard:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.dashboard
-    ports:
-      - "5001:5001"
-    depends_on:
-      friday:
-        condition: service_healthy
-      inference:
-        condition: service_healthy
-      memora:
-        condition: service_healthy
-      stratex:
-        condition: service_healthy
-      forge:
-        condition: service_healthy
-      cortex:
-        condition: service_healthy
-      sentinel:
-        condition: service_healthy
-      intelx:
-        condition: service_healthy
-      futuris:
-        condition: service_healthy
-      vyralx:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/')"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+networks:
+  friday-network:
+    driver: bridge

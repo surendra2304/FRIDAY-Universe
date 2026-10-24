@@ -37,9 +37,9 @@ def _post(path, data):
         return json.loads(resp.read())
 
 
-def _get(path):
+def _get(path, timeout=15):
     req = urllib.request.Request(f"{BASE}{path}")
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read())
 
 
@@ -93,4 +93,4 @@ class TestDeepWorkflowHTTP:
         assert "layers" in result
         assert "agents" in result
         assert len(result["agents"]) == 9
-        assert result["total_api_endpoints"] >= 50
+        assert result["dashboard"]["total_api_endpoints"] >= 50
