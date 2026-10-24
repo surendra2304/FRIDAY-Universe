@@ -6,6 +6,7 @@ and complexity trend analysis.
 """
 from __future__ import annotations
 
+import math
 import time
 import uuid
 from dataclasses import dataclass, field

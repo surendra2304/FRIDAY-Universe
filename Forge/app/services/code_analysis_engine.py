@@ -63,7 +63,7 @@ class CodeAnalysisEngine:
         """Analyze code and generate a report."""
         report_id = f"analysis_{uuid.uuid4().hex[:12]}"
         report = AnalysisReport(report_id=report_id, project_path=project_path)
-        report.metrics = self._calculate_metrics(code)
+        report.metrics = self._calculate_metrics(code, project_path)
 
         lines = code.split("\n")
         for i, line in enumerate(lines, 1):
@@ -104,7 +104,7 @@ class CodeAnalysisEngine:
         self._reports[report_id] = report
         return report
 
-    def _calculate_metrics(self, code: str) -> CodeMetrics:
+    def _calculate_metrics(self, code: str, file_path: str = "") -> CodeMetrics:
         """Calculate code metrics."""
         lines = code.split("\n")
         loc = len([l for l in lines if l.strip() and not l.strip().startswith("#")])
@@ -117,6 +117,7 @@ class CodeAnalysisEngine:
         duplicates = max(0, loc // 50)
 
         return CodeMetrics(
+            file_path=file_path,
             cyclomatic_complexity=round(cyclomatic, 1),
             lines_of_code=loc,
             lines_of_comments=comments,
