@@ -44,7 +44,10 @@ class FleetValidationTests(unittest.TestCase):
         self.assertEqual(mirror_workflow_violations(workflow), [])
         self.assertIn("workflow_dispatch:", workflow)
         self.assertIn("gh pr create", workflow)
-        self.assertNotRegex(workflow, r"(?m)^\s*rsync\b")
+        self.assertRegex(workflow, r"(?m)^\s*rsync -a")
+        self.assertNotRegex(workflow, r"(?m)^\s*rsync\b[^\n]*--delete\b")
+        self.assertIn("http.extraheader=AUTHORIZATION: basic", workflow)
+        self.assertIn("ref: ${{ github.sha }}", workflow)
 
     def test_mirror_workflow_rejects_external_push_without_pr(self):
         unsafe = """
