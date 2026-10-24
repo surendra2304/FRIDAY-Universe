@@ -1,7 +1,14 @@
 name: FRIDAY Universe Fleet Continuous Deployment
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
+
+concurrency:
+  group: deploy-monorepo-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   detect-changes:
@@ -28,12 +35,18 @@ jobs:
               - 'Forge/**'
               - 'mesh/**'
               - 'deploy/**'
+              - 'scripts/**'
+              - 'tests/**'
+              - '.github/workflows/**'
             server2:
               - 'VyralX/**'
               - 'Sentinel/**'
               - 'Cortex/**'
               - 'mesh/**'
               - 'deploy/**'
+              - 'scripts/**'
+              - 'tests/**'
+              - '.github/workflows/**'
 
   deploy-server1:
     name: Deploy Core Fleet (Server 1)
@@ -48,7 +61,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
-            echo "=== Syncing FRIDAY Universe on Server 1 ==="
+            echo "=== Syncing FRIDAY Universe on Server 1 (FRIDAY Universe VNIC) ==="
             cd /opt/friday_universe
             OLD_REV=$(git rev-parse HEAD 2>/dev/null || echo "HEAD~1")
             git fetch origin main
@@ -59,7 +72,7 @@ jobs:
             
             SERVER1_AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "IntelX" "Futuris" "Forge")
             for AGENT in "${SERVER1_AGENTS[@]}"; do
-              if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || [ "$1" = "force" ]; then
+              if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 if systemctl list-unit-files | grep -qw "${AGENT}.service"; then
                   echo "=== Restarting ${AGENT}.service ==="
                   sudo systemctl restart "${AGENT}.service"
@@ -69,6 +82,13 @@ jobs:
                 fi
               fi
             done
+            
+            if echo "$CHANGED_AGENTS" | grep -qw "Stratex" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              if systemctl list-unit-files | grep -qw "Stratex-Daemon.service"; then
+                echo "=== Restarting Stratex-Daemon.service ==="
+                sudo systemctl restart Stratex-Daemon.service
+              fi
+            fi
 
   deploy-server2:
     name: Deploy Specialist Fleet (Server 2)
@@ -83,7 +103,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
-            echo "=== Syncing FRIDAY Universe on Server 2 ==="
+            echo "=== Syncing FRIDAY Universe on Server 2 (FRIDAY Universe VNIC 2) ==="
             cd /opt/friday_universe
             OLD_REV=$(git rev-parse HEAD 2>/dev/null || echo "HEAD~1")
             git fetch origin main
@@ -94,7 +114,7 @@ jobs:
             
             SERVER2_AGENTS=("VyralX" "Sentinel" "Cortex")
             for AGENT in "${SERVER2_AGENTS[@]}"; do
-              if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || [ "$1" = "force" ]; then
+              if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                 if systemctl list-unit-files | grep -qw "${AGENT}.service"; then
                   echo "=== Restarting ${AGENT}.service ==="
                   sudo systemctl restart "${AGENT}.service"
@@ -104,3 +124,10 @@ jobs:
                 fi
               fi
             done
+            
+            if echo "$CHANGED_AGENTS" | grep -qw "VyralX" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              if systemctl list-unit-files | grep -qw "VyralX-Daemon.service"; then
+                echo "=== Restarting VyralX-Daemon.service ==="
+                sudo systemctl restart VyralX-Daemon.service
+              fi
+            fi
