@@ -37,10 +37,10 @@ def mirror_workflow_violations(content: str) -> list[str]:
     """
     problems: list[str] = []
 
-    if re.search(r"(?m)^\s*git\s+push\b[^\n]*--force(?:-with-lease)?\b", content):
+    if re.search(r"(?m)^\s*git\b[^\n]*\bpush\b[^\n]*--force(?:-with-lease)?\b", content):
         problems.append("mirror workflow must not force-push")
     if re.search(
-        r"(?m)^\s*git\s+push\b[^\n]*(?:split-[^\s]*:main|HEAD:refs/heads/main|origin\s+main)\b",
+        r"(?m)^\s*git\b[^\n]*\bpush\b[^\n]*(?:split-[^\s]*:main|HEAD:refs/heads/main|origin\s+main)\b",
         content,
     ):
         problems.append("mirror workflow must not push directly to a standalone default branch")
@@ -55,7 +55,7 @@ def mirror_workflow_violations(content: str) -> list[str]:
 
     # Direct pushes to external repositories are unsafe; cross-repo writes
     # must go through a pull request on a temporary sync branch.
-    push_lines = re.findall(r"(?m)^\s*git\s+push\b[^\n]*", content)
+    push_lines = re.findall(r"(?m)^\s*git\b[^\n]*\bpush\b[^\n]*", content)
     for line in push_lines:
         # Allow pushes that target a sync branch (literal or variable-based).
         if re.search(r"refs/heads/sync/", line):
