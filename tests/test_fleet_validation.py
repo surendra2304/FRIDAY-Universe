@@ -47,15 +47,48 @@ class FleetValidationTests(unittest.TestCase):
         self.assertNotIn("gh pr create", workflow)
         self.assertNotIn("rsync", workflow)
 
-    def test_mirror_workflow_rejects_external_push_without_force(self):
+    def test_mirror_workflow_rejects_external_push_without_pr(self):
         unsafe = """
         on:
           workflow_dispatch:
         run: |
-          git push origin feature-branch
+          git push origin main
         """
         problems = mirror_workflow_violations(unsafe)
         self.assertTrue(any("external repository" in problem for problem in problems))
+
+    def test_mirror_workflow_rejects_external_sync_branch_write(self):
+        unsafe = """
+        on:
+          workflow_dispatch:
+        run: |
+          git push origin sync/monorepo-abc123
+        """
+        problems = mirror_workflow_violations(unsafe)
+        self.assertTrue(any("external repository" in problem for problem in problems))
+
+
+    def test_deployment_sources_do_not_embed_live_credentials(self):
+        root = Path(__file__).resolve().parents[1]
+        sensitive_paths = (
+            "MASTER_AGENT_AWAKENING_DIRECTIVE.md",
+            "FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.md",
+            "deploy/setup_fleet.sh",
+            "scripts/register_vyralx_dokploy.py",
+            "scripts/generate_master_architecture_pdf.py",
+            "Memora/core/resilience/telemetry.py",
+            "FRIDAY/tests/test_codex_invariants_and_mesh.py",
+        )
+        live_key_patterns = (
+            r"(?m)^\s*SENTINEL_AUDIT_(?:HMAC|SIGNING)_KEY=[A-Fa-f0-9]{32,}\s*$",
+            r"(?m)^\s*(?:SENTINEL_API_KEY|FRIDAY_API_KEY|INFERENCE_API_KEY|INTELX_API_KEY|MEMORA_API_KEY|VYRALX_API_KEY)=(?:sentinel|friday|inference|intelx|memora|vyralx)_[A-Za-z0-9_-]{20,}\s*$",
+            r"oracle\+oracledb(?:_async)?://ADMIN:[^@\s]+@",
+        )
+        for relative in sensitive_paths:
+            content = (root / relative).read_text(encoding="utf-8")
+            self.assertNotIn("FridayUniverse2026", content, relative)
+            for pattern in live_key_patterns:
+                self.assertNotRegex(content, pattern, relative)
 
     def test_current_monorepo_structure_and_workflows(self):
         root = Path(__file__).resolve().parents[1]

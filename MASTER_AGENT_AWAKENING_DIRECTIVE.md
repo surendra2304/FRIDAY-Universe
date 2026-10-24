@@ -89,10 +89,10 @@ State is persisted across two dedicated Oracle Autonomous Database 23ai (Serverl
 - **Host:** `adb.ap-hyderabad-1.oraclecloud.com`
 - **Port:** `1521` (Protocol: TCPS, `ssl_server_dn_match=yes`)
 - **Service Name:** `g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com`
-- **Username / Password:** `ADMIN` / `FridayUniverse2026!#Core`
+- **Username / Password:** `ADMIN` / provided by secret store; do not commit credentials
 - **Connection Strings:**
-  - Synchronous: `oracle+oracledb://ADMIN:FridayUniverse2026%21%23Core@<DSN>`
-  - Asynchronous: `oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Core@<DSN>`
+  - Synchronous: `oracle+oracledb://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@DSN_FROM_SECRET_STORE`
+  - Asynchronous: `oracle+oracledb_async://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@DSN_FROM_SECRET_STORE`
 - **Tenants:** `FRIDAY`, `Inference`, `Memora`, `Stratex`, `Futuris`, `IntelX`, `Forge`, `Sentinel`, `Cortex`.
 - **Core Schemas:**
   - `MEMORA_MEMORIES`, `MEMORA_ENTITIES`, `MEMORA_RELATIONS` (Native Vector Search with Cosine Distance)
@@ -107,10 +107,10 @@ State is persisted across two dedicated Oracle Autonomous Database 23ai (Serverl
 - **Host:** `adb.ap-hyderabad-1.oraclecloud.com`
 - **Port:** `1521` (Protocol: TCPS, `ssl_server_dn_match=yes`)
 - **Service Name:** `g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com`
-- **Username / Password:** `ADMIN` / `FridayUniverse2026!#Vyral`
+- **Username / Password:** `ADMIN` / provided by secret store; do not commit credentials
 - **Connection Strings:**
-  - Synchronous: `oracle+oracledb://ADMIN:FridayUniverse2026%21%23Vyral@<DSN>`
-  - Asynchronous: `oracle+oracledb_async://ADMIN:FridayUniverse2026%21%23Vyral@<DSN>`
+  - Synchronous: `oracle+oracledb://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@DSN_FROM_SECRET_STORE`
+  - Asynchronous: `oracle+oracledb_async://USERNAME_FROM_SECRET_STORE:PASSWORD_FROM_SECRET_STORE@DSN_FROM_SECRET_STORE`
 - **Tenancy:** Strictly dedicated to `VyralX` for heavy video pipelines.
 - **Core Tables:** `VYRALX_PROJECTS`, `VYRALX_SCRIPTS`, `VYRALX_STORYBOARDS`, `VYRALX_MEDIA_ASSETS`, `VYRALX_PUBLISH_QUEUE`, `VIDEO_METRICS`, `AGENT_TASKS`.
 

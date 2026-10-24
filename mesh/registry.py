@@ -1,4 +1,4 @@
-"""Agent registration, manifest validation, and ecosystem discovery for all 9 subsystems."""
+"""Agent registration, manifest validation, and ecosystem discovery for all 10 subsystems."""
 from __future__ import annotations
 
 import json
@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-MANIFEST_SCHEMA_PATH = Path(__file__).resolve().parent.parent / "reports_and_data" / "mesh" / "config" / "agent-manifest.schema.json"
+MANIFEST_SCHEMA_PATH = Path(__file__).resolve().parent / "config" / "agent-manifest.schema.json"
 
 DEFAULT_ECOSYSTEM_AGENTS = [
     {
@@ -119,6 +119,18 @@ DEFAULT_ECOSYSTEM_AGENTS = [
         "version": "4.0.0",
         "url": "http://sentinel:8000",
     },
+    {
+        "agent_id": "a1000000-0000-4000-8000-000000000010",
+        "name": "VyralX",
+        "description": "Autonomous video production, licensed asset import, render, and multi-channel distribution",
+        "capabilities": ["video_discovery", "script_generation", "licensed_asset_import", "voiceover", "render_pipeline", "youtube_distribution", "provenance_audit"],
+        "intents": ["discover", "script", "render", "publish", "measure", "audit_publish"],
+        "trust_level": 4,
+        "health_endpoint": "/health",
+        "heartbeat_interval": 30,
+        "version": "0.2.0",
+        "url": "http://vyralx:8000",
+    },
 ]
 
 
@@ -218,6 +230,6 @@ class AgentDiscovery:
 
 
 def create_default_registry() -> AgentRegistry:
-    """Create and return an AgentRegistry pre-populated with all 9 sovereign agents."""
+    """Create and return an AgentRegistry pre-populated with all 10 sovereign agents."""
     return AgentRegistry(load_defaults=True)
 
