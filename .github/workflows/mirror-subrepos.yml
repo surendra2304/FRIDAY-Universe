@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: standalone-mirror-${ github.event.inputs.agent }-${ github.ref }
+  group: standalone-mirror-${{ github.event.inputs.agent }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -35,14 +35,14 @@ jobs:
       - name: Check out the selected monorepo revision
         uses: actions/checkout@v4
         with:
-          ref: ${ github.sha }
+          ref: ${{ github.sha }}
           path: monorepo
           fetch-depth: 1
 
       - name: Validate selected agent
         shell: bash
         env:
-          AGENT: ${ github.event.inputs.agent }
+          AGENT: ${{ github.event.inputs.agent }}
         run: |
           set -euo pipefail
           case "$AGENT" in
@@ -55,7 +55,7 @@ jobs:
       - name: Require a dedicated cross-repository token
         shell: bash
         env:
-          MIRROR_TOKEN: ${ secrets.GH_PAT_MIRROR }
+          MIRROR_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
         run: |
           set -euo pipefail
           if [[ -z "$MIRROR_TOKEN" ]]; then
@@ -66,8 +66,8 @@ jobs:
       - name: Clone the selected standalone repository
         shell: bash
         env:
-          AGENT: ${ github.event.inputs.agent }
-          SOURCE_SHA: ${ github.sha }
+          AGENT: ${{ github.event.inputs.agent }}
+          SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           mkdir -p standalone
@@ -75,15 +75,15 @@ jobs:
           git -C "standalone/$AGENT" fetch origin main
           git -C "standalone/$AGENT" config user.name "github-actions[bot]"
           git -C "standalone/$AGENT" config user.email "github-actions[bot]@users.noreply.github.com"
-          echo "SYNC_BRANCH=sync/monorepo-\${SOURCE_SHA:0:12}" >> "$GITHUB_ENV"
+          echo "SYNC_BRANCH=sync/monorepo-${SOURCE_SHA:0:12}" >> "$GITHUB_ENV"
 
       - name: Stage safe additions and modifications
         id: stage
         shell: bash
         env:
-          AGENT: ${ github.event.inputs.agent }
-          SOURCE_SHA: ${ github.sha }
-          MIRROR_TOKEN: ${ secrets.GH_PAT_MIRROR }
+          AGENT: ${{ github.event.inputs.agent }}
+          SOURCE_SHA: ${{ github.sha }}
+          MIRROR_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
         run: |
           set -euo pipefail
           DEST="$GITHUB_WORKSPACE/standalone/$AGENT"
@@ -111,7 +111,7 @@ jobs:
             exit 0
           fi
 
-          git -C "$DEST" commit -m "chore(mirror): sync $AGENT from monorepo \${SOURCE_SHA:0:12}"
+          git -C "$DEST" commit -m "chore(mirror): sync $AGENT from monorepo ${SOURCE_SHA:0:12}"
           # One-shot auth header avoids persisting the PAT inside .git/config.
           AUTH_HEADER="$(printf 'x-access-token:%s' "$MIRROR_TOKEN" | base64 -w 0)"
           git -C "$DEST" -c "http.extraheader=AUTHORIZATION: basic $AUTH_HEADER" \
@@ -123,10 +123,10 @@ jobs:
         if: steps.stage.outputs.has_changes == 'true'
         shell: bash
         env:
-          AGENT: ${ github.event.inputs.agent }
-          SYNC_BRANCH: ${ env.SYNC_BRANCH }
-          SOURCE_SHA: ${ github.sha }
-          GH_TOKEN: ${ secrets.GH_PAT_MIRROR }
+          AGENT: ${{ github.event.inputs.agent }}
+          SYNC_BRANCH: ${{ env.SYNC_BRANCH }}
+          SOURCE_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GH_PAT_MIRROR }}
         run: |
           set -euo pipefail
           EXISTING_PR="$(gh pr list --repo "surendra2304/$AGENT" --head "$SYNC_BRANCH" --state open --json url --jq '.[0].url' || true)"
@@ -137,6 +137,6 @@ jobs:
               --repo "surendra2304/$AGENT" \
               --base main \
               --head "$SYNC_BRANCH" \
-              --title "chore(mirror): sync $AGENT from monorepo \${SOURCE_SHA:0:12}" \
+              --title "chore(mirror): sync $AGENT from monorepo ${SOURCE_SHA:0:12}" \
               --body "Review additions and modifications from FRIDAY-Universe commit $SOURCE_SHA. This workflow does not automatically delete standalone-only files."
           fi
