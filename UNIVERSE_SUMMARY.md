@@ -19,11 +19,11 @@ The FRIDAY Universe is a multi-agent AI platform consisting of 10 specialized ag
 | 9 | Futuris | 5008 | Predictive Intelligence | 13 |
 | 10 | Sentinel | 5009 | Security Operations | 22 |
 
-**Total deep modules: 302**
+**Total deep modules: 321**
 
 ## Cross-Cutting Infrastructure
 
-The universe includes 12 cross-cutting modules in `FRIDAY/apps/core/src/friday_core/`:
+The universe includes 21 cross-cutting modules in `FRIDAY/apps/core/src/friday_core/`:
 
 1. `universe_dispatch_bus.py` — Unified dispatch to all 9 specialists with circuit breakers, retry, receipts
 2. `universe_auth.py` — Unified agent authentication with HMAC API key verification and capability-based authorization
@@ -37,6 +37,12 @@ The universe includes 12 cross-cutting modules in `FRIDAY/apps/core/src/friday_c
 10. `error_envelope.py` — Unified error handling with standard codes
 11. `universe_resilience.py` — Universe-wide fault tolerance and graceful degradation
 12. `universe_cost_optimizer.py` — Cross-agent cost tracking and budget management
+13. `universe_knowledge_graph.py` — Cross-agent knowledge graph and semantic query engine
+14. `universe_event_bus.py` — Cross-agent event publishing and subscription management
+15. `universe_state_manager.py` — Cross-agent state synchronization and consistency
+16. `universe_audit_trail.py` — Immutable audit logging and compliance evidence
+17. `universe_rate_limiter.py` — Cross-agent rate limiting and quota management
+18. `universe_task_router.py` — Intelligent task routing with capability matching
 
 ## Cross-Agent Integration
 
