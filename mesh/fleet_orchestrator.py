@@ -470,20 +470,37 @@ class FleetSupervisor:
         }
 
     async def emergency_halt(self, agent: str) -> bool:
-        """Emergency halt an agent."""
+        """Request an emergency halt and report whether transport accepted it.
+
+        Acceptance is not proof that the remote process actually stopped, so
+        this method deliberately does not change observed health status. A
+        subsequent health probe is responsible for recording OFFLINE status.
+        """
+        if not isinstance(agent, str) or not agent.strip():
+            return False
+        target = self.registry.get_agent(agent)
+        if target is None:
+            return False
+
         envelope = AgentEnvelope(
             from_agent="FLEET_SUPERVISOR",
-            to_agent=agent,
+            to_agent=target.name,
             intent="emergency_halt",
             payload={"reason": "Manual emergency halt"},
         )
 
         try:
             result = await self.transport.publish(envelope)
-            self.registry.update_status(agent, AgentStatus.OFFLINE)
-            return True
-        except Exception as e:
+        except Exception:
             return False
+
+        if not isinstance(result, dict):
+            return False
+        return result.get("status") in {
+            "DELIVERED_LOCAL",
+            "ACCEPTED_NATS",
+            "ACCEPTED_HTTP",
+        }
 
 
 # Module-level singleton
