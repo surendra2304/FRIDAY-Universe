@@ -38,16 +38,14 @@ class FleetValidationTests(unittest.TestCase):
         self.assertEqual(len(AGENTS), 10)
         self.assertEqual(len(set(AGENTS)), 10)
 
-    def test_mirror_workflow_is_manual_and_pr_based(self):
+    def test_mirror_workflow_is_manual_and_read_only(self):
         root = Path(__file__).resolve().parents[1]
         workflow = (root / ".github" / "workflows" / "mirror-subrepos.yml").read_text(encoding="utf-8")
         self.assertEqual(mirror_workflow_violations(workflow), [])
         self.assertIn("workflow_dispatch:", workflow)
-        self.assertIn("gh pr create", workflow)
-        self.assertRegex(workflow, r"(?m)^\s*rsync -a")
-        self.assertNotRegex(workflow, r"(?m)^\s*rsync\b[^\n]*--delete\b")
-        self.assertIn("http.extraheader=AUTHORIZATION: basic", workflow)
-        self.assertIn("ref: ${{ github.sha }}", workflow)
+        self.assertNotIn("GH_PAT_MIRROR", workflow)
+        self.assertNotIn("gh pr create", workflow)
+        self.assertNotIn("rsync", workflow)
 
     def test_mirror_workflow_rejects_external_push_without_pr(self):
         unsafe = """
@@ -59,7 +57,7 @@ class FleetValidationTests(unittest.TestCase):
         problems = mirror_workflow_violations(unsafe)
         self.assertTrue(any("external repository" in problem for problem in problems))
 
-    def test_mirror_workflow_requires_pull_request_for_cross_repo_changes(self):
+    def test_mirror_workflow_rejects_external_sync_branch_write(self):
         unsafe = """
         on:
           workflow_dispatch:
@@ -67,7 +65,8 @@ class FleetValidationTests(unittest.TestCase):
           git push origin sync/monorepo-abc123
         """
         problems = mirror_workflow_violations(unsafe)
-        self.assertTrue(any("pull request" in problem for problem in problems))
+        self.assertTrue(any("external repository" in problem for problem in problems))
+
 
     def test_deployment_sources_do_not_embed_live_credentials(self):
         root = Path(__file__).resolve().parents[1]
