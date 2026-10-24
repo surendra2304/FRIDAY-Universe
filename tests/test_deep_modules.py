@@ -627,6 +627,12 @@ class TestNewDeepModules:
         "Cortex/apps/api/src/cortex_api/decision_tree_visualizer.py",
         "Memora/apps/api/routers/memory_decay_predictor.py",
         "Inference/services/analogical_reasoning_engine.py",
+        # Wave 43: Recommendation explainer, intel exchange, merge resolver, flash crash, incident timeline
+        "VyralX/app/services/content_recommendation_explainer.py",
+        "IntelX/intelx/services/threat_intel_exchange_protocol.py",
+        "Forge/app/services/code_merge_conflict_resolver.py",
+        "Stratex/execution/flash_crash_detector.py",
+        "Sentinel/sentinel/apps/api/src/sentinel_api/security_incident_timeline.py",
     ]
 
     def test_all_new_modules_compile(self):
@@ -644,7 +650,7 @@ class TestNewDeepModules:
 
     def test_new_module_count(self):
         """Test that we have created a substantial number of new modules."""
-        assert len(self.NEW_MODULES) >= 83, f"Expected at least 83 new modules, got {len(self.NEW_MODULES)}"
+        assert len(self.NEW_MODULES) >= 88, f"Expected at least 88 new modules, got {len(self.NEW_MODULES)}"
 
 
 class TestCrossAgentIntegration:

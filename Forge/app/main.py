@@ -415,6 +415,10 @@ def create_app() -> FastAPI:
     from app.services.code_architecture_analyzer import router as arch_analyzer_router
     app.include_router(arch_analyzer_router, prefix="/api/v1/forge", tags=["Architecture Analysis"])
 
+    # --- Code Merge Conflict Resolver Integration ---
+    from app.services.code_merge_conflict_resolver import router as merge_resolver_router
+    app.include_router(merge_resolver_router, prefix="/api/v1/forge", tags=["Merge Conflict Resolver"])
+
     return app
 
 
