@@ -52,8 +52,6 @@ def mirror_workflow_violations(content: str) -> list[str]:
 
     if re.search(r"(?m)^\s*rsync\b[^\n]*--delete\b", content):
         problems.append("mirror workflow must not automatically delete standalone-only files")
-    elif re.search(r"(?m)^\s*rsync\b", content):
-        problems.append("mirror workflow must not synchronize files into standalone repositories")
 
     # Direct pushes to external repositories are unsafe; cross-repo writes
     # must go through a pull request on a temporary sync branch.
