@@ -273,7 +273,7 @@ User=ubuntu
 WorkingDirectory=$REPO_DIR/Sentinel
 Environment="PYTHONPATH=$REPO_DIR/Sentinel:$REPO_DIR"
 Environment="PORT=8008"
-Environment="STORAGE_BACKEND=memory"
+Environment="STORAGE_BACKEND=sqlite"
 EnvironmentFile=$REPO_DIR/Sentinel/.env
 ExecStart=$VENV_DIR/bin/python -m uvicorn sentinel.apps.api.main:app --host 0.0.0.0 --port 8008 --workers 1
 Restart=always
