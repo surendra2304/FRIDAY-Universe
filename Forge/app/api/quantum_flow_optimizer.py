@@ -197,7 +197,7 @@ class QuantumFlowOptimizer:
 
                     # Accept if better or with probability (Metropolis criterion)
                     if new_duration < best_duration or (
-                        hashlib.md5(f"accept:{iterations}:{temperature}").hexdigest()[:1] < temperature * 16
+                        hashlib.md5(f"accept:{iterations}:{temperature}".encode()).hexdigest()[:1] < temperature * 16
                     ):
                         best_duration = new_duration
                         solutions += 1
