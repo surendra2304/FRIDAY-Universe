@@ -5,7 +5,7 @@
 **Ecosystem Coordinator:** FRIDAY Antigravity Master Control  
 **Target Environment:** Oracle Cloud Infrastructure — ARM64 (`VM.Standard.A1.Flex`, 2 OCPUs, 12 GB RAM, 150 GB NVMe Boot Volume)  
 **Interim Host:** Oracle Cloud Infrastructure — AMD64 (`140.245.208.100`, ~1 GB RAM, 8 GB Swap, 50 GB Disk)  
-**Local Monorepo Workspace:** `D:\FRIDAY Universe`  
+**Local Monorepo Workspace:** `FRIDAY_UNIVERSE_HOME`  
 
 ---
 
@@ -78,7 +78,7 @@ flowchart TD
 | :--- | :--- | :--- |
 | **Compute Hardware** | Interim AMD VM (`VM.Standard.E2.1.Micro`), 1 OCPU, 956 MB RAM, 8 GB swapfile. Host: `140.245.208.100`. | Oracle ARM VM (`VM.Standard.A1.Flex`), 2 OCPUs, 12 GB RAM, 150 GB Boot Volume (Allocated via GitHub Sniper). |
 | **Storage Architecture** | Disparate local SQLite files (`friday.db`, `universe.db`, `memora.db`, `forge.db`, `cortex.db`, `intelx.db`, `futuris.db`). | Single unified PostgreSQL 18 cluster with 9 distinct logical databases and isolated, least-privilege service roles. |
-| **Local Repositories** | 9 individual Git repositories in `D:\FRIDAY Universe`, all 100% lint-clean (`ruff check`) and passing unit tests. | Same 9 distinct Git repositories maintained, tracked, and synchronized with corresponding GitHub origins. |
+| **Local Repositories** | 9 individual Git repositories in `FRIDAY_UNIVERSE_HOME`, all 100% lint-clean (`ruff check`) and passing unit tests. | Same 9 distinct Git repositories maintained, tracked, and synchronized with corresponding GitHub origins. |
 | **Service Ports** | Mixed development ports (`10000`, `8000`, `8001`, `8002`, `8005`). | All 8 internal specialist APIs strictly standardized to container port `:8000`. FRIDAY on `:10000`. Ingress on `:80/:443`. |
 | **Memory Backend** | Local SQLite + file-based Qdrant embeddings with optional Turso sync. | PostgreSQL 18 `memora_db` with relational constraints, Redis caching, and persistent Qdrant vector index. SQLite fallback disabled. |
 | **Concurrency & Workers** | Uncontrolled background threads risking OOM on 1 GB host. | Global CPU-heavy-job semaphore (1 heavy task at a time: build, deep crawl, or backtest) to guarantee zero latency on user voice paths. |
@@ -89,7 +89,7 @@ flowchart TD
 ## 3. Deep-Dive: The Nine Subsystems
 
 ### 3.1 FRIDAY — Core Orchestrator & Action Gateway
-- **Repository Path:** `D:\FRIDAY Universe\FRIDAY`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\FRIDAY`
 - **GitHub Origin:** `https://github.com/surendra2304/FRIDAY.git`
 - **Primary Mission:** Acts as the primary user-facing orchestrator, voice and multimodal companion, central task planner, action approval authority, and external webhook receiver.
 - **Entry Point:** `friday.api.server:app` (Uvicorn ASGI, Port `10000`)
@@ -110,7 +110,7 @@ flowchart TD
 ---
 
 ### 3.2 Inference — Canonical Model Gateway & Reasoning Router
-- **Repository Path:** `D:\FRIDAY Universe\Inference`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\Inference`
 - **GitHub Origin:** `https://github.com/surendra2304/Inference.git`
 - **Primary Mission:** Serves as the sole authorized AI model gateway for the entire ecosystem. Eliminates direct API key sprawl in specialist agents by centralizing provider failovers, dynamic rate-limiting, token budgets, and output validation.
 - **Entry Point:** `app.main:app` (Uvicorn ASGI, Port `8000`)
@@ -129,7 +129,7 @@ flowchart TD
 ---
 
 ### 3.3 Memora — 3-Tier Central Memory Authority
-- **Repository Path:** `D:\FRIDAY Universe\Memora`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\Memora`
 - **GitHub Origin:** `https://github.com/surendra2304/Memora.git`
 - **Primary Mission:** Sole long-term cross-agent memory authority for the entire FRIDAY Universe. Enforces policy, access control, deduplication, supersession, semantic retrieval, and hard deletion.
 - **Entry Point:** `apps.api.main:app` (Uvicorn ASGI, Port `8000`)
@@ -149,7 +149,7 @@ flowchart TD
 ---
 
 ### 3.4 Stratex — Quantitative Trading & Execution Engine
-- **Repository Path:** `D:\FRIDAY Universe\Stratex`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\Stratex`
 - **GitHub Origin:** `https://github.com/surendra2304/Stratex.git`
 - **Primary Mission:** Quantitative market analysis, real-time order execution, portfolio tracking, and automated risk management across crypto and equity markets.
 - **Entry Point:** `api/control.py` / `scripts/supervise_services.py` (Port `8000`)
@@ -168,7 +168,7 @@ flowchart TD
 ---
 
 ### 3.5 Forge — Autonomous Software Synthesizer & Repair Lab
-- **Repository Path:** `D:\FRIDAY Universe\Forge`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\Forge`
 - **GitHub Origin:** `https://github.com/surendra2304/Forge.git`
 - **Primary Mission:** Autonomous software synthesis, automated test execution, code repair, dependency analysis, and delivery packaging inside isolated execution environments.
 - **Entry Point:** `app.main:app` (Uvicorn ASGI, Port `8000`)
@@ -188,7 +188,7 @@ flowchart TD
 ---
 
 ### 3.6 Cortex — Multi-Tenant Web Engine & Governed CRM
-- **Repository Path:** `D:\FRIDAY Universe\Cortex`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\Cortex`
 - **GitHub Origin:** `https://github.com/surendra2304/Cortex.git`
 - **Primary Mission:** Powers public web presence, landing pages, interactive dashboards, multi-tenant lead capture, CRM telemetry, and governed website optimizations.
 - **Entry Point:** `cortex_api.main:app` (Uvicorn ASGI, Port `8000`)
@@ -207,7 +207,7 @@ flowchart TD
 ---
 
 ### 3.7 Sentinel — Zero-Trust Security Operations & Gatekeeper
-- **Repository Path:** `D:\FRIDAY Universe\Sentinel`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\Sentinel`
 - **GitHub Origin:** `https://github.com/surendra2304/Sentinel.git`
 - **Primary Mission:** Ecosystem security officer, continuous vulnerability scanner, dependency auditor, AST policy enforcer, and gatekeeper for all external and cross-service operations.
 - **Entry Point:** `sentinel/main.py` / `entrypoint.sh` (Uvicorn ASGI, Port `8000`)
@@ -225,7 +225,7 @@ flowchart TD
 ---
 
 ### 3.8 IntelX — Deep Research & Fact Verification Specialist
-- **Repository Path:** `D:\FRIDAY Universe\IntelX`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\IntelX`
 - **GitHub Origin:** `https://github.com/surendra2304/IntelX.git`
 - **Primary Mission:** Autonomous web research, multi-source intelligence gathering, claim extraction, evidence linking, contradiction detection, and citation provenance.
 - **Entry Point:** `intelx.cli.main:serve` (Port `8000`)
@@ -243,7 +243,7 @@ flowchart TD
 ---
 
 ### 3.9 Futuris — Predictive Forecasting & Calibration Engine
-- **Repository Path:** `D:\FRIDAY Universe\Futuris`
+- **Repository Path:** `FRIDAY_UNIVERSE_HOME\Futuris`
 - **GitHub Origin:** `https://github.com/surendra2304/Futuris.git`
 - **Primary Mission:** Scenario forecasting, probabilistic modeling, uncertainty estimation, Brier score calibration, and long-term predictive trajectory tracking.
 - **Entry Point:** `futuris.cli:serve` (Port `8000`)

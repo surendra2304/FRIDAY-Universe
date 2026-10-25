@@ -3,7 +3,7 @@
 # ==============================================================================
 # CLASSIFICATION: Authoritative Operational Directive for Antigravity AI Agents
 # REPOSITORY: https://github.com/surendra2304/FRIDAY-Universe (Branch: main)
-# WORKSPACES: Local (D:\FRIDAY Universe) | Production Remote (/opt/friday_universe)
+# WORKSPACES: Local (FRIDAY_UNIVERSE_HOME) | Production Remote (/opt/friday_universe)
 # TARGET: Any Antigravity Agent Chat Session across the 10 Sovereign Subsystems
 # ==============================================================================
 

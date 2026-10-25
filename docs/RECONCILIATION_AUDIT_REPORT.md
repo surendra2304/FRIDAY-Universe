@@ -2,7 +2,7 @@
 
 > **DOCUMENT ID:** `FU-AUDIT-20261018-001`  
 > **DATE:** 2026-10-18T02:22:00+05:30  
-> **SCOPE:** Complete Read-Only Multi-Repository Inspection, Working-Tree Audit, Remote Divergence, CI/PR Analysis, and Production Deployment Mapping across all 9 Repositories in `D:\FRIDAY Universe`.  
+> **SCOPE:** Complete Read-Only Multi-Repository Inspection, Working-Tree Audit, Remote Divergence, CI/PR Analysis, and Production Deployment Mapping across all 9 Repositories in `FRIDAY_UNIVERSE_HOME`.  
 > **COORDINATION:** Prepared for ChatGPT (Lead Coordinator via MCP/GitHub) and System Owner.  
 > **STATUS:** Complete Read-Only Baseline â€” No Source Code Modified During Audit.
 
@@ -11,7 +11,7 @@
 ## 1. Executive Summary & Verification Matrix
 
 ### 1.1 Ecosystem Topography at a Glance
-The FRIDAY Universe consists of **nine independent Git repositories** hosted on GitHub under organization account `surendra2304`. Each repository is locally cloned under `D:\FRIDAY Universe\<RepoName>` and tracked to its corresponding `origin/main` upstream branch.
+The FRIDAY Universe consists of **nine independent Git repositories** hosted on GitHub under organization account `surendra2304`. Each repository is locally cloned under `FRIDAY_UNIVERSE_HOME\<RepoName>` and tracked to its corresponding `origin/main` upstream branch.
 
 | Repository | Current Local Branch | Local HEAD (Short / Full) | Remote Tracking Branch | Remote HEAD (origin/main) | Local Divergence (Ahead / Behind) | Dirty Status Count (M / D / ??) | Test Suite Baseline |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -31,9 +31,9 @@ The FRIDAY Universe consists of **nine independent Git repositories** hosted on 
 
 ### 2.1 Archive & Snapshot Inventory `[FACT]`
 A full pre-reconciliation recovery snapshot exists at:
-- **Directory:** `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125`
-- **ZIP Archive:** `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125.zip`
-- **Manifest:** `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125\manifest.json`
+- **Directory:** `FRIDAY_UNIVERSE_HOME\state_backups\pre-reconciliation-20261018-010125`
+- **ZIP Archive:** `FRIDAY_UNIVERSE_HOME\state_backups\pre-reconciliation-20261018-010125.zip`
+- **Manifest:** `FRIDAY_UNIVERSE_HOME\state_backups\pre-reconciliation-20261018-010125\manifest.json`
 
 The snapshot contains exact, verified copies of:
 1. `git-status.txt` for each repository.
@@ -297,7 +297,7 @@ To maintain perfect engineering hygiene, zero merge conflicts, and 100% test pas
 ### Phase 1: Stratex PR #5 Merge & Remote Catchup
 1. **Action:** Review and merge PR #5 (`docs/stratex-handoff-and-ci-fix`) on GitHub repository `surendra2304/Stratex`.
 2. **Acceptance Criteria:** PR #5 merged cleanly; Stratex CI green on remote `main`.
-3. **Local Action:** In `D:\FRIDAY Universe\Stratex`, fetch `origin/main` without modifying local working tree; create feature branch `reconcile/stratex-local-changes` containing the 3 modified local files (`api/control.py`, `config.py`, `gemini_service.py`).
+3. **Local Action:** In `FRIDAY_UNIVERSE_HOME\Stratex`, fetch `origin/main` without modifying local working tree; create feature branch `reconcile/stratex-local-changes` containing the 3 modified local files (`api/control.py`, `config.py`, `gemini_service.py`).
 
 ### Phase 2: Reconciliation of Independent Clean Repositories (Inference, Memora, Forge, IntelX, Futuris)
 1. **Inference:** Branch `reconcile/inference-resilience` -> stage 3 modified files -> test (723 passed) -> push PR.
@@ -356,7 +356,7 @@ Before any destructive or production-impacting action is executed, explicit appr
 
 If any reconciliation branch, merge, or test run exhibits unexpected regressions:
 1. **Local Working-Tree Rollback:**
-   The recovery snapshot at `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125` is completely untouched and read-only. Any repository can be restored to its exact pre-audit state by applying `tracked-working-tree.patch`.
+   The recovery snapshot at `FRIDAY_UNIVERSE_HOME\state_backups\pre-reconciliation-20261018-010125` is completely untouched and read-only. Any repository can be restored to its exact pre-audit state by applying `tracked-working-tree.patch`.
 2. **Git Branch Isolation:**
    All work must occur on dedicated feature branches (`reconcile/*`). The local `main` branches remain completely untouched until PRs are merged on GitHub.
 3. **Production State Rollback:**
@@ -372,7 +372,7 @@ If any reconciliation branch, merge, or test run exhibits unexpected regressions
 > **TIMESTAMP:** 2026-10-18T10:25:38+05:30  
 > **STATUS:** 100% SYNCHRONIZED — ALL 9 REPOSITORIES UP TO DATE WITH GITHUB MAIN
 
-Every local repository in D:\FRIDAY Universe has been reconciled, rebased, and pushed to GitHub. All working trees are completely clean with zero uncommitted changes, zero untracked files, and zero diffs against origin/main.
+Every local repository in FRIDAY_UNIVERSE_HOME has been reconciled, rebased, and pushed to GitHub. All working trees are completely clean with zero uncommitted changes, zero untracked files, and zero diffs against origin/main.
 
 | Repository | Branch | Local HEAD | Remote HEAD (origin/main) | Divergence | Working Tree Status | Sync Verification |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
