@@ -6,10 +6,10 @@ import json
 import subprocess
 from pathlib import Path
 
-SSH_KEY = r"C:\Users\Surendra\.ssh\friday_universe_oracle.key"
+SSH_KEY = r"USER_HOME\.ssh\friday_universe_oracle.key"
 SSH_USER = "ubuntu"
 SSH_HOST = "140.245.208.100"
-CREDENTIALS_FILE = Path(r"D:\FRIDAY Universe\CREDENTIALS_PHASE3_POSTGRES.json")
+CREDENTIALS_FILE = Path(r"FRIDAY_UNIVERSE_HOME\CREDENTIALS_PHASE3_POSTGRES.json")
 
 def verify_all():
     with open(CREDENTIALS_FILE, "r", encoding="utf-8") as f:

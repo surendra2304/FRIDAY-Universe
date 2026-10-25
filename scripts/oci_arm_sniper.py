@@ -10,7 +10,7 @@ import sys
 
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-SSH_KEY = r"C:\Users\Surendra\.ssh\friday_universe_oracle.key"
+SSH_KEY = r"USER_HOME\.ssh\friday_universe_oracle.key"
 CLOUD_HOST = "ubuntu@140.245.208.100"
 
 def get_remote_status():

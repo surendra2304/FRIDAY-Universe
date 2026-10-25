@@ -2,7 +2,7 @@ import subprocess
 
 SSH_CMD = [
     "ssh", "-o", "BatchMode=yes",
-    "-i", r"C:\Users\Surendra\.ssh\friday_universe_oracle.key",
+    "-i", r"USER_HOME\.ssh\friday_universe_oracle.key",
     "ubuntu@140.245.208.100",
     "sudo python3 -"
 ]

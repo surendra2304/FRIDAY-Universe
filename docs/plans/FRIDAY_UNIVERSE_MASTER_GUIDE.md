@@ -1,7 +1,7 @@
 # 🌌 FRIDAY UNIVERSE — The Complete Master Architectural & Technical Guide
 
 > **Ecosystem Version:** 2.2.0  
-> **Host Root:** `D:\FRIDAY Universe`  
+> **Host Root:** `FRIDAY_UNIVERSE_HOME`  
 > **Cloud Ingress:** `https://friday-universe.duckdns.org`  
 > **Internal Container Mesh:** `friday_mesh` (Docker internal bridge network)  
 > **Hosting Platform:** Oracle Cloud Infrastructure (OCI) Always Free (Ampere A1 ARM64 / AMD x86_64) + Caddy TLS Reverse Proxy
@@ -62,7 +62,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 1. ⚡ Inference — Central Multi-Model Intelligence Gateway
-- **Workspace Path:** [`D:\FRIDAY Universe\Inference`](file:///D:/FRIDAY%20Universe/Inference)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\Inference`](file:///D:/FRIDAY%20Universe/Inference)
 - **Repository:** `surendra2304/Inference`
 - **Internal Mesh URL:** `http://inference:8000` | **Host Port:** `8000`
 - **Public Route:** `https://friday-universe.duckdns.org/inference`
@@ -82,7 +82,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 2. 🧠 Memora — Unified Long-Term Memory Fabric
-- **Workspace Path:** [`D:\FRIDAY Universe\Memora`](file:///D:/FRIDAY%20Universe/Memora)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\Memora`](file:///D:/FRIDAY%20Universe/Memora)
 - **Repository:** `surendra2304/Memora`
 - **Internal Mesh URL:** `http://memora:8000` | **Host Port:** `8006`
 - **Public Route:** `https://friday-universe.duckdns.org/memora`
@@ -100,7 +100,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 3. 📈 Stratex — Algorithmic Futures Strategy Engine
-- **Workspace Path:** [`D:\FRIDAY Universe\Stratex`](file:///D:/FRIDAY%20Universe/Stratex)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\Stratex`](file:///D:/FRIDAY%20Universe/Stratex)
 - **Repository:** `surendra2304/algorithmic-trading-bot`
 - **Internal Mesh URL:** `http://stratex:8000` | **Host Port:** `8008`
 - **Public Route:** `https://friday-universe.duckdns.org/stratex`
@@ -123,7 +123,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 4. 🔍 IntelX — Live Intelligence Gathering & OSINT Engine
-- **Workspace Path:** [`D:\FRIDAY Universe\IntelX`](file:///D:/FRIDAY%20Universe/IntelX)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\IntelX`](file:///D:/FRIDAY%20Universe/IntelX)
 - **Repository:** `surendra2304/IntelX`
 - **Internal Mesh URL:** `http://intelx:8000` | **Host Port:** `8005`
 - **Public Route:** `https://friday-universe.duckdns.org/intelx`
@@ -142,7 +142,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 5. 🔮 Futuris — Calibrated Predictive Forecasting Engine
-- **Workspace Path:** [`D:\FRIDAY Universe\Futuris`](file:///D:/FRIDAY%20Universe/Futuris)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\Futuris`](file:///D:/FRIDAY%20Universe/Futuris)
 - **Repository:** `surendra2304/Futuris`
 - **Internal Mesh URL:** `http://futuris:8000` | **Host Port:** `8003`
 - **Public Route:** `https://friday-universe.duckdns.org/futuris`
@@ -160,7 +160,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 6. 🌐 Cortex — Autonomous Web Operations & Lead Intelligence
-- **Workspace Path:** [`D:\FRIDAY Universe\Cortex`](file:///D:/FRIDAY%20Universe/Cortex)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\Cortex`](file:///D:/FRIDAY%20Universe/Cortex)
 - **Repository:** `surendra2304/Cortex`
 - **Internal Mesh URL:** `http://cortex:8000` | **Host Port:** `8001`
 - **Public Route:** `https://friday-universe.duckdns.org/cortex`
@@ -178,7 +178,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 7. 🛠️ Forge — Autonomous Software Engineering Engine
-- **Workspace Path:** [`D:\FRIDAY Universe\Forge`](file:///D:/FRIDAY%20Universe/Forge)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\Forge`](file:///D:/FRIDAY%20Universe/Forge)
 - **Repository:** `surendra2304/Forge`
 - **Internal Mesh URL:** `http://forge:8000` | **Host Port:** `8004`
 - **Public Route:** `https://friday-universe.duckdns.org/forge`
@@ -196,7 +196,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 8. 🛡️ Sentinel — Cybersecurity Watchdog & Cryptographic Gatekeeper
-- **Workspace Path:** [`D:\FRIDAY Universe\Sentinel`](file:///D:/FRIDAY%20Universe/Sentinel)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\Sentinel`](file:///D:/FRIDAY%20Universe/Sentinel)
 - **Repository:** `surendra2304/Sentinel`
 - **Internal Mesh URL:** `http://sentinel:8000` | **Host Port:** `8007`
 - **Public Route:** `https://friday-universe.duckdns.org/sentinel`
@@ -214,7 +214,7 @@ Below is the complete profile for each agent in the FRIDAY Universe, including w
 ---
 
 ### 9. 🤖 FRIDAY — Central Voice Assistant & Desktop Controller
-- **Workspace Path:** [`D:\FRIDAY Universe\FRIDAY`](file:///D:/FRIDAY%20Universe/FRIDAY)
+- **Workspace Path:** [`FRIDAY_UNIVERSE_HOME\FRIDAY`](file:///D:/FRIDAY%20Universe/FRIDAY)
 - **Repository:** `surendra2304/FRIDAY`
 - **Internal Mesh URL:** `http://friday:10000` | **Host Port:** `10000`
 - **Public Route:** `https://friday-universe.duckdns.org`
@@ -249,7 +249,7 @@ Sentinel  -> http://sentinel:8000
 FRIDAY    -> http://friday:10000
 ```
 
-### Shared Mesh Libraries ([`D:\FRIDAY Universe\mesh`](file:///D:/FRIDAY%20Universe/mesh))
+### Shared Mesh Libraries ([`FRIDAY_UNIVERSE_HOME\mesh`](file:///D:/FRIDAY%20Universe/mesh))
 To ensure standardized communication across all 9 agents, the root repository contains a shared Python networking package:
 - **`mesh/registry.py`**: Central registry of all service URLs, endpoints, health routes, and timeout configs.
 - **`mesh/transport.py`**: Resilient HTTP transport client featuring exponential backoff, circuit breaking, and automatic bearer token injection.
@@ -263,7 +263,7 @@ To ensure standardized communication across all 9 agents, the root repository co
 In production, each agent runs in its own sandbox with its own isolated `.env` file located inside its directory:
 
 ```
-D:\FRIDAY Universe\
+FRIDAY_UNIVERSE_HOME\
 ├── Cortex\.env
 ├── Forge\.env
 ├── FRIDAY\.env
@@ -283,12 +283,12 @@ Each service receives:
 
 ---
 
-## 📁 5. Directory Structure & Layout of `D:\FRIDAY Universe`
+## 📁 5. Directory Structure & Layout of `FRIDAY_UNIVERSE_HOME`
 
-Here is how the complete filesystem on `D:\FRIDAY Universe` is organized:
+Here is how the complete filesystem on `FRIDAY_UNIVERSE_HOME` is organized:
 
 ```
-D:\FRIDAY Universe\
+FRIDAY_UNIVERSE_HOME\
 ├── Cortex/                   # Subsystem 1: Web Ops, Dashboard & Lead Gen
 ├── Forge/                    # Subsystem 2: Autonomous Software Engineering
 ├── FRIDAY/                   # Subsystem 3: Central Multimodal Voice OS & Conductor

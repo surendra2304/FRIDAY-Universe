@@ -406,8 +406,8 @@ Antigravity reported it created `D:\ChatGPT\server.py`, launched it using `D:\Ch
 
 - Reported MCP endpoint: `https://kite-trouble-decency.ngrok-free.dev/mcp`
 - Reported health endpoint: `https://kite-trouble-decency.ngrok-free.dev/health`
-- Reported launcher: `C:\Users\Surendra\Desktop\Start_ChatGPT_Bridge.bat`
-- Workspace root: `D:\FRIDAY Universe`
+- Reported launcher: `USER_HOME\Desktop\Start_ChatGPT_Bridge.bat`
+- Workspace root: `FRIDAY_UNIVERSE_HOME`
 - User's plugin page (not the MCP endpoint): `https://chatgpt.com/plugins/plugin_asdk_app_6ad3d28abed48191bfaaea36dc03ee8e`
 
 The actual runtime connection failed with an `UNAVAILABLE: Connection failed` error during preparation of this handoff. Therefore the endpoint, tunnel, authentication and tool discovery must be tested in the new chat before assuming local edit or server access works. A permanent plugin-page URL is not the same as the underlying MCP URL; verify both independently.
@@ -425,7 +425,7 @@ The actual runtime connection failed with an `UNAVAILABLE: Connection failed` er
 
 The later tool interface visible to ChatGPT exposed generic tools such as `get_system_info`, `list_directory`, `read_file`, `write_file`, `execute_terminal_command`, and `run_python_code`; do not assume the larger 15-tool inventory is currently callable. Test every tool in the active connector session and distinguish AVAILABLE / FAILED / NOT CONFIGURED / NOT TESTED.
 
-The reported bridge said it blocks traversal outside `D:\FRIDAY Universe`, protects backup ZIPs, redacts secrets, and requires authorization before state changes. Treat those as reported implementation claims until tests against the current `server.py` confirm them. Regex redaction is not sufficient by itself to guarantee secrets can never leak; tools must avoid reading/returning credential values in the first place.
+The reported bridge said it blocks traversal outside `FRIDAY_UNIVERSE_HOME`, protects backup ZIPs, redacts secrets, and requires authorization before state changes. Treat those as reported implementation claims until tests against the current `server.py` confirm them. Regex redaction is not sufficient by itself to guarantee secrets can never leak; tools must avoid reading/returning credential values in the first place.
 
 ## 10.3 Startup and connection recovery checklist
 
@@ -448,8 +448,8 @@ The user does not need to grant unrestricted access to the entire laptop. Worksp
 
 An earlier successful bridge inspection ran read-only Git commands over all ten local repositories. It found every repo dirty and several branches behind `origin/main`. A pre-reconciliation snapshot was created:
 
-- `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125.zip`
-- matching snapshot directory: `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125`
+- `FRIDAY_UNIVERSE_HOME\state_backups\pre-reconciliation-20261018-010125.zip`
+- matching snapshot directory: `FRIDAY_UNIVERSE_HOME\state_backups\pre-reconciliation-20261018-010125`
 
 The snapshot includes tracked working-tree patches, status records, a manifest and copies of untracked files. Never delete or overwrite it without a verified independent backup.
 
@@ -690,7 +690,7 @@ Paste this prompt after attaching this PDF, the master specification Markdown, a
 >
 > The ecosystem has exactly ten repositories: FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX and Futuris. FRIDAY is the orchestrator; Inference is the canonical model gateway; Memora is the only long-term cross-agent memory authority. Each agent owns its operational DB; all memory sharing goes through Memora's authenticated scoped API. Target data layer is PostgreSQL 18, one server with ten logical databases/least-privilege roles, only after verified data migration and restore tests.
 >
-> Do not make any blind pull, reset, clean, force-push, bulk merge or direct-main edit. The local workspace had many uncommitted changes and a recovery snapshot at `D:\FRIDAY Universe\state_backups\pre-reconciliation-20261018-010125.zip`. The current MCP tool call failed at the time this handoff was prepared. Restore the local connection and run a read-only audit before editing.
+> Do not make any blind pull, reset, clean, force-push, bulk merge or direct-main edit. The local workspace had many uncommitted changes and a recovery snapshot at `FRIDAY_UNIVERSE_HOME\state_backups\pre-reconciliation-20261018-010125.zip`. The current MCP tool call failed at the time this handoff was prepared. Restore the local connection and run a read-only audit before editing.
 >
 > Recheck all GitHub PRs and CI because the status table in this handoff is only as current as 18 October 2026. At last check, PRs #3 were merged for FRIDAY, Inference, Memora, Forge, Sentinel and IntelX; Stratex #8 was merged; Cortex #3 was open/draft with failed CI; Futuris #3 was open with successful CI; Stratex #7 and #9 were open. Reconfirm each exact SHA/check now. Another chat has worked on Stratex, so avoid conflicting edits and start any new Stratex work from refreshed `main` on a new branch.
 >
