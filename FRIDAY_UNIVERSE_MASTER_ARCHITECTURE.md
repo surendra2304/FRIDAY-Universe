@@ -5,7 +5,7 @@
 # VERSION: 3.1.0 (Production Dual-Server Fleet & Oracle 23ai Mesh)
 # DATE: October 2026
 # REPOSITORY: https://github.com/surendra2304/FRIDAY-Universe (Branch: main)
-# LOCAL WORKSPACE: D:\FRIDAY Universe
+# LOCAL WORKSPACE: FRIDAY_UNIVERSE_HOME
 # REMOTE WORKSPACE: /opt/friday_universe
 # CLOUD INGRESS GATEWAY: https://friday-universe.duckdns.org
 # ==============================================================================
@@ -60,8 +60,8 @@ The 10 autonomous agents are physically distributed across two AMD Micro VMs in 
 |                                    FRIDAY UNIVERSE FLEET                                           |
 +----------------------------------------------------------------------------------------------------+
 | SERVER 1: CORE DECISION FLEET                      | SERVER 2: SPECIALIST STUDIO & OPS FLEET       |
-| Public IP:  140.245.208.100                        | Public IP:  140.245.243.168                   |
-| Private IP: 10.0.0.121 (friday-amd-vnic)           | Private IP: 10.0.0.120 (friday-amd-2-vnic)    |
+| Public IP:  SERVER1_PUBLIC_IP                        | Public IP:  SERVER2_PUBLIC_IP                   |
+| Private IP: SERVER1_PRIVATE_IP (friday-amd-vnic)           | Private IP: SERVER2_PRIVATE_IP (friday-amd-2-vnic)    |
 | OS: Ubuntu 22.04 LTS (AMD64)                       | OS: Ubuntu 22.04 LTS (AMD64)                   |
 | RAM: 1 GB Physical + 8 GB Swap                     | RAM: 1 GB Physical + 8 GB Swap                 |
 | Base Path: /opt/friday_universe                    | Base Path: /opt/friday_universe                |
@@ -84,16 +84,16 @@ The 10 autonomous agents are physically distributed across two AMD Micro VMs in 
 
 | Agent Name | Host Server | Mesh Port | Systemd Service Unit | Working Directory & Entrypoint Command | MemoryMax Cap |
 |---|---|---|---|---|---|
-| **FRIDAY** | Server 1 (`140.245.208.100`) | `10000` | `FRIDAY.service` | `cd /opt/friday_universe/FRIDAY && /opt/friday_universe/venv/bin/python -m uvicorn friday.api.server:app --host 0.0.0.0 --port 10000 --workers 1` | `200M` |
-| **Inference** | Server 1 (`140.245.208.100`) | `8001` | `Inference.service` | `cd /opt/friday_universe/Inference && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 1` | `180M` |
-| **Memora** | Server 1 (`140.245.208.100`) | `8002` | `Memora.service` | `cd /opt/friday_universe/Memora && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --workers 1` | `200M` |
-| **Stratex** | Server 1 (`140.245.208.100`) | `8003` | `Stratex.service` | `cd /opt/friday_universe/Stratex && /opt/friday_universe/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8003 --workers 1` | `180M` |
-| **Futuris** | Server 1 (`140.245.208.100`) | `8004` | `Futuris.service` | `cd /opt/friday_universe/Futuris && /opt/friday_universe/venv/bin/python -m uvicorn futuris.api.app:app --host 0.0.0.0 --port 8004 --workers 1` | `180M` |
-| **IntelX** | Server 1 (`140.245.208.100`) | `8005` | `IntelX.service` | `cd /opt/friday_universe/IntelX && /opt/friday_universe/venv/bin/python -m uvicorn intelx.app.main:app --host 0.0.0.0 --port 8005 --workers 1` | `180M` |
-| **Forge** | Server 1 (`140.245.208.100`) | `8006` | `Forge.service` | `cd /opt/friday_universe/Forge && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --workers 1` | `180M` |
-| **VyralX** | Server 2 (`140.245.243.168`) | `8010` | `VyralX.service` | `cd /opt/friday_universe/VyralX && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8010 --workers 1` | `250M` |
-| **Sentinel** | Server 2 (`140.245.243.168`) | `8008` | `Sentinel.service` | `cd /opt/friday_universe/Sentinel && /opt/friday_universe/venv/bin/python -m uvicorn sentinel.apps.api.main:app --host 0.0.0.0 --port 8008 --workers 1` | `200M` |
-| **Cortex** | Server 2 (`140.245.243.168`) | `8009` | `Cortex.service` | `cd /opt/friday_universe/Cortex && /opt/friday_universe/venv/bin/python -m uvicorn apps.api.src.cortex_api.main:app --host 0.0.0.0 --port 8009 --workers 1` | `200M` |
+| **FRIDAY** | Server 1 (`SERVER1_PUBLIC_IP`) | `10000` | `FRIDAY.service` | `cd /opt/friday_universe/FRIDAY && /opt/friday_universe/venv/bin/python -m uvicorn friday.api.server:app --host 0.0.0.0 --port 10000 --workers 1` | `200M` |
+| **Inference** | Server 1 (`SERVER1_PUBLIC_IP`) | `8001` | `Inference.service` | `cd /opt/friday_universe/Inference && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 1` | `180M` |
+| **Memora** | Server 1 (`SERVER1_PUBLIC_IP`) | `8002` | `Memora.service` | `cd /opt/friday_universe/Memora && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --workers 1` | `200M` |
+| **Stratex** | Server 1 (`SERVER1_PUBLIC_IP`) | `8003` | `Stratex.service` | `cd /opt/friday_universe/Stratex && /opt/friday_universe/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8003 --workers 1` | `180M` |
+| **Futuris** | Server 1 (`SERVER1_PUBLIC_IP`) | `8004` | `Futuris.service` | `cd /opt/friday_universe/Futuris && /opt/friday_universe/venv/bin/python -m uvicorn futuris.api.app:app --host 0.0.0.0 --port 8004 --workers 1` | `180M` |
+| **IntelX** | Server 1 (`SERVER1_PUBLIC_IP`) | `8005` | `IntelX.service` | `cd /opt/friday_universe/IntelX && /opt/friday_universe/venv/bin/python -m uvicorn intelx.app.main:app --host 0.0.0.0 --port 8005 --workers 1` | `180M` |
+| **Forge** | Server 1 (`SERVER1_PUBLIC_IP`) | `8006` | `Forge.service` | `cd /opt/friday_universe/Forge && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --workers 1` | `180M` |
+| **VyralX** | Server 2 (`SERVER2_PUBLIC_IP`) | `8010` | `VyralX.service` | `cd /opt/friday_universe/VyralX && /opt/friday_universe/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8010 --workers 1` | `250M` |
+| **Sentinel** | Server 2 (`SERVER2_PUBLIC_IP`) | `8008` | `Sentinel.service` | `cd /opt/friday_universe/Sentinel && /opt/friday_universe/venv/bin/python -m uvicorn sentinel.apps.api.main:app --host 0.0.0.0 --port 8008 --workers 1` | `200M` |
+| **Cortex** | Server 2 (`SERVER2_PUBLIC_IP`) | `8009` | `Cortex.service` | `cd /opt/friday_universe/Cortex && /opt/friday_universe/venv/bin/python -m uvicorn apps.api.src.cortex_api.main:app --host 0.0.0.0 --port 8009 --workers 1` | `200M` |
 
 ---
 
@@ -139,7 +139,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 1. FRIDAY (Cognitive Orchestrator & Action Gateway)
 - **Repo Origin:** `https://github.com/surendra2304/FRIDAY.git`
-- **Location:** `D:\FRIDAY Universe\FRIDAY` (Local) | `/opt/friday_universe/FRIDAY` (Server 1)
+- **Location:** `FRIDAY_UNIVERSE_HOME\FRIDAY` (Local) | `/opt/friday_universe/FRIDAY` (Server 1)
 - **Port:** `10000` | **Service:** `FRIDAY.service`
 - **Primary Mission:** Central human-in-the-loop orchestrator, task planner, voice/chat companion, and mesh dispatcher.
 - **Key Routes:**
@@ -150,7 +150,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 2. Inference (Sovereign Model Routing & Reasoning Gateway)
 - **Repo Origin:** `https://github.com/surendra2304/Inference.git`
-- **Location:** `D:\FRIDAY Universe\Inference` (Local) | `/opt/friday_universe/Inference` (Server 1)
+- **Location:** `FRIDAY_UNIVERSE_HOME\Inference` (Local) | `/opt/friday_universe/Inference` (Server 1)
 - **Port:** `8001` | **Service:** `Inference.service`
 - **Primary Mission:** High-throughput multi-model inference router with intelligent fallback across LLM providers.
 - **Provider Waterfall:** Groq (Llama-3.3-70b) -> Cerebras (Llama-3.1-8b/70b) -> OpenRouter (DeepSeek-R1 / Sonnet) -> Google Gemini (2.0 Flash / Pro).
@@ -162,7 +162,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 3. Memora (Cognitive Memory Fabric & Vector Database)
 - **Repo Origin:** `https://github.com/surendra2304/Memora.git`
-- **Location:** `D:\FRIDAY Universe\Memora` (Local) | `/opt/friday_universe/Memora` (Server 1)
+- **Location:** `FRIDAY_UNIVERSE_HOME\Memora` (Local) | `/opt/friday_universe/Memora` (Server 1)
 - **Port:** `8002` | **Service:** `Memora.service`
 - **Primary Mission:** Cross-agent memory authority enforcing cryptographic provenance, multi-tier scoping, and prompt injection isolation.
 - **Storage:** Oracle Database 23ai native `VECTOR` indexing (HNSW, Cosine distance) in `friday_universe_db` (`MEMORA_MEMORIES`, `MEMORA_ENTITIES`, `MEMORA_RELATIONS`).
@@ -174,7 +174,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 4. Stratex (Quantitative Algorithmic Trading & Risk Desk)
 - **Repo Origin:** `https://github.com/surendra2304/Stratex.git`
-- **Location:** `D:\FRIDAY Universe\Stratex` (Local) | `/opt/friday_universe/Stratex` (Server 1)
+- **Location:** `FRIDAY_UNIVERSE_HOME\Stratex` (Local) | `/opt/friday_universe/Stratex` (Server 1)
 - **Port:** `8003` | **Service:** `Stratex.service`
 - **Primary Mission:** Algorithmic execution desk, continuous market surveillance, risk governance, and quantitative backtesting.
 - **Safety Invariants:** Bound strictly to Binance Futures Testnet (`https://testnet.binancefuture.com`). Zero real money risk. Hardcoded max position ($1,000 margin), max leverage (5x), mandatory stop-loss (2%), portfolio drawdown cap (5%).
@@ -186,7 +186,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 5. Futuris (Predictive Trajectory Analysis & Calibration Engine)
 - **Repo Origin:** `https://github.com/surendra2304/Futuris.git`
-- **Location:** `D:\FRIDAY Universe\Futuris` (Local) | `/opt/friday_universe/Futuris` (Server 1)
+- **Location:** `FRIDAY_UNIVERSE_HOME\Futuris` (Local) | `/opt/friday_universe/Futuris` (Server 1)
 - **Port:** `8004` | **Service:** `Futuris.service`
 - **Primary Mission:** Probabilistic forecasting, scenario simulation, uncertainty estimation, and Brier score calibration.
 - **Storage:** 12 Oracle tables: `forecasts`, `scenarios`, `outcomes`, `observations`, `evaluation_runs`, `evidence_refs`, `forecast_events`, `intelx_notices`, `model_registry`, `signal_sources`, `audit_logs`, `api_keys`.
@@ -198,7 +198,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 6. IntelX (Deep Evidence Research & Fact Verification)
 - **Repo Origin:** `https://github.com/surendra2304/IntelX.git`
-- **Location:** `D:\FRIDAY Universe\IntelX` (Local) | `/opt/friday_universe/IntelX` (Server 1)
+- **Location:** `FRIDAY_UNIVERSE_HOME\IntelX` (Local) | `/opt/friday_universe/IntelX` (Server 1)
 - **Port:** `8005` | **Service:** `IntelX.service`
 - **Primary Mission:** Deep web research, fact-checking, citation extraction, news ingestion, and claim verification.
 - **Storage:** Oracle `RESEARCH_RUNS`, `CLAIMS`, `EVIDENCE`, `FINDINGS`, `INTELX_ARTICLES`, `SOURCES`, and shared `API_KEYS`.
@@ -210,11 +210,11 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 7. Forge (Autonomous Software Synthesizer & Verification Battery)
 - **Repo Origin:** `https://github.com/surendra2304/Forge.git`
-- **Location:** `D:\FRIDAY Universe\Forge` (Local) | `/opt/friday_universe/Forge` (Server 1)
+- **Location:** `FRIDAY_UNIVERSE_HOME\Forge` (Local) | `/opt/friday_universe/Forge` (Server 1)
 - **Port:** `8006` | **Service:** `Forge.service`
 - **Primary Mission:** Full-stack autonomous software engineer: specification parsing, multi-file code synthesis, automated test generation, and verification.
 - **Storage:** Oracle `FORGE_BUILDS`, `ARTIFACTS`, `TASKS`. Local memory client falls back to `/dev/shm/forge_memora.db` (zero disk write).
-- **Fail-Closed Security:** Submits all generated diffs to Sentinel (`POST http://10.0.0.120:8008/v1/security/audit`) before commit.
+- **Fail-Closed Security:** Submits all generated diffs to Sentinel (`POST http://SERVER2_PRIVATE_IP:8008/v1/security/audit`) before commit.
 - **Key Routes:**
   - `POST /api/v1/synthesize`: Submit software specification for multi-step DAG build
   - `GET /api/v1/tasks/{id}/verify`: Execute objective verification battery on workspace
@@ -222,7 +222,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 8. VyralX (Autonomous Video Production & Multi-Channel Studio)
 - **Repo Origin:** `https://github.com/surendra2304/VyralX.git`
-- **Location:** `D:\FRIDAY Universe\VyralX` (Local) | `/opt/friday_universe/VyralX` (Server 2)
+- **Location:** `FRIDAY_UNIVERSE_HOME\VyralX` (Local) | `/opt/friday_universe/VyralX` (Server 2)
 - **Port:** `8010` | **Service:** `VyralX.service`
 - **Primary Mission:** End-to-end video production, AI scriptwriting, audio synthesis, visual assembly, automated captioning, rendering, and YouTube publication.
 - **Storage:** Dedicated `vyralx_db` tables: `VYRALX_PROJECTS`, `VYRALX_SCRIPTS`, `VYRALX_STORYBOARDS`, `VYRALX_MEDIA_ASSETS`, `VYRALX_PUBLISH_QUEUE`, `VIDEO_METRICS`.
@@ -235,7 +235,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 9. Sentinel (Zero-Trust Cybersecurity Gatekeeper & Audit Shield)
 - **Repo Origin:** `https://github.com/surendra2304/Sentinel.git`
-- **Location:** `D:\FRIDAY Universe\Sentinel` (Local) | `/opt/friday_universe/Sentinel` (Server 2)
+- **Location:** `FRIDAY_UNIVERSE_HOME\Sentinel` (Local) | `/opt/friday_universe/Sentinel` (Server 2)
 - **Port:** `8008` | **Service:** `Sentinel.service`
 - **Primary Mission:** Ecosystem security officer: cryptographic HMAC audit ledger, continuous TLS/DNS monitoring, static code vulnerability analysis, and zero-trust perimeter defense.
 - **Storage:** Oracle `SENTINEL_SCANS`, `SENTINEL_ALERTS`, `SENTINEL_FINDINGS`, `AUDIT_EVENTS` in `friday_universe_db`.
@@ -247,7 +247,7 @@ All persistent state across all agents lives in two Always Free Oracle Autonomou
 
 ### 10. Cortex (Autonomous Operations Engine & Governed CRM)
 - **Repo Origin:** `https://github.com/surendra2304/Cortex.git`
-- **Location:** `D:\FRIDAY Universe\Cortex` (Local) | `/opt/friday_universe/Cortex` (Server 2)
+- **Location:** `FRIDAY_UNIVERSE_HOME\Cortex` (Local) | `/opt/friday_universe/Cortex` (Server 2)
 - **Port:** `8009` | **Service:** `Cortex.service`
 - **Primary Mission:** Powers ecosystem web presence, landing pages, operator dashboard API, CRM telemetry, and event-driven self-healing.
 - **Storage:** Tables `TENANTS`, `SITES`, shared `API_KEYS`, `VISITORS`, `LEADS`, `PROFILES`, `SESSIONS`, `CORTEX_TASK_DAGS` in `friday_universe_db`.
@@ -312,7 +312,7 @@ When writing or modifying code in any agent, NEVER violate these proven resoluti
 The ecosystem is developed in a unified monorepo with automated bidirectional isolation:
 
 - **Monorepo:** `https://github.com/surendra2304/FRIDAY-Universe` (`main` branch)
-- **Local Workspace:** `D:\FRIDAY Universe`
+- **Local Workspace:** `FRIDAY_UNIVERSE_HOME`
 
 ### Granular CI/CD Workflow (`.github/workflows/deploy-monorepo.yml`):
 - Uses `dorny/paths-filter@v3` to detect changes on a per-agent folder basis (`FRIDAY/**`, `VyralX/**`, etc.).
@@ -357,12 +357,12 @@ The ecosystem is developed in a unified monorepo with automated bidirectional is
 ```
 
 ### Inter-Service Communication Endpoints:
-- `FRIDAY` -> `Inference`: `POST http://10.0.0.121:8001/v1/chat/completions` or `/ask`
-- `FRIDAY` -> `Memora`: `POST http://10.0.0.121:8002/api/v1/memories/search` (vector search)
-- `Stratex` -> `Futuris`: `GET http://10.0.0.121:8004/v1/forecast/regime` (market regime prediction)
-- `Stratex` -> `Sentinel`: `POST http://10.0.0.120:8008/v1/audit/record` (ledger event signing)
-- `Forge` -> `Sentinel`: `POST http://10.0.0.120:8008/v1/security/audit` (code diff vulnerability check)
-- `Cortex` / `VyralX` -> `IntelX`: `POST http://10.0.0.121:8005/v1/research/query` (fact extraction)
+- `FRIDAY` -> `Inference`: `POST http://SERVER1_PRIVATE_IP:8001/v1/chat/completions` or `/ask`
+- `FRIDAY` -> `Memora`: `POST http://SERVER1_PRIVATE_IP:8002/api/v1/memories/search` (vector search)
+- `Stratex` -> `Futuris`: `GET http://SERVER1_PRIVATE_IP:8004/v1/forecast/regime` (market regime prediction)
+- `Stratex` -> `Sentinel`: `POST http://SERVER2_PRIVATE_IP:8008/v1/audit/record` (ledger event signing)
+- `Forge` -> `Sentinel`: `POST http://SERVER2_PRIVATE_IP:8008/v1/security/audit` (code diff vulnerability check)
+- `Cortex` / `VyralX` -> `IntelX`: `POST http://SERVER1_PRIVATE_IP:8005/v1/research/query` (fact extraction)
 
 ### Required Request Headers:
 ```http
@@ -390,16 +390,16 @@ SENTINEL_AUDIT_SIGNING_KEY=<injected-at-deployment-time>
 SENTINEL_API_KEY=<injected-at-deployment-time>
 
 # Private Mesh Network URLs (Internal IP Interconnect)
-FRIDAY_URL=http://10.0.0.121:10000
-INFERENCE_URL=http://10.0.0.121:8001
-MEMORA_URL=http://10.0.0.121:8002
-STRATEX_URL=http://10.0.0.121:8003
-FUTURIS_URL=http://10.0.0.121:8004
-INTELX_URL=http://10.0.0.121:8005
-FORGE_URL=http://10.0.0.121:8006
-VYRALX_URL=http://10.0.0.120:8010
-SENTINEL_URL=http://10.0.0.120:8008
-CORTEX_URL=http://10.0.0.120:8009
+FRIDAY_URL=http://SERVER1_PRIVATE_IP:10000
+INFERENCE_URL=http://SERVER1_PRIVATE_IP:8001
+MEMORA_URL=http://SERVER1_PRIVATE_IP:8002
+STRATEX_URL=http://SERVER1_PRIVATE_IP:8003
+FUTURIS_URL=http://SERVER1_PRIVATE_IP:8004
+INTELX_URL=http://SERVER1_PRIVATE_IP:8005
+FORGE_URL=http://SERVER1_PRIVATE_IP:8006
+VYRALX_URL=http://SERVER2_PRIVATE_IP:8010
+SENTINEL_URL=http://SERVER2_PRIVATE_IP:8008
+CORTEX_URL=http://SERVER2_PRIVATE_IP:8009
 ```
 
 ---
@@ -425,7 +425,7 @@ Your response must consist of a detailed, deep-dive architectural report structu
 
 1. **Sovereign Agent Identity & Physical Infrastructure:**
    - Exact Proper Name
-   - Host Server (`Server 1: 140.245.208.100` / `10.0.0.121` OR `Server 2: 140.245.243.168` / `10.0.0.120`)
+   - Host Server (`Server 1: SERVER1_PUBLIC_IP` / `SERVER1_PRIVATE_IP` OR `Server 2: SERVER2_PUBLIC_IP` / `SERVER2_PRIVATE_IP`)
    - Assigned Port, Systemd Service (`/etc/systemd/system/<agent>.service`), and 1 GB RAM cgroup limits.
 
 2. **Codebase Topography & Route Inventory:**

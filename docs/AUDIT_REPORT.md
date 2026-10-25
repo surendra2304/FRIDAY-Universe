@@ -46,7 +46,7 @@ This comprehensive preflight audit inspects all nine constituent repositories of
 - **Sniper Automation:**
   - Worker 1: `.github/workflows/oracle-capacity-sniper.yml` (Runs every 2 hours, 320 min duration, 30s cycle delay)
   - Worker 2: `.github/workflows/oracle-capacity-sniper-worker2.yml` (Complementary persistent runner)
-  - Core Script: `D:\FRIDAY Universe\FRIDAY\scripts\oracle_retry.py` (Inspected without modification or execution).
+  - Core Script: `FRIDAY_UNIVERSE_HOME\FRIDAY\scripts\oracle_retry.py` (Inspected without modification or execution).
 - **OCI Tenancy Quotas:**
   - Always Free Boot Volume: 200 GB limit. Current usage: 50 GB (AMD host). Remaining quota: 150 GB. The sniper's 150 GB request perfectly matches the remaining quota without incurring charges.
   - Object Storage: Namespace `axz0jlcap2j6` in `ap-hyderabad-1`. 0 buckets currently exist. 10 GB standard + 10 GB archive available under Always Free tier.
