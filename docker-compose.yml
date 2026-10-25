@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  friday-universe-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: friday-universe-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=FRIDAY/apps/core/src:Inference/app:Inference:Memora:Stratex:Forge/app/services:Sentinel/app/services:IntelX/intelx/services:Futuris/futuris/core:VyralX/app/services
+      - FRIDAY_UNIVERSE_VERSION=3.0.0
+    volumes:
+      - ./FRIDAY/.data:/app/FRIDAY-Universe/FRIDAY/.data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  friday-universe-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: friday-universe-dashboard
+    command: python3 -m http.server 3000 --directory FRIDAY/apps/core/src/friday_core/
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./FRIDAY/apps/core/src/friday_core:/app/FRIDAY-Universe/FRIDAY/apps/core/src/friday_core
+    depends_on:
+      - friday-universe-api
+    restart: unless-stopped
+
+networks:
+  friday-network:
+    driver: bridge

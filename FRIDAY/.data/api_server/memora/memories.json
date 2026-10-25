@@ -1,0 +1,354 @@
+{
+  "mem_3bf6b7fb00ea": {
+    "memory_id": "mem_3bf6b7fb00ea",
+    "content": "Trading decision for TEST: buy_prob=0.300, backtest_return=0.0%, sharpe=0.0",
+    "agent_origin": "Stratex",
+    "tags": [
+      "trading",
+      "TEST"
+    ],
+    "importance": 0.8,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792882936.9565122,
+    "created_at": 1792882936.956513,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_8c4ae6607d01": {
+    "memory_id": "mem_8c4ae6607d01",
+    "content": "Security event: 3 threats, 1 vulns. Decision: Block Immediately (confidence: 0.73)",
+    "agent_origin": "Sentinel",
+    "tags": [
+      "security",
+      "incident"
+    ],
+    "importance": 0.9,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792882936.994139,
+    "created_at": 1792882936.9941392,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_fcdb158b9735": {
+    "memory_id": "mem_fcdb158b9735",
+    "content": "Trading decision for TEST: buy_prob=0.300, backtest_return=0.0%, sharpe=0.0",
+    "agent_origin": "Stratex",
+    "tags": [
+      "trading",
+      "TEST"
+    ],
+    "importance": 0.8,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792882965.5062985,
+    "created_at": 1792882965.506299,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_888f15d41164": {
+    "memory_id": "mem_888f15d41164",
+    "content": "Security event: 3 threats, 2 vulns. Decision: Block Immediately (confidence: 0.73)",
+    "agent_origin": "Sentinel",
+    "tags": [
+      "security",
+      "incident"
+    ],
+    "importance": 0.9,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792882965.5104804,
+    "created_at": 1792882965.5104806,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_73299d658104": {
+    "memory_id": "mem_73299d658104",
+    "content": "Code review: add_numbers.py score=100.0, decision=Deploy, complexity=1",
+    "agent_origin": "Forge",
+    "tags": [
+      "code",
+      "review"
+    ],
+    "importance": 0.7,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792882965.5135515,
+    "created_at": 1792882965.5135517,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_3240283c4c24": {
+    "memory_id": "mem_3240283c4c24",
+    "content": "Content decision: 'AI Trends 2024' -> Publish Now (engagement: 36.0, forecast: 54040.8119)",
+    "agent_origin": "VyralX",
+    "tags": [
+      "content",
+      "decision"
+    ],
+    "importance": 0.6,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792882965.5164332,
+    "created_at": 1792882965.5164332,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_b1b1cd96f6d8": {
+    "memory_id": "mem_b1b1cd96f6d8",
+    "content": "Trading decision for TEST: buy_prob=0.300, backtest_return=0.0%, sharpe=0.0",
+    "agent_origin": "Stratex",
+    "tags": [
+      "trading",
+      "TEST"
+    ],
+    "importance": 0.8,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884595.525678,
+    "created_at": 1792884595.5256784,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_d60740a2f6fe": {
+    "memory_id": "mem_d60740a2f6fe",
+    "content": "Security event: 3 threats, 2 vulns. Decision: Block Immediately (confidence: 0.73)",
+    "agent_origin": "Sentinel",
+    "tags": [
+      "security",
+      "incident"
+    ],
+    "importance": 0.9,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884595.5312426,
+    "created_at": 1792884595.5312433,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_7d575e77a3d4": {
+    "memory_id": "mem_7d575e77a3d4",
+    "content": "Code review: add_numbers.py score=100.0, decision=Deploy, complexity=1",
+    "agent_origin": "Forge",
+    "tags": [
+      "code",
+      "review"
+    ],
+    "importance": 0.7,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884595.534396,
+    "created_at": 1792884595.5343962,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_860c5c1e3e34": {
+    "memory_id": "mem_860c5c1e3e34",
+    "content": "Content decision: 'AI Trends 2024' -> Publish Now (engagement: 36.0, forecast: 54040.8119)",
+    "agent_origin": "VyralX",
+    "tags": [
+      "content",
+      "decision"
+    ],
+    "importance": 0.6,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884595.5373812,
+    "created_at": 1792884595.5373812,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_31f727bc1a19": {
+    "memory_id": "mem_31f727bc1a19",
+    "content": "Trading decision for TEST: buy_prob=0.300, backtest_return=0.0%, sharpe=0.0",
+    "agent_origin": "Stratex",
+    "tags": [
+      "trading",
+      "TEST"
+    ],
+    "importance": 0.8,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884604.4728987,
+    "created_at": 1792884604.472899,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_bcefdfd20c90": {
+    "memory_id": "mem_bcefdfd20c90",
+    "content": "Security event: 3 threats, 2 vulns. Decision: Block Immediately (confidence: 0.73)",
+    "agent_origin": "Sentinel",
+    "tags": [
+      "security",
+      "incident"
+    ],
+    "importance": 0.9,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884604.4802377,
+    "created_at": 1792884604.480238,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_09767ead97c9": {
+    "memory_id": "mem_09767ead97c9",
+    "content": "Code review: add_numbers.py score=100.0, decision=Deploy, complexity=1",
+    "agent_origin": "Forge",
+    "tags": [
+      "code",
+      "review"
+    ],
+    "importance": 0.7,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884604.4845605,
+    "created_at": 1792884604.4845607,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_65f0ea9cc6d6": {
+    "memory_id": "mem_65f0ea9cc6d6",
+    "content": "Content decision: 'AI Trends 2024' -> Publish Now (engagement: 36.0, forecast: 54040.8119)",
+    "agent_origin": "VyralX",
+    "tags": [
+      "content",
+      "decision"
+    ],
+    "importance": 0.6,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884604.4881053,
+    "created_at": 1792884604.4881055,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_febea4f6c692": {
+    "memory_id": "mem_febea4f6c692",
+    "content": "Trading decision for TEST: buy_prob=0.300, backtest_return=0.0%, sharpe=0.0",
+    "agent_origin": "Stratex",
+    "tags": [
+      "trading",
+      "TEST"
+    ],
+    "importance": 0.8,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884785.762926,
+    "created_at": 1792884785.7629263,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_839fbee53ac7": {
+    "memory_id": "mem_839fbee53ac7",
+    "content": "Security event: 3 threats, 2 vulns. Decision: Block Immediately (confidence: 0.73)",
+    "agent_origin": "Sentinel",
+    "tags": [
+      "security",
+      "incident"
+    ],
+    "importance": 0.9,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884785.7687457,
+    "created_at": 1792884785.7687457,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_c6703434a164": {
+    "memory_id": "mem_c6703434a164",
+    "content": "Code review: add_numbers.py score=100.0, decision=Deploy, complexity=1",
+    "agent_origin": "Forge",
+    "tags": [
+      "code",
+      "review"
+    ],
+    "importance": 0.7,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884785.772099,
+    "created_at": 1792884785.7720993,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_f1d2520093a4": {
+    "memory_id": "mem_f1d2520093a4",
+    "content": "Content decision: 'AI Trends 2024' -> Publish Now (engagement: 36.0, forecast: 54040.8119)",
+    "agent_origin": "VyralX",
+    "tags": [
+      "content",
+      "decision"
+    ],
+    "importance": 0.6,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792884785.7748868,
+    "created_at": 1792884785.7748868,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_99a34b346f03": {
+    "memory_id": "mem_99a34b346f03",
+    "content": "Trading decision for TEST: buy_prob=0.300, backtest_return=0.0%, sharpe=0.0",
+    "agent_origin": "Stratex",
+    "tags": [
+      "trading",
+      "TEST"
+    ],
+    "importance": 0.8,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792885254.7778025,
+    "created_at": 1792885254.7778025,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_3c8ffd4bf511": {
+    "memory_id": "mem_3c8ffd4bf511",
+    "content": "Security event: 3 threats, 2 vulns. Decision: Block Immediately (confidence: 0.73)",
+    "agent_origin": "Sentinel",
+    "tags": [
+      "security",
+      "incident"
+    ],
+    "importance": 0.9,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792885254.7846236,
+    "created_at": 1792885254.7846239,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_587776c55012": {
+    "memory_id": "mem_587776c55012",
+    "content": "Code review: add_numbers.py score=100.0, decision=Deploy, complexity=1",
+    "agent_origin": "Forge",
+    "tags": [
+      "code",
+      "review"
+    ],
+    "importance": 0.7,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792885254.7893682,
+    "created_at": 1792885254.7893684,
+    "superseded_by": null,
+    "links": []
+  },
+  "mem_18711bdaf25f": {
+    "memory_id": "mem_18711bdaf25f",
+    "content": "Content decision: 'AI Trends 2024' -> Publish Now (engagement: 36.0, forecast: 54040.8119)",
+    "agent_origin": "VyralX",
+    "tags": [
+      "content",
+      "decision"
+    ],
+    "importance": 0.6,
+    "confidence": 0.5,
+    "access_count": 0,
+    "last_accessed": 1792885254.7931714,
+    "created_at": 1792885254.7931716,
+    "superseded_by": null,
+    "links": []
+  }
+}
