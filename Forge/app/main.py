@@ -427,6 +427,10 @@ def create_app() -> FastAPI:
     from app.services.code_complexity_quantifier import router as complexity_quantifier_router
     app.include_router(complexity_quantifier_router, prefix="/api/v1/forge", tags=["Code Complexity"])
 
+    # --- Camofox Stealth Browser Integration ---
+    from app.services.real_browser_routes import router as real_browser_router
+    app.include_router(real_browser_router, prefix="/api/v1/forge", tags=["Camofox Stealth Browser"])
+
     return app
 
 
