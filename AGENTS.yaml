@@ -7,8 +7,8 @@ version: "3.0.0"
 total_agents: 9
 layers:
   basic: 9
-  advanced: 8
-  deep: 7
+  advanced: 9
+  deep: 9
 
 agents:
   cortex:
@@ -23,8 +23,8 @@ agents:
   inference:
     name: "Inference"
     domain: "Reasoning"
-    layers: 2
-    engines: ["bayesian", "causal", "argumentation", "probabilistic_logic"]
+    layers: 3
+    engines: ["bayesian", "causal", "argumentation", "probabilistic_logic", "metacognitive", "abductive", "temporal", "counterfactual", "analogical"]
     port: 8001
     memory_limit: "180M"
     status: "production"
@@ -32,8 +32,8 @@ agents:
   memora:
     name: "Memora"
     domain: "Memory"
-    layers: 2
-    engines: ["tf_idf", "knowledge_graph", "consolidation", "supermemo"]
+    layers: 3
+    engines: ["tf_idf", "knowledge_graph", "consolidation", "supermemo", "episodic", "semantic", "procedural", "working_memory", "reconsolidation", "cross_modal"]
     port: 8002
     memory_limit: "200M"
     status: "production"
