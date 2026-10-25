@@ -1,0 +1,6 @@
+FROM python:3.11-slim
+WORKDIR /app
+RUN pip install --no-cache-dir fastapi uvicorn httpx pyyaml sqlalchemy aiosqlite redis pydantic-settings
+COPY . /app
+WORKDIR /app/Futuris
+CMD ["python3", "-m", "uvicorn", "futuris.api.app:app", "--host", "0.0.0.0", "--port", "8012"]

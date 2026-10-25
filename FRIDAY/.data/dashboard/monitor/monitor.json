@@ -1,0 +1,104 @@
+{
+  "agents": [
+    {
+      "agent_id": "cortex",
+      "name": "Cortex",
+      "status": "healthy",
+      "layers": 3,
+      "engine_count": 4,
+      "last_heartbeat": 1792885119.6923695,
+      "cpu_usage": 0.37134138327347643,
+      "memory_usage": 0.6118401175059252,
+      "error_count": 0
+    },
+    {
+      "agent_id": "inference",
+      "name": "Inference",
+      "status": "healthy",
+      "layers": 2,
+      "engine_count": 6,
+      "last_heartbeat": 1792885119.6963875,
+      "cpu_usage": 0.2295520811135119,
+      "memory_usage": 0.2714508594883393,
+      "error_count": 0
+    },
+    {
+      "agent_id": "memora",
+      "name": "Memora",
+      "status": "healthy",
+      "layers": 2,
+      "engine_count": 3,
+      "last_heartbeat": 1792885119.6970756,
+      "cpu_usage": 0.4083664888967571,
+      "memory_usage": 0.6924000612777332,
+      "error_count": 0
+    },
+    {
+      "agent_id": "stratex",
+      "name": "Stratex",
+      "status": "healthy",
+      "layers": 3,
+      "engine_count": 5,
+      "last_heartbeat": 1792885119.697859,
+      "cpu_usage": 0.22490732269585603,
+      "memory_usage": 0.6234680655375449,
+      "error_count": 0
+    },
+    {
+      "agent_id": "forge",
+      "name": "Forge",
+      "status": "healthy",
+      "layers": 3,
+      "engine_count": 4,
+      "last_heartbeat": 1792885119.6984572,
+      "cpu_usage": 0.3356635225927428,
+      "memory_usage": 0.6389725289731187,
+      "error_count": 0
+    },
+    {
+      "agent_id": "sentinel",
+      "name": "Sentinel",
+      "status": "healthy",
+      "layers": 3,
+      "engine_count": 4,
+      "last_heartbeat": 1792885119.6990001,
+      "cpu_usage": 0.44619867819456516,
+      "memory_usage": 0.4459425994261276,
+      "error_count": 0
+    },
+    {
+      "agent_id": "intelx",
+      "name": "IntelX",
+      "status": "healthy",
+      "layers": 3,
+      "engine_count": 4,
+      "last_heartbeat": 1792885119.6996412,
+      "cpu_usage": 0.19273733171236765,
+      "memory_usage": 0.24579833828013514,
+      "error_count": 0
+    },
+    {
+      "agent_id": "futuris",
+      "name": "Futuris",
+      "status": "healthy",
+      "layers": 3,
+      "engine_count": 5,
+      "last_heartbeat": 1792885119.7002075,
+      "cpu_usage": 0.2184725160161934,
+      "memory_usage": 0.6177407467170939,
+      "error_count": 0
+    },
+    {
+      "agent_id": "vyralx",
+      "name": "VyralX",
+      "status": "healthy",
+      "layers": 3,
+      "engine_count": 4,
+      "last_heartbeat": 1792885119.7007425,
+      "cpu_usage": 0.11631695143256318,
+      "memory_usage": 0.6789356147929031,
+      "error_count": 0
+    }
+  ],
+  "alerts": []
+}

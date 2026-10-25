@@ -26,6 +26,12 @@ from app.api.routes import router as api_router
 from app.api.automated_testing import router as automated_testing_router
 from app.api.code_intelligence import router as code_intelligence_router
 from app.api.synthesis_routes import pipeline_router, synthesis_router
+from app.api.autonomous_code_repair import router as code_repair_router
+from app.api.quantum_flow_optimizer import router as quantum_optimizer_router
+from app.api.realtime_collaboration import router as collaboration_router
+from app.api.distributed_dev_environment import router as dev_env_router
+from app.api.code_review_router import router as code_review_router
+from app.api.deployment_pipeline_manager import router as deployment_router
 from app.api.tasks import tasks_router
 from app.api.websocket import ws_router
 from app.config.production import production_settings
@@ -341,6 +347,12 @@ def create_app() -> FastAPI:
     app.include_router(api_router, tags=["Core API"])
     app.include_router(api_router, prefix="/api/v1", tags=["API v1"])
     app.include_router(tasks_router, prefix="/api/v1", tags=["Tasks v1"])
+    app.include_router(code_repair_router, prefix="/api/v1/forge")
+    app.include_router(quantum_optimizer_router, prefix="/api/v1/forge/quantum")
+    app.include_router(collaboration_router, prefix="/api/v1/forge/collab")
+    app.include_router(dev_env_router, prefix="/api/v1/forge/dev-env")
+    app.include_router(code_review_router)
+    app.include_router(deployment_router)
 
     # /api is the prefix the dashboard and docs/API_REFERENCE.md actually use.
     # Without a core-router mount here every endpoint only api_router owns
@@ -370,6 +382,50 @@ def create_app() -> FastAPI:
     app.include_router(automated_testing_router, prefix="/api", tags=["Automated Testing"])
     app.include_router(code_intelligence_router, prefix="/api/v1", tags=["Code Intelligence v1"])
     app.include_router(code_intelligence_router, prefix="/api", tags=["Code Intelligence"])
+
+    # --- Test Generation Engine Integration ---
+    from app.services.test_generation_engine import router as test_gen_router
+    app.include_router(test_gen_router, prefix="/api/v1/forge", tags=["Test Generation"])
+
+    # --- Code Refactoring Engine Integration ---
+    from app.services.code_refactoring_engine import router as refactor_router
+    app.include_router(refactor_router, prefix="/api/v1/forge", tags=["Code Refactoring"])
+
+    # --- Dependency Analyzer Integration ---
+    from app.services.dependency_analyzer import router as dep_analyzer_router
+    app.include_router(dep_analyzer_router, prefix="/api/v1/forge", tags=["Dependency Analysis"])
+
+    # --- Performance Profiler Integration ---
+    from app.services.performance_profiler import router as perf_profiler_router
+    app.include_router(perf_profiler_router, prefix="/api/v1/forge", tags=["Performance Profiling"])
+
+    # --- Code Analysis Engine Integration ---
+    from app.services.code_analysis_engine import router as code_analysis_router
+    app.include_router(code_analysis_router, prefix="/api/v1/forge", tags=["Code Analysis"])
+
+    # --- Build Pipeline Manager Integration ---
+    from app.services.build_pipeline_manager import router as build_pipeline_router
+    app.include_router(build_pipeline_router, prefix="/api/v1/forge", tags=["Build Pipeline"])
+
+    # --- Test Coverage Analyzer Integration ---
+    from app.services.test_coverage_analyzer import router as test_coverage_router
+    app.include_router(test_coverage_router, prefix="/api/v1/forge", tags=["Test Coverage"])
+
+    # --- Code Architecture Analyzer Integration ---
+    from app.services.code_architecture_analyzer import router as arch_analyzer_router
+    app.include_router(arch_analyzer_router, prefix="/api/v1/forge", tags=["Architecture Analysis"])
+
+    # --- Code Merge Conflict Resolver Integration ---
+    from app.services.code_merge_conflict_resolver import router as merge_resolver_router
+    app.include_router(merge_resolver_router, prefix="/api/v1/forge", tags=["Merge Conflict Resolver"])
+
+    # --- Code Security Scanner Integration ---
+    from app.services.code_security_scanner import router as security_scanner_router
+    app.include_router(security_scanner_router, prefix="/api/v1/forge", tags=["Code Security"])
+
+    # --- Code Complexity Quantifier Integration ---
+    from app.services.code_complexity_quantifier import router as complexity_quantifier_router
+    app.include_router(complexity_quantifier_router, prefix="/api/v1/forge", tags=["Code Complexity"])
 
     return app
 
