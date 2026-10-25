@@ -86,6 +86,7 @@ from cortex_api.advanced_operations_router import router as advanced_operations_
 from cortex_api.marketing_platform_integrator import router as marketing_platform_router  # noqa: E402
 from cortex_api.predictive_demand_forecaster import router as demand_forecaster_router  # noqa: E402
 from cortex_api.multi_channel_attribution import router as attribution_router  # noqa: E402
+from cortex_api.ab_experiment_framework import router as ab_experiment_router  # noqa: E402
 from cortex_api.competitive_intelligence import router as competitive_intel_router
 from cortex_api.decision_conflict_resolver import router as conflict_resolver_router
 from cortex_api.decision_recommendation_system import router as decision_rec_router
@@ -307,6 +308,10 @@ app.include_router(decision_tree_router, prefix="/api/v1/cortex")
 # --- Decision Fatigue Detector Integration ---
 from cortex_api.decision_fatigue_detector import router as decision_fatigue_router
 app.include_router(decision_fatigue_router, prefix="/api/v1/cortex")
+
+# --- Agentic Inbox Engine Integration ---
+from cortex_api.real_inbox_routes import router as real_inbox_router
+app.include_router(real_inbox_router, prefix="/api/v1/cortex")
 
 
 # ── Pydantic Schemas for Cognitive Reasoning ─────────────────────────────────

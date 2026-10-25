@@ -135,7 +135,8 @@ class TestProvenVerticalSlice:
 
         for step in result.steps:
             assert step.step_id.startswith("step_")
-            assert step.agent in ("Forge", "Sentinel", "IntelX")
+            # FRIDAY now owns the harness-verification step of every workflow.
+            assert step.agent in ("Forge", "Sentinel", "IntelX", "FRIDAY")
             assert step.layer in ("basic", "advanced", "deep")
             assert step.action
             assert step.status == "completed"
