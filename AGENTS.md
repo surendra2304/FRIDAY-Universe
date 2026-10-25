@@ -1,5 +1,28 @@
 # FRIDAY Universe — Agent Architecture Documentation
 
+## Design System & Animation
+
+**All web dashboards and frontend work must consult these docs first:**
+
+- `docs/design-system.md` — Visual principles, design tokens, component standards, color palette, typography, spacing, motion tokens
+- `docs/animation-playbook.md` — Animation patterns (scroll reveals, pinning, parallax, staggered text, micro-interactions), library selection matrix, cleanup patterns, performance budget
+- `docs/design-references.md` — Reference catalogue with source URLs, transferable design lessons, implemented patterns
+- `docs/design-qa.md` — Responsive, visual, functional, accessibility, and performance checklist
+
+**Key rules:**
+- Respect `prefers-reduced-motion` — all animations must have CSS fallbacks
+- Prefer `transform` and `opacity` for animated properties
+- Dashboards are data workspaces, not marketing pages — no hero animations, no decorative 3D
+- Use CSS-only animations for reliability; add GSAP/Lenis only when scroll-driven storytelling is needed
+- Monospace fonts (DM Mono) for all numeric data
+- Single accent color per product (lime for Stratex, green for Forge)
+- Panel-based layouts with consistent padding (18px desktop, 14px mobile)
+
+**Current web assets:**
+- `Stratex/static/` — Operations desk (index.html, style.css, app.js) with scroll progress, panel reveals, metric bump animations
+- `Forge/app/dashboard/routes.py` — Engineering console with staggered entrances, scroll progress, IntersectionObserver reveals
+- `Cortex/apps/dashboard/` — Next.js dashboard (React/TypeScript/Tailwind)
+
 ## Overview
 
 The FRIDAY Universe is a multi-agent AI platform where each agent is a specialized service with independent APIs, domain expertise, and operational autonomy. Agents communicate through a shared Gateway and can collaborate on cross-domain tasks.
