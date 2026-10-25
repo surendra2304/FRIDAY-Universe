@@ -24,7 +24,7 @@ agents:
     name: "Inference"
     domain: "Reasoning"
     layers: 3
-    engines: ["bayesian", "causal", "argumentation", "probabilistic_logic", "metacognitive", "abductive", "temporal", "counterfactual", "analogical"]
+    engines: ["bayesian", "causal", "argumentation", "probabilistic_logic", "metacognitive", "abductive", "temporal", "counterfactual", "analogical", "scientific_skills", "evidence_audit"]
     port: 8001
     memory_limit: "180M"
     status: "production"
@@ -33,7 +33,7 @@ agents:
     name: "Memora"
     domain: "Memory"
     layers: 3
-    engines: ["tf_idf", "knowledge_graph", "consolidation", "supermemo", "episodic", "semantic", "procedural", "working_memory", "reconsolidation", "cross_modal"]
+    engines: ["tf_idf", "knowledge_graph", "consolidation", "supermemo", "episodic", "semantic", "procedural", "working_memory", "reconsolidation", "cross_modal", "viking_context", "layered_recall"]
     port: 8002
     memory_limit: "200M"
     status: "production"
@@ -60,7 +60,7 @@ agents:
     name: "Sentinel"
     domain: "Security"
     layers: 3
-    engines: ["security_engine", "siem", "vuln_mgmt", "compliance", "incident_playbook"]
+    engines: ["security_engine", "siem", "vuln_mgmt", "compliance", "incident_playbook", "cyber_skills", "csf_assessment", "detection_coverage"]
     port: 8008
     memory_limit: "200M"
     status: "production"
@@ -87,7 +87,7 @@ agents:
     name: "VyralX"
     domain: "Content"
     layers: 3
-    engines: ["content", "audience", "growth", "calendar", "moderation"]
+    engines: ["content", "audience", "growth", "calendar", "moderation", "diagram_design", "explainer_generation"]
     port: 8010
     memory_limit: "250M"
     status: "production"
