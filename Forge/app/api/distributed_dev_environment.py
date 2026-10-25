@@ -208,7 +208,7 @@ class DistributedDevEnvironment:
         if not env:
             raise HTTPException(404, f"Environment {environment_id} not found")
 
-        total_tests = 50 + (ord(hashlib.md5(f"tests:{environment_id}").encode()) % 100)
+        total_tests = 50 + (ord(hashlib.md5(f"tests:{environment_id}".encode()).encode()) % 100)
 
         run = ParallelTestRun(
             run_id=hashlib.md5(

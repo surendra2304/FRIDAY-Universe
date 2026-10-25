@@ -287,7 +287,7 @@ class AutonomousCodeRepairEngine:
         deploy2 = self.deploy_fix(fix2.proposal_id)
 
         cycle = RepairCycle(
-            cycle_id=hashlib.md5(f"repair_cycle:{time.time()}").hexdigest()[:12],
+            cycle_id=hashlib.md5(f"repair_cycle:{time.time()}".encode()).hexdigest()[:12],
             bugs_detected=2,
             bugs_analyzed=2,
             fixes_proposed=2,
