@@ -7,7 +7,6 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/opt/friday_universe/Stratex
 Environment="PYTHONPATH=/opt/friday_universe/Stratex:/opt/friday_universe"
-EnvironmentFile=/etc/default/friday_universe.env
 EnvironmentFile=/opt/friday_universe/Stratex/.env
 ExecStart=/opt/friday_universe/venv/bin/python -u -m autonomy.run_daemon
 Restart=always

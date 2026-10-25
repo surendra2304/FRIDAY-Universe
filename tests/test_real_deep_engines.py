@@ -160,7 +160,7 @@ class TestStratexPatternRecognition:
 
 class TestForgeSecurityScanner:
     def test_security_scan(self):
-        code = "password = 'secret123'\neval('1+1')\nh = hashlib.md5('x')"
+        code = "password = 'secret123'\neval('1+1')\nh = hashlib.md5('x'.encode())"
         findings = forge_deep.security_scanner.scan(code, "test.py")
         assert len(findings) >= 2
 

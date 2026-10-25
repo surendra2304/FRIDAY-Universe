@@ -159,7 +159,7 @@ class CodeReviewAutomation:
         for file in files:
             # Lint check
             findings.append(ReviewFinding(
-                finding_id=hashlib.md5(f"lint:{file['path']}:{time.time()}").hexdigest()[:12],
+                finding_id=hashlib.md5(f"lint:{file['path']}:{time.time()}".encode()).hexdigest()[:12],
                 file_path=file["path"],
                 line=15,
                 rule_id="E501",
@@ -172,7 +172,7 @@ class CodeReviewAutomation:
             # Security check
             if "auth" in file["path"] or "login" in file["path"]:
                 findings.append(ReviewFinding(
-                    finding_id=hashlib.md5(f"sec:{file['path']}:{time.time()}").hexdigest()[:12],
+                    finding_id=hashlib.md5(f"sec:{file['path']}:{time.time()}".encode()).hexdigest()[:12],
                     file_path=file["path"],
                     line=42,
                     rule_id="S001",
@@ -185,7 +185,7 @@ class CodeReviewAutomation:
             # Complexity check
             if file["lines"] > 100:
                 findings.append(ReviewFinding(
-                    finding_id=hashlib.md5(f"cplx:{file['path']}:{time.time()}").hexdigest()[:12],
+                    finding_id=hashlib.md5(f"cplx:{file['path']}:{time.time()}".encode()).hexdigest()[:12],
                     file_path=file["path"],
                     line=0,
                     rule_id="C901",
