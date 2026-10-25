@@ -132,6 +132,7 @@ class UniversalMemoryFabric:
             self.local_db_path = str(default_dir / "fabric_local.db")
 
         self._in_memory_records: List[MemoryEntry] = []
+        self._context_bridge: Optional[Any] = None
         self._init_local_db()
 
     def _init_local_db(self) -> None:
@@ -172,6 +173,82 @@ class UniversalMemoryFabric:
                 conn.commit()
         except Exception as e:
             logger.debug(f"Local fabric DB init notice: {e}")
+
+    # ── Layered context database (Memora viking://) ───────────────────────
+    def context_bridge(self) -> Optional[Any]:
+        """Lazily attach Memora's viking context database (L0/L1/L2 memory).
+
+        Returns ``None`` when the context backend is unavailable so memory
+        writes never fail because of an optional dependency.
+        """
+        if self._context_bridge is not None:
+            return self._context_bridge or None
+        try:
+            import importlib.util
+            import sys
+
+            path = Path(__file__).resolve().parent.parent / "Memora" / "core" / "memory" / "context_service.py"
+            if not path.exists():
+                self._context_bridge = False
+                return None
+            if "memora_context_service" in sys.modules:
+                module = sys.modules["memora_context_service"]
+            else:
+                spec = importlib.util.spec_from_file_location("memora_context_service", path)
+                module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+                sys.modules["memora_context_service"] = module
+                spec.loader.exec_module(module)  # type: ignore[union-attr]
+            service = module.MemoraContextService(
+                user=os.getenv("FABRIC_CONTEXT_USER", "universe")
+            )
+            self._context_bridge = module.FabricBridge(service=service)
+            return self._context_bridge
+        except Exception as exc:  # pragma: no cover - optional backend
+            logger.debug(f"Context database unavailable: {exc}")
+            self._context_bridge = False
+            return None
+
+    def record_context(
+        self,
+        owner_agent: str,
+        title: str,
+        body: str,
+        kind: str = "note",
+        tags: Optional[List[str]] = None,
+    ) -> Optional[str]:
+        """Mirror a memory into the agent's viking subtree (markdown file)."""
+        bridge = self.context_bridge()
+        if bridge is None:
+            return None
+        try:
+            return bridge.save(owner_agent, title, body, tags or [kind], kind=kind)
+        except Exception as exc:  # pragma: no cover - optional backend
+            logger.debug(f"context record failed: {exc}")
+            return None
+
+    def recall_layered(
+        self,
+        query: str,
+        agent_name: str,
+        level: str = "L0",
+        limit: int = 5,
+    ) -> List[Dict[str, Any]]:
+        """Layer-aware recall: L0 abstracts, L1 outline, L2 full document."""
+        bridge = self.context_bridge()
+        if bridge is None:
+            return []
+        try:
+            return bridge.service.recall(query, limit=limit, level=level,
+                                         uri=bridge.agent_root(agent_name))
+        except Exception as exc:  # pragma: no cover - optional backend
+            logger.debug(f"context recall failed: {exc}")
+            return []
+
+    def context_tree(self, agent_name: str, depth: int = 3) -> str:
+        bridge = self.context_bridge()
+        if bridge is None:
+            return ""
+        return bridge.service.tree(bridge.agent_root(agent_name), depth)
 
     def build_namespace(
         self,
@@ -234,6 +311,12 @@ class UniversalMemoryFabric:
 
         # Asynchronously dispatch to Cloud Memora
         self._dispatch_to_cloud(entry)
+
+        # Mirror into the agent's layered viking:// subtree so the same memory
+        # can be read as an abstract (L0), an outline (L1) or full text (L2).
+        title = " ".join(content_text.split())[:80]
+        self.record_context(owner, title, content_text,
+                            kind=memory_type, tags=[memory_type, scope.value])
 
         return entry
 

@@ -27,8 +27,11 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `security_hardening.py` — SSRF protection, path traversal defense, CORS config
 - `universe_resilience.py` — Universe-wide fault tolerance and graceful degradation
 - `universe_cost_optimizer.py` — Cross-agent cost tracking and budget management
+- `real_browser_agent.py` — Indexed DOM understanding, selector resolution, form filling and goal-directed browser runs
+- `real_harness_engineering.py` — Agent loop, context compaction, typed tools, permission gate, verification, tracing, checkpoints, evals
+- `agent_runtime.py` — **live wiring**: `FridayAgentRuntime` used by `universe_orchestrator` workflows and mounted as `/v1/agent/*`
 
-**API:** `/api/v1/friday/*`
+**API:** `/api/v1/friday/*` and `/v1/agent/{capabilities,plan,execute,context/compact,browser/run,trace}`
 
 ### 2. Stratex — Trading Intelligence Agent
 **Role:** Algorithmic trading, portfolio management, market intelligence.
@@ -74,7 +77,9 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `realtime_collaboration.py` — Real-time collaborative editing and review
 - `content_performance_analyzer.py` — Content performance metrics, engagement analysis, trend detection
 
-**API:** `/api/v1/vyralx/*`
+- `app/services/diagram_service.py` — **live wiring**: self-contained HTML+SVG diagram rendering behind `/api/v1/diagrams/*` and automatic explainer diagrams in every generated content pack
+
+**API:** `/api/v1/vyralx/*` and `/api/v1/diagrams/*`
 
 ### 4. Cortex — Decision Intelligence Agent
 **Role:** Predictive analytics, decision support, scenario planning.
@@ -115,7 +120,9 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `temporal_reasoning_engine.py` — Time-aware reasoning with temporal logic
 - `commonsense_reasoning_engine.py` — Commonsense knowledge application and everyday reasoning
 
-**API:** `/api/v1/inference/*`
+- `app/scientific_service.py` — **live wiring**: research-skill routing, statistics, power, hypotheses and evidence audit behind `/v1/scientific/*` and the inter-agent `/v1/agent/research-plan`
+
+**API:** `/api/v1/inference/*` and `/v1/scientific/*`
 
 ### 6. Forge — Autonomous Coding Agent
 **Role:** Code generation, testing, deployment automation.
@@ -158,7 +165,9 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `memory_provenance_tracker.py` — Memory provenance tracking with source verification
 - `memory_retrieval_engine.py` — Semantic memory retrieval with context-aware search
 
-**API:** `/api/v1/memora/*`
+- `core/memory/context_service.py` — **live wiring**: `viking://` context database (L0/L1/L2, scoped search, session commits, wiki) behind `/v1/context/*` and the shared `mesh.memory_fabric`
+
+**API:** `/api/v1/memora/*` and `/v1/context/*`
 
 ### 8. IntelX — Threat Intelligence Agent
 **Role:** Cybersecurity, threat intelligence, OSINT, breach monitoring.
@@ -217,7 +226,9 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `security_slade_engine.py` — Security SLA tracking and compliance posture scoring
 - `threat_hunting_automation_engine.py` — Automated threat hunting with hypothesis generation
 
-**API:** `/api/v1/sentinel/*`
+- `app/services/cyber_skills_service.py` — **live wiring**: ATT&CK/NIST CSF/D3FEND/ATLAS/F3 skill engine behind `/v1/cyber/*`, incident-triage crosswalk and posture-report CSF alignment
+
+**API:** `/api/v1/sentinel/*` and `/v1/cyber/*`
 
 ## Architecture
 
