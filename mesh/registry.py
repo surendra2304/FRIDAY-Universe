@@ -17,12 +17,12 @@ DEFAULT_ECOSYSTEM_AGENTS = [
         "description": "Central multimodal OS, voice assistant, and master orchestrator",
         "capabilities": [
             "orchestration", "voice", "desktop_control", "task_planning",
-            "cognitive_reflection", "browser_automation", "agent_harness",
+            "cognitive_reflection", "browser_automation", "agent_harness", "harness_engineering",
             "tool_permissions", "output_verification", "context_compaction",
         ],
         "intents": [
             "launch", "control", "research", "orchestrate", "voice_stream",
-            "browse", "verify", "plan_task",
+            "browse", "verify", "plan_task", "execute_step",
         ],
         "trust_level": 5,
         "health_endpoint": "/health",
@@ -37,9 +37,9 @@ DEFAULT_ECOSYSTEM_AGENTS = [
         "capabilities": [
             "routing", "key_pooling", "llm_gateway", "failover",
             "latency_optimization", "scientific_skills", "statistical_analysis",
-            "research_planning", "evidence_audit",
+            "research_planning", "evidence_audit", "power_analysis",
         ],
-        "intents": ["route", "model_select", "complete", "stream", "research_plan", "analyse"],
+        "intents": ["route", "model_select", "complete", "stream", "research_plan", "analyse", "verify_claims"],
         "trust_level": 4,
         "health_endpoint": "/health",
         "heartbeat_interval": 30,
@@ -57,7 +57,7 @@ DEFAULT_ECOSYSTEM_AGENTS = [
         ],
         "intents": [
             "record", "load", "distill", "query", "consolidate",
-            "context_read", "commit_session",
+            "context_read", "commit_session", "remember", "recall",
         ],
         "trust_level": 5,
         "health_endpoint": "/health",
@@ -136,7 +136,7 @@ DEFAULT_ECOSYSTEM_AGENTS = [
         ],
         "intents": [
             "audit", "gate", "reboot", "scan_code", "quarantine",
-            "triage", "playbook", "coverage",
+            "triage", "playbook", "coverage", "assess_posture",
         ],
         "trust_level": 5,
         "health_endpoint": "/health",
@@ -151,11 +151,11 @@ DEFAULT_ECOSYSTEM_AGENTS = [
         "capabilities": [
             "video_discovery", "script_generation", "licensed_asset_import",
             "voiceover", "render_pipeline", "youtube_distribution",
-            "provenance_audit", "diagram_design", "explainer_generation",
+            "provenance_audit", "diagram_design", "explainer_generation", "content_explainer",
         ],
         "intents": [
             "discover", "script", "render", "publish", "measure",
-            "audit_publish", "diagram", "explain",
+            "audit_publish", "diagram", "explain", "generate_explainer",
         ],
         "trust_level": 4,
         "health_endpoint": "/health",
