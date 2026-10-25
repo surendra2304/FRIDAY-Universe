@@ -4,10 +4,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-SSH_KEY = r"C:\Users\Surendra\.ssh\friday_universe_oracle.key"
+SSH_KEY = r"USER_HOME\.ssh\friday_universe_oracle.key"
 SSH_USER = "ubuntu"
 SSH_HOST = "140.245.208.100"
-CREDENTIALS_FILE = Path(r"D:\FRIDAY Universe\CREDENTIALS_PHASE3_POSTGRES.json")
+CREDENTIALS_FILE = Path(r"FRIDAY_UNIVERSE_HOME\CREDENTIALS_PHASE3_POSTGRES.json")
 
 DATABASES = [
     {"app_id": "app_friday",    "name": "FRIDAY",    "db": "friday_db",    "user": "friday_user"},

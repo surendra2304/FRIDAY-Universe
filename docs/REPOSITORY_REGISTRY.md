@@ -11,22 +11,22 @@
 
 | # | Service Name | Local Path | Branch | Upstream | Local HEAD SHA | Remote SHA | Git Sync Status | Internal Port | Entry Point | Primary DB | Target Logical DB |
 |---|--------------|------------|--------|----------|----------------|------------|-----------------|---------------|-------------|------------|-------------------|
-| 1 | **FRIDAY** | `D:\FRIDAY Universe\FRIDAY` | `main` | `origin/main` | `261213f` | `b6036b4` | Diverged / Dirty | `10000` | `friday.api.server:app` | SQLite (`friday.db`) | `friday_db` |
-| 2 | **Inference** | `D:\FRIDAY Universe\Inference` | `main` | `origin/main` | `0fb1af4` | `0fb1af4` | Synced (Dirty docs) | `8000` | `app.main:app` | SQLite (`universe.db`) | `inference_db` |
-| 3 | **Memora** | `D:\FRIDAY Universe\Memora` | `main` | `origin/main` | `a61dc80` | `a61dc80` | Synced (Dirty notes) | `8000` | `apps.api.main:app` | SQLite (`memora.db`) + Qdrant | `memora_db` |
-| 4 | **Stratex** | `D:\FRIDAY Universe\Stratex` | `main` | `origin/main` | `a31978b` | `a31978b` | Synced (Dirty research) | `8000` | `scripts/supervise_services.py` | In-Memory / Redis | `stratex_db` |
-| 5 | **Forge** | `D:\FRIDAY Universe\Forge` | `main` | `origin/main` | `2c9863a` | `2c9863a` | Synced (Dirty upgrade) | `8000` | `app.main:app` | SQLite (`forge.db`) | `forge_db` |
-| 6 | **Cortex** | `D:\FRIDAY Universe\Cortex` | `main` | `origin/main` | `ce6e2c0` | `3323620` | Diverged / Dirty | `8000` | `cortex_api.main:app` | SQLite (`cortex.db`) | `cortex_db` |
-| 7 | **Sentinel** | `D:\FRIDAY Universe\Sentinel` | `main` | `origin/main` | `2faa1c7` | `f16e4ff` | Diverged / Untracked | `8000` | `entrypoint.sh` | Alembic / SQLite | `sentinel_db` |
-| 8 | **IntelX** | `D:\FRIDAY Universe\IntelX` | `main` | `origin/main` | `f74dcd9` | `f74dcd9` | Synced (Dirty upgrade) | `8000` | `intelx.cli.main:serve` | SQLite (`intelx.db`) | `intelx_db` |
-| 9 | **Futuris** | `D:\FRIDAY Universe\Futuris` | `main` | `origin/main` | `6d9040b` | `6d9040b` | Synced (Dirty notes) | `8000` | `futuris.cli:serve` | SQLite (`futuris.db`) | `futuris_db` |
+| 1 | **FRIDAY** | `FRIDAY_UNIVERSE_HOME\FRIDAY` | `main` | `origin/main` | `261213f` | `b6036b4` | Diverged / Dirty | `10000` | `friday.api.server:app` | SQLite (`friday.db`) | `friday_db` |
+| 2 | **Inference** | `FRIDAY_UNIVERSE_HOME\Inference` | `main` | `origin/main` | `0fb1af4` | `0fb1af4` | Synced (Dirty docs) | `8000` | `app.main:app` | SQLite (`universe.db`) | `inference_db` |
+| 3 | **Memora** | `FRIDAY_UNIVERSE_HOME\Memora` | `main` | `origin/main` | `a61dc80` | `a61dc80` | Synced (Dirty notes) | `8000` | `apps.api.main:app` | SQLite (`memora.db`) + Qdrant | `memora_db` |
+| 4 | **Stratex** | `FRIDAY_UNIVERSE_HOME\Stratex` | `main` | `origin/main` | `a31978b` | `a31978b` | Synced (Dirty research) | `8000` | `scripts/supervise_services.py` | In-Memory / Redis | `stratex_db` |
+| 5 | **Forge** | `FRIDAY_UNIVERSE_HOME\Forge` | `main` | `origin/main` | `2c9863a` | `2c9863a` | Synced (Dirty upgrade) | `8000` | `app.main:app` | SQLite (`forge.db`) | `forge_db` |
+| 6 | **Cortex** | `FRIDAY_UNIVERSE_HOME\Cortex` | `main` | `origin/main` | `ce6e2c0` | `3323620` | Diverged / Dirty | `8000` | `cortex_api.main:app` | SQLite (`cortex.db`) | `cortex_db` |
+| 7 | **Sentinel** | `FRIDAY_UNIVERSE_HOME\Sentinel` | `main` | `origin/main` | `2faa1c7` | `f16e4ff` | Diverged / Untracked | `8000` | `entrypoint.sh` | Alembic / SQLite | `sentinel_db` |
+| 8 | **IntelX** | `FRIDAY_UNIVERSE_HOME\IntelX` | `main` | `origin/main` | `f74dcd9` | `f74dcd9` | Synced (Dirty upgrade) | `8000` | `intelx.cli.main:serve` | SQLite (`intelx.db`) | `intelx_db` |
+| 9 | **Futuris** | `FRIDAY_UNIVERSE_HOME\Futuris` | `main` | `origin/main` | `6d9040b` | `6d9040b` | Synced (Dirty notes) | `8000` | `futuris.cli:serve` | SQLite (`futuris.db`) | `futuris_db` |
 
 ---
 
 ## 2. Detailed Subsystem Specifications
 
 ### 2.1 FRIDAY (Core Orchestrator & Gateway)
-- **Path:** `D:\FRIDAY Universe\FRIDAY`
+- **Path:** `FRIDAY_UNIVERSE_HOME\FRIDAY`
 - **Remote:** `https://github.com/surendra2304/FRIDAY.git`
 - **Role:** Central voice & text user-facing assistant, master task planner, action approval authority, and companion client gateway.
 - **Runtime:** Python 3.11.9
@@ -52,7 +52,7 @@
 ---
 
 ### 2.2 Inference (Canonical Model Gateway & Reasoning Router)
-- **Path:** `D:\FRIDAY Universe\Inference`
+- **Path:** `FRIDAY_UNIVERSE_HOME\Inference`
 - **Remote:** `https://github.com/surendra2304/Inference.git`
 - **Role:** Sole dynamic LLM/provider gateway, key pooler, model fallbacks, latency tracking, and token budget management.
 - **Runtime:** Python 3.11.9
@@ -74,7 +74,7 @@
 ---
 
 ### 2.3 Memora (3-Tier Central Memory Authority)
-- **Path:** `D:\FRIDAY Universe\Memora`
+- **Path:** `FRIDAY_UNIVERSE_HOME\Memora`
 - **Remote:** `https://github.com/surendra2304/Memora.git`
 - **Role:** Ecosystem memory authority enforcing Private, Shared, and Universal visibility scopes with semantic vector retrieval.
 - **Runtime:** Python 3.11.9
@@ -96,7 +96,7 @@
 ---
 
 ### 2.4 Stratex (Algorithmic Trading & Execution Engine)
-- **Path:** `D:\FRIDAY Universe\Stratex`
+- **Path:** `FRIDAY_UNIVERSE_HOME\Stratex`
 - **Remote:** `https://github.com/surendra2304/Stratex.git`
 - **Role:** Autonomous Binance Futures execution engine with hard risk gates, order idempotency, and position reconciliation.
 - **Runtime:** Python 3.11.9
@@ -118,7 +118,7 @@
 ---
 
 ### 2.5 Forge (Autonomous Software Engineer & Sandbox Builder)
-- **Path:** `D:\FRIDAY Universe\Forge`
+- **Path:** `FRIDAY_UNIVERSE_HOME\Forge`
 - **Remote:** `https://github.com/surendra2304/Forge.git`
 - **Role:** Code synthesis, AST verification, test execution runner, and 3D web application builder in bounded environments.
 - **Runtime:** Python 3.11.9
@@ -139,7 +139,7 @@
 ---
 
 ### 2.6 Cortex (Web Operations & Lead Qualification Agent)
-- **Path:** `D:\FRIDAY Universe\Cortex`
+- **Path:** `FRIDAY_UNIVERSE_HOME\Cortex`
 - **Remote:** `https://github.com/surendra2304/Cortex.git`
 - **Role:** Multi-tenant web operations, real-time visitor telemetry, lead qualification, and CRM sync.
 - **Runtime:** Python 3.11.9 (Backend) + Next.js (Dashboard frontend in `apps/dashboard`)
@@ -163,7 +163,7 @@
 ---
 
 ### 2.7 Sentinel (Real-time Cyber Shield & Security Gatekeeper)
-- **Path:** `D:\FRIDAY Universe\Sentinel`
+- **Path:** `FRIDAY_UNIVERSE_HOME\Sentinel`
 - **Remote:** `https://github.com/surendra2304/Sentinel.git`
 - **Role:** AST-based code policy gate, secret redactor, vulnerability scanner, and active security boundary auditor.
 - **Runtime:** Python 3.11.9
@@ -187,7 +187,7 @@
 ---
 
 ### 2.8 IntelX (Deep Multi-Source Research & Evidence Engine)
-- **Path:** `D:\FRIDAY Universe\IntelX`
+- **Path:** `FRIDAY_UNIVERSE_HOME\IntelX`
 - **Remote:** `https://github.com/surendra2304/IntelX.git`
 - **Role:** Web crawler, citation extractor, contradiction detection, and source evidence graph builder.
 - **Runtime:** Python 3.11.9
@@ -210,7 +210,7 @@
 ---
 
 ### 2.9 Futuris (Calibrated Probabilistic Forecasting Engine)
-- **Path:** `D:\FRIDAY Universe\Futuris`
+- **Path:** `FRIDAY_UNIVERSE_HOME\Futuris`
 - **Remote:** `https://github.com/surendra2304/Futuris.git`
 - **Role:** Probabilistic forecasts, scenario analysis, Brier score calibration, and ecosystem regime modeling.
 - **Runtime:** Python 3.11.9

@@ -57,7 +57,7 @@ jobs:
       - name: Update Changed Agents on Server 1
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: 140.245.208.100
+          host: ${{ secrets.SERVER1_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
@@ -99,7 +99,7 @@ jobs:
       - name: Update Changed Agents on Server 2
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: 140.245.243.168
+          host: ${{ secrets.SERVER2_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
