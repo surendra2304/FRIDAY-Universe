@@ -1,20 +1,82 @@
-name: Standalone Repository Mirror (Disabled)
+name: Subtree Mirror to Standalone Agent Repos
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'FRIDAY/**'
+      - 'Inference/**'
+      - 'Memora/**'
+      - 'Stratex/**'
+      - 'Forge/**'
+      - 'Cortex/**'
+      - 'Sentinel/**'
+      - 'IntelX/**'
+      - 'Futuris/**'
+      - 'VyralX/**'
+      - '.github/workflows/mirror-subrepos.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: standalone-mirror-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  no-op:
-    name: Confirm monorepo-only mode
+  sync-subrepos:
+    name: Sync ${{ matrix.agent }} to standalone
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: [FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX, Futuris, VyralX]
     steps:
-      - name: Explain the no-op
+      - name: Check out monorepo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT_MIRROR || secrets.GITHUB_TOKEN }}
+
+      - name: Determine whether this agent changed
+        id: filter
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+          AGENT: ${{ matrix.agent }}
         run: |
           set -euo pipefail
-          echo "::notice::Cross-repository mirroring is disabled."
-          echo "This workflow does not check out, synchronize, push to, or open pull requests in other repositories."
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "target_changed=true" >> "$GITHUB_OUTPUT"
+          elif ! git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- ".github/workflows/mirror-subrepos.yml"; then
+            echo "target_changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BEFORE_SHA" "$HEAD_SHA" -- "$AGENT"; then
+            echo "target_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No files changed under $AGENT; skipping."
+          else
+            echo "target_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure Git Committer
+        if: steps.filter.outputs.target_changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Mirror Agent Subtree
+        if: steps.filter.outputs.target_changed == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_MIRROR || secrets.GITHUB_TOKEN }}
+          AGENT: ${{ matrix.agent }}
+        run: |
+          set -euo pipefail
+          echo "=== Splitting subtree for $AGENT ==="
+          git subtree split --prefix="$AGENT" -b "split-$AGENT" || true
+          echo "=== Pushing $AGENT to standalone repository ==="
+          git push "https://${GH_TOKEN}@github.com/surendra2304/${AGENT}.git" "split-$AGENT:main" --force
+          echo "=== Successfully mirrored $AGENT to standalone repository ==="
