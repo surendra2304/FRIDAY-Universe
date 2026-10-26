@@ -378,6 +378,10 @@ def create_app() -> FastAPI:
     app.include_router(ws_router, tags=["WebSockets"])
     app.include_router(streaming_router, tags=["WebSocket Streaming Gateway"])
     app.include_router(dashboard_router, tags=["Web Dashboard"])
+    from app.api.real_engines_router import real_engines_router
+    app.include_router(real_engines_router)
+    from app.api.real_services_router import real_services_router
+    app.include_router(real_services_router)
     app.include_router(automated_testing_router, prefix="/api/v1", tags=["Automated Testing v1"])
     app.include_router(automated_testing_router, prefix="/api", tags=["Automated Testing"])
     app.include_router(code_intelligence_router, prefix="/api/v1", tags=["Code Intelligence v1"])
