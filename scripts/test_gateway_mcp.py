@@ -6,10 +6,12 @@ and executes all registered tools against the live production gateway.
 """
 
 import json
+import os
 import urllib.request
 
-GATEWAY_URL = "https://friday-universe.duckdns.org/mcp"
-AUTH_TOKEN = "friday_mcp_sec_99a8b7c6d5e4f3a2b1c0"
+GATEWAY_URL = os.getenv("FRIDAY_MCP_URL", "https://friday-universe.duckdns.org/mcp")
+# Never commit tokens. Export FRIDAY_MCP_TOKEN before running this verifier.
+AUTH_TOKEN = os.getenv("FRIDAY_MCP_TOKEN", "").strip()
 
 def rpc_call(method: str, params: dict = None, rpc_id: int = 1):
     payload = {
@@ -32,6 +34,8 @@ def rpc_call(method: str, params: dict = None, rpc_id: int = 1):
         return json.loads(resp.read().decode())
 
 def main():
+    if not AUTH_TOKEN:
+        raise SystemExit("FRIDAY_MCP_TOKEN is not set; refusing to probe the gateway.")
     print("=" * 65)
     print("FRIDAY UNIFIED MCP GATEWAY — END-TO-END VERIFICATION")
     print(f"Target: {GATEWAY_URL}")

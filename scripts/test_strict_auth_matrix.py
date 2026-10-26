@@ -1,18 +1,20 @@
+import os
+import secrets
+import sys
 import urllib.request
 import json
 import ssl
-from pathlib import Path
 
 ctx = ssl.create_default_context()
-BASE_URL = "https://friday-universe.duckdns.org/mcp"
+BASE_URL = os.getenv("FRIDAY_MCP_URL", "https://friday-universe.duckdns.org/mcp")
 
-# Read newly rotated secret from local file
-secret_file = Path(r"D:\ChatGPT\.env.gateway_secret")
-with open(secret_file, "r", encoding="utf-8") as f:
-    line = f.read().strip()
-    NEW_TOKEN = line.split("=", 1)[1].strip()
+# Never commit tokens. Export FRIDAY_MCP_TOKEN before running this verifier.
+NEW_TOKEN = os.getenv("FRIDAY_MCP_TOKEN", "").strip()
+if not NEW_TOKEN:
+    raise SystemExit("FRIDAY_MCP_TOKEN is not set; refusing to probe the gateway.")
 
-OLD_EXPIRED_TOKEN = "friday_mcp_sec_99a8b7c6d5e4f3a2b1c0"
+# A random 24-byte value is guaranteed not to be a live credential.
+OLD_EXPIRED_TOKEN = secrets.token_hex(24)
 
 def rpc_call(url, method, params=None, headers=None):
     payload = {"jsonrpc": "2.0", "id": 1, "method": method}

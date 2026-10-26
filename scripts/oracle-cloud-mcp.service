@@ -9,7 +9,10 @@ WorkingDirectory=/opt/oracle_mcp
 ExecStart=/usr/bin/python3 /opt/oracle_mcp/server.py
 Restart=always
 RestartSec=5
-Environment=ORACLE_MCP_TOKEN=friday_mcp_sec_99a8b7c6d5e4f3a2b1c0
+# Keep the token outside the repository, readable only by root:
+#   install -m 600 /dev/null /etc/oracle-mcp.env
+#   echo "ORACLE_MCP_TOKEN=<64-hex-secret>" > /etc/oracle-mcp.env
+EnvironmentFile=/etc/oracle-mcp.env
 
 [Install]
 WantedBy=multi-user.target
