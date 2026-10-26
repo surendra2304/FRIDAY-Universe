@@ -27,11 +27,37 @@
 
 The FRIDAY Universe is a multi-agent AI platform where each agent is a specialized service with independent APIs, domain expertise, and operational autonomy. Agents communicate through a shared Gateway and can collaborate on cross-domain tasks.
 
+## Verified Production Deployment (2026-10-26)
+
+Ground truth from both OCI hosts. Production is **systemd + Caddy on two VMs**; the
+Dokploy/Docker Swarm/Traefik/PostgreSQL stack described in older documents is not running
+(`docker ps` is empty and Swarm is `inactive` on both hosts).
+
+| Host | Public IP | Agents (host port) |
+|------|-----------|--------------------|
+| server 1 | 140.245.208.100 | FRIDAY 10000, Inference 8001, Memora 8002, Stratex 8003, Futuris 8004, IntelX 8005, Forge 8006 |
+| server 2 | 140.245.243.168 (private 10.0.0.120) | Sentinel 8008, Cortex 8009, VyralX 8010 |
+
+- Public ingress: `https://friday-universe.duckdns.org` (DuckDNS refreshed by cron every 5 minutes).
+- Caddy on server 1 path-routes `/friday`, `/inference`, `/memora`, `/stratex`, `/futuris`,
+  `/intelx`, `/forge` to local ports, and `/sentinel`, `/cortex`, `/vyralx` to server 2 over the
+  private network.
+- Each agent is a `systemd` unit running from `/opt/friday_universe/<Agent>` with the shared venv
+  `/opt/friday_universe/venv` (Python 3.10.12). Server 1 has 956 MB RAM for seven agents; check
+  `free -m` before adding workers.
+- Persistence is local SQLite under each agent's `data/` directory. Cortex must stay on disk —
+  never set `CORTEX_SQLITE_TMPFS=true` in production, or CRM data is lost on restart.
+
 ## Agents (10)
 
 ### 1. FRIDAY — Multi-Agent Orchestrator
 **Role:** Central coordinator and meta-agent that manages the FRIDAY Universe.
-**Port:** 5000 | **Stack:** Python, FastAPI, React
+**Port:** 10000 (server 1) | **Stack:** Python, FastAPI
+
+The live application is `FRIDAY/src/friday/api/server.py` (uvicorn `friday.api.server:app`).
+It serves the LLM gateway, the tool registry, auth/rate limiting and peer health probing. Some
+advertised orchestration modules below exist as libraries but are not mounted in the live app —
+verify a route in OpenAPI before relying on it.
 
 **Deep Modules (21):**
 - `general_cognitive_coordinator.py` — Cross-domain orchestration with sub-task decomposition
@@ -58,7 +84,7 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 
 ### 2. Stratex — Trading Intelligence Agent
 **Role:** Algorithmic trading, portfolio management, market intelligence.
-**Port:** 5001 | **Stack:** Python, Flask, SQLite
+**Port:** 8003 (server 1) | **Stack:** Python, Flask, SQLite
 
 **Deep Modules (18):**
 - `strategy_engine.py` — Multi-strategy trading engine with backtesting
@@ -82,9 +108,13 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 
 **API:** `/api/v1/trading/*` and `/api/v1/trading/engines/*`
 
+**Caveats:** Binance Futures **testnet** only. The checked-in ledger shows 64 fills, a 26.6% win
+rate and net +$22.71; the bot has been dormant since late September. VaR/Monte-Carlo helpers in
+`portfolio_risk_analytics.py` are deterministic heuristics, not risk-engine output.
+
 ### 3. VyralX — Video Content Intelligence Agent
 **Role:** Video analytics, content creation, audience engagement.
-**Port:** 5002 | **Stack:** Python, FastAPI
+**Port:** 8010 (server 2) | **Stack:** Python, FastAPI
 
 **Deep Modules (76):**
 - `content_optimizer.py` — Video content optimization with audience targeting
@@ -107,52 +137,52 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 
 **API:** `/api/v1/vyralx/*`, `/api/v1/diagrams/*`, and `/api/v1/media/*`
 
-### 4. Cortex — Decision Intelligence Agent
-**Role:** Predictive analytics, decision support, scenario planning.
-**Port:** 5003 | **Stack:** Python, FastAPI
+**Caveats:** FFmpeg rendering, stock-footage assembly and YouTube OAuth upload are real.
+Analytics dashboards, localization reports, influencer ROI and monetization scores are
+hash/keyword heuristics, not measured platform data. The upload daemon creates private drafts.
 
-**Deep Modules (41):**
-- `decision_engine.py` — Multi-criteria decision analysis with uncertainty quantification
-- `scenario_analyzer.py` — Scenario planning with Monte Carlo simulation
-- `predictive_model_manager.py` — ML model lifecycle management with auto-retraining
-- `ab_experiment_framework.py` — A/B testing framework with statistical significance
-- `competitive_intelligence.py` — Competitor monitoring, product tracking, pricing analysis, SWOT
-- `contextual_bandit_optimizer.py` — Contextual bandit optimization for real-time decision making
-- `causal_impact_analyzer.py` — Causal impact analysis with counterfactual reasoning
-- `strategic_planning_assistant.py` — Long-term strategic planning with roadmap generation
-- `decision_tree_explorer.py` — Interactive decision tree exploration and analysis
-- `predictive_customer_behavior_model.py` — Customer behavior prediction with churn analysis
-- `marketing_attribution_modeler.py` — Marketing channel attribution with multi-touch modeling
-- `autonomous_experiment_designer.py` — AI-powered experiment design and optimization
-- `decision_impact_analyzer.py` — Decision outcome tracking and impact measurement
+### 4. Cortex — CRM & Web Operations Agent
+**Role:** Multi-tenant CRM and website-operations platform (Salesforce/HubSpot class): visitor
+identity resolution, lead capture and scoring, segmentation, campaigns, attribution, experiments,
+and closed-loop sales follow-up. It also owns the public website surface.
+**Port:** 8009 (server 2) | **Stack:** Python, FastAPI, SQLAlchemy async, Redis, Next.js dashboard
 
-**API:** `/api/v1/cortex/*`
+**Core Modules:**
+- `enhanced_crm.py` — Weighted lead scoring, persisted `LeadScoreHistoryModel`, CLV/churn prediction, dynamic segments, smart follow-up
+- `public_gateway.py` — Public website surface: `/v1/identify`, tenant-scoped visitors, events, lead capture
+- `marketing_platform_integrator.py` / `marketing_automation.py` — HubSpot, Stripe and SendGrid connectors, campaign automation
+- `production_router.py` — `/health`, `/ready`, status and WebSocket event stream
+- `schema.py` — ORM schema bootstrap/verification (16 tables: tenants, visitors, leads, lead_scores, events, sessions, audit_records, ...)
+- `friday_router.py` — Cross-agent bridge to FRIDAY
+- `ab_experiment_framework.py` / `experiments.py` — Experiment assignment and analysis
+- `enhanced_analytics.py`, `attribution.py`, `demand_forecaster.py` — Funnel, attribution and forecasting surfaces
 
-### 5. Inference — Reasoning Engine Agent
-**Role:** Logical reasoning, inference, knowledge graph operations.
-**Port:** 5004 | **Stack:** Python, FastAPI
+**API:** `/cortex/*` (public ingress), `/api/v1/*`, `/v1/identify`, `/v1/visitors/{id}`, `/ready`
 
-**Deep Modules (29):**
-- `reasoning_engine.py` — Multi-step logical inference with confidence tracking
-- `knowledge_graph_processor.py` — Knowledge graph operations with query optimization
-- `reasoning_chain_optimizer.py` — Reasoning chain optimization with strategy recommendations
-- `multi_hypothesis_reasoner.py` — Multi-hypothesis reasoning with Bayesian updating
-- `belief_revision_engine.py` — Belief revision with AGM axioms
-- `multi_model_deliberation_engine.py` — Multi-model deliberation with consensus
-- `argument_analysis_engine.py` — Argument structure analysis with validity checking
-- `causal_inference_engine.py` — Causal inference with structural equation models
-- `reasoning_path_explorer.py` — Reasoning path exploration with graph traversal
-- `knowledge_conflict_resolver.py` — Knowledge conflict resolution with priority-based merging
-- `temporal_reasoning_engine.py` — Time-aware reasoning with temporal logic
-- `commonsense_reasoning_engine.py` — Commonsense knowledge application and everyday reasoning
+**Caveats:** competitive intelligence and parts of demand forecasting / predictive analytics are
+deterministic heuristics, not measured data. Readiness covers Postgres/schema/Redis; cross-agent
+probes are reported as `UNKNOWN` and are not fatal.
 
-- `app/scientific_service.py` — **live wiring**: research-skill routing, statistics, power, hypotheses and evidence audit behind `/v1/scientific/*` and the inter-agent `/v1/agent/research-plan`
+### 5. Inference — LLM Gateway & Model Router
+**Role:** Centralized model gateway for every agent. Aggregates API keys across providers, routes
+each request to the best available model, and serves an OpenAI-compatible API with streaming and
+cascading fallback. Reasoning/deliberation modules exist but are secondary to key routing.
+**Port:** 8001 (server 1) | **Stack:** Python, FastAPI, httpx
 
-**API:** `/api/v1/inference/*` and `/v1/scientific/*`
+**Core Modules:**
+- `app/providers/gateway.py` — `ModelGateway` + `KeyPool`: round-robin keys, 60-second quarantine on 429/503, per-provider rate limits, capability-matched OpenRouter fallback, deadline reservation
+- `app/providers/health.py` — Provider health tracking and circuit state
+- `app/providers/pool_optimizer.py` — Key-pool allocation and utilization
+- `app/providers/unified_manager.py` — Provider registry and credential discovery
+- `app/routing/cost_router.py`, `consumer_router.py`, `self_optimizer.py` — Cost-, consumer- and feedback-aware model selection
+- `app/api/v1_core_routes.py`, `app/main.py` — OpenAI-compatible `/v1/chat/completions`, `/v1/models`, streaming and admin endpoints
+- Provider adapters — Groq, Cerebras, Gemini, OpenRouter, Mistral, Cohere, HuggingFace, NVIDIA, and local/LiteLLM/vLLM tiers
+
+**API:** `/inference/*`, OpenAI-compatible `/v1/*`, `/api/v1/*`
 
 ### 6. Forge — Autonomous Coding Agent
 **Role:** Code generation, testing, deployment automation.
-**Port:** 5005 | **Stack:** Python, FastAPI
+**Port:** 8006 (server 1) | **Stack:** Python, FastAPI
 
 **Deep Modules (27):**
 - `autonomous_laptop_operator.py` — Full-stack autonomous development with browser automation
@@ -171,9 +201,13 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 
 **API:** `/api/v1/forge/*`
 
+**Caveats:** Execution, lint/test/build checks and repair loops are real subprocess work, but the
+"synthesis" step is mostly deterministic templates. There is no container isolation around
+executed code — treat it as a trusted-environment developer tool.
+
 ### 7. Memora — Memory Intelligence Agent
 **Role:** Persistent memory, knowledge storage, context management.
-**Port:** 5006 | **Stack:** Python, FastAPI
+**Port:** 8002 (server 1) | **Stack:** Python, FastAPI
 
 **Deep Modules (33):**
 - `semantic_memory_store.py` — Semantic memory with vector-based retrieval
@@ -195,9 +229,13 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 
 **API:** `/api/v1/memora/*` and `/v1/context/*`
 
+**Caveats:** The relational memory store and mesh bridge are real. The `viking://` context layer is
+backed by an in-process store that is empty after a restart, and semantic retrieval is not a
+production vector database. Do not treat it as durable memory yet.
+
 ### 8. IntelX — Threat Intelligence Agent
 **Role:** Cybersecurity, threat intelligence, OSINT, breach monitoring.
-**Port:** 5007 | **Stack:** Python, FastAPI
+**Port:** 8005 (server 1) | **Stack:** Python, FastAPI
 
 **Deep Modules (13):**
 - `threat_detection_engine.py` — Multi-source threat detection with correlation
@@ -218,9 +256,13 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 
 **API:** `/api/v1/intelex/*`, `/api/v1/osint/*`, and `/api/v1/intelx/*`
 
+**Caveats:** The evidence-research pipeline (plan → search → retrieve → quote-align → synthesize)
+is real. OSINT collectors fall back to synthetic findings when keys or upstream calls fail; the
+result must not be treated as evidence without provenance.
+
 ### 9. Futuris — Predictive Intelligence Agent
 **Role:** Forecasting, predictive modeling, scenario simulation.
-**Port:** 5008 | **Stack:** Python, FastAPI
+**Port:** 8004 (server 1) | **Stack:** Python, FastAPI
 
 **Deep Modules (11):**
 - `forecasting_engine.py` — Multi-model forecasting with calibration and accuracy tracking
@@ -235,9 +277,13 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 
 **API:** `/api/v1/futuris/*`
 
+**Caveats:** The live forecasting core uses `statsforecast` adapters and stores results in SQLite.
+The legacy `predict/` layer and several "deep modules" generate illustrative numbers from hashes;
+several read endpoints have returned 500 in production.
+
 ### 10. Sentinel — Security Operations Agent
 **Role:** Security monitoring, threat hunting, compliance auditing.
-**Port:** 5009 | **Stack:** Python, Flask
+**Port:** 8008 (server 2) | **Stack:** Python, Flask
 
 **Deep Modules (20):**
 - `security_monitor.py` — Real-time security monitoring with SIEM integration
@@ -257,6 +303,10 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `app/services/cyber_skills_service.py` — **live wiring**: ATT&CK/NIST CSF/D3FEND/ATLAS/F3 skill engine behind `/v1/cyber/*`, incident-triage crosswalk and posture-report CSF alignment
 
 **API:** `/api/v1/sentinel/*` and `/v1/cyber/*`
+
+**Caveats:** HMAC/ECDSA signing, the SHA-256 hash-chained audit log and the ATT&CK/NIST/D3FEND
+tables are real. SIEM, SOAR, zero-trust enforcement and several SOC dashboards are in-memory
+stubs; API-key auth defaults off unless explicitly configured.
 
 ## Architecture
 
@@ -323,10 +373,12 @@ Each deep module follows a consistent pattern:
 
 ## Testing
 
-All modules are validated with:
-- **py_compile** — Syntax validation
-- **pytest** — Test suite covering imports, instantiation, and method calls
-- **149/149 tests passing** (17 skipped)
+- **py_compile** — Syntax validation in CI and before deployment.
+- **pytest** — Per-agent suites; counts differ by agent and are not aggregated here. There is no
+  single universal "149/149" suite; that number came from one agent's local run.
+- **Production smoke checks** — `/health` on every agent and `/ready` where implemented. Verified
+  2026-10-26: all ten agents return 200 on `/health`; FRIDAY, Sentinel and VyralX return 200 on
+  `/ready`; Cortex requires its database schema and Redis to be reachable.
 
 ## Cross-Cutting Infrastructure
 
@@ -345,4 +397,7 @@ All modules are validated with:
 | `universe_resilience.py` | Universe-wide fault tolerance |
 | `universe_cost_optimizer.py` | Cross-agent cost tracking |
 
-## Total: 100 new deep modules across 10 agents + 21 cross-cutting infrastructure modules
+## Total: 100 deep modules across 10 agents + 21 cross-cutting infrastructure modules
+
+Counts describe code that exists, not code that is production-grade. The caveats above mark which
+layers are real and which are heuristic or simulated.
