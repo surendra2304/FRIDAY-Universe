@@ -122,3 +122,11 @@ Example full Robin investigation (the selected domain is mandatory):
 The existing FRIDAY servers already have broad CORS settings and legacy routes; deploy them behind an authenticated gateway and restrict network exposure. The new operator endpoints fail closed unless the local token is configured, but this integration does not retrofit authentication onto unrelated pre-existing routes. SQLite state is local, not encrypted at rest: restrict filesystem access and retention, especially for journals, reports and uploaded snapshots.
 
 Not implemented/claimed: Cloud9's gated lesson bodies or trading outcomes, a licensed/connected Yahoo production feed, Gmail unread-mail OAuth, WhatsApp sending/contact lookup, a copied holographic Jarvis web UI, smart-home/BroadLink device drivers, a Tor service installation, live crawls in this sandbox, proprietary Drive connectors in the deployed server, live brokerage execution, unattended external sends, or a verified 200-card index until the operator imports the Drive document's extracted text.
+
+## Extended workplace and verified coverage
+
+The additive `/v2` contract preserves all existing routes and now includes a
+browser workplace at `/v2/assistant`, voice/speech adapters, approval-gated room
+services, grounded quote-validated investigations, Cortex business analysis,
+and persistent validated routines. See [capability-coverage.md](capability-coverage.md)
+for the source-to-code matrix, deployment configuration and verification limits.
