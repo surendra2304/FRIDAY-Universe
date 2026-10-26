@@ -235,7 +235,7 @@ You are the dedicated Senior Full-Stack & Telemetry Systems Engineer for **Corte
 - **Database Configuration (dokploy-postgres):**
   - Database: `cortex_db`
   - User: `cortex_user`
-  - Password: `JOckBx8gtWYn4bhPkVj-mB92`
+  - Password: `<redacted — set via POSTGRES_DSN; rotate the previously committed value>`
   - Tables already provisioned: `events`, `sessions`
 
 ### 2. Core Architectural Role & Invariants
