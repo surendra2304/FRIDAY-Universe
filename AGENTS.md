@@ -283,7 +283,7 @@ several read endpoints have returned 500 in production.
 
 ### 10. Sentinel — Security Operations Agent
 **Role:** Security monitoring, threat hunting, compliance auditing.
-**Port:** 8008 (server 2) | **Stack:** Python, Flask
+**Port:** 8008 (server 2) | **Stack:** Python, FastAPI
 
 **Deep Modules (20):**
 - `security_monitor.py` — Real-time security monitoring with SIEM integration
