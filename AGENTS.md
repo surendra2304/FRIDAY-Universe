@@ -108,9 +108,12 @@ verify a route in OpenAPI before relying on it.
 
 **API:** `/api/v1/trading/*` and `/api/v1/trading/engines/*`
 
-**Caveats:** Binance Futures **testnet** only. The checked-in ledger shows 64 fills, a 26.6% win
-rate and net +$22.71; the bot has been dormant since late September. VaR/Monte-Carlo helpers in
-`portfolio_risk_analytics.py` are deterministic heuristics, not risk-engine output.
+**Caveats:** The Binance Futures integration is **testnet** only; its checked-in ledger shows 64
+fills, a 26.6% win rate and net +$22.71, with no new fills since late September. `Stratex-Daemon`
+is a separate path: it trades an **MT5 demo** account through the MT5 bridge and was live on
+2026-10-26 with five open demo positions — at its 5/5 cap, so new entries were being logged as
+"Holding". VaR/Monte-Carlo helpers in `portfolio_risk_analytics.py` are deterministic heuristics,
+not risk-engine output.
 
 ### 3. VyralX — Video Content Intelligence Agent
 **Role:** Video analytics, content creation, audience engagement.
