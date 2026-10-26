@@ -29,7 +29,10 @@ PORT = 8765
 LAPTOP_BRIDGE_URL = "https://kite-trouble-decency.ngrok-free.dev"
 DOKPLOY_API_URL = "http://127.0.0.1:3000/api"
 DOKPLOY_KEY_FILE = "/opt/oracle_mcp/.dokploy_key"
-GATEWAY_SECRET = os.getenv("ORACLE_MCP_TOKEN", "[REDACTED:mcp_bridge_token]")
+GATEWAY_SECRET = os.getenv("ORACLE_MCP_TOKEN", "").strip()
+if not GATEWAY_SECRET:
+    # Fail closed: a default token in source is a public credential.
+    raise SystemExit("ORACLE_MCP_TOKEN is required (set it in the systemd EnvironmentFile).")
 
 def get_dokploy_key() -> str:
     if os.path.exists(DOKPLOY_KEY_FILE):
