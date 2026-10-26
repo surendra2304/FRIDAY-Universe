@@ -18,7 +18,7 @@ FRIDAY Universe is an enterprise-grade autonomous multi-agent intelligence platf
      │              │               │               │              │
 ┌────┴────┐   ┌─────┴─────┐   ┌─────┴─────┐   ┌─────┴────┐   ┌─────┴────┐
 │ Stratex │   │  VyralX   │   │  Cortex   │   │Inference │   │  Forge   │
-│ Trading │   │  Content  │   │ Decision  │   │Reasoning │   │  Coding  │
+│ Trading │   │  Content  │   │   CRM     │   │LLM Router│   │  Coding  │
 └────┬────┘   └─────┬─────┘   └─────┬─────┘   └─────┬────┘   └─────┬────┘
      │              │               │               │              │
 ┌────┴────┐   ┌─────┴─────┐   ┌─────┴─────┐         │              │
@@ -40,7 +40,7 @@ The system operates 10 specialized services coordinated through a unified API Ga
 
 ### 1. FRIDAY — Central Orchestrator & Meta-Agent
 - **Role:** Central coordinator, autonomous task decomposition, multi-agent dispatch, and harness execution.
-- **Port:** `5000` | **Stack:** Python, FastAPI, React
+- **Port:** `10000` | **Stack:** Python, FastAPI
 - **Deep Modules & Wiring:**
   - `agent_runtime.py` — Live `FridayAgentRuntime` supporting step-by-step execution, typed tool registry, and session tracing.
   - `real_browser_agent.py` — Indexed DOM parser, selector resolution, form filling, and goal-directed web runs.
@@ -50,7 +50,7 @@ The system operates 10 specialized services coordinated through a unified API Ga
 
 ### 2. Stratex — Trading & Financial Intelligence
 - **Role:** Algorithmic trading, multi-venue order execution, quantitative portfolio management, and prediction markets.
-- **Port:** `5001` | **Stack:** Python, Flask, SQLite
+- **Port:** `8003` | **Stack:** Python, Flask, SQLite
 - **Live Open-Source Integrations:**
   - **CCXT (`ccxt`)**: Multi-exchange unified market data (`fetch_ticker`, `fetch_order_book`), rate-limited execution, and cross-venue spatial arbitrage.
   - **Backtrader (`backtrader`)**: Event-driven backtesting with `BtSmaCrossoverStrategy`, Pandas OHLCV feeds, and trade performance analyzers.
@@ -67,35 +67,34 @@ The system operates 10 specialized services coordinated through a unified API Ga
 
 ### 3. VyralX — Video & Content Intelligence
 - **Role:** Autonomous content creation, audience analytics, video optimization, and automated growth packs.
-- **Port:** `5002` | **Stack:** Python, FastAPI
+- **Port:** `8010` (server 2) | **Stack:** Python, FastAPI
 - **Deep Modules & Wiring:**
   - `app/services/real_media_routes.py` — Unified multi-modal `/api/v1/media/growth-pack` orchestrating ClaudeAds copy generation, TopRank SEO page audits, OpenHiggsfield video prompts, and Hyperframes storyboards.
   - `app/services/diagram_service.py` — Self-contained HTML+SVG diagram generation mounted under `/api/v1/diagrams/*`.
   - `content_optimizer.py` & `audience_analytics.py` — Retention curve analysis, virality scoring, and cohort segmentation.
 - **API Surface:** `/api/v1/vyralx/*`, `/api/v1/diagrams/*`, and `/api/v1/media/*`
 
-### 4. Cortex — Decision Intelligence
-- **Role:** Multi-criteria decision analysis, predictive modeling, scenario simulation, and causal inference.
-- **Port:** `5003` | **Stack:** Python, FastAPI, Next.js
-- **Deep Modules:**
-  - `decision_engine.py` — Multi-criteria decision analysis with uncertainty quantification and fatigue detection.
-  - `scenario_analyzer.py` — Monte Carlo simulation and stress testing across economic and operational variables.
-  - `contextual_bandit_optimizer.py` — Contextual bandit optimization for real-time strategy selection.
-  - `causal_impact_analyzer.py` — Counterfactual reasoning and causal impact estimation.
-- **API Surface:** `/api/v1/cortex/*`
+### 4. Cortex — Multi-Tenant CRM & Web Operations
+- **Role:** CRM and website-operations platform: visitor identity resolution, lead capture and scoring, segmentation, campaigns, attribution, and closed-loop sales follow-up.
+- **Port:** `8009` (server 2) | **Stack:** Python, FastAPI, SQLAlchemy async, Redis, Next.js
+- **Core Modules:**
+  - `enhanced_crm.py` — Weighted lead scoring with persisted score history, CLV/churn prediction, dynamic segments, smart follow-up.
+  - `public_gateway.py` — Public website surface: `/v1/identify`, tenant-scoped visitors, leads, events, analytics.
+  - `marketing_platform_integrator.py` & `marketing_automation.py` — HubSpot, Stripe and SendGrid connectors, campaign automation.
+- **API Surface:** `/cortex/*`, `/api/v1/*`, `/v1/identify`
 
-### 5. Inference — Reasoning Engine
-- **Role:** Multi-step logical inference, causal reasoning, hypothesis evaluation, and scientific verification.
-- **Port:** `5004` | **Stack:** Python, FastAPI
-- **Deep Modules & Wiring:**
-  - `app/scientific_service.py` — Research-skill routing, statistical power calculation, hypothesis generation, and evidence auditing under `/v1/scientific/*`.
-  - `reasoning_engine.py` & `multi_model_deliberation_engine.py` — Multi-model deliberation and consensus validation.
-  - `causal_inference_engine.py` — Structural equation modeling and counterfactual verification.
-- **API Surface:** `/api/v1/inference/*` and `/v1/scientific/*`
+### 5. Inference — LLM Gateway & Model Router
+- **Role:** Centralized model plane: aggregates provider API keys, routes each request to the best available model, quarantines failing keys, and serves an OpenAI-compatible API with streaming and fallback.
+- **Port:** `8001` (server 1) | **Stack:** Python, FastAPI
+- **Core Modules & Wiring:**
+  - `app/providers/gateway.py` — `ModelGateway` + `KeyPool` with round-robin rotation, 60-second quarantine on 429/503, per-provider limits, and capability-matched OpenRouter fallback.
+  - `app/routing/cost_router.py` & `self_optimizer.py` — Cost- and feedback-aware model selection.
+  - `app/scientific_service.py` — Statistical power, hypothesis and evidence-audit skills under `/v1/scientific/*` (secondary to routing).
+- **API Surface:** `/inference/*`, OpenAI-compatible `/v1/*`, `/api/v1/*`
 
 ### 6. Forge — Autonomous Software Engineering
 - **Role:** Autonomous code generation, test generation, vulnerability remediation, and laptop automation.
-- **Port:** `5005` | **Stack:** Python, FastAPI
+- **Port:** `8006` | **Stack:** Python, FastAPI
 - **Deep Modules:**
   - `autonomous_laptop_operator.py` — Full-stack autonomous engineering loop with browser automation and local execution.
   - `code_review_router.py` & `autonomous_code_repair.py` — AST analysis, automated vulnerability scanning, and test-driven code repair.
@@ -104,7 +103,7 @@ The system operates 10 specialized services coordinated through a unified API Ga
 
 ### 7. Memora — Memory Intelligence
 - **Role:** Persistent memory fabric, associative retrieval, temporal indexing, and context compaction.
-- **Port:** `5006` | **Stack:** Python, FastAPI
+- **Port:** `8002` | **Stack:** Python, FastAPI
 - **Deep Modules & Wiring:**
   - `core/memory/context_service.py` — `viking://` context database (L0/L1/L2 memory hierarchy, scoped search, session commits, and knowledge wiki) mounted under `/v1/context/*`.
   - `semantic_memory_store.py` & `causal_memory_graph.py` — Vector embeddings, associative memory retrieval, and causal relationship tracking.
@@ -113,7 +112,7 @@ The system operates 10 specialized services coordinated through a unified API Ga
 
 ### 8. IntelX — Threat Intelligence & OSINT
 - **Role:** OSINT investigation, breach monitoring, dark web reconnaissance, and entity correlation graphs.
-- **Port:** `5007` | **Stack:** Python, FastAPI
+- **Port:** `8005` | **Stack:** Python, FastAPI
 - **Live Open-Source Integrations:**
   - **Intelligence X (`intelx`)**: Native SDK integration for phonebook search, selector lookup, and breach record retrieval.
   - **IntelBase REST**: Live REST lookup integration for email, username, and infostealer database queries.
@@ -128,7 +127,7 @@ The system operates 10 specialized services coordinated through a unified API Ga
 
 ### 9. Futuris — Predictive Intelligence & Forecasting
 - **Role:** Time-series forecasting, market regime detection, ensemble calibration, and rare event prediction.
-- **Port:** `5008` | **Stack:** Python, FastAPI
+- **Port:** `8004` | **Stack:** Python, FastAPI
 - **Deep Modules:**
   - `forecasting_engine.py` & `ensemble_reconciliation.py` — Multi-model ensemble forecasting (ARIMA, Holt-Winters, exponential smoothing) with automated error calibration.
   - `market_regime_detector.py` — Hidden Markov Model (HMM) regime detection and structural break identification.
@@ -137,7 +136,7 @@ The system operates 10 specialized services coordinated through a unified API Ga
 
 ### 10. Sentinel — Security Operations & Threat Hunting
 - **Role:** Real-time SIEM monitoring, MITRE ATT&CK / NIST CSF alignment, and automated compliance auditing.
-- **Port:** `5009` | **Stack:** Python, Flask
+- **Port:** `8008` (server 2) | **Stack:** Python, FastAPI
 - **Deep Modules & Wiring:**
   - `app/services/cyber_skills_service.py` — ATT&CK / NIST CSF / D3FEND / ATLAS skill engine mounted under `/v1/cyber/*`.
   - `security_monitor.py` & `realtime_threat_matcher.py` — Real-time threat pattern matching with IoC feeds and SIEM log correlation.
@@ -171,22 +170,21 @@ cp .env.example .env
 
 ### 3. Running Services
 
-#### Central API Gateway (FRIDAY Orchestrator):
+#### FRIDAY (orchestrator and LLM gateway):
 ```bash
-python -m uvicorn friday_core.real_api_server:app --host 0.0.0.0 --port 5000 --reload
+cd FRIDAY
+python -m uvicorn friday.api.server:app --host 0.0.0.0 --port 10000 --reload
 ```
 
 #### Stratex Trading Operations Desk:
 ```bash
 cd Stratex
 python dashboard.py
-# Running on http://127.0.0.1:5001
+# Running on http://127.0.0.1:8003
 ```
 
-#### Docker Compose (All 10 Services):
-```bash
-docker compose up -d --build
-```
+> Production does not use Docker Compose. On the OCI hosts each agent is a systemd unit
+> (`/opt/friday_universe/<Agent>`) behind Caddy; see `AGENTS.md` for the verified topology.
 
 ---
 
@@ -205,7 +203,7 @@ python -m pytest tests/test_real_batch4a.py tests/test_real_batch4b.py tests/tes
 python scripts/verify_deep_wiring.py
 ```
 
-### Test Results Summary:
+### Test Results Summary (last recorded run — rerun to verify):
 | Verification Suite | Target Areas | Tests / Checks | Status |
 | :--- | :--- | :---: | :---: |
 | `test_deep_universe_engines_full.py` | CCXT, Backtrader, Vectorbt, Freqtrade, Hummingbot, Lumibot, Polymarket, TradingAgents, IntelX, Maltego, MalNet, Growth Pack | 18 |  **PASS (100%)** |
@@ -213,7 +211,7 @@ python scripts/verify_deep_wiring.py
 | `test_real_batch4b.py` | Vectorbt, Freqtrade Hyperopt, Lumibot Backtesting, Polymarket Analyzers | 131 |  **PASS (100%)** |
 | `test_real_deep_layer3j.py` | IntelX OSINT, ShadowDragon Tradecraft, Maltego Entity Graphs | 93 |  **PASS (100%)** |
 | `verify_deep_wiring.py` | Inter-agent imports, HTTP routes, E2E flow, security guardrails | 19 |  **PASS (100%)** |
-| **Total** | **Universe Verification Suite** | **453** | ** 100% Passed** |
+| **Total** | **Universe Verification Suite** | **453** | **Recorded (not rerun)** |
 
 ---
 
