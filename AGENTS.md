@@ -78,7 +78,9 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `market_microstructure_analyzer.py` — Order book analysis, liquidity detection, market impact
 - `regime_change_detector.py` — Market regime detection, structural break identification
 
-**API:** `/api/v1/trading/*`
+- `app/trading_hub.py` — **live wiring**: `TradingHub` orchestrator uniting CCXT, Backtrader, Vectorbt, Freqtrade, Hummingbot, Lumibot, Polymarket, TradingAgents, AutoHedge, Vibe-Trading, and FinceptTerminal behind `/api/v1/trading/engines/*`
+
+**API:** `/api/v1/trading/*` and `/api/v1/trading/engines/*`
 
 ### 3. VyralX — Video Content Intelligence Agent
 **Role:** Video analytics, content creation, audience engagement.
@@ -101,8 +103,9 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `content_performance_analyzer.py` — Content performance metrics, engagement analysis, trend detection
 
 - `app/services/diagram_service.py` — **live wiring**: self-contained HTML+SVG diagram rendering behind `/api/v1/diagrams/*` and automatic explainer diagrams in every generated content pack
+- `app/services/real_media_routes.py` — **live wiring**: unified multi-modal `/growth-pack` orchestrating ClaudeAds, TopRank, OpenHiggsfield, Hyperframes, and DiagramDesign
 
-**API:** `/api/v1/vyralx/*` and `/api/v1/diagrams/*`
+**API:** `/api/v1/vyralx/*`, `/api/v1/diagrams/*`, and `/api/v1/media/*`
 
 ### 4. Cortex — Decision Intelligence Agent
 **Role:** Predictive analytics, decision support, scenario planning.
@@ -211,7 +214,9 @@ The FRIDAY Universe is a multi-agent AI platform where each agent is a specializ
 - `intel_sharing_manager.py` — Intelligence sharing with STIX/TAXII compatibility
 - `disinformation_detector.py` — False information detection with source credibility analysis
 
-**API:** `/api/v1/intelex/*`
+- `routers/real_osint_routes.py` — **live wiring**: Intelligence X search, ShadowDragon tradecraft (Google Dorks, Email Permutations, ELA Image Forensics), Maltego graph builder, MalNet correlation, and Horizon alerts behind `/api/v1/osint/*` and `/api/v1/intelx/*`
+
+**API:** `/api/v1/intelex/*`, `/api/v1/osint/*`, and `/api/v1/intelx/*`
 
 ### 9. Futuris — Predictive Intelligence Agent
 **Role:** Forecasting, predictive modeling, scenario simulation.
