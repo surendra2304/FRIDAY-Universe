@@ -103,3 +103,6 @@ risk_orchestration_log.jsonl
 handoffs/
 incident_reports/
 FRIDAY_Universe_Workspace_Pack/
+
+# Persistent observations created by the research API (not source code)
+FRIDAY/.data/research_api/
