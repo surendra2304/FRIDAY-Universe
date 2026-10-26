@@ -16,10 +16,13 @@ def engine(tmp_path):
 
 
 @pytest.fixture
-def client(engine):
+def client(engine, monkeypatch):
+    monkeypatch.setenv('FRIDAY_LOCAL_ACTION_TOKEN', 'layer-test-token')
     app = FastAPI()
     app.include_router(create_research_router(engine))
-    return TestClient(app)
+    test_client = TestClient(app)
+    test_client.headers.update({'X-FRIDAY-Operator': 'layer-test-token'})
+    return test_client
 
 
 def market():
