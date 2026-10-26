@@ -21589,6 +21589,7146 @@
         "holt",
         "arima"
       ]
+    },
+    "fc_0df58ab45731": {
+      "forecast_id": "fc_0df58ab45731",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.6827624,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6847234cc938": {
+      "forecast_id": "fc_6847234cc938",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.701789,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_dd78952ac625": {
+      "forecast_id": "fc_dd78952ac625",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.7219036,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e00bccc96ad0": {
+      "forecast_id": "fc_e00bccc96ad0",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.7396104,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6a59d9f2e976": {
+      "forecast_id": "fc_6a59d9f2e976",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.757074,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d14ce7c67a05": {
+      "forecast_id": "fc_d14ce7c67a05",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.7751083,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a8506c8ddbed": {
+      "forecast_id": "fc_a8506c8ddbed",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.7940423,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8aa3ae903ec5": {
+      "forecast_id": "fc_8aa3ae903ec5",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.811416,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_93b1e29d6520": {
+      "forecast_id": "fc_93b1e29d6520",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.8287382,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_93f01eaebc50": {
+      "forecast_id": "fc_93f01eaebc50",
+      "symbol": "TEST",
+      "prediction": 113.7573,
+      "lower_bound": 113.6544,
+      "upper_bound": 113.8603,
+      "confidence": 0.991,
+      "timestamp": 1793032254.8461735,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e6bd3c9d0240": {
+      "forecast_id": "fc_e6bd3c9d0240",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.7369008,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_08dcc70cda6d": {
+      "forecast_id": "fc_08dcc70cda6d",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.7725544,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ca1337526a2b": {
+      "forecast_id": "fc_ca1337526a2b",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.7956064,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_39bea889c648": {
+      "forecast_id": "fc_39bea889c648",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.8130474,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_921d6bccc807": {
+      "forecast_id": "fc_921d6bccc807",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.83093,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_74843b5d8d97": {
+      "forecast_id": "fc_74843b5d8d97",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.8485227,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_5df617c81c77": {
+      "forecast_id": "fc_5df617c81c77",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.868508,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_70ff230e38a2": {
+      "forecast_id": "fc_70ff230e38a2",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.8894403,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b841bc9591a4": {
+      "forecast_id": "fc_b841bc9591a4",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.908018,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b1d523c343d1": {
+      "forecast_id": "fc_b1d523c343d1",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.9276314,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d80e61736966": {
+      "forecast_id": "fc_d80e61736966",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.9476902,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_36df2d42e65b": {
+      "forecast_id": "fc_36df2d42e65b",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.9655232,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ffe70ac78fbe": {
+      "forecast_id": "fc_ffe70ac78fbe",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032258.983046,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_09566ae2517e": {
+      "forecast_id": "fc_09566ae2517e",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.0006366,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f584d7989eb6": {
+      "forecast_id": "fc_f584d7989eb6",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.0181549,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_bdefbfa642b9": {
+      "forecast_id": "fc_bdefbfa642b9",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.0358264,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_96da201cc8cc": {
+      "forecast_id": "fc_96da201cc8cc",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.0532699,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4c951779e5ee": {
+      "forecast_id": "fc_4c951779e5ee",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.07082,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ef101fe0ac47": {
+      "forecast_id": "fc_ef101fe0ac47",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.0881453,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_21f7374a333c": {
+      "forecast_id": "fc_21f7374a333c",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.1059556,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_10843d473476": {
+      "forecast_id": "fc_10843d473476",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.1237164,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_98dbba9102b5": {
+      "forecast_id": "fc_98dbba9102b5",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.1415093,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_85f5a3955cd2": {
+      "forecast_id": "fc_85f5a3955cd2",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.1590407,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f8bb7dd62f1b": {
+      "forecast_id": "fc_f8bb7dd62f1b",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.1766748,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_17141d9f92a9": {
+      "forecast_id": "fc_17141d9f92a9",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.1941538,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0fda81829a78": {
+      "forecast_id": "fc_0fda81829a78",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.2171376,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f4dd630fcefc": {
+      "forecast_id": "fc_f4dd630fcefc",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.2400215,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_38235d7df52e": {
+      "forecast_id": "fc_38235d7df52e",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.2583365,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d1bcd34f86a2": {
+      "forecast_id": "fc_d1bcd34f86a2",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.2777305,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ff7f2a4f1278": {
+      "forecast_id": "fc_ff7f2a4f1278",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.3157115,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_787b34265c76": {
+      "forecast_id": "fc_787b34265c76",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.3538554,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_497fd4897c22": {
+      "forecast_id": "fc_497fd4897c22",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.3917112,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b7699dd25fac": {
+      "forecast_id": "fc_b7699dd25fac",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.43059,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cb98f5c1a86a": {
+      "forecast_id": "fc_cb98f5c1a86a",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.4687953,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b223f85cfc4f": {
+      "forecast_id": "fc_b223f85cfc4f",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.4896977,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e01ef6b90a99": {
+      "forecast_id": "fc_e01ef6b90a99",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.5083222,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a8f7196b92bd": {
+      "forecast_id": "fc_a8f7196b92bd",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.5273454,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d13c07b31ea0": {
+      "forecast_id": "fc_d13c07b31ea0",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.5468102,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_5b9f32c64f60": {
+      "forecast_id": "fc_5b9f32c64f60",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.5783646,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_180dba6e2ae3": {
+      "forecast_id": "fc_180dba6e2ae3",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.7402062,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2b52e62f7d85": {
+      "forecast_id": "fc_2b52e62f7d85",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.7586162,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e03a0ee2480d": {
+      "forecast_id": "fc_e03a0ee2480d",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.779679,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_5b72a3ae38a5": {
+      "forecast_id": "fc_5b72a3ae38a5",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.7987592,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a47c61de1283": {
+      "forecast_id": "fc_a47c61de1283",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.819137,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b15fde9b1a48": {
+      "forecast_id": "fc_b15fde9b1a48",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.8380024,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4086a5673bc2": {
+      "forecast_id": "fc_4086a5673bc2",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.8589764,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b3a81efc02f6": {
+      "forecast_id": "fc_b3a81efc02f6",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.8779144,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_67b8424b276d": {
+      "forecast_id": "fc_67b8424b276d",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.8970063,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b2154a9e6a33": {
+      "forecast_id": "fc_b2154a9e6a33",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.9154568,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2a21e1bd6659": {
+      "forecast_id": "fc_2a21e1bd6659",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.934077,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_448d54937dea": {
+      "forecast_id": "fc_448d54937dea",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.9525635,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a6f3f463a853": {
+      "forecast_id": "fc_a6f3f463a853",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.9725614,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e8a9e4f46ecf": {
+      "forecast_id": "fc_e8a9e4f46ecf",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032259.9917288,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a919679480a0": {
+      "forecast_id": "fc_a919679480a0",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.0175557,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0d1550ee1614": {
+      "forecast_id": "fc_0d1550ee1614",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.0520072,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_9912c3015ec0": {
+      "forecast_id": "fc_9912c3015ec0",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.0712197,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3682ea18653d": {
+      "forecast_id": "fc_3682ea18653d",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.0912812,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_95bc44c17e6a": {
+      "forecast_id": "fc_95bc44c17e6a",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.1164708,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4682929e81d9": {
+      "forecast_id": "fc_4682929e81d9",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.1449695,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8a4159f99e59": {
+      "forecast_id": "fc_8a4159f99e59",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.1811485,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c41712737f4e": {
+      "forecast_id": "fc_c41712737f4e",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.2151535,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1aa3e45d7905": {
+      "forecast_id": "fc_1aa3e45d7905",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.2343004,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_372313289db2": {
+      "forecast_id": "fc_372313289db2",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.2531354,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4b90a6f1ad99": {
+      "forecast_id": "fc_4b90a6f1ad99",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.2824526,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_783486bc60cd": {
+      "forecast_id": "fc_783486bc60cd",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.30766,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1f5e9d9ed4ab": {
+      "forecast_id": "fc_1f5e9d9ed4ab",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.3385692,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b059e438becb": {
+      "forecast_id": "fc_b059e438becb",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.3603735,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_14b73108ca1d": {
+      "forecast_id": "fc_14b73108ca1d",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.379297,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_44aed146b5d0": {
+      "forecast_id": "fc_44aed146b5d0",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.400827,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_bc2731739b39": {
+      "forecast_id": "fc_bc2731739b39",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.423568,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_36cc56f88f19": {
+      "forecast_id": "fc_36cc56f88f19",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.4498024,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_76c807acdac5": {
+      "forecast_id": "fc_76c807acdac5",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.4795003,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6512bb0b5bf9": {
+      "forecast_id": "fc_6512bb0b5bf9",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.5190723,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0ef3ea670e04": {
+      "forecast_id": "fc_0ef3ea670e04",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.5483236,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_85ea06862bed": {
+      "forecast_id": "fc_85ea06862bed",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.572194,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_746b160b531f": {
+      "forecast_id": "fc_746b160b531f",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.6050475,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b76ebd87877c": {
+      "forecast_id": "fc_b76ebd87877c",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.6376305,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a51dfb5e24dc": {
+      "forecast_id": "fc_a51dfb5e24dc",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.6587589,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_20592c74234c": {
+      "forecast_id": "fc_20592c74234c",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.680346,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a6db58524379": {
+      "forecast_id": "fc_a6db58524379",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.7002258,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8894709c12e5": {
+      "forecast_id": "fc_8894709c12e5",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.7217712,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7dcfe2235a29": {
+      "forecast_id": "fc_7dcfe2235a29",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.742458,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_486dd9b5280b": {
+      "forecast_id": "fc_486dd9b5280b",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.762901,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_91cf1d9e9443": {
+      "forecast_id": "fc_91cf1d9e9443",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.7854729,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e68e21ad46d1": {
+      "forecast_id": "fc_e68e21ad46d1",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.8079965,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_9d46cc01fbca": {
+      "forecast_id": "fc_9d46cc01fbca",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.8291852,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_fde32358154d": {
+      "forecast_id": "fc_fde32358154d",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.849515,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_5ba612f871c2": {
+      "forecast_id": "fc_5ba612f871c2",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.8695056,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d066b50e9aef": {
+      "forecast_id": "fc_d066b50e9aef",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.892294,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f7858f11e1c8": {
+      "forecast_id": "fc_f7858f11e1c8",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.9148526,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_748d2885ceed": {
+      "forecast_id": "fc_748d2885ceed",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.9344037,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_798636443fed": {
+      "forecast_id": "fc_798636443fed",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032260.9612386,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_83463116e46c": {
+      "forecast_id": "fc_83463116e46c",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032261.0022173,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f7928091d317": {
+      "forecast_id": "fc_f7928091d317",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032261.043469,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_85e487c2ea5d": {
+      "forecast_id": "fc_85e487c2ea5d",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032261.0848937,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e20aeb148a37": {
+      "forecast_id": "fc_e20aeb148a37",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032261.1251776,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c21c384fd4b3": {
+      "forecast_id": "fc_c21c384fd4b3",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032261.165784,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f4f5a4d183d7": {
+      "forecast_id": "fc_f4f5a4d183d7",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032261.2063801,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e492d20f314e": {
+      "forecast_id": "fc_e492d20f314e",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032261.2471645,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3365f5b7da0c": {
+      "forecast_id": "fc_3365f5b7da0c",
+      "symbol": "TEST",
+      "prediction": 114.0262,
+      "lower_bound": 113.9294,
+      "upper_bound": 114.123,
+      "confidence": 0.992,
+      "timestamp": 1793032261.2869806,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2926ffa72f2f": {
+      "forecast_id": "fc_2926ffa72f2f",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.6344872,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7727e40041ad": {
+      "forecast_id": "fc_7727e40041ad",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.6542919,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1c99ef6c3501": {
+      "forecast_id": "fc_1c99ef6c3501",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.6734846,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_918d9006fba8": {
+      "forecast_id": "fc_918d9006fba8",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.6927085,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7043fcf20933": {
+      "forecast_id": "fc_7043fcf20933",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.7117944,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_27fbdb8a6e9c": {
+      "forecast_id": "fc_27fbdb8a6e9c",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.7311268,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_dbed16e2bb32": {
+      "forecast_id": "fc_dbed16e2bb32",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.7502077,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_67f7c601421c": {
+      "forecast_id": "fc_67f7c601421c",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.7694418,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_928d3e6a06c7": {
+      "forecast_id": "fc_928d3e6a06c7",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.7887821,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_316419481ea2": {
+      "forecast_id": "fc_316419481ea2",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.8093321,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_75bd2b5e1895": {
+      "forecast_id": "fc_75bd2b5e1895",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.8288682,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_21588e23caf7": {
+      "forecast_id": "fc_21588e23caf7",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.8484733,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ea6c63010b10": {
+      "forecast_id": "fc_ea6c63010b10",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.8679106,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2c3226279fb8": {
+      "forecast_id": "fc_2c3226279fb8",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.8873298,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_56116af630c6": {
+      "forecast_id": "fc_56116af630c6",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.9066975,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_755527058a76": {
+      "forecast_id": "fc_755527058a76",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.9258375,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_528a066aa077": {
+      "forecast_id": "fc_528a066aa077",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.9490194,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_002380b78bc7": {
+      "forecast_id": "fc_002380b78bc7",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.9744635,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ad01277b5af0": {
+      "forecast_id": "fc_ad01277b5af0",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032268.9972694,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2fe79ea5ab4e": {
+      "forecast_id": "fc_2fe79ea5ab4e",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.0279078,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_19ad9fdf9e03": {
+      "forecast_id": "fc_19ad9fdf9e03",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.0478823,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_adb4bc4cd03d": {
+      "forecast_id": "fc_adb4bc4cd03d",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.0673008,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_07fef9eb392b": {
+      "forecast_id": "fc_07fef9eb392b",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.0894148,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1c03ddfb2e7f": {
+      "forecast_id": "fc_1c03ddfb2e7f",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.108956,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0bac1f7715f5": {
+      "forecast_id": "fc_0bac1f7715f5",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.128688,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_83cafc8dea51": {
+      "forecast_id": "fc_83cafc8dea51",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.1505003,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7fd8f9c458ad": {
+      "forecast_id": "fc_7fd8f9c458ad",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.1760352,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_13f1e4f83ec3": {
+      "forecast_id": "fc_13f1e4f83ec3",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.202123,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d404ffce88fb": {
+      "forecast_id": "fc_d404ffce88fb",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.2298086,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f255da772beb": {
+      "forecast_id": "fc_f255da772beb",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.2492077,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_188284b234de": {
+      "forecast_id": "fc_188284b234de",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.2691963,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_53b49b468842": {
+      "forecast_id": "fc_53b49b468842",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.2890115,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_22188658688e": {
+      "forecast_id": "fc_22188658688e",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.3087728,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3626ea704eb0": {
+      "forecast_id": "fc_3626ea704eb0",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.3284774,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_eb785aadf562": {
+      "forecast_id": "fc_eb785aadf562",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.353276,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_efdf7ec2dfaa": {
+      "forecast_id": "fc_efdf7ec2dfaa",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.3734128,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ea3fa8869a01": {
+      "forecast_id": "fc_ea3fa8869a01",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.3991902,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0fc698779d7c": {
+      "forecast_id": "fc_0fc698779d7c",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.432022,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_07e22ee7fe7e": {
+      "forecast_id": "fc_07e22ee7fe7e",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.4651723,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f62562f9146e": {
+      "forecast_id": "fc_f62562f9146e",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.4978406,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a104d99e4bc0": {
+      "forecast_id": "fc_a104d99e4bc0",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.5289385,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_20474edf72bc": {
+      "forecast_id": "fc_20474edf72bc",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.5561485,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_050d5f88911a": {
+      "forecast_id": "fc_050d5f88911a",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.5765939,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_5cccb861c880": {
+      "forecast_id": "fc_5cccb861c880",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.600915,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7fd9355e4135": {
+      "forecast_id": "fc_7fd9355e4135",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.6279995,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c8258b1eb6b3": {
+      "forecast_id": "fc_c8258b1eb6b3",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.6488354,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8f05f0eee4e6": {
+      "forecast_id": "fc_8f05f0eee4e6",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.6686075,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4e3c74bb55b7": {
+      "forecast_id": "fc_4e3c74bb55b7",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.689004,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_795e6623e9ea": {
+      "forecast_id": "fc_795e6623e9ea",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.7257218,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_51c25740ff8e": {
+      "forecast_id": "fc_51c25740ff8e",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.750226,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f234245d189e": {
+      "forecast_id": "fc_f234245d189e",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.7711532,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_185987c66cb1": {
+      "forecast_id": "fc_185987c66cb1",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.7919552,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8c666838674b": {
+      "forecast_id": "fc_8c666838674b",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.812185,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6e48ce552020": {
+      "forecast_id": "fc_6e48ce552020",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.833918,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_41630f7a8c92": {
+      "forecast_id": "fc_41630f7a8c92",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.854908,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b9c4114ccc6f": {
+      "forecast_id": "fc_b9c4114ccc6f",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.8758466,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_29d6e7b017f2": {
+      "forecast_id": "fc_29d6e7b017f2",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.8961318,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2dae69203f10": {
+      "forecast_id": "fc_2dae69203f10",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.9170022,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d8388c266f33": {
+      "forecast_id": "fc_d8388c266f33",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.9391513,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ff6a406df959": {
+      "forecast_id": "fc_ff6a406df959",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.9621837,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_667e09ed94f4": {
+      "forecast_id": "fc_667e09ed94f4",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032269.9870439,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_33780855b05c": {
+      "forecast_id": "fc_33780855b05c",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.0193372,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_986b02f0f390": {
+      "forecast_id": "fc_986b02f0f390",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.045315,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_69bb7e597015": {
+      "forecast_id": "fc_69bb7e597015",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.0807061,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_123d0cfb57fb": {
+      "forecast_id": "fc_123d0cfb57fb",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.1185749,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3df85cf6ba5a": {
+      "forecast_id": "fc_3df85cf6ba5a",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.1425903,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a46f5ec3b492": {
+      "forecast_id": "fc_a46f5ec3b492",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.163085,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e41eb9547db9": {
+      "forecast_id": "fc_e41eb9547db9",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.1838682,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d0b84985fd3c": {
+      "forecast_id": "fc_d0b84985fd3c",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.20453,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_79e08caa11d9": {
+      "forecast_id": "fc_79e08caa11d9",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.225431,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ab1516a059da": {
+      "forecast_id": "fc_ab1516a059da",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.2457743,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_94f40108d9e9": {
+      "forecast_id": "fc_94f40108d9e9",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.2662883,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_75aa46c29d65": {
+      "forecast_id": "fc_75aa46c29d65",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.2868998,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ddb55558a32f": {
+      "forecast_id": "fc_ddb55558a32f",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.307428,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1825176e9bd8": {
+      "forecast_id": "fc_1825176e9bd8",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.3280888,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0cb0067ac8e7": {
+      "forecast_id": "fc_0cb0067ac8e7",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.349005,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1dd5da48f31d": {
+      "forecast_id": "fc_1dd5da48f31d",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.3771732,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_dbe7d455a949": {
+      "forecast_id": "fc_dbe7d455a949",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.413772,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_283a731a89c0": {
+      "forecast_id": "fc_283a731a89c0",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.4428656,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a9357b511b7e": {
+      "forecast_id": "fc_a9357b511b7e",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.4766862,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2a471f66b09f": {
+      "forecast_id": "fc_2a471f66b09f",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.517463,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_273c12f44ee1": {
+      "forecast_id": "fc_273c12f44ee1",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.5553901,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_95100cd1e0e8": {
+      "forecast_id": "fc_95100cd1e0e8",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.593646,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cfae49456cc7": {
+      "forecast_id": "fc_cfae49456cc7",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.6203861,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_bbdcdc6dab4f": {
+      "forecast_id": "fc_bbdcdc6dab4f",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.647298,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_710bf35424fb": {
+      "forecast_id": "fc_710bf35424fb",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.6733472,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_88bfe4aa06be": {
+      "forecast_id": "fc_88bfe4aa06be",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.6986146,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0fcb46d2cf75": {
+      "forecast_id": "fc_0fcb46d2cf75",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.7267895,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b4668dd9b217": {
+      "forecast_id": "fc_b4668dd9b217",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.7501545,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_94c8c838eb35": {
+      "forecast_id": "fc_94c8c838eb35",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.772675,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c24d8c1dc80e": {
+      "forecast_id": "fc_c24d8c1dc80e",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.7933526,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4ee2750e0d2d": {
+      "forecast_id": "fc_4ee2750e0d2d",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.8143172,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4c7c02af6c06": {
+      "forecast_id": "fc_4c7c02af6c06",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.8354201,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3090db6388b3": {
+      "forecast_id": "fc_3090db6388b3",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.8602355,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a16d1e7c89cd": {
+      "forecast_id": "fc_a16d1e7c89cd",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.8850756,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a82ba1379b8f": {
+      "forecast_id": "fc_a82ba1379b8f",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.9054425,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_59e09a8a668f": {
+      "forecast_id": "fc_59e09a8a668f",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.926047,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ee94d846f32a": {
+      "forecast_id": "fc_ee94d846f32a",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.9465978,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ea5a45c659a0": {
+      "forecast_id": "fc_ea5a45c659a0",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.9671533,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4cdc1741ea8a": {
+      "forecast_id": "fc_4cdc1741ea8a",
+      "symbol": "TEST",
+      "prediction": 114.6946,
+      "lower_bound": 114.552,
+      "upper_bound": 114.8372,
+      "confidence": 0.988,
+      "timestamp": 1793032270.9878452,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_44d238be83c2": {
+      "forecast_id": "fc_44d238be83c2",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.7270617,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7a93f49642d8": {
+      "forecast_id": "fc_7a93f49642d8",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.7477043,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_671987857700": {
+      "forecast_id": "fc_671987857700",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.7688432,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0c6caba713bb": {
+      "forecast_id": "fc_0c6caba713bb",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.790948,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_74ecdb1ade35": {
+      "forecast_id": "fc_74ecdb1ade35",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.8120725,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_206aa0519d0e": {
+      "forecast_id": "fc_206aa0519d0e",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.8331425,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7ef70473ab83": {
+      "forecast_id": "fc_7ef70473ab83",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.858175,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1553e1857537": {
+      "forecast_id": "fc_1553e1857537",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.8791084,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e9fe09e7277a": {
+      "forecast_id": "fc_e9fe09e7277a",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.900001,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7a41debc39d8": {
+      "forecast_id": "fc_7a41debc39d8",
+      "symbol": "TEST",
+      "prediction": 114.0784,
+      "lower_bound": 113.9703,
+      "upper_bound": 114.1865,
+      "confidence": 0.991,
+      "timestamp": 1793032296.92088,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1f52e6d31da9": {
+      "forecast_id": "fc_1f52e6d31da9",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.1657183,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8e168db84011": {
+      "forecast_id": "fc_8e168db84011",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.189773,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_181fbe37aa19": {
+      "forecast_id": "fc_181fbe37aa19",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.213025,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a194b701d468": {
+      "forecast_id": "fc_a194b701d468",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.236208,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_101372cddd4b": {
+      "forecast_id": "fc_101372cddd4b",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.2570965,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_558c4caf80ec": {
+      "forecast_id": "fc_558c4caf80ec",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.2784462,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f3c14fa1d6c5": {
+      "forecast_id": "fc_f3c14fa1d6c5",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.3002777,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0ccce5fb4dbf": {
+      "forecast_id": "fc_0ccce5fb4dbf",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.321899,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e480820a8a6e": {
+      "forecast_id": "fc_e480820a8a6e",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.3430665,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ff10edd5f2ed": {
+      "forecast_id": "fc_ff10edd5f2ed",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.3643043,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_60efb9c3843e": {
+      "forecast_id": "fc_60efb9c3843e",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.389852,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4f9f6ecd39aa": {
+      "forecast_id": "fc_4f9f6ecd39aa",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.4120064,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_215aade034e4": {
+      "forecast_id": "fc_215aade034e4",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.4339113,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_21d6e5b76da5": {
+      "forecast_id": "fc_21d6e5b76da5",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.455082,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d82aff190d48": {
+      "forecast_id": "fc_d82aff190d48",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.4779449,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_aea7b288d896": {
+      "forecast_id": "fc_aea7b288d896",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.4994903,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8f5ccfb5665e": {
+      "forecast_id": "fc_8f5ccfb5665e",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.5209615,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c5da0ab66516": {
+      "forecast_id": "fc_c5da0ab66516",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.5425208,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_200edd2fb43d": {
+      "forecast_id": "fc_200edd2fb43d",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.5637867,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3181de32070a": {
+      "forecast_id": "fc_3181de32070a",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.5860128,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_480903195324": {
+      "forecast_id": "fc_480903195324",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.6075354,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d1452b684b95": {
+      "forecast_id": "fc_d1452b684b95",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.630735,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d4529224dafa": {
+      "forecast_id": "fc_d4529224dafa",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.6560566,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2a2571e11e39": {
+      "forecast_id": "fc_2a2571e11e39",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.6777883,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ac1f181ea9c0": {
+      "forecast_id": "fc_ac1f181ea9c0",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.6996808,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_39c988c10b8a": {
+      "forecast_id": "fc_39c988c10b8a",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.7213852,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_5c3807651a1c": {
+      "forecast_id": "fc_5c3807651a1c",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.742961,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cb3f85b3cf0f": {
+      "forecast_id": "fc_cb3f85b3cf0f",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.7698903,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1d75d5ebdaf1": {
+      "forecast_id": "fc_1d75d5ebdaf1",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.8011127,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8cb92fc189c9": {
+      "forecast_id": "fc_8cb92fc189c9",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.8231246,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_842aa11c0f1f": {
+      "forecast_id": "fc_842aa11c0f1f",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.8447905,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c41d9ea37d84": {
+      "forecast_id": "fc_c41d9ea37d84",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.8662715,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f83f5f819515": {
+      "forecast_id": "fc_f83f5f819515",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.8878925,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3e7ba11dd179": {
+      "forecast_id": "fc_3e7ba11dd179",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.910025,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_af37f8c0162d": {
+      "forecast_id": "fc_af37f8c0162d",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.9317589,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4ae6fe299786": {
+      "forecast_id": "fc_4ae6fe299786",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.9537106,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ff3e9c012f33": {
+      "forecast_id": "fc_ff3e9c012f33",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.9758277,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c424bf9db5da": {
+      "forecast_id": "fc_c424bf9db5da",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032312.9975362,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_25e9e3d9f55a": {
+      "forecast_id": "fc_25e9e3d9f55a",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.0214925,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f823c25d03fa": {
+      "forecast_id": "fc_f823c25d03fa",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.0431864,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_12cbbc456001": {
+      "forecast_id": "fc_12cbbc456001",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.0709488,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6c55c38ccadd": {
+      "forecast_id": "fc_6c55c38ccadd",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.0929666,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a4f01470cf9e": {
+      "forecast_id": "fc_a4f01470cf9e",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.116024,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_71a42b8d9440": {
+      "forecast_id": "fc_71a42b8d9440",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.1387053,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_480369474da1": {
+      "forecast_id": "fc_480369474da1",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.1618586,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c210f0e913b1": {
+      "forecast_id": "fc_c210f0e913b1",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.1849644,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4f4d3f909bf7": {
+      "forecast_id": "fc_4f4d3f909bf7",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.2083397,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ac99e3bc2b31": {
+      "forecast_id": "fc_ac99e3bc2b31",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.2536554,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_86b83d2e5a65": {
+      "forecast_id": "fc_86b83d2e5a65",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.2948985,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_91e6fb1f77b6": {
+      "forecast_id": "fc_91e6fb1f77b6",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.3179095,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_95fba25df79d": {
+      "forecast_id": "fc_95fba25df79d",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.3396604,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_533aedf1e840": {
+      "forecast_id": "fc_533aedf1e840",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.3613453,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_dc6a8aca078e": {
+      "forecast_id": "fc_dc6a8aca078e",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.382874,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b159328eb55d": {
+      "forecast_id": "fc_b159328eb55d",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.4046242,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e882615a854c": {
+      "forecast_id": "fc_e882615a854c",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.4264886,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0ec915972afc": {
+      "forecast_id": "fc_0ec915972afc",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.4487848,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_72895cf9d517": {
+      "forecast_id": "fc_72895cf9d517",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.4708376,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_363353b1c9ad": {
+      "forecast_id": "fc_363353b1c9ad",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.4931624,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d97ace403474": {
+      "forecast_id": "fc_d97ace403474",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.515083,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4a1a55dcbe44": {
+      "forecast_id": "fc_4a1a55dcbe44",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.5369606,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_9577aedeeceb": {
+      "forecast_id": "fc_9577aedeeceb",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.5589252,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_07154685eddb": {
+      "forecast_id": "fc_07154685eddb",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.5811396,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_feca0751d906": {
+      "forecast_id": "fc_feca0751d906",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.6051302,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c78533e19b25": {
+      "forecast_id": "fc_c78533e19b25",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.627664,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_974cb6b78584": {
+      "forecast_id": "fc_974cb6b78584",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.650382,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_70065fe9ccc0": {
+      "forecast_id": "fc_70065fe9ccc0",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.6959255,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1d3473593e7e": {
+      "forecast_id": "fc_1d3473593e7e",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.7181025,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c0784a4a9046": {
+      "forecast_id": "fc_c0784a4a9046",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.746485,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_574b0d7d0a94": {
+      "forecast_id": "fc_574b0d7d0a94",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.7686703,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cea6df3c1b70": {
+      "forecast_id": "fc_cea6df3c1b70",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.7974117,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_71cf0e16cff6": {
+      "forecast_id": "fc_71cf0e16cff6",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.8254168,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cc5427fe90a5": {
+      "forecast_id": "fc_cc5427fe90a5",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.8476558,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_352759084d8d": {
+      "forecast_id": "fc_352759084d8d",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.8993163,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0c342e4710c6": {
+      "forecast_id": "fc_0c342e4710c6",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.9445224,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_489108b5634c": {
+      "forecast_id": "fc_489108b5634c",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032313.9774277,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e8df3ea2e7f4": {
+      "forecast_id": "fc_e8df3ea2e7f4",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.006834,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_30044712b40a": {
+      "forecast_id": "fc_30044712b40a",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.0321152,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_967cfdf0d383": {
+      "forecast_id": "fc_967cfdf0d383",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.056885,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a10be3257f88": {
+      "forecast_id": "fc_a10be3257f88",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.0824385,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7af3d3a38f64": {
+      "forecast_id": "fc_7af3d3a38f64",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.108917,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_bacacb924b18": {
+      "forecast_id": "fc_bacacb924b18",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.131621,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1a406c9b4e1d": {
+      "forecast_id": "fc_1a406c9b4e1d",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.153764,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e94cec486442": {
+      "forecast_id": "fc_e94cec486442",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.175781,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cc0813291184": {
+      "forecast_id": "fc_cc0813291184",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.1975875,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3e19d7590639": {
+      "forecast_id": "fc_3e19d7590639",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.2199702,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6179b74505e3": {
+      "forecast_id": "fc_6179b74505e3",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.2431662,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d2eaee859320": {
+      "forecast_id": "fc_d2eaee859320",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.2653594,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_001f633c6200": {
+      "forecast_id": "fc_001f633c6200",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.2879193,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_56c27aad68d1": {
+      "forecast_id": "fc_56c27aad68d1",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.310344,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b1a84bfbc740": {
+      "forecast_id": "fc_b1a84bfbc740",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.3322792,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c7a54b07786f": {
+      "forecast_id": "fc_c7a54b07786f",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.3544464,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b432e35b330a": {
+      "forecast_id": "fc_b432e35b330a",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.3768919,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3179962de446": {
+      "forecast_id": "fc_3179962de446",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.3995383,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ae6341d1a037": {
+      "forecast_id": "fc_ae6341d1a037",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.4223397,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8a4e9f292930": {
+      "forecast_id": "fc_8a4e9f292930",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.446372,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_be92a95e3c80": {
+      "forecast_id": "fc_be92a95e3c80",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.4699004,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_9617070643b6": {
+      "forecast_id": "fc_9617070643b6",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.4929144,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_166e1a322634": {
+      "forecast_id": "fc_166e1a322634",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.5159616,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c42f93928856": {
+      "forecast_id": "fc_c42f93928856",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.5386038,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2893d2f953ef": {
+      "forecast_id": "fc_2893d2f953ef",
+      "symbol": "TEST",
+      "prediction": 114.0569,
+      "lower_bound": 113.9371,
+      "upper_bound": 114.1766,
+      "confidence": 0.99,
+      "timestamp": 1793032314.563818,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_747dcfa9bd58": {
+      "forecast_id": "fc_747dcfa9bd58",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.0086522,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_bdcc4ae9d634": {
+      "forecast_id": "fc_bdcc4ae9d634",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.0395057,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7f7c7ee834d2": {
+      "forecast_id": "fc_7f7c7ee834d2",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.072451,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_49bab716f255": {
+      "forecast_id": "fc_49bab716f255",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.1141047,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2a70d60b08db": {
+      "forecast_id": "fc_2a70d60b08db",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.1511369,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_67ba153cb0ed": {
+      "forecast_id": "fc_67ba153cb0ed",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.1765661,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_878ccdfde0e8": {
+      "forecast_id": "fc_878ccdfde0e8",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.2015998,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ef31fa00afd8": {
+      "forecast_id": "fc_ef31fa00afd8",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.2278883,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_25962139c33a": {
+      "forecast_id": "fc_25962139c33a",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.25091,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4a03e22e02a9": {
+      "forecast_id": "fc_4a03e22e02a9",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.2740057,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_579184cfc8d2": {
+      "forecast_id": "fc_579184cfc8d2",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.3007174,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_db89a6a17b27": {
+      "forecast_id": "fc_db89a6a17b27",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.3598397,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_fdd333c64958": {
+      "forecast_id": "fc_fdd333c64958",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.4067369,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7aa7b2e23028": {
+      "forecast_id": "fc_7aa7b2e23028",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.4539728,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6b4cf50bf280": {
+      "forecast_id": "fc_6b4cf50bf280",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.5023923,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cc5335d40174": {
+      "forecast_id": "fc_cc5335d40174",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.5483682,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e4e54771a165": {
+      "forecast_id": "fc_e4e54771a165",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.5818224,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_466df6c95d9e": {
+      "forecast_id": "fc_466df6c95d9e",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.6041539,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6024e86e181c": {
+      "forecast_id": "fc_6024e86e181c",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.6267288,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6f76f9e5cb1c": {
+      "forecast_id": "fc_6f76f9e5cb1c",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.6488826,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_abe494399bcf": {
+      "forecast_id": "fc_abe494399bcf",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.6720328,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_1735016c584e": {
+      "forecast_id": "fc_1735016c584e",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.6947503,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7188b9fc5df9": {
+      "forecast_id": "fc_7188b9fc5df9",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.7173445,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_30d22cdd2c21": {
+      "forecast_id": "fc_30d22cdd2c21",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.7399368,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f82745e10c8f": {
+      "forecast_id": "fc_f82745e10c8f",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.7857733,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2d06acc876ed": {
+      "forecast_id": "fc_2d06acc876ed",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.8313715,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_597992a424b4": {
+      "forecast_id": "fc_597992a424b4",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.8553016,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cc37236382db": {
+      "forecast_id": "fc_cc37236382db",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.877993,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8d884ba0b091": {
+      "forecast_id": "fc_8d884ba0b091",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.9016821,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d0e826c3af5b": {
+      "forecast_id": "fc_d0e826c3af5b",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.9240744,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_668ecf05f333": {
+      "forecast_id": "fc_668ecf05f333",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.9470458,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b3ec9954e20b": {
+      "forecast_id": "fc_b3ec9954e20b",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.972935,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_08d275a98393": {
+      "forecast_id": "fc_08d275a98393",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032339.9968107,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ae4d3066ebdb": {
+      "forecast_id": "fc_ae4d3066ebdb",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.0236175,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_20cbb3f1f866": {
+      "forecast_id": "fc_20cbb3f1f866",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.0460575,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e748ebd721eb": {
+      "forecast_id": "fc_e748ebd721eb",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.068511,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_16e4d72a6e13": {
+      "forecast_id": "fc_16e4d72a6e13",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.0909004,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_aca1b084981e": {
+      "forecast_id": "fc_aca1b084981e",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.1331751,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_289a3ab4c173": {
+      "forecast_id": "fc_289a3ab4c173",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.158852,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_0b72f6b247fd": {
+      "forecast_id": "fc_0b72f6b247fd",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.1815865,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e8c2a36b35c8": {
+      "forecast_id": "fc_e8c2a36b35c8",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.2049298,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_84fb753d0552": {
+      "forecast_id": "fc_84fb753d0552",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.2275488,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_f03137695719": {
+      "forecast_id": "fc_f03137695719",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.2598279,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_aeb0166675cd": {
+      "forecast_id": "fc_aeb0166675cd",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.2850404,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_55f44f8cfc30": {
+      "forecast_id": "fc_55f44f8cfc30",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.314131,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8b8225c52a6d": {
+      "forecast_id": "fc_8b8225c52a6d",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.3381772,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_15ae4c2ac9ab": {
+      "forecast_id": "fc_15ae4c2ac9ab",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.3615808,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_83cfa5fc0173": {
+      "forecast_id": "fc_83cfa5fc0173",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.3884892,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_7e4db10e3dd1": {
+      "forecast_id": "fc_7e4db10e3dd1",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.4178672,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_756065ef6e68": {
+      "forecast_id": "fc_756065ef6e68",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.4650033,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_9edf10c94e37": {
+      "forecast_id": "fc_9edf10c94e37",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.4885423,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b01a0739ca18": {
+      "forecast_id": "fc_b01a0739ca18",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.535841,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_192a70afee52": {
+      "forecast_id": "fc_192a70afee52",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.5829592,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_68c08a7da459": {
+      "forecast_id": "fc_68c08a7da459",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.6086512,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3329c9272dda": {
+      "forecast_id": "fc_3329c9272dda",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.6311421,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_5019e3116717": {
+      "forecast_id": "fc_5019e3116717",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.653898,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_9082164b2b0f": {
+      "forecast_id": "fc_9082164b2b0f",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.6764407,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8e32552d31f7": {
+      "forecast_id": "fc_8e32552d31f7",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.6993508,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b893bb325709": {
+      "forecast_id": "fc_b893bb325709",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.7219772,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_c8ee6d75cbb3": {
+      "forecast_id": "fc_c8ee6d75cbb3",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.7446024,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8e8c77a1417b": {
+      "forecast_id": "fc_8e8c77a1417b",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.7672057,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_246295d2850d": {
+      "forecast_id": "fc_246295d2850d",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.7900922,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_264c68ec53a8": {
+      "forecast_id": "fc_264c68ec53a8",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.8129873,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d840d4f90eb6": {
+      "forecast_id": "fc_d840d4f90eb6",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.8359292,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b2641c8cb22a": {
+      "forecast_id": "fc_b2641c8cb22a",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.8588934,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_541c160be319": {
+      "forecast_id": "fc_541c160be319",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.881659,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d7c02bb36538": {
+      "forecast_id": "fc_d7c02bb36538",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.904417,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_979a7bb9d81b": {
+      "forecast_id": "fc_979a7bb9d81b",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.9275126,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_957685b272e2": {
+      "forecast_id": "fc_957685b272e2",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.951238,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_e44b2cb0d796": {
+      "forecast_id": "fc_e44b2cb0d796",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.9749017,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_77c3229bb9a4": {
+      "forecast_id": "fc_77c3229bb9a4",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032340.9982042,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b46e4b0ba944": {
+      "forecast_id": "fc_b46e4b0ba944",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.0214603,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_cd0672791f77": {
+      "forecast_id": "fc_cd0672791f77",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.0446937,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_22cd7306ed96": {
+      "forecast_id": "fc_22cd7306ed96",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.0677955,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_698693f2b471": {
+      "forecast_id": "fc_698693f2b471",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.091004,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_8ae349aa6117": {
+      "forecast_id": "fc_8ae349aa6117",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.1178112,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ced2554a2d42": {
+      "forecast_id": "fc_ced2554a2d42",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.1433613,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_acdb78005156": {
+      "forecast_id": "fc_acdb78005156",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.1764615,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_eea2fcbfa029": {
+      "forecast_id": "fc_eea2fcbfa029",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.2000465,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_97baeb236730": {
+      "forecast_id": "fc_97baeb236730",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.22404,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_3f539dd01915": {
+      "forecast_id": "fc_3f539dd01915",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.2470384,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_6c1c442a64c5": {
+      "forecast_id": "fc_6c1c442a64c5",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.270355,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_084b1ef92687": {
+      "forecast_id": "fc_084b1ef92687",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.2935367,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_31a2acc29f38": {
+      "forecast_id": "fc_31a2acc29f38",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.3171685,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a94fd58510fa": {
+      "forecast_id": "fc_a94fd58510fa",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.3406568,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b6d5cbef3290": {
+      "forecast_id": "fc_b6d5cbef3290",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.3638444,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_72e059ac71c9": {
+      "forecast_id": "fc_72e059ac71c9",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.3874648,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_2f3f3b729dfc": {
+      "forecast_id": "fc_2f3f3b729dfc",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.4107194,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d9632f56d8f1": {
+      "forecast_id": "fc_d9632f56d8f1",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.435665,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_a48478e8aa6b": {
+      "forecast_id": "fc_a48478e8aa6b",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.4591212,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_4dbbb032a40a": {
+      "forecast_id": "fc_4dbbb032a40a",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.4838016,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_20aaa904c273": {
+      "forecast_id": "fc_20aaa904c273",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.507993,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_23123d530a40": {
+      "forecast_id": "fc_23123d530a40",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.5311058,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_ea11580aa64a": {
+      "forecast_id": "fc_ea11580aa64a",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.5545535,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_5f50411f7612": {
+      "forecast_id": "fc_5f50411f7612",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.5780263,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_66458e30b5cb": {
+      "forecast_id": "fc_66458e30b5cb",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.6012123,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_b5c6de725704": {
+      "forecast_id": "fc_b5c6de725704",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.6244924,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_d987c39941bb": {
+      "forecast_id": "fc_d987c39941bb",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.6478233,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_9375dacc06cc": {
+      "forecast_id": "fc_9375dacc06cc",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.671066,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
+    },
+    "fc_98c15b594fc8": {
+      "forecast_id": "fc_98c15b594fc8",
+      "symbol": "TEST",
+      "prediction": 114.6743,
+      "lower_bound": 114.5442,
+      "upper_bound": 114.8045,
+      "confidence": 0.989,
+      "timestamp": 1793032341.6946309,
+      "horizon_sec": 3600.0,
+      "model_name": "ensemble",
+      "features_used": [
+        "sma",
+        "ses",
+        "holt",
+        "arima"
+      ]
     }
   },
   "actuals": {}

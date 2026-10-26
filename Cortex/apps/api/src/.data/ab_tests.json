@@ -110,5 +110,33 @@
     "winner": "B",
     "significance": "highly_significant",
     "improvement_pct": 49.999999999999986
+  },
+  {
+    "test_id": "ab_1ec7dcb84a10",
+    "name": "Landing page test",
+    "winner": "B",
+    "significance": "highly_significant",
+    "improvement_pct": 60.0
+  },
+  {
+    "test_id": "ab_d44752bd8555",
+    "name": "",
+    "winner": "B",
+    "significance": "highly_significant",
+    "improvement_pct": 49.999999999999986
+  },
+  {
+    "test_id": "ab_39be6939be64",
+    "name": "Landing page test",
+    "winner": "B",
+    "significance": "highly_significant",
+    "improvement_pct": 60.0
+  },
+  {
+    "test_id": "ab_83845f7c8726",
+    "name": "",
+    "winner": "B",
+    "significance": "highly_significant",
+    "improvement_pct": 49.999999999999986
   }
 ]

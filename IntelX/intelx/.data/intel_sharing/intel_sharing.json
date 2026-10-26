@@ -1,13 +1,13 @@
 {
   "packages": [
     {
-      "package_id": "pkg_937476acf42b",
+      "package_id": "pkg_a8c851abc94d",
       "name": "Threat Report",
       "confidence": 0.8,
       "tlp": "amber"
     },
     {
-      "package_id": "pkg_e44082813322",
+      "package_id": "pkg_ec13fd833872",
       "name": "Secret",
       "confidence": 0.9,
       "tlp": "red"
