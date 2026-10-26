@@ -173,7 +173,7 @@ class RealtimeCollaborationEngine:
         # Simulate Operational Transformation
         ot_transform = {
             "position": position,
-            "adjusted": position + (ord(hashlib.md5(f"{session_id}:{position}".encode()).encode()) % 5) - 2,
+            "adjusted": position + (ord(hashlib.md5(f"{session_id}:{position}".encode()).hexdigest()[:1]) % 5) - 2,
         }
 
         op = EditOperation(
