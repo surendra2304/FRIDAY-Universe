@@ -496,7 +496,6 @@ class AutomatedTesting:
 automated_testing = AutomatedTesting()
 
 
-@router.post("/testing/generate")
 @router.post("/api/v1/forge/testing/generate")
 async def generate_tests_endpoint(payload: dict):
     """Generate unit tests from code."""
@@ -507,7 +506,6 @@ async def generate_tests_endpoint(payload: dict):
     return {"generated_tests": automated_testing.generate_tests(code, file_name)}
 
 
-@router.post("/testing/coverage")
 @router.post("/api/v1/forge/testing/coverage")
 async def analyze_coverage_endpoint(payload: dict):
     """Analyze code coverage."""
@@ -517,7 +515,6 @@ async def analyze_coverage_endpoint(payload: dict):
     return report.__dict__
 
 
-@router.get("/testing/report")
 @router.get("/api/v1/forge/testing/report")
 async def get_testing_report_endpoint():
     """Get automated testing report."""
