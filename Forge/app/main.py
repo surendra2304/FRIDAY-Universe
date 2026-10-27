@@ -347,10 +347,10 @@ def create_app() -> FastAPI:
     app.include_router(api_router, tags=["Core API"])
     app.include_router(api_router, prefix="/api/v1", tags=["API v1"])
     app.include_router(tasks_router, prefix="/api/v1", tags=["Tasks v1"])
-    app.include_router(code_repair_router, prefix="/api/v1/forge")
-    app.include_router(quantum_optimizer_router, prefix="/api/v1/forge/quantum")
-    app.include_router(collaboration_router, prefix="/api/v1/forge/collab")
-    app.include_router(dev_env_router, prefix="/api/v1/forge/dev-env")
+    app.include_router(code_repair_router)
+    app.include_router(quantum_optimizer_router)
+    app.include_router(collaboration_router)
+    app.include_router(dev_env_router)
     app.include_router(code_review_router)
     app.include_router(deployment_router)
 
@@ -378,58 +378,57 @@ def create_app() -> FastAPI:
     app.include_router(ws_router, tags=["WebSockets"])
     app.include_router(streaming_router, tags=["WebSocket Streaming Gateway"])
     app.include_router(dashboard_router, tags=["Web Dashboard"])
-    app.include_router(automated_testing_router, prefix="/api/v1", tags=["Automated Testing v1"])
-    app.include_router(automated_testing_router, prefix="/api", tags=["Automated Testing"])
-    app.include_router(code_intelligence_router, prefix="/api/v1", tags=["Code Intelligence v1"])
-    app.include_router(code_intelligence_router, prefix="/api", tags=["Code Intelligence"])
+    # These routers declare absolute /api/v1/forge/... paths; mount once at root.
+    app.include_router(automated_testing_router, tags=["Automated Testing"])
+    app.include_router(code_intelligence_router, tags=["Code Intelligence"])
 
     # --- Test Generation Engine Integration ---
     from app.services.test_generation_engine import router as test_gen_router
-    app.include_router(test_gen_router, prefix="/api/v1/forge", tags=["Test Generation"])
+    app.include_router(test_gen_router, prefix="/api/v1", tags=["Test Generation"])
 
     # --- Code Refactoring Engine Integration ---
     from app.services.code_refactoring_engine import router as refactor_router
-    app.include_router(refactor_router, prefix="/api/v1/forge", tags=["Code Refactoring"])
+    app.include_router(refactor_router, prefix="/api/v1", tags=["Code Refactoring"])
 
     # --- Dependency Analyzer Integration ---
     from app.services.dependency_analyzer import router as dep_analyzer_router
-    app.include_router(dep_analyzer_router, prefix="/api/v1/forge", tags=["Dependency Analysis"])
+    app.include_router(dep_analyzer_router, prefix="/api/v1", tags=["Dependency Analysis"])
 
     # --- Performance Profiler Integration ---
     from app.services.performance_profiler import router as perf_profiler_router
-    app.include_router(perf_profiler_router, prefix="/api/v1/forge", tags=["Performance Profiling"])
+    app.include_router(perf_profiler_router, prefix="/api/v1", tags=["Performance Profiling"])
 
     # --- Code Analysis Engine Integration ---
     from app.services.code_analysis_engine import router as code_analysis_router
-    app.include_router(code_analysis_router, prefix="/api/v1/forge", tags=["Code Analysis"])
+    app.include_router(code_analysis_router, prefix="/api/v1", tags=["Code Analysis"])
 
     # --- Build Pipeline Manager Integration ---
     from app.services.build_pipeline_manager import router as build_pipeline_router
-    app.include_router(build_pipeline_router, prefix="/api/v1/forge", tags=["Build Pipeline"])
+    app.include_router(build_pipeline_router, prefix="/api/v1", tags=["Build Pipeline"])
 
     # --- Test Coverage Analyzer Integration ---
     from app.services.test_coverage_analyzer import router as test_coverage_router
-    app.include_router(test_coverage_router, prefix="/api/v1/forge", tags=["Test Coverage"])
+    app.include_router(test_coverage_router, prefix="/api/v1", tags=["Test Coverage"])
 
     # --- Code Architecture Analyzer Integration ---
     from app.services.code_architecture_analyzer import router as arch_analyzer_router
-    app.include_router(arch_analyzer_router, prefix="/api/v1/forge", tags=["Architecture Analysis"])
+    app.include_router(arch_analyzer_router, prefix="/api/v1", tags=["Architecture Analysis"])
 
     # --- Code Merge Conflict Resolver Integration ---
     from app.services.code_merge_conflict_resolver import router as merge_resolver_router
-    app.include_router(merge_resolver_router, prefix="/api/v1/forge", tags=["Merge Conflict Resolver"])
+    app.include_router(merge_resolver_router, prefix="/api/v1", tags=["Merge Conflict Resolver"])
 
     # --- Code Security Scanner Integration ---
     from app.services.code_security_scanner import router as security_scanner_router
-    app.include_router(security_scanner_router, prefix="/api/v1/forge", tags=["Code Security"])
+    app.include_router(security_scanner_router, prefix="/api/v1", tags=["Code Security"])
 
     # --- Code Complexity Quantifier Integration ---
     from app.services.code_complexity_quantifier import router as complexity_quantifier_router
-    app.include_router(complexity_quantifier_router, prefix="/api/v1/forge", tags=["Code Complexity"])
+    app.include_router(complexity_quantifier_router, prefix="/api/v1", tags=["Code Complexity"])
 
     # --- Camofox Stealth Browser Integration ---
     from app.services.real_browser_routes import router as real_browser_router
-    app.include_router(real_browser_router, prefix="/api/v1/forge", tags=["Camofox Stealth Browser"])
+    app.include_router(real_browser_router, prefix="/api/v1", tags=["Camofox Stealth Browser"])
 
     return app
 
