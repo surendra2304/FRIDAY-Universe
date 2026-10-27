@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     id VARCHAR2(64) PRIMARY KEY,
     goal CLOB NOT NULL,
     requirements CLOB DEFAULT '[]',
-    mode VARCHAR2(32) DEFAULT 'autonomous',
+    run_mode VARCHAR2(32) DEFAULT 'autonomous',
     workspace_path VARCHAR2(1024) NOT NULL,
     max_budget NUMBER(10,2) DEFAULT 10.0,
     budget_consumed NUMBER(10,2) DEFAULT 0.0,
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
     goal TEXT NOT NULL,
     requirements TEXT NOT NULL DEFAULT '[]',
-    mode TEXT NOT NULL DEFAULT 'autonomous',
+    run_mode TEXT NOT NULL DEFAULT 'autonomous',
     workspace_path TEXT NOT NULL,
     max_budget REAL NOT NULL DEFAULT 10.0,
     budget_consumed REAL NOT NULL DEFAULT 0.0,
@@ -186,10 +186,15 @@ CREATE INDEX IF NOT EXISTS idx_checkpoints_step ON checkpoints(project_id, step_
 
 
 class DbRow(Mapping):
-    """Dictionary-like row wrapper matching aiosqlite.Row interface."""
+    """Dictionary-like row wrapper matching aiosqlite.Row interface.
+
+    Keys are normalised to lower case because Oracle returns unquoted column
+    names in upper case while SQLite and PostgreSQL return them as declared.
+    Callers index rows by their lower-case column names on every backend.
+    """
 
     def __init__(self, data: dict[str, Any]):
-        self._data = dict(data)
+        self._data = {str(k).lower(): v for k, v in data.items()}
 
     def __getitem__(self, key: str) -> Any:
         return self._data[key]
