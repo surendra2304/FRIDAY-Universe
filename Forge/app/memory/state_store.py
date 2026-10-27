@@ -99,7 +99,7 @@ class StateStore:
         async with self.db.connection() as conn:
             await conn.execute(
                 """
-                INSERT INTO tasks (id, goal, requirements, mode, workspace_path, max_budget, budget_consumed, state, progress_percentage, error_message, metadata, created_at, updated_at)
+                INSERT INTO tasks (id, goal, requirements, run_mode, workspace_path, max_budget, budget_consumed, state, progress_percentage, error_message, metadata, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -144,7 +144,7 @@ class StateStore:
                 id=row["id"],
                 goal=row["goal"],
                 requirements=json.loads(row["requirements"]),
-                mode=TaskMode(row["mode"]),
+                mode=TaskMode(row["run_mode"]),
                 workspace_path=row["workspace_path"],
                 max_budget=row["max_budget"],
                 budget_consumed=row["budget_consumed"],
@@ -201,7 +201,7 @@ class StateStore:
                 await conn.execute(
                     """
                     UPDATE tasks
-                    SET goal = ?, requirements = ?, mode = ?, workspace_path = ?, max_budget = ?,
+                    SET goal = ?, requirements = ?, run_mode = ?, workspace_path = ?, max_budget = ?,
                         budget_consumed = ?, state = ?, progress_percentage = ?, error_message = ?, metadata = ?, updated_at = ?
                     WHERE id = ?
                     """,
@@ -223,7 +223,7 @@ class StateStore:
             else:
                 await conn.execute(
                     """
-                    INSERT INTO tasks (id, goal, requirements, mode, workspace_path, max_budget, budget_consumed, state, progress_percentage, error_message, metadata, created_at, updated_at)
+                    INSERT INTO tasks (id, goal, requirements, run_mode, workspace_path, max_budget, budget_consumed, state, progress_percentage, error_message, metadata, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
@@ -281,7 +281,7 @@ class StateStore:
                         id=row["id"],
                         goal=row["goal"],
                         requirements=json.loads(row["requirements"]),
-                        mode=TaskMode(row["mode"]),
+                        mode=TaskMode(row["run_mode"]),
                         workspace_path=row["workspace_path"],
                         max_budget=row["max_budget"],
                         budget_consumed=row["budget_consumed"],
