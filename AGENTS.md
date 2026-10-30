@@ -381,9 +381,13 @@ Each deep module follows a consistent pattern:
 - **py_compile** — Syntax validation in CI and before deployment.
 - **pytest** — Per-agent suites; counts differ by agent and are not aggregated here. There is no
   single universal "149/149" suite; that number came from one agent's local run.
-- **Production smoke checks** — `/health` on every agent and `/ready` where implemented. Verified
-  2026-10-26: all ten agents return 200 on `/health`; FRIDAY, Sentinel and VyralX return 200 on
-  `/ready`; Cortex requires its database schema and Redis to be reachable.
+- **Production smoke checks** - `/health` on every agent and `/ready` where implemented. Verified
+  2026-10-31: all ten agents return 200 on `/health` and report `database_backend: oracle`.
+  FRIDAY, Inference, Memora, Futuris, IntelX, Forge, Sentinel, Cortex and VyralX return 200 on
+  `/ready`; Stratex returns 503 because its execution engine has no loaded strategy or live
+  heartbeat, while its `database` check reports `connected` on Oracle. All ten Oracle accounts are
+  `OPEN` and each agent owns its own schema (Cortex 16 tables, Forge 7, FRIDAY 15, Futuris 12,
+  Inference 8, IntelX 18, Memora 15, Sentinel 15, Stratex 3, VyralX 8).
 
 ## Cross-Cutting Infrastructure
 
