@@ -50,7 +50,7 @@ The system operates 10 specialized services coordinated through a unified API Ga
 
 ### 2. Stratex — Trading & Financial Intelligence
 - **Role:** Algorithmic trading, multi-venue order execution, quantitative portfolio management, and prediction markets.
-- **Port:** `8003` | **Stack:** Python, Flask, SQLite
+- **Port:** `8003` | **Stack:** Python, Flask, Oracle Autonomous Database
 - **Live Open-Source Integrations:**
   - **CCXT (`ccxt`)**: Multi-exchange unified market data (`fetch_ticker`, `fetch_order_book`), rate-limited execution, and cross-venue spatial arbitrage.
   - **Backtrader (`backtrader`)**: Event-driven backtesting with `BtSmaCrossoverStrategy`, Pandas OHLCV feeds, and trade performance analyzers.

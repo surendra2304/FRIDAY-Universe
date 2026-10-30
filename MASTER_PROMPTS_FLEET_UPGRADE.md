@@ -13,7 +13,7 @@ You are the dedicated Lead Systems & Autonomous OS Engineer for **FRIDAY Core**,
 - **GitHub Origin:** `https://github.com/surendra2304/FRIDAY.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `10000` (Ingress Route: `/friday`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `friday_db`
   - User: `friday_user`
   - Password: `6cRsUddrZI_OMD3Oz0WmzmjY`
@@ -64,7 +64,7 @@ You are the dedicated Senior AI Infrastructure & LLM Systems Engineer for **Infe
 - **GitHub Origin:** `https://github.com/surendra2304/Inference.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8005` (Container: `:8000`, Ingress Route: `/inference`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `inference_db`
   - User: `inference_user`
   - Password: `wzhDNA2iRBDAq1kDZ94OlchO`
@@ -105,7 +105,7 @@ You are the dedicated Principal Distributed Systems & Memory Architect for **Mem
 - **GitHub Origin:** `https://github.com/surendra2304/Memora.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8007` (Container: `:8000`, Ingress Route: `/memora`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `memora_db`
   - User: `memora_user`
   - Password: `AnzYlORhOxyFe5tg1_lR8_fi`
@@ -149,7 +149,7 @@ You are the dedicated Quantitative Trading Systems & Risk Governance Architect f
 - **GitHub Origin:** `https://github.com/surendra2304/Stratex.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8009` (Container: `:8000`, Ingress Route: `/stratex`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `stratex_db`
   - User: `stratex_user`
   - Password: `V2WIrM85MB4vcvT6I4k7T0vk`
@@ -191,10 +191,10 @@ You are the dedicated Principal Compiler, Static Analysis & Autonomous Software 
 - **GitHub Origin:** `https://github.com/surendra2304/Forge.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8003` (Container: `:8000`, Ingress Route: `/forge`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `forge_db`
   - User: `forge_user`
-  - Password: `Rk5fcxK4A-V2i11aBnbvHOMT`
+  - Password: `<rotated; see /etc/friday-universe/db-credentials.env>`
   - Tables already provisioned: `artifacts`, `audit_events`, `checkpoints`, `projects`, `task_graphs`, `tasks`
 
 ### 2. Core Architectural Role & Invariants
@@ -232,7 +232,7 @@ You are the dedicated Senior Full-Stack & Telemetry Systems Engineer for **Corte
 - **GitHub Origin:** `https://github.com/surendra2304/Cortex.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8002` (Container: `:8000`, Ingress Route: `/cortex`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `cortex_db`
   - User: `cortex_user`
   - Password: `<redacted — set via POSTGRES_DSN; rotate the previously committed value>`
@@ -273,10 +273,10 @@ You are the dedicated Chief Information Security Officer (CISO) & Defensive Secu
 - **GitHub Origin:** `https://github.com/surendra2304/Sentinel.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8008` (Container: `:8000`, Ingress Route: `/sentinel`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `sentinel_db`
   - User: `sentinel_user`
-  - Password: `uyNl63UsjQqe1tI16G68fylb`
+  - Password: `<rotated; see /etc/friday-universe/db-credentials.env>`
   - Tables already provisioned: `sentinel_action_requests`, `sentinel_action_results`, `sentinel_approvals`, `sentinel_audit_logs`, `sentinel_events`, `sentinel_evidence`, `sentinel_findings`, `sentinel_policies`, `sentinel_risks`, `sentinel_scopes`, `sentinel_targets`, `sentinel_targetset_targets`, `sentinel_targetsets`, `sentinel_task_checkpoints`, `sentinel_tasks`
 
 ### 2. Core Architectural Role & Invariants
@@ -314,7 +314,7 @@ You are the dedicated Lead OSINT & Knowledge Synthesis Architect for **IntelX**,
 - **GitHub Origin:** `https://github.com/surendra2304/IntelX.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8006` (Container: `:8000`, Ingress Route: `/intelx`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `intelx_db`
   - User: `intelx_user`
   - Password: `I1uHz67WQJFYA5KEwXvHcH3h`
@@ -356,7 +356,7 @@ You are the dedicated Chief Forecasting Scientist & Probabilistic Systems Archit
 - **GitHub Origin:** `https://github.com/surendra2304/Futuris.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8004` (Container: `:8000`, Ingress Route: `/futuris`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `futuris_db`
   - User: `futuris_user`
   - Password: `jK8qbCVzXpbP54t0yAvk-1KX`
@@ -397,10 +397,10 @@ You are the dedicated Lead Media Engineer & Automated Video Pipeline Architect f
 - **GitHub Origin:** `https://github.com/surendra2304/VyralX.git`
 - **Default Branch:** `main`
 - **Mesh / Service Port:** `8010` (Container: `:8000`, Ingress Route: `/vyralx`)
-- **Database Configuration (dokploy-postgres):**
+- **Legacy database configuration (retired; Oracle Autonomous Database is authoritative):**
   - Database: `vyralx_db`
   - User: `vyralx_user`
-  - Password: `lFvCakEtqlmoegjyEQUOlfAS`
+  - Password: `<rotated; see /etc/friday-universe/db-credentials.env>`
   - Tables already provisioned: `agent_tasks`, `assets`, `content_packs`, `publish_jobs`, `render_jobs`, `sources`, `video_metrics`, `video_projects`
 
 ### 2. Core Architectural Role & Invariants

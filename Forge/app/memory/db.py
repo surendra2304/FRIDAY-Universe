@@ -1,8 +1,13 @@
 """
-Database layer for FORGE supporting PostgreSQL (via SQLAlchemy 2.0 / asyncpg)
+Database layer for FORGE supporting Oracle Autonomous Database 23ai (via
+SQLAlchemy 2.0 / python-oracledb), PostgreSQL (via SQLAlchemy 2.0 / asyncpg)
 and SQLite (via aiosqlite).
-Persists tasks, task_graphs, checkpoints, artifacts, audit_events, and projects
-directly into forge_db.
+Persists tasks, task_graphs, checkpoints, artifacts, audit_events, projects and
+the Memora outbox directly into the active relational database.
+
+Dialect differences are confined to this module and `StateStore`: Oracle has no
+``LIMIT`` clause (``FETCH FIRST n ROWS ONLY``), treats ``''`` as ``NULL``, has no
+``ON CONFLICT`` upsert, and requires ``FROM DUAL`` for scalar selects.
 """
 
 from __future__ import annotations
@@ -101,6 +106,36 @@ CREATE TABLE IF NOT EXISTS checkpoints (
     timestamp VARCHAR2(64) NOT NULL,
     description CLOB
 );
+
+CREATE TABLE IF NOT EXISTS memora_outbox (
+    id VARCHAR2(64) PRIMARY KEY,
+    agent_name VARCHAR2(128) NOT NULL,
+    memory_type VARCHAR2(64) NOT NULL,
+    content_text CLOB NOT NULL,
+    source VARCHAR2(1024),
+    confidence NUMBER(6,4) DEFAULT 1.0,
+    importance NUMBER(6,4) DEFAULT 0.5,
+    lifecycle_state VARCHAR2(32) DEFAULT 'active',
+    tenant_id VARCHAR2(64) DEFAULT 'default',
+    created_at VARCHAR2(64) NOT NULL
+);
+"""
+
+# Reused by `app.integrations.memora_outbox` when it creates the table lazily,
+# before DatabaseManager.init_db() has run.
+MEMORA_OUTBOX_DDL_ORACLE = """
+CREATE TABLE IF NOT EXISTS memora_outbox (
+    id VARCHAR2(64) PRIMARY KEY,
+    agent_name VARCHAR2(128) NOT NULL,
+    memory_type VARCHAR2(64) NOT NULL,
+    content_text CLOB NOT NULL,
+    source VARCHAR2(1024),
+    confidence NUMBER(6,4) DEFAULT 1.0,
+    importance NUMBER(6,4) DEFAULT 0.5,
+    lifecycle_state VARCHAR2(32) DEFAULT 'active',
+    tenant_id VARCHAR2(64) DEFAULT 'default',
+    created_at VARCHAR2(64) NOT NULL
+)
 """
 
 SCHEMA_SQL = """
@@ -185,6 +220,58 @@ CREATE INDEX IF NOT EXISTS idx_checkpoints_step ON checkpoints(project_id, step_
 """
 
 
+# "Object already exists" is the only class of DDL failure that is safe to
+# ignore: `_ensure_schema` is explicitly idempotent. Every other failure is
+# surfaced, because a partially created schema silently degrades the whole
+# persistence layer (this is how the `MODE` column rename went unnoticed).
+_ORACLE_BENIGN_DDL_CODES = (
+    "ORA-00955",  # name is already used by an existing object
+    "ORA-01408",  # such column list already indexed
+    "ORA-02275",  # such referential constraint already exists
+)
+_POSTGRES_BENIGN_SQLSTATES = frozenset(
+    {
+        "42P07",  # duplicate_table
+        "42710",  # duplicate_object
+        "42701",  # duplicate_column
+        "42P16",  # invalid_table_definition (concurrent IF NOT EXISTS race)
+    }
+)
+_POSTGRES_BENIGN_ERROR_NAMES = frozenset(
+    {"DuplicateTable", "DuplicateObject", "DuplicateColumn"}
+)
+
+
+def is_benign_ddl_error(exc: BaseException) -> bool:
+    """Return True only for DDL errors meaning "this object already exists"."""
+    orig = getattr(exc, "orig", exc)
+    chunks = [str(exc), str(orig)]
+    for arg in getattr(orig, "args", ()) or ():
+        chunks.append(str(arg))
+    blob = " | ".join(chunks).upper()
+
+    if any(code in blob for code in _ORACLE_BENIGN_DDL_CODES):
+        return True
+    sqlstate = getattr(orig, "sqlstate", None) or getattr(orig, "pgcode", None)
+    if sqlstate in _POSTGRES_BENIGN_SQLSTATES:
+        return True
+    if type(orig).__name__ in _POSTGRES_BENIGN_ERROR_NAMES:
+        return True
+    # SQLite raises OperationalError("table x already exists") and Oracle's
+    # ORA-00955 message also contains "already ... existing object".
+    return "ALREADY EXISTS" in blob
+
+
+def ping_statement(db: Any) -> str:
+    """Return the dialect-correct scalar ping for *db*.
+
+    ``getattr`` keeps duck-typed/test doubles (which only implement
+    ``connection()``) working, while a real ``DatabaseManager`` answers
+    ``SELECT 1 FROM DUAL`` on Oracle.
+    """
+    return getattr(db, "ping_sql", "SELECT 1")
+
+
 class DbRow(Mapping):
     """Dictionary-like row wrapper matching aiosqlite.Row interface.
 
@@ -252,14 +339,20 @@ class AsyncCursorWrapper:
 class AsyncDbConnectionWrapper:
     """Connection wrapper abstracting SQLAlchemy AsyncConnection."""
 
-    def __init__(self, async_conn: AsyncConnection):
+    def __init__(self, async_conn: AsyncConnection, dialect: str = "postgresql"):
         self._conn = async_conn
+        self._dialect = dialect
         self.row_factory = None
+
+    @property
+    def dialect_name(self) -> str:
+        return self._dialect
 
     async def execute(
         self, query: str, params: tuple | list | dict | None = None
     ) -> AsyncCursorWrapper:
-        # Ignore SQLite PRAGMAs on PostgreSQL
+        # SQLite-only PRAGMAs are meaningless on Oracle/PostgreSQL; the wrapper
+        # silently ignores them so callers can stay backend-agnostic.
         if query.strip().upper().startswith("PRAGMA"):
             return AsyncCursorWrapper(None)
 
@@ -268,11 +361,16 @@ class AsyncDbConnectionWrapper:
 
         if params:
             if isinstance(params, (tuple, list)):
+                values = list(params)
+                if self._dialect == "oracle":
+                    # Oracle has no BOOLEAN column type; legacy NUMBER(1) flags
+                    # must receive 0/1 rather than a Python bool.
+                    values = [int(v) if isinstance(v, bool) else v for v in values]
                 parts = query.split("?")
                 new_parts = []
                 for idx, part in enumerate(parts[:-1]):
                     pname = f"p{idx}"
-                    param_dict[pname] = params[idx]
+                    param_dict[pname] = values[idx]
                     new_parts.append(f"{part}:{pname}")
                 new_parts.append(parts[-1])
                 processed_query = "".join(new_parts)
@@ -315,7 +413,69 @@ class DatabaseManager:
         self._schema_lock = asyncio.Lock()
         self._async_engine: AsyncEngine | None = None
         self._is_postgres: bool = False
+        self._is_oracle: bool = False
         self._tried_postgres: bool = False
+
+    # --- Dialect introspection ------------------------------------------------
+
+    @property
+    def configured_dialect(self) -> str:
+        """Dialect implied by the configured URL, without opening a connection."""
+        url = self.get_effective_url().lower()
+        if url.startswith("oracle") or "oracle+oracledb" in url:
+            return "oracle"
+        if url.startswith("postgresql") or "+asyncpg" in url:
+            return "postgresql"
+        return "sqlite"
+
+    @property
+    def is_oracle(self) -> bool:
+        """True when SQL is executed against Oracle.
+
+        Before the first connection attempt the configured URL is the only
+        signal available, so it is used to answer correctly for callers that
+        build SQL before opening a connection (the Oracle fallback to SQLite
+        clears the flag again).
+        """
+        if self._is_oracle:
+            return True
+        if not self._tried_postgres:
+            return self.configured_dialect == "oracle"
+        return False
+
+    @property
+    def is_postgres(self) -> bool:
+        """True when SQL is executed against PostgreSQL."""
+        return self._is_postgres
+
+    @property
+    def is_sqlite(self) -> bool:
+        """True when the SQLite fallback is the active backend."""
+        return not (self._is_postgres or self.is_oracle)
+
+    @property
+    def dialect_name(self) -> str:
+        """Active SQL dialect: ``oracle``, ``postgresql`` or ``sqlite``."""
+        if self.is_oracle:
+            return "oracle"
+        if self._is_postgres:
+            return "postgresql"
+        return "sqlite"
+
+    @property
+    def ping_sql(self) -> str:
+        """Scalar ``SELECT`` usable on the active backend."""
+        return "SELECT 1 FROM DUAL" if self.is_oracle else "SELECT 1"
+
+    def row_limit_clause(self) -> str:
+        """Dialect-specific row limit, appended after ``ORDER BY``.
+
+        The limit itself is always bound as the next positional parameter so
+        callers keep building one parameter tuple for every backend.
+        """
+        if self.is_oracle:
+            return "FETCH FIRST ? ROWS ONLY"
+        return "LIMIT ?"
 
     def get_effective_url(self) -> str:
         """Return target database connection URL."""
@@ -355,10 +515,12 @@ class DatabaseManager:
                 return self._async_engine
             except Exception as e:
                 logger.warning(
-                    f"Relational database unreachable at {url} ({type(e).__name__}: {e}). "
+                    f"Relational database unreachable at {url.split('@')[-1]} "
+                    f"({type(e).__name__}: {e}). "
                     f"Falling back to high-performance SQLite store."
                 )
                 self._is_postgres = False
+                self._is_oracle = False
                 self._async_engine = None
         return None
 
@@ -370,23 +532,53 @@ class DatabaseManager:
             if self._schema_ready:
                 return
 
-            schema_to_run = SCHEMA_SQL_ORACLE if getattr(self, "_is_oracle", False) else SCHEMA_SQL
+            # Resolve the backend *before* choosing the DDL script: the previous
+            # order read `_is_oracle` before `_init_postgres_engine()` had run,
+            # so the first call on a fresh process always executed the SQLite
+            # script against Oracle.
             engine = await self._init_postgres_engine()
             if engine is not None and self._is_postgres:
+                dialect = "oracle" if self._is_oracle else "postgresql"
+                schema_to_run = SCHEMA_SQL_ORACLE if self._is_oracle else SCHEMA_SQL
+                failures: list[tuple[str, Exception]] = []
                 try:
                     async with engine.begin() as conn:
                         for stmt in schema_to_run.split(";"):
                             cleaned = stmt.strip()
-                            if cleaned and not cleaned.upper().startswith("PRAGMA"):
-                                try:
-                                    await conn.execute(text(cleaned))
-                                except Exception:
-                                    pass
+                            if not cleaned or cleaned.upper().startswith("PRAGMA"):
+                                continue
+                            try:
+                                await conn.execute(text(cleaned))
+                            except Exception as exc:
+                                head = " ".join(cleaned.split())[:120]
+                                if is_benign_ddl_error(exc):
+                                    logger.debug(f"{dialect} DDL already applied [{head}]")
+                                    continue
+                                logger.error(
+                                    f"{dialect} DDL failed [{head}]: "
+                                    f"{type(exc).__name__}: {exc}"
+                                )
+                                failures.append((head, exc))
+                except Exception as e:
+                    # Connection/transaction level problem: keep the historical
+                    # SQLite fallback, but make it loud instead of silent.
+                    logger.error(
+                        f"{dialect} schema initialisation could not run "
+                        f"({type(e).__name__}: {e}). Falling back to SQLite store."
+                    )
+                    self._is_postgres = False
+                    self._is_oracle = False
+                    self._async_engine = None
+                else:
+                    if failures:
+                        head, exc = failures[0]
+                        raise RuntimeError(
+                            f"{dialect} schema initialisation incomplete: "
+                            f"{len(failures)} DDL statement(s) failed. "
+                            f"First failure [{head}]: {exc}"
+                        ) from exc
                     self._schema_ready = True
                     return
-                except Exception as e:
-                    logger.warning(f"Error ensuring schema: {e}. Falling back to SQLite.")
-                    self._is_postgres = False
 
             # SQLite schema initialization
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -403,25 +595,37 @@ class DatabaseManager:
 
     @asynccontextmanager
     async def connection(self) -> AsyncGenerator[Any, None]:
-        """Async context manager yielding a database connection (PostgreSQL or SQLite)."""
+        """Async context manager yielding a database connection (relational or SQLite)."""
         await self._ensure_schema()
 
         if self._is_postgres and self._async_engine is not None:
+            # Only a failure to *acquire* the connection may fall back to SQLite.
+            # The previous structure wrapped `yield`, so any error raised by the
+            # caller (including a genuine Oracle/PostgreSQL SQL error) was logged
+            # as a "connection error" and the block was replayed against SQLite,
+            # hiding incompatibilities instead of reporting them.
             try:
-                async with self._async_engine.connect() as conn:
-                    trans = await conn.begin()
-                    wrapper = AsyncDbConnectionWrapper(conn)
-                    try:
-                        yield wrapper
-                        if trans.is_active:
-                            await trans.commit()
-                    except Exception:
-                        if trans.is_active:
-                            await trans.rollback()
-                        raise
-                return
+                conn = await self._async_engine.connect()
             except Exception as e:
-                logger.warning(f"PostgreSQL connection error: {e}. Falling back to SQLite.")
+                logger.error(
+                    f"{self.dialect_name} connection error: {type(e).__name__}: {e}. "
+                    f"Falling back to SQLite."
+                )
+                self._is_postgres = False
+                self._is_oracle = False
+            else:
+                trans = await conn.begin()
+                try:
+                    yield AsyncDbConnectionWrapper(conn, dialect=self.dialect_name)
+                    if trans.is_active:
+                        await trans.commit()
+                except Exception:
+                    if trans.is_active:
+                        await trans.rollback()
+                    raise
+                finally:
+                    await conn.close()
+                return
 
         # SQLite fallback connection
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -436,7 +640,12 @@ class DatabaseManager:
     async def init_db(self) -> None:
         """Initialize database tables and indexes (idempotent)."""
         await self._ensure_schema()
-        target = "PostgreSQL" if self._is_postgres else f"SQLite ({self.db_path})"
+        if self.is_oracle:
+            target = "Oracle Autonomous Database 23ai"
+        elif self._is_postgres:
+            target = "PostgreSQL"
+        else:
+            target = f"SQLite ({self.db_path})"
         logger.info(f"Initialized FORGE database using {target}")
 
 

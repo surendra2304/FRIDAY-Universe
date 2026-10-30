@@ -78,7 +78,7 @@ FRIDAY Universe is an enterprise-grade autonomous multi-agent intelligence platf
   - `public_gateway.py`: Public website surface — `/v1/identify`, tenant-scoped visitors, leads, events, analytics.
   - `marketing_platform_integrator.py` & `marketing_automation.py`: HubSpot, Stripe and SendGrid connectors, campaign automation.
 - **Key API Routes**: `/v1/identify`, `/v1/visitors/{id}`, `/v1/leads`, `/api/v1/leads/score`, `/api/v1/crm/report`.
-- **Persistence**: durable SQLite at `data/cortex.db`; never enable `CORTEX_SQLITE_TMPFS` in production.
+- **Persistence**: Oracle Autonomous Database (`CORTEX` login/schema on the FRIDAY Universe DB). PostgreSQL and SQLite are not supported.
 
 ### 5. Inference (Port 8001) — LLM Gateway & Model Router
 - **Core Role**: Centralized model plane — aggregates provider API keys, routes each request to the best available model, quarantines failing keys, and serves an OpenAI-compatible API with streaming and fallback.

@@ -20,7 +20,10 @@ respectively without touching any storage.
 The fallback now persists to a portable location and shares the canonical Memora
 schema (agents / namespaces / memory_records) with
 ``app.integrations.memora_client``, so a lesson written by either client is
-readable by the other. Every public method is exception-safe: callers in the
+readable by the other. When the active database is Oracle Autonomous Database the
+fallback is the ``MEMORA_OUTBOX`` table in the FORGE schema instead of a SQLite
+file (nothing under ``/dev/shm`` survives an ADB-only deployment).
+Every public method is exception-safe: callers in the
 agent hot path do not all guard these calls, so a storage failure must degrade
 to "no memory" rather than abort an engineering step.
 """
@@ -36,6 +39,16 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
+
+# The Oracle spool is optional: `forge_upgrade` is also imported standalone.
+try:
+    from app.core.config import get_settings as _get_settings
+    from app.integrations.memora_outbox import OracleMemoraOutbox as _OracleMemoraOutbox
+    from app.integrations.memora_outbox import is_oracle_url as _is_oracle_url
+except Exception:  # pragma: no cover - standalone use
+    _get_settings = None  # type: ignore[assignment]
+    _OracleMemoraOutbox = None  # type: ignore[assignment]
+    _is_oracle_url = None  # type: ignore[assignment]
 
 # Try importing from central Memora SDK first. When the real fabric is present
 # it wins; the local fallback below only runs when it is not.
@@ -90,6 +103,9 @@ except Exception:
         """Local, portable Memora client with real persistence and retrieval."""
 
         def __init__(self, db_path: str | Path | None = None):
+            self._explicit_sqlite = db_path is not None or bool(
+                os.environ.get("MEMORA_DB_PATH")
+            )
             if db_path is not None:
                 self.local_db_path = Path(db_path)
             else:
@@ -103,6 +119,16 @@ except Exception:
                         Path(__file__).resolve().parents[1] / "data" / "memora.db"
                     )
             self._schema_ready = False
+            self._oracle = None
+            if not self._explicit_sqlite:
+                url = None
+                try:
+                    if _get_settings is not None:
+                        url = _get_settings().get_database_url()
+                except Exception:
+                    url = None
+                if url and _is_oracle_url is not None and _is_oracle_url(url) and _OracleMemoraOutbox:
+                    self._oracle = _OracleMemoraOutbox(url)
 
         # ------------------------------------------------------------------
         # storage plumbing
@@ -248,6 +274,14 @@ except Exception:
             source = "agent:forge"
             if entities:
                 source = f"{source}:{','.join(str(e) for e in entities)}"
+            if self._oracle is not None:
+                return self._oracle.record(
+                    agent_name=agent_name or "forge",
+                    memory_type=memory_type,
+                    content_text=content_text,
+                    source=source,
+                    importance=float(importance),
+                )
             with self._connect() as conn:
                 aid, nid = self._agent_and_namespace(conn, agent_name or "forge")
                 conn.execute(
@@ -281,16 +315,19 @@ except Exception:
             An empty query returns the most important recent memories.
             """
             try:
-                with self._connect() as conn:
-                    rows = conn.execute(
-                        "SELECT m.id, m.memory_type, m.content_text, m.source,"
-                        " m.importance, m.created_at"
-                        " FROM memory_records m"
-                        " JOIN agents a ON a.id = m.owner_id"
-                        " WHERE a.name = ? AND m.lifecycle_state = 'active'"
-                        " ORDER BY m.created_at DESC LIMIT 400",
-                        (agent_name or "forge",),
-                    ).fetchall()
+                if self._oracle is not None:
+                    rows = self._oracle.recent(agent_name or "forge", 400)
+                else:
+                    with self._connect() as conn:
+                        rows = conn.execute(
+                            "SELECT m.id, m.memory_type, m.content_text, m.source,"
+                            " m.importance, m.created_at"
+                            " FROM memory_records m"
+                            " JOIN agents a ON a.id = m.owner_id"
+                            " WHERE a.name = ? AND m.lifecycle_state = 'active'"
+                            " ORDER BY m.created_at DESC LIMIT 400",
+                            (agent_name or "forge",),
+                        ).fetchall()
 
                 tokens = self._tokenize(query)
                 scored: list[tuple[float, dict[str, Any]]] = []

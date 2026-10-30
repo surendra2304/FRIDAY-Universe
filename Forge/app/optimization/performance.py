@@ -22,9 +22,19 @@ class PerformanceOptimizer:
 
     @classmethod
     async def optimize_sqlite_pragmas(cls, db: DatabaseManager = db_manager):
-        """Apply high-performance production SQLite PRAGMA settings."""
+        """Apply high-performance production SQLite PRAGMA settings.
+
+        PRAGMAs are SQLite-only. On Oracle/PostgreSQL the call is skipped (the
+        connection wrapper already ignores PRAGMA statements, but skipping avoids
+        five pointless round-trips per startup).
+        """
         try:
             async with db.connection() as conn:
+                if not db.is_sqlite:
+                    logger.debug(
+                        f"Skipping SQLite PRAGMAs: active backend is {db.dialect_name}."
+                    )
+                    return
                 await conn.execute("PRAGMA journal_mode = WAL;")
                 await conn.execute("PRAGMA synchronous = NORMAL;")
                 await conn.execute("PRAGMA busy_timeout = 5000;")

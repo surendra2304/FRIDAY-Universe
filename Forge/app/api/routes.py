@@ -31,7 +31,7 @@ from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
 from app.core.orchestrator import OrchestratorCore
 from app.core.workspace import WorkspaceManager, workspace_manager
-from app.memory.db import db_manager
+from app.memory.db import db_manager, ping_statement
 from app.memory.models import (
     ProjectWorkspace,
     TaskMode,
@@ -79,7 +79,7 @@ async def health_check(
     """Check database connectivity and provider health status."""
     db_connected = False
     try:
-        async with db_manager.connection() as conn, conn.execute("SELECT 1") as cursor:
+        async with db_manager.connection() as conn, conn.execute(ping_statement(db_manager)) as cursor:
             row = await cursor.fetchone()
             if row and row[0] == 1:
                 db_connected = True
