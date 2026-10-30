@@ -45,8 +45,10 @@ Dokploy/Docker Swarm/Traefik/PostgreSQL stack described in older documents is no
 - Each agent is a `systemd` unit running from `/opt/friday_universe/<Agent>` with the shared venv
   `/opt/friday_universe/venv` (Python 3.10.12). Server 1 has 956 MB RAM for seven agents; check
   `free -m` before adding workers.
-- Persistence is local SQLite under each agent's `data/` directory. Cortex must stay on disk —
-  never set `CORTEX_SQLITE_TMPFS=true` in production, or CRM data is lost on restart.
+- Persistence is Oracle Autonomous Database: the FRIDAY Universe DB holds one login/schema
+  per agent, and VyralX additionally uses the VyralX media DB. PostgreSQL and SQLite are not
+  supported backends; do not reintroduce a local SQLite file for any agent (Cortex CRM data
+  must stay in its Oracle `CORTEX` schema).
 
 ## Agents (10)
 
@@ -84,7 +86,7 @@ verify a route in OpenAPI before relying on it.
 
 ### 2. Stratex — Trading Intelligence Agent
 **Role:** Algorithmic trading, portfolio management, market intelligence.
-**Port:** 8003 (server 1) | **Stack:** Python, Flask, SQLite
+**Port:** 8003 (server 1) | **Stack:** Python, Flask, Oracle Autonomous Database
 
 **Deep Modules (18):**
 - `strategy_engine.py` — Multi-strategy trading engine with backtesting
@@ -163,7 +165,7 @@ and closed-loop sales follow-up. It also owns the public website surface.
 **API:** `/cortex/*` (public ingress), `/api/v1/*`, `/v1/identify`, `/v1/visitors/{id}`, `/ready`
 
 **Caveats:** competitive intelligence and parts of demand forecasting / predictive analytics are
-deterministic heuristics, not measured data. Readiness covers Postgres/schema/Redis; cross-agent
+deterministic heuristics, not measured data. Readiness covers the Oracle schema and Redis; cross-agent
 probes are reported as `UNKNOWN` and are not fatal.
 
 ### 5. Inference — LLM Gateway & Model Router
@@ -280,7 +282,7 @@ result must not be treated as evidence without provenance.
 
 **API:** `/api/v1/futuris/*`
 
-**Caveats:** The live forecasting core uses `statsforecast` adapters and stores results in SQLite.
+**Caveats:** The live forecasting core uses `statsforecast` adapters and stores results in Oracle.
 The legacy `predict/` layer and several "deep modules" generate illustrative numbers from hashes;
 several read endpoints have returned 500 in production.
 

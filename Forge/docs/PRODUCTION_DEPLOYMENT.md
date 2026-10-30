@@ -91,12 +91,10 @@ Exported metrics:
 ## 4. Backup & Disaster Recovery
 
 ### Automated Database Snapshots
-FORGE creates consistent SQLite backups via `BackupManager`:
-- Snapshots are written to `data/backups/forge_backup_<timestamp>.db`.
-- Backups older than 7 days are automatically pruned.
+FORGE persists to Oracle Autonomous Database (`FORGE_DATABASE_URL`), so there is no local database file to snapshot. Use the ADB automated backups and Data Pump exports from the Oracle console; keep `data/backups/` for workspace and artifact exports only.
 
 ### Manual Database Restoration
-To restore a snapshot:
+Restore the `FORGE` schema from an ADB backup or Data Pump export, then restart FORGE. The legacy `BackupManager` helper below applies only to the local SQLite fallback used by tests:
 ```python
 from pathlib import Path
 from app.backup.recovery import backup_manager
@@ -108,5 +106,5 @@ backup_manager.restore_database(Path("data/backups/forge_backup_20260827_190000.
 
 ## 5. Performance Tuning
 
-- **SQLite WAL Mode:** PRAGMA optimizations automatically applied on startup (`journal_mode=WAL`, `synchronous=NORMAL`, 64MB cache).
+- **Oracle connection pool:** Bounded `python-oracledb` pool with pre-ping; PostgreSQL and SQLite are not supported production backends.
 - **Response Compression:** GZip middleware enabled for all payloads $> 1\text{ KB}$.

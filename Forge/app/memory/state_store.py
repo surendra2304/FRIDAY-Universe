@@ -24,8 +24,33 @@ from app.memory.models import (
 logger = get_logger("memory.state_store")
 
 
+def _text(value: str | None) -> str | None:
+    """Normalise optional text for a nullable column.
+
+    Oracle stores ``''`` as ``NULL``, so an empty string written to a nullable
+    column already comes back as ``None``. Converting on write keeps the
+    round-trip identical on SQLite/PostgreSQL instead of returning ``""`` on
+    one backend and ``None`` on another.
+    """
+    if value is None:
+        return None
+    return value or None
+
+
+def _required_text(value: str | None, default: str) -> str:
+    """Normalise text bound to a ``NOT NULL`` column.
+
+    An empty string would be inserted as ``NULL`` on Oracle and rejected with
+    ``ORA-01400``, so a documented placeholder is used instead of failing the
+    whole write.
+    """
+    if value is None or value == "":
+        return default
+    return value
+
+
 class StateStore:
-    """Provides high-level state persistence methods over SQLite."""
+    """Provides high-level state persistence methods over the active backend."""
 
     def __init__(self, db: DatabaseManager | None = None):
         self.db = db or db_manager
@@ -42,9 +67,9 @@ class StateStore:
                 """,
                 (
                     project.id,
-                    project.name,
-                    project.description,
-                    project.workspace_path,
+                    _required_text(project.name, "untitled-project"),
+                    _text(project.description),
+                    _required_text(project.workspace_path, "."),
                     json.dumps(project.config),
                     project.created_at.isoformat(),
                     project.updated_at.isoformat(),
@@ -104,15 +129,15 @@ class StateStore:
                 """,
                 (
                     task.id,
-                    task.goal,
+                    _required_text(task.goal, "(empty goal)"),
                     json.dumps(task.requirements),
                     task.mode.value,
-                    task.workspace_path,
+                    _required_text(task.workspace_path, "."),
                     task.max_budget,
                     task.budget_consumed,
                     task.state.value,
                     task.progress_percentage,
-                    task.error_message,
+                    _text(task.error_message),
                     json.dumps(task.metadata),
                     task.created_at.isoformat(),
                     task.updated_at.isoformat(),
@@ -177,7 +202,9 @@ class StateStore:
                 if progress_percentage is not None
                 else row["progress_percentage"]
             )
-            new_budget = row["budget_consumed"] + budget_increment
+            # Oracle returns NUMBER columns as decimal.Decimal; adding a float
+            # budget increment to one raises TypeError, so coerce first.
+            new_budget = float(row["budget_consumed"] or 0.0) + budget_increment
 
             await conn.execute(
                 """
@@ -185,7 +212,14 @@ class StateStore:
                 SET state = ?, progress_percentage = ?, error_message = ?, budget_consumed = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (state.value, new_progress, error_message, new_budget, now, task_id),
+                (
+                    state.value,
+                    new_progress,
+                    _text(error_message),
+                    new_budget,
+                    now,
+                    task_id,
+                ),
             )
             await conn.commit()
 
@@ -206,15 +240,15 @@ class StateStore:
                     WHERE id = ?
                     """,
                     (
-                        task.goal,
+                        _required_text(task.goal, "(empty goal)"),
                         json.dumps(task.requirements),
                         task.mode.value,
-                        task.workspace_path,
+                        _required_text(task.workspace_path, "."),
                         task.max_budget,
                         task.budget_consumed,
                         task.state.value,
                         task.progress_percentage,
-                        task.error_message,
+                        _text(task.error_message),
                         json.dumps(task.metadata),
                         now,
                         task.id,
@@ -228,15 +262,15 @@ class StateStore:
                     """,
                     (
                         task.id,
-                        task.goal,
+                        _required_text(task.goal, "(empty goal)"),
                         json.dumps(task.requirements),
                         task.mode.value,
-                        task.workspace_path,
+                        _required_text(task.workspace_path, "."),
                         task.max_budget,
                         task.budget_consumed,
                         task.state.value,
                         task.progress_percentage,
-                        task.error_message,
+                        _text(task.error_message),
                         json.dumps(task.metadata),
                         task.created_at.isoformat(),
                         now,
@@ -263,37 +297,41 @@ class StateStore:
             params.append(since_timestamp.isoformat())
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
-        query += " ORDER BY created_at DESC LIMIT ?"
-        params.append(limit)
 
-        async with self.db.connection() as conn, conn.execute(query, tuple(params)) as cursor:
-            rows = await cursor.fetchall()
-            results = []
-            for row in rows:
-                metadata = {}
-                if "metadata" in row.keys() and row["metadata"]:
-                    try:
-                        metadata = json.loads(row["metadata"])
-                    except Exception:
-                        metadata = {}
-                results.append(
-                    TaskEntity(
-                        id=row["id"],
-                        goal=row["goal"],
-                        requirements=json.loads(row["requirements"]),
-                        mode=TaskMode(row["run_mode"]),
-                        workspace_path=row["workspace_path"],
-                        max_budget=row["max_budget"],
-                        budget_consumed=row["budget_consumed"],
-                        state=TaskState(row["state"]),
-                        progress_percentage=row["progress_percentage"],
-                        error_message=row["error_message"],
-                        metadata=metadata,
-                        created_at=datetime.fromisoformat(row["created_at"]),
-                        updated_at=datetime.fromisoformat(row["updated_at"]),
+        async with self.db.connection() as conn:
+            # Resolved after `connection()` so the dialect reflects the backend
+            # actually in use (an unreachable Oracle/PostgreSQL server falls
+            # back to SQLite). Oracle has no LIMIT clause.
+            query += " ORDER BY created_at DESC " + self.db.row_limit_clause()
+            params.append(limit)
+            async with conn.execute(query, tuple(params)) as cursor:
+                rows = await cursor.fetchall()
+                results = []
+                for row in rows:
+                    metadata = {}
+                    if "metadata" in row.keys() and row["metadata"]:
+                        try:
+                            metadata = json.loads(row["metadata"])
+                        except Exception:
+                            metadata = {}
+                    results.append(
+                        TaskEntity(
+                            id=row["id"],
+                            goal=row["goal"],
+                            requirements=json.loads(row["requirements"]),
+                            mode=TaskMode(row["run_mode"]),
+                            workspace_path=row["workspace_path"],
+                            max_budget=row["max_budget"],
+                            budget_consumed=row["budget_consumed"],
+                            state=TaskState(row["state"]),
+                            progress_percentage=row["progress_percentage"],
+                            error_message=row["error_message"],
+                            metadata=metadata,
+                            created_at=datetime.fromisoformat(row["created_at"]),
+                            updated_at=datetime.fromisoformat(row["updated_at"]),
+                        )
                     )
-                )
-            return results
+                return results
 
     async def count_tasks(self) -> int:
         """Count total tasks in the store."""
@@ -321,7 +359,7 @@ class StateStore:
                 (
                     event.id,
                     event.task_id,
-                    event.event_type,
+                    _required_text(event.event_type, "unknown"),
                     json.dumps(event.payload),
                     event.timestamp.isoformat(),
                 ),
@@ -364,11 +402,11 @@ class StateStore:
                 (
                     artifact.id,
                     artifact.task_id,
-                    artifact.name,
-                    artifact.path,
-                    artifact.file_type,
+                    _required_text(artifact.name, "unnamed-artifact"),
+                    _required_text(artifact.path, "."),
+                    _required_text(artifact.file_type, "text/plain"),
                     artifact.size_bytes,
-                    artifact.checksum,
+                    _text(artifact.checksum),
                     artifact.created_at.isoformat(),
                 ),
             )
@@ -422,36 +460,54 @@ class StateStore:
     # --- Task Graph Persistence ---
 
     async def save_task_graph(self, graph: TaskGraph) -> TaskGraph:
-        """Upsert a task graph."""
+        """Upsert a task graph.
+
+        Written as SELECT + UPDATE/INSERT rather than ``ON CONFLICT(id)``
+        (PostgreSQL/SQLite) or ``MERGE`` (Oracle) so one statement sequence
+        works on every backend -- the same pattern ``save_task`` already uses.
+        """
         graph.updated_at = datetime.now(UTC)
         nodes_json = json.dumps({k: v.model_dump(mode="json") for k, v in graph.nodes.items()})
         edges_json = json.dumps([e.model_dump(mode="json") for e in graph.edges])
 
         async with self.db.connection() as conn:
-            await conn.execute(
-                """
-                INSERT INTO task_graphs (id, project_id, goal, nodes, edges, status, current_node_id, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    goal = excluded.goal,
-                    nodes = excluded.nodes,
-                    edges = excluded.edges,
-                    status = excluded.status,
-                    current_node_id = excluded.current_node_id,
-                    updated_at = excluded.updated_at
-                """,
-                (
-                    graph.id,
-                    graph.project_id,
-                    graph.goal,
-                    nodes_json,
-                    edges_json,
-                    graph.status.value,
-                    graph.current_node_id,
-                    graph.created_at.isoformat(),
-                    graph.updated_at.isoformat(),
-                ),
-            )
+            async with conn.execute("SELECT id FROM task_graphs WHERE id = ?", (graph.id,)) as cursor:
+                exists = await cursor.fetchone()
+            if exists:
+                await conn.execute(
+                    """
+                    UPDATE task_graphs
+                    SET goal = ?, nodes = ?, edges = ?, status = ?, current_node_id = ?, updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        _required_text(graph.goal, "(empty goal)"),
+                        nodes_json,
+                        edges_json,
+                        graph.status.value,
+                        _text(graph.current_node_id),
+                        graph.updated_at.isoformat(),
+                        graph.id,
+                    ),
+                )
+            else:
+                await conn.execute(
+                    """
+                    INSERT INTO task_graphs (id, project_id, goal, nodes, edges, status, current_node_id, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        graph.id,
+                        _required_text(graph.project_id, "unspecified"),
+                        _required_text(graph.goal, "(empty goal)"),
+                        nodes_json,
+                        edges_json,
+                        graph.status.value,
+                        _text(graph.current_node_id),
+                        graph.created_at.isoformat(),
+                        graph.updated_at.isoformat(),
+                    ),
+                )
             await conn.commit()
         return graph
 
@@ -484,17 +540,17 @@ class StateStore:
 
     async def get_latest_task_graph_for_project(self, project_id: str) -> TaskGraph | None:
         """Fetch the most recent task graph for a project or task."""
-        async with (
-            self.db.connection() as conn,
-            conn.execute(
-                "SELECT id FROM task_graphs WHERE project_id = ? ORDER BY created_at DESC LIMIT 1",
-                (project_id,),
-            ) as cursor,
-        ):
-            row = await cursor.fetchone()
-            if not row:
-                return None
-            return await self.get_task_graph(row["id"])
+        async with self.db.connection() as conn:
+            # Oracle: FETCH FIRST ? ROWS ONLY instead of LIMIT ?.
+            query = (
+                "SELECT id FROM task_graphs WHERE project_id = ? ORDER BY created_at DESC "
+                + self.db.row_limit_clause()
+            )
+            async with conn.execute(query, (project_id, 1)) as cursor:
+                row = await cursor.fetchone()
+        if not row:
+            return None
+        return await self.get_task_graph(row["id"])
 
     # --- Checkpoints ---
 
@@ -508,13 +564,13 @@ class StateStore:
                 """,
                 (
                     checkpoint.id,
-                    checkpoint.project_id,
-                    checkpoint.task_id,
+                    _required_text(checkpoint.project_id, "unspecified"),
+                    _text(checkpoint.task_id),
                     checkpoint.step_number,
                     json.dumps(checkpoint.state_data),
-                    checkpoint.checksum,
+                    _text(checkpoint.checksum),
                     checkpoint.timestamp.isoformat(),
-                    checkpoint.description,
+                    _text(checkpoint.description),
                 ),
             )
             await conn.commit()
@@ -548,10 +604,11 @@ class StateStore:
     async def get_latest_checkpoint(self, project_id: str) -> Checkpoint | None:
         """Retrieve the most recent checkpoint for a task or project."""
         async with self.db.connection() as conn:
-            async with conn.execute(
-                "SELECT * FROM checkpoints WHERE project_id = ? ORDER BY step_number DESC, timestamp DESC LIMIT 1",
-                (project_id,),
-            ) as cursor:
+            query = (
+                "SELECT * FROM checkpoints WHERE project_id = ? "
+                "ORDER BY step_number DESC, timestamp DESC " + self.db.row_limit_clause()
+            )
+            async with conn.execute(query, (project_id, 1)) as cursor:
                 row = await cursor.fetchone()
                 if not row:
                     return None

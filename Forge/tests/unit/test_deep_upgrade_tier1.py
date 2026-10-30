@@ -28,23 +28,17 @@ from app.security.sentinel_client import (
 
 # --- 1. PostgreSQL & Database Layer Tests ---
 
-def test_config_postgres_url_resolution():
-    """Verify Settings resolves PostgreSQL dokploy-postgres database URL correctly."""
+def test_config_database_url_fails_closed_without_oracle_dsn():
+    """Verify Settings never invents a PostgreSQL or SQLite database URL."""
     settings = Settings()
     settings.database_url = None
-    settings.postgres_host = "dokploy-postgres"
-    settings.postgres_port = 5432
-    settings.postgres_user = "forge_user"
-    settings.postgres_password = "Rk5fcxK4A-V2i11aBnbvHOMT"
-    settings.postgres_db = "forge_db"
 
-    # Default without env flag returns SQLite path
-    default_url = settings.get_database_url()
-    assert "sqlite" in default_url
+    with pytest.raises(RuntimeError, match="No database URL configured"):
+        settings.get_database_url()
 
-    # Explicit database_url takes highest precedence
-    settings.database_url = "postgresql+asyncpg://custom:secret@db:5432/custom_db"
-    assert settings.get_database_url() == "postgresql+asyncpg://custom:secret@db:5432/custom_db"
+    oracle_dsn = "oracle+oracledb://FORGE:secret@adb.example.com:1522/?service_name=TEST"
+    settings.database_url = oracle_dsn
+    assert settings.get_database_url() == oracle_dsn
 
 
 @pytest.mark.asyncio

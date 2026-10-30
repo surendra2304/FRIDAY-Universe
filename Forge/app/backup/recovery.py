@@ -21,13 +21,17 @@ logger = get_logger("backup.recovery")
 
 class BackupManifest(BaseModel):
     backup_path: str
-    backup_type: str = "sqlite"  # sqlite, metadata, config
+    backup_type: str = "sqlite"  # sqlite, metadata, config, oracle-adb-managed
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     size_bytes: int = 0
 
 
 class BackupManager:
-    """Manages creation, restoration, and pruning of SQLite database and workspace metadata backups."""
+    """Manages creation, restoration, and pruning of database and workspace metadata backups.
+
+    On Oracle Autonomous Database only metadata/config snapshots are produced;
+    database backups are owned by ADB.
+    """
 
     def __init__(self, settings: Settings | None = None, db: DatabaseManager | None = None):
         self.settings = settings or get_settings()
@@ -36,7 +40,22 @@ class BackupManager:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
 
     async def backup_database(self) -> BackupManifest:
-        """Create a consistent SQLite database snapshot."""
+        """Create a consistent database snapshot.
+
+        Oracle Autonomous Database manages its own backups (automatic backups,
+        point-in-time restore and Data Guard), so there is no local data file
+        to copy. The call becomes a logged no-op on Oracle instead of trying to
+        open ``settings.database_path`` (which does not exist for ADB).
+        """
+        if self.db.is_oracle:
+            logger.info(
+                "Database backup skipped: Oracle Autonomous Database manages "
+                "backups automatically (no local data file to snapshot)."
+            )
+            return BackupManifest(
+                backup_path="", backup_type="oracle-adb-managed", size_bytes=0
+            )
+
         src_path = self.settings.database_path
         if not src_path.is_absolute():
             src_path = self.settings.base_dir / src_path
@@ -90,6 +109,14 @@ class BackupManager:
 
     def restore_database(self, backup_file: Path) -> bool:
         """Restore SQLite database from a specified backup file."""
+        if self.db.is_oracle:
+            logger.warning(
+                "Database restore skipped: Oracle Autonomous Database restores are "
+                "performed from ADB automatic backups / point-in-time restore, not "
+                "from a local file."
+            )
+            return False
+
         if not backup_file.exists():
             logger.error(f"Backup file '{backup_file}' does not exist.")
             return False

@@ -20,6 +20,7 @@ import httpx
 
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
+from app.integrations.memora_outbox import OracleMemoraOutbox, is_oracle_url
 
 logger = get_logger("integrations.memora")
 
@@ -71,7 +72,9 @@ class MemoryItem(dict):
 class MemoraClient:
     """
     Client for interacting with Memora Long-Term Memory Fabric.
-    Supports asynchronous & synchronous operations with automatic local SQLite fallback.
+    Supports asynchronous & synchronous operations with an automatic local
+    fallback: the ``MEMORA_OUTBOX`` table in the FORGE schema when Oracle is the
+    active database, otherwise a local SQLite spool file.
     """
 
     def __init__(
@@ -86,17 +89,55 @@ class MemoraClient:
         self.api_key = api_key or settings.memora_api_key
         self.timeout = timeout
 
+        self._prefer_local_sqlite = False
+        self._oracle_outbox: OracleMemoraOutbox | None = None
+
+        # Keep the module logger honest about which spool backs this client.
+        self._backend = "sqlite"
+        self._local_db_path = ""
+
         if local_db_path:
             self.local_db_path = local_db_path
         else:
-            if Path("/dev/shm").exists():
-                self.local_db_path = "/dev/shm/forge_memora.db"
+            # Configurable spool path (SQLite backends only).
+            env_path = os.environ.get("FORGE_MEMORA_SPOOL_PATH") or os.environ.get(
+                "MEMORA_SPOOL_PATH"
+            )
+            if env_path:
+                self._local_db_path = env_path
+            elif Path("/dev/shm").exists():
+                self._local_db_path = "/dev/shm/forge_memora.db"
             else:
                 cand = Path("d:/FRIDAY Universe/Memora/data/memora.db")
                 if cand.exists():
-                    self.local_db_path = str(cand)
+                    self._local_db_path = str(cand)
                 else:
-                    self.local_db_path = str(settings.data_dir / "memora.db")
+                    self._local_db_path = str(settings.data_dir / "memora.db")
+
+        database_url = settings.get_database_url()
+        if not self._prefer_local_sqlite and is_oracle_url(database_url):
+            # ADB has no durable local disk: spool into the FORGE schema instead
+            # of /dev/shm, so memories survive restarts and are shared with the
+            # rest of the universe.
+            self._oracle_outbox = OracleMemoraOutbox(database_url)
+            self._backend = "oracle"
+            logger.info("Memora fallback spool: Oracle MEMORA_OUTBOX table (FORGE schema)")
+        elif not self._prefer_local_sqlite:
+            logger.debug(f"Memora fallback spool: SQLite at {self._local_db_path}")
+
+    @property
+    def local_db_path(self) -> str:
+        """Path of the SQLite spool (inactive when the Oracle outbox is used)."""
+        return self._local_db_path
+
+    @local_db_path.setter
+    def local_db_path(self, value: str | Path) -> None:
+        # Explicitly assigning a path opts into the SQLite spool and disables the
+        # Oracle outbox; tests and local development rely on this.
+        self._local_db_path = str(value)
+        self._oracle_outbox = None
+        self._prefer_local_sqlite = True
+        self._backend = "sqlite"
 
     def _get_headers(self) -> dict[str, str]:
         headers = {
@@ -351,7 +392,7 @@ class MemoraClient:
         return "\n".join(lines)
 
     # -------------------------------------------------------------------------
-    # Local SQLite Fallback Engine
+    # Local Fallback Engine (Oracle MEMORA_OUTBOX or SQLite spool)
     # -------------------------------------------------------------------------
 
     def _ensure_local_tables(self, conn: sqlite3.Connection) -> None:
@@ -405,6 +446,21 @@ class MemoraClient:
         tags: list[str] | None,
         metadata: dict[str, Any] | None,
     ) -> dict[str, Any]:
+        content = f"Forge Task: {user_input} | Result: {agent_output}"
+        if self._oracle_outbox is not None:
+            try:
+                rec_id = self._oracle_outbox.record(
+                    agent_name=agent_name.lower(),
+                    memory_type="episodic",
+                    content_text=content,
+                    source=f"agent:{agent_name.lower()}",
+                    importance=0.9,
+                )
+                return {"id": rec_id, "status": "persisted_locally"}
+            except Exception as e:
+                logger.warning(f"Oracle MEMORA_OUTBOX memory record failed: {e}")
+                return {"status": "error", "error": str(e)}
+
         try:
             os.makedirs(os.path.dirname(self.local_db_path), exist_ok=True)
             with sqlite3.connect(self.local_db_path, timeout=5.0) as conn:
@@ -430,7 +486,6 @@ class MemoraClient:
 
                 now_iso = time.strftime("%Y-%m-%d %H:%M:%S")
                 rec_id = str(uuid.uuid4())
-                content = f"Forge Task: {user_input} | Result: {agent_output}"
                 cols = {col[1] for col in c.execute("PRAGMA table_info(memory_records)").fetchall()}
                 record_data = {
                     "id": rec_id,
@@ -471,6 +526,20 @@ class MemoraClient:
         importance: float,
         entities: list[str] | None,
     ) -> dict[str, Any]:
+        if self._oracle_outbox is not None:
+            try:
+                rec_id = self._oracle_outbox.record(
+                    agent_name=agent_name.lower(),
+                    memory_type="semantic",
+                    content_text=fact_text,
+                    source=f"agent:{agent_name.lower()}",
+                    importance=importance,
+                )
+                return {"id": rec_id, "status": "fact_persisted_locally"}
+            except Exception as e:
+                logger.warning(f"Oracle MEMORA_OUTBOX fact record failed: {e}")
+                return {"status": "error", "error": str(e)}
+
         try:
             os.makedirs(os.path.dirname(self.local_db_path), exist_ok=True)
             with sqlite3.connect(self.local_db_path, timeout=5.0) as conn:
@@ -516,37 +585,48 @@ class MemoraClient:
             logger.warning(f"Local SQLite fact record failed: {e}")
             return {"status": "error", "error": str(e)}
 
+    def _keyword_list(self, query: str) -> list[str]:
+        """Deduplicated, capped keyword list for keyword-overlap recall.
+
+        One LIKE clause is built per keyword. A hostile or degenerate query -- a
+        5 000-character goal, or "app app app ..." repeated 2 000 times --
+        produced thousands of clauses and SQLite rejected the whole statement
+        with "Expression tree is too large (maximum depth 1000)", so recall
+        silently returned nothing for those tasks. Deduplicate, keep the most
+        selective (longest) keywords, and cap the clause count: past a couple of
+        dozen the extra terms add noise, not recall.
+        """
+        raw_keywords = [k.strip() for k in query.split() if len(k.strip()) > 3]
+        seen: set[str] = set()
+        keywords = []
+        for kw in sorted(set(raw_keywords), key=len, reverse=True):
+            low = kw.lower()
+            if low in seen:
+                continue
+            seen.add(low)
+            keywords.append(kw)
+            if len(keywords) >= _MAX_RECALL_KEYWORDS:
+                break
+        if not keywords:
+            fallback = (query or "").strip()
+            keywords = [fallback[:_MAX_RECALL_KEYWORDS * 8]] if fallback else []
+        return keywords
+
     def _recall_locally(self, agent_name: str, query: str, limit: int) -> list[dict[str, Any]]:
-        if not os.path.exists(self.local_db_path):
-            return []
         try:
+            keywords = self._keyword_list(query)
+            if not keywords:
+                return []
+
+            if self._oracle_outbox is not None:
+                rows = self._oracle_outbox.recall(keywords, limit)
+                return [MemoryItem(r) for r in rows]
+
+            if not os.path.exists(self.local_db_path):
+                return []
             with sqlite3.connect(self.local_db_path, timeout=5.0) as conn:
                 conn.row_factory = sqlite3.Row
                 c = conn.cursor()
-                # One LIKE clause per keyword. A hostile or degenerate query --
-                # a 5 000-character goal, or "app app app ..." repeated 2 000 times
-                # -- produced thousands of clauses and SQLite rejected the whole
-                # statement with "Expression tree is too large (maximum depth
-                # 1000)", so recall silently returned nothing for those tasks.
-                # Deduplicate, keep the most selective (longest) keywords, and cap
-                # the clause count: past a couple of dozen the extra terms add
-                # noise, not recall.
-                raw_keywords = [k.strip() for k in query.split() if len(k.strip()) > 3]
-                seen: set[str] = set()
-                keywords = []
-                for kw in sorted(set(raw_keywords), key=len, reverse=True):
-                    low = kw.lower()
-                    if low in seen:
-                        continue
-                    seen.add(low)
-                    keywords.append(kw)
-                    if len(keywords) >= _MAX_RECALL_KEYWORDS:
-                        break
-                if not keywords:
-                    fallback = (query or "").strip()
-                    keywords = [fallback[:_MAX_RECALL_KEYWORDS * 8]] if fallback else []
-                if not keywords:
-                    return []
                 like_clauses = " OR ".join(["content_text LIKE ?" for _ in keywords])
                 params = [f"%{k}%" for k in keywords]
                 query_sql = f"""
@@ -560,7 +640,10 @@ class MemoraClient:
                 rows = c.fetchall()
                 return [MemoryItem(dict(r)) for r in rows]
         except Exception as e:
-            logger.warning(f"Local SQLite memory recall failed: {e}")
+            if self._oracle_outbox is not None:
+                logger.warning(f"Oracle MEMORA_OUTBOX memory recall failed: {e}")
+            else:
+                logger.warning(f"Local SQLite memory recall failed: {e}")
             return []
 
 

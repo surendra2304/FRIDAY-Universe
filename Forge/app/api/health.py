@@ -2,6 +2,7 @@
 Health, Readiness, Diagnostics, and Prometheus Metrics Endpoints for Project FORGE.
 """
 
+import logging
 import time
 from datetime import datetime, timezone
 from typing import Any
@@ -11,10 +12,11 @@ from pydantic import BaseModel, Field
 
 from app.core.config import get_settings
 from app.integrations.ai_universe_deep import deep_ai_universe
-from app.memory.db import db_manager
+from app.memory.db import db_manager, ping_statement
 from app.monitoring.production_monitor import AlertStatus, production_monitor
 
 health_router = APIRouter(tags=["Health & Monitoring"])
+logger = logging.getLogger(__name__)
 
 
 def _observed_at() -> str:
@@ -37,6 +39,8 @@ class ReadinessResponse(BaseModel):
     service: str = "forge"
     version: str = "0.1.0"
     database_connected: bool = True
+    database: str = "connected"
+    database_backend: str = "unconfigured"
     workspaces_writable: bool = True
     evidence_class: str = "dependency_readiness"
     observed_at: str = Field(default_factory=_observed_at)
@@ -65,12 +69,14 @@ async def health_liveness():
     db_ok = False
     try:
         async with db_manager.connection() as conn:
-            cursor = await conn.execute("SELECT 1")
+            # Oracle needs "SELECT 1 FROM DUAL"; resolved after connecting.
+            cursor = await conn.execute(ping_statement(db_manager))
             row = await cursor.fetchone()
-            db_ok = row is not None and row[0] == 1
+            db_ok = row is not None and next(iter(row.values()), None) == 1
     except Exception:
         # Keep liveness independent from database health: callers still receive
         # the process status, while readiness reports whether it can serve work.
+        logger.warning("Forge liveness database probe failed", exc_info=True)
         db_ok = False
     return LivenessResponse(
         status="ok",
@@ -103,14 +109,15 @@ async def health_readiness():
 
     try:
         async with db_manager.connection() as conn:
-            cursor = await conn.execute("SELECT 1")
+            cursor = await conn.execute(ping_statement(db_manager))
             row = await cursor.fetchone()
-            db_ok = row is not None and row[0] == 1
+            db_ok = row is not None and next(iter(row.values()), None) == 1
     except Exception:
+        logger.warning("Forge readiness database probe failed", exc_info=True)
         db_ok = False
 
+    settings = get_settings()
     try:
-        settings = get_settings()
         ws_dir = (
             settings.base_dir / settings.workspaces_dir
             if not settings.workspaces_dir.is_absolute()
@@ -122,7 +129,24 @@ async def health_readiness():
         test_file.unlink(missing_ok=True)
         ws_ok = True
     except Exception:
+        logger.warning("Forge readiness workspace probe failed for %s", settings.workspaces_dir, exc_info=True)
         ws_ok = False
+
+    # Read database backend from the SQLAlchemy engine (via DatabaseManager)
+    db_backend = getattr(db_manager, "dialect_name", "unconfigured")
+    if not db_backend or db_backend == "unconfigured":
+        engine = getattr(db_manager, "_async_engine", None)
+        if engine is not None and hasattr(engine, "dialect"):
+            db_backend = str(getattr(engine.dialect, "name", "unconfigured"))
+        else:
+            url = getattr(db_manager, "get_effective_url", lambda: "")()
+            db_backend_lower = url.lower()
+            if "oracle" in db_backend_lower:
+                db_backend = "oracle"
+            elif "postgresql" in db_backend_lower or "+asyncpg" in db_backend_lower:
+                db_backend = "postgresql"
+            else:
+                db_backend = "sqlite"
 
     if not db_ok or not ws_ok:
         observed_at = _observed_at()
@@ -132,9 +156,30 @@ async def health_readiness():
                 "status": "not_ready",
                 "service": "forge",
                 "database_connected": db_ok,
+                "database": "connected" if db_ok else "unavailable",
+                "database_backend": db_backend,
                 "workspaces_writable": ws_ok,
                 "evidence_class": "dependency_readiness",
                 "observed_at": observed_at,
+            },
+        )
+
+    # Keep production readiness semantics: non-Oracle backend in production = 503
+    is_prod = getattr(settings, "APP_ENV", "development").lower() == "production"
+    if is_prod and db_backend != "oracle" and (db_ok and ws_ok):
+        observed_at = _observed_at()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "not_ready",
+                "service": "forge",
+                "database_connected": db_ok,
+                "database": "connected" if db_ok else "unavailable",
+                "database_backend": db_backend,
+                "workspaces_writable": ws_ok,
+                "evidence_class": "dependency_readiness",
+                "observed_at": observed_at,
+                "message": f"Production requires Oracle backend; got {db_backend}",
             },
         )
 
@@ -143,6 +188,8 @@ async def health_readiness():
         service="forge",
         version=settings.app_version,
         database_connected=db_ok,
+        database="connected" if db_ok else "unavailable",
+        database_backend=db_backend,
         workspaces_writable=ws_ok,
         observed_at=_observed_at(),
     )

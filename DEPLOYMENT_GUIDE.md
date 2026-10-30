@@ -22,35 +22,31 @@ This guide covers deployment of all 10 agents in the FRIDAY Universe.
 ## Prerequisites
 
 - Python 3.11+
-- PostgreSQL (dokploy-postgres or equivalent)
+- Oracle Autonomous Database (FRIDAY Universe DB, plus the VyralX media DB for VyralX)
 - Redis (for heavy task coordination)
 - FFmpeg (for VyralX video rendering)
 - Node.js 18+ (for VyralX UI)
 
 ## Database Setup
 
-Each agent has its own database. Create them all:
+Oracle Autonomous Database only — PostgreSQL and SQLite are not supported backends.
 
-```bash
-# Create databases
-psql -U postgres -c "CREATE DATABASE friday_db;"
-psql -U postgres -c "CREATE DATABASE stratex_db;"
-psql -U postgres -c "CREATE DATABASE cortex_db;"
-psql -U postgres -c "CREATE DATABASE futuris_db;"
-psql -U postgres -c "CREATE DATABASE inference_db;"
-psql -U postgres -c "CREATE DATABASE intelx_db;"
-psql -U postgres -c "CREATE DATABASE memora_db;"
-psql -U postgres -c "CREATE DATABASE sentinel_db;"
-psql -U postgres -c "CREATE DATABASE forge_db;"
-psql -U postgres -c "CREATE DATABASE vyralx_db;"
+Two ADBs are used:
 
-# Create users (replace passwords with strong values)
-psql -U postgres -c "CREATE USER friday_user WITH PASSWORD 'STRONG_PASSWORD';"
-# ... repeat for each agent ...
+- **FRIDAY Universe DB** — one login/schema per agent: `FRIDAY`, `STRATEX`, `INFERENCE`,
+  `MEMORA`, `INTELX`, `FORGE`, `FUTURIS`, `SENTINEL`, `CORTEX`, `VYRALX`.
+- **VyralX media DB** — the `VYRALX_MEDIA` login/schema.
 
-# Grant privileges
-psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE friday_db TO friday_user;"
-# ... repeat for each agent ...
+Provision each login with a strong password in the Oracle console (or as `ADMIN` in SQL
+Developer/DB Actions) and give it only the privileges its agent needs. Each agent creates its
+own tables on first use; there is no shared database to create with `psql`.
+
+```sql
+-- Run once per agent as ADMIN. Never commit real passwords.
+CREATE USER FRIDAY IDENTIFIED BY "<strong-password>";
+GRANT CONNECT, RESOURCE TO FRIDAY;
+ALTER USER FRIDAY QUOTA UNLIMITED ON DATA;
+-- Repeat for each agent login, and VYRALX_MEDIA in the VyralX media DB.
 ```
 
 ## Environment Variables
@@ -58,9 +54,11 @@ psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE friday_db TO friday_user;"
 Each agent requires environment variables for database connection, API keys, and configuration. Key variables:
 
 ```bash
-# Database
-POSTGRES_HOST=dokploy-postgres
-POSTGRES_PORT=5432
+# Database — Oracle Autonomous Database only. PostgreSQL/SQLite are not supported.
+# Each agent reads its own login DSN from the environment; never hardcode it.
+# Example: DATABASE_URL=oracle+oracledb://USER:password@(description=...)
+# Some agents use a prefixed key (FRIDAY_DATABASE_URL, STRATEX_DATABASE_URL,
+# FORGE_DATABASE_URL, SENTINEL_DATABASE_URL, INTELX_DB_URL, ORACLE_CORE_ASYNC_URL).
 
 # API Keys (use secrets manager)
 OPENAI_API_KEY=sk-...
@@ -149,7 +147,7 @@ docker compose -f docker-compose.oracle.yml up -d
 ## Troubleshooting
 
 1. **Port conflicts**: Ensure no other service is using the assigned ports
-2. **Database connection errors**: Verify POSTGRES_HOST and credentials
+2. **Database connection errors**: Verify the agent's Oracle DSN and credentials
 3. **Module import errors**: Install missing dependencies with `pip install -r requirements.txt`
 4. **CORS errors**: Ensure CORS_ORIGINS includes the frontend URL
 5. **Health check failures**: Check agent logs for startup errors

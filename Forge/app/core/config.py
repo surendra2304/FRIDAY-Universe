@@ -202,29 +202,29 @@ class Settings(BaseSettings):
         description="Explicit database connection URL (e.g. oracle+oracledb_async://..., postgresql+asyncpg://..., or sqlite+aiosqlite://...)",
     )
     postgres_host: str = Field(
-        default="dokploy-postgres",
+        default="",
         validation_alias=AliasChoices("POSTGRES_HOST", "FORGE_POSTGRES_HOST", "postgres_host"),
-        description="PostgreSQL hostname within the mesh",
+        description="Legacy PostgreSQL hostname; PostgreSQL is not a supported backend.",
     )
     postgres_port: int = Field(
-        default=5432,
+        default=0,
         validation_alias=AliasChoices("POSTGRES_PORT", "FORGE_POSTGRES_PORT", "postgres_port"),
-        description="PostgreSQL port",
+        description="Legacy PostgreSQL port; PostgreSQL is not a supported backend.",
     )
     postgres_user: str = Field(
-        default="forge_user",
+        default="",
         validation_alias=AliasChoices("POSTGRES_USER", "FORGE_POSTGRES_USER", "postgres_user"),
-        description="PostgreSQL username",
+        description="Legacy PostgreSQL username; PostgreSQL is not a supported backend.",
     )
     postgres_password: str = Field(
-        default="Rk5fcxK4A-V2i11aBnbvHOMT",
+        default="",
         validation_alias=AliasChoices("POSTGRES_PASSWORD", "FORGE_POSTGRES_PASSWORD", "postgres_password"),
-        description="PostgreSQL password",
+        description="Legacy PostgreSQL password; PostgreSQL is not a supported backend.",
     )
     postgres_db: str = Field(
-        default="forge_db",
+        default="",
         validation_alias=AliasChoices("POSTGRES_DB", "FORGE_POSTGRES_DB", "postgres_db"),
-        description="PostgreSQL database name",
+        description="Legacy PostgreSQL database name; PostgreSQL is not a supported backend.",
     )
     git_push_token: str | None = Field(
         default=None,
@@ -243,19 +243,20 @@ class Settings(BaseSettings):
     )
 
     def get_database_url(self) -> str:
-        """Return the effective database URL (PostgreSQL asyncpg or SQLite aiosqlite)."""
+        """Return the configured database URL, failing closed when unset.
+
+        Oracle Autonomous Database is the only supported backend. There is no
+        PostgreSQL or SQLite fallback: an unset ``FORGE_DATABASE_URL`` /
+        ``DATABASE_URL`` is a deployment error, not a reason to create a local
+        file.
+        """
         if self.database_url:
             return self.database_url
-        if os.getenv("FORGE_USE_POSTGRES", "0").lower() in ("1", "true", "yes"):
-            return (
-                f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@"
-                f"{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-            )
-        if Path("/dev/shm").exists():
-            return "sqlite+aiosqlite:////dev/shm/forge.db"
-        abs_sqlite = self.base_dir / self.database_path if not self.database_path.is_absolute() else self.database_path
-        path_str = str(abs_sqlite).replace("\\", "/")
-        return f"sqlite+aiosqlite:///{path_str}"
+        raise RuntimeError(
+            "No database URL configured. Set FORGE_DATABASE_URL or DATABASE_URL to an "
+            "Oracle Autonomous Database DSN (oracle+oracledb://USER:<password>@...). "
+            "PostgreSQL and SQLite are not supported backends."
+        )
 
     def ensure_directories(self) -> None:
         """Create runtime directories if they do not exist."""
