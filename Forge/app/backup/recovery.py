@@ -1,15 +1,16 @@
-"""
-Backup and Disaster Recovery Manager for Project FORGE.
-Provides automated SQLite snapshots, metadata backups, restoration utilities, and retention pruning.
+"""Backup and disaster recovery manager for Project FORGE.
+
+FORGE persists to Oracle Autonomous Database, which owns database backups
+(automatic backups, point-in-time restore, Data Guard). This module therefore
+produces metadata and configuration snapshots only; it never opens a local
+database file.
 """
 
 import json
-import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-import aiosqlite
 from pydantic import BaseModel, Field
 
 from app.core.config import Settings, get_settings
@@ -21,16 +22,16 @@ logger = get_logger("backup.recovery")
 
 class BackupManifest(BaseModel):
     backup_path: str
-    backup_type: str = "sqlite"  # sqlite, metadata, config, oracle-adb-managed
+    backup_type: str = "metadata"  # metadata, config, oracle-adb-managed
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     size_bytes: int = 0
 
 
 class BackupManager:
-    """Manages creation, restoration, and pruning of database and workspace metadata backups.
+    """Create, restore and prune workspace metadata and configuration snapshots.
 
-    On Oracle Autonomous Database only metadata/config snapshots are produced;
-    database backups are owned by ADB.
+    Database backups are owned by Oracle Autonomous Database; FORGE only snapshots
+    the metadata it actually owns.
     """
 
     def __init__(self, settings: Settings | None = None, db: DatabaseManager | None = None):
@@ -40,48 +41,16 @@ class BackupManager:
         self.backup_dir.mkdir(parents=True, exist_ok=True)
 
     async def backup_database(self) -> BackupManifest:
-        """Create a consistent database snapshot.
+        """Report the ADB-managed backup state.
 
-        Oracle Autonomous Database manages its own backups (automatic backups,
-        point-in-time restore and Data Guard), so there is no local data file
-        to copy. The call becomes a logged no-op on Oracle instead of trying to
-        open ``settings.database_path`` (which does not exist for ADB).
+        Oracle Autonomous Database manages its own backups, so there is no local
+        data file to snapshot. The call is a logged no-op.
         """
-        if self.db.is_oracle:
-            logger.info(
-                "Database backup skipped: Oracle Autonomous Database manages "
-                "backups automatically (no local data file to snapshot)."
-            )
-            return BackupManifest(
-                backup_path="", backup_type="oracle-adb-managed", size_bytes=0
-            )
-
-        src_path = self.settings.database_path
-        if not src_path.is_absolute():
-            src_path = self.settings.base_dir / src_path
-
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-        target_path = self.backup_dir / f"forge_backup_{timestamp}.db"
-
-        if not src_path.exists():
-            await self.db.init_db()
-
-        try:
-            async with aiosqlite.connect(src_path) as src_conn:
-                async with aiosqlite.connect(target_path) as dst_conn:
-                    await src_conn.backup(dst_conn)
-            size = target_path.stat().st_size
-            logger.info(f"Database backup created: {target_path.name} ({size} bytes)")
-            return BackupManifest(
-                backup_path=str(target_path), backup_type="sqlite", size_bytes=size
-            )
-        except Exception as e:
-            logger.warning(f"aiosqlite backup failed ({e}), falling back to direct copy.")
-            shutil.copy2(src_path, target_path)
-            size = target_path.stat().st_size
-            return BackupManifest(
-                backup_path=str(target_path), backup_type="sqlite", size_bytes=size
-            )
+        logger.info(
+            "Database backup delegated to Oracle Autonomous Database "
+            "(automatic backups, point-in-time restore and Data Guard)."
+        )
+        return BackupManifest(backup_path="", backup_type="oracle-adb-managed", size_bytes=0)
 
     def backup_workspace_metadata(self, task_id: str, metadata: dict[str, Any]) -> BackupManifest:
         """Create a JSON metadata snapshot for a workspace."""
@@ -108,54 +77,40 @@ class BackupManager:
         return BackupManifest(backup_path=str(target_path), backup_type="config", size_bytes=size)
 
     def restore_database(self, backup_file: Path) -> bool:
-        """Restore SQLite database from a specified backup file."""
-        if self.db.is_oracle:
-            logger.warning(
-                "Database restore skipped: Oracle Autonomous Database restores are "
-                "performed from ADB automatic backups / point-in-time restore, not "
-                "from a local file."
-            )
-            return False
-
-        if not backup_file.exists():
-            logger.error(f"Backup file '{backup_file}' does not exist.")
-            return False
-
-        dst_path = self.settings.database_path
-        if not dst_path.is_absolute():
-            dst_path = self.settings.base_dir / dst_path
-
-        try:
-            shutil.copy2(backup_file, dst_path)
-            logger.info(f"Restored database successfully from: {backup_file.name}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to restore database from {backup_file.name}: {e}")
-            return False
+        """Refuse local restores; ADB restores are performed by Oracle."""
+        logger.warning(
+            "Database restore skipped: Oracle Autonomous Database restores are "
+            "performed from ADB automatic backups / point-in-time restore, not "
+            "from a local file (%s).",
+            backup_file,
+        )
+        return False
 
     def list_backups(self) -> list[Path]:
-        """List all available database backup files sorted newest first."""
+        """List metadata/config snapshots, newest first."""
         if not self.backup_dir.exists():
             return []
-        return sorted(self.backup_dir.glob("forge_backup_*.db"), reverse=True)
+        return sorted(self.backup_dir.rglob("*.*"), reverse=True)
 
     def prune_old_backups(self, retention_days: int = 7) -> int:
-        """Prune database snapshots older than specified retention days."""
+        """Prune metadata/config snapshots older than the retention window."""
         if not self.backup_dir.exists():
             return 0
 
         cutoff = datetime.now(UTC) - timedelta(days=retention_days)
         pruned = 0
 
-        for b in self.backup_dir.glob("forge_backup_*.db"):
+        for path in self.backup_dir.rglob("*"):
+            if not path.is_file():
+                continue
             try:
-                mtime = datetime.fromtimestamp(b.stat().st_mtime, tz=UTC)
-                if mtime <= cutoff + timedelta(seconds=1):
-                    b.unlink()
+                mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
+                if mtime <= cutoff:
+                    path.unlink()
                     pruned += 1
-                    logger.info(f"Pruned old backup: {b.name}")
+                    logger.info(f"Pruned old backup: {path.name}")
             except Exception as e:
-                logger.debug(f"Error pruning backup {b.name}: {e}")
+                logger.debug(f"Error pruning backup {path.name}: {e}")
 
         return pruned
 

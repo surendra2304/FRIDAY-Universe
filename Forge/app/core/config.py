@@ -35,7 +35,6 @@ class Settings(BaseSettings):
     # Filesystem Paths
     base_dir: Path = Field(default_factory=lambda: Path(__file__).resolve().parent.parent.parent)
     data_dir: Path = Field(default_factory=lambda: Path("data"))
-    database_path: Path = Field(default_factory=lambda: Path("data/forge.db"))
     workspaces_dir: Path = Field(default_factory=lambda: Path("workspaces"))
     artifacts_dir: Path = Field(default_factory=lambda: Path("artifacts"))
 
@@ -197,34 +196,13 @@ class Settings(BaseSettings):
             "ORACLE_CORE_ASYNC_URL",
             "ORACLE_CORE_URL",
             "FORGE_DATABASE_URL",
+            "FORGE_UNIVERSE_DB_URL",
             "database_url",
         ),
-        description="Explicit database connection URL (e.g. oracle+oracledb_async://..., postgresql+asyncpg://..., or sqlite+aiosqlite://...)",
-    )
-    postgres_host: str = Field(
-        default="",
-        validation_alias=AliasChoices("POSTGRES_HOST", "FORGE_POSTGRES_HOST", "postgres_host"),
-        description="Legacy PostgreSQL hostname; PostgreSQL is not a supported backend.",
-    )
-    postgres_port: int = Field(
-        default=0,
-        validation_alias=AliasChoices("POSTGRES_PORT", "FORGE_POSTGRES_PORT", "postgres_port"),
-        description="Legacy PostgreSQL port; PostgreSQL is not a supported backend.",
-    )
-    postgres_user: str = Field(
-        default="",
-        validation_alias=AliasChoices("POSTGRES_USER", "FORGE_POSTGRES_USER", "postgres_user"),
-        description="Legacy PostgreSQL username; PostgreSQL is not a supported backend.",
-    )
-    postgres_password: str = Field(
-        default="",
-        validation_alias=AliasChoices("POSTGRES_PASSWORD", "FORGE_POSTGRES_PASSWORD", "postgres_password"),
-        description="Legacy PostgreSQL password; PostgreSQL is not a supported backend.",
-    )
-    postgres_db: str = Field(
-        default="",
-        validation_alias=AliasChoices("POSTGRES_DB", "FORGE_POSTGRES_DB", "postgres_db"),
-        description="Legacy PostgreSQL database name; PostgreSQL is not a supported backend.",
+        description=(
+            "Oracle Autonomous Database DSN, e.g. "
+            "oracle+oracledb://USER:<password>@adb.example.com:1522/?service_name=FORGE"
+        ),
     )
     git_push_token: str | None = Field(
         default=None,
@@ -243,26 +221,44 @@ class Settings(BaseSettings):
     )
 
     def get_database_url(self) -> str:
-        """Return the configured database URL, failing closed when unset.
+        """Return the configured Oracle DSN, failing closed when unset or malformed.
 
         Oracle Autonomous Database is the only supported backend. There is no
         PostgreSQL or SQLite fallback: an unset ``FORGE_DATABASE_URL`` /
         ``DATABASE_URL`` is a deployment error, not a reason to create a local
-        file.
+        file, and a non-Oracle URL is rejected instead of being silently
+        downgraded to a different engine.
         """
-        if self.database_url:
-            return self.database_url
-        raise RuntimeError(
-            "No database URL configured. Set FORGE_DATABASE_URL or DATABASE_URL to an "
-            "Oracle Autonomous Database DSN (oracle+oracledb://USER:<password>@...). "
-            "PostgreSQL and SQLite are not supported backends."
-        )
+        url = (self.database_url or "").strip()
+        if not url:
+            raise RuntimeError(
+                "No database URL configured. Set FORGE_DATABASE_URL, FORGE_UNIVERSE_DB_URL "
+                "or DATABASE_URL to an Oracle Autonomous Database DSN "
+                "(oracle+oracledb://USER:<password>@...). PostgreSQL and SQLite are not "
+                "supported backends."
+            )
+
+        lowered = url.lower()
+        if not lowered.startswith(("oracle+oracledb://", "oracle+oracledb_async://")):
+            if lowered.startswith(
+                ("postgres://", "postgresql://", "postgresql+", "sqlite://", "sqlite+")
+            ):
+                raise RuntimeError(
+                    "Unsupported database backend in the configured URL. Oracle Autonomous "
+                    "Database is the only supported backend; set FORGE_DATABASE_URL to an "
+                    "oracle+oracledb:// DSN. PostgreSQL and SQLite drivers are not installed "
+                    "or used by FORGE."
+                )
+            raise RuntimeError(
+                "Malformed database URL: expected an Oracle Autonomous Database DSN starting "
+                "with 'oracle+oracledb://'. Refusing to start with an unknown backend."
+            )
+        return url
 
     def ensure_directories(self) -> None:
         """Create runtime directories if they do not exist."""
         for path in [
             self.data_dir,
-            self.database_path.parent,
             self.workspaces_dir,
             self.artifacts_dir,
         ]:

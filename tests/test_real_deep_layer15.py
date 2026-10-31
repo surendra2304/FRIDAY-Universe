@@ -12,6 +12,7 @@ import sys
 import threading
 import wave
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import parse_qs, urlsplit
@@ -469,8 +470,9 @@ def test_drive_business_api_protects_customer_snapshots(tmp_path, monkeypatch):
     routine=client.post("/api/business/routines",headers=headers,json={"skill_id":skill.json()["skill_id"],
         "weekdays":[0],"local_time":"09:15","timezone":"Asia/Kolkata"})
     assert routine.status_code==200
-    uploaded=client.post("/api/business/snapshots/crm",headers=headers,json={"payload":{"leads":[],"as_of":"2026-10-26T12:00:00Z"},
-        "observed_at":"2026-10-26T12:00:00Z","source_link":"https://crm.example/export"})
+    now_iso = datetime.now(timezone.utc).isoformat()
+    uploaded=client.post("/api/business/snapshots/crm",headers=headers,json={"payload":{"leads":[],"as_of":now_iso},
+        "observed_at":now_iso,"source_link":"https://crm.example/export"})
     assert uploaded.status_code==200
     run=client.post(f"/api/business/routines/{routine.json()['routine_id']}/run",headers=headers,json={})
     assert run.status_code==200 and run.json()["status"]=="completed"
