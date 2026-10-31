@@ -101,7 +101,10 @@ def test_store_paths_collisions_corruption(tmp_path):
     assert len(store.history())==2
     with pytest.raises(ValueError):store.get('../../etc/passwd')
     target=tmp_path/'outside';target.write_text('{"query":"outside"}')
-    (tmp_path/('b'*32+'.json')).symlink_to(target)
+    try:
+        (tmp_path/('b'*32+'.json')).symlink_to(target)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlink creation is not permitted on this platform")
     with pytest.raises(ValueError):store.get('b'*32)
 
 

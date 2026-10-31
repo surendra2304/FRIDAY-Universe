@@ -31,12 +31,8 @@ to "no memory" rather than abort an engineering step.
 from __future__ import annotations
 
 import asyncio
-import os
 import re
-import sqlite3
 import sys
-import time
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -61,37 +57,6 @@ try:
     _USING_SDK = True
 except Exception:
     _USING_SDK = False
-
-    _SCHEMA = """
-    CREATE TABLE IF NOT EXISTS agents (
-        id TEXT PRIMARY KEY,
-        name TEXT UNIQUE,
-        role TEXT,
-        tenant_id TEXT
-    );
-    CREATE TABLE IF NOT EXISTS namespaces (
-        id TEXT PRIMARY KEY,
-        path TEXT,
-        type TEXT,
-        agent_id TEXT,
-        tenant_id TEXT
-    );
-    CREATE TABLE IF NOT EXISTS memory_records (
-        id TEXT PRIMARY KEY,
-        namespace_id TEXT,
-        owner_id TEXT,
-        memory_type TEXT,
-        content_text TEXT,
-        source TEXT,
-        confidence REAL,
-        importance REAL,
-        lifecycle_state TEXT,
-        tenant_id TEXT,
-        created_at TEXT
-    );
-    CREATE INDEX IF NOT EXISTS idx_memory_records_owner
-        ON memory_records(owner_id, created_at DESC);
-    """
 
     # Tokens too common to be useful for retrieval.
     _STOPWORDS = frozenset(

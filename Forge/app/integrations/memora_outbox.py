@@ -2,15 +2,16 @@
 Oracle-backed spool for Memora memories that could not be delivered.
 
 Both Forge Memora clients (``app.integrations.memora_client`` and the legacy
-``forge_upgrade.memora_client``) used to fall back to a local SQLite file such
-as ``/dev/shm/forge_memora.db``. On a VM whose only durable store is Oracle ADB
-that spool is lost on restart and invisible to every other agent.
+``forge_upgrade.memora_client``) spool into the ``MEMORA_OUTBOX`` table in the
+FORGE schema. There is no local SQLite fallback: Oracle Autonomous Database is
+the only durable store, and a spool file under ``/dev/shm`` would be lost on
+restart and invisible to every other agent.
 
-When the active database is Oracle, the spool is instead the ``MEMORA_OUTBOX``
-table in the FORGE schema. The table is created by
-``DatabaseManager._ensure_schema`` (it is part of ``SCHEMA_SQL_ORACLE``) and,
-defensively, on first use here -- the Memora client may write before the API
-startup hook has initialised the schema.
+The table is created by ``DatabaseManager._ensure_schema`` (it is part of
+``SCHEMA_TABLES``) and, defensively, on first use here -- the Memora client may
+write before the API startup hook has initialised the schema. Existence is
+checked against ``user_tables`` because ``CREATE TABLE IF NOT EXISTS`` is not
+portable across ADB versions.
 
 The class is deliberately synchronous: the Memora client's storage methods are
 plain ``def`` methods invoked from the agent hot path (and from
@@ -95,7 +96,11 @@ class OracleMemoraOutbox:
         if self._schema_ready:
             return
         try:
-            conn.execute(text(MEMORA_OUTBOX_DDL_ORACLE))
+            exists = conn.execute(
+                text("SELECT COUNT(*) FROM user_tables WHERE table_name = 'MEMORA_OUTBOX'")
+            ).scalar_one()
+            if int(exists) == 0:
+                conn.execute(text(MEMORA_OUTBOX_DDL_ORACLE))
             self._schema_ready = True
         except Exception as exc:
             if is_benign_ddl_error(exc):
@@ -105,7 +110,11 @@ class OracleMemoraOutbox:
 
     @staticmethod
     def _lower_keys(row: Any) -> dict[str, Any]:
-        return {str(k).lower(): v for k, v in dict(row).items()}
+        lowered: dict[str, Any] = {}
+        for key, value in dict(row).items():
+            read = getattr(value, "read", None)
+            lowered[str(key).lower()] = read() if callable(read) else value
+        return lowered
 
     # ------------------------------------------------------------------
     # writes

@@ -1,6 +1,10 @@
 """
 StateStore: Memory and state persistence interface for FORGE.
-Handles projects, tasks, task graphs, checkpoints, audit events, and artifact records.
+
+Handles projects, tasks, task graphs, checkpoints, audit events, and artifact
+records. Every statement targets Oracle Autonomous Database and uses named
+``:bind`` parameters; upserts use ``MERGE`` and row limits use
+``FETCH FIRST :row_limit ROWS ONLY``.
 """
 
 import json
@@ -24,13 +28,49 @@ from app.memory.models import (
 logger = get_logger("memory.state_store")
 
 
+# Columns that Oracle returns as LOB objects. They must be read before being
+# parsed/returned; ``str(lob)`` would produce a repr instead of the payload.
+_CLOB_COLUMNS = (
+    "goal",
+    "requirements",
+    "error_message",
+    "metadata",
+    "description",
+    "config",
+    "payload",
+    "nodes",
+    "edges",
+    "state_data",
+)
+
+
+def _as_text(value: Any) -> Any:
+    """Read an Oracle CLOB/LOB value (or pass a plain value through)."""
+    if value is None:
+        return None
+    read = getattr(value, "read", None)
+    if callable(read):
+        return read()
+    return value
+
+
+def _loads(value: Any, default: Any) -> Any:
+    """Parse a JSON CLOB, tolerating NULL/empty and legacy malformed rows."""
+    text_value = _as_text(value)
+    if text_value is None or text_value == "":
+        return default
+    try:
+        return json.loads(text_value)
+    except (TypeError, ValueError):
+        return default
+
+
 def _text(value: str | None) -> str | None:
     """Normalise optional text for a nullable column.
 
     Oracle stores ``''`` as ``NULL``, so an empty string written to a nullable
     column already comes back as ``None``. Converting on write keeps the
-    round-trip identical on SQLite/PostgreSQL instead of returning ``""`` on
-    one backend and ``None`` on another.
+    round-trip identical.
     """
     if value is None:
         return None
@@ -50,10 +90,15 @@ def _required_text(value: str | None, default: str) -> str:
 
 
 class StateStore:
-    """Provides high-level state persistence methods over the active backend."""
+    """Provides high-level state persistence methods over Oracle."""
 
     def __init__(self, db: DatabaseManager | None = None):
         self.db = db or db_manager
+
+    @property
+    def _is_oracle(self) -> bool:
+        # False only for the explicit test-only SQLite backend.
+        return bool(getattr(self.db, "is_oracle", True))
 
     # --- Project Management ---
 
@@ -63,17 +108,18 @@ class StateStore:
             await conn.execute(
                 """
                 INSERT INTO projects (id, name, description, workspace_path, config, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (:id, :name, :description, :workspace_path, :config, :created_at, :updated_at)
                 """,
-                (
-                    project.id,
-                    _required_text(project.name, "untitled-project"),
-                    _text(project.description),
-                    _required_text(project.workspace_path, "."),
-                    json.dumps(project.config),
-                    project.created_at.isoformat(),
-                    project.updated_at.isoformat(),
-                ),
+                {
+                    "id": project.id,
+                    "name": _required_text(project.name, "untitled-project"),
+                    "description": _text(project.description),
+                    "workspace_path": _required_text(project.workspace_path, "."),
+                    "config": json.dumps(project.config),
+                    "created_at": project.created_at.isoformat(),
+                    "updated_at": project.updated_at.isoformat(),
+                },
+                clob_params=("description", "config"),
             )
             await conn.commit()
         logger.debug(f"Saved project: {project.id} ({project.name})")
@@ -83,8 +129,9 @@ class StateStore:
         """Retrieve project workspace by ID."""
         async with self.db.connection() as conn:
             async with conn.execute(
-                "SELECT id, name, description, workspace_path, config, created_at, updated_at FROM projects WHERE id = ?",
-                (project_id,),
+                "SELECT id, name, description, workspace_path, config, created_at, updated_at "
+                "FROM projects WHERE id = :id",
+                {"id": project_id},
             ) as cursor:
                 row = await cursor.fetchone()
                 if not row:
@@ -92,9 +139,9 @@ class StateStore:
                 return ProjectWorkspace(
                     id=row["id"],
                     name=row["name"],
-                    description=row["description"],
+                    description=_as_text(row["description"]),
                     workspace_path=row["workspace_path"],
-                    config=json.loads(row["config"]),
+                    config=_loads(row["config"], {}),
                     created_at=datetime.fromisoformat(row["created_at"]),
                     updated_at=datetime.fromisoformat(row["updated_at"]),
                 )
@@ -102,15 +149,17 @@ class StateStore:
     async def list_projects(self) -> list[ProjectWorkspace]:
         """List all project workspaces."""
         async with self.db.connection() as conn:
-            async with conn.execute("SELECT * FROM projects ORDER BY created_at DESC") as cursor:
+            async with conn.execute(
+                "SELECT * FROM projects ORDER BY created_at DESC"
+            ) as cursor:
                 rows = await cursor.fetchall()
                 return [
                     ProjectWorkspace(
                         id=row["id"],
                         name=row["name"],
-                        description=row["description"],
+                        description=_as_text(row["description"]),
                         workspace_path=row["workspace_path"],
-                        config=json.loads(row["config"]),
+                        config=_loads(row["config"], {}),
                         created_at=datetime.fromisoformat(row["created_at"]),
                         updated_at=datetime.fromisoformat(row["updated_at"]),
                     )
@@ -125,61 +174,56 @@ class StateStore:
             await conn.execute(
                 """
                 INSERT INTO tasks (id, goal, requirements, run_mode, workspace_path, max_budget, budget_consumed, state, progress_percentage, error_message, metadata, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (:id, :goal, :requirements, :run_mode, :workspace_path, :max_budget, :budget_consumed, :state, :progress_percentage, :error_message, :metadata, :created_at, :updated_at)
                 """,
-                (
-                    task.id,
-                    _required_text(task.goal, "(empty goal)"),
-                    json.dumps(task.requirements),
-                    task.mode.value,
-                    _required_text(task.workspace_path, "."),
-                    task.max_budget,
-                    task.budget_consumed,
-                    task.state.value,
-                    task.progress_percentage,
-                    _text(task.error_message),
-                    json.dumps(task.metadata),
-                    task.created_at.isoformat(),
-                    task.updated_at.isoformat(),
-                ),
+                {
+                    "id": task.id,
+                    "goal": _required_text(task.goal, "(empty goal)"),
+                    "requirements": json.dumps(task.requirements),
+                    "run_mode": task.mode.value,
+                    "workspace_path": _required_text(task.workspace_path, "."),
+                    "max_budget": task.max_budget,
+                    "budget_consumed": task.budget_consumed,
+                    "state": task.state.value,
+                    "progress_percentage": task.progress_percentage,
+                    "error_message": _text(task.error_message),
+                    "metadata": json.dumps(task.metadata),
+                    "created_at": task.created_at.isoformat(),
+                    "updated_at": task.updated_at.isoformat(),
+                },
+                clob_params=("goal", "requirements", "error_message", "metadata"),
             )
             await conn.commit()
         logger.debug(f"Created task: {task.id}")
         return task
 
+    def _task_from_row(self, row: Any) -> TaskEntity:
+        return TaskEntity(
+            id=row["id"],
+            goal=_as_text(row["goal"]),
+            requirements=_loads(row["requirements"], []),
+            mode=TaskMode(row["run_mode"]),
+            workspace_path=row["workspace_path"],
+            max_budget=row["max_budget"],
+            budget_consumed=row["budget_consumed"],
+            state=TaskState(row["state"]),
+            progress_percentage=row["progress_percentage"],
+            error_message=_as_text(row["error_message"]),
+            metadata=_loads(row["metadata"], {}),
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
     async def get_task(self, task_id: str) -> TaskEntity | None:
         """Retrieve task entity by ID."""
         async with (
             self.db.connection() as conn,
-            conn.execute(
-                "SELECT * FROM tasks WHERE id = ?",
-                (task_id,),
-            ) as cursor,
+            conn.execute("SELECT * FROM tasks WHERE id = :id", {"id": task_id}) as cursor,
         ):
             row = await cursor.fetchone()
             if not row:
                 return None
-            metadata = {}
-            if "metadata" in row.keys() and row["metadata"]:
-                try:
-                    metadata = json.loads(row["metadata"])
-                except Exception:
-                    metadata = {}
-            return TaskEntity(
-                id=row["id"],
-                goal=row["goal"],
-                requirements=json.loads(row["requirements"]),
-                mode=TaskMode(row["run_mode"]),
-                workspace_path=row["workspace_path"],
-                max_budget=row["max_budget"],
-                budget_consumed=row["budget_consumed"],
-                state=TaskState(row["state"]),
-                progress_percentage=row["progress_percentage"],
-                error_message=row["error_message"],
-                metadata=metadata,
-                created_at=datetime.fromisoformat(row["created_at"]),
-                updated_at=datetime.fromisoformat(row["updated_at"]),
-            )
+            return self._task_from_row(row)
 
     async def update_task_state(
         self,
@@ -192,7 +236,9 @@ class StateStore:
         """Update task state, progress, and budget consumed."""
         now = datetime.now(UTC).isoformat()
         async with self.db.connection() as conn:
-            async with conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)) as cursor:
+            async with conn.execute(
+                "SELECT * FROM tasks WHERE id = :id", {"id": task_id}
+            ) as cursor:
                 row = await cursor.fetchone()
                 if not row:
                     return None
@@ -209,73 +255,104 @@ class StateStore:
             await conn.execute(
                 """
                 UPDATE tasks
-                SET state = ?, progress_percentage = ?, error_message = ?, budget_consumed = ?, updated_at = ?
-                WHERE id = ?
+                SET state = :state, progress_percentage = :progress_percentage,
+                    error_message = :error_message, budget_consumed = :budget_consumed,
+                    updated_at = :updated_at
+                WHERE id = :id
                 """,
-                (
-                    state.value,
-                    new_progress,
-                    _text(error_message),
-                    new_budget,
-                    now,
-                    task_id,
-                ),
+                {
+                    "state": state.value,
+                    "progress_percentage": new_progress,
+                    "error_message": _text(error_message),
+                    "budget_consumed": new_budget,
+                    "updated_at": now,
+                    "id": task_id,
+                },
+                clob_params=("error_message",),
             )
             await conn.commit()
 
         return await self.get_task(task_id)
 
     async def save_task(self, task: TaskEntity) -> TaskEntity:
-        """Upsert a task entity."""
+        """Upsert a task entity (Oracle ``MERGE``)."""
         now = datetime.now(UTC).isoformat()
+        params = {
+            "id": task.id,
+            "goal": _required_text(task.goal, "(empty goal)"),
+            "requirements": json.dumps(task.requirements),
+            "run_mode": task.mode.value,
+            "workspace_path": _required_text(task.workspace_path, "."),
+            "max_budget": task.max_budget,
+            "budget_consumed": task.budget_consumed,
+            "state": task.state.value,
+            "progress_percentage": task.progress_percentage,
+            "error_message": _text(task.error_message),
+            "metadata": json.dumps(task.metadata),
+            "created_at": task.created_at.isoformat(),
+            "updated_at": now,
+        }
+        clob_params = ("goal", "requirements", "error_message", "metadata")
+
         async with self.db.connection() as conn:
-            async with conn.execute("SELECT id FROM tasks WHERE id = ?", (task.id,)) as cursor:
-                row = await cursor.fetchone()
-            if row:
+            if self._is_oracle:
                 await conn.execute(
                     """
-                    UPDATE tasks
-                    SET goal = ?, requirements = ?, run_mode = ?, workspace_path = ?, max_budget = ?,
-                        budget_consumed = ?, state = ?, progress_percentage = ?, error_message = ?, metadata = ?, updated_at = ?
-                    WHERE id = ?
+                    MERGE INTO tasks t
+                    USING (SELECT :id AS id FROM dual) src
+                    ON (t.id = src.id)
+                    WHEN MATCHED THEN UPDATE SET
+                        t.goal = :goal,
+                        t.requirements = :requirements,
+                        t.run_mode = :run_mode,
+                        t.workspace_path = :workspace_path,
+                        t.max_budget = :max_budget,
+                        t.budget_consumed = :budget_consumed,
+                        t.state = :state,
+                        t.progress_percentage = :progress_percentage,
+                        t.error_message = :error_message,
+                        t.metadata = :metadata,
+                        t.updated_at = :updated_at
+                    WHEN NOT MATCHED THEN INSERT
+                        (id, goal, requirements, run_mode, workspace_path, max_budget,
+                         budget_consumed, state, progress_percentage, error_message,
+                         metadata, created_at, updated_at)
+                    VALUES
+                        (:id, :goal, :requirements, :run_mode, :workspace_path,
+                         :max_budget, :budget_consumed, :state, :progress_percentage,
+                         :error_message, :metadata, :created_at, :updated_at)
                     """,
-                    (
-                        _required_text(task.goal, "(empty goal)"),
-                        json.dumps(task.requirements),
-                        task.mode.value,
-                        _required_text(task.workspace_path, "."),
-                        task.max_budget,
-                        task.budget_consumed,
-                        task.state.value,
-                        task.progress_percentage,
-                        _text(task.error_message),
-                        json.dumps(task.metadata),
-                        now,
-                        task.id,
-                    ),
+                    params,
+                    clob_params=clob_params,
                 )
             else:
-                await conn.execute(
-                    """
-                    INSERT INTO tasks (id, goal, requirements, run_mode, workspace_path, max_budget, budget_consumed, state, progress_percentage, error_message, metadata, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        task.id,
-                        _required_text(task.goal, "(empty goal)"),
-                        json.dumps(task.requirements),
-                        task.mode.value,
-                        _required_text(task.workspace_path, "."),
-                        task.max_budget,
-                        task.budget_consumed,
-                        task.state.value,
-                        task.progress_percentage,
-                        _text(task.error_message),
-                        json.dumps(task.metadata),
-                        task.created_at.isoformat(),
-                        now,
-                    ),
-                )
+                # Explicit test-only SQLite backend (app.memory.sqlite_test_backend).
+                async with conn.execute(
+                    "SELECT id FROM tasks WHERE id = :id", {"id": task.id}
+                ) as cursor:
+                    exists = await cursor.fetchone()
+                if exists:
+                    await conn.execute(
+                        """
+                        UPDATE tasks
+                        SET goal = :goal, requirements = :requirements,
+                            run_mode = :run_mode, workspace_path = :workspace_path,
+                            max_budget = :max_budget, budget_consumed = :budget_consumed,
+                            state = :state, progress_percentage = :progress_percentage,
+                            error_message = :error_message, metadata = :metadata,
+                            updated_at = :updated_at
+                        WHERE id = :id
+                        """,
+                        params,
+                    )
+                else:
+                    await conn.execute(
+                        """
+                        INSERT INTO tasks (id, goal, requirements, run_mode, workspace_path, max_budget, budget_consumed, state, progress_percentage, error_message, metadata, created_at, updated_at)
+                        VALUES (:id, :goal, :requirements, :run_mode, :workspace_path, :max_budget, :budget_consumed, :state, :progress_percentage, :error_message, :metadata, :created_at, :updated_at)
+                        """,
+                        params,
+                    )
             await conn.commit()
         return task
 
@@ -287,57 +364,31 @@ class StateStore:
     ) -> list[TaskEntity]:
         """List tasks ordered by created_at DESC with optional state/time filters."""
         query = "SELECT * FROM tasks"
-        params: list[Any] = []
+        params: dict[str, Any] = {}
         conditions: list[str] = []
         if state is not None:
-            conditions.append("state = ?")
-            params.append(state.value)
+            conditions.append("state = :state")
+            params["state"] = state.value
         if since_timestamp is not None:
-            conditions.append("updated_at >= ?")
-            params.append(since_timestamp.isoformat())
+            conditions.append("updated_at >= :since_timestamp")
+            params["since_timestamp"] = since_timestamp.isoformat()
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
 
+        query += " ORDER BY created_at DESC " + self.db.row_limit_clause()
+        params["row_limit"] = limit
+
         async with self.db.connection() as conn:
-            # Resolved after `connection()` so the dialect reflects the backend
-            # actually in use (an unreachable Oracle/PostgreSQL server falls
-            # back to SQLite). Oracle has no LIMIT clause.
-            query += " ORDER BY created_at DESC " + self.db.row_limit_clause()
-            params.append(limit)
-            async with conn.execute(query, tuple(params)) as cursor:
+            async with conn.execute(query, params) as cursor:
                 rows = await cursor.fetchall()
-                results = []
-                for row in rows:
-                    metadata = {}
-                    if "metadata" in row.keys() and row["metadata"]:
-                        try:
-                            metadata = json.loads(row["metadata"])
-                        except Exception:
-                            metadata = {}
-                    results.append(
-                        TaskEntity(
-                            id=row["id"],
-                            goal=row["goal"],
-                            requirements=json.loads(row["requirements"]),
-                            mode=TaskMode(row["run_mode"]),
-                            workspace_path=row["workspace_path"],
-                            max_budget=row["max_budget"],
-                            budget_consumed=row["budget_consumed"],
-                            state=TaskState(row["state"]),
-                            progress_percentage=row["progress_percentage"],
-                            error_message=row["error_message"],
-                            metadata=metadata,
-                            created_at=datetime.fromisoformat(row["created_at"]),
-                            updated_at=datetime.fromisoformat(row["updated_at"]),
-                        )
-                    )
-                return results
+                return [self._task_from_row(row) for row in rows]
 
     async def count_tasks(self) -> int:
         """Count total tasks in the store."""
-        async with self.db.connection() as conn, conn.execute("SELECT COUNT(*) as cnt FROM tasks") as cursor:
-            row = await cursor.fetchone()
-            return row["cnt"] if row else 0
+        async with self.db.connection() as conn:
+            async with conn.execute("SELECT COUNT(*) AS cnt FROM tasks") as cursor:
+                row = await cursor.fetchone()
+                return int(row["cnt"]) if row else 0
 
     # --- Audit Events ---
 
@@ -354,15 +405,16 @@ class StateStore:
             await conn.execute(
                 """
                 INSERT INTO audit_events (id, task_id, event_type, payload, timestamp)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (:id, :task_id, :event_type, :payload, :timestamp)
                 """,
-                (
-                    event.id,
-                    event.task_id,
-                    _required_text(event.event_type, "unknown"),
-                    json.dumps(event.payload),
-                    event.timestamp.isoformat(),
-                ),
+                {
+                    "id": event.id,
+                    "task_id": event.task_id,
+                    "event_type": _required_text(event.event_type, "unknown"),
+                    "payload": json.dumps(event.payload),
+                    "timestamp": event.timestamp.isoformat(),
+                },
+                clob_params=("payload",),
             )
             await conn.commit()
         logger.debug(f"Audit event recorded [{event_type}] for task {task_id}")
@@ -373,8 +425,8 @@ class StateStore:
         async with (
             self.db.connection() as conn,
             conn.execute(
-                "SELECT * FROM audit_events WHERE task_id = ? ORDER BY timestamp ASC",
-                (task_id,),
+                "SELECT * FROM audit_events WHERE task_id = :task_id ORDER BY timestamp ASC",
+                {"task_id": task_id},
             ) as cursor,
         ):
             rows = await cursor.fetchall()
@@ -383,7 +435,7 @@ class StateStore:
                     id=row["id"],
                     task_id=row["task_id"],
                     event_type=row["event_type"],
-                    payload=json.loads(row["payload"]),
+                    payload=_loads(row["payload"], {}),
                     timestamp=datetime.fromisoformat(row["timestamp"]),
                 )
                 for row in rows
@@ -397,18 +449,18 @@ class StateStore:
             await conn.execute(
                 """
                 INSERT INTO artifacts (id, task_id, name, path, file_type, size_bytes, checksum, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (:id, :task_id, :name, :path, :file_type, :size_bytes, :checksum, :created_at)
                 """,
-                (
-                    artifact.id,
-                    artifact.task_id,
-                    _required_text(artifact.name, "unnamed-artifact"),
-                    _required_text(artifact.path, "."),
-                    _required_text(artifact.file_type, "text/plain"),
-                    artifact.size_bytes,
-                    _text(artifact.checksum),
-                    artifact.created_at.isoformat(),
-                ),
+                {
+                    "id": artifact.id,
+                    "task_id": artifact.task_id,
+                    "name": _required_text(artifact.name, "unnamed-artifact"),
+                    "path": _required_text(artifact.path, "."),
+                    "file_type": _required_text(artifact.file_type, "text/plain"),
+                    "size_bytes": artifact.size_bytes,
+                    "checksum": _text(artifact.checksum),
+                    "created_at": artifact.created_at.isoformat(),
+                },
             )
             await conn.commit()
         logger.debug(f"Recorded artifact: {artifact.id} ({artifact.name})")
@@ -418,7 +470,7 @@ class StateStore:
         """Retrieve artifact record by ID."""
         async with self.db.connection() as conn:
             async with conn.execute(
-                "SELECT * FROM artifacts WHERE id = ?", (artifact_id,)
+                "SELECT * FROM artifacts WHERE id = :id", {"id": artifact_id}
             ) as cursor:
                 row = await cursor.fetchone()
                 if not row:
@@ -439,7 +491,8 @@ class StateStore:
         async with (
             self.db.connection() as conn,
             conn.execute(
-                "SELECT * FROM artifacts WHERE task_id = ? ORDER BY created_at ASC", (task_id,)
+                "SELECT * FROM artifacts WHERE task_id = :task_id ORDER BY created_at ASC",
+                {"task_id": task_id},
             ) as cursor,
         ):
             rows = await cursor.fetchall()
@@ -460,54 +513,72 @@ class StateStore:
     # --- Task Graph Persistence ---
 
     async def save_task_graph(self, graph: TaskGraph) -> TaskGraph:
-        """Upsert a task graph.
-
-        Written as SELECT + UPDATE/INSERT rather than ``ON CONFLICT(id)``
-        (PostgreSQL/SQLite) or ``MERGE`` (Oracle) so one statement sequence
-        works on every backend -- the same pattern ``save_task`` already uses.
-        """
+        """Upsert a task graph (Oracle ``MERGE``)."""
         graph.updated_at = datetime.now(UTC)
         nodes_json = json.dumps({k: v.model_dump(mode="json") for k, v in graph.nodes.items()})
         edges_json = json.dumps([e.model_dump(mode="json") for e in graph.edges])
+        params = {
+            "id": graph.id,
+            "project_id": _required_text(graph.project_id, "unspecified"),
+            "goal": _required_text(graph.goal, "(empty goal)"),
+            "nodes": nodes_json,
+            "edges": edges_json,
+            "status": graph.status.value,
+            "current_node_id": _text(graph.current_node_id),
+            "created_at": graph.created_at.isoformat(),
+            "updated_at": graph.updated_at.isoformat(),
+        }
+        clob_params = ("goal", "nodes", "edges")
 
         async with self.db.connection() as conn:
-            async with conn.execute("SELECT id FROM task_graphs WHERE id = ?", (graph.id,)) as cursor:
-                exists = await cursor.fetchone()
-            if exists:
+            if self._is_oracle:
                 await conn.execute(
                     """
-                    UPDATE task_graphs
-                    SET goal = ?, nodes = ?, edges = ?, status = ?, current_node_id = ?, updated_at = ?
-                    WHERE id = ?
+                    MERGE INTO task_graphs t
+                    USING (SELECT :id AS id FROM dual) src
+                    ON (t.id = src.id)
+                    WHEN MATCHED THEN UPDATE SET
+                        t.goal = :goal,
+                        t.nodes = :nodes,
+                        t.edges = :edges,
+                        t.status = :status,
+                        t.current_node_id = :current_node_id,
+                        t.updated_at = :updated_at
+                    WHEN NOT MATCHED THEN INSERT
+                        (id, project_id, goal, nodes, edges, status, current_node_id,
+                         created_at, updated_at)
+                    VALUES
+                        (:id, :project_id, :goal, :nodes, :edges, :status,
+                         :current_node_id, :created_at, :updated_at)
                     """,
-                    (
-                        _required_text(graph.goal, "(empty goal)"),
-                        nodes_json,
-                        edges_json,
-                        graph.status.value,
-                        _text(graph.current_node_id),
-                        graph.updated_at.isoformat(),
-                        graph.id,
-                    ),
+                    params,
+                    clob_params=clob_params,
                 )
             else:
-                await conn.execute(
-                    """
-                    INSERT INTO task_graphs (id, project_id, goal, nodes, edges, status, current_node_id, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        graph.id,
-                        _required_text(graph.project_id, "unspecified"),
-                        _required_text(graph.goal, "(empty goal)"),
-                        nodes_json,
-                        edges_json,
-                        graph.status.value,
-                        _text(graph.current_node_id),
-                        graph.created_at.isoformat(),
-                        graph.updated_at.isoformat(),
-                    ),
-                )
+                # Explicit test-only SQLite backend (app.memory.sqlite_test_backend).
+                async with conn.execute(
+                    "SELECT id FROM task_graphs WHERE id = :id", {"id": graph.id}
+                ) as cursor:
+                    exists = await cursor.fetchone()
+                if exists:
+                    await conn.execute(
+                        """
+                        UPDATE task_graphs
+                        SET goal = :goal, nodes = :nodes, edges = :edges,
+                            status = :status, current_node_id = :current_node_id,
+                            updated_at = :updated_at
+                        WHERE id = :id
+                        """,
+                        params,
+                    )
+                else:
+                    await conn.execute(
+                        """
+                        INSERT INTO task_graphs (id, project_id, goal, nodes, edges, status, current_node_id, created_at, updated_at)
+                        VALUES (:id, :project_id, :goal, :nodes, :edges, :status, :current_node_id, :created_at, :updated_at)
+                        """,
+                        params,
+                    )
             await conn.commit()
         return graph
 
@@ -515,21 +586,22 @@ class StateStore:
         """Load a task graph by ID."""
         async with self.db.connection() as conn:
             async with conn.execute(
-                "SELECT id, project_id, goal, nodes, edges, status, current_node_id, created_at, updated_at FROM task_graphs WHERE id = ?",
-                (graph_id,),
+                "SELECT id, project_id, goal, nodes, edges, status, current_node_id, "
+                "created_at, updated_at FROM task_graphs WHERE id = :id",
+                {"id": graph_id},
             ) as cursor:
                 row = await cursor.fetchone()
                 if not row:
                     return None
 
-                raw_nodes = json.loads(row["nodes"])
+                raw_nodes = _loads(row["nodes"], {})
                 nodes = {k: TaskNode(**v) for k, v in raw_nodes.items()}
-                raw_edges = json.loads(row["edges"])
+                raw_edges = _loads(row["edges"], [])
 
                 return TaskGraph(
                     id=row["id"],
                     project_id=row["project_id"],
-                    goal=row["goal"],
+                    goal=_as_text(row["goal"]),
                     nodes=nodes,
                     edges=raw_edges,
                     status=TaskState(row["status"]),
@@ -541,12 +613,13 @@ class StateStore:
     async def get_latest_task_graph_for_project(self, project_id: str) -> TaskGraph | None:
         """Fetch the most recent task graph for a project or task."""
         async with self.db.connection() as conn:
-            # Oracle: FETCH FIRST ? ROWS ONLY instead of LIMIT ?.
             query = (
-                "SELECT id FROM task_graphs WHERE project_id = ? ORDER BY created_at DESC "
-                + self.db.row_limit_clause()
+                "SELECT id FROM task_graphs WHERE project_id = :project_id "
+                "ORDER BY created_at DESC " + self.db.row_limit_clause()
             )
-            async with conn.execute(query, (project_id, 1)) as cursor:
+            async with conn.execute(
+                query, {"project_id": project_id, "row_limit": 1}
+            ) as cursor:
                 row = await cursor.fetchone()
         if not row:
             return None
@@ -560,18 +633,19 @@ class StateStore:
             await conn.execute(
                 """
                 INSERT INTO checkpoints (id, project_id, task_id, step_number, state_data, checksum, timestamp, description)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (:id, :project_id, :task_id, :step_number, :state_data, :checksum, :timestamp, :description)
                 """,
-                (
-                    checkpoint.id,
-                    _required_text(checkpoint.project_id, "unspecified"),
-                    _text(checkpoint.task_id),
-                    checkpoint.step_number,
-                    json.dumps(checkpoint.state_data),
-                    _text(checkpoint.checksum),
-                    checkpoint.timestamp.isoformat(),
-                    _text(checkpoint.description),
-                ),
+                {
+                    "id": checkpoint.id,
+                    "project_id": _required_text(checkpoint.project_id, "unspecified"),
+                    "task_id": _text(checkpoint.task_id),
+                    "step_number": checkpoint.step_number,
+                    "state_data": json.dumps(checkpoint.state_data),
+                    "checksum": _text(checkpoint.checksum),
+                    "timestamp": checkpoint.timestamp.isoformat(),
+                    "description": _text(checkpoint.description),
+                },
+                clob_params=("state_data", "description"),
             )
             await conn.commit()
         logger.debug(
@@ -579,46 +653,40 @@ class StateStore:
         )
         return checkpoint
 
+    def _checkpoint_from_row(self, row: Any) -> Checkpoint:
+        return Checkpoint(
+            id=row["id"],
+            project_id=row["project_id"],
+            task_id=row["task_id"],
+            step_number=row["step_number"],
+            state_data=_loads(row["state_data"], {}),
+            checksum=row["checksum"],
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            description=_as_text(row["description"]),
+        )
+
     async def list_checkpoints(self, project_id: str) -> list[Checkpoint]:
         """List checkpoints for a task or project ordered by step number."""
         async with self.db.connection() as conn:
             async with conn.execute(
-                "SELECT * FROM checkpoints WHERE project_id = ? ORDER BY step_number ASC, timestamp ASC",
-                (project_id,),
+                "SELECT * FROM checkpoints WHERE project_id = :project_id "
+                "ORDER BY step_number ASC, timestamp ASC",
+                {"project_id": project_id},
             ) as cursor:
                 rows = await cursor.fetchall()
-                return [
-                    Checkpoint(
-                        id=row["id"],
-                        project_id=row["project_id"],
-                        task_id=row["task_id"],
-                        step_number=row["step_number"],
-                        state_data=json.loads(row["state_data"]),
-                        checksum=row["checksum"],
-                        timestamp=datetime.fromisoformat(row["timestamp"]),
-                        description=row["description"],
-                    )
-                    for row in rows
-                ]
+                return [self._checkpoint_from_row(row) for row in rows]
 
     async def get_latest_checkpoint(self, project_id: str) -> Checkpoint | None:
         """Retrieve the most recent checkpoint for a task or project."""
         async with self.db.connection() as conn:
             query = (
-                "SELECT * FROM checkpoints WHERE project_id = ? "
+                "SELECT * FROM checkpoints WHERE project_id = :project_id "
                 "ORDER BY step_number DESC, timestamp DESC " + self.db.row_limit_clause()
             )
-            async with conn.execute(query, (project_id, 1)) as cursor:
+            async with conn.execute(
+                query, {"project_id": project_id, "row_limit": 1}
+            ) as cursor:
                 row = await cursor.fetchone()
                 if not row:
                     return None
-                return Checkpoint(
-                    id=row["id"],
-                    project_id=row["project_id"],
-                    task_id=row["task_id"],
-                    step_number=row["step_number"],
-                    state_data=json.loads(row["state_data"]),
-                    checksum=row["checksum"],
-                    timestamp=datetime.fromisoformat(row["timestamp"]),
-                    description=row["description"],
-                )
+                return self._checkpoint_from_row(row)
