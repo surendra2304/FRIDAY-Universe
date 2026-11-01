@@ -34,8 +34,8 @@ The **FRIDAY Universe** is an enterprise-grade autonomous AI operating system co
    - `Sentinel` (Zero-Trust Cybersecurity Gatekeeper & Audit Shield)
    - `Cortex` (Autonomous Operations Engine & Governed CRM)
 
-2. **ZERO PERSISTENT LOCAL SQLITE & POSTGRESQL ON DISK:**
-   - No `.db`, `.sqlite`, or local PostgreSQL files or containers may exist on VM persistent disks (`/opt/friday_universe/*`).
+2. **NO LOCAL DATABASE FILES OR CONTAINERS:**
+   - No `.db`, `.sqlite`, PostgreSQL, or any other local database files or containers may exist on VM persistent disks (`/opt/friday_universe/*`).
    - All relational state, vector embeddings, and ledgers reside exclusively in the two Oracle Autonomous 23ai cloud databases (`friday_universe_db` and `vyralx_db`).
    - If an agent requires local in-memory buffering or an offline cache fallback, it MUST use Linux tmpfs (`/dev/shm/<agent>.db` in RAM). Zero bytes written to disk.
 
@@ -67,7 +67,7 @@ The 10 autonomous agents are physically distributed across two AMD Micro VMs in 
 | SERVER 1: 140.245.208.100 (Internal: 10.0.0.121)    | SERVER 2: 140.245.243.168 (Internal: 10.0.0.120)     |
 | Shape: VM.Standard.E2.1.Micro (1 OCPU, 1 GB RAM)   | Shape: VM.Standard.E2.1.Micro (1 OCPU, 1 GB RAM)    |
 | Swap: 8 GB (/swapfile) | Linux kernel: 6.8         | Swap: 8 GB (/swapfile) | Linux kernel: 6.8          |
-| Ingress: Traefik v3 (TLS via Let's Encrypt / 443)  | Ingress: Direct Mesh / Internal VPC Routing         |
+| Ingress: Caddy     (TLS via Let's Encrypt / 443)  | Ingress: Direct Mesh / Internal VPC Routing         |
 +----------------------------------------------------+-----------------------------------------------------+
 | 1. FRIDAY    (Port 10000) - Orchestrator Gateway   | 8.  VyralX   (Port 8010) - Video Production Studio  |
 | 2. Inference (Port 8001)  - Model Routing Gateway  | 9.  Sentinel (Port 8008) - Security & Audit Shield  |
@@ -164,7 +164,7 @@ As an Antigravity agent receiving this directive, you MUST execute the following
    - Your local root directory (`README.md`, `pyproject.toml`, or `requirements.txt`).
    - Your main application entry points (`main.py`, `app/main.py`, `src/`, or `routers/`).
    - Your database models and configuration files (`db/`, `models.py`, `config.py`, or `storage/`).
-2. Search your codebase for any violations of the **Zero-Disk SQLite** policy (ensure any SQLite fallback is strictly redirected to `/dev/shm/` tmpfs).
+2. Search your codebase for any local database usage. There is no SQLite fallback and no `/dev/shm` database: every agent persists to its own Oracle schema, and missing credentials must fail closed.
 3. Search your codebase for how the **Oracle Autonomous Database** connection string is initialized (ensure `create_async_engine` handles `oracle+oracledb_async://` correctly).
 
 ### PHASE 2: SYNTHESIZE YOUR DEEP OPERATIONAL DOSSIER
@@ -183,7 +183,7 @@ Generate an exhaustive, highly structured markdown report containing the followi
 #### SECTION 3: DATA PERSISTENCE & MEMORY ARCHITECTURE
 - Specific Oracle Database assigned: `friday_universe_db` or `vyralx_db`.
 - Key database tables managed or queried by your subsystem.
-- Confirmation of compliance with the Zero-Disk SQLite rule (all ephemeral caching located in `/dev/shm` in RAM).
+- Confirmation that the agent opens no local database file and persists only to its Oracle schema.
 - Oracle SQLAlchemy dialect handling (confirm `@compiles(JSON, "oracle")` or async engine status).
 
 #### SECTION 4: INTER-AGENT RPC & DEPENDENCY MATRIX

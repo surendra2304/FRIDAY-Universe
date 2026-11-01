@@ -163,8 +163,8 @@ python scripts/verify_deep_wiring.py
 - All ten agents return `200` on `/health`.
 - `/ready` returns `200` on FRIDAY, Sentinel, Cortex and VyralX.
 - VyralX `/ready` was `503` until the `FFMPEG_BIN` path was corrected on server 2.
-- Cortex was serving from an unlinked `/dev/shm` SQLite file; it now uses the durable
-  `data/cortex.db` with all 16 tables present across restarts.
+- Cortex persists to its own `CORTEX` Oracle schema (16 tables) in the FRIDAY Universe
+  database; the former local SQLite file has been removed.
 
 ---
 

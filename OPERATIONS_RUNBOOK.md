@@ -49,9 +49,13 @@
 ## Backup and Recovery
 
 ### Database Backups
-- Automated daily backups via dokploy-postgres
-- Manual backup: `pg_dump -U user dbname > backup.sql`
-- Recovery: `psql -U user dbname < backup.sql`
+- All persistence lives in Oracle Autonomous Database, which takes automated daily
+  backups and retains them per the ADB backup policy. There is no self-managed
+  database server to dump.
+- Manual logical export (per agent schema, using that agent's own login):
+  `expdp <agent_user>/<password>@<service_name> schemas=<AGENT_SCHEMA> directory=DATA_PUMP_DIR dumpfile=<agent>_$(date +%F).dmp`
+- Recovery is an ADB restore/point-in-time recovery, or an `impdp` of the dumpfile
+  into a fresh schema. Never restore one agent's schema over another's.
 
 ### Configuration Backups
 - Version control all configuration in Git
