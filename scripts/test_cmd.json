@@ -1,1 +1,0 @@
-{"command": "docker ps --format '{{.Names}}'"}

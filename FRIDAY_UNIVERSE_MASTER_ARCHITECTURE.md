@@ -29,10 +29,10 @@ The **FRIDAY Universe** is an enterprise-grade autonomous AI operating system co
    - `Sentinel`
    - `Cortex`
 
-2. **ZERO PERSISTENT LOCAL SQLITE & POSTGRESQL ON DISK:**
-   - No `.db`, `.sqlite`, or local PostgreSQL files or containers may exist on VM persistent disks (`/opt/friday_universe/*`).
+2. **NO LOCAL DATABASE FILES OR CONTAINERS:**
+   - No `.db`, `.sqlite`, PostgreSQL, or any other local database file or container may exist on VM persistent disks (`/opt/friday_universe/*`) or in RAM.
    - All relational state, vector embeddings, and ledgers reside exclusively in the two Oracle Autonomous 23ai cloud databases (`friday_universe_db` and `vyralx_db`).
-   - If an agent requires local in-memory buffering or an offline cache fallback, it MUST use Linux tmpfs (`/dev/shm/<agent>.db` in RAM). Zero bytes written to disk.
+   - If an agent requires buffering, it MUST use a bounded in-process structure. It may not open a local database of any kind.
 
 3. **1 GB PHYSICAL RAM BUDGET ($0.00 ALWAYS FREE BOUNDARY):**
    - Both VMs are Oracle Cloud Always Free AMD Micro instances (`VM.Standard.E2.1.Micro`), capped at **1 OCPU and 1 GB Physical RAM** each (supported by an 8 GB swapfile at `/swapfile`).
@@ -416,7 +416,7 @@ When this architectural specification is introduced into an Antigravity chat ses
 1. **Identify Local Workspace & Identity:** Explore your current directory (`README.md`, `pyproject.toml`, `requirements.txt`, `main.py`, `app/`).
 2. **Audit Routes & Data Models:** Inspect your primary route definitions and SQLAlchemy database models.
 3. **Verify Compliance with Invariants:**
-   - Confirm zero persistent SQLite files on disk (ephemeral cache strictly in `/dev/shm`).
+   - Confirm no `.db`, `.sqlite`, PostgreSQL, or other local database files exist anywhere under `/opt/friday_universe/`.
    - Confirm connection to assigned Oracle Autonomous 23ai Database (`friday_universe_db` or `vyralx_db`).
    - Confirm memory discipline (1 GB RAM cap, single-worker uvicorn).
 
@@ -435,7 +435,7 @@ Your response must consist of a detailed, deep-dive architectural report structu
 3. **Data Persistence & Memory Hierarchy:**
    - Assigned Oracle Autonomous 23ai Database (`friday_universe_db` or `vyralx_db`).
    - Tables owned or queried in Oracle Cloud.
-   - Verification of Zero-Disk SQLite rule (RAM tmpfs `/dev/shm` compliance).
+   - Verification that no agent opens a local database and that every agent reports `database_backend: oracle` on `/health`.
    - Async engine and dialect compatibility (`oracle+oracledb_async://`, `@compiles(JSON, "oracle")`).
 
 4. **Inter-Agent RPC & Private Mesh Matrix:**
