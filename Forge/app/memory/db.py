@@ -225,6 +225,33 @@ class DbRow(Mapping):
         return f"<DbRow {self._data}>"
 
 
+class _AwaitableCursor:
+    """Promise of a cursor that works both with ``await`` and ``async with``.
+
+    ``AsyncDbConnectionWrapper.execute`` used to be a coroutine, but call sites
+    were written as ``async with conn.execute(...) as cursor`` (the aiosqlite
+    idiom this store was originally written against). A coroutine has no
+    ``__aenter__``, so every such call raised ``AttributeError: __aenter__`` at
+    runtime -- the Forge status/task paths failed even though they looked
+    correct. Returning this adapter keeps both idioms working instead of
+    rewriting a dozen call sites and hoping.
+    """
+
+    __slots__ = ("_coro",)
+
+    def __init__(self, coro: Any):
+        self._coro = coro
+
+    def __await__(self):
+        return self._coro.__await__()
+
+    async def __aenter__(self) -> "AsyncCursorWrapper":
+        return await self._coro
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool:
+        return False
+
+
 class AsyncCursorWrapper:
     """Cursor wrapper for SQLAlchemy 2.0 AsyncConnection executions."""
 
@@ -273,7 +300,15 @@ class AsyncDbConnectionWrapper:
         # receive 0/1 rather than a Python bool.
         return int(value) if isinstance(value, bool) else value
 
-    async def execute(
+    def execute(
+        self,
+        query: str,
+        params: Mapping[str, Any] | Sequence[Any] | None = None,
+        clob_params: Sequence[str] = (),
+    ) -> _AwaitableCursor:
+        return _AwaitableCursor(self._execute(query, params, clob_params))
+
+    async def _execute(
         self,
         query: str,
         params: Mapping[str, Any] | Sequence[Any] | None = None,

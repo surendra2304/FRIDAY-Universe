@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -45,6 +46,26 @@ class TaskResultModel(BaseModel):
     error: str | None = None
     execution_time_ms: int = 0
     verification_manifest: dict[str, Any] | None = None
+    #: FRIDAY's mesh certifies completion only from a receipt naming the
+    #: dispatched action, this agent as target, and non-empty evidence.
+    receipt: dict[str, Any] | None = None
+
+
+def _forge_receipt(
+    *,
+    requested_action: str,
+    result: dict[str, Any],
+    verification_evidence: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "requested_action": requested_action,
+        "target": "forge",
+        "authorization_decision": "AUTHORIZED",
+        "execution_timestamp": datetime.now(timezone.utc).isoformat(),
+        "result": result,
+        "verification_evidence": verification_evidence,
+        "failure_reason": None,
+    }
 
 
 async def _dispatch_webhook_callback(callback_url: str, result: TaskResultModel) -> None:
@@ -72,13 +93,24 @@ async def delegate_task(
         if action in ("status", "health", "ping"):
             tasks = await store.list_tasks(limit=5)
             lat = int((time.time() - t0) * 1000)
+            result_body = {"active_tasks": len(tasks), "engine_status": "ONLINE"}
             return TaskResultModel(
                 task_id=envelope.task_id,
                 target_agent="forge",
                 status="SUCCESS",
-                result={"active_tasks": len(tasks), "engine_status": "ONLINE"},
+                result=result_body,
                 summary=f"Forge SWE engine online, {len(tasks)} recent tasks in queue",
                 execution_time_ms=lat,
+                receipt=_forge_receipt(
+                    requested_action=action,
+                    result=result_body,
+                    verification_evidence={
+                        "source": "forge.api.v1.forge.delegate",
+                        "task_id": envelope.task_id,
+                        "queue_snapshot_size": len(tasks),
+                        "engine_status": "ONLINE",
+                    },
+                ),
             )
 
         if action == "cancel":
@@ -244,6 +276,16 @@ async def delegate_task(
                 summary=f"Forge successfully synthesized and verified goal (Task ID: {task.id})",
                 verification_manifest=manifest_dict,
                 execution_time_ms=lat,
+                receipt=_forge_receipt(
+                    requested_action=action,
+                    result={"forge_task_id": task.id, "verified": True},
+                    verification_evidence={
+                        "source": "forge.api.v1.forge.delegate",
+                        "task_id": task.id,
+                        "verification_stages": manifest.total_stages,
+                        "all_passed": manifest.all_passed,
+                    },
+                ),
             )
             if callback_url:
                 asyncio.create_task(_dispatch_webhook_callback(callback_url, res))

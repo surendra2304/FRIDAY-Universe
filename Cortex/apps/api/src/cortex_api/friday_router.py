@@ -818,6 +818,9 @@ class FridayTaskResponse(BaseModel):
     # classification, everything else stays honestly unclassified.
     classification: str = "UNCLASSIFIED"
     execution_time_ms: float = 0.0
+    #: Required by FRIDAY's mesh to certify completion; a 200 without one is
+    #: classified UNVERIFIED regardless of how well the action went.
+    receipt: dict[str, Any] | None = None
 
 
 async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession | None = None) -> FridayTaskResponse:
