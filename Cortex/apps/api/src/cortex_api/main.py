@@ -370,6 +370,31 @@ async def execute_task(body: dict, auth: dict = Depends(verify_friday_token)):
         dry_run=dry_run,
     )
     resp = await process_task_envelope(envelope)
+    if str(resp.state).upper() in ("COMPLETED", "SUCCESS"):
+        resp = resp.model_copy(
+            update={
+                "receipt": {
+                    "requested_action": action,
+                    "target": "cortex",
+                    "authorization_decision": "AUTHORIZED",
+                    "execution_timestamp": datetime.now(UTC).isoformat(),
+                    "result": {
+                        "stage": resp.stage,
+                        "progress": resp.progress,
+                        "property_id": resp.property_id,
+                    },
+                    "verification_evidence": {
+                        "source": "cortex.v1.task.execute",
+                        "task_id": resp.task_id,
+                        "state": resp.state,
+                        "stage": resp.stage,
+                        "property_id": resp.property_id,
+                        "dry_run": resp.dry_run,
+                    },
+                    "failure_reason": None,
+                }
+            }
+        )
     return resp.model_dump()
 
 

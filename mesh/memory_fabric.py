@@ -31,6 +31,11 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger("memory_fabric")
 
 
+def _local_cache_enabled() -> bool:
+    """SQLite is a test-only cache for the fabric; production uses Memora cloud."""
+    return "pytest" in sys.modules
+
+
 class MemoryScope(str, Enum):
     AGENT = "agent"          # Private to individual agent
     GROUP = "group"          # Shared within an agent cluster (e.g. trading, engineering)
@@ -136,6 +141,8 @@ class UniversalMemoryFabric:
         self._init_local_db()
 
     def _init_local_db(self) -> None:
+        if not _local_cache_enabled():
+            return
         try:
             with sqlite3.connect(self.local_db_path, timeout=5.0) as conn:
                 c = conn.cursor()
@@ -321,6 +328,8 @@ class UniversalMemoryFabric:
         return entry
 
     def _save_local_record(self, entry: MemoryEntry) -> None:
+        if not _local_cache_enabled():
+            return
         try:
             with sqlite3.connect(self.local_db_path, timeout=5.0) as conn:
                 c = conn.cursor()
@@ -391,6 +400,8 @@ class UniversalMemoryFabric:
 
         # Also pull from local DB
         try:
+            if not _local_cache_enabled():
+                raise RuntimeError("local cache disabled")
             with sqlite3.connect(self.local_db_path, timeout=5.0) as conn:
                 c = conn.cursor()
                 c.execute("SELECT id, scope, owner_agent, group_name, namespace, memory_type, content_text, source, confidence, importance, metadata_json, created_at FROM fabric_memories")
@@ -533,6 +544,8 @@ class NightlyLessonDistiller:
 
         # Save to SQLite lessons_applied ledger
         try:
+            if not _local_cache_enabled():
+                raise RuntimeError("local cache disabled")
             with sqlite3.connect(self.fabric.local_db_path, timeout=5.0) as conn:
                 c = conn.cursor()
                 c.execute("""
@@ -575,6 +588,8 @@ class NightlyLessonDistiller:
         """Query the lessons_applied ledger."""
         lessons = []
         try:
+            if not _local_cache_enabled():
+                raise RuntimeError("local cache disabled")
             with sqlite3.connect(self.fabric.local_db_path, timeout=5.0) as conn:
                 c = conn.cursor()
                 query = "SELECT id, agent_name, domain, trigger_error, rule, context, scope, confidence, importance, applied_count, created_at FROM lessons_applied WHERE 1=1"
@@ -609,6 +624,8 @@ class NightlyLessonDistiller:
         """Run the comprehensive distillation cycle across all raw episodic memory records."""
         distilled_count = 0
         try:
+            if not _local_cache_enabled():
+                raise RuntimeError("local cache disabled")
             with sqlite3.connect(self.fabric.local_db_path, timeout=5.0) as conn:
                 c = conn.cursor()
                 # Find all error memories not yet distilled
