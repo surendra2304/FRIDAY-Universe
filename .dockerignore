@@ -33,3 +33,6 @@
 # Sentinel source package named artifacts is code, not generated output.
 !Sentinel/sentinel/storage/artifacts/
 !Sentinel/sentinel/storage/artifacts/**
+
+# Generated CI receipts are host-mounted, not Docker build inputs.
+**/generated-artifacts/**
