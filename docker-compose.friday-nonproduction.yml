@@ -23,7 +23,7 @@ services:
     command: ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
     environment: {<<: *test, APP_ENV: test, INFERENCE_TEST_DB_PATH: /tmp/inference.db, INFERENCE_API_KEY: inference-test-only}
     tmpfs: ["/tmp"]
-    volumes: ["./:/workspace:ro"]
+    volumes: ["./:/workspace:ro", "./generated-artifacts/friday-standalone-test:/friday-test-output"]
     networks: [mesh]
   memora:
     build: {context: ./Memora, dockerfile: Dockerfile}
