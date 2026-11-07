@@ -14,6 +14,10 @@ x-test: &test
   VYRALX_URL: http://vyralx:8000
   SENTINEL_URL: http://sentinel:8000
 services:
+  qdrant:
+    image: qdrant/qdrant:v1.13.6
+    tmpfs: ["/qdrant/storage"]
+    networks: [mesh]
   inference:
     build: {context: ./Inference, dockerfile: Dockerfile}
     command: ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
@@ -24,7 +28,7 @@ services:
   memora:
     build: {context: ./Memora, dockerfile: Dockerfile}
     command: ["uvicorn","apps.api.main:app","--host","0.0.0.0","--port","8000"]
-    environment: {<<: *test, MEMORA_ENV: testing, ENVIRONMENT: testing, DATABASE_URL: sqlite:////tmp/memora.db, MEMORA_ALLOW_ANONYMOUS_DEV: "true"}
+    environment: {<<: *test, MEMORA_ENV: testing, ENVIRONMENT: testing, DATABASE_URL: sqlite:////tmp/memora.db, MEMORA_ALLOW_ANONYMOUS_DEV: "true", QDRANT_URL: http://qdrant:6333}
     tmpfs: ["/tmp"]
     networks: [mesh]
   intelx:
