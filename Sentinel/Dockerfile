@@ -41,6 +41,7 @@ RUN python -m pip install --no-cache-dir --retries 10 --timeout 120 --upgrade pi
 
 # Copy application source & contracts
 COPY --chown=appuser:appuser Sentinel/sentinel/ ./sentinel/
+COPY --chown=appuser:appuser Sentinel/app/ ./app/
 COPY --chown=appuser:appuser Sentinel/contracts/ ./contracts/
 COPY --chown=appuser:appuser Sentinel/alembic.ini ./
 COPY --chown=appuser:appuser Sentinel/alembic/ ./alembic/
