@@ -45,7 +45,7 @@ async def main():
   if pending: raise RuntimeError("Unhealthy services: "+json.dumps({s[0]:probe_errors[s[0]] for s in pending}))
  bus=UniverseDispatchBus()
  for n,p,paths,path,key,header in S:
-  base=f"http://127.0.0.1:{p}"; bus.register_agent(n,base,base+paths[0],timeout_sec=30,max_retries=0,api_key=key,auth_header=header,action_path=path)
+  base=f"http://{p}:8000"; bus.register_agent(n,base,health[n]["url"],timeout_sec=30,max_retries=0,api_key=key,auth_header=header,action_path=path)
  captured=[]; original=httpx.AsyncClient.post
  async def capture(client,url,*args,**kwargs):
   r=await original(client,url,*args,**kwargs)
@@ -64,7 +64,7 @@ async def main():
     if body.get("valid") is not True or body.get("prompt_safe") is not True: raise RuntimeError("Inference validation failed: "+str(body))
     row["service_receipt"]={"requested_action":"reason-validation","authorization_decision":"AUTHORIZED","verification_evidence":{"source":"inference.v1.task.validate","task_id":friday.task_id,"valid":True,"prompt_safe":True}}
    elif n=="Sentinel":
-    task_id=str(body.get("task_id") or ""); base=f"http://127.0.0.1:{p}"; end=time.monotonic()+30; task={}
+    task_id=str(body.get("task_id") or ""); base=f"http://{p}:8000"; end=time.monotonic()+30; task={}
     async with httpx.AsyncClient() as c:
      while task_id and time.monotonic()<end:
       q=await c.get(f"{base}/api/v1/tasks/{task_id}",timeout=5)
