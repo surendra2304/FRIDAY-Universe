@@ -15,7 +15,7 @@ S=[
 ("Stratex",8115,["/health","/api/health"],"/v1/task/execute","friday-test-only","X-API-KEY"),
 ("Forge",8116,["/health","/api/health"],"/api/v1/forge/delegate","","X-API-Key"),
 ("Cortex",8117,["/health","/health/ready"],"/v1/task/execute","friday-test-only","X-Friday-Api-Key"),
-("VyralX",8118,["/health","/healthz"],"/v1/task/execute","vyralx-test-only","X-API-Key"),
+("VyralX",8118,["/ready"],"/v1/task/execute","vyralx-test-only","X-API-Key"),
 ("Sentinel",8119,["/health","/healthz"],"/api/v1/tasks","","X-API-Key"),]
 def payload(n):
  tid="friday-standalone-"+n.lower()
