@@ -31,7 +31,7 @@ def payload(n):
  raise ValueError(n)
 async def main():
  async with httpx.AsyncClient() as client:
-  health={}; deadline=time.monotonic()+180; pending=list(S)
+  health={}; probe_errors={n:[] for n,*_ in S}; deadline=time.monotonic()+180; pending=list(S)
   while pending and time.monotonic()<deadline:
    for s in pending[:]:
     n,p,paths,*_=s; base=f"http://{p}:8000"
@@ -39,9 +39,10 @@ async def main():
      try:
       r=await client.get(base+path,timeout=3)
       if r.status_code==200: health[n]={"url":base+path,"status":r.status_code,"body":r.json() if r.content else {"status":"ok"}}; pending.remove(s); break
-     except (httpx.HTTPError,ValueError): pass
+      probe_errors[n].append(f"{path}: HTTP {r.status_code} {r.text[:160]}")
+     except (httpx.HTTPError,ValueError) as exc: probe_errors[n].append(f"{path}: {type(exc).__name__}: {exc}")
    if pending: await asyncio.sleep(1)
-  if pending: raise RuntimeError("Unhealthy services: "+", ".join(s[0] for s in pending))
+  if pending: raise RuntimeError("Unhealthy services: "+json.dumps({s[0]:probe_errors[s[0]] for s in pending}))
  bus=UniverseDispatchBus()
  for n,p,paths,path,key,header in S:
   base=f"http://127.0.0.1:{p}"; bus.register_agent(n,base,base+paths[0],timeout_sec=30,max_retries=0,api_key=key,auth_header=header,action_path=path)
