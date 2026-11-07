@@ -58,7 +58,7 @@ services:
     tmpfs: ["/tmp"]
     networks: [mesh]
   vyralx:
-    build: {context: ./VyralX, dockerfile: Dockerfile}
+    build: {context: ./VyralX, dockerfile: Dockerfile.friday-test}
     ports: ["8118:8000"]
     environment: {<<: *test, APP_ENV: development, DATABASE_URL: sqlite:////tmp/vyralx.db, MEDIA_DATABASE_URL: sqlite:////tmp/vyralx-media.db, VYRALX_API_KEY: vyralx-test-only, VYRALX_PUBLISH_ENABLED: "false", AUTONOMOUS_PUBLISH_ENABLED: "false", YOUTUBE_PUBLISH_ENABLED: "false"}
     tmpfs: ["/tmp"]
