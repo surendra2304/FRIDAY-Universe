@@ -51,6 +51,8 @@ def backend_for(database_url: str | None = None) -> str:
         return "oracle"
     if not raw and settings.oracle_configured:
         return "oracle"
+    if not raw and settings.standalone_test_database_path():
+        return "sqlite-test"
     return "unconfigured"
 
 
@@ -64,6 +66,10 @@ def create_memory_store(database_url: str | None = None) -> BaseMemory:
     """
     raw = _configured_url(database_url)
     backend = backend_for(raw)
+
+    if backend == "sqlite-test":
+        from app.memory.sqlite import SQLiteMemory
+        return SQLiteMemory(db_path=settings.standalone_test_database_path())
 
     if backend == "oracle":
         from app.memory.oracle import OracleMemory
@@ -93,6 +99,8 @@ def describe_memory_backend(database_url: str | None = None) -> str:
         if raw and "@" in raw:
             target = raw.split("@", 1)[1]
         return f"Oracle Autonomous Database 26ai ({target})"
+    if backend == "sqlite-test":
+        return "SQLite test-only storage (ephemeral tmpfs)"
     return "unconfigured (no DATABASE_URL and no Oracle settings)"
 
 
