@@ -10,7 +10,7 @@ from friday_core.universe_dispatch_bus import UniverseDispatchBus
 S=[
 ("Inference","inference",["/health","/healthz"],"/v1/task/validate","inference-test-only", "X-API-Key"),
 ("Memora","memora",["/health","/healthz"],"/v1/task/execute","friday","X-Agent-Name"),
-("IntelX","intelx",["/api/v1/health","/health","/healthz"],"/api/v1/task/execute","friday-test-only","X-API-Key"),
+("IntelX","intelx",["/api/v1/health","/health","/healthz"],"/v1/task/execute","friday-test-only","X-API-Key"),
 ("Futuris","futuris",["/health","/healthz"],"/v1/task/execute","friday-test-only","X-Friday-Api-Key"),
 ("Stratex","stratex",["/health","/api/health"],"/v1/task/execute","friday-test-only","X-API-KEY"),
 ("Forge","forge",["/health","/api/health"],"/api/v1/forge/delegate","","X-API-Key"),
