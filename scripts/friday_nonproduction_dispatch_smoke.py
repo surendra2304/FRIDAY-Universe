@@ -23,7 +23,7 @@ def payload(n):
  if n=="Memora": return {"task_id":tid,"source_agent":"friday","target_agent":"memora","action":"query","payload":{"query":"FRIDAY nonproduction smoke marker","limit":1}}
  if n=="IntelX": return {"task_id":tid,"source_agent":"friday","target_agent":"intelx","action":"query","payload":{"query":"synthetic fixture only","limit":1}}
  if n in ("Futuris","Stratex","Forge"): return {"task_id":tid,"source_agent":"friday","target_agent":n.lower(),"action":"status","payload":{}}
- if n=="Cortex": return {"task_id":tid,"source_agent":"friday","target_agent":"cortex","action":"analyze","dry_run":True,"payload":{"dry_run":True,"goal":"Review synthetic nonproduction metrics; recommend only.","telemetry":{"visitors":12,"conversions":2}}}
+ if n=="Cortex": return {"task_id":tid,"source_agent":"friday","target_agent":"cortex","action":"recommend_intervention","dry_run":True,"payload":{"dry_run":True,"property_id":"site_storefront","proposed_operation":"analytics_query","rationale":"Review synthetic nonproduction metrics; make no changes.","params":{"query":"synthetic smoke metrics"},"expected_outcomes":{"report_only":True},"confidence":0.95,"max_staleness_seconds":300,"telemetry":{"source":"synthetic_nonproduction","timestamp":datetime.now(UTC).isoformat(),"visitors":12,"conversions":2}}}
  if n=="VyralX": return {"task_id":tid,"target_agent":"vyralx","action":"status","requested_mode":"sync","inputs":{}}
  if n=="Sentinel":
   now=datetime.now(UTC); t="http://inference:8000/health"
