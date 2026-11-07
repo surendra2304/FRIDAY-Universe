@@ -1,5 +1,7 @@
 x-test: &test
   PORT: "8000"
+  APP_ENV: test
+  FRIDAY_STANDALONE_TEST_MODE: "true"
   FRIDAY_URL: http://127.0.0.1:9
   FRIDAY_API_KEY: friday-test-only
   INFERENCE_URL: http://inference:8000
@@ -16,7 +18,7 @@ services:
     build: {context: ./Inference, dockerfile: Dockerfile}
     command: ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
     ports: ["8111:8000"]
-    environment: {<<: *test, APP_ENV: test, DATABASE_URL: sqlite+aiosqlite:////tmp/inference.db, INFERENCE_API_KEY: inference-test-only}
+    environment: {<<: *test, APP_ENV: test, INFERENCE_TEST_DB_PATH: /tmp/inference.db, INFERENCE_API_KEY: inference-test-only}
     tmpfs: ["/tmp"]
     networks: [mesh]
   memora:
@@ -29,13 +31,13 @@ services:
   intelx:
     build: {context: ./IntelX, dockerfile: Dockerfile}
     ports: ["8113:8000"]
-    environment: {<<: *test, INTELX_ENV: development, ENVIRONMENT: development, INTELX_MOCK_MODE: "true", MOCK_MODE: "true", INTELX_DB_URL: sqlite+aiosqlite:////tmp/intelx.db, API_KEYS: '["friday-test-only"]'}
+    environment: {<<: *test, INTELX_ENV: test, ENVIRONMENT: development, INTELX_MOCK_MODE: "true", MOCK_MODE: "true", INTELX_DB_URL: sqlite+aiosqlite:////tmp/intelx.db, API_KEYS: '["friday-test-only"]'}
     tmpfs: ["/tmp"]
     networks: [mesh]
   futuris:
     build: {context: ., dockerfile: Futuris/Dockerfile}
     ports: ["8114:8000"]
-    environment: {<<: *test, APP_ENV: test, DATABASE_URL: sqlite+aiosqlite:////tmp/futuris.db, API_KEYS_ENABLED: "false"}
+    environment: {<<: *test, APP_ENV: test, FUTURIS_TEST_DB_PATH: /tmp/futuris.db, OBJECT_STORE_PATH: /tmp/futuris-data, API_KEYS_ENABLED: "false"}
     tmpfs: ["/tmp"]
     networks: [mesh]
   stratex:
@@ -48,7 +50,7 @@ services:
   forge:
     build: {context: ., dockerfile: Forge/Dockerfile}
     ports: ["8116:8000"]
-    environment: {<<: *test, APP_ENV: test, FRIDAY_STANDALONE_TEST_MODE: "true", FORGE_TEST_SQLITE_PATH: /tmp/forge.db, FORGE_API_KEY: forge-test-only}
+    environment: {<<: *test, APP_ENV: test, FORGE_ENV: test, FRIDAY_STANDALONE_TEST_MODE: "true", FORGE_TEST_SQLITE_PATH: /tmp/forge.db, FORGE_API_KEY: forge-test-only}
     tmpfs: ["/tmp"]
     networks: [mesh]
   cortex:
