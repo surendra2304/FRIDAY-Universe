@@ -108,3 +108,6 @@ FRIDAY_Universe_Workspace_Pack/
 **/.data/
 # Persistent observations created by the research API (not source code)
 FRIDAY/.data/research_api/
+
+# Nonproduction CI evidence artifacts
+/generated-artifacts/
