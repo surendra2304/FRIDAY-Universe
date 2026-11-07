@@ -208,7 +208,16 @@ class TestUniverseStatus:
         compose = ["docker", "compose", "-f", str(ROOT / "docker-compose.friday-nonproduction.yml")]
         try:
             subprocess.run(compose + ["up", "--build", "-d"], cwd=ROOT, check=True, timeout=3300)
-            subprocess.run([sys.executable, "scripts/friday_nonproduction_dispatch_smoke.py"], cwd=ROOT, check=True, timeout=300)
+            receipts_dir = ROOT / "generated-artifacts" / "friday-standalone-test"
+            receipts_dir.mkdir(parents=True, exist_ok=True)
+            subprocess.run(
+                compose + ["exec", "-T", "-e", "FRIDAY_TEST_RECEIPTS_PATH=/tmp/friday-standalone-test/receipts.json", "inference", "python", "/workspace/scripts/friday_nonproduction_dispatch_smoke.py"],
+                cwd=ROOT, check=True, timeout=600,
+            )
+            subprocess.run(
+                compose + ["cp", "inference:/tmp/friday-standalone-test/receipts.json", str(receipts_dir / "receipts.json")],
+                cwd=ROOT, check=True, timeout=120,
+            )
         finally:
             subprocess.run(compose + ["logs", "--no-color"], cwd=ROOT, check=False, timeout=120)
             subprocess.run(compose + ["down", "--volumes", "--remove-orphans"], cwd=ROOT, check=False, timeout=180)
