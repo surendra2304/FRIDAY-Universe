@@ -140,20 +140,48 @@ class SQLiteTestCursor:
         return [DbRow(dict(row)) for row in rows]
 
 
+class SQLiteTestCursorAwaitable:
+    """Allow SQLite cursors to be awaited or used with async with."""
+
+    def __init__(self, cursor_coro: Any):
+        self._cursor_coro = cursor_coro
+        self._cursor = None
+
+    def __await__(self):
+        return self._cursor_coro.__await__()
+
+    async def __aenter__(self) -> SQLiteTestCursor:
+        self._cursor = await self._cursor_coro
+        return await self._cursor.__aenter__()
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self._cursor is None:
+            return False
+        return await self._cursor.__aexit__(exc_type, exc_val, exc_tb)
+
+
 class SQLiteTestConnection:
-    """Thin adapter with the same ``execute`` surface as the Oracle wrapper."""
+    """Thin adapter with the same execute surface as the Oracle wrapper."""
 
     def __init__(self, conn: aiosqlite.Connection):
         self._conn = conn
         self.row_factory = aiosqlite.Row
 
-    async def execute(
+    def execute(
+        self,
+        query: str,
+        params: Mapping[str, Any] | Sequence[Any] | None = None,
+        clob_params: Sequence[str] = (),
+    ) -> SQLiteTestCursorAwaitable:
+        return SQLiteTestCursorAwaitable(self._execute(query, params, clob_params))
+
+    async def _execute(
         self,
         query: str,
         params: Mapping[str, Any] | Sequence[Any] | None = None,
         clob_params: Sequence[str] = (),
     ) -> SQLiteTestCursor:
-        # ``clob_params`` is accepted for signature parity; SQLite has no CLOBs.
+        # clob_params is accepted for signature parity; SQLite has no CLOBs.
         del clob_params
         if params is None:
             params = {}
