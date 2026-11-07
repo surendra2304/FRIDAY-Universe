@@ -1,3 +1,4 @@
+fastapi>=0.110.0
 python-binance==1.0.37
 # NOTE: the suite is verified green on pandas 3.x (2026-10-07 hardening pass);
 # requirements.lock pins the exact verified set for reproducible installs.
