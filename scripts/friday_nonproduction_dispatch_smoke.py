@@ -17,6 +17,7 @@ S=[
 ("Cortex","cortex",["/health","/health/ready"],"/v1/task/execute","friday-test-only","X-Friday-Api-Key"),
 ("VyralX","vyralx",["/ready"],"/v1/task/execute","vyralx-test-only","X-API-Key"),
 ("Sentinel","sentinel",["/health","/healthz"],"/api/v1/tasks","","X-API-Key"),]
+SENTINEL_TARGET="http://inference:8000/health"
 def payload(n):
  tid="friday-standalone-"+n.lower()
  if n=="Inference": return {"source_agent":"friday","action":"reason","payload":{"prompt":"Validate this synthetic nonproduction request; do not call a model or external provider."}}
@@ -26,7 +27,7 @@ def payload(n):
  if n=="Cortex": return {"task_id":tid,"source_agent":"friday","target_agent":"cortex","action":"recommend_intervention","dry_run":True,"payload":{"dry_run":True,"property_id":"site_storefront","proposed_operation":"analytics_query","rationale":"Review synthetic nonproduction metrics; make no changes.","params":{"query":"synthetic smoke metrics"},"expected_outcomes":{"report_only":True},"confidence":0.95,"max_staleness_seconds":300,"telemetry":{"source":"synthetic_nonproduction","timestamp":datetime.now(UTC).isoformat(),"visitors":12,"conversions":2}}}
  if n=="VyralX": return {"task_id":tid,"target_agent":"vyralx","action":"status","requested_mode":"sync","inputs":{}}
  if n=="Sentinel":
-  now=datetime.now(UTC); t="http://inference:8000/health"
+  now=datetime.now(UTC); t=SENTINEL_TARGET
   return {"objective":"Loopback-only health observation.","targets":[{"type":"url","value":t,"metadata":{"criticality":"low","environment":"development","owner":"local-test","description":"Internal service health endpoint; no external scans or enrichment.","tags":{"purpose":"nonproduction-smoke"}}}],"mode":"monitoring","scope":{"owner":"local-test","environment":"development","written_authorization_reference":"FRIDAY-NONPROD-TEST-ONLY","allowed_targets":[t,"inference"],"allowed_methods":["discovery","validation"],"time_window":{"start_time":(now-timedelta(minutes=1)).isoformat(),"end_time":(now+timedelta(minutes=5)).isoformat()},"maximum_impact":"low","max_intensity":1,"rate_limit":1,"authorization":{"authorization_type":"owned","reference_ticket_id":"FRIDAY-NONPROD-TEST-ONLY","allow_third_party_enrichment":False}}}
  raise ValueError(n)
 async def main():
@@ -76,14 +77,14 @@ async def main():
      if task_status not in {"completed","complete","partially_completed"}: raise RuntimeError("Sentinel loopback task did not produce a completed observation: "+str(task))
      targets=task.get("target_set",{}).get("targets",[])
      scope=task.get("scope",{}); authorization=scope.get("authorization",{})
-     if len(targets)!=1 or targets[0].get("value")!=t: raise RuntimeError("Sentinel task escaped the single loopback target")
+     if len(targets)!=1 or targets[0].get("value")!=SENTINEL_TARGET: raise RuntimeError("Sentinel task escaped the single loopback target")
      if scope.get("environment")!="development" or targets[0].get("metadata",{}).get("environment")!="development": raise RuntimeError("Sentinel task is not marked nonproduction")
      if scope.get("maximum_impact")!="low" or scope.get("max_intensity")!=1 or authorization.get("allow_third_party_enrichment") is not False: raise RuntimeError("Sentinel task exceeded the safe test scope")
      if float(task.get("progress_percentage",0))<100 or not task.get("completed_at"): raise RuntimeError("Sentinel task lacks terminal completion evidence")
      ev=await c.get(f"{base}/api/v1/tasks/{task_id}/evidence",timeout=5)
      ev_body=ev.json() if ev.status_code==200 else {}
      if ev.status_code!=200 or not ev_body.get("evidence"): raise RuntimeError("Sentinel did not persist task evidence: "+str(ev_body))
-     row["service_response"]={"task":task,"evidence":ev_body}; row["service_receipt"]={"requested_action":"loopback-health-observation","authorization_decision":"AUTHORIZED","verification_evidence":{"source":"sentinel.local-task-evidence","task_id":task_id,"status":task_status,"progress_percentage":task.get("progress_percentage"),"target":t,"scope_environment":scope.get("environment"),"third_party_enrichment_disabled":True,"evidence":ev_body}}
+     row["service_response"]={"task":task,"evidence":ev_body}; row["service_receipt"]={"requested_action":"loopback-health-observation","authorization_decision":"AUTHORIZED","verification_evidence":{"source":"sentinel.local-task-evidence","task_id":task_id,"status":task_status,"progress_percentage":task.get("progress_percentage"),"target":SENTINEL_TARGET,"scope_environment":scope.get("environment"),"third_party_enrichment_disabled":True,"evidence":ev_body}}
    else:
     receipt=body.get("receipt") if isinstance(body,dict) else None
     evidence=receipt.get("verification_evidence") if isinstance(receipt,dict) else None
