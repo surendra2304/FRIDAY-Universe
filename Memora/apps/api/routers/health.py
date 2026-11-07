@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from core.config import settings
 from storage.relational.session import get_db, storage_receipt
 from storage.vector.qdrant_adapter import vector_adapter
 
@@ -22,13 +23,20 @@ def health_check(db: Session = Depends(get_db)):
     except Exception as e:
         db_status = f"degraded ({type(e).__name__})"
 
-    # The durable event feed is the same Oracle schema as the rest of Memora.
-    event_store = "oracle_database" if database.get("backend") == "oracle" else "unavailable"
-    event_store_ok = event_store == "oracle_database"
-
+    # Production event feeds use Oracle. Explicit testing mode reports the same
+    # ephemeral SQLite database as a test-only event store; it is never durable
+    # across the runner lifecycle and does not alter production backend rules.
+    sqlite_test = (
+        str(settings.MEMORA_ENV).lower() in {"test", "testing"}
+        and database.get("backend") == "sqlite"
+    )
     if database.get("backend") == "oracle":
+        event_store = "oracle_database"
+        event_store_ok = True
         vector_store = {"status": "available", "available": True, "backend": "oracle_23ai_native_vector"}
     else:
+        event_store = "sqlite_test_database" if sqlite_test else "unavailable"
+        event_store_ok = sqlite_test and db_status == "healthy"
         vector_store = vector_adapter.readiness()
 
     status_ok = db_status == "healthy" and event_store_ok and vector_store["available"]
