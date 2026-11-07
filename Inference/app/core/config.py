@@ -164,6 +164,8 @@ class Settings(BaseSettings):
     def memory_backend_description(self) -> str:
         """Describe the configured memory backend for status endpoints and startup logs."""
         backend = self.database_backend
+        if backend == "sqlite-test":
+            return "SQLite test-only storage (ephemeral tmpfs)"
         if backend == "oracle":
             url = (self.DATABASE_URL or "").strip()
             if url:
