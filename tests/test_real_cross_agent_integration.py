@@ -12,6 +12,7 @@ Priority 1: Real cross-agent integration — not mock or simulated
 import sys
 import pytest
 import os
+import subprocess
 import tempfile
 import shutil
 import importlib.util
@@ -195,3 +196,20 @@ class TestUniverseStatus:
         assert status["memory_engine"]["total_memories"] >= 2
         # Decisions should have been made
         assert status["decision_engine"]["total_decisions"] >= 2
+
+
+
+    def test_task82_real_standalone_specialist_fleet():
+        """Run real specialist services only on the dedicated nonproduction CI branch."""
+        if os.environ.get("GITHUB_REF_NAME") != "arena/task82-nonprod-fleet":
+            pytest.skip("standalone fleet runs only on its dedicated CI branch")
+        if os.environ.get("CI", "").lower() != "true":
+            pytest.skip("standalone fleet requires GitHub Actions CI")
+        compose = ["docker", "compose", "-f", str(ROOT / "docker-compose.friday-nonproduction.yml")]
+        try:
+            subprocess.run(compose + ["up", "--build", "-d"], cwd=ROOT, check=True, timeout=3300)
+            subprocess.run([sys.executable, "scripts/friday_nonproduction_dispatch_smoke.py"], cwd=ROOT, check=True, timeout=300)
+        finally:
+            subprocess.run(compose + ["logs", "--no-color"], cwd=ROOT, check=False, timeout=120)
+            subprocess.run(compose + ["down", "--volumes", "--remove-orphans"], cwd=ROOT, check=False, timeout=180)
+    
