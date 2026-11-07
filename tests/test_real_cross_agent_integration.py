@@ -12,6 +12,7 @@ Priority 1: Real cross-agent integration — not mock or simulated
 import sys
 import pytest
 import os
+import json
 import subprocess
 import tempfile
 import shutil
@@ -207,17 +208,23 @@ class TestUniverseStatus:
             pytest.skip("standalone fleet requires GitHub Actions CI")
         compose = ["docker", "compose", "-f", str(ROOT / "docker-compose.friday-nonproduction.yml")]
         try:
-            subprocess.run(compose + ["up", "--build", "-d"], cwd=ROOT, check=True, timeout=3300)
             receipts_dir = ROOT / "generated-artifacts" / "friday-standalone-test"
             receipts_dir.mkdir(parents=True, exist_ok=True)
+            os.chmod(receipts_dir, 0o777)
+            receipts_file = receipts_dir / "receipts.json"
+            receipts_file.unlink(missing_ok=True)
+            subprocess.run(compose + ["up", "--build", "-d"], cwd=ROOT, check=True, timeout=3300)
             subprocess.run(
-                compose + ["exec", "-T", "-e", "FRIDAY_TEST_RECEIPTS_PATH=/tmp/friday-standalone-test/receipts.json", "inference", "python", "/workspace/scripts/friday_nonproduction_dispatch_smoke.py"],
+                compose + ["exec", "-T", "-e", "FRIDAY_TEST_RECEIPTS_PATH=/friday-test-output/receipts.json", "inference", "python", "/workspace/scripts/friday_nonproduction_dispatch_smoke.py"],
                 cwd=ROOT, check=True, timeout=600,
             )
-            subprocess.run(
-                compose + ["cp", "inference:/tmp/friday-standalone-test/receipts.json", str(receipts_dir / "receipts.json")],
-                cwd=ROOT, check=True, timeout=120,
-            )
+            if not receipts_file.is_file():
+                raise AssertionError("Standalone smoke run did not write its receipts artifact")
+            receipt_data = json.loads(receipts_file.read_text(encoding="utf-8"))
+            expected_agents = {"Inference", "Memora", "IntelX", "Futuris", "Stratex", "Forge", "Cortex", "VyralX", "Sentinel"}
+            actual_agents = {item.get("agent") for item in receipt_data.get("receipts", [])}
+            if receipt_data.get("mode") != "nonproduction-test" or receipt_data.get("agents_total") != 10 or actual_agents != expected_agents:
+                raise AssertionError("Standalone receipts artifact is incomplete or not marked nonproduction")
         finally:
             subprocess.run(compose + ["logs", "--no-color"], cwd=ROOT, check=False, timeout=120)
             subprocess.run(compose + ["down", "--volumes", "--remove-orphans"], cwd=ROOT, check=False, timeout=180)
