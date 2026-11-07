@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Test real FRIDAY HTTP dispatch against the isolated specialist fleet."""
-import asyncio, hashlib, json, sys, time
+import asyncio, hashlib, json, os, sys, time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import httpx
@@ -8,15 +8,15 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"FRIDAY/apps/core/src"))
 from friday_core.universe_dispatch_bus import UniverseDispatchBus
 S=[
-("Inference",8111,["/health","/healthz"],"/v1/task/validate","", "X-API-Key"),
-("Memora",8112,["/health","/healthz"],"/v1/task/execute","friday","X-Agent-Name"),
-("IntelX",8113,["/api/v1/health","/health","/healthz"],"/api/v1/task/execute","friday-test-only","X-API-Key"),
-("Futuris",8114,["/health","/healthz"],"/v1/task/execute","friday-test-only","X-Friday-Api-Key"),
-("Stratex",8115,["/health","/api/health"],"/v1/task/execute","friday-test-only","X-API-KEY"),
-("Forge",8116,["/health","/api/health"],"/api/v1/forge/delegate","","X-API-Key"),
-("Cortex",8117,["/health","/health/ready"],"/v1/task/execute","friday-test-only","X-Friday-Api-Key"),
-("VyralX",8118,["/ready"],"/v1/task/execute","vyralx-test-only","X-API-Key"),
-("Sentinel",8119,["/health","/healthz"],"/api/v1/tasks","","X-API-Key"),]
+("Inference","inference",["/health","/healthz"],"/v1/task/validate","", "X-API-Key"),
+("Memora","memora",["/health","/healthz"],"/v1/task/execute","friday","X-Agent-Name"),
+("IntelX","intelx",["/api/v1/health","/health","/healthz"],"/api/v1/task/execute","friday-test-only","X-API-Key"),
+("Futuris","futuris",["/health","/healthz"],"/v1/task/execute","friday-test-only","X-Friday-Api-Key"),
+("Stratex","stratex",["/health","/api/health"],"/v1/task/execute","friday-test-only","X-API-KEY"),
+("Forge","forge",["/health","/api/health"],"/api/v1/forge/delegate","","X-API-Key"),
+("Cortex","cortex",["/health","/health/ready"],"/v1/task/execute","friday-test-only","X-Friday-Api-Key"),
+("VyralX","vyralx",["/ready"],"/v1/task/execute","vyralx-test-only","X-API-Key"),
+("Sentinel","sentinel",["/health","/healthz"],"/api/v1/tasks","","X-API-Key"),]
 def payload(n):
  tid="friday-standalone-"+n.lower()
  if n=="Inference": return {"source_agent":"friday","action":"reason","payload":{"prompt":"Validate this synthetic nonproduction request; do not call a model or external provider."}}
@@ -34,7 +34,7 @@ async def main():
   health={}; deadline=time.monotonic()+180; pending=list(S)
   while pending and time.monotonic()<deadline:
    for s in pending[:]:
-    n,p,paths,*_=s; base=f"http://127.0.0.1:{p}"
+    n,p,paths,*_=s; base=f"http://{p}:8000"
     for path in paths:
      try:
       r=await client.get(base+path,timeout=3)
@@ -84,7 +84,7 @@ async def main():
    row["response_sha256"]=hashlib.sha256(digest).hexdigest(); receipts.append(row)
  finally: httpx.AsyncClient.post=original
  if len(receipts)!=9: raise RuntimeError("Expected nine specialist receipts")
- out=ROOT/"generated-artifacts/friday-standalone-test/receipts.json"; out.parent.mkdir(parents=True,exist_ok=True)
+ out=Path(os.environ.get("FRIDAY_TEST_RECEIPTS_PATH", str(ROOT/"generated-artifacts/friday-standalone-test/receipts.json"))); out.parent.mkdir(parents=True,exist_ok=True)
  out.write_text(json.dumps({"runner":"FRIDAY UniverseDispatchBus","mode":"nonproduction-test","agents_total":10,"specialists":len(receipts),"external_network":"isolated internal test mesh","health":health,"receipts":receipts},indent=2)+"\n",encoding="utf-8")
  print(f"Verified {len(receipts)} evidence-backed service receipts; 10 total agents.")
 if __name__=="__main__": asyncio.run(main())
