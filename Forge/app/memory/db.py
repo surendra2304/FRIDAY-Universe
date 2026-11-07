@@ -21,6 +21,7 @@ Oracle differences handled here:
 from __future__ import annotations
 
 import asyncio
+import os
 from collections.abc import AsyncGenerator, Mapping, Sequence
 from contextlib import asynccontextmanager
 from typing import Any
