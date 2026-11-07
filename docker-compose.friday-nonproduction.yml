@@ -13,21 +13,21 @@ x-test: &test
   SENTINEL_URL: http://sentinel:8000
 services:
   inference:
-    build: {context: ., dockerfile: Inference/Dockerfile}
+    build: {context: ./Inference, dockerfile: Dockerfile}
     command: ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
     ports: ["8111:8000"]
     environment: {<<: *test, APP_ENV: test, DATABASE_URL: sqlite+aiosqlite:////tmp/inference.db, INFERENCE_API_KEY: inference-test-only}
     tmpfs: ["/tmp"]
     networks: [mesh]
   memora:
-    build: {context: ., dockerfile: Memora/Dockerfile}
+    build: {context: ./Memora, dockerfile: Dockerfile}
     command: ["uvicorn","apps.api.main:app","--host","0.0.0.0","--port","8000"]
     ports: ["8112:8000"]
     environment: {<<: *test, MEMORA_ENV: testing, ENVIRONMENT: testing, DATABASE_URL: sqlite:////tmp/memora.db, MEMORA_ALLOW_ANONYMOUS_DEV: "true"}
     tmpfs: ["/tmp"]
     networks: [mesh]
   intelx:
-    build: {context: ., dockerfile: IntelX/Dockerfile}
+    build: {context: ./IntelX, dockerfile: Dockerfile}
     ports: ["8113:8000"]
     environment: {<<: *test, INTELX_ENV: development, ENVIRONMENT: development, INTELX_MOCK_MODE: "true", MOCK_MODE: "true", INTELX_DB_URL: sqlite+aiosqlite:////tmp/intelx.db, API_KEYS: '["friday-test-only"]'}
     tmpfs: ["/tmp"]
@@ -39,7 +39,7 @@ services:
     tmpfs: ["/tmp"]
     networks: [mesh]
   stratex:
-    build: {context: ., dockerfile: Stratex/Dockerfile}
+    build: {context: ./Stratex, dockerfile: Dockerfile}
     command: ["python","dashboard.py"]
     ports: ["8115:8000"]
     environment: {<<: *test, STRATEX_ENV: test, APP_ENV: test, API_KEY_FRIDAY: friday-test-only, TRADING_ENABLED: "false", AUTOTRADE_ENABLED: "false", LIVE_TRADING_ENABLED: "false", TESTNET_ENABLED: "false", PAPER_TRADING: "true"}
@@ -52,13 +52,13 @@ services:
     tmpfs: ["/tmp"]
     networks: [mesh]
   cortex:
-    build: {context: ., dockerfile: Cortex/Dockerfile}
+    build: {context: ./Cortex, dockerfile: Dockerfile}
     ports: ["8117:8000"]
     environment: {<<: *test, APP_ENV: development, MOCK_MODE: "true", POSTGRES_DSN: sqlite+aiosqlite:////tmp/cortex.db, JWT_SECRET: friday-cortex-test-only-signing-key, CORTEX_API_KEY: cortex-test-only, CORTEX_PII_SALT: friday-test-salt}
     tmpfs: ["/tmp"]
     networks: [mesh]
   vyralx:
-    build: {context: ., dockerfile: VyralX/Dockerfile}
+    build: {context: ./VyralX, dockerfile: Dockerfile}
     ports: ["8118:8000"]
     environment: {<<: *test, APP_ENV: development, DATABASE_URL: sqlite:////tmp/vyralx.db, MEDIA_DATABASE_URL: sqlite:////tmp/vyralx-media.db, VYRALX_API_KEY: vyralx-test-only, VYRALX_PUBLISH_ENABLED: "false", AUTONOMOUS_PUBLISH_ENABLED: "false", YOUTUBE_PUBLISH_ENABLED: "false"}
     tmpfs: ["/tmp"]
