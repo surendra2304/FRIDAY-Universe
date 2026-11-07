@@ -17,58 +17,50 @@ services:
   inference:
     build: {context: ./Inference, dockerfile: Dockerfile}
     command: ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
-    ports: ["8111:8000"]
     environment: {<<: *test, APP_ENV: test, INFERENCE_TEST_DB_PATH: /tmp/inference.db, INFERENCE_API_KEY: inference-test-only}
     tmpfs: ["/tmp"]
+    volumes: ["./:/workspace:ro"]
     networks: [mesh]
   memora:
     build: {context: ./Memora, dockerfile: Dockerfile}
     command: ["uvicorn","apps.api.main:app","--host","0.0.0.0","--port","8000"]
-    ports: ["8112:8000"]
     environment: {<<: *test, MEMORA_ENV: testing, ENVIRONMENT: testing, DATABASE_URL: sqlite:////tmp/memora.db, MEMORA_ALLOW_ANONYMOUS_DEV: "true"}
     tmpfs: ["/tmp"]
     networks: [mesh]
   intelx:
     build: {context: ./IntelX, dockerfile: Dockerfile}
-    ports: ["8113:8000"]
     environment: {<<: *test, INTELX_ENV: test, ENVIRONMENT: development, INTELX_MOCK_MODE: "true", MOCK_MODE: "true", INTELX_DB_URL: sqlite+aiosqlite:////tmp/intelx.db, API_KEYS: '["friday-test-only"]'}
     tmpfs: ["/tmp"]
     networks: [mesh]
   futuris:
     build: {context: ., dockerfile: Futuris/Dockerfile}
-    ports: ["8114:8000"]
     environment: {<<: *test, APP_ENV: test, FUTURIS_TEST_DB_PATH: /tmp/futuris.db, OBJECT_STORE_PATH: /tmp/futuris-data, API_KEYS_ENABLED: "false"}
     tmpfs: ["/tmp"]
     networks: [mesh]
   stratex:
     build: {context: ./Stratex, dockerfile: Dockerfile}
     command: ["python","dashboard.py"]
-    ports: ["8115:8000"]
     environment: {<<: *test, STRATEX_ENV: test, APP_ENV: test, API_KEY_FRIDAY: friday-test-only, TRADING_ENABLED: "false", AUTOTRADE_ENABLED: "false", LIVE_TRADING_ENABLED: "false", TESTNET_ENABLED: "false", PAPER_TRADING: "true"}
     tmpfs: ["/tmp"]
     networks: [mesh]
   forge:
     build: {context: ., dockerfile: Forge/Dockerfile}
-    ports: ["8116:8000"]
-    environment: {<<: *test, APP_ENV: test, FORGE_ENV: test, FRIDAY_STANDALONE_TEST_MODE: "true", FORGE_TEST_SQLITE_PATH: /tmp/forge.db, FORGE_API_KEY: forge-test-only}
+    environment: {<<: *test, APP_ENV: test, FORGE_ENV: development, FRIDAY_STANDALONE_TEST_MODE: "true", FORGE_TEST_SQLITE_PATH: /tmp/forge.db, FORGE_API_KEY: forge-test-only}
     tmpfs: ["/tmp"]
     networks: [mesh]
   cortex:
     build: {context: ./Cortex, dockerfile: Dockerfile}
-    ports: ["8117:8000"]
     environment: {<<: *test, APP_ENV: development, MOCK_MODE: "true", POSTGRES_DSN: sqlite+aiosqlite:////tmp/cortex.db, JWT_SECRET: friday-cortex-test-only-signing-key, CORTEX_API_KEY: cortex-test-only, CORTEX_PII_SALT: friday-test-salt}
     tmpfs: ["/tmp"]
     networks: [mesh]
   vyralx:
     build: {context: ./VyralX, dockerfile: Dockerfile.friday-test}
-    ports: ["8118:8000"]
     environment: {<<: *test, APP_ENV: development, DATABASE_URL: sqlite:////tmp/vyralx.db, MEDIA_DATABASE_URL: sqlite:////tmp/vyralx-media.db, VYRALX_API_KEY: vyralx-test-only, VYRALX_PUBLISH_ENABLED: "false", AUTONOMOUS_PUBLISH_ENABLED: "false", YOUTUBE_PUBLISH_ENABLED: "false"}
     tmpfs: ["/tmp"]
     networks: [mesh]
   sentinel:
     build: {context: ., dockerfile: Sentinel/Dockerfile}
-    ports: ["8119:8000"]
-    environment: {<<: *test, SENTINEL_ENVIRONMENT: testing, SENTINEL_STORAGE_BACKEND: memory, SENTINEL_S3_BACKEND: local, SENTINEL_API_AUTH_REQUIRED: "false", SENTINEL_ACTIVE_SCANNING_ENABLED: "false", SENTINEL_THIRD_PARTY_ENRICHMENT_ENABLED: "false", SENTINEL_API_KEY: sentinel-test-only}
+    environment: {<<: *test, SENTINEL_ENVIRONMENT: testing, SENTINEL_AUDIT_SIGNING_KEY: friday-sentinel-test-only-audit-key, SENTINEL_STORAGE_BACKEND: memory, SENTINEL_S3_BACKEND: local, SENTINEL_API_AUTH_REQUIRED: "false", SENTINEL_ACTIVE_SCANNING_ENABLED: "false", SENTINEL_THIRD_PARTY_ENRICHMENT_ENABLED: "false", SENTINEL_API_KEY: sentinel-test-only}
     tmpfs: ["/tmp"]
     networks: [mesh]
 networks:
