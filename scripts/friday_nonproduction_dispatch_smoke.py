@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/"FRIDAY/apps/core/src"))
 from friday_core.universe_dispatch_bus import UniverseDispatchBus
 S=[
-("Inference","inference",["/health","/healthz"],"/v1/task/validate","", "X-API-Key"),
+("Inference","inference",["/health","/healthz"],"/v1/task/validate","inference-test-only", "X-API-Key"),
 ("Memora","memora",["/health","/healthz"],"/v1/task/execute","friday","X-Agent-Name"),
 ("IntelX","intelx",["/api/v1/health","/health","/healthz"],"/api/v1/task/execute","friday-test-only","X-API-Key"),
 ("Futuris","futuris",["/health","/healthz"],"/v1/task/execute","friday-test-only","X-Friday-Api-Key"),
