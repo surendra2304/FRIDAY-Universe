@@ -199,7 +199,7 @@ class TestUniverseStatus:
 
 
 
-    def test_task82_real_standalone_specialist_fleet():
+    def test_task82_real_standalone_specialist_fleet(self):
         """Run real specialist services only on the dedicated nonproduction CI branch."""
         if os.environ.get("GITHUB_REF_NAME") != "arena/task82-nonprod-fleet":
             pytest.skip("standalone fleet runs only on its dedicated CI branch")
