@@ -537,7 +537,24 @@ class DatabaseManager:
 
 
 # Global singleton instance
-db_manager = DatabaseManager()
+def create_database_manager():
+    """Select SQLite only for an explicit isolated FRIDAY test run."""
+    enabled = os.getenv("FRIDAY_STANDALONE_TEST_MODE", "").strip().lower() in {"1", "true", "yes"}
+    test_env = os.getenv("APP_ENV", "").strip().lower() in {"test", "testing"}
+    test_path = os.getenv("FORGE_TEST_SQLITE_PATH", "").strip()
+    if enabled:
+        if not test_env:
+            raise RuntimeError("FRIDAY standalone SQLite is test-only and requires APP_ENV=test")
+        if not test_path or not os.path.isabs(test_path):
+            raise RuntimeError("FRIDAY standalone SQLite requires an absolute FORGE_TEST_SQLITE_PATH")
+        from app.memory.sqlite_test_backend import SQLiteTestDatabase
+        return SQLiteTestDatabase(test_path)
+    if test_path:
+        raise RuntimeError("FORGE_TEST_SQLITE_PATH requires FRIDAY_STANDALONE_TEST_MODE in APP_ENV=test")
+    return DatabaseManager()
+
+
+db_manager = create_database_manager()
 
 
 async def get_db() -> AsyncGenerator[Any, None]:
