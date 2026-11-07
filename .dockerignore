@@ -29,3 +29,7 @@
 **/*.sqlite
 **/*.sqlite3
 **/*.db
+
+# Sentinel source package named artifacts is code, not generated output.
+!Sentinel/sentinel/storage/artifacts/
+!Sentinel/sentinel/storage/artifacts/**
