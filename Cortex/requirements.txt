@@ -10,6 +10,7 @@ pydantic-settings>=2.2.0
 # same redis-py generation that contract was verified against.
 redis>=5.0.0,<8.0.0
 sqlalchemy[asyncio]>=2.0.0
+aiosqlite>=0.20.0,<1.0.0
 oracledb>=2.5.0
 alembic>=1.13.0
 httpx>=0.27.0
