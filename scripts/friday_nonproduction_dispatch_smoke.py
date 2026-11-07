@@ -27,7 +27,7 @@ def payload(n):
  if n=="VyralX": return {"task_id":tid,"target_agent":"vyralx","action":"status","requested_mode":"sync","inputs":{}}
  if n=="Sentinel":
   now=datetime.now(UTC); t="http://inference:8000/health"
-  return {"objective":"Loopback-only health observation.","targets":[{"type":"url","value":t}],"mode":"assessment","scope":{"owner":"local-test","written_authorization_reference":"FRIDAY-NONPROD-TEST-ONLY","allowed_targets":[t,"inference"],"allowed_methods":["discovery","validation"],"time_window":{"start_time":(now-timedelta(minutes=1)).isoformat(),"end_time":(now+timedelta(minutes=5)).isoformat()},"maximum_impact":"low","rate_limit":1,"authorization":{"allow_third_party_enrichment":False}}}
+  return {"objective":"Loopback-only health observation.","targets":[{"type":"url","value":t,"metadata":{"criticality":"low","environment":"development","owner":"local-test","description":"Internal service health endpoint; no external scans or enrichment.","tags":{"purpose":"nonproduction-smoke"}}}],"mode":"monitoring","scope":{"owner":"local-test","environment":"development","written_authorization_reference":"FRIDAY-NONPROD-TEST-ONLY","allowed_targets":[t,"inference"],"allowed_methods":["discovery","validation"],"time_window":{"start_time":(now-timedelta(minutes=1)).isoformat(),"end_time":(now+timedelta(minutes=5)).isoformat()},"maximum_impact":"low","max_intensity":1,"rate_limit":1,"authorization":{"authorization_type":"owned","reference_ticket_id":"FRIDAY-NONPROD-TEST-ONLY","allow_third_party_enrichment":False}}}
  raise ValueError(n)
 async def main():
  async with httpx.AsyncClient() as client:
@@ -70,12 +70,20 @@ async def main():
       q=await c.get(f"{base}/api/v1/tasks/{task_id}",timeout=5)
       if q.status_code==200:
        task=q.json()
-       if str(task.get("status","")).lower() in {"completed","complete","failed","blocked","cancelled"}: break
+       if str(task.get("status","")).lower() in {"completed","complete","partially_completed","failed","blocked","cancelled"}: break
       await asyncio.sleep(.25)
-     if str(task.get("status","")).lower() not in {"completed","complete"}: raise RuntimeError("Sentinel loopback task did not complete: "+str(task))
+     task_status=str(task.get("status","")).lower()
+     if task_status not in {"completed","complete","partially_completed"}: raise RuntimeError("Sentinel loopback task did not produce a completed observation: "+str(task))
+     targets=task.get("target_set",{}).get("targets",[])
+     scope=task.get("scope",{}); authorization=scope.get("authorization",{})
+     if len(targets)!=1 or targets[0].get("value")!=t: raise RuntimeError("Sentinel task escaped the single loopback target")
+     if scope.get("environment")!="development" or targets[0].get("metadata",{}).get("environment")!="development": raise RuntimeError("Sentinel task is not marked nonproduction")
+     if scope.get("maximum_impact")!="low" or scope.get("max_intensity")!=1 or authorization.get("allow_third_party_enrichment") is not False: raise RuntimeError("Sentinel task exceeded the safe test scope")
+     if float(task.get("progress_percentage",0))<100 or not task.get("completed_at"): raise RuntimeError("Sentinel task lacks terminal completion evidence")
      ev=await c.get(f"{base}/api/v1/tasks/{task_id}/evidence",timeout=5)
-     if ev.status_code!=200 or not ev.json(): raise RuntimeError("Sentinel did not persist evidence")
-     row["service_response"]=task; row["service_receipt"]={"requested_action":"loopback-health-observation","authorization_decision":"AUTHORIZED","verification_evidence":{"source":"sentinel.local-task-evidence","task_id":task_id,"status":task.get("status"),"evidence":ev.json()}}
+     ev_body=ev.json() if ev.status_code==200 else {}
+     if ev.status_code!=200 or not ev_body.get("evidence"): raise RuntimeError("Sentinel did not persist task evidence: "+str(ev_body))
+     row["service_response"]={"task":task,"evidence":ev_body}; row["service_receipt"]={"requested_action":"loopback-health-observation","authorization_decision":"AUTHORIZED","verification_evidence":{"source":"sentinel.local-task-evidence","task_id":task_id,"status":task_status,"progress_percentage":task.get("progress_percentage"),"target":t,"scope_environment":scope.get("environment"),"third_party_enrichment_disabled":True,"evidence":ev_body}}
    else:
     receipt=body.get("receipt") if isinstance(body,dict) else None
     evidence=receipt.get("verification_evidence") if isinstance(receipt,dict) else None
