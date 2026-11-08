@@ -16,6 +16,22 @@ from sqlalchemy.types import JSON
 
 from intelx.core.settings import get_settings
 
+# SQLAlchemy's generic JSON type expects these hooks on the Oracle dialect.
+# python-oracledb's async dialect inherits OracleDialect, which in some supported
+# SQLAlchemy releases does not define them. Default to stdlib json.dumps/json.loads
+# without changing Oracle's native JSON DDL or existing JSON column storage.
+try:
+    from sqlalchemy.dialects.oracle.base import OracleDialect
+
+    if not hasattr(OracleDialect, "_json_serializer"):
+        OracleDialect._json_serializer = None
+    if not hasattr(OracleDialect, "_json_deserializer"):
+        OracleDialect._json_deserializer = None
+except Exception:
+    # Importing the test SQLite backend should not fail because an optional
+    # Oracle dialect compatibility hook is unavailable.
+    pass
+
 
 @compiles(JSON, "oracle")
 def _compile_json_oracle(_type, _compiler, **_kw):
