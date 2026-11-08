@@ -23,7 +23,7 @@ Evidence cited by file path or command. Secrets are named, never printed.
 | Cortex | Cortex/apps/api (cortex_api.main:app) | 2 | 8009 | Running |
 | Sentinel | Sentinel app | 2 | 8008 | Running |
 | VyralX | VyralX/app/main.py | 2 | 8010 | Running (+ daemon, autopilot) |
-- VERIFIED: services are active on both servers (systemctl list-units, Server 1 and 2).
+- VERIFIED at point-in-time check 2026-11-09: all ten canonical agent systemd services (FRIDAY, Inference, Memora, Stratex, Futuris, IntelX, Forge, Cortex, Sentinel, VyralX) were active across the two VMs. This is service liveness only; it does not prove each function or integration is healthy.
 - CONFLICT: docs/DEPLOYMENT_GUIDE.md described the port map as 8000–8010 container ports before PR #20; that PR changed it to production host ports. Confirm the current file.
 - VERIFIED: `friday-oci-a1-allocator.service` is referenced in docs but not registered on Server 1 (not-found).
 
@@ -57,10 +57,10 @@ Evidence cited by file path or command. Secrets are named, never printed.
 - Server 2: 140.245.243.168 (private 10.0.0.120). 956 MB RAM. Disk 49 GB, 37% used.
 - Memory use at time of check: Server 1 454 MB used, 346 MB available, 1.5 GB swap used. Server 2 466 MB used, 337 MB available.
 - Region ap-hyderabad-1. Always Free A1 capacity: none available (sniper log, 287 attempts, "Capacity full").
-- GAP: FRIDAY-Voice has no MemoryMax (systemd show, infinity). All other units have one.
+- VERIFIED 2026-11-09: FRIDAY-Voice.service is active and loads `/etc/systemd/system/FRIDAY-Voice.service.d/memory.conf` with MemoryHigh=250M and MemoryMax=300M. This resolves the previous missing-limit gap. Separate LiveKit logs contain event-loop-blocked warnings (158–679ms; threshold 100ms) at 2026-11-08 19:35–20:10 UTC; current frequency and user-facing effect are not yet verified.
 
 ## 8. Service ports, health and deployment configuration (VERIFIED)
-- Health: each agent answers GET /health on its port (curl through Caddy returned 200 for FRIDAY).
+- Health: systemd/mesh checks reported GET /health 200 for all ten agents at the point-in-time check; direct exhaustive endpoint and capability tests for every agent remain outstanding.
 - Restart policy: all units Restart=always (VERIFIED). A crash loop restarts silently; no alerting found.
 - Deploy: deploy-monorepo.yml on push to main; SSH to each server; `git fetch origin main; git reset --hard origin/main`; restarts changed agents. VERIFIED by reading the workflow; deployment execution is not evidenced by this GitHub-only review.
 - Mirror: current main workflow still requires inspection against open PR #27. PR #27 proposes manual-only mirroring and removes force-push; it is not merged.
@@ -75,6 +75,7 @@ Evidence cited by file path or command. Secrets are named, never printed.
 - CREDENTIALS.md on Server 2 (/opt/friday_universe/CREDENTIALS.md): untracked by git (VERIFIED, 0 history commits in earlier host check). Holds identifiers and provider keys in plaintext. Keep it out of git.
 - `.gitignore` excludes credential files, `.env` files, private-key files, token JSON and service-account JSON; `.env.example` remains explicitly allowed. A recursive Git-tree filename inventory on main (5,291 blobs) found the nine expected `.env.example` templates and no tracked credential/private-key filename matches. This is filename evidence only, not content proof.
 - IN_REVIEW, not on main: PR #31 adds a Gitleaks GitHub Actions workflow for PR/push change ranges. Run 42525462164 passed after fixing an initial shallow-fetch range failure. It does not scan the legacy full history; TASK-SEC-002 is still required.
+- IN_REVIEW, not on main: PR #32 addresses an IntelX database runtime error. Live IntelX.service logs recorded `AttributeError: OracleDialectAsync_oracledb has no attribute _json_deserializer` during a SQLAlchemy result processor at 2026-11-08 20:22:08 UTC. IntelX model declarations use generic SQLAlchemy JSON columns, while its engine customized only Oracle JSON DDL compilation and did not set generic JSON serializer/deserializer defaults. PR #32 adds these missing base-dialect defaults in a standalone `IntelX/intelx/oracle_dialect_compat.py` imported before engine construction, plus `tests/test_intelx_oracle_json_compat.py` that exercises JSON bind/result round-trip on `OracleDialect`. Latest CI on PR head is queued/in progress; earlier collection attempts failed because `intelx.db` package initialization imported SQLAlchemy asyncio and greenlet was absent. The helper has since been moved outside that package. No service restart or production DB validation performed.
 - Leaked keys in public history commit 46034a4: owner rotated. History not yet rewritten.
 - Binance testnet keys are present in the credentials file; testnet only.
 
@@ -114,6 +115,9 @@ Evidence cited by file path or command. Secrets are named, never printed.
 10. GAP: no alerting on crash loops; no documented rollback.
 11. GAP: sniper secrets authentication unconfirmed (TASK-OPS-002).
 12. UNVERIFIED: most per-agent internals (not yet read in full).
+13. IntelX Oracle JSON processor error observed; PR #32 fix is in review and not deployed.
+14. FRIDAY-Voice memory limit is now configured (MemoryMax=300M); LiveKit event-loop blocked warnings need further diagnosis.
+15. Stratex received 401 responses for some `/api/v1/status` and `/api/v1/positions` probes and 404 responses for several alternate positions/trades URLs in service logs. Futuris also logged 404s against Stratex positions endpoints. Caller/endpoint contract and effect on service functionality remain under TASK-STR-001/TASK-STR-002 investigation; Stratex.service itself was active.
 13. CI: full monorepo validation is not yet evidenced green on current main.
 14. Cortex role policy: PR #26 has an unresolved finding because method-only POST=>operator blocks read-only forecast analysis for viewer users.
 15. Secret scan: PR #31 is open, and its change-range Gitleaks CI passed on its latest head; broader monorepo validation remains in progress. Do not treat TASK-SEC-004 as complete until PR review, all required checks, and merge.
