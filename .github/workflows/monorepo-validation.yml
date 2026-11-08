@@ -45,8 +45,13 @@ jobs:
 
       - name: Run repository and cancellable CPU-worker tests
         env:
+          DATABASE_URL: oracle+oracledb://mock:mock@localhost:1521/FREE
+          MEDIA_DATABASE_URL: oracle+oracledb://mock:mock@localhost:1521/FREE
+          ENVIRONMENT: development
           PYTHONPATH: ${{ github.workspace }}/Futuris:${{ github.workspace }}/VyralX
-        run: python -m pytest -q tests VyralX/tests/test_autonomous_orchestrator.py Futuris/tests/infra/test_cpu_process.py --confcutdir=Futuris/tests/infra
+        run: |
+          python -m pytest -q tests Futuris/tests/infra/test_cpu_process.py --confcutdir=Futuris/tests/infra
+          (cd VyralX && python -m pytest -q tests/test_autonomous_orchestrator.py)
 
       - name: Validate repository and workflow safety
         run: python scripts/validate_fleet.py
