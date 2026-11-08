@@ -67,7 +67,8 @@ Evidence cited by file path or command. Secrets are named, never printed.
 
 ## 9. Authentication and authorization (PARTIALLY VERIFIED)
 - Agents require bearer keys named in their manifests (MEMORA_API_KEY, STRATEX_API_KEY, FRIDAY_API_KEY and so on). Values are secrets; not recorded.
-- Bridge (friday-bridge, :8011, exposed via Caddy /bridge, /mcp, /messages): run_shell, github_api, github_write_file, read_text, github_run_logs. No authentication found in bridge/server.py (PARTIALLY VERIFIED: a request to /bridge/mcp timed out instead of being rejected). Owner accepted the risk; recommendation stands.
+- Production bridge (friday-bridge, :8011, exposed via Caddy /bridge, /mcp, /messages): the currently running bridge source has no request authentication (PARTIALLY VERIFIED; previous /bridge/mcp probe timed out rather than returning an auth rejection). Owner accepted the risk pending remediation.
+- Pending TASK-SEC-003 on branch `chatgpt/TASK-SEC-003` (NOT DEPLOYED): adds a pure-ASGI `BridgeAuthMiddleware` requiring `X-FRIDAY-BRIDGE-KEY` backed by runtime-only `FRIDAY_BRIDGE_SHARED_SECRET`, with fail-closed 503 when unset and 401 for absent/incorrect credentials. Tests and a server-entrypoint integration patch are included. This does not change the running bridge until the secret is provisioned and the patch is applied during an owner-authorized maintenance window.
 - CI secrets: DATABASE_URL in CI is a test-only placeholder (VERIFIED in monorepo-validation.yml from PR #20).
 
 ## 10. Secret management (VERIFIED)
