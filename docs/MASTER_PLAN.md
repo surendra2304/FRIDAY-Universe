@@ -1,97 +1,118 @@
-# FRIDAY Universe: Master Plan v2 (Claude)
+# FRIDAY Universe — Master Plan
 
-Replaces v1. v1 was written before most of the code was read and is superseded.
+Single source of truth for the roadmap. Both Claude and ChatGPT work top to bottom through this file.
+Read docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md before starting any task.
 
-## How to read this plan
-- VERIFIED: checked in source, git history, CI logs, or on the live servers during this review.
-- OBSERVED: seen in one place (a log line, a config value, a grep count) but not traced end to end.
-- GAP: not yet read. Nothing in this plan should be implemented in a GAP area until it is read.
-- No secret values appear here. Secret names only.
+Statuses: NOT_STARTED | IN_PROGRESS | BLOCKED | IN_REVIEW | VERIFIED | DONE
+- VERIFIED needs evidence (command output, log line, live check, or test run cited in handoff.md).
+- DONE needs implementation, passing tests, verification, and all acceptance criteria met.
+- A box is never ticked because code was written.
 
-## Coverage of this review
-- Repository: 5,288 tracked files, about 1.1 million lines of Python.
-- Read in full: the sniper workflows and retry script, the deploy, mirror and validation workflows, AGENTS.yaml, the two open PRs, CI logs for the failing PRs.
-- Read in part, with targeted searches: the FRIDAY orchestrator (server.py command router, fleet_client, universe_orchestrator, dispatch bus), Stratex's exchange selection, the Caddy routes, systemd unit definitions on both servers.
-- Not read yet (GAP): the bodies of the Inference, Memora, Futuris, IntelX, Forge, Cortex, Sentinel and VyralX agents; FRIDAY's 3,089-line server.py beyond routing; the tests (89 files at top level plus per-agent suites); database schemas; Server 2 unit bodies beyond ExecStart; the mesh and inter-agent auth code.
-- The plan is therefore complete for infrastructure, deploy, routing and safety. It is not yet complete for the per-agent internals. Phase 1 closes that gap.
+## 1. Vision and objectives
+FRIDAY Universe is one integrated system of ten agents, run on two Oracle Cloud VMs, with FRIDAY as the central orchestrator. The owner wants FRIDAY to receive natural-language requests, decide which agent should act, assign the work, track it to completion, and report back. Trading (Stratex) stays on Binance testnet until the owner authorises otherwise.
 
-## 0. Security actions (Surendra)
-1. Rotate every provider key that appeared in public commit 46034a4. Done per owner.
-2. History rewrite: removes leaked strings from all commits on main. Pending owner confirmation. Rotation is the real fix; the rewrite stops copying from history. Force-push invalidates open PR bases and ChatGPT branches.
-3. Bridge exposure (VERIFIED): Caddy on Server 1 routes /bridge, /mcp and /messages to Server 2 port 8011. The bridge exposes run_shell (passwordless sudo on both servers) and github_write_file with no authentication. Owner accepted the risk. Recommendation stands: add a shared-secret header check.
-4. OCI secrets for the sniper (Surendra): not present in the repo and not recoverable from the servers. See section 1.
+## 2. Canonical ten-agent architecture
+1. FRIDAY — orchestrator, voice/desktop runtime, task dispatch (Server 1, :10000)
+2. Inference — LLM provider gateway and routing (Server 1, :8001)
+3. Memora — memory fabric, Oracle-backed (Server 1, :8002)
+4. Stratex — futures strategy and execution, testnet only (Server 1, :8003)
+5. Futuris — forecasting (Server 1, :8004)
+6. IntelX — research and evidence (Server 1, :8005)
+7. Forge — code generation and execution (Server 1, :8006)
+8. Cortex — CRM and website operations (Server 2, :8009)
+9. Sentinel — security operations and audit (Server 2, :8008)
+10. VyralX — video intelligence and growth (Server 2, :8010)
+Plus infrastructure: Caddy (Server 1), friday-bridge engineering MCP gateway (Server 2, :8011).
+Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
-## 1. Oracle sniper and ARM server
-- VERIFIED: root cause of no allocation is Oracle capacity in ap-hyderabad-1 ("Capacity full" across all four shapes over 287 attempts), not authentication.
-- VERIFIED and FIXED in code: scheduled runs cancelled active 6h runs (cancel-in-progress true with shared concurrency). Now false, with a skip guard. Retry cycle 15s, 429 backoff 45s.
-- VERIFIED and MOVED: sniper workflows now live at repo root (.github/workflows) so GitHub runs them. Commit dd1ff29.
-- BLOCKED: the four OCI secrets (OCI_USER_OCID, OCI_KEY_CONTENT, OCI_FINGERPRINT, OCI_TENANCY_OCID) and the _2 variants for worker 2 are missing from the main repo. CREDENTIALS.md does not contain them (it lists the names only). None of the servers has an OCI config or API key. They must come from the OCI console (user OCID, tenancy OCID, API key fingerprint, and the private API key PEM generated for the user). The workflow also needs OCI_REGION only if not ap-hyderabad-1.
-- Note: the retry script hardcodes one availability domain and one subnet. If Hyderabad has more than one AD, the script never tries the others.
+## 3. Phases in execution order (dependency-driven)
 
-## 2. Infrastructure (VERIFIED)
-- Server 1 (140.245.208.100 / 10.0.0.121): 956 MB RAM. Runs FRIDAY, FRIDAY-Voice, Inference, Memora, Stratex, Stratex-Daemon, Futuris, IntelX, Forge, Caddy.
-- Server 2 (140.245.243.168 / 10.0.0.120): 956 MB RAM. Runs Sentinel, Cortex, VyralX (+ daemon, autopilot), friday-bridge, Docker.
-- Memory limits (VERIFIED from systemd MemoryMax): FRIDAY 200M, Stratex-Daemon 300M, most others 180M. FRIDAY-Voice has NO limit (infinity). On a 956 MB host this is the most likely cause of swap pressure and an OOM risk. Fix first: set a MemoryMax on FRIDAY-Voice.
-- Restart policy: all services Restart=always. A crash loop will spin without alerting.
-- Caddy (VERIFIED): public routes for friday, inference, memora, stratex, futuris, intelx, forge (Server 1), and bridge, vyralx, sentinel, cortex (Server 2). Ports in AGENTS.yaml and DEPLOYMENT_GUIDE.md now match Caddy.
+### Phase 0 — Owner actions (blocking external)
+- [ ] TASK-SEC-001 — Rotate every provider key that appeared in public commit 46034a4. Status: owner reports DONE; re-verify in handoff.
+- [ ] TASK-SEC-002 — Decide on git history rewrite to remove leaked strings. Owner: yes (confirmed). Execution: Claude, after PR merges are quiet. Destructive; coordinate with ChatGPT first.
+- [ ] TASK-OPS-001 — OCI secrets present in main repo. Names verified via API; values unverified until run 42497059156 authenticates.
+- [ ] TASK-OPS-002 — Verify OCI credentials work: the sniper run 42497059156 must show API calls, not authentication errors. Owner can read the live log on the run page.
 
-## 3. FRIDAY orchestrator (the central agent) (VERIFIED)
-FRIDAY must route and assign tasks to the other agents. Current state:
-- It does route. Two real paths exist:
-  a. Command path: `_dispatch_command` in api/server.py maps commands to `fleet_client.ask_*` for each peer.
-  b. Directive path: `fleet_client.dispatch_directive` picks a peer by keyword.
-  c. Typed path: `fleet_client.dispatch_task` posts a TaskEnvelope to a peer's /v1/task/execute.
-- PROBLEM 1 (VERIFIED, fake success): `UniverseOrchestrator.execute_universe_goal` does not dispatch when no simulation API is configured. It returns a fixed message with metrics `real_agents: 8` and status "dispatched" without calling any peer. Any caller treating this as a real dispatch receives a false result. Fix: remove the fabricated synthesis, or make it call the fleet and report real per-agent results.
-- PROBLEM 2 (VERIFIED, misrouting): keyword routing is substring matching. "decode this base64" routes to Forge (matches "code"). "trader-proof" routes to Stratex (matches "trade"). "cashback" routes to Stratex (matches "cash"). "webpage" routes to Cortex (matches "web"). Fix: replace substring matching with explicit intent classification, with the routing table tested.
-- PROBLEM 3 (VERIFIED, missing endpoints): dispatch_task sends TaskEnvelopes to /v1/task/execute. Forge and Sentinel have no such route. Sending a typed task to them returns 404 and falls through. Fix: implement the endpoint on those agents, or do not route typed tasks to them.
-- PROBLEM 4 (VERIFIED): every peer call is a separate HTTP request with no shared result model. Failures are reported per call but there is no task-level status, retry or assignment record. Required for "assign tasks and track them": a task table with ID, owner agent, status and result.
-- Requirement mapping (owner said FRIDAY should do everything he says, assign tasks, and option c = both "run the fleet itself" and "route requests"): the routing exists; the assignment/tracking layer and the autonomous fleet control loop are not verified. GAP: read the autonomous controller and fleet supervision code before claiming autonomy.
+### Phase 1 — Infrastructure and security foundations
+- [ ] TASK-INF-001 — Audit Oracle infrastructure (both VMs: sizes, memory, disks, services). Evidence: `oracle_fleet_health`, systemd show output.
+- [ ] TASK-INF-002 — Set MemoryMax on FRIDAY-Voice (currently no limit on a 956 MB host).
+- [ ] TASK-SEC-003 — Bridge authentication: shared-secret header check on /bridge, /mcp, /messages. Owner accepted the exposure; recommendation stands.
+- [ ] TASK-SEC-004 — Audit secret management: env files, CREDENTIALS.md (untracked, must stay untracked), GitHub secrets.
+- [ ] TASK-INF-003 — Backup and recovery: verify Oracle DB backups and service restore steps.
+- [ ] TASK-OPS-003 — Oracle sniper: confirm allocation loop works end to end; after success, promotion of the new instance is a manual owner decision.
 
-## 4. Stratex (VERIFIED)
-- Exchange mode is chosen by the BINANCE_TESTNET environment variable. The code default is "true" (testnet). The effective value on the running services could not be read from here. Owner states demo account; confirm the variable is true on both Stratex units.
-- Stratex contains MT5 and cTrader code as well as Binance Futures. Confirm which adapters are enabled in the running config.
-- Live-order gating is by that variable only. Recommendation: add an explicit ALLOW_LIVE_TRADING=false guard that must be set by hand, so a single env change cannot turn on mainnet.
+### Phase 2 — Data foundation
+- [ ] TASK-DATA-001 — Audit database architecture per agent (schemas, owners, connection strings by name only).
+- [ ] TASK-DATA-002 — Verify memory isolation between agents (Memora namespaces `memora://<agent>/private`).
+- [ ] TASK-DATA-003 — Test persistence and recovery for Memora and Stratex ledgers.
 
-## 5. Deploy and CI (VERIFIED)
-- deploy-monorepo.yml deploys on every push to main, and runs `git reset --hard origin/main` on both servers. Uncommitted server changes are lost on every deploy.
-- mirror-subrepos.yml force-pushes agent folders to standalone repos. Edit the monorepo only.
-- CI (VERIFIED, red): PR #19 and PR #20 both fail on the VyralX/Futuris `app` package collision (`No module named app.services.autonomous_orchestrator`). Main was red before these PRs. Fix CI before any feature merge.
-- Workflow files at root are the only ones GitHub runs. Keep the sniper workflows at root.
+### Phase 3 — CI and delivery
+- [ ] TASK-CI-001 — Fix VyralX/Futuris `app` package collision in CI (ChatGPT pushed fixes to main; not yet verified green).
+- [ ] TASK-CI-002 — Get `main` fully green: all validation jobs pass on current HEAD.
+- [ ] TASK-CI-003 — Fix run_workspace_test (venv has no pytest on Server 2).
+- [ ] TASK-CI-004 — Narrow `.gitignore` bridge/** rule so bridge source can be committed deliberately.
 
-## 6. Bridge
-- bridge/ is untracked and ignored by PR #19/#20 proposals. The ignore rule for bridge/** would prevent the bridge source from ever being committed. Narrow it.
-- Add auth, remove any hardcoded token from source, and document every tool it exposes.
-- run_shell is the largest single risk in the system. Restrict its allowed commands or add an audit log before the bridge is used by anything other than the owner.
+### Phase 4 — Core agent foundations
+- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT).
+- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator (live path returns "dispatched" without calling any peer).
+- [ ] TASK-CORE-003 — Add task records (TASK-ID, owner agent, status, result) so work can be assigned and tracked.
 
-## 7. Repo hygiene
-- AGENTS.yaml is the intended roster source. Other roster and port documents must be generated from it or deleted.
-- Remove untracked backups on Server 2 (.deploy-backups/, Cortex *.bak-*).
-- Multiple overlapping handoff and audit documents exist in docs/. Consolidate into docs/handoff.md and docs/archive.
+### Phase 5 — Agent APIs and communication
+- [ ] TASK-API-001 — Implement /v1/task/execute on Forge and Sentinel, or stop routing typed tasks there (currently 404).
+- [ ] TASK-API-002 — Standardise health endpoints (/health) across all ten agents and make AGENTS.yaml the source for ports.
+- [ ] TASK-API-003 — Authentication matrix test: each agent accepts only its configured keys.
 
-## 8. Per-agent GAPS (must be read before those agents are changed)
-Each agent needs: entrypoint, routes, state store, external calls, tests, failure modes.
-- FRIDAY: server.py (3,089 lines), agent/, planning/, ecosystem/, autonomous/, tools/.
-- Inference: LLM provider routing, key pools (names only), fallbacks.
-- Memora: memory schema, Oracle usage, vector store.
-- Stratex: testnet_engine, autonomy, stratex_agents, risk gates, Telegram.
-- Futuris: forecasting, Oracle DSN handling (CI relies on a DATABASE_URL shape).
-- IntelX: research and evidence pipeline, libSQL usage.
-- Forge: code generation and execution sandbox. Security review required (runs code).
-- Cortex: CRM and website operations, Mumbai notes.
-- Sentinel: security policy and audit log.
-- VyralX: video pipeline, autopilot, daemon (Server 2).
-- FRIDAY-Voice: LiveKit worker (no memory limit; see section 2).
+### Phase 6 — FRIDAY orchestration and task dispatch
+- [ ] TASK-ORCH-001 — Replace keyword-substring routing (misroutes: "decode"→Forge, "trader-proof"→Stratex, "cashback"→Stratex, "webpage"→Cortex) with explicit intent classification and a tested routing table.
+- [ ] TASK-ORCH-002 — Assignment and tracking: FRIDAY assigns a task to an agent, records it, and reports completion.
+- [ ] TASK-ORCH-003 — Verify autonomous controller and fleet supervision code before claiming autonomy (GAP).
 
-## 9. Roadmap
-- Phase 0 (owner): OCI secrets into the main repo; confirm history rewrite; confirm BINANCE_TESTNET=true on Stratex units.
-- Phase 1 (read-only, Claude): finish per-agent GAPS above. Output: docs/ARCHITECTURE_AS_BUILT.md, with file references for every claim.
-- Phase 2 (Claude): CI fix (VyralX/Futuris collision), FRIDAY-Voice memory limit, bridge auth and narrowed ignore rules, remove fake dispatch success in universe_orchestrator.
-- Phase 3 (ChatGPT): FRIDAY routing rewrite (intent classification, task records, endpoints on Forge and Sentinel) with tests.
-- Phase 4: ARM server placement once a sniper claims an instance.
-- Phase 5: per-agent hardening, monitoring, backups, rollback.
+### Phase 7 — Inference and provider routing
+- [ ] TASK-INF-LLM-001 — Audit provider key pools (names and counts only) and fallback behaviour.
+- [ ] TASK-INF-LLM-002 — Verify provider failover under simulated outage.
 
-## 10. Working agreement
-- One owner per task, recorded in docs/handoff.md. Only the owner edits those paths.
-- One branch and one PR per task. CI must pass before merge. Reviewer comments on the PR and says "Reviewed by X, merged by X".
-- Never reset --hard a server while another task has uncommitted work there.
-- Secrets never go into git, comments, logs or documents.
+### Phase 8 — Specialist agent capabilities
+- [ ] TASK-STR-001 — Stratex: confirm BINANCE_TESTNET=true on both units; add explicit ALLOW_LIVE_TRADING=false guard.
+- [ ] TASK-STR-002 — Stratex: confirm which venues are active (Binance Futures, MT5, cTrader).
+- [ ] TASK-FOR-001 — Forge: security review of code-execution sandbox (it runs generated code).
+- [ ] TASK-MEM-001 — Memora: Oracle schema and vector-store audit.
+- [ ] TASK-FUT-001 — Futuris: forecasting audit; DSN handling.
+- [ ] TASK-INT-001 — IntelX: evidence pipeline audit.
+- [ ] TASK-CTX-001 — Cortex: CRM and website operations audit (Server 2).
+- [ ] TASK-SEN-001 — Sentinel: policy and audit-log audit.
+- [ ] TASK-VYR-001 — VyralX: daemon and autopilot audit (Server 2).
+- [ ] TASK-VOI-001 — FRIDAY-Voice: LiveKit worker audit and memory limit.
+
+### Phase 9 — Cross-agent workflows and shared memory
+- [ ] TASK-WF-001 — One end-to-end workflow through FRIDAY across at least three agents, with a recorded trace.
+
+### Phase 10 — Reliability, recovery and observability
+- [ ] TASK-OBS-001 — Health and restart alerting (services have Restart=always, so crash loops are silent today).
+- [ ] TASK-OBS-002 — Rollback procedure for a bad deploy (deploy resets servers with git reset --hard).
+
+### Phase 11 — Integration, security and production validation
+- [ ] TASK-VAL-001 — Full fleet validation on live servers, with evidence per agent.
+- [ ] TASK-VAL-002 — Security review of public ingress and bridge.
+
+## 4. Dependencies (summary)
+- TASK-CI-002 before any feature merge.
+- TASK-SEC-003 before further bridge tooling is used by anything but the owner.
+- TASK-CORE-001 before any agent change in Phases 5–8.
+- TASK-CORE-003 before TASK-ORCH-002.
+- TASK-API-001 before TASK-ORCH-001 routes typed tasks to Forge or Sentinel.
+
+## 5. Security, reliability and production requirements
+- No secrets in git, comments, logs or documents. Names only.
+- Merges to main deploy to both servers. Review deployment impact in the PR.
+- No production restart without owner authorisation for that restart.
+- Stratex trades on testnet only until the owner authorises live trading in writing.
+
+## 6. Testing and verification requirements
+- Every code task has a passing test run cited in handoff.md.
+- CI passes before merge. Fix root causes; never weaken tests to pass.
+- Live checks use the public health endpoints and systemctl status, recorded with timestamps.
+
+## 7. Current overall progress
+- Verified: 0 tasks. Names of OCI secrets were checked via API; that is evidence of presence, not of correctness.
+- Done: 0 (no task has met the DONE definition yet).
+- Everything else: NOT_STARTED, or as noted in handoff.md.
