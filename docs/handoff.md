@@ -10,6 +10,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | PHASE-0 | Phase 0 — owner actions executed by Claude (owner instructed: implement Phase 0 without asking ChatGPT) | Claude | main / claude/TASK-DOC-001 | docs/handoff.md, docs/MASTER_PLAN.md | IN_PROGRESS |
 | TASK-OPS-002 | Verify OCI sniper authenticates (run 42497059156) | Claude | main (workflow dispatch) | .github/workflows/oracle-capacity-sniper.yml | IN_PROGRESS |
 | TASK-CI-002 | Get main fully green | ChatGPT (claimed by activity; confirm) | main | CI workflows, tests | IN_PROGRESS |
+| TASK-CORE-001 | Per-agent entrypoint/routes/state/external-call audit (Cortex parallel to Claude's FRIDAY audit) | ChatGPT | chatgpt/TASK-CORE-001-cortex-route-auth | Cortex/apps/api/src/cortex_api/main.py, Cortex/tests/unit/test_route_authorization.py, three central docs | IN_PROGRESS |
 
 ## B. Completed tasks
 (none verified yet under the DONE definition)
@@ -28,6 +29,16 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - PR #20 still open and red (see its comment); not merged.
 - Claude: TASK-DOC-001 (this document set). TASK-OPS-002: sniper run 42497059156 dispatched on main at c097312 at 15:53 UTC; in progress; its API step is running, log not yet readable. Owner can watch it at https://github.com/surendra2304/FRIDAY-Universe/actions/runs/42497059156
 - ChatGPT: CI fixes on main (see B).
+
+## C. Current work
+
+- ChatGPT TASK-CORE-001 (2026-11-08): auditing Cortex in parallel with Claude's FRIDAY audit. Live Cortex health returned HTTP 200 at 2026-11-08T17:56:22Z; Cortex.service active on Server 2 (PID 313363, 85.1 MB current memory, 200 MB MemoryMax).
+- Source review: `Cortex/apps/api/src/cortex_api/main.py` composes Cortex v2.1.0; `/v1/task/execute` uses `verify_friday_token`; FRIDAY integration routes use the same service-key dependency; user-facing routes use JWT/RBAC in several routers. Async SQLAlchemy DB and Redis are configured in `config.py`; supported DSN selection includes Oracle/Postgres/SQLite paths, but effective production backend was not independently verified in this audit.
+- Targeted test evidence on the connected workspace: `Cortex/tests/test_prompt9_cortex.py` 22 passed; `Cortex/tests/unit/test_friday_integration.py` 27 passed; `Cortex/tests/integration/test_peer_integration_contract.py` 9 passed, 2 skipped; `Cortex/tests/integration/test_multi_tenant_security_isolation.py` 1 passed.
+- Security finding: `Cortex/tests/unit/test_route_authorization.py` failed (1 failed, 1 passed). The inventory identified over 100 feature API routes without a recognized authentication dependency, including marketing, content, campaign, decision, forecasting, risk, inbox, segmentation, and journey endpoints. Several affected router modules declare no auth imports/dependencies. This is a source-level access-control gap; unauthenticated live requests to those routes were not performed.
+- Remediation proposed on branch `chatgpt/TASK-CORE-001-cortex-route-auth`: a shared method-aware dependency requires CORTEX_VIEWER for safe reads and CORTEX_OPERATOR for state-changing methods, while preserving stronger endpoint-specific RBAC. It is attached only to the affected feature routers; health, public SDK ingestion, Stripe-signed webhooks, streaming token routes, and FRIDAY service-key routes remain on their existing auth contracts.
+- New regression coverage verifies viewer read access, operator write access, and viewer write rejection. Branch CI is the next verification gate; no production service was restarted and no deployment occurred.
+- Claude's existing uncommitted CI changes on `claude/TASK-CI-002` were preserved and not included in this branch.
 
 ## D. Blocked tasks
 | Blocker | Cause | Required action | Responsible |
