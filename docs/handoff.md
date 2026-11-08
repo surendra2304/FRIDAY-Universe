@@ -11,11 +11,13 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-OPS-002 | Verify OCI sniper authenticates (run 42497059156) | Claude | main (workflow dispatch) | .github/workflows/oracle-capacity-sniper.yml | IN_PROGRESS |
 | TASK-CI-002 | Get main fully green | Claude | claude/TASK-CI-002 | CI workflows/tests | IN_PROGRESS; fixes landed on main through PR #22 and commits f24ff91/680c04e, but full suite/main validation remains unresolved |
 | TASK-CORE-002 | Remove fabricated universe_orchestrator success | Grok | grok/TASK-CORE-002 | FRIDAY/src/friday/integrations/universe_orchestrator.py and regression tests | MERGED to main via PR #25 (commit 79c1f75); code test evidence 5 passed on Server 2; production verification outstanding |
+| TASK-SEC-004 | Secret-management audit and CI leak prevention | ChatGPT | chatgpt/TASK-SEC-004 | .github/workflows/secret-scan.yml | IN_REVIEW (PR #31); change-range Gitleaks scan passed run 42525462164; not merged / not yet verified on main |
 
 ## B. Merged implementation work (not equivalent to production VERIFIED/DONE)
 - TASK-DOC-001: PR #21 merged at 515858e.
 - TASK-CORE-002: PR #25 merged at 79c1f75; stops the false `dispatched` claim and reports `not_executed` after a live fleet probe when no Universe API exists. The goal is still not executed on that path.
 - CI baseline: PR #22 merged at 0a2eeb4; subsequent main commits f24ff91 and 680c04e add missing test dependencies and the `sys` import in mesh/memory_fabric.py. Full validation still not green.
+- TASK-SEC-004: PR #31 adds `.github/workflows/secret-scan.yml`. Gitleaks action run 42525352655 failed because shallow checkout did not contain event base/head refs. The workflow was changed to `fetch-depth: 0` and scans the event change range only; run 42525462164 passed. This does not scan/clean historical commit 46034a4.
 
 Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - 28bd5e6 docs: master plan v2 — Claude. Verified infrastructure, routing, safety. Coverage stated.
@@ -30,7 +32,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - CI on main is RED. Root cause for the docs PR check "Validate fleet layout and mirror safety": 37 failed, 43 errors in tests (missing sqlalchemy and pydantic_settings in the CI install step; NameError 'sys' in tests/test_real_deep_layer11.py). This is a pre-existing defect on main, not caused by PR #21.
 - PR #20 merged via commit 94fed85 (2026-11-08). PR #21 merged via commit 515858e.
 - Claude currently owns TASK-CI-002, TASK-API-001 (PR #29), TASK-DISPATCH-001 (PR #28), TASK-MIRROR-001 (PR #27), and TASK-OPS-002 per existing coordination notes.
-- ChatGPT currently owns TASK-SEC-003 (PR #24) and TASK-CTX-001 (PR #26). Both require review findings below to be resolved before merge.
+- ChatGPT currently owns TASK-SEC-003 (PR #24), TASK-CTX-001 (PR #26), and TASK-SEC-004 (PR #31). PR #24/#26 require review findings below to be resolved before merge.
 - Grok's TASK-CORE-002 implementation was merged through PR #25.
 - Current `main` HEAD observed via GitHub: `680c04ee383066874cad42a3295d18008eb6e1d2` (2026-11-08T19:34:57Z).
 
@@ -62,10 +64,12 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 ## G. Latest handoff checkpoint (ChatGPT reconnect, 2026-11-09)
 - Last implementation merged: TASK-CORE-002 (PR #25, 79c1f75). No production task is claimed DONE/VERIFIED based only on this connector inspection.
 - Main HEAD: `680c04ee383066874cad42a3295d18008eb6e1d2`.
-- Open PRs observed: #23 (CI), #24 (bridge auth), #26 (Cortex route auth), #27 (manual/no-force mirror), #28 (dispatch bus), #29 (Sentinel task endpoint).
+- Open PRs observed: #23 (CI), #24 (bridge auth), #26 (Cortex route auth), #27 (manual/no-force mirror), #28 (dispatch bus), #29 (Sentinel task endpoint), #30 (central docs sync), #31 (Gitleaks change-range scan).
 - ChatGPT review comments posted 2026-11-09: #23 TASK-ID collision/full-suite concern; #26 read-only POST forecast viewer access; #28 peer contract/endpoint/receipt/fake-success blockers.
 - CI evidence: run 42502800827 reported 3,286 passed, 74 skipped, 38 failed, 43 errors. This is historical evidence from PR #24's run, not a result for current HEAD. Current main's full validation remains UNVERIFIED in this session.
-- New ChatGPT documentation synchronization branch: `chatgpt/TASK-DOC-SYNC-001` (docs only, branched from main HEAD). PR creation follows after updates to all three documents and content review.
-- Tests: no local repository checkout/runtime available in this session; no new tests executed.
+- ChatGPT docs synchronization branch: `chatgpt/TASK-DOC-SYNC-001`; PR #30 updates the three central docs. This update adds TASK-SEC-004 state; PR #30 remains open and docs-only.
+- Live system bridge checked 2026-11-09: workspace on Server 2 is branch `claude/TASK-DISPATCH-001`, commit `f09e29f`, with one untracked file `Forge/tests/unit/test_task_execute_contract.py`; this work was preserved and not edited. Both Oracle VMs were online. Server 1: 956 MB RAM, 464 MB used, 337 MB available, 97 GB disk 22%; Server 2: 956 MB RAM, 265 MB used, 538 MB available, 49 GB disk 36%. These are point-in-time read-only diagnostics.
+- TASK-SEC-004 PR #31: Gitleaks run 42525462164 PASS after initial run 42525352655 failed due shallow-fetch range resolution. Current action scans PR/push change ranges only, not entire history. It must pass CI and merge before TASK-SEC-004 can be VERIFIED.
+- Tests: Forge targeted workspace test command was attempted on Server 2 but stopped in `Forge/tests/conftest.py` because the venv lacks installed `anthropic` (`ModuleNotFoundError`); the new Forge contract test was not executed. The dependency is listed in `Forge/requirements.txt`. No test was skipped or weakened.
 - Outstanding external actions: TASK-OPS-002 sniper OCI authentication needs current workflow log verification; owner-reported credential rotation and approved history rewrite still need safe timing after open PRs settle; infrastructure and FRIDAY-Voice resource limits require authorized host access.
-- Exact next step: finish doc sync PR; Claude addresses dispatch/CI/API PR findings; ChatGPT addresses PR #26/24 findings; then perform independent reviews and verify CI on updated heads.
+- Exact next steps: (1) confirm all PR #31 CI jobs finish and review scanner policy; (2) keep PR #30 central docs aligned with accepted/merged work; (3) Claude resolves PR #28 dispatch findings and continues CI/Forge/Sentinel API work; (4) ChatGPT resolves PR #26 and #24 review findings; (5) pursue remaining owner actions and continue TASK-CORE-001 / data foundation audits without changing live services.
