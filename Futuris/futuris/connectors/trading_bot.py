@@ -492,10 +492,10 @@ class TradingBotConnector(BaseConnector):
                 return result
             result.update(
                 {
-                    "funding_rate": item.get("funding_rate"),
-                    "funding_time": item.get("funding_time") or item.get("timestamp"),
-                    "mark_price": item.get("mark_price"),
-                    "predicted_rate": item.get("predicted_rate"),
+                    "funding_rate": item.get("funding_rate", item.get("fundingRate")),
+                    "funding_time": item.get("funding_time") or item.get("fundingTime") or item.get("timestamp"),
+                    "mark_price": item.get("mark_price", item.get("markPrice")),
+                    "predicted_rate": item.get("predicted_rate", item.get("predictedRate")),
                     "status": "available",
                     "source": "stratex_ccxt",
                 }
