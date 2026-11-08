@@ -1,6 +1,6 @@
 # FRIDAY Universe — Handoff
 
-Shared coordination and continuity document for Claude and ChatGPT.
+Shared coordination and continuity document for Claude, ChatGPT, and Grok.
 Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this file; kept for history).
 
 ## A. Active task registry
@@ -10,6 +10,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | PHASE-0 | Phase 0 — owner actions executed by Claude (owner instructed: implement Phase 0 without asking ChatGPT) | Claude | main / claude/TASK-DOC-001 | docs/handoff.md, docs/MASTER_PLAN.md | IN_PROGRESS |
 | TASK-OPS-002 | Verify OCI sniper authenticates (run 42497059156) | Claude | main (workflow dispatch) | .github/workflows/oracle-capacity-sniper.yml | IN_PROGRESS |
 | TASK-CI-002 | Get main fully green | ChatGPT (claimed by activity; confirm) | main | CI workflows, tests | IN_PROGRESS |
+| TASK-CORE-002 | Remove fabricated universe_orchestrator success | Grok | grok/TASK-CORE-002 | FRIDAY/src/friday/integrations/universe_orchestrator.py, FRIDAY/tests/test_universe_orchestrator_no_fake_dispatch.py, docs/MASTER_PLAN.md, docs/handoff.md, docs/ARCHITECTURE_AS_BUILT.md | IN_REVIEW |
 
 ## B. Completed tasks
 (none verified yet under the DONE definition)
@@ -49,14 +50,14 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - 2026-11-08: Both AIs work top to bottom through MASTER_PLAN.md. No bottom-up ownership split. (Owner decision.)
 - 2026-11-08: Sniper workflows live at repo root only. Subfolder copies are not run by GitHub.
 - 2026-11-08: Stratex trades on Binance testnet only. Owner confirmed. Code defaults to testnet (BINANCE_TESTNET default "true"); the effective value on the running units is UNVERIFIED.
-- 2026-11-08: The UniverseOrchestrator live path returns a fixed success message without calling peers. Treated as a defect (TASK-CORE-002).
+- 2026-11-08: The UniverseOrchestrator live path returned a fixed success message without calling peers. Treated as a defect (TASK-CORE-002). Grok, same day: branch grok/TASK-CORE-002 makes that path call get_fleet_summary and return status not_executed. Tests: 5 passed (2 new + 3 existing in test_universe_phase20_21.py) via venv pytest on Server 2. Not merged. Not deployed. Claude's uncommitted TASK-CI-002 edits were stashed as "WIP preserved from claude/TASK-CI-002 before grok/TASK-CORE-002 (do not drop)" and should be restored onto claude/TASK-CI-002.
 - 2026-11-08: Keyword routing in dispatch_directive misroutes common words. Treated as a defect (TASK-ORCH-001).
 - 2026-11-08: Stratex and other agents stay on their current servers. Owner decision.
 - 2026-11-08: Sniper retry loop speed-up (15 s cycle, 45 s backoff) is a trade-off: fewer waits, possibly more 429 throttles. Review after several hours of logs.
 
 ## G. Latest handoff checkpoint
 - Last completed TASK-ID: none verified under DONE.
-- Current IN_PROGRESS TASK-IDs: TASK-OPS-002 (Claude), TASK-CI-002 (ChatGPT, to confirm).
+- Current IN_PROGRESS / IN_REVIEW TASK-IDs: TASK-OPS-002 (Claude), TASK-CI-002 (ChatGPT, to confirm), TASK-CORE-002 (Grok, IN_REVIEW).
 - Last modified files (this branch): docs/MASTER_PLAN.md, docs/handoff.md, docs/ARCHITECTURE_AS_BUILT.md.
 - Latest branch and PR: claude/TASK-DOC-001 (PR to be opened).
 - Tests and results: no new tests this session. Last CI run on the earlier PR head failed; main head c097312 result UNVERIFIED.
