@@ -15,9 +15,11 @@ import asyncio
 import pytest
 from fastapi import HTTPException
 from fastapi.routing import APIRoute
+from fastapi.security import HTTPAuthorizationCredentials
 from starlette.requests import Request
 
-from cortex_api.main import app, require_cortex_route_access
+import cortex_api.main as main_module
+from cortex_api.main import app
 
 AUTH_DEPENDENCIES = {
     "verify_jwt_token",
@@ -130,13 +132,41 @@ def _request_for_method(method: str) -> Request:
     )
 
 
-def test_route_policy_allows_viewer_reads_and_requires_operator_for_writes():
+def test_route_policy_supports_jwt_and_friday_service_auth(monkeypatch):
     viewer = {"sub": "viewer", "role": "cortex_viewer", "tenant_id": "tenant_test"}
     operator = {"sub": "operator", "role": "cortex_operator", "tenant_id": "tenant_test"}
+    friday = {"sub": "friday_system", "role": "friday_system", "tenant_id": "system"}
 
-    assert asyncio.run(require_cortex_route_access(_request_for_method("GET"), viewer)) == viewer
-    assert asyncio.run(require_cortex_route_access(_request_for_method("POST"), operator)) == operator
+    async def fake_jwt(credentials):
+        return viewer if credentials and credentials.credentials == "viewer" else operator
+
+    async def fake_friday(token):
+        assert token == "internal-test-key"
+        return friday
+
+    monkeypatch.setattr(main_module, "verify_jwt_token", fake_jwt)
+    monkeypatch.setattr(main_module, "verify_friday_token", fake_friday)
+
+    viewer_credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="viewer")
+    operator_credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="operator")
+
+    assert asyncio.run(
+        main_module.require_cortex_route_access(_request_for_method("GET"), viewer_credentials, None)
+    ) == viewer
+    assert asyncio.run(
+        main_module.require_cortex_route_access(_request_for_method("POST"), operator_credentials, None)
+    ) == operator
 
     with pytest.raises(HTTPException) as exc:
-        asyncio.run(require_cortex_route_access(_request_for_method("POST"), viewer))
+        asyncio.run(
+            main_module.require_cortex_route_access(_request_for_method("POST"), viewer_credentials, None)
+        )
     assert exc.value.status_code == 403
+
+    # Internal FRIDAY service calls must continue to work for both read and write routes.
+    assert asyncio.run(
+        main_module.require_cortex_route_access(_request_for_method("GET"), None, "internal-test-key")
+    ) == friday
+    assert asyncio.run(
+        main_module.require_cortex_route_access(_request_for_method("POST"), None, "internal-test-key")
+    ) == friday
