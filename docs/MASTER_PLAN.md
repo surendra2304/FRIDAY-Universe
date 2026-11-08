@@ -35,7 +35,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
 ### Phase 1 — Infrastructure and security foundations
 - [ ] TASK-INF-001 — Audit Oracle infrastructure (both VMs: sizes, memory, disks, services). Evidence: `oracle_fleet_health`, systemd show output.
-- [ ] TASK-INF-002 — Set MemoryMax on FRIDAY-Voice (currently no limit on a 956 MB host).
+- [x] TASK-INF-002 — Set MemoryMax on FRIDAY-Voice. Status: VERIFIED by read-only systemd inspection on 2026-11-09: FRIDAY-Voice.service is active and loads `/etc/systemd/system/FRIDAY-Voice.service.d/memory.conf` with MemoryHigh=250M and MemoryMax=300M. No restart or configuration change was made in this session.
 - [ ] TASK-SEC-003 — Bridge authentication: shared-secret authentication for /bridge, /mcp, /messages and /sse. Owner: ChatGPT. IN_REVIEW (PR #24); middleware/tests are on branch, but production activation remains unverified and requires runtime secret provisioning, MCP-client header compatibility, and owner-approved restart.
 - [ ] TASK-SEC-004 — Secret-management audit and CI leak prevention. Owner: ChatGPT; IN_REVIEW in PR #31 (`chatgpt/TASK-SEC-004`). A root Gitleaks action scans PR/push change ranges; first run exposed shallow-fetch range failure, fixed by full commit graph; current scan run 42525462164 passed. Not merged or VERIFIED on main yet. Full-history exposure is separately tracked in TASK-SEC-002.
 - [ ] TASK-INF-003 — Backup and recovery: verify Oracle DB backups and service restore steps.
@@ -53,7 +53,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - [ ] TASK-CI-004 — Narrow `.gitignore` bridge/** rule so bridge source can be committed deliberately.
 
 ### Phase 4 — Core agent foundations
-- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT).
+- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT). Owner split in progress: Claude—FRIDAY; ChatGPT—IntelX (PR #32 addresses a live Oracle JSON processor defect found during this audit).
 - [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator. IMPLEMENTATION MERGED to main via PR #25 (commit 79c1f75); live path probes FleetClient and returns `not_executed` when no Universe API is configured. Tests recorded as 5 passed on Server 2, 2026-11-08. Deployment/runtime verification remains outstanding; therefore not VERIFIED or DONE.
 - [ ] TASK-CORE-003 — Add task records (TASK-ID, owner agent, status, result) so work can be assigned and tracked.
 
@@ -77,7 +77,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - [ ] TASK-FOR-001 — Forge: security review of code-execution sandbox (it runs generated code).
 - [ ] TASK-MEM-001 — Memora: Oracle schema and vector-store audit.
 - [ ] TASK-FUT-001 — Futuris: forecasting audit; DSN handling.
-- [ ] TASK-INT-001 — IntelX: evidence pipeline audit.
+- [ ] TASK-INT-001 — IntelX: evidence pipeline audit. Owner: ChatGPT; IN_REVIEW (PR #32 `chatgpt/TASK-INT-001-intelx-json`) adds Oracle JSON bind/result compatibility defaults and a root-suite regression test. CI collection still being corrected; not merged, not deployed, and not yet VERIFIED.
 - [ ] TASK-CTX-001 — Cortex: CRM and website operations audit (Server 2).
 - [ ] TASK-SEN-001 — Sentinel: policy and audit-log audit.
 - [ ] TASK-VYR-001 — VyralX: daemon and autopilot audit (Server 2).
@@ -115,5 +115,6 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 ## 7. Current overall progress
 - VERIFIED: no end-to-end production task is claimed VERIFIED from this GitHub-only review. GitHub-visible implementation merges are not deployment evidence.
 - Merged implementation: TASK-DOC-001 (PR #21), TASK-CORE-002 (PR #25), and CI-related PR #22. Their production/runtime verification is separate.
-- IN_PROGRESS / IN_REVIEW: TASK-CI-002, TASK-SEC-003, TASK-SEC-004, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, and TASK-CTX-001 as tracked in handoff.md.
+- IN_PROGRESS / IN_REVIEW: TASK-CI-002, TASK-SEC-003, TASK-SEC-004, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, TASK-CTX-001, and TASK-INT-001 as tracked in handoff.md.
+- VERIFIED infrastructure control: TASK-INF-002 (FRIDAY-Voice MemoryMax=300M, MemoryHigh=250M) based on 2026-11-09 systemd evidence; this is not a claim that the voice agent's event-loop warnings are resolved.
 - All ten agents remain canonical and integrated; VyralX remains agent ten.
