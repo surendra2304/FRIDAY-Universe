@@ -71,16 +71,18 @@ FRIDAY_FLEET_SUPERVISION_INTERVAL_SECONDS=300
 STRATEX_AUTOSTART_SERVICES=0
 ```
 
-## Startup Commands
+## Manual Startup Commands
+
+Production services are normally managed by systemd on the two Oracle VMs. These commands are for manual/local startup and use the production port assignments above.
 
 ### FRIDAY
 ```bash
-cd FRIDAY && python -m src.friday.api.server
+cd FRIDAY && uvicorn friday.api.server:app --app-dir src --host 0.0.0.0 --port 10000
 ```
 
 ### Stratex
 ```bash
-cd Stratex && python dashboard.py
+cd Stratex && PORT=8003 python dashboard.py
 ```
 
 ### VyralX
@@ -90,27 +92,27 @@ cd VyralX && uvicorn app.main:app --host 0.0.0.0 --port 8010
 
 ### Cortex
 ```bash
-cd Cortex/apps/api && uvicorn cortex_api.main:app --host 0.0.0.0 --port 8002
+cd Cortex/apps/api && uvicorn cortex_api.main:app --host 0.0.0.0 --port 8009
 ```
 
 ### Inference
 ```bash
-cd Inference && uvicorn app.main:app --host 0.0.0.0 --port 8005
+cd Inference && uvicorn app.main:app --host 0.0.0.0 --port 8001
 ```
 
 ### Forge
 ```bash
-cd Forge && uvicorn app.main:app --host 0.0.0.0 --port 8009
+cd Forge && uvicorn app.main:app --host 0.0.0.0 --port 8006
 ```
 
 ### Memora
 ```bash
-cd Memora/apps/api && uvicorn main:app --host 0.0.0.0 --port 8007
+cd Memora/apps/api && uvicorn main:app --host 0.0.0.0 --port 8002
 ```
 
 ### IntelX
 ```bash
-cd IntelX && uvicorn intelx.app.main:app --host 0.0.0.0 --port 8006
+cd IntelX && uvicorn intelx.app.main:app --host 0.0.0.0 --port 8005
 ```
 
 ### Futuris
@@ -129,13 +131,16 @@ After starting each agent, verify health:
 
 ```bash
 # Check each agent
-curl http://localhost:8000/api/health  # FRIDAY
-curl http://localhost:8001/api/health  # Stratex
-curl http://localhost:8010/api/health  # VyralX
-# ... repeat for each agent ...
-
-# Check universe health via FRIDAY gateway
-curl http://localhost:8000/api/v1/gateway/health
+curl http://localhost:10000/health  # FRIDAY
+curl http://localhost:8001/health   # Inference
+curl http://localhost:8002/health   # Memora
+curl http://localhost:8003/health   # Stratex
+curl http://localhost:8004/health   # Futuris
+curl http://localhost:8005/health   # IntelX
+curl http://localhost:8006/health   # Forge
+curl http://localhost:8008/health   # Sentinel
+curl http://localhost:8009/health   # Cortex
+curl http://localhost:8010/health   # VyralX
 ```
 
 ## Optional Docker Deployment
