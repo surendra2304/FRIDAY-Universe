@@ -41,16 +41,30 @@ def test_agents_yaml_valid_yaml():
 def test_agent_count_matches_manifest():
     """The agent count in AGENTS.yaml must match actual agent directories."""
     agent_dirs = [
-        "Cortex", "Inference", "Memora", "Stratex",
-        "Forge", "Sentinel", "IntelX", "Futuris", "VyralX"
+        "FRIDAY", "Inference", "Memora", "Stratex", "Forge",
+        "Cortex", "Sentinel", "IntelX", "Futuris", "VyralX",
     ]
     actual_agents = [d for d in agent_dirs if (ROOT / d).exists()]
-    assert len(actual_agents) == 9, f"Expected 9 agents, found {len(actual_agents)}: {actual_agents}"
+    assert len(actual_agents) == 10, f"Expected 10 agents, found {len(actual_agents)}: {actual_agents}"
+
+    try:
+        import yaml
+    except ImportError:
+        pytest.skip("yaml not installed")
+    with open(ROOT / "AGENTS.yaml", "r") as f:
+        data = yaml.safe_load(f)
+    manifest_agents = set(data["agents"])
+    expected_agents = {name.lower() for name in agent_dirs}
+    assert data["total_agents"] == 10
+    assert data.get("specialist_agents") == 9
+    assert len(manifest_agents) == 10
+    assert manifest_agents == expected_agents, f"Manifest mismatch: {manifest_agents ^ expected_agents}"
 
 
 def test_all_agents_have_engines():
     """Every agent in the manifest must have at least one engine file."""
     engine_files = [
+        "FRIDAY/src/friday/api/server.py",
         "Cortex/apps/api/src/cortex_api/real_decision_engine.py",
         "Cortex/apps/api/src/cortex_api/real_advanced_engines.py",
         "Cortex/apps/api/src/cortex_api/real_deep_engines.py",
@@ -117,10 +131,22 @@ def test_resource_budget_fits():
     with open(ROOT / "AGENTS.yaml", "r") as f:
         data = yaml.safe_load(f)
     budget = data["resource_budget"]
+    def to_mb(value: str) -> int:
+        value = str(value).strip().upper()
+        if value.endswith("G"):
+            return int(value[:-1]) * 1024
+        if value.endswith("M"):
+            return int(value[:-1])
+        raise AssertionError(f"Unsupported memory unit: {value}")
+
     total_mem = budget["total_memory_limit"]
-    total_mb = int(total_mem.replace("M", "").replace("G", ""))
+    total_mb = to_mb(total_mem)
+    declared_agent_mb = sum(to_mb(agent["memory_limit"]) for agent in data["agents"].values())
     ram_gb = budget["target_host"]["ram_gb"]
     ram_mb = ram_gb * 1024
+    assert total_mb == declared_agent_mb, (
+        f"Manifest memory total {total_mb}M does not match agent limits {declared_agent_mb}M"
+    )
     assert total_mb < ram_mb, f"Memory budget {total_mb}M exceeds RAM {ram_mb}M"
 
 

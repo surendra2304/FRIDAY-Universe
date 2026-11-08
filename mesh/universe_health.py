@@ -54,17 +54,20 @@ class ConnectivityResult:
 
 
 # Agent registry with their mesh URLs
+# Production addresses from the Oracle private VCN. FRIDAY runs on server 1;
+# Cortex, Sentinel and VyralX run on server 2. Do not use the old Docker-only
+# service DNS names or the historical 8000-8008 development port sequence here.
 AGENT_REGISTRY = {
-    "friday": {"url": "http://localhost:10000", "endpoints": ["/api/v1/mesh/health", "/health"]},
-    "inference": {"url": "http://localhost:8000", "endpoints": ["/health", "/ready"]},
-    "memora": {"url": "http://localhost:8001", "endpoints": ["/api/v1/memory/health", "/health"]},
-    "stratex": {"url": "http://localhost:8002", "endpoints": ["/health", "/api/ecosystem/status"]},
-    "forge": {"url": "http://localhost:8003", "endpoints": ["/health", "/ready"]},
-    "cortex": {"url": "http://localhost:8004", "endpoints": ["/health", "/ready"]},
-    "sentinel": {"url": "http://localhost:8005", "endpoints": ["/health", "/ready"]},
-    "intelx": {"url": "http://localhost:8006", "endpoints": ["/health", "/ready"]},
-    "futuris": {"url": "http://localhost:8007", "endpoints": ["/health", "/ready"]},
-    "vyralx": {"url": "http://localhost:8008", "endpoints": ["/health", "/ready"]},
+    "friday": {"url": "http://10.0.0.121:10000", "endpoints": ["/health"]},
+    "inference": {"url": "http://10.0.0.121:8001", "endpoints": ["/health"]},
+    "memora": {"url": "http://10.0.0.121:8002", "endpoints": ["/health"]},
+    "stratex": {"url": "http://10.0.0.121:8003", "endpoints": ["/health"]},
+    "futuris": {"url": "http://10.0.0.121:8004", "endpoints": ["/health"]},
+    "intelx": {"url": "http://10.0.0.121:8005", "endpoints": ["/health"]},
+    "forge": {"url": "http://10.0.0.121:8006", "endpoints": ["/health"]},
+    "sentinel": {"url": "http://10.0.0.120:8008", "endpoints": ["/health"]},
+    "cortex": {"url": "http://10.0.0.120:8009", "endpoints": ["/health"]},
+    "vyralx": {"url": "http://10.0.0.120:8010", "endpoints": ["/health"]},
 }
 
 
@@ -91,7 +94,7 @@ class UniverseHealthMonitor:
                 import httpx
                 async with httpx.AsyncClient(timeout=5.0) as client:
                     resp = await client.get(url)
-                    if resp.status_code < 500:
+                    if 200 <= resp.status_code < 300:
                         health.endpoints_passed += 1
                     else:
                         health.error = f"HTTP {resp.status_code} on {endpoint}"
@@ -182,7 +185,7 @@ class UniverseHealthMonitor:
                 async with httpx.AsyncClient(timeout=5.0) as client:
                     # Try to hit the target's health endpoint
                     resp = await client.get(f"{to_config['url']}/health")
-                    if resp.status_code < 500:
+                    if 200 <= resp.status_code < 300:
                         result.status = "connected"
                     else:
                         result.status = "failed"
