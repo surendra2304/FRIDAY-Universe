@@ -4,20 +4,22 @@
 
 This guide covers deployment of all 10 agents in the FRIDAY Universe.
 
-## Agent Port Assignments
+## Production Agent Port Assignments
 
-| Agent | Port | Container Port | Ingress Route |
-|-------|------|---------------|---------------|
-| FRIDAY | 8000 | 8000 | /friday |
-| Stratex | 8001 | 8000 | /stratex |
-| Cortex | 8002 | 8000 | /cortex |
-| Futuris | 8004 | 8000 | /futuris |
-| Inference | 8005 | 8000 | /inference |
-| IntelX | 8006 | 8000 | /intelx |
-| Memora | 8007 | 8000 | /memora |
-| Sentinel | 8008 | 8000 | /sentinel |
-| Forge | 8009 | 8000 | /forge |
-| VyralX | 8010 | 8000 | /vyralx |
+The live two-VM deployment uses **systemd services and Caddy ingress**. These are production host ports, not container-internal ports.
+
+| Agent | Oracle VM | Production host port | Ingress route |
+|-------|-----------|----------------------|---------------|
+| FRIDAY | Server 1 | 10000 | `/friday` |
+| Inference | Server 1 | 8001 | `/inference` |
+| Memora | Server 1 | 8002 | `/memora` |
+| Stratex | Server 1 | 8003 | `/stratex` |
+| Futuris | Server 1 | 8004 | `/futuris` |
+| IntelX | Server 1 | 8005 | `/intelx` |
+| Forge | Server 1 | 8006 | `/forge` |
+| Sentinel | Server 2 | 8008 | `/sentinel` |
+| Cortex | Server 2 | 8009 | `/cortex` |
+| VyralX | Server 2 | 8010 | `/vyralx` |
 
 ## Prerequisites
 
@@ -136,9 +138,9 @@ curl http://localhost:8010/api/health  # VyralX
 curl http://localhost:8000/api/v1/gateway/health
 ```
 
-## Docker Deployment
+## Optional Docker Deployment
 
-Use the provided docker-compose.oracle.yml as a template:
+The active production fleet is systemd + Caddy on two Oracle VMs. Do not run this Compose stack against production as part of routine updates. The following file is an alternative deployment template only:
 
 ```bash
 docker compose -f docker-compose.oracle.yml up -d
