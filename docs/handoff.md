@@ -63,3 +63,10 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Tests and results: no new tests this session. Last CI run on the earlier PR head failed; main head c097312 result UNVERIFIED.
 - Outstanding issues: sniper authentication unconfirmed; FRIDAY-Voice memory limit; bridge has no auth (owner accepted); history rewrite pending.
 - Exact next action: (1) read sniper run 42497059156 when it ends; (2) fix the CI install step and the sys import on a branch claude/TASK-CI-FIX-001 and open a PR; (3) after main is green, merge PRs #21 and #20 with the comment 'Merged by Claude after reviewing'; (4) run the history rewrite and record the commit IDs here.
+
+## Session log: Claude, 2026-11-08 (evening)
+- PR #27 (TASK-MIRROR-001): mirror is manual-only, no force-push. Open. CI red from the pre-existing suite, not from this change.
+- PR #28 (TASK-DISPATCH-001): dispatch bus now uses real fleet URLs from AGENTS.yaml, `/v1/task/execute`, and the full envelope. Open.
+  - Live probe: Futuris 200; Inference, Memora, Stratex, IntelX, Forge, Cortex reached and return 401 (keys needed); Sentinel 404 (TASK-API-001).
+  - OPERATIONAL, owner: set FRIDAY_DISPATCH_<NAME>_API_KEY (and _AUTH_HEADER where needed) for the bus host. Not committed.
+- Open follow-ups: TASK-API-001 (Sentinel /v1/task/execute), TASK-ORCH-001 (intent routing), CI integration tests that need live agents.
