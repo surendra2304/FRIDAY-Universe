@@ -250,9 +250,14 @@ async def calculate_portfolio_risk_payload(
     start_dt = now - timedelta(days=window_days)
     connector = TradingBotConnector()
 
-    # Discover active pairs and positions
+    # Market watchlist and open positions are separate evidence sources.
+    # In particular, a default market watchlist must never be presented as
+    # confirmed positions or used to invent portfolio exposure.
     pairs = await connector.discover_active_trade_pairs()
+    pair_discovery_status = connector.last_pairs_discovery_status
+    pair_discovery_source = connector.last_pairs_source
     positions = await connector.fetch_active_positions()
+    positions_data_status = connector.last_positions_status
 
     engine = RiskCalibrationEngine()
     asset_reports: list[dict[str, Any]] = []
@@ -342,9 +347,24 @@ async def calculate_portfolio_risk_payload(
             }
         )
 
+    has_verified_position_snapshot = positions_data_status in {"available", "empty"}
+    weighting_basis = "position_exposure" if total_exposure > 0 else "equal_watchlist_estimate"
+    portfolio_data_quality = (
+        "live_positions"
+        if positions_data_status == "available"
+        else "verified_no_open_positions"
+        if positions_data_status == "empty"
+        else "watchlist_only_no_verified_positions"
+    )
+
     portfolio_payload = {
         "active_pairs": pairs,
+        "pair_discovery_status": pair_discovery_status,
+        "pair_discovery_source": pair_discovery_source,
         "positions": positions,
+        "positions_data_status": positions_data_status,
+        "portfolio_data_quality": portfolio_data_quality,
+        "risk_measure_basis": weighting_basis,
         "assets": asset_reports,
         "portfolio_summary": {
             "total_exposure_usd": round(total_exposure, 2),
@@ -356,6 +376,10 @@ async def calculate_portfolio_risk_payload(
             "overall_traffic_light": worst_traffic_light,
             "confidence_level": confidence_level,
             "lookback_window_days": window_days,
+            "positions_data_status": positions_data_status,
+            "portfolio_data_quality": portfolio_data_quality,
+            "risk_measure_basis": weighting_basis,
+            "verified_positions_count": len(positions) if has_verified_position_snapshot else None,
         },
         "prediction_is_not_authorization": True,
         "timestamp": now.isoformat(),
