@@ -36,7 +36,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 ### Phase 1 — Infrastructure and security foundations
 - [ ] TASK-INF-001 — Audit Oracle infrastructure (both VMs: sizes, memory, disks, services). Evidence: `oracle_fleet_health`, systemd show output.
 - [ ] TASK-INF-002 — Set MemoryMax on FRIDAY-Voice (currently no limit on a 956 MB host).
-- [ ] TASK-SEC-003 — Bridge authentication: shared-secret header check on /bridge, /mcp, /messages. Owner accepted the exposure; recommendation stands.
+- [ ] TASK-SEC-003 — Bridge authentication: shared-secret authentication for /bridge, /mcp, /messages and /sse. Owner: ChatGPT. IN_REVIEW (PR #24); middleware/tests are on branch, but production activation remains unverified and requires runtime secret provisioning, MCP-client header compatibility, and owner-approved restart.
 - [ ] TASK-SEC-004 — Audit secret management: env files, CREDENTIALS.md (untracked, must stay untracked), GitHub secrets.
 - [ ] TASK-INF-003 — Backup and recovery: verify Oracle DB backups and service restore steps.
 - [ ] TASK-OPS-003 — Oracle sniper: confirm allocation loop works end to end; after success, promotion of the new instance is a manual owner decision.
@@ -48,17 +48,17 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
 ### Phase 3 — CI and delivery
 - [ ] TASK-CI-001 — Fix VyralX/Futuris `app` package collision in CI (ChatGPT pushed fixes to main; not yet verified green).
-- [ ] TASK-CI-002 — Get `main` fully green: all validation jobs pass on current HEAD.
+- [ ] TASK-CI-002 — Get `main` fully green: all validation jobs pass on current HEAD. Owner: Claude. IN_PROGRESS; CI fixes have landed, but latest main/PR validation evidence remains red or incomplete.
 - [ ] TASK-CI-003 — Fix run_workspace_test (venv has no pytest on Server 2).
 - [ ] TASK-CI-004 — Narrow `.gitignore` bridge/** rule so bridge source can be committed deliberately.
 
 ### Phase 4 — Core agent foundations
 - [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT).
-- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator (live path returns "dispatched" without calling any peer). Status: IN_REVIEW on grok/TASK-CORE-002. Live path now probes FleetClient and returns status not_executed. Not DONE: not merged, not deployed.
+- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator. IMPLEMENTATION MERGED to main via PR #25 (commit 79c1f75); live path probes FleetClient and returns `not_executed` when no Universe API is configured. Tests recorded as 5 passed on Server 2, 2026-11-08. Deployment/runtime verification remains outstanding; therefore not VERIFIED or DONE.
 - [ ] TASK-CORE-003 — Add task records (TASK-ID, owner agent, status, result) so work can be assigned and tracked.
 
 ### Phase 5 — Agent APIs and communication
-- [ ] TASK-API-001 — Implement /v1/task/execute on Forge and Sentinel, or stop routing typed tasks there (currently 404).
+- [ ] TASK-API-001 — Implement `/v1/task/execute` on Forge and Sentinel, or stop routing typed tasks there. Owner: Claude; IN_REVIEW (PR #29 covers Sentinel; Forge still requires capability/route validation).
 - [ ] TASK-API-002 — Standardise health endpoints (/health) across all ten agents and make AGENTS.yaml the source for ports.
 - [ ] TASK-API-003 — Authentication matrix test: each agent accepts only its configured keys.
 
@@ -113,6 +113,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - Live checks use the public health endpoints and systemctl status, recorded with timestamps.
 
 ## 7. Current overall progress
-- Verified: 0 tasks. Names of OCI secrets were checked via API; that is evidence of presence, not of correctness.
-- Done: 0 (no task has met the DONE definition yet).
-- Everything else: NOT_STARTED, or as noted in handoff.md.
+- VERIFIED: no end-to-end production task is claimed VERIFIED from this GitHub-only review. GitHub-visible implementation merges are not deployment evidence.
+- Merged implementation: TASK-DOC-001 (PR #21), TASK-CORE-002 (PR #25), and CI-related PR #22. Their production/runtime verification is separate.
+- IN_PROGRESS / IN_REVIEW: TASK-CI-002, TASK-SEC-003, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, and TASK-CTX-001 as tracked in handoff.md.
+- All ten agents remain canonical and integrated; VyralX remains agent ten.
