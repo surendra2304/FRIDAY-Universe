@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - PYTHONPATH=FRIDAY/apps/core/src:Inference/app:Inference:Memora:Stratex:Forge/app/services:Sentinel/app/services:IntelX/intelx/services:Futuris/futuris/core:VyralX/app/services
+      - PYTHONPATH=/app/FRIDAY-Universe/FRIDAY/apps/core/src:/app/FRIDAY-Universe/Inference/app:/app/FRIDAY-Universe/Inference:/app/FRIDAY-Universe/Memora:/app/FRIDAY-Universe/Stratex:/app/FRIDAY-Universe/Forge/app/services:/app/FRIDAY-Universe/Sentinel/app/services:/app/FRIDAY-Universe/IntelX/intelx/services:/app/FRIDAY-Universe/Futuris/futuris/core:/app/FRIDAY-Universe/VyralX/app/services
       - FRIDAY_UNIVERSE_VERSION=3.0.0
     volumes:
       - ./FRIDAY/.data:/app/FRIDAY-Universe/FRIDAY/.data
