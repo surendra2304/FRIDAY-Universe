@@ -185,7 +185,7 @@ class UniverseDispatchBus:
                 "agent": envelope.agent,
                 "action": envelope.action,
                 "payload": envelope.payload,
-                "priority": envelope.priority,
+                "priority": str(envelope.priority),  # Cortex validates priority as a string
                 "timeout_sec": envelope.timeout_sec,
                 "source_agent": "FRIDAY",
             }
