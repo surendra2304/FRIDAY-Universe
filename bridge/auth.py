@@ -86,10 +86,25 @@ class BridgeAuthMiddleware:
             return
 
         headers = dict(scope.get("headers", []))
-        supplied = headers.get(self.HEADER_NAME, b"")
         expected_bytes = expected.encode("utf-8")
+        candidates = []
 
-        if not supplied or not hmac.compare_digest(supplied, expected_bytes):
+        custom_header = headers.get(self.HEADER_NAME, b"")
+        if custom_header:
+            candidates.append(custom_header)
+
+        # Standard HTTP Bearer authentication is accepted for MCP clients
+        # that expose bearer-token configuration but not arbitrary headers.
+        authorization = headers.get(b"authorization", b"")
+        auth_parts = authorization.split(None, 1)
+        if len(auth_parts) == 2 and auth_parts[0].lower() == b"bearer":
+            candidates.append(auth_parts[1])
+
+        authorized = any(
+            hmac.compare_digest(candidate, expected_bytes)
+            for candidate in candidates
+        )
+        if not authorized:
             await self._reject(
                 send,
                 401,
