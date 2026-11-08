@@ -314,3 +314,82 @@ async def test_scheduler_dynamic_trading_subscription_sync():
     for t in targets:
         assert t in sub_targets
     assert len(scheduler.subscriptions) >= initial_count
+
+
+@pytest.mark.asyncio
+async def test_active_positions_without_configured_key_never_calls_stratex():
+    """Missing credentials must not be replaced with a placeholder key or sample positions."""
+
+    class NoNetworkTransport(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+            raise AssertionError("Stratex must not be called without an explicit read key")
+
+    connector = TradingBotConnector(
+        base_url="http://test-stratex:8000",
+        api_key=None,
+        transport=NoNetworkTransport(),
+    )
+
+    positions = await connector.fetch_active_positions()
+
+    assert positions == []
+    assert connector.last_positions_status == "not_configured"
+
+
+@pytest.mark.asyncio
+async def test_active_positions_unauthorized_fails_closed_without_endpoint_fallback():
+    """A rejected read key must not trigger alternate routes or fabricated positions."""
+    requested_paths: list[str] = []
+
+    class UnauthorizedTransport(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+            requested_paths.append(request.url.path)
+            return httpx.Response(401, json={"error": "UNAUTHORIZED"})
+
+    connector = TradingBotConnector(
+        base_url="http://test-stratex:8000",
+        api_key="invalid_read_key",
+        transport=UnauthorizedTransport(),
+    )
+
+    positions = await connector.fetch_active_positions()
+
+    assert positions == []
+    assert connector.last_positions_status == "unauthorized"
+    assert requested_paths == ["/api/v1/positions"]
+
+
+@pytest.mark.asyncio
+async def test_empty_stratex_positions_are_not_replaced_with_examples():
+    """A valid empty Stratex snapshot must remain empty."""
+    class EmptyTransport(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/api/v1/positions"
+            assert request.headers.get("x-api-key") == "explicit_read_key"
+            return httpx.Response(200, json={"status": "OK", "data": []})
+
+    connector = TradingBotConnector(
+        base_url="http://test-stratex:8000",
+        api_key="explicit_read_key",
+        transport=EmptyTransport(),
+    )
+
+    positions = await connector.fetch_active_positions()
+
+    assert positions == []
+    assert connector.last_positions_status == "empty"
+
+
+@pytest.mark.asyncio
+async def test_pair_discovery_marks_watchlist_fallback_as_non_live():
+    """Core market pairs are a watchlist, not evidence that positions are open."""
+    connector = TradingBotConnector(
+        base_url="http://test-stratex:8000",
+        api_key=None,
+    )
+
+    pairs = await connector.discover_active_trade_pairs()
+
+    assert pairs == ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
+    assert connector.last_pairs_discovery_status == "not_configured"
+    assert connector.last_pairs_source == "core_watchlist"
