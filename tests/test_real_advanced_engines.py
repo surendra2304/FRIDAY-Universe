@@ -212,15 +212,15 @@ class TestMemoraConsolidation:
 
 
 class TestMemoraReinforcement:
-    def test_spaced_repetition(self):
-        engine = memora_adv.MemoryReinforcementEngine()
+    def test_spaced_repetition(self, tmp_path):
+        engine = memora_adv.MemoryReinforcementEngine(store_dir=str(tmp_path))
         item = engine.add_item("Learn about Docker")
         assert item.interval == 1.0
         reviewed = engine.review(item.item_id, quality=5)
         assert reviewed.interval > 1.0  # Should increase after good review
 
-    def test_due_items(self):
-        engine = memora_adv.MemoryReinforcementEngine()
+    def test_due_items(self, tmp_path):
+        engine = memora_adv.MemoryReinforcementEngine(store_dir=str(tmp_path))
         item = engine.add_item("Test")
         item.next_review = time.time() - 1  # Make it due
         due = engine.get_due_items()
