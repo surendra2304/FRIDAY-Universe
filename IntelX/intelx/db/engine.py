@@ -15,7 +15,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.types import JSON
 
 # Install Oracle JSON defaults before constructing python-oracledb dialects.
-from intelx.db import oracle_dialect_compat as _oracle_dialect_compat  # noqa: F401
+from intelx import oracle_dialect_compat as _oracle_dialect_compat  # noqa: F401
 from intelx.core.settings import get_settings
 
 
