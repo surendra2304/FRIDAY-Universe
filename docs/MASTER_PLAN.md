@@ -53,7 +53,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - [ ] TASK-CI-004 — Narrow `.gitignore` bridge/** rule so bridge source can be committed deliberately.
 
 ### Phase 4 — Core agent foundations
-- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT).
+- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT). Owner: ChatGPT (Cortex parallel audit); Status: IN_PROGRESS. Initial Cortex review found unguarded feature routers; route-level RBAC remediation is being implemented and must pass CI before verification.
 - [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator (live path returns "dispatched" without calling any peer).
 - [ ] TASK-CORE-003 — Add task records (TASK-ID, owner agent, status, result) so work can be assigned and tracked.
 
