@@ -112,3 +112,15 @@ Evidence cited by file path or command. Secrets are named, never printed.
 10. GAP: no alerting on crash loops; no documented rollback.
 11. GAP: sniper secrets authentication unconfirmed (TASK-OPS-002).
 12. UNVERIFIED: most per-agent internals (not yet read in full).
+
+
+## 16. Cortex agent — source and runtime audit (PARTIALLY VERIFIED, 2026-11-08)
+- Entry point: `Cortex/apps/api/src/cortex_api/main.py`; deployed service runs `uvicorn apps.api.src.cortex_api.main:app` on Server 2, port 8009. Service is active; observed 85.1 MB current memory with a 200 MB MemoryMax.
+- Public health endpoint `/cortex/health` returned HTTP 200, version 2.1.0, evidence class `process_liveness` at 2026-11-08T17:56:22Z. This proves process liveness, not database or downstream readiness.
+- FRIDAY task contract: `POST /v1/task/execute` is declared in `main.py` and depends on `verify_friday_token`; `friday_router.py` FRIDAY endpoints also use the FRIDAY service-key dependency. Key header: `X-Friday-Api-Key`.
+- Human/operator auth: `auth.py` implements JWT validation and role hierarchy. Development bypass requires explicit `CORTEX_DEV_AUTH_BYPASS=true` and is disabled when `APP_ENV=production` or Render production is detected. `require_role` provides viewer/operator/admin tiers.
+- Data/services: `config.py` configures an async SQLAlchemy engine/session and Redis pool. DSN selection can resolve Oracle, PostgreSQL, or SQLite based on runtime environment. The actual production DSN/backend and live Redis connectivity were not independently verified here. Schema bootstrap errors are logged but do not prevent app startup.
+- Integrations declared: FRIDAY peer URL, Memora peer URL, SendGrid, Twilio, HubSpot, Stripe, and multiple marketing/analytics modules. Dependency declarations and code paths do not prove external credentials are provisioned or live provider calls succeed.
+- Tests run on the connected workspace: `test_prompt9_cortex.py` 22 passed; `test_friday_integration.py` 27 passed; `test_peer_integration_contract.py` 9 passed, 2 skipped; `test_multi_tenant_security_isolation.py` 1 passed. `test_route_authorization.py` failed (1 failed, 1 passed) and enumerated more than 100 feature routes lacking recognized auth dependencies.
+- GAP: marketing/content/decision/forecasting/risk/campaign/journey/segmentation/inbox feature routers had routes without route-level authentication dependencies in the audited source. This is a source-level access-control risk; live unauthenticated access was not tested. A method-aware RBAC remediation is proposed in PR #26; it is not deployed and requires passing CI plus review.
+- GAP: several marketing/content modules still contain simulated campaign status/metrics rather than demonstrated external provider execution (for example, in-memory campaign state and comments indicating production API calls are future work). Do not represent these integrations as production-verified.
