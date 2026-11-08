@@ -499,6 +499,43 @@ async def status_check() -> dict[str, Any]:
 # Task Gateway Endpoints
 # ---------------------------------------------------------------------------
 
+# Fleet task protocol (FRIDAY dispatch). Fail-closed: only read-only actions run here.
+# Scans and any state change must go through the operator-approved task gateway below.
+SENTINEL_FLEET_READONLY_ACTIONS = frozenset({"status"})
+
+
+@app.post("/v1/task/execute", tags=["Fleet Task Protocol"])
+async def fleet_task_execute(request: Request) -> dict[str, Any]:
+    """Universal task entry point for the FRIDAY fleet. Read-only actions only."""
+    try:
+        body = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="body must be JSON") from exc
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="body must be a JSON object")
+
+    task_id = str(body.get("task_id") or "")[:128]
+    action = str(body.get("action") or "").strip().lower()
+    source = str(body.get("source_agent") or "unknown")[:64]
+
+    if action not in SENTINEL_FLEET_READONLY_ACTIONS:
+        return {
+            "task_id": task_id,
+            "target_agent": "sentinel",
+            "status": "REJECTED",
+            "error": "action_not_permitted",
+            "message": f"'{action}' requires the operator-approved task gateway",
+            "source_agent": source,
+        }
+    return {
+        "task_id": task_id,
+        "target_agent": "sentinel",
+        "status": "SUCCESS",
+        "result": {"service": "sentinel", "status": "ok", "action": action},
+        "source_agent": source,
+    }
+
+
 @app.post(f"{settings.api_prefix}/tasks", response_model=TaskResponse, status_code=201, tags=["Task Gateway"])
 async def submit_task(request: SubmitTaskRequest) -> TaskResponse:
     """Submit a security task into the Sentinel execution engine."""
