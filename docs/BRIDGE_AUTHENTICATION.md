@@ -30,4 +30,4 @@ Do not put the secret value in this repository, `CREDENTIALS.md`, commits, logs,
 
 ## Integration
 
-`bridge/server_auth.patch` wraps the existing Starlette app after route registration and CORS setup. The middleware is deliberately a pure ASGI component so the tests do not need to import or start the live MCP server.
+`bridge/server_auth.patch` registers the authentication middleware before CORS, so Starlette places CORS outside authentication and CORS headers are retained on 401/503 responses. The middleware is deliberately a pure ASGI component so the tests do not need to start the live MCP server.
