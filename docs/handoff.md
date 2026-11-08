@@ -97,3 +97,13 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 3. Cortex 500 on ping: investigate.
 4. Forge route: implement.
 5. PR #28 and #29 merge when CI is green, which depends on the pre-existing suite fixes.
+
+## Session log: Claude, 2026-11-08 (Stratex key, health, Cortex)
+- Stratex FRIDAY-scoped key created (Option A, owner approved). Written to Stratex/.env (Server 1), /etc/friday/dispatch.env, and CREDENTIALS.md (row "Stratex FRIDAY Scope"). Value not recorded here.
+- Stratex.service restarted (owner approved). Probe: POST /v1/task/execute action=status with X-API-KEY -> 200, AUTHORIZED.
+- Stratex health timeout: root cause was slow startup after restart, not a fault. /health returns 200 once the process has finished starting. Stratex runs in TRADING_MODE PAPER per its startup log ("TESTNET ORDERS: 0 | LIVE ORDERS: 0"). The owner stated testnet; this should be confirmed.
+- Stratex .env: python-dotenv reports a parse error at line 35 (a stray quote on TELEGRAM_BOT_TOKEN). Cosmetic, pre-existing, not fixed here.
+- Cortex 500: root cause is in the dispatch bus. It sent priority as a number, Cortex's FridayTaskEnvelope requires a string, and the unhandled ValidationError became a 500. Fixed in caf5e73 (priority sent as string). Verified directly: numeric priority -> 500, string priority -> 422 (Cortex only supports health_summary, recommend_intervention, execute_operation, cancel, rollback). Follow-up for Cortex: a schema error should return 422, not 500.
+- Main: GitHub main is still at 680c04e. The test-suite fixes described by the owner are NOT on main, so PR #28 and PR #29 contain main but do not contain those fixes. Their CI cannot go green from main alone.
+- PR #29 CI: both validation checks still fail (pre-existing suite). Not merged.
+- PR #28 CI: test passes; validation checks running at time of writing.
