@@ -4,13 +4,25 @@
 # Doc drift should become a failing test, not a comment.
 
 version: "3.0.0"
-total_agents: 9
+total_agents: 10
+specialist_agents: 9
+# FRIDAY is the tenth agent and central orchestrator; the three engine-layer
+# counters below apply to the nine specialist agents, not the FRIDAY runtime.
 layers:
   basic: 9
   advanced: 9
   deep: 9
 
 agents:
+  friday:
+    name: "FRIDAY"
+    domain: "Orchestration"
+    layers: 0
+    engines: ["agent_orchestration", "task_planning", "agent_dispatch", "tool_registry", "fleet_supervision", "voice_desktop_runtime"]
+    port: 10000
+    memory_limit: "200M"
+    status: "production"
+
   cortex:
     name: "Cortex"
     domain: "Decision Intelligence"
@@ -98,14 +110,14 @@ resource_budget:
     cpu: "2 OCPU"
     ram_gb: 12
     os: "Oracle Linux ARM64 / Ubuntu 22.04 AMD64"
-  total_memory_limit: "1630M"  # Sum of all agent memory_limits
-  memory_utilization_pct: 13.6  # 1630M / 12288M
-  always_on_agents: 7
+  total_memory_limit: "1950M"  # Sum of all ten agent memory_limits
+  memory_utilization_pct: 15.9  # 1950M / 12288M
+  always_on_agents: 8
   on_demand_agents: 2
   notes: >
-    Total memory limit of 1630M fits comfortably within 12GB target.
-    2 agents (VyralX, Cortex) are on-demand due to higher memory needs.
-    Full fleet boot proven on Oracle Cloud VM.Standard.A1.Flex (2 OCPU, 12GB).
+    The combined ten-agent memory limit is 1950M, fitting within the 12GB target.
+    8 agents are always on; VyralX and Cortex are on-demand due to higher memory needs.
+    Full fleet boot is designed for Oracle Cloud VM.Standard.A1.Flex (2 OCPU, 12GB).
 
 # Proven vertical slice (review 2: breadth vs depth)
 proven_vertical:
