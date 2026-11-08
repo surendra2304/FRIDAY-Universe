@@ -1,20 +1,7 @@
 name: Subtree Mirror to Standalone Agent Repos
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'FRIDAY/**'
-      - 'Inference/**'
-      - 'Memora/**'
-      - 'Stratex/**'
-      - 'Forge/**'
-      - 'Cortex/**'
-      - 'Sentinel/**'
-      - 'IntelX/**'
-      - 'Futuris/**'
-      - 'VyralX/**'
-      - '.github/workflows/mirror-subrepos.yml'
+  # Manual only: the monorepo is the single source; mirroring is a deliberate owner action.
   workflow_dispatch:
 
 permissions:
@@ -78,5 +65,5 @@ jobs:
           echo "=== Splitting subtree for $AGENT ==="
           git subtree split --prefix="$AGENT" -b "split-$AGENT" || true
           echo "=== Pushing $AGENT to standalone repository ==="
-          git push "https://${GH_TOKEN}@github.com/surendra2304/${AGENT}.git" "split-$AGENT:main" --force
+          git push "https://${GH_TOKEN}@github.com/surendra2304/${AGENT}.git" "split-$AGENT:main"
           echo "=== Successfully mirrored $AGENT to standalone repository ==="
