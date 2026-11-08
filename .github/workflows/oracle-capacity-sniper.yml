@@ -62,4 +62,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WORKFLOW_NAME: "oracle-capacity-sniper.yml"
         run: |
-          python scripts/oracle_retry.py
+          python FRIDAY/scripts/oracle_retry.py
