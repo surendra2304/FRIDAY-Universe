@@ -54,7 +54,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
 ### Phase 4 — Core agent foundations
 - [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT). Owner: ChatGPT (Cortex parallel audit); Status: IN_PROGRESS. Cortex source audit found missing route-level auth dependencies; remediation is in PR #26 and awaiting CI.
-- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator (live path returns "dispatched" without calling any peer). Status: IN_PROGRESS after merge of PR #25 to main (2026-11-08 18:02 UTC). Live path now probes FleetClient and returns status not_executed. Deployment and live runtime verification remain outstanding; not DONE.
+- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator (live path returns "dispatched" without calling any peer). Status: IN_PROGRESS after merge of PR #25 to main (2026-11-08 18:02 UTC). Deployment workflow #42507954757 succeeded; FRIDAY.service restarted at 18:03 UTC and /friday/health returned HTTP 200 at 18:07 UTC. Live goal invocation is still unverified; not DONE.
 - [ ] TASK-CORE-003 — Add task records (TASK-ID, owner agent, status, result) so work can be assigned and tracked.
 
 ### Phase 5 — Agent APIs and communication
