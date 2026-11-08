@@ -36,7 +36,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 ### Phase 1 — Infrastructure and security foundations
 - [ ] TASK-INF-001 — Audit Oracle infrastructure (both VMs: sizes, memory, disks, services). Evidence: `oracle_fleet_health`, systemd show output.
 - [ ] TASK-INF-002 — Set MemoryMax on FRIDAY-Voice (currently no limit on a 956 MB host).
-- [ ] TASK-SEC-003 — Bridge authentication: shared-secret header check on /bridge, /mcp, /messages. Owner accepted the exposure; recommendation stands.
+- [ ] TASK-SEC-003 — Bridge authentication: shared-secret authentication for /bridge, /mcp, /messages and /sse. Owner: ChatGPT. Status: IN_REVIEW (PR #24); production activation awaits runtime secret provisioning, both MCP clients' header compatibility and owner-approved restart.
 - [ ] TASK-SEC-004 — Audit secret management: env files, CREDENTIALS.md (untracked, must stay untracked), GitHub secrets.
 - [ ] TASK-INF-003 — Backup and recovery: verify Oracle DB backups and service restore steps.
 - [ ] TASK-OPS-003 — Oracle sniper: confirm allocation loop works end to end; after success, promotion of the new instance is a manual owner decision.
@@ -48,7 +48,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
 ### Phase 3 — CI and delivery
 - [ ] TASK-CI-001 — Fix VyralX/Futuris `app` package collision in CI (ChatGPT pushed fixes to main; not yet verified green).
-- [ ] TASK-CI-002 — Get `main` fully green: all validation jobs pass on current HEAD.
+- [ ] TASK-CI-002 — Get `main` fully green: all validation jobs pass on current HEAD. Owner: Claude. Status: IN_PROGRESS (PR #22 merged; further CI fixes under investigation).
 - [ ] TASK-CI-003 — Fix run_workspace_test (venv has no pytest on Server 2).
 - [ ] TASK-CI-004 — Narrow `.gitignore` bridge/** rule so bridge source can be committed deliberately.
 
