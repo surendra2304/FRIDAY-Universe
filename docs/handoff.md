@@ -12,7 +12,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-CI-002 | Get main fully green | Claude | claude/TASK-CI-002 | CI workflows, tests, tests/test_real_deep_layer11.py | IN_PROGRESS (PR #22 merged; post-merge CI still failing) |
 | TASK-INF-001 | Audit Oracle infrastructure on both VMs | Claude | pending | docs/ARCHITECTURE_AS_BUILT.md, infrastructure evidence | NOT_STARTED (reserved for Claude in next-task plan) |
 | TASK-INF-002 | Set FRIDAY-Voice MemoryMax after configuration review | Claude | pending | FRIDAY-Voice systemd unit/configuration | NOT_STARTED (reserved for Claude in next-task plan) |
-| TASK-SEC-003 | Add shared-secret authentication to bridge ingress and MCP routes | ChatGPT | chatgpt/TASK-SEC-003 | bridge/server.py, bridge/auth.py, tests/test_bridge_auth.py | IN_PROGRESS (claimed before implementation) |
+| TASK-SEC-003 | Add shared-secret authentication to bridge ingress and MCP routes | ChatGPT | chatgpt/TASK-SEC-003 | bridge/auth.py, bridge/server_auth.patch, tests/test_bridge_auth.py, docs/BRIDGE_AUTHENTICATION.md, docs/ARCHITECTURE_AS_BUILT.md, docs/handoff.md | IN_PROGRESS |
 
 ## B. Completed tasks
 (none verified yet under the DONE definition)
@@ -31,6 +31,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - PR #20 merged at 2026-11-08 16:21 UTC. PR #21 merged at 16:17 UTC. PR #22 (CI dependency installation) merged at 16:22 UTC. Do not infer CI is green from merge or deployment success; latest required validation runs on main are failing.
 - Claude: PHASE-0 / TASK-OPS-002 remains in progress; TASK-INF-001 and TASK-INF-002 are reserved to Claude as shown in the active registry. Claude also owns TASK-CI-002; PR #22 is merged, but main CI remains failing.
 - ChatGPT: I did NOT start TASK-CI-002, did not edit CI workflows or tests for that task, and do not claim its work. I claim TASK-SEC-003 on `chatgpt/TASK-SEC-003`.
+- TASK-SEC-003 implementation checkpoint: committed `bridge/auth.py`, `bridge/server_auth.patch`, `tests/test_bridge_auth.py`, and `docs/BRIDGE_AUTHENTICATION.md` to the isolated branch. The patch is an integration instruction for the currently untracked live `bridge/server.py`; it has NOT been applied and the bridge service has NOT been restarted. The shared secret is not provisioned by this PR.
 
 ## D. Blocked tasks
 | Blocker | Cause | Required action | Responsible |
@@ -63,6 +64,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Current IN_PROGRESS TASK-IDs: PHASE-0 and TASK-OPS-002 (Claude), TASK-CI-002 (Claude; PR #22 merged, post-merge CI still failing), TASK-SEC-003 (ChatGPT).
 - Last modified files (this branch): docs/MASTER_PLAN.md, docs/handoff.md, docs/ARCHITECTURE_AS_BUILT.md.
 - Latest merged documentation PR: #21 (claude/TASK-DOC-001). ChatGPT task branch: chatgpt/TASK-SEC-003; PR not yet opened.
-- Tests and results: access-check regression `tests/test_mesh_agents.py` passed 3/3 on the bridge workspace. Main HEAD at last check: 0a2eeb477897ba705cf604327ffc2bfc53d17c2b; post-PR #22 validation runs 42499559130 and 42499559121 failed. TASK-SEC-003 tests have not yet been written or run.
-- Outstanding issues: sniper authentication unconfirmed; FRIDAY-Voice memory limit; bridge remains unauthenticated pending TASK-SEC-003; main CI red; owner-approved history rewrite deferred until PRs are settled.
+- Tests and results: access-check regression `tests/test_mesh_agents.py` passed 3/3 on the bridge workspace. Main HEAD at last check: 0a2eeb477897ba705cf604327ffc2bfc53d17c2b; post-PR #22 validation runs 42499559130 and 42499559121 failed. TASK-SEC-003 regression tests have been added on its branch but are not yet executed; PR CI will provide the isolated test result.
+- Outstanding issues: sniper authentication unconfirmed; FRIDAY-Voice memory limit; bridge remains unauthenticated in production pending runtime secret provisioning and patch activation; main CI red; owner-approved history rewrite deferred until PRs are settled.
+- Coordination risk: the Oracle workspace `/opt/friday_universe` is a single shared checkout and its active branch can be switched by either engineer. ChatGPT's work is therefore isolated through GitHub branch/content operations; do not switch the shared checkout for ChatGPT tasks without coordinating.
 - Exact next action: (1) read sniper run 42497059156 when it ends; (2) fix the CI install step and the sys import on a branch claude/TASK-CI-FIX-001 and open a PR; (3) after main is green, merge PRs #21 and #20 with the comment 'Merged by Claude after reviewing'; (4) run the history rewrite and record the commit IDs here.
