@@ -192,7 +192,7 @@ async def test_discover_active_trade_pairs_futures_perp():
     class FuturesTransport(httpx.AsyncBaseTransport):
         async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
             if request.url.path == "/api/v1/positions":
-                return httpx.Response(200, json={"status": "OK", "data": mock_futures})
+                return httpx.Response(200, json={"status": "OK", "data": mock_futures["data"]})
             return httpx.Response(404)
 
     connector = TradingBotConnector(
