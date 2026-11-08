@@ -37,7 +37,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - [ ] TASK-INF-001 — Audit Oracle infrastructure (both VMs: sizes, memory, disks, services). Evidence: `oracle_fleet_health`, systemd show output.
 - [ ] TASK-INF-002 — Set MemoryMax on FRIDAY-Voice (currently no limit on a 956 MB host).
 - [ ] TASK-SEC-003 — Bridge authentication: shared-secret authentication for /bridge, /mcp, /messages and /sse. Owner: ChatGPT. IN_REVIEW (PR #24); middleware/tests are on branch, but production activation remains unverified and requires runtime secret provisioning, MCP-client header compatibility, and owner-approved restart.
-- [ ] TASK-SEC-004 — Audit secret management: env files, CREDENTIALS.md (untracked, must stay untracked), GitHub secrets.
+- [ ] TASK-SEC-004 — Secret-management audit and CI leak prevention. Owner: ChatGPT; IN_REVIEW in PR #31 (`chatgpt/TASK-SEC-004`). A root Gitleaks action scans PR/push change ranges; first run exposed shallow-fetch range failure, fixed by full commit graph; current scan run 42525462164 passed. Not merged or VERIFIED on main yet. Full-history exposure is separately tracked in TASK-SEC-002.
 - [ ] TASK-INF-003 — Backup and recovery: verify Oracle DB backups and service restore steps.
 - [ ] TASK-OPS-003 — Oracle sniper: confirm allocation loop works end to end; after success, promotion of the new instance is a manual owner decision.
 
@@ -115,5 +115,5 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 ## 7. Current overall progress
 - VERIFIED: no end-to-end production task is claimed VERIFIED from this GitHub-only review. GitHub-visible implementation merges are not deployment evidence.
 - Merged implementation: TASK-DOC-001 (PR #21), TASK-CORE-002 (PR #25), and CI-related PR #22. Their production/runtime verification is separate.
-- IN_PROGRESS / IN_REVIEW: TASK-CI-002, TASK-SEC-003, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, and TASK-CTX-001 as tracked in handoff.md.
+- IN_PROGRESS / IN_REVIEW: TASK-CI-002, TASK-SEC-003, TASK-SEC-004, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, and TASK-CTX-001 as tracked in handoff.md.
 - All ten agents remain canonical and integrated; VyralX remains agent ten.
