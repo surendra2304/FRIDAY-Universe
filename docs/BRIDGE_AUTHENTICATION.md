@@ -4,7 +4,8 @@
 
 The bridge is exposed through public ingress and currently has no request authentication. This change introduces a fail-closed ASGI middleware using one runtime-provided shared secret.
 
-- Header: `X-FRIDAY-BRIDGE-KEY`
+- Preferred MCP-compatible header: `Authorization: Bearer <secret>`.
+- Alternative explicit header: `X-FRIDAY-BRIDGE-KEY: <secret>`.
 - Runtime variable: `FRIDAY_BRIDGE_SHARED_SECRET`
 - Protected paths: `/`, `/bridge/**`, `/mcp/**`, `/messages/**`, and `/sse/**`
 - `GET /health` remains public for liveness monitoring.
@@ -19,9 +20,9 @@ The source module and integration patch do not change the running service by the
 1. Create a high-entropy shared secret outside GitHub and ChatGPT.
 2. Provision it to the `friday-bridge.service` process through the approved secret manager (prefer an OCI Vault-backed environment injection).
 3. Confirm the unit receives `FRIDAY_BRIDGE_SHARED_SECRET` without printing the value.
-4. Confirm both MCP client configurations support the required custom header before enabling enforcement.
+4. Confirm both MCP client configurations support standard Bearer auth or the alternative custom header before enabling enforcement.
 5. Apply `bridge/server_auth.patch` to the bridge server entry point.
-6. Verify that **both Claude and ChatGPT MCP clients can send `X-FRIDAY-BRIDGE-KEY`** (and that any SSE/EventSource consumers support the header or are migrated to a header-capable transport). Test both clients end to end before enabling enforcement; otherwise the guard can lock out the management connectors.
+6. Verify that **both Claude and ChatGPT MCP clients can send `Authorization: Bearer <secret>` or `X-FRIDAY-BRIDGE-KEY`** (and that any SSE/EventSource consumers support the selected header or are migrated to a header-capable transport). Test both clients end to end before enabling enforcement; otherwise the guard can lock out the management connectors.
 7. Schedule an owner-approved service restart and validate authenticated MCP/SSE/messages plus public health.
 8. Update the architecture/handoff evidence only after runtime verification.
 
