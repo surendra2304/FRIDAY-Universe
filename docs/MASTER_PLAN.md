@@ -1,6 +1,6 @@
 # FRIDAY Universe — Master Plan
 
-Single source of truth for the roadmap. Both Claude and ChatGPT work top to bottom through this file.
+Single source of truth for the roadmap. Claude, ChatGPT, and Grok are equal collaborators working together through this file. The current plan is a shared roadmap, not a hierarchy; the owner is the final decision-maker.
 Read docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md before starting any task.
 
 Statuses: NOT_STARTED | IN_PROGRESS | BLOCKED | IN_REVIEW | VERIFIED | DONE
@@ -53,8 +53,8 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - [ ] TASK-CI-004 — Narrow `.gitignore` bridge/** rule so bridge source can be committed deliberately.
 
 ### Phase 4 — Core agent foundations
-- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT).
-- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator (live path returns "dispatched" without calling any peer). Status: IN_REVIEW on grok/TASK-CORE-002. Live path now probes FleetClient and returns status not_executed. Not DONE: not merged, not deployed.
+- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT). Owner: ChatGPT (Cortex parallel audit); Status: IN_PROGRESS. Cortex source audit found missing route-level auth dependencies; remediation is in PR #26 and awaiting CI.
+- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator (live path returns "dispatched" without calling any peer). Status: IN_PROGRESS after merge of PR #25 to main (2026-11-08 18:02 UTC). Live path now probes FleetClient and returns status not_executed. Deployment and live runtime verification remain outstanding; not DONE.
 - [ ] TASK-CORE-003 — Add task records (TASK-ID, owner agent, status, result) so work can be assigned and tracked.
 
 ### Phase 5 — Agent APIs and communication
