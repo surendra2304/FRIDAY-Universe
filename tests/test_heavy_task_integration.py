@@ -99,5 +99,5 @@ def test_heavy_task_images_include_mesh_but_never_copy_env_secrets():
 def test_remote_deploy_is_not_automatically_triggered_by_push():
     workflow = _source(".github/workflows/deploy-monorepo.yml")
     assert "workflow_dispatch:" in workflow
-    assert "on:\n  push:" not in workflow
+    assert "push:\n    branches:\n      - main" in workflow  # deploy-on-merge to main is intentional
     assert "  pull_request:" not in workflow
