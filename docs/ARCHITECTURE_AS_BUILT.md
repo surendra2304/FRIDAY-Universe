@@ -36,7 +36,7 @@ Evidence cited by file path or command. Secrets are named, never printed.
 ## 4. FRIDAY orchestration and task dispatch (VERIFIED by reading; behaviour PARTIALLY VERIFIED)
 - Command router: _dispatch_command in src/friday/api/server.py. Checks prompt injection, refuses destructive intents, then routes to ask_* calls. Routing table is substring matching.
 - Directive router: fleet_client.dispatch_directive, substring keyword matching. Misroutes observed by test: "decode this base64"→Forge, "I want to trader-proof my plan"→Stratex, "cashback offers"→Stratex, "the weather in the webpage"→Cortex.
-- GAP / DEFECT: integrations/universe_orchestrator.py execute_universe_goal, with no simulation API set, returns status "dispatched", real_agents 8, and a fixed synthesis without calling any peer (VERIFIED by reading lines 60–85).
+- FIXED ON BRANCH, NOT DEPLOYED: integrations/universe_orchestrator.py execute_universe_goal, with no simulation API set, used to return status "dispatched", real_agents 8, and a fixed synthesis without calling any peer. grok/TASK-CORE-002 calls FleetClient.get_fleet_summary and returns status not_executed with the probed online/total counts, or the probe error. It does not execute the goal. Verified by FRIDAY/tests/test_universe_orchestrator_no_fake_dispatch.py (2 passed) plus the existing mock-API test file (3 passed) on Server 2, 2026-11-08.
 - Task records: none found. No table or store tracks assignment, status or result across agents. (PARTIALLY VERIFIED: searched for dispatch/task store; not exhaustive.)
 - Autonomy: src/friday/autonomous/ exists (controller.py, daemon.py, enhanced_controller.py). UNVERIFIED: whether it can assign work to agents.
 - Dispatch bus: FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py exists and is mounted at /api/v1 (VERIFIED by grep). UNVERIFIED: its behaviour.
@@ -103,7 +103,7 @@ Evidence cited by file path or command. Secrets are named, never printed.
 1. CONFLICT: Stratex database (Oracle manifest vs SQLite code).
 2. CONFLICT: Memora database (Oracle manifest vs SQLite in older docs).
 3. CONFLICT: Stratex venues (Binance Futures vs MT5 vs cTrader). Owner says Binance testnet.
-4. GAP: universe_orchestrator fake success.
+4. IN_REVIEW: universe_orchestrator no longer fabricates a live dispatch (grok/TASK-CORE-002). The goal is still not executed when no Universe API is configured.
 5. GAP: keyword routing misroutes.
 6. GAP: Forge and Sentinel lack /v1/task/execute.
 7. GAP: FRIDAY-Voice memory limit.
