@@ -1,6 +1,6 @@
 # FRIDAY Universe — Handoff
 
-Shared coordination and continuity document for Claude and ChatGPT.
+Shared coordination and continuity document for Claude, ChatGPT, and Grok. All three are equal collaborators; the current Master Plan is a common roadmap, not a hierarchy. The owner is the final decision-maker.
 Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this file; kept for history).
 
 ## A. Active task registry
@@ -11,6 +11,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-OPS-002 | Verify OCI sniper authenticates (run 42497059156) | Claude | main (workflow dispatch) | .github/workflows/oracle-capacity-sniper.yml | IN_PROGRESS |
 | TASK-CI-002 | Get main fully green | ChatGPT (claimed by activity; confirm) | main | CI workflows, tests | IN_PROGRESS |
 | TASK-CORE-001 | Per-agent entrypoint/routes/state/external-call audit (Cortex parallel to Claude's FRIDAY audit) | ChatGPT | chatgpt/TASK-CORE-001-cortex-route-auth | Cortex/apps/api/src/cortex_api/main.py, Cortex/tests/unit/test_route_authorization.py, three central docs | IN_PROGRESS |
+| TASK-CORE-002 | Remove fabricated live success in UniverseOrchestrator | Grok | grok/TASK-CORE-002 | integrations/universe_orchestrator.py and regression tests | IN_REVIEW (PR #25) |
 
 ## B. Completed tasks
 (none verified yet under the DONE definition)
@@ -28,7 +29,8 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - CI on main is RED. Root cause for the docs PR check "Validate fleet layout and mirror safety": 37 failed, 43 errors in tests (missing sqlalchemy and pydantic_settings in the CI install step; NameError 'sys' in tests/test_real_deep_layer11.py). This is a pre-existing defect on main, not caused by PR #21.
 - PR #20 still open and red (see its comment); not merged.
 - Claude: TASK-DOC-001 (this document set). TASK-OPS-002: sniper run 42497059156 dispatched on main at c097312 at 15:53 UTC; in progress; its API step is running, log not yet readable. Owner can watch it at https://github.com/surendra2304/FRIDAY-Universe/actions/runs/42497059156
-- ChatGPT: CI fixes on main (see B).
+- ChatGPT: CI fixes on main (see B); TASK-CORE-001 Cortex audit/remediation on PR #26.
+- Grok: TASK-CORE-002 removes fabricated live dispatch success; PR #25 is open for review.
 
 ## C. Current work
 
@@ -54,7 +56,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 2. TASK-INF-001 — infrastructure audit (Claude).
 3. TASK-INF-002 — FRIDAY-Voice memory limit (Claude).
 4. TASK-CI-002 — main green (ChatGPT confirms ownership).
-5. TASK-CORE-001 — per-agent audit, starting with FRIDAY (Claude), in parallel with ChatGPT on a different agent.
+5. TASK-CORE-001 — Claude audits FRIDAY while ChatGPT audits Cortex; Grok owns TASK-CORE-002. Coordinate dependencies through the shared handoff.
 
 ## F. Shared decisions
 - 2026-11-08: Both AIs work top to bottom through MASTER_PLAN.md. No bottom-up ownership split. (Owner decision.)
