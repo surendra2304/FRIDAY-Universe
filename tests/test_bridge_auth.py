@@ -120,6 +120,48 @@ def test_correct_secret_allows_request():
     assert downstream.called is True
 
 
+def test_correct_bearer_authorization_header_allows_request():
+    downstream = RecordingApp()
+    middleware = BridgeAuthMiddleware(downstream, secret_provider=lambda: "expected")
+
+    status, _ = invoke(
+        middleware,
+        path="/mcp",
+        headers=[(b"authorization", b"Bearer expected")],
+    )
+
+    assert status == 204
+    assert downstream.called is True
+
+
+def test_bearer_scheme_is_case_insensitive():
+    downstream = RecordingApp()
+    middleware = BridgeAuthMiddleware(downstream, secret_provider=lambda: "expected")
+
+    status, _ = invoke(
+        middleware,
+        path="/sse",
+        headers=[(b"authorization", b"bearer expected")],
+    )
+
+    assert status == 204
+    assert downstream.called is True
+
+
+def test_wrong_bearer_token_is_rejected():
+    downstream = RecordingApp()
+    middleware = BridgeAuthMiddleware(downstream, secret_provider=lambda: "expected")
+
+    status, _ = invoke(
+        middleware,
+        path="/mcp",
+        headers=[(b"authorization", b"Bearer wrong")],
+    )
+
+    assert status == 401
+    assert downstream.called is False
+
+
 def test_health_endpoint_remains_public_when_secret_is_unset():
     downstream = RecordingApp()
     middleware = BridgeAuthMiddleware(downstream, secret_provider=lambda: "")
