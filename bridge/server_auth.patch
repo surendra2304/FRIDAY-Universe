@@ -1,0 +1,19 @@
+--- a/bridge/server.py
++++ b/bridge/server.py
+@@
+     app.add_middleware(
+         CORSMiddleware,
+         allow_origins=["*"],
+         allow_credentials=True,
+         allow_methods=["*"],
+         allow_headers=["*"],
+     )
+ 
++    # Protect MCP, SSE and message routes. /health remains public for liveness checks.
++    # The bridge directory is already added to sys.path before this app is built.
++    from auth import BridgeAuthMiddleware
++    app = BridgeAuthMiddleware(app)
++
+     print("================================================================")
+     print("  FRIDAY Universe Cloud-Hosted Engineering Bridge Starting...")
+     print("  Port: 8011 (Server 2)")
