@@ -135,6 +135,11 @@ class UniverseDispatchBus:
                 name, base, f"{base}/health", api_key=api_key,
                 auth_header=auth_header, action_path=action_path,
             )
+            # Optional extra header, e.g. FRIDAY_DISPATCH_MEMORA_EXTRA_HEADER="X-Agent-Name: FRIDAY"
+            extra = os.getenv(f"FRIDAY_DISPATCH_{key}_EXTRA_HEADER", "").strip()
+            if extra and ":" in extra:
+                hn, hv = extra.split(":", 1)
+                self._configs[name].extra_headers = {hn.strip(): hv.strip()}
 
     def register_agent(self, agent_name: str, base_url: str,
                        health_url: str = "", timeout_sec: float = 30.0,
@@ -160,7 +165,9 @@ class UniverseDispatchBus:
     @staticmethod
     def _headers(config: AgentDispatchConfig) -> dict[str, str]:
         """Attach a configured service credential when present."""
-        return {config.auth_header: config.api_key} if config.api_key else {}
+        headers = {config.auth_header: config.api_key} if config.api_key else {}
+        headers.update(getattr(config, "extra_headers", None) or {})
+        return headers
 
     @staticmethod
     def _request_payload(envelope: TaskEnvelope, config: AgentDispatchConfig) -> dict[str, Any]:
