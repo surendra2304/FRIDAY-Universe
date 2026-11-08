@@ -26,6 +26,7 @@ AUTH_DEPENDENCIES = {
     "role_checker",
     "verify_friday_token",
     "service_or_operator_auth",
+    "require_cortex_route_access",
 }
 
 # Routes that authenticate inside the handler or by design carry no principal.
