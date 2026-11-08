@@ -182,6 +182,57 @@ def test_cors_preflight_bypasses_auth_and_reaches_cors_middleware():
     assert downstream.called is True
 
 
+def test_cors_headers_are_added_to_auth_rejections():
+    from starlette.middleware.cors import CORSMiddleware
+
+    downstream = RecordingApp()
+    authenticated = BridgeAuthMiddleware(
+        downstream,
+        secret_provider=lambda: "expected",
+    )
+    middleware = CORSMiddleware(
+        authenticated,
+        allow_origins=["https://client.example"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+        allow_credentials=True,
+    )
+
+    messages = []
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message):
+        messages.append(message)
+
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": "POST",
+        "scheme": "https",
+        "path": "/mcp",
+        "raw_path": b"/mcp",
+        "query_string": b"",
+        "headers": [(b"origin", b"https://client.example")],
+        "client": ("127.0.0.1", 12345),
+        "server": ("testserver", 443),
+    }
+    asyncio.run(middleware(scope, receive, send))
+
+    response_start = next(
+        message
+        for message in messages
+        if message["type"] == "http.response.start"
+    )
+    response_headers = dict(response_start["headers"])
+    assert response_start["status"] == 401
+    assert response_headers[b"access-control-allow-origin"] == b"https://client.example"
+    assert response_headers[b"access-control-allow-credentials"] == b"true"
+    assert downstream.called is False
+
+
 def test_non_bridge_route_is_not_blocked():
     downstream = RecordingApp()
     middleware = BridgeAuthMiddleware(downstream, secret_provider=lambda: "")
