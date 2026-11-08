@@ -19,7 +19,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
@@ -217,16 +218,26 @@ app.add_middleware(
 )
 
 
+_cortex_bearer = HTTPBearer(auto_error=False)
+
+
 async def require_cortex_route_access(
     request: Request,
-    auth: dict[str, Any] = Depends(verify_jwt_token),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_cortex_bearer),
+    x_friday_api_key: str | None = Header(None, alias="X-Friday-Api-Key"),
 ) -> dict[str, Any]:
-    """Require viewer access for reads and operator access for state-changing routes.
+    """Require viewer reads / operator writes; preserve FRIDAY service auth.
 
-    Applied only to feature routers that previously had no authentication
-    dependency. Existing endpoint-specific RBAC dependencies remain in force
-    and can impose stricter roles.
+    Human callers authenticate with JWT Bearer credentials. Internal FRIDAY
+    callers may use X-Friday-Api-Key and receive the FRIDAY_SYSTEM role.
+    Existing endpoint-specific RBAC dependencies remain in force and can
+    impose stricter roles.
     """
+    if x_friday_api_key:
+        auth = await verify_friday_token(x_friday_api_key)
+    else:
+        auth = await verify_jwt_token(credentials)
+
     required_role = (
         Role.CORTEX_VIEWER
         if request.method.upper() in {"GET", "HEAD", "OPTIONS"}
