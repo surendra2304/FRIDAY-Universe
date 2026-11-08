@@ -1,23 +1,32 @@
 """Regression coverage for INTELX Oracle generic JSON processor compatibility.
 
-The production async Oracle dialect subclasses OracleDialect. Importing the
-async driver module itself requires SQLAlchemy's optional greenlet extra, so
-this regression exercises the generic processors on the shared base class
-that the async dialect inherits, without requiring a DB connection.
+The monorepo's conftest adds multiple agent roots to sys.path. Load the INTELX
+helper by its exact file path to avoid another agent's same-named package.
 """
 
+import importlib.util
 import json
+from pathlib import Path
 
 from sqlalchemy.dialects.oracle.base import OracleDialect
 from sqlalchemy.types import JSON
 
-# The engine imports this module before constructing the concrete Oracle
-# dialect. Import it directly here to avoid importing SQLAlchemy's async extra.
-import intelx.oracle_dialect_compat  # noqa: F401
-
 
 def test_oracle_json_bind_and_result_processors_use_stdlib_defaults():
-    """Oracle's generic JSON processors must bind and read nested JSON values."""
+    """Oracle generic JSON processors must bind/read after IntelX hook loads."""
+    helper_path = (
+        Path(__file__).resolve().parents[1]
+        / "IntelX"
+        / "intelx"
+        / "oracle_dialect_compat.py"
+    )
+    spec = importlib.util.spec_from_file_location(
+        "_intelx_oracle_dialect_compat", helper_path
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
     dialect = OracleDialect()
     payload = {
         "status": "verified",
