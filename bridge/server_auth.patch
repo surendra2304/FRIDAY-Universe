@@ -1,6 +1,6 @@
 --- a/bridge/server.py
 +++ b/bridge/server.py
-@@
+@@ -416,9 +416,13 @@
      app.add_middleware(
          CORSMiddleware,
          allow_origins=["*"],
@@ -15,5 +15,3 @@
 +    app = BridgeAuthMiddleware(app)
 +
      print("================================================================")
-     print("  FRIDAY Universe Cloud-Hosted Engineering Bridge Starting...")
-     print("  Port: 8011 (Server 2)")
