@@ -13,7 +13,7 @@ from sqlalchemy.types import JSON
 
 # The engine imports this module before constructing the concrete Oracle
 # dialect. Import it directly here to avoid importing SQLAlchemy's async extra.
-import intelx.db.oracle_dialect_compat  # noqa: F401
+import intelx.oracle_dialect_compat  # noqa: F401
 
 
 def test_oracle_json_bind_and_result_processors_use_stdlib_defaults():
