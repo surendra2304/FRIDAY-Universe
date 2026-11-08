@@ -1,6 +1,6 @@
 # FRIDAY Universe — Master Plan
 
-Single source of truth for the roadmap. Both Claude and ChatGPT work top to bottom through this file.
+Single source of truth for the roadmap. Claude, ChatGPT, and Grok are equal collaborators working together through this file. The current plan is a shared roadmap, not a hierarchy; the owner is the final decision-maker.
 Read docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md before starting any task.
 
 Statuses: NOT_STARTED | IN_PROGRESS | BLOCKED | IN_REVIEW | VERIFIED | DONE
