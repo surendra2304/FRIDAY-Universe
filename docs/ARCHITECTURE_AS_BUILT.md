@@ -36,7 +36,7 @@ Evidence cited by file path or command. Secrets are named, never printed.
 ## 4. FRIDAY orchestration and task dispatch (VERIFIED by reading; behaviour PARTIALLY VERIFIED)
 - Command router: _dispatch_command in src/friday/api/server.py. Checks prompt injection, refuses destructive intents, then routes to ask_* calls. Routing table is substring matching.
 - Directive router: fleet_client.dispatch_directive, substring keyword matching. Misroutes observed by test: "decode this base64"→Forge, "I want to trader-proof my plan"→Stratex, "cashback offers"→Stratex, "the weather in the webpage"→Cortex.
-- GAP / DEFECT: integrations/universe_orchestrator.py execute_universe_goal, with no simulation API set, returns status "dispatched", real_agents 8, and a fixed synthesis without calling any peer (VERIFIED by reading lines 60–85).
+- FIXED ON BRANCH, NOT DEPLOYED: integrations/universe_orchestrator.py execute_universe_goal, with no simulation API set, used to return status "dispatched", real_agents 8, and a fixed synthesis without calling any peer. grok/TASK-CORE-002 calls FleetClient.get_fleet_summary and returns status not_executed with the probed online/total counts, or the probe error. It does not execute the goal. Verified by FRIDAY/tests/test_universe_orchestrator_no_fake_dispatch.py (2 passed) plus the existing mock-API test file (3 passed) on Server 2, 2026-11-08.
 - Task records: none found. No table or store tracks assignment, status or result across agents. (PARTIALLY VERIFIED: searched for dispatch/task store; not exhaustive.)
 - Autonomy: src/friday/autonomous/ exists (controller.py, daemon.py, enhanced_controller.py). UNVERIFIED: whether it can assign work to agents.
 - Dispatch bus: FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py exists and is mounted at /api/v1 (VERIFIED by grep). UNVERIFIED: its behaviour.
@@ -103,7 +103,7 @@ Evidence cited by file path or command. Secrets are named, never printed.
 1. CONFLICT: Stratex database (Oracle manifest vs SQLite code).
 2. CONFLICT: Memora database (Oracle manifest vs SQLite in older docs).
 3. CONFLICT: Stratex venues (Binance Futures vs MT5 vs cTrader). Owner says Binance testnet.
-4. GAP: universe_orchestrator fake success.
+4. IN_REVIEW: universe_orchestrator no longer fabricates a live dispatch (grok/TASK-CORE-002). The goal is still not executed when no Universe API is configured.
 5. GAP: keyword routing misroutes.
 6. GAP: Forge and Sentinel lack /v1/task/execute.
 7. GAP: FRIDAY-Voice memory limit.
@@ -112,15 +112,3 @@ Evidence cited by file path or command. Secrets are named, never printed.
 10. GAP: no alerting on crash loops; no documented rollback.
 11. GAP: sniper secrets authentication unconfirmed (TASK-OPS-002).
 12. UNVERIFIED: most per-agent internals (not yet read in full).
-
-
-## 16. Cortex agent — source and runtime audit (PARTIALLY VERIFIED, 2026-11-08)
-- Entry point: `Cortex/apps/api/src/cortex_api/main.py`; deployed service runs `uvicorn apps.api.src.cortex_api.main:app` on Server 2, port 8009. Service is active; observed 85.1 MB current memory with a 200 MB MemoryMax.
-- Public health endpoint `/cortex/health` returned HTTP 200, version 2.1.0, evidence class `process_liveness` at 2026-11-08T17:56:22Z. This proves process liveness, not database or downstream readiness.
-- FRIDAY task contract: `POST /v1/task/execute` is declared in `main.py` and depends on `verify_friday_token`; `friday_router.py` FRIDAY endpoints also use the FRIDAY service-key dependency. Key header: `X-Friday-Api-Key`.
-- Human/operator auth: `auth.py` implements JWT validation and role hierarchy. Development bypass requires explicit `CORTEX_DEV_AUTH_BYPASS=true` and is disabled when `APP_ENV=production` or Render production is detected. `require_role` provides viewer/operator/admin tiers.
-- Data/services: `config.py` configures an async SQLAlchemy engine/session and Redis pool. DSN selection can resolve Oracle, PostgreSQL, or SQLite based on runtime environment. The actual production DSN/backend and live Redis connectivity were not independently verified here. Schema bootstrap errors are logged but do not prevent app startup.
-- Integrations declared: FRIDAY peer URL, Memora peer URL, SendGrid, Twilio, HubSpot, Stripe, and multiple marketing/analytics modules. The dependency declarations and code paths do not prove that external credentials are provisioned or live provider calls succeed.
-- Tests run on the connected workspace: `test_prompt9_cortex.py` 22 passed; `test_friday_integration.py` 27 passed; `test_peer_integration_contract.py` 9 passed, 2 skipped; `test_multi_tenant_security_isolation.py` 1 passed. `test_route_authorization.py` failed (1 failed, 1 passed) and enumerated more than 100 feature routes lacking recognized auth dependencies.
-- GAP: marketing/content/decision/forecasting/risk/campaign/journey/segmentation/inbox feature routers had routes without route-level authentication dependencies in the audited source. This is a source-level access-control risk; live unauthenticated access was not tested. A method-aware RBAC remediation is proposed on `chatgpt/TASK-CORE-001-cortex-route-auth`; it is not deployed and requires passing CI plus review.
-- GAP: several marketing/content modules still contain simulated campaign status/metrics rather than demonstrated external provider execution (for example, in-memory campaign state and comments indicating production API calls are future work). Do not represent these integrations as production-verified.
