@@ -36,10 +36,10 @@ Evidence cited by file path or command. Secrets are named, never printed.
 ## 4. FRIDAY orchestration and task dispatch (VERIFIED by reading; behaviour PARTIALLY VERIFIED)
 - Command router: _dispatch_command in src/friday/api/server.py. Checks prompt injection, refuses destructive intents, then routes to ask_* calls. Routing table is substring matching.
 - Directive router: fleet_client.dispatch_directive, substring keyword matching. Misroutes observed by test: "decode this base64"→Forge, "I want to trader-proof my plan"→Stratex, "cashback offers"→Stratex, "the weather in the webpage"→Cortex.
-- FIXED ON BRANCH, NOT DEPLOYED: integrations/universe_orchestrator.py execute_universe_goal, with no simulation API set, used to return status "dispatched", real_agents 8, and a fixed synthesis without calling any peer. grok/TASK-CORE-002 calls FleetClient.get_fleet_summary and returns status not_executed with the probed online/total counts, or the probe error. It does not execute the goal. Verified by FRIDAY/tests/test_universe_orchestrator_no_fake_dispatch.py (2 passed) plus the existing mock-API test file (3 passed) on Server 2, 2026-11-08.
+- MERGED IMPLEMENTATION (PR #25, commit 79c1f75; deployment not verified): integrations/universe_orchestrator.py execute_universe_goal, with no simulation API set, previously returned status `dispatched`, real_agents 8, and a fixed synthesis without calling any peer. Grok's merged fix calls FleetClient.get_fleet_summary and returns status `not_executed` with probed online/total counts, or the probe error. It does not execute the goal on this path. Test evidence recorded in the commit: 5 passed (2 new plus 3 existing) on Server 2, 2026-11-08. This is test evidence, not production deployment evidence.
 - Task records: none found. No table or store tracks assignment, status or result across agents. (PARTIALLY VERIFIED: searched for dispatch/task store; not exhaustive.)
 - Autonomy: src/friday/autonomous/ exists (controller.py, daemon.py, enhanced_controller.py). UNVERIFIED: whether it can assign work to agents.
-- Dispatch bus: FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py exists and is mounted at /api/v1 (VERIFIED by grep). UNVERIFIED: its behaviour.
+- Dispatch bus: FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py exists and is mounted at `/api/v1` (source-level route evidence). PR #28 (`claude/TASK-DISPATCH-001`) is IN_REVIEW and not merged. Independent review on 2026-11-09 found payload priority type mismatch, missing Cortex/Memora auth headers, generic/wrong routes for Forge/Futuris/Sentinel, DEGRADED/ERROR receipt misclassification and possible Stratex false success. Dispatch functionality must not be called integrated until those contract findings are fixed and tests pass.
 
 ## 5. Inference routing and providers (PARTIALLY VERIFIED)
 - Inference exposes health and a routing gateway; key pools exist for Gemini, Groq, OpenRouter and NVIDIA NIM in the (untracked) credentials file. Names and counts only are recorded here.
@@ -62,12 +62,12 @@ Evidence cited by file path or command. Secrets are named, never printed.
 ## 8. Service ports, health and deployment configuration (VERIFIED)
 - Health: each agent answers GET /health on its port (curl through Caddy returned 200 for FRIDAY).
 - Restart policy: all units Restart=always (VERIFIED). A crash loop restarts silently; no alerting found.
-- Deploy: deploy-monorepo.yml on push to main; SSH to each server; `git fetch origin main; git reset --hard origin/main`; restarts changed agents. VERIFIED by reading the workflow.
-- Mirror: mirror-subrepos.yml force-pushes each agent folder to its standalone repo.
+- Deploy: deploy-monorepo.yml on push to main; SSH to each server; `git fetch origin main; git reset --hard origin/main`; restarts changed agents. VERIFIED by reading the workflow; deployment execution is not evidenced by this GitHub-only review.
+- Mirror: current main workflow still requires inspection against open PR #27. PR #27 proposes manual-only mirroring and removes force-push; it is not merged.
 
 ## 9. Authentication and authorization (PARTIALLY VERIFIED)
 - Agents require bearer keys named in their manifests (MEMORA_API_KEY, STRATEX_API_KEY, FRIDAY_API_KEY and so on). Values are secrets; not recorded.
-- Bridge (friday-bridge, :8011, exposed via Caddy /bridge, /mcp, /messages): run_shell, github_api, github_write_file, read_text, github_run_logs. No authentication found in bridge/server.py (PARTIALLY VERIFIED: a request to /bridge/mcp timed out instead of being rejected). Owner accepted the risk; recommendation stands.
+- Bridge (friday-bridge, :8011, exposed via Caddy /bridge, /mcp, /messages): run_shell, github_api, github_write_file, read_text, github_run_logs. Production bridge auth remains unverified/not enabled in the observed production source. PR #24 (`chatgpt/TASK-SEC-003`) adds fail-closed ASGI middleware and tests on a branch only; its integration patch, runtime secret provisioning, both MCP clients' header compatibility, and owner-approved restart remain outstanding. Do not claim protection is active.
 - CI secrets: DATABASE_URL in CI is a test-only placeholder (VERIFIED in monorepo-validation.yml from PR #20).
 
 ## 10. Secret management (VERIFIED)
@@ -96,19 +96,21 @@ Evidence cited by file path or command. Secrets are named, never printed.
 
 ## 14. CI/CD (VERIFIED)
 - Workflows at root: deploy-monorepo, mirror-subrepos, monorepo-validation, validate-monorepo, friday-universe-ci, heavy-task-image-build, oracle-capacity-sniper, oracle-capacity-sniper-worker2.
-- Failing before the CI fixes: VyralX/Futuris `app` collision (ModuleNotFoundError: app.services.autonomous_orchestrator). ChatGPT pushed fixes; current status of main c097312 UNVERIFIED.
+- Earlier CI blockers included VyralX/Futuris `app` collision, missing test dependencies and a `sys` import error. PR #22 and commits f24ff91/680c04e landed fixes for dependency installation and `mesh/memory_fabric.py`. Historical run 42502800827 still showed 3,286 passed, 74 skipped, 38 failed and 43 errors on a PR head. Current main full-suite status not verified in this review.
 - Workflows run on Node 20 with actions/checkout@v4 (deprecation warning in logs; not blocking).
 
 ## 15. Known gaps and inconsistencies (summary)
 1. CONFLICT: Stratex database (Oracle manifest vs SQLite code).
 2. CONFLICT: Memora database (Oracle manifest vs SQLite in older docs).
 3. CONFLICT: Stratex venues (Binance Futures vs MT5 vs cTrader). Owner says Binance testnet.
-4. IN_REVIEW: universe_orchestrator no longer fabricates a live dispatch (grok/TASK-CORE-002). The goal is still not executed when no Universe API is configured.
-5. GAP: keyword routing misroutes.
-6. GAP: Forge and Sentinel lack /v1/task/execute.
+4. MERGED (PR #25): universe_orchestrator no longer fabricates a live dispatch; when no Universe API is configured, the goal remains `not_executed` and is not actually executed.
+5. GAP: keyword routing misroutes; TASK-ORCH-001 remains outstanding.
+6. GAP: Forge and Sentinel typed task route capability is not yet complete; PR #29 covers Sentinel only and PR #28's generic defaults have unresolved contract review findings.
 7. GAP: FRIDAY-Voice memory limit.
-8. GAP: bridge authentication.
+8. GAP: production bridge authentication not yet activated; PR #24 is source/tests only pending operational requirements.
 9. GAP: no task records for cross-agent assignment.
 10. GAP: no alerting on crash loops; no documented rollback.
 11. GAP: sniper secrets authentication unconfirmed (TASK-OPS-002).
 12. UNVERIFIED: most per-agent internals (not yet read in full).
+13. CI: full monorepo validation is not yet evidenced green on current main.
+14. Cortex role policy: PR #26 has an unresolved finding because method-only POST=>operator blocks read-only forecast analysis for viewer users.
