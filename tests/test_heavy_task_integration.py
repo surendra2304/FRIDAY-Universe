@@ -97,7 +97,9 @@ def test_heavy_task_images_include_mesh_but_never_copy_env_secrets():
 
 
 def test_remote_deploy_is_not_automatically_triggered_by_push():
+    # Owner decision (2026-11-08): merging to main deploys to both Oracle servers by design.
+    # The guard that matters is that pushes are limited to main and PRs never deploy.
     workflow = _source(".github/workflows/deploy-monorepo.yml")
     assert "workflow_dispatch:" in workflow
-    assert "on:\n  push:" not in workflow
+    assert "on:\n  push:\n    branches:\n      - main" in workflow
     assert "  pull_request:" not in workflow
