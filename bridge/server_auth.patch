@@ -1,17 +1,6 @@
 --- a/bridge/server.py
 +++ b/bridge/server.py
-@@ -416,9 +416,13 @@
-     app.add_middleware(
-         CORSMiddleware,
-         allow_origins=["*"],
-         allow_credentials=True,
-         allow_methods=["*"],
-         allow_headers=["*"],
-     )
- 
-+    # Protect MCP, SSE and message routes. /health remains public for liveness checks.
-+    # The bridge directory is already added to sys.path before this app is built.
+@@ -416,1 +416,3 @@
 +    from auth import BridgeAuthMiddleware
-+    app = BridgeAuthMiddleware(app)
-+
-     print("================================================================")
++    app.add_middleware(BridgeAuthMiddleware)
+     app.add_middleware(
