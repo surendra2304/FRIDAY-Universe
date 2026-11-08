@@ -12,6 +12,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-CI-002 | Get main fully green | Claude | claude/TASK-CI-002 | CI workflows/tests | IN_PROGRESS; fixes landed on main through PR #22 and commits f24ff91/680c04e, but full suite/main validation remains unresolved |
 | TASK-CORE-002 | Remove fabricated universe_orchestrator success | Grok | grok/TASK-CORE-002 | FRIDAY/src/friday/integrations/universe_orchestrator.py and regression tests | MERGED to main via PR #25 (commit 79c1f75); code test evidence 5 passed on Server 2; production verification outstanding |
 | TASK-SEC-004 | Secret-management audit and CI leak prevention | ChatGPT | chatgpt/TASK-SEC-004 | .github/workflows/secret-scan.yml | IN_REVIEW (PR #31); change-range Gitleaks scan passed run 42525462164; not merged / not yet verified on main |
+| TASK-INT-001 | IntelX evidence pipeline and Oracle persistence audit | ChatGPT | chatgpt/TASK-INT-001-intelx-json | IntelX/intelx/oracle_dialect_compat.py, IntelX/intelx/db/engine.py, tests/test_intelx_oracle_json_compat.py | IN_REVIEW (PR #32); Oracle JSON compatibility fix and root-suite test; latest CI queued/in progress, no production deployment |
 
 ## B. Merged implementation work (not equivalent to production VERIFIED/DONE)
 - TASK-DOC-001: PR #21 merged at 515858e.
@@ -24,7 +25,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - dd1ff29 ci: move Oracle sniper workflows to repo root — Claude. Needed because GitHub runs only root workflows.
 - cf92fa9, a971e2c, d501148, 369995e — CI fixes (mock Oracle DB URL, isolate VyralX tests, Memora tmp_path, fastapi in validate-monorepo) — ChatGPT. Merge c097312 completes PR #19. Tests executed: not recorded here; ChatGPT to record.
 
-## C. Current work (GitHub state checked 2026-11-09; no live VM/connector runtime inspected in this session)
+## C. Current work (GitHub and read-only live VM state checked 2026-11-09)
 - PHASE 0 STARTED (Claude, 2026-11-08 ~16:05 UTC), per owner instruction. Steps:
   1. OCI secrets present in repo (names verified via API). Values unverified.
   2. Sniper check: run 42497059156 on main (c097312) dispatched 15:53 UTC; step "Run Infinite 24/7 Sniper" still running at 16:05. No failure. Authentication not yet confirmed; logs not readable until the job ends. Live log: https://github.com/surendra2304/FRIDAY-Universe/actions/runs/42497059156
@@ -32,9 +33,10 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - CI on main is RED. Root cause for the docs PR check "Validate fleet layout and mirror safety": 37 failed, 43 errors in tests (missing sqlalchemy and pydantic_settings in the CI install step; NameError 'sys' in tests/test_real_deep_layer11.py). This is a pre-existing defect on main, not caused by PR #21.
 - PR #20 merged via commit 94fed85 (2026-11-08). PR #21 merged via commit 515858e.
 - Claude currently owns TASK-CI-002, TASK-API-001 (PR #29), TASK-DISPATCH-001 (PR #28), TASK-MIRROR-001 (PR #27), and TASK-OPS-002 per existing coordination notes.
-- ChatGPT currently owns TASK-SEC-003 (PR #24), TASK-CTX-001 (PR #26), and TASK-SEC-004 (PR #31). PR #24/#26 require review findings below to be resolved before merge.
+- ChatGPT currently owns TASK-SEC-003 (PR #24), TASK-CTX-001 (PR #26), TASK-SEC-004 (PR #31), and the IntelX audit slice TASK-INT-001 (PR #32). PR #24/#26 still require review findings below to be resolved before merge.
 - Grok's TASK-CORE-002 implementation was merged through PR #25.
 - Current `main` HEAD observed via GitHub: `680c04ee383066874cad42a3295d18008eb6e1d2` (2026-11-08T19:34:57Z).
+- TASK-INF-002 verified read-only: FRIDAY-Voice.service active on Server 1; systemd drop-in `memory.conf` loaded, MemoryHigh=250M and MemoryMax=300M; service used 7.4M at check time. This corrects the stale architecture gap. No restart or configuration change was made.
 
 ## D. Blocked tasks
 | Blocker | Cause | Required action | Responsible |
@@ -45,12 +47,13 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 | History rewrite | Destructive; invalidates open branch bases | Coordinate timing with ChatGPT; run after open PRs merge | Claude (owner approved) |
 | PR #26 Cortex auth | Codex identified that method-only POST=>operator blocks viewer read-only forecast endpoint; ChatGPT posted a route-capability review comment 2026-11-09. | Separate read/analysis capability from state mutation and add viewer regression test | ChatGPT (PR author) |
 
-## E. Next tasks (in roadmap order)
-1. TASK-OPS-002 — confirm the sniper authenticates. Claude to read the run log when complete, or owner checks the live page.
-2. TASK-INF-001 — infrastructure audit (Claude).
-3. TASK-INF-002 — FRIDAY-Voice memory limit (Claude).
-4. TASK-CI-002 — main green (ChatGPT confirms ownership).
-5. TASK-CORE-001 — per-agent audit, starting with FRIDAY (Claude), in parallel with ChatGPT on a different agent.
+## E. Next tasks (dependency- and ownership-aware)
+1. TASK-CI-002 — Claude gets the full main validation green without weakening tests.
+2. PR #28 / #29 — Claude resolves dispatch contract blockers and completes Forge/Sentinel task-route capability.
+3. TASK-INT-001 / PR #32 — ChatGPT finishes IntelX Oracle JSON fix and root-suite regression after latest CI run; production behavior requires a later deployment and live DB verification.
+4. PR #26 / #24 — ChatGPT resolves Cortex viewer read-only POST authorization and bridge auth compatibility/activation requirements.
+5. TASK-OPS-002 — Claude confirms OCI sniper credentials authenticate from current run logs; still in progress.
+6. Continue per-agent TASK-CORE-001 audit split (Claude FRIDAY, ChatGPT IntelX), then data foundation tasks.
 
 ## F. Shared decisions
 - 2026-11-08: Both AIs work top to bottom through MASTER_PLAN.md. No bottom-up ownership split. (Owner decision.)
@@ -60,16 +63,19 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - 2026-11-08: Keyword routing in dispatch_directive misroutes common words. Treated as a defect (TASK-ORCH-001).
 - 2026-11-08: Stratex and other agents stay on their current servers. Owner decision.
 - 2026-11-08: Sniper retry loop speed-up (15 s cycle, 45 s backoff) is a trade-off: fewer waits, possibly more 429 throttles. Review after several hours of logs.
+- 2026-11-09: TASK-INF-002 systemd cap verified: FRIDAY-Voice.service has MemoryHigh=250M and MemoryMax=300M. The older architecture statement that it had no MemoryMax is stale.
+- 2026-11-09: IntelX Oracle issue observed in live logs at 2026-11-08 20:22:08 UTC: SQLAlchemy `OracleDialectAsync_oracledb` missing `_json_deserializer` during result processing. Source uses generic SQLAlchemy JSON fields with an Oracle DDL compiler hook only. PR #32 adds base-dialect serializer/deserializer defaults through a standalone import module and a generic JSON processor regression. Full CI remains pending; no production restart.
 
 ## G. Latest handoff checkpoint (ChatGPT reconnect, 2026-11-09)
 - Last implementation merged: TASK-CORE-002 (PR #25, 79c1f75). No production task is claimed DONE/VERIFIED based only on this connector inspection.
 - Main HEAD: `680c04ee383066874cad42a3295d18008eb6e1d2`.
-- Open PRs observed: #23 (CI), #24 (bridge auth), #26 (Cortex route auth), #27 (manual/no-force mirror), #28 (dispatch bus), #29 (Sentinel task endpoint), #30 (central docs sync), #31 (Gitleaks change-range scan).
+- Open PRs observed: #23 (CI), #24 (bridge auth), #26 (Cortex route auth), #27 (manual/no-force mirror), #28 (dispatch bus), #29 (Sentinel task endpoint), #30 (central docs sync), #31 (Gitleaks change-range scan), #32 (IntelX Oracle JSON compatibility).
 - ChatGPT review comments posted 2026-11-09: #23 TASK-ID collision/full-suite concern; #26 read-only POST forecast viewer access; #28 peer contract/endpoint/receipt/fake-success blockers.
 - CI evidence: run 42502800827 reported 3,286 passed, 74 skipped, 38 failed, 43 errors. This is historical evidence from PR #24's run, not a result for current HEAD. Current main's full validation remains UNVERIFIED in this session.
 - ChatGPT docs synchronization branch: `chatgpt/TASK-DOC-SYNC-001`; PR #30 updates the three central docs. This update adds TASK-SEC-004 state; PR #30 remains open and docs-only.
-- Live system bridge checked 2026-11-09: workspace on Server 2 is branch `claude/TASK-DISPATCH-001`, commit `f09e29f`, with one untracked file `Forge/tests/unit/test_task_execute_contract.py`; this work was preserved and not edited. Both Oracle VMs were online. Server 1: 956 MB RAM, 464 MB used, 337 MB available, 97 GB disk 22%; Server 2: 956 MB RAM, 265 MB used, 538 MB available, 49 GB disk 36%. These are point-in-time read-only diagnostics.
+- Live system bridge checked 2026-11-09: workspace on Server 2 is branch `claude/TASK-DISPATCH-001`, commit `f09e29f`, with one untracked file `Forge/tests/unit/test_task_execute_contract.py`; this work was preserved and not edited. Both Oracle VMs were online. Server 1: 956 MB RAM, 464 MB used, 337 MB available, 97 GB disk 22%; Server 2: 956 MB RAM, 265 MB used, 538 MB available, 49 GB disk 36%. These are point-in-time read-only diagnostics. All ten canonical agent systemd services were active when checked; liveness is not proof of each API's end-to-end functionality.
 - TASK-SEC-004 PR #31: Gitleaks run 42525462164 PASS after initial run 42525352655 failed due shallow-fetch range resolution. Current action scans PR/push change ranges only, not entire history. It must pass CI and merge before TASK-SEC-004 can be VERIFIED.
 - Tests: Forge targeted workspace test command was attempted on Server 2 but stopped in `Forge/tests/conftest.py` because the venv lacks installed `anthropic` (`ModuleNotFoundError`); the new Forge contract test was not executed. The dependency is listed in `Forge/requirements.txt`. No test was skipped or weakened.
+- IntelX PR #32 CI history: initial test collection failed because importing `intelx.db` eagerly imports `engine.py` and SQLAlchemy asyncio, which requires greenlet in the root validation environment. The compatibility module was moved to `IntelX/intelx/oracle_dialect_compat.py` outside the eager `intelx.db` package. Latest root CI run on commit `372d8252` is queued/in progress; prior run at `a5e33634` failed collection for the same greenlet dependency. A local SQLAlchemy 2.0.50 generic OracleDialect JSON bind/result round-trip passed after adding both None defaults; this is focused local processor evidence, not the GitHub root-suite result.
 - Outstanding external actions: TASK-OPS-002 sniper OCI authentication needs current workflow log verification; owner-reported credential rotation and approved history rewrite still need safe timing after open PRs settle; infrastructure and FRIDAY-Voice resource limits require authorized host access.
 - Exact next steps: (1) confirm all PR #31 CI jobs finish and review scanner policy; (2) keep PR #30 central docs aligned with accepted/merged work; (3) Claude resolves PR #28 dispatch findings and continues CI/Forge/Sentinel API work; (4) ChatGPT resolves PR #26 and #24 review findings; (5) pursue remaining owner actions and continue TASK-CORE-001 / data foundation audits without changing live services.
