@@ -72,7 +72,9 @@ Evidence cited by file path or command. Secrets are named, never printed.
 
 ## 10. Secret management (VERIFIED)
 - GitHub Actions secrets in FRIDAY-Universe: GH_PAT_MIRROR, ORACLE_SSH_KEY, SERVER1_HOST, SERVER2_HOST, OCI_USER_OCID, OCI_KEY_CONTENT, OCI_FINGERPRINT, OCI_TENANCY_OCID, OCI_REGION, OCI_USER_OCID_2, OCI_KEY_CONTENT_2, OCI_FINGERPRINT_2 (names verified via API).
-- CREDENTIALS.md on Server 2 (/opt/friday_universe/CREDENTIALS.md): untracked by git (VERIFIED, 0 history commits). Holds identifiers and provider keys in plaintext. Keep it out of git.
+- CREDENTIALS.md on Server 2 (/opt/friday_universe/CREDENTIALS.md): untracked by git (VERIFIED, 0 history commits in earlier host check). Holds identifiers and provider keys in plaintext. Keep it out of git.
+- `.gitignore` excludes credential files, `.env` files, private-key files, token JSON and service-account JSON; `.env.example` remains explicitly allowed. A recursive Git-tree filename inventory on main (5,291 blobs) found the nine expected `.env.example` templates and no tracked credential/private-key filename matches. This is filename evidence only, not content proof.
+- IN_REVIEW, not on main: PR #31 adds a Gitleaks GitHub Actions workflow for PR/push change ranges. Run 42525462164 passed after fixing an initial shallow-fetch range failure. It does not scan the legacy full history; TASK-SEC-002 is still required.
 - Leaked keys in public history commit 46034a4: owner rotated. History not yet rewritten.
 - Binance testnet keys are present in the credentials file; testnet only.
 
@@ -95,7 +97,7 @@ Evidence cited by file path or command. Secrets are named, never printed.
 - Rollback: none documented (GAP).
 
 ## 14. CI/CD (VERIFIED)
-- Workflows at root: deploy-monorepo, mirror-subrepos, monorepo-validation, validate-monorepo, friday-universe-ci, heavy-task-image-build, oracle-capacity-sniper, oracle-capacity-sniper-worker2.
+- Workflows at root on main include deploy-monorepo, mirror-subrepos, monorepo-validation, validate-monorepo, friday-universe-ci, heavy-task-image-build, oracle-capacity-sniper, oracle-capacity-sniper-worker2. PR #31 proposes a new secret-scan.yml workflow; it is not merged.
 - Earlier CI blockers included VyralX/Futuris `app` collision, missing test dependencies and a `sys` import error. PR #22 and commits f24ff91/680c04e landed fixes for dependency installation and `mesh/memory_fabric.py`. Historical run 42502800827 still showed 3,286 passed, 74 skipped, 38 failed and 43 errors on a PR head. Current main full-suite status not verified in this review.
 - Workflows run on Node 20 with actions/checkout@v4 (deprecation warning in logs; not blocking).
 
@@ -114,3 +116,4 @@ Evidence cited by file path or command. Secrets are named, never printed.
 12. UNVERIFIED: most per-agent internals (not yet read in full).
 13. CI: full monorepo validation is not yet evidenced green on current main.
 14. Cortex role policy: PR #26 has an unresolved finding because method-only POST=>operator blocks read-only forecast analysis for viewer users.
+15. Secret scan: PR #31 is open, and its change-range Gitleaks CI passed on its latest head; broader monorepo validation remains in progress. Do not treat TASK-SEC-004 as complete until PR review, all required checks, and merge.
