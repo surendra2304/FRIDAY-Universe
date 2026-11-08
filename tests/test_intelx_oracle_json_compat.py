@@ -9,9 +9,9 @@ import json
 from sqlalchemy.dialects.oracle.oracledb import OracleDialectAsync_oracledb
 from sqlalchemy.types import JSON
 
-# The engine module installs guarded defaults on OracleDialect when SQLAlchemy
-# does not define the generic JSON hooks required by JSON bind/result processors.
-import intelx.db.engine  # noqa: F401
+# Importing the compatibility module installs the same defaults imported by
+# intelx.db.engine before the Oracle async engine is constructed.
+import intelx.db.oracle_dialect_compat  # noqa: F401
 
 
 def test_oracle_async_json_bind_and_result_processors_use_stdlib_defaults():
