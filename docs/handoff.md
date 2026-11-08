@@ -70,3 +70,30 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
   - Live probe: Futuris 200; Inference, Memora, Stratex, IntelX, Forge, Cortex reached and return 401 (keys needed); Sentinel 404 (TASK-API-001).
   - OPERATIONAL, owner: set FRIDAY_DISPATCH_<NAME>_API_KEY (and _AUTH_HEADER where needed) for the bus host. Not committed.
 - Open follow-ups: TASK-API-001 (Sentinel /v1/task/execute), TASK-ORCH-001 (intent routing), CI integration tests that need live agents.
+
+## Session log: Claude, 2026-11-08 (authorized actions)
+- FRIDAY.service restarted on Server 1 (owner approved). Active, /health 200, 4 dispatch keys loaded.
+- Keys: read from live service environments, not from the document. Memora and Stratex document keys match live. VyralX document key was stale and has been replaced with the live key in CREDENTIALS.md. Values never written to this log.
+- /etc/friday/dispatch.env (root, 600) now holds: Futuris, IntelX, Inference, Cortex, Memora (Bearer + X-Agent-Name: FRIDAY), VyralX.
+- PR #28 gained a per-agent extra-header option (needed for Memora); commit da6d26f. CI running.
+- PR #29 (Sentinel /v1/task/execute): CI fails on the pre-existing suite (validate-monorepo, fleet). Not merged.
+
+### Live probe (POST /v1/task/execute, action=ping, keys from live environments)
+| Agent | Result | Meaning |
+|---|---|---|
+| Futuris 8004 | 200 SUCCESS (X-API-Key) | reachable and authenticated |
+| IntelX 8005 | 200 (Authorization: Bearer) | reachable and authenticated |
+| Inference 8001 | 422 (X-FRIDAY-API-Key) | key accepted; probe body rejected by schema |
+| Memora 8002 | 422 (Bearer own key + X-Agent-Name) | key accepted once X-Agent-Name is sent |
+| VyralX 8010 | 422 (x-api-key, live key, /api/v1/tasks) | key accepted |
+| Cortex 8009 | 500 (X-Friday-Api-Key) | key accepted; route error to investigate |
+| Stratex 8003 | 401 | BLOCKED: Stratex has no FRIDAY-scoped key (API_KEY_FRIDAY absent from its env and .env). Only BOT_API_KEY (ADMIN) exists. Owner decision needed. Also: Stratex localhost /health timed out. |
+| Forge 8006 | 404 | no /v1/task/execute route (TASK-API-001 follow-up) |
+| Sentinel 8008 | 404 | PR #29 not merged/deployed yet |
+
+### Open
+1. Stratex FRIDAY-scoped key: owner to decide (create API_KEY_FRIDAY in Stratex .env and restart Stratex, or accept BOT_API_KEY).
+2. Stratex health timeout: investigate.
+3. Cortex 500 on ping: investigate.
+4. Forge route: implement.
+5. PR #28 and #29 merge when CI is green, which depends on the pre-existing suite fixes.
