@@ -10,8 +10,14 @@ adding a new public route requires a deliberate, reviewable change here.
 
 from __future__ import annotations
 
-from cortex_api.main import app
+import asyncio
+
+import pytest
+from fastapi import HTTPException
 from fastapi.routing import APIRoute
+from starlette.requests import Request
+
+from cortex_api.main import app, require_cortex_route_access
 
 AUTH_DEPENDENCIES = {
     "verify_jwt_token",
@@ -109,3 +115,28 @@ def test_high_risk_routes_are_absent_from_the_public_allowlist():
     )
     leaked = [f"{method} {path}" for method, path in CREDENTIAL_IN_HANDLER if path.startswith(privileged_prefixes)]
     assert leaked == [], f"Privileged routes must not sit in the public allowlist: {leaked}"
+
+
+
+def _request_for_method(method: str) -> Request:
+    return Request(
+        {
+            "type": "http",
+            "method": method,
+            "path": "/test",
+            "headers": [],
+            "query_string": b"",
+        }
+    )
+
+
+def test_route_policy_allows_viewer_reads_and_requires_operator_for_writes():
+    viewer = {"sub": "viewer", "role": "cortex_viewer", "tenant_id": "tenant_test"}
+    operator = {"sub": "operator", "role": "cortex_operator", "tenant_id": "tenant_test"}
+
+    assert asyncio.run(require_cortex_route_access(_request_for_method("GET"), viewer)) == viewer
+    assert asyncio.run(require_cortex_route_access(_request_for_method("POST"), operator)) == operator
+
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(require_cortex_route_access(_request_for_method("POST"), viewer))
+    assert exc.value.status_code == 403
