@@ -18,6 +18,8 @@ async def test_trading_bot_connector_defaults():
     """Verify connector defaults to STRATEX_URL and valid credential handling."""
     connector = TradingBotConnector()
     assert "stratex" in connector.base_url or "trading-bot" in connector.base_url
+    assert connector.api_key is None
+    assert connector.last_positions_status == "not_checked"
     assert TARGET_BTC_PRICE_VARIANCE == "trading:BTCUSDT:price_variance_24h"
     assert TARGET_ETH_PRICE_VARIANCE == "trading:ETHUSDT:price_variance_24h"
     assert TARGET_SOL_PRICE_VARIANCE == "trading:SOLUSDT:price_variance_24h"
@@ -94,6 +96,7 @@ async def test_fetch_ticker_series_connection_error_graceful():
 
     connector = TradingBotConnector(
         base_url="http://offline-stratex:8000",
+        api_key="test_read_key",
         transport=ErrorTransport(),
     )
 
@@ -157,6 +160,7 @@ async def test_fetch_active_positions_success():
 
     connector = TradingBotConnector(
         base_url="http://test-stratex:8000",
+        api_key="test_read_key",
         transport=MockPosTransport(),
     )
 
@@ -171,6 +175,7 @@ async def test_fetch_active_positions_success():
     assert p["leverage"] == 10
     assert p["margin_type"] == "CROSS"
     assert "funding_rate" in p
+    assert connector.last_positions_status == "available"
 
 
 @pytest.mark.asyncio
@@ -186,8 +191,8 @@ async def test_discover_active_trade_pairs_futures_perp():
 
     class FuturesTransport(httpx.AsyncBaseTransport):
         async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-            if "futures/positions" in str(request.url):
-                return httpx.Response(200, json=mock_futures)
+            if request.url.path == "/api/v1/positions":
+                return httpx.Response(200, json={"status": "OK", "data": mock_futures})
             return httpx.Response(404)
 
     connector = TradingBotConnector(
@@ -224,12 +229,13 @@ async def test_fetch_active_positions_binance_futures_fields():
 
     class MockBinanceTransport(httpx.AsyncBaseTransport):
         async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-            if "fapi/v1/positionRisk" in str(request.url):
-                return httpx.Response(200, json=mock_binance_futures)
+            if request.url.path == "/api/v1/positions":
+                return httpx.Response(200, json={"status": "OK", "data": mock_binance_futures})
             return httpx.Response(404)
 
     connector = TradingBotConnector(
         base_url="http://test-stratex:8000",
+        api_key="test_read_key",
         transport=MockBinanceTransport(),
     )
 
@@ -260,12 +266,13 @@ async def test_fetch_futures_funding_telemetry_remote_and_fallback():
 
     class FundingTransport(httpx.AsyncBaseTransport):
         async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-            if "fundingRate" in str(request.url):
-                return httpx.Response(200, json=mock_rate)
+            if request.url.path == "/api/v1/ccxt/funding":
+                return httpx.Response(200, json={"status": "OK", "data": mock_rate[0]})
             return httpx.Response(500)
 
     connector = TradingBotConnector(
         base_url="http://test-stratex:8000",
+        api_key="test_read_key",
         transport=FundingTransport(),
     )
 
@@ -276,13 +283,19 @@ async def test_fetch_futures_funding_telemetry_remote_and_fallback():
     assert funding["predicted_rate"] == 0.00018
 
     # Test fallback
+    class OfflineTransport(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("Stratex unavailable")
+
     connector_offline = TradingBotConnector(
         base_url="http://offline-stratex:8000",
-        transport=httpx.AsyncBaseTransport(),
+        api_key="test_read_key",
+        transport=OfflineTransport(),
     )
     fb = await connector_offline.fetch_futures_funding_telemetry("SOLUSDT")
     assert fb["symbol"] == "SOLUSDT"
-    assert fb["funding_rate"] == 0.0001
+    assert fb["funding_rate"] is None
+    assert fb["status"] == "unavailable"
 
 
 @pytest.mark.asyncio
