@@ -33,3 +33,9 @@
 
 - [FACT] The implementation is hybrid in naming and scoring, but vector embeddings are local feature hashing, lexical ranking is Python substring overlap, graph expansion is one hop, and default reranking is heuristic. Configured “BM25” and ranking factors overstate the algorithms currently exercised by these paths.
 - [FACT] One local runtime probe reproduced a severe context-budget overrun; no network, external model, Qdrant or production service was contacted. Phase 7 is complete; next is persistence, schema/migrations, and deletion convergence.
+
+
+## Audit correction — 2026-11-09
+
+- [FACT — current source audit] The advertised `Settings.VECTOR_DIMENSION=1536` had no production-code references. The actual `EmbeddingGenerator` and `OracleVectorAdapter` both use 384 dimensions; the old setting and `.env.example` value were misleading. PR #37 removes the unused override from configuration/documentation and states the fixed 384-dimensional contract.
+- [FACT] This does not establish the size of any separately provisioned external Qdrant collection. Qdrant collection dimensions must match the 384-dimensional vectors; collection creation/resizing and production connectivity remain unverified.
