@@ -47,7 +47,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
 ### Phase 2 — Data foundation
 - [ ] TASK-DATA-001 — Audit database architecture per agent (schemas, owners, connection strings by name only).
-- [ ] TASK-DATA-002 — Verify memory isolation between agents (Memora namespaces `memora://<agent>/private`).
+- [ ] TASK-DATA-002 — Verify memory isolation between agents (Memora namespaces `memora://<agent>/private`). Owner: ChatGPT; IN_PROGRESS on chatgpt/TASK-DATA-002-memory-tenant-isolation; first confirmed defect fixed in PR #38 (stacked on PR #37). The /v1/memories/sweep-horizon endpoint previously accepted an arbitrary tenant ID from a memora API request and could trigger permanent milestone creation/raw-memory deletion across that tenant. The route now binds to the authenticated memora identity in the default tenant, rejects mismatches before invoking the sweeper, and always passes the bound tenant. Regression: full FRIDAY CI run 42598678632 PASS (Memora group 17 passed/1 warning; HTTP/API group 45 passed); focused vector workflow run 42598678508 PASS (8 passed/1 warning). Broad monorepo checks 42598678658 and 42598678539 were still in progress. Remaining work: complete API/namespace/share/graph private/shared/universal regression matrix; PR #38 must not merge before PR #37.
 - [ ] TASK-DATA-003 — Test persistence and recovery for Memora and Stratex ledgers.
 
 ### Phase 3 — CI and delivery
@@ -119,7 +119,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 ## 7. Current overall progress
 - VERIFIED: no end-to-end production task is claimed VERIFIED from this GitHub-only review. GitHub-visible implementation merges are not deployment evidence.
 - Merged implementation: TASK-DOC-001 (PR #21), TASK-CORE-002 (PR #25), and CI-related PR #22. Their production/runtime verification is separate.
-- IN_PROGRESS / IN_REVIEW: TASK-COLLAB-001, TASK-CI-002, TASK-SEC-003, TASK-SEC-004, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, TASK-CTX-001, TASK-INT-001, TASK-FUT-001 and TASK-MEM-001 as tracked in handoff.md.
+- IN_PROGRESS / IN_REVIEW: TASK-COLLAB-001, TASK-CI-002, TASK-SEC-003, TASK-SEC-004, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, TASK-CTX-001, TASK-INT-001, TASK-FUT-001, TASK-MEM-001 and TASK-DATA-002 as tracked in handoff.md.
 - PR #34 (Claude) adds CI root-cause changes under TASK-CI-004; its FRIDAY CI and heavy-task image checks passed, but two monorepo validation jobs failed. Independent review comment #6732764298 records outstanding stub-fleet false-success, real-fleet override, dependency and overlapping PR findings. Its file overlap with PR #23 and PR #28 is recorded in docs/collaboration/FILE_OWNERSHIP.yaml.
 - VERIFIED infrastructure control: TASK-INF-002 (FRIDAY-Voice MemoryMax=300M, MemoryHigh=250M) based on 2026-11-09 systemd evidence; this is not a claim that the voice agent's event-loop warnings are resolved.
 - All ten agents remain canonical and integrated; VyralX remains agent ten.
@@ -133,3 +133,11 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - Focused vector regression run 42596147391 PASS (8 passed, 1 warning); FRIDAY Universe CI/CD run 42596147378 PASS, including all existing FRIDAY test suites, the Memora vector test step, HTTP/API tests and artifact upload.
 - Broad monorepo validators 42596147434 and 42596147572 were still in progress at the latest status check. Do not infer their result from the focused/FRIDAY workflows.
 - Oracle tenant-safe MERGE and transaction savepoint behavior are covered by a SQL contract test and SQLite transaction regressions respectively; live Oracle DB execution was not performed. External Qdrant collection dimension remains unverified.
+
+
+## TASK-DATA-002 — cross-agent memory isolation (2026-11-09; in progress)
+
+- PR #38 is open on chatgpt/TASK-DATA-002-memory-tenant-isolation, stacked on PR #37. It closes a confirmed cross-tenant maintenance control gap in POST /v1/memories/sweep-horizon: body-supplied tenant IDs are now rejected unless they match the authenticated Memora service identity's tenant; the API always invokes the sweeper with the resolved tenant. The trusted internal background worker's all-tenant mode is unchanged.
+- Regression results on PR #38 head 0b8252529f36d37c51907cfbd1dc3fd6149b6bfb: FRIDAY Universe CI/CD run 42598678632 PASS. Memora regression group: 17 passed, 1 warning. HTTP/API suite: 45 passed. Memora Vector Regression run 42598678508 PASS (8 passed, 1 warning).
+- Broad monorepo Structure/Safety checks 42598678658 and 42598678539 were still running at the latest check; no green result is claimed for those.
+- This does not close the whole task. The remaining private/shared/universal namespace audit and adversarial route matrix are still in progress. PR #38 must not be merged before its dependency PR #37.
