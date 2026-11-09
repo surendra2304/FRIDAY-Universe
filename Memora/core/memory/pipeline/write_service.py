@@ -11,6 +11,7 @@ import time
 import logging
 
 from storage.relational.models import (
+    AccessGrant,
     MemoryRecord,
     MemoryType,
     LifecycleState,
@@ -22,6 +23,7 @@ from storage.relational.models import (
 from storage.relational.access_scope import (
     SERVICE_AGENT,
     grant_shared_access,
+    may_mutate_record,
     share_record_with_all,
 )
 from storage.relational.session import storage_receipt
@@ -86,6 +88,122 @@ class MemoryWriteResult:
         }
 
 class MemoryWriteService:
+    @staticmethod
+    def _apply_record_shares(
+        db: Session,
+        record: MemoryRecord,
+        actor,
+        tenant_id: str,
+        recipient_names: List[str],
+        purpose: Optional[str] = None,
+    ) -> None:
+        """Apply explicit, owner-authorized sharing within the record's tenant."""
+        if not recipient_names or record.scope == MemoryScopeType.UNIVERSAL:
+            return
+
+        if not may_mutate_record(record, actor.name):
+            raise PermissionDeniedError(
+                "Only the memory owner may share a record with other agents."
+            )
+
+        recipients = []
+        for raw_name in recipient_names:
+            target_name = normalize_agent_name(raw_name)
+            if not target_name:
+                raise MemoryPipelineError("shared_with entries must be non-empty agent names.")
+            if target_name == "*":
+                raise PermissionDeniedError(
+                    "Wildcard recipients are not accepted. Use the canonical team-shared namespace or the authorized sharing workflow."
+                )
+            if target_name == normalize_agent_name(actor.name):
+                raise MemoryPipelineError("A memory owner does not need to share a record with itself.")
+            recipient = IdentityService.get_agent_by_name(
+                db, target_name, tenant_id=tenant_id
+            )
+            if recipient is None:
+                raise PermissionDeniedError(
+                    f"Shared recipient '{target_name}' must be registered in tenant '{tenant_id}'."
+                )
+            recipients.append(recipient)
+
+        decision = PolicyEngine.evaluate_access(
+            db,
+            actor=actor,
+            namespace=record.namespace,
+            action="share",
+            purpose=purpose,
+            memory_id=record.id,
+            log_audit=False,
+        )
+        if not decision.allowed:
+            PolicyEngine.log_audit_decision(
+                db,
+                decision,
+                actor_id=actor.id,
+                memory_id=record.id,
+                tenant_id=tenant_id,
+            )
+            raise PermissionDeniedError(decision.reason)
+
+        record.scope = MemoryScopeType.SHARED
+        for recipient in recipients:
+            existing_grant = db.query(AccessGrant).filter(
+                AccessGrant.tenant_id == tenant_id,
+                AccessGrant.agent_id == recipient.id,
+                AccessGrant.namespace_id == record.namespace_id,
+            ).first()
+            if existing_grant is None:
+                IdentityService.grant_access(
+                    db,
+                    agent_id=recipient.id,
+                    namespace_id=record.namespace_id,
+                    actions=["read", "query"],
+                    purpose=purpose,
+                    tenant_id=tenant_id,
+                    commit=False,
+                )
+            else:
+                if existing_grant.is_expired():
+                    # A new, explicit owner share renews the expired grant but
+                    # does not revive its former write capability.
+                    existing_grant.actions = ["read", "query"]
+                    existing_grant.expires_at = None
+                else:
+                    actions = list(existing_grant.actions or [])
+                    for action in ("read", "query"):
+                        if action not in actions:
+                            actions.append(action)
+                    existing_grant.actions = actions
+                if purpose is not None:
+                    existing_grant.purpose = purpose
+                db.flush()
+
+            grant_shared_access(
+                db,
+                record,
+                recipient.name,
+                granted_by=actor.name,
+            )
+
+        PolicyEngine.log_audit_decision(
+            db,
+            decision,
+            actor_id=actor.id,
+            memory_id=record.id,
+            tenant_id=tenant_id,
+        )
+        event_emitter.publish(
+            "memory.shared",
+            {
+                "memory_id": record.id,
+                "shared_by": actor.name,
+                "shared_with": [recipient.name for recipient in recipients],
+                "namespace_path": record.namespace.path if record.namespace else "",
+                "actions": ["read", "query"],
+            },
+            db=db,
+        )
+
     @classmethod
     def execute_pipeline(
         cls,
@@ -399,6 +517,12 @@ class MemoryWriteService:
                 target_name = normalize_agent_name(raw_name)
                 if not target_name:
                     raise MemoryPipelineError("shared_with entries must be non-empty agent names.")
+                if target_name == "*":
+                    raise PermissionDeniedError(
+                        "Wildcard recipients are not accepted. Use the canonical team-shared namespace or the authorized sharing workflow."
+                    )
+                if target_name == normalize_agent_name(actor.name):
+                    raise MemoryPipelineError("A memory owner does not need to share a record with itself.")
                 if target_name not in share_targets:
                     share_targets.append(target_name)
             if share_targets and resolved_scope == MemoryScopeType.UNIVERSAL:
@@ -444,6 +568,10 @@ class MemoryWriteService:
                 ).first()
                 if existing_idemp:
                     read_decision = _require_duplicate_read_access(existing_idemp)
+                    if share_targets:
+                        cls._apply_record_shares(
+                            db, existing_idemp, actor, resolved_tenant, share_targets, purpose
+                        )
                     PolicyEngine.log_audit_decision(
                         db,
                         policy_decision,
@@ -496,6 +624,10 @@ class MemoryWriteService:
                 ).first()
                 if existing:
                     read_decision = _require_duplicate_read_access(existing)
+                    if share_targets:
+                        cls._apply_record_shares(
+                            db, existing, actor, resolved_tenant, share_targets, purpose
+                        )
                     PolicyEngine.log_audit_decision(
                         db,
                         policy_decision,
@@ -624,10 +756,9 @@ class MemoryWriteService:
                 db.flush()
                 if resolved_scope == MemoryScopeType.SHARED:
                     if share_targets:
-                        for target_name in share_targets:
-                            grant_shared_access(
-                                db, record, target_name, granted_by=actor.name
-                            )
+                        cls._apply_record_shares(
+                            db, record, actor, resolved_tenant, share_targets, purpose
+                        )
                     elif scope_for_namespace_type(namespace.type) == MemoryScopeType.SHARED:
                         # A `team-shared` namespace keeps its historical meaning:
                         # readable by the whole team, still gated by namespace
@@ -664,6 +795,10 @@ class MemoryWriteService:
                 if winner is None:
                     raise
                 read_decision = _require_duplicate_read_access(winner)
+                if share_targets:
+                    cls._apply_record_shares(
+                        db, winner, actor, resolved_tenant, share_targets, purpose
+                    )
                 PolicyEngine.log_audit_decision(
                     db,
                     policy_decision,
