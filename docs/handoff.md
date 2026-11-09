@@ -110,10 +110,8 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 ## J. Latest CI evidence and cross-AI actions — 2026-11-09
 
 - Current PR #30 head: `4a00f428` (`4a00f428d85b74834eff5ff29b54e6a032f64e15`).
-- Collaboration Registry Validation: run 42566339658 — PASS.
-- FRIDAY Universe CI/CD: run 42566339669 — IN_PROGRESS at this snapshot.
-- Fleet-layout monorepo validation: run 42566339666 — IN_PROGRESS at this snapshot.
-- Monorepo policy/workflow validator: run 42566339657 — IN_PROGRESS at this snapshot.
+- Collaboration Registry Validation: run 42596903311 — PASS on PR #30 head `5920161f`.
+- Broad monorepo Structure and Safety CI runs 42596903328 and 42596903017 were in progress at the latest check. These are not implied to have passed.
 - Prior PR #30 head `7ec4cdda` results: run 42564999230 — FAIL (37 failed, 3272 passed, 73 skipped, 40 errors), and run 42564999188 — FAIL. Observed prior-head failure groups included Docker service hostname `inference` DNS failures, only 28/100 concurrent dispatch receipts, circuit breaker open, Inference test DB unconfigured, missing agent dependencies, namespace collisions and CPU-worker startup failures. These results must not be presented as the latest-head result.
 - Vercel v0 PR #36 monorepo-policy check run 42564376993 — FAIL, with overlapping test/dependency/import issues. PR #36 remains open and overlaps seven files with PR #30; no handoff response observed.
 - Claude PR #34 review posted at PR comment #6732764298. Findings: permissive stub fleet can return false success on arbitrary routes/actions; real-fleet override comment does not match implementation; dependency lists remain incomplete; PR #27 mirror-policy changes are not part of its base; stale path assertions and Memora import collision remain.
@@ -130,3 +128,11 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Dependency: `greenlet>=3.0.0,<4.0.0` is now declared in both `Memora/requirements.txt` and `Memora/pyproject.toml` because SQLAlchemy asyncio is imported by the package test/runtime surface.
 - Dimension contract: generator/Oracle table are fixed at 384. Removed the unused `VECTOR_DIMENSION=1536` setting and documented that Qdrant (if used) must be externally provisioned at 384; no live collection/Oracle schema was contacted.
 - Exact next action: review PR #37, obtain Oracle-specific verification in a controlled non-production database when available, verify Qdrant collection shape/config if deployed, then request owner review before merge.
+
+
+## L. Latest Memora and collaboration registry handoff — 2026-11-09
+
+- PR #37 / TASK-MEM-001: focused Memora vector tests run 42596147391 PASS (8 passed, 1 warning); full FRIDAY CI run 42596147378 PASS, including the Memora step and HTTP/API tests.
+- PR #37 latest head: `730ee962bb36e72d9a40c29821d84c8624b4c85a`; open/mergeable; no live Oracle or Qdrant integration performed.
+- PR #30 latest head: `5920161f457e4216f13edd260862ef6476d2612c`; collaboration registry validation run 42596903311 PASS. The two broad monorepo validation jobs on that head were still in progress at the latest check.
+- TASK-MEM-001 has been added to the work board, roster, file ownership, activity log, handoff, Master Plan and as-built architecture.
