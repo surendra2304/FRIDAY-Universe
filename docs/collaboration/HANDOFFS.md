@@ -125,3 +125,15 @@ For every new handoff, include:
 - Regression: foreign tenant request rejected and sweeper not called; explicit default and omitted tenant both pass only default.
 - Verification: FRIDAY run 42598678632 PASS (Memora group 17 passed/1 warning; HTTP/API group 45 passed); focused Memora Vector Regression run 42598678508 PASS (8 passed/1 warning). Broad monorepo runs 42598678658/78539 still in progress at last check.
 - Remaining task: complete adversarial API tests for direct read, search, share/revoke, graph and task routes; inspect remaining tenant-selectable administrative endpoints. No production DB/service was touched.
+
+
+## Handoff — 2026-11-09 — TASK-DATA-002 legacy access-controller authorization
+
+- Owner: ChatGPT; continuation of the existing TASK-DATA-002 claim (issue #35 comment #6745629449).
+- Branch / PR: `chatgpt/TASK-DATA-002-memory-tenant-isolation` / PR #38. This branch remains stacked on PR #37; do not merge #38 before #37.
+- Finding: `Memora/apps/api/main.py` mounts the compatibility router from `memory_access_controller.py` under `/api/v1`. Its handlers previously had no authentication dependency. The process-local controller exposed grant, revoke, approval, self-check, request, global audit and report routes without a verified principal.
+- Implementation: all seven endpoints now authenticate; only the `memora` principal may grant/revoke/approve or inspect global audit/report; request/check subjects are pinned to the authenticated agent; caller-supplied `granted_by` / `decided_by` hints cannot impersonate another principal. The report explicitly labels the controller as process-local compatibility state, not the canonical persistent policy store.
+- Files: `Memora/apps/api/routers/memory_access_controller.py`, `Memora/tests/test_memory_access_controller_auth.py`, `.github/workflows/friday-universe-ci.yml`, `.github/workflows/memora-vector-regression.yml`.
+- Regression: missing credentials rejected; non-admin grant/revoke/approval/audit/report denied; request/check subject spoofing denied; Memora admin actions accepted with authenticated attribution.
+- Verification: focused Memora Vector Regression run 42658441949 PASS (12 passed, 1 warning). The Memora step in FRIDAY CI run 42658441937 PASS; full FRIDAY HTTP/API stage was still in progress at the last check. Monorepo checks 42658441817 and 42658441849 were also still in progress then.
+- Limits: no live Oracle/Qdrant or production service was contacted; this compatibility controller remains process-local and is not a substitute for the tenant-scoped relational PolicyEngine. Full TASK-DATA-002 isolation matrix remains IN_PROGRESS.
