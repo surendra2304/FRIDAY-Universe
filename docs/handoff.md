@@ -95,3 +95,12 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - CI refresh: PR #34 FRIDAY CI run 42560097648 PASS; Heavy-Task Runtime Image Build run 42560097625 PASS; Monorepo Structure and Safety CI runs 42560097582 and 42560097580 FAIL. PR #33 FRIDAY CI run 42530391450 PASS; monorepo validation run 42530741161 FAIL during collection due missing NumPy in the root validation environment. Main full validation remains red/unverified.
 - TASK-CI-ID reconciliation: PR #23 uses TASK-CI-003 for CI dependencies/test DB setup while Master Plan TASK-CI-003 describes run_workspace_test; PR #34 uses TASK-CI-004 for broad validation fixes while Master Plan TASK-CI-004 describes bridge/** .gitignore. Claude must reconcile these IDs with the project owner before acceptance criteria are changed.
 - No merge, production deployment, service restart, secret provisioning or history rewrite was performed in this session.
+
+
+## I. Collaboration registry validation added
+
+- Added `scripts/validate_collaboration.py` and `.github/workflows/collaboration-registry.yml` to PR #30.
+- The workflow installs PyYAML and checks the YAML records, unique collaborator/task/conflict IDs, valid statuses, registered task owners, conflict-path references, required handoff files, central documents and the canonical ten-agent list.
+- Command: `python scripts/validate_collaboration.py`.
+- Status: workflow result not yet available at this snapshot. Do not call it passing until GitHub Actions completes.
+- Claim: TASK-COLLAB-001 was posted to issue #35, comment [#6732479100](https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6732479100).
