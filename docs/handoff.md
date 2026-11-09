@@ -86,15 +86,15 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 
 ## H. Multi-AI collaboration snapshot (2026-11-09)
 
-- Shared collaboration centre: `docs/collaboration/`; onboarding instructions are in `docs/collaboration/README.md`. Initial validator run 42564054378 failed because `project_owner_id` did not match the roster ID; fixed to `human_surendra`. Latest validator run 42564543465 passed.
+- Shared collaboration centre: `docs/collaboration/`; onboarding instructions are in `docs/collaboration/README.md`. Initial validator run 42564054378 failed because `project_owner_id` did not match the roster ID; fixed to `human_surendra`. Latest validator run 42564999184 passed on PR #30 head `7ec4cdda`.
 - Shared claim/release/review thread: [GitHub issue #35](https://github.com/surendra2304/FRIDAY-Universe/issues/35). Contributors must post a claim before editing, then update the board and file-ownership registry.
 - Current roster: Claude (active), ChatGPT (active), Grok (previous contributor; current availability unknown), Vercel v0 (active contributor with PR #36), ZAI (planned/not onboarded), Surendra (project owner). V0 reports local shell/Vercel Git sync; only branch/PR existence is independently verified in this snapshot.
 - Current active PR ownership and changed-file lists are mirrored in `docs/collaboration/WORK_BOARD.yaml` and `FILE_OWNERSHIP.yaml`. PR #30 is the proposed integration branch; PR #36's separate changes must be compared and consolidated.
 - Explicit overlap conflicts: PR #23/#34 both modify `.github/workflows/validate-monorepo.yml`; PR #28/#34 both modify `FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py`; PR #24/#26/#30 all modify the three central docs; PR #30/#36 both modify the seven core `docs/collaboration/` files. Coordinate and reconcile combined diffs before merge. PR #36 was opened on `v0/coordination-bootstrap`; a coordination comment was posted on PR #36 (#6732575647).
 - Shared Server 2 workspace last observed on `claude/TASK-CI-004` with untracked `Forge/tests/unit/test_task_execute_contract.py`. This file remains protected and must not be deleted or overwritten without its owner confirming disposition.
-- CI refresh: PR #34 FRIDAY CI run 42560097648 PASS; Heavy-Task Runtime Image Build run 42560097625 PASS; Monorepo Structure and Safety CI runs 42560097582 and 42560097580 FAIL. PR #33 FRIDAY CI run 42530391450 PASS; monorepo validation run 42530741161 FAIL during collection due missing NumPy in the root validation environment. Main full validation remains red/unverified.
+- CI refresh: PR #30 FRIDAY CI run 42564999315 PASS; Collaboration Registry Validation 42564999184 PASS; Monorepo Structure and Safety CI runs 42564999230 and 42564999188 FAIL. Fleet validation run 42564999230: 37 failed, 3272 passed, 73 skipped, 40 errors. Failures include unresolved Docker service-name dispatch targets (`inference`), 28/100 concurrent dispatch receipts, circuit-breaker failures, unconfigured Oracle memory DB during Inference app tests, missing test dependencies and CPU-worker process startup. Monorepo policy run 42564999188 also failed on dependency/import/process-worker issues. PR #34 FRIDAY CI run 42560097648 PASS; Heavy-Task Runtime Image Build run 42560097625 PASS; its monorepo jobs 42560097582/580 FAIL. PR #33 FRIDAY CI run 42530391450 PASS; its monorepo validation run 42530741161 FAIL during collection due missing NumPy. Main full validation remains red.
 - TASK-CI-ID reconciliation: PR #23 uses TASK-CI-003 for CI dependencies/test DB setup while Master Plan TASK-CI-003 describes run_workspace_test; PR #34 uses TASK-CI-004 for broad validation fixes while Master Plan TASK-CI-004 describes bridge/** .gitignore. Claude must reconcile these IDs with the project owner before acceptance criteria are changed.
-- No merge, production deployment, service restart, secret provisioning or history rewrite was performed in this session. PR #30 remains open and mergeable; PR #36 also remains open. The registry validator passed, but the full repository validation jobs are still running/failing separately.
+- No merge, production deployment, service restart, secret provisioning or history rewrite was performed in this session. PR #30 remains open and mergeable; PR #36 also remains open. The latest registry validator and FRIDAY CI passed; both broader monorepo validation jobs failed.
 
 
 ## I. Collaboration registry validation added
@@ -102,5 +102,17 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Added `scripts/validate_collaboration.py` and `.github/workflows/collaboration-registry.yml` to PR #30.
 - The workflow installs PyYAML and checks the YAML records, unique collaborator/task/conflict IDs, valid statuses, registered task owners, conflict-path references, required handoff files, central documents and the canonical ten-agent list.
 - Command: `python scripts/validate_collaboration.py`.
-- Status: workflow result not yet available at this snapshot. Do not call it passing until GitHub Actions completes.
+- Latest result: PASS, run 42564999184 on PR #30 head `7ec4cdda1e9589090fe33ede1b1c03f71daa14de`. This validates registry structure only; full monorepo CI remains failed.
 - Claim: TASK-COLLAB-001 was posted to issue #35, comment [#6732479100](https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6732479100).
+
+
+## J. Latest CI evidence and cross-AI actions — 2026-11-09
+
+- PR #30 head: `7ec4cdda1e9589090fe33ede1b1c03f71daa14de`.
+- Collaboration Registry Validation: run 42564999184 — PASS.
+- FRIDAY Universe CI/CD: run 42564999315 — PASS.
+- Fleet-layout monorepo validation: run 42564999230 — FAIL; 37 failed, 3272 passed, 73 skipped, 40 errors. Dispatch tests attempted Docker service hostname `inference`, causing DNS failures, only 28/100 concurrent dispatch receipts, and circuit-breaker failures. Inference app tests refused to start because the test database configuration was absent. Other failures included missing test dependencies and CPU worker startup.
+- Monorepo policy/workflow validator: run 42564999188 — FAIL. Errors include missing greenlet/agent dependencies, Memora `app.core` import resolution, and process-worker failures.
+- Vercel v0 PR #36 monorepo-policy check run 42564376993 — FAIL, with overlapping test/dependency/import issues. PR #36 remains open and overlaps seven files with PR #30; no handoff response observed.
+- Claude PR #34 review posted at PR comment #6732764298. Findings: permissive stub fleet can return false success on arbitrary routes/actions; real-fleet override comment does not match implementation; dependency lists remain incomplete; PR #27 mirror-policy changes are not part of its base; stale path assertions and Memora import collision remain.
+- Exact next actions: Claude addresses PR #34 review and reconciles overlaps with PR #23/#28; v0 and ChatGPT consolidate PR #30/#36 through issue #35; ChatGPT maintains the single operational registry. All PR branches remain preserved and unmerged.
