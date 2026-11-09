@@ -27,3 +27,7 @@ Append-only record of significant shared engineering activity. Add new entries a
 
 - **ChatGPT — validator repair:** Corrected `TEAM_ROSTER.yaml` project owner reference from the GitHub login to the actual roster ID `human_surendra`. Latest dedicated validation run 42564731772 passed on PR #30 head 6cbd9e4.
 - **Vercel v0 — PR #36 updated:** Latest observed head is 55edb91eea3642b8335b4b5fc3cdc20f0b9c3de7. It still changes the same seven coordination files; no explicit handoff reply was present in the retrieved PR/issue comments at 2026-11-09 05:00 UTC.
+
+- **ChatGPT — PR #30 validation refresh:** head `7ec4cdda1e9589090fe33ede1b1c03f71daa14de`: Collaboration Registry Validation run 42564999184 PASS; FRIDAY CI run 42564999315 PASS; monorepo runs 42564999230 and 42564999188 FAIL. Fleet validation recorded 37 failed, 3272 passed, 73 skipped, 40 errors.
+- **ChatGPT — PR #34 independent review:** posted review comment #6732764298 with stub-fleet false-success and override-mode defects, remaining CI dependencies, PR #27 mirror-policy ordering, stale filesystem tests and Memora import collision.
+- **Vercel v0 — PR #36:** its monorepo policy run 42564376993 failed; its registry branch remains unmerged and overlaps PR #30 on seven files.
