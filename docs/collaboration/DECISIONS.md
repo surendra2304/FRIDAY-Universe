@@ -97,3 +97,16 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Contributors:** ChatGPT (finding, implementation, tests).  
 **Owner approval:** This is a branch-level fail-closed security correction within the existing task; PR merge and production activation remain subject to owner authorization.  
 **Consequences:** Existing callers using arbitrary/unregistered or wildcard `shared_with` values will now receive an authorization/validation error and must provision recipients and use owner-authorized sharing. No production migration or live-service change is included.
+
+
+## D-014 — Task receipts must report the active storage backend and durability
+
+**Date:** 2026-11-09  
+**Problem:** The task-envelope receipt builder hard-coded `backend="oracle"` and `durable_write=True` for a successful memory store. The storage layer deliberately reports actual active backend/durability (including SQLite / process-local in test mode), so task receipts could make a local write appear durably persisted to Oracle.  
+**Alternatives:** Remove storage claims from task receipts; keep an Oracle-specific claim; or derive backend and durability from the canonical storage receipt provider.  
+**Evidence:** `storage/relational/session.py::storage_receipt()` returns `backend`, `durable`, and `durability`; `v1_task.py::_receipt_for` did not consult it. A new authenticated route-level test asserts SQLite/non-durable semantics.  
+**Decision:** Build task verification evidence from `storage_receipt()`; include active backend, durability boolean and durability class. Set `durable_write` only from the actual storage durability value.  
+**Reason:** An ActionReceipt is evidence, not a success slogan; a 200 response must not imply an Oracle write or persistence durability that has not occurred.  
+**Contributors:** ChatGPT (finding, implementation, regression).  
+**Owner approval:** Branch-level correction only; merge and production activation remain subject to owner authorization.  
+**Consequences:** Consumers must accept `sqlite`, `uninitialized` or other actual backend values in test/non-production environments; production remains fail-closed by the storage configuration.
