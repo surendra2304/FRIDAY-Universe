@@ -168,3 +168,11 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Regression: `Memora/tests/test_memory_write_share_authorization.py` covers write-only escalation denial, wildcard and cross-tenant target rejection, and successful owner share/read isolation.
 - Evidence: focused Memora run 42663206883 PASS (16 passed, 1 warning); full FRIDAY run 42663207108 PASS across Python suites and HTTP/API; Docker skipped on pull_request. Monorepo runs 42663206848 / 42663206908 remained in progress at last check.
 - Branch/PR: `chatgpt/TASK-DATA-002-memory-tenant-isolation` / #38, stacked on #37. Not merged or deployed.
+
+
+### TASK-DATA-002 update — task ActionReceipt truthfulness
+
+- Found false success evidence: task receipts hard-coded Oracle and durable-write claims regardless of the storage backend.
+- Fixed on PR #38: ActionReceipt evidence now reads `storage_receipt()` and carries actual backend/durable/durability; `durable_write` follows the storage durability boolean.
+- Added authenticated endpoint test: `Memora/tests/test_task_receipt_truthfulness.py`; asserts SQLite / false / process_local / false.
+- Newest PR #38 head: `a5328273e096449205beca5b8511d49a32e4e8ee`. CI for this last change is pending; earlier share/access tests passed on previous head only.
