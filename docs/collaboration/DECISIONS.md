@@ -84,3 +84,16 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Contributors:** ChatGPT (implementation and regression coverage); no other contributor had an active claim on the router at the time of the change.  
 **Owner approval:** Not required for this isolated branch-level security hardening; merge and production activation remain subject to owner authorization.  
 **Consequences:** The compatibility API remains ephemeral and process-local; persistent access control continues through Memora's tenant-scoped policy/grant system. A production integration review is still required before treating this controller as an authoritative permission source.
+
+
+## D-013 — Require explicit share authorization for memory allow-list changes
+
+**Date:** 2026-11-09  
+**Problem:** The canonical write pipeline accepted `shared_with` recipients after the namespace `write` check. A write-only namespace member could therefore change per-memory visibility without satisfying the separate `share` policy boundary. Recipient handles were not resolved within the tenant and a raw wildcard could become the all-agent sentinel. The pipeline also did not provision the recipient's namespace-level read/query grant, making the API contract inconsistent.  
+**Alternatives:** Remove `shared_with` from memory creation entirely and require the dedicated share endpoint; keep the shortcut but require the same owner/share authorization contract; or let any namespace writer add recipients.  
+**Evidence:** Source inspection of `Memora/core/memory/pipeline/write_service.py` confirmed that the old branch inserted `MemorySharedAgent` rows directly and did not check `action="share"`. Existing namespace grants are action-scoped and tenant-scoped; per-memory visibility uses the membership table. New route-level tests cover the write-only escalation attempt, wildcard, foreign-tenant recipient and successful owner share.  
+**Decision:** Keep the creation shortcut, but apply the owner and explicit PolicyEngine `share` decision before any allow-list change. Reject wildcard, self, unknown and cross-tenant recipient handles. Provision read/query namespace grant and per-memory membership together in the existing write transaction; emit audit/event records. Preserve the special implicit team-shared namespace path, which has its own canonical semantics.  
+**Reason:** Sharing must be a distinct authority, not an incidental consequence of write permission; recipient resolution and both levels of permission must remain in the same tenant.  
+**Contributors:** ChatGPT (finding, implementation, tests).  
+**Owner approval:** This is a branch-level fail-closed security correction within the existing task; PR merge and production activation remain subject to owner authorization.  
+**Consequences:** Existing callers using arbitrary/unregistered or wildcard `shared_with` values will now receive an authorization/validation error and must provision recipients and use owner-authorized sharing. No production migration or live-service change is included.
