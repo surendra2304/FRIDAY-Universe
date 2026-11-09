@@ -110,3 +110,5 @@ For every new handoff, include:
 - **Verification:** Memora Vector Regression run 42596147391 PASS (8 passed, 1 warning); FRIDAY Universe CI/CD run 42596147378 PASS including all FRIDAY suites, Memora regression and HTTP/API tests.
 - **Limitations:** Oracle SQL MERGE was asserted at SQL-contract level, not run against Oracle Autonomous Database. External Qdrant collection size and connectivity were not checked. No production service/database was changed.
 - **Next action:** Independently review PR #37, arrange a controlled non-production Oracle integration check and confirm Qdrant collection dimension, then seek owner approval before merge.
+
+- **Memora follow-on work:** PR #37 (TASK-MEM-001) has green focused Memora tests (8 passed, 1 warning) and full FRIDAY CI (run 42596147378 PASS). The next available dependency is TASK-DATA-002, cross-agent private/shared namespace isolation. A separate branch should start from the reviewed PR #37 head but claim only the identity, access-policy, retrieval and API files it modifies; do not modify PR #37 files or branch.
