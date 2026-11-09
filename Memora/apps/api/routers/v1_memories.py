@@ -810,12 +810,32 @@ def trigger_horizon_sweep(
     db: Session = Depends(get_db),
 ):
     require_admin(actor_name)
+
+    # The memora service principal administers only its credential-bound
+    # tenant. The worker's internal background loop may sweep all tenants, but
+    # an authenticated API request must never choose a foreign tenant or turn
+    # the service identity into a cross-tenant superuser.
+    actor = IdentityService.get_agent_by_name(
+        db, actor_name, tenant_id="default"
+    )
+    if actor is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The Memora service identity is not provisioned in the API-bound tenant.",
+        )
+
+    requested_tenant = (req.tenant_id or "").strip() if req else ""
+    if requested_tenant and requested_tenant != actor.tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The horizon sweep tenant must match the authenticated service tenant.",
+        )
+
     from storage.convergence.horizon_sweeper import horizon_sweeper
-    tenant_id = req.tenant_id if req and req.tenant_id else None
-    result = horizon_sweeper.run_sweep_pass(db, tenant_id=tenant_id)
+    result = horizon_sweeper.run_sweep_pass(db, tenant_id=actor.tenant_id)
     return {
         "status": "success",
-        "actor": actor_name,
+        "actor": actor.name,
         "sweep_result": result,
     }
 
