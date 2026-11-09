@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-09T05:00:00Z"
+snapshot_at: "2026-11-09T16:49:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 rule: "The GitHub claim thread plus a current branch/PR is the shared ownership record. This file is the searchable mirror, not an atomic lock."
@@ -285,6 +285,27 @@ claims:
     status: "CLAIMED_IN_REVIEW"
     risk: "Route-level regression stubs the sweeper to prove foreign tenant requests are denied before destructive work begins."
 
+
+  - path: "Memora/apps/api/routers/memory_access_controller.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "The mounted legacy in-memory access controller must remain authenticated and clearly non-canonical; grant/revoke/approval and global audit/report are restricted to the Memora service identity."
+
+  - path: "Memora/tests/test_memory_access_controller_auth.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Regression tests cover missing credentials, non-admin denial, subject binding, and Memora-admin grant/revoke/approval/audit access."
+
+  - path: ".github/workflows/memora-vector-regression.yml"
+    owner: "chatgpt"
+    prs: [37, 38]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit", "chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "STACKED_CLAIM_IN_REVIEW"
+    risk: "Focused Memora CI now also runs the legacy access-controller authorization regressions; PR #38 remains stacked on PR #37."
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
