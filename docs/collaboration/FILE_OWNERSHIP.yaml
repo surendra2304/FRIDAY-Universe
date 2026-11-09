@@ -300,6 +300,20 @@ claims:
     status: "CLAIMED_IN_REVIEW"
     risk: "Regression tests cover missing credentials, non-admin denial, subject binding, and Memora-admin grant/revoke/approval/audit access."
 
+  - path: "Memora/core/memory/pipeline/write_service.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Explicit shared_with recipients must not inherit access from write permission alone; owner share authorization and tenant-scoped recipient grants are enforced in the canonical write pipeline."
+
+  - path: "Memora/tests/test_memory_write_share_authorization.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Regression suite covers write-only escalation, wildcard/foreign-tenant recipient rejection, and authorized owner share with successful recipient read."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:
