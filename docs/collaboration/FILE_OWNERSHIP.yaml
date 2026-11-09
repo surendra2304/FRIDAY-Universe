@@ -216,10 +216,10 @@ claims:
 
   - path: ".github/workflows/friday-universe-ci.yml"
     owner: "chatgpt"
-    prs: [37]
-    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
-    status: "CLAIMED_IN_REVIEW"
-    risk: "Adds isolated Memora regression step to existing PR workflow; full FRIDAY CI run 42596147378 passed."
+    prs: [37, 38]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit", "chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "STACKED_CLAIM_IN_REVIEW"
+    risk: "PR #37 adds vector regression; stacked PR #38 adds maintenance and cross-tenant context tests. Rebase #38 after #37 merges, then run final workflow on main."
 
   - path: "Memora/requirements.txt"
     owner: "chatgpt"
@@ -269,6 +269,22 @@ claims:
     branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
     status: "CLAIMED_IN_REVIEW"
     risk: "Audit notes document PR #37 implementation and exact test/deployment verification boundary."
+
+
+  - path: "Memora/apps/api/routers/v1_memories.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Binds API-triggered horizon sweep to the authenticated Memora tenant; the internal background worker retains intentional multi-tenant mode."
+
+  - path: "Memora/tests/test_memory_tenant_admin_maintenance_isolation.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Route-level regression stubs the sweeper to prove foreign tenant requests are denied before destructive work begins."
+
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
