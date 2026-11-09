@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from core.identity.service import IdentityService
-from apps.api.routers import v1_task
+from storage.relational import session as relational_session
 
 
 def test_task_store_receipt_reports_active_non_durable_sqlite_backend(
@@ -10,15 +10,11 @@ def test_task_store_receipt_reports_active_non_durable_sqlite_backend(
     """A local test write must never be reported as a durable Oracle write."""
     monkeypatch.delenv("MEMORA_ALLOW_ANONYMOUS_DEV", raising=False)
     monkeypatch.setenv("FORGE_API_KEY", "task-receipt-test-key")
-    monkeypatch.setattr(
-        v1_task,
-        "storage_receipt",
-        lambda: {
-            "backend": "sqlite",
-            "durable": False,
-            "durability": "process_local",
-        },
-    )
+    # Patch the canonical storage state read by storage_receipt(), not the
+    # router's imported function name. This exercises the actual provider
+    # boundary used by every module that imports the function.
+    monkeypatch.setattr(relational_session, "_active_storage_backend", "sqlite")
+    monkeypatch.setattr(relational_session, "_active_storage_durable", False)
     IdentityService.register_agent(test_db, "forge")
 
     response = client.post(
