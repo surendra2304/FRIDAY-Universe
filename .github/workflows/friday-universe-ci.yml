@@ -64,6 +64,7 @@ jobs:
             tests/test_memory_tenant_admin_maintenance_isolation.py \
             tests/test_memory_access_controller_auth.py \
             tests/test_memory_write_share_authorization.py \
+            tests/test_task_receipt_truthfulness.py \
             tests/test_cross_tenant_context_isolation.py
 
       - name: Start API server and run HTTP tests
