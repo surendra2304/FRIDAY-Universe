@@ -369,6 +369,8 @@ tasks:
       - "Memora/tests/test_memory_access_controller_auth.py"
       - "Memora/core/memory/pipeline/write_service.py"
       - "Memora/tests/test_memory_write_share_authorization.py"
+      - "Memora/apps/api/routers/v1_task.py"
+      - "Memora/tests/test_task_receipt_truthfulness.py"
       - ".github/workflows/friday-universe-ci.yml"
       - ".github/workflows/memora-vector-regression.yml"
     completed_findings:
@@ -378,6 +380,7 @@ tasks:
       - "The mounted legacy /api/v1/memora/access/* router previously exposed grant, revoke, approve, audit and report operations without authentication."
       - "Those routes now require authenticated agent credentials; grant/revoke/approval and global audit/report are restricted to the memora service identity, while request/check operations are bound to the authenticated subject."
       - "The canonical create-memory pipeline previously accepted shared_with targets after checking only write permission, bypassing the explicit share policy decision and allowing wildcard or foreign-tenant recipient names into the record allow-list."
+      - "The task success receipt previously hard-coded backend=oracle and durable_write=true for any memory_id, regardless of the active ORM backend and storage durability."
       - "Explicit shared_with recipients now require record ownership and a successful namespace share decision; wildcard/self/unknown or foreign-tenant recipients are rejected. The pipeline creates or extends only tenant-local read/query namespace grants and per-memory membership in the same transaction; implicit canonical team-shared namespace behavior is unchanged."
     acceptance:
       - "A foreign-tenant sweep request returns 403 and does not invoke the sweeper."
@@ -387,6 +390,7 @@ tasks:
       - "The mounted process-local access-controller compatibility endpoints fail closed without credentials, reject non-admin mutations/global inspection, and prevent subject/actor spoofing."
       - "A namespace write-only member cannot widen a record allow-list using shared_with; explicit sharing rejects wildcard and foreign-tenant recipient names."
       - "An authorized owner can share to a registered same-tenant recipient, resulting in tenant-local read/query grant plus per-memory membership; recipient can read while an unshared peer receives 404."
+      - "Task ActionReceipt backend/durability metadata is derived from storage_receipt(); a non-durable SQLite task write is not reported as an Oracle durable write."
       - "FRIDAY and focused Memora tests pass; Oracle/Qdrant/production limitations are explicitly recorded."
     evidence:
       - "FRIDAY Universe CI/CD run 42598678632 PASS on PR #38 head 0b825252; Memora group 17 passed, 1 warning; HTTP/API group 45 passed."
@@ -396,10 +400,11 @@ tasks:
       - "Focused Memora Vector Regression run 42658441949 PASS: 12 passed, 1 warning, including the access-controller auth matrix."
       - "Focused Memora Vector Regression run 42663206883 PASS: 16 passed, 1 warning, including the access-controller and write-sharing authorization regressions."
       - "FRIDAY Universe CI/CD run 42663207108 PASS: basic, cross-agent, advanced, deep, orchestrator, realtime, dashboard, Memora regression, and HTTP/API suites all passed; Docker build job skipped for pull_request."
+      - "Task receipt regression is newly added and wired into both CI workflows; its post-change result is pending at this update."
       - "Monorepo Structure and Safety CI runs 42663206848 and 42663206908 were still in progress at the latest check."
       - "No live Oracle/Qdrant or production environment was accessed."
-    latest_update_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6746337420"
-    next_action: "Continue independent direct-read/search/share-revoke/graph/task-envelope regression review, finish both monorepo checks, and after PR #37 merges rebase this stacked PR onto main and rerun all checks."
+    latest_update_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6746748393"
+    next_action: "Verify the new task receipt regression and both CI workflows; finish direct-read/search/share-revoke/graph/task-envelope privacy review and monorepo checks; after #37 merges, rebase this stacked PR onto main and rerun all checks."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
