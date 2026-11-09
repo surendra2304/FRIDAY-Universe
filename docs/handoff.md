@@ -20,6 +20,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-COLLAB-001 | Shared multi-AI collaboration centre | ChatGPT | chatgpt/TASK-DOC-SYNC-001 | docs/collaboration/* and three central documents | IN_REVIEW (PR #30); GitHub claim hub issue #35 created; records are a snapshot and require review/merge |
 | TASK-STR-001 | Stratex fail-closed live-trading guard for exchange adapters | ZAI | zai/TASK-STR-001-live-trading-guard | Stratex/exchanges/exchange_implementations.py + 3 test files | IN_REVIEW (PR #39); 24 new + 17 updated tests pass locally; 2 unrelated pre-existing failures reproduce on pristine main; production flags verified read-only (BINANCE_TESTNET=false, TRADING_MODE=FUTURES, BINANCE_ENV=demo) |
 | TASK-COLLAB-002 | Register ZAI as an active collaborator | ZAI | zai/TASK-COLLAB-002-register-zai | docs/collaboration/* + three central documents | IN_REVIEW (stacked on PR #30; merge #30 first) |
+| TASK-DATA-001 | Audit database architecture per agent (schemas, owners, connection strings by name only) | ZAI | zai/TASK-DATA-001-db-architecture-audit | docs/ARCHITECTURE_AS_BUILT.md §20, docs/MASTER_PLAN.md, docs/handoff.md, docs/collaboration/* | IN_REVIEW (stacked on PR #40; merge #30 then #40 first); read-only verification, env-var/schema-user NAMES only; ADMIN-DSN and dead Redis/Qdrant wiring findings recorded for owner decisions |
 
 ## B. Merged implementation work (not equivalent to production VERIFIED/DONE)
 - TASK-DOC-001: PR #21 merged at 515858e.
@@ -171,3 +172,11 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Regression: `Memora/tests/test_memory_write_share_authorization.py` covers write-only escalation denial, wildcard and cross-tenant target rejection, and successful owner share/read isolation.
 - Evidence: focused Memora run 42663206883 PASS (16 passed, 1 warning); full FRIDAY run 42663207108 PASS across Python suites and HTTP/API; Docker skipped on pull_request. Monorepo runs 42663206848 / 42663206908 remained in progress at last check.
 - Branch/PR: `chatgpt/TASK-DATA-002-memory-tenant-isolation` / #38, stacked on #37. Not merged or deployed.
+
+## N. TASK-DATA-001 — database architecture audit (2026-11-09, ZAI)
+
+- Owner: ZAI. Claim on issue #35 (comment 6747502892). Branch `zai/TASK-DATA-001-db-architecture-audit`, stacked on PR #40 (which is stacked on PR #30) — merge #30, then #40, then this.
+- Deliverable: docs/ARCHITECTURE_AS_BUILT.md §20 records, per agent: schema user, code-read DSN env-var names, provisioned-but-unused variables, migrations and owned tables — names only, zero secret values.
+- Verified shared facts: one Oracle ADB (adb.ap-hyderabad-1) serves all ten agents; per-agent schema users incl. VYRALX_MEDIA; Redis only on Server 2 (loopback); Qdrant nowhere; SQLite refused fail-closed on production paths (FRIDAY/Sentinel).
+- Owner-decision findings: (1) ADMIN-privileged DSNs in FRIDAY/Memora/Futuris/IntelX (FRIDAY_UNIVERSE_DB_URL+ASYNC) and VyralX (VYRALX_DB_URL+ASYNC) env files, contradicting the .env.example unprivileged-login policy — feeds TASK-SEC-004; (2) *_DB_ASYNC_URL variables have no Python consumer anywhere; (3) Memora REDIS_URL/QDRANT_URL point at listeners that do not exist on Server 1 while the event bus actually works via Memora HTTP polling (consumers friday-cloud, futuris-cloud-v1); (4) vyralx-autopilot.service failed on Server 2 (start-timeout SIGTERM 16:05:40Z) — for TASK-VYR-001.
+- Limits: read-only bridge commands only; no service restarts, no merges, no deployments; no secret values read.

@@ -161,3 +161,11 @@ For every new handoff, include:
 - Production findings (read-only, non-secret flags): BINANCE_TESTNET=false, TRADING_MODE=FUTURES, BINANCE_ENV=demo, ed25519 keys; the daemon venue is demo, not classic testnet. No live-capital path exists through the guarded adapters today; the dashboard uses them read-only. Owner should confirm demo is the intended venue.
 - Remaining / next steps: owner review of PR #39 and this registration PR; after merge+deploy, verify the Stratex dashboard still serves /api/multiexchange/*; follow-ups: real execution or removal for Bybit/OKX order paths, read-path data honesty in Bybit/OKX fallbacks, Stratex tests wired into CI.
 - Limits: no production service, DB or trading venue was contacted; no secret values were read; no merges or deployments performed.
+
+## Handoff — 2026-11-09 — TASK-DATA-001 database architecture audit
+
+- Owner: ZAI (GLM). Claim: issue #35 comment 6747502892. Branch: `zai/TASK-DATA-001-db-architecture-audit`, stacked on PR #40 (which is stacked on PR #30); merge order #30 -> #40 -> this.
+- Deliverable: docs/ARCHITECTURE_AS_BUILT.md section 20 — per-agent schema users, code-read vs provisioned DSN variables, migrations, owned tables; plus findings 20.3.
+- Verified: one shared Oracle ADB (ap-hyderabad-1); per-agent schema users incl. VYRALX_MEDIA; Redis only on Server 2; Qdrant absent; SQLite fail-closed refused on production paths.
+- Owner decisions requested: ADMIN-DSN remediation path (feeds TASK-SEC-004); removal or wiring of unused *_DB_ASYNC_URL variables; Memora Redis/Qdrant provisioning on Server 1 or variable removal; TASK-VYR-001 assignment for the failed vyralx-autopilot unit.
+- Limits: read-only bridge commands; no secret values read; no restarts, merges or deployments.

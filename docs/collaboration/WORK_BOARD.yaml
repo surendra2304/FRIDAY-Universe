@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-09T18:05:00Z"
+snapshot_at: "2026-11-09T18:40:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -466,6 +466,38 @@ tasks:
       - "Stacked on PR #30; must not merge before PR #30 merges."
     blockers: []
     next_action: "Owner review of PR #30 and PR #40; merge PR #30 first, then this registration branch."
+
+  - id: "TASK-DATA-001"
+    title: "Audit database architecture per agent (schemas, owners, connection strings by name only)"
+    status: "IN_REVIEW"
+    owner: "zai"
+    branch: "zai/TASK-DATA-001-db-architecture-audit"
+    other_contributors: []
+    priority: "P1"
+    created_at: "2026-11-09T17:59:14Z"
+    updated_at: "2026-11-09T18:40:00Z"
+    files:
+      - "docs/ARCHITECTURE_AS_BUILT.md"
+      - "docs/MASTER_PLAN.md"
+      - "docs/handoff.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/FILE_OWNERSHIP.yaml"
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/HANDOFFS.md"
+    dependencies:
+      - "TASK-COLLAB-002 (stacked on PR #40 branch; merge PR #30 then PR #40 first)"
+    acceptance:
+      - "Per-agent schema owners, DSN env-var names, migrations and owned tables recorded without any secret values."
+      - "Production wiring verified read-only through the bridge; verified facts separated from findings."
+      - "All three central documents (Master Plan, handoff, as-built) carry the same conclusions."
+    evidence:
+      - "Repo scan: code-read env names (config paths) vs production .env NAMES per agent; ARCHITECTURE_AS_BUILT.md section 20."
+      - "Server-side read-only verification on both VMs: DSN dialect schemes, schema-user NAMES via safe -o extraction, Redis/Qdrant listener presence (ss -ltn)."
+      - "Findings: ADMIN-privileged DSNs on five agents; *_DB_ASYNC_URL has no Python consumer; Memora Redis/Qdrant dead wiring on Server 1 (event bus actually via Memora HTTP polling); vyralx-autopilot.service failed unit."
+    risk_flags:
+      - "Stacked on PR #40 (transitively PR #30); must not merge before those merge."
+    blockers: []
+    next_action: "Owner/ChatGPT review of this PR; decide ADMIN-DSN remediation path feeding TASK-SEC-004; assign TASK-VYR-001 for the failed autopilot unit."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
