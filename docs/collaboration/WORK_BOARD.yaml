@@ -1,0 +1,88 @@
+version: 1
+updated_at: "2026-11-09"
+tasks:
+  - id: COORD-001
+    name: Establish collaboration centre
+    description: Create the shared coordination records and register verified collaborator capabilities without overwriting prior history.
+    priority: HIGH
+    acceptance_criteria:
+      - All required coordination files exist.
+      - Existing collaborators and reported assignments are preserved as unverified where not independently checked.
+      - v0 branch and ownership are recorded.
+    dependencies: []
+    status: VERIFIED
+    assigned_collaborator: v0
+    other_contributors: []
+    working_branch: v0/coordination-bootstrap
+    associated_pr: null
+    files_being_modified:
+      - docs/collaboration/
+    test_requirements:
+      - YAML parse validation
+      - git diff review
+    test_results:
+      - "All three YAML registries parsed successfully with PyYAML."
+      - "git diff --check passed."
+    blockers: []
+    last_update: "2026-11-09"
+    next_action: Keep registries synchronized as implementation work begins.
+  - id: TASK-CI-002
+    name: Get main fully green
+    description: Resolve the known CI dependency and validation failures on main.
+    priority: HIGH
+    acceptance_criteria:
+      - Required CI checks pass on current main.
+      - Failures are fixed at root cause without weakening tests.
+    dependencies: []
+    status: IN_PROGRESS
+    assigned_collaborator: chatgpt
+    other_contributors: []
+    working_branch: main
+    associated_pr: null
+    files_being_modified: []
+    test_requirements: [root CI workflows]
+    test_results: [UNVERIFIED]
+    blockers: [Current status and ownership require GitHub verification]
+    last_update: "2026-11-09"
+    next_action: Verify active branch and latest workflow result before overlap.
+  - id: TASK-CORE-002
+    name: Remove fabricated orchestrator success
+    description: Prevent the universe orchestrator from reporting successful dispatch without peer execution.
+    priority: HIGH
+    acceptance_criteria:
+      - Live path does not claim dispatch when no execution occurred.
+      - Regression tests pass.
+      - PR is reviewed, merged, deployed, and verified separately.
+    dependencies: []
+    status: IN_REVIEW
+    assigned_collaborator: grok
+    other_contributors: []
+    working_branch: grok/TASK-CORE-002
+    associated_pr: null
+    files_being_modified: []
+    test_requirements: [FRIDAY orchestrator regression tests]
+    test_results: ["5 passed reported in docs/handoff.md; independently unverified"]
+    blockers: [Merge and deployment status unverified]
+    last_update: "2026-11-09"
+    next_action: Review branch diff and CI before overlapping edits.
+  - id: COORD-002
+    name: Audit current project state
+    description: Compare roadmap, source, tests, CI, and deployment evidence; record only verified findings.
+    priority: HIGH
+    acceptance_criteria:
+      - Central docs and repository structure inspected.
+      - Unverified claims and conflicts identified.
+      - One safe unclaimed implementation task selected after ownership review.
+    dependencies: [COORD-001]
+    status: IN_PROGRESS
+    assigned_collaborator: v0
+    other_contributors: []
+    working_branch: v0/coordination-bootstrap
+    associated_pr: null
+    files_being_modified:
+      - docs/collaboration/
+    test_requirements: [targeted repository checks]
+    test_results: []
+    blockers: [External GitHub PR and Oracle evidence still require fresh verification]
+    last_update: "2026-11-09"
+    next_action: Inspect CI configuration and select a non-overlapping fix.

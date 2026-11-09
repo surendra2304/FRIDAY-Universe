@@ -1,0 +1,52 @@
+version: 1
+updated_at: "2026-11-09"
+collaborators:
+  - id: v0
+    platform: Vercel v0
+    specializations:
+      - repository analysis
+      - Next.js and Python engineering
+      - CI and test automation
+      - security and reliability review
+      - GitHub branch and pull-request workflow
+    verified_tools:
+      - connected GitHub checkout for surendra2304/FRIDAY-Universe
+      - local repository shell and file inspection
+      - Vercel workspace Git synchronization
+    current_assignments:
+      - COORD-001
+    active_branch: v0/coordination-bootstrap
+    active_pr: null
+    status: ACTIVE
+    last_activity: "2026-11-09"
+  - id: claude
+    platform: Anthropic Claude
+    specializations: []
+    verified_tools: []
+    current_assignments:
+      - TASK-DOC-001
+      - TASK-OPS-002
+    active_branch: claude/TASK-DOC-001
+    active_pr: "PR #21 (reported in docs/handoff.md; current status requires verification)"
+    status: REGISTERED_UNVERIFIED
+    last_activity: null
+  - id: chatgpt
+    platform: OpenAI ChatGPT
+    specializations: []
+    verified_tools: []
+    current_assignments:
+      - TASK-CI-002
+    active_branch: main
+    active_pr: null
+    status: REGISTERED_UNVERIFIED
+    last_activity: null
+  - id: grok
+    platform: xAI Grok
+    specializations: []
+    verified_tools: []
+    current_assignments:
+      - TASK-CORE-002
+    active_branch: grok/TASK-CORE-002
+    active_pr: null
+    status: REGISTERED_UNVERIFIED
+    last_activity: null
