@@ -1,0 +1,35 @@
+version: 1
+updated_at: "2026-11-09"
+ownership:
+  - task_id: COORD-001
+    collaborator: v0
+    branch: v0/coordination-bootstrap
+    paths:
+      - docs/collaboration/
+    claimed_at: "2026-11-09"
+    update_or_expiry: "Owner handoff or explicit release required; no automatic takeover."
+  - task_id: TASK-DOC-001
+    collaborator: claude
+    branch: claude/TASK-DOC-001
+    paths:
+      - docs/MASTER_PLAN.md
+      - docs/handoff.md
+      - docs/ARCHITECTURE_AS_BUILT.md
+    claimed_at: "reported in docs/handoff.md"
+    update_or_expiry: "Verify with current owner before editing."
+  - task_id: TASK-CORE-002
+    collaborator: grok
+    branch: grok/TASK-CORE-002
+    paths:
+      - FRIDAY/src/friday/integrations/universe_orchestrator.py
+      - FRIDAY/tests/test_universe_orchestrator_no_fake_dispatch.py
+    claimed_at: "reported in docs/handoff.md"
+    update_or_expiry: "Verify with current owner before editing."
+  - task_id: TASK-CI-002
+    collaborator: chatgpt
+    branch: main
+    paths:
+      - .github/workflows/
+      - tests/
+    claimed_at: "reported in docs/handoff.md"
+    update_or_expiry: "Verify current worktree and branch before editing."
