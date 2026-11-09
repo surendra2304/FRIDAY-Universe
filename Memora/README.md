@@ -218,7 +218,6 @@ All error responses (4xx and 5xx) conform to a standardized error envelope:
 | `REDIS_URL` | string | `redis://redis:6379/0` | Redis connection URL for candidate caching and events. |
 | `QDRANT_URL` | string | `http://qdrant:6333` | Qdrant vector database URL. |
 | `QDRANT_COLLECTION` | string | `memora_embeddings` | Qdrant vector collection name. |
-| `VECTOR_DIMENSION` | integer | `1536` | Vector embedding dimension. |
 | `MEMORA_API_KEY` | string | *Required* | Master bearer API key for authenticating requests to Memora. |
 | `MEMORA_CORS_ORIGINS` | string | *Whitelisted* | Comma-separated whitelist of allowed browser origins (`https://friday-universe.duckdns.org,http://localhost:8000,http://127.0.0.1:8000,http://localhost:8006,http://localhost:3000`). |
 | `FRIDAY_API_KEY` | string | *Optional* | API key for peer `friday` orchestrator agent. |
@@ -231,6 +230,9 @@ All error responses (4xx and 5xx) conform to a standardized error envelope:
 | `SENTINEL_API_KEY` | string | *Optional* | API key for peer `sentinel` security agent. |
 | `DEFAULT_CONFIDENCE_THRESHOLD` | float | `0.75` | Minimum confidence score for promoting experiences. |
 | `DEFAULT_IMPORTANCE_THRESHOLD` | float | `0.50` | Minimum importance score for memory persistence. |
+
+
+**Embedding dimension:** The current generator and Oracle native vector table use a fixed dimension of **384**. There is no supported `VECTOR_DIMENSION` environment override. When Qdrant is enabled, its collection must be provisioned with 384-dimensional vectors; Memora does not create or resize the Qdrant collection automatically. Changing dimensions requires a coordinated embedding, vector-table/collection migration and data reindexing.
 
 ---
 
