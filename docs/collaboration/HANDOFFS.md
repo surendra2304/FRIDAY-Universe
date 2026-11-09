@@ -1,0 +1,89 @@
+# Cross-AI Handoffs
+
+Update this file whenever one contributor hands work to another. The current board is only a snapshot; refresh GitHub before continuing.
+
+## Active handoff — 2026-11-09
+
+### Claude
+
+**Current observed work**
+- PR #23 — CI install dependencies/test DB environment/deploy policy; TASK-ID needs reconciliation with the Master Plan.
+- PR #27 — manual-only and non-force mirror workflow.
+- PR #28 — dispatch bus endpoint/envelope integration; review findings remain open.
+- PR #29 — Sentinel status task endpoint; live contract verification remains outstanding.
+- PR #34 — root CI fixes; FRIDAY CI and heavy runtime image passed, two monorepo validation jobs failed.
+- TASK-OPS-002 — multiple OCI capacity sniper workflow runs are pending/in progress; successful OCI authentication/allocation not verified.
+
+**Protected workspace observation**
+- Shared Server 2 worktree was on `claude/TASK-CI-004`.
+- Untracked file: `Forge/tests/unit/test_task_execute_contract.py`.
+- Do not alter or discard this untracked test without explicit confirmation from the owner of that worktree.
+
+**Exact next actions**
+1. Inspect PR #34's failed monorepo validation job logs and fix the actual remaining defects.
+2. Reconcile PR #23 and #34's overlapping `.github/workflows/validate-monorepo.yml` changes.
+3. Reconcile PR #28 and #34's overlapping `universe_dispatch_bus.py` changes and the posted dispatch contract findings.
+4. Complete Sentinel live endpoint/auth tests for PR #29.
+5. Verify OCI authentication from current sniper logs; do not infer success from a still-running workflow.
+6. Post claims/handoffs on issue #35 and update this register.
+
+### ChatGPT
+
+**Current observed work**
+- PR #24 — bridge authentication; runtime patch and secret activation are not applied.
+- PR #26 — Cortex route authorization; read-only viewer POST authorization review finding remains open.
+- PR #30 — central docs and multi-AI collaboration registry.
+- PR #31 — Gitleaks change-range workflow; focused Gitleaks scan passed, historical secret cleanup remains separate.
+- PR #32 — IntelX Oracle JSON compatibility; FRIDAY CI passed, broad monorepo validation remains red.
+- PR #33 — Futuris must not fabricate Stratex positions; FRIDAY CI passed, broad monorepo validation failed during dependency collection in the last observed run.
+
+**Exact next actions**
+1. Finish the collaboration directory and synchronize the three central docs in PR #30.
+2. Review PR #34's implementation and CI failures; coordinate dispatch bus overlap with Claude.
+3. Fix PR #26's route-capability issue and re-run authorization tests.
+4. Finish PR #24's review requirements; do not apply production patch/provision secret/restart without owner approval.
+5. Refresh PR #32/#33 heads and checks after the latest CI changes; fix focused defects without weakening tests.
+6. Continue the per-agent architecture/security audit and register the next independent task.
+
+### Grok
+
+**Current observed work**
+- PR #25 merged TASK-CORE-002 implementation.
+- No open PR or current active branch was observed in the latest snapshot.
+- Availability and current access are unknown.
+
+**Exact next actions after rejoining**
+1. Read the complete current collaboration registry and all three central documents.
+2. Review PR #28 dispatch contracts and PR #34 root-CI changes independently.
+3. Claim an available task using issue #35 before editing.
+4. Record evidence and coordinate with the current file owners.
+
+### ZAI and Vercel v0
+
+**Current observed work**
+- Planned contributors; no repository activity, branch, PR, permissions or tool access has yet been verified.
+
+**Exact next actions after onboarding**
+1. Register actual access and tools in TEAM_ROSTER.yaml.
+2. Read the common roadmap, architecture, handoff and collaboration records.
+3. Review the active work board and file ownership.
+4. Claim an available task on issue #35 before editing.
+5. Do not assume privileged cloud, GitHub or production access.
+
+## Handoff template
+
+For every new handoff, include:
+
+- **Task ID and title**
+- **Outgoing collaborator**
+- **Incoming collaborator**
+- **Current status**
+- **Branch and PR**
+- **Files changed**
+- **Implementation completed**
+- **Tests run and exact results**
+- **Known failures/blockers**
+- **Production/deployment state**
+- **Next action**
+- **Required owner approval**
+- **Claim release / new claim comment URL on issue #35**
