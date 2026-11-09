@@ -1,0 +1,20 @@
+id: "TASK-XXX-001"
+title: "Short, verifiable task title"
+status: "AVAILABLE"
+owner: null
+branch: null
+pr: null
+contributors: []
+priority: "P2"
+created_at: "YYYY-MM-DDTHH:MM:SSZ"
+updated_at: "YYYY-MM-DDTHH:MM:SSZ"
+files: []
+dependencies: []
+acceptance:
+  - "Concrete observable acceptance criterion"
+evidence: []
+risk_flags: []
+blockers: []
+next_action: "Exact next implementation or verification step"
+claim_comment_url: null
+last_update_comment_url: null
