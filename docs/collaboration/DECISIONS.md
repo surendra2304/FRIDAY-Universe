@@ -57,3 +57,10 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Date:** 2026-11-09  
 **Decision:** PRs with overlapping changed files require an explicit combined-diff review and agreed merge sequence. Do not merge one branch over another's stale snapshot. Current known overlaps are recorded in `FILE_OWNERSHIP.yaml`.  
 **Reason:** Avoid silently losing concurrent work and inconsistent central documentation.
+
+## D-010 — Coordination records are structurally validated
+
+**Date:** 2026-11-09  
+**Decision:** The roster, work board and file-ownership registry are validated by `scripts/validate_collaboration.py` in a dedicated GitHub Actions workflow when coordination files or central project documents change.  
+**Reason:** A shared board becomes unreliable if contributors can accidentally introduce duplicate task IDs, invalid owner references or dangling file-conflict records.  
+**Boundary:** A passing registry validator checks record structure only; it does not certify task correctness, tests, integration or production readiness.
