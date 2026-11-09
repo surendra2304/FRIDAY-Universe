@@ -160,7 +160,11 @@ class OracleVectorAdapter:
         db: Optional[Session] = None,
     ) -> bool:
         """Upsert a vector without committing a caller-owned transaction."""
-        if not self._valid_identity(memory_id, tenant_id) or not self._validate_vector(vector):
+        if (
+            not self._valid_identity(memory_id, tenant_id)
+            or not self._validate_vector(vector)
+            or (payload is not None and not isinstance(payload, dict))
+        ):
             return False
         if not self.ensure_schema(db):
             return False
@@ -334,9 +338,11 @@ class OracleVectorAdapter:
             or not self._validate_vector(query_vector)
             or not isinstance(limit, int)
             or isinstance(limit, bool)
-            or limit < 1
+            or not 1 <= limit <= 1000
+            or not isinstance(score_threshold, (int, float))
+            or isinstance(score_threshold, bool)
             or not math.isfinite(float(score_threshold))
-            or not 0.0 <= score_threshold <= 1.0
+            or not 0.0 <= float(score_threshold) <= 1.0
         ):
             return []
         if not any(float(value) != 0.0 for value in query_vector):
