@@ -472,10 +472,11 @@ tasks:
     status: "IN_REVIEW"
     owner: "zai"
     branch: "zai/TASK-DATA-001-db-architecture-audit"
+    pr: 41
     other_contributors: []
     priority: "P1"
     created_at: "2026-11-09T17:59:14Z"
-    updated_at: "2026-11-09T18:40:00Z"
+    updated_at: "2026-11-09T18:55:00Z"
     files:
       - "docs/ARCHITECTURE_AS_BUILT.md"
       - "docs/MASTER_PLAN.md"
@@ -497,7 +498,7 @@ tasks:
     risk_flags:
       - "Stacked on PR #40 (transitively PR #30); must not merge before those merge."
     blockers: []
-    next_action: "Owner/ChatGPT review of this PR; decide ADMIN-DSN remediation path feeding TASK-SEC-004; assign TASK-VYR-001 for the failed autopilot unit."
+    next_action: "Owner/ChatGPT review of PR #41; decide ADMIN-DSN remediation path feeding TASK-SEC-004; assign TASK-VYR-001 for the failed autopilot unit."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
