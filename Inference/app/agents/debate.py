@@ -138,8 +138,21 @@ class CollaborationEngine:
         memory: BaseMemory | None = None,
         registry: BaseAgentRegistry | None = None
     ) -> None:
-        self.memory = memory or create_memory_store()
+        # Keep imports configuration-safe. Production memory is still created on
+        # first use, so an unconfigured deployment fails closed at the boundary
+        # that actually needs persistence instead of during module discovery.
+        self._memory = memory
         self.registry = registry or agent_registry
+
+    @property
+    def memory(self) -> BaseMemory:
+        if self._memory is None:
+            self._memory = create_memory_store()
+        return self._memory
+
+    @memory.setter
+    def memory(self, value: BaseMemory) -> None:
+        self._memory = value
 
     def _resolve_gate_provider(self, model_cfg: AgentModelConfig) -> str:
         """Return the name of the provider that will *actually* serve this model config.

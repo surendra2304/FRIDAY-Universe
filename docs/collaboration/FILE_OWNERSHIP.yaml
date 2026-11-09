@@ -33,3 +33,11 @@ ownership:
       - tests/
     claimed_at: "reported in docs/handoff.md"
     update_or_expiry: "Verify current worktree and branch before editing."
+  - task_id: INF-003
+    collaborator: v0
+    branch: v0/coordination-bootstrap
+    paths:
+      - Inference/app/agents/debate.py
+      - Inference/tests/
+    claimed_at: "2026-11-09"
+    update_or_expiry: "Owner handoff or explicit release required; no automatic takeover."
