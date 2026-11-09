@@ -15,6 +15,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-INT-001 | IntelX evidence pipeline and Oracle persistence audit | ChatGPT | chatgpt/TASK-INT-001-intelx-json | IntelX/intelx/oracle_dialect_compat.py, IntelX/intelx/db/engine.py, tests/test_intelx_oracle_json_compat.py | IN_REVIEW (PR #32); FRIDAY CI passed, monorepo validation still fails on broader repository issues; no deployment |
 | TASK-FUT-001 | Prevent fabricated Stratex positions/funding telemetry | ChatGPT | chatgpt/TASK-FUT-001-stratex-telemetry | Futuris connector, risk router and regression tests | IN_REVIEW (PR #33); FRIDAY CI passed, monorepo validation failed during collection because root validation lacks NumPy; no deployment |
 | TASK-MEM-001 | Memora Oracle vector tenant and transaction integrity | ChatGPT | chatgpt/TASK-MEM-001-memora-oracle-vector-audit | Memora Oracle vector adapter, regression tests, root and nested CI workflows, package/config docs | IN_REVIEW (PR #37); focused vector suite 8 passed/1 warning (run 42596147391); full FRIDAY CI passed (run 42596147378); live Oracle/Qdrant unverified |
+| TASK-DATA-002 | Cross-agent Memora private/shared/universal isolation | ChatGPT | chatgpt/TASK-DATA-002-memory-tenant-isolation | Memora maintenance API, route-level regressions and FRIDAY CI | IN_PROGRESS; PR #38 closes arbitrary tenant selection in horizon sweep (stacked on #37); Memora group 17 passed/1 warning and HTTP/API group 45 passed in run 42598678632; broad monorepo checks pending |
 | TASK-CI-004 | Root-cause fixes for fleet CI failures | Claude | claude/TASK-CI-004 | validate-monorepo.yml, dispatch bus, Forge optimizers, tests/conftest.py, e2e tests | IN_REVIEW (PR #34); FRIDAY CI and image build passed; both monorepo validators failed |
 | TASK-COLLAB-001 | Shared multi-AI collaboration centre | ChatGPT | chatgpt/TASK-DOC-SYNC-001 | docs/collaboration/* and three central documents | IN_REVIEW (PR #30); GitHub claim hub issue #35 created; records are a snapshot and require review/merge |
 
@@ -136,3 +137,15 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - PR #37 latest head: `730ee962bb36e72d9a40c29821d84c8624b4c85a`; open/mergeable; no live Oracle or Qdrant integration performed.
 - PR #30 latest head: `5920161f457e4216f13edd260862ef6476d2612c`; collaboration registry validation run 42596903311 PASS. The two broad monorepo validation jobs on that head were still in progress at the latest check.
 - TASK-MEM-001 has been added to the work board, roster, file ownership, activity log, handoff, Master Plan and as-built architecture.
+
+
+## M. TASK-DATA-002 — maintenance tenant binding (2026-11-09)
+
+- Claim: GitHub issue #35 comment #6737168104.
+- Branch / PR: chatgpt/TASK-DATA-002-memory-tenant-isolation / PR #38.
+- Dependency: The branch is stacked on PR #37's vector remediation. Do not merge PR #38 before PR #37; after #37 lands, rebase/retarget #38 and rerun checks.
+- Confirmed defect: /v1/memories/sweep-horizon allowed a Memora API caller to choose a foreign tenant; the sweeper then ran tenant-scoped consolidation/purge for that ID.
+- Fix: API resolves memora only in the API-bound default tenant, rejects any non-matching requested tenant with 403 before invoking the worker, and always sends the resolved tenant. Background worker multi-tenant scanning remains unchanged.
+- Tests: test_memory_tenant_admin_maintenance_isolation.py proves foreign-tenant request returns 403 and the sweeper is not called; explicit/default and omitted tenant requests both call the worker with default.
+- Verification: FRIDAY run 42598678632 PASS (Memora group 17 passed/1 warning; HTTP/API group 45 passed); focused Memora Vector Regression run 42598678508 PASS (8 passed/1 warning). Broad monorepo runs 42598678658/78539 still in progress at last check.
+- Open scope: TASK-DATA-002 remains IN_PROGRESS. Continue auditing direct read, query/search, graph, sharing/grant revocation, task-envelope routes and private/shared/universal scope combinations. No production DB/service was touched.
