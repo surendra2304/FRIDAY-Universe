@@ -1,0 +1,308 @@
+schema_version: 1
+snapshot_at: "2026-11-09T04:24:00Z"
+repository: "surendra2304/FRIDAY-Universe"
+master_plan: "docs/MASTER_PLAN.md"
+claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
+main_head_at_snapshot: "680c04ee383066874cad42a3295d18008eb6e1d2"
+warning: "Snapshot only. Refresh GitHub branches, PRs, workflows and runtime state before acting."
+
+status_definitions:
+  PROPOSED: "Identified; not yet ready to claim."
+  AVAILABLE: "Acceptance criteria/dependencies clear; no active owner."
+  CLAIMED: "Owner registered; implementation not started."
+  IN_PROGRESS: "Implementation underway."
+  BLOCKED: "Cannot proceed until a named dependency is resolved."
+  IN_REVIEW: "Implementation submitted for review."
+  MERGED: "PR merged to its target branch."
+  DEPLOYED: "Implementation deployed to its intended environment."
+  VERIFIED: "Acceptance criteria verified with recorded evidence in target environment."
+  CLOSED: "Formally closed; reason and evidence recorded."
+
+tasks:
+  - id: "TASK-COLLAB-001"
+    title: "Shared multi-AI collaboration centre"
+    status: "IN_PROGRESS"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-DOC-SYNC-001"
+    pr: 30
+    files:
+      - "docs/collaboration/README.md"
+      - "docs/collaboration/TEAM_ROSTER.yaml"
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/FILE_OWNERSHIP.yaml"
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/DECISIONS.md"
+      - "docs/collaboration/HANDOFFS.md"
+      - "docs/collaboration/TASK_TEMPLATE.yaml"
+      - "docs/collaboration/HANDOFF_TEMPLATE.md"
+      - "docs/MASTER_PLAN.md"
+      - "docs/handoff.md"
+      - "docs/ARCHITECTURE_AS_BUILT.md"
+    acceptance:
+      - "Shared roster lists current and planned collaborators without inventing access."
+      - "Work board reflects active PRs, owners, branches and CI evidence."
+      - "File ownership register identifies overlapping PR changes and protected untracked work."
+      - "Claim/release/handoff protocol points to GitHub issue #35."
+      - "All three central documents link to and explain the coordination centre."
+    evidence:
+      - "GitHub issue #35 created as the shared claim/handoff thread."
+      - "Open PR snapshot and changed-file lists retrieved on 2026-11-09."
+    next_action: "Finish initial records, synchronize central documents and verify PR #30 checks."
+
+  - id: "TASK-DOC-SYNC-001"
+    title: "Synchronize Master Plan, handoff and as-built architecture"
+    status: "IN_REVIEW"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-DOC-SYNC-001"
+    pr: 30
+    files:
+      - "docs/MASTER_PLAN.md"
+      - "docs/handoff.md"
+      - "docs/ARCHITECTURE_AS_BUILT.md"
+    acceptance:
+      - "Merged work and open PR ownership reflect current GitHub evidence."
+      - "Implementation, test, merge, deployment and production verification remain distinct."
+      - "All known blockers and overlapping work are recorded."
+    evidence:
+      - "PR #30 open; FRIDAY CI run 42528250971 passed; monorepo validation runs 42528250968 and 42528250941 failed."
+    next_action: "Update these documents with PR #34, PR #33, current sniper runs and the new collaboration centre."
+
+  - id: "TASK-OPS-002"
+    title: "Verify OCI capacity sniper authenticates and can allocate"
+    status: "IN_PROGRESS"
+    owner: "claude"
+    branch: "main (workflow_dispatch)"
+    pr: null
+    files:
+      - ".github/workflows/oracle-capacity-sniper.yml"
+      - ".github/workflows/oracle-capacity-sniper-worker2.yml"
+    dependencies:
+      - "Owner-provisioned OCI private key and correct OCI identity configuration"
+    evidence:
+      - "Runs 42551915292 and 42554225035 were in progress at the latest snapshot; run 42557535650 was pending."
+      - "Authentication and successful allocation were not verified."
+    next_action: "Inspect current logs for authenticated OCI API calls and allocation result; do not promote a new VM without owner decision."
+
+  - id: "TASK-INF-001"
+    title: "Audit both Oracle VMs and service/resource posture"
+    status: "IN_PROGRESS"
+    owner: "claude"
+    branch: null
+    pr: null
+    evidence:
+      - "Read-only fleet checks in the prior snapshot showed both VMs up and all ten canonical agent services active."
+      - "Observed RAM: approximately 956 MB per VM; disk use approximately 22% and 36%."
+    next_action: "Re-run resource/systemd/backup checks and record current evidence; verify backups and restore, not only liveness."
+
+  - id: "TASK-INF-002"
+    title: "Set FRIDAY-Voice memory limits"
+    status: "VERIFIED"
+    owner: "claude"
+    branch: null
+    pr: null
+    evidence:
+      - "2026-11-09 read-only systemd inspection: MemoryHigh=250M and MemoryMax=300M drop-in loaded; service active."
+    next_action: "None for the memory-limit acceptance criterion; continue separate LiveKit event-loop latency investigation."
+
+  - id: "TASK-SEC-002"
+    title: "Remove exposed historical secrets from Git history"
+    status: "BLOCKED"
+    owner: "claude"
+    branch: null
+    pr: null
+    dependencies:
+      - "All impacted credentials rotated."
+      - "All related PR branches reconciled and merged or abandoned."
+      - "Explicitly scheduled owner-approved destructive maintenance window."
+    next_action: "Coordinate with every contributor, preserve backup refs and snapshots, then perform the approved history cleanup. Do not rewrite history in this task-claim session."
+
+  - id: "TASK-SEC-003"
+    title: "Bridge authentication and safe production activation"
+    status: "IN_REVIEW"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-SEC-003"
+    pr: 24
+    files:
+      - "bridge/auth.py"
+      - "bridge/server_auth.patch"
+      - "tests/test_bridge_auth.py"
+      - "docs/BRIDGE_AUTHENTICATION.md"
+      - "docs/MASTER_PLAN.md"
+      - "docs/handoff.md"
+      - "docs/ARCHITECTURE_AS_BUILT.md"
+    evidence:
+      - "PR #24 open; branch implementation/tests exist."
+      - "Production bridge patch not applied; secret not provisioned; production enforcement not verified."
+    next_action: "Resolve branch review and file overlap, verify both MCP clients' header/SSE compatibility, then await owner-approved secret provisioning and restart."
+
+  - id: "TASK-SEC-004"
+    title: "Secret-management audit and change-range secret scanning"
+    status: "IN_REVIEW"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-SEC-004"
+    pr: 31
+    files:
+      - ".github/workflows/secret-scan.yml"
+    evidence:
+      - "Gitleaks change-range scan run 42525462164 passed after shallow-fetch range failure was corrected."
+      - "Known historical exposure remains separate under TASK-SEC-002."
+    next_action: "Review required checks and merge only after approved PR review; do not claim historical exposure resolved."
+
+  - id: "TASK-CI-002"
+    title: "Get current main and required validation fully green"
+    status: "IN_PROGRESS"
+    owner: "claude"
+    branch: "main / claude CI branches"
+    pr: null
+    files:
+      - ".github/workflows/validate-monorepo.yml"
+      - ".github/workflows/friday-universe-ci.yml"
+      - "tests/"
+    next_action: "Use PR #34's new failure evidence, fix remaining real root causes, and demonstrate all required workflows green on the final current head."
+
+  - id: "TASK-CI-003"
+    title: "Run workspace test runner and reconcile CI task IDs"
+    status: "IN_REVIEW"
+    owner: "claude"
+    branch: "claude/TASK-CI-003"
+    pr: 23
+    files:
+      - ".github/workflows/validate-monorepo.yml"
+      - "tests/test_heavy_task_integration.py"
+    risk_flags:
+      - "TASK-ID mismatch: Master Plan currently describes TASK-CI-003 as fixing run_workspace_test; PR #23 is described as CI install dependencies/test DB environment/deploy policy."
+      - "PR #23 shares validate-monorepo.yml with PR #34."
+    next_action: "Reconcile the correct TASK-ID and coordinate the overlapping workflow file with PR #34's owner before merge."
+
+  - id: "TASK-CI-004"
+    title: "Root-cause fixes for fleet validation failures"
+    status: "IN_REVIEW"
+    owner: "claude"
+    branch: "claude/TASK-CI-004"
+    pr: 34
+    files:
+      - ".github/workflows/validate-monorepo.yml"
+      - "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
+      - "Forge/app/agents/real_optimization_advanced.py"
+      - "tests/conftest.py"
+      - "tests/test_e2e_real_repo_integration.py"
+    evidence:
+      - "FRIDAY Universe CI/CD run 42560097648 passed."
+      - "Heavy-Task Runtime Image Build run 42560097625 passed."
+      - "Monorepo Structure and Safety CI runs 42560097582 and 42560097580 failed."
+    risk_flags:
+      - "Overlaps PR #23 on validate-monorepo.yml."
+      - "Overlaps PR #28 on universe_dispatch_bus.py."
+      - "The current Master Plan's TASK-CI-004 description differs from the scope of PR #34; reconcile before changing task acceptance."
+    next_action: "Inspect the two failed validation jobs, reconcile overlapping PR content and update the correct task IDs."
+
+  - id: "TASK-MIRROR-001"
+    title: "Make standalone repository mirroring manual and non-destructive"
+    status: "IN_REVIEW"
+    owner: "claude"
+    branch: "claude/TASK-MIRROR-001"
+    pr: 27
+    files:
+      - ".github/workflows/mirror-subrepos.yml"
+    next_action: "Complete review, including cross-repository write token scope and divergence behavior."
+
+  - id: "TASK-DISPATCH-001"
+    title: "Real fleet task dispatch using valid peer contracts"
+    status: "IN_REVIEW"
+    owner: "claude"
+    branch: "claude/TASK-DISPATCH-001"
+    pr: 28
+    files:
+      - "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
+    evidence:
+      - "Live probe from Server 2 reached peers; missing auth keys/header differences and Forge/Sentinel gaps remain."
+      - "Independent review comment posted on PR #28 with priority type, auth headers, endpoint support, degraded/error receipt and false-success findings."
+    risk_flags:
+      - "Overlaps PR #34 on universe_dispatch_bus.py."
+    next_action: "Resolve review findings with per-agent contract tests and reconcile the shared file with PR #34."
+
+  - id: "TASK-API-001"
+    title: "Sentinel fail-closed status task API"
+    status: "IN_REVIEW"
+    owner: "claude"
+    branch: "claude/TASK-API-001"
+    pr: 29
+    files:
+      - "Sentinel/sentinel/apps/api/main.py"
+    evidence:
+      - "PR #29 adds read-only status action; other actions are rejected."
+      - "Only py_compile evidence was described in the PR; live endpoint integration was still outstanding."
+    next_action: "Run endpoint contract test with auth and confirm disallowed actions fail closed."
+
+  - id: "TASK-CORE-001-CTX"
+    title: "Cortex route authorization and data-access audit"
+    status: "IN_REVIEW"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-CORE-001-cortex-route-auth"
+    pr: 26
+    files:
+      - "Cortex/apps/api/src/cortex_api/main.py"
+      - "Cortex/tests/unit/test_route_authorization.py"
+      - "docs/MASTER_PLAN.md"
+      - "docs/handoff.md"
+      - "docs/ARCHITECTURE_AS_BUILT.md"
+    evidence:
+      - "PR #26 open; prior connected workspace evidence included 22 acceptance tests and 27 FRIDAY integration tests passing."
+      - "Independent review finding: method-only POST => operator blocks CORTEX_VIEWER from the read-only demand forecast endpoint."
+    next_action: "Implement route-capability authorization and regression tests; resolve central-document overlap."
+
+  - id: "TASK-INT-001"
+    title: "IntelX Oracle generic JSON bind/result compatibility"
+    status: "IN_REVIEW"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-INT-001-intelx-json"
+    pr: 32
+    files:
+      - "IntelX/intelx/db/engine.py"
+      - "IntelX/intelx/oracle_dialect_compat.py"
+      - "tests/test_intelx_oracle_json_compat.py"
+    evidence:
+      - "FRIDAY Universe CI/CD run 42528530422 passed."
+      - "Monorepo validation runs 42528530461 and 42528530425 failed on broader existing test/dependency issues; the latest error list did not identify this focused regression as the failing test."
+    next_action: "Refresh the latest PR head/checks after PR #34 changes; get the focused root regression collected and passing, then plan owner-approved rollout and live DB verification."
+
+  - id: "TASK-FUT-001"
+    title: "Fail closed on unavailable Stratex positions and funding telemetry"
+    status: "IN_REVIEW"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-FUT-001-stratex-telemetry"
+    pr: 33
+    files:
+      - "Futuris/futuris/connectors/trading_bot.py"
+      - "Futuris/futuris/api/routers/risk.py"
+      - "Futuris/tests/connectors/test_trading_bot_ticker.py"
+      - "tests/test_futuris_stratex_positions_fail_closed.py"
+    evidence:
+      - "FRIDAY Universe CI/CD run 42530391450 passed."
+      - "Monorepo run 42530741161 failed during collection because numpy was missing in the root validator environment; this is not proof the focused connector regression passed."
+      - "Live Futuris code had inserted example BTC/ETH/SOL positions when Stratex reads failed; the new branch removes that fabricated portfolio state."
+    next_action: "Check the new isolated root-test commit's latest CI; fix actual dependency/test issues without weakening assertions. Provision a valid Stratex read key only through the approved secret process."
+
+  - id: "TASK-CORE-002"
+    title: "Remove fabricated UniverseOrchestrator dispatch success"
+    status: "MERGED"
+    owner: "grok"
+    branch: "grok/TASK-CORE-002"
+    pr: 25
+    files:
+      - "FRIDAY/src/friday/integrations/universe_orchestrator.py"
+      - "FRIDAY/tests/test_universe_orchestrator_no_fake_dispatch.py"
+    evidence:
+      - "PR #25 merged at commit 79c1f75."
+      - "Five tests reported passed on Server 2; production execution remains unverified."
+    next_action: "Verify actual deployed behavior after the owner-approved deploy window; do not describe the no-API path as executing a task."
+
+task_id_warnings:
+  - id: "WARN-TASK-ID-001"
+    severity: "high"
+    description: "PR #23 is labelled TASK-CI-003 but does not match TASK-CI-003's current Master Plan acceptance criteria (workspace test runner)."
+    resolution_owner: "claude"
+  - id: "WARN-TASK-ID-002"
+    severity: "high"
+    description: "PR #34 is labelled TASK-CI-004 but the Master Plan currently describes TASK-CI-004 as narrowing the bridge/** gitignore rule. PR #34 is a separate broad root-cause CI change."
+    resolution_owner: "claude"
