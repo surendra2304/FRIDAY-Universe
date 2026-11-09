@@ -128,10 +128,10 @@ Evidence cited by file path or command. Secrets are named, never printed.
 
 ## 16. Multi-AI collaboration and task ownership (PROPOSED IN PR #30; NOT ON MAIN)
 
-- The proposed coordination directory is `docs/collaboration/`. It contains a universal contributor guide, roster, operational task board, file-ownership/conflict register, append-only activity log, decisions, handoffs and reusable templates.
+- The proposed coordination directory is `docs/collaboration/`. PR #30 (ChatGPT) and PR #36 (Vercel v0) independently created overlapping versions. PR #30 currently contains a universal contributor guide, roster, operational task board, file-ownership/conflict register, append-only activity log, decisions, handoffs, reusable templates and validator. The two PRs must be consolidated before merging.
 - GitHub issue #35 is the shared, timestamped claim/release/handoff thread for Claude, ChatGPT, Grok, ZAI, Vercel v0 and future contributors. Every collaborator remains an equal engineering contributor; the project owner retains final approval.
 - `docs/MASTER_PLAN.md` remains authoritative for task scope and acceptance criteria. The collaboration board mirrors ownership and work state; it does not replace the Master Plan.
 - Initial file-overlap audit found PR #23/#34 overlap on `.github/workflows/validate-monorepo.yml`, PR #28/#34 overlap on `universe_dispatch_bus.py`, and PR #24/#26/#30 overlap on the three central documents. These conflicts require explicit reconciliation before merge.
-- ZAI and Vercel v0 are recorded as planned/not onboarded. Their repository access, tools and permissions must be verified before assigning work.
+- Vercel v0 is now an active contributor with branch `v0/coordination-bootstrap` and PR #36; its branch/PR existence is verified, while its reported local shell/Vercel sync capabilities are not independently verified in this session. ZAI remains planned/not onboarded. Verify tools and permissions before expanding either contributor's scope.
 - The collaboration directory is documentation/Git coordination only. FRIDAY's runtime assignment/result store under TASK-CORE-003 remains a separate engineering requirement.
 - A dedicated validator `scripts/validate_collaboration.py` and workflow `.github/workflows/collaboration-registry.yml` are included in PR #30. They structurally validate contributor/task IDs, states, ownership references, conflict references, required docs and the canonical ten-agent list. The workflow is not yet verified green at this snapshot.
