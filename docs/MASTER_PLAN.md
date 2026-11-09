@@ -146,3 +146,8 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 ### TASK-DATA-002 incremental security finding — 2026-11-09
 
 The main Memora app mounted `memory_access_controller.router` under `/api/v1`, while the legacy process-local grant, approval and audit handlers had no authentication dependencies. PR #38 now requires authenticated agent credentials on all seven compatibility routes; only the `memora` service identity can mutate grants or inspect global audit/report state, and request/check operations are bound to the authenticated subject. The compatibility engine remains explicitly process-local and is not the canonical tenant-aware persistent policy store. Focused Memora run 42658441949 passed (12 tests, 1 warning); the Memora step in FRIDAY CI run 42658441937 passed. This work is unmerged and not deployed.
+
+
+### TASK-DATA-002 incremental finding — explicit memory-share authorization — 2026-11-09
+
+A second authorization defect was found in the canonical write path: the `shared_with` parameter previously inserted `MemorySharedAgent` entries after a namespace write decision only. PR #38 now requires owner control and an explicit policy `share` decision, rejects wildcard/self/unregistered/cross-tenant recipient names, and provisions tenant-scoped read/query namespace grants alongside the memory membership entry. This is performed in the existing write transaction and across new, duplicate and idempotent replay paths; canonical implicit team-shared behavior is unchanged. Focused Memora run 42663206883 passed (16 tests, 1 warning); full FRIDAY run 42663207108 passed the Python and HTTP/API suites, with Docker skipped for the PR event. Monorepo checks remained pending at the last observation. Unmerged and undeployed.
