@@ -11,3 +11,10 @@ Append-only record. Timestamps are UTC dates unless a more precise timestamp is 
 - Tests: `uv run --with PyYAML python ...` parsed all three YAML registries successfully; `git diff --check` passed.
 - Verified PR #36 is open with three CI checks currently in progress; no review decision is recorded yet.
 - Outstanding: verify active branches and live Oracle evidence through approved read-only tooling before claiming an implementation task.
+
+## 2026-11-09 — v0 — COORD-002
+
+- Verified PR #36 head and `origin/v0/coordination-bootstrap` both contain all seven collaboration-centre files.
+- Verified GitHub API content for `docs/collaboration/README.md` on the branch.
+- Observed CI results: repository test job passes, while fleet-layout and monorepo-policy jobs fail in pre-existing test/workflow areas; failures include Oracle memory configuration, Forge ABC timing, and orchestrator completion assertions.
+- No runtime or production files were changed. The failures were recorded as blockers rather than hidden or weakened.

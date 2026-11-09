@@ -83,6 +83,8 @@ tasks:
       - docs/collaboration/
     test_requirements: [targeted repository checks]
     test_results: []
-    blockers: [External GitHub PR and Oracle evidence still require fresh verification]
+    blockers:
+      - External Oracle evidence still requires fresh verification.
+      - PR #36's unrelated repository checks currently fail in the existing suite: Oracle memory configuration, Forge ABC timing, and orchestrator completion assertions.
     last_update: "2026-11-09"
-    next_action: Inspect CI configuration and select a non-overlapping fix.
+    next_action: Coordinate with the owners of TASK-CI-002 and TASK-CORE-002 before touching their implementation files.
