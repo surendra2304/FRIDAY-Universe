@@ -15,7 +15,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-INT-001 | IntelX evidence pipeline and Oracle persistence audit | ChatGPT | chatgpt/TASK-INT-001-intelx-json | IntelX/intelx/oracle_dialect_compat.py, IntelX/intelx/db/engine.py, tests/test_intelx_oracle_json_compat.py | IN_REVIEW (PR #32); FRIDAY CI passed, monorepo validation still fails on broader repository issues; no deployment |
 | TASK-FUT-001 | Prevent fabricated Stratex positions/funding telemetry | ChatGPT | chatgpt/TASK-FUT-001-stratex-telemetry | Futuris connector, risk router and regression tests | IN_REVIEW (PR #33); FRIDAY CI passed, monorepo validation failed during collection because root validation lacks NumPy; no deployment |
 | TASK-MEM-001 | Memora Oracle vector tenant and transaction integrity | ChatGPT | chatgpt/TASK-MEM-001-memora-oracle-vector-audit | Memora Oracle vector adapter, regression tests, root and nested CI workflows, package/config docs | IN_REVIEW (PR #37); focused vector suite 8 passed/1 warning (run 42596147391); full FRIDAY CI passed (run 42596147378); live Oracle/Qdrant unverified |
-| TASK-DATA-002 | Cross-agent Memora private/shared/universal isolation | ChatGPT | chatgpt/TASK-DATA-002-memory-tenant-isolation | Memora maintenance API, route-level regressions and FRIDAY CI | IN_PROGRESS; PR #38 closes arbitrary tenant selection in horizon sweep (stacked on #37); Memora group 17 passed/1 warning and HTTP/API group 45 passed in run 42598678632; broad monorepo checks pending |
+| TASK-DATA-002 | Cross-agent Memora private/shared/universal isolation | ChatGPT | chatgpt/TASK-DATA-002-memory-tenant-isolation | Memora tenant binding, legacy access-controller authorization, route tests and FRIDAY CI | IN_PROGRESS; PR #38 also secures the mounted process-local access controller; focused run 42658441949: 12 passed/1 warning; Memora step of FRIDAY run 42658441937 passed; full FRIDAY HTTP/API and monorepo checks pending |
 | TASK-CI-004 | Root-cause fixes for fleet CI failures | Claude | claude/TASK-CI-004 | validate-monorepo.yml, dispatch bus, Forge optimizers, tests/conftest.py, e2e tests | IN_REVIEW (PR #34); FRIDAY CI and image build passed; both monorepo validators failed |
 | TASK-COLLAB-001 | Shared multi-AI collaboration centre | ChatGPT | chatgpt/TASK-DOC-SYNC-001 | docs/collaboration/* and three central documents | IN_REVIEW (PR #30); GitHub claim hub issue #35 created; records are a snapshot and require review/merge |
 
@@ -149,3 +149,13 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Tests: test_memory_tenant_admin_maintenance_isolation.py proves foreign-tenant request returns 403 and the sweeper is not called; explicit/default and omitted tenant requests both call the worker with default.
 - Verification: FRIDAY run 42598678632 PASS (Memora group 17 passed/1 warning; HTTP/API group 45 passed); focused Memora Vector Regression run 42598678508 PASS (8 passed/1 warning). Broad monorepo runs 42598678658/78539 still in progress at last check.
 - Open scope: TASK-DATA-002 remains IN_PROGRESS. Continue auditing direct read, query/search, graph, sharing/grant revocation, task-envelope routes and private/shared/universal scope combinations. No production DB/service was touched.
+
+
+### TASK-DATA-002 update — mounted access-controller security
+
+- Claim extension: issue #35 comment #6745629449.
+- New finding: `Memora/apps/api/main.py` mounts the legacy `memory_access_controller` router under `/api/v1`. Its handlers did not authenticate callers.
+- Fix on PR #38: all routes require valid agent credentials; the `memora` identity alone can grant/revoke/approve or view global audit/report; request/check operations are self-bound; attribution spoofing is rejected.
+- New tests: `Memora/tests/test_memory_access_controller_auth.py` checks missing credentials, non-admin denial, self-binding and admin actions.
+- Verification: focused Memora Vector Regression run 42658441949 PASS (12 passed, 1 warning); Memora step in FRIDAY CI run 42658441937 PASS. Full HTTP/API and monorepo checks still pending.
+- The legacy engine remains process-local and non-canonical; this is not proof of persistent policy or deployment integration. PR #38 remains stacked on PR #37 and both remain unmerged.
