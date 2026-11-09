@@ -413,6 +413,10 @@ class TestCortexE2E:
 class TestMemoraE2E:
     @classmethod
     def setup_class(cls):
+        # Several agents ship a top-level 'app' package; drop any cached one so Memora's own is imported.
+        for mod in list(sys.modules):
+            if mod in ("app", "apps") or mod.startswith(("app.", "apps.")):
+                sys.modules.pop(mod, None)
         memora_path = os.path.join(REPO_ROOT, "Memora")
         if memora_path in sys.path:
             sys.path.remove(memora_path)
