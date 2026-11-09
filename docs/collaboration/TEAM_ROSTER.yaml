@@ -55,7 +55,7 @@ collaborators:
     authority: "Equal engineering collaborator"
     verified_capabilities:
       - "GitHub repository read/write through connected GitHub integration"
-      - "Created and updated branches and pull requests #24, #26, #30, #31, #32, #33 and #37"
+      - "Created and updated branches and pull requests #24, #26, #30, #31, #32, #33, #37 and #38"
       - "Read-only diagnostics through the FRIDAY x Claude x ChatGPT bridge"
       - "Posted independent review findings on PRs #23, #26 and #28"
     active_assignments:
@@ -66,6 +66,7 @@ collaborators:
       - "PR #32 — IntelX Oracle JSON compatibility"
       - "PR #33 — Futuris/Stratex portfolio data integrity"
       - "PR #37 — Memora Oracle vector tenant and transaction integrity"
+      - "PR #38 — Memora maintenance API tenant binding (stacked on PR #37); broader TASK-DATA-002 audit remains active"
     active_branches:
       - "chatgpt/TASK-SEC-003"
       - "chatgpt/TASK-CORE-001-cortex-route-auth"
@@ -74,7 +75,8 @@ collaborators:
       - "chatgpt/TASK-INT-001-intelx-json"
       - "chatgpt/TASK-FUT-001-stratex-telemetry"
       - "chatgpt/TASK-MEM-001-memora-oracle-vector-audit"
-    last_verified_at: "2026-11-09T09:50:00Z"
+      - "chatgpt/TASK-DATA-002-memory-tenant-isolation"
+    last_verified_at: "2026-11-09T10:10:00Z"
     access_limits:
       - "Oracle checks performed in this snapshot were read-only."
       - "No production restart, deployment, merge or secret provisioning was performed."
