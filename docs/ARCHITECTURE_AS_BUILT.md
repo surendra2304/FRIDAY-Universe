@@ -109,9 +109,9 @@ Evidence cited by file path or command. Secrets are named, never printed.
 4. MERGED (PR #25): universe_orchestrator no longer fabricates a live dispatch; when no Universe API is configured, the goal remains `not_executed` and is not actually executed.
 5. GAP: keyword routing misroutes; TASK-ORCH-001 remains outstanding.
 6. GAP: Forge and Sentinel typed task route capability is not yet complete; PR #29 covers Sentinel only and PR #28's generic defaults have unresolved contract review findings.
-7. GAP: FRIDAY-Voice memory limit.
+7. RESOLVED CONFIGURATION GAP: FRIDAY-Voice now has MemoryHigh=250M and MemoryMax=300M in a systemd drop-in (read-only verification 2026-11-09); LiveKit event-loop blocking warnings remain separately under investigation.
 8. GAP: production bridge authentication not yet activated; PR #24 is source/tests only pending operational requirements.
-9. GAP: no task records for cross-agent assignment.
+9. GAP: no runtime FRIDAY task database/store for cross-agent assignment. A documentation-level contributor/task registry is proposed in PR #30 under docs/collaboration; it is not yet merged and does not replace a runtime task execution record.
 10. GAP: no alerting on crash loops; no documented rollback.
 11. GAP: sniper secrets authentication unconfirmed (TASK-OPS-002).
 12. UNVERIFIED: most per-agent internals (not yet read in full).
@@ -120,4 +120,17 @@ Evidence cited by file path or command. Secrets are named, never printed.
 15. Stratex received 401 responses for some `/api/v1/status` and `/api/v1/positions` probes and 404 responses for several alternate positions/trades URLs in service logs. Futuris also logged 404s against Stratex positions endpoints. Caller/endpoint contract and effect on service functionality remain under TASK-STR-001/TASK-STR-002 investigation; Stratex.service itself was active.
 13. CI: full monorepo validation is not yet evidenced green on current main.
 14. Cortex role policy: PR #26 has an unresolved finding because method-only POST=>operator blocks read-only forecast analysis for viewer users.
-15. Secret scan: PR #31 is open, and its change-range Gitleaks CI passed on its latest head; broader monorepo validation remains in progress. Do not treat TASK-SEC-004 as complete until PR review, all required checks, and merge.
+15. Secret scan: PR #31 is open, and its change-range Gitleaks CI passed on its latest head; broader monorepo validation remains red. Do not treat TASK-SEC-004 as complete until PR review, required checks and merge.
+16. Futuris/Stratex data truth: PR #33 removes simulated BTC/ETH/SOL positions and placeholder credentials from the Futuris telemetry connector. It is not merged or deployed; read-key configuration and live data verification remain outstanding.
+17. CI: PR #34 changes validation dependencies/fixtures, the dispatch bus and Forge optimizers. Its FRIDAY CI and heavy-task image checks passed, but both monorepo validator jobs failed. PR #34 overlaps PR #23 and #28 on changed files.
+18. AI collaboration: PR #30 proposes a shared collaboration centre at docs/collaboration and GitHub issue #35 for claims/handoffs. The directory is not on main until PR #30 is reviewed and merged. It is a contributor coordination layer, not a runtime FRIDAY task store.
+
+
+## 16. Multi-AI collaboration and task ownership (PROPOSED IN PR #30; NOT ON MAIN)
+
+- The proposed coordination directory is `docs/collaboration/`. It contains a universal contributor guide, roster, operational task board, file-ownership/conflict register, append-only activity log, decisions, handoffs and reusable templates.
+- GitHub issue #35 is the shared, timestamped claim/release/handoff thread for Claude, ChatGPT, Grok, ZAI, Vercel v0 and future contributors. Every collaborator remains an equal engineering contributor; the project owner retains final approval.
+- `docs/MASTER_PLAN.md` remains authoritative for task scope and acceptance criteria. The collaboration board mirrors ownership and work state; it does not replace the Master Plan.
+- Initial file-overlap audit found PR #23/#34 overlap on `.github/workflows/validate-monorepo.yml`, PR #28/#34 overlap on `universe_dispatch_bus.py`, and PR #24/#26/#30 overlap on the three central documents. These conflicts require explicit reconciliation before merge.
+- ZAI and Vercel v0 are recorded as planned/not onboarded. Their repository access, tools and permissions must be verified before assigning work.
+- The collaboration directory is documentation/Git coordination only. FRIDAY's runtime assignment/result store under TASK-CORE-003 remains a separate engineering requirement.
