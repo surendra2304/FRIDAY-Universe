@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-09T05:18:00Z"
+snapshot_at: "2026-11-09T09:50:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -316,6 +316,40 @@ tasks:
       - "PR #25 merged at commit 79c1f75."
       - "Five tests reported passed on Server 2; production execution remains unverified."
     next_action: "Verify actual deployed behavior after the owner-approved deploy window; do not describe the no-API path as executing a task."
+
+  - id: "TASK-MEM-001"
+    title: "Memora Oracle vector tenant and transaction integrity"
+    status: "IN_REVIEW"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-MEM-001-memora-oracle-vector-audit"
+    pr: 37
+    priority: "P1"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6732954210"
+    files:
+      - "Memora/storage/vector/oracle_vector_adapter.py"
+      - "Memora/tests/test_oracle_vector_tenant_isolation.py"
+      - ".github/workflows/memora-vector-regression.yml"
+      - ".github/workflows/friday-universe-ci.yml"
+      - "Memora/requirements.txt"
+      - "Memora/pyproject.toml"
+      - "Memora/core/config.py"
+      - "Memora/.env.example"
+      - "Memora/README.md"
+      - "Memora/notes/phase-07-search-context-budgeting.md"
+      - "Memora/notes/phase-08-storage-schema-deletion.md"
+    acceptance:
+      - "Vector IDs cannot be reassigned across tenants in Oracle or the SQLite test fallback."
+      - "Caller-owned vector writes/deletes do not commit or roll back the memory pipeline's outer transaction."
+      - "Failed schema initialization does not report the vector adapter available."
+      - "Embedding dimension/configuration is consistent and does not expose an unused override."
+      - "Focused regression and existing FRIDAY CI pass; Oracle/Qdrant integration limitations are explicitly recorded."
+    evidence:
+      - "PR #37 latest head 730ee962bb36e72d9a40c29821d84c8624b4c85a is open and mergeable."
+      - "Memora Vector Regression run 42596147391 PASS: 8 passed, 1 warning."
+      - "FRIDAY Universe CI/CD run 42596147378 PASS, including the Memora vector step and HTTP/API tests."
+      - "Monorepo validator runs 42596147434 and 42596147572 were still in progress at the latest status check."
+      - "No live Oracle Autonomous Database or Qdrant service was contacted."
+    next_action: "Review PR #37; obtain controlled non-production Oracle MERGE/schema verification and verify deployed Qdrant collection dimension before claiming integration complete. Then request owner approval before merging."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
