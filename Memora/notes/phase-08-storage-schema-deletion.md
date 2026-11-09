@@ -44,3 +44,19 @@
 - A fresh database created through `init_db()` now gets an Alembic `head` stamp only when the pre-create database had no Memora tables and no `alembic_version`. Existing unversioned databases are not auto-stamped, because doing so could skip required data transformations. `tests/test_schema_init_migrations.py` compares the fresh ORM schema's tables, columns, and uniqueness invariants with a migration-only SQLite upgrade, and confirms a subsequent `alembic upgrade head` succeeds.
 - A temporary installed-wheel run verified the packaged `init_db()` path creates/stamps SQLite at `f35ecb0a7c12`, then the packaged Alembic CLI reports the same head from outside the source checkout. Docker CLI/image and hosted DB migration behavior remain unverified.
 - Subsequent hardening added `DeletionTombstone.turso_deleted` and remote anti-resurrection fencing/retry, direct-read lifecycle enforcement, Qdrant tenant-filtered paged orphan reconciliation, and event-ID tenant/publisher collision checks. These fixes are locally tested; no remote Turso/Qdrant/Redis/PostgreSQL service was contacted. Event-feed APIs still bind to the shared `default` tenant until credentials carry tenant claims.
+
+
+## Oracle vector adapter audit — 2026-11-09 (PR #37; not merged)
+
+Static source tracing identified two correctness defects in the Oracle native vector adapter:
+
+1. **Tenant ownership collision:** Oracle `MERGE` matched only the memory ID, while the SQLite fallback looked up by ID and updated `tenant_id`. Reuse of the same vector ID by a second tenant could overwrite the first tenant's vector/payload or transfer ownership in the fallback backend.
+2. **Premature parent transaction commit:** The write pipeline flushes the MemoryRecord and graph metadata, then passes its active SQLAlchemy session to `OracleVectorAdapter.upsert_embedding` before the final event/audit commit. The adapter unconditionally committed that session. Consequently the new memory/associated rows could be committed before the pipeline's intended atomic final commit. The schema-bootstrap method also committed a caller-supplied session when it needed to initialize a table.
+
+The PR changes the Oracle MERGE to match ID and tenant, makes the fallback reject cross-tenant ID reuse and update only an ID+tenant pair, and performs caller-owned upserts/deletes inside savepoints without committing or rolling back the caller's outer transaction. Schema initialization uses a separately managed session. Identifier, vector dimension, finite-value and payload validation were added. Readiness no longer reports available before schema bootstrap succeeds and no longer labels an unknown backend as SQLite emulation.
+
+Regression coverage is added in `tests/test_oracle_vector_tenant_isolation.py`: tenant collision, same-tenant updates, caller-owned outer commit/rollback behavior for vector upsert/delete, Oracle MERGE SQL contract, invalid dimensions/non-finite values and readiness.
+
+Verification boundaries: the tests use isolated SQLite databases and a recording session for the Oracle SQL contract; no Oracle Autonomous Database or production service was contacted. The newly added CI job first failed because Memora did not declare `greenlet`, required by its SQLAlchemy asyncio imports. The package dependency has since been added to both `requirements.txt` and `pyproject.toml`; the subsequent test run exposed a test-fixture module-import mistake, which has been corrected using `importlib.import_module`. The newest focused run is pending; no passing result is claimed yet.
+
+The stale `VECTOR_DIMENSION=1536` setting was also removed because it was unused while the generator/table both used 384. External Qdrant collection dimension and live Oracle schema compatibility remain unverified.
