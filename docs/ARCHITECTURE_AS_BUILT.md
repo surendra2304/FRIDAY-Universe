@@ -134,7 +134,7 @@ Evidence cited by file path or command. Secrets are named, never printed.
 - Initial file-overlap audit found PR #23/#34 overlap on `.github/workflows/validate-monorepo.yml`, PR #28/#34 overlap on `universe_dispatch_bus.py`, and PR #24/#26/#30 overlap on the three central documents. These conflicts require explicit reconciliation before merge.
 - Vercel v0 is now an active contributor with branch `v0/coordination-bootstrap` and PR #36; its branch/PR existence is verified, while its reported local shell/Vercel sync capabilities are not independently verified in this session. ZAI remains planned/not onboarded. Verify tools and permissions before expanding either contributor's scope.
 - The collaboration directory is documentation/Git coordination only. FRIDAY's runtime assignment/result store under TASK-CORE-003 remains a separate engineering requirement.
-- A dedicated validator `scripts/validate_collaboration.py` and workflow `.github/workflows/collaboration-registry.yml` are included in PR #30. They structurally validate contributor/task IDs, states, ownership references, conflict references, required docs and the canonical ten-agent list. Collaboration Registry Validation run 42566339658 passed on latest PR #30 head 4a00f428. FRIDAY CI run 42566339669 and broad monorepo validators 42566339666/42566339657 are in progress on the same head. The collaboration check validates registry structure only, not implementation or production health.
+- A dedicated validator `scripts/validate_collaboration.py` and workflow `.github/workflows/collaboration-registry.yml` are included in PR #30. They structurally validate contributor/task IDs, states, ownership references, conflict references, required docs and the canonical ten-agent list. Collaboration Registry Validation run 42596903311 passed on PR #30 head 5920161f. Broad monorepo validators 42596903328 and 42596903017 were in progress at the latest status check. The collaboration check validates registry structure only, not implementation or production health.
 
 
 ## 17. Memora Oracle vector adapter remediation (PR #37 — IN_REVIEW; not on main)
@@ -145,3 +145,11 @@ Evidence cited by file path or command. Secrets are named, never printed.
 - Adapter inputs now reject invalid identifiers, vector dimensions and non-finite values, invalid payload types, invalid thresholds and unbounded result limits.
 - The stale `VECTOR_DIMENSION=1536` knob was unused; actual embedding generation and Oracle table are 384-dimensional. PR #37 removes the ineffective override and documents the 384-dimensional contract. External Qdrant collection provisioning is not verified.
 - Verification: PR #37 focused Memora Vector Regression run 42596147391 PASS (8 passed, 1 warning); full FRIDAY Universe CI/CD run 42596147378 PASS, including the Memora step and HTTP/API suite. Oracle MERGE is checked by SQL contract tests; SQLite tests verify fallback and transaction boundaries. No live Oracle Autonomous Database or Qdrant service was contacted. Broad monorepo validation remains separately in progress.
+
+
+## 18. Memora vector audit (PR #37 — IN_REVIEW, not merged)
+
+- PR #37 adds tenant-safe vector upsert semantics for Oracle and the SQLite fallback, caller-owned transaction savepoints for vector mutations, schema bootstrap isolation, truthful readiness, and input validation.
+- The unused 1536-dimensional configuration was removed; current embedding generation/Oracle vector schema is fixed at 384. A deployed Qdrant collection's actual dimension remains unverified.
+- Verification: focused Memora vector regression run 42596147391 passed (8 passed, 1 warning); FRIDAY CI run 42596147378 passed, including all FRIDAY test suites, Memora vector tests, and HTTP/API tests.
+- No live Oracle database/Qdrant service was contacted. PR #37 remains open and is not production-verified.
