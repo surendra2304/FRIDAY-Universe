@@ -112,3 +112,16 @@ For every new handoff, include:
 - **Next action:** Independently review PR #37, arrange a controlled non-production Oracle integration check and confirm Qdrant collection dimension, then seek owner approval before merge.
 
 - **Memora follow-on work:** PR #37 (TASK-MEM-001) has green focused Memora tests (8 passed, 1 warning) and full FRIDAY CI (run 42596147378 PASS). The next available dependency is TASK-DATA-002, cross-agent private/shared namespace isolation. A separate branch should start from the reviewed PR #37 head but claim only the identity, access-policy, retrieval and API files it modifies; do not modify PR #37 files or branch.
+
+
+## Handoff — 2026-11-09 — TASK-DATA-002 / PR #38
+
+- Owner: ChatGPT
+- Claim: issue #35 comment #6737168104.
+- Branch / PR: chatgpt/TASK-DATA-002-memory-tenant-isolation / PR #38.
+- Stacking: Branch is based on PR #37's head. PR #38 must not merge before #37; after #37 lands, rebase/retarget #38 to main and rerun CI.
+- Confirmed issue: API-triggered horizon sweep trusted body-supplied tenant_id and passed it to consolidation/pruning. This could mutate foreign tenant memories via the Memora admin API.
+- Fix: Route resolves authenticated memora principal in API tenant default, rejects foreign tenant requests with 403 before invoking the sweeper, and always passes the service actor's tenant. Internal all-tenant background sweep is unchanged.
+- Regression: foreign tenant request rejected and sweeper not called; explicit default and omitted tenant both pass only default.
+- Verification: FRIDAY run 42598678632 PASS (Memora group 17 passed/1 warning; HTTP/API group 45 passed); focused Memora Vector Regression run 42598678508 PASS (8 passed/1 warning). Broad monorepo runs 42598678658/78539 still in progress at last check.
+- Remaining task: complete adversarial API tests for direct read, search, share/revoke, graph and task routes; inspect remaining tenant-selectable administrative endpoints. No production DB/service was touched.
