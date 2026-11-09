@@ -156,3 +156,15 @@ When ZAI, Vercel v0 or another contributor is introduced:
 ## Snapshot warning
 
 The YAML files are an initial snapshot dated 2026-11-09. Contributors must refresh GitHub and runtime state before acting. The records are not a live dashboard and do not update themselves.
+
+
+## Automated registry validation
+
+Run locally before submitting changes:
+
+```bash
+python -m pip install "PyYAML>=6.0,<7.0"
+python scripts/validate_collaboration.py
+```
+
+The dedicated GitHub Actions workflow `.github/workflows/collaboration-registry.yml` runs on pull requests and pushes that change collaboration records or the central documents. It validates contributor IDs, task IDs/states, ownership references, conflict references, required files and the canonical ten-agent record. A passing registry check validates the records' structure; it does not prove task implementation or production health.
