@@ -88,3 +88,28 @@ tasks:
       - PR #36's unrelated repository checks currently fail in the existing suite: Oracle memory configuration, Forge ABC timing, and orchestrator completion assertions.
     last_update: "2026-11-09"
     next_action: Coordinate with the owners of TASK-CI-002 and TASK-CORE-002 before touching their implementation files.
+  - id: INF-003
+    name: Make inference imports configuration-safe
+    description: Prevent module import from constructing an Oracle memory backend before an inference request or explicit memory use.
+    priority: HIGH
+    acceptance_criteria:
+      - Importing Inference app modules does not require production database credentials.
+      - First real memory use still fails closed when no Oracle configuration exists.
+      - Regression tests cover both import safety and explicit memory construction.
+    dependencies: []
+    status: IN_REVIEW
+    assigned_collaborator: v0
+    other_contributors: []
+    working_branch: v0/coordination-bootstrap
+    associated_pr: https://github.com/surendra2304/FRIDAY-Universe/pull/36
+    files_being_modified:
+      - Inference/app/agents/debate.py
+      - Inference/tests/test_module_importability.py
+      - docs/collaboration/
+    test_requirements: [Inference import regression test, targeted pytest]
+    test_results:
+      - "Inference module importability suite: 5 passed with required dependencies."
+      - "Import without database credentials passes; first memory access still raises DatabaseConfigurationError."
+    blockers: [Full fleet CI still has independent peer-service and load-test failures.]
+    last_update: "2026-11-09"
+    next_action: Push branch and request review; do not claim full fleet CI green until peer-service failures are fixed.

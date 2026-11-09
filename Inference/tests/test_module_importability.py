@@ -11,7 +11,12 @@ the admin routes actually use - so they were removed rather than rescued.
 """
 
 import importlib
+import os
 import pathlib
+import subprocess
+import sys
+
+import pytest
 
 import app
 
@@ -65,6 +70,42 @@ def test_no_directory_shares_its_name_with_a_sibling_module():
     assert not collisions, (
         "rename or remove one side of each collision:\n  " + "\n  ".join(collisions)
     )
+
+
+def test_inference_debate_module_imports_without_database_credentials():
+    """Import discovery must not construct a production memory backend."""
+    env = os.environ.copy()
+    for name in ("DATABASE_URL", "ORACLE_CORE_URL", "ORACLE_CORE_ASYNC_URL", "ORACLE_PASSWORD"):
+        env.pop(name, None)
+    env["PYTHONPATH"] = str(pathlib.Path(__file__).resolve().parents[1])
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from app.agents.debate import CollaborationEngine; CollaborationEngine()",
+        ],
+        cwd=pathlib.Path(__file__).resolve().parents[1],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_inference_debate_memory_still_fails_closed_without_configuration(monkeypatch):
+    from app.agents.debate import CollaborationEngine
+    from app.core.config import settings
+    from app.memory.factory import DatabaseConfigurationError
+
+    monkeypatch.setattr(settings, "DATABASE_URL", "")
+    monkeypatch.setattr(settings, "ORACLE_CORE_URL", None)
+    monkeypatch.setattr(settings, "ORACLE_CORE_ASYNC_URL", None)
+    monkeypatch.setattr(settings, "ORACLE_PASSWORD", None)
+
+    engine = CollaborationEngine()
+    with pytest.raises(DatabaseConfigurationError):
+        _ = engine.memory
 
 
 def test_admin_alerts_endpoint_reads_the_live_alert_system():
