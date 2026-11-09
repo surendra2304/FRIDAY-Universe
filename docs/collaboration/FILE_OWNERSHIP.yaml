@@ -33,23 +33,23 @@ claims:
   - path: "docs/MASTER_PLAN.md"
     owner: "chatgpt"
     prs: [24, 26, 30]
-    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001", "zai/TASK-COLLAB-002-register-zai", "zai/TASK-DATA-001-db-architecture-audit"]
     status: "OVERLAPPING_CLAIMS"
-    risk: "Multiple ChatGPT PR branches carry different copies of the roadmap. Reconcile the final text onto one current branch; do not merge stale doc snapshots over newer evidence."
+    risk: "Multiple ChatGPT PR branches carry different copies of the roadmap. Reconcile the final text onto one current branch; do not merge stale doc snapshots over newer evidence. ZAI branches touch it too: PR #40 records TASK-STR-001/TASK-COLLAB-002 status; zai/TASK-DATA-001-db-architecture-audit updates only the TASK-DATA-001 status line."
 
   - path: "docs/handoff.md"
     owner: "chatgpt"
     prs: [24, 26, 30]
-    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001", "zai/TASK-COLLAB-002-register-zai", "zai/TASK-DATA-001-db-architecture-audit"]
     status: "OVERLAPPING_CLAIMS"
-    risk: "Multiple PRs update the handoff. Keep the most recent GitHub/runtime snapshot and include all concurrent contributors."
+    risk: "Multiple PRs update the handoff. Keep the most recent GitHub/runtime snapshot and include all concurrent contributors. ZAI branches append registry rows and task-specific sections only."
 
   - path: "docs/ARCHITECTURE_AS_BUILT.md"
     owner: "chatgpt"
     prs: [24, 26, 30]
-    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001", "zai/TASK-COLLAB-002-register-zai", "zai/TASK-DATA-001-db-architecture-audit"]
     status: "OVERLAPPING_CLAIMS"
-    risk: "As-built documentation needs one final reconciled update after implementation reviews."
+    risk: "As-built documentation needs one final reconciled update after implementation reviews. ZAI branches append PR-scoped sections only (TASK-DATA-001 adds section 20; sections 1-19 untouched)."
 
   - path: ".github/workflows/mirror-subrepos.yml"
     owner: "claude"
