@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-09T09:55:00Z"
+snapshot_at: "2026-11-09T10:10:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -350,6 +350,38 @@ tasks:
       - "Monorepo validator runs 42596147434 and 42596147572 were still in progress at the latest status check."
       - "No live Oracle Autonomous Database or Qdrant service was contacted."
     next_action: "Review PR #37; obtain controlled non-production Oracle MERGE/schema verification and verify deployed Qdrant collection dimension before claiming integration complete. Then request owner approval before merging."
+
+  - id: "TASK-DATA-002"
+    title: "Cross-agent Memora private/shared/universal isolation"
+    status: "IN_PROGRESS"
+    owner: "chatgpt"
+    branch: "chatgpt/TASK-DATA-002-memory-tenant-isolation"
+    pr: 38
+    priority: "P1"
+    depends_on:
+      - "TASK-MEM-001 / PR #37 — vector tenant ownership remediation"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6737168104"
+    stacked_pr_rule: "PR #38 is based on PR #37 and must not merge before #37. After #37 merges, rebase/retarget #38 onto main and rerun all checks."
+    files:
+      - "Memora/apps/api/routers/v1_memories.py"
+      - "Memora/tests/test_memory_tenant_admin_maintenance_isolation.py"
+      - ".github/workflows/friday-universe-ci.yml"
+    completed_findings:
+      - "API-triggered /v1/memories/sweep-horizon previously accepted arbitrary tenant_id and forwarded it to the destructive milestone-consolidation worker."
+      - "The route now resolves the authenticated memora identity in the default tenant, rejects mismatched tenant selectors before invoking the sweeper, and always passes the resolved service tenant."
+      - "The internal background worker's intentionally multi-tenant mode is unchanged."
+    acceptance:
+      - "A foreign-tenant sweep request returns 403 and does not invoke the sweeper."
+      - "A matching or omitted tenant is pinned to the authenticated Memora service tenant."
+      - "Private/shared/universal read, write, search, context, graph and grant routes are covered by adversarial cross-agent regressions."
+      - "No cross-tenant service-admin action or information disclosure remains in the API surface."
+      - "FRIDAY and focused Memora tests pass; Oracle/Qdrant/production limitations are explicitly recorded."
+    evidence:
+      - "FRIDAY Universe CI/CD run 42598678632 PASS on PR #38 head 0b825252; Memora group 17 passed, 1 warning; HTTP/API group 45 passed."
+      - "Memora Vector Regression run 42598678508 PASS (8 passed, 1 warning)."
+      - "Monorepo validator runs 42598678658 and 42598678539 were still in progress at last check."
+      - "No live Oracle/Qdrant or production environment was accessed."
+    next_action: "Continue the direct-read/search/share/revoke/graph/task-route privacy matrix, then rebase this stacked PR after #37 merges and rerun the complete CI."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
