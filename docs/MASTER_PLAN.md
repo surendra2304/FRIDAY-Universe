@@ -1,9 +1,10 @@
 # FRIDAY Universe — Master Plan
 
-Single source of truth for the roadmap. Both Claude and ChatGPT work top to bottom through this file.
-Read docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md before starting any task.
+Single source of truth for project objectives, acceptance criteria and dependency order. All human and AI collaborators work from this file; there is no permanent AI hierarchy.
+Read docs/handoff.md, docs/ARCHITECTURE_AS_BUILT.md and docs/collaboration/README.md before starting any task. Refresh GitHub and the shared coordination records before acting.
 
-Statuses: NOT_STARTED | IN_PROGRESS | BLOCKED | IN_REVIEW | VERIFIED | DONE
+Roadmap statuses: NOT_STARTED | IN_PROGRESS | BLOCKED | IN_REVIEW | VERIFIED | DONE
+Operational collaborator/task states are defined in docs/collaboration/README.md and docs/collaboration/WORK_BOARD.yaml.
 - VERIFIED needs evidence (command output, log line, live check, or test run cited in handoff.md).
 - DONE needs implementation, passing tests, verification, and all acceptance criteria met.
 - A box is never ticked because code was written.
@@ -26,6 +27,9 @@ Plus infrastructure: Caddy (Server 1), friday-bridge engineering MCP gateway (Se
 Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
 ## 3. Phases in execution order (dependency-driven)
+
+### Phase 0A — Multi-AI collaboration foundation
+- [ ] TASK-COLLAB-001 — Establish the shared multi-AI collaboration centre at `docs/collaboration/`: roster, task board, file ownership, activity log, decisions, handoffs and templates. Use GitHub issue #35 for visible claims/releases/handoffs. Owner: ChatGPT; IN_REVIEW in PR #30 (`chatgpt/TASK-DOC-SYNC-001`). Do not mark DONE until the directory, all three central-document links, file-conflict records and GitHub claim protocol are reviewed and merged.
 
 ### Phase 0 — Owner actions (blocking external)
 - [ ] TASK-SEC-001 — Rotate every provider key that appeared in public commit 46034a4. Status: owner reports DONE; re-verify in handoff.
@@ -115,6 +119,9 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 ## 7. Current overall progress
 - VERIFIED: no end-to-end production task is claimed VERIFIED from this GitHub-only review. GitHub-visible implementation merges are not deployment evidence.
 - Merged implementation: TASK-DOC-001 (PR #21), TASK-CORE-002 (PR #25), and CI-related PR #22. Their production/runtime verification is separate.
-- IN_PROGRESS / IN_REVIEW: TASK-CI-002, TASK-SEC-003, TASK-SEC-004, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, TASK-CTX-001, and TASK-INT-001 as tracked in handoff.md.
+- IN_PROGRESS / IN_REVIEW: TASK-COLLAB-001, TASK-CI-002, TASK-SEC-003, TASK-SEC-004, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, TASK-CTX-001, TASK-INT-001 and TASK-FUT-001 as tracked in handoff.md.
+- PR #34 (Claude) adds CI root-cause changes under TASK-CI-004; its FRIDAY CI and heavy-task image checks passed, but two monorepo validation jobs failed. Its file overlap with PR #23 and PR #28 is recorded in docs/collaboration/FILE_OWNERSHIP.yaml.
 - VERIFIED infrastructure control: TASK-INF-002 (FRIDAY-Voice MemoryMax=300M, MemoryHigh=250M) based on 2026-11-09 systemd evidence; this is not a claim that the voice agent's event-loop warnings are resolved.
 - All ten agents remain canonical and integrated; VyralX remains agent ten.
+- Multi-AI collaboration centre is proposed in PR #30 and is not yet on main. The shared GitHub claim thread is issue #35. Read docs/collaboration/README.md and refresh TEAM_ROSTER.yaml, WORK_BOARD.yaml and FILE_OWNERSHIP.yaml before claiming work.
+- Task-ID reconciliation required: PR #23 uses TASK-CI-003 for a CI install/test-environment change while this plan currently defines TASK-CI-003 as the Server 2 workspace test runner. PR #34 uses TASK-CI-004 for root-cause CI fixes while this plan currently defines TASK-CI-004 as the bridge/** .gitignore change. Do not silently rewrite acceptance criteria; reconcile IDs with Claude and the owner.
