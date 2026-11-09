@@ -72,7 +72,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 ## G. Latest handoff checkpoint (ChatGPT reconnect, 2026-11-09)
 - Last implementation merged: TASK-CORE-002 (PR #25, 79c1f75). No production task is claimed DONE/VERIFIED based only on this connector inspection.
 - Main HEAD: `680c04ee383066874cad42a3295d18008eb6e1d2`.
-- Open PRs observed in the latest snapshot: #23 (CI environment), #24 (bridge auth), #26 (Cortex auth), #27 (manual/no-force mirror), #28 (dispatch bus), #29 (Sentinel task API), #30 (docs/collaboration centre), #31 (Gitleaks), #32 (IntelX Oracle JSON), #33 (Futuris/Stratex data integrity), #34 (CI root-cause fixes).
+- Open PRs observed in the latest snapshot: #23 (CI environment), #24 (bridge auth), #26 (Cortex auth), #27 (manual/no-force mirror), #28 (dispatch bus), #29 (Sentinel task API), #30 (ChatGPT docs/collaboration centre), #31 (Gitleaks), #32 (IntelX Oracle JSON), #33 (Futuris/Stratex data integrity), #34 (Claude CI root-cause fixes), #36 (Vercel v0 collaboration-centre bootstrap).
 - ChatGPT review comments posted 2026-11-09: #23 TASK-ID collision/full-suite concern; #26 read-only POST forecast viewer access; #28 peer contract/endpoint/receipt/fake-success blockers.
 - CI evidence: run 42502800827 reported 3,286 passed, 74 skipped, 38 failed, 43 errors. This is historical evidence from PR #24's run, not a result for current HEAD. Current main's full validation remains UNVERIFIED in this session.
 - ChatGPT docs/collaboration branch: `chatgpt/TASK-DOC-SYNC-001`; PR #30 updates the three central docs and adds the initial `docs/collaboration/` system. PR #30 remains open; nothing has been merged to main.
@@ -86,15 +86,15 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 
 ## H. Multi-AI collaboration snapshot (2026-11-09)
 
-- Shared collaboration centre: `docs/collaboration/`; onboarding instructions are in `docs/collaboration/README.md`.
+- Shared collaboration centre: `docs/collaboration/`; onboarding instructions are in `docs/collaboration/README.md`. Initial validator run 42564054378 failed because `project_owner_id` did not match the roster ID; fixed to `human_surendra`. Latest validator run 42564543465 passed.
 - Shared claim/release/review thread: [GitHub issue #35](https://github.com/surendra2304/FRIDAY-Universe/issues/35). Contributors must post a claim before editing, then update the board and file-ownership registry.
-- Current roster: Claude (active), ChatGPT (active), Grok (previous contributor; current availability unknown), ZAI (planned/not onboarded), Vercel v0 (planned/not onboarded), Surendra (project owner). Do not infer unverified integrations or permissions.
-- Current active PR ownership and changed-file lists are mirrored in `docs/collaboration/WORK_BOARD.yaml` and `FILE_OWNERSHIP.yaml`.
-- Explicit overlap conflicts: PR #23/#34 both modify `.github/workflows/validate-monorepo.yml`; PR #28/#34 both modify `FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py`; PR #24/#26/#30 all modify the three central docs. Coordinate and reconcile combined diffs before merge.
+- Current roster: Claude (active), ChatGPT (active), Grok (previous contributor; current availability unknown), Vercel v0 (active contributor with PR #36), ZAI (planned/not onboarded), Surendra (project owner). V0 reports local shell/Vercel Git sync; only branch/PR existence is independently verified in this snapshot.
+- Current active PR ownership and changed-file lists are mirrored in `docs/collaboration/WORK_BOARD.yaml` and `FILE_OWNERSHIP.yaml`. PR #30 is the proposed integration branch; PR #36's separate changes must be compared and consolidated.
+- Explicit overlap conflicts: PR #23/#34 both modify `.github/workflows/validate-monorepo.yml`; PR #28/#34 both modify `FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py`; PR #24/#26/#30 all modify the three central docs; PR #30/#36 both modify the seven core `docs/collaboration/` files. Coordinate and reconcile combined diffs before merge. PR #36 was opened on `v0/coordination-bootstrap`; a coordination comment was posted on PR #36 (#6732575647).
 - Shared Server 2 workspace last observed on `claude/TASK-CI-004` with untracked `Forge/tests/unit/test_task_execute_contract.py`. This file remains protected and must not be deleted or overwritten without its owner confirming disposition.
 - CI refresh: PR #34 FRIDAY CI run 42560097648 PASS; Heavy-Task Runtime Image Build run 42560097625 PASS; Monorepo Structure and Safety CI runs 42560097582 and 42560097580 FAIL. PR #33 FRIDAY CI run 42530391450 PASS; monorepo validation run 42530741161 FAIL during collection due missing NumPy in the root validation environment. Main full validation remains red/unverified.
 - TASK-CI-ID reconciliation: PR #23 uses TASK-CI-003 for CI dependencies/test DB setup while Master Plan TASK-CI-003 describes run_workspace_test; PR #34 uses TASK-CI-004 for broad validation fixes while Master Plan TASK-CI-004 describes bridge/** .gitignore. Claude must reconcile these IDs with the project owner before acceptance criteria are changed.
-- No merge, production deployment, service restart, secret provisioning or history rewrite was performed in this session.
+- No merge, production deployment, service restart, secret provisioning or history rewrite was performed in this session. PR #30 remains open and mergeable; PR #36 also remains open. The registry validator passed, but the full repository validation jobs are still running/failing separately.
 
 
 ## I. Collaboration registry validation added
