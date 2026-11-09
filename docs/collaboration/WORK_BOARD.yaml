@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-09T04:57:08Z"
+snapshot_at: "2026-11-09T05:00:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -21,7 +21,7 @@ status_definitions:
 tasks:
   - id: "TASK-COLLAB-001"
     title: "Shared multi-AI collaboration centre"
-    status: "IN_PROGRESS"
+    status: "IN_REVIEW"
     owner: "chatgpt"
     branch: "chatgpt/TASK-DOC-SYNC-001"
     pr: 30
@@ -29,6 +29,8 @@ tasks:
       - "vercel_v0"
     overlapping_prs:
       - 36
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6732479100"
+    overlap_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/pull/36#issuecomment-6732575647"
     files:
       - "docs/collaboration/README.md"
       - "docs/collaboration/TEAM_ROSTER.yaml"
