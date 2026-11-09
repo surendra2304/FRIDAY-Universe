@@ -21,3 +21,6 @@ Append-only record of significant shared engineering activity. Add new entries a
 - **CI evidence refresh:** PR #34's FRIDAY CI and heavy runtime image jobs passed; both Monorepo Structure and Safety CI runs failed. Their failures must be diagnosed and resolved, not hidden.
 
 - **ChatGPT — TASK-COLLAB-001 validation:** Added `scripts/validate_collaboration.py` and `.github/workflows/collaboration-registry.yml` to validate collaborator IDs, task IDs/states, owner references, file-claim conflict references, required files and the ten-agent architecture. The workflow result is pending; no pass is claimed yet.
+
+- **Vercel v0 — PR #36:** Opened `v0/coordination-bootstrap` with the same seven core coordination files as PR #30. It was detected during the PR #30 validation refresh; a coordination comment was posted on PR #36 requesting a pause on overlapping edits and a handoff/review on issue #35. Both branches are preserved.
+- **Coordination correction:** PR #30's first dedicated registry validation failed because TEAM_ROSTER.yaml used `project_owner_id: surendra2304` while the roster's collaborator ID is `human_surendra`. This mismatch is being corrected; no passing validator result is claimed yet.
