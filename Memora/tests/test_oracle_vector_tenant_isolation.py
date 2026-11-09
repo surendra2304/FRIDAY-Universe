@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +48,7 @@ class _RecordingSession:
 
 @pytest.fixture
 def sqlite_vector_adapter(tmp_path: Path, monkeypatch):
-    import storage.vector.oracle_vector_adapter as adapter_module
+    adapter_module = importlib.import_module("storage.vector.oracle_vector_adapter")
 
     db_path = tmp_path / "vector-isolation.db"
     engine = create_engine(f"sqlite:///{db_path}")
