@@ -314,6 +314,20 @@ claims:
     status: "CLAIMED_IN_REVIEW"
     risk: "Regression suite covers write-only escalation, wildcard/foreign-tenant recipient rejection, and authorized owner share with successful recipient read."
 
+  - path: "Memora/apps/api/routers/v1_task.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "ActionReceipt evidence must report active ORM backend and durability; never hardcode Oracle or durable success for local/test storage."
+
+  - path: "Memora/tests/test_task_receipt_truthfulness.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Route-level regression proves local SQLite storage is reported as non-durable process-local storage rather than an Oracle durable write."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:
