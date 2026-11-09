@@ -149,3 +149,15 @@ For every new handoff, include:
 - Files: `Memora/core/memory/pipeline/write_service.py`, `Memora/tests/test_memory_write_share_authorization.py`, `.github/workflows/friday-universe-ci.yml`, `.github/workflows/memora-vector-regression.yml`.
 - Verification: focused Memora run 42663206883 PASS (16 passed, 1 warning). Full FRIDAY run 42663207108 PASS for basic/cross-agent/advanced/deep/orchestrator/realtime/dashboard/Memora/HTTP suites; Docker skipped on PR. Monorepo CI runs 42663206848 and 42663206908 still pending at last observation.
 - Status remains IN_PROGRESS, unmerged and undeployed. No live Oracle, Qdrant or production environment was accessed.
+
+## Handoff — 2026-11-09 — TASK-STR-001 Stratex live-trading guard + ZAI registration
+
+- Owner: ZAI (GLM). Claim recorded here and in WORK_BOARD.yaml (TASK-STR-001 / TASK-COLLAB-002); issue #35 remains the shared claim thread.
+- Branch / PR: `zai/TASK-STR-001-live-trading-guard` / PR #39 (based on main 680c04e). Registration branch: `zai/TASK-COLLAB-002-register-zai` (stacked on PR #30 head 8e13bfb; merge PR #30 first).
+- Finding: `Stratex/exchanges/exchange_implementations.py` fabricated FILLED order results (Binance/Bybit/OKX) and unconditional cancel success with no venue call and no live-trading gate, and `BinanceExchangeAdapter._get_client()` built a live-endpoint python-binance client whenever BINANCE_API_KEY/SECRET were present. Coinbase orders had no gate at all.
+- Implementation: shared `_enforce_no_live_trading()` gate (TRADING_MODE=LIVE / LIVE_TRADING_ENABLED=1 -> PermissionError; PAPER/RESEARCH refuse), explicit ALLOW_LIVE_TRADING opt-in (default false), testnet-routed client (BINANCE_TESTNET default true), honest refusals instead of fabrication, real client-routed orders for Binance.
+- Files: `Stratex/exchanges/exchange_implementations.py`, `Stratex/tests/test_live_trading_guard.py` (new), `Stratex/tests/test_multi_exchange.py`, `Stratex/tests/test_multi_exchange_expansion.py`.
+- Verification: local pytest (Python 3.12) — 24 new + 17 existing tests pass; blast-radius suites 45 pass; 2 pre-existing failures reproduce on pristine main (test_stratex_runtime_factory.py) and are unrelated. No CI workflow currently runs Stratex/tests/**; noted as a follow-up task.
+- Production findings (read-only, non-secret flags): BINANCE_TESTNET=false, TRADING_MODE=FUTURES, BINANCE_ENV=demo, ed25519 keys; the daemon venue is demo, not classic testnet. No live-capital path exists through the guarded adapters today; the dashboard uses them read-only. Owner should confirm demo is the intended venue.
+- Remaining / next steps: owner review of PR #39 and this registration PR; after merge+deploy, verify the Stratex dashboard still serves /api/multiexchange/*; follow-ups: real execution or removal for Bybit/OKX order paths, read-path data honesty in Bybit/OKX fallbacks, Stratex tests wired into CI.
+- Limits: no production service, DB or trading venue was contacted; no secret values were read; no merges or deployments performed.

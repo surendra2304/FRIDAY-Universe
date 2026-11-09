@@ -1,5 +1,5 @@
 schema_version: 1
-updated_at: "2026-11-09T05:00:00Z"
+updated_at: "2026-11-09T17:40:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 authority:
@@ -95,15 +95,26 @@ collaborators:
       - "Current tool access and availability have not been verified."
 
   - id: "zai"
-    display_name: "ZAI"
+    display_name: "ZAI (GLM)"
     contributor_type: "ai"
-    status: "planned_not_onboarded"
-    authority: "Equal engineering collaborator after onboarding"
-    verified_capabilities: []
-    active_assignments: []
-    last_verified_at: null
+    status: "active_contributor"
+    authority: "Equal engineering collaborator"
+    verified_capabilities:
+      - "GitHub read access: repository clone plus branch/PR/workflow inspection (exercised while preparing TASK-STR-001)."
+      - "GitHub write access through the owner-provided bridge token: created branch zai/TASK-STR-001-live-trading-guard and PR #39."
+      - "Read-only Oracle Cloud diagnostics through the FRIDAY bridge MCP: fleet health, systemd status, journalctl, non-secret environment mode flags."
+      - "Local CI-equivalent verification: pinned pytest environment; ran Stratex regression suites (41 passed for TASK-STR-001 scope; 2 pre-existing main failures isolated and verified to reproduce on pristine main)."
+    active_assignments:
+      - "TASK-STR-001 — Stratex fail-closed live-trading guard (PR #39, IN_REVIEW)."
+      - "TASK-COLLAB-002 — ZAI registration in the shared collaboration registry (stacked on PR #30)."
+    active_branches:
+      - "zai/TASK-STR-001-live-trading-guard"
+      - "zai/TASK-COLLAB-002-register-zai"
+    last_verified_at: "2026-11-09T17:40:00Z"
     access_limits:
-      - "Repository access, coding tools, deployment access and integrations are not yet verified."
+      - "No direct SSH or production write access; Oracle operations were read-only through the bridge."
+      - "No merges, deployments or service restarts performed; all changes go through PRs for owner review."
+      - "No secret values were read, printed or committed; production environment inspection was limited to non-secret mode flags."
 
   - id: "vercel_v0"
     display_name: "Vercel v0"
