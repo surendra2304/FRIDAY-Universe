@@ -1,0 +1,143 @@
+schema_version: 1
+snapshot_at: "2026-11-09T04:24:00Z"
+repository: "surendra2304/FRIDAY-Universe"
+claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
+rule: "The GitHub claim thread plus a current branch/PR is the shared ownership record. This file is the searchable mirror, not an atomic lock."
+protected_worktree:
+  location: "Server 2 shared workspace"
+  observed_branch: "claude/TASK-CI-004"
+  observed_status:
+    - "?? Forge/tests/unit/test_task_execute_contract.py"
+  classification: "PROTECTED_UNTRACKED_WORK"
+  owner: "unconfirmed; observed in Claude's shared worktree"
+  instructions:
+    - "Do not delete, stage, modify, stash, clean or overwrite this file without explicit owner confirmation."
+    - "Confirm whether it is intended for PR #28, PR #34 or another task before moving it."
+    - "Re-check git status before any worktree operation."
+
+claims:
+  - path: ".github/workflows/validate-monorepo.yml"
+    owner: "claude"
+    prs: [23, 34]
+    branches: ["claude/TASK-CI-003", "claude/TASK-CI-004"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Both PRs modify the same validator workflow. Review and reconcile the combined diff before either merge."
+
+  - path: "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
+    owner: "claude"
+    prs: [28, 34]
+    branches: ["claude/TASK-DISPATCH-001", "claude/TASK-CI-004"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Both PRs change the dispatch bus. Merge order and combined tests must be agreed before merge."
+
+  - path: "docs/MASTER_PLAN.md"
+    owner: "chatgpt"
+    prs: [24, 26, 30]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Multiple ChatGPT PR branches carry different copies of the roadmap. Reconcile the final text onto one current branch; do not merge stale doc snapshots over newer evidence."
+
+  - path: "docs/handoff.md"
+    owner: "chatgpt"
+    prs: [24, 26, 30]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Multiple PRs update the handoff. Keep the most recent GitHub/runtime snapshot and include all concurrent contributors."
+
+  - path: "docs/ARCHITECTURE_AS_BUILT.md"
+    owner: "chatgpt"
+    prs: [24, 26, 30]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "As-built documentation needs one final reconciled update after implementation reviews."
+
+  - path: ".github/workflows/mirror-subrepos.yml"
+    owner: "claude"
+    prs: [27]
+    branches: ["claude/TASK-MIRROR-001"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "PR #27 also needs cross-repository token policy verification."
+
+  - path: "Sentinel/sentinel/apps/api/main.py"
+    owner: "claude"
+    prs: [29]
+    branches: ["claude/TASK-API-001"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Verify endpoint contract against deployed Sentinel auth middleware."
+
+  - path: "bridge/auth.py"
+    owner: "chatgpt"
+    prs: [24]
+    branches: ["chatgpt/TASK-SEC-003"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Production patch/runtime secret activation is not complete."
+
+  - path: "Cortex/apps/api/src/cortex_api/main.py"
+    owner: "chatgpt"
+    prs: [26]
+    branches: ["chatgpt/TASK-CORE-001-cortex-route-auth"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Resolve reviewer finding on read-only POST route capability."
+
+  - path: ".github/workflows/secret-scan.yml"
+    owner: "chatgpt"
+    prs: [31]
+    branches: ["chatgpt/TASK-SEC-004"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Change-range scan does not resolve the separate historical secret exposure."
+
+  - path: "IntelX/intelx/db/engine.py"
+    owner: "chatgpt"
+    prs: [32]
+    branches: ["chatgpt/TASK-INT-001-intelx-json"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Root monorepo validation remains red for other collection/dependency failures."
+
+  - path: "IntelX/intelx/oracle_dialect_compat.py"
+    owner: "chatgpt"
+    prs: [32]
+    branches: ["chatgpt/TASK-INT-001-intelx-json"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Verify actual Oracle async dialect inheritance on supported SQLAlchemy/python-oracledb versions."
+
+  - path: "Futuris/futuris/connectors/trading_bot.py"
+    owner: "chatgpt"
+    prs: [33]
+    branches: ["chatgpt/TASK-FUT-001-stratex-telemetry"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Telemetry-only change; verify no order/execution path was changed."
+
+  - path: "Futuris/futuris/api/routers/risk.py"
+    owner: "chatgpt"
+    prs: [33]
+    branches: ["chatgpt/TASK-FUT-001-stratex-telemetry"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Risk output must clearly distinguish verified position exposure from watchlist estimates."
+
+  - path: "Forge/app/agents/real_optimization_advanced.py"
+    owner: "claude"
+    prs: [34]
+    branches: ["claude/TASK-CI-004"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Optimizer rewrite must retain existing objective and thresholds; regression evidence is in PR #34."
+
+  - path: "tests/conftest.py"
+    owner: "claude"
+    prs: [34]
+    branches: ["claude/TASK-CI-004"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Global fixture and environment restoration changes can affect all root tests; inspect cross-test isolation."
+
+conflicts_to_resolve:
+  - id: "FILE-CONFLICT-001"
+    files: [".github/workflows/validate-monorepo.yml"]
+    prs: [23, 34]
+    required_action: "Claude to reconcile both PR diffs and run the validator from the resulting combined branch."
+  - id: "FILE-CONFLICT-002"
+    files: ["FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"]
+    prs: [28, 34]
+    required_action: "Claude to reconcile dispatch optimization and protocol changes, then run dispatch contract and root tests."
+  - id: "FILE-CONFLICT-003"
+    files: ["docs/MASTER_PLAN.md", "docs/handoff.md", "docs/ARCHITECTURE_AS_BUILT.md"]
+    prs: [24, 26, 30]
+    required_action: "ChatGPT to maintain one current documentation branch and reconcile content before merging any of the three PRs."
