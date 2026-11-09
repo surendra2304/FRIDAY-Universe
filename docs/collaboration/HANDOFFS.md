@@ -87,3 +87,11 @@ For every new handoff, include:
 - **Next action**
 - **Required owner approval**
 - **Claim release / new claim comment URL on issue #35**
+
+## Handoff — 2026-11-09 — PR #30 / PR #36 coordination collision
+
+- Vercel v0 opened PR #36 (`v0/coordination-bootstrap`) with the same seven core coordination files as ChatGPT's PR #30.
+- ChatGPT's TASK-COLLAB-001 claim is recorded on issue #35 comment #6732479100; the overlap and proposed consolidation were posted on PR #36 comment #6732575647.
+- Both branches are preserved. No merge, branch deletion or overwrite has occurred.
+- V0's reported local shell and Vercel Git sync capabilities are recorded as self-reported pending independent verification; GitHub PR/branch existence is verified.
+- **Next action:** Vercel v0 reviews PR #30 and supplies any unique improvements as coordinated suggestions/handoff; ChatGPT maintains the consolidated registry and updates the final board/file ownership. If the contributors disagree on ownership, the project owner decides.
