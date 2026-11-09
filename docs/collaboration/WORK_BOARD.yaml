@@ -438,7 +438,7 @@ tasks:
     status: "IN_REVIEW"
     owner: "zai"
     branch: "zai/TASK-COLLAB-002-register-zai"
-    pr: null
+    pr: 40
     other_contributors:
       - "chatgpt"
     priority: "P2"
@@ -465,7 +465,7 @@ tasks:
     risk_flags:
       - "Stacked on PR #30; must not merge before PR #30 merges."
     blockers: []
-    next_action: "Record this stacked PR's number once opened, then owner review of both PR #30 and this branch."
+    next_action: "Owner review of PR #30 and PR #40; merge PR #30 first, then this registration branch."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
