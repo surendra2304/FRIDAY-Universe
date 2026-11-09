@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     # Vector DB (Qdrant)
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_COLLECTION: str = "memora_embeddings"
-    VECTOR_DIMENSION: int = 1536
+    # Embedding vectors are currently fixed at 384 dimensions in the generator
+    # and Oracle adapter. Changing this requires a coordinated vector-store
+    # schema/collection migration; there is intentionally no env override.
 
     # Gemini Embedding Model
     GEMINI_API_KEY: Optional[str] = None
