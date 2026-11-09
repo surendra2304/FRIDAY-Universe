@@ -159,3 +159,12 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - New tests: `Memora/tests/test_memory_access_controller_auth.py` checks missing credentials, non-admin denial, self-binding and admin actions.
 - Verification: focused Memora Vector Regression run 42658441949 PASS (12 passed, 1 warning); Memora step in FRIDAY CI run 42658441937 PASS. Full HTTP/API and monorepo checks still pending.
 - The legacy engine remains process-local and non-canonical; this is not proof of persistent policy or deployment integration. PR #38 remains stacked on PR #37 and both remain unmerged.
+
+
+### TASK-DATA-002 update — explicit memory share authorization
+
+- Finding: canonical `shared_with` handling could turn namespace write permission into an implicit sharing capability. It also accepted wildcard/foreign-tenant recipient handles and did not grant the recipient namespace-level read/query access.
+- Fix in PR #38: owner check + PolicyEngine `share` decision; reject wildcard/self/unregistered/cross-tenant recipients; create/update tenant-local read/query grants and memory membership in the write transaction; audit and `memory.shared` event. Existing canonical team-shared default remains unchanged.
+- Regression: `Memora/tests/test_memory_write_share_authorization.py` covers write-only escalation denial, wildcard and cross-tenant target rejection, and successful owner share/read isolation.
+- Evidence: focused Memora run 42663206883 PASS (16 passed, 1 warning); full FRIDAY run 42663207108 PASS across Python suites and HTTP/API; Docker skipped on pull_request. Monorepo runs 42663206848 / 42663206908 remained in progress at last check.
+- Branch/PR: `chatgpt/TASK-DATA-002-memory-tenant-isolation` / #38, stacked on #37. Not merged or deployed.
