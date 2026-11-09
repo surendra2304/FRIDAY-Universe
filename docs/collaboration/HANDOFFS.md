@@ -137,3 +137,15 @@ For every new handoff, include:
 - Regression: missing credentials rejected; non-admin grant/revoke/approval/audit/report denied; request/check subject spoofing denied; Memora admin actions accepted with authenticated attribution.
 - Verification: focused Memora Vector Regression run 42658441949 PASS (12 passed, 1 warning). The Memora step in FRIDAY CI run 42658441937 PASS; full FRIDAY HTTP/API stage was still in progress at the last check. Monorepo checks 42658441817 and 42658441849 were also still in progress then.
 - Limits: no live Oracle/Qdrant or production service was contacted; this compatibility controller remains process-local and is not a substitute for the tenant-scoped relational PolicyEngine. Full TASK-DATA-002 isolation matrix remains IN_PROGRESS.
+
+
+## Handoff — 2026-11-09 — TASK-DATA-002 explicit memory-share authorization
+
+- Owner: ChatGPT; continuation of the existing task/claim in issue #35. Latest finding comment: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6746337420
+- Branch / PR: `chatgpt/TASK-DATA-002-memory-tenant-isolation` / PR #38, stacked on PR #37. Keep #38 unmerged until #37 merges and the branch is rebased/retargeted.
+- Finding: canonical `MemoryWriteService.execute_pipeline` accepted caller-supplied `shared_with` after checking namespace `write` only. It did not authorize `share`, validate recipients in the same tenant, reject wildcard, or provision the recipient's namespace read/query grant.
+- Fix: `_apply_record_shares` requires the memory owner and an explicit PolicyEngine `share` allow decision, rejects `*`, self and unresolved/foreign-tenant recipient handles, applies tenant-local read/query grants and per-memory membership, and emits audit/event evidence. Explicit share path is used for new and idempotent/duplicate result paths. Existing canonical implicit team-shared namespace behavior stays unchanged.
+- Tests: write-only member denied; wildcard denied; foreign-tenant-only target denied; owner can share to registered same-tenant agent, which can read while an unshared peer receives 404.
+- Files: `Memora/core/memory/pipeline/write_service.py`, `Memora/tests/test_memory_write_share_authorization.py`, `.github/workflows/friday-universe-ci.yml`, `.github/workflows/memora-vector-regression.yml`.
+- Verification: focused Memora run 42663206883 PASS (16 passed, 1 warning). Full FRIDAY run 42663207108 PASS for basic/cross-agent/advanced/deep/orchestrator/realtime/dashboard/Memora/HTTP suites; Docker skipped on PR. Monorepo CI runs 42663206848 and 42663206908 still pending at last observation.
+- Status remains IN_PROGRESS, unmerged and undeployed. No live Oracle, Qdrant or production environment was accessed.
