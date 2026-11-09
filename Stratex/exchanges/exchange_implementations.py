@@ -21,6 +21,40 @@ from logger import get_logger
 
 logger = get_logger("exchange_adapters")
 
+
+def _env_flag(name: str, default: str = "false") -> bool:
+    """True when the env var holds a truthy value (1/true/yes/on, case-insensitive)."""
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _enforce_no_live_trading(venue: str) -> None:
+    """Fail-closed order gate shared by every adapter in this module.
+
+    Mirrors the permanent invariant enforced by stratex_ccxt_adapter/client.py:
+    live trading is blocked by design, and PAPER/RESEARCH modes may not place
+    real venue orders. Raises PermissionError when either rule is violated.
+    """
+    trading_mode = os.environ.get("TRADING_MODE", "TESTNET").upper()
+    if trading_mode == "LIVE" or os.environ.get("LIVE_TRADING_ENABLED") == "1":
+        raise PermissionError(
+            f"SECURITY CRITICAL: LIVE trading is permanently blocked by design "
+            f"(venue={venue}, TRADING_MODE={trading_mode})."
+        )
+    if trading_mode == "PAPER" or os.environ.get("RESEARCH_MODE") == "1":
+        raise PermissionError(
+            f"STRATEX_ORDER_BLOCKED: cannot place real venue orders in "
+            f"{trading_mode} / research mode (venue={venue})."
+        )
+
+
+def _live_trading_authorized() -> bool:
+    """True only when the owner explicitly sets ALLOW_LIVE_TRADING=true (TASK-STR-001).
+
+    Default false: every adapter in this module refuses live-endpoint orders
+    and live-endpoint client construction unless this explicit opt-in exists.
+    """
+    return _env_flag("ALLOW_LIVE_TRADING", "false")
+
 # Import new adapters
 try:
     from exchanges.oanda_adapter import OandaExchangeAdapter
@@ -57,10 +91,24 @@ class BinanceExchangeAdapter(BaseExchange):
         self._client = None
 
     def _get_client(self):
+        """Builds the python-binance client, fail-closed on live endpoints.
+
+        BINANCE_TESTNET (default true) routes futures endpoints to the testnet.
+        A live-endpoint client is only built when the owner has explicitly set
+        ALLOW_LIVE_TRADING=true; otherwise this adapter returns None so read
+        paths report empty data and order paths refuse to fabricate fills.
+        """
         if self._client is None and self.api_key and self.secret_key:
             try:
                 from binance.client import Client
-                self._client = Client(self.api_key, self.secret_key)
+                testnet = _env_flag("BINANCE_TESTNET", "true")
+                if not testnet and not _live_trading_authorized():
+                    logger.warning(
+                        "[BINANCE_ADAPTER] BINANCE_TESTNET disabled without ALLOW_LIVE_TRADING=true; "
+                        "refusing to build a live-endpoint client."
+                    )
+                    return None
+                self._client = Client(self.api_key, self.secret_key, testnet=testnet)
             except Exception as e:
                 logger.warning(f"[BINANCE_ADAPTER] python-binance client init skipped: {e}")
         return self._client
@@ -162,24 +210,66 @@ class BinanceExchangeAdapter(BaseExchange):
         price: float | None = None,
         stop_price: float | None = None
     ) -> UnifiedOrderResult:
+        """Places a real (testnet-routed) order via python-binance; never fabricates a fill.
+
+        Fail-closed: live trading is permanently blocked, PAPER/RESEARCH modes
+        cannot place real orders, and an unconfigured adapter raises instead of
+        inventing a FILLED result (TASK-STR-001).
+        """
+        _enforce_no_live_trading("binance")
         u_sym = self.normalize_symbol(symbol)
-        fill_price = price or 60500.0
+        client = self._get_client()
+        if client is None:
+            raise RuntimeError(
+                "[BINANCE_ADAPTER] Cannot place order: no exchange client configured "
+                "(credentials missing, or live endpoints blocked by ALLOW_LIVE_TRADING=false). "
+                "Refusing to fabricate a fill."
+            )
+        kwargs: dict[str, Any] = {
+            "symbol": self.denormalize_symbol(u_sym),
+            "side": side.upper(),
+            "type": order_type.upper(),
+            "quantity": quantity,
+        }
+        if price is not None:
+            kwargs["price"] = price
+        if stop_price is not None:
+            kwargs["stopPrice"] = stop_price
+        raw = client.futures_create_order(**kwargs)
+        executed_qty = float(raw.get("executedQty", 0.0) or 0.0)
+        order_price = float(raw.get("price", 0.0) or 0.0)
+        avg_price = float(raw.get("avgPrice", 0.0) or 0.0)
         return UnifiedOrderResult(
-            order_id=f"BN_{int(time.time()*1000)}",
+            order_id=str(raw.get("orderId", "")),
             symbol=u_sym,
             side=side.upper(),
             order_type=order_type.upper(),
-            price=fill_price,
+            price=order_price or (price or 0.0),
             quantity=quantity,
-            status="FILLED",
-            executed_qty=quantity,
-            avg_price=fill_price,
-            fee_paid=round(quantity * fill_price * 0.0004, 4),
-            exchange="binance"
+            status=str(raw.get("status", "NEW")).upper(),
+            executed_qty=executed_qty,
+            avg_price=avg_price or order_price,
+            fee_paid=0.0,  # Real venue fees arrive with later fill events; never invent them.
+            exchange="binance",
         )
 
     def cancel_order(self, symbol: str, order_id: str) -> bool:
-        return True
+        """Cancels a real order via python-binance; never fabricates success."""
+        _enforce_no_live_trading("binance")
+        client = self._get_client()
+        if client is None:
+            raise RuntimeError(
+                "[BINANCE_ADAPTER] Cannot cancel order: no exchange client configured. "
+                "Refusing to fabricate success."
+            )
+        try:
+            client.futures_cancel_order(
+                symbol=self.denormalize_symbol(self.normalize_symbol(symbol)), orderId=order_id
+            )
+            return True
+        except Exception as e:
+            logger.warning(f"[BINANCE_ADAPTER] cancel_order failed: {e}")
+            return False
 
     def get_historical_data(self, symbol: str, timeframe: str = "15m", limit: int = 100) -> list[dict[str, Any]]:
         now_ts = int(time.time())
@@ -308,24 +398,25 @@ class BybitExchangeAdapter(BaseExchange):
         price: float | None = None,
         stop_price: float | None = None
     ) -> UnifiedOrderResult:
-        u_sym = self.normalize_symbol(symbol)
-        fill_price = price or 60505.0
-        return UnifiedOrderResult(
-            order_id=f"BY_{int(time.time()*1000)}",
-            symbol=u_sym,
-            side=side.upper(),
-            order_type=order_type.upper(),
-            price=fill_price,
-            quantity=quantity,
-            status="FILLED",
-            executed_qty=quantity,
-            avg_price=fill_price,
-            fee_paid=round(quantity * fill_price * 0.00055, 4),
-            exchange="bybit"
+        """Refuses the order: real execution is not implemented for Bybit.
+
+        The previous behaviour returned a fabricated FILLED result without
+        contacting any venue. The fail-closed guard plus this honest refusal
+        replace that fabricated success (TASK-STR-001).
+        """
+        _enforce_no_live_trading("bybit")
+        raise RuntimeError(
+            "[BYBIT_ADAPTER] Real order execution is not implemented for this venue; "
+            "refusing to fabricate a fill."
         )
 
     def cancel_order(self, symbol: str, order_id: str) -> bool:
-        return True
+        """Refuses to fabricate a cancellation for a venue without order execution."""
+        _enforce_no_live_trading("bybit")
+        raise RuntimeError(
+            "[BYBIT_ADAPTER] Real order execution is not implemented for this venue; "
+            "refusing to fabricate a cancellation."
+        )
 
     def get_historical_data(self, symbol: str, timeframe: str = "15m", limit: int = 100) -> list[dict[str, Any]]:
         now_ts = int(time.time())
@@ -449,24 +540,25 @@ class OKXExchangeAdapter(BaseExchange):
         price: float | None = None,
         stop_price: float | None = None
     ) -> UnifiedOrderResult:
-        u_sym = self.normalize_symbol(symbol)
-        fill_price = price or 60495.0
-        return UnifiedOrderResult(
-            order_id=f"OKX_{int(time.time()*1000)}",
-            symbol=u_sym,
-            side=side.upper(),
-            order_type=order_type.upper(),
-            price=fill_price,
-            quantity=quantity,
-            status="FILLED",
-            executed_qty=quantity,
-            avg_price=fill_price,
-            fee_paid=round(quantity * fill_price * 0.0005, 4),
-            exchange="okx"
+        """Refuses the order: real execution is not implemented for OKX.
+
+        The previous behaviour returned a fabricated FILLED result without
+        contacting any venue. The fail-closed guard plus this honest refusal
+        replace that fabricated success (TASK-STR-001).
+        """
+        _enforce_no_live_trading("okx")
+        raise RuntimeError(
+            "[OKX_ADAPTER] Real order execution is not implemented for this venue; "
+            "refusing to fabricate a fill."
         )
 
     def cancel_order(self, symbol: str, order_id: str) -> bool:
-        return True
+        """Refuses to fabricate a cancellation for a venue without order execution."""
+        _enforce_no_live_trading("okx")
+        raise RuntimeError(
+            "[OKX_ADAPTER] Real order execution is not implemented for this venue; "
+            "refusing to fabricate a cancellation."
+        )
 
     def get_historical_data(self, symbol: str, timeframe: str = "15m", limit: int = 100) -> list[dict[str, Any]]:
         now_ts = int(time.time())
@@ -597,6 +689,17 @@ class CoinbaseExchangeAdapter(BaseExchange):
         price: float | None = None,
         stop_price: float | None = None
     ) -> UnifiedOrderResult:
+        """Places a real order through ccxt coinbase; gated fail-closed.
+
+        Coinbase has no testnet venue, so any real order is a live order and
+        requires the explicit owner opt-in ALLOW_LIVE_TRADING=true.
+        """
+        _enforce_no_live_trading("coinbase")
+        if not _live_trading_authorized():
+            raise PermissionError(
+                "STRATEX_ORDER_BLOCKED: coinbase has no testnet venue; a real order requires "
+                "explicit ALLOW_LIVE_TRADING=true (venue=coinbase)."
+            )
         client = self._get_client()
         if not client:
             raise RuntimeError("[COINBASE_ADAPTER] Cannot place order without live credentials.")
@@ -620,6 +723,13 @@ class CoinbaseExchangeAdapter(BaseExchange):
         )
 
     def cancel_order(self, symbol: str, order_id: str) -> bool:
+        """Cancels a real order; gated fail-closed (no testnet venue for coinbase)."""
+        _enforce_no_live_trading("coinbase")
+        if not _live_trading_authorized():
+            raise PermissionError(
+                "STRATEX_ORDER_BLOCKED: coinbase has no testnet venue; cancelling a real order "
+                "requires explicit ALLOW_LIVE_TRADING=true (venue=coinbase)."
+            )
         client = self._get_client()
         if not client:
             return False
