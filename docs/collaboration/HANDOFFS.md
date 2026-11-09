@@ -4,7 +4,7 @@
 
 ### Completed
 
-- Repository checkout established on `v0/coordination-bootstrap`.
+- Repository checkout established on `v0/coordination-bootstrap`; PR #36 is open for review: https://github.com/surendra2304/FRIDAY-Universe/pull/36.
 - Central roadmap, handoff, as-built architecture, agent manifest, instructions, workflows, and root manifests inspected.
 - Collaboration centre created and v0 registered with only verified local/repository capabilities.
 
