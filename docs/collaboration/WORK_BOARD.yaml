@@ -25,6 +25,10 @@ tasks:
     owner: "chatgpt"
     branch: "chatgpt/TASK-DOC-SYNC-001"
     pr: 30
+    other_contributors:
+      - "vercel_v0"
+    overlapping_prs:
+      - 36
     files:
       - "docs/collaboration/README.md"
       - "docs/collaboration/TEAM_ROSTER.yaml"
@@ -46,9 +50,10 @@ tasks:
       - "All three central documents link to and explain the coordination centre."
     evidence:
       - "GitHub issue #35 created as the shared claim/handoff thread."
+      - "Vercel v0 opened PR #36 on v0/coordination-bootstrap with the same seven registry files; overlap comment posted on PR #36."
       - "Open PR snapshot and changed-file lists retrieved on 2026-11-09."
       - "scripts/validate_collaboration.py and .github/workflows/collaboration-registry.yml added for structural validation."
-    next_action: "Run the dedicated collaboration-registry workflow, fix any schema/record defects, then complete PR #30 review."
+    next_action: "Resolve the PR #30/#36 directory overlap, fix the validator, and run the dedicated collaboration-registry workflow on the consolidated final branch."
 
   - id: "TASK-DOC-SYNC-001"
     title: "Synchronize Master Plan, handoff and as-built architecture"
