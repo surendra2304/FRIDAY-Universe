@@ -153,3 +153,12 @@ Evidence cited by file path or command. Secrets are named, never printed.
 - The unused 1536-dimensional configuration was removed; current embedding generation/Oracle vector schema is fixed at 384. A deployed Qdrant collection's actual dimension remains unverified.
 - Verification: focused Memora vector regression run 42596147391 passed (8 passed, 1 warning); FRIDAY CI run 42596147378 passed, including all FRIDAY test suites, Memora vector tests, and HTTP/API tests.
 - No live Oracle database/Qdrant service was contacted. PR #37 remains open and is not production-verified.
+
+
+## 19. Memora maintenance tenant isolation (PR #38 — IN_PROGRESS; stacked on PR #37)
+
+- The API-triggered /v1/memories/sweep-horizon previously forwarded a request-body tenant ID directly to the consolidator. The consolidator can create permanent milestone records and delete expiring raw records within the selected tenant.
+- PR #38 binds the API route to the authenticated Memora service identity in the API-bound default tenant. A foreign tenant selector returns HTTP 403 before the sweeper is called; omitted or matching selectors still run only for the bound tenant.
+- The trusted internal background worker's separate all-tenant sweep mode remains unchanged; the restriction applies to the authenticated API endpoint.
+- Verification on PR #38 head 0b8252529f36d37c51907cfbd1dc3fd6149b6bfb: FRIDAY Universe CI/CD run 42598678632 passed, including Memora group (17 passed, 1 warning) and HTTP/API suite (45 passed); focused Memora Vector Regression run 42598678508 passed (8 passed, 1 warning).
+- PR #38 is stacked on PR #37 and must not merge before #37. The full TASK-DATA-002 isolation audit remains in progress; Oracle/Qdrant production state remains unverified.
