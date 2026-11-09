@@ -128,7 +128,82 @@ claims:
     status: "CLAIMED_IN_REVIEW"
     risk: "Global fixture and environment restoration changes can affect all root tests; inspect cross-test isolation."
 
+
+  - path: "docs/collaboration/README.md"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "PR #30 adds issue #35 claim protocol, validator instructions and broader operational rules; PR #36 has a separate initial guide. Compare and consolidate."
+
+  - path: "docs/collaboration/TEAM_ROSTER.yaml"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "PR #30 registers all planned/current contributors; PR #36 registers a smaller roster. Preserve current PR/branch evidence and verify reported access."
+
+  - path: "docs/collaboration/WORK_BOARD.yaml"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "PR #30 includes live open PR ownership and CI states; PR #36 has a shorter bootstrap board. Reconcile rather than replace."
+
+  - path: "docs/collaboration/FILE_OWNERSHIP.yaml"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Both PRs record file ownership; combine all observed PR overlaps and the protected untracked Forge test."
+
+  - path: "docs/collaboration/ACTIVITY_LOG.md"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Append both contributors' dated activity; do not erase either history."
+
+  - path: "docs/collaboration/DECISIONS.md"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Merge unique decisions and preserve provenance; align names and numbering."
+
+  - path: "docs/collaboration/HANDOFFS.md"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Combine v0's onboarding handoff with current Claude/ChatGPT/Grok and future ZAI/v0 next actions."
+
+  - path: "docs/collaboration/TASK_TEMPLATE.yaml"
+    owner: "chatgpt"
+    prs: [30]
+    branches: ["chatgpt/TASK-DOC-SYNC-001"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Not present in PR #36; ensure it follows the final shared board schema."
+
+  - path: "docs/collaboration/HANDOFF_TEMPLATE.md"
+    owner: "chatgpt"
+    prs: [30]
+    branches: ["chatgpt/TASK-DOC-SYNC-001"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Not present in PR #36; align with the final claim/release/handoff protocol."
+
 conflicts_to_resolve:
+  - id: "FILE-CONFLICT-004"
+    files:
+      - "docs/collaboration/README.md"
+      - "docs/collaboration/TEAM_ROSTER.yaml"
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/FILE_OWNERSHIP.yaml"
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/DECISIONS.md"
+      - "docs/collaboration/HANDOFFS.md"
+    prs: [30, 36]
+    required_action: "Keep both PRs and branches intact; consolidate into one current directory after v0 review/hand-off. Do not merge either duplicate directory snapshot separately."
   - id: "FILE-CONFLICT-001"
     files: [".github/workflows/validate-monorepo.yml"]
     prs: [23, 34]
