@@ -71,3 +71,16 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Decision:** PR #30 and PR #36 both contribute the same seven `docs/collaboration/` files. Preserve both branches, compare unique improvements, and consolidate into one coherent final registry before merging. Do not merge two divergent copies of the same coordination system.  
 **Coordination evidence:** PR #36 was opened from `v0/coordination-bootstrap`; the first TASK-COLLAB-001 claim was recorded on issue #35 in comment #6732479100. A coordination note was posted on PR #36.  
 **Owner:** Project owner resolves any ownership dispute if collaborators cannot agree.
+
+
+## D-012 — Authenticate the mounted legacy memory access controller
+
+**Date:** 2026-11-09  
+**Problem:** `Memora/apps/api/main.py` mounts a process-local access-controller router whose grant, revoke, approval, audit and report routes previously had no authentication dependency. The controller is separate from the persistent tenant-scoped `IdentityService` / `PolicyEngine` path.  
+**Alternatives:** Remove the compatibility router; leave it available only as an unauthenticated demo surface; or preserve the routes while enforcing authenticated caller identity and explicit administrator boundaries.  
+**Evidence:** Source inspection confirmed the router is included in the main app under `/api/v1` and all seven route handlers lacked principal dependencies. No other currently open PR changed this router. New route-level tests cover anonymous, non-admin and self-service behavior.  
+**Decision:** Preserve endpoint compatibility but fail closed on authentication. Restrict grant/revoke/approval and global audit/report to the authenticated `memora` service identity. Bind request/check subjects to the authenticated principal and ignore/reject spoofed attribution hints. Mark the engine report as process-local compatibility state.  
+**Reason:** Prevent unauthenticated privilege changes and cross-agent metadata inspection without confusing an in-memory compatibility helper with the canonical persistent authorization system.  
+**Contributors:** ChatGPT (implementation and regression coverage); no other contributor had an active claim on the router at the time of the change.  
+**Owner approval:** Not required for this isolated branch-level security hardening; merge and production activation remain subject to owner authorization.  
+**Consequences:** The compatibility API remains ephemeral and process-local; persistent access control continues through Memora's tenant-scoped policy/grant system. A production integration review is still required before treating this controller as an authoritative permission source.
