@@ -14,6 +14,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-SEC-004 | Secret-management audit and CI leak prevention | ChatGPT | chatgpt/TASK-SEC-004 | .github/workflows/secret-scan.yml | IN_REVIEW (PR #31); change-range Gitleaks scan passed run 42525462164; not merged / not yet verified on main |
 | TASK-INT-001 | IntelX evidence pipeline and Oracle persistence audit | ChatGPT | chatgpt/TASK-INT-001-intelx-json | IntelX/intelx/oracle_dialect_compat.py, IntelX/intelx/db/engine.py, tests/test_intelx_oracle_json_compat.py | IN_REVIEW (PR #32); FRIDAY CI passed, monorepo validation still fails on broader repository issues; no deployment |
 | TASK-FUT-001 | Prevent fabricated Stratex positions/funding telemetry | ChatGPT | chatgpt/TASK-FUT-001-stratex-telemetry | Futuris connector, risk router and regression tests | IN_REVIEW (PR #33); FRIDAY CI passed, monorepo validation failed during collection because root validation lacks NumPy; no deployment |
+| TASK-MEM-001 | Memora Oracle vector tenant and transaction integrity | ChatGPT | chatgpt/TASK-MEM-001-memora-oracle-vector-audit | Memora Oracle vector adapter, regression tests, root and nested CI workflows, package/config docs | IN_REVIEW (PR #37); focused vector suite 8 passed/1 warning (run 42596147391); full FRIDAY CI passed (run 42596147378); live Oracle/Qdrant unverified |
 | TASK-CI-004 | Root-cause fixes for fleet CI failures | Claude | claude/TASK-CI-004 | validate-monorepo.yml, dispatch bus, Forge optimizers, tests/conftest.py, e2e tests | IN_REVIEW (PR #34); FRIDAY CI and image build passed; both monorepo validators failed |
 | TASK-COLLAB-001 | Shared multi-AI collaboration centre | ChatGPT | chatgpt/TASK-DOC-SYNC-001 | docs/collaboration/* and three central documents | IN_REVIEW (PR #30); GitHub claim hub issue #35 created; records are a snapshot and require review/merge |
 
@@ -117,3 +118,15 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Vercel v0 PR #36 monorepo-policy check run 42564376993 — FAIL, with overlapping test/dependency/import issues. PR #36 remains open and overlaps seven files with PR #30; no handoff response observed.
 - Claude PR #34 review posted at PR comment #6732764298. Findings: permissive stub fleet can return false success on arbitrary routes/actions; real-fleet override comment does not match implementation; dependency lists remain incomplete; PR #27 mirror-policy changes are not part of its base; stale path assertions and Memora import collision remain.
 - Exact next actions: Claude addresses PR #34 review and reconciles overlaps with PR #23/#28; v0 and ChatGPT consolidate PR #30/#36 through issue #35; ChatGPT maintains the single operational registry. All PR branches remain preserved and unmerged.
+
+
+## K. Memora Oracle vector audit — latest PR #37 evidence (2026-11-09)
+
+- PR #37 branch: `chatgpt/TASK-MEM-001-memora-oracle-vector-audit`; latest head `730ee962bb36e72d9a40c29821d84c8624b4c85a`; PR open and mergeable.
+- Focused Memora Vector Regression run 42596147391 — PASS (8 passed, 1 warning).
+- Full FRIDAY Universe CI/CD run 42596147378 — PASS. The job completed basic, cross-agent, advanced, deep, orchestrator, realtime, dashboard, Memora vector regression and HTTP/API tests; artifact upload also passed. Docker build remains skipped on PR branches by workflow design.
+- Monorepo-only policy validator run 42596147434 and fleet-layout validator run 42596147572 were still in progress at the latest status check. They are not included in the green FRIDAY CI result.
+- Source fixes: Oracle MERGE matches vector ID and tenant; SQLite fallback refuses cross-tenant ID reassignments; caller-owned writes/deletes use savepoints without committing the memory pipeline's parent transaction; schema bootstrap uses a separately managed session; readiness reports not-initialized/unavailable truthfully; vector ID/dimension/finite-value/threshold/payload guards were added.
+- Dependency: `greenlet>=3.0.0,<4.0.0` is now declared in both `Memora/requirements.txt` and `Memora/pyproject.toml` because SQLAlchemy asyncio is imported by the package test/runtime surface.
+- Dimension contract: generator/Oracle table are fixed at 384. Removed the unused `VECTOR_DIMENSION=1536` setting and documented that Qdrant (if used) must be externally provisioned at 384; no live collection/Oracle schema was contacted.
+- Exact next action: review PR #37, obtain Oracle-specific verification in a controlled non-production database when available, verify Qdrant collection shape/config if deployed, then request owner review before merge.
