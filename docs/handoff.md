@@ -1,6 +1,6 @@
 # FRIDAY Universe — Handoff
 
-Shared coordination and continuity document for Claude, ChatGPT, and Grok.
+Shared coordination and continuity document for the project owner and all human/AI collaborators (Claude, ChatGPT, Grok, ZAI, Vercel v0 and future contributors).
 Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this file; kept for history).
 
 ## A. Active task registry
@@ -12,7 +12,10 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-CI-002 | Get main fully green | Claude | claude/TASK-CI-002 | CI workflows/tests | IN_PROGRESS; fixes landed on main through PR #22 and commits f24ff91/680c04e, but full suite/main validation remains unresolved |
 | TASK-CORE-002 | Remove fabricated universe_orchestrator success | Grok | grok/TASK-CORE-002 | FRIDAY/src/friday/integrations/universe_orchestrator.py and regression tests | MERGED to main via PR #25 (commit 79c1f75); code test evidence 5 passed on Server 2; production verification outstanding |
 | TASK-SEC-004 | Secret-management audit and CI leak prevention | ChatGPT | chatgpt/TASK-SEC-004 | .github/workflows/secret-scan.yml | IN_REVIEW (PR #31); change-range Gitleaks scan passed run 42525462164; not merged / not yet verified on main |
-| TASK-INT-001 | IntelX evidence pipeline and Oracle persistence audit | ChatGPT | chatgpt/TASK-INT-001-intelx-json | IntelX/intelx/oracle_dialect_compat.py, IntelX/intelx/db/engine.py, tests/test_intelx_oracle_json_compat.py | IN_REVIEW (PR #32); Oracle JSON compatibility fix and root-suite test; latest CI queued/in progress, no production deployment |
+| TASK-INT-001 | IntelX evidence pipeline and Oracle persistence audit | ChatGPT | chatgpt/TASK-INT-001-intelx-json | IntelX/intelx/oracle_dialect_compat.py, IntelX/intelx/db/engine.py, tests/test_intelx_oracle_json_compat.py | IN_REVIEW (PR #32); FRIDAY CI passed, monorepo validation still fails on broader repository issues; no deployment |
+| TASK-FUT-001 | Prevent fabricated Stratex positions/funding telemetry | ChatGPT | chatgpt/TASK-FUT-001-stratex-telemetry | Futuris connector, risk router and regression tests | IN_REVIEW (PR #33); FRIDAY CI passed, monorepo validation failed during collection because root validation lacks NumPy; no deployment |
+| TASK-CI-004 | Root-cause fixes for fleet CI failures | Claude | claude/TASK-CI-004 | validate-monorepo.yml, dispatch bus, Forge optimizers, tests/conftest.py, e2e tests | IN_REVIEW (PR #34); FRIDAY CI and image build passed; both monorepo validators failed |
+| TASK-COLLAB-001 | Shared multi-AI collaboration centre | ChatGPT | chatgpt/TASK-DOC-SYNC-001 | docs/collaboration/* and three central documents | IN_REVIEW (PR #30); GitHub claim hub issue #35 created; records are a snapshot and require review/merge |
 
 ## B. Merged implementation work (not equivalent to production VERIFIED/DONE)
 - TASK-DOC-001: PR #21 merged at 515858e.
@@ -35,7 +38,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Claude currently owns TASK-CI-002, TASK-API-001 (PR #29), TASK-DISPATCH-001 (PR #28), TASK-MIRROR-001 (PR #27), and TASK-OPS-002 per existing coordination notes.
 - ChatGPT currently owns TASK-SEC-003 (PR #24), TASK-CTX-001 (PR #26), TASK-SEC-004 (PR #31), and the IntelX audit slice TASK-INT-001 (PR #32). PR #24/#26 still require review findings below to be resolved before merge.
 - Grok's TASK-CORE-002 implementation was merged through PR #25.
-- Current `main` HEAD observed via GitHub: `680c04ee383066874cad42a3295d18008eb6e1d2` (2026-11-08T19:34:57Z).
+- Current `main` HEAD observed via GitHub: `680c04ee383066874cad42a3295d18008eb6e1d2` (2026-11-08T19:34:57Z); active PR branches are ahead of main and remain unmerged.
 - TASK-INF-002 verified read-only: FRIDAY-Voice.service active on Server 1; systemd drop-in `memory.conf` loaded, MemoryHigh=250M and MemoryMax=300M; service used 7.4M at check time. This corrects the stale architecture gap. No restart or configuration change was made.
 
 ## D. Blocked tasks
@@ -69,13 +72,26 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 ## G. Latest handoff checkpoint (ChatGPT reconnect, 2026-11-09)
 - Last implementation merged: TASK-CORE-002 (PR #25, 79c1f75). No production task is claimed DONE/VERIFIED based only on this connector inspection.
 - Main HEAD: `680c04ee383066874cad42a3295d18008eb6e1d2`.
-- Open PRs observed: #23 (CI), #24 (bridge auth), #26 (Cortex route auth), #27 (manual/no-force mirror), #28 (dispatch bus), #29 (Sentinel task endpoint), #30 (central docs sync), #31 (Gitleaks change-range scan), #32 (IntelX Oracle JSON compatibility).
+- Open PRs observed in the latest snapshot: #23 (CI environment), #24 (bridge auth), #26 (Cortex auth), #27 (manual/no-force mirror), #28 (dispatch bus), #29 (Sentinel task API), #30 (docs/collaboration centre), #31 (Gitleaks), #32 (IntelX Oracle JSON), #33 (Futuris/Stratex data integrity), #34 (CI root-cause fixes).
 - ChatGPT review comments posted 2026-11-09: #23 TASK-ID collision/full-suite concern; #26 read-only POST forecast viewer access; #28 peer contract/endpoint/receipt/fake-success blockers.
 - CI evidence: run 42502800827 reported 3,286 passed, 74 skipped, 38 failed, 43 errors. This is historical evidence from PR #24's run, not a result for current HEAD. Current main's full validation remains UNVERIFIED in this session.
-- ChatGPT docs synchronization branch: `chatgpt/TASK-DOC-SYNC-001`; PR #30 updates the three central docs. This update adds TASK-SEC-004 state; PR #30 remains open and docs-only.
+- ChatGPT docs/collaboration branch: `chatgpt/TASK-DOC-SYNC-001`; PR #30 updates the three central docs and adds the initial `docs/collaboration/` system. PR #30 remains open; nothing has been merged to main.
 - Live system bridge checked 2026-11-09: workspace on Server 2 is branch `claude/TASK-DISPATCH-001`, commit `f09e29f`, with one untracked file `Forge/tests/unit/test_task_execute_contract.py`; this work was preserved and not edited. Both Oracle VMs were online. Server 1: 956 MB RAM, 464 MB used, 337 MB available, 97 GB disk 22%; Server 2: 956 MB RAM, 265 MB used, 538 MB available, 49 GB disk 36%. These are point-in-time read-only diagnostics. All ten canonical agent systemd services were active when checked; liveness is not proof of each API's end-to-end functionality.
 - TASK-SEC-004 PR #31: Gitleaks run 42525462164 PASS after initial run 42525352655 failed due shallow-fetch range resolution. Current action scans PR/push change ranges only, not entire history. It must pass CI and merge before TASK-SEC-004 can be VERIFIED.
 - Tests: Forge targeted workspace test command was attempted on Server 2 but stopped in `Forge/tests/conftest.py` because the venv lacks installed `anthropic` (`ModuleNotFoundError`); the new Forge contract test was not executed. The dependency is listed in `Forge/requirements.txt`. No test was skipped or weakened.
 - IntelX PR #32 CI history: initial test collection failed because importing `intelx.db` eagerly imports `engine.py` and SQLAlchemy asyncio, which requires greenlet in the root validation environment. The compatibility module was moved to `IntelX/intelx/oracle_dialect_compat.py` outside the eager `intelx.db` package. Latest root CI run on commit `372d8252` is queued/in progress; prior run at `a5e33634` failed collection for the same greenlet dependency. A local SQLAlchemy 2.0.50 generic OracleDialect JSON bind/result round-trip passed after adding both None defaults; this is focused local processor evidence, not the GitHub root-suite result.
 - Outstanding external actions: TASK-OPS-002 sniper OCI authentication needs current workflow log verification; owner-reported credential rotation and approved history rewrite still need safe timing after open PRs settle; infrastructure and FRIDAY-Voice resource limits require authorized host access.
-- Exact next steps: (1) confirm all PR #31 CI jobs finish and review scanner policy; (2) keep PR #30 central docs aligned with accepted/merged work; (3) Claude resolves PR #28 dispatch findings and continues CI/Forge/Sentinel API work; (4) ChatGPT resolves PR #26 and #24 review findings; (5) pursue remaining owner actions and continue TASK-CORE-001 / data foundation audits without changing live services.
+- Exact next steps: (1) review PR #34's two failed monorepo validator jobs and reconcile its overlapping files with PR #23/#28; (2) finish and review the collaboration files in PR #30 and synchronize all three central docs; (3) Claude resolves PR #28 dispatch contracts and completes PR #29 Sentinel verification; (4) ChatGPT resolves PR #26/#24 findings and refreshes PR #31/#32/#33 checks; (5) Grok should independently review PR #28/#34 after rejoining; (6) onboard ZAI and Vercel v0 only after verifying actual repo/tool access; (7) continue owner actions and per-agent audits without unapproved production changes.
+
+
+## H. Multi-AI collaboration snapshot (2026-11-09)
+
+- Shared collaboration centre: `docs/collaboration/`; onboarding instructions are in `docs/collaboration/README.md`.
+- Shared claim/release/review thread: [GitHub issue #35](https://github.com/surendra2304/FRIDAY-Universe/issues/35). Contributors must post a claim before editing, then update the board and file-ownership registry.
+- Current roster: Claude (active), ChatGPT (active), Grok (previous contributor; current availability unknown), ZAI (planned/not onboarded), Vercel v0 (planned/not onboarded), Surendra (project owner). Do not infer unverified integrations or permissions.
+- Current active PR ownership and changed-file lists are mirrored in `docs/collaboration/WORK_BOARD.yaml` and `FILE_OWNERSHIP.yaml`.
+- Explicit overlap conflicts: PR #23/#34 both modify `.github/workflows/validate-monorepo.yml`; PR #28/#34 both modify `FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py`; PR #24/#26/#30 all modify the three central docs. Coordinate and reconcile combined diffs before merge.
+- Shared Server 2 workspace last observed on `claude/TASK-CI-004` with untracked `Forge/tests/unit/test_task_execute_contract.py`. This file remains protected and must not be deleted or overwritten without its owner confirming disposition.
+- CI refresh: PR #34 FRIDAY CI run 42560097648 PASS; Heavy-Task Runtime Image Build run 42560097625 PASS; Monorepo Structure and Safety CI runs 42560097582 and 42560097580 FAIL. PR #33 FRIDAY CI run 42530391450 PASS; monorepo validation run 42530741161 FAIL during collection due missing NumPy in the root validation environment. Main full validation remains red/unverified.
+- TASK-CI-ID reconciliation: PR #23 uses TASK-CI-003 for CI dependencies/test DB setup while Master Plan TASK-CI-003 describes run_workspace_test; PR #34 uses TASK-CI-004 for broad validation fixes while Master Plan TASK-CI-004 describes bridge/** .gitignore. Claude must reconcile these IDs with the project owner before acceptance criteria are changed.
+- No merge, production deployment, service restart, secret provisioning or history rewrite was performed in this session.
