@@ -10,11 +10,11 @@ tasks:
       - Existing collaborators and reported assignments are preserved as unverified where not independently checked.
       - v0 branch and ownership are recorded.
     dependencies: []
-    status: VERIFIED
+    status: IN_REVIEW
     assigned_collaborator: v0
     other_contributors: []
     working_branch: v0/coordination-bootstrap
-    associated_pr: null
+    associated_pr: https://github.com/surendra2304/FRIDAY-Universe/pull/36
     files_being_modified:
       - docs/collaboration/
     test_requirements:

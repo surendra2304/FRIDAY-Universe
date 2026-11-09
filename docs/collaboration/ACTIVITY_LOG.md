@@ -9,4 +9,5 @@ Append-only record. Timestamps are UTC dates unless a more precise timestamp is 
 - Created the collaboration centre without overwriting existing coordination records; no prior `docs/collaboration/` directory existed in this checkout.
 - Recorded known ownership and status claims as reported/unverified where current GitHub or Oracle evidence was not independently refreshed.
 - Tests: `uv run --with PyYAML python ...` parsed all three YAML registries successfully; `git diff --check` passed.
-- Outstanding: verify open PRs, active branches, latest CI, and live Oracle evidence through approved read-only tooling before claiming an implementation task.
+- Verified PR #36 is open with three CI checks currently in progress; no review decision is recorded yet.
+- Outstanding: verify active branches and live Oracle evidence through approved read-only tooling before claiming an implementation task.
