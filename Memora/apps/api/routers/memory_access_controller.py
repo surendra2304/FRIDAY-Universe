@@ -6,12 +6,15 @@ role-based access control for memory operations.
 """
 from __future__ import annotations
 
+import math
 import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+from apps.api.dependencies import get_actor_header, require_admin
 
 router = APIRouter()
 
@@ -148,50 +151,111 @@ class MemoryAccessController:
 engine = MemoryAccessController()
 
 
+
+
+def _require_self(actor_name: str, requested_subject: str) -> str:
+    """Bind self-service requests and checks to the authenticated principal."""
+    subject = (requested_subject or "").strip().lower()
+    if not subject or subject != actor_name:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="An agent may request or inspect access only for its authenticated identity.",
+        )
+    return actor_name
+
+
+def _reject_identity_spoof(hint: str, actor_name: str, field_name: str) -> None:
+    """Keep legacy hint parameters without trusting caller-supplied identity."""
+    supplied = (hint or "").strip().lower()
+    if supplied not in {"", "system", actor_name}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"{field_name} must match the authenticated administrator.",
+        )
+
+
 @router.post("/memora/access/grants")
-async def grant_access(subject: str, scope: str, permission: str = "read",
-                       granted_by: str = "system", ttl_seconds: float = 0.0):
-    """Grant access to a memory scope."""
-    grant_id = engine.grant_access(subject, scope, permission, granted_by, ttl_seconds)
+async def grant_access(
+    subject: str,
+    scope: str,
+    permission: str = "read",
+    granted_by: str = "system",
+    ttl_seconds: float = 0.0,
+    actor_name: str = Depends(get_actor_header),
+):
+    """Only the authenticated Memora service identity may create grants."""
+    require_admin(actor_name)
+    _reject_identity_spoof(granted_by, actor_name, "granted_by")
+    grant_id = engine.grant_access(subject, scope, permission, actor_name, ttl_seconds)
     return {"grant_id": grant_id, "status": "granted"}
 
 
 @router.delete("/memora/access/grants/{grant_id}")
-async def revoke_access(grant_id: str):
-    """Revoke an access grant."""
+async def revoke_access(
+    grant_id: str,
+    actor_name: str = Depends(get_actor_header),
+):
+    """Only the authenticated Memora service identity may revoke grants."""
+    require_admin(actor_name)
     if not engine.revoke_access(grant_id):
         raise HTTPException(status_code=404, detail="Grant not found")
     return {"grant_id": grant_id, "status": "revoked"}
 
 
 @router.get("/memora/access/check")
-async def check_access(subject: str, scope: str, permission: str = "read"):
-    """Check if a subject has access to a scope."""
-    granted = engine.check_access(subject, scope, permission)
-    return {"subject": subject, "scope": scope, "permission": permission, "granted": granted}
+async def check_access(
+    subject: str,
+    scope: str,
+    permission: str = "read",
+    actor_name: str = Depends(get_actor_header),
+):
+    """An authenticated agent may inspect only its own access decision."""
+    caller = _require_self(actor_name, subject)
+    granted = engine.check_access(caller, scope, permission)
+    return {"subject": caller, "scope": scope, "permission": permission, "granted": granted}
 
 
 @router.post("/memora/access/requests")
-async def request_access(subject: str, scope: str, permission: str, reason: str = ""):
-    """Request access to a memory scope."""
-    request_id = engine.request_access(subject, scope, permission, reason)
+async def request_access(
+    subject: str,
+    scope: str,
+    permission: str,
+    reason: str = "",
+    actor_name: str = Depends(get_actor_header),
+):
+    """An authenticated agent may request access only for itself."""
+    caller = _require_self(actor_name, subject)
+    request_id = engine.request_access(caller, scope, permission, reason)
     return {"request_id": request_id, "status": "pending"}
 
 
 @router.post("/memora/access/requests/{request_id}/approve")
-async def approve_request(request_id: str, decided_by: str = "system"):
-    """Approve an access request."""
-    request = engine.approve_request(request_id, decided_by)
-    return {"request_id": request.request_id, "status": "approved"}
+async def approve_request(
+    request_id: str,
+    decided_by: str = "system",
+    actor_name: str = Depends(get_actor_header),
+):
+    """Only the authenticated Memora service identity may approve requests."""
+    require_admin(actor_name)
+    _reject_identity_spoof(decided_by, actor_name, "decided_by")
+    request = engine.approve_request(request_id, actor_name)
+    return {"request_id": request.request_id, "status": "approved", "decided_by": actor_name}
 
 
 @router.get("/memora/access/audit")
-async def get_audit_trail(limit: int = 50):
-    """Get access audit trail."""
+async def get_audit_trail(
+    limit: int = Query(default=50, ge=1, le=500),
+    actor_name: str = Depends(get_actor_header),
+):
+    """The process-wide audit trail is restricted to the Memora administrator."""
+    require_admin(actor_name)
     return {"entries": engine.get_audit_trail(limit)}
 
 
 @router.get("/memora/access/report")
-async def access_report():
-    """Get access controller report."""
-    return engine.get_report()
+async def access_report(actor_name: str = Depends(get_actor_header)):
+    """Process-wide grant/request totals are restricted to the Memora administrator."""
+    require_admin(actor_name)
+    report = engine.get_report()
+    report["authority"] = "process_local_compatibility_only"
+    return report
