@@ -35,6 +35,22 @@ class FakeBinanceClient:
             "markPrice": "60500.0", "unRealizedProfit": "25.0", "leverage": "2"
         }]
 
+    def futures_create_order(self, **kwargs):
+        """Test double: records the order and reports a venue-style response."""
+        self.last_order = kwargs
+        return {
+            "orderId": 9001,
+            "status": "FILLED",
+            "executedQty": kwargs.get("quantity", 0.0),
+            "avgPrice": kwargs.get("price", 60500.0),
+            "price": kwargs.get("price", 60500.0),
+        }
+
+    def futures_cancel_order(self, **kwargs):
+        """Test double: records the cancellation and reports venue-style success."""
+        self.last_cancel = kwargs
+        return {}
+
 
 class FakeCcxtClient:
     """Test double for ccxt coinbase client."""
@@ -132,7 +148,8 @@ def test_multi_exchange_router_and_failover(mock_exchanges):
     assert venue in mock_exchanges
     assert price > 0
 
-    # Order execution
+    # Order execution: FILLED is reported by the injected fake venue client,
+    # never fabricated by the adapter itself (see test_live_trading_guard.py).
     res = router.route_and_execute_order("BTC/USDT", "BUY", "LIMIT", 0.1, price=60500.0)
     assert res.status == "FILLED"
     assert res.executed_qty == 0.1
