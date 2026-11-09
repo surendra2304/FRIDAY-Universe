@@ -151,3 +151,8 @@ The main Memora app mounted `memory_access_controller.router` under `/api/v1`, w
 ### TASK-DATA-002 incremental finding — explicit memory-share authorization — 2026-11-09
 
 A second authorization defect was found in the canonical write path: the `shared_with` parameter previously inserted `MemorySharedAgent` entries after a namespace write decision only. PR #38 now requires owner control and an explicit policy `share` decision, rejects wildcard/self/unregistered/cross-tenant recipient names, and provisions tenant-scoped read/query namespace grants alongside the memory membership entry. This is performed in the existing write transaction and across new, duplicate and idempotent replay paths; canonical implicit team-shared behavior is unchanged. Focused Memora run 42663206883 passed (16 tests, 1 warning); full FRIDAY run 42663207108 passed the Python and HTTP/API suites, with Docker skipped for the PR event. Monorepo checks remained pending at the last observation. Unmerged and undeployed.
+
+
+### TASK-DATA-002 incremental finding — truthful task storage receipts — 2026-11-09
+
+The task endpoint's ActionReceipt builder previously hard-coded Oracle and durable-write claims even in a SQLite/non-durable test environment. PR #38 now sources active backend, durability and durability class from Memora's canonical `storage_receipt()`; successful store evidence only reports `durable_write=true` when the active storage contract says it is durable. A route regression test was added and wired into the focused Memora and FRIDAY workflows. This change remains unverified until those new CI runs complete; PR #38 remains unmerged/undeployed.
