@@ -10,9 +10,9 @@
 
 ### Incomplete
 
-- Current GitHub PR/branch review and latest CI status need fresh verification.
 - Oracle service state and live integrations require the approved FRIDAY read-only audit surface; repository documentation alone is not deployment proof.
 - No implementation task has been taken over from another collaborator.
+- PR #36 remains open; its branch contents are present on GitHub, but two repository checks are failing in pre-existing test/workflow areas.
 
 ### Known defects carried forward
 
