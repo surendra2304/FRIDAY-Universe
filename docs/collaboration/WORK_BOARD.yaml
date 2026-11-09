@@ -47,7 +47,8 @@ tasks:
     evidence:
       - "GitHub issue #35 created as the shared claim/handoff thread."
       - "Open PR snapshot and changed-file lists retrieved on 2026-11-09."
-    next_action: "Finish initial records, synchronize central documents and verify PR #30 checks."
+      - "scripts/validate_collaboration.py and .github/workflows/collaboration-registry.yml added for structural validation."
+    next_action: "Run the dedicated collaboration-registry workflow, fix any schema/record defects, then complete PR #30 review."
 
   - id: "TASK-DOC-SYNC-001"
     title: "Synchronize Master Plan, handoff and as-built architecture"
