@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-09T10:10:00Z"
+snapshot_at: "2026-11-09T18:05:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -400,6 +400,72 @@ tasks:
       - "No live Oracle/Qdrant or production environment was accessed."
     latest_update_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6746337420"
     next_action: "Continue independent direct-read/search/share-revoke/graph/task-envelope regression review, finish both monorepo checks, and after PR #37 merges rebase this stacked PR onto main and rerun all checks."
+
+  - id: "TASK-STR-001"
+    title: "Stratex fail-closed live-trading guard for exchange adapters"
+    status: "IN_REVIEW"
+    owner: "zai"
+    branch: "zai/TASK-STR-001-live-trading-guard"
+    pr: 39
+    other_contributors: []
+    priority: "P1"
+    created_at: "2026-11-09T17:00:00Z"
+    updated_at: "2026-11-09T17:40:00Z"
+    files:
+      - "Stratex/exchanges/exchange_implementations.py"
+      - "Stratex/tests/test_live_trading_guard.py"
+      - "Stratex/tests/test_multi_exchange.py"
+      - "Stratex/tests/test_multi_exchange_expansion.py"
+    dependencies:
+      - "Master Plan Phase 8 TASK-STR-001"
+    acceptance:
+      - "Every adapter order path in exchanges/exchange_implementations.py enforces the permanent LIVE block (TRADING_MODE=LIVE / LIVE_TRADING_ENABLED=1 -> PermissionError)."
+      - "An explicit ALLOW_LIVE_TRADING opt-in (default false) gates live-endpoint client construction and Coinbase live orders."
+      - "No adapter fabricates FILLED orders or cancel success; unconfigured venues refuse with honest errors."
+      - "Regression tests pass and are recorded."
+    evidence:
+      - "Production .env on Server 1 inspected read-only (non-secret flags only): BINANCE_TESTNET=false, TRADING_MODE=FUTURES, TESTNET_ENABLED=true, PAPER_SAFE_MODE=FALSE, BINANCE_ENV=demo, BINANCE_KEY_TYPE=ed25519; Stratex.service and Stratex-Daemon.service share the same EnvironmentFile."
+      - "Local pytest on Python 3.12: tests/test_live_trading_guard.py 24 passed; test_multi_exchange.py + test_multi_exchange_expansion.py 17 passed; blast-radius suites 45 passed with 2 pre-existing failures that reproduce on pristine main (test_stratex_runtime_factory.py, verified via stash)."
+      - "PR #39 opened 2026-11-09 with the full diff and evidence."
+    risk_flags:
+      - "Owner decision required: production .env has BINANCE_TESTNET=false while the Master Plan expected true; the daemon's active venue is BinanceFuturesAdapter in demo mode (BINANCE_ENV=demo), not the classic testnet."
+      - "Dashboard adapters are read-only in production today; no production flow places orders through exchange_implementations.py (verified by reading dashboard call sites)."
+    blockers: []
+    next_action: "Owner review of PR #39; after merge and deploy, confirm the Stratex dashboard still serves /api/multiexchange/* and record live evidence."
+
+  - id: "TASK-COLLAB-002"
+    title: "Register ZAI as an active collaborator in the shared registry"
+    status: "IN_REVIEW"
+    owner: "zai"
+    branch: "zai/TASK-COLLAB-002-register-zai"
+    pr: null
+    other_contributors:
+      - "chatgpt"
+    priority: "P2"
+    created_at: "2026-11-09T17:40:00Z"
+    updated_at: "2026-11-09T17:40:00Z"
+    files:
+      - "docs/collaboration/TEAM_ROSTER.yaml"
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/FILE_OWNERSHIP.yaml"
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/HANDOFFS.md"
+      - "docs/MASTER_PLAN.md"
+      - "docs/handoff.md"
+      - "docs/ARCHITECTURE_AS_BUILT.md"
+    dependencies:
+      - "TASK-COLLAB-001 (stacked on PR #30 branch; merge PR #30 first)"
+    acceptance:
+      - "TEAM_ROSTER.yaml zai entry carries verified, evidence-backed capabilities only."
+      - "TASK-STR-001 recorded on the work board with owner, branch, PR, files, acceptance and evidence."
+      - "Ownership claims exist for the Stratex files changed by PR #39."
+      - "Central documents synchronized with the TASK-STR-001 status and production flag evidence."
+    evidence:
+      - "Branch zai/TASK-COLLAB-002-register-zai created from PR #30 head 8e13bfb with these registry updates."
+    risk_flags:
+      - "Stacked on PR #30; must not merge before PR #30 merges."
+    blockers: []
+    next_action: "Record this stacked PR's number once opened, then owner review of both PR #30 and this branch."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

@@ -97,3 +97,12 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Contributors:** ChatGPT (finding, implementation, tests).  
 **Owner approval:** This is a branch-level fail-closed security correction within the existing task; PR merge and production activation remain subject to owner authorization.  
 **Consequences:** Existing callers using arbitrary/unregistered or wildcard `shared_with` values will now receive an authorization/validation error and must provision recipients and use owner-authorized sharing. No production migration or live-service change is included.
+
+## D-006 — Stratex live-trading guard: fail-closed with explicit owner opt-in
+
+**Date:** 2026-11-09  
+**Decision:** Every order path in `Stratex/exchanges/exchange_implementations.py` enforces the permanent LIVE block already used by `stratex_ccxt_adapter` (`TRADING_MODE=LIVE` / `LIVE_TRADING_ENABLED=1` -> `PermissionError`), refuses real orders in PAPER/RESEARCH modes, routes the python-binance client to testnet by default (`BINANCE_TESTNET`, default true), and requires an explicit `ALLOW_LIVE_TRADING=true` for any live-endpoint client or Coinbase (no testnet) order. Adapters must never fabricate FILLED orders or cancel success.  
+**Alternatives:** (a) leave per-adapter guards inconsistent; (b) env-only `LIVE_TRADING_ENABLED` switch without an explicit opt-in; (c) implement real execution for all venues in the same PR.  
+**Reason:** (a) left unguarded/fabricating paths; (b) keeps live trading one accidental env flip away; (c) widens an unreviewable safety change into new side-effect surfaces.  
+**Evidence:** fabricated FILLED results and unguarded Coinbase orders confirmed by reading the pre-change code; production flags verified read-only (BINANCE_TESTNET=false, BINANCE_ENV=demo).  
+**Implementation:** PR #39 (TASK-STR-001), ZAI. Owner approval for merge pending.
