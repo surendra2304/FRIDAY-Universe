@@ -63,3 +63,47 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - Tests and results: no new tests this session. Last CI run on the earlier PR head failed; main head c097312 result UNVERIFIED.
 - Outstanding issues: sniper authentication unconfirmed; FRIDAY-Voice memory limit; bridge has no auth (owner accepted); history rewrite pending.
 - Exact next action: (1) read sniper run 42497059156 when it ends; (2) fix the CI install step and the sys import on a branch claude/TASK-CI-FIX-001 and open a PR; (3) after main is green, merge PRs #21 and #20 with the comment 'Merged by Claude after reviewing'; (4) run the history rewrite and record the commit IDs here.
+
+## Session log: Claude, 2026-11-08 (evening)
+- PR #27 (TASK-MIRROR-001): mirror is manual-only, no force-push. Open. CI red from the pre-existing suite, not from this change.
+- PR #28 (TASK-DISPATCH-001): dispatch bus now uses real fleet URLs from AGENTS.yaml, `/v1/task/execute`, and the full envelope. Open.
+  - Live probe: Futuris 200; Inference, Memora, Stratex, IntelX, Forge, Cortex reached and return 401 (keys needed); Sentinel 404 (TASK-API-001).
+  - OPERATIONAL, owner: set FRIDAY_DISPATCH_<NAME>_API_KEY (and _AUTH_HEADER where needed) for the bus host. Not committed.
+- Open follow-ups: TASK-API-001 (Sentinel /v1/task/execute), TASK-ORCH-001 (intent routing), CI integration tests that need live agents.
+
+## Session log: Claude, 2026-11-08 (authorized actions)
+- FRIDAY.service restarted on Server 1 (owner approved). Active, /health 200, 4 dispatch keys loaded.
+- Keys: read from live service environments, not from the document. Memora and Stratex document keys match live. VyralX document key was stale and has been replaced with the live key in CREDENTIALS.md. Values never written to this log.
+- /etc/friday/dispatch.env (root, 600) now holds: Futuris, IntelX, Inference, Cortex, Memora (Bearer + X-Agent-Name: FRIDAY), VyralX.
+- PR #28 gained a per-agent extra-header option (needed for Memora); commit da6d26f. CI running.
+- PR #29 (Sentinel /v1/task/execute): CI fails on the pre-existing suite (validate-monorepo, fleet). Not merged.
+
+### Live probe (POST /v1/task/execute, action=ping, keys from live environments)
+| Agent | Result | Meaning |
+|---|---|---|
+| Futuris 8004 | 200 SUCCESS (X-API-Key) | reachable and authenticated |
+| IntelX 8005 | 200 (Authorization: Bearer) | reachable and authenticated |
+| Inference 8001 | 422 (X-FRIDAY-API-Key) | key accepted; probe body rejected by schema |
+| Memora 8002 | 422 (Bearer own key + X-Agent-Name) | key accepted once X-Agent-Name is sent |
+| VyralX 8010 | 422 (x-api-key, live key, /api/v1/tasks) | key accepted |
+| Cortex 8009 | 500 (X-Friday-Api-Key) | key accepted; route error to investigate |
+| Stratex 8003 | 401 | BLOCKED: Stratex has no FRIDAY-scoped key (API_KEY_FRIDAY absent from its env and .env). Only BOT_API_KEY (ADMIN) exists. Owner decision needed. Also: Stratex localhost /health timed out. |
+| Forge 8006 | 404 | no /v1/task/execute route (TASK-API-001 follow-up) |
+| Sentinel 8008 | 404 | PR #29 not merged/deployed yet |
+
+### Open
+1. Stratex FRIDAY-scoped key: owner to decide (create API_KEY_FRIDAY in Stratex .env and restart Stratex, or accept BOT_API_KEY).
+2. Stratex health timeout: investigate.
+3. Cortex 500 on ping: investigate.
+4. Forge route: implement.
+5. PR #28 and #29 merge when CI is green, which depends on the pre-existing suite fixes.
+
+## Session log: Claude, 2026-11-08 (Stratex key, health, Cortex)
+- Stratex FRIDAY-scoped key created (Option A, owner approved). Written to Stratex/.env (Server 1), /etc/friday/dispatch.env, and CREDENTIALS.md (row "Stratex FRIDAY Scope"). Value not recorded here.
+- Stratex.service restarted (owner approved). Probe: POST /v1/task/execute action=status with X-API-KEY -> 200, AUTHORIZED.
+- Stratex health timeout: root cause was slow startup after restart, not a fault. /health returns 200 once the process has finished starting. Stratex runs in TRADING_MODE PAPER per its startup log ("TESTNET ORDERS: 0 | LIVE ORDERS: 0"). The owner stated testnet; this should be confirmed.
+- Stratex .env: python-dotenv reports a parse error at line 35 (a stray quote on TELEGRAM_BOT_TOKEN). Cosmetic, pre-existing, not fixed here.
+- Cortex 500: root cause is in the dispatch bus. It sent priority as a number, Cortex's FridayTaskEnvelope requires a string, and the unhandled ValidationError became a 500. Fixed in caf5e73 (priority sent as string). Verified directly: numeric priority -> 500, string priority -> 422 (Cortex only supports health_summary, recommend_intervention, execute_operation, cancel, rollback). Follow-up for Cortex: a schema error should return 422, not 500.
+- Main: GitHub main is still at 680c04e. The test-suite fixes described by the owner are NOT on main, so PR #28 and PR #29 contain main but do not contain those fixes. Their CI cannot go green from main alone.
+- PR #29 CI: both validation checks still fail (pre-existing suite). Not merged.
+- PR #28 CI: test passes; validation checks running at time of writing.

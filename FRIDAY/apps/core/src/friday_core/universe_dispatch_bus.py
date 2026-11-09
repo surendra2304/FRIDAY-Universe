@@ -122,21 +122,24 @@ class UniverseDispatchBus:
 
     def _register_default_agents(self) -> None:
         """Register default agent dispatch configurations."""
-        # Docker service names are defaults; URLs and credentials are overridable.
+        # Real fleet endpoints from AGENTS.yaml (single source of truth for ports).
+        # Server 1 = 10.0.0.121 hosts the core agents; Server 2 = 10.0.0.120 hosts the rest.
+        # Every value is overridable with FRIDAY_DISPATCH_<NAME>_URL.
         agents = [
-            ("Inference", "inference"), ("Memora", "memora"),
-            ("Stratex", "stratex"), ("Forge", "forge"),
-            ("Cortex", "cortex"), ("Sentinel", "sentinel"),
-            ("IntelX", "intelx"), ("Futuris", "futuris"),
-            ("VyralX", "vyralx"),
+            ("Inference", "http://10.0.0.121:8001"), ("Memora", "http://10.0.0.121:8002"),
+            ("Stratex", "http://10.0.0.121:8003"), ("Futuris", "http://10.0.0.121:8004"),
+            ("IntelX", "http://10.0.0.121:8005"), ("Forge", "http://10.0.0.121:8006"),
+            ("Sentinel", "http://10.0.0.120:8008"), ("Cortex", "http://10.0.0.120:8009"),
+            ("VyralX", "http://10.0.0.120:8010"),
         ]
-        for name, service in agents:
+        for name, default_base in agents:
+            service = name.lower()
             key = name.upper()
             base = (
                 os.getenv(f"FRIDAY_DISPATCH_{key}_URL")
                 or os.getenv(f"FRIDAY_{key}_URL")
                 or os.getenv(f"{key}_URL")
-                or f"http://{service}:8000"
+                or default_base
             ).rstrip("/")
             api_key = (
                 os.getenv(f"FRIDAY_DISPATCH_{key}_API_KEY")
@@ -147,10 +150,8 @@ class UniverseDispatchBus:
             auth_header = os.getenv(
                 f"FRIDAY_DISPATCH_{key}_AUTH_HEADER", "x-api-key"
             ).strip() or "x-api-key"
-            default_action_path = (
-                "/api/v1/tasks" if service == "vyralx"
-                else f"/agent/{service}/{{action}}"
-            )
+            # Every agent serves POST /v1/task/execute (see fleet_client); VyralX has its own API.
+            default_action_path = "/api/v1/tasks" if service == "vyralx" else "/v1/task/execute"
             action_path = os.getenv(
                 f"FRIDAY_DISPATCH_{key}_ACTION_PATH", default_action_path,
             )
@@ -158,6 +159,11 @@ class UniverseDispatchBus:
                 name, base, f"{base}/health", api_key=api_key,
                 auth_header=auth_header, action_path=action_path,
             )
+            # Optional extra header, e.g. FRIDAY_DISPATCH_MEMORA_EXTRA_HEADER="X-Agent-Name: FRIDAY"
+            extra = os.getenv(f"FRIDAY_DISPATCH_{key}_EXTRA_HEADER", "").strip()
+            if extra and ":" in extra:
+                hn, hv = extra.split(":", 1)
+                self._configs[name].extra_headers = {hn.strip(): hv.strip()}
 
     def register_agent(self, agent_name: str, base_url: str,
                        health_url: str = "", timeout_sec: float = 30.0,
@@ -183,7 +189,9 @@ class UniverseDispatchBus:
     @staticmethod
     def _headers(config: AgentDispatchConfig) -> dict[str, str]:
         """Attach a configured service credential when present."""
-        return {config.auth_header: config.api_key} if config.api_key else {}
+        headers = {config.auth_header: config.api_key} if config.api_key else {}
+        headers.update(getattr(config, "extra_headers", None) or {})
+        return headers
 
     @staticmethod
     def _request_payload(envelope: TaskEnvelope, config: AgentDispatchConfig) -> dict[str, Any]:
@@ -194,6 +202,16 @@ class UniverseDispatchBus:
                 "task_type": envelope.action,
                 "input": envelope.payload,
                 "correlation_id": envelope.task_id,
+            }
+        if config.action_path.rstrip("/") == "/v1/task/execute":
+            return {
+                "task_id": envelope.task_id,
+                "agent": envelope.agent,
+                "action": envelope.action,
+                "payload": envelope.payload,
+                "priority": str(envelope.priority),  # Cortex validates priority as a string
+                "timeout_sec": envelope.timeout_sec,
+                "source_agent": "FRIDAY",
             }
         return envelope.payload
 
