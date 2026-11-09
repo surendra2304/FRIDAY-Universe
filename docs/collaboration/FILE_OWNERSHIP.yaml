@@ -209,10 +209,10 @@ claims:
 
   - path: ".github/workflows/memora-vector-regression.yml"
     owner: "chatgpt"
-    prs: [37]
-    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
-    status: "CLAIMED_IN_REVIEW"
-    risk: "Dedicated focused vector workflow; also wired to existing PR-triggered FRIDAY CI."
+    prs: [37, 38]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit", "chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "STACKED_CLAIM_IN_REVIEW"
+    risk: "Focused Memora CI also runs the PR #38 legacy access-controller authorization regressions; PR #38 remains stacked on PR #37."
 
   - path: ".github/workflows/friday-universe-ci.yml"
     owner: "chatgpt"
@@ -299,13 +299,6 @@ claims:
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "CLAIMED_IN_REVIEW"
     risk: "Regression tests cover missing credentials, non-admin denial, subject binding, and Memora-admin grant/revoke/approval/audit access."
-
-  - path: ".github/workflows/memora-vector-regression.yml"
-    owner: "chatgpt"
-    prs: [37, 38]
-    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit", "chatgpt/TASK-DATA-002-memory-tenant-isolation"]
-    status: "STACKED_CLAIM_IN_REVIEW"
-    risk: "Focused Memora CI now also runs the legacy access-controller authorization regressions; PR #38 remains stacked on PR #37."
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
