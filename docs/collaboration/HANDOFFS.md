@@ -149,3 +149,12 @@ For every new handoff, include:
 - Files: `Memora/core/memory/pipeline/write_service.py`, `Memora/tests/test_memory_write_share_authorization.py`, `.github/workflows/friday-universe-ci.yml`, `.github/workflows/memora-vector-regression.yml`.
 - Verification: focused Memora run 42663206883 PASS (16 passed, 1 warning). Full FRIDAY run 42663207108 PASS for basic/cross-agent/advanced/deep/orchestrator/realtime/dashboard/Memora/HTTP suites; Docker skipped on PR. Monorepo CI runs 42663206848 and 42663206908 still pending at last observation.
 - Status remains IN_PROGRESS, unmerged and undeployed. No live Oracle, Qdrant or production environment was accessed.
+
+
+## Handoff — 2026-11-09 — TASK-DATA-002 task receipt truthfulness
+
+- Finding: `_receipt_for` in `Memora/apps/api/routers/v1_task.py` claimed `backend="oracle"` and `durable_write=true` for all successful task stores, even when the active storage receipt said SQLite/non-durable. This violated the storage layer's explicit truthfulness contract.
+- Fix on PR #38: receipt evidence now calls `storage_receipt()` and reports active `backend`, `durable`, and `durability`; `durable_write` reflects the actual flag. Query receipts also carry the truthful backend fields.
+- Test added: `Memora/tests/test_task_receipt_truthfulness.py`, authenticated task-store route response with explicit SQLite receipt, asserts no Oracle/durability claim.
+- CI pending on the newest PR #38 head `a5328273e096449205beca5b8511d49a32e4e8ee`; do not mark verified until the focused and full FRIDAY suites complete.
+- Files: `Memora/apps/api/routers/v1_task.py`, `Memora/tests/test_task_receipt_truthfulness.py`, both FRIDAY and Memora workflows.
