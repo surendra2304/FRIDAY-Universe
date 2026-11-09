@@ -64,3 +64,10 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Decision:** The roster, work board and file-ownership registry are validated by `scripts/validate_collaboration.py` in a dedicated GitHub Actions workflow when coordination files or central project documents change.  
 **Reason:** A shared board becomes unreliable if contributors can accidentally introduce duplicate task IDs, invalid owner references or dangling file-conflict records.  
 **Boundary:** A passing registry validator checks record structure only; it does not certify task correctness, tests, integration or production readiness.
+
+## D-011 — Consolidate parallel collaboration-centre PRs
+
+**Date:** 2026-11-09  
+**Decision:** PR #30 and PR #36 both contribute the same seven `docs/collaboration/` files. Preserve both branches, compare unique improvements, and consolidate into one coherent final registry before merging. Do not merge two divergent copies of the same coordination system.  
+**Coordination evidence:** PR #36 was opened from `v0/coordination-bootstrap`; the first TASK-COLLAB-001 claim was recorded on issue #35 in comment #6732479100. A coordination note was posted on PR #36.  
+**Owner:** Project owner resolves any ownership dispute if collaborators cannot agree.
