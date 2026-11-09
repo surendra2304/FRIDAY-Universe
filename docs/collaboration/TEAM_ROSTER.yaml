@@ -4,7 +4,7 @@ repository: "surendra2304/FRIDAY-Universe"
 collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 authority:
   model: "equal_human_and_ai_collaboration"
-  project_owner_id: "surendra2304"
+  project_owner_id: "human_surendra"
   project_owner_display: "Surendra Varma Jalli"
   final_approval: "Project owner"
   no_permanent_ai_hierarchy: true
@@ -104,13 +104,21 @@ collaborators:
   - id: "vercel_v0"
     display_name: "Vercel v0"
     contributor_type: "ai"
-    status: "planned_not_onboarded"
-    authority: "Equal engineering collaborator after onboarding"
-    verified_capabilities: []
-    active_assignments: []
-    last_verified_at: null
+    status: "active_contributor_overlap_to_reconcile"
+    authority: "Equal engineering collaborator"
+    verified_capabilities:
+      - "Created visible branch v0/coordination-bootstrap and PR #36."
+      - "PR #36 changes the seven core docs/collaboration registry files."
+    reported_capabilities:
+      - "PR #36 reports local repository shell/file inspection and Vercel workspace Git synchronization; those specific capabilities have not been independently exercised in this session."
+    active_assignments:
+      - "PR #36 — independent collaboration-centre bootstrap; overlaps TASK-COLLAB-001 and PR #30."
+    active_branches:
+      - "v0/coordination-bootstrap"
+    last_verified_at: "2026-11-09T04:44:27Z"
     access_limits:
-      - "Repository access, branch/PR permissions, design integrations and runtime access are not yet verified."
+      - "PR #36 must be reconciled with PR #30 before either branch is merged."
+      - "Production and Oracle access have not been verified."
 
 onboarding_policy:
   required_before_task_claim:
