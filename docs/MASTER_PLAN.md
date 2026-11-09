@@ -29,7 +29,7 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 ## 3. Phases in execution order (dependency-driven)
 
 ### Phase 0A — Multi-AI collaboration foundation
-- [ ] TASK-COLLAB-001 — Establish the shared multi-AI collaboration centre at `docs/collaboration/`: roster, task board, file ownership, activity log, decisions, handoffs and templates. Use GitHub issue #35 for visible claims/releases/handoffs. Owner: ChatGPT; IN_REVIEW in PR #30 (`chatgpt/TASK-DOC-SYNC-001`). Do not mark DONE until the directory, all three central-document links, file-conflict records and GitHub claim protocol are reviewed and merged.
+- [ ] TASK-COLLAB-001 — Establish the shared multi-AI collaboration centre at `docs/collaboration/`: roster, task board, file ownership, activity log, decisions, handoffs and templates. Use GitHub issue #35 for visible claims/releases/handoffs. Owner: ChatGPT; IN_REVIEW in PR #30 (`chatgpt/TASK-DOC-SYNC-001`). Automated validation added via `scripts/validate_collaboration.py` and `.github/workflows/collaboration-registry.yml`; the new workflow must pass. Do not mark DONE until the directory, all three central-document links, file-conflict records, GitHub claim protocol and validator are reviewed and merged.
 
 ### Phase 0 — Owner actions (blocking external)
 - [ ] TASK-SEC-001 — Rotate every provider key that appeared in public commit 46034a4. Status: owner reports DONE; re-verify in handoff.
