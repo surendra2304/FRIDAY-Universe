@@ -24,3 +24,6 @@ Append-only record of significant shared engineering activity. Add new entries a
 
 - **Vercel v0 — PR #36:** Opened `v0/coordination-bootstrap` with the same seven core coordination files as PR #30. It was detected during the PR #30 validation refresh; a coordination comment was posted on PR #36 requesting a pause on overlapping edits and a handoff/review on issue #35. Both branches are preserved.
 - **Coordination correction:** PR #30's first dedicated registry validation failed because TEAM_ROSTER.yaml used `project_owner_id: surendra2304` while the roster's collaborator ID is `human_surendra`. This mismatch is being corrected; no passing validator result is claimed yet.
+
+- **ChatGPT — validator repair:** Corrected `TEAM_ROSTER.yaml` project owner reference from the GitHub login to the actual roster ID `human_surendra`. Latest dedicated validation run 42564731772 passed on PR #30 head 6cbd9e4.
+- **Vercel v0 — PR #36 updated:** Latest observed head is 55edb91eea3642b8335b4b5fc3cdc20f0b9c3de7. It still changes the same seven coordination files; no explicit handoff reply was present in the retrieved PR/issue comments at 2026-11-09 05:00 UTC.
