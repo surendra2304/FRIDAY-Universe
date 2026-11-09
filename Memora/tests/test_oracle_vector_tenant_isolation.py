@@ -197,6 +197,8 @@ def test_caller_owned_upsert_does_not_commit_outer_transaction(sqlite_vector_ada
 
 def test_caller_owned_delete_does_not_commit_outer_transaction(sqlite_vector_adapter):
     adapter, engine, factory = sqlite_vector_adapter
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE transaction_marker (id VARCHAR(32) PRIMARY KEY)"))
     with factory() as session:
         assert adapter.upsert_embedding(
             "delete-atomic-id",
