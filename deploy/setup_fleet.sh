@@ -34,26 +34,15 @@ echo "UTC = timezone.utc" | sudo tee -a /usr/lib/python3.10/datetime.py 2>/dev/n
 echo "class StrEnum(str, Enum): pass" | sudo tee -a /usr/lib/python3.10/enum.py 2>/dev/null || true
 
 echo "=== [2/4] Configuring Canonical Databases (Oracle Autonomous 23ai) ==="
-FRIDAY_UNIVERSE_DB_DSN="(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridaycore_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
-VYRALX_DB_DSN="(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=adb.ap-hyderabad-1.oraclecloud.com))(connect_data=(service_name=g7e6177242670c3_fridayvyralx_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
-
-FRIDAY_UNIVERSE_DB_USERNAME="${FRIDAY_UNIVERSE_DB_USERNAME:-ADMIN}"
-VYRALX_DB_USERNAME="${VYRALX_DB_USERNAME:-ADMIN}"
-: "${FRIDAY_UNIVERSE_DB_PASSWORD:?Export FRIDAY_UNIVERSE_DB_PASSWORD before deployment}"
-: "${VYRALX_DB_PASSWORD:?Export VYRALX_DB_PASSWORD before deployment}"
-
-urlencode_component() {
-    python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
-}
-CORE_USER_ENCODED="$(urlencode_component "$FRIDAY_UNIVERSE_DB_USERNAME")"
-CORE_PASSWORD_ENCODED="$(urlencode_component "$FRIDAY_UNIVERSE_DB_PASSWORD")"
-VYRAL_USER_ENCODED="$(urlencode_component "$VYRALX_DB_USERNAME")"
-VYRAL_PASSWORD_ENCODED="$(urlencode_component "$VYRALX_DB_PASSWORD")"
-
-FRIDAY_UNIVERSE_DB_URL="oracle+oracledb://${CORE_USER_ENCODED}:${CORE_PASSWORD_ENCODED}@${FRIDAY_UNIVERSE_DB_DSN}"
-FRIDAY_UNIVERSE_DB_ASYNC_URL="oracle+oracledb_async://${CORE_USER_ENCODED}:${CORE_PASSWORD_ENCODED}@${FRIDAY_UNIVERSE_DB_DSN}"
-VYRALX_DB_URL="oracle+oracledb://${VYRAL_USER_ENCODED}:${VYRAL_PASSWORD_ENCODED}@${VYRALX_DB_DSN}"
-VYRALX_DB_ASYNC_URL="oracle+oracledb_async://${VYRAL_USER_ENCODED}:${VYRAL_PASSWORD_ENCODED}@${VYRALX_DB_DSN}"
+# TASK-DATA-001 remediation (2026-11-10): this section previously constructed
+# ADMIN-privileged DSNs (FRIDAY_UNIVERSE_DB_URL/_ASYNC_URL and
+# VYRALX_DB_URL/_ASYNC_URL) that no service ever consumed, and demanded the
+# ADMIN passwords up front. Per the AGENTS.yaml policy of one unprivileged
+# Oracle login per agent, fleet setup must not construct or seed ADMIN DSNs:
+# each agent's $REPO_DIR/<Agent>/.env carries only that agent's own schema-user
+# DATABASE_URL (plus agent-specific secondary DSNs such as VyralX's
+# MEDIA_DATABASE_URL). Owner-authorized cleanup; evidence in
+# docs/ARCHITECTURE_AS_BUILT.md section 20.4.
 
 # Purge legacy global env if present
 sudo rm -f /etc/default/friday_universe.env

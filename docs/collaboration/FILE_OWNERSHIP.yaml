@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-09T18:05:00Z"
+snapshot_at: "2026-11-10T03:10:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 rule: "The GitHub claim thread plus a current branch/PR is the shared ownership record. This file is the searchable mirror, not an atomic lock."
@@ -341,6 +341,13 @@ claims:
     branches: ["zai/TASK-STR-001-live-trading-guard"]
     status: "CLAIMED_IN_REVIEW"
     risk: "Router tests rewritten with labelled test doubles; honest-refusal assertions added."
+
+  - path: "deploy/setup_fleet.sh"
+    owner: "zai"
+    prs: [41]
+    branches: ["zai/TASK-DATA-001-db-architecture-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "TASK-DATA-001 remediation removes the dead ADMIN-privileged DSN construction that no service consumed; the script also stops demanding ADMIN passwords. Unclaimed before this PR (no other open PR touches this file). bash -n verified; not executed against either server."
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
