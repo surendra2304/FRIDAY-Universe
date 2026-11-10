@@ -595,6 +595,14 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-STR-002 tests: routing + truthfulness + read-only surface + fast path."
 
+
+  - path: "FRIDAY/tests/test_proactive_greeting_memory.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-MEM-003 tests: proactive greeting memory (agent + server ladder), failure-never-breaks, truncation."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

@@ -743,6 +743,26 @@ tasks:
     blockers: []
     next_action: "Closed. The owner's 'how is my portfolio?' in the new dashboard returns the real Binance-demo snapshot; live trading requires an explicit owner decision to lift D-015 (not recommended without TASK-OBS-001 alerting)."
 
+  - id: "TASK-MEM-003"
+    title: "FRIDAY uses memory proactively across sessions (remembers the owner's preferences, references past conversations)"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit. The reactive side was already merged (Memora recall in the cognitive loop via build_context_block with quarantine headers, RememberFactTool, PR #37/#38 tenant isolation). The missing proactive piece is now in: (1) the greeting fast path (agent) recalls up to 3 memories via memora_client.recall_memories and volunteers ONE short remembered line ('Since we last talked, I still remember this: ...', truncated to 140 chars, never a dump); recall failure never breaks the greeting; (2) the /api/chat ladder's own greeting short-circuit (which fires first for 'hello friday' etc.) volunteers the same line with metadata proactive_memory=true/false; (3) the greeting pattern now accepts the natural trailing-'friday' form ('hello friday', 'hi friday', 'hey friday') which never matched the agent fast path before. 7 tests (agent fast path: remembers/clean/failure-never-breaks/truncation/noise-ignored; server ladder: remembered-line + clean) in FRIDAY/tests/test_proactive_greeting_memory.py; related suites green; /api/chat E2E verified (greeting flows with proactive_memory flag; production Memora holds the owner's real history)."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/agent/agent.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_proactive_greeting_memory.py"
+    acceptance:
+      - "FRIDAY uses memory proactively across sessions (remembers the owner's preferences, references past conversations; Memora tenant isolation was merged in PR #37/#38)."
+    evidence:
+      - "Plan task (M2). 2026-11-10: 7/7 tests green; live Memora recall proven 2026-11-10 morning (the 2026-11-04 crypto-research conversation recalled verbatim)."
+    blockers: []
+    next_action: "Closed. The owner sees the remembered line on his next 'hello friday' in production (his Memora history is live there)."
+
 task_id_warnings:
   - id: "TASK-PERSONA-001"
     title: "Warm friend + Jarvis persona for FRIDAY"

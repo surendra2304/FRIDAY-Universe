@@ -1734,9 +1734,37 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
         import random as _random
         _persona = getattr(_live_settings(), "persona", "friday") or "friday"
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
+        _reply = _random.choice(greeting_responses_for(_persona)).format(user_name=_user)
+        # TASK-MEM-003: proactive memory — the owner is (re)opening the
+        # conversation, so FRIDAY volunteers one short remembered line without
+        # being asked. Recall failure never breaks the greeting.
+        _remembered_line = ""
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _hits = _memora.recall_memories(
+                "friday", f"{_user} recent work preferences", limit=3,
+            )
+            _seen: set[str] = set()
+            for _m in _hits or []:
+                _text = str(_m.get("content_text", "")).strip()
+                if _text and _text not in _seen and len(_text) > 8:
+                    _seen.add(_text)
+                    if not _remembered_line:
+                        _remembered_line = _text.rstrip(".!? ")
+                        if len(_remembered_line) > 140:
+                            _remembered_line = _remembered_line[:137].rstrip() + "…"
+        except Exception as _e:
+            logger.debug(f"Memora proactive recall skipped in greeting: {_e}")
+        if _remembered_line:
+            _reply = f"{_reply}\n\nSince we last talked, I still remember this: {_remembered_line}."
         return {
-            "reply": _random.choice(greeting_responses_for(_persona)).format(user_name=_user),
-            "metadata": {"fast_path": True, "conversational": True, "peer_health_checked": False},
+            "reply": _reply,
+            "metadata": {
+                "fast_path": True,
+                "conversational": True,
+                "peer_health_checked": False,
+                "proactive_memory": bool(_remembered_line),
+            },
         }
 
     if any(k in cmd for k in ["not tracking", "hands are not tracking", "these two hands", "two hands", "tracking", "gesture", "calibrate hands", "test hands"]):

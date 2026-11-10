@@ -129,6 +129,31 @@ class FastPathMixin:
             from friday.persona.friday import greeting_responses_for
             responses = greeting_responses_for(getattr(self.settings, "persona", "friday"))
             response = random.choice(responses).format(user_name=self.settings.user_name)
+            # TASK-MEM-003: proactive memory — a greeting is the moment the
+            # owner returns, so FRIDAY volunteers a short reference to what it
+            # remembers (past conversations, preferences) without being asked.
+            # Recall failure never breaks the greeting; a greeting with no
+            # memory line is a normal greeting.
+            remembered: list[str] = []
+            try:
+                from friday.memory.memora_client import memora_client
+                user_name = getattr(self.settings, "user_name", "Surendra")
+                hits = memora_client.recall_memories(
+                    "friday", f"{user_name} recent work preferences", limit=3,
+                )
+                seen: set[str] = set()
+                for m in hits or []:
+                    text = str(m.get("content_text", "")).strip()
+                    if text and text not in seen and len(text) > 8:
+                        seen.add(text)
+                        remembered.append(text)
+            except Exception as e:
+                logger.debug(f"Memora proactive recall skipped in greeting: {e}")
+            if remembered:
+                one_line = remembered[0].rstrip(".!? ")
+                if len(one_line) > 140:
+                    one_line = one_line[:137].rstrip() + "…"
+                response = f"{response}\n\nSince we last talked, I still remember this: {one_line}."
             logger.info("Greeting fast-path: responding directly without cognitive loop or tools")
             self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Greeting recognized")
             self.state_machine.transition_to(TaskState.PLANNING, reason="Synthesizing greeting response")
@@ -152,6 +177,8 @@ class FastPathMixin:
                 is_done=True,
                 metadata={
                     "greeting_fast_path": True,
+                    "proactive_memory": bool(remembered),
+                    "remembered_count": len(remembered),
                     "task_state": self.state_machine.current_state.value,
                 },
             )

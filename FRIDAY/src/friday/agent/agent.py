@@ -617,8 +617,12 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
     # like "hello FRIDAY" or "hey, open notepad" intentionally do NOT match and
     # flow through the normal pipeline (the LLM handles them via the prompt's
     # GREETING HANDLING rule).
+    # TASK-MEM-003 (2026-11-10): an optional trailing "friday" is accepted —
+    # "hello friday" / "hi friday" / "hey friday" are the natural ways the
+    # owner greets, and the greeting fast path (which now volunteers a
+    # remembered line) never fired for them before.
     _GREETING_PATTERN = re.compile(
-        r"^\s*(?:hi|hello|hey|sup)\b(?:\s+there)?\s*[!.,?]*$",
+        r"^\s*(?:hi|hello|hey|sup)\b(?:\s+there)?(?:\s+friday)?\s*[!.,?]*$",
         re.IGNORECASE,
     )
 
