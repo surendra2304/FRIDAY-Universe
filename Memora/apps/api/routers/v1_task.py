@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from storage.relational.session import get_db
+from storage.relational.session import get_db, storage_receipt
 from storage.relational.models import MemoryType
 from core.memory.pipeline.write_service import MemoryWriteService, MemoryPipelineError
 from core.memory.pipeline.secret_scanner import SecretDetectedSecurityViolation
