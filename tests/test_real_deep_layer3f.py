@@ -9,11 +9,28 @@ Tests for real advanced engines:
 - IntelX: real_intel_analysis.py (Source, IntelligenceReport, StructuredAnalysis, SourceEvaluation, EvidenceFusion, AdvancedLinkAnalysis, PatternOfLife, HypothesisEngine, UncertaintyQuantifier, OSINTCollector, CompetitiveIntel, ReportWriter)
 """
 
+import random
+
 import pytest
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+
+@pytest.fixture(autouse=True)
+def _deterministic_stochastic_algorithms():
+    """Pin the RNG trajectory before every test in this file.
+
+    The engines under test (SA/ACO/DE/GA/PSO/... and the signal generators)
+    draw from the global `random` module, so an unseeded run makes every
+    threshold in this file a dice roll that depends on the whole session's
+    import and test order. A test must control the state it asserts on
+    (same philosophy as the Futuris tests conftest). The thresholds stay
+    exactly as strict; only the draw sequence is made reproducible.
+    """
+    random.seed(20261110)
+    yield
 
 
 class TestSpeechProcessing:
