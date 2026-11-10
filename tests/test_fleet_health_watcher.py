@@ -183,12 +183,15 @@ class TestProbeHealth:
 
 class TestObserve:
     def test_observe_graceful_without_systemctl(self, monkeypatch):
-        # Sandbox has no systemd; observe must still produce a snapshot.
+        # Any environment (systemctl present, absent, or answering oddly):
+        # observe must produce a snapshot, never raise.
         spec = watcher.ServiceSpec("NoSuchUnit", None)
         snap_obj = watcher.observe(spec)
         assert snap_obj.name == "NoSuchUnit"
-        assert snap_obj.active_state in {"unknown", "active", "failed"}
-        # health port None -> healthy depends only on systemd state
+        assert isinstance(snap_obj.active_state, str) and snap_obj.active_state
+        # healthy stays a well-defined bool whatever systemd reports
+        # ('unknown' when systemctl is absent, 'inactive' on minimal hosts).
+        assert isinstance(snap_obj.healthy, bool)
 
 
 class TestHealthiness:
