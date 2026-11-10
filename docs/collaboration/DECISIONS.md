@@ -135,3 +135,27 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Reason:** (a) left unguarded/fabricating paths; (b) keeps live trading one accidental env flip away; (c) widens an unreviewable safety change into new side-effect surfaces.  
 **Evidence:** fabricated FILLED results and unguarded Coinbase orders confirmed by reading the pre-change code; production flags verified read-only (BINANCE_TESTNET=false, BINANCE_ENV=demo).  
 **Implementation:** PR #39 (TASK-STR-001), ZAI. Owner approval for merge pending.
+
+## D-014 — Bridge remains unauthenticated by owner risk acceptance
+
+**Date:** 2026-11-10
+**Problem:** The friday-bridge MCP gateway (:8011, public via Caddy at /bridge, /mcp, /messages) exposes engineering tools — including `run_shell` with passwordless sudo on both Oracle VMs, GitHub write access and production service control — with no authentication. PR #24 implements fail-closed shared-secret authentication but remains open and undeployed.
+**Alternatives:** (a) deploy PR #24's shared-secret header; (b) restrict the bridge to a VPN/private ingress; (c) keep the bridge unauthenticated and accept the exposure.
+**Evidence:** 2026-11-10 re-verification: an unauthenticated MCP `initialize` + `tools/list` against https://friday-universe.duckdns.org/bridge/mcp succeeded from an external host (31 tools available, server v1.30.0). No side-effect tool was invoked. docs/ARCHITECTURE_AS_BUILT.md §9 previously recorded "Owner accepted the risk".
+**Decision:** Owner selected (c): keep the bridge unauthenticated. Direct owner quote in the collaboration chat, 2026-11-10: "No problem even if it is leaked."
+**Reason:** Owner's risk acceptance of the public exposure; convenience of direct MCP access from any AI collaborator session without secret provisioning.
+**Contributors:** ZAI (evidence refresh); ChatGPT (PR #24 author).
+**Owner approval:** Given directly in chat on 2026-11-10; recorded verbatim above.
+**Consequences:** TASK-SEC-003 production activation is NOT requested. PR #24 remains open pending owner disposition (park for future activation or close). Any secret placed on either server (including CREDENTIALS.md, env backups, the ADB ADMIN password) must be assumed readable by anyone on the internet until this decision is revisited; this raises the priority of TASK-SEC-004 and of ADMIN password rotation. Re-verify this decision if the servers ever hold live-trading credentials or customer data.
+
+## D-015 — Stratex production trading venue is Binance demo (owner-confirmed)
+
+**Date:** 2026-11-10
+**Problem:** The Master Plan assumed Stratex runs on Binance classic testnet (BINANCE_TESTNET=true), but production flags on Server 1 are BINANCE_TESTNET=false / TRADING_MODE=FUTURES / TESTNET_ENABLED=true / BINANCE_ENV=demo, and the daemon's active venue is BinanceFuturesAdapter in demo mode. The mismatch needed an owner decision before the TASK-STR-001 guard could be considered complete.
+**Alternatives:** (a) switch production to classic testnet to match the plan; (b) confirm demo as the intended venue and correct the plan.
+**Evidence:** Read-only .env inspection on Server 1 (2026-11-09, non-secret flags only; recorded in ACTIVITY_LOG.md); Master Plan TASK-STR-001 flag mismatch noted in PR #39 risk flags; owner asked directly in chat on 2026-11-10 ("Is demo only?" — "Yes it is demo only").
+**Decision:** (b) — demo (BinanceFuturesAdapter, BINANCE_ENV=demo) is the intended production venue. Live trading remains forbidden without explicit owner authorization; the fail-closed LIVE block and ALLOW_LIVE_TRADING opt-in (PR #39) remain the enforcement mechanism.
+**Reason:** Owner's explicit confirmation in chat, 2026-11-10.
+**Contributors:** ZAI (flag verification, decision recording).
+**Owner approval:** Given directly in chat on 2026-11-10.
+**Consequences:** Master Plan §1 and TASK-STR-001 updated: the "testnet" assumption is replaced by the owner-confirmed demo venue. PR #39's risk flag is resolved (no longer awaiting an owner decision); its review can proceed. Future tasks (TASK-STR-002 venue confirmation, Futuris/Stratex telemetry in PR #33) should treat demo as canonical. Testnet-vs-demo must stay clearly separated in Stratex tests.

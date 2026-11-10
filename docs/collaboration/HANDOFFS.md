@@ -170,3 +170,32 @@ For every new handoff, include:
 - Production findings (read-only, non-secret flags): BINANCE_TESTNET=false, TRADING_MODE=FUTURES, BINANCE_ENV=demo, ed25519 keys; the daemon venue is demo, not classic testnet. No live-capital path exists through the guarded adapters today; the dashboard uses them read-only. Owner should confirm demo is the intended venue.
 - Remaining / next steps: owner review of PR #39 and this registration PR; after merge+deploy, verify the Stratex dashboard still serves /api/multiexchange/*; follow-ups: real execution or removal for Bybit/OKX order paths, read-path data honesty in Bybit/OKX fallbacks, Stratex tests wired into CI.
 - Limits: no production service, DB or trading venue was contacted; no secret values were read; no merges or deployments performed.
+
+## Handoff — 2026-11-09 — TASK-DATA-001 database architecture audit
+
+- Owner: ZAI (GLM). Claim: issue #35 comment 6747502892. Branch: `zai/TASK-DATA-001-db-architecture-audit`, stacked on PR #40 (which is stacked on PR #30); merge order #30 -> #40 -> this.
+- Deliverable: docs/ARCHITECTURE_AS_BUILT.md section 20 — per-agent schema users, code-read vs provisioned DSN variables, migrations, owned tables; plus findings 20.3.
+- Verified: one shared Oracle ADB (ap-hyderabad-1); per-agent schema users incl. VYRALX_MEDIA; Redis only on Server 2; Qdrant absent; SQLite fail-closed refused on production paths.
+- Owner decisions requested: ADMIN-DSN remediation path (feeds TASK-SEC-004); removal or wiring of unused *_DB_ASYNC_URL variables; Memora Redis/Qdrant provisioning on Server 1 or variable removal; TASK-VYR-001 assignment for the failed vyralx-autopilot unit.
+- Limits: read-only bridge commands; no secret values read; no restarts, merges or deployments.
+
+## Handoff — 2026-11-10 — TASK-DATA-001 owner-authorized remediation (follow-up on PR #41)
+
+- Owner: ZAI (GLM). Same claim (issue #35 comment 6747502892), same branch `zai/TASK-DATA-001-db-architecture-audit` / PR #41. Authorization: owner instruction in chat, 2026-11-10 ("Fix them and continue working").
+- Production changes (all backed up before, verified after, through the bridge MCP; names/log facts only, no secret values):
+  - ADMIN-privileged DSN lines removed from six agent env files across both servers (FRIDAY ×1, Memora/Futuris/IntelX ×2 each, VyralX Server 1 repo copy ×2, VyralX Server 2 live copy ×2). FRIDAY's own-user FRIDAY_UNIVERSE_DB_URL duplicate kept. Seven services restarted and verified healthy; zero failed units fleet-wide afterwards. Backups: ~/env-backups/ per server.
+  - deploy/setup_fleet.sh: dead ADMIN-DSN construction removed (bash -n verified) so fleet re-setup can never re-seed ADMIN DSNs.
+  - Memora: REDIS_URL=disabled (emitter's designed off-switch) + dead QDRANT_URL/QDRANT_COLLECTION removed; post-restart log truthful ("Redis not configured"); Futuris event polling 200 OK.
+  - vyralx-autopilot (Server 2): TimeoutStartSec 3600→7200, failure cleared, timer re-armed 2026-11-10T05:05:00Z. Backup: ~/systemd-backups/.
+- Handoff to owner: PR #41 now carries audit + remediation; review/merge after #30 and #40. Open decisions: ADMIN password rotation (TASK-SEC-004; removed DSNs had an unknown exposure window), Redis/Qdrant provisioning on Server 1 (TASK-DATA-003/TASK-OBS-001), total wall-clock budget inside run_viral_autopilot.py (TASK-VYR-001).
+- Limits: no new software installed, no merges, no deployments beyond the service restarts listed above, no credential rotation, no secret values read.
+
+## Handoff — 2026-11-10 — ZAI owner-directed full-project re-verification
+
+- Owner: ZAI (GLM). Session type: owner-directed understanding/verification pass over the whole system ("Understand everything properly"); no new TASK-ID claimed. Registry rows appended on branch zai/TASK-DATA-001-db-architecture-audit (PR #41, the current zai stack tip) per the established append-only pattern.
+- What was done: fresh clone of main @ 680c04e; three central documents re-read; live fleet re-check through the bridge (both servers ONLINE; Server 1 memory tight — 73 MB free + 1.5 GB swap in use); 17 open PRs re-snapshotted; CI re-checked (FRIDAY Universe CI/CD and Collaboration Registry Validation green on the latest zai/claude heads; both Monorepo Structure and Safety CI runs red on the same heads; snipers cycling); complete code-level re-audit of all ten agents (highlights in ACTIVITY_LOG.md, 2026-11-10T04:29:42Z).
+- Confirmed unchanged: main head 680c04e (no merges since 2026-11-09); merge order remains #30 -> #40 -> #41 (#39 independent of the stack); live Server 2 worktree still on claude/TASK-CI-004 @ 69e0697, untouched.
+- Re-evidenced for owner attention: (1) the bridge still answers unauthenticated MCP initialize + tools/list from the public internet — TASK-SEC-003 / PR #24 urgency; (2) Stratex production flags remain BINANCE_ENV=demo / BINANCE_TESTNET=false (owner decision requested in PR #39); (3) Monorepo Structure and Safety CI is red on every recent head (TASK-CI-002 / PR #34); (4) fabricated-fill and fabricated-position code paths remain on main until PRs #39 and #33 merge.
+- Roster hygiene fixed this session: zai entry now lists TASK-DATA-001 and the zai/TASK-DATA-001-db-architecture-audit branch (previously missing), last_verified_at bumped to 2026-11-10T04:30:00Z.
+- Next steps: owner reviews/merges PR #30, then #40, then #41. ZAI is ready for the next Master Plan task; candidates with no open PR: TASK-API-002 (health-endpoint standardization), TASK-API-003 (auth matrix), TASK-ORCH-001 (routing table), TASK-CORE-003 (task records), TASK-OBS-001 (crash-loop alerting).
+- Limits: read-only everywhere; no production writes, restarts, merges or secret reads; the only push is this registry append to the zai stack tip.
