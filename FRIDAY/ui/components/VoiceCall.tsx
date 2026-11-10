@@ -1,19 +1,16 @@
 "use client";
 
-import { AlertCircle, Headphones, Mic, PhoneOff, Radio, ShieldAlert, Volume2, Waves } from "lucide-react";
+import { Mic, PhoneOff, Radio } from "lucide-react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OrbCore, OrbState } from "./OrbCore";
 import { formatClock, requestJson } from "@/lib/api";
 
 /* ============================================================
-   Continuous LiveKit voice session with FRIDAY.
-   - One tap -> room joins, mic opens, stays open the whole call.
-   - The FRIDAY worker (Gemini Live voice agent on the Oracle
-     server) is the other participant: full-duplex conversation,
-     you can interrupt FRIDAY mid-sentence.
-   - Auto-disconnects after 3 min of silence or a 30 min hard cap
-     to protect the free LiveKit minutes.
+   Continuous LiveKit voice session with FRIDAY — console rail.
+   One tap connects right here (nothing ever scrolls the page),
+   the mic stays open the whole call, and free-tier minutes are
+   protected by idle / hard-cap auto-disconnect.
    ============================================================ */
 
 const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
@@ -21,9 +18,9 @@ const HARD_CAP_MS = 30 * 60 * 1000;
 
 type VoiceStatus = "idle" | "connecting" | "connected" | "error";
 
-export function VoiceCall({ onStateChange }: { onStateChange?: (state: OrbState) => void }) {
+export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: OrbState) => void; footer?: React.ReactNode }) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
-  const [message, setMessage] = useState("Tap to open a continuous voice line with FRIDAY.");
+  const [message, setMessage] = useState("Tap once — we talk like we're on the phone.");
   const [peerSpeaking, setPeerSpeaking] = useState(false);
   const [micSpeaking, setMicSpeaking] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -53,17 +50,20 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: OrbState)
     document.querySelectorAll("audio[data-livekit]").forEach((el) => el.remove());
   }, []);
 
-  const endCall = useCallback((note: string) => {
-    roomRef.current?.disconnect();
-    roomRef.current = null;
-    clearAudioElements();
-    setPeerSpeaking(false);
-    setMicSpeaking(false);
-    setAudioBlocked(false);
-    setSeconds(0);
-    setStatus("idle");
-    setMessage(note);
-  }, [clearAudioElements]);
+  const endCall = useCallback(
+    (note: string) => {
+      roomRef.current?.disconnect();
+      roomRef.current = null;
+      clearAudioElements();
+      setPeerSpeaking(false);
+      setMicSpeaking(false);
+      setAudioBlocked(false);
+      setSeconds(0);
+      setStatus("idle");
+      setMessage(note);
+    },
+    [clearAudioElements],
+  );
 
   /* session timers: clock, idle auto-disconnect, hard cap */
   useEffect(() => {
@@ -72,9 +72,9 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: OrbState)
       setSeconds(Math.floor((Date.now() - connectedAtRef.current) / 1000));
       const idleFor = Date.now() - lastActivityRef.current;
       if (idleFor > IDLE_TIMEOUT_MS) {
-        endCall("Disconnected automatically after 3 minutes of silence to protect your free LiveKit minutes.");
+        endCall("Line closed after 3 quiet minutes to protect your free LiveKit minutes. Tap to reopen.");
       } else if (Date.now() - connectedAtRef.current > HARD_CAP_MS) {
-        endCall("Session capped at 30 minutes to protect your free LiveKit minutes — tap to start again.");
+        endCall("30-minute cap reached (free minutes) — tap to call again.");
       }
     }, 1000);
     return () => window.clearInterval(timer);
@@ -92,7 +92,7 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: OrbState)
   async function startCall() {
     if (status === "connecting" || status === "connected") return;
     setStatus("connecting");
-    setMessage("Opening the voice room…");
+    setMessage("Opening the voice line…");
     setPeerSpeaking(false);
     setMicSpeaking(false);
     setAudioBlocked(false);
@@ -153,8 +153,7 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: OrbState)
 
       await room.connect(body.server_url, body.token);
 
-      /* THE fix the old voice panel never had: publish the microphone.
-         Without this the room is listen-only — FRIDAY hears nothing. */
+      /* publish the microphone — without this the room is listen-only */
       await room.localParticipant.setMicrophoneEnabled(true);
 
       roomRef.current = room;
@@ -162,84 +161,62 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: OrbState)
       lastActivityRef.current = Date.now();
       setSeconds(0);
       setStatus("connected");
-      setMessage("Live — speak naturally. You can interrupt FRIDAY mid-sentence.");
+      setMessage("Live — speak naturally, interrupt anytime.");
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Voice connection failed.";
       roomRef.current?.disconnect();
       roomRef.current = null;
       clearAudioElements();
       setStatus("error");
-      setMessage(reason.includes("permission") || reason.toLowerCase().includes("denied")
-        ? "Microphone permission was denied. Allow mic access in your browser, then try again."
-        : reason);
+      setMessage(
+        reason.includes("permission") || reason.toLowerCase().includes("denied")
+          ? "Mic permission denied — allow it in the browser, then tap again."
+          : reason,
+      );
     }
   }
 
   return (
-    <div className="voice-layout">
-      <div className="panel voice-stage">
-        <OrbCore state={orbState} />
-        <div className="voice-status">{status === "connected" ? <strong>{message}</strong> : message}</div>
+    <div className="voice-rail panel">
+      <div className="rail-orb">
+        <OrbCore state={orbState} showLabel={false} />
+      </div>
+      <div className="rail-state" aria-live="polite">
+        <strong>{message}</strong>
         {status === "connected" && (
           <span className="voice-timer">
             <span className="rec-dot" aria-hidden="true" />
             {formatClock(seconds)}
           </span>
         )}
-        <button
-          className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg`}
-          onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
-          disabled={status === "connecting"}
-        >
-          {status === "connecting" ? (
-            <>
-              <Radio size={17} className="spin" /> Connecting…
-            </>
-          ) : status === "connected" ? (
-            <>
-              <PhoneOff size={16} /> End call
-            </>
-          ) : (
-            <>
-              <Mic size={17} /> Talk to FRIDAY
-            </>
-          )}
-        </button>
-        {audioBlocked && (
-          <div className="voice-error">
-            <ShieldAlert size={15} />
-            <span>Browser blocked playback — tap anywhere on the page, then press the call button again.</span>
-          </div>
+      </div>
+      <button
+        className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg btn-voice`}
+        onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
+        disabled={status === "connecting"}
+        aria-label={status === "connected" ? "End voice call" : "Start voice call"}
+      >
+        {status === "connecting" ? (
+          <>
+            <Radio size={17} className="spin" /> Connecting…
+          </>
+        ) : status === "connected" ? (
+          <>
+            <PhoneOff size={16} /> End call
+          </>
+        ) : (
+          <>
+            <Mic size={17} /> Start voice
+          </>
         )}
-        <p className="voice-note">
-          Auto-disconnects after 3 minutes of silence or 30 minutes total — your free LiveKit minutes are never wasted.
-        </p>
-      </div>
-
-      <div className="panel" style={{ padding: "clamp(22px, 3vw, 34px)", display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
-        <h3 className="display" style={{ margin: 0, fontSize: 21, fontWeight: 700 }}>
-          A real phone line to your <span className="grad-text">sovereign AI</span>
-        </h3>
-        <p style={{ margin: 0, color: "var(--muted)", fontSize: 14.5, lineHeight: 1.65 }}>
-          The mic stays open the entire call — no press-to-talk, no one-shot search box. FRIDAY hears you
-          continuously through the Gemini Live voice engine on your Oracle server, answers in English or Telugu,
-          and stops mid-word when you interrupt.
-        </p>
-        <div className="voice-features">
-          <div className="voice-feature">
-            <Waves size={15} /> Full-duplex audio, interrupt anytime
-          </div>
-          <div className="voice-feature">
-            <Volume2 size={15} /> FRIDAY&apos;s voice streams back instantly
-          </div>
-          <div className="voice-feature">
-            <Headphones size={15} /> Works on phone browsers (WebRTC)
-          </div>
-          <div className="voice-feature">
-            <AlertCircle size={15} /> Auto-disconnect protects free minutes
-          </div>
-        </div>
-      </div>
+      </button>
+      {audioBlocked && (
+        <p className="rail-note rail-warn">Browser blocked playback — tap anywhere on the page, then press the button again.</p>
+      )}
+      <p className="rail-note">
+        English or Telugu · full-duplex · auto-closes when idle to protect free minutes
+      </p>
+      {footer && <div className="rail-footer">{footer}</div>}
     </div>
   );
 }

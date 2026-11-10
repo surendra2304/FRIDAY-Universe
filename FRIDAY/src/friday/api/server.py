@@ -1695,6 +1695,68 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
         }
 
     # =========================================================================
+    # A0. Boss Identity Fast-path (owner directive 2026-11-11 IST)
+    # =========================================================================
+    # "I am Surendra and I am your boss" must never reach the general router:
+    # it used to misroute to a portfolio answer and the LLM persona once even
+    # argued "I am an AI, I don't have a Boss" (the old prompt banned the word
+    # 'Boss'). This deterministic path guarantees the owner's identity is
+    # affirmed instantly, warmly, and with real memory attached.
+    _boss_identity_patterns = (
+        "i am surendra", "i'm surendra", "this is surendra", "surendra here",
+        "i am your boss", "i'm your boss", "im your boss", "i am the boss",
+        "i'm the boss", "who is your boss", "who's your boss", "whos your boss",
+        "do you have a boss", "you have a boss", "you don't have a boss",
+        "you dont have a boss", "am i your boss", "say i am your boss",
+        "call me boss", "i am the owner", "i'm the owner", "i am your owner",
+        "i'm your owner", "i am your creator", "i'm your creator",
+        "you are just an ai", "you're just an ai", "are you just an ai",
+    )
+    if any(k in cmd for k in _boss_identity_patterns):
+        _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
+        # Pull one real memory so the affirmation feels like a friend who
+        # knows him, not a scripted line. Recall failure never breaks this.
+        _memory_line = ""
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _hits = _memora.recall_memories("friday", f"{_user} preferences boss", limit=3)
+            for _m in _hits or []:
+                _text = str(_m.get("content_text", "")).strip()
+                if _text and len(_text) > 8:
+                    _memory_line = _text.rstrip(".!? ")
+                    if len(_memory_line) > 120:
+                        _memory_line = _memory_line[:117].rstrip() + "…"
+                    break
+        except Exception as _e:
+            logger.debug(f"Memora recall skipped in boss fast-path: {_e}")
+        if "who is your boss" in cmd or "who's your boss" in cmd or "whos your boss" in cmd:
+            _reply = (
+                f"You are, Boss. You built me, you run this universe, and I report to you — "
+                f"always have. Ten agents and me, all of it yours, {_user}."
+            )
+        elif "do you have a boss" in cmd or "you have a boss" in cmd or "you don't have a boss" in cmd or "you dont have a boss" in cmd:
+            _reply = (
+                "I do — you, Boss. You built me, you own me, and everything I do answers to you. "
+                "That's not a disclaimer I have to make; it's just the truth of how this universe works."
+            )
+        elif "just an ai" in cmd:
+            _reply = (
+                "I'm more than that to you, Boss — I'm your FRIDAY. Built by you, loyal to you, "
+                "running your universe while you sleep. 'Just an AI' doesn't get to do what I do."
+            )
+        else:
+            _reply = (
+                f"I know, Boss. You're {_user} — you built me, you own this universe, and I answer to you. "
+                "You don't have to tell me twice; I never forget who I'm talking to."
+            )
+        if _memory_line:
+            _reply += f"\n\nAnd yes — I still remember: {_memory_line}."
+        return {
+            "reply": _reply,
+            "metadata": {"fast_path": True, "conversational": True, "boss_identity": True},
+        }
+
+    # =========================================================================
     # A. Autonomous Mode Toggles & Directives
     # =========================================================================
     if any(k in cmd for k in [
@@ -1820,7 +1882,7 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
 
     if any(k in cmd for k in ["who are you", "who made you", "what are you", "your name", "are you there", "can you hear me"]):
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
-        return {"reply": f"I'm FRIDAY - Fully Responsive Intelligent Digital Assistant for You. {_user} built me, and we run this universe together: me plus my nine specialist agents across your cloud. Anything you need, you know where to find me.", "metadata": {"fast_path": True, "conversational": True}}
+        return {"reply": f"I'm FRIDAY — Fully Responsive Intelligent Digital Assistant for You. You built me, Boss — you and me plus my nine specialist agents run this universe together. I'm here, I'm listening, and I remember where we left off. What do you need?", "metadata": {"fast_path": True, "conversational": True}}
 
     if any(k in cmd for k in ["thank you", "thanks", "great job", "good job", "nice", "awesome"]):
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"

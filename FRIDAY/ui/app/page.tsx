@@ -1,11 +1,11 @@
 "use client";
 
-import { AudioLines, Clock3, Globe2, Mic, MessageSquareText, Radio } from "lucide-react";
+import { Clock3, Globe2, LayoutGrid, Radio, TerminalSquare, Waypoints } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
-import { AuroraBackground, CountUp, Magnetic, ParticleField, Reveal, ScrambleText } from "@/components/effects";
-import { OrbCore, OrbState } from "@/components/OrbCore";
-import { ActivityFeed, FleetGrid, TelemetryStrip } from "@/components/panels";
+import { AuroraBackground, CountUp, FloatingOrbs, ParticleField, Reveal, ScrambleText } from "@/components/effects";
+import { OrbState } from "@/components/OrbCore";
+import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
 import {
   Agent,
@@ -14,17 +14,35 @@ import {
   HostTelemetry,
   LiveActivityEvent,
   apiBase,
+  istTime,
   requestJson,
-  statusTone,
 } from "@/lib/api";
 
-const AGENT_NAMES = [
-  "Stratex", "Inference", "Cortex", "Forge", "IntelX",
-  "VyralX", "Memora", "Futuris", "Sentinel", "FRIDAY",
+/* ============================================================
+   FRIDAY Universe — sectioned command center.
+
+   Owner directives honored here (2026-11-11 IST):
+   - The Dashboard (Console) is FRIDAY communication ONLY — voice
+     and chat side by side, fits the viewport, nothing scrolls.
+   - Fleet / Activity / System live in their own sections.
+   - No scroll-jump when starting voice (it connects in place).
+   - IST is the only clock shown.
+   - Chat history and any live call survive tab switches (all
+     sections stay mounted; hidden sections pause their fetches).
+   ============================================================ */
+
+type Tab = "console" | "fleet" | "activity" | "system";
+
+const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
+  { id: "console", label: "Console", icon: <Radio size={14} /> },
+  { id: "fleet", label: "Fleet", icon: <LayoutGrid size={14} /> },
+  { id: "activity", label: "Activity", icon: <Waypoints size={14} /> },
+  { id: "system", label: "System", icon: <TerminalSquare size={14} /> },
 ];
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
+  const [tab, setTab] = useState<Tab>("console");
   const [now, setNow] = useState<Date | null>(null);
   const [fleet, setFleet] = useState<FleetSnapshot | null>(null);
   const [telemetry, setTelemetry] = useState<HostTelemetry | null>(null);
@@ -39,7 +57,7 @@ export default function Page() {
   useEffect(() => {
     setMounted(true);
     setNow(new Date());
-    const clock = window.setInterval(() => setNow(new Date()), 30_000);
+    const clock = window.setInterval(() => setNow(new Date()), 15_000);
     return () => window.clearInterval(clock);
   }, []);
 
@@ -79,8 +97,8 @@ export default function Page() {
     return () => window.clearInterval(timer);
   }, [mounted, refresh]);
 
-  /* live agent activity: try the WebSocket; it may be gated in production,
-     in which case the 30-second polling above still keeps the feed fresh. */
+  /* live agent activity over the keyless origin-gated WebSocket; polling
+     above keeps everything fresh if the socket is unavailable. */
   useEffect(() => {
     if (!mounted) return;
     let socket: WebSocket | null = null;
@@ -92,7 +110,7 @@ export default function Page() {
       try {
         socket = new WebSocket(`${apiBase().replace(/^http/, "ws")}/api/ws/activity`);
       } catch {
-        return; /* fall back to polling silently */
+        return;
       }
       socket.onmessage = (event) => {
         try {
@@ -126,24 +144,12 @@ export default function Page() {
     };
   }, [mounted]);
 
-  const greeting = useMemo(() => {
-    if (!now) return "Good evening";
-    const h = now.getHours();
-    if (h < 12) return "Good morning";
-    if (h < 18) return "Good afternoon";
-    return "Good evening";
-  }, [now]);
-
-  const onlineCount = fleet?.agents?.filter((a) => statusTone(a.status) === "good").length ?? 0;
+  const onlineCount = fleet?.agents?.filter((a) => a.status?.toUpperCase() === "ONLINE").length ?? 0;
   const totalAgents = fleet?.agent_count ?? fleet?.agents?.length ?? 10;
-
-  function scrollTo(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   function askAgent(agent: Agent) {
     setChatPrefill({ text: `@${agent.name} `, seq: chatPrefill.seq + 1 });
-    requestAnimationFrame(() => scrollTo("chat"));
+    setTab("console");
   }
 
   if (!mounted) {
@@ -163,154 +169,90 @@ export default function Page() {
     <>
       <AuroraBackground />
       <ParticleField />
+      <FloatingOrbs />
 
       <nav className="nav" aria-label="Main navigation">
         <a className="nav-logo" href="#top" aria-label="FRIDAY home">
-          <span className="logo-mark"><AudioLines size={18} strokeWidth={2.2} /></span>
+          <span className="logo-dot" aria-hidden="true" />
           <ScrambleText text="FRIDAY" />
         </a>
-        <div className="nav-links">
-          <button className="nav-link" onClick={() => scrollTo("voice")}>Voice</button>
-          <button className="nav-link" onClick={() => scrollTo("chat")}>Chat</button>
-          <button className="nav-link" onClick={() => scrollTo("fleet")}>Fleet</button>
-          <button className="nav-link" onClick={() => scrollTo("telemetry")}>Telemetry</button>
-          <button className="nav-link" onClick={() => scrollTo("activity")}>Activity</button>
+        <div className="tabs" role="tablist" aria-label="Sections">
+          {TABS.map(({ id, label, icon }) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={tab === id}
+              className={`tab${tab === id ? " active" : ""}`}
+              onClick={() => setTab(id)}
+            >
+              {icon}
+              <span>{label}</span>
+            </button>
+          ))}
         </div>
         <div className="nav-status">
           <span className={`dot ${connected === "online" ? "good" : connected === "offline" ? "bad" : "muted"} ${connected === "online" ? "pulse" : ""}`} />
-          {connected === "online" ? `${onlineCount}/${totalAgents} agents live` : connected === "offline" ? "API offline" : "Connecting…"}
+          {connected === "online" ? `${onlineCount}/${totalAgents} live` : connected === "offline" ? "API offline" : "Connecting…"}
+          <span className="nav-clock" title="Indian Standard Time">
+            <Clock3 size={12} />
+            {now ? `${istTime(now)} IST` : "--:-- IST"}
+          </span>
         </div>
       </nav>
 
       <main className="shell" id="top" style={{ paddingTop: "var(--nav-h)" }}>
-        {/* ============ HERO ============ */}
-        <section className="hero" aria-label="FRIDAY hero">
-          <span className="hero-eyebrow">
-            <span className="pulse-dot" aria-hidden="true" />
-            FRIDAY Universe · Command Center
-          </span>
-
-          <div className="hero-orb">
-            <OrbCore state={voiceState} showLabel={false} />
-          </div>
-
-          <h1 className="hero-title">
-            <ScrambleText text="FRIDAY" speed={46} />
-          </h1>
-          <p className="hero-greeting">
-            {greeting}, <span className="grad-text">Surendra</span>.
-          </p>
-          <p className="hero-tagline">
-            Your personal Jarvis.
-            <span className="sep">·</span>
-            Ten agents, one voice.
-            <span className="sep">·</span>
-            Talk continuously — English or Telugu.
-          </p>
-
-          <div className="hero-cta">
-            <Magnetic>
-              <button className="btn btn-primary btn-lg" onClick={() => scrollTo("voice")}>
-                <Mic size={17} /> Talk to FRIDAY
-              </button>
-            </Magnetic>
-            <Magnetic>
-              <button className="btn btn-ghost btn-lg" onClick={() => scrollTo("chat")}>
-                <MessageSquareText size={16} /> Open chat
-              </button>
-            </Magnetic>
-          </div>
-
-          <div className="hero-stats">
-            <span className="stat-pill">
-              <Globe2 size={13} style={{ color: "var(--cyan)" }} />
-              <strong><CountUp value={onlineCount} /></strong> / {totalAgents} agents online
-            </span>
-            <span className="stat-pill">
-              <Radio size={13} style={{ color: "var(--mint)" }} />
-              Voice line <strong className={voiceState === "idle" ? "tone-muted" : "tone-good"}>{voiceState}</strong>
-            </span>
-            <span className="stat-pill">
-              <Clock3 size={13} style={{ color: "var(--violet)" }} />
-              {now ? now.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "--:--"}
-            </span>
-          </div>
-
-          <div className="marquee" aria-hidden="true">
-            <div className="marquee-track">
-              {[0, 1].map((copy) => (
-                <span className="marquee-item" key={copy}>
-                  {AGENT_NAMES.map((name) => (
-                    <span key={name} style={{ display: "inline-flex", alignItems: "center", gap: 54 }}>
-                      {name} <i>·</i>
-                    </span>
-                  ))}
-                </span>
-              ))}
+        {/* ============ CONSOLE — FRIDAY communication only ============ */}
+        <section className={`tabview${tab === "console" ? " on" : ""}`} hidden={tab !== "console"} aria-label="FRIDAY console">
+          <div className="console">
+            <div className="console-left">
+              <VoiceCall onStateChange={setVoiceState} footer={<ConsoleStrip fleet={fleet} autonomy={autonomy} />} />
+            </div>
+            <div className="console-main">
+              <ChatPanel prefill={chatPrefill} />
             </div>
           </div>
-
-          <div className="scroll-hint" aria-hidden="true">
-            <div className="mouse" />
-            scroll
-          </div>
         </section>
 
-        {/* ============ VOICE ============ */}
-        <section className="section" id="voice" aria-label="Voice call with FRIDAY">
+        {/* ============ FLEET — the ten-agent universe ============ */}
+        <section className={`tabview${tab === "fleet" ? " on" : ""}`} hidden={tab !== "fleet"} aria-label="Agent fleet">
           <Reveal>
-            <div className="eyebrow">Continuous voice</div>
-            <h2 className="section-title">
-              Talk like you&apos;re on the <span className="grad-text">phone</span>
-            </h2>
-            <p className="section-sub">
-              One tap opens a live audio line. No press-to-talk, no search box — a real conversation.
-            </p>
-          </Reveal>
-          <Reveal delay={90}>
-            <VoiceCall onStateChange={setVoiceState} />
-          </Reveal>
-        </section>
-
-        {/* ============ CHAT ============ */}
-        <section className="section" id="chat-section" aria-label="Chat with FRIDAY">
-          <Reveal>
-            <div className="eyebrow">Command channel</div>
-            <h2 className="section-title">
-              Or just <span className="grad-text">type</span> to FRIDAY
-            </h2>
-            <p className="section-sub">
-              The same brain as voice. FRIDAY can answer, remember, and dispatch real work to any agent.
-            </p>
-          </Reveal>
-          <Reveal delay={90}>
-            <ChatPanel prefill={chatPrefill} />
-          </Reveal>
-        </section>
-
-        {/* ============ FLEET ============ */}
-        <section className="section" id="fleet" aria-label="Agent fleet">
-          <Reveal>
-            <div className="eyebrow">Live fleet</div>
+            <div className="eyebrow">
+              <Globe2 size={13} style={{ verticalAlign: -2, marginRight: 6 }} />
+              Live fleet · what every agent is doing
+            </div>
             <h2 className="section-title">
               The <span className="grad-text">ten-agent</span> universe
             </h2>
             <p className="section-sub">
-              Every agent answers a real health probe. Click a card to route a chat to that agent.
+              Every agent answers a real health probe. Cards show each agent&apos;s last piece of work and how fresh it is —
+              assign or ask anything and FRIDAY dispatches it.
             </p>
           </Reveal>
           <FleetGrid fleet={fleet} autonomy={autonomy} liveActivity={liveActivity} onAsk={askAgent} />
         </section>
 
-        {/* ============ TELEMETRY ============ */}
-        <section className="section" id="telemetry" aria-label="Host telemetry">
+        {/* ============ ACTIVITY — live operations ============ */}
+        <section className={`tabview${tab === "activity" ? " on" : ""}`} hidden={tab !== "activity"} aria-label="Live activity">
           <Reveal>
-            <div className="eyebrow">Host telemetry</div>
+            <div className="eyebrow">Live operations</div>
             <h2 className="section-title">
-              Your Oracle <span className="grad-text">server</span>, live
+              What the fleet is <span className="grad-text">doing</span> right now
             </h2>
           </Reveal>
-          <TelemetryStrip
+          <Reveal delay={80}>
+            <ActivityFeed autonomy={autonomy} liveActivity={liveActivity} />
+          </Reveal>
+        </section>
+
+        {/* ============ SYSTEM — server & autonomy ============ */}
+        <section className={`tabview${tab === "system" ? " on" : ""}`} hidden={tab !== "system"} aria-label="System telemetry">
+          <Reveal>
+            <div className="eyebrow">System</div>
+            <h2 className="section-title">
+              Your Oracle <span className="grad-text">servers</span>, live
+            </h2>
+          </Reveal>
+          <SystemPanel
             fleet={fleet}
             telemetry={telemetry}
             autonomy={autonomy}
@@ -319,26 +261,11 @@ export default function Page() {
           />
         </section>
 
-        {/* ============ ACTIVITY ============ */}
-        <section className="section" id="activity" aria-label="Live activity">
-          <Reveal>
-            <div className="eyebrow">Live activity</div>
-            <h2 className="section-title">
-              What the fleet is <span className="grad-text">doing</span>
-            </h2>
-          </Reveal>
-          <Reveal delay={80}>
-            <ActivityFeed autonomy={autonomy} liveActivity={liveActivity} />
-          </Reveal>
-        </section>
-
         <footer className="footer">
           <span>
             <strong>FRIDAY Universe</strong> — built for Surendra
           </span>
-          <span>
-            Oracle Always Free · GitHub Actions · LiveKit Cloud · Gemini Live
-          </span>
+          <span>Oracle Always Free · GitHub Actions · LiveKit · IST everywhere</span>
         </footer>
       </main>
     </>

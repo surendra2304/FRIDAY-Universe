@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-10T14:30:00Z"
+snapshot_at: "2026-11-11T00:45:00+05:30"
 repository: "surendra2304/FRIDAY-Universe"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 rule: "The GitHub claim thread plus a current branch/PR is the shared ownership record. This file is the searchable mirror, not an atomic lock."
@@ -843,6 +843,20 @@ claims:
     branches: []
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-VAL-001: live validation human-readable evidence table (2026-11-10)."
+
+  - path: "FRIDAY/ui/lib/api.ts"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BRAIN_UI_2026-11-11"
+    task: "TASK-UI-003: API client library — was missing from the repo after TASK-UI-002 (export built from an uncommitted lib/); committed so the dashboard is rebuildable from a fresh clone."
+
+  - path: "FRIDAY/tests/test_boss_identity_contract.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BRAIN_UI_2026-11-11"
+    task: "TASK-BRAIN-001: 12 tests pinning the Boss contract (fast-path affirmation, no AI disclaimers, no misroute, prompt/persona/voice contracts)."
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, MessageSquareText, Send, Sparkles } from "lucide-react";
+import { Loader2, MessageSquareText, Send } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessage, requestJson } from "@/lib/api";
 
@@ -11,9 +11,9 @@ import { ChatMessage, requestJson } from "@/lib/api";
 
 const CHIPS = [
   "How's the fleet?",
+  "What do you remember about me?",
   "Portfolio status",
   "Research this week's macro news",
-  "Write me a script that renames my files by date",
 ];
 
 export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number } }) {
@@ -28,14 +28,13 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
     setHydrated(true);
   }, []);
 
-  /* external prefill (e.g. "Ask via chat" on an agent card) */
+  /* external prefill (e.g. "Ask" on a Fleet card): focus the input in
+     place — never scrollIntoView, which used to yank the page (owner
+     directive 2026-11-11: no scroll jumps, ever). */
   useEffect(() => {
     if (!prefill || prefill.seq === 0) return;
     setInput((current) => (current.trim() ? current : prefill.text));
-    requestAnimationFrame(() => {
-      inputRef.current?.focus();
-      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
+    requestAnimationFrame(() => inputRef.current?.focus());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefill?.seq]);
 
@@ -91,25 +90,21 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
             <MessageSquareText size={17} />
           </div>
           <div>
-            <h3>Chat with FRIDAY</h3>
-            <span className="subtitle">Same brain as voice — routes to the ten-agent fleet</span>
+            <h3>FRIDAY</h3>
+            <span className="subtitle">Your universe&apos;s coordinator — talk, command, ask anything</span>
           </div>
         </div>
-        <span style={{ fontSize: 11.5, color: "var(--faint)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-          <Sparkles size={11} style={{ display: "inline", marginRight: 5, verticalAlign: -1 }} />
-          Persona live
-        </span>
       </div>
 
       <div className="chat-body">
         <div className="chat-scroll" ref={scrollRef}>
           {messages.length === 0 ? (
             <div className="chat-empty">
-              <MessageSquareText size={30} />
-              <p style={{ margin: 0, fontSize: 13.5 }}>
-                Say anything — FRIDAY answers as your friend and coordinator,
-                <br />
-                and can dispatch real work to any agent in the fleet.
+              <span className="chat-empty-orb" aria-hidden="true" />
+              <h4 className="chat-empty-title">Good to see you, Boss.</h4>
+              <p style={{ margin: 0, fontSize: 13.5, maxWidth: 380 }}>
+                This is your direct line — talk like a friend, command like an owner.
+                I remember you, and I can dispatch work to any agent in the fleet.
               </p>
             </div>
           ) : (

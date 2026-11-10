@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-10T23:30:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST)
+snapshot_at: "2026-11-11T00:40:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST)
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -1064,8 +1064,6 @@ tasks:
     blockers:
       - "OWNER AVAILABILITY: the live voice session itself (owner decision 4 in the Master Plan)."
     next_action: "Owner: run the preflight on Server 1 (2 min), then the 6-phrase kit (5 min) and post results to issue #35; TASK-VOI-001 closes as VERIFIED with the owner's own evidence. ZAI pre-cleared every engineering dependency."
-
-task_id_warnings:
   - id: "TASK-PERSONA-001"
     title: "Warm friend + Jarvis persona for FRIDAY"
     status: "MERGED"
@@ -1077,6 +1075,57 @@ task_id_warnings:
       - "FRIDAY/src/friday/persona/friday.py"
       - "FRIDAY/src/friday/core/config.py"
     evidence: "tests/test_friday_persona.py 10/10 passed; fast-path and daily-rhythm suites 35 passed with 1 pre-existing unrelated failure (test_windows_friday_goal_and_window_directives, fails on pristine main). Deployment + FRIDAY service restart pending."
+    next_action: "Deployed 2026-11-10 IST (Fleet CD 1301d71). Extended 2026-11-11 IST by TASK-BRAIN-001 (Boss contract) — persona blocks now also carry the Boss identity rules."
+  - id: "TASK-BRAIN-001"
+    title: "Boss identity contract: FRIDAY recognises Surendra as Boss in chat and voice (owner directive 2026-11-11 IST)"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "When I say I am Surendra and I am your boss it is saying I am an AI and I don't have any Boss. No matter how many times I say but it is still repeating that it is an AI. It should talk to me like a friend and not like an AI (2026-11-11 chat)."
+    merge_note: "2026-11-11 IST: root cause found and fixed in three layers. (1) The old system prompt literally BANNED the word: 'Never use sycophantic titles like Boss' (prompts.py) — the live brain was obeying it, so it argued 'I am an AI, I don't have a Boss'. Ban removed; a Boss contract added (Surendra is the Boss; affirm instantly and warmly; NEVER say 'just an AI' / 'As an AI' / 'I don't have a boss'; talk like his closest friend). (2) Same contract in the Gemini Live spoken persona (gemini_live_session.py) and both persona blocks (friday.py). (3) A deterministic fast-path in the chat router (server.py, before all routing) answers ~24 owner-identity phrasings instantly — the old failure ALSO misrouted 'I am Surendra and I am your boss' to a portfolio answer (verified live before the fix), so the exact sentence can never reach the router again. Memory line attached to the affirmation when Memora has one. 'who are you' fast-path now addresses him as Boss."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/agent/prompts.py"
+      - "FRIDAY/src/friday/persona/friday.py"
+      - "FRIDAY/src/friday/voice/gemini_live_session.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_boss_identity_contract.py"
+    acceptance:
+      - "'I am Surendra and I am your boss' (and every close phrasing) gets an instant warm Boss affirmation, never an AI disclaimer, never a misroute."
+      - "Voice carries the same contract."
+    evidence: "tests/test_boss_identity_contract.py 12/12 green (affirmation + no-AI-disclaimer + no-misroute + prompt/persona/voice contract assertions); suite with persona + owner-identity + origin enforcement 52/52 green (2026-11-11 IST). Pre-fix live repro recorded: /api/chat answered 'I am your boss' with a portfolio question (groq/gpt-oss-120b, 2026-11-11 IST)."
+    blockers: []
+    next_action: "Owner live re-test on the site after Fleet CD deploy; long-run memory verification (remember/recall across sessions) is TASK-BRAIN-002."
+  - id: "TASK-UI-003"
+    title: "Sectioned command-center website: Console (FRIDAY only) / Fleet / Activity / System (owner directive 2026-11-11 IST)"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "In the main section which is the dashboard keep only the Friday communication with me and another sections organise others. Why did you keep that scrolling down when I click on start voice — it should not be like that. I have kept on the symbols like ear symbol and f symbol — I want the best professional website. Use react bits and work flows and all and give me the best attractive dynamic website with floating elements and dynamic elements (2026-11-11 chat)."
+    merge_note: "2026-11-11 IST: single long scrolling page rebuilt as four tab sections. CONSOLE (default) = FRIDAY communication only — voice orb rail + chat side by side; the whole console fits a 1440x900 and 1366x768 viewport with ZERO page scroll (Playwright-verified), voice connects IN PLACE (no scrollIntoView anywhere in app code; the old 'Talk to FRIDAY' hero button that scrolled the page is gone), chat history and a live call survive tab switches (all sections stay mounted). FLEET = nine agent cards, cleaned: orchestrator boilerplate ('Carry out this owner-approved FRIDAY Universe task...' / 'Workspace task reference: <uuid>') stripped to the human intent, freshness labels ('active 2d ago' / 'probe just now') so stale data cannot masquerade as live work, IST timestamps. ACTIVITY = live operations feed (keyless WS + 30s poll), sorted newest-first, cleaned. SYSTEM = Server 1 CPU/RAM sparklines, fleet online, autonomy. Ear/waveform/letter glyphs removed from the orb (pure geometry + reactive equalizer); hero marquee, scroll-hint mouse and marketing copy blocks dropped. Effects kit extended: floating glass orbs, view transitions, gradient tabs, IST clock in nav. lib/api.ts (apiBase/requestJson/statusTone/IST helpers/cleanDirective/freshness) was MISSING from the repo after TASK-UI-002 (the export was built from an uncommitted lib/) — the source tree could not rebuild from a fresh clone; it is committed now, so the artifact is reproducible."
+    milestone: "M2/M5 (Master Plan v2)"
+    files:
+      - "FRIDAY/ui/lib/api.ts"
+      - "FRIDAY/ui/app/page.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/components/OrbCore.tsx"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+      - "FRIDAY/ui/components/ChatPanel.tsx"
+      - "FRIDAY/ui/components/panels.tsx"
+      - "FRIDAY/ui/components/effects.tsx"
+      - "FRIDAY/ui/out"
+    acceptance:
+      - "Dashboard section = FRIDAY communication only; agents/telemetry/activity organised in their own sections."
+      - "No page scroll jump on Start voice (or anywhere)."
+      - "No ear/F pictogram symbols; professional clean iconography."
+      - "Dynamic floating/dynamic elements (React-Bits-style), IST clock."
+    evidence: "next build clean (Next 16.3.4, TS green); Playwright 1440x900 + 1366x768 console fits viewport exactly (scrollHeight == innerHeight, fits:true), mobile 390x844 renders with stacked rail+chat; DOM asserts: 4 tabs, ear icon absent, 5 floating orbs, IST clock live, voice button present, zero scrollIntoView in app code; VLM design review 8/10 after fixes (empty-state presence praised, no clipping/overlap)."
+    blockers: []
+    next_action: "Owner live review after Fleet CD deploy; live data check on Fleet cards (boilerplate stripping + freshness) against the real /api/agents/status payload."
+
+task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
     description: "PR #23 is labelled TASK-CI-003 but does not match TASK-CI-003's current Master Plan acceptance criteria (workspace test runner)."

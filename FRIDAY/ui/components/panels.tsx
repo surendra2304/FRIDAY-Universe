@@ -8,35 +8,66 @@ import {
   Cpu,
   Database,
   Eye,
+  Gauge,
   Globe2,
   HardDrive,
   Layers,
+  LineChart,
   MessageSquareText,
   Network,
   ShieldCheck,
   Terminal,
+  TrendingUp,
   Wifi,
   Zap,
 } from "lucide-react";
-import { Agent, AutonomySnapshot, FleetSnapshot, HostTelemetry, LiveActivityEvent, statusTone } from "@/lib/api";
+import {
+  Agent,
+  AutonomySnapshot,
+  FleetSnapshot,
+  HostTelemetry,
+  LiveActivityEvent,
+  cleanDirective,
+  freshness,
+  istTime,
+  statusTone,
+} from "@/lib/api";
 import { CountUp, Reveal, SpotlightCard } from "./effects";
 
 /* ============================================================
-   Fleet grid, telemetry strip and live activity feed.
+   Fleet grid, activity feed and system panel.
+   Owner directives honored here (2026-11-11 IST):
+   - no raw "owner-approved FRIDAY Universe task" boilerplate —
+     cards show the human intent, cleaned;
+   - every agent shows WHEN it last did something (freshness),
+     so stale data can't masquerade as live work;
+   - timestamps are IST, the single project clock.
    ============================================================ */
 
 const AGENT_ORDER = ["stratex", "inference", "cortex", "forge", "intelx", "vyralx", "memora", "futuris", "sentinel"] as const;
 
 const AGENT_ICONS: Record<string, React.ReactNode> = {
-  stratex: <BarChart2 size={17} />,
+  stratex: <TrendingUp size={17} />,
   inference: <Network size={17} />,
   cortex: <Database size={17} />,
   forge: <Terminal size={17} />,
-  intelx: <ShieldCheck size={17} />,
+  intelx: <Eye size={17} />,
   vyralx: <Layers size={17} />,
   memora: <HardDrive size={17} />,
-  futuris: <Eye size={17} />,
-  sentinel: <Wifi size={17} />,
+  futuris: <LineChart size={17} />,
+  sentinel: <ShieldCheck size={17} />,
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  stratex: "Algorithmic trading",
+  inference: "AI gateway",
+  cortex: "Web operations",
+  forge: "Software engineering",
+  intelx: "Macro research",
+  vyralx: "Video production",
+  memora: "Persistent memory",
+  futuris: "Forecasting",
+  sentinel: "Cyber defense",
 };
 
 export function Sparkline({ values, color, width = 130, height = 38 }: { values: number[]; color: string; width?: number; height?: number }) {
@@ -87,8 +118,22 @@ export function FleetGrid({
       {sorted.map((agent, index) => {
         const live = liveActivity[agent.id];
         const record = live
-          ? { directive: live.directive || `${live.action ?? "activity"} ${live.target ?? ""}`.trim(), result: live.result, success: Boolean(live.success) }
-          : autonomy?.agent_activity?.[agent.id];
+          ? {
+              directive: cleanDirective(live.directive || `${live.action ?? "activity"} ${live.target ?? ""}`.trim()),
+              result: cleanDirective(live.result, 120),
+              success: Boolean(live.success),
+              at: live.timestamp,
+            }
+          : (() => {
+              const a = autonomy?.agent_activity?.[agent.id];
+              if (!a) return null;
+              return {
+                directive: cleanDirective(a.directive),
+                result: cleanDirective(a.result, 120),
+                success: Boolean(a.success),
+                at: a.recorded_at ?? a.timestamp,
+              };
+            })();
         const isActive = autonomy?.active_agent?.toLowerCase() === agent.id;
         const tone = statusTone(agent.status);
         return (
@@ -103,33 +148,36 @@ export function FleetGrid({
                     {isActive && <span className="dot good pulse" aria-label="active" />}
                   </div>
                   <span className="agent-id">{agent.id}</span>
-                  <div className="agent-role">{agent.role || "Specialist agent"}</div>
+                  <div className="agent-role">{ROLE_LABELS[agent.id] ?? agent.role ?? "Specialist agent"}</div>
                 </div>
-                <span className={`status-pill ${tone}`}>{agent.status}</span>
+                <span className={`status-pill ${tone}`}>{agent.status.toLowerCase()}</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <div className="agent-meta">
                 <span className="agent-latency">
                   {typeof agent.latency_ms === "number" ? `${Math.round(agent.latency_ms)} ms` : "latency n/a"}
+                </span>
+                <span className="agent-fresh">
+                  {record?.at ? `active ${freshness(record.at)}` : `probe ${freshness(agent.last_checked)}`}
                 </span>
               </div>
               <div className="agent-task">
                 {record?.directive ? (
                   <>
-                    <strong>Last directive:</strong> {record.directive}
+                    <strong>Last work:</strong> {record.directive}
                   </>
                 ) : (
-                  <>Idle — awaiting directive</>
+                  <>Idle — awaiting your directive</>
                 )}
               </div>
-              {record?.result !== undefined && record.result !== null && String(record.result).trim() !== "" && (
+              {record?.result && (
                 <div className={`agent-result ${record.success ? "good" : "bad"}`}>
                   {record.success ? <CheckCircle2 size={13} style={{ flex: "none", marginTop: 2 }} /> : <Activity size={13} style={{ flex: "none", marginTop: 2 }} />}
-                  <span>{String(record.result).slice(0, 120)}</span>
+                  <span>{record.result}</span>
                 </div>
               )}
               <div className="agent-actions">
                 <button className="mini-btn" onClick={() => onAsk(agent)}>
-                  <MessageSquareText size={13} /> Ask via chat
+                  <MessageSquareText size={13} /> Assign / ask
                 </button>
                 <a
                   className="mini-btn"
@@ -148,7 +196,77 @@ export function FleetGrid({
   );
 }
 
-export function TelemetryStrip({
+export function ActivityFeed({
+  autonomy,
+  liveActivity,
+}: {
+  autonomy: AutonomySnapshot | null;
+  liveActivity: Record<string, LiveActivityEvent>;
+}) {
+  const rows: Array<{ agent: string; directive: string; result: string; success: boolean; at: string }> = [];
+
+  for (const [key, event] of Object.entries(liveActivity)) {
+    rows.push({
+      agent: event.agent || key,
+      directive: cleanDirective(event.directive || `${event.action ?? "activity"} ${event.target ?? ""}`.trim()),
+      result: cleanDirective(event.result, 140),
+      success: Boolean(event.success),
+      at: event.timestamp ?? "",
+    });
+  }
+  for (const action of autonomy?.recent_actions ?? []) {
+    rows.push({
+      agent: action.target || action.action_type || "system",
+      directive: cleanDirective(action.directive || action.action_type || "action"),
+      result: cleanDirective(action.result, 140),
+      success: action.success !== false,
+      at: action.recorded_at ?? action.timestamp ?? "",
+    });
+  }
+  const seen = new Set<string>();
+  const unique = rows
+    .filter((r) => {
+      const k = `${r.agent}|${r.directive}|${r.at}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .sort((a, b) => new Date(b.at || 0).getTime() - new Date(a.at || 0).getTime())
+    .slice(0, 14);
+
+  if (unique.length === 0) {
+    return (
+      <div className="panel feed-empty">
+        <Zap size={20} style={{ marginBottom: 8 }} />
+        All agents standing by. The moment one acts — yours to see here, live.
+      </div>
+    );
+  }
+
+  return (
+    <div className="panel">
+      <div className="feed-list">
+        {unique.map((row, i) => (
+          <div className="feed-row" key={`${row.agent}-${row.at}-${i}`} style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}>
+            <div className={`feed-icon ${row.success ? "ok" : "err"}`}>
+              {row.success ? <CheckCircle2 size={14} /> : <Activity size={14} />}
+            </div>
+            <div className="feed-body">
+              <span className="feed-agent">{row.agent}</span>
+              <p className="feed-text" style={{ margin: "3px 0" }}>{row.directive}</p>
+              {row.result && <p className="feed-result" style={{ margin: 0 }}>{row.result}</p>}
+            </div>
+            <span className="feed-time" title="IST">
+              {row.at ? `${istTime(row.at)} IST` : "live"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function SystemPanel({
   telemetry,
   fleet,
   autonomy,
@@ -164,6 +282,7 @@ export function TelemetryStrip({
   const online = fleet?.agents?.filter((a) => statusTone(a.status) === "good").length ?? 0;
   const total = fleet?.agent_count ?? fleet?.agents?.length ?? 0;
   const cpuOk = telemetry?.status === "ok" && typeof telemetry.cpu_percent === "number";
+  const ramOk = telemetry?.status === "ok" && typeof telemetry.ram_percent === "number";
 
   return (
     <div className="telemetry-grid">
@@ -171,7 +290,7 @@ export function TelemetryStrip({
         <SpotlightCard className="panel stat-card">
           <div className="stat-head">
             <span className="stat-label">
-              <Cpu size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Host CPU
+              <Cpu size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Server 1 CPU
             </span>
             <span className={`status-pill ${cpuOk ? "good" : "muted"}`}>{cpuOk ? "live" : "n/a"}</span>
           </div>
@@ -179,7 +298,7 @@ export function TelemetryStrip({
             {cpuOk ? <CountUp value={Math.round(telemetry!.cpu_percent!)} suffix="%" /> : "—"}
           </div>
           <div className="stat-foot">
-            <span>{telemetry?.cpu_cores ?? "—"} cores · {telemetry?.os ?? "Oracle host"}</span>
+            <span>{telemetry?.cpu_cores ?? "—"} cores · Oracle Always Free</span>
             <Sparkline values={cpuHistory} color="#8de6cf" />
           </div>
         </SpotlightCard>
@@ -189,18 +308,14 @@ export function TelemetryStrip({
         <SpotlightCard className="panel stat-card">
           <div className="stat-head">
             <span className="stat-label">
-              <Activity size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Host memory
+              <Gauge size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Server 1 memory
             </span>
             <span className={`status-pill ${telemetry?.status === "ok" ? "good" : "muted"}`}>
               {telemetry?.status === "ok" ? "live" : "n/a"}
             </span>
           </div>
           <div className="stat-value grad-text">
-            {telemetry?.status === "ok" && typeof telemetry.ram_percent === "number" ? (
-              <CountUp value={Math.round(telemetry.ram_percent)} suffix="%" />
-            ) : (
-              "—"
-            )}
+            {ramOk ? <CountUp value={Math.round(telemetry!.ram_percent!)} suffix="%" /> : "—"}
           </div>
           <div className="stat-foot">
             <span>
@@ -237,14 +352,12 @@ export function TelemetryStrip({
               <Zap size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Autonomy
             </span>
             <span className={`status-pill ${autonomy?.autonomous_mode ? "good" : "muted"}`}>
-              {autonomy?.autonomous_mode ? "enabled" : "manual"}
+              {autonomy?.autonomous_mode ? "running" : "manual"}
             </span>
           </div>
-          <div className="stat-value grad-text">
-            {autonomy?.history_count ?? 0}
-          </div>
+          <div className="stat-value grad-text">{autonomy?.history_count ?? 0}</div>
           <div className="stat-foot">
-            <span>recorded autonomous actions</span>
+            <span>autonomous actions recorded</span>
             {autonomy?.active_agent ? (
               <span style={{ color: "var(--cyan)" }}>{autonomy.active_agent}</span>
             ) : (
@@ -257,71 +370,30 @@ export function TelemetryStrip({
   );
 }
 
-export function ActivityFeed({
+/* Compact strip used on the Console tab: fleet + autonomy at a glance. */
+export function ConsoleStrip({
+  fleet,
   autonomy,
-  liveActivity,
 }: {
+  fleet: FleetSnapshot | null;
   autonomy: AutonomySnapshot | null;
-  liveActivity: Record<string, LiveActivityEvent>;
 }) {
-  const rows: Array<{ agent: string; directive: string; result: string; success: boolean; at: string }> = [];
-
-  for (const [key, event] of Object.entries(liveActivity)) {
-    rows.push({
-      agent: event.agent || key,
-      directive: event.directive || `${event.action ?? "activity"} ${event.target ?? ""}`.trim(),
-      result: String(event.result ?? ""),
-      success: Boolean(event.success),
-      at: event.timestamp ?? "",
-    });
-  }
-  for (const action of autonomy?.recent_actions ?? []) {
-    rows.push({
-      agent: action.target || action.action_type || "system",
-      directive: action.directive || action.action_type || "action",
-      result: String(action.result ?? ""),
-      success: action.success !== false,
-      at: action.timestamp ?? "",
-    });
-  }
-  const seen = new Set<string>();
-  const unique = rows.filter((r) => {
-    const k = `${r.agent}|${r.directive}|${r.at}`;
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  }).slice(0, 12);
-
-  if (unique.length === 0) {
-    return (
-      <div className="panel feed-empty">
-        <Zap size={20} style={{ marginBottom: 8 }} />
-        All agents standing by. Recent fleet actions will appear here in real time.
-      </div>
-    );
-  }
-
+  const online = fleet?.agents?.filter((a) => statusTone(a.status) === "good").length ?? 0;
+  const total = fleet?.agent_count ?? fleet?.agents?.length ?? 10;
   return (
-    <div className="panel">
-      <div className="feed-list">
-        {unique.map((row, i) => (
-          <div className="feed-row" key={`${row.agent}-${row.at}-${i}`} style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}>
-            <div className={`feed-icon ${row.success ? "ok" : "err"}`}>
-              {row.success ? <CheckCircle2 size={14} /> : <Activity size={14} />}
-            </div>
-            <div className="feed-body">
-              <span className="feed-agent">{row.agent}</span>
-              <p className="feed-text" style={{ margin: "3px 0" }}>{row.directive}</p>
-              {row.result && <p className="feed-result" style={{ margin: 0 }}>{row.result.slice(0, 140)}</p>}
-            </div>
-            <span className="feed-time">
-              {row.at
-                ? new Date(row.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
-                : "live"}
-            </span>
-          </div>
-        ))}
-      </div>
+    <div className="console-strip">
+      <span className="strip-pill">
+        <span className={`dot ${fleet ? "good pulse" : "muted"}`} />
+        {fleet ? `${online}/${total} agents online` : "connecting…"}
+      </span>
+      <span className="strip-pill">
+        <Zap size={12} style={{ color: "var(--amber)" }} />
+        {autonomy?.autonomous_mode ? "autonomy running" : "autonomy manual"}
+      </span>
+      <span className="strip-pill">
+        <BarChart2 size={12} style={{ color: "var(--cyan)" }} />
+        {autonomy?.history_count ?? 0} actions
+      </span>
     </div>
   );
 }

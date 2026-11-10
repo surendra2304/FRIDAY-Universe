@@ -29,6 +29,19 @@ export function AuroraBackground() {
   );
 }
 
+/* ---------- Floating glass orbs (pure CSS drift, reduced-motion safe) ---------- */
+export function FloatingOrbs() {
+  return (
+    <div className="float-orbs" aria-hidden="true">
+      <span className="float-orb o1" />
+      <span className="float-orb o2" />
+      <span className="float-orb o3" />
+      <span className="float-orb o4" />
+      <span className="float-orb o5" />
+    </div>
+  );
+}
+
 /* ---------- Particle field (canvas, adaptive + self-pausing) ---------- */
 type Particle = { x: number; y: number; vx: number; vy: number; r: number; c: string; a: number };
 
