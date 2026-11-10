@@ -110,8 +110,18 @@ def _receipt_for(
     to take the summary on trust.
     """
     payload = result.result or {}
+    # Storage truth, not a slogan: report what the storage layer actually
+    # is (backend / durability), never a hard-coded Oracle/durable claim.
+    # Fail-safe: if the receipt is unavailable for any reason, report the
+    # unknown state explicitly rather than a durable Oracle write.
+    try:
+        receipt = storage_receipt()
+    except Exception:  # pragma: no cover - defensive
+        receipt = {"backend": "unknown", "durable": False, "durability": "unknown"}
     evidence: dict[str, Any] = {
-        "backend": "oracle",
+        "backend": receipt["backend"],
+        "durable": receipt["durable"],
+        "durability": receipt["durability"],
         "action": envelope.action,
         "task_id": envelope.task_id,
         "evidence_source": "memora.v1.task.execute",
@@ -119,7 +129,7 @@ def _receipt_for(
     if "memory_id" in payload:
         evidence["memory_id"] = payload["memory_id"]
         evidence["namespace_path"] = payload.get("namespace_path")
-        evidence["durable_write"] = True
+        evidence["durable_write"] = receipt["durable"]
     if "count" in payload:
         evidence["recalled_count"] = payload["count"]
         evidence["query"] = payload.get("query")
