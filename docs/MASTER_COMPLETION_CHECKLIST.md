@@ -174,6 +174,7 @@
 - [ ] **I4** Full battery green: `test_real_usage_battery.py` 29/29
 - [ ] **I5** Coverage gate in CI (no untested regression classes)
 - [ ] **I6** Dead-code sweep: unused tools/modules removed or wired
+- [ ] **I7** Fix duplicate `(path, method)` route registration in server.py (pre-existing `test_api_command_truthfulness` failure on main)
 
 ---
 
@@ -189,8 +190,8 @@
 | F. Agents | 7 | 27 | 26% |
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
-| I. Tech debt | 0 | 6 | 0% |
-| **Universe** | **42** | **123** | **34%** |
+| I. Tech debt | 0 | 7 | 0% |
+| **Universe** | **42** | **124** | **34%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

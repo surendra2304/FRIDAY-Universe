@@ -15,6 +15,7 @@ from friday.tools.builtin.android_control import (
     TypeTextTool as AndroidTypeTextTool,
 )
 from friday.tools.builtin.browser_tool import BrowserAutomationTool
+from friday.tools.builtin.fleet_dispatch import FleetDispatchTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
 from friday.tools.builtin.forge_code_task import ForgeCodeTool
 from friday.tools.builtin.intelx_research import IntelXResearchTool
@@ -164,6 +165,7 @@ __all__ = [
     "SendWhatsAppMessageTool",
     "SynthesizeInformationTool",
     "SystemControlTool",
+    "FleetDispatchTool",
     "FleetStatusTool",
     "ForgeCodeTool",
     "IntelXResearchTool",

@@ -105,6 +105,7 @@ from friday.tools.builtin import (
     SynthesizeInformationTool,
     SystemControlTool,
     SystemInfoTool,
+    FleetDispatchTool,
     FleetStatusTool,
     ForgeCodeTool,
     IntelXResearchTool,
@@ -141,6 +142,7 @@ class ToolExecutionMixin:
             registry = ToolRegistry()
             registry.register(SystemInfoTool())
             registry.register(FleetStatusTool())
+            registry.register(FleetDispatchTool())
             registry.register(ForgeCodeTool())
             registry.register(IntelXResearchTool())
             registry.register(StratexPortfolioTool())
