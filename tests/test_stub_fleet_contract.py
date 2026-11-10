@@ -81,6 +81,24 @@ def test_modes_never_mix_and_misuse_fails():
     assert stub_fleet.configure_fleet(env) == ("live", None)
 
 
+def test_nested_pytest_reuses_the_parents_stub_but_still_refuses_real_urls():
+    env = {"FRIDAY_TEST_FLEET_STUB_PORT": "5555",
+           **{f"FRIDAY_DISPATCH_{slug.upper()}_URL": f"http://127.0.0.1:5555/{slug}" for slug in stub_fleet.AGENTS}}
+    assert stub_fleet.configure_fleet(env) == ("stub", None)
+    env["FRIDAY_DISPATCH_INFERENCE_URL"] = "http://real-host:8001"  # a real URL mixed in must be refused
+    with pytest.raises(ValueError, match="already set"):
+        stub_fleet.configure_fleet(env)
+
+
+def test_pooled_dispatch_to_the_stub_is_fast(stub):
+    import time
+    client = httpx.Client(timeout=5)
+    start = time.time()
+    for _ in range(50):
+        assert client.post(stub + "/inference/v1/task/execute", json=envelope(action="test")).status_code == 200
+    assert time.time() - start < 2.0, "stub is stalling (check Nagle / buffering)"
+
+
 def test_bus_reports_failure_for_an_unsupported_action(monkeypatch):
     spec = importlib.util.spec_from_file_location(
         "bus_under_test", ROOT / "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py")

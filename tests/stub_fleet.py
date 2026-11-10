@@ -48,6 +48,8 @@ ENVELOPE_FIELDS = (
 
 class _Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
+    wbufsize = 65536  # send headers and body in one write (two small writes stall on Nagle + delayed ACK)
+    disable_nagle_algorithm = True
 
     def log_message(self, *args):  # keep test output quiet
         return
@@ -119,6 +121,13 @@ def configure_fleet(environ):
     mode = (environ.get("FRIDAY_TEST_FLEET") or "stub").strip().lower()
     present = [v for v in FLEET_URL_VARS if environ.get(v)]
     if mode == "stub":
+        # A nested pytest run (a test that shells out to pytest) inherits the parent's stub; reuse it.
+        inherited = environ.get("FRIDAY_TEST_FLEET_STUB_PORT")
+        if present and inherited and all(
+            environ.get(f"FRIDAY_DISPATCH_{slug.upper()}_URL") == f"http://127.0.0.1:{inherited}/{slug}"
+            for slug in AGENTS
+        ):
+            return "stub", None
         if present:
             raise ValueError(
                 "FRIDAY_TEST_FLEET=stub but these are already set: " + ", ".join(present)
@@ -128,6 +137,7 @@ def configure_fleet(environ):
         server, port = start_stub_fleet()
         for slug in AGENTS:
             environ[f"FRIDAY_DISPATCH_{slug.upper()}_URL"] = f"http://127.0.0.1:{port}/{slug}"
+        environ["FRIDAY_TEST_FLEET_STUB_PORT"] = str(port)
         return "stub", server
     if mode == "live":
         missing = [v for v in FLEET_URL_VARS if not environ.get(v)]
