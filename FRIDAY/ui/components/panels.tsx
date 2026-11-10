@@ -157,7 +157,11 @@ export function FleetGrid({
                   {typeof agent.latency_ms === "number" ? `${Math.round(agent.latency_ms)} ms` : "latency n/a"}
                 </span>
                 <span className="agent-fresh">
-                  {record?.at ? `active ${freshness(record.at)}` : `probe ${freshness(agent.last_checked)}`}
+                  {record?.at
+                    ? freshness(record.at)
+                      ? `active ${freshness(record.at)}`
+                      : "active"
+                    : `probe ${freshness(agent.last_checked) || "pending"}`}
                 </span>
               </div>
               <div className="agent-task">
