@@ -1702,16 +1702,17 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
         return await autonomous_controller.execute_agent_control(agent_id, sub_task)
 
     # 0. Conversational & Voice Interaction Fast-paths
+    # These use the same persona layer as the agent greeting fast-path so FRIDAY
+    # speaks with one voice everywhere (owner directive 2026-11-10: talk like a
+    # friend, Jarvis-style). A greeting may say that FRIDAY is listening; it
+    # may not certify a fleet.
     if any(cmd.startswith(g) or cmd == g for g in ["hello", "hi", "hey", "hello friday", "hello friends", "good morning", "good afternoon", "good evening"]):
-        # This greeting used to assert "8 specialist agents are online and ready"
-        # without asking any of them - while /api/agents reported every one of
-        # them UNREACHABLE on the same machine, at the same moment. A greeting
-        # may say that FRIDAY is listening; it may not certify a fleet.
+        from friday.persona.friday import greeting_responses_for
+        import random as _random
+        _persona = getattr(_live_settings(), "persona", "friday") or "friday"
+        _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
         return {
-            "reply": (
-                "Hello Surendra. FRIDAY is listening. Say 'status of all agents' for a live check of "
-                "the specialist peers - I will not claim they are online without asking them."
-            ),
+            "reply": _random.choice(greeting_responses_for(_persona)).format(user_name=_user),
             "metadata": {"fast_path": True, "conversational": True, "peer_health_checked": False},
         }
 
@@ -1719,10 +1720,12 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
         return {"reply": "Dual-hand optical sensors are active and calibrated. Hold both hands facing the camera with open palms for reticle lock.", "metadata": {"fast_path": True, "conversational": True}}
 
     if any(k in cmd for k in ["who are you", "who made you", "what are you", "your name", "are you there", "can you hear me"]):
-        return {"reply": "I am F.R.I.D.A.Y., Surendra's Autonomous Intelligence Core v3.5. I control your PC, Android ecosystem, and 8 specialist agents.", "metadata": {"fast_path": True, "conversational": True}}
+        _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
+        return {"reply": f"I'm FRIDAY - Fully Responsive Intelligent Digital Assistant for You. {_user} built me, and we run this universe together: me plus my nine specialist agents across your cloud. Anything you need, you know where to find me.", "metadata": {"fast_path": True, "conversational": True}}
 
     if any(k in cmd for k in ["thank you", "thanks", "great job", "good job", "nice", "awesome"]):
-        return {"reply": "Always at your service, Surendra.", "metadata": {"fast_path": True, "conversational": True}}
+        _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
+        return {"reply": f"Anytime, {_user}. That's what I'm here for.", "metadata": {"fast_path": True, "conversational": True}}
 
     if any(k in cmd for k in ["what can you do", "help", "features", "commands", "what are your capabilities", "capabilities", "what do you do"]):
         return {
