@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-09T16:49:00Z"
+snapshot_at: "2026-11-09T18:05:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 rule: "The GitHub claim thread plus a current branch/PR is the shared ownership record. This file is the searchable mirror, not an atomic lock."
@@ -327,6 +327,34 @@ claims:
     branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
     status: "CLAIMED_IN_REVIEW"
     risk: "Route-level regression proves local SQLite storage is reported as non-durable process-local storage rather than an Oracle durable write."
+
+  - path: "Stratex/exchanges/exchange_implementations.py"
+    owner: "zai"
+    prs: [39]
+    branches: ["zai/TASK-STR-001-live-trading-guard"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Fail-closed live-trading guard replaces fabricated FILLED orders; unclaimed before this PR (no other open PR touches this file)."
+
+  - path: "Stratex/tests/test_live_trading_guard.py"
+    owner: "zai"
+    prs: [39]
+    branches: ["zai/TASK-STR-001-live-trading-guard"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "New regression suite (24 tests) for the live-trading guard contract."
+
+  - path: "Stratex/tests/test_multi_exchange.py"
+    owner: "zai"
+    prs: [39]
+    branches: ["zai/TASK-STR-001-live-trading-guard"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Test fakes updated to the honest no-fabrication contract."
+
+  - path: "Stratex/tests/test_multi_exchange_expansion.py"
+    owner: "zai"
+    prs: [39]
+    branches: ["zai/TASK-STR-001-live-trading-guard"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Router tests rewritten with labelled test doubles; honest-refusal assertions added."
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"

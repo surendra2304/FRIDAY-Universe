@@ -126,3 +126,12 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 - Evidence: `AGENTS.yaml` declares `total_agents: 10`; the master plan and architecture document define the same ten-agent set.
 - Chosen approach: treat FRIDAY, Inference, Memora, Stratex, Forge, Cortex, Sentinel, IntelX, Futuris, and VyralX as the immutable canonical set unless the project owner explicitly approves a change.
 - Consequences: separate repositories or service boundaries do not create additional canonical agents.
+
+## D-006 — Stratex live-trading guard: fail-closed with explicit owner opt-in
+
+**Date:** 2026-11-09  
+**Decision:** Every order path in `Stratex/exchanges/exchange_implementations.py` enforces the permanent LIVE block already used by `stratex_ccxt_adapter` (`TRADING_MODE=LIVE` / `LIVE_TRADING_ENABLED=1` -> `PermissionError`), refuses real orders in PAPER/RESEARCH modes, routes the python-binance client to testnet by default (`BINANCE_TESTNET`, default true), and requires an explicit `ALLOW_LIVE_TRADING=true` for any live-endpoint client or Coinbase (no testnet) order. Adapters must never fabricate FILLED orders or cancel success.  
+**Alternatives:** (a) leave per-adapter guards inconsistent; (b) env-only `LIVE_TRADING_ENABLED` switch without an explicit opt-in; (c) implement real execution for all venues in the same PR.  
+**Reason:** (a) left unguarded/fabricating paths; (b) keeps live trading one accidental env flip away; (c) widens an unreviewable safety change into new side-effect surfaces.  
+**Evidence:** fabricated FILLED results and unguarded Coinbase orders confirmed by reading the pre-change code; production flags verified read-only (BINANCE_TESTNET=false, BINANCE_ENV=demo).  
+**Implementation:** PR #39 (TASK-STR-001), ZAI. Owner approval for merge pending.

@@ -18,6 +18,8 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | TASK-DATA-002 | Cross-agent Memora private/shared/universal isolation | ChatGPT | chatgpt/TASK-DATA-002-memory-tenant-isolation | Memora tenant binding, legacy access-controller authorization, route tests and FRIDAY CI | IN_PROGRESS; PR #38 also secures the mounted process-local access controller; focused run 42658441949: 12 passed/1 warning; Memora step of FRIDAY run 42658441937 passed; full FRIDAY HTTP/API and monorepo checks pending |
 | TASK-CI-004 | Root-cause fixes for fleet CI failures | Claude | claude/TASK-CI-004 | validate-monorepo.yml, dispatch bus, Forge optimizers, tests/conftest.py, e2e tests | IN_REVIEW (PR #34); FRIDAY CI and image build passed; both monorepo validators failed |
 | TASK-COLLAB-001 | Shared multi-AI collaboration centre | ChatGPT | chatgpt/TASK-DOC-SYNC-001 | docs/collaboration/* and three central documents | IN_REVIEW (PR #30); GitHub claim hub issue #35 created; records are a snapshot and require review/merge |
+| TASK-STR-001 | Stratex fail-closed live-trading guard for exchange adapters | ZAI | zai/TASK-STR-001-live-trading-guard | Stratex/exchanges/exchange_implementations.py + 3 test files | IN_REVIEW (PR #39); 24 new + 17 updated tests pass locally; 2 unrelated pre-existing failures reproduce on pristine main; production flags verified read-only (BINANCE_TESTNET=false, TRADING_MODE=FUTURES, BINANCE_ENV=demo) |
+| TASK-COLLAB-002 | Register ZAI as an active collaborator | ZAI | zai/TASK-COLLAB-002-register-zai | docs/collaboration/* + three central documents | IN_REVIEW (stacked on PR #30; merge #30 first) |
 
 ## B. Merged implementation work (not equivalent to production VERIFIED/DONE)
 - TASK-DOC-001: PR #21 merged at 515858e.
@@ -31,6 +33,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - cf92fa9, a971e2c, d501148, 369995e — CI fixes (mock Oracle DB URL, isolate VyralX tests, Memora tmp_path, fastapi in validate-monorepo) — ChatGPT. Merge c097312 completes PR #19. Tests executed: not recorded here; ChatGPT to record.
 
 ## C. Current work (GitHub and read-only live VM state checked 2026-11-09)
+- ZAI (registered 2026-11-09, stacked on PR #30): TASK-STR-001 claimed and implemented in PR #39 (Stratex fail-closed live-trading guard; see docs/collaboration/HANDOFFS.md). Read-only production verification found BINANCE_TESTNET=false / TRADING_MODE=FUTURES / BINANCE_ENV=demo on Server 1 — recorded in docs/collaboration/ACTIVITY_LOG.md and ARCHITECTURE_AS_BUILT.md. No production writes, restarts, merges or secret reads performed.
 - PHASE 0 STARTED (Claude, 2026-11-08 ~16:05 UTC), per owner instruction. Steps:
   1. OCI secrets present in repo (names verified via API). Values unverified.
   2. Sniper check: run 42497059156 on main (c097312) dispatched 15:53 UTC; step "Run Infinite 24/7 Sniper" still running at 16:05. No failure. Authentication not yet confirmed; logs not readable until the job ends. Live log: https://github.com/surendra2304/FRIDAY-Universe/actions/runs/42497059156
