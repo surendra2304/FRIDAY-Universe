@@ -475,6 +475,34 @@ claims:
     status: "MERGED"
     risk: "Test-only statistics fix (D-020): true nearest-rank p95 of 40 samples (was max-of-20 via int(20*0.95)==19), warm-up runs excluded, host-calibrated budgets clamped [1.0, 4.0] (reference machine keeps the exact original 100ms/500ms contract). Merged to main as fca3d93; main fully green."
 
+  - path: "FRIDAY/apps/core/src/friday_core/task_records.py"
+    owner: "zai"
+    prs: [44]
+    branches: ["zai/TASK-CORE-003-task-records"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CORE-003: new unified task-record module (TaskRecord, TaskStatus lifecycle, thread-safe TaskRecordStore)."
+
+  - path: "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
+    owner: "zai"
+    prs: [44]
+    branches: ["zai/TASK-CORE-003-task-records"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CORE-003: optional task_records store records submitted/assigned/routing_failed; default None keeps today's behavior."
+
+  - path: "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
+    owner: "zai"
+    prs: [44]
+    branches: ["zai/TASK-CORE-003-task-records"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CORE-003: optional task_records store records dispatched then completed/failed; accepted (202) receipts stay at dispatched (no fabricated completion); retries/circuit breaker untouched."
+
+  - path: "tests/test_task_records.py"
+    owner: "zai"
+    prs: [44]
+    branches: ["zai/TASK-CORE-003-task-records"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CORE-003: 22 tests - lifecycle, failure paths, history auditability, filters, report, router/bus integration store-present/absent (local HTTP double), 202-truthfulness, thread-safety."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:
