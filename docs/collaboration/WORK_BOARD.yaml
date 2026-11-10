@@ -152,7 +152,9 @@ tasks:
     evidence:
       - "PR #24 open; branch implementation/tests exist."
       - "Production bridge patch not applied; secret not provisioned; production enforcement not verified."
-    next_action: "Resolve branch review and file overlap, verify both MCP clients' header/SSE compatibility, then await owner-approved secret provisioning and restart."
+      - "2026-11-10 external re-verification: unauthenticated MCP initialize + tools/list against the public bridge succeeded (31 tools, v1.30.0); no side-effect tool invoked."
+      - "OWNER DECISION 2026-11-10: exposure accepted (DECISIONS.md D-014, owner quote recorded)."
+    next_action: "Recorded owner risk acceptance; production activation NOT requested. Owner to decide PR #24 disposition: park on branch for a future change of decision, or close it. Until then, treat every server-resident secret as publicly readable (feeds TASK-SEC-004 and ADMIN password rotation)."
 
   - id: "TASK-SEC-004"
     title: "Secret-management audit and change-range secret scanning"
@@ -428,7 +430,7 @@ tasks:
       - "Local pytest on Python 3.12: tests/test_live_trading_guard.py 24 passed; test_multi_exchange.py + test_multi_exchange_expansion.py 17 passed; blast-radius suites 45 passed with 2 pre-existing failures that reproduce on pristine main (test_stratex_runtime_factory.py, verified via stash)."
       - "PR #39 opened 2026-11-09 with the full diff and evidence."
     risk_flags:
-      - "Owner decision required: production .env has BINANCE_TESTNET=false while the Master Plan expected true; the daemon's active venue is BinanceFuturesAdapter in demo mode (BINANCE_ENV=demo), not the classic testnet."
+      - "RESOLVED 2026-11-10: owner confirmed demo is the intended venue (BINANCE_ENV=demo; DECISIONS.md D-015). The original Master Plan expectation of BINANCE_TESTNET=true was superseded; the production flag mismatch is no longer an open decision."
       - "Dashboard adapters are read-only in production today; no production flow places orders through exchange_implementations.py (verified by reading dashboard call sites)."
     blockers: []
     next_action: "Owner review of PR #39; after merge and deploy, confirm the Stratex dashboard still serves /api/multiexchange/* and record live evidence."
