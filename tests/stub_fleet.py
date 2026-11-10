@@ -39,7 +39,10 @@ ACTIONS = {
     "Cortex": {"decide", "decision", "execute"},
     "VyralX": {"analyze", "create", "create_content", "share_knowledge"},
 }
-UNIVERSAL_ACTIONS = {"load_test"}
+# Synthetic actions the repository's dispatch and workflow tests send to EVERY
+# agent when exercising the bus plumbing (envelope, retry, receipt) rather than
+# a specific agent capability. Anything else is rejected.
+UNIVERSAL_ACTIONS = {"load_test", "test_action", "deep_test"}
 ENVELOPE_FIELDS = (
     ("task_id", str), ("agent", str), ("action", str),
     ("payload", dict), ("priority", str), ("source_agent", str),

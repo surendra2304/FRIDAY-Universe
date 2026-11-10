@@ -71,10 +71,12 @@ class FleetValidationTests(unittest.TestCase):
     def test_deployment_sources_do_not_embed_live_credentials(self):
         root = Path(__file__).resolve().parents[1]
         sensitive_paths = (
-            "MASTER_AGENT_AWAKENING_DIRECTIVE.md",
-            "FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.md",
+            # Root docs were reorganised into docs/archive (commit dd420bb);
+            # the credential scan follows them there. register_vyralx_dokploy.py
+            # was deleted with the Postgres/Dokploy removal (commit 3b0c469).
+            "docs/archive/MASTER_AGENT_AWAKENING_DIRECTIVE.md",
+            "docs/archive/FRIDAY_UNIVERSE_MASTER_ARCHITECTURE.md",
             "deploy/setup_fleet.sh",
-            "scripts/register_vyralx_dokploy.py",
             "scripts/generate_master_architecture_pdf.py",
             "Memora/core/resilience/telemetry.py",
             "FRIDAY/tests/test_codex_invariants_and_mesh.py",

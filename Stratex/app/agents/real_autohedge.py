@@ -172,7 +172,15 @@ class PortfolioRebalancer:
         return False
 
     def rebalance(self, prices: dict[str, float]) -> dict[str, float]:
-        total = sum(p * q for p, q in prices.items() if p in self.positions) + self.cash
+        # Total portfolio value = sum(price * held quantity) + cash. Iterate
+        # (symbol, price) pairs and look up the held quantity; multiplying the
+        # symbol itself by the price (the previous `p * q` form) raised
+        # TypeError on the first live call and returned HTTP 500.
+        total = sum(
+            price * self.positions[symbol]
+            for symbol, price in prices.items()
+            if symbol in self.positions
+        ) + self.cash
         trades: dict[str, float] = {}
         for asset, target_w in self.target_weights.items():
             target_val = total * target_w

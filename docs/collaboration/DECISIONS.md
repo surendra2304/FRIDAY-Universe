@@ -195,3 +195,15 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Contributors:** ZAI (implementation); owner (directive).
 **Owner approval:** Given in chat, 2026-11-10.
 **Consequences:** All default FRIDAY text and voice interactions shift to the warm friend register immediately upon deployment and service restart. Tests 10/10 pass; adjacent suites unchanged except one pre-existing unrelated failure recorded in the activity log.
+
+## D-019 — ZAI executes TASK-CI-002 (main-green) with merge authority
+
+**Date:** 2026-11-10
+**Problem:** After the owner-directed mass merge, `Monorepo Structure and Safety CI` failed on main head 7d712c1 (both monorepo workflows) while FRIDAY Universe CI/CD, Fleet CD, Secret Scanning and Collaboration Registry Validation were green. TASK-CI-002 is registered to Claude, who was not reachable, and the owner directed continued work without pause.
+**Alternatives:** (a) wait for Claude; (b) have the owner fix CI personally; (c) ZAI executes the remaining root-cause work under the owner's standing directive and full merge authority.
+**Evidence:** Owner directive in chat, 2026-11-10: "Merge all those prs and rewrite it … You no need to ask me to do anything … You can restart and do anything you want. You have full access to do anything." CI evidence: monorepo-validation run 42764787943 on main head 7d712c1 — 26 FAILED + 26 ERROR, root causes diagnosed (missing Stratex test deps in requirements-ci.txt; agent route contract drift: Cortex route auth PR #26 and Forge browser router prefix; VyralX media-warehouse bootstrap needing a reachable DB at import; monorepo module-cache pollution across agent apps; a genuine Stratex AutoHedge rebalance TypeError masked until pandas was installed).
+**Decision:** (c) — ZAI claims the execution pass for TASK-CI-002, fixes root causes only (no test weakening), and merges to main once green, recording this decision for Claude's review.
+**Reason:** The owner explicitly directed continuous work and full merge authority; main being red blocks every subsequent task's merge gate (Master Plan §4: "TASK-CI-002 before any feature merge").
+**Contributors:** ZAI (diagnosis + implementation); Claude (registered owner, to review); owner (directive).
+**Owner approval:** Given in chat, 2026-11-10 ("You have full rights to merge them", "You have full access to do anything").
+**Consequences:** Root-cause fixes land on main via ZAI's PR; the collaboration registry records the execution-pass claim; Claude retains registered ownership for any follow-up; nothing in this pass weakens a single assertion — every fix either supplies a genuinely missing dependency, aligns a test with the merged production route/auth contract, makes an app import deterministic, or repairs a real production bug.

@@ -681,8 +681,12 @@ class TestAgentAppsExposeTheNewCapabilities:
             "print(cat.status_code, flow.status_code, flow.json()['validation']['passed'])\n",
             "200 200 True",
             # This test exercises the diagram endpoints, not the database backend: give VyralX its own
-            # SQLite file so it never tries to reach the CI Oracle placeholder URL.
-            env_extra={"DATABASE_URL": "sqlite:///" + os.path.join(tempfile.mkdtemp(), "vyralx_layer11.db")},
+            # SQLite files so it never tries to reach the CI Oracle placeholder URLs. The media
+            # warehouse bootstrap runs at app import, so MEDIA_DATABASE_URL must be covered too.
+            env_extra={
+                "DATABASE_URL": "sqlite:///" + os.path.join(tempfile.mkdtemp(), "vyralx_layer11.db"),
+                "MEDIA_DATABASE_URL": "sqlite:///" + os.path.join(tempfile.mkdtemp(), "vyralx_layer11_media.db"),
+            },
         )
 
     def test_sentinel_app(self):

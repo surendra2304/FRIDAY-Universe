@@ -5,6 +5,8 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
+from repo_isolation import purge_ambiguous_modules
+
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
@@ -17,6 +19,7 @@ if REPO_ROOT not in sys.path:
 class TestStratexE2E:
     @classmethod
     def setup_class(cls):
+        purge_ambiguous_modules()
         stratex_path = os.path.join(REPO_ROOT, "Stratex")
         if stratex_path in sys.path:
             sys.path.remove(stratex_path)
@@ -180,11 +183,15 @@ class TestStratexE2E:
 class TestVyralXE2E:
     @classmethod
     def setup_class(cls):
+        purge_ambiguous_modules()
         os.environ["DATABASE_URL"] = "sqlite:///./data/vyralx_test.db"
         os.environ["ENVIRONMENT"] = "testing"
-        for mod in list(sys.modules):
-            if mod == "app" or mod.startswith("app."):
-                sys.modules.pop(mod, None)
+        # The CI job exports a placeholder Oracle MEDIA_DATABASE_URL; app import
+        # bootstraps the media warehouse schema, so point it at the development
+        # SQLite backend (allowed only when VyralX APP_ENV is development) so the
+        # import exercises the real schema-creation path instead of dying on a
+        # unreachable database.
+        os.environ["MEDIA_DATABASE_URL"] = "sqlite:///./data/vyralx_test_media.db"
         vyralx_path = os.path.join(REPO_ROOT, "VyralX")
         if vyralx_path in sys.path:
             sys.path.remove(vyralx_path)
@@ -193,6 +200,7 @@ class TestVyralXE2E:
     @classmethod
     def teardown_class(cls):
         os.environ.pop("DATABASE_URL", None)
+        os.environ.pop("MEDIA_DATABASE_URL", None)
 
     @pytest.fixture(scope="class")
     def client(self):
@@ -311,26 +319,41 @@ class TestVyralXE2E:
 # ═════════════════════════════════════════════════════════════════════════════
 
 class TestCortexE2E:
+    # Route-level auth (see cortex_api.main: require_cortex_route_access) accepts
+    # the FRIDAY service identity via X-Friday-Api-Key; these e2e calls exercise
+    # the inbox routes exactly as FRIDAY dispatch would.
+    FRIDAY_SERVICE_KEY = "ci-friday-e2e-service-key-0123456789abcdef"
+
     @classmethod
     def setup_class(cls):
+        purge_ambiguous_modules(extra=("cortex_api",))
         os.environ.pop("DATABASE_URL", None)
+        os.environ["FRIDAY_API_KEY"] = cls.FRIDAY_SERVICE_KEY
         cortex_path = os.path.join(REPO_ROOT, "Cortex", "apps", "api", "src")
         if cortex_path in sys.path:
             sys.path.remove(cortex_path)
         sys.path.insert(0, cortex_path)
+
+    @classmethod
+    def teardown_class(cls):
+        os.environ.pop("FRIDAY_API_KEY", None)
 
     @pytest.fixture(scope="class")
     def client(self):
         from cortex_api.main import app
         return TestClient(app)
 
-    def test_inbox_classify_meeting(self, client):
+    @pytest.fixture(scope="class")
+    def auth(self):
+        return {"X-Friday-Api-Key": self.FRIDAY_SERVICE_KEY}
+
+    def test_inbox_classify_meeting(self, client, auth):
         resp = client.post("/api/v1/cortex/inbox/classify", json={
             "sender": "partner@vc.com",
             "recipient": "cortex@universe.ai",
             "subject": "Executive Meeting Tomorrow",
             "body": "Let's schedule a meeting to review cross-agent KPIs tomorrow at 2 PM.",
-        })
+        }, headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
@@ -339,66 +362,66 @@ class TestCortexE2E:
         assert data["is_spam"] is False
         assert data["priority_score"] > 0
 
-    def test_inbox_classify_finance(self, client):
+    def test_inbox_classify_finance(self, client, auth):
         resp = client.post("/api/v1/cortex/inbox/classify", json={
             "sender": "billing@cloud.oracle.com",
             "recipient": "cortex@universe.ai",
             "subject": "Monthly Cloud Invoice #INV-98214",
             "body": "Please find attached invoice for server hosting and GPU compute payment.",
-        })
+        }, headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
         assert data["classification"] == "finance"
 
-    def test_inbox_actions(self, client):
+    def test_inbox_actions(self, client, auth):
         resp = client.post("/api/v1/cortex/inbox/actions", json={
             "text": "Please review the security audit. You must submit the SOC2 report by Thursday.",
-        })
+        }, headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
         assert data["item_count"] >= 1
 
-    def test_inbox_summarize(self, client):
+    def test_inbox_summarize(self, client, auth):
         resp = client.post("/api/v1/cortex/inbox/summarize", json={
             "sender": "lead@dev.org",
             "recipient": "cortex@universe.ai",
             "subject": "Deployment Architecture",
             "body": "We have completed the deployment of all 10 specialized agent engines across the cluster.",
-        })
+        }, headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
         assert len(data["summary"]) > 0
 
-    def test_inbox_triage(self, client):
+    def test_inbox_triage(self, client, auth):
         resp = client.post("/api/v1/cortex/inbox/triage", json={
             "messages": [
                 {"sender": "a@co.com", "recipient": "c@co.com", "subject": "Meeting", "body": "Let's meet."},
                 {"sender": "b@co.com", "recipient": "c@co.com", "subject": "Invoice", "body": "Please pay."},
             ]
-        })
+        }, headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
         assert "meeting" in data["triage"]
         assert "finance" in data["triage"]
 
-    def test_inbox_digest(self, client):
-        resp = client.get("/api/v1/cortex/inbox/digest")
+    def test_inbox_digest(self, client, auth):
+        resp = client.get("/api/v1/cortex/inbox/digest", headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
         assert "unread_count" in data["digest"]
 
-    def test_inbox_coordinate(self, client):
+    def test_inbox_coordinate(self, client, auth):
         resp = client.post("/api/v1/cortex/inbox/coordinate", json={
             "messages": [
                 {"sender": "client@corp.com", "recipient": "c@co.com", "subject": "Support help needed", "body": "Help me fix error."},
                 {"sender": "cfo@corp.com", "recipient": "c@co.com", "subject": "Invoice approval", "body": "Approve this bill."},
             ]
-        })
+        }, headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "success"
@@ -413,10 +436,10 @@ class TestCortexE2E:
 class TestMemoraE2E:
     @classmethod
     def setup_class(cls):
-        # Several agents ship a top-level 'app' package; drop any cached one so Memora's own is imported.
-        for mod in list(sys.modules):
-            if mod in ("app", "apps") or mod.startswith(("app.", "apps.")):
-                sys.modules.pop(mod, None)
+        # Drop cached ambiguous top-level packages ('app', 'apps', 'core', ...)
+        # so Memora's own (including bare `core.*` imports like `core.config`)
+        # resolves to Memora, not Forge or another agent.
+        purge_ambiguous_modules()
         memora_path = os.path.join(REPO_ROOT, "Memora")
         if memora_path in sys.path:
             sys.path.remove(memora_path)
@@ -507,10 +530,8 @@ class TestMemoraE2E:
 class TestForgeE2E:
     @classmethod
     def setup_class(cls):
+        purge_ambiguous_modules()
         os.environ.pop("DATABASE_URL", None)
-        for mod in list(sys.modules):
-            if mod == "app" or mod.startswith("app."):
-                sys.modules.pop(mod, None)
         forge_path = os.path.join(REPO_ROOT, "Forge")
         if forge_path in sys.path:
             sys.path.remove(forge_path)
