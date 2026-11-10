@@ -1,0 +1,6 @@
+--- a/bridge/server.py
++++ b/bridge/server.py
+@@ -416,1 +416,3 @@
++    from auth import BridgeAuthMiddleware
++    app.add_middleware(BridgeAuthMiddleware)
+     app.add_middleware(
