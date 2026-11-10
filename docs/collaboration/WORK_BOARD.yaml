@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-10T09:45:00Z"
+snapshot_at: "2026-11-10T14:30:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -90,19 +90,20 @@ tasks:
 
   - id: "TASK-OPS-002"
     title: "Verify OCI capacity sniper authenticates and can allocate"
-    status: "IN_PROGRESS"
-    owner: "claude"
+    status: "VERIFIED"
+    owner: "zai"
+    verified_by: "claude (original IN_PROGRESS inspection) + zai (2026-11-10 run-log verification below)"
     branch: "main (workflow_dispatch)"
     pr: null
     files:
       - ".github/workflows/oracle-capacity-sniper.yml"
       - ".github/workflows/oracle-capacity-sniper-worker2.yml"
     dependencies:
-      - "Owner-provisioned OCI private key and correct OCI identity configuration"
+      - "Owner-provisioned OCI private key and correct OCI identity configuration (satisfied: OCI_FINGERPRINT configured in workflow secrets)"
     evidence:
       - "Runs 42551915292 and 42554225035 were in progress at the latest snapshot; run 42557535650 was pending."
-      - "Authentication and successful allocation were not verified."
-    next_action: "Inspect current logs for authenticated OCI API calls and allocation result; do not promote a new VM without owner decision."
+      - "2026-11-10 (ZAI, GitHub API log inspection of run 42761923442, completed success): OCI_FINGERPRINT configured (masked in log); 547 real snipe attempts over 321.2 minutes across shapes 1-2 OCPU / 4-12 GB; API responses are AUTHENTICATED traffic (429 rate-limit backoffs and per-shape 'Capacity full' responses - unauthenticated clients get 401s, not capacity errors); 24/7 relay dispatched the next runner successfully. Run 42801930924 in_progress at check time (loop healthy)."
+    next_action: "AUTHENTICATION: VERIFIED (2026-11-10 sniper run log, above). ALLOCATION: remains capacity-gated by Oracle's free A1 pool - that end-to-end portion stays with TASK-OPS-003 (standing backlog); the hourly sniper continues autonomously."
 
   - id: "TASK-INF-001"
     title: "Audit both Oracle VMs and service/resource posture"
@@ -823,6 +824,165 @@ tasks:
       - "Plan task (M3). 2026-11-10: 8/8 tests green; the composition sources are the same live-proven tools from today's M1/M2 acceptance traces (IntelX/Stratex dispatches, fleet probes)."
     blockers: []
     next_action: "Closed (composition + delivery). The spoken delivery rides the existing voice pipeline (the greeting pops the notification which voice mode speaks; the dashboard speaks the greeting reply). The owner hears it on his first morning greeting after deploy; full voice-loop validation with the owner lands with TASK-VOI-001 (LiveKit)."
+
+  - id: "TASK-VAL-001"
+    title: "Full fleet validation on live servers with per-agent evidence"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: ZAI direct main commit. New scripts/validate_fleet_live.py probes ALL TEN agents through the public gateway exactly as the owner reaches them (health + per-agent functional probes + MCP bridge initialize + TLS evidence), writes timestamped JSON + markdown evidence to docs/validation/. New Fleet Live Validation workflow adds the server-side half: per-agent systemctl ActiveState/NRestarts/ActiveEnterTimestamp + local /health probes on BOTH servers, schedulable 4x/day and manually dispatchable. This closes the plan requirement 'live checks cite public health endpoints and systemctl status with timestamps'."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "scripts/validate_fleet_live.py"
+      - ".github/workflows/fleet-live-validation.yml"
+    acceptance:
+      - "Full fleet validation on live servers with per-agent evidence."
+    evidence:
+      - "LIVE RUN 2026-11-10T13:5xZ (remote sandbox, owner's network path): 10/10 agents healthy (latencies 0.27-2.06s), bridge initialize 200 (v1.30.0), TLS 1.3 Let's Encrypt exp 2027-01-12; functional probes PASS: FRIDAY fleet_status 200 w/ real per-agent probe dict, remote chat mint correctly blocked 401 (D-023 gate live), control-session mint correctly blocked 401 without key (TASK-SEC-005 live). Evidence files: docs/validation/fleet_live_validation_2026-11-10.json + FLEET_LIVE_VALIDATION_2026-11-10.md."
+      - "Systemctl evidence runs on demand via the Fleet Live Validation workflow (both servers, per-agent NRestarts + local health + timestamps in the job log)."
+    blockers: []
+    next_action: "Owner (or ZAI post-merge): dispatch 'Fleet Live Validation' once to capture the server-side systemctl half; after that, close as VERIFIED citing both halves."
+
+  - id: "TASK-VAL-002"
+    title: "Security review of public ingress and bridge"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: ZAI direct main commit. Full anonymous-attacker review of https://friday-universe.duckdns.org: read-only probes + auth-rejection checks only (scripts/val002_ingress_probes.py, scripts/val002_probes_round2.py), findings in docs/security/INGRESS_BRIDGE_REVIEW_2026-11-10.md. VERIFIED SECURE: control-session mint (401 no key / 403 forged Origin / 401 wrong key - TASK-SEC-005 live), remote chat gate 401 (D-023), Forge task execute 401, Inference completions 401, FRIDAY voice speak 403 forged Origin, TLS 1.3, base security headers. FINDINGS: B-1 CRITICAL bridge is an anonymous RCE surface (33 tools incl. run_shell, write_file, git_push, oracle_restart_service - D-014's read-mostly premise is factually wrong; owner decision D-024 proposed: activate merged bridge auth); B-2 MEDIUM Stratex paper-trading surface accepts anonymous state changes (live guard keeps real money fail-closed; route-level key recommended); B-3 LOW Caddy hardening (HSTS/CSP/Server header); B-4 LOW dispatch records report anonymously readable (aggregate counters only)."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "scripts/val002_ingress_probes.py"
+      - "scripts/val002_probes_round2.py"
+      - "docs/security/INGRESS_BRIDGE_REVIEW_2026-11-10.md"
+    acceptance:
+      - "Security review of public ingress and bridge."
+    evidence:
+      - "2026-11-10 live probes (all from an unauthenticated remote vantage): bridge initialize 200 + anonymous tools/list captured 33 tools (list reproduced verbatim in the review appendix); Stratex /api/live/account 200 anonymous; Stratex consensus POST 200 anonymous (pure stateless math - classified); Inference /v1/chat/completions 401; all FRIDAY control-surface rejections PASS."
+    blockers: []
+    next_action: "OWNER DECISION D-024 required: activate the merged bridge auth (FRIDAY_BRIDGE_SHARED_SECRET + X-FRIDAY-BRIDGE-KEY). Until then the bridge URL is a live intrusion path. B-2/B-3 fixes ready to implement on owner direction."
+
+  - id: "TASK-OBS-001"
+    title: "Crash-loop and health alerting (Restart=always makes crash loops silent)"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: ZAI direct main commit. scripts/fleet_health_watcher.py: per cycle reads systemctl NRestarts/ActiveState/SubState + local /health for every unit; four alert classes (CRASH_LOOP on NRestarts delta >= 3 per window, SERVICE_DOWN, HEALTH_FAIL/UNREACHABLE, RECOVERED auto-close); cooldown dedup; state file survives watcher restarts; never crashes on a failed probe; pluggable FLEET_ALERT_COMMAND forwarding (FLEET_ALERT_TEXT/JSON). deploy/fleet-health-watcher.{service,timer}: 5-minute systemd timer (per-server fleet map via FLEET_WATCH_SERVICES). Deploy-side: deploy-monorepo.yml gained a post-deploy health gate on BOTH servers (probe every restarted agent up to 60s, print NRestarts, warn >3, FAIL the deploy job on any unhealthy agent - a silent crash loop is now a red X on the commit). Runbook: docs/observability/DEPLOY_HEALTH_AND_ROLLBACK.md. 26 unit tests over the decision logic (deltas, first-seen suppression, recovery, cooldown, persistence, daemon units, graceful degradation)."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "scripts/fleet_health_watcher.py"
+      - "deploy/fleet-health-watcher.service"
+      - "deploy/fleet-health-watcher.timer"
+      - ".github/workflows/deploy-monorepo.yml"
+      - "tests/test_fleet_health_watcher.py"
+      - "docs/observability/DEPLOY_HEALTH_AND_ROLLBACK.md"
+    acceptance:
+      - "Crash-loop and health alerting."
+    evidence:
+      - "tests/test_fleet_health_watcher.py 26/26 green (2026-11-10). deploy-monorepo.yml health-gate added to both deploy-server jobs (YAML validated)."
+    blockers: []
+    next_action: "OWNER ACTION (2 commands per server, in the runbook §3): cp the two unit files, enable the timer. Optional FLEET_ALERT_COMMAND for push alerts. The deploy-side gate is live on the next deploy with no server action."
+
+  - id: "TASK-OBS-002"
+    title: "Rollback procedure for a bad deploy (deploy uses git reset --hard)"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: ZAI direct main commit. scripts/rollback_deploy.sh: validates the target commit, REFUSES anything not an ancestor of the deployed HEAD (rollback-only - cannot roll forward/sideways), derives affected services from the folder diff, git reset --hard <target>, restarts only affected units, health-checks each up to 60s, writes an append-only JSON receipt to /var/lib/friday-universe/rollback-receipts/; modes --dry-run/--yes/--json; interactive confirmation types 'rollback'. .github/workflows/rollback-deploy.yml: one-click Fleet Rollback (manual) workflow_dispatch on BOTH servers via the existing CI SSH secret + typed confirmation, then re-probes all ten agents through the public gateway. Runbook with a roll-back-vs-fix-forward decision table in docs/observability/DEPLOY_HEALTH_AND_ROLLBACK.md. 8 guard tests against a throwaway git fixture."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "scripts/rollback_deploy.sh"
+      - ".github/workflows/rollback-deploy.yml"
+      - "tests/test_rollback_deploy.py"
+      - "docs/observability/DEPLOY_HEALTH_AND_ROLLBACK.md"
+    acceptance:
+      - "Rollback procedure for a bad deploy."
+    evidence:
+      - "tests/test_rollback_deploy.py 8/8 green (2026-11-10): rejects non-commit/same-HEAD/forward/sideways targets, accepts true ancestors, dry-run changes nothing, unconfirmed run aborts, affected-service detection from the folder diff."
+    blockers: []
+    next_action: "Closed (code+tests+workflow). First real use should follow the runbook decision table; drill with --dry-run any time."
+
+  - id: "TASK-INF-003"
+    title: "Backup and restore drill: Oracle DBs and service configs"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: ZAI direct main commit. scripts/backup_fleet_databases.py: per-agent logical JSONL dumps (gzip, mode 600) + SHA-256 manifest with a self-verify pass + config snapshot (credential env files + systemd units, secrets never printed); --dry-run inventory, --verify checksum validation, --agents subset, --media (VyralX media schema), --keep retention pruning; credentials resolved by the shared scripts/oracle_db.py (never stored in repo). scripts/restore_fleet_database.py: --verify-only read-only drill (manifest vs LIVE row counts = drift report) and --apply destructive load (refuses non-empty tables without --replace; FK-deferred retry pass; per-table honest reporting). .github/workflows/fleet-backup.yml: weekly Sun 03:30 UTC backup on Server 1 + manual dispatch, with a 2 GB free-disk guard. Runbook: docs/observability/BACKUP_RESTORE_AND_LEDGER_DRILL.md. 14 backup + 11 restore unit tests (fake oracledb connection)."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "scripts/backup_fleet_databases.py"
+      - "scripts/restore_fleet_database.py"
+      - ".github/workflows/fleet-backup.yml"
+      - "tests/test_backup_fleet_databases.py"
+      - "tests/test_restore_fleet_database.py"
+      - "docs/observability/BACKUP_RESTORE_AND_LEDGER_DRILL.md"
+    acceptance:
+      - "Backup and restore drill: Oracle DBs and service configs."
+    evidence:
+      - "tests/test_backup_fleet_databases.py 14/14 + tests/test_restore_fleet_database.py 11/11 green (2026-11-10): JSONL round-trip, checksum/tamper detection, manifest password-redaction, refuse-non-empty, truncate-replace, b64 LOB round-trip, retention pruning."
+    blockers: []
+    next_action: "First LIVE backup: dispatch the 'Fleet Backup' workflow once after this merge (reads real Oracle schemas on Server 1); the job log is the drill evidence. Offsite copy location is an owner decision (runbook §5)."
+
+  - id: "TASK-DATA-003"
+    title: "Persistence and recovery test for Memora and Stratex ledgers"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: ZAI direct main commit. tests/test_ledger_persistence_recovery.py: 4 tests using REAL SUBPROCESSES that exit between write and read (process death, not instance recycling). Memora: subprocess A boots the real FastAPI app on a file-backed test DB, ingests via POST /memories, dies; subprocess B boots fresh over the same file, reads back by id AND via query. Stratex: subprocess A reserves an order intent (OrderIntentStore) and advances RESERVED->SUBMITTING->ACCEPTED, dies; subprocess B re-opens the file: duplicate read returns the same terminal state + result, and a conflicting reuse of the same client-order-id with a different payload STILL raises IntentConflictError after restart (anti-double-spend contract holds across process death). Plus .github/workflows/ledger-persistence-drill.yml: production restart-survival drill (snapshot MEMORA+STRATEX ledger row counts -> owner-authorized typed-confirmation restart -> re-read -> compare; zero row loss = PASS) so the same proof runs against Oracle in production."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "tests/test_ledger_persistence_recovery.py"
+      - ".github/workflows/ledger-persistence-drill.yml"
+      - "docs/observability/BACKUP_RESTORE_AND_LEDGER_DRILL.md"
+    acceptance:
+      - "Persistence and recovery test for Memora and Stratex ledgers."
+    evidence:
+      - "tests/test_ledger_persistence_recovery.py 4/4 green (2026-11-10): both ledgers survive real process death; Stratex idempotency + audit trail intact across restart; conflicting reuse still detected."
+    blockers: []
+    next_action: "Closed (contract level). Production Oracle drill available any time via the 'Ledger Persistence Drill' workflow (typed 'restart' = the owner authorization the security rules require); cite its job log to upgrade evidence to Oracle-in-production."
+
+  - id: "TASK-ORCH-003"
+    title: "Verify the autonomous controller and fleet supervision before any autonomy claim"
+    status: "VERIFIED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: ZAI direct main commit. docs/autonomy/AUTONOMY_AUDIT_2026-11-10.md: complete inventory of all nine autonomy surfaces (authority/limits/logging/stop behavior each), verdict: supervision verified+honest; autonomy correctly bounded and OFF by default (runtime-only toggle); permitted claims = 'supervises the fleet continuously and reports failures honestly' + 'executes owner-requested agent tasks bounded, recorded, truthful'; NOT permitted = 'works autonomously on its own goals' until OBS-001 alerting is live server-side. New FRIDAY/tests/test_fleet_supervision_loop_contracts.py (8/8): failed poll sets last_error and KEEPS the last good snapshot; loop survives a failed cycle and polls again; running-flag lifecycle; autonomy toggle runtime-only (settings rebuild after enabled=True reads autonomous_mode=False); status reports runtime_only + never claims auto-approval while off; disk-backed action history survives controller re-instantiation. Existing autonomy suites re-run: 105 passed / 3 known sandbox-environmental failures (unchanged on clean HEAD; none of this tranche touches FRIDAY/src)."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "docs/autonomy/AUTONOMY_AUDIT_2026-11-10.md"
+      - "FRIDAY/tests/test_fleet_supervision_loop_contracts.py"
+    acceptance:
+      - "Verify the autonomous controller and fleet supervision before any autonomy claim."
+    evidence:
+      - "FRIDAY/tests/test_fleet_supervision_loop_contracts.py 8/8 green (2026-11-10)."
+      - "Live 2026-11-10: GET /friday/api/agents/status 200 with real per-agent probe data; all three autonomous API endpoints 401 without the owner key (control/goals/mode)."
+    blockers: []
+    next_action: "Closed at the verification level the plan asks for (the controller and supervision are VERIFIED before any autonomy claim; autonomy itself stays OFF). Follow-up candidate TASK-ORCH-005 (backlog): wire daemon output into the unified task records."
+
+  - id: "TASK-VOI-001"
+    title: "FRIDAY-Voice (LiveKit worker) live test with the owner: speak, be understood, get spoken answers"
+    status: "IN_PROGRESS"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: engineering side made READY. FRIDAY/scripts/voice_preflight.py: 9-check preflight (env, Gemini key, SDK import, real JWT token mint, LIVEKIT_URL host resolve+TCP, FRIDAY /api/livekit/token endpoint gate, worker module import with model/voice report) - no secrets printed. Smoke-verified from this sandbox: 8/9 PASS with the expected endpoint-refused (no local server); livekit_worker imports cleanly (model gemini-3.8-live, voice Aoede); LiveKit Cloud friday-voice.livekit.cloud resolves and accepts TLS. docs/voice/VOICE_TEST_KIT_2026-11-10.md: the owner's 5-minute six-phrase test script (English + Telugu per the worker's bilingual instructions), pass criteria per phrase, evidence-recording checklist for issue #35, and the known event-loop-latency caveat (158-679ms warnings 2026-11-08) with what to listen for. Voice suites re-run green: test_livekit_token.py + test_gemini_live_voice.py 29/29 (after installing the livekit SDK in the sandbox; the earlier 1 failure was the missing-SDK environmental class)."
+    milestone: "M3 (Master Plan v2)"
+    files:
+      - "FRIDAY/scripts/voice_preflight.py"
+      - "docs/voice/VOICE_TEST_KIT_2026-11-10.md"
+    acceptance:
+      - "FRIDAY-Voice live test with the owner: speak, be understood, get spoken answers."
+    evidence:
+      - "Preflight smoke run 8/9 PASS (2026-11-10, sandbox; the 9th check requires the live FRIDAY instance which is up on Server 1). 29/29 voice tests green."
+    blockers:
+      - "OWNER AVAILABILITY: the live voice session itself (owner decision 4 in the Master Plan)."
+    next_action: "Owner: run the preflight on Server 1 (2 min), then the 6-phrase kit (5 min) and post results to issue #35; TASK-VOI-001 closes as VERIFIED with the owner's own evidence. ZAI pre-cleared every engineering dependency."
 
 task_id_warnings:
   - id: "TASK-PERSONA-001"

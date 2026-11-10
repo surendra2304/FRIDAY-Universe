@@ -1,0 +1,17 @@
+[Unit]
+Description=FRIDAY Universe fleet health watcher (TASK-OBS-001)
+# One cycle of crash-loop detection and /health alerting; triggered by the timer.
+Documentation=https://github.com/surendra2304/FRIDAY-Universe
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/friday_universe
+ExecStart=/opt/friday_universe/venv/bin/python scripts/fleet_health_watcher.py --once
+# Per-server fleet map (Server 2 example):
+#   Environment=FLEET_WATCH_SERVICES=Sentinel:8008,Cortex:8009,VyralX:8010,VyralX-Daemon:-
+# Alert forwarding (optional; env vars FLEET_ALERT_TEXT / FLEET_ALERT_JSON):
+#   Environment=FLEET_ALERT_COMMAND=curl -s -X POST .../notify -d "$FLEET_ALERT_TEXT"
+User=ubuntu
+Nice=5
+# State lives in /var/lib so it survives package-style repo updates.
+StateDirectory=friday-universe

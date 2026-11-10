@@ -1,0 +1,195 @@
+{
+  "task": "TASK-VAL-001",
+  "gateway": "https://friday-universe.duckdns.org",
+  "started_at": "2026-11-10T13:56:23Z",
+  "agents": {
+    "FRIDAY": {
+      "gateway_prefix": "friday",
+      "health": {
+        "endpoint": "/friday/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.278,
+        "detail": "{\"status\": \"healthy\", \"service\": \"FRIDAY\", \"version\": \"2.0.0\", \"agent\": \"FRIDAY\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:23Z"
+      },
+      "functional": [
+        {
+          "label": "fleet_status",
+          "endpoint": "/friday/api/agents/status",
+          "http_status": 200,
+          "ok": true,
+          "latency_s": 0.365,
+          "evidence": "agents dict present",
+          "probed_at": "2026-11-10T13:56:24Z"
+        },
+        {
+          "label": "friend_persona_greeting",
+          "endpoint": "/friday/api/chat",
+          "http_status": 401,
+          "ok": true,
+          "latency_s": 0.271,
+          "evidence": "remote chat without owner key blocked with HTTP 401 (D-023 gate live); persona E2E needs the owner key",
+          "probed_at": "2026-11-10T13:56:24Z"
+        },
+        {
+          "label": "control_session_requires_key",
+          "endpoint": "/friday/api/control/session",
+          "http_status": 401,
+          "ok": true,
+          "latency_s": 0.271,
+          "evidence": "unauthenticated remote mint blocked with HTTP 401 (TASK-SEC-005 live)",
+          "probed_at": "2026-11-10T13:56:24Z"
+        }
+      ]
+    },
+    "Inference": {
+      "gateway_prefix": "inference",
+      "health": {
+        "endpoint": "/inference/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.291,
+        "detail": "{\"status\": \"healthy\", \"service\": \"inference\", \"version\": \"2.0.0\", \"agent\": \"Inference\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:25Z"
+      },
+      "functional": []
+    },
+    "Memora": {
+      "gateway_prefix": "memora",
+      "health": {
+        "endpoint": "/memora/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.532,
+        "detail": "{\"status\": \"healthy\", \"service\": \"memora\", \"version\": \"2.0.0\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:25Z"
+      },
+      "functional": [
+        {
+          "label": "health_detail",
+          "endpoint": "/memora/health",
+          "http_status": 200,
+          "ok": true,
+          "latency_s": 0.515,
+          "evidence": "{\"status\": \"healthy\", \"service\": \"memora\", \"evidence_class\": \"process_liveness\", \"observed_at\": \"2026-11-10T13:56:26.101232+00:00\", \"storage\": \"oracle\", \"databa",
+          "probed_at": "2026-11-10T13:56:26Z"
+        }
+      ]
+    },
+    "Stratex": {
+      "gateway_prefix": "stratex",
+      "health": {
+        "endpoint": "/stratex/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.287,
+        "detail": "{\"status\": \"ok\", \"service\": \"stratex\", \"version\": \"2.2.0\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:26Z"
+      },
+      "functional": []
+    },
+    "Futuris": {
+      "gateway_prefix": "futuris",
+      "health": {
+        "endpoint": "/futuris/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.535,
+        "detail": "{\"status\": \"ok\", \"service\": \"futuris\", \"version\": \"2.0.0\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:26Z"
+      },
+      "functional": []
+    },
+    "IntelX": {
+      "gateway_prefix": "intelx",
+      "health": {
+        "endpoint": "/intelx/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.27,
+        "detail": "{\"status\": \"ok\", \"service\": \"intelx\", \"version\": \"2.0.0\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:27Z"
+      },
+      "functional": []
+    },
+    "Forge": {
+      "gateway_prefix": "forge",
+      "health": {
+        "endpoint": "/forge/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.275,
+        "detail": "{\"status\": \"ok\", \"service\": \"forge\", \"version\": \"2.0.0\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:27Z"
+      },
+      "functional": []
+    },
+    "Sentinel": {
+      "gateway_prefix": "sentinel",
+      "health": {
+        "endpoint": "/sentinel/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.289,
+        "detail": "{\"status\": \"ok\", \"service\": \"sentinel\", \"version\": \"1.0.0\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:27Z"
+      },
+      "functional": []
+    },
+    "Cortex": {
+      "gateway_prefix": "cortex",
+      "health": {
+        "endpoint": "/cortex/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.35,
+        "detail": "{\"status\": \"healthy\", \"service\": \"cortex\", \"version\": \"2.1.0\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:28Z"
+      },
+      "functional": []
+    },
+    "VyralX": {
+      "gateway_prefix": "vyralx",
+      "health": {
+        "endpoint": "/vyralx/health",
+        "http_status": 200,
+        "healthy": true,
+        "latency_s": 0.292,
+        "detail": "{\"status\": \"ok\", \"service\": \"vyralx\", \"version\": \"0.2.0\"}",
+        "error": null,
+        "probed_at": "2026-11-10T13:56:28Z"
+      },
+      "functional": []
+    }
+  },
+  "bridge": {
+    "endpoint": "/bridge/mcp",
+    "http_status": 200,
+    "ok": true,
+    "latency_s": 0.694,
+    "server_info": "{\"name\": \"FRIDAY-Cloud-Engineering-Bridge\", \"version\": \"1.30.0\"}",
+    "error": null,
+    "probed_at": "2026-11-10T13:56:29Z"
+  },
+  "tls": {
+    "ok": false,
+    "error": "NameError: name 'socket' is not defined"
+  },
+  "finished_at": "2026-11-10T13:56:29Z",
+  "summary": {
+    "agents_healthy": 10,
+    "agents_total": 10,
+    "bridge_ok": true,
+    "all_functional_ok": true
+  }
+}

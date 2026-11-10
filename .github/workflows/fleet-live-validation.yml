@@ -1,0 +1,88 @@
+name: Fleet Live Validation
+
+# TASK-VAL-001 — repeatable full-fleet validation with per-agent evidence:
+#   1. public-gateway probes (identical to the owner's path)
+#   2. server-side systemctl status + NRestarts + local /health per agent
+# Evidence is printed into the job log (with timestamps) — cite the run URL
+# in WORK_BOARD/handoff. Run any time from the Actions tab.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"  # four times a day, off the hour
+
+jobs:
+  public-gateway:
+    name: Public gateway validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe all ten agents + bridge + TLS
+        run: |
+          python3 scripts/validate_fleet_live.py --out "$GITHUB_WORKSPACE/validation"
+
+  server1:
+    name: Server 1 systemctl evidence
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect per-agent evidence on Server 1
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            echo "=== Server 1 fleet evidence $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            for SVC in FRIDAY Inference Memora Stratex Futuris IntelX Forge Stratex-Daemon; do
+              if systemctl list-unit-files | grep -qw "${SVC}.service"; then
+                ACTIVE=$(systemctl is-active "${SVC}.service" || true)
+                RESTARTS=$(systemctl show "${SVC}.service" --property=NRestarts --value)
+                SINCE=$(systemctl show "${SVC}.service" --property=ActiveEnterTimestamp --value)
+                echo "${SVC}: active=${ACTIVE} NRestarts=${RESTARTS} since='${SINCE}'"
+                if [ "$RESTARTS" -gt 5 ]; then
+                  echo "::warning::${SVC} NRestarts=${RESTARTS} — crash-loop suspicion (see fleet_health_watcher)"
+                fi
+              else
+                echo "${SVC}: unit not registered on this server"
+              fi
+            done
+            echo "--- local /health probes ---"
+            for PAIR in "FRIDAY:10000" "Inference:8001" "Memora:8002" "Stratex:8003" "Futuris:8004" "IntelX:8005" "Forge:8006"; do
+              AGENT="${PAIR%:*}"; PORT="${PAIR#*:}"
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 8 "http://127.0.0.1:${PORT}/health" || echo "000")
+              echo "${AGENT}: /health HTTP ${CODE}"
+              [ "$CODE" = "200" ] || echo "::warning::${AGENT} local /health returned ${CODE}"
+            done
+
+  server2:
+    name: Server 2 systemctl evidence
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect per-agent evidence on Server 2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            echo "=== Server 2 fleet evidence $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            for SVC in VyralX Sentinel Cortex VyralX-Daemon; do
+              if systemctl list-unit-files | grep -qw "${SVC}.service"; then
+                ACTIVE=$(systemctl is-active "${SVC}.service" || true)
+                RESTARTS=$(systemctl show "${SVC}.service" --property=NRestarts --value)
+                SINCE=$(systemctl show "${SVC}.service" --property=ActiveEnterTimestamp --value)
+                echo "${SVC}: active=${ACTIVE} NRestarts=${RESTARTS} since='${SINCE}'"
+                if [ "$RESTARTS" -gt 5 ]; then
+                  echo "::warning::${SVC} NRestarts=${RESTARTS} — crash-loop suspicion (see fleet_health_watcher)"
+                fi
+              else
+                echo "${SVC}: unit not registered on this server"
+              fi
+            done
+            echo "--- local /health probes ---"
+            for PAIR in "Sentinel:8008" "Cortex:8009" "VyralX:8010"; do
+              AGENT="${PAIR%:*}"; PORT="${PAIR#*:}"
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 8 "http://127.0.0.1:${PORT}/health" || echo "000")
+              echo "${AGENT}: /health HTTP ${CODE}"
+              [ "$CODE" = "200" ] || echo "::warning::${AGENT} local /health returned ${CODE}"
+            done

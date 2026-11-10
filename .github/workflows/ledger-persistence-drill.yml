@@ -1,0 +1,88 @@
+name: Ledger Persistence Drill
+
+# TASK-DATA-003 — production restart-survival proof for the two ledgers that
+# must never lose a row: Memora (memories) and Stratex (order intents).
+#
+# This workflow RESTARTS two production services. The typed confirmation is
+# the owner authorization the security rules require for that restart.
+# Evidence: pre/post row counts with timestamps in the job log.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmed:
+        description: "Type 'restart' to authorize restarting Memora and Stratex"
+        required: true
+        default: ""
+
+jobs:
+  drill:
+    name: Memora + Stratex restart-survival drill
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse to run without explicit owner authorization
+        run: |
+          if [ "${{ inputs.confirmed }}" != "restart" ]; then
+            echo "::error::This drill restarts Memora and Stratex. Re-run and type 'restart' in the confirmation field."
+            exit 1
+          fi
+      - name: Snapshot, restart, re-read, compare
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            echo "=== Ledger persistence drill $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            SNAPSHOT() {
+              /opt/friday_universe/venv/bin/python - <<'EOF'
+              import json, sys
+              sys.path.insert(0, "scripts")
+              from oracle_db import resolve_target, connect, list_tables
+              out = {}
+              for agent in ("MEMORA", "STRATEX"):
+                  try:
+                      t = resolve_target(agent)
+                      conn = connect(t)
+                      counts = {}
+                      for table in list_tables(conn):
+                          with conn.cursor() as cur:
+                              cur.execute(f'SELECT COUNT(*) FROM "{table}"')
+                          counts[table] = int(cur.fetchone()[0])
+                      conn.close()
+                      out[agent] = counts
+                  except Exception as exc:
+                      out[agent] = {"__error__": str(exc)[:200]}
+              print(json.dumps(out))
+              EOF
+            }
+            echo "--- BEFORE (live row counts) ---"
+            BEFORE=$(SNAPSHOT)
+            echo "$BEFORE"
+            echo "--- restarting Memora + Stratex ---"
+            sudo systemctl restart Memora Stratex
+            sleep 20
+            echo "--- AFTER (live row counts) ---"
+            AFTER=$(SNAPSHOT)
+            echo "$AFTER"
+            echo "--- comparison ---"
+            /opt/friday_universe/venv/bin/python - "$BEFORE" "$AFTER" <<'EOF'
+            import json, sys
+            before, after = json.loads(sys.argv[1]), json.loads(sys.argv[2])
+            failures = []
+            for agent, counts in before.items():
+                after_counts = after.get(agent, {})
+                for table, count in counts.items():
+                    live = after_counts.get(table)
+                    if live is None:
+                        failures.append(f"{agent}.{table}: missing after restart")
+                    elif live < count:
+                        failures.append(f"{agent}.{table}: {count} -> {live} (LOST {count-live} rows)")
+            if failures:
+                for f in failures:
+                    print(f"::error::DATA LOSS {f}")
+                sys.exit(1)
+            print("PASS: no ledger row loss across the Memora/Stratex restart.")
+            EOF

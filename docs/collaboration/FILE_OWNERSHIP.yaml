@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-10T09:45:00Z"
+snapshot_at: "2026-11-10T14:30:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 rule: "The GitHub claim thread plus a current branch/PR is the shared ownership record. This file is the searchable mirror, not an atomic lock."
@@ -640,6 +640,202 @@ claims:
     branches: []
     status: "DIRECT_COMMIT_D023"
     task: "TASK-VOI-002 tests: window gating, once-per-morning, honest failures, delivery."
+
+  - path: "scripts/validate_fleet_live.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VAL-001: live fleet validation through the public gateway with per-agent evidence."
+
+  - path: "scripts/val002_ingress_probes.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VAL-002: read-only ingress security probes (round 1)."
+
+  - path: "scripts/val002_probes_round2.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VAL-002: corrected-path + bridge MCP session protocol probes (round 2)."
+
+  - path: "docs/security/INGRESS_BRIDGE_REVIEW_2026-11-10.md"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VAL-002: anonymous ingress/bridge security review with live evidence and owner decision D-024 proposal."
+
+  - path: "scripts/fleet_health_watcher.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-001: crash-loop detection and health alerting watcher."
+
+  - path: "deploy/fleet-health-watcher.service"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-001: systemd service unit for the fleet health watcher."
+
+  - path: "deploy/fleet-health-watcher.timer"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-001: 5-minute systemd timer for the fleet health watcher."
+
+  - path: ".github/workflows/deploy-monorepo.yml"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-001: post-deploy health gate added to both server jobs (probe restarted agents, NRestarts visibility, fail the job on unhealthy agents)."
+
+  - path: "tests/test_fleet_health_watcher.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-001: 26 unit tests over the watcher decision logic."
+
+  - path: "scripts/rollback_deploy.sh"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-002: ancestor-guarded production rollback script with receipts."
+
+  - path: ".github/workflows/rollback-deploy.yml"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-002: one-click Fleet Rollback workflow (both servers, typed confirmation, post-rollback gateway check)."
+
+  - path: "tests/test_rollback_deploy.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-002: 8 guard tests against a git fixture (forward/sideways refusal etc.)."
+
+  - path: "docs/observability/DEPLOY_HEALTH_AND_ROLLBACK.md"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-OBS-001/002: runbook (activation commands, decision table, evidence trail)."
+
+  - path: "scripts/backup_fleet_databases.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-INF-003: per-agent logical JSONL backup + config snapshot + checksum verify."
+
+  - path: "scripts/restore_fleet_database.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-INF-003: read-only restore drill + guarded destructive load."
+
+  - path: ".github/workflows/fleet-backup.yml"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-INF-003: weekly scheduled backup on Server 1 + manual dispatch with disk guard."
+
+  - path: "tests/test_backup_fleet_databases.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-INF-003: 14 unit tests over dump/manifest/verify logic."
+
+  - path: "tests/test_restore_fleet_database.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-INF-003: 11 unit tests over drill/apply guards."
+
+  - path: ".github/workflows/ledger-persistence-drill.yml"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-DATA-003: owner-authorized production restart-survival drill for Memora/Stratex ledgers."
+
+  - path: "tests/test_ledger_persistence_recovery.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-DATA-003: 4 real-subprocess process-death persistence tests for both ledgers."
+
+  - path: "docs/observability/BACKUP_RESTORE_AND_LEDGER_DRILL.md"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-INF-003/DATA-003: backup, restore, retention and ledger-drill runbook."
+
+  - path: "docs/autonomy/AUTONOMY_AUDIT_2026-11-10.md"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-ORCH-003: autonomy + fleet supervision audit with permitted/forbidden claims."
+
+  - path: "FRIDAY/tests/test_fleet_supervision_loop_contracts.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-ORCH-003: 8 guard tests over supervision honesty + runtime-only autonomy."
+
+  - path: "FRIDAY/scripts/voice_preflight.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VOI-001: 9-check voice-loop preflight (no secrets printed)."
+
+  - path: "docs/voice/VOICE_TEST_KIT_2026-11-10.md"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VOI-001: the owner's 6-phrase live voice test kit with evidence checklist."
+
+  - path: ".github/workflows/fleet-live-validation.yml"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VAL-001: repeatable fleet validation workflow (public gateway + both servers' systemctl evidence)."
+
+  - path: "docs/validation/fleet_live_validation_2026-11-10.json"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VAL-001: live validation machine-readable evidence (10/10 healthy, 2026-11-10)."
+
+  - path: "docs/validation/FLEET_LIVE_VALIDATION_2026-11-10.md"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-VAL-001: live validation human-readable evidence table (2026-11-10)."
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"

@@ -1,0 +1,81 @@
+name: Fleet Rollback (manual)
+
+# TASK-OBS-002 — one-click rollback for a bad deploy, from the GitHub UI.
+# The deploy workflow moves both servers forward with `git reset --hard
+# origin/main`; this is the inverse operation, restricted to moving BACKWARD:
+# scripts/rollback_deploy.sh refuses any target that is not an ancestor of the
+# currently deployed commit.
+#
+# Use when: a deploy broke a service and fix-forward would take longer than
+# rolling back. Evidence lands in the job log (per-service health after
+# rollback) and in /var/lib/friday-universe/rollback-receipts/ on each server.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: "Known-good commit SHA to roll back to (must be an ancestor of the deployed HEAD)"
+        required: true
+      confirmed:
+        description: "Type 'rollback' to confirm"
+        required: true
+        default: ""
+      dry_run:
+        description: "Preview only (no changes applied)"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  rollback:
+    name: Roll back to ${{ inputs.target_sha }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - server: Server 1
+            host: SERVER1_HOST
+          - server: Server 2
+            host: SERVER2_HOST
+    steps:
+      - name: Refuse to run without explicit confirmation
+        run: |
+          if [ "${{ inputs.confirmed }}" != "rollback" ]; then
+            echo "::error::This workflow is a production rollback. Re-run it and type 'rollback' in the confirmation field."
+            exit 1
+          fi
+      - name: Roll back ${{ matrix.server }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets[matrix.host] }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            MODE=""
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              sudo bash scripts/rollback_deploy.sh "${{ inputs.target_sha }}" --dry-run
+            else
+              sudo bash scripts/rollback_deploy.sh "${{ inputs.target_sha }}" --yes --json
+            fi
+      - name: Post-rollback fleet health (public gateway)
+        run: |
+          sleep 30
+          python3 - <<'EOF'
+          import json, urllib.request, sys
+          base = "https://friday-universe.duckdns.org"
+          agents = ["friday","inference","memora","stratex","futuris","intelx","forge","sentinel","cortex","vyralx"]
+          bad = []
+          for a in agents:
+              try:
+                  with urllib.request.urlopen(f"{base}/{a}/health", timeout=15) as r:
+                      print(f"{a}: HTTP {r.status}")
+                      if r.status != 200: bad.append(a)
+              except Exception as e:
+                  print(f"{a}: FAILED {e}"); bad.append(a)
+          if bad:
+              print(f"::warning::Unhealthy after rollback: {bad}")
+          else:
+              print("All agents healthy after rollback.")
+          EOF

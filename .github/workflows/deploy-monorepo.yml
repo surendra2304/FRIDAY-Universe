@@ -90,6 +90,42 @@ jobs:
               fi
             fi
 
+            # ── TASK-OBS-001 post-deploy health gate ─────────────────────────────
+            # A unit under Restart=always can sit in a crash loop and still read
+            # "active". Probe each restarted agent over HTTP and surface failures
+            # in the job log instead of leaving them silent.
+            echo "=== Post-deploy health gate ==="
+            FAILED_HEALTH=""
+            for AGENT in "${SERVER1_AGENTS[@]}"; do
+              PORT=""
+              case "$AGENT" in
+                FRIDAY) PORT=10000;; Inference) PORT=8001;; Memora) PORT=8002;;
+                Stratex) PORT=8003;; Futuris) PORT=8004;; IntelX) PORT=8005;; Forge) PORT=8006;;
+              esac
+              [ -n "$PORT" ] || continue
+              OK=""
+              for i in $(seq 1 12); do
+                if curl -sf -m 5 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then OK=yes; break; fi
+                sleep 5
+              done
+              if [ "$OK" = "yes" ]; then
+                RESTARTS=$(systemctl show "$AGENT.service" --property=NRestarts --value)
+                echo "    $AGENT: healthy (NRestarts=$RESTARTS)"
+                if [ "${RESTARTS:-0}" -gt 3 ]; then
+                  echo "    ::warning::$AGENT restarted ${RESTARTS}x since boot — possible crash loop"
+                fi
+              else
+                STATUS=$(systemctl is-active "$AGENT.service" || true)
+                echo "    ::error::$AGENT UNHEALTHY after deploy (systemd: $STATUS)"
+                FAILED_HEALTH="$FAILED_HEALTH $AGENT"
+              fi
+            done
+            if [ -n "$FAILED_HEALTH" ]; then
+              echo "::error::Deploy completed but health gate failed for:$FAILED_HEALTH — run scripts/rollback_deploy.sh <last-good-sha> or the 'Fleet Rollback' workflow"
+              exit 1
+            fi
+            echo "=== Health gate passed on Server 1 ==="
+
   deploy-server2:
     name: Deploy Specialist Fleet (Server 2)
     needs: detect-changes
@@ -131,3 +167,35 @@ jobs:
                 sudo systemctl restart VyralX-Daemon.service
               fi
             fi
+
+            # ── TASK-OBS-001 post-deploy health gate ─────────────────────────────
+            echo "=== Post-deploy health gate ==="
+            FAILED_HEALTH=""
+            for AGENT in "${SERVER2_AGENTS[@]}"; do
+              PORT=""
+              case "$AGENT" in
+                Sentinel) PORT=8008;; Cortex) PORT=8009;; VyralX) PORT=8010;;
+              esac
+              [ -n "$PORT" ] || continue
+              OK=""
+              for i in $(seq 1 12); do
+                if curl -sf -m 5 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then OK=yes; break; fi
+                sleep 5
+              done
+              if [ "$OK" = "yes" ]; then
+                RESTARTS=$(systemctl show "$AGENT.service" --property=NRestarts --value)
+                echo "    $AGENT: healthy (NRestarts=$RESTARTS)"
+                if [ "${RESTARTS:-0}" -gt 3 ]; then
+                  echo "    ::warning::$AGENT restarted ${RESTARTS}x since boot — possible crash loop"
+                fi
+              else
+                STATUS=$(systemctl is-active "$AGENT.service" || true)
+                echo "    ::error::$AGENT UNHEALTHY after deploy (systemd: $STATUS)"
+                FAILED_HEALTH="$FAILED_HEALTH $AGENT"
+              fi
+            done
+            if [ -n "$FAILED_HEALTH" ]; then
+              echo "::error::Deploy completed but health gate failed for:$FAILED_HEALTH — run scripts/rollback_deploy.sh <last-good-sha> or the 'Fleet Rollback' workflow"
+              exit 1
+            fi
+            echo "=== Health gate passed on Server 2 ==="

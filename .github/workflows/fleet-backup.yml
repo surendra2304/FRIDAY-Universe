@@ -1,0 +1,47 @@
+name: Fleet Backup
+
+# TASK-INF-003 — weekly logical backup of all agent Oracle schemas + service
+# configs on Server 1 (where the credential env files live), plus manual runs.
+# Evidence: table counts + SHA-256 verify summary in the job log.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Inventory only (no files written)"
+        required: false
+        type: boolean
+        default: false
+      agents:
+        description: "Comma list of agents (empty = all)"
+        required: false
+        default: ""
+  schedule:
+    - cron: "30 3 * * 0"  # Sundays 03:30 UTC
+
+jobs:
+  backup:
+    name: Backup fleet databases on Server 1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run backup
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            echo "=== Fleet backup $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            FREE_KB=$(df --output=avail -k /var | tail -1 | tr -d ' ')
+            if [ "$FREE_KB" -lt 2097152 ]; then
+              echo "::error::Less than 2 GB free on /var — aborting backup to protect the server."
+              exit 1
+            fi
+            ARGS="--keep 4"
+            if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
+            if [ -n "${{ inputs.agents }}" ]; then ARGS="$ARGS --agents ${{ inputs.agents }}"; fi
+            sudo /opt/friday_universe/venv/bin/python scripts/backup_fleet_databases.py $ARGS
+            echo "=== Latest backups ==="
+            sudo ls -lt /var/backups/friday-universe | head -5
