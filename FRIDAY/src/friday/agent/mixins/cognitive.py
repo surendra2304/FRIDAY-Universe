@@ -166,6 +166,15 @@ class CognitiveMixin:
             greeting_response = self._greeting_fast_path(clean_input)
             if greeting_response is not None:
                 if hasattr(self, "notifications") and self.notifications:
+                    # TASK-VOI-002: the morning brief is composed (once per
+                    # morning, from real data) and pushed here so the owner
+                    # hears/ssees it on his first greeting of the day.
+                    try:
+                        from friday.proactive.morning_brief import maybe_deliver_morning_brief
+
+                        maybe_deliver_morning_brief(self.notifications)
+                    except Exception as brief_exc:
+                        logger.debug(f"morning brief delivery skipped: {brief_exc}")
                     proactive = self.notifications.pop_notifications_summary()
                     if proactive:
                         from friday.persona.friday import proactive_style

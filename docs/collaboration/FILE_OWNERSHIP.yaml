@@ -626,6 +626,21 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-FOR-002 tests: routing + truthfulness + the two directive-conflict regressions."
 
+
+  - path: "FRIDAY/src/friday/proactive/morning_brief.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-VOI-002: proactive morning brief — real data, honest failures, once per morning."
+
+  - path: "FRIDAY/tests/test_morning_brief.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-VOI-002 tests: window gating, once-per-morning, honest failures, delivery."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

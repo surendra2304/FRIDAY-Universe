@@ -1757,6 +1757,19 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
             logger.debug(f"Memora proactive recall skipped in greeting: {_e}")
         if _remembered_line:
             _reply = f"{_reply}\n\nSince we last talked, I still remember this: {_remembered_line}."
+        # TASK-VOI-002: the proactive morning brief (once per morning, from
+        # real data — daily goal, live fleet status, portfolio snapshot,
+        # overnight events) joins the greeting so the owner gets it on his
+        # first "hello" of the day. A failed component contributes an honest
+        # line; delivery failure never breaks the greeting.
+        try:
+            from friday.proactive.morning_brief import maybe_deliver_morning_brief
+
+            _brief = maybe_deliver_morning_brief(agent.notifications)
+            if _brief:
+                _reply = f"{_brief}\n\n{_reply}"
+        except Exception as _brief_exc:
+            logger.debug(f"morning brief skipped in server greeting: {_brief_exc}")
         return {
             "reply": _reply,
             "metadata": {

@@ -803,6 +803,27 @@ tasks:
     blockers: []
     next_action: "Closed (engineering side). The owner's first 'write me a script that...' in the new dashboard runs the full path: chat -> forge_code_task -> Forge sandbox build with verification manifest. If production FRIDAY lacks FRIDAY_FORGE_API_KEY the tool reports the honest failure — check the server .env and set it (owner action)."
 
+  - id: "TASK-VOI-002"
+    title: "Proactive morning brief: fleet status, portfolio summary and overnight events"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit. New friday/proactive/morning_brief.py: composes the brief ONCE per morning (09:00-12:00 window, Surendra's 09:00 wake hour) from REAL data — daily focus goal (DailyRhythmManager), live fleet status (FleetStatusTool — same truth as /api/agents/status), portfolio snapshot (StratexPortfolioTool, read-only), overnight events (pending proactive notifications) — and pushes it as a proactive notification (category morning_brief, dated metadata for dedupe). Delivery hooks: the agent greeting path (before the notification pop, so the brief is spoken/surfaced on the owner's first 'hello friday' of the day) and the /api/chat server greeting short-circuit (prepended to the reply). Every failing component contributes an honest line ('probe failed (X), so I won't guess'); delivery failure never breaks the greeting; composition at most once per morning (locked by tests). 8 tests in FRIDAY/tests/test_morning_brief.py (once-per-morning, window gating, honest failures, overnight inclusion, delivery push, broken-notification-system never raises, goal-line real-or-honest, greeting carries the brief); affected suites 120 green together."
+    milestone: "M3 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/proactive/morning_brief.py"
+      - "FRIDAY/src/friday/proactive/__init__.py"
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_morning_brief.py"
+    acceptance:
+      - "Proactive morning brief: spoken fleet status, portfolio summary and overnight events."
+    evidence:
+      - "Plan task (M3). 2026-11-10: 8/8 tests green; the composition sources are the same live-proven tools from today's M1/M2 acceptance traces (IntelX/Stratex dispatches, fleet probes)."
+    blockers: []
+    next_action: "Closed (composition + delivery). The spoken delivery rides the existing voice pipeline (the greeting pops the notification which voice mode speaks; the dashboard speaks the greeting reply). The owner hears it on his first morning greeting after deploy; full voice-loop validation with the owner lands with TASK-VOI-001 (LiveKit)."
+
 task_id_warnings:
   - id: "TASK-PERSONA-001"
     title: "Warm friend + Jarvis persona for FRIDAY"
