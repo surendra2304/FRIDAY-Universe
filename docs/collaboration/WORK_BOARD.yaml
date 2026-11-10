@@ -567,8 +567,8 @@ tasks:
 
   - id: "TASK-JARVIS-M1"
     title: "M1 — first real task end-to-end through FRIDAY chat (the owner's dream demo)"
-    status: "AVAILABLE"
-    owner: null
+    status: "IN_PROGRESS"
+    owner: "zai"
     branch: null
     pr: null
     milestone: "M1 (Master Plan v2)"
@@ -582,12 +582,13 @@ tasks:
       - "FRIDAY reports the real result back in the friend persona; the end-to-end trace is recorded in handoff.md (closes TASK-WF-001)."
     evidence:
       - "Live baseline 2026-11-10 (ZAI): persona, Memora recall and the Groq pipeline verified live; dispatch fails at the action limit with routed_capability=VISION_MODEL (ACTIVITY_LOG same date)."
+      - "2026-11-10 afternoon (ZAI, production, post-551aa77 deploy): engineering-side acceptance trace RECORDED — 4 real dispatches through the live unified bus: IntelX research COMPLETED 2.98s (real citations response), Inference reasoning COMPLETED 1.61s, Stratex portfolio COMPLETED 7.30s (balance 10792.8, 7 strategies), Futuris FAILED truthfully (HTTP 501 no evidence-backed handler — honest, not fabricated). GET /api/v1/dispatch/records/report on production: 4 records, 3 completed / 1 failed, per-agent counts present. Browser-side chat path E2E-verified locally (agent-browser): boot -> key gate -> HUD -> POST /api/chat reply, zero console errors; dashboard live at friday-universe.duckdns.org/friday."
     dependencies:
-      - "TASK-ORCH-001, TASK-ORCH-002, TASK-ORCH-004 before the TASK-WF-001 acceptance trace"
+      - "TASK-ORCH-001, TASK-ORCH-002, TASK-ORCH-004 (all MERGED 2026-11-10)"
     risk_flags:
       - "Keyword-substring routing misroutes live traffic (proven 2026-11-10); any routing change needs its own test table."
     blockers: []
-    next_action: "Claim TASK-JARVIS-M1 (or one of its child tasks) on issue #35, then implement TASK-ORCH-001 (intent classification + routing table), TASK-ORCH-002 (shared TaskRecordStore wiring), TASK-ORCH-004 (action limits); close with the TASK-WF-001 trace."
+    next_action: "Remaining for M1 closure: the OWNER runs the friend-chat version in his browser (paste FRIDAY_API_KEY once at the new dashboard, say 'Friday, research X and give me the highlights') and the trace is recorded in handoff.md. All engineering prerequisites are merged and deployed; Futuris's missing generic-task handler is noted for TASK-FUT-001."
 
   - id: "TASK-ORCH-001"
     title: "Replace keyword-substring routing with explicit intent classification and a tested routing table"
