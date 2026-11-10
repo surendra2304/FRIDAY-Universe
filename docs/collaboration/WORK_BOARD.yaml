@@ -763,6 +763,23 @@ tasks:
     blockers: []
     next_action: "Closed. The owner sees the remembered line on his next 'hello friday' in production (his Memora history is live there)."
 
+  - id: "TASK-FOR-001"
+    title: "Security review of the Forge code-execution sandbox (prerequisite for M2 code tasks)"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: completed by ZAI as a direct main commit. Full review delivered as docs/security/FORGE_SANDBOX_REVIEW_2026-11-10.md (line-by-line review of every execution path + adversarial pattern probing + security-suite runs). VERDICT: APPROVED for M2 code tasks — no critical or high findings. Eight defense layers verified independently: (1) fail-closed API auth (503 without a >=32-char unique key, hmac.compare_digest, mesh-credential or own key); (2) command risk policy (secret-like commands rejected, git push separately authorized, network tools gated, pipe-to-shell injection blocked); (3) allowlist env isolation (denylist inversion — future secrets dropped by default); (4) process isolation (start_new_session, kill only the child tree — the self-kill fix holds); (5) workspace confinement (canonical-path validation, 8.3-name resolution, SandboxViolationError on traversal); (6) immutable role permissions (frozen allowlist, deny by default); (7) output hygiene (secret redaction, 200KB truncation, full audit log); (8) delegation receipts + Sentinel delivery gate (fail-closed). Findings: F-1 low (two drifted security tests — protections present in code; follow-up TASK-FOR-003 test-repair recommended), F-2 low (dependency installs inherently execute setup code — acceptable with allow_network=False default), F-3 info (webhooks behind the same mesh credential). No Forge file was modified."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "docs/security/FORGE_SANDBOX_REVIEW_2026-11-10.md"
+    acceptance:
+      - "Security review of the Forge code-execution sandbox (prerequisite for M2 code tasks)."
+    evidence:
+      - "Review document (this commit). Security suites run in the review environment: test_execution_tools pass; test_critical_execution_security pass except two pre-existing environmental failures (F-1, test/model drift on Settings.database_path + subprocess battery needing the full runtime)."
+    blockers: []
+    next_action: "Closed. Unblocks TASK-FOR-002 (Forge executes one real code task through FRIDAY chat) via POST /forge/delegate action=build with allow_network=False defaults. Backlog: TASK-FOR-003 (repair the two drifted security tests)."
+
 task_id_warnings:
   - id: "TASK-PERSONA-001"
     title: "Warm friend + Jarvis persona for FRIDAY"

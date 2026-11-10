@@ -603,6 +603,14 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-MEM-003 tests: proactive greeting memory (agent + server ladder), failure-never-breaks, truncation."
 
+
+  - path: "docs/security/FORGE_SANDBOX_REVIEW_2026-11-10.md"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-FOR-001: Forge sandbox security review (verdict: approved for M2 code tasks)."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:
