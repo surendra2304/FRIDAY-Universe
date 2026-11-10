@@ -187,6 +187,13 @@ class CognitiveMixin:
             if conversational_response is not None:
                 return conversational_response
 
+            # TASK-ORCH-007: explicit delegation phrasings dispatch straight to
+            # the named agent — BEFORE the fleet-status path so "send this task
+            # to Sentinel: check the fleet" is a dispatch, not a status probe.
+            delegation_response = self._delegation_fast_path(clean_input, start_time)
+            if delegation_response is not None:
+                return delegation_response
+
             # TASK-API-002: fleet-health questions get a real probe, not an
             # LLM guess — "how's the fleet?" answers with live agent status.
             fleet_response = self._fleet_status_fast_path(clean_input, start_time)

@@ -1184,6 +1184,30 @@ tasks:
     blockers: []
     next_action: "Update statuses as batches land; the checklist is the 100% contract with the owner."
 
+  - id: "TASK-ORCH-007"
+    title: "Delegation fast-path + phantom-XML redirect — 'assign a task to X' really dispatches"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "It should assign tasks to other agents (2026-11-11 chat)."
+    merge_note: "2026-11-11 IST. Live evidence chain: after ORCH-005+ORCH-006 deploys, /api/tools confirmed fleet_dispatch registered (83 tools live), yet the model still answered 'assign a quick task to IntelX' with invented <execute_agent> XML text and a Sentinel probe with <send_task> XML — its training bias outranks the tool schema. Fix layer 1: deterministic delegation fast-path BEFORE the fleet-status path (which was also hijacking '…check the fleet' phrasings); extracts agent+task, normalizes typos/aliases, strips result-tail clauses, returns the agent's real result with task receipt. Layer 2: agent-loop phantom-XML redirect — one redirect turn toward the real tool when delegation markup appears as text with fleet_dispatch available. Layer 3: 15 regression tests. Pre-existing asyncio pollution in test_boss_identity_contract (get_event_loop vs asyncio.run, reproduced with intelx fast-path tests on clean logic) fixed — battery 131/131."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"
+      - "FRIDAY/src/friday/agent/agent.py"
+      - "FRIDAY/tests/test_delegation_fast_path.py"
+      - "FRIDAY/tests/test_boss_identity_contract.py"
+    acceptance:
+      - "'assign a quick task to <agent>: <task>' dispatches via fleet_dispatch and returns the agent's real result + task receipt."
+      - "Delegation phrasing with the word 'fleet' is a dispatch, not a status probe."
+      - "Non-fleet recipients and empty tasks fall through to the model (no false positives)."
+      - "Phantom delegation XML as text triggers at most one redirect toward the real tool."
+    evidence: "tests/test_delegation_fast_path.py 15/15 (7 phrasings x real dispatch, tail-strip, no-hijack, fall-throughs, redirect convergence, bounded phantom, angle-bracket-safe); full battery 131/131 green incl. boss contract, agent, multi-tool, intelx, memory guard, gemini tools; pre-existing pollution reproduced with intelx-before-boss on unchanged logic before fixing the helper."
+    blockers: []
+    next_action: "Live re-test of both probe phrasings on the deployed site after Fleet CD; tick checklist C6 on live success; C13 (status queries 'what happened to that task') is the next delegation item."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

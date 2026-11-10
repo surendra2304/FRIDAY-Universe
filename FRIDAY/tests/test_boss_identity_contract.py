@@ -23,7 +23,11 @@ import pytest
 def _dispatch(message: str) -> dict:
     from friday.api.server import _dispatch_command
 
-    return asyncio.get_event_loop().run_until_complete(_dispatch_command(message))
+    # asyncio.run (not get_event_loop().run_until_complete): the deprecated
+    # pattern raised "no current event loop" whenever an earlier test in the
+    # same process had already run asyncio.run() — e.g. any fast-path test
+    # that dispatches through a fleet tool. asyncio.run is loop-safe here.
+    return asyncio.run(_dispatch_command(message))
 
 
 @pytest.mark.parametrize(

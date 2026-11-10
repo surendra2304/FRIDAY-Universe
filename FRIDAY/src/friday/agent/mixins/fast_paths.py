@@ -297,6 +297,99 @@ class FastPathMixin:
             },
         )
 
+    def _delegation_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """TASK-ORCH-007: explicit delegation phrasings dispatch straight to the agent.
+
+        Live incidents (2026-11-11 IST): asked to "assign a quick task to
+        IntelX" or "send this task to Sentinel", the live reasoning model
+        repeatedly answered with invented XML protocols (`<execute_agent>`,
+        `<send_task>`) as plain text instead of calling the registered
+        fleet_dispatch tool — a task was never dispatched. This deterministic
+        path fires only on explicit delegation phrasing (assign/send/delegate
+        a task TO a named fleet agent, or have/tell/ask an agent to do
+        something), extracts the agent and the task, and returns the agent's
+        REAL result with a task receipt. Ordinary sentences never match.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.tools.builtin.fleet_dispatch import FleetDispatchTool, normalize_agent
+
+        delegation_patterns = [
+            # assign/delegate/send/give/pass/hand (a/this/the/quick/small) task(s) to <agent>[: task]
+            r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+            r"(?:assign|delegate|send|give|pass|hand)\s+"
+            r"(?:a\s+|an\s+|this\s+|the\s+)?"
+            r"(?:quick\s+|small\s+|simple\s+|new\s+)?"
+            r"(?:task|work|job)s?\s+"
+            r"(?:to|for|over to|onto)\s+"
+            r"(?P<agent>[a-z]+)\s*[:\-]?\s*(?P<task>.*)$",
+            # send/forward this (task) to <agent>: task
+            r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+            r"(?:send|forward)\s+this(?:\s+task)?\s+to\s+"
+            r"(?P<agent>[a-z]+)\s*[:\-]?\s*(?P<task>.*)$",
+            # have/tell/ask/let <agent> (to) <task>
+            r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+            r"(?:have|tell|ask|let)\s+(?P<agent>[a-z]+)\s+(?:to\s+)?(?P<task>.+)$",
+        ]
+        match = None
+        for pattern in delegation_patterns:
+            candidate = re.match(pattern, low)
+            if candidate:
+                match = candidate
+                break
+        if match is None:
+            return None
+        agent = normalize_agent(match.group("agent"))
+        if agent is None:
+            # Not a fleet agent ("tell Rajesh to...") — the normal path handles it.
+            return None
+        task = (match.group("task") or "").strip()
+        # The owner often adds "then show me its result" — the tool result IS
+        # shown, so strip that tail from the dispatched task text.
+        task = re.sub(
+            r"[.,]?\s*(?:and|then)\s+show\s+me\s+(?:its|the)?\s*(?:result|results|output)s?\s*$",
+            "", task,
+        ).strip()
+        if not task:
+            # "assign a task to IntelX" with no task content — let the model
+            # ask what the task should be.
+            return None
+
+        result = FleetDispatchTool().execute(agent=agent, task=task)
+        success = not result.is_error
+        content = result.content
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Delegation request recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason=f"Dispatching to {agent.title()} via fleet_dispatch")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="fleet_dispatch dispatch")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Returning the agent's real result")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["fleet_dispatch", "fast_path", agent],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in delegation dispatch: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "delegation_dispatch": True,
+                "target_agent": agent,
+                "receipt": (result.metadata or {}).get("fleet_dispatch"),
+                "probe_success": success,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _research_dispatch_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
         """TASK-INT-002: dispatch explicit research requests straight to IntelX.
 

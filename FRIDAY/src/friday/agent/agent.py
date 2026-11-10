@@ -410,6 +410,13 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         # 4.7s, no tool call attempted). One nudged retry fixes it without
         # unbounding the loop; a second consecutive empty turn still ends it.
         empty_turns = 0
+        # TASK-ORCH-007 (2026-11-11 IST): the live reasoning model answers
+        # delegation asks with invented XML protocols (<execute_agent>,
+        # <send_task>) as plain text instead of calling the registered
+        # fleet_dispatch tool. When that shape appears and the real tool is
+        # available, redirect once: show the model its own phantom output and
+        # order a real tool call (or a plain-text answer) instead.
+        phantom_redirects = 0
         for _ in range(self.max_tool_iterations):
             iterations += 1
             try:
@@ -454,6 +461,28 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
             if not response.tool_calls:
                 content = strip_thought_tags(response.content)
                 if content:
+                    if (
+                        phantom_redirects == 0
+                        and self.tools.get("fleet_dispatch") is not None
+                        and re.search(
+                            r"<(?:execute_agent|send_task|dispatch_task|agent_call|task_dispatch|delegate)\b",
+                            response.content or "",
+                        )
+                    ):
+                        phantom_redirects += 1
+                        messages.append(Message(role=Role.ASSISTANT, content=response.content))
+                        messages.append(
+                            Message(
+                                role=Role.SYSTEM,
+                                content=(
+                                    "That XML protocol does not exist and dispatched nothing. "
+                                    "You have a real fleet_dispatch tool (agent, task) registered "
+                                    "this turn — call it now, or answer the user in plain text. "
+                                    "Never emit task-assignment markup as text."
+                                ),
+                            )
+                        )
+                        continue
                     return AgentResponse(
                         content=content,
                         tool_calls=tool_calls or None,

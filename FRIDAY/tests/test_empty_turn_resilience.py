@@ -79,7 +79,7 @@ class TestEmptyTurnNudge:
             return Message(role=Role.ASSISTANT, content="On it, Boss — done.")
 
         agent, provider = _agent_with(responder)
-        response = agent.process_message("assign a quick task to IntelX: sky note")
+        response = agent.process_message("analyze the feasibility of a solar-powered router")
 
         assert response.is_done
         assert response.content == "On it, Boss — done."
