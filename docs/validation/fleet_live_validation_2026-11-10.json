@@ -1,7 +1,7 @@
 {
   "task": "TASK-VAL-001",
   "gateway": "https://friday-universe.duckdns.org",
-  "started_at": "2026-11-10T13:56:23Z",
+  "started_at": "2026-11-10T14:49:33Z",
   "agents": {
     "FRIDAY": {
       "gateway_prefix": "friday",
@@ -9,10 +9,10 @@
         "endpoint": "/friday/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.278,
+        "latency_s": 0.861,
         "detail": "{\"status\": \"healthy\", \"service\": \"FRIDAY\", \"version\": \"2.0.0\", \"agent\": \"FRIDAY\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:23Z"
+        "probed_at": "2026-11-10T14:49:34Z"
       },
       "functional": [
         {
@@ -20,27 +20,27 @@
           "endpoint": "/friday/api/agents/status",
           "http_status": 200,
           "ok": true,
-          "latency_s": 0.365,
+          "latency_s": 0.652,
           "evidence": "agents dict present",
-          "probed_at": "2026-11-10T13:56:24Z"
+          "probed_at": "2026-11-10T14:49:35Z"
         },
         {
           "label": "friend_persona_greeting",
           "endpoint": "/friday/api/chat",
           "http_status": 401,
           "ok": true,
-          "latency_s": 0.271,
+          "latency_s": 0.918,
           "evidence": "remote chat without owner key blocked with HTTP 401 (D-023 gate live); persona E2E needs the owner key",
-          "probed_at": "2026-11-10T13:56:24Z"
+          "probed_at": "2026-11-10T14:49:35Z"
         },
         {
           "label": "control_session_requires_key",
           "endpoint": "/friday/api/control/session",
           "http_status": 401,
           "ok": true,
-          "latency_s": 0.271,
+          "latency_s": 0.514,
           "evidence": "unauthenticated remote mint blocked with HTTP 401 (TASK-SEC-005 live)",
-          "probed_at": "2026-11-10T13:56:24Z"
+          "probed_at": "2026-11-10T14:49:36Z"
         }
       ]
     },
@@ -50,10 +50,10 @@
         "endpoint": "/inference/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.291,
+        "latency_s": 0.318,
         "detail": "{\"status\": \"healthy\", \"service\": \"inference\", \"version\": \"2.0.0\", \"agent\": \"Inference\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:25Z"
+        "probed_at": "2026-11-10T14:49:36Z"
       },
       "functional": []
     },
@@ -63,10 +63,10 @@
         "endpoint": "/memora/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.532,
+        "latency_s": 0.289,
         "detail": "{\"status\": \"healthy\", \"service\": \"memora\", \"version\": \"2.0.0\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:25Z"
+        "probed_at": "2026-11-10T14:49:37Z"
       },
       "functional": [
         {
@@ -74,9 +74,9 @@
           "endpoint": "/memora/health",
           "http_status": 200,
           "ok": true,
-          "latency_s": 0.515,
-          "evidence": "{\"status\": \"healthy\", \"service\": \"memora\", \"evidence_class\": \"process_liveness\", \"observed_at\": \"2026-11-10T13:56:26.101232+00:00\", \"storage\": \"oracle\", \"databa",
-          "probed_at": "2026-11-10T13:56:26Z"
+          "latency_s": 0.376,
+          "evidence": "{\"status\": \"healthy\", \"service\": \"memora\", \"evidence_class\": \"process_liveness\", \"observed_at\": \"2026-11-10T14:49:37.397547+00:00\", \"storage\": \"oracle\", \"databa",
+          "probed_at": "2026-11-10T14:49:37Z"
         }
       ]
     },
@@ -86,10 +86,10 @@
         "endpoint": "/stratex/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.287,
+        "latency_s": 0.56,
         "detail": "{\"status\": \"ok\", \"service\": \"stratex\", \"version\": \"2.2.0\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:26Z"
+        "probed_at": "2026-11-10T14:49:38Z"
       },
       "functional": []
     },
@@ -99,10 +99,10 @@
         "endpoint": "/futuris/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.535,
+        "latency_s": 0.278,
         "detail": "{\"status\": \"ok\", \"service\": \"futuris\", \"version\": \"2.0.0\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:26Z"
+        "probed_at": "2026-11-10T14:49:38Z"
       },
       "functional": []
     },
@@ -112,10 +112,10 @@
         "endpoint": "/intelx/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.27,
+        "latency_s": 0.351,
         "detail": "{\"status\": \"ok\", \"service\": \"intelx\", \"version\": \"2.0.0\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:27Z"
+        "probed_at": "2026-11-10T14:49:38Z"
       },
       "functional": []
     },
@@ -125,10 +125,10 @@
         "endpoint": "/forge/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.275,
+        "latency_s": 0.279,
         "detail": "{\"status\": \"ok\", \"service\": \"forge\", \"version\": \"2.0.0\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:27Z"
+        "probed_at": "2026-11-10T14:49:38Z"
       },
       "functional": []
     },
@@ -138,10 +138,10 @@
         "endpoint": "/sentinel/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.289,
+        "latency_s": 0.326,
         "detail": "{\"status\": \"ok\", \"service\": \"sentinel\", \"version\": \"1.0.0\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:27Z"
+        "probed_at": "2026-11-10T14:49:39Z"
       },
       "functional": []
     },
@@ -151,10 +151,10 @@
         "endpoint": "/cortex/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.35,
+        "latency_s": 0.54,
         "detail": "{\"status\": \"healthy\", \"service\": \"cortex\", \"version\": \"2.1.0\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:28Z"
+        "probed_at": "2026-11-10T14:49:39Z"
       },
       "functional": []
     },
@@ -164,10 +164,10 @@
         "endpoint": "/vyralx/health",
         "http_status": 200,
         "healthy": true,
-        "latency_s": 0.292,
+        "latency_s": 0.326,
         "detail": "{\"status\": \"ok\", \"service\": \"vyralx\", \"version\": \"0.2.0\"}",
         "error": null,
-        "probed_at": "2026-11-10T13:56:28Z"
+        "probed_at": "2026-11-10T14:49:40Z"
       },
       "functional": []
     }
@@ -176,16 +176,16 @@
     "endpoint": "/bridge/mcp",
     "http_status": 200,
     "ok": true,
-    "latency_s": 0.694,
+    "latency_s": 0.344,
     "server_info": "{\"name\": \"FRIDAY-Cloud-Engineering-Bridge\", \"version\": \"1.30.0\"}",
     "error": null,
-    "probed_at": "2026-11-10T13:56:29Z"
+    "probed_at": "2026-11-10T14:49:40Z"
   },
   "tls": {
     "ok": false,
     "error": "NameError: name 'socket' is not defined"
   },
-  "finished_at": "2026-11-10T13:56:29Z",
+  "finished_at": "2026-11-10T14:49:40Z",
   "summary": {
     "agents_healthy": 10,
     "agents_total": 10,

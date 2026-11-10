@@ -15,7 +15,8 @@
 
 # next.js
 /.next/
-/out/
+# NOTE: /out/ is NOT ignored — the exported dashboard is committed on purpose.
+# It is the deploy artifact served by the FRIDAY API (server.py root static mount).
 
 # production
 /build

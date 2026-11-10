@@ -20,6 +20,11 @@ build/
 **/build/
 out/
 **/out/
+# Exception: FRIDAY/ui/out is the exported dashboard — a deploy artifact
+# served straight from the repo by the API (see server.py root static mount),
+# so it is committed on purpose.
+!FRIDAY/ui/out/
+!FRIDAY/ui/out/**
 *.egg-info/
 **/*.egg-info/
 coverage/

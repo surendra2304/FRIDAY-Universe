@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-10T14:30:00Z"
+snapshot_at: "2026-11-11T01:30:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -883,7 +883,57 @@ tasks:
     evidence:
       - "tests/test_fleet_health_watcher.py 26/26 green (2026-11-10). deploy-monorepo.yml health-gate added to both deploy-server jobs (YAML validated)."
     blockers: []
-    next_action: "OWNER ACTION (2 commands per server, in the runbook §3): cp the two unit files, enable the timer. Optional FLEET_ALERT_COMMAND for push alerts. The deploy-side gate is live on the next deploy with no server action."
+    next_action: "ENABLED 2026-11-11 (ZAI, via bridge, both servers): unit files deployed, fleet-health-watcher.timer enabled+active on Server 1 (default map) and Server 2 (drop-in FLEET_WATCH_SERVICES=Sentinel:8008,Cortex:8009,VyralX:8010,VyralX-Daemon:-). First verified cycles: Server 1 8/8 healthy, Server 2 4/4 healthy. Status moves to DEPLOYED/VERIFIED at the next real alert+recovery observation. FLEET_ALERT_COMMAND forwarding to the FRIDAY Universe Telegram bot is the next batch (D-025)."
+
+  - id: "TASK-UI-002"
+    title: "Keyless dark awwwards-level dashboard with continuous LiveKit voice (owner's four rejections of TASK-UI-001 addressed)"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-11: ZAI direct main commit under D-025. FRIDAY/ui rebuilt: dark deep-space glass theme, React-Bits-style effects kit (ScrambleText, AuroraBackground, adaptive self-pausing ParticleField, Magnetic, SpotlightCard, Reveal, CountUp), FRIDAY orb hero (state-reactive, the voice line's live status), continuous LiveKit voice (one tap -> room 'friday', mic published, full-duplex with the Gemini Live worker, barge-in, 3-min idle / 30-min hard-cap auto-disconnect protecting free minutes), fleet grid, host telemetry, live activity feed (origin-gated keyless WS), chat panel (origin-gated keyless /api/chat). Static export committed as deploy artifact (FRIDAY/ui/out, un-ignored on purpose); FastAPI serves it at site root (index no-store via '/' route, hashed assets via root StaticFiles mount registered last; Caddy handle_path /friday* strips the prefix). Mobile discipline: compositor-only animations, DPR-capped canvas, IntersectionObserver+visibilitychange pausing, prefers-reduced-motion."
+    milestone: "M2/M5 (Master Plan v2)"
+    files:
+      - "FRIDAY/ui/app/page.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/app/layout.tsx"
+      - "FRIDAY/ui/components/OrbCore.tsx"
+      - "FRIDAY/ui/components/effects.tsx"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+      - "FRIDAY/ui/components/ChatPanel.tsx"
+      - "FRIDAY/ui/components/panels.tsx"
+      - "FRIDAY/ui/lib/api.ts"
+      - "FRIDAY/src/friday/api/server.py"
+      - ".gitignore"
+    acceptance:
+      - "Keyless: no key, no auth screen; open the site and talk."
+      - "Dark, dynamic, React-Bits-style, awwwards-level; FRIDAY hero is the centerpiece."
+      - "Continuous full-duplex voice via LiveKit + the deployed worker; no one-shot search-box feel."
+      - "Mobile-fast: no always-on heavy canvases; smooth on phones."
+    evidence:
+      - "next build clean (Next 16.3.4, TS green, 1.7 MB export, self-hosted fonts). agent-browser local render desktop 1440x900 + mobile 390x844: no clipped/overlapping elements after hero-rhythm fix (VLM review 8.5/10). Live verification of the deployed site recorded in ACTIVITY_LOG 2026-11-11."
+    blockers: []
+    next_action: "Owner live voice test (TASK-VOI-001 kit); wire FRIDAY Universe bot alerts; consider self-hosted LiveKit SFU when the ARM sniper claims a server (removes the minute cap)."
+
+  - id: "TASK-NOTIF-001"
+    title: "Owner Telegram notification channels: ZAI completion pings + FRIDAY Universe agent reports"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-11: owner created two Telegram bots and supplied tokens in chat (recorded in D-025; tokens stored ONLY in the ZAI sandbox at /home/z/my-project/.config/telegram.json, chmod 600, never committed; chat_id resolved to the owner's existing chat). ZAI bot (@zai_notifications_bot): ZAI fires a ping when a work batch for the owner's message completes. FRIDAY Universe bot: destination for ten-agent fleet reports/alerts (wiring next batch per owner's 'implement that later'). Stratex .env Telegram lines repaired the same session (stray quote + backslash -> clean KEY=value; Stratex's own bot unaffected)."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "(sandbox) /home/z/my-project/scripts/tg_notify.py"
+      - "(sandbox) /home/z/my-project/.config/telegram.json"
+      - "(server) /opt/friday_universe/Stratex/.env (lines 35-36 repaired)"
+    acceptance:
+      - "ZAI sends a Telegram ping on batch completion so the owner does not poll the site."
+      - "FRIDAY Universe bot channel is live for agent reports."
+    evidence:
+      - "Test ping delivered from BOTH bots to the owner's chat 2026-11-11 (ok:true, chat 6341781431)."
+    blockers: []
+    next_action: "Wire the FRIDAY Universe bot as FLEET_ALERT_COMMAND in fleet-health-watcher (crash/down/recovered alerts) + agent report relays; consider sniper-win alert."
 
   - id: "TASK-OBS-002"
     title: "Rollback procedure for a bad deploy (deploy uses git reset --hard)"

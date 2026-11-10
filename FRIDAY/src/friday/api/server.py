@@ -447,6 +447,26 @@ def _control_token_valid(token: str, secret: str) -> bool:
     return hmac.compare_digest(parts[2], expected)
 
 
+async def _require_origin_gate(request: Request) -> None:
+    """Origin-only gate for the public chat surface.
+
+    Owner decision (2026-11-11, "Remove that authentication"): talking to FRIDAY
+    must be keyless — the dashboard opens straight into the conversation. The
+    browser-origin gate is kept: a page the owner merely has open in another tab
+    still cannot drive the chat pipeline (cross-origin state-changing requests
+    carry ``Origin``), but no key or session token is ever required.
+    """
+    origin = request.headers.get("origin", "").strip()
+    if not _origin_allowed(origin, request):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "This browser origin is not permitted to reach the FRIDAY control API. "
+                "Add it to FRIDAY_ALLOWED_ORIGINS if it is a trusted frontend."
+            ),
+        )
+
+
 async def _require_control_access(request: Request) -> None:
     """Authorise a control HTTP request.
 
@@ -590,6 +610,21 @@ async def _require_control_access_ws(websocket: WebSocket) -> None:
 def _websocket_origin_allowed(websocket: WebSocket) -> bool:
     """Apply the same origin policy to WebSocket upgrades, which CORS never sees."""
     return _origin_allowed(websocket.headers.get("origin", "").strip(), websocket)  # type: ignore[arg-type]
+
+
+async def _require_origin_gate_ws(websocket: WebSocket) -> None:
+    """Origin-only gate for the read-only activity stream.
+
+    Owner decision (2026-11-11, "Remove that authentication"): the dashboard is
+    keyless. The activity feed is read-only (fleet events + ping/pong), so the
+    browser-origin gate — the same policy as the public chat surface — is the
+    only gate. Raw control WebSockets keep the full token gate.
+    """
+    if not _websocket_origin_allowed(websocket):
+        raise HTTPException(
+            status_code=403,
+            detail="This browser origin is not permitted to reach the FRIDAY activity stream.",
+        )
 
 # Initialize global agent and Android controller
 agent = FridayAgent(
@@ -2100,8 +2135,13 @@ class ChatRequest(BaseModel):
 
 
 @app.post("/api/chat")
-async def chat_endpoint(req: ChatRequest, _: None = Depends(_require_control_access)) -> dict[str, Any]:
-    """Compatibility endpoint for chat/command execution."""
+async def chat_endpoint(req: ChatRequest, _: None = Depends(_require_origin_gate)) -> dict[str, Any]:
+    """Compatibility endpoint for chat/command execution.
+
+    Owner decision (2026-11-11): the chat surface is public and keyless —
+    origin-gated only (see ``_require_origin_gate``). Raw control endpoints
+    (``/api/command`` and friends) keep the full key gate.
+    """
     return await execute_command(CommandRequest(command=req.message))
 
 
@@ -2251,9 +2291,9 @@ async def companion_status_endpoint(_: None = Depends(_require_control_access)) 
 async def activity_ws_endpoint(websocket: WebSocket) -> None:
     """Stream autonomous agent activity events to dashboard clients in real time."""
     try:
-        await _require_control_access_ws(websocket)
+        await _require_origin_gate_ws(websocket)
     except HTTPException:
-        await websocket.close(code=1008, reason="FRIDAY control authentication required")
+        await websocket.close(code=1008, reason="Origin not permitted")
         return
     await websocket.accept()
     register_activity_client(websocket)
@@ -2834,30 +2874,34 @@ async def laptop_connect_endpoint(websocket: WebSocket, laptop_id: str) -> None:
         await laptop_bridge.unregister(laptop_id, websocket)
 
 
-# --- Self-contained command center (server-rendered) ------------------------
-# The dashboard is a single HTML document with inline CSS/JS. Serving it from
-# the API removes the whole class of failures that a client-only bundle has on
-# this host: no chunk 404s, no basePath mismatch, no hydration crash that leaves
-# the owner staring at a spinner. The markup is real HTML, so something useful
-# is visible before a single byte of JavaScript runs.
+# --- Owner dashboard (Next.js static export from FRIDAY/ui) ------------------
+# The dashboard is the exported Next.js app in FRIDAY/ui/out: dark theme,
+# continuous LiveKit voice line, React-Bits-style effects. Caddy strips the
+# /friday prefix in front of this process, so the same export is reached at
+# https://friday-universe.duckdns.org/ and /friday/ — the export's asset URLs
+# (/friday/_next/...) route through the same handle. The HTML shell is served
+# by this route with no-store so a deploy shows on the very next reload;
+# immutable hashed assets are served by the root static mount at the bottom of
+# this file (registered last, so every API route above wins).
 
-_INDEX_FILE = Path(__file__).with_name("index.html")
-_index_cache: dict[str, Any] = {"mtime": -1.0, "html": ""}
+_UI_EXPORT_DIR = Path(__file__).resolve().parents[3] / "ui" / "out"
+_UI_INDEX = _UI_EXPORT_DIR / "index.html"
+_ui_index_cache: dict[str, Any] = {"mtime": -1.0, "html": ""}
 
 
 def _index_html() -> str:
     try:
-        mtime = _INDEX_FILE.stat().st_mtime
+        mtime = _UI_INDEX.stat().st_mtime
     except OSError:
         return (
             "<!doctype html><meta charset='utf-8'><title>FRIDAY</title>"
             "<body style='background:#050508;color:#f0f0f5;font-family:system-ui;padding:40px'>"
-            "<h1>FRIDAY</h1><p>The index file is missing on this host.</p></body>"
+            "<h1>FRIDAY</h1><p>The dashboard export (FRIDAY/ui/out) is missing on this host.</p></body>"
         )
-    if _index_cache["mtime"] != mtime or not _index_cache["html"]:
-        _index_cache["html"] = _INDEX_FILE.read_text(encoding="utf-8")
-        _index_cache["mtime"] = mtime
-    return _index_cache["html"]
+    if _ui_index_cache["mtime"] != mtime or not _ui_index_cache["html"]:
+        _ui_index_cache["html"] = _UI_INDEX.read_text(encoding="utf-8")
+        _ui_index_cache["mtime"] = mtime
+    return _ui_index_cache["html"]
 
 
 @app.get("/", include_in_schema=False)
@@ -3154,3 +3198,9 @@ app.include_router(universe_rate_router, prefix="/api/v1")
 # --- Wave 45: Task Router ---
 from friday_core.universe_task_router import router as universe_task_router
 app.include_router(universe_task_router, prefix="/api/v1")
+
+# --- Dashboard static assets (mounted LAST: every API route above wins) ------
+# Serves the export's immutable hashed assets (/_next/...) and stray top-level
+# files. The HTML shell itself is served by the "/" route above with no-store.
+if _UI_EXPORT_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=str(_UI_EXPORT_DIR), html=True), name="ui")
