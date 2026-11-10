@@ -603,7 +603,13 @@ class MemoraClient:
             except Exception as e:
                 logger.debug(f"Memora remote recall error: {type(e).__name__}")
 
-        if os.path.exists(self.local_db_path):
+        # TASK-BRAIN-002 (2026-11-11 IST): production runs the ORACLE local
+        # fallback (local_db_path is None there), and os.path.exists(None)
+        # raised TypeError — silently killing recall whenever the remote
+        # Memora search timed out. The guard is now: oracle backend always
+        # tries (it has its own error handling); sqlite only when the file
+        # exists.
+        if self.local_db_path is None or os.path.exists(self.local_db_path):
             try:
                 return self._recall_locally(agent_name, query, limit)
             except Exception as e:
@@ -725,7 +731,9 @@ class MemoraClient:
             except Exception as e:
                 logger.debug(f"Memora recall_experience API failed ({type(e).__name__})")
 
-        if os.path.exists(self.local_db_path):
+        # Same guard fix as recall_memories (TASK-BRAIN-002): never crash on
+        # the oracle backend where local_db_path is None.
+        if self.local_db_path is None or os.path.exists(self.local_db_path):
             try:
                 return self._recall_experience_locally(agent_name, task_query, domain, limit)
             except Exception as e:
