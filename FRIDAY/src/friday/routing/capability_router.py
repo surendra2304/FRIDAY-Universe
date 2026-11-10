@@ -142,6 +142,19 @@ class CapabilityRouter:
     # account and live market signals — the answer must come from Stratex
     # (stratex_portfolio), never the LLM's imagination. Live trading stays
     # blocked by the fail-closed guard (D-015): the tool is read-only.
+    # TASK-FOR-002 (2026-11-10): keywords signaling a real code task for
+    # Forge (sandbox security-reviewed under TASK-FOR-001). "Write me a
+    # script that..." is engineering work: it must reach forge_code_task
+    # (Forge plans + executes in its sandboxed workspace), never a
+    # conversational "sure, here's how you could..." from the LLM.
+    CODE_TASK_KEYWORDS = {
+        "write me a script", "write a script", "write me a program",
+        "write a program", "write me a function", "write a function",
+        "write me a tool", "build me a", "build a script", "build a tool",
+        "code a", "code me a", "create a script", "make me a script",
+        "fix this bug", "fix the bug", "fix this code", "refactor this",
+        "refactor the", "review this code", "review the code",
+    }
     PORTFOLIO_KEYWORDS = {
         "my portfolio", "the portfolio", "portfolio", "positions", "open positions",
         "any positions", "my balance", "account balance", "trading account",
@@ -205,12 +218,15 @@ class CapabilityRouter:
         # conversation — exclude them too.
         # TASK-STR-002: portfolio/market questions are factual queries over
         # the owner's trading account — exclude them from DIRECT_REASONING too.
+        # TASK-FOR-002: code-task requests are engineering work for Forge —
+        # exclude them from DIRECT_REASONING too.
         is_conversational = is_conversational and not (
             self._matches(clean_input, self.FLEET_KEYWORDS)
             or self._matches(clean_input, self.RESEARCH_KEYWORDS)
             or self._matches(clean_input, self.PORTFOLIO_KEYWORDS)
+            or self._matches(clean_input, self.CODE_TASK_KEYWORDS)
         )
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -279,6 +295,22 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["stratex_portfolio"],
                 rationale="Portfolio/market question: read-only Stratex snapshot (balance, positions, strategies, signals); live trading blocked (D-015).",
+            ))
+
+        # TASK-FOR-002: Evaluate Forge Code Task Dispatch — "write me a
+        # script that..." is engineering work: Forge plans and executes it in
+        # its security-reviewed sandbox (TASK-FOR-001) and returns the real
+        # result with a verification manifest.
+        if self._matches(clean_input, self.CODE_TASK_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=30000.0,
+                confidence=0.9,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["forge_code_task"],
+                rationale="Code task: dispatch to Forge (sandboxed SWE agent, TASK-FOR-001 approved) for a real build with verification.",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

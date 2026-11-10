@@ -611,6 +611,21 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-FOR-001: Forge sandbox security review (verdict: approved for M2 code tasks)."
 
+
+  - path: "FRIDAY/src/friday/tools/builtin/forge_code_task.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-FOR-002: ForgeCodeTool — real code tasks delegated to Forge's security-reviewed sandbox."
+
+  - path: "FRIDAY/tests/test_forge_code_dispatch.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-FOR-002 tests: routing + truthfulness + the two directive-conflict regressions."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

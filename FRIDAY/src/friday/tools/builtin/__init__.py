@@ -16,6 +16,7 @@ from friday.tools.builtin.android_control import (
 )
 from friday.tools.builtin.browser_tool import BrowserAutomationTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
+from friday.tools.builtin.forge_code_task import ForgeCodeTool
 from friday.tools.builtin.intelx_research import IntelXResearchTool
 from friday.tools.builtin.stratex_portfolio import StratexPortfolioTool
 from friday.tools.builtin.calculator import CalculatorTool
@@ -164,6 +165,7 @@ __all__ = [
     "SynthesizeInformationTool",
     "SystemControlTool",
     "FleetStatusTool",
+    "ForgeCodeTool",
     "IntelXResearchTool",
     "StratexPortfolioTool",
     "SystemInfoTool",

@@ -780,6 +780,29 @@ tasks:
     blockers: []
     next_action: "Closed. Unblocks TASK-FOR-002 (Forge executes one real code task through FRIDAY chat) via POST /forge/delegate action=build with allow_network=False defaults. Backlog: TASK-FOR-003 (repair the two drifted security tests)."
 
+  - id: "TASK-FOR-002"
+    title: "Forge executes one real code task requested through FRIDAY chat"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit. New ForgeCodeTool (FRIDAY/src/friday/tools/builtin/forge_code_task.py) delegates code tasks to Forge via the FleetClient TaskEnvelope path (target=forge, action=build, payload {goal, requirements, execute_now: true}) and returns Forge's REAL build result — plan steps, verification stages (x/y passed), artifacts, receipt; FAILED/PARTIAL_FAILURE reported honestly ('nothing was fabricated'); sandbox provenance stated (TASK-FOR-001 reviewed). Registered in the tool registry; capability_router CODE_TASK_KEYWORDS route code-task requests to forge_code_task (never DIRECT_REASONING — the LLM could only describe, never build). TWO routing conflicts fixed (both proven live by the CSV-converter E2E): (1) windows_friday's keyboard 'type/write' directive swallowed 'write me a script that...' -> 'Typing error: ctypes.windll' on non-Windows hosts; (2) the active-window typing fast path (_ACTIVE_WINDOW_TYPE_PATTERN) captured the same request -> 'AttributeError'. Both now decline code-task requests (locked by tests: handle_directive declines + plain typing still works). 14 tests (routing table + result truthfulness + requirements forwarding + directive-conflict regressions); affected suites 134 green together; /api/chat E2E: 'friday, write me a script that converts csv to json' now routes routed_capability=TOOL_EXECUTION (was: windows typing error); the LLM then picks forge_code_task (sandbox lacks the LLM network — production Groq runs the full path). Public Forge delegation endpoint verified fail-closed (401 without the mesh credential)."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/forge_code_task.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/src/friday/devices/windows_friday.py"
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/tests/test_forge_code_dispatch.py"
+    acceptance:
+      - "Forge executes one real code task requested through FRIDAY chat."
+    evidence:
+      - "Plan task (M2). 2026-11-10: 14/14 tests green; E2E proven: routed_capability=TOOL_EXECUTION with the two swallowing paths fixed; Forge delegation endpoint live and fail-closed (401); Forge's build contract verified in code (plan + execute_now + verification manifest + Sentinel gate)."
+    dependencies:
+      - "TASK-FOR-001 (MERGED)"
+    blockers: []
+    next_action: "Closed (engineering side). The owner's first 'write me a script that...' in the new dashboard runs the full path: chat -> forge_code_task -> Forge sandbox build with verification manifest. If production FRIDAY lacks FRIDAY_FORGE_API_KEY the tool reports the honest failure — check the server .env and set it (owner action)."
+
 task_id_warnings:
   - id: "TASK-PERSONA-001"
     title: "Warm friend + Jarvis persona for FRIDAY"

@@ -100,6 +100,7 @@ from friday.tools.builtin import (
     SystemControlTool,
     SystemInfoTool,
     FleetStatusTool,
+    ForgeCodeTool,
     IntelXResearchTool,
     StratexPortfolioTool,
     SystemPowerControlTool,

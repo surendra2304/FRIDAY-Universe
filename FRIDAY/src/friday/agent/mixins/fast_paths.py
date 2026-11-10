@@ -1335,6 +1335,15 @@ class FastPathMixin:
                 )
 
             active_type_match = self._ACTIVE_WINDOW_TYPE_PATTERN.match(clean_input)
+            # TASK-FOR-002: "write me a script that ..." is a code task for
+            # Forge, not an active-window typing request. The old pattern
+            # swallowed it before the cognitive loop could route it to
+            # forge_code_task. Decline so the engineering request is planned.
+            if active_type_match:
+                from friday.routing.capability_router import CapabilityRouter
+
+                if CapabilityRouter._matches(clean_input, CapabilityRouter.CODE_TASK_KEYWORDS):
+                    active_type_match = None
             if active_type_match:
                 payload = active_type_match.group("text").strip()
                 # If payload ends with "here" or similar, clean it

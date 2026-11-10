@@ -2645,6 +2645,17 @@ class WindowsFridayController:
 
         # M. Keyboard & Typing Automation
         type_match = re.match(r"^(?:type|write|enter text)\s+(.+)$", raw, flags=re.IGNORECASE)
+        # TASK-FOR-002: "write me a script that ..." is a code task for Forge,
+        # not a keyboard-typing request. The old match swallowed it before the
+        # cognitive loop could route it to forge_code_task (proven: the CSV
+        # converter request became "Typing error: module 'ctypes' has no
+        # attribute 'windll'" on non-Windows hosts). Decline so the caller's
+        # cognitive loop handles the engineering request.
+        if type_match:
+            from friday.routing.capability_router import CapabilityRouter
+
+            if CapabilityRouter._matches(cmd, CapabilityRouter.CODE_TASK_KEYWORDS):
+                type_match = None
         if type_match:
             text_to_type = type_match.group(1).strip()
             ok, reply = self.type_text(text_to_type)
