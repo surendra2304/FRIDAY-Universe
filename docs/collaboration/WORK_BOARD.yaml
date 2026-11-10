@@ -350,6 +350,23 @@ tasks:
       - "Five tests reported passed on Server 2; production execution remains unverified."
     next_action: "Verify actual deployed behavior after the owner-approved deploy window; do not describe the no-API path as executing a task."
 
+  - id: "TASK-CORE-003"
+    title: "Add task records (TASK-ID, owner agent, status, result) so work can be assigned and tracked"
+    status: "IN_REVIEW"
+    owner: "zai"
+    branch: "zai/TASK-CORE-003-task-records"
+    pr: 44
+    execution_note: "2026-11-10: implemented by ZAI (standing owner directive D-019 chain). New FRIDAY/apps/core/src/friday_core/task_records.py: TaskRecord (task_id, description, owner_agent, status, result, error, rationale, timestamps, immutable transition history), documented TaskStatus lifecycle (submitted -> assigned -> dispatched -> completed | failed, plus routing_failed distinct from execution failure), thread-safe in-memory TaskRecordStore (create/record_assignment/record_dispatch/record_completion/record_failure/record_routing_failed/get/list(status, agent)/report with per-status and per-agent counts); unknown id -> KeyError, duplicate create -> ValueError (fail loud). Deliberately no persistence this pass (production is Oracle-only, fail-closed; clean interface for a durable backend later). Non-breaking integration: UniverseTaskRouter(task_records=...) and UniverseDispatchBus(task_records=...) take an optional shared store (default None = exactly today's behavior; retries/circuit breaker untouched); accepted (HTTP 202) receipts stay at dispatched — no fabricated completion (locked by test)."
+    files:
+      - "FRIDAY/apps/core/src/friday_core/task_records.py"
+      - "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
+      - "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
+      - "tests/test_task_records.py"
+    evidence:
+      - "pytest tests/test_task_records.py: 22 passed (lifecycle, failure paths, history auditability, KeyError/ValueError, filters, report, router/bus integration store-present/absent against a local HTTP double, 202-truthfulness, thread-safety smoke: 16 concurrent writers)."
+      - "Regressions: test_deep_friday_core + test_deep_autonomy_friday + test_deep_all_agents + test_proven_vertical_slice: 104 passed. Safety extras (integration/mesh/load/e2e/stub-fleet/workflow suites): 248 passed, 17 pre-existing availability skips, 0 failures. Verified independently by the coordinator before push."
+    next_action: "Merge PR #44 once its checks pass, then verify green on post-merge main; TASK-ORCH-002 (assignment and tracking) then wires ONE shared store into router + bus and correlates router task ids with bus dispatch ids via the dispatch payload."
+
   - id: "TASK-MEM-001"
     title: "Memora Oracle vector tenant and transaction integrity"
     status: "MERGED"

@@ -9,9 +9,14 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
+
+if TYPE_CHECKING:  # runtime import not needed: the store is duck-typed and
+    # annotations are lazy (from __future__ import annotations), so loading
+    # this file via importlib keeps working without the package on sys.path.
+    from friday_core.task_records import TaskRecordStore
 
 router = APIRouter()
 
@@ -50,9 +55,17 @@ class RoutingDecision:
 
 
 class UniverseTaskRouter:
-    """Engine for intelligent task routing."""
+    """Engine for intelligent task routing.
 
-    def __init__(self) -> None:
+    ``task_records`` (TASK-CORE-003) is an optional shared
+    ``TaskRecordStore``. When provided, ``submit_task`` records a
+    ``submitted`` task record and ``route_task`` records the assignment
+    (owner agent + routing rationale) or a ``routing_failed`` transition.
+    When it is None (the default), behavior is exactly as before.
+    """
+
+    def __init__(self, task_records: "TaskRecordStore | None" = None) -> None:
+        self._task_records = task_records
         self._capabilities: dict[str, AgentCapability] = {}
         self._tasks: dict[str, Task] = {}
         self._decisions: list[RoutingDecision] = []
@@ -93,12 +106,17 @@ class UniverseTaskRouter:
             priority=priority, deadline=deadline,
         )
         self._tasks[task_id] = task
+        if self._task_records is not None:
+            self._task_records.create(task_id, description=description)
         return task
 
     def route_task(self, task_id: str) -> RoutingDecision:
         """Route a task to the best agent."""
         task = self._tasks.get(task_id)
         if not task:
+            if (self._task_records is not None
+                    and self._task_records.get(task_id) is not None):
+                self._task_records.record_routing_failed(task_id, "Task not found")
             raise HTTPException(status_code=404, detail="Task not found")
 
         decision_id = f"route_{uuid.uuid4().hex[:12]}"
@@ -122,6 +140,9 @@ class UniverseTaskRouter:
             scores[agent] = cap_score * 0.5 + load_score * 0.2 + success_score * 0.3
 
         if not scores:
+            if (self._task_records is not None
+                    and self._task_records.get(task_id) is not None):
+                self._task_records.record_routing_failed(task_id, "No agents registered")
             raise HTTPException(status_code=400, detail="No agents registered")
 
         # Sort and pick best
@@ -132,6 +153,11 @@ class UniverseTaskRouter:
         decision.alternatives = [a for a, _ in sorted_agents[1:3]]
         decision.reason = f"Best match: {best_agent} with score {best_score:.2f}"
         task.status = "routed"
+
+        if self._task_records is not None:
+            self._task_records.record_assignment(
+                task_id, owner_agent=best_agent, rationale=decision.reason,
+            )
 
         self._decisions.append(decision)
         return decision
