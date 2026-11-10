@@ -132,7 +132,7 @@ claims:
     owner: "zai"
     prs: [28, 34, 44]
     branches: ["claude/TASK-DISPATCH-001", "claude/TASK-CI-004", "zai/TASK-CORE-003-task-records"]
-    status: "ACTIVE_CLAIM"
+    status: "MERGED"
     risk: "Historical: PRs #28/#34 both changed the dispatch bus and were merged in the 2026-11-10 owner-directed mass merge (OVERLAPPING_CLAIMS resolved then). Active: PR #44 (TASK-CORE-003, ZAI) adds an optional task_records store — default None keeps exactly today's behavior; retries and circuit breaker untouched; accepted (202) receipts stay at dispatched (no fabricated completion)."
 
   - path: "docs/MASTER_PLAN.md"
@@ -479,21 +479,21 @@ claims:
     owner: "zai"
     prs: [44]
     branches: ["zai/TASK-CORE-003-task-records"]
-    status: "ACTIVE_CLAIM"
+    status: "MERGED"
     task: "TASK-CORE-003: new unified task-record module (TaskRecord, TaskStatus lifecycle, thread-safe TaskRecordStore)."
 
   - path: "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
     owner: "zai"
     prs: [44]
     branches: ["zai/TASK-CORE-003-task-records"]
-    status: "ACTIVE_CLAIM"
+    status: "MERGED"
     task: "TASK-CORE-003: optional task_records store records submitted/assigned/routing_failed; default None keeps today's behavior."
 
   - path: "tests/test_task_records.py"
     owner: "zai"
     prs: [44]
     branches: ["zai/TASK-CORE-003-task-records"]
-    status: "ACTIVE_CLAIM"
+    status: "MERGED"
     task: "TASK-CORE-003: 22 tests - lifecycle, failure paths, history auditability, filters, report, router/bus integration store-present/absent (local HTTP double), 202-truthfulness, thread-safety."
 
 conflicts_to_resolve:
