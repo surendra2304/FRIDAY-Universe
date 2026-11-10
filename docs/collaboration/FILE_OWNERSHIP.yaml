@@ -565,6 +565,21 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-API-002 tests: routing table + tool truthfulness + fast-path E2E."
 
+
+  - path: "FRIDAY/src/friday/tools/builtin/intelx_research.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-INT-002: IntelXResearchTool — evidence-based research briefs from the fleet's Macro Research & Evidence Engine."
+
+  - path: "FRIDAY/tests/test_intelx_research_dispatch.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-INT-002 tests: routing table + truthfulness + fast path + incidental-word guard."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

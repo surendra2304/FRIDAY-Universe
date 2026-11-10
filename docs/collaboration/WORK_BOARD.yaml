@@ -701,6 +701,27 @@ tasks:
     blockers: []
     next_action: "Closed (chat side). The /health standardization across all ten agents (identical schemas) remains under TASK-VAL-001 fleet validation; claim on issue #35 if wanted."
 
+  - id: "TASK-INT-002"
+    title: "IntelX research briefs retrievable through FRIDAY chat"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit. New IntelXResearchTool (FRIDAY/src/friday/tools/builtin/intelx_research.py) dispatches research queries to IntelX through the shared FleetClient TaskEnvelope path (circuit breaker, real HTTP, target_agent=intelx) and returns IntelX's evidence-based brief — citations count, sources, spoken summary; 'no conclusive evidence' is reported as a finding, dispatch failures as honest errors, empty responses never invented into highlights. Registered in the tool registry; capability_router RESEARCH_KEYWORDS route research requests to TOOL_EXECUTION with required_tools=[intelx_research] (never VISION_MODEL — the live 2026-11-10 misroute — and never DIRECT_REASONING); deterministic fast path fires only on explicit research-action phrasing (leading verb or highlights ask) so incidental 'research' words take the normal cognitive path. 16 tests (routing table + truthfulness + fast path through process_message + incidental-word guard); related suites zero new failures. Local E2E via /api/chat: 'friday, research the crypto market and give me the highlights' -> fast_path=true, research_dispatch=true; sandbox cannot reach the internal IntelX IP so the honest failure path was exercised ('no highlights were fabricated'); production (deployed by Fleet CD) reaches the real IntelX — live production brief confirmation lands with the owner's first research chat."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/intelx_research.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"
+      - "FRIDAY/tests/test_intelx_research_dispatch.py"
+    acceptance:
+      - "IntelX research briefs retrievable through FRIDAY chat."
+    evidence:
+      - "Plan task (M2). 2026-11-10: 16/16 tests green; live dispatch to IntelX proven earlier the same day (engineering acceptance trace: IntelX research completed 2.98s with real citations response)."
+    blockers: []
+    next_action: "Closed. The owner's first 'research X and give me the highlights' in the new dashboard returns IntelX's real brief."
+
 task_id_warnings:
   - id: "TASK-PERSONA-001"
     title: "Warm friend + Jarvis persona for FRIDAY"

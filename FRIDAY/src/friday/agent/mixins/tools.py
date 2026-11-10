@@ -106,6 +106,7 @@ from friday.tools.builtin import (
     SystemControlTool,
     SystemInfoTool,
     FleetStatusTool,
+    IntelXResearchTool,
     SystemPowerControlTool,
     TimeDateTool,
     ToggleBluetoothTool,
@@ -138,6 +139,7 @@ class ToolExecutionMixin:
             registry = ToolRegistry()
             registry.register(SystemInfoTool())
             registry.register(FleetStatusTool())
+            registry.register(IntelXResearchTool())
             registry.register(TimeDateTool())
             registry.register(CalculatorTool())
             registry.register(FileReaderTool())

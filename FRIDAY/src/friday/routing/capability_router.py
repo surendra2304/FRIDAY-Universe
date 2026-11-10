@@ -127,6 +127,16 @@ class CapabilityRouter:
         "mesh status", "universe status", "who is online", "anyone down",
         "agents online", "status of the agents", "how are the agents",
     }
+    # TASK-INT-002 (2026-11-10): keywords signaling a research dispatch to
+    # IntelX. The live incident ("run a quick research check" -> VISION_MODEL)
+    # proved research requests were nobody's job: they must reach
+    # intelx_research (the fleet's Macro Research & Evidence Engine).
+    RESEARCH_KEYWORDS = {
+        "research", "research this", "do some research", "find out about",
+        "look into", "investigate", "get the highlights", "give me the highlights",
+        "brief me on", "what are the findings", "sourced summary",
+        "evidence on", "dig into",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -179,8 +189,13 @@ class CapabilityRouter:
         is_conversational = not self._matches(clean_input, {"file", "click", "run", "execute", "background", "search memory"})
         # TASK-API-002: fleet-status questions are live factual probes, never
         # plain conversation — exclude them from DIRECT_REASONING.
-        is_conversational = is_conversational and not self._matches(clean_input, self.FLEET_KEYWORDS)
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS)):
+        # TASK-INT-002: research requests are dispatchable tasks, not
+        # conversation — exclude them too.
+        is_conversational = is_conversational and not (
+            self._matches(clean_input, self.FLEET_KEYWORDS)
+            or self._matches(clean_input, self.RESEARCH_KEYWORDS)
+        )
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -216,6 +231,23 @@ class CapabilityRouter:
                 is_local_deterministic=True,
                 required_tools=["get_fleet_status"],
                 rationale="Live fleet-health question: probe the nine specialist agents with get_fleet_status (same truth as /api/agents/status).",
+            ))
+
+        # TASK-INT-002: Evaluate Fleet Research Dispatch — "research X" is a
+        # request for evidence-based findings from IntelX (the fleet's Macro
+        # Research & Evidence Engine), not a vision-model job and not plain
+        # conversation. The live 2026-11-10 misroute sent exactly this class
+        # to VISION_MODEL; intelx_research is the correct tool.
+        if self._matches(clean_input, self.RESEARCH_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=5000.0,
+                confidence=0.92,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["intelx_research"],
+                rationale="Research request: dispatch to IntelX (Macro Research & Evidence Engine) for an evidence-based brief with citations.",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

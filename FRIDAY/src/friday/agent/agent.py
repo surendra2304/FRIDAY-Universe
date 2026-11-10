@@ -100,6 +100,7 @@ from friday.tools.builtin import (
     SystemControlTool,
     SystemInfoTool,
     FleetStatusTool,
+    IntelXResearchTool,
     SystemPowerControlTool,
     TimeDateTool,
     ToggleBluetoothTool,

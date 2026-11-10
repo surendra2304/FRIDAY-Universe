@@ -269,6 +269,74 @@ class FastPathMixin:
             },
         )
 
+    def _research_dispatch_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """TASK-INT-002: dispatch explicit research requests straight to IntelX.
+
+        The M1 owner exit — "Friday, research X and give me the highlights" —
+        must reliably reach IntelX (the fleet's Macro Research & Evidence
+        Engine). This fast path fires only on explicit research-action phrasing
+        (leading verb or an explicit highlights request), so ordinary sentences
+        that merely contain the word "research" still take the full cognitive
+        path. The brief returned is IntelX's real response — including its
+        honest "no conclusive evidence" — never a fabricated summary.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.routing.capability_router import CapabilityRouter
+
+        if not CapabilityRouter._matches(low, CapabilityRouter.RESEARCH_KEYWORDS):
+            return None
+        # Explicit research ACTION: leading verb, please-form, or highlights ask.
+        action_shaped = bool(re.match(
+            r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+            r"(?:research|investigate|look into|dig into|find out about|brief me on|do some research)\b",
+            low,
+        )) or CapabilityRouter._matches(low, {"give me the highlights", "get the highlights"})
+        if not action_shaped:
+            return None
+
+        from friday.tools.builtin.intelx_research import IntelXResearchTool
+
+        # The research subject: strip the action prefix for a cleaner query.
+        query = re.sub(
+            r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+            r"(?:research|investigate|look into|dig into|find out about|brief me on|do some research)\s+(?:on\s+|about\s+|the\s+)?",
+            "", low,
+        ).strip() or low
+        result = IntelXResearchTool().execute(query=query)
+        success = not result.is_error
+        content = result.content
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Research request recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Dispatching to IntelX (Macro Research & Evidence Engine)")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="intelx_research dispatch")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Returning IntelX's evidence-based brief")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["intelx_research", "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in research dispatch: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "research_dispatch": True,
+                "intelx": (result.metadata or {}).get("intelx"),
+                "probe_success": success,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _deterministic_action_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
             """Execute safe geometric desktop actions without vision or an LLM."""
             intent = DeterministicActionDetector.detect(clean_input)

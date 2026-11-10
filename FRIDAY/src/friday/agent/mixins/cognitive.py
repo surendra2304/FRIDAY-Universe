@@ -184,6 +184,13 @@ class CognitiveMixin:
             if fleet_response is not None:
                 return fleet_response
 
+            # TASK-INT-002: explicit research requests dispatch straight to
+            # IntelX — "research X and give me the highlights" gets its
+            # evidence-based brief, no misroute possible.
+            research_response = self._research_dispatch_fast_path(clean_input, start_time)
+            if research_response is not None:
+                return research_response
+
             direct_desktop_response = self._direct_desktop_action_fast_path(clean_input, start_time)
             if direct_desktop_response is not None:
                 return direct_desktop_response
