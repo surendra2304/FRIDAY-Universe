@@ -104,13 +104,16 @@ collaborators:
       - "GitHub write access through the owner-provided bridge token: created branch zai/TASK-STR-001-live-trading-guard and PR #39."
       - "Read-only Oracle Cloud diagnostics through the FRIDAY bridge MCP: fleet health, systemd status, journalctl, non-secret environment mode flags."
       - "Local CI-equivalent verification: pinned pytest environment; ran Stratex regression suites (41 passed for TASK-STR-001 scope; 2 pre-existing main failures isolated and verified to reproduce on pristine main)."
+      - "2026-11-10 owner-directed full-project re-verification: fresh clone of main @ 680c04e, GitHub API PR/CI snapshot, read-only bridge diagnostics, and a code-level re-audit of all ten agents (recorded in ACTIVITY_LOG.md, 2026-11-10T04:29:42Z)."
     active_assignments:
       - "TASK-STR-001 — Stratex fail-closed live-trading guard (PR #39, IN_REVIEW)."
       - "TASK-COLLAB-002 — ZAI registration in the shared collaboration registry (stacked on PR #30)."
+      - "TASK-DATA-001 — database architecture audit + owner-authorized remediation (PR #41, IN_REVIEW)."
     active_branches:
       - "zai/TASK-STR-001-live-trading-guard"
       - "zai/TASK-COLLAB-002-register-zai"
-    last_verified_at: "2026-11-09T17:40:00Z"
+      - "zai/TASK-DATA-001-db-architecture-audit"
+    last_verified_at: "2026-11-10T04:30:00Z"
     access_limits:
       - "No direct SSH or production write access; Oracle operations were read-only through the bridge."
       - "No merges, deployments or service restarts performed; all changes go through PRs for owner review."
