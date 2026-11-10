@@ -10,14 +10,23 @@ adding a new public route requires a deliberate, reviewable change here.
 
 from __future__ import annotations
 
-from cortex_api.main import app
+import asyncio
+
+import pytest
+from fastapi import HTTPException
 from fastapi.routing import APIRoute
+from fastapi.security import HTTPAuthorizationCredentials
+from starlette.requests import Request
+
+import cortex_api.main as main_module
+from cortex_api.main import app
 
 AUTH_DEPENDENCIES = {
     "verify_jwt_token",
     "role_checker",
     "verify_friday_token",
     "service_or_operator_auth",
+    "require_cortex_route_access",
 }
 
 # Routes that authenticate inside the handler or by design carry no principal.
@@ -109,3 +118,56 @@ def test_high_risk_routes_are_absent_from_the_public_allowlist():
     )
     leaked = [f"{method} {path}" for method, path in CREDENTIAL_IN_HANDLER if path.startswith(privileged_prefixes)]
     assert leaked == [], f"Privileged routes must not sit in the public allowlist: {leaked}"
+
+
+
+def _request_for_method(method: str) -> Request:
+    return Request(
+        {
+            "type": "http",
+            "method": method,
+            "path": "/test",
+            "headers": [],
+            "query_string": b"",
+        }
+    )
+
+
+def test_route_policy_supports_jwt_and_friday_service_auth(monkeypatch):
+    viewer = {"sub": "viewer", "role": "cortex_viewer", "tenant_id": "tenant_test"}
+    operator = {"sub": "operator", "role": "cortex_operator", "tenant_id": "tenant_test"}
+    friday = {"sub": "friday_system", "role": "friday_system", "tenant_id": "system"}
+
+    async def fake_jwt(credentials):
+        return viewer if credentials and credentials.credentials == "viewer" else operator
+
+    async def fake_friday(token):
+        assert token == "internal-test-key"
+        return friday
+
+    monkeypatch.setattr(main_module, "verify_jwt_token", fake_jwt)
+    monkeypatch.setattr(main_module, "verify_friday_token", fake_friday)
+
+    viewer_credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="viewer")
+    operator_credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="operator")
+
+    assert asyncio.run(
+        main_module.require_cortex_route_access(_request_for_method("GET"), viewer_credentials, None)
+    ) == viewer
+    assert asyncio.run(
+        main_module.require_cortex_route_access(_request_for_method("POST"), operator_credentials, None)
+    ) == operator
+
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(
+            main_module.require_cortex_route_access(_request_for_method("POST"), viewer_credentials, None)
+        )
+    assert exc.value.status_code == 403
+
+    # Internal FRIDAY service calls must continue to work for both read and write routes.
+    assert asyncio.run(
+        main_module.require_cortex_route_access(_request_for_method("GET"), None, "internal-test-key")
+    ) == friday
+    assert asyncio.run(
+        main_module.require_cortex_route_access(_request_for_method("POST"), None, "internal-test-key")
+    ) == friday

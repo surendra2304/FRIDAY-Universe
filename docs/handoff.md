@@ -10,6 +10,7 @@ Older handoff: docs/FRIDAY_Universe_Engineering_Handoff.md (superseded by this f
 | PHASE-0 | Phase 0 — owner actions executed by Claude (owner instructed: implement Phase 0 without asking ChatGPT) | Claude | main / claude/TASK-DOC-001 | docs/handoff.md, docs/MASTER_PLAN.md | IN_PROGRESS |
 | TASK-OPS-002 | Verify OCI sniper authenticates (run 42497059156) | Claude | main (workflow dispatch) | .github/workflows/oracle-capacity-sniper.yml | IN_PROGRESS |
 | TASK-CI-002 | Get main fully green | Claude | claude/TASK-CI-002 | CI workflows, tests, tests/test_real_deep_layer11.py | IN_PROGRESS (PR #22 merged; post-merge CI still failing) |
+| TASK-CORE-001 | Per-agent entrypoint/routes/state/external-call audit (Cortex parallel to Claude's FRIDAY audit) | ChatGPT | chatgpt/TASK-CORE-001-cortex-route-auth | Cortex/apps/api/src/cortex_api/main.py, Cortex/tests/unit/test_route_authorization.py, three central docs | IN_PROGRESS |
 | TASK-CORE-002 | Remove fabricated universe_orchestrator success | Grok | grok/TASK-CORE-002 | FRIDAY/src/friday/integrations/universe_orchestrator.py, FRIDAY/tests/test_universe_orchestrator_no_fake_dispatch.py, docs/MASTER_PLAN.md, docs/handoff.md, docs/ARCHITECTURE_AS_BUILT.md | IN_REVIEW |
 | TASK-INF-001 | Audit Oracle infrastructure on both VMs | Claude | pending | docs/ARCHITECTURE_AS_BUILT.md, infrastructure evidence | NOT_STARTED (reserved for Claude in next-task plan) |
 | TASK-INF-002 | Set FRIDAY-Voice MemoryMax after configuration review | Claude | pending | FRIDAY-Voice systemd unit/configuration | NOT_STARTED (reserved for Claude in next-task plan) |
@@ -34,6 +35,17 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 - ChatGPT: I did NOT start TASK-CI-002, did not edit CI workflows or tests for that task, and do not claim its work. I claim TASK-SEC-003 on `chatgpt/TASK-SEC-003`.
 - TASK-SEC-003 implementation checkpoint: PR #24 is open at https://github.com/surendra2304/FRIDAY-Universe/pull/24, branch `chatgpt/TASK-SEC-003`, head before this handoff checkpoint `021cf65dc761c22a36b473a8f583cd9d8143ddf2`. It adds `bridge/auth.py`, `bridge/server_auth.patch`, `tests/test_bridge_auth.py`, and `docs/BRIDGE_AUTHENTICATION.md`, plus updates the three central documents. Middleware accepts standard `Authorization: Bearer <secret>` or `X-FRIDAY-BRIDGE-KEY: <secret>`, backed only by runtime `FRIDAY_BRIDGE_SHARED_SECRET`; missing configuration returns 503 and invalid credentials 401. Auth is registered inside CORS so rejection responses retain CORS headers. The patch for the currently ignored/untracked live `bridge/server.py` has NOT been applied; the production bridge was NOT restarted and the shared secret is NOT provisioned.
 
+## C. Current work
+
+- Grok TASK-CORE-002: PR #25 merged to main at 2026-11-08 18:02 UTC. Deployment workflow #42507954757 succeeded; FRIDAY.service restarted at 18:03 UTC and `/friday/health` returned HTTP 200 at 18:07 UTC. The fake `dispatched` success was removed; the no-Universe-API path probes FleetClient and reports `not_executed`. Deployment/process liveness are verified; invoking this exact goal path in production remains unverified.
+- ChatGPT TASK-CORE-001 (2026-11-08): auditing Cortex in parallel with Claude's FRIDAY audit. Live Cortex health returned HTTP 200 at 2026-11-08T17:56:22Z; Cortex.service active on Server 2 (PID 313363, 85.1 MB current memory, 200 MB MemoryMax).
+- Source review: `Cortex/apps/api/src/cortex_api/main.py` composes Cortex v2.1.0; `/v1/task/execute` uses `verify_friday_token`; FRIDAY integration routes use the same service-key dependency; user-facing routes use JWT/RBAC in several routers. Async SQLAlchemy DB and Redis are configured in `config.py`; supported DSN selection includes Oracle/Postgres/SQLite paths, but effective production backend was not independently verified in this audit.
+- Targeted test evidence on the connected workspace: `Cortex/tests/test_prompt9_cortex.py` 22 passed; `Cortex/tests/unit/test_friday_integration.py` 27 passed; `Cortex/tests/integration/test_peer_integration_contract.py` 9 passed, 2 skipped; `Cortex/tests/integration/test_multi_tenant_security_isolation.py` 1 passed.
+- Security finding: `Cortex/tests/unit/test_route_authorization.py` failed (1 failed, 1 passed). The inventory identified over 100 feature API routes without a recognized authentication dependency, including marketing, content, campaign, decision, forecasting, risk, inbox, segmentation, and journey endpoints. This is a source-level access-control gap; unauthenticated live requests to those routes were not performed.
+- Remediation in PR #26 (`chatgpt/TASK-CORE-001-cortex-route-auth`): a shared method-aware dependency accepts either JWT Bearer credentials or the internal X-Friday-Api-Key, requires CORTEX_VIEWER for safe reads and CORTEX_OPERATOR for state-changing methods, and preserves stronger endpoint-specific RBAC. It is attached to 23 affected feature-router mounts; health, public SDK ingestion, signature-verified webhooks, streaming token routes, and FRIDAY service-key routes remain on their existing auth contracts.
+- Regression coverage verifies viewer read access, operator write access, and viewer write rejection. CI is pending; do not mark verified until the route inventory and targeted tests pass. No production service was restarted and no deployment occurred.
+- Claude's existing CI changes on `claude/TASK-CI-002` were preserved and not included in PR #26.
+
 ## D. Blocked tasks
 | Blocker | Cause | Required action | Responsible |
 |---|---|---|---|
@@ -50,6 +62,7 @@ Recent work on main (not yet claimed under a TASK-ID, recorded for history):
 4. TASK-CI-002 — main green (Claude owns; PR #22 merged but latest main checks still fail).
 5. TASK-SEC-003 — bridge authentication (ChatGPT; PR #24 in review).
 6. TASK-CORE-001 — per-agent audit, starting with FRIDAY (Claude), after dependencies and ownership are reconciled.
+5. TASK-CORE-001 — Claude audits FRIDAY while ChatGPT audits Cortex; Grok owns TASK-CORE-002. Coordinate dependencies through this shared handoff.
 
 ## F. Shared decisions
 - 2026-11-08: Both AIs work top to bottom through MASTER_PLAN.md. No bottom-up ownership split. (Owner decision.)

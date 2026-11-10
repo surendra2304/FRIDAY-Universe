@@ -19,7 +19,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
@@ -62,7 +63,7 @@ if _REPO_ROOT is not None:
         pass
 
 from cortex_api.api_keys import provision_api_key  # noqa: E402
-from cortex_api.auth import Role, require_role, verify_friday_token  # noqa: E402
+from cortex_api.auth import Role, require_role, verify_friday_token, verify_jwt_token  # noqa: E402
 from cortex_api.config import (  # noqa: E402 - deliberate late import (avoids an import cycle)
     AsyncSessionLocal,
     close_resources,
@@ -217,6 +218,34 @@ app.add_middleware(
 )
 
 
+_cortex_bearer = HTTPBearer(auto_error=False)
+
+
+async def require_cortex_route_access(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(_cortex_bearer),
+    x_friday_api_key: str | None = Header(None, alias="X-Friday-Api-Key"),
+) -> dict[str, Any]:
+    """Require viewer reads / operator writes; preserve FRIDAY service auth.
+
+    Human callers authenticate with JWT Bearer credentials. Internal FRIDAY
+    callers may use X-Friday-Api-Key and receive the FRIDAY_SYSTEM role.
+    Existing endpoint-specific RBAC dependencies remain in force and can
+    impose stricter roles.
+    """
+    if x_friday_api_key:
+        auth = await verify_friday_token(x_friday_api_key)
+    else:
+        auth = await verify_jwt_token(credentials)
+
+    required_role = (
+        Role.CORTEX_VIEWER
+        if request.method.upper() in {"GET", "HEAD", "OPTIONS"}
+        else Role.CORTEX_OPERATOR
+    )
+    return await require_role(required_role)(auth)
+
+
 # ── Standardized Error Handlers ──────────────────────────────────────────────
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
@@ -257,20 +286,20 @@ app.include_router(advanced_operations_router)
 app.include_router(enhanced_crm_router)
 app.include_router(advanced_analytics_router)
 # These routers declare absolute /api/v1/cortex/... paths; mount at root.
-app.include_router(marketing_platform_router)
-app.include_router(demand_forecaster_router)
-app.include_router(attribution_router)
-app.include_router(ab_experiment_router)
-app.include_router(competitive_intel_router)
-app.include_router(conflict_resolver_router)
-app.include_router(decision_rec_router)
-app.include_router(risk_framework_router)
-app.include_router(recommendation_engine_router)
-app.include_router(ab_test_framework_router)
-app.include_router(predictive_analytics_router)
-app.include_router(marketing_automation_router)
-app.include_router(content_creator_router)
-app.include_router(customer_journey_optimizer_router)
+app.include_router(marketing_platform_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(demand_forecaster_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(attribution_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(ab_experiment_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(competitive_intel_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(conflict_resolver_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(decision_rec_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(risk_framework_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(recommendation_engine_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(ab_test_framework_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(predictive_analytics_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(marketing_automation_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(content_creator_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(customer_journey_optimizer_router, dependencies=[Depends(require_cortex_route_access)])
 app.include_router(public_gateway_router)
 app.include_router(events_router)
 app.include_router(understand_router)
@@ -280,39 +309,39 @@ app.include_router(streaming_router)
 
 # --- Customer Segmentation Engine Integration ---
 from cortex_api.customer_segmentation_engine import router as segmentation_router
-app.include_router(segmentation_router, prefix="/api/v1")
+app.include_router(segmentation_router, prefix="/api/v1", dependencies=[Depends(require_cortex_route_access)])
 
 # --- Marketing Campaign Optimizer Integration ---
 from cortex_api.marketing_campaign_optimizer import router as campaign_optimizer_router
-app.include_router(campaign_optimizer_router, prefix="/api/v1")
+app.include_router(campaign_optimizer_router, prefix="/api/v1", dependencies=[Depends(require_cortex_route_access)])
 
 # --- Recommendation Personalizer Integration ---
 from cortex_api.recommendation_personalizer import router as recommendation_personalizer_router
-app.include_router(recommendation_personalizer_router, prefix="/api/v1")
+app.include_router(recommendation_personalizer_router, prefix="/api/v1", dependencies=[Depends(require_cortex_route_access)])
 
 # --- Decision Impact Analyzer Integration ---
 from cortex_api.decision_impact_analyzer import router as decision_impact_router
-app.include_router(decision_impact_router, prefix="/api/v1")
+app.include_router(decision_impact_router, prefix="/api/v1", dependencies=[Depends(require_cortex_route_access)])
 
 # --- Strategic Foresight Engine Integration ---
 from cortex_api.strategic_foresight_engine import router as strategic_foresight_router
-app.include_router(strategic_foresight_router, prefix="/api/v1")
+app.include_router(strategic_foresight_router, prefix="/api/v1", dependencies=[Depends(require_cortex_route_access)])
 
 # --- Strategic Partner Network Analyzer Integration ---
 from cortex_api.strategic_partner_network_analyzer import router as partner_network_router
-app.include_router(partner_network_router, prefix="/api/v1")
+app.include_router(partner_network_router, prefix="/api/v1", dependencies=[Depends(require_cortex_route_access)])
 
 # --- Decision Tree Visualizer Integration ---
 from cortex_api.decision_tree_visualizer import router as decision_tree_router
-app.include_router(decision_tree_router, prefix="/api/v1")
+app.include_router(decision_tree_router, prefix="/api/v1", dependencies=[Depends(require_cortex_route_access)])
 
 # --- Decision Fatigue Detector Integration ---
 from cortex_api.decision_fatigue_detector import router as decision_fatigue_router
-app.include_router(decision_fatigue_router, prefix="/api/v1")
+app.include_router(decision_fatigue_router, prefix="/api/v1", dependencies=[Depends(require_cortex_route_access)])
 
 # --- Agentic Inbox Engine Integration ---
 from cortex_api.real_inbox_routes import router as real_inbox_router
-app.include_router(real_inbox_router, prefix="/api/v1/cortex")
+app.include_router(real_inbox_router, prefix="/api/v1/cortex", dependencies=[Depends(require_cortex_route_access)])
 
 
 # ── Pydantic Schemas for Cognitive Reasoning ─────────────────────────────────
