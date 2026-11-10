@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-11 (early hours IST) · 42/123 items done (34%) · capability-weighted completion ≈ 55%
+**Snapshot:** 2026-11-11 (early hours IST; updated same night after ORCH-005/006/007) · 44/124 items done (35%) · capability-weighted completion ≈ 57%
 
 ---
 
@@ -47,7 +47,7 @@
 - [x] **C3** Forge code tasks via chat (FOR-002, live)
 - [x] **C4** Unified task records: TASK-ID, owner agent, status, result (CORE-003)
 - [x] **C5** Empty-turn fix unblocks delegation requests (ORCH-005 — this batch; live re-verify after deploy)
-- [ ] **C6** Generic "assign <task> to <agent>" phrasing routes to the right agent tool
+- [x] **C6** Generic "assign <task> to <agent>" phrasing routes to the right agent tool (ORCH-006/007, live verified 2026-11-11)
 - [ ] **C7** VyralX delegation: video scripts/clips on request
 - [ ] **C8** Sentinel delegation: "run a security scan" on request
 - [ ] **C9** Cortex delegation: web fetch/monitor tasks on request
@@ -55,7 +55,7 @@
 - [ ] **C11** Memora delegation: owner-facing memory ops (search/edit) as first-class tasks
 - [ ] **C12** Multi-agent pipelines: "research X, then draft the email about it" (chained dispatch)
 - [ ] **C13** Task status queries: "what happened to that IntelX task?" → real record lookup
-- [ ] **C14** Delegation receipts: every assignment returns a task ID the owner can reference
+- [x] **C14** Delegation receipts: every assignment returns a task ID the owner can reference (live: task_71f66986709e)
 
 ## D. Website — command center (18 items)
 
@@ -184,14 +184,14 @@
 |---|---|---|---|
 | A. Brain | 5 | 14 | 36% |
 | B. Memory | 6 | 12 | 50% |
-| C. Orchestration | 5 | 14 | 36% |
+| C. Orchestration | 7 | 14 | 50% |
 | D. Website | 8 | 18 | 44% |
 | E. Voice | 2 | 10 | 20% |
 | F. Agents | 7 | 27 | 26% |
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
 | I. Tech debt | 0 | 7 | 0% |
-| **Universe** | **42** | **124** | **34%** |
+| **Universe** | **44** | **124** | **35%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 
