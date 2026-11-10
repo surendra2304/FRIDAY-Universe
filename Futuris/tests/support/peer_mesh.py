@@ -11,8 +11,9 @@ credential it is given, records every request it receives (so tests can assert
 that collaboration happened rather than assuming it), and supports fault
 injection through ``/__control``.
 """
-
 from __future__ import annotations
+
+import os
 
 import time
 from dataclasses import dataclass, field
@@ -23,7 +24,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 #: Credential every peer expects; tests set the matching <PEER>_API_KEY.
-MESH_TOKEN = "[REDACTED:mesh_peer_token]"
+MESH_TOKEN = os.environ.get("MESH_PEER_TOKEN", "mesh_peer_token_LOCAL_TEST_ONLY")
 
 PEERS = ("intelx", "inference", "memora", "stratex", "sentinel", "cortex", "forge", "friday")
 

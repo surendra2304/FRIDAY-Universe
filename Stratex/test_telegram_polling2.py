@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 """Test Telegram bot polling with debug"""
+import os
 from notifications.telegram_bot import TelegramBotClient
 import time
 import requests
 
-token = '[REDACTED:telegram_bot_token]'
-chat_id = '[REDACTED:telegram_chat_id]'
+token = os.getenv('TELEGRAM_BOT_TOKEN')
+if not token:
+    raise SystemExit('Set TELEGRAM_BOT_TOKEN before running this test script.')
+chat_id = os.getenv('TELEGRAM_CHAT_ID', '')
 
 bot = TelegramBotClient(bot_token=token, chat_id=chat_id)
 print('Starting polling...')

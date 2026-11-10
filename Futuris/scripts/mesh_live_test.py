@@ -41,9 +41,9 @@ import httpx
 ROOT = Path(__file__).resolve().parents[1]
 MESH_PORT = 8210
 FUTURIS_PORT = 8110
-MESH_TOKEN = "[REDACTED:mesh_peer_token]"
-MASTER_KEY = "[REDACTED:mesh_master_key]"
-FRIDAY_KEY = "[REDACTED:mesh_friday_key]"
+MESH_TOKEN = os.environ.get("MESH_PEER_TOKEN", "mesh_peer_token_LOCAL_TEST_ONLY")
+MASTER_KEY = os.environ.get("MESH_MASTER_KEY", "mesh_master_key_LOCAL_TEST_ONLY")
+FRIDAY_KEY = os.environ.get("MESH_FRIDAY_KEY", "mesh_friday_key_LOCAL_TEST_ONLY")
 
 MESH_URL = f"http://127.0.0.1:{MESH_PORT}"
 FUTURIS_URL = f"http://127.0.0.1:{FUTURIS_PORT}"
