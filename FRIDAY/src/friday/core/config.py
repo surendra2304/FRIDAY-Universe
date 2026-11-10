@@ -514,7 +514,7 @@ class Settings(BaseSettings):
     user_name: str = Field(default="Surendra", description="Name/title to address the user")
     persona: str = Field(
         default="friday",
-        description="Communications persona: 'friday' (dry wit, efficient, proactive) or 'classic' (concise, neutral)",
+        description="Communications persona: 'friday' (warm friend + Jarvis-style wit, proactive) or 'classic' (concise, neutral)",
     )
     persona_title: str = Field(
         default="",
