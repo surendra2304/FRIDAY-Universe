@@ -6,9 +6,9 @@
       "status": "healthy",
       "layers": 3,
       "engine_count": 4,
-      "last_heartbeat": 1793699933.7528036,
-      "cpu_usage": 0.40654068814085154,
-      "memory_usage": 0.5171677484083868,
+      "last_heartbeat": 1794298628.4243922,
+      "cpu_usage": 0.5003563885717282,
+      "memory_usage": 0.32833340089396734,
       "error_count": 0
     },
     {
@@ -17,9 +17,9 @@
       "status": "healthy",
       "layers": 2,
       "engine_count": 6,
-      "last_heartbeat": 1793699933.7548113,
-      "cpu_usage": 0.4553909469081775,
-      "memory_usage": 0.5446045883109559,
+      "last_heartbeat": 1794298628.4252625,
+      "cpu_usage": 0.5224917484002428,
+      "memory_usage": 0.5924213279233764,
       "error_count": 0
     },
     {
@@ -28,9 +28,9 @@
       "status": "healthy",
       "layers": 2,
       "engine_count": 3,
-      "last_heartbeat": 1793699933.7548113,
-      "cpu_usage": 0.2906663992966526,
-      "memory_usage": 0.20725463859667453,
+      "last_heartbeat": 1794298628.4262488,
+      "cpu_usage": 0.22443199743144673,
+      "memory_usage": 0.6617889597732588,
       "error_count": 0
     },
     {
@@ -39,9 +39,9 @@
       "status": "healthy",
       "layers": 3,
       "engine_count": 5,
-      "last_heartbeat": 1793699933.7548113,
-      "cpu_usage": 0.3888940711273471,
-      "memory_usage": 0.4307975305033215,
+      "last_heartbeat": 1794298628.4270809,
+      "cpu_usage": 0.3068827021098419,
+      "memory_usage": 0.28114891574990614,
       "error_count": 0
     },
     {
@@ -50,9 +50,9 @@
       "status": "healthy",
       "layers": 3,
       "engine_count": 4,
-      "last_heartbeat": 1793699933.7575796,
-      "cpu_usage": 0.24118435191858542,
-      "memory_usage": 0.5330632665899144,
+      "last_heartbeat": 1794298628.427756,
+      "cpu_usage": 0.26813514770613844,
+      "memory_usage": 0.6624000363426047,
       "error_count": 0
     },
     {
@@ -61,9 +61,9 @@
       "status": "healthy",
       "layers": 3,
       "engine_count": 4,
-      "last_heartbeat": 1793699933.7588856,
-      "cpu_usage": 0.15694452943291773,
-      "memory_usage": 0.442982359569968,
+      "last_heartbeat": 1794298628.4284043,
+      "cpu_usage": 0.3060340221843765,
+      "memory_usage": 0.6525589436956634,
       "error_count": 0
     },
     {
@@ -72,9 +72,9 @@
       "status": "healthy",
       "layers": 3,
       "engine_count": 4,
-      "last_heartbeat": 1793699933.7598977,
-      "cpu_usage": 0.46790208363537655,
-      "memory_usage": 0.6935161658213376,
+      "last_heartbeat": 1794298628.4291518,
+      "cpu_usage": 0.1601362408464084,
+      "memory_usage": 0.5921778148840917,
       "error_count": 0
     },
     {
@@ -83,9 +83,9 @@
       "status": "healthy",
       "layers": 3,
       "engine_count": 5,
-      "last_heartbeat": 1793699933.7608967,
-      "cpu_usage": 0.11258403805111364,
-      "memory_usage": 0.329190519787249,
+      "last_heartbeat": 1794298628.429709,
+      "cpu_usage": 0.3581807139793526,
+      "memory_usage": 0.5051502455484151,
       "error_count": 0
     },
     {
@@ -94,9 +94,9 @@
       "status": "healthy",
       "layers": 3,
       "engine_count": 4,
-      "last_heartbeat": 1793699933.7608967,
-      "cpu_usage": 0.3049443379687502,
-      "memory_usage": 0.5558902372079275,
+      "last_heartbeat": 1794298628.430365,
+      "cpu_usage": 0.20063606603258274,
+      "memory_usage": 0.31863058523611193,
       "error_count": 0
     }
   ],
