@@ -472,8 +472,8 @@ claims:
     owner: "zai"
     prs: [43]
     branches: ["zai/TASK-CI-002-latency-stability"]
-    status: "ACTIVE_CLAIM"
-    task: "TASK-CI-002 post-merge pass (D-020): latency-statistics root-cause fix - true nearest-rank p95 of 40 samples (was max-of-20 via int(20*0.95)==19), warm-up runs excluded, host-calibrated budgets clamped [1.0, 4.0] (reference machine keeps the exact original 100ms/500ms contract)."
+    status: "MERGED"
+    risk: "Test-only statistics fix (D-020): true nearest-rank p95 of 40 samples (was max-of-20 via int(20*0.95)==19), warm-up runs excluded, host-calibrated budgets clamped [1.0, 4.0] (reference machine keeps the exact original 100ms/500ms contract). Merged to main as fca3d93; main fully green."
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"

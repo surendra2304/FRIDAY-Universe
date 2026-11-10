@@ -127,15 +127,14 @@ tasks:
 
   - id: "TASK-SEC-002"
     title: "Remove exposed historical secrets from Git history"
-    status: "BLOCKED"
+    status: "VERIFIED"
     owner: "claude"
     branch: null
     pr: null
-    dependencies:
-      - "All impacted credentials rotated."
-      - "All related PR branches reconciled and merged or abandoned."
-      - "Explicitly scheduled owner-approved destructive maintenance window."
-    next_action: "Coordinate with every contributor, preserve backup refs and snapshots, then perform the approved history cleanup. Do not rewrite history in this task-claim session."
+    evidence:
+      - "EXECUTED 2026-11-10 by ZAI after the owner-directed mass merge (D-016 / MASTER_PLAN TASK-SEC-002): live tree sanitized first (env-var lookups), git-filter-repo purge of 16 leaked credential literals across all 667 commits, post-rewrite scan zero hits, main force-pushed, all 27 stale remote branches deleted; pre-rewrite bundle preserved offline by ZAI."
+      - "Re-verified 2026-11-10 (post-merge pass session): fixed-string scan of the full reachable history (pickaxe over all refs) shows zero occurrences of the exposed credentials; all 41 GitHub refs/pull/*/head trees scanned clean."
+    next_action: "Owner follow-ups remain: rotate the leaked Telegram bot token (BotFather) and the DuckDNS token (tracked in MASTER_PLAN Phase 0)."
 
   - id: "TASK-SEC-003"
     title: "Bridge authentication and safe production activation"
@@ -175,11 +174,11 @@ tasks:
 
   - id: "TASK-CI-002"
     title: "Get current main and required validation fully green"
-    status: "IN_REVIEW"
+    status: "VERIFIED"
     owner: "claude"
     other_contributors:
       - "zai"
-    branch: "zai/TASK-CI-002-latency-stability"
+    branch: null
     pr: 43
     execution_note: "2026-11-10: execution pass by ZAI under owner directive and D-019 (Claude unreachable; owner granted full authority), merged as PR #42 (f667701). Post-merge Monorepo Structure and Safety CI run 42779391316 failed 1/3384: test_security_workflow_latency 'P95 latency too high: 583.9ms'. Root cause isolated in the test's statistics (D-020): latencies[int(20*0.95)] == index 19 == MAX of 20 samples ('p95' was actually max-of-20), no warm-up, absolute wall-clock budgets on shared runners (workflow steady state ~21-23ms). PR #43 fixes: 3 warm-up runs excluded, 40 measured samples, true nearest-rank percentiles (p95 = rank 38 of 40), host-calibrated budgets (best-of-3 pure-Python calibration, reference 0.328s) clamped [1.0, 4.0] — reference machine keeps the exact original 100ms/500ms contract. Evidence: file suite 5/5 at factor 1.00 (P50 22.2/P95 22.8ms); 600ms stall injection absorbed by new statistics (p95 24.7ms PASS) vs old statistics failing the identical stall at 622ms; full CI-equivalent suite locally 3390 passed / 0 failed. Test-only change, zero production surface."
     files:
@@ -199,7 +198,11 @@ tasks:
       - "Memora/apps/__init__.py"
       - "Memora/app/__init__.py"
       - "tests/test_proven_vertical_slice.py"
-    next_action: "Merge PR #43 after its checks pass, then verify both Monorepo Structure and Safety CI runs green on the post-merge main head; record the green run IDs and close the task. Claude to review the pass (registered owner)."
+    evidence:
+      - "2026-11-10 post-merge main head fca3d93: all six workflows green — Monorepo Structure and Safety CI runs 42782743402 and 42782743035 (both jobs: Validate fleet layout and mirror safety; Validate monorepo-only policy and workflow syntax), Secret Scanning 42782743026, Collaboration Registry Validation 42782743532, FRIDAY Universe CI/CD 42782743070, Fleet Continuous Deployment 42782743011."
+      - "PR #43 check runs on head c0c898f: test, Validate monorepo-only policy and workflow syntax, Build coordinated workload images, Scan changed commits for secrets, Validate fleet layout and mirror safety, Validate roster/task IDs/file ownership — all success (docker skipped: PR event)."
+      - "Local CI-equivalent suite after the fix: 3390 passed, 66 skipped, 0 failed; 600ms stall injection absorbed by the fixed statistics (p95 24.7ms PASS) vs old statistics failing the identical stall at 622ms."
+    next_action: "Closed — acceptance criterion met (all validation jobs pass on current HEAD). Claude (registered owner) to review the two execution passes (PR #42, PR #43) at leisure; re-open if main goes red again."
 
   - id: "TASK-CI-003"
     title: "Run workspace test runner and reconcile CI task IDs"
