@@ -169,3 +169,14 @@ For every new handoff, include:
 - Verified: one shared Oracle ADB (ap-hyderabad-1); per-agent schema users incl. VYRALX_MEDIA; Redis only on Server 2; Qdrant absent; SQLite fail-closed refused on production paths.
 - Owner decisions requested: ADMIN-DSN remediation path (feeds TASK-SEC-004); removal or wiring of unused *_DB_ASYNC_URL variables; Memora Redis/Qdrant provisioning on Server 1 or variable removal; TASK-VYR-001 assignment for the failed vyralx-autopilot unit.
 - Limits: read-only bridge commands; no secret values read; no restarts, merges or deployments.
+
+## Handoff — 2026-11-10 — TASK-DATA-001 owner-authorized remediation (follow-up on PR #41)
+
+- Owner: ZAI (GLM). Same claim (issue #35 comment 6747502892), same branch `zai/TASK-DATA-001-db-architecture-audit` / PR #41. Authorization: owner instruction in chat, 2026-11-10 ("Fix them and continue working").
+- Production changes (all backed up before, verified after, through the bridge MCP; names/log facts only, no secret values):
+  - ADMIN-privileged DSN lines removed from six agent env files across both servers (FRIDAY ×1, Memora/Futuris/IntelX ×2 each, VyralX Server 1 repo copy ×2, VyralX Server 2 live copy ×2). FRIDAY's own-user FRIDAY_UNIVERSE_DB_URL duplicate kept. Seven services restarted and verified healthy; zero failed units fleet-wide afterwards. Backups: ~/env-backups/ per server.
+  - deploy/setup_fleet.sh: dead ADMIN-DSN construction removed (bash -n verified) so fleet re-setup can never re-seed ADMIN DSNs.
+  - Memora: REDIS_URL=disabled (emitter's designed off-switch) + dead QDRANT_URL/QDRANT_COLLECTION removed; post-restart log truthful ("Redis not configured"); Futuris event polling 200 OK.
+  - vyralx-autopilot (Server 2): TimeoutStartSec 3600→7200, failure cleared, timer re-armed 2026-11-10T05:05:00Z. Backup: ~/systemd-backups/.
+- Handoff to owner: PR #41 now carries audit + remediation; review/merge after #30 and #40. Open decisions: ADMIN password rotation (TASK-SEC-004; removed DSNs had an unknown exposure window), Redis/Qdrant provisioning on Server 1 (TASK-DATA-003/TASK-OBS-001), total wall-clock budget inside run_viral_autopilot.py (TASK-VYR-001).
+- Limits: no new software installed, no merges, no deployments beyond the service restarts listed above, no credential rotation, no secret values read.
