@@ -1,52 +1,134 @@
-version: 1
-updated_at: "2026-11-09"
+schema_version: 1
+updated_at: "2026-11-09T05:00:00Z"
+repository: "surendra2304/FRIDAY-Universe"
+collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
+authority:
+  model: "equal_human_and_ai_collaboration"
+  project_owner_id: "human_surendra"
+  project_owner_display: "Surendra Varma Jalli"
+  final_approval: "Project owner"
+  no_permanent_ai_hierarchy: true
+
 collaborators:
-  - id: v0
-    platform: Vercel v0
-    specializations:
-      - repository analysis
-      - Next.js and Python engineering
-      - CI and test automation
-      - security and reliability review
-      - GitHub branch and pull-request workflow
-    verified_tools:
-      - connected GitHub checkout for surendra2304/FRIDAY-Universe
-      - local repository shell and file inspection
-      - Vercel workspace Git synchronization
-    current_assignments:
-      - COORD-001
-    active_branch: v0/coordination-bootstrap
-    active_pr: null
-    status: ACTIVE
-    last_activity: "2026-11-09"
-  - id: claude
-    platform: Anthropic Claude
-    specializations: []
-    verified_tools: []
-    current_assignments:
-      - TASK-DOC-001
-      - TASK-OPS-002
-    active_branch: claude/TASK-DOC-001
-    active_pr: "PR #21 (reported in docs/handoff.md; current status requires verification)"
-    status: REGISTERED_UNVERIFIED
-    last_activity: null
-  - id: chatgpt
-    platform: OpenAI ChatGPT
-    specializations: []
-    verified_tools: []
-    current_assignments:
-      - TASK-CI-002
-    active_branch: main
-    active_pr: null
-    status: REGISTERED_UNVERIFIED
-    last_activity: null
-  - id: grok
-    platform: xAI Grok
-    specializations: []
-    verified_tools: []
-    current_assignments:
-      - TASK-CORE-002
-    active_branch: grok/TASK-CORE-002
-    active_pr: null
-    status: REGISTERED_UNVERIFIED
-    last_activity: null
+  - id: "human_surendra"
+    display_name: "Surendra Varma Jalli"
+    contributor_type: "human"
+    status: "project_owner"
+    authority: "Final project decisions, merges and production authorization"
+    verified_capabilities:
+      - "GitHub repository ownership/administration"
+      - "Final approval for architecture and production operations"
+    active_assignments: []
+    last_verified_at: "2026-11-09"
+
+  - id: "claude"
+    display_name: "Claude"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Equal engineering collaborator"
+    verified_capabilities:
+      - "Authored active repository PRs #23, #27, #28, #29 and #34"
+      - "Changes available through shared GitHub branches and pull requests"
+      - "Shared Server 2 engineering workspace was observed on claude/TASK-CI-004"
+    active_assignments:
+      - "PR #23 — CI dependencies/test environment and deploy-policy regression (TASK-ID requires reconciliation)"
+      - "PR #27 — manual-only/no-force mirror workflow"
+      - "PR #28 — FRIDAY dispatch bus integration"
+      - "PR #29 — Sentinel task endpoint"
+      - "PR #34 — root-cause CI fixes"
+      - "TASK-OPS-002 — Oracle capacity sniper verification"
+    active_branches:
+      - "claude/TASK-CI-003"
+      - "claude/TASK-MIRROR-001"
+      - "claude/TASK-DISPATCH-001"
+      - "claude/TASK-API-001"
+      - "claude/TASK-CI-004"
+    last_verified_at: "2026-11-09T04:08:17Z"
+    access_limits:
+      - "An untracked Forge contract test was observed in the shared workspace; its final owner/disposition has not been confirmed."
+      - "Production changes remain subject to owner approval."
+
+  - id: "chatgpt"
+    display_name: "ChatGPT"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Equal engineering collaborator"
+    verified_capabilities:
+      - "GitHub repository read/write through connected GitHub integration"
+      - "Created and updated branches and pull requests #24, #26, #30, #31, #32, #33, #37 and #38"
+      - "Read-only diagnostics through the FRIDAY x Claude x ChatGPT bridge"
+      - "Posted independent review findings on PRs #23, #26 and #28"
+    active_assignments:
+      - "PR #24 — bridge authentication"
+      - "PR #26 — Cortex route authorization"
+      - "PR #30 — central documentation and collaboration registry"
+      - "PR #31 — Gitleaks change-range scan"
+      - "PR #32 — IntelX Oracle JSON compatibility"
+      - "PR #33 — Futuris/Stratex portfolio data integrity"
+      - "PR #37 — Memora Oracle vector tenant and transaction integrity"
+      - "PR #38 — Memora maintenance API tenant binding (stacked on PR #37); broader TASK-DATA-002 audit remains active"
+    active_branches:
+      - "chatgpt/TASK-SEC-003"
+      - "chatgpt/TASK-CORE-001-cortex-route-auth"
+      - "chatgpt/TASK-DOC-SYNC-001"
+      - "chatgpt/TASK-SEC-004"
+      - "chatgpt/TASK-INT-001-intelx-json"
+      - "chatgpt/TASK-FUT-001-stratex-telemetry"
+      - "chatgpt/TASK-MEM-001-memora-oracle-vector-audit"
+      - "chatgpt/TASK-DATA-002-memory-tenant-isolation"
+    last_verified_at: "2026-11-09T10:10:00Z"
+    access_limits:
+      - "Oracle checks performed in this snapshot were read-only."
+      - "No production restart, deployment, merge or secret provisioning was performed."
+
+  - id: "grok"
+    display_name: "Grok"
+    contributor_type: "ai"
+    status: "previous_contributor_availability_unknown"
+    authority: "Equal engineering collaborator"
+    verified_capabilities:
+      - "Previous implementation merged through PR #25 for TASK-CORE-002"
+    active_assignments: []
+    last_verified_at: "2026-11-08"
+    access_limits:
+      - "No current open PR or active branch was observed in the latest open-PR snapshot."
+      - "Current tool access and availability have not been verified."
+
+  - id: "zai"
+    display_name: "ZAI"
+    contributor_type: "ai"
+    status: "planned_not_onboarded"
+    authority: "Equal engineering collaborator after onboarding"
+    verified_capabilities: []
+    active_assignments: []
+    last_verified_at: null
+    access_limits:
+      - "Repository access, coding tools, deployment access and integrations are not yet verified."
+
+  - id: "vercel_v0"
+    display_name: "Vercel v0"
+    contributor_type: "ai"
+    status: "active_contributor_overlap_to_reconcile"
+    authority: "Equal engineering collaborator"
+    verified_capabilities:
+      - "Created visible branch v0/coordination-bootstrap and PR #36."
+      - "PR #36 changes the seven core docs/collaboration registry files."
+    reported_capabilities:
+      - "PR #36 reports local repository shell/file inspection and Vercel workspace Git synchronization; those specific capabilities have not been independently exercised in this session."
+    active_assignments:
+      - "PR #36 — independent collaboration-centre bootstrap; overlaps TASK-COLLAB-001 and PR #30."
+    active_branches:
+      - "v0/coordination-bootstrap"
+    last_verified_at: "2026-11-09T04:44:27Z"
+    access_limits:
+      - "PR #36 must be reconciled with PR #30 before either branch is merged."
+      - "Production and Oracle access have not been verified."
+
+onboarding_policy:
+  required_before_task_claim:
+    - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
+    - "Read docs/collaboration/README.md and all current registry files."
+    - "Verify repository permissions, available tools and current worktree state."
+    - "Register a unique collaborator ID and evidence-backed capabilities."
+    - "Post a claim to the shared GitHub issue before editing assigned files."
+  capability_rule: "Never infer integrations or permissions from the contributor or product name."

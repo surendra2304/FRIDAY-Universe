@@ -1,43 +1,354 @@
-version: 1
-updated_at: "2026-11-09"
-ownership:
-  - task_id: COORD-001
-    collaborator: v0
-    branch: v0/coordination-bootstrap
-    paths:
-      - docs/collaboration/
-    claimed_at: "2026-11-09"
-    update_or_expiry: "Owner handoff or explicit release required; no automatic takeover."
-  - task_id: TASK-DOC-001
-    collaborator: claude
-    branch: claude/TASK-DOC-001
-    paths:
-      - docs/MASTER_PLAN.md
-      - docs/handoff.md
-      - docs/ARCHITECTURE_AS_BUILT.md
-    claimed_at: "reported in docs/handoff.md"
-    update_or_expiry: "Verify with current owner before editing."
-  - task_id: TASK-CORE-002
-    collaborator: grok
-    branch: grok/TASK-CORE-002
-    paths:
-      - FRIDAY/src/friday/integrations/universe_orchestrator.py
-      - FRIDAY/tests/test_universe_orchestrator_no_fake_dispatch.py
-    claimed_at: "reported in docs/handoff.md"
-    update_or_expiry: "Verify with current owner before editing."
-  - task_id: TASK-CI-002
-    collaborator: chatgpt
-    branch: main
-    paths:
-      - .github/workflows/
-      - tests/
-    claimed_at: "reported in docs/handoff.md"
-    update_or_expiry: "Verify current worktree and branch before editing."
-  - task_id: INF-003
-    collaborator: v0
-    branch: v0/coordination-bootstrap
-    paths:
-      - Inference/app/agents/debate.py
-      - Inference/tests/
-    claimed_at: "2026-11-09"
-    update_or_expiry: "Owner handoff or explicit release required; no automatic takeover."
+schema_version: 1
+snapshot_at: "2026-11-09T16:49:00Z"
+repository: "surendra2304/FRIDAY-Universe"
+claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
+rule: "The GitHub claim thread plus a current branch/PR is the shared ownership record. This file is the searchable mirror, not an atomic lock."
+protected_worktree:
+  location: "Server 2 shared workspace"
+  observed_branch: "claude/TASK-CI-004"
+  observed_status:
+    - "?? Forge/tests/unit/test_task_execute_contract.py"
+  classification: "PROTECTED_UNTRACKED_WORK"
+  owner: "unconfirmed; observed in Claude's shared worktree"
+  instructions:
+    - "Do not delete, stage, modify, stash, clean or overwrite this file without explicit owner confirmation."
+    - "Confirm whether it is intended for PR #28, PR #34 or another task before moving it."
+    - "Re-check git status before any worktree operation."
+
+claims:
+  - path: ".github/workflows/validate-monorepo.yml"
+    owner: "claude"
+    prs: [23, 34]
+    branches: ["claude/TASK-CI-003", "claude/TASK-CI-004"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Both PRs modify the same validator workflow. Review and reconcile the combined diff before either merge."
+
+  - path: "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
+    owner: "claude"
+    prs: [28, 34]
+    branches: ["claude/TASK-DISPATCH-001", "claude/TASK-CI-004"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Both PRs change the dispatch bus. Merge order and combined tests must be agreed before merge."
+
+  - path: "docs/MASTER_PLAN.md"
+    owner: "chatgpt"
+    prs: [24, 26, 30]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Multiple ChatGPT PR branches carry different copies of the roadmap. Reconcile the final text onto one current branch; do not merge stale doc snapshots over newer evidence."
+
+  - path: "docs/handoff.md"
+    owner: "chatgpt"
+    prs: [24, 26, 30]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Multiple PRs update the handoff. Keep the most recent GitHub/runtime snapshot and include all concurrent contributors."
+
+  - path: "docs/ARCHITECTURE_AS_BUILT.md"
+    owner: "chatgpt"
+    prs: [24, 26, 30]
+    branches: ["chatgpt/TASK-SEC-003", "chatgpt/TASK-CORE-001-cortex-route-auth", "chatgpt/TASK-DOC-SYNC-001"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "As-built documentation needs one final reconciled update after implementation reviews."
+
+  - path: ".github/workflows/mirror-subrepos.yml"
+    owner: "claude"
+    prs: [27]
+    branches: ["claude/TASK-MIRROR-001"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "PR #27 also needs cross-repository token policy verification."
+
+  - path: "Sentinel/sentinel/apps/api/main.py"
+    owner: "claude"
+    prs: [29]
+    branches: ["claude/TASK-API-001"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Verify endpoint contract against deployed Sentinel auth middleware."
+
+  - path: "bridge/auth.py"
+    owner: "chatgpt"
+    prs: [24]
+    branches: ["chatgpt/TASK-SEC-003"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Production patch/runtime secret activation is not complete."
+
+  - path: "Cortex/apps/api/src/cortex_api/main.py"
+    owner: "chatgpt"
+    prs: [26]
+    branches: ["chatgpt/TASK-CORE-001-cortex-route-auth"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Resolve reviewer finding on read-only POST route capability."
+
+  - path: ".github/workflows/secret-scan.yml"
+    owner: "chatgpt"
+    prs: [31]
+    branches: ["chatgpt/TASK-SEC-004"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Change-range scan does not resolve the separate historical secret exposure."
+
+  - path: "IntelX/intelx/db/engine.py"
+    owner: "chatgpt"
+    prs: [32]
+    branches: ["chatgpt/TASK-INT-001-intelx-json"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Root monorepo validation remains red for other collection/dependency failures."
+
+  - path: "IntelX/intelx/oracle_dialect_compat.py"
+    owner: "chatgpt"
+    prs: [32]
+    branches: ["chatgpt/TASK-INT-001-intelx-json"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Verify actual Oracle async dialect inheritance on supported SQLAlchemy/python-oracledb versions."
+
+  - path: "Futuris/futuris/connectors/trading_bot.py"
+    owner: "chatgpt"
+    prs: [33]
+    branches: ["chatgpt/TASK-FUT-001-stratex-telemetry"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Telemetry-only change; verify no order/execution path was changed."
+
+  - path: "Futuris/futuris/api/routers/risk.py"
+    owner: "chatgpt"
+    prs: [33]
+    branches: ["chatgpt/TASK-FUT-001-stratex-telemetry"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Risk output must clearly distinguish verified position exposure from watchlist estimates."
+
+  - path: "Forge/app/agents/real_optimization_advanced.py"
+    owner: "claude"
+    prs: [34]
+    branches: ["claude/TASK-CI-004"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Optimizer rewrite must retain existing objective and thresholds; regression evidence is in PR #34."
+
+  - path: "tests/conftest.py"
+    owner: "claude"
+    prs: [34]
+    branches: ["claude/TASK-CI-004"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Global fixture and environment restoration changes can affect all root tests; inspect cross-test isolation."
+
+
+  - path: "docs/collaboration/README.md"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "PR #30 adds issue #35 claim protocol, validator instructions and broader operational rules; PR #36 has a separate initial guide. Compare and consolidate."
+
+  - path: "docs/collaboration/TEAM_ROSTER.yaml"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "PR #30 registers all planned/current contributors; PR #36 registers a smaller roster. Preserve current PR/branch evidence and verify reported access."
+
+  - path: "docs/collaboration/WORK_BOARD.yaml"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "PR #30 includes live open PR ownership and CI states; PR #36 has a shorter bootstrap board. Reconcile rather than replace."
+
+  - path: "docs/collaboration/FILE_OWNERSHIP.yaml"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Both PRs record file ownership; combine all observed PR overlaps and the protected untracked Forge test."
+
+  - path: "docs/collaboration/ACTIVITY_LOG.md"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Append both contributors' dated activity; do not erase either history."
+
+  - path: "docs/collaboration/DECISIONS.md"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Merge unique decisions and preserve provenance; align names and numbering."
+
+  - path: "docs/collaboration/HANDOFFS.md"
+    owner: "chatgpt + vercel_v0 (consolidation required)"
+    prs: [30, 36]
+    branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
+    status: "OVERLAPPING_CLAIMS"
+    risk: "Combine v0's onboarding handoff with current Claude/ChatGPT/Grok and future ZAI/v0 next actions."
+
+  - path: "docs/collaboration/TASK_TEMPLATE.yaml"
+    owner: "chatgpt"
+    prs: [30]
+    branches: ["chatgpt/TASK-DOC-SYNC-001"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Not present in PR #36; ensure it follows the final shared board schema."
+
+  - path: "docs/collaboration/HANDOFF_TEMPLATE.md"
+    owner: "chatgpt"
+    prs: [30]
+    branches: ["chatgpt/TASK-DOC-SYNC-001"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Not present in PR #36; align with the final claim/release/handoff protocol."
+
+
+  - path: "Memora/storage/vector/oracle_vector_adapter.py"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Oracle MERGE contract is tested with a recording session; live Oracle schema behavior remains unverified."
+
+  - path: "Memora/tests/test_oracle_vector_tenant_isolation.py"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "SQLite tests cover tenant fallback and outer transaction boundaries; Oracle SQL behavior is contract-tested, not run against Oracle."
+
+  - path: ".github/workflows/memora-vector-regression.yml"
+    owner: "chatgpt"
+    prs: [37, 38]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit", "chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "STACKED_CLAIM_IN_REVIEW"
+    risk: "Focused Memora CI also runs the PR #38 legacy access-controller authorization regressions; PR #38 remains stacked on PR #37."
+
+  - path: ".github/workflows/friday-universe-ci.yml"
+    owner: "chatgpt"
+    prs: [37, 38]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit", "chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "STACKED_CLAIM_IN_REVIEW"
+    risk: "PR #37 adds vector regression; stacked PR #38 adds maintenance and cross-tenant context tests. Rebase #38 after #37 merges, then run final workflow on main."
+
+  - path: "Memora/requirements.txt"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Adds greenlet required by SQLAlchemy asyncio runtime imports."
+
+  - path: "Memora/pyproject.toml"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Declares same greenlet runtime dependency in package metadata."
+
+  - path: "Memora/core/config.py"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Removes unused VECTOR_DIMENSION=1536 setting; current generator/Oracle adapter are fixed at 384."
+
+  - path: "Memora/.env.example"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Documents 384-dimensional vector contract; does not verify deployed Qdrant collection."
+
+  - path: "Memora/README.md"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Documents fixed 384-dimensional vector contract and external Qdrant provisioning boundary."
+
+  - path: "Memora/notes/phase-07-search-context-budgeting.md"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Corrects a stale earlier statement that VECTOR_DIMENSION=1536 configured the actual embedding pipeline."
+
+  - path: "Memora/notes/phase-08-storage-schema-deletion.md"
+    owner: "chatgpt"
+    prs: [37]
+    branches: ["chatgpt/TASK-MEM-001-memora-oracle-vector-audit"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Audit notes document PR #37 implementation and exact test/deployment verification boundary."
+
+
+  - path: "Memora/apps/api/routers/v1_memories.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Binds API-triggered horizon sweep to the authenticated Memora tenant; the internal background worker retains intentional multi-tenant mode."
+
+  - path: "Memora/tests/test_memory_tenant_admin_maintenance_isolation.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Route-level regression stubs the sweeper to prove foreign tenant requests are denied before destructive work begins."
+
+
+  - path: "Memora/apps/api/routers/memory_access_controller.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "The mounted legacy in-memory access controller must remain authenticated and clearly non-canonical; grant/revoke/approval and global audit/report are restricted to the Memora service identity."
+
+  - path: "Memora/tests/test_memory_access_controller_auth.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Regression tests cover missing credentials, non-admin denial, subject binding, and Memora-admin grant/revoke/approval/audit access."
+
+  - path: "Memora/core/memory/pipeline/write_service.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Explicit shared_with recipients must not inherit access from write permission alone; owner share authorization and tenant-scoped recipient grants are enforced in the canonical write pipeline."
+
+  - path: "Memora/tests/test_memory_write_share_authorization.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Regression suite covers write-only escalation, wildcard/foreign-tenant recipient rejection, and authorized owner share with successful recipient read."
+
+  - path: "Memora/apps/api/routers/v1_task.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "ActionReceipt evidence must report active ORM backend and durability; never hardcode Oracle or durable success for local/test storage."
+
+  - path: "Memora/tests/test_task_receipt_truthfulness.py"
+    owner: "chatgpt"
+    prs: [38]
+    branches: ["chatgpt/TASK-DATA-002-memory-tenant-isolation"]
+    status: "CLAIMED_IN_REVIEW"
+    risk: "Route-level regression proves local SQLite storage is reported as non-durable process-local storage rather than an Oracle durable write."
+
+conflicts_to_resolve:
+  - id: "FILE-CONFLICT-004"
+    files:
+      - "docs/collaboration/README.md"
+      - "docs/collaboration/TEAM_ROSTER.yaml"
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/FILE_OWNERSHIP.yaml"
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/DECISIONS.md"
+      - "docs/collaboration/HANDOFFS.md"
+    prs: [30, 36]
+    required_action: "Keep both PRs and branches intact; consolidate into one current directory after v0 review/hand-off. Do not merge either duplicate directory snapshot separately."
+  - id: "FILE-CONFLICT-001"
+    files: [".github/workflows/validate-monorepo.yml"]
+    prs: [23, 34]
+    required_action: "Claude to reconcile both PR diffs and run the validator from the resulting combined branch."
+  - id: "FILE-CONFLICT-002"
+    files: ["FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"]
+    prs: [28, 34]
+    required_action: "Claude to reconcile dispatch optimization and protocol changes, then run dispatch contract and root tests."
+  - id: "FILE-CONFLICT-003"
+    files: ["docs/MASTER_PLAN.md", "docs/handoff.md", "docs/ARCHITECTURE_AS_BUILT.md"]
+    prs: [24, 26, 30]
+    required_action: "ChatGPT to maintain one current documentation branch and reconcile content before merging any of the three PRs."

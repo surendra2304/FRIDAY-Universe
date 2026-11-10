@@ -1,9 +1,10 @@
 # FRIDAY Universe — Master Plan
 
-Single source of truth for the roadmap. Claude, ChatGPT, and Grok are equal collaborators working together through this file. The current plan is a shared roadmap, not a hierarchy; the owner is the final decision-maker.
-Read docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md before starting any task.
+Single source of truth for project objectives, acceptance criteria and dependency order. All human and AI collaborators work from this file; there is no permanent AI hierarchy.
+Read docs/handoff.md, docs/ARCHITECTURE_AS_BUILT.md and docs/collaboration/README.md before starting any task. Refresh GitHub and the shared coordination records before acting.
 
-Statuses: NOT_STARTED | IN_PROGRESS | BLOCKED | IN_REVIEW | VERIFIED | DONE
+Roadmap statuses: NOT_STARTED | IN_PROGRESS | BLOCKED | IN_REVIEW | VERIFIED | DONE
+Operational collaborator/task states are defined in docs/collaboration/README.md and docs/collaboration/WORK_BOARD.yaml.
 - VERIFIED needs evidence (command output, log line, live check, or test run cited in handoff.md).
 - DONE needs implementation, passing tests, verification, and all acceptance criteria met.
 - A box is never ticked because code was written.
@@ -27,6 +28,9 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
 ## 3. Phases in execution order (dependency-driven)
 
+### Phase 0A — Multi-AI collaboration foundation
+- [ ] TASK-COLLAB-001 — Establish the shared multi-AI collaboration centre at `docs/collaboration/`: roster, task board, file ownership, activity log, decisions, handoffs and templates. Use GitHub issue #35 for visible claims/releases/handoffs. Owner: ChatGPT; IN_REVIEW in PR #30 (`chatgpt/TASK-DOC-SYNC-001`), with overlapping independent bootstrap PR #36 from Vercel v0 (`v0/coordination-bootstrap`). Automated validation added via `scripts/validate_collaboration.py` and `.github/workflows/collaboration-registry.yml`; latest validator run 42596903311 passed on PR #30 head 5920161f. Consolidate both PRs' seven shared files before merge. Do not mark DONE until the directory, all three central-document links, file-conflict records, GitHub claim protocol and validator are reviewed and merged.
+
 ### Phase 0 — Owner actions (blocking external)
 - [ ] TASK-SEC-001 — Rotate every provider key that appeared in public commit 46034a4. Status: owner reports DONE; re-verify in handoff.
 - [ ] TASK-SEC-002 — Decide on git history rewrite to remove leaked strings. Owner: yes (confirmed). Execution: Claude, after PR merges are quiet. Destructive; coordinate with ChatGPT first.
@@ -35,30 +39,30 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 
 ### Phase 1 — Infrastructure and security foundations
 - [ ] TASK-INF-001 — Audit Oracle infrastructure (both VMs: sizes, memory, disks, services). Evidence: `oracle_fleet_health`, systemd show output.
-- [ ] TASK-INF-002 — Set MemoryMax on FRIDAY-Voice (currently no limit on a 956 MB host).
-- [ ] TASK-SEC-003 — Bridge authentication: shared-secret authentication for /bridge, /mcp, /messages and /sse. Owner: ChatGPT. Status: IN_REVIEW (PR #24); production activation awaits runtime secret provisioning, both MCP clients' header compatibility and owner-approved restart.
-- [ ] TASK-SEC-004 — Audit secret management: env files, CREDENTIALS.md (untracked, must stay untracked), GitHub secrets.
+- [x] TASK-INF-002 — Set MemoryMax on FRIDAY-Voice. Status: VERIFIED by read-only systemd inspection on 2026-11-09: FRIDAY-Voice.service is active and loads `/etc/systemd/system/FRIDAY-Voice.service.d/memory.conf` with MemoryHigh=250M and MemoryMax=300M. No restart or configuration change was made in this session.
+- [ ] TASK-SEC-003 — Bridge authentication: shared-secret authentication for /bridge, /mcp, /messages and /sse. Owner: ChatGPT. IN_REVIEW (PR #24); middleware/tests are on branch, but production activation remains unverified and requires runtime secret provisioning, MCP-client header compatibility, and owner-approved restart.
+- [ ] TASK-SEC-004 — Secret-management audit and CI leak prevention. Owner: ChatGPT; IN_REVIEW in PR #31 (`chatgpt/TASK-SEC-004`). A root Gitleaks action scans PR/push change ranges; first run exposed shallow-fetch range failure, fixed by full commit graph; current scan run 42525462164 passed. Not merged or VERIFIED on main yet. Full-history exposure is separately tracked in TASK-SEC-002.
 - [ ] TASK-INF-003 — Backup and recovery: verify Oracle DB backups and service restore steps.
 - [ ] TASK-OPS-003 — Oracle sniper: confirm allocation loop works end to end; after success, promotion of the new instance is a manual owner decision.
 
 ### Phase 2 — Data foundation
 - [ ] TASK-DATA-001 — Audit database architecture per agent (schemas, owners, connection strings by name only).
-- [ ] TASK-DATA-002 — Verify memory isolation between agents (Memora namespaces `memora://<agent>/private`).
+- [ ] TASK-DATA-002 — Verify memory isolation between agents (Memora namespaces `memora://<agent>/private`). Owner: ChatGPT; IN_PROGRESS on chatgpt/TASK-DATA-002-memory-tenant-isolation; PR #38 is stacked on PR #37. Fixes include authenticated tenant pinning for the destructive horizon-sweep API and authentication/authorization of the mounted process-local access-controller compatibility endpoints. The latter now restricts grant/revoke/approval and global audit/report to the authenticated memora principal and binds self-service requests/checks to the caller. Focused Memora regression run 42658441949 PASS (12 passed, 1 warning); the Memora step of FRIDAY run 42658441937 PASS. Full FRIDAY API and monorepo validation were still in progress at last check. Remaining work: complete direct-read/search/share/revoke/graph/task-route private/shared/universal matrix and verify the canonical persistent policy surface; PR #38 must not merge before PR #37.
 - [ ] TASK-DATA-003 — Test persistence and recovery for Memora and Stratex ledgers.
 
 ### Phase 3 — CI and delivery
 - [ ] TASK-CI-001 — Fix VyralX/Futuris `app` package collision in CI (ChatGPT pushed fixes to main; not yet verified green).
-- [ ] TASK-CI-002 — Get `main` fully green: all validation jobs pass on current HEAD. Owner: Claude. Status: IN_PROGRESS (PR #22 merged; further CI fixes under investigation).
+- [ ] TASK-CI-002 — Get `main` fully green: all validation jobs pass on current HEAD. Owner: Claude. IN_PROGRESS; CI fixes have landed, but latest main/PR validation evidence remains red or incomplete.
 - [ ] TASK-CI-003 — Fix run_workspace_test (venv has no pytest on Server 2).
 - [ ] TASK-CI-004 — Narrow `.gitignore` bridge/** rule so bridge source can be committed deliberately.
 
 ### Phase 4 — Core agent foundations
-- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT). Owner: ChatGPT (Cortex parallel audit); Status: IN_PROGRESS. Cortex source audit found missing route-level auth dependencies; remediation is in PR #26 and awaiting CI.
-- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator (live path returns "dispatched" without calling any peer). Status: IN_PROGRESS after merge of PR #25 to main (2026-11-08 18:02 UTC). Deployment workflow #42507954757 succeeded; FRIDAY.service restarted at 18:03 UTC and /friday/health returned HTTP 200 at 18:07 UTC. Live goal invocation is still unverified; not DONE.
+- [ ] TASK-CORE-001 — Read and document each agent's entrypoint, routes, state, external calls (feeds ARCHITECTURE_AS_BUILT). Owner split: Claude—FRIDAY; ChatGPT—IntelX (PR #32 addresses a live Oracle JSON processor defect found during this audit). Cortex source audit found missing route-level auth dependencies; remediation is in PR #26 and awaiting CI.
+- [ ] TASK-CORE-002 — Remove fabricated success in universe_orchestrator. IMPLEMENTATION MERGED to main via PR #25 (commit 79c1f75); live path probes FleetClient and returns `not_executed` when no Universe API is configured. Tests recorded as 5 passed on Server 2, 2026-11-08. Deployment workflow #42507954757 succeeded; FRIDAY.service restarted 2026-11-08 18:03 UTC and /friday/health returned HTTP 200 at 18:07 UTC. Live goal invocation is still unverified; not VERIFIED or DONE.
 - [ ] TASK-CORE-003 — Add task records (TASK-ID, owner agent, status, result) so work can be assigned and tracked.
 
 ### Phase 5 — Agent APIs and communication
-- [ ] TASK-API-001 — Implement /v1/task/execute on Forge and Sentinel, or stop routing typed tasks there (currently 404).
+- [ ] TASK-API-001 — Implement `/v1/task/execute` on Forge and Sentinel, or stop routing typed tasks there. Owner: Claude; IN_REVIEW (PR #29 covers Sentinel; Forge still requires capability/route validation).
 - [ ] TASK-API-002 — Standardise health endpoints (/health) across all ten agents and make AGENTS.yaml the source for ports.
 - [ ] TASK-API-003 — Authentication matrix test: each agent accepts only its configured keys.
 
@@ -75,9 +79,9 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - [ ] TASK-STR-001 — Stratex: confirm BINANCE_TESTNET=true on both units; add explicit ALLOW_LIVE_TRADING=false guard.
 - [ ] TASK-STR-002 — Stratex: confirm which venues are active (Binance Futures, MT5, cTrader).
 - [ ] TASK-FOR-001 — Forge: security review of code-execution sandbox (it runs generated code).
-- [ ] TASK-MEM-001 — Memora: Oracle schema and vector-store audit.
+- [ ] TASK-MEM-001 — Memora: Oracle schema and vector-store audit. Owner: ChatGPT; IN_REVIEW in PR #37 (`chatgpt/TASK-MEM-001-memora-oracle-vector-audit`). Fixes Oracle/SQLite vector tenant-ID ownership collisions, prevents adapter-owned commits of the caller's memory/event transaction, makes readiness truthful, declares SQLAlchemy's `greenlet` runtime dependency, and removes the unused 1536-dimension setting in favour of the actual 384-dimensional contract. Focused Memora regression run 42596147391 PASS (8 tests, 1 warning); full FRIDAY CI run 42596147378 PASS. Oracle live DB and external Qdrant collection/schema remain unverified; not merged/deployed.
 - [ ] TASK-FUT-001 — Futuris: forecasting audit; DSN handling.
-- [ ] TASK-INT-001 — IntelX: evidence pipeline audit.
+- [ ] TASK-INT-001 — IntelX: evidence pipeline audit. Owner: ChatGPT; IN_REVIEW (PR #32 `chatgpt/TASK-INT-001-intelx-json`) adds Oracle JSON bind/result compatibility defaults and a root-suite regression test. CI collection still being corrected; not merged, not deployed, and not yet VERIFIED.
 - [ ] TASK-CTX-001 — Cortex: CRM and website operations audit (Server 2).
 - [ ] TASK-SEN-001 — Sentinel: policy and audit-log audit.
 - [ ] TASK-VYR-001 — VyralX: daemon and autopilot audit (Server 2).
@@ -113,6 +117,42 @@ Source: AGENTS.yaml (declared) and docs/ARCHITECTURE_AS_BUILT.md (observed).
 - Live checks use the public health endpoints and systemctl status, recorded with timestamps.
 
 ## 7. Current overall progress
-- Verified: 0 tasks. Names of OCI secrets were checked via API; that is evidence of presence, not of correctness.
-- Done: 0 (no task has met the DONE definition yet).
-- Everything else: NOT_STARTED, or as noted in handoff.md.
+- VERIFIED: no end-to-end production task is claimed VERIFIED from this GitHub-only review. GitHub-visible implementation merges are not deployment evidence.
+- Merged implementation: TASK-DOC-001 (PR #21), TASK-CORE-002 (PR #25), and CI-related PR #22. Their production/runtime verification is separate.
+- IN_PROGRESS / IN_REVIEW: TASK-COLLAB-001, TASK-CI-002, TASK-SEC-003, TASK-SEC-004, TASK-API-001, TASK-DISPATCH-001, TASK-MIRROR-001, TASK-CTX-001, TASK-INT-001, TASK-FUT-001, TASK-MEM-001 and TASK-DATA-002 as tracked in handoff.md.
+- PR #34 (Claude) adds CI root-cause changes under TASK-CI-004; its FRIDAY CI and heavy-task image checks passed, but two monorepo validation jobs failed. Independent review comment #6732764298 records outstanding stub-fleet false-success, real-fleet override, dependency and overlapping PR findings. Its file overlap with PR #23 and PR #28 is recorded in docs/collaboration/FILE_OWNERSHIP.yaml.
+- VERIFIED infrastructure control: TASK-INF-002 (FRIDAY-Voice MemoryMax=300M, MemoryHigh=250M) based on 2026-11-09 systemd evidence; this is not a claim that the voice agent's event-loop warnings are resolved.
+- All ten agents remain canonical and integrated; VyralX remains agent ten.
+- Multi-AI collaboration centre is proposed in PR #30 and independently bootstrapped in PR #36; neither is merged to main. The shared GitHub claim thread is issue #35. The dedicated registry validator passed on latest PR #30 head `5920161f` in run 42596903311. The broad monorepo validations 42596903328 and 42596903017 were in progress at the latest status check; previous-head results remain separately recorded in handoff.md. PR #30 and #36 overlap on seven registry files and must be consolidated before merge. Read docs/collaboration/README.md and refresh TEAM_ROSTER.yaml, WORK_BOARD.yaml and FILE_OWNERSHIP.yaml before claiming work.
+- Task-ID reconciliation required: PR #23 uses TASK-CI-003 for a CI install/test-environment change while this plan currently defines TASK-CI-003 as the Server 2 workspace test runner. PR #34 uses TASK-CI-004 for root-cause CI fixes while this plan currently defines TASK-CI-004 as the bridge/** .gitignore change. Do not silently rewrite acceptance criteria; reconcile IDs with Claude and the owner.
+
+
+## Memora audit update — 2026-11-09
+
+- TASK-MEM-001 is IN_REVIEW in PR #37 (`chatgpt/TASK-MEM-001-memora-oracle-vector-audit`); no merge or production deployment.
+- Focused vector regression run 42596147391 PASS (8 passed, 1 warning); FRIDAY Universe CI/CD run 42596147378 PASS, including all existing FRIDAY test suites, the Memora vector test step, HTTP/API tests and artifact upload.
+- Broad monorepo validators 42596147434 and 42596147572 were still in progress at the latest status check. Do not infer their result from the focused/FRIDAY workflows.
+- Oracle tenant-safe MERGE and transaction savepoint behavior are covered by a SQL contract test and SQLite transaction regressions respectively; live Oracle DB execution was not performed. External Qdrant collection dimension remains unverified.
+
+
+## TASK-DATA-002 — cross-agent memory isolation (2026-11-09; in progress)
+
+- PR #38 is open on chatgpt/TASK-DATA-002-memory-tenant-isolation, stacked on PR #37. It closes a confirmed cross-tenant maintenance control gap in POST /v1/memories/sweep-horizon: body-supplied tenant IDs are now rejected unless they match the authenticated Memora service identity's tenant; the API always invokes the sweeper with the resolved tenant. The trusted internal background worker's all-tenant mode is unchanged.
+- Regression results on PR #38 head 0b8252529f36d37c51907cfbd1dc3fd6149b6bfb: FRIDAY Universe CI/CD run 42598678632 PASS. Memora regression group: 17 passed, 1 warning. HTTP/API suite: 45 passed. Memora Vector Regression run 42598678508 PASS (8 passed, 1 warning).
+- Broad monorepo Structure/Safety checks 42598678658 and 42598678539 were still running at the latest check; no green result is claimed for those.
+- This does not close the whole task. The remaining private/shared/universal namespace audit and adversarial route matrix are still in progress. PR #38 must not be merged before its dependency PR #37.
+
+
+### TASK-DATA-002 incremental security finding — 2026-11-09
+
+The main Memora app mounted `memory_access_controller.router` under `/api/v1`, while the legacy process-local grant, approval and audit handlers had no authentication dependencies. PR #38 now requires authenticated agent credentials on all seven compatibility routes; only the `memora` service identity can mutate grants or inspect global audit/report state, and request/check operations are bound to the authenticated subject. The compatibility engine remains explicitly process-local and is not the canonical tenant-aware persistent policy store. Focused Memora run 42658441949 passed (12 tests, 1 warning); the Memora step in FRIDAY CI run 42658441937 passed. This work is unmerged and not deployed.
+
+
+### TASK-DATA-002 incremental finding — explicit memory-share authorization — 2026-11-09
+
+A second authorization defect was found in the canonical write path: the `shared_with` parameter previously inserted `MemorySharedAgent` entries after a namespace write decision only. PR #38 now requires owner control and an explicit policy `share` decision, rejects wildcard/self/unregistered/cross-tenant recipient names, and provisions tenant-scoped read/query namespace grants alongside the memory membership entry. This is performed in the existing write transaction and across new, duplicate and idempotent replay paths; canonical implicit team-shared behavior is unchanged. Focused Memora run 42663206883 passed (16 tests, 1 warning); full FRIDAY run 42663207108 passed the Python and HTTP/API suites, with Docker skipped for the PR event. Monorepo checks remained pending at the last observation. Unmerged and undeployed.
+
+
+### TASK-DATA-002 incremental finding — truthful task storage receipts — 2026-11-09
+
+The task endpoint's ActionReceipt builder previously hard-coded Oracle and durable-write claims even in a SQLite/non-durable test environment. PR #38 now sources active backend, durability and durability class from Memora's canonical `storage_receipt()`; successful store evidence only reports `durable_write=true` when the active storage contract says it is durable. A route regression test was added and wired into the focused Memora and FRIDAY workflows. This change remains unverified until those new CI runs complete; PR #38 remains unmerged/undeployed.
