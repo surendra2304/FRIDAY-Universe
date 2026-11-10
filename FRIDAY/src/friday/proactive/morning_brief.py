@@ -24,6 +24,8 @@ import threading
 from datetime import datetime, time as dtime
 from typing import Any
 
+from friday.core.owner_time import OWNER_TZ, now_owner_tz, owner_today
+
 logger = logging.getLogger(__name__)
 
 #: Morning window: fire once between 09:00 and 12:00 local time.
@@ -40,11 +42,19 @@ _last_morning_date: str | None = None
 
 
 def _today() -> str:
-    return datetime.now().strftime("%Y-%m-%d")
+    # Owner decision (2026-11-10 IST, "It should be IST"): the brief belongs
+    # to the owner's morning — the IST date, not the server's UTC date.
+    return owner_today()
 
 
 def _in_morning_window(now: datetime | None = None) -> bool:
-    now = now or datetime.now()
+    # The window is the owner's morning: 09:00–12:00 IST (the Oracle host
+    # runs UTC, where that window would land at 14:30–17:30 IST — wrong day
+    # part for the owner).
+    if now is None:
+        now = now_owner_tz()
+    elif now.tzinfo is not None:
+        now = now.astimezone(OWNER_TZ)
     return MORNING_WINDOW_START <= now.time() <= MORNING_WINDOW_END
 
 

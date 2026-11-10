@@ -13,6 +13,7 @@ from urllib.parse import quote_plus
 import uuid
 from datetime import datetime
 from friday.agent.checkpoint import TaskCheckpoint, TaskCheckpointStore
+from friday.core.owner_time import owner_now_str
 from friday.agent.cognitive import CognitiveIntelligenceEngine, CognitivePhase
 
 
@@ -1192,8 +1193,10 @@ class FastPathMixin:
                 self.memory.add_message(Message(role=Role.USER, content=clean_input))
                 self.state_machine.transition_to(TaskState.PLANNING, reason="Direct time query")
                 self.state_machine.transition_to(TaskState.VERIFYING, reason="Formatting local time")
-                time_format = "It is %#I:%M %p." if os.name == "nt" else "It is %-I:%M %p."
-                content = datetime.now().astimezone().strftime(time_format)
+                # Owner decision (2026-11-10 IST, "It should be IST"): the spoken
+                # time is IST regardless of the host clock (Oracle servers run UTC).
+                time_format = "It is %#I:%M %p IST." if os.name == "nt" else "It is %-I:%M %p IST."
+                content = owner_now_str(time_format)
                 self.state_machine.transition_to(TaskState.COMPLETED, reason="Time answered")
                 self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
                 return AgentResponse(

@@ -14,6 +14,7 @@ from typing import Any
 
 from friday.core.auth import BaseAuthorizer, DefaultSecureAuthorizer
 from friday.core.logging import get_logger
+from friday.core.owner_time import now_owner_tz
 from friday.core.types import AuthorizationDecision, AuthorizationRequest, SafetyLevel
 
 logger = get_logger("workflows.scheduler")
@@ -74,8 +75,10 @@ class WorkflowScheduler:
         self._last_briefing_date: str | None = None
 
     def check_morning_briefing_proactive(self) -> dict[str, Any] | None:
-        """Trigger proactive morning briefing at 8:00 AM."""
-        now = datetime.now().astimezone()
+        """Trigger proactive morning briefing at 8:00 AM IST."""
+        # Owner decision (2026-11-10 IST, "It should be IST"): the briefing
+        # trigger fires in the owner's morning (08:00 IST), not host-UTC.
+        now = now_owner_tz()
         today_str = now.strftime("%Y-%m-%d")
         # Trigger between 8:00 AM and 8:30 AM once per day
         if now.hour == 8 and self._last_briefing_date != today_str:

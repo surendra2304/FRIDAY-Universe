@@ -48,6 +48,16 @@ def utcnow() -> str:
     return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+# Owner decision (2026-11-10 IST, "It should be IST"): every timestamp the
+# owner reads is IST (Asia/Kolkata, no DST). Machine fields (observed_at)
+# stay UTC ISO-8601 for unambiguous sorting.
+_IST = dt.timezone(dt.timedelta(hours=5, minutes=30), "IST")
+
+
+def ist_now() -> str:
+    return dt.datetime.now(dt.timezone.utc).astimezone(_IST).strftime("%Y-%m-%d %H:%M:%S IST")
+
+
 @dataclass
 class ServiceSpec:
     name: str
@@ -255,14 +265,14 @@ def dispatch_alerts(alerts: list[dict], state: WatchState, *, cooldown_s: int, a
         if alert["alert"] == "RECOVERED":
             for stale in [k for k in list(state.open_alerts) if k.startswith(alert["service"] + ":")]:
                 del state.open_alerts[stale]
-            state.open_alerts[alert["service"] + ":last"] = f"recovered at {utcnow()}"
+            state.open_alerts[alert["service"] + ":last"] = f"recovered at {ist_now()}"
             print(f"[RECOVERED] {alert['service']} — {alert['detail']}", flush=True)
             continue
         if last and now_epoch - float(last) < cooldown_s:
             print(f"[SUPPRESSED] {key} within {cooldown_s}s cooldown", flush=True)
             continue
         state.open_alerts[key] = str(now_epoch)
-        state.open_alerts[alert["service"] + ":last"] = f"{alert['alert']} at {utcnow()}"
+        state.open_alerts[alert["service"] + ":last"] = f"{alert['alert']} at {ist_now()}"
         line = f"[{alert['severity'].upper()}] {alert['alert']} {alert['service']}: {alert['detail']}"
         print(line, flush=True)
         if alert_command:
@@ -321,7 +331,7 @@ def main() -> int:
             first_seen=first_seen,
         )
         down = [s.name for s in snapshots if not s.healthy]
-        print(f"[CYCLE {utcnow()}] {len(snapshots) - len(down)}/{len(snapshots)} healthy"
+        print(f"[CYCLE {ist_now()}] {len(snapshots) - len(down)}/{len(snapshots)} healthy"
               + (f"; unhealthy: {', '.join(down)}" if down else ""), flush=True)
         state.save(args.state)
         first_seen = False

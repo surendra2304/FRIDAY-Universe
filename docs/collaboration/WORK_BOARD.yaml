@@ -1,5 +1,5 @@
 schema_version: 1
-snapshot_at: "2026-11-11T01:30:00Z"
+snapshot_at: "2026-11-10T23:30:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST)
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
@@ -883,7 +883,7 @@ tasks:
     evidence:
       - "tests/test_fleet_health_watcher.py 26/26 green (2026-11-10). deploy-monorepo.yml health-gate added to both deploy-server jobs (YAML validated)."
     blockers: []
-    next_action: "ENABLED 2026-11-11 (ZAI, via bridge, both servers): unit files deployed, fleet-health-watcher.timer enabled+active on Server 1 (default map) and Server 2 (drop-in FLEET_WATCH_SERVICES=Sentinel:8008,Cortex:8009,VyralX:8010,VyralX-Daemon:-). First verified cycles: Server 1 8/8 healthy, Server 2 4/4 healthy. Status moves to DEPLOYED/VERIFIED at the next real alert+recovery observation. FLEET_ALERT_COMMAND forwarding to the FRIDAY Universe Telegram bot is the next batch (D-025)."
+    next_action: "ENABLED 2026-11-10 IST (ZAI, via bridge, both servers): unit files deployed, fleet-health-watcher.timer enabled+active on Server 1 (default map) and Server 2 (drop-in FLEET_WATCH_SERVICES=Sentinel:8008,Cortex:8009,VyralX:8010,VyralX-Daemon:-). First verified cycles: Server 1 8/8 healthy, Server 2 4/4 healthy. Watcher display timestamps now IST (D-026 patch 2026-11-10 IST; redeployed via bridge, timers restarted). Status moves to DEPLOYED/VERIFIED at the next real alert+recovery observation. FLEET_ALERT_COMMAND forwarding to the FRIDAY Universe Telegram bot is the next batch (D-025)."
 
   - id: "TASK-UI-002"
     title: "Keyless dark awwwards-level dashboard with continuous LiveKit voice (owner's four rejections of TASK-UI-001 addressed)"
@@ -891,7 +891,7 @@ tasks:
     owner: "zai"
     branch: null
     pr: null
-    merge_note: "2026-11-11: ZAI direct main commit under D-025. FRIDAY/ui rebuilt: dark deep-space glass theme, React-Bits-style effects kit (ScrambleText, AuroraBackground, adaptive self-pausing ParticleField, Magnetic, SpotlightCard, Reveal, CountUp), FRIDAY orb hero (state-reactive, the voice line's live status), continuous LiveKit voice (one tap -> room 'friday', mic published, full-duplex with the Gemini Live worker, barge-in, 3-min idle / 30-min hard-cap auto-disconnect protecting free minutes), fleet grid, host telemetry, live activity feed (origin-gated keyless WS), chat panel (origin-gated keyless /api/chat). Static export committed as deploy artifact (FRIDAY/ui/out, un-ignored on purpose); FastAPI serves it at site root (index no-store via '/' route, hashed assets via root StaticFiles mount registered last; Caddy handle_path /friday* strips the prefix). Mobile discipline: compositor-only animations, DPR-capped canvas, IntersectionObserver+visibilitychange pausing, prefers-reduced-motion."
+    merge_note: "2026-11-10 IST: ZAI direct main commit under D-025. FRIDAY/ui rebuilt: dark deep-space glass theme, React-Bits-style effects kit (ScrambleText, AuroraBackground, adaptive self-pausing ParticleField, Magnetic, SpotlightCard, Reveal, CountUp), FRIDAY orb hero (state-reactive, the voice line's live status), continuous LiveKit voice (one tap -> room 'friday', mic published, full-duplex with the Gemini Live worker, barge-in, 3-min idle / 30-min hard-cap auto-disconnect protecting free minutes), fleet grid, host telemetry, live activity feed (origin-gated keyless WS), chat panel (origin-gated keyless /api/chat). Static export committed as deploy artifact (FRIDAY/ui/out, un-ignored on purpose); FastAPI serves it at site root (index no-store via '/' route, hashed assets via root StaticFiles mount registered last; Caddy handle_path /friday* strips the prefix). Mobile discipline: compositor-only animations, DPR-capped canvas, IntersectionObserver+visibilitychange pausing, prefers-reduced-motion."
     milestone: "M2/M5 (Master Plan v2)"
     files:
       - "FRIDAY/ui/app/page.tsx"
@@ -911,7 +911,7 @@ tasks:
       - "Continuous full-duplex voice via LiveKit + the deployed worker; no one-shot search-box feel."
       - "Mobile-fast: no always-on heavy canvases; smooth on phones."
     evidence:
-      - "next build clean (Next 16.3.4, TS green, 1.7 MB export, self-hosted fonts). agent-browser local render desktop 1440x900 + mobile 390x844: no clipped/overlapping elements after hero-rhythm fix (VLM review 8.5/10). Live verification of the deployed site recorded in ACTIVITY_LOG 2026-11-11."
+      - "next build clean (Next 16.3.4, TS green, 1.7 MB export, self-hosted fonts). agent-browser local render desktop 1440x900 + mobile 390x844: no clipped/overlapping elements after hero-rhythm fix (VLM review 8.5/10). Live verification of the deployed site recorded in ACTIVITY_LOG 2026-11-10 (IST)."
     blockers: []
     next_action: "Owner live voice test (TASK-VOI-001 kit); wire FRIDAY Universe bot alerts; consider self-hosted LiveKit SFU when the ARM sniper claims a server (removes the minute cap)."
 
@@ -921,7 +921,7 @@ tasks:
     owner: "zai"
     branch: null
     pr: null
-    merge_note: "2026-11-11: owner created two Telegram bots and supplied tokens in chat (recorded in D-025; tokens stored ONLY in the ZAI sandbox at /home/z/my-project/.config/telegram.json, chmod 600, never committed; chat_id resolved to the owner's existing chat). ZAI bot (@zai_notifications_bot): ZAI fires a ping when a work batch for the owner's message completes. FRIDAY Universe bot: destination for ten-agent fleet reports/alerts (wiring next batch per owner's 'implement that later'). Stratex .env Telegram lines repaired the same session (stray quote + backslash -> clean KEY=value; Stratex's own bot unaffected)."
+    merge_note: "2026-11-10 IST: owner created two Telegram bots and supplied tokens in chat (recorded in D-025; tokens stored ONLY in the ZAI sandbox at /home/z/my-project/.config/telegram.json, chmod 600, never committed; chat_id resolved to the owner's existing chat). ZAI bot (@zai_notifications_bot): ZAI fires a ping when a work batch for the owner's message completes. FRIDAY Universe bot: destination for ten-agent fleet reports/alerts (wiring next batch per owner's 'implement that later'). Stratex .env Telegram lines repaired the same session (stray quote + backslash -> clean KEY=value; Stratex's own bot unaffected)."
     milestone: "M4 (Master Plan v2)"
     files:
       - "(sandbox) /home/z/my-project/scripts/tg_notify.py"
@@ -931,9 +931,40 @@ tasks:
       - "ZAI sends a Telegram ping on batch completion so the owner does not poll the site."
       - "FRIDAY Universe bot channel is live for agent reports."
     evidence:
-      - "Test ping delivered from BOTH bots to the owner's chat 2026-11-11 (ok:true, chat 6341781431)."
+      - "Test ping delivered from BOTH bots to the owner's chat 2026-11-10 IST (ok:true, chat 6341781431)."
     blockers: []
     next_action: "Wire the FRIDAY Universe bot as FLEET_ALERT_COMMAND in fleet-health-watcher (crash/down/recovered alerts) + agent report relays; consider sniper-win alert."
+
+  - id: "TASK-TZ-001"
+    title: "IST (Asia/Kolkata) as the project clock — every owner-facing time/date is IST (D-026)"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10 IST night: ZAI direct main commit under D-026 (owner: 'The above message was set by you in the server.py which used the wrong date / Which time are you using / It should be ist / Fix everything'). New leaf helper FRIDAY/src/friday/core/owner_time.py (OWNER_TZ Asia/Kolkata + fixed-offset fallback — IST has no DST; now_owner_tz/owner_today/owner_now_str). Owner-facing surfaces patched to IST: voice session prompt (was feeding Gemini UTC while claiming IST), chat time fast path ('It is H:MM PM IST.'), get_time_date tool, calendar 'today', morning-brief window (09:00-12:00 IST), scheduler 08:00 briefing trigger (08:00 IST), briefing greetings/dates (executive + live + calendar workflows), fleet_health_watcher display lines (observed_at stays UTC ISO for sorting). 15 wrongly-dated '2026-11-11' strings corrected to 2026-11-10 IST (server.py x3, DECISIONS x5, ACTIVITY_LOG x1, WORK_BOARD x6) — all those events happened 2026-11-10 evening IST; the wrong dates came from ZAI's UTC+8 sandbox clock. Dashboard UI already renders browser-local (IST on the owner's devices) — unchanged."
+    milestone: "M4 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/core/owner_time.py"
+      - "FRIDAY/src/friday/voice/gemini_live_session.py"
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/tools/builtin/time_date.py"
+      - "FRIDAY/src/friday/tools/builtin/calendar.py"
+      - "FRIDAY/src/friday/proactive/morning_brief.py"
+      - "FRIDAY/src/friday/workflows/scheduler.py"
+      - "FRIDAY/src/friday/workflows/briefing_workflow.py"
+      - "FRIDAY/src/friday/workflows/executive_briefing.py"
+      - "FRIDAY/src/friday/workflows/live_briefing_workflow.py"
+      - "scripts/fleet_health_watcher.py"
+      - "FRIDAY/src/friday/api/server.py"
+    acceptance:
+      - "FRIDAY's spoken/chat time answers state IST and match the owner's wall clock."
+      - "Proactive windows (morning brief 09:00-12:00, briefing trigger 08:00) fire in IST."
+      - "Registry/docs dates the owner reads are IST dates."
+    evidence:
+      - "Affected suites re-run green post-patch (morning brief, calendar briefing, tools, agent fast paths, reliability, gemini live voice, voice agent integration, ecosystem supervision, voice scheduler, intelligence briefing, predictive briefings) + watcher 26/26; recorded in ACTIVITY_LOG 2026-11-10 IST night."
+      - "Live post-deploy check: chat time answer returns IST time (recorded in ACTIVITY_LOG)."
+    blockers: []
+    next_action: "Wire FLEET_ALERT_COMMAND to the FRIDAY Universe bot (next batch); scheduler daily-rhythm windows audit (autonomous/daily_rhythm.py uses naive now() in places) if owner reports off-schedule behavior."
 
   - id: "TASK-OBS-002"
     title: "Rollback procedure for a bad deploy (deploy uses git reset --hard)"

@@ -26,7 +26,11 @@ def _parse_ics_content(ics_text: str, target_date: date | None = None) -> list[d
     import recurring_ical_events
 
     cal = icalendar.Calendar.from_ical(ics_text)
-    day = target_date or datetime.now().astimezone().date()
+    # Owner decision (2026-11-10 IST, "It should be IST"): "today" is the
+    # owner's IST day, not the host's UTC day (Oracle servers run UTC).
+    from friday.core.owner_time import now_owner_tz
+
+    day = target_date or now_owner_tz().date()
 
     # Query events for the single target day (start of day to end of day)
     start_dt = datetime.combine(day, time.min).astimezone()

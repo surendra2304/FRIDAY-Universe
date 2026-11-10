@@ -263,13 +263,16 @@ class GeminiLiveVoiceSession:
                 f"The user's name is {user_name}. Use this exact name; if unsure how to pronounce it, "
                 "leave it out rather than guessing."
             )
+        # Owner decision (2026-11-10 IST, "It should be IST"): FRIDAY speaks IST
+        # regardless of the host clock — the Oracle servers run UTC, and the
+        # session prompt must never feed Gemini a UTC time labelled as IST.
         try:
-            local_tz = datetime.now().astimezone().tzname() or "the user's local timezone"
+            from friday.core.owner_time import OWNER_TZ_LABEL, owner_now_str
+
+            local_tz = OWNER_TZ_LABEL
+            now_str = owner_now_str()
         except Exception:
             local_tz = "the user's local timezone"
-        try:
-            now_str = datetime.now().astimezone().strftime("%I:%M %p on %A, %d %B %Y")
-        except Exception:
             now_str = "unknown"
         active_window_info = ""
         try:

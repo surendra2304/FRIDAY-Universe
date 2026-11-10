@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from friday.core.logging import get_logger
+from friday.core.owner_time import now_owner_tz
 from friday.trading.live_operations import LiveOperationsCenter
 from friday.trading.regime_detector import MarketRegimeDetector
 
@@ -102,19 +103,19 @@ class LiveMorningBriefingWorkflow:
         if not state.available:
             spoken = (
                 f"Good morning Operator Surendra. This is your live trading briefing for "
-                f"{datetime.now(timezone.utc).strftime('%A, %B %d')}. The trading bridge has not "
+                f"{now_owner_tz().strftime('%A, %B %d')} (IST). The trading bridge has not "
                 f"reported, so I have no equity, no P&L, no positions and no risk proximity to give "
                 f"you. I am not going to read you figures that nothing produced."
             )
             md = (
                 f"# 🌅 FRIDAY Live Trading Morning Briefing\n\n"
-                f"**Generated:** `{now_iso[:19]} UTC`\n\n"
+                f"**Generated:** `{now_owner_tz().strftime('%Y-%m-%d %H:%M:%S')} IST`\n\n"
                 f"**The trading bridge has reported nothing.** Equity, P&L, positions, risk proximity "
                 f"and advisory activity are all unknown; this briefing does not fill them in.\n"
             )
         else:
             spoken = (
-                f"Good morning Operator Surendra. Here is your live trading morning briefing for {datetime.now(timezone.utc).strftime('%A, %B %d')}. "
+                f"Good morning Operator Surendra. Here is your live trading morning briefing for {now_owner_tz().strftime('%A, %B %d')} (IST). "
                 f"Reported trading mode is {state.trading_mode}. "
                 f"Reported equity is {_money(state.total_equity)} USDT with today's P&L at {_money(state.total_pnl_today)} USDT "
                 f"across {len(state.positions)} reported position(s). "
@@ -129,7 +130,7 @@ class LiveMorningBriefingWorkflow:
             # 2. Markdown Visual Report
             md = (
                 f"# 🌅 FRIDAY Live Trading Morning Briefing\n\n"
-                f"**Generated:** `{now_iso[:19]} UTC` | **Trading Mode:** `{state.trading_mode}` | "
+                f"**Generated:** `{now_owner_tz().strftime('%Y-%m-%d %H:%M:%S')} IST` | **Trading Mode:** `{state.trading_mode}` | "
                 f"**Data provenance:** reported by the trading bridge; unreported values are named.\n\n"
                 f"## 📈 Account\n"
                 f"- **Equity:** `{_money(state.total_equity)} USDT` (Cash: `{_money(state.cash_balance)}`)\n"
@@ -171,7 +172,7 @@ class LiveMorningBriefingWorkflow:
             md += (
                 f"**Execution Mode:** `{state.trading_mode}` | "
                 f"**Capital Tier:** `{'Level ' + str(state.capital_level) if state.capital_level is not None else 'not reported'}` | "
-                f"**Date:** `{now_iso[:10]}`\n\n"
+                f"**Date:** `{now_owner_tz().strftime('%Y-%m-%d')}` (IST)\n\n"
                 f"## 💰 Capital & Risk Telemetry\n"
                 f"- **Account Equity:** **{_money(state.total_equity)} USDT** (Cash: `{_money(state.cash_balance)}`)\n"
                 f"- **Today's Total P&L:** **{_money(state.total_pnl_today)} USDT** "

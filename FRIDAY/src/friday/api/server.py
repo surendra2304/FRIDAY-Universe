@@ -450,7 +450,7 @@ def _control_token_valid(token: str, secret: str) -> bool:
 async def _require_origin_gate(request: Request) -> None:
     """Origin-only gate for the public chat surface.
 
-    Owner decision (2026-11-11, "Remove that authentication"): talking to FRIDAY
+    Owner decision (2026-11-10 IST, "Remove that authentication"): talking to FRIDAY
     must be keyless — the dashboard opens straight into the conversation. The
     browser-origin gate is kept: a page the owner merely has open in another tab
     still cannot drive the chat pipeline (cross-origin state-changing requests
@@ -615,7 +615,7 @@ def _websocket_origin_allowed(websocket: WebSocket) -> bool:
 async def _require_origin_gate_ws(websocket: WebSocket) -> None:
     """Origin-only gate for the read-only activity stream.
 
-    Owner decision (2026-11-11, "Remove that authentication"): the dashboard is
+    Owner decision (2026-11-10 IST, "Remove that authentication"): the dashboard is
     keyless. The activity feed is read-only (fleet events + ping/pong), so the
     browser-origin gate — the same policy as the public chat surface — is the
     only gate. Raw control WebSockets keep the full token gate.
@@ -2138,7 +2138,7 @@ class ChatRequest(BaseModel):
 async def chat_endpoint(req: ChatRequest, _: None = Depends(_require_origin_gate)) -> dict[str, Any]:
     """Compatibility endpoint for chat/command execution.
 
-    Owner decision (2026-11-11): the chat surface is public and keyless —
+    Owner decision (2026-11-10 IST): the chat surface is public and keyless —
     origin-gated only (see ``_require_origin_gate``). Raw control endpoints
     (``/api/command`` and friends) keep the full key gate.
     """

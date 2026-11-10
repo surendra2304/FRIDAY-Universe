@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from friday.core.logging import get_logger
+from friday.core.owner_time import now_owner_tz, owner_today
 from friday.ecosystem.command_center import EcosystemCommandCenter
 from friday.ecosystem.policy_interface import HumanPolicyInterface
 from friday.trading.evolution_history import EvolutionHistoryTracker
@@ -121,7 +122,7 @@ class DailyExecutiveBriefingWorkflow:
             )
 
         spoken = (
-            f"Good morning Operator Surendra. Here is your morning executive briefing for {datetime.now(timezone.utc).strftime('%A, %B %d')}. "
+            f"Good morning Operator Surendra. Here is your morning executive briefing for {now_owner_tz().strftime('%A, %B %d')} (IST). "
             f"Ecosystem state is {state}; system readings - {'; '.join(system_lines)}. "
             f"{trading_clause}"
             f"Risk limit utilisation is {prox.percent()} and aggregate leverage is {lev.number(2, 'x')}. "
@@ -131,7 +132,7 @@ class DailyExecutiveBriefingWorkflow:
 
         md = (
             f"# 🌅 FRIDAY Morning Executive Briefing\n\n"
-            f"**Date:** `{now_iso[:10]}` | **Ecosystem State:** `{state}` | **Daily P&L:** `{pnl.currency()} USDT`\n\n"
+            f"**Date:** `{owner_today()}` (IST) | **Ecosystem State:** `{state}` | **Daily P&L:** `{pnl.currency()} USDT`\n\n"
             f"**Data provenance:** {status.get('data_provenance', 'unknown')}\n\n"
             f"## 🏛️ Executive Health Summary\n"
             f"- **Trading Bot:** `{bot.get('status', UNKNOWN_LABEL)}` "
@@ -178,7 +179,7 @@ class DailyExecutiveBriefingWorkflow:
 
         md = (
             f"# 🌙 FRIDAY Evening Performance Wrap-Up\n\n"
-            f"**Date:** `{now_iso[:10]}` | **Total Day P&L:** **`{sign}${pnl:,.2f} USDT`** | **Decisions Executed:** `{len(decisions)}`\n\n"
+            f"**Date:** `{owner_today()}` (IST) | **Total Day P&L:** **`{sign}${pnl:,.2f} USDT`** | **Decisions Executed:** `{len(decisions)}`\n\n"
             f"## 🛡️ Overnight Posture\n"
             f"- Dynamic trailing stops active across all liquid positions.\n"
             f"- Guardian Angel 24/7 continuous 10s monitoring online.\n"

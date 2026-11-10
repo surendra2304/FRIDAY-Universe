@@ -11,6 +11,7 @@ from typing import Any
 
 from friday.core.config import get_settings
 from friday.core.logging import get_logger
+from friday.core.owner_time import now_owner_tz
 from friday.tools.registry import ToolRegistry
 from friday.tools.builtin.calendar import GetTodaysEventsTool
 from friday.tools.builtin.web_tools import WebSearchTool
@@ -90,8 +91,8 @@ class MorningBriefingWorkflow:
             logger.warning(f"Weather lookup fallback: {e}")
             weather_summary = "pleasant"
 
-        # 3. Format Spoken Response
-        now = datetime.now().astimezone()
+        # 3. Format Spoken Response (owner-facing hours are IST — D-026)
+        now = now_owner_tz()
         greeting = "Good morning" if now.hour < 12 else ("Good afternoon" if now.hour < 17 else "Good evening")
 
         if meeting_count == 0:
