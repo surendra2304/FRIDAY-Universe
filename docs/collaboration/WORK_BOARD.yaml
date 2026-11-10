@@ -1,9 +1,9 @@
 schema_version: 1
-snapshot_at: "2026-11-10T06:00:00Z"
+snapshot_at: "2026-11-10T09:45:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
-main_head_at_snapshot: "5bbe2294"  # post-rewrite; history was purged of leaked secrets on 2026-11-10
+main_head_at_snapshot: "9b99b4d"  # pre-v2-plan-push head; Master Plan v2 published under D-022 same day
 warning: "Snapshot only. Refresh GitHub branches, PRs, workflows and runtime state before acting. NOTE (2026-11-10): the repository history was rewritten to purge leaked credentials; all pre-rewrite commit SHAs recorded anywhere in this registry are historical references only. The pre-rewrite bundle is preserved offline by ZAI. All collaborator branches were deleted after merge (single-branch main)."
 
 status_definitions:
@@ -564,6 +564,107 @@ tasks:
       - "ADMIN DSNs existed in env files for an unknown period before removal; credential rotation remains TASK-SEC-004 scope."
     blockers: []
     next_action: "Owner review of PR #41 (audit + remediation; merge #30 then #40 first). Remaining owner decisions: ADMIN password rotation for TASK-SEC-004 (removed DSNs had unknown exposure window), whether Server 1 should ever get Redis/Qdrant (TASK-DATA-003/TASK-OBS-001), and a total wall-clock budget inside run_viral_autopilot.py for TASK-VYR-001."
+
+  - id: "TASK-JARVIS-M1"
+    title: "M1 — first real task end-to-end through FRIDAY chat (the owner's dream demo)"
+    status: "AVAILABLE"
+    owner: null
+    branch: null
+    pr: null
+    milestone: "M1 (Master Plan v2)"
+    files:
+      - "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
+      - "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
+      - "FRIDAY/src/friday/api/server.py"
+    acceptance:
+      - "One natural-language task sent from the owner's browser chat is classified to the correct specialist agent (no VISION_MODEL-style misroutes)."
+      - "The task is tracked through the merged TaskRecord lifecycle (TASK-CORE-003) and completed by real agent work within the action limits."
+      - "FRIDAY reports the real result back in the friend persona; the end-to-end trace is recorded in handoff.md (closes TASK-WF-001)."
+    evidence:
+      - "Live baseline 2026-11-10 (ZAI): persona, Memora recall and the Groq pipeline verified live; dispatch fails at the action limit with routed_capability=VISION_MODEL (ACTIVITY_LOG same date)."
+    dependencies:
+      - "TASK-ORCH-001, TASK-ORCH-002, TASK-ORCH-004 before the TASK-WF-001 acceptance trace"
+    risk_flags:
+      - "Keyword-substring routing misroutes live traffic (proven 2026-11-10); any routing change needs its own test table."
+    blockers: []
+    next_action: "Claim TASK-JARVIS-M1 (or one of its child tasks) on issue #35, then implement TASK-ORCH-001 (intent classification + routing table), TASK-ORCH-002 (shared TaskRecordStore wiring), TASK-ORCH-004 (action limits); close with the TASK-WF-001 trace."
+
+  - id: "TASK-ORCH-001"
+    title: "Replace keyword-substring routing with explicit intent classification and a tested routing table"
+    status: "AVAILABLE"
+    owner: null
+    branch: null
+    pr: null
+    milestone: "M1 (Master Plan v2)"
+    files:
+      - "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
+    acceptance:
+      - "No keyword-substring false hits ('decode' to Forge, 'trader-proof'/'cashback' to Stratex, 'webpage' to Cortex, 'research' to VISION_MODEL all misroute today)."
+      - "Intent classification is explicit and covered by a routing-table test with the known misroute corpus as regressions."
+    evidence:
+      - "Live proof 2026-11-10: a research request routed to routed_capability=VISION_MODEL and then failed at the action limit (ACTIVITY_LOG)."
+    blockers: []
+    next_action: "Claim on issue #35; extract the routing table, write the misroute regression corpus, implement classification, prove with tests."
+
+  - id: "TASK-ORCH-002"
+    title: "Wire one shared TaskRecordStore into router and dispatch bus with the agent-side completion callback"
+    status: "AVAILABLE"
+    owner: null
+    branch: null
+    pr: null
+    milestone: "M1 (Master Plan v2)"
+    files:
+      - "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
+      - "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
+      - "FRIDAY/apps/core/src/friday_core/task_records.py"
+    acceptance:
+      - "ONE shared store instance wired into both UniverseTaskRouter and UniverseDispatchBus; router task ids correlate with bus dispatch ids via the dispatch payload."
+      - "Agent-side completion callback records completion for 202-accepted work; accepted work never records fabricated completion (TASK-CORE-002 class of defect)."
+      - "FRIDAY can report task status from the store (store.report()) in the friend persona."
+    evidence:
+      - "Substrate merged as PR #44 (TASK-CORE-003, D-021): TaskRecord/TaskRecordStore with lifecycle, thread safety, 22+374 tests green; integration points are optional today (default None)."
+    dependencies:
+      - "TASK-CORE-003 (MERGED)"
+    blockers: []
+    next_action: "Claim on issue #35; wire the shared store, correlate ids, add the completion callback, extend tests."
+
+  - id: "TASK-ORCH-004"
+    title: "Fix the action limit so one real task completes within limits"
+    status: "AVAILABLE"
+    owner: null
+    branch: null
+    pr: null
+    milestone: "M1 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/api/server.py"
+    acceptance:
+      - "A single ordinary research/code/trade request completes end-to-end without hitting 'the action limit'."
+      - "Limits stay bounded (no unbounded loops) — raise/allocate, document and test the budget."
+    evidence:
+      - "Live proof 2026-11-10: a plain research request ran 14 s, one iteration, and ended 'I could not complete the request within the action limit.' (ACTIVITY_LOG)."
+    blockers: []
+    next_action: "Claim on issue #35; locate the action-limit budget on the cognitive path, right-size it for one real task, add a regression test."
+
+  - id: "TASK-SEC-005"
+    title: "Close the public FRIDAY control surface (control-session mint accepts forged Origin)"
+    status: "PROPOSED"
+    owner: null
+    branch: null
+    pr: null
+    milestone: "M4 (Master Plan v2); disposition decision requested now"
+    owner_decision_required: true
+    files:
+      - "FRIDAY/src/friday/api/server.py"
+    acceptance:
+      - "/api/control/session no longer mints tokens to unauthenticated remote callers with a forged Origin header."
+      - "The owner's browser flow keeps working (paste-once credential or equivalent); the fix is covered by tests that replay the demonstrated attack."
+      - "Owner decision recorded in DECISIONS.md either way (secure it, or formally accept the risk like D-014)."
+    evidence:
+      - "Live proof 2026-11-10 (ZAI): from an unauthenticated remote sandbox, GET /api/control/session with Origin: https://friday-universe.duckdns.org returned a valid fcs1 token, which then successfully drove the authenticated control API (POST /api/chat). Origin is a client-controlled header, not an authentication boundary."
+    risk_flags:
+      - "Unlike the engineering bridge (D-014), this surface can command FRIDAY: chat, tasks, autonomous goals, device control."
+    blockers: []
+    next_action: "Owner decision (ZAI recommendation: secure it). If approved, claim on issue #35 and implement a real credential gate on the session mint."
 
 task_id_warnings:
   - id: "TASK-PERSONA-001"
