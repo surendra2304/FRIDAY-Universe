@@ -204,14 +204,11 @@ class TestMemoraAskInference:
         assert _count_methods(content) >= 1
 
 
-class TestMemoraDBViewer:
-    def test_module_exists(self):
-        content = _content("Memora/db_viewer.py")
-        assert "db" in content.lower() or "database" in content.lower() or "viewer" in content.lower()
-
-    def test_has_methods(self):
-        content = _content("Memora/db_viewer.py")
-        assert _count_methods(content) >= 1
+# NOTE: TestMemoraDBViewer was removed because Memora/db_viewer.py was deleted
+# in the Oracle-only persistence sweep (commit 1818879, "chore: complete
+# Oracle-only persistence sweep for FRIDAY Universe agents"). The module no
+# longer exists anywhere in the repository, so a file-content contract for it
+# cannot be satisfied.
 
 
 # ── Futuris Core Modules ─────────────────────────────────────────────────────

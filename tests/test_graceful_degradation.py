@@ -6,13 +6,17 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from repo_isolation import purge_ambiguous_modules
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
 def _clean_app(agent_subpath: str):
-    to_remove = [k for k in list(sys.modules.keys()) if k == "app" or k.startswith("app.")]
-    for k in to_remove:
-        sys.modules.pop(k, None)
+    # Drop every module imported from inside the repository, not just the
+    # `app`/`app.*` namespace: agents also ship identically named top-level
+    # packages such as `core` (Memora, Forge) and `dashboard` (Stratex), and a
+    # stale sys.modules entry resolves bare imports to the wrong agent.
+    purge_ambiguous_modules()
     agent_path = str(ROOT / agent_subpath)
     if agent_path in sys.path:
         sys.path.remove(agent_path)

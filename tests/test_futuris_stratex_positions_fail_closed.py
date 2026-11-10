@@ -6,7 +6,7 @@ importing the entire forecasting stack (which has its own heavy dependencies).
 """
 
 import importlib.util
-import logging
+import structlog
 from pathlib import Path
 import sys
 import types
@@ -36,7 +36,11 @@ def trading_bot_connector(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setitem(sys.modules, "futuris.core.enums", enums)
 
     log_module = types.ModuleType("futuris.infra.logging")
-    log_module.get_logger = logging.getLogger
+    # The connector logs structlog-style (logger.warning("event", status=...)),
+    # matching Futuris' real get_logger contract (structlog.stdlib.BoundLogger).
+    # Stub the same contract so the isolated module logs (and degrades) exactly
+    # like it does in production instead of raising TypeError on kwargs.
+    log_module.get_logger = structlog.get_logger
     monkeypatch.setitem(sys.modules, "futuris.infra.logging", log_module)
 
     config = types.ModuleType("futuris.infra.config")

@@ -26,7 +26,7 @@ def load_module(relpath, name):
     return mod
 
 
-dash = load_module("FRIDAY/apps/core/src/friday_core/universe_dashboard.py", "dashboard")
+dash = load_module("FRIDAY/apps/core/src/friday_core/universe_dashboard.py", "universe_dashboard_under_test")
 
 
 @pytest.fixture

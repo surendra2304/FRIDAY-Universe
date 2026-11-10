@@ -427,8 +427,11 @@ def create_app() -> FastAPI:
     app.include_router(complexity_quantifier_router, prefix="/api/v1", tags=["Code Complexity"])
 
     # --- Camofox Stealth Browser Integration ---
+    # Prefix keeps every Forge route under /api/v1/forge/* (agent-name namespace),
+    # matching the fleet route contract used by FRIDAY dispatch and ops scripts
+    # (scripts/restart_cloud_services.py) and the root e2e suite.
     from app.services.real_browser_routes import router as real_browser_router
-    app.include_router(real_browser_router, prefix="/api/v1", tags=["Camofox Stealth Browser"])
+    app.include_router(real_browser_router, prefix="/api/v1/forge", tags=["Camofox Stealth Browser"])
 
     return app
 

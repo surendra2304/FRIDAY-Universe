@@ -16,6 +16,111 @@ protected_worktree:
     - "Re-check git status before any worktree operation."
 
 claims:
+  - path: "requirements-ci.txt"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): add the Stratex/Futuris test surface missing from the CI install."
+
+  - path: "tests/repo_isolation.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): new shared surgical module-cache purge helper for ambiguous top-level packages."
+
+  - path: "tests/stub_fleet.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): UNIVERSAL_ACTIONS gains the documented synthetic bus-plumbing actions."
+
+  - path: "tests/test_e2e_real_repo_integration.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): agent-class isolation via repo_isolation; Cortex auth header per PR #26; VyralX dev-SQLite env."
+
+  - path: "tests/test_graceful_degradation.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): _clean_app uses the shared surgical purge."
+
+  - path: "tests/test_futuris_stratex_positions_fail_closed.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): structlog-contract logger stub."
+
+  - path: "tests/test_deep_modules_batch9.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): TestMemoraDBViewer removed (module deleted in the 1818879 sweep)."
+
+  - path: "tests/test_fleet_validation.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): credential-scan paths follow the docs/archive moves."
+
+  - path: "tests/test_real_deep_layer11.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): VyralX subprocess env gains MEDIA_DATABASE_URL dev SQLite."
+
+  - path: "tests/test_real_universe_dashboard.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): stop squatting the canonical 'dashboard' module name."
+
+  - path: "Stratex/app/agents/real_autohedge.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): real bug fix - rebalance multiplied the symbol by the price."
+
+  - path: "Forge/app/main.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): browser router under /api/v1/forge/* per the fleet route contract."
+
+  - path: "Memora/core/__init__.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): regular package for deterministic bare-core resolution."
+
+  - path: "Memora/apps/__init__.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): regular package for deterministic bare-apps resolution."
+
+  - path: "Memora/app/__init__.py"
+    owner: "zai"
+    prs: [42]
+    branches: ["zai/TASK-CI-002-main-green"]
+    status: "ACTIVE_CLAIM"
+    task: "TASK-CI-002 execution pass (D-019): lazy PEP 562 shim; circular-import crash class eliminated."
+
   - path: ".github/workflows/validate-monorepo.yml"
     owner: "claude"
     prs: [23, 34]
