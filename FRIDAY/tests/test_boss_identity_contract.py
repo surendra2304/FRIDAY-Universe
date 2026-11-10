@@ -90,3 +90,97 @@ def test_voice_prompt_boss_contract() -> None:
     text = instruction.parts[0].text
     assert "boss" in text.lower()
     assert "never use sycophantic titles" not in text.lower()
+
+
+# ---------------------------------------------------------------------------
+# TASK-BRAIN-002: deterministic memory (owner directive 2026-11-11 IST)
+# "Remember this Boss: my favorite chai is masala chai and I review the
+# fleet every morning at 9" used to be hijacked by the fleet-status
+# fast-path (bare keyword 'fleet') and answered with a probe report.
+# ---------------------------------------------------------------------------
+
+STORE_SENTENCE = "Remember this Boss: my favorite chai is masala chai and I review the fleet every morning at 9"
+STORED_FACT = "my favorite chai is masala chai and I review the fleet every morning at 9"
+
+
+class _StubMemora:
+    """Records facts and replays them — no external service needed."""
+
+    def __init__(self) -> None:
+        self.facts: list[str] = []
+        self.recall_calls: list[str] = []
+
+    def record_fact(self, agent_name, fact_text, category="preference", importance=0.95):
+        self.facts.append(fact_text)
+        return {"status": "success", "content_text": fact_text}
+
+    def recall_memories(self, agent_name, query, limit=5):
+        self.recall_calls.append(query)
+        return [{"content_text": f} for f in self.facts]
+
+
+@pytest.fixture()
+def stub_memora(monkeypatch):
+    stub = _StubMemora()
+
+    def _factory(agent_name="friday"):
+        import friday.memory.memora_client as mc
+
+        return stub
+
+    monkeypatch.setattr("friday.memory.memora_client.memora_client", stub, raising=True)
+    # The server imports the client inside functions via
+    # `from friday.memory.memora_client import memora_client`, so patching
+    # the module attribute is enough.
+    return stub
+
+
+def test_memory_store_not_hijacked_by_fleet_status(stub_memora) -> None:
+    result = _dispatch(STORE_SENTENCE)
+    meta = result["metadata"]
+    assert meta.get("memory_store") is True, result
+    assert meta.get("fast_path") is not None
+    assert stub_memora.facts == [STORED_FACT], stub_memora.facts
+    # The old failure: a fleet probe report instead of a memory confirmation.
+    assert "specialist agents up" not in result["reply"]
+    assert "probe" not in result["reply"].lower()
+    assert "locked in" in result["reply"].lower()
+    assert "boss" in result["reply"].lower()
+
+
+def test_memory_store_plain_remember(stub_memora) -> None:
+    _dispatch("remember my birthday is on the twelfth of march")
+    assert any("birthday" in f for f in stub_memora.facts)
+
+
+def test_memory_recall_returns_stored_facts(stub_memora) -> None:
+    _dispatch(STORE_SENTENCE)
+    result = _dispatch("what do you remember about me")
+    meta = result["metadata"]
+    assert meta.get("memory_recall") is True
+    assert meta.get("remembered_count", 0) >= 1
+    assert "masala chai" in result["reply"]
+    assert "boss" in result["reply"].lower()
+
+
+def test_memory_recall_honest_when_empty(stub_memora) -> None:
+    result = _dispatch("what do you remember about me")
+    assert result["metadata"].get("memory_recall") is True
+    assert result["metadata"].get("remembered_count") == 0
+    assert "empty" in result["reply"].lower() or "don't have anything" in result["reply"].lower()
+
+
+def test_recall_beats_remember_for_questions(stub_memora) -> None:
+    _dispatch(STORE_SENTENCE)
+    result = _dispatch("do you remember my chai preference")
+    assert result["metadata"].get("memory_recall") is True
+    assert "masala chai" in result["reply"]
+
+
+def test_fleet_status_still_works(stub_memora) -> None:
+    """The memory fast-path must not swallow genuine fleet questions."""
+    result = _dispatch("how's the fleet?")
+    assert result["metadata"].get("memory_store") is None
+    assert result["metadata"].get("memory_recall") is None
+    # (may answer via the fleet probe fast-path or the cognitive loop —
+    # either way it must NOT claim to have stored a memory.)

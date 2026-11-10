@@ -1757,6 +1757,139 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
         }
 
     # =========================================================================
+    # A0.5 Memory Fast-path (owner directive 2026-11-11 IST: autonomous memory)
+    # =========================================================================
+    # "Remember this Boss: my favorite chai is masala chai and I review the
+    # fleet every morning at 9" used to be hijacked by the fleet-status
+    # fast-path (bare keyword 'fleet') and answered with a probe report —
+    # the exact opposite of remembering. Explicit remember/recall intents are
+    # now answered deterministically BEFORE any keyword router can misfire.
+    _MEMORY_LINE_NOISE = (
+        "Carry out this owner-approved FRIDAY Universe task",
+        "Workspace task reference",
+        "The general plan approval does not authorize",
+    )
+
+    def _clean_memory_line(text: str) -> str:
+        for noise in _MEMORY_LINE_NOISE:
+            if noise.lower() in text.lower():
+                text = text[: max(0, text.lower().index(noise.lower()))]
+        text = " ".join(text.split()).strip().rstrip(":;,-")
+        return text
+
+    _recall_patterns = (
+        "what do you remember", "do you remember", "you remember",
+        "what do you know about me", "what do you know about my",
+        "do you have memory", "do you have any memory", "your memory",
+        "what did i say", "what did i tell you", "what have i told you",
+        "my preferences", "recall my", "recall what",
+    )
+    _remember_patterns = (
+        "remember this", "remember that", "remember:", "remember ,",
+        "note that", "don't forget", "dont forget", "keep in mind",
+        "memorize this", "memorise this", "store this", "remember it",
+    )
+    # Recall wins over remember ("do you remember" is a question, not a store
+    # command); both match at start or mid-sentence, but recall is checked
+    # first so "do you remember when I told you to remember X" recalls.
+    _is_recall = any(p in cmd for p in _recall_patterns)
+    _is_remember = cmd.startswith("remember ") or any(
+        cmd.startswith(p) or f" {p} " in f" {cmd} " or f" {p}:" in f" {cmd}" for p in _remember_patterns
+    )
+
+    if _is_recall:
+        _hits: list[dict[str, Any]] = []
+        _mem_error = ""
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _query = raw_cmd if len(raw_cmd) <= 120 else raw_cmd[:120]
+            _hits = _memora.recall_memories("friday", f"{_query} Surendra preferences facts", limit=6) or []
+        except Exception as _e:
+            _mem_error = f"{type(_e).__name__}"
+            logger.debug(f"Memora recall skipped in memory fast-path: {_e}")
+        _lines: list[str] = []
+        _seen_mem: set[str] = set()
+        for _m in _hits:
+            _text = _clean_memory_line(str(_m.get("content_text", "")))
+            if _text and len(_text) > 6 and _text.lower() not in _seen_mem:
+                _seen_mem.add(_text.lower())
+                if len(_text) > 130:
+                    _text = _text[:127].rstrip() + "…"
+                _lines.append(f"• {_text}")
+            if len(_lines) >= 4:
+                break
+        if _lines:
+            _reply = "Of course I remember, Boss. Here's what I'm holding onto:\n\n" + "\n".join(_lines)
+        else:
+            _reply = (
+                "I don't have anything stored on that yet, Boss — my memory store came back empty. "
+                "Tell me what matters and I'll keep it: just say 'remember that…'."
+            )
+        if _mem_error:
+            _reply = f"My memory service is out of reach right now ({_mem_error}), Boss — I'll be honest: I can't check it this second. Say it again in a moment."
+        return {
+            "reply": _reply,
+            "metadata": {
+                "fast_path": True,
+                "conversational": True,
+                "memory_recall": True,
+                "remembered_count": len(_lines),
+                "memory_service_error": _mem_error or None,
+            },
+        }
+
+    if _is_remember:
+        # Extract the payload after the command phrase.
+        _payload = raw_cmd
+        for _pfx in (
+            "remember this boss:", "remember this:", "remember that:", "remember this", "remember that",
+            "remember:", "remember", "note that", "don't forget that", "dont forget that",
+            "don't forget", "dont forget", "keep in mind that", "keep in mind", "memorize this",
+            "memorise this", "store this",
+        ):
+            if _payload.lower().startswith(_pfx):
+                _payload = _payload[len(_pfx):]
+                break
+        _payload = _payload.strip().lstrip(":, -–").strip()
+        _payload = _clean_memory_line(_payload)
+        if not _payload:
+            _payload = raw_cmd.strip()
+        if len(_payload) > 400:
+            _payload = _payload[:397].rstrip() + "…"
+        _stored = False
+        _store_error = ""
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _res = _memora.record_fact(
+                agent_name="friday",
+                fact_text=_payload,
+                category="owner_fact",
+                importance=0.98,
+            )
+            _stored = bool(_res) and _res.get("status") != "error"
+        except Exception as _e:
+            _store_error = f"{type(_e).__name__}"
+            logger.warning(f"Memora record_fact failed in memory fast-path: {_e}")
+        if _stored:
+            _reply = f"Got it, Boss — locked in: {_payload}. That's mine to keep now."
+        else:
+            _reply = (
+                f"I couldn't reach my memory store just now, Boss, so I have NOT saved that — "
+                f"say it again in a moment and I'll keep it safe."
+            )
+            if _store_error:
+                logger.warning(f"memory fast-path store error: {_store_error}")
+        return {
+            "reply": _reply,
+            "metadata": {
+                "fast_path": True,
+                "conversational": True,
+                "memory_store": _stored,
+                "fact": _payload,
+            },
+        }
+
+    # =========================================================================
     # A. Autonomous Mode Toggles & Directives
     # =========================================================================
     if any(k in cmd for k in [
