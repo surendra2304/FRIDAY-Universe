@@ -159,3 +159,39 @@ This is the decision record for cross-contributor rules. Add new decisions; do n
 **Contributors:** ZAI (flag verification, decision recording).
 **Owner approval:** Given directly in chat on 2026-11-10.
 **Consequences:** Master Plan §1 and TASK-STR-001 updated: the "testnet" assumption is replaced by the owner-confirmed demo venue. PR #39's risk flag is resolved (no longer awaiting an owner decision); its review can proceed. Future tasks (TASK-STR-002 venue confirmation, Futuris/Stratex telemetry in PR #33) should treat demo as canonical. Testnet-vs-demo must stay clearly separated in Stratex tests.
+
+## D-016 — Execute the deferred history rewrite to purge leaked credentials
+
+**Date:** 2026-11-10
+**Problem:** Real credentials (live Telegram bot token + chat id, old MCP bridge token, DuckDNS token, Sentinel service key, two Postgres passwords, five fleet inter-agent API keys, mesh hash/master/peer keys) had been committed to the public repository history (initial leak from commit 46034a4 era and later). The rewrite had been planned and owner-approved on 2026-11-08 but deferred until open PRs merged.
+**Alternatives:** (a) leave history and rely on rotation alone; (b) rewrite only the initial commit; (c) full filter-repo purge of every leaked literal across all history plus branch cleanup.
+**Evidence:** Pre-rewrite blob scan of all 6,826 unique objects; the purge list contained only values with real-secret characteristics (obviously-fake scanner-test fixtures preserved after fingerprint verification). Post-rewrite scan: zero occurrences of all 16 literals.
+**Decision:** (c) — merge all open PRs first (done: 18 PRs, zero open fleet-wide), sanitize the live tree, run git-filter-repo replace-text across all 667 commits, force-push main, delete all 27 stale remote branches (single-branch policy), preserve the pre-rewrite bundle offline.
+**Reason:** Owner authorization was explicit and repeated ("Rewrite the history"; "Merge all those prs and rewrite it"; full rights granted). Purging is the only way to stop the public history from re-exposing the values.
+**Contributors:** ZAI (execution); Claude (original plan + owner approval trail in handoff.md).
+**Owner approval:** Given in chat, 2026-11-10 ("Merge all those prs and rewrite it").
+**Consequences:** All pre-rewrite SHAs recorded in project documents are historical references and no longer resolve on the remote. The leaked values were already public — rotation of the Telegram bot token and the DuckDNS token remains an owner follow-up; the ADB ADMIN password and bridge token were rotated. Anyone with an old clone retains the pre-rewrite history.
+
+## D-017 — Rotate the ADB ADMIN password (TASK-SEC-004 core action)
+
+**Date:** 2026-11-10
+**Problem:** The Autonomous Database ADMIN password sat in plaintext env-backup files on both servers and in pre-rewrite git history, while the bridge is publicly reachable by owner risk acceptance (D-014), making server-resident secrets effectively public.
+**Alternatives:** (a) keep the old password and only redact backups; (b) rotate the ADMIN password server-side and redact every stored copy; (c) also reset all ten fleet schema passwords (not authorized this session).
+**Evidence:** Working old credential verified among env-backup DSN candidates before rotation; `ALTER USER ADMIN` executed; new credential verified (connect + SELECT + 58 users visible); old credential confirmed rejected (ORA-01017) after rotation.
+**Decision:** (b) — rotate on the server, generate the new password server-side (never transited the bridge, never printed), store it root-only (`/root/.adb_admin_rotation_2026-11-10`, mode 600), and redact every old-password copy in env-backups on both servers.
+**Reason:** Owner authorization "Yes rotate it" (2026-11-10 chat, in answer to the recorded pending ADMIN rotation). Rotation was already flagged as the highest-priority consequence of D-014.
+**Contributors:** ZAI.
+**Owner approval:** Given in chat, 2026-11-10.
+**Consequences:** Zero live-code impact (TASK-DATA-001 remediation had already removed all ADMIN DSNs from live env files; verified 0 references after rotation; 0 failed units; FRIDAY /health 200). The owner can retrieve the new password from the root-only file on Server 1. Fleet schema-user passwords (unchanged) remain in server env files under the accepted D-014 risk; rotation of those is a separate future action.
+
+## D-018 — FRIDAY speaks as a warm friend with Jarvis capability
+
+**Date:** 2026-11-10
+**Problem:** FRIDAY's default persona ("dry, quietly confident, professional wit") did not match the owner's lived intent for the product: a personal companion in the Iron Man Jarvis mould.
+**Alternatives:** (a) keep the dry-professional persona; (b) add a third persona option; (c) evolve the default 'friday' persona to warm-friend-first with Jarvis-grade confidence.
+**Evidence:** Owner directive in chat, 2026-11-10: "I want my Friday to talk to me like a friend and do all the tasks I said like the Jarvis for Iron Man." Persona contract tests (tests/test_friday_persona.py) pin only structural guarantees (block presence, {user_name} placeholders, pool separation, classic passthrough), leaving tone free to evolve.
+**Decision:** (c) — rewrite the persona blocks, greeting pool, empty-turn line and proactive openers to warm-best-friend-first with dry wit and Jarvis-grade composure; keep the 'classic' persona untouched; strictly presentational with no identity/safety/capability changes.
+**Reason:** The owner's directive was explicit and the persona is the product's soul.
+**Contributors:** ZAI (implementation); owner (directive).
+**Owner approval:** Given in chat, 2026-11-10.
+**Consequences:** All default FRIDAY text and voice interactions shift to the warm friend register immediately upon deployment and service restart. Tests 10/10 pass; adjacent suites unchanged except one pre-existing unrelated failure recorded in the activity log.
