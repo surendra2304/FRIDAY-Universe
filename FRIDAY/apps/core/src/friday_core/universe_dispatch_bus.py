@@ -12,13 +12,18 @@ import os
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import ssl
 import threading
 
 import httpx
 from fastapi import APIRouter, HTTPException
+
+if TYPE_CHECKING:  # runtime import not needed: the store is duck-typed and
+    # annotations are lazy (from __future__ import annotations), so loading
+    # this file via importlib keeps working without the package on sys.path.
+    from friday_core.task_records import TaskRecordStore
 
 router = APIRouter()
 
@@ -87,9 +92,21 @@ class AgentDispatchConfig:
 
 
 class UniverseDispatchBus:
-    """Unified dispatch bus for all specialist agents with real HTTP delivery."""
+    """Unified dispatch bus for all specialist agents with real HTTP delivery.
 
-    def __init__(self) -> None:
+    ``task_records`` (TASK-CORE-003) is an optional shared
+    ``TaskRecordStore``. When provided, every dispatch records its lifecycle:
+    ``submitted`` -> ``dispatched`` on hand-off, then ``completed`` (with the
+    receipt/result summary) or ``failed`` (with the error) once the receipt
+    is in. An ``accepted`` receipt (agent queued the work asynchronously)
+    deliberately leaves the record at ``dispatched`` — recording completion
+    would fabricate success. When the store is None (the default), dispatch
+    behavior is exactly as before; retries and the circuit breaker are
+    untouched either way.
+    """
+
+    def __init__(self, task_records: "TaskRecordStore | None" = None) -> None:
+        self._task_records = task_records
         self._configs: dict[str, AgentDispatchConfig] = {}
         self._tasks: dict[str, TaskEnvelope] = {}
         self._receipts: dict[str, TaskReceipt] = {}
@@ -263,6 +280,51 @@ class UniverseDispatchBus:
         if config.consecutive_failures >= self._circuit_threshold:
             config.circuit_open = True
 
+    def _record_dispatch_lifecycle(self, task_id: str, agent: str, action: str) -> None:
+        """TASK-CORE-003: create + dispatch the task record, when a store is wired."""
+        if self._task_records is None:
+            return
+        self._task_records.create(
+            task_id, description=f"Dispatch {action} to {agent}",
+            owner_agent=agent,
+        )
+        self._task_records.record_dispatch(task_id)
+
+    @staticmethod
+    def _receipt_summary(receipt: TaskReceipt) -> dict[str, Any]:
+        """Compact, JSON-friendly summary of a receipt for a task record."""
+        return {
+            "task_id": receipt.task_id,
+            "agent": receipt.agent,
+            "status": receipt.status,
+            "result": receipt.result,
+            "latency_ms": receipt.latency_ms,
+            "completed_at": receipt.completed_at,
+            "error": receipt.error,
+        }
+
+    def _record_dispatch_outcome(self, receipt: TaskReceipt) -> None:
+        """TASK-CORE-003: write the receipt outcome to the task record store.
+
+        Only a truthfully ``completed`` receipt maps to ``completed``: an
+        ``accepted`` receipt means the agent queued the work for asynchronous
+        execution, so the record stays ``dispatched`` — recording completion
+        would fabricate success (the exact defect TASK-CORE-002 removed).
+        """
+        if self._task_records is None:
+            return
+        if receipt.status == "completed":
+            self._task_records.record_completion(
+                receipt.task_id, result=self._receipt_summary(receipt),
+            )
+        elif receipt.status == "accepted":
+            pass  # async acceptance: awaiting the agent's completion signal
+        else:
+            self._task_records.record_failure(
+                receipt.task_id,
+                error=receipt.error or f"receipt status {receipt.status}",
+            )
+
     async def _dispatch_http(self, envelope: TaskEnvelope, config: AgentDispatchConfig) -> TaskReceipt:
         """Send real HTTP request to the agent with retry logic."""
         url = self._build_action_url(config, envelope.action)
@@ -321,9 +383,11 @@ class UniverseDispatchBus:
             max_retries=config.max_retries,
         )
         self._tasks[task_id] = envelope
+        self._record_dispatch_lifecycle(task_id, agent, action)
 
         receipt = await self._dispatch_http(envelope, config)
         self._receipts[task_id] = receipt
+        self._record_dispatch_outcome(receipt)
 
         if receipt.status in {"accepted", "completed"}:
             self._record_success(config, receipt.latency_ms)
@@ -349,6 +413,7 @@ class UniverseDispatchBus:
             max_retries=config.max_retries,
         )
         self._tasks[task_id] = envelope
+        self._record_dispatch_lifecycle(task_id, agent, action)
 
         start = time.time()
         # Use real HTTP with retry logic
@@ -367,6 +432,7 @@ class UniverseDispatchBus:
                 if receipt is not None:
                     self._receipts[task_id] = receipt
                     self._record_success(config, receipt.latency_ms)
+                    self._record_dispatch_outcome(receipt)
                     return receipt
                 elif resp.status_code == 404:
                     last_error = f"Action '{action}' not found on {agent}"
@@ -387,6 +453,7 @@ class UniverseDispatchBus:
         )
         self._receipts[task_id] = receipt
         self._record_failure(config)
+        self._record_dispatch_outcome(receipt)
         return receipt
 
     def dispatch_batch(self, tasks: list[dict[str, Any]]) -> list[TaskReceipt]:
