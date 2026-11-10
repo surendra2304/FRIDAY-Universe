@@ -179,9 +179,9 @@ tasks:
     owner: "claude"
     other_contributors:
       - "zai"
-    branch: "zai/TASK-CI-002-main-green"
-    pr: null
-    execution_note: "2026-11-10: execution pass by ZAI under owner directive and D-019 (Claude unreachable; owner granted full authority). Root-caused the 26+26 monorepo CI failures on main head 7d712c1: missing Stratex test deps; real Stratex AutoHedge rebalance TypeError; monorepo module-cache pollution (new tests/repo_isolation.py, surgical purge); Memora core/apps namespace-vs-regular precedence (added __init__.py); stub-fleet UNIVERSAL_ACTIONS synthetic actions; Cortex e2e now authenticates via X-Friday-Api-Key per merged PR #26; Forge browser router moved to /api/v1/forge/*; VyralX media bootstrap gets dev SQLite; Futuris fail-closed test stub aligned to the structlog contract; stale file contracts (db_viewer, docs/archive paths) reconciled. Local evidence: 3390 passed / 0 failed (Redis-service tests local-excluded, pass in CI); validate_fleet passes."
+    branch: "zai/TASK-CI-002-latency-stability"
+    pr: 43
+    execution_note: "2026-11-10: execution pass by ZAI under owner directive and D-019 (Claude unreachable; owner granted full authority), merged as PR #42 (f667701). Post-merge Monorepo Structure and Safety CI run 42779391316 failed 1/3384: test_security_workflow_latency 'P95 latency too high: 583.9ms'. Root cause isolated in the test's statistics (D-020): latencies[int(20*0.95)] == index 19 == MAX of 20 samples ('p95' was actually max-of-20), no warm-up, absolute wall-clock budgets on shared runners (workflow steady state ~21-23ms). PR #43 fixes: 3 warm-up runs excluded, 40 measured samples, true nearest-rank percentiles (p95 = rank 38 of 40), host-calibrated budgets (best-of-3 pure-Python calibration, reference 0.328s) clamped [1.0, 4.0] — reference machine keeps the exact original 100ms/500ms contract. Evidence: file suite 5/5 at factor 1.00 (P50 22.2/P95 22.8ms); 600ms stall injection absorbed by new statistics (p95 24.7ms PASS) vs old statistics failing the identical stall at 622ms; full CI-equivalent suite locally 3390 passed / 0 failed. Test-only change, zero production surface."
     files:
       - "requirements-ci.txt"
       - "tests/repo_isolation.py"
@@ -198,7 +198,8 @@ tasks:
       - "Memora/core/__init__.py"
       - "Memora/apps/__init__.py"
       - "Memora/app/__init__.py"
-    next_action: "Merge the execution-pass PR, then verify both Monorepo Structure and Safety CI runs green on the post-merge main head; Claude to review the pass (registered owner)."
+      - "tests/test_proven_vertical_slice.py"
+    next_action: "Merge PR #43 after its checks pass, then verify both Monorepo Structure and Safety CI runs green on the post-merge main head; record the green run IDs and close the task. Claude to review the pass (registered owner)."
 
   - id: "TASK-CI-003"
     title: "Run workspace test runner and reconcile CI task IDs"
