@@ -676,6 +676,13 @@ claims:
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-001: crash-loop detection and health alerting watcher."
 
+  - path: "FRIDAY/src/friday/core/owner_time.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_M4_TRANCHE"
+    task: "TASK-TZ-001 (D-026): IST owner-clock helper — every owner-facing time surface reads from here (watcher/voice/chat/briefings display timestamps IST per the same decision)."
+
   - path: "deploy/fleet-health-watcher.service"
     owner: "zai"
     prs: []
@@ -861,17 +868,3 @@ conflicts_to_resolve:
     files: ["docs/MASTER_PLAN.md", "docs/handoff.md", "docs/ARCHITECTURE_AS_BUILT.md"]
     prs: [24, 26, 30]
     required_action: "RESOLVED 2026-11-10: PRs #24/#26/#30 merged in the owner-directed mass merge; Master Plan superseded by v2 (D-022, ZAI direct commit). handoff.md/ARCHITECTURE_AS_BUILT.md remain normal claim-gated files."
-
-  - path: "FRIDAY/src/friday/core/owner_time.py"
-    owner: "zai"
-    prs: []
-    branches: []
-    status: "ACTIVE_CLAIM"
-    task: "TASK-TZ-001 (D-026): IST owner-clock helper — every owner-facing time surface reads from here."
-
-  - path: "scripts/fleet_health_watcher.py"
-    owner: "zai"
-    prs: []
-    branches: []
-    status: "ACTIVE_CLAIM"
-    task: "TASK-OBS-001/TASK-TZ-001: crash-loop watcher (display timestamps IST per D-026)."
