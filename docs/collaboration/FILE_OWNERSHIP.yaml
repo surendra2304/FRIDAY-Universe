@@ -496,6 +496,60 @@ claims:
     status: "MERGED"
     task: "TASK-CORE-003: 22 tests - lifecycle, failure paths, history auditability, filters, report, router/bus integration store-present/absent (local HTTP double), 202-truthfulness, thread-safety."
 
+
+  # --- 2026-11-10 afternoon: TASK-SEC-005 + FRIDAY PRIME + M1 tranche (D-023) ---
+
+  - path: "FRIDAY/src/friday/api/server.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-SEC-005 (D-023, owner 'Do it'): control-session mint requires the owner key from remote callers (constant-time), loopback stays keyless, origin gate retained, fail-closed 503 unchanged."
+    risk: "Auth-critical surface. Any future auth change must extend tests/test_control_session_hardening.py and re-verify the attack replay fails closed."
+
+  - path: "FRIDAY/src/friday/api/app.js"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "FRIDAY PRIME dashboard rebuild (owner directive): chat via POST /api/chat (fixes the autonomous-goals mis-send the owner hit), paste-once key gate, auto-refreshing control sessions, fleet wall, mic + voice."
+    risk: "The chat path must stay /api/chat. Sending chat to /api/autonomous/goals is the exact owner-reported failure mode."
+
+  - path: "FRIDAY/src/friday/api/index.html"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "FRIDAY PRIME dashboard rebuild (owner directive): futuristic neural-console shell — boot sequence, arc-reactor core, starfield/waveform canvases, floating HUD panels."
+
+  - path: "FRIDAY/tests/test_control_session_hardening.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-SEC-005 attack regression: 15 tests replaying the forged-Origin remote mint."
+
+  - path: "FRIDAY/tests/test_router_word_boundaries.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-ORCH-001 regression corpus: live misroute phrases + existing keyword phrases."
+
+  - path: "FRIDAY/src/friday/routing/capability_router.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-ORCH-001 first tranche: whole-word/phrase keyword matching (CapabilityRouter._matches)."
+
+  - path: "FRIDAY/src/friday/planning/orchestrator.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-ORCH-004: interactive turn budget 4 -> 8 (bounded, configurable via interactive_turn_limit)."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

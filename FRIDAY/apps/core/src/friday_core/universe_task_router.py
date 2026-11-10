@@ -17,6 +17,15 @@ if TYPE_CHECKING:  # runtime import not needed: the store is duck-typed and
     # annotations are lazy (from __future__ import annotations), so loading
     # this file via importlib keeps working without the package on sys.path.
     from friday_core.task_records import TaskRecordStore
+else:
+    # TASK-ORCH-002: the module-level engine is wired to the shared store at
+    # import time. importlib-style loading of this single file keeps working
+    # (the fallback swallows ImportError exactly like the duck-typed contract).
+    try:
+        from friday_core.task_records import get_shared_task_records
+    except ImportError:  # pragma: no cover - importlib single-file loading
+        def get_shared_task_records():  # type: ignore[misc]
+            return None
 
 router = APIRouter()
 
@@ -184,7 +193,10 @@ class UniverseTaskRouter:
         }
 
 
-engine = UniverseTaskRouter()
+# TASK-ORCH-002: the router records submission/assignment into the same
+# process-wide store the dispatch bus records execution into, so one task
+# leaves one coherent lifecycle trail.
+engine = UniverseTaskRouter(task_records=get_shared_task_records())
 
 
 @router.post("/taskrouter/agents")

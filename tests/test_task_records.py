@@ -560,3 +560,197 @@ class TestThreadSafety:
         assert readers == []
         # The audit trail kept every transition even under concurrent reads.
         assert len(store.get("task_rw_1").history) == 1 + 1 + 2 * 200
+
+
+# ===========================================================================
+# TASK-ORCH-002 (2026-11-10): shared store wired into the production engines
+# + agent-side completion callbacks closing the accepted-receipt loop.
+# ===========================================================================
+class TestTaskOrch002SharedStoreWiring:
+    """The module-level engines record into ONE process-wide shared store."""
+
+    def test_shared_store_singleton_is_stable(self):
+        from friday_core.task_records import get_shared_task_records
+        assert get_shared_task_records() is get_shared_task_records()
+
+    def test_production_engines_are_wired_to_the_shared_store(self):
+        import friday_core.universe_task_router as utr
+        import friday_core.universe_dispatch_bus as udb
+        from friday_core.task_records import get_shared_task_records
+
+        shared = get_shared_task_records()
+        assert utr.engine._task_records is shared
+        assert udb.engine._task_records is shared
+
+
+class TestTaskOrch002AgentCompletionCallback:
+    """An agent's late completion signal closes the accepted-receipt loop."""
+
+    def _accepted_dispatch(self, bus):
+        server = ThreadingHTTPServer(("127.0.0.1", 0), _ResultHandler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            base = f"http://127.0.0.1:{server.server_address[1]}"
+            bus.register_agent("AsyncProbeAgent", base, max_retries=0, timeout_sec=5.0)
+            receipt = bus.dispatch("AsyncProbeAgent", "enqueue", {})
+        finally:
+            server.shutdown()
+            server.server_close()
+        assert receipt.status == "accepted"
+        return receipt
+
+    def test_callback_completes_an_accepted_task(self):
+        store = TaskRecordStore()
+        bus = UniverseDispatchBus(task_records=store)
+        receipt = self._accepted_dispatch(bus)
+        assert store.get(receipt.task_id).status == "dispatched"
+
+        final = bus.record_agent_completion(
+            receipt.task_id, "completed", result="research memo attached"
+        )
+        assert final.status == "completed"
+        assert final.result == "research memo attached"
+        record = store.get(receipt.task_id)
+        assert record.status == "completed"
+        assert record.result["source"] == "agent_completion_callback"
+        assert record.result["result"] == "research memo attached"
+        assert _transitions(record) == [
+            ("", "submitted"),
+            ("submitted", "dispatched"),
+            ("dispatched", "completed"),
+        ]
+
+    def test_callback_records_failure_truthfully(self):
+        store = TaskRecordStore()
+        bus = UniverseDispatchBus(task_records=store)
+        receipt = self._accepted_dispatch(bus)
+
+        final = bus.record_agent_completion(
+            receipt.task_id, "failed", error="dataset unreachable"
+        )
+        assert final.status == "failed"
+        record = store.get(receipt.task_id)
+        assert record.status == "failed"
+        assert record.error == "dataset unreachable"
+
+    def test_unknown_task_id_fails_loud(self):
+        store = TaskRecordStore()
+        bus = UniverseDispatchBus(task_records=store)
+        with pytest.raises(HTTPException) as exc:
+            bus.record_agent_completion("no_such_task", "completed")
+        assert exc.value.status_code == 404
+
+    def test_non_terminal_status_is_rejected(self):
+        store = TaskRecordStore()
+        bus = UniverseDispatchBus(task_records=store)
+        receipt = self._accepted_dispatch(bus)
+        with pytest.raises(HTTPException) as exc:
+            bus.record_agent_completion(receipt.task_id, "accepted")
+        assert exc.value.status_code == 422
+        # The record is untouched by the rejected signal.
+        assert store.get(receipt.task_id).status == "dispatched"
+
+    def test_repeated_callback_is_idempotent(self):
+        store = TaskRecordStore()
+        bus = UniverseDispatchBus(task_records=store)
+        receipt = self._accepted_dispatch(bus)
+        bus.record_agent_completion(receipt.task_id, "completed", result="first")
+        # Agents retry callbacks: a repeat must not fabricate a second
+        # lifecycle or corrupt the record.
+        again = bus.record_agent_completion(receipt.task_id, "completed", result="first")
+        assert again.status == "completed"
+        assert store.get(receipt.task_id).status == "completed"
+
+    def test_late_callback_cannot_overwrite_a_sync_completion(self):
+        store = TaskRecordStore()
+        bus = UniverseDispatchBus(task_records=store)
+        server = ThreadingHTTPServer(("127.0.0.1", 0), _ResultHandler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            base = f"http://127.0.0.1:{server.server_address[1]}"
+            bus.register_agent("SyncProbeAgent", base, max_retries=0, timeout_sec=5.0)
+            receipt = bus.dispatch("SyncProbeAgent", "run", {})
+        finally:
+            server.shutdown()
+            server.server_close()
+        assert receipt.status == "completed"
+        assert store.get(receipt.task_id).status == "completed"
+
+        # A late, contradictory callback must not rewrite terminal history.
+        bus.record_agent_completion(receipt.task_id, "failed", error="late noise")
+        record = store.get(receipt.task_id)
+        assert record.status == "completed"
+        assert record.result["result"] == "stub result"
+
+    def test_callback_without_store_still_updates_the_receipt(self):
+        bus = UniverseDispatchBus()  # no store wired: callback still works
+        receipt = self._accepted_dispatch(bus)
+        final = bus.record_agent_completion(
+            receipt.task_id, "completed", result="done off the books"
+        )
+        assert final.status == "completed"
+        assert bus.get_receipt(receipt.task_id)["status"] == "completed"
+
+
+class TestTaskOrch002HttpSurface:
+    """The callback and the lifecycle report are real HTTP endpoints."""
+
+    def test_completions_endpoint_and_records_report(self):
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+
+        import friday_core.universe_dispatch_bus as udb
+
+        app = FastAPI()
+        app.include_router(udb.router, prefix="/api/v1")
+        client = TestClient(app)
+
+        # A dispatch that gets accepted (async) leaves the record dispatched.
+        server = ThreadingHTTPServer(("127.0.0.1", 0), _ResultHandler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            base = f"http://127.0.0.1:{server.server_address[1]}"
+            udb.engine.register_agent(
+                "HttpProbeAgent", base, max_retries=0, timeout_sec=5.0
+            )
+            receipt = udb.engine.dispatch("HttpProbeAgent", "enqueue", {})
+        finally:
+            server.shutdown()
+            server.server_close()
+        assert receipt.status == "accepted"
+
+        shared_before = udb.engine._task_records.get(receipt.task_id).status
+        assert shared_before == "dispatched"
+
+        # 422: only terminal outcomes are accepted.
+        bad = client.post(
+            "/api/v1/dispatch/completions",
+            params={"task_id": receipt.task_id, "status": "accepted"},
+        )
+        assert bad.status_code == 422
+
+        # 404: unknown task fails loud.
+        missing = client.post(
+            "/api/v1/dispatch/completions",
+            params={"task_id": "missing_1", "status": "completed"},
+        )
+        assert missing.status_code == 404
+
+        # The agent's completion signal closes the loop over HTTP.
+        ok = client.post(
+            "/api/v1/dispatch/completions",
+            params={
+                "task_id": receipt.task_id,
+                "status": "completed",
+                "result": "memo ready",
+            },
+        )
+        assert ok.status_code == 200, ok.text
+        assert ok.json()["recorded_via"] == "agent_completion_callback"
+
+        # The shared lifecycle report reflects the closed loop.
+        report = client.get("/api/v1/dispatch/records/report")
+        assert report.status_code == 200
+        body = report.json()
+        assert body["enabled"] is True
+        assert body["by_status"]["completed"] >= 1

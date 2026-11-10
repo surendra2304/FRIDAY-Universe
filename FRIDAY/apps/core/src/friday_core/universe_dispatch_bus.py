@@ -24,6 +24,14 @@ if TYPE_CHECKING:  # runtime import not needed: the store is duck-typed and
     # annotations are lazy (from __future__ import annotations), so loading
     # this file via importlib keeps working without the package on sys.path.
     from friday_core.task_records import TaskRecordStore
+else:
+    # TASK-ORCH-002: the module-level engine is wired to the shared store at
+    # import time; the fallback preserves importlib single-file loading.
+    try:
+        from friday_core.task_records import get_shared_task_records
+    except ImportError:  # pragma: no cover - importlib single-file loading
+        def get_shared_task_records():  # type: ignore[misc]
+            return None
 
 router = APIRouter()
 
@@ -485,6 +493,76 @@ class UniverseDispatchBus:
         config.consecutive_failures = 0
         return True
 
+    def record_agent_completion(
+        self, task_id: str, status: str, result: str = "", error: str = ""
+    ) -> TaskReceipt:
+        """TASK-ORCH-002: record an agent's own completion signal.
+
+        An ``accepted`` receipt means the agent queued the work; until now
+        nothing ever closed that loop, so the task record stayed ``dispatched``
+        forever. This is the agent-side callback: the agent (or the owner on
+        its behalf) POSTs the final outcome and the record moves to
+        ``completed``/``failed`` truthfully.
+
+        * unknown ``task_id`` -> 404 (fail loud, never silently no-op);
+        * a repeated signal for an already-terminal record is idempotent and
+          returns the current receipt (agents retry callbacks; the store
+          appends history, it never rewrites it);
+        * only ``completed``/``failed`` are terminal outcomes; anything else
+          is rejected with 422.
+        """
+        if status not in {"completed", "failed"}:
+            raise HTTPException(
+                status_code=422,
+                detail=f"status must be 'completed' or 'failed', got {status!r}",
+            )
+        envelope = self._tasks.get(task_id)
+        if envelope is None:
+            raise HTTPException(
+                status_code=404, detail=f"Unknown task_id {task_id!r}"
+            )
+
+        now = time.time()
+        receipt = TaskReceipt(
+            task_id=task_id,
+            agent=envelope.agent,
+            status=status,
+            result=result if status == "completed" else "",
+            latency_ms=(now - envelope.created_at) * 1000,
+            completed_at=now,
+            error=error if status == "failed" else "",
+        )
+        self._receipts[task_id] = receipt
+
+        if self._task_records is not None:
+            record = self._task_records.get(task_id)
+            if record is not None:
+                terminal = {"completed", "failed", "routing_failed"}
+                if record.status not in terminal:
+                    if status == "completed":
+                        self._task_records.record_completion(
+                            task_id, result={
+                                "source": "agent_completion_callback",
+                                "result": result,
+                                "latency_ms": receipt.latency_ms,
+                            },
+                        )
+                    else:
+                        self._task_records.record_failure(
+                            task_id, error=error or "agent reported failure"
+                        )
+        if status == "completed":
+            config = self._configs.get(envelope.agent)
+            if config is not None:
+                self._record_success(config, receipt.latency_ms)
+        return receipt
+
+    def get_task_records_report(self) -> dict[str, Any]:
+        """TASK-ORCH-002: expose the shared task-record lifecycle report."""
+        if self._task_records is None:
+            return {"enabled": False, "note": "no shared task record store wired"}
+        return {"enabled": True, **self._task_records.report()}
+
     def get_receipt(self, task_id: str) -> dict[str, Any]:
         """Get a task receipt."""
         receipt = self._receipts.get(task_id)
@@ -545,7 +623,9 @@ class UniverseDispatchBus:
         }
 
 
-engine = UniverseDispatchBus()
+# TASK-ORCH-002: the bus records dispatch/execution into the same
+# process-wide store the task router records submission/assignment into.
+engine = UniverseDispatchBus(task_records=get_shared_task_records())
 
 
 @router.post("/dispatch/send")
@@ -613,3 +693,29 @@ async def reset_circuit(agent_name: str):
 async def dispatch_report():
     """Get dispatch bus report."""
     return engine.get_report()
+
+
+@router.post("/dispatch/completions")
+async def record_agent_completion(task_id: str, status: str,
+                                   result: str = "", error: str = ""):
+    """TASK-ORCH-002: agent-side completion callback.
+
+    After an ``accepted`` (asynchronous) dispatch, the agent POSTs its final
+    outcome here so the shared task record truthfully reaches
+    ``completed``/``failed`` instead of lingering at ``dispatched`` forever.
+    """
+    receipt = engine.record_agent_completion(task_id, status, result, error)
+    return {
+        "task_id": receipt.task_id,
+        "agent": receipt.agent,
+        "status": receipt.status,
+        "result": receipt.result,
+        "error": receipt.error,
+        "recorded_via": "agent_completion_callback",
+    }
+
+
+@router.get("/dispatch/records/report")
+async def task_records_report():
+    """TASK-ORCH-002: shared task-record lifecycle report (router + bus)."""
+    return engine.get_task_records_report()

@@ -115,6 +115,30 @@ class CapabilityRouter:
     # Keywords signaling background execution
     BACKGROUND_KEYWORDS = {"in the background", "async", "long running", "monitor continuously", "background task"}
 
+    # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
+    # The previous substring matching misrouted live traffic: "run a quick research
+    # check" matched SCREEN_KEYWORDS because "quick" contains the substring "ui",
+    # sending a plain research question to the external vision model (proven live
+    # 2026-11-10, ACTIVITY_LOG). Word boundaries keep every existing keyword
+    # behaviour while removing the substring false-hit class.
+    _WORD_BOUNDARY_CACHE: dict[str, "re.Pattern[str]"] = {}
+
+    @classmethod
+    def _matches(cls, text: str, keywords: "set[str] | frozenset[str]") -> bool:
+        """True when any keyword appears in ``text`` as a whole word or phrase.
+
+        Substring containment (``kw in text``) is intentionally NOT used: it
+        produces false hits like "ui" inside "quick" or "run" inside "trader".
+        """
+        for kw in keywords:
+            pattern = cls._WORD_BOUNDARY_CACHE.get(kw)
+            if pattern is None:
+                pattern = re.compile(r"(?<![\w])" + re.escape(kw) + r"(?![\w])")
+                cls._WORD_BOUNDARY_CACHE[kw] = pattern
+            if pattern.search(text):
+                return True
+        return False
+
     def __init__(
         self,
         default_vision_cost_usd: float = 0.002,
@@ -139,8 +163,8 @@ class CapabilityRouter:
 
         # 1. Evaluate Direct Reasoning (Conversational / General Knowledge)
         # If user asks pure conversational question without real-world tools
-        is_conversational = not any(w in clean_input for w in ["file", "click", "run", "execute", "background", "search memory"])
-        if is_conversational and not any(kw in clean_input for kw in self.SCREEN_KEYWORDS | self.MEMORY_KEYWORDS | self.LOCAL_CALC_KEYWORDS):
+        is_conversational = not self._matches(clean_input, {"file", "click", "run", "execute", "background", "search memory"})
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -152,7 +176,7 @@ class CapabilityRouter:
             ))
 
         # 2. Evaluate Memory Retrieval
-        if any(kw in clean_input for kw in self.MEMORY_KEYWORDS):
+        if self._matches(clean_input, self.MEMORY_KEYWORDS):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.MEMORY_RETRIEVAL,
                 estimated_cost_usd=0.0,
@@ -164,7 +188,7 @@ class CapabilityRouter:
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)
-        if any(kw in clean_input for kw in self.LOCAL_CALC_KEYWORDS) or re.match(r"^\d+\s*[\+\-\*\/]\s*\d+$", clean_input):
+        if self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or re.match(r"^\d+\s*[\+\-\*\/]\s*\d+$", clean_input):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.LOCAL_COMPUTATION,
                 estimated_cost_usd=0.0,
@@ -176,7 +200,7 @@ class CapabilityRouter:
             ))
 
         # 4. Evaluate Screen Perception (Cached vs Vision Model)
-        if any(kw in clean_input for kw in self.SCREEN_KEYWORDS):
+        if self._matches(clean_input, self.SCREEN_KEYWORDS):
             if has_cached_screen and (screen_unchanged or (cache_age_seconds is not None and cache_age_seconds < 5.0)):
                 candidates.append(CapabilityMetadata(
                     capability_type=ExecutionCapabilityType.LOCAL_SCREEN_INSPECTION,
@@ -200,7 +224,7 @@ class CapabilityRouter:
                 ))
 
         # 5. Evaluate Background Task Execution
-        if any(kw in clean_input for kw in self.BACKGROUND_KEYWORDS):
+        if self._matches(clean_input, self.BACKGROUND_KEYWORDS):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.BACKGROUND_TASK,
                 estimated_cost_usd=0.0,
@@ -212,7 +236,7 @@ class CapabilityRouter:
             ))
 
         # 6. Fallback Tool Execution Candidate
-        if any(w in clean_input for w in ["write", "read", "delete", "create", "list", "system", "file", "process", "move", "click", "type", "scroll"]):
+        if self._matches(clean_input, {"write", "read", "delete", "create", "list", "system", "file", "process", "move", "click", "type", "scroll"}):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
                 estimated_cost_usd=0.0,

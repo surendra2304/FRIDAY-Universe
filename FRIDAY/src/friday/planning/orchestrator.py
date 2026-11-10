@@ -139,7 +139,13 @@ class FridayOrchestrator:
         all_results: list[ToolResult] = []
         last_error = ""
 
-        for _ in range(4):
+        # TASK-ORCH-004 (2026-11-10): four bounded tool-call turns was too tight for
+        # one real task — a single ordinary research request exhausted the budget
+        # live (14s, 1 iteration, "action limit" reply; ACTIVITY_LOG 2026-11-10).
+        # Eight turns keeps the loop bounded while letting pick->call->verify->
+        # summarize workflows converge; the turn bound itself is also configurable
+        # for tests and future tuning.
+        for _ in range(getattr(self, "interactive_turn_limit", 8)):
             replanner = self.scheduler.replanner
             self.scheduler.replanner = None
             try:

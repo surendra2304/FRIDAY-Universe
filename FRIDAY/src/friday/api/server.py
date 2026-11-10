@@ -607,17 +607,23 @@ android = AndroidDeviceController()
 async def control_session(request: Request) -> JSONResponse:
     """Mint a short-lived control token for the owner's dashboard.
 
-    This is the only control surface that answers without a credential, and it is
-    deliberately constrained:
+    TASK-SEC-005 (2026-11-10): remote callers must present the control API key
+    to mint a session. The previous origin-only gate was demonstrated forgeable
+    — ``Origin`` is a client-controlled header, so any unauthenticated remote
+    client could mint a control capability (see ACTIVITY_LOG 2026-11-10). The
+    key is verified with a constant-time comparison; only loopback callers keep
+    the keyless mint (the owner on the box itself).
+
+    Constraints retained:
 
     * the browser origin must already be allowed (:func:`_origin_allowed`), so a
-      third-party page cannot read the token even if it calls the endpoint;
+      third-party page cannot reach this endpoint at all;
     * it fails closed with 503 when no usable ``FRIDAY_API_KEY`` is configured;
     * tokens expire, are HMAC-signed with the key, and are useless once the key
       rotates.
 
-    The token is a control *capability*, not the key itself, so it never has to
-    be pasted into a browser by the owner.
+    The token is a control *capability*, not the key itself, so the owner pastes
+    the key exactly once per browser and it never leaves that browser's storage.
     """
     if not _origin_allowed(request.headers.get("origin", "").strip(), request):
         raise HTTPException(
@@ -630,6 +636,23 @@ async def control_session(request: Request) -> JSONResponse:
             status_code=503,
             detail="Remote control is disabled until a non-example FRIDAY_API_KEY is configured.",
         )
+    client_host = request.client.host if request.client else ""
+    client_is_remote = False
+    try:
+        client_is_remote = not ipaddress.ip_address(client_host).is_loopback
+    except ValueError:
+        pass
+    remotely_exposed = bool(os.getenv("RENDER") or client_is_remote)
+    if remotely_exposed:
+        provided = request.headers.get("x-friday-api-key", "")
+        authorization = request.headers.get("authorization", "")
+        if not provided and authorization.lower().startswith("bearer "):
+            provided = authorization[7:].strip()
+        if not provided or not hmac.compare_digest(provided, secret):
+            raise HTTPException(
+                status_code=401,
+                detail="Owner key required: present FRIDAY_API_KEY as x-friday-api-key to mint a control session.",
+            )
     token, expires = _mint_control_token(secret)
     response = JSONResponse(
         {

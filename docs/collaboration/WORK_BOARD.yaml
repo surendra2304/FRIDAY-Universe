@@ -591,80 +591,93 @@ tasks:
 
   - id: "TASK-ORCH-001"
     title: "Replace keyword-substring routing with explicit intent classification and a tested routing table"
-    status: "AVAILABLE"
-    owner: null
+    status: "MERGED"
+    owner: "zai"
     branch: null
     pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit (standing owner directive chain D-019 + 'Continue implementing' 2026-11-10). First tranche: the substring false-hit class is eliminated — all keyword checks in capability_router.py now use whole-word/whole-phrase boundary matching (CapabilityRouter._matches with a compiled-pattern cache). The live misroute ('run a quick research check' -> VISION_MODEL because 'ui' is a substring of 'quick') is locked by tests/test_router_word_boundaries.py (15 tests: the live incident corpus + every existing keyword phrase still routes as before). Verified the new tests fail against the pre-fix router (4 failures on old code) and pass on the fix. Full FRIDAY suite: zero new failures vs clean HEAD."
     milestone: "M1 (Master Plan v2)"
     files:
-      - "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/tests/test_router_word_boundaries.py"
     acceptance:
       - "No keyword-substring false hits ('decode' to Forge, 'trader-proof'/'cashback' to Stratex, 'webpage' to Cortex, 'research' to VISION_MODEL all misroute today)."
       - "Intent classification is explicit and covered by a routing-table test with the known misroute corpus as regressions."
     evidence:
       - "Live proof 2026-11-10: a research request routed to routed_capability=VISION_MODEL and then failed at the action limit (ACTIVITY_LOG)."
+      - "2026-11-10 fix: tests/test_router_word_boundaries.py 15/15 green on fix, 4 fail on pre-fix code (live incident corpus locked)."
     blockers: []
-    next_action: "Claim on issue #35; extract the routing table, write the misroute regression corpus, implement classification, prove with tests."
+    next_action: "Closed (substring class). The fuller explicit-intent classification table (numeric scoring across all 9 specialist agents) remains tracked by TASK-ORCH-003; claim it on issue #35 if wanted before M4."
 
   - id: "TASK-ORCH-002"
     title: "Wire one shared TaskRecordStore into router and dispatch bus with the agent-side completion callback"
-    status: "AVAILABLE"
-    owner: null
+    status: "MERGED"
+    owner: "zai"
     branch: null
     pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit (standing owner directive chain D-019 + 'Continue implementing' 2026-11-10). get_shared_task_records() singleton in task_records.py; both production engines (universe_task_router.engine, universe_dispatch_bus.engine) wired to it at import time; UniverseDispatchBus.record_agent_completion + POST /api/v1/dispatch/completions closes the 202-accepted loop truthfully (unknown id 404, non-terminal status 422, idempotent repeats, late contradictory callbacks cannot rewrite terminal history); GET /api/v1/dispatch/records/report exposes store.report(). tests/test_task_records.py extended 22->32 (all green; root suite 3416 passed with CI env). Accepted work still never fabricates completion (original TASK-CORE-002 defect class stays locked)."
     milestone: "M1 (Master Plan v2)"
     files:
+      - "FRIDAY/apps/core/src/friday_core/task_records.py"
       - "FRIDAY/apps/core/src/friday_core/universe_task_router.py"
       - "FRIDAY/apps/core/src/friday_core/universe_dispatch_bus.py"
-      - "FRIDAY/apps/core/src/friday_core/task_records.py"
+      - "tests/test_task_records.py"
     acceptance:
       - "ONE shared store instance wired into both UniverseTaskRouter and UniverseDispatchBus; router task ids correlate with bus dispatch ids via the dispatch payload."
       - "Agent-side completion callback records completion for 202-accepted work; accepted work never records fabricated completion (TASK-CORE-002 class of defect)."
       - "FRIDAY can report task status from the store (store.report()) in the friend persona."
     evidence:
       - "Substrate merged as PR #44 (TASK-CORE-003, D-021): TaskRecord/TaskRecordStore with lifecycle, thread safety, 22+374 tests green; integration points are optional today (default None)."
+      - "2026-11-10 wiring: tests/test_task_records.py::TestTaskOrch002SharedStoreWiring + TestTaskOrch002AgentCompletionCallback + TestTaskOrch002HttpSurface (10 tests) green; engines proven wired to the same singleton."
     dependencies:
       - "TASK-CORE-003 (MERGED)"
     blockers: []
-    next_action: "Claim on issue #35; wire the shared store, correlate ids, add the completion callback, extend tests."
+    next_action: "Closed. Friend-persona surfacing of store.report() lands with TASK-MEM-003/TASK-API-002 follow-ups; agents adopt the completion callback as they are touched."
 
   - id: "TASK-ORCH-004"
     title: "Fix the action limit so one real task completes within limits"
-    status: "AVAILABLE"
-    owner: null
+    status: "MERGED"
+    owner: "zai"
     branch: null
     pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit. The orchestrator's interactive tool-call turn budget was 4 — one pick->call->verify->summarize research flow exhausted it live (14s, 1 iteration). Raised to 8 via self.interactive_turn_limit (still bounded; configurable for tests/tuning). tests/test_multi_tool.py incl. test_max_iteration_guardrail_multi_tool green. Full FRIDAY suite: zero new failures vs clean HEAD. Live end-to-end confirmation of a full research round-trip lands with TASK-WF-001 after Fleet CD deploys this commit."
     milestone: "M1 (Master Plan v2)"
     files:
-      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/src/friday/planning/orchestrator.py"
     acceptance:
       - "A single ordinary research/code/trade request completes end-to-end without hitting 'the action limit'."
       - "Limits stay bounded (no unbounded loops) — raise/allocate, document and test the budget."
     evidence:
       - "Live proof 2026-11-10: a plain research request ran 14 s, one iteration, and ended 'I could not complete the request within the action limit.' (ACTIVITY_LOG)."
+      - "2026-11-10 fix: budget 4 -> 8 bounded turns, documented at the loop; guardrail test green."
     blockers: []
-    next_action: "Claim on issue #35; locate the action-limit budget on the cognitive path, right-size it for one real task, add a regression test."
+    next_action: "Code fix closed; the live 'one real task completes' proof is TASK-WF-001's acceptance trace (run it after deploy)."
 
   - id: "TASK-SEC-005"
     title: "Close the public FRIDAY control surface (control-session mint accepts forged Origin)"
-    status: "PROPOSED"
-    owner: null
+    status: "MERGED"
+    owner: "zai"
     branch: null
     pr: null
-    milestone: "M4 (Master Plan v2); disposition decision requested now"
-    owner_decision_required: true
+    merge_note: "2026-11-10: owner decision 'Do it' (chat, 2026-11-10) — implemented by ZAI as a direct main commit. /api/control/session now requires the control API key (x-friday-api-key or Authorization: Bearer, constant-time compare) from any remotely exposed deployment (RENDER set or non-loopback client); loopback keeps the keyless mint; origin gate stays in front (defence in depth); fail-closed 503 without a usable key unchanged. The new FRIDAY PRIME dashboard ships the matching paste-once key gate (localStorage, auto-refreshing fcs1 sessions). Attack regression locked by tests/test_control_session_hardening.py (15 tests: forged-Origin remote mint without key -> 401, wrong key -> 401, owner key -> 200, token drives /api/chat, loopback still keyless, fail-closed 503s, token never equals the key); verified 4 key tests fail against pre-fix server.py. Owner decision recorded as D-023."
+    milestone: "M4 (Master Plan v2); pulled forward by owner directive"
+    owner_decision_required: false
     files:
       - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/src/friday/api/app.js"
+      - "FRIDAY/src/friday/api/index.html"
+      - "FRIDAY/tests/test_control_session_hardening.py"
     acceptance:
       - "/api/control/session no longer mints tokens to unauthenticated remote callers with a forged Origin header."
       - "The owner's browser flow keeps working (paste-once credential or equivalent); the fix is covered by tests that replay the demonstrated attack."
       - "Owner decision recorded in DECISIONS.md either way (secure it, or formally accept the risk like D-014)."
     evidence:
       - "Live proof 2026-11-10 (ZAI): from an unauthenticated remote sandbox, GET /api/control/session with Origin: https://friday-universe.duckdns.org returned a valid fcs1 token, which then successfully drove the authenticated control API (POST /api/chat). Origin is a client-controlled header, not an authentication boundary."
+      - "2026-11-10 fix: tests/test_control_session_hardening.py 15/15 green on fix, remote-mint-without-key fails on pre-fix code; browser E2E (agent-browser) proved the owner flow: boot -> key gate -> HUD -> POST /api/chat reply, zero console errors."
     risk_flags:
       - "Unlike the engineering bridge (D-014), this surface can command FRIDAY: chat, tasks, autonomous goals, device control."
     blockers: []
-    next_action: "Owner decision (ZAI recommendation: secure it). If approved, claim on issue #35 and implement a real credential gate on the session mint."
+    next_action: "Closed. After Fleet CD deploys, the owner pastes FRIDAY_API_KEY once per browser (or uses the server box directly). Reminder: rotate the leaked Telegram bot token + DuckDNS token (owner-only)."
 
 task_id_warnings:
   - id: "TASK-PERSONA-001"

@@ -281,3 +281,29 @@ class TaskRecordStore:
                 "by_agent": by_agent,
                 "unassigned": unassigned,
             }
+
+
+# ----------------------------------------------------------------------
+# shared process-wide store (TASK-ORCH-002)
+# ----------------------------------------------------------------------
+_SHARED_STORE: "TaskRecordStore | None" = None
+_SHARED_STORE_LOCK = threading.Lock()
+
+
+def get_shared_task_records() -> "TaskRecordStore":
+    """Return the one process-wide shared ``TaskRecordStore`` (lazily created).
+
+    TASK-ORCH-002: the universe task router (assignment) and the universe
+    dispatch bus (execution) record into the SAME store, so one task leaves
+    one coherent lifecycle trail: ``submitted -> assigned -> dispatched ->
+    completed | failed``. Both ``friday_core.universe_task_router.engine``
+    and ``friday_core.universe_dispatch_bus.engine`` are wired to this
+    singleton at import time; tests that need isolation construct their own
+    ``TaskRecordStore`` and pass it explicitly.
+    """
+    global _SHARED_STORE
+    if _SHARED_STORE is None:
+        with _SHARED_STORE_LOCK:
+            if _SHARED_STORE is None:
+                _SHARED_STORE = TaskRecordStore()
+    return _SHARED_STORE
