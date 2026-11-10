@@ -858,6 +858,13 @@ claims:
     status: "DIRECT_COMMIT_BRAIN_UI_2026-11-11"
     task: "TASK-BRAIN-001: 12 tests pinning the Boss contract (fast-path affirmation, no AI disclaimers, no misroute, prompt/persona/voice contracts)."
 
+  - path: "FRIDAY/src/friday/memory/memora_client.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BRAIN_UI_2026-11-11"
+    task: "TASK-BRAIN-002: recall guard fix (os.path.exists(None) TypeError killed recall on the Oracle backend) + tests/test_memora_recall_guard.py (3 tests)."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

@@ -1097,6 +1097,27 @@ tasks:
     evidence: "tests/test_boss_identity_contract.py 12/12 green (affirmation + no-AI-disclaimer + no-misroute + prompt/persona/voice contract assertions); suite with persona + owner-identity + origin enforcement 52/52 green (2026-11-11 IST). Pre-fix live repro recorded: /api/chat answered 'I am your boss' with a portfolio question (groq/gpt-oss-120b, 2026-11-11 IST)."
     blockers: []
     next_action: "Owner live re-test on the site after Fleet CD deploy; long-run memory verification (remember/recall across sessions) is TASK-BRAIN-002."
+  - id: "TASK-BRAIN-002"
+    title: "Deterministic autonomous memory: remember/recall that actually works live (owner directive 2026-11-11 IST)"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "You haven't kept autonomous memory and its brain… it is not keeping memory (2026-11-11 chat)."
+    merge_note: "2026-11-11 IST, three live-proven fixes shipped same night. (1) MEMORY FAST-PATH in the chat router before all keyword routing: store intents ('remember that/this', 'note that', 'don't forget', bare 'remember …') extract the payload and store via memora_client.record_fact (category owner_fact, importance 0.98) with a warm confirmation; recall intents ('what do you remember', 'do you remember'…) search with the owner's own words, rank client-side (question-word overlap + personal-fact boost + agent-log penalty, agent-log lines filtered from personal answers), and answer as a friendly list — honest 'nothing stored yet' when empty, honest 'memory service unreachable' on failure. Live repro of the old failure: 'Remember this Boss: my favorite chai is masala chai and I review the fleet every morning at 9' was hijacked by the fleet-status fast-path (bare keyword 'fleet') into a probe report. (2) RECALL CRASH FIX (the deeper root cause): production MemoraClient runs the ORACLE local fallback where local_db_path is None; recall_memories/recall_experience guarded the local path with os.path.exists(None) → TypeError whenever the remote search missed its 0.8s window — recall (including build_context_block in the cognitive loop) has been silently dead in production. Guard fixed in both; oracle backend now always attempts, sqlite only when the file exists. (3) GENERIC-QUESTION PROBE: 'what do you remember about me' (no subject words) now falls back to an owner-fact probe query. LIVE VERIFIED after deploy: 'do you remember my chai preference' → exactly 'my favorite chai is masala chai and I review the fleet every morning at 9'; 'what do you remember about me' → leads with the stored chai fact; store → 'Got it, Boss — locked in'."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/src/friday/memory/memora_client.py"
+      - "FRIDAY/tests/test_boss_identity_contract.py"
+      - "FRIDAY/tests/test_memora_recall_guard.py"
+    acceptance:
+      - "'Remember this Boss: …' stores the fact (no fleet-report hijack) and confirms as a friend."
+      - "'What do you remember about me?' answers with real stored owner facts, not agent logs."
+      - "Recall never crashes on the Oracle backend."
+    evidence: "tests/test_boss_identity_contract.py 18/18 (store/recall fast-paths incl. no-hijack, recall-beats-remember, honest-empty, fleet unaffected); tests/test_memora_recall_guard.py 3/3 (no-crash on None path, oracle fallback invoked, local failure surfaces as []); live production verification 2026-11-11 IST recorded in ACTIVITY_LOG (store → 'Got it, Boss — locked in', chai recall returns the exact stored fact). Pre-fix live repros: fleet hijack + TypeError recall failure both captured."
+    blockers: []
+    next_action: "Owner live memory test on the site; longer-horizon memory usage (proactive recall woven into normal answers) is follow-up tuning."
   - id: "TASK-UI-003"
     title: "Sectioned command-center website: Console (FRIDAY only) / Fleet / Activity / System (owner directive 2026-11-11 IST)"
     status: "DEPLOYED"
