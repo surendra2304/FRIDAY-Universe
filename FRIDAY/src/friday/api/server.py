@@ -1800,12 +1800,20 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
     if _is_recall:
         _hits: list[dict[str, Any]] = []
         _mem_error = ""
+        _q_personal = any(p in cmd for p in (" me", "my ", "myself", "i "))
         try:
             from friday.memory.memora_client import memora_client as _memora
             # Search with the owner's own words — appending generic terms
             # ("preferences facts…") buried the real subject (live lesson:
             # "do you remember my chai preference" returned research junk).
             _hits = _memora.recall_memories("friday", raw_cmd[:200], limit=10) or []
+            if not _hits and _q_personal:
+                # Generic personal question ("what do you remember about me")
+                # has no subject words for search — probe owner facts directly.
+                _hits = (
+                    _memora.recall_memories("friday", "my favorite preference boss surendra", limit=10)
+                    or []
+                )
         except Exception as _e:
             _mem_error = f"{type(_e).__name__}"
             logger.debug(f"Memora recall skipped in memory fast-path: {_e}")
@@ -1815,22 +1823,28 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
         _stop = {"remember", "about", "what", "have", "tell", "does", "your", "you", "when", "where", "which"}
         _q_words -= _stop
 
-        def _mem_rank(item: dict[str, Any]) -> tuple[int, int, str]:
-            _raw_line = str(item.get("content_text", ""))
-            _line = _clean_memory_line(_raw_line)
+        def _is_agent_log(low: str) -> bool:
+            return " executed " in low or "[agent task" in low or "bundle id" in low or "http 200" in low or "[memora response" in low
+
+        def _mem_rank(item: dict[str, Any]) -> tuple[int, int, int]:
+            _line = _clean_memory_line(str(item.get("content_text", "")))
             _low = _line.lower()
             _overlap = sum(1 for w in _q_words if w in _low)
             _personal = 1 if any(p in _low for p in ("my ", "i ", "i'm", "mine", "favorite", "prefer", "boss")) else 0
-            _log_penalty = -4 if (" executed " in _low or "[agent task" in _low or "bundle id" in _low or "http 200" in _low) else 0
-            return (_overlap + _personal + _log_penalty, len(_line) < 160 and 1 or 0, _line)
+            _log_penalty = -4 if _is_agent_log(_low) else 0
+            return (_overlap + _personal + _log_penalty, _personal, min(len(_line), 160))
 
         _ranked = sorted(_hits, key=_mem_rank, reverse=True)
         _lines: list[str] = []
         _seen_mem: set[str] = set()
         for _m in _ranked:
             _text = _clean_memory_line(str(_m.get("content_text", "")))
-            if _text and len(_text) > 6 and _text.lower() not in _seen_mem:
-                _seen_mem.add(_text.lower())
+            _low = _text.lower()
+            # A personal question never gets agent-log noise in the answer.
+            if _q_personal and _is_agent_log(_low):
+                continue
+            if _text and len(_text) > 6 and _low not in _seen_mem:
+                _seen_mem.add(_low)
                 if len(_text) > 130:
                     _text = _text[:127].rstrip() + "…"
                 _lines.append(f"• {_text}")
