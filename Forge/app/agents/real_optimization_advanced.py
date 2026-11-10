@@ -140,59 +140,47 @@ class GeneticAlgorithm:
     bounds: list[tuple[float, float]] = field(default_factory=list)
 
     def optimize(self, objective: Callable[[list[float]], float]) -> tuple[list[float], float]:
-        """Optimize using GA."""
-        # Initialize population
-        population = []
-        scores = []
+        """Optimize using a real-coded GA: tournament selection, blend crossover,
+        Gaussian mutation and elitism. Parents are copied, so offspring never alias them."""
+        size = max(2, self.population_size)
+        population = [[random.uniform(b[0], b[1]) for b in self.bounds] for _ in range(size)]
+        scores = [objective(ind) for ind in population]
+        best_idx = min(range(size), key=lambda i: scores[i])
+        best_individual, best_score = population[best_idx][:], scores[best_idx]
 
-        for _ in range(self.population_size):
-            individual = [random.uniform(b[0], b[1]) for b in self.bounds]
-            score = objective(individual)
-            population.append(individual)
-            scores.append(score)
-
-        best_individual = min(population, key=objective)
-        best_score = objective(best_individual)
-
-        # Evolution loop
         for _ in range(self.n_generations):
-            # Selection (tournament)
+            tournament_size = min(3, size)
             parents = []
-            for _ in range(self.population_size):
-                tournament_size = 3
-                tournament = random.sample(range(self.population_size), tournament_size)
-                winner = min(tournament, key=lambda i: scores[i])
-                parents.append(population[winner])
+            for _ in range(size):
+                winner = min(random.sample(range(size), tournament_size), key=lambda i: scores[i])
+                parents.append(population[winner][:])
 
-            # Crossover
             offspring = []
-            for i in range(0, self.population_size - 1, 2):
+            for i in range(0, size - 1, 2):
+                p1, p2 = parents[i], parents[i + 1]
                 if random.random() < self.crossover_rate:
                     alpha = random.random()
-                    child1 = [alpha * parents[i][j] + (1 - alpha) * parents[i + 1][j] for j in range(self.dimensions)]
-                    child2 = [(1 - alpha) * parents[i][j] + alpha * parents[i + 1][j] for j in range(self.dimensions)]
-                    offspring.append(child1)
-                    offspring.append(child2)
+                    offspring.append([alpha * p1[j] + (1 - alpha) * p2[j] for j in range(self.dimensions)])
+                    offspring.append([(1 - alpha) * p1[j] + alpha * p2[j] for j in range(self.dimensions)])
                 else:
-                    offspring.append(parents[i])
-                    offspring.append(parents[i + 1])
+                    offspring.append(p1[:])
+                    offspring.append(p2[:])
+            if len(offspring) < size:  # odd population size
+                offspring.append(parents[-1][:])
 
-            # Mutation
-            for i in range(len(offspring)):
-                if random.random() < self.mutation_rate:
-                    j = random.randint(0, self.dimensions - 1)
-                    offspring[i][j] = random.uniform(self.bounds[j][0], self.bounds[j][1])
+            for child in offspring:
+                for j in range(self.dimensions):
+                    if random.random() < self.mutation_rate:
+                        lo, hi = self.bounds[j]
+                        step = random.gauss(0.0, 0.1 * (hi - lo))
+                        child[j] = max(lo, min(hi, child[j] + step))
 
-            # Evaluate
-            for i in range(len(offspring)):
-                score = objective(offspring[i])
-                if score < best_score:
-                    best_score = score
-                    best_individual = offspring[i]
-
-            # Replace population
+            offspring[0] = best_individual[:]  # elitism: the best-so-far always survives
             population = offspring
             scores = [objective(ind) for ind in population]
+            for i, score in enumerate(scores):
+                if score < best_score:
+                    best_score, best_individual = score, population[i][:]
 
         return best_individual, best_score
 
@@ -357,42 +345,57 @@ class ArtificialBeeColony:
     dimensions: int = 5
     bounds: list[tuple[float, float]] = field(default_factory=list)
 
-    def optimize(self, objective: Callable[[list[float]], float]) -> tuple[list[float], float]:
-        """Optimize using ABC."""
-        # Initialize food sources
-        food_sources = []
-        for _ in range(self.n_bees):
-            source = [random.uniform(b[0], b[1]) for b in self.bounds]
-            food_sources.append(source)
+    limit: int = 0  # trials before a source is abandoned; 0 means n_bees * dimensions
 
-        best_source = min(food_sources, key=objective)
-        best_score = objective(best_source)
+    def optimize(self, objective: Callable[[list[float]], float]) -> tuple[list[float], float]:
+        """Optimize using the standard ABC algorithm: employed bees, fitness-proportional
+        onlooker bees, scouts for exhausted sources, and a memorized global best."""
+        n = max(2, self.n_bees)
+        dims = self.dimensions
+        limit = self.limit if self.limit > 0 else n * dims
+        sources = [[random.uniform(b[0], b[1]) for b in self.bounds] for _ in range(n)]
+        scores = [objective(src) for src in sources]
+        trials = [0] * n
+        best_idx = min(range(n), key=lambda i: scores[i])
+        best_source, best_score = sources[best_idx][:], scores[best_idx]
+
+        def explore(i: int) -> None:
+            nonlocal best_source, best_score
+            partner = random.choice([k for k in range(n) if k != i])
+            j = random.randint(0, dims - 1)
+            lo, hi = self.bounds[j]
+            candidate = sources[i][:]
+            candidate[j] = max(lo, min(hi, sources[i][j] + random.uniform(-1.0, 1.0) * (sources[i][j] - sources[partner][j])))
+            cand_score = objective(candidate)
+            if cand_score < scores[i]:  # greedy selection
+                sources[i], scores[i], trials[i] = candidate, cand_score, 0
+                if cand_score < best_score:
+                    best_source, best_score = candidate[:], cand_score
+            else:
+                trials[i] += 1
 
         for _ in range(self.n_iterations):
-            # Employed bees phase
-            for i in range(self.n_bees):
-                neighbor = food_sources[i][:]
-                idx = random.randint(0, self.dimensions - 1)
-                neighbor[idx] += random.uniform(-0.5, 0.5)
-                neighbor[idx] = max(self.bounds[idx][0], min(self.bounds[idx][1], neighbor[idx]))
+            for i in range(n):  # employed bees
+                explore(i)
 
-                if objective(neighbor) < objective(food_sources[i]):
-                    food_sources[i] = neighbor
+            fitness = [1.0 / (1.0 + s) if s >= 0 else 1.0 + abs(s) for s in scores]
+            total = sum(fitness)
+            for _ in range(n):  # onlooker bees favour better sources
+                pick, acc, chosen = random.uniform(0.0, total), 0.0, n - 1
+                for i, f in enumerate(fitness):
+                    acc += f
+                    if pick <= acc:
+                        chosen = i
+                        break
+                explore(chosen)
 
-            # Onlooker bees phase
-            for i in range(self.n_bees):
-                if random.random() < 0.5:
-                    source_idx = random.randint(0, self.n_bees - 1)
-                    food_sources[i] = food_sources[source_idx][:]
-
-            # Scout bees phase
-            for i in range(self.n_bees):
-                if random.random() < 0.1:
-                    food_sources[i] = [random.uniform(b[0], b[1]) for b in self.bounds]
-
-            # Find best
-            best_source = min(food_sources, key=objective)
-            best_score = objective(best_source)
+            worst = max(range(n), key=lambda i: trials[i])  # scout replaces one exhausted source
+            if trials[worst] > limit:
+                sources[worst] = [random.uniform(b[0], b[1]) for b in self.bounds]
+                scores[worst] = objective(sources[worst])
+                trials[worst] = 0
+                if scores[worst] < best_score:
+                    best_source, best_score = sources[worst][:], scores[worst]
 
         return best_source, best_score
 
