@@ -925,7 +925,7 @@ tasks:
     evidence:
       - "tests/test_backup_fleet_databases.py 14/14 + tests/test_restore_fleet_database.py 11/11 green (2026-11-10): JSONL round-trip, checksum/tamper detection, manifest password-redaction, refuse-non-empty, truncate-replace, b64 LOB round-trip, retention pruning."
     blockers: []
-    next_action: "First LIVE backup: dispatch the 'Fleet Backup' workflow once after this merge (reads real Oracle schemas on Server 1); the job log is the drill evidence. Offsite copy location is an owner decision (runbook §5)."
+    next_action: "LIVE BACKUP EXECUTED 2026-11-10 (runs 42835686434 + 42836955350, post-fix): REAL Oracle dumps for STRATEX (4 tables), INTELX (18 tables, 8 API_KEYS rows), FORGE (7 tables) — 50 files verify 50/50 OK — plus config snapshot (19 systemd units + /etc/friday-universe/db-credentials.env, mode 600). Root-cause fix shipped: credentials are read from each agent's own .env (its systemd EnvironmentFile), not just /etc/friday-universe. HONEST FAILURES recorded for 7 agents: FRIDAY/INFERENCE/MEMORA/FUTURIS/VYRALX have a non-Oracle http:// DATABASE_URL in production (HTTP-based DBs — their 'Oracle schema' from the 2026-10-31 audit no longer describes their runtime storage), SENTINEL/CORTEX credentials are Server-2-resident (backup runs on Server 1). Follow-up note for TASK-DATA-001: refresh the per-agent persistence map from this live evidence. Offsite copy location remains an owner decision (runbook §5)."
 
   - id: "TASK-DATA-003"
     title: "Persistence and recovery test for Memora and Stratex ledgers"
