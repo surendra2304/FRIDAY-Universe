@@ -105,6 +105,7 @@ from friday.tools.builtin import (
     SynthesizeInformationTool,
     SystemControlTool,
     SystemInfoTool,
+    FleetStatusTool,
     SystemPowerControlTool,
     TimeDateTool,
     ToggleBluetoothTool,
@@ -136,6 +137,7 @@ class ToolExecutionMixin:
             """Instantiate default tool registry with built-in safe tools."""
             registry = ToolRegistry()
             registry.register(SystemInfoTool())
+            registry.register(FleetStatusTool())
             registry.register(TimeDateTool())
             registry.register(CalculatorTool())
             registry.register(FileReaderTool())

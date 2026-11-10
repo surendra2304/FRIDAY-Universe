@@ -99,6 +99,7 @@ from friday.tools.builtin import (
     SynthesizeInformationTool,
     SystemControlTool,
     SystemInfoTool,
+    FleetStatusTool,
     SystemPowerControlTool,
     TimeDateTool,
     ToggleBluetoothTool,

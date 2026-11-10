@@ -178,6 +178,12 @@ class CognitiveMixin:
             if conversational_response is not None:
                 return conversational_response
 
+            # TASK-API-002: fleet-health questions get a real probe, not an
+            # LLM guess — "how's the fleet?" answers with live agent status.
+            fleet_response = self._fleet_status_fast_path(clean_input, start_time)
+            if fleet_response is not None:
+                return fleet_response
+
             direct_desktop_response = self._direct_desktop_action_fast_path(clean_input, start_time)
             if direct_desktop_response is not None:
                 return direct_desktop_response

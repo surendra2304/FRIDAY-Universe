@@ -680,6 +680,27 @@ tasks:
     blockers: []
     next_action: "Closed. After Fleet CD deploys, the owner pastes FRIDAY_API_KEY once per browser (or uses the server box directly). Reminder: rotate the leaked Telegram bot token + DuckDNS token (owner-only)."
 
+  - id: "TASK-API-002"
+    title: "Standard /health and agent-status surface so 'Friday, how's the fleet?' is answered truthfully"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit (standing owner directive chain). New FleetStatusTool (FRIDAY/src/friday/tools/builtin/fleet_status.py) probes all nine specialists via the same FleetClient behind GET /api/agents/status — one truth, two surfaces; probe failure is reported honestly (is_error, 'I could not probe the fleet', no invented statuses). Registered in the tool registry; capability_router FLEET_KEYWORDS route fleet questions to TOOL_EXECUTION (never DIRECT_REASONING, where the LLM could only guess); deterministic fast path (mixins/fast_paths.py, hooked before the desktop paths) answers 'how's the fleet?' with the real probe, zero LLM round-trip. 16 tests in FRIDAY/tests/test_fleet_status_truth.py (routing table + tool truthfulness + fast path E2E through process_message); E2E via the real /api/chat: 'friday, how is the fleet doing?' -> truthful per-agent probe answer with fast_path=true; plain chat unaffected. Registry-only deviation: no WORK_BOARD entry existed before (plan-backlog task); this entry is added at close."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/fleet_status.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"
+      - "FRIDAY/tests/test_fleet_status_truth.py"
+    acceptance:
+      - "Standard /health and agent-status surface so 'Friday, how's the fleet?' is answered truthfully (partially live today)."
+    evidence:
+      - "Plan task (M2). 2026-11-10 implementation: 16/16 tests green; related suites (fast paths, cognitive, multi_tool, tool registry, routing) zero new failures (1 pre-existing environmental). Live E2E via /api/chat with the fast path returning the real probe answer."
+    blockers: []
+    next_action: "Closed (chat side). The /health standardization across all ten agents (identical schemas) remains under TASK-VAL-001 fleet validation; claim on issue #35 if wanted."
+
 task_id_warnings:
   - id: "TASK-PERSONA-001"
     title: "Warm friend + Jarvis persona for FRIDAY"

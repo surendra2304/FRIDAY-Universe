@@ -54,6 +54,9 @@ class CapabilityMetadata:
     is_local_deterministic: bool = True
     freshness_seconds: float | None = None
     rationale: str = ""
+    # TASK-API-002: names the concrete tool a candidate needs (e.g.
+    # "get_fleet_status"); telemetry only, the executor still picks tools.
+    required_tools: "list[str] | None" = None
 
     def compute_selection_score(self) -> float:
         """Lower score is better (cheapest, fastest, safest, highest confidence)."""
@@ -114,6 +117,16 @@ class CapabilityRouter:
     LOCAL_CALC_KEYWORDS = {"what time", "current date", "calculate", "2 + 2", "sum of", "timestamp"}
     # Keywords signaling background execution
     BACKGROUND_KEYWORDS = {"in the background", "async", "long running", "monitor continuously", "background task"}
+    # TASK-API-002 (2026-11-10): keywords signaling a live fleet-status probe.
+    # Without these, "how's the fleet?" classified as DIRECT_REASONING and the
+    # LLM never saw a tool, so the answer could only be a guess. Fleet questions
+    # are factual probes over live infrastructure — they must reach
+    # get_fleet_status (FleetStatusTool), the same truth /api/agents/status reports.
+    FLEET_KEYWORDS = {
+        "fleet", "the agents", "all agents", "agents status", "agent status",
+        "mesh status", "universe status", "who is online", "anyone down",
+        "agents online", "status of the agents", "how are the agents",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -164,7 +177,10 @@ class CapabilityRouter:
         # 1. Evaluate Direct Reasoning (Conversational / General Knowledge)
         # If user asks pure conversational question without real-world tools
         is_conversational = not self._matches(clean_input, {"file", "click", "run", "execute", "background", "search memory"})
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS)):
+        # TASK-API-002: fleet-status questions are live factual probes, never
+        # plain conversation — exclude them from DIRECT_REASONING.
+        is_conversational = is_conversational and not self._matches(clean_input, self.FLEET_KEYWORDS)
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -185,6 +201,21 @@ class CapabilityRouter:
                 risk_level=SafetyLevel.SAFE,
                 is_local_deterministic=True,
                 rationale="Query references past conversational memory or stored user facts.",
+            ))
+
+        # TASK-API-002: Evaluate Live Fleet Status Probe — "how's the fleet?"
+        # is a factual question about live infrastructure; the answer must come
+        # from get_fleet_status (a real probe), never from the LLM's imagination.
+        if self._matches(clean_input, self.FLEET_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=800.0,
+                confidence=0.97,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=True,
+                required_tools=["get_fleet_status"],
+                rationale="Live fleet-health question: probe the nine specialist agents with get_fleet_status (same truth as /api/agents/status).",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

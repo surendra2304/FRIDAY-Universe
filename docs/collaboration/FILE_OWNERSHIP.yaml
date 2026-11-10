@@ -550,6 +550,21 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-ORCH-004: interactive turn budget 4 -> 8 (bounded, configurable via interactive_turn_limit)."
 
+
+  - path: "FRIDAY/src/friday/tools/builtin/fleet_status.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-API-002: FleetStatusTool — truthful 10-agent fleet probe behind the chat persona."
+
+  - path: "FRIDAY/tests/test_fleet_status_truth.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-API-002 tests: routing table + tool truthfulness + fast-path E2E."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

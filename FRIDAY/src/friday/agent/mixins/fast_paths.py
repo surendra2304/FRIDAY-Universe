@@ -215,6 +215,60 @@ class FastPathMixin:
             },
         )
 
+    def _fleet_status_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """TASK-API-002: answer fleet-health questions with a REAL probe.
+
+        "How's the fleet?" is a factual question about live infrastructure:
+        the answer must come from an actual health probe of the nine
+        specialist agents (the same truth /api/agents/status reports), never
+        from an LLM's imagination. Deterministic fast path: no LLM round-trip,
+        no hallucination surface. Probe failure is reported honestly.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.routing.capability_router import CapabilityRouter
+
+        if not CapabilityRouter._matches(low, CapabilityRouter.FLEET_KEYWORDS):
+            return None
+
+        from friday.tools.builtin.fleet_status import FleetStatusTool
+
+        tool = FleetStatusTool()
+        detail = "full" if CapabilityRouter._matches(low, {"everyone", "every agent", "full", "all of them", "detailed"}) else "summary"
+        result = tool.execute(detail=detail)
+        success = not result.is_error
+        content = result.content
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Fleet-health question recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Probing the nine specialist agents")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="get_fleet_status probe")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Reporting probe results truthfully")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["fleet_status", "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in fleet status: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "fleet_status": True,
+                "probe_success": success,
+                "fleet": (result.metadata or {}).get("fleet"),
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _deterministic_action_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
             """Execute safe geometric desktop actions without vision or an LLM."""
             intent = DeterministicActionDetector.detect(clean_input)
