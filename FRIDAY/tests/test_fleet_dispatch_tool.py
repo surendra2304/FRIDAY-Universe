@@ -26,8 +26,18 @@ from friday.tools.builtin.fleet_dispatch import (
 )
 
 
+class _EnumStatus:
+    """Mimics TaskStatus.SUCCESS — str() yields 'TaskStatus.SUCCESS'."""
+
+    def __init__(self, name: str) -> None:
+        self._name = name
+
+    def __str__(self) -> str:
+        return f"TaskStatus.{self._name}"
+
+
 class _FakeResult:
-    def __init__(self, status: str, result: dict[str, Any] | None = None, error: str | None = None, task_id: str = "task_receipt_1"):
+    def __init__(self, status, result: dict[str, Any] | None = None, error: str | None = None, task_id: str = "task_receipt_1"):
         self.status = status
         self.result = result or {}
         self.error = error
@@ -140,6 +150,23 @@ class TestFleetDispatchToolTruth:
         result = FleetDispatchTool(fleet_client=_FakeFleetClient(_FakeResult("SUCCESS"))).execute(agent="intelx", task="  ")
         assert result.is_error
         assert "need the task" in result.content
+
+    def test_enum_status_success_is_recognized(self) -> None:
+        """Live 2026-11-11: IntelX returned TaskStatus.SUCCESS but str() is
+        'TaskStatus.SUCCESS' — the tool must not report a finished task as a
+        failure."""
+        result = FleetDispatchTool(fleet_client=_FakeFleetClient(_FakeResult(
+            _EnumStatus("SUCCESS"), {"response": "Rayleigh scattering."}
+        ))).execute(agent="intelx", task="sky")
+        assert not result.is_error
+        assert "Rayleigh scattering." in result.content
+
+    def test_enum_status_failed_is_honest_error(self) -> None:
+        result = FleetDispatchTool(fleet_client=_FakeFleetClient(_FakeResult(
+            _EnumStatus("FAILED"), error="timeout"
+        ))).execute(agent="intelx", task="sky")
+        assert result.is_error
+        assert "timeout" in result.content
 
     def test_empty_agent_response_is_not_invented(self) -> None:
         result = FleetDispatchTool(fleet_client=_FakeFleetClient(_FakeResult("SUCCESS", {}))).execute(agent="intelx", task="x")

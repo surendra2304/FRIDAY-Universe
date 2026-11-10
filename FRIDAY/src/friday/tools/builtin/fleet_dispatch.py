@@ -212,7 +212,9 @@ class FleetDispatchTool(BaseTool):
                 metadata={"error": f"{type(exc).__name__}: {exc}", "agent": canonical},
             )
 
-        status = str(getattr(result, "status", "")).lower()
+        # TaskResult.status may arrive as the enum repr ("TaskStatus.SUCCESS"),
+        # a plain name ("SUCCESS") or lowercase — normalize to the bare token.
+        status = str(getattr(result, "status", "") or "").rsplit(".", 1)[-1].strip().lower()
         task_id = str(getattr(result, "task_id", "") or "")
         execution_time_ms = getattr(result, "execution_time_ms", 0)
         receipt = f"[Task receipt: {task_id}]" if task_id else ""
