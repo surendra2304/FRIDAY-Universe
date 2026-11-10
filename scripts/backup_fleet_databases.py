@@ -53,6 +53,34 @@ CONFIG_ENV_FILES = (
 CONFIG_UNIT_GLOBS = ("/etc/systemd/system/FRIDAY*.service", "/etc/systemd/system/*.service")
 LOB_CAP_BYTES = 1_000_000
 
+# Where each agent's credentials actually live in production: the per-agent .env
+# wired into its systemd unit via EnvironmentFile (deploy/setup_fleet.sh).
+AGENT_ENV_DIRS = {
+    "FRIDAY": "FRIDAY", "INFERENCE": "Inference", "MEMORA": "Memora",
+    "STRATEX": "Stratex", "FUTURIS": "Futuris", "INTELX": "IntelX",
+    "FORGE": "Forge", "SENTINEL": "Sentinel", "CORTEX": "Cortex",
+    "VYRALX": "VyralX", "VYRALX_MEDIA": "VyralX",
+}
+
+
+def agent_runtime_env(agent: str, repo_root: Path | None = None) -> dict:
+    """Load the agent's own .env (its systemd EnvironmentFile) as a dict.
+
+    This is the production credential source on the servers; the shared
+    /etc/friday-universe files are consulted by oracle_db.resolve_target
+    separately. Values stay in memory only.
+    """
+    root = repo_root or Path(__file__).resolve().parents[1]
+    env_dir = AGENT_ENV_DIRS.get(agent.upper())
+    if not env_dir:
+        return {}
+    path = root / env_dir / ".env"
+    if not path.is_file():
+        return {}
+    from oracle_db import load_env_file
+
+    return load_env_file(path)
+
 
 def utcnow() -> str:
     return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -143,7 +171,8 @@ def snapshot_configs(dest: Path, log=print) -> list[str]:
 def backup_agent(agent: str, out_dir: Path, *, env_file: str | None, media: bool,
                  dry_run: bool, log=print) -> dict:
     """Dump one agent schema. Returns the manifest entry (or inventory for dry-run)."""
-    target = resolve_target(agent, env_file=env_file, media=media)
+    runtime_env = agent_runtime_env(agent)
+    target = resolve_target(agent, env_file=env_file, media=media, env=runtime_env or None)
     log(f"[{agent}] connecting as {target.redacted()}")
     conn = connect(target)
     try:

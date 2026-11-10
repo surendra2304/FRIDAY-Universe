@@ -37,6 +37,28 @@ from oracle_db import (  # noqa: E402
     resolve_target,
 )
 
+# Per-agent .env (systemd EnvironmentFile source) is the production credential
+# store; mirror scripts/backup_fleet_databases.py.
+AGENT_ENV_DIRS = {
+    "FRIDAY": "FRIDAY", "INFERENCE": "Inference", "MEMORA": "Memora",
+    "STRATEX": "Stratex", "FUTURIS": "Futuris", "INTELX": "IntelX",
+    "FORGE": "Forge", "SENTINEL": "Sentinel", "CORTEX": "Cortex",
+    "VYRALX": "VyralX", "VYRALX_MEDIA": "VyralX",
+}
+
+
+def agent_runtime_env(agent: str) -> dict:
+    root = Path(__file__).resolve().parents[1]
+    env_dir = AGENT_ENV_DIRS.get(agent.upper())
+    if not env_dir:
+        return {}
+    path = root / env_dir / ".env"
+    if not path.is_file():
+        return {}
+    from oracle_db import load_env_file
+
+    return load_env_file(path)
+
 
 def utcnow() -> str:
     return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -190,7 +212,8 @@ def main() -> int:
             print(f"[{agent}] no manifest entry in this backup — skipped")
             overall_ok = False
             continue
-        target = resolve_target(agent, env_file=args.env_file or None)
+        target = resolve_target(agent, env_file=args.env_file or None,
+                                env=agent_runtime_env(agent) or None)
         print(f"[{agent}] connecting as {target.redacted()}")
         conn = connect(target)
         try:
