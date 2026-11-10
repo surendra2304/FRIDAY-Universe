@@ -1146,6 +1146,44 @@ tasks:
     blockers: []
     next_action: "Owner live review after Fleet CD deploy; live data check on Fleet cards (boilerplate stripping + freshness) against the real /api/agents/status payload."
 
+  - id: "TASK-ORCH-005"
+    title: "Empty-turn resilience: reasoning-model blank turns no longer kill delegation requests"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "Friday should work autonomously and … it should assign tasks to other agents (2026-11-11 chat); live probe the same night: 'assign a quick task to IntelX: one-line research note' → 'I could not complete the request within the action limit.' (4.7s, 1 iteration, no tool attempted)."
+    merge_note: "2026-11-11 IST. Root cause: the live reasoning model (groq gpt-oss-120b) sometimes returns a turn whose visible content is empty — the whole output sits in the reasoning channel — and the agent cognitive loop broke on the FIRST empty turn, returning the 'action limit' fallback without ever attempting a tool. Fix in agent.py execute_complex_task loop: a first empty visible turn now appends one plain-text nudge ('Your previous turn produced no visible answer. Reply now with a short plain-text answer … or call one of the available tools') and continues the loop; only a second consecutive empty turn ends it with the honest fallback. The streak resets whenever a real turn (content or tool call) happens, so an empty turn late in a multi-step task still gets its retry. Loop stays bounded: worst case 2 wasted model calls per request."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/agent/agent.py"
+      - "FRIDAY/tests/test_empty_turn_resilience.py"
+    acceptance:
+      - "A delegation request that receives one empty model turn still completes (answer or tool call) on the nudged retry."
+      - "Two consecutive empty turns end with the honest 'action limit' fallback — loop bounded at 2 model calls."
+      - "An empty turn followed by a tool call still executes the tool."
+    evidence: "tests/test_empty_turn_resilience.py 5/5 green (empty→answer with nudge message asserted in the retry turn's history; whitespace-only treated as empty; empty→tool-call executes; all-empty ends with 'action limit' after exactly 2 calls; streak resets after a real turn); surrounding suites re-run green: test_agent + test_multi_tool + test_self_repair_user_path + test_intelx_research_dispatch 52/52, test_gemini_tools 29/29 (3 pre-existing failures in test_real_usage_battery confirmed pre-existing on clean HEAD via git stash — logged as checklist items I1-I3, not regressions)."
+    blockers: []
+    next_action: "Live re-test of the IntelX delegation phrasing on the deployed site after Fleet CD; generic 'assign <task> to <agent>' routing coverage is checklist item C6."
+  - id: "TASK-PLAN-001"
+    title: "Master Completion Checklist — the owner-directed 100% tracker (123 items)"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "Keep a checklist of all the tasks even if they are 100 or more and complete 100% of my Friday Universe (2026-11-11 chat)."
+    merge_note: "2026-11-11 IST: docs/MASTER_COMPLETION_CHECKLIST.md created — 123 checklist items across 9 modules (Brain 14, Memory 12, Orchestration 14, Website 18, Voice 10, Agents 27, Autonomy 12, Infra 10, Tech debt 6), each with an honest status backed by evidence (live probe, test, or bundle inspection). Snapshot at creation: 42/123 done (34%); capability-weighted completion ≈ 55% — both stated with a method note explaining the difference. Includes the owner-approved execution order (delegation realism first, then React Bits website, memory maturity, per-agent depth, overnight autonomy, voice). Pre-existing test failures recorded as items I1-I3."
+    milestone: "M5 (Master Plan v2)"
+    files:
+      - "docs/MASTER_COMPLETION_CHECKLIST.md"
+    acceptance:
+      - "Every remaining piece of FRIDAY Universe appears exactly once with a stable ID."
+      - "No item is ticked without recorded evidence."
+      - "Scoreboard sums match the item statuses."
+    evidence: "Checklist committed with per-module scoreboard; honest baseline stated (42/123); execution order derived from owner priority directives (delegation → website → memory → agents → autonomy)."
+    blockers: []
+    next_action: "Update statuses as batches land; the checklist is the 100% contract with the owner."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

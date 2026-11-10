@@ -401,6 +401,15 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         current_user_request = str((context or {}).get("current_user_request", goal))
 
         iterations = 0
+        # TASK-ORCH-005 (2026-11-11 IST): reasoning models served via Groq
+        # (gpt-oss-120b) sometimes emit a turn whose visible content is empty —
+        # the whole answer sits in the reasoning channel or inside <thought>
+        # tags that strip_thought_tags removes. Breaking on the FIRST empty
+        # turn made one ordinary delegation request die as "could not complete
+        # the request within the action limit" (live 2026-11-11, 1 iteration,
+        # 4.7s, no tool call attempted). One nudged retry fixes it without
+        # unbounding the loop; a second consecutive empty turn still ends it.
+        empty_turns = 0
         for _ in range(self.max_tool_iterations):
             iterations += 1
             try:
@@ -457,9 +466,23 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                             "iterations": iterations,
                         },
                     )
-                break
+                empty_turns += 1
+                if empty_turns >= 2:
+                    break
+                messages.append(
+                    Message(
+                        role=Role.SYSTEM,
+                        content=(
+                            "Your previous turn produced no visible answer. "
+                            "Reply now with a short plain-text answer for the user, "
+                            "or call one of the available tools if the request needs one."
+                        ),
+                    )
+                )
+                continue
 
             messages.append(response)
+            empty_turns = 0
             calls = response.tool_calls
             call_results: list[ToolResult | None] = [None] * len(calls)
             parallel_safe_batch = len(calls) > 1 and all(
