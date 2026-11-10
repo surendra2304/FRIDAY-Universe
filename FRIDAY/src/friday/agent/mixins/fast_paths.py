@@ -337,6 +337,71 @@ class FastPathMixin:
             },
         )
 
+    def _portfolio_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """TASK-STR-002: answer portfolio questions with Stratex's real snapshot.
+
+        "How's my portfolio?" is a factual question about the owner's Binance
+        demo account: the answer must be Stratex's real engine snapshot
+        (balance, positions, strategies, trading mode), never a guess. This
+        fast path fires only on possessive/explicit phrasing ("my portfolio",
+        "open positions", "market signals", explicit stratex/binance asks);
+        general finance questions ("what is a portfolio") take the full
+        cognitive path. The tool is read-only — live trading stays blocked by
+        the fail-closed guard (D-015).
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.routing.capability_router import CapabilityRouter
+
+        possessive = {
+            "my portfolio", "the portfolio", "my balance", "my positions",
+            "open positions", "any positions", "any open positions",
+            "my trading", "how is my trading", "market signals",
+            "trading signals", "what strategies", "active strategies",
+            "stratex", "binance", "pnl", "profit and loss", "current positions",
+        }
+        if not CapabilityRouter._matches(low, possessive):
+            return None
+
+        from friday.tools.builtin.stratex_portfolio import StratexPortfolioTool
+
+        kind = "analysis" if CapabilityRouter._matches(
+            low, {"market signals", "trading signals", "analyze"}
+        ) else "portfolio"
+        result = StratexPortfolioTool().execute(question=low, kind=kind)
+        success = not result.is_error
+        content = result.content
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Portfolio question recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Querying Stratex for the live snapshot")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="stratex_portfolio query")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Returning Stratex's real data")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["stratex_portfolio", "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in portfolio: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "portfolio_query": True,
+                "stratex": (result.metadata or {}).get("stratex"),
+                "query_success": success,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _deterministic_action_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
             """Execute safe geometric desktop actions without vision or an LLM."""
             intent = DeterministicActionDetector.detect(clean_input)

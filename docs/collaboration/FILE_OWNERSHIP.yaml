@@ -580,6 +580,21 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-INT-002 tests: routing table + truthfulness + fast path + incidental-word guard."
 
+
+  - path: "FRIDAY/src/friday/tools/builtin/stratex_portfolio.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-STR-002: StratexPortfolioTool — read-only Binance-demo portfolio snapshot; live trading stays fail-closed (D-015)."
+
+  - path: "FRIDAY/tests/test_stratex_portfolio_dispatch.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_D023"
+    task: "TASK-STR-002 tests: routing + truthfulness + read-only surface + fast path."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

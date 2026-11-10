@@ -137,6 +137,18 @@ class CapabilityRouter:
         "brief me on", "what are the findings", "sourced summary",
         "evidence on", "dig into",
     }
+    # TASK-STR-002 (2026-11-10): keywords signaling a Stratex portfolio/market
+    # question. These are factual questions about the owner's Binance demo
+    # account and live market signals — the answer must come from Stratex
+    # (stratex_portfolio), never the LLM's imagination. Live trading stays
+    # blocked by the fail-closed guard (D-015): the tool is read-only.
+    PORTFOLIO_KEYWORDS = {
+        "my portfolio", "the portfolio", "portfolio", "positions", "open positions",
+        "any positions", "my balance", "account balance", "trading account",
+        "how is my trading", "pnl", "profit and loss", "market signals",
+        "trading signals", "what strategies", "active strategies", "stratex",
+        "binance",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -191,11 +203,14 @@ class CapabilityRouter:
         # plain conversation — exclude them from DIRECT_REASONING.
         # TASK-INT-002: research requests are dispatchable tasks, not
         # conversation — exclude them too.
+        # TASK-STR-002: portfolio/market questions are factual queries over
+        # the owner's trading account — exclude them from DIRECT_REASONING too.
         is_conversational = is_conversational and not (
             self._matches(clean_input, self.FLEET_KEYWORDS)
             or self._matches(clean_input, self.RESEARCH_KEYWORDS)
+            or self._matches(clean_input, self.PORTFOLIO_KEYWORDS)
         )
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -248,6 +263,22 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["intelx_research"],
                 rationale="Research request: dispatch to IntelX (Macro Research & Evidence Engine) for an evidence-based brief with citations.",
+            ))
+
+        # TASK-STR-002: Evaluate Stratex Portfolio Snapshot — "how's my
+        # portfolio?" is a factual question about the owner's Binance demo
+        # account; the answer must come from Stratex (stratex_portfolio,
+        # read-only; live trading stays fail-closed per D-015).
+        if self._matches(clean_input, self.PORTFOLIO_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=4000.0,
+                confidence=0.93,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["stratex_portfolio"],
+                rationale="Portfolio/market question: read-only Stratex snapshot (balance, positions, strategies, signals); live trading blocked (D-015).",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

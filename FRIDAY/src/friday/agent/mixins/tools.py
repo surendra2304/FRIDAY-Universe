@@ -107,6 +107,7 @@ from friday.tools.builtin import (
     SystemInfoTool,
     FleetStatusTool,
     IntelXResearchTool,
+    StratexPortfolioTool,
     SystemPowerControlTool,
     TimeDateTool,
     ToggleBluetoothTool,
@@ -140,6 +141,7 @@ class ToolExecutionMixin:
             registry.register(SystemInfoTool())
             registry.register(FleetStatusTool())
             registry.register(IntelXResearchTool())
+            registry.register(StratexPortfolioTool())
             registry.register(TimeDateTool())
             registry.register(CalculatorTool())
             registry.register(FileReaderTool())

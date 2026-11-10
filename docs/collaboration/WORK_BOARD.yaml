@@ -722,6 +722,27 @@ tasks:
     blockers: []
     next_action: "Closed. The owner's first 'research X and give me the highlights' in the new dashboard returns IntelX's real brief."
 
+  - id: "TASK-STR-002"
+    title: "Stratex answers portfolio and position questions via FRIDAY on Binance demo (live trading stays fail-closed, D-015)"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "2026-11-10: implemented by ZAI as a direct main commit. New StratexPortfolioTool (FRIDAY/src/friday/tools/builtin/stratex_portfolio.py) queries Stratex through the FleetClient TaskEnvelope path (target=stratex) with a READ-ONLY action surface by construction (_ALLOWED_ACTIONS = status/analyze only; orders unsendable from this tool and rejected server-side anyway — live trading stays blocked by the fail-closed guard per D-015, stated in every answer). Returns the real engine snapshot (balance, cash, open positions with entry/PnL, active strategies, trading mode) or the real analysis (signals per symbol); failures honest, nothing invented. Registered in the tool registry; capability_router PORTFOLIO_KEYWORDS route portfolio/market questions to stratex_portfolio (never DIRECT_REASONING); deterministic fast path fires only on possessive/explicit phrasing ('my portfolio', 'open positions', 'market signals', explicit stratex/binance asks) — general finance questions take the full cognitive path. 15 tests (routing + snapshot truthfulness + positions rendering + honest failures + read-only action surface + fast path through process_message); related suites 101 green together; /api/chat E2E exercised the honest-failure branch from the sandbox; production returns the real snapshot (the same dispatch returned balance 10792.8 / 7 strategies during the M1 acceptance trace)."
+    milestone: "M2 (Master Plan v2)"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/stratex_portfolio.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"
+      - "FRIDAY/tests/test_stratex_portfolio_dispatch.py"
+    acceptance:
+      - "Stratex answers portfolio and position questions via FRIDAY on Binance demo (live trading stays blocked by the merged fail-closed guard; owner decision D-015)."
+    evidence:
+      - "Plan task (M2). 2026-11-10: 15/15 tests green; live Stratex dispatch proven earlier the same day (engineering acceptance trace: portfolio_snapshot completed 7.30s with balance/positions/strategies)."
+    blockers: []
+    next_action: "Closed. The owner's 'how is my portfolio?' in the new dashboard returns the real Binance-demo snapshot; live trading requires an explicit owner decision to lift D-015 (not recommended without TASK-OBS-001 alerting)."
+
 task_id_warnings:
   - id: "TASK-PERSONA-001"
     title: "Warm friend + Jarvis persona for FRIDAY"

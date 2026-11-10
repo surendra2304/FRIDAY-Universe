@@ -191,6 +191,12 @@ class CognitiveMixin:
             if research_response is not None:
                 return research_response
 
+            # TASK-STR-002: portfolio/position questions get Stratex's real
+            # snapshot — "how's my portfolio?" answers with live demo data.
+            portfolio_response = self._portfolio_fast_path(clean_input, start_time)
+            if portfolio_response is not None:
+                return portfolio_response
+
             direct_desktop_response = self._direct_desktop_action_fast_path(clean_input, start_time)
             if direct_desktop_response is not None:
                 return direct_desktop_response
