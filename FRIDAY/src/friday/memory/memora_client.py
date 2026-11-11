@@ -616,6 +616,179 @@ class MemoraClient:
                 logger.debug(f"Memora local recall error: {type(e).__name__}")
         return []
 
+    # ------------------------------------------------------------------
+    # Checklist B9/B10: owner-facing memory commands — forget and correct.
+    # ------------------------------------------------------------------
+
+    def forget_fact(
+        self,
+        agent_name: str,
+        query: str,
+        memory_id: str = "",
+    ) -> Dict[str, Any]:
+        """B9: remove a stored fact (soft delete — history is never hard-purged).
+
+        ``query`` finds the best-matching live memory (top recall hit) unless a
+        concrete ``memory_id`` is given. Returns an honest result dict:
+        ``status`` is one of ``deleted`` | ``not_found`` | ``error``; the
+        removed text is echoed so the owner sees exactly what was forgotten.
+        """
+        if not query.strip() and not memory_id:
+            return {"status": "not_found", "reason": "empty query"}
+
+        target_id = memory_id or ""
+        target_text = ""
+        if not target_id:
+            hits = self.recall_memories(agent_name, query, limit=5) or []
+            for hit in hits:
+                text = str(hit.get("content_text", "")).strip()
+                if text and len(text) > 6:
+                    target_id = str(hit.get("id") or hit.get("memory_id") or "")
+                    target_text = text
+                    break
+        if not target_id:
+            return {"status": "not_found", "reason": "no matching memory", "query": query}
+
+        if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
+            try:
+                url = f"{self.base_url}/v1/memories/{urllib.parse.quote(target_id)}?hard=false"
+                req = urllib.request.Request(
+                    url,
+                    headers=self._remote_headers(agent_name),
+                    method="DELETE",
+                )
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    if resp.status in (200, 204):
+                        body = {}
+                        try:
+                            body = json.loads(resp.read().decode("utf-8"))
+                        except Exception:
+                            body = {}
+                        return {
+                            "status": "deleted",
+                            "id": target_id,
+                            "content_text": target_text or str(body.get("content_text", "")),
+                        }
+            except Exception as e:
+                logger.debug(f"Memora remote forget_fact error: {type(e).__name__}: {e}")
+
+        # local fallback: soft-delete by id (lifecycle_state stays auditable)
+        try:
+            result = self._mark_record_state(target_id, "deleted")
+            if result:
+                return {"status": "deleted", "id": target_id, "content_text": target_text, "cloud": False}
+        except Exception as e:
+            logger.debug(f"Memora local forget_fact error: {type(e).__name__}: {e}")
+        return {"status": "error", "error": "no available memory backend could delete that fact"}
+
+    def correct_fact(
+        self,
+        agent_name: str,
+        new_fact_text: str,
+        old_query: str,
+        reason: str = "owner correction",
+    ) -> Dict[str, Any]:
+        """B10: supersede a stored fact with a corrected one — update, not duplicate.
+
+        The old fact is NOT destroyed: Memora marks it superseded and the new
+        fact becomes the live one, so recall stops returning both copies while
+        the audit trail keeps the correction. Returns ``status`` in
+        ``corrected`` | ``stored_new_only`` | ``not_found`` | ``error``.
+        """
+        new_fact_text = self.sanitize_for_persistence(new_fact_text or "")
+        if not new_fact_text.strip():
+            return {"status": "error", "error": "empty correction"}
+
+        # Find the old fact (best live hit for the correction subject).
+        old_id = ""
+        old_text = ""
+        if old_query.strip():
+            for hit in self.recall_memories(agent_name, old_query, limit=5) or []:
+                text = str(hit.get("content_text", "")).strip()
+                if text and len(text) > 6:
+                    old_id = str(hit.get("id") or hit.get("memory_id") or "")
+                    old_text = text
+                    break
+
+        # Write the corrected fact first (it must exist before supersede).
+        stored = self.record_fact(
+            agent_name=agent_name,
+            fact_text=new_fact_text,
+            category="owner_fact",
+            importance=0.98,
+        )
+        new_id = str((stored or {}).get("id") or (stored or {}).get("memory_id") or "")
+        stored_ok = bool(stored) and (stored.get("status") not in {None, "error"})
+
+        if not stored_ok:
+            return {"status": "error", "error": "could not store the corrected fact"}
+
+        if not old_id:
+            # Nothing to supersede (owner states something new) — not an error,
+            # but the caller should know no old fact was replaced.
+            return {"status": "stored_new_only", "id": new_id, "content_text": new_fact_text}
+
+        if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
+            try:
+                url = f"{self.base_url}/v1/memories/{urllib.parse.quote(old_id)}/supersede"
+                payload = {"new_memory_id": new_id, "reason": reason}
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers=self._remote_headers(agent_name, json_body=True),
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    if resp.status_code in (200, 201):
+                        return {
+                            "status": "corrected",
+                            "superseded_id": old_id,
+                            "winner_id": new_id,
+                            "old_text": old_text,
+                            "content_text": new_fact_text,
+                        }
+            except Exception as e:
+                logger.debug(f"Memora remote supersede error: {type(e).__name__}: {e}")
+
+        # local fallback: mark the old record superseded directly
+        try:
+            if self._mark_record_state(old_id, "superseded"):
+                return {
+                    "status": "corrected",
+                    "superseded_id": old_id,
+                    "winner_id": new_id,
+                    "old_text": old_text,
+                    "content_text": new_fact_text,
+                    "cloud": False,
+                }
+        except Exception as e:
+            logger.debug(f"Memora local correct_fact error: {type(e).__name__}: {e}")
+        # The new fact is stored; the old one could not be marked — honest state.
+        return {"status": "stored_new_only", "id": new_id, "content_text": new_fact_text,
+                "warning": "old fact could not be superseded"}
+
+    def _mark_record_state(self, record_id: str, state: str) -> bool:
+        """Set ``lifecycle_state`` on a local/Oracle record (soft transitions)."""
+        if self._backend == "oracle":
+            oracle.execute(
+                "UPDATE memora_records SET lifecycle_state = :state WHERE id = :rid",
+                {"state": state, "rid": record_id},
+            )
+            return True
+        if self._backend == "sqlite":
+            if not os.path.exists(self.local_db_path):
+                return False
+            from friday.core.database import connect_sqlite
+
+            with connect_sqlite(self.local_db_path, timeout=5.0) as conn:
+                cur = conn.execute(
+                    "UPDATE memory_records SET lifecycle_state = ? WHERE id = ?",
+                    (state, record_id),
+                )
+                conn.commit()
+                return cur.rowcount > 0
+        return False
+
     def build_context_block(self, agent_name: str, query: str) -> str:
         """Generate formatted prompt context from recalled memories with quarantine headers."""
         memories = self.recall_memories(agent_name, query, limit=5)

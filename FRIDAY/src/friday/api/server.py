@@ -1889,6 +1889,130 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
         text = " ".join(text.split()).strip().rstrip(":;,-")
         return text
 
+    # =========================================================================
+    # A0.55 Memory Commands (checklist B9/B10: forget + correct, 2026-11-11)
+    # =========================================================================
+    # The owner owns his memory: "forget that" removes a stored fact; a
+    # correction ("actually my number is X") must UPDATE the fact, not
+    # duplicate it. Both are deterministic like remember/recall, run BEFORE
+    # them, and answer honestly (nothing found is said, never faked).
+    _FORGET_QUERY = ""
+    _is_forget = False
+    if cmd in ("forget that", "forget this", "forget it", "forget that now",
+               "forget the last thing", "forget last thing"):
+        _is_forget = True
+        _FORGET_QUERY = raw_cmd  # "forget that" → top recent hit via generic probe
+    else:
+        for _pfx in ("forget about ", "forget ", "remove memory ", "delete memory ",
+                     "remove that memory ", "erase memory "):
+            if cmd.startswith(_pfx):
+                _FORGET_QUERY = raw_cmd[len(_pfx):].strip()
+                if _FORGET_QUERY:
+                    _is_forget = True
+                break
+
+    _CORRECTION_TEXT = ""
+    for _pfx in ("actually, my ", "actually my ", "no wait, my ", "no, my ",
+                 "no wait my ", "correction: ", "correction, ", "i meant ",
+                 "update my ", "change my "):
+        if cmd.startswith(_pfx):
+            # Slice from raw_cmd so the stored fact keeps the owner's casing
+            # (the remember path does the same).
+            _CORRECTION_TEXT = raw_cmd[len(_pfx):].strip()
+            # restore the possessive for the stored fact so recall reads well
+            if not _CORRECTION_TEXT.lower().startswith(("my ", "that ", "the ")):
+                _CORRECTION_TEXT = f"my {_CORRECTION_TEXT}"
+            break
+    if not _CORRECTION_TEXT:
+        # Fallback correction openers ("actually I prefer tea now"). The
+        # sentence must look like a FACT about the owner (possessive with a
+        # state verb, or a first-person preference/identity verb) so a plain
+        # conversational rejection ("no, that's not what I said") is never
+        # mistaken for a correction and stored.
+        _spaced = f" {cmd} "
+        _factish = (
+            (" my " in _spaced and any(k in _spaced for k in (" is ", " are ", " now ")))
+            or (" i " in _spaced and any(k in _spaced for k in (" prefer ", " like ", " am ", " have ", " hate ")))
+        )
+        if _factish:
+            for _pfx in ("actually ", "no wait, ", "no, ", "scratch that, "):
+                if cmd.startswith(_pfx):
+                    _CORRECTION_TEXT = raw_cmd[len(_pfx):].strip()
+                    break
+
+    if _is_forget:
+        _forget_res: dict[str, Any] = {}
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _probe = _FORGET_QUERY if _FORGET_QUERY != raw_cmd else "my favorite preference boss surendra"
+            _forget_res = _memora.forget_fact("friday", _probe) or {}
+        except Exception as _e:
+            logger.warning(f"Memora forget failed in memory fast-path: {_e}")
+            _forget_res = {"status": "error", "error": f"{type(_e).__name__}"}
+        _st = str(_forget_res.get("status", "error"))
+        if _st == "deleted":
+            _gone = str(_forget_res.get("content_text", "")).strip()
+            _reply = (
+                f"Done, Boss — I've forgotten {_gone or 'it'}. "
+                "It's out of my active memory now."
+            )
+        elif _st == "not_found":
+            _reply = (
+                "I checked my memory, Boss, and I don't have a stored fact matching that — "
+                "there's nothing to forget. If it was something else, tell me the exact words."
+            )
+        else:
+            _reply = (
+                "I couldn't reach my memory store just now, so nothing was forgotten — "
+                "say it again in a moment and I'll take care of it."
+            )
+        return {
+            "reply": _reply,
+            "metadata": {
+                "fast_path": True,
+                "conversational": True,
+                "memory_forget": True,
+                "forget_status": _st,
+            },
+        }
+
+    if _CORRECTION_TEXT:
+        _corr_res: dict[str, Any] = {}
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _corr_res = _memora.correct_fact(
+                "friday",
+                new_fact_text=_CORRECTION_TEXT,
+                old_query=_CORRECTION_TEXT,
+            ) or {}
+        except Exception as _e:
+            logger.warning(f"Memora correct failed in memory fast-path: {_e}")
+            _corr_res = {"status": "error", "error": f"{type(_e).__name__}"}
+        _st = str(_corr_res.get("status", "error"))
+        if _st == "corrected":
+            _reply = (
+                f"Updated, Boss — I've replaced the old one. I now remember: "
+                f"{_CORRECTION_TEXT}. The earlier version stays in my audit trail, "
+                "but my active memory only carries the correction."
+            )
+        elif _st == "stored_new_only":
+            _reply = f"Noted, Boss: {_CORRECTION_TEXT}. (I didn't find an older version of that to replace.)"
+        else:
+            _reply = (
+                "I couldn't reach my memory store just now, so that correction is NOT saved — "
+                "say it again in a moment and I'll keep it safe."
+            )
+        return {
+            "reply": _reply,
+            "metadata": {
+                "fast_path": True,
+                "conversational": True,
+                "memory_correction": True,
+                "correction_status": _st,
+                "fact": _CORRECTION_TEXT,
+            },
+        }
+
     _recall_patterns = (
         "what do you remember", "do you remember", "you remember",
         "what do you know about me", "what do you know about my",
