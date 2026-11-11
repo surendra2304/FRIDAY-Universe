@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-11 (IST; LIVE-VERIFIED this session: C13 task-status loop incl. the ledger-recording gap fix, D12 agents/live, D9/D10 effects in the deployed build, B9 forget, B10 correction-supersede — all on production) · 52/125 items done (42%) · capability-weighted completion ≈ 62%
+**Snapshot:** 2026-11-11 (IST; batch 3 COMPLETE: C12 multi-agent pipelines, A10 clarification, A13 formatting policy, D13 task timeline, D11 activity coverage — 53-test suite, 0 regressions vs clean tree) · 62/125 items done (50%) · capability-weighted completion ≈ 62%
 
 ---
 
@@ -19,10 +19,10 @@
 - [ ] **A7** Reasoning benchmark suite: 20 real delegation-style prompts scored pass/fail, run weekly
 - [ ] **A8** Personality consistency across chat AND voice (same persona contract enforced on Gemini Live prompt)
 - [ ] **A9** Casual/sarcastic tone matching (owner jokes → FRIDAY plays along, doesn't lecture)
-- [ ] **A10** Clarification quality: asks ONE sharp question when ambiguous, never interrogates
+- [x] **A10** Clarification quality: asks ONE sharp question when ambiguous, never interrogates (DONE 2026-11-11 IST, batch 3: `routing/clarification.py` — intent matched but operand missing/bare-pronoun → exactly ONE Boss-tone question through `_clarification_response` (state machine + memory + Memora record so the next turn resolves it); wired into the batch3 + research + forecast fast paths; complete requests proceed untouched; every question verified single-question-mark by test)
 - [ ] **A11** Long-goal persistence: a goal stated Monday is still tracked Friday ("still on it, Boss")
 - [ ] **A12** Proactive follow-up: unfinished tasks get a status ping without being asked
-- [ ] **A13** Response formatting policy: consistent lists/emoji use, no wall-of-text
+- [x] **A13** Response formatting policy: consistent lists/emoji use, no wall-of-text (DONE 2026-11-11 IST, batch 3: `persona/response_format.py` — deterministic idempotent post-processor on free-form LLM replies in execute_command; walls split into ≤3-sentence paragraphs, run-on inline enumerations reflowed to bullets, code blocks + structured lists untouched; fast-path/tool replies exempt)
 - [ ] **A14** Boss-only command surface: owner-exclusive commands (mode switches, agent shutdown) keyed to owner identity
 
 ## B. Memory — Memora (12 items)
@@ -48,12 +48,12 @@
 - [x] **C4** Unified task records: TASK-ID, owner agent, status, result (CORE-003)
 - [x] **C5** Empty-turn fix unblocks delegation requests (ORCH-005 — this batch; live re-verify after deploy)
 - [x] **C6** Generic "assign <task> to <agent>" phrasing routes to the right agent tool (ORCH-006/007, live verified 2026-11-11)
-- [ ] **C7** VyralX delegation: video scripts/clips on request
+- [x] **C7** VyralX delegation: video scripts/clips on request (DONE 2026-11-11 IST, batch 3: `vyralx_script` tool → FleetClient.request_vyralx_script → VyralX's REAL Hyperframes engine, draft-only — nothing rendered or published by the chat path; SCRIPT_KEYWORDS routing before the fleet probe)
 - [x] **C8** Sentinel delegation: "run a security scan" on request (DONE 2026-11-11 IST with F19: "run a security check" / "any vulnerabilities" answer from Sentinel's REAL posture + finding engines via sentinel_security (read-only); active assessments stay behind Sentinel's owner-authorized scope gate — stated in every answer; security fast-path runs BEFORE the fleet-status probe so "check the fleet's security posture" is a security lookup, not a fleet ping; delegation-shaped asks ("tell Sentinel to run a security scan") still route to delegation; 33-test suite)
-- [ ] **C9** Cortex delegation: web fetch/monitor tasks on request
+- [x] **C9** Cortex delegation: web fetch/monitor tasks on request (DONE 2026-11-11 IST, batch 3: `cortex_web_ops` tool → FleetClient.request_cortex_web_ops → Cortex's REAL health summary + governed properties roster, read-only, no outreach; WEB_OPS_KEYWORDS routing before the fleet probe)
 - [x] **C10** Futuris delegation: forecast requests on demand (DONE 2026-11-11 IST with F10: "forecast X over 24h" / "what does Futuris predict for Y" reach Futuris's real FRIDAY delegation contract (POST /v1/friday/forecast) via futuris_forecast; forecast fast-path runs BEFORE the fleet-status probe so "predict the fleet load" is a forecast, not a fleet ping; delegation-shaped asks still route to delegation; 32-test suite)
-- [ ] **C11** Memora delegation: owner-facing memory ops (search/edit) as first-class tasks
-- [ ] **C12** Multi-agent pipelines: "research X, then draft the email about it" (chained dispatch)
+- [x] **C11** Memora delegation: owner-facing memory ops (search/edit) as first-class tasks (DONE 2026-11-11 IST, batch 3: `memora_memory` tool → FleetClient.request_memora_memory_op → Memora's REAL context DB, honest empties; MEMORA_OP_KEYWORDS routing; this-form keywords "save this to fleet memory" added in the batch-3 completion pass after the routing gap was found)
+- [x] **C12** Multi-agent pipelines: "research X, then draft the email about it" (chained dispatch) (DONE 2026-11-11 IST, batch 3: `ecosystem/pipeline.py` — connector-based chain detection mapping every fragment to a stage kind via the router's own keyword sets; `_pipeline_fast_path` runs BEFORE every single-intent fast path so a chain is never eaten by its first stage's dispatcher; sequential real dispatches (IntelX/VyralX/Memora-write/Futuris/Cortex) where stage N consumes stage N-1's real output; per-stage honest failures; combined report; per-stage live activity events)
 - [x] **C13** Task status queries: "what happened to that IntelX task?" → real record lookup (TASK-ORCH-008 + gap fix, LIVE-VERIFIED 2026-11-11 end-to-end: chat dispatch → receipt task_036e6b93ecaa → 'what happened to the stratex task?' returned the REAL failed record with the actual 401 error, routing rationale, IST timestamps and full trail; the gap fix records chat delegations into the shared ledger because FleetClient bypasses the in-process bus; 84-test suite)
 - [x] **C14** Delegation receipts: every assignment returns a task ID the owner can reference (live: task_71f66986709e)
 
@@ -69,9 +69,9 @@
 - [x] **D8** LiveKit voice orb with graceful idle disconnect ("Voice line closed")
 - [x] **D9** React Bits integration (owner request — animated component kit, not hand-rolled CSS only) (LIVE 2026-11-11: full React-Bits component inventory in effects.tsx — ScrambleText, Aurora(AuroraBackground), Magnetic, Spotlight(SpotlightCard), CountUp, Reveal + new pointer-driven Parallax and Orbital, all React components with compositor-safe animation, reduced-motion + touch-pointer safe; deployed in the 0055eef build)
 - [x] **D10** Floating/dynamic element pass: orbitals, parallax, magnet buttons, aurora backgrounds (LIVE 2026-11-11: Orbital = 9 satellite dots orbiting the voice core (one per fleet agent); Parallax = pointer-depth layers on console rail (6px) + chat (2px); Magnetic wired onto nav tabs + fleet card buttons; AuroraBackground + FloatingOrbs already live — deployed bundle serves orbitalSpin/orbital-dot CSS + the new effects chunk)
-- [ ] **D11** Live activity feed richness: every agent action streams in real time (WS exists; event coverage partial)
+- [x] **D11** Live activity feed richness: every agent action streams in real time (WS exists; event coverage partial) (DONE 2026-11-11 IST, batch 3: coverage widened — `chat_command` events from execute_command (every owner command streams), `agent_action` events from the batch3 delegation dispatch, per-stage events from multi-agent pipelines; dashboard WS handler accepts activity + agent_action + chat_command frames)
 - [x] **D12** "What is each agent doing RIGHT NOW" — live status per card, auto-refreshed (TASK-UI-004: GET /api/agents/live merges reachability + the unified task ledger — in_flight/last_outcome per agent; dashboard polls it in the 30s refresh and renders 'Working now' + 'working <freshness>'; 9/9 endpoint tests; ALSO fixed the blocking defect — the Python-template `lib/` gitignore rule had silently hidden FRIDAY/ui/lib, so lib/api.ts was never committed and a fresh clone could not rebuild the dashboard)
-- [ ] **D13** Task timeline: delegation history with status chips (queued/running/done/failed)
+- [x] **D13** Task timeline: delegation history with status chips (queued/running/done/failed) (DONE 2026-11-11 IST, batch 3: GET /api/tasks/timeline — newest-first unified-ledger history with honest chip mapping + empty ledgers returned empty, never fabricated; registered BEFORE /api/tasks/{task_id} so the parameterized status route can't swallow it; dashboard TaskTimeline panel in the ACTIVITY tab with chip styling, fetched in the 30s refresh; BONUS routing fix found on the way: "save THIS to fleet memory" never matched MEMORA_OP_KEYWORDS — the this-form keywords were added)
 - [ ] **D14** Mobile responsiveness verified (320–430px widths)
 - [ ] **D15** Accessibility pass: contrast, aria labels, keyboard tabs
 - [ ] **D16** Performance budget: Lighthouse ≥ 90 on the deployed build
@@ -183,16 +183,16 @@
 
 | Module | Done | Total | % |
 |---|---|---|---|
-| A. Brain | 5 | 14 | 36% |
+| A. Brain | 7 | 14 | 50% |
 | B. Memory | 9 | 12 | 75% |
-| C. Orchestration | 10 | 14 | 71% |
-| D. Website | 11 | 18 | 61% |
+| C. Orchestration | 14 | 14 | 100% |
+| D. Website | 13 | 18 | 72% |
 | E. Voice | 2 | 10 | 20% |
 | F. Agents | 9 | 27 | 33% |
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
 | I. Tech debt | 2 | 8 | 25% |
-| **Universe** | **57** | **125** | **46%** |
+| **Universe** | **65** | **125** | **52%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

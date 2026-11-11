@@ -1025,3 +1025,22 @@ a { color: inherit; text-decoration: none; }
   .voice-rail { min-height: 260px; }
   .float-orb { display: none; }
 }
+
+/* ---------- D13: task timeline chips ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+.chip-queued { color: #ffd08a; background: rgba(255, 190, 100, 0.10); border: 1px solid rgba(255, 190, 100, 0.28); }
+.chip-running { color: var(--cyan); background: rgba(112, 212, 232, 0.10); border: 1px solid rgba(112, 212, 232, 0.28); }
+.chip-done { color: var(--mint); background: rgba(133, 240, 191, 0.10); border: 1px solid rgba(133, 240, 191, 0.28); }
+.chip-failed { color: var(--red); background: rgba(248, 122, 122, 0.10); border: 1px solid rgba(248, 122, 122, 0.28); }
+.feed-icon.muted-icon { color: var(--faint); background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); }

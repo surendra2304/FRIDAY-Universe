@@ -187,6 +187,14 @@ class CognitiveMixin:
             if conversational_response is not None:
                 return conversational_response
 
+            # Checklist C12 (batch 3): multi-agent pipelines — chained
+            # dispatch ("research X, then draft the script about it") runs
+            # BEFORE every single-intent fast path so a chained instruction
+            # is never eaten by its first stage's dispatcher.
+            pipeline_response = self._pipeline_fast_path(clean_input, start_time)
+            if pipeline_response is not None:
+                return pipeline_response
+
             # TASK-ORCH-008 (C13): task-status questions read the real ledger —
             # BEFORE delegation so "what happened to that IntelX task?" is a
             # lookup, not a fresh dispatch to IntelX.

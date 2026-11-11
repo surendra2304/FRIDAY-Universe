@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   BarChart2,
   CheckCircle2,
+  Clock3,
   Cpu,
   Database,
   Eye,
@@ -18,6 +19,7 @@ import {
   ShieldCheck,
   Terminal,
   TrendingUp,
+  Waypoints,
   Wifi,
   Zap,
 } from "lucide-react";
@@ -28,6 +30,7 @@ import {
   HostTelemetry,
   LiveActivityEvent,
   AgentsLiveSnapshot,
+  TaskTimelineSnapshot,
   cleanDirective,
   freshness,
   istTime,
@@ -222,6 +225,51 @@ export function FleetGrid({
           </Reveal>
         );
       })}
+    </div>
+  );
+}
+
+/** Checklist D13: delegation history with status chips — newest first. */
+export function TaskTimeline({ timeline }: { timeline: TaskTimelineSnapshot | null }) {
+  if (!timeline || timeline.events.length === 0) {
+    return (
+      <div className="panel feed-empty">
+        <Waypoints size={20} style={{ marginBottom: 8 }} />
+        No delegated tasks yet. Assign work from the Console — every dispatch lands here with its status.
+      </div>
+    );
+  }
+  const counts = timeline.chip_counts ?? {};
+  return (
+    <div className="panel">
+      <div className="feed-list">
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+          <span className="chip chip-queued">queued {counts.queued ?? 0}</span>
+          <span className="chip chip-running">running {counts.running ?? 0}</span>
+          <span className="chip chip-done">done {counts.done ?? 0}</span>
+          <span className="chip chip-failed">failed {counts.failed ?? 0}</span>
+        </div>
+        {timeline.events.map((ev, i) => (
+          <div className="feed-row" key={ev.task_id || i} style={{ animationDelay: `${Math.min(i * 30, 180)}ms` }}>
+            <div className={`feed-icon ${ev.chip === "failed" ? "err" : ev.chip === "done" ? "ok" : "muted-icon"}`}>
+              {ev.chip === "done" ? <CheckCircle2 size={14} /> : ev.chip === "failed" ? <Activity size={14} /> : <Clock3 size={14} />}
+            </div>
+            <div className="feed-body">
+              <span className="feed-agent">{ev.owner_agent || "unassigned"}</span>
+              <p className="feed-text" style={{ margin: "3px 0" }}>
+                <span className={`chip chip-${ev.chip}`}>{ev.chip}</span>{" "}
+                {cleanDirective(ev.description, 120)}
+              </p>
+              {ev.error ? (
+                <p className="feed-result" style={{ margin: 0, color: "#ff8080" }}>{cleanDirective(ev.error, 140)}</p>
+              ) : ev.result ? (
+                <p className="feed-result" style={{ margin: 0 }}>{cleanDirective(ev.result, 140)}</p>
+              ) : null}
+            </div>
+            <span className="feed-time" title="IST">{istTime(ev.updated_at)} IST</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { AuroraBackground, CountUp, FloatingOrbs, Magnetic, Orbital, Parallax, ParticleField, Reveal, ScrambleText } from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
-import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel } from "@/components/panels";
+import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
 import {
   Agent,
@@ -14,6 +14,7 @@ import {
   FleetSnapshot,
   HostTelemetry,
   LiveActivityEvent,
+  TaskTimelineSnapshot,
   apiBase,
   istTime,
   requestJson,
@@ -50,6 +51,7 @@ export default function Page() {
   const [telemetry, setTelemetry] = useState<HostTelemetry | null>(null);
   const [autonomy, setAutonomy] = useState<AutonomySnapshot | null>(null);
   const [liveActivity, setLiveActivity] = useState<Record<string, LiveActivityEvent>>({});
+  const [timeline, setTimeline] = useState<TaskTimelineSnapshot | null>(null);
   const [connected, setConnected] = useState<"checking" | "online" | "offline">("checking");
   const [cpuHistory, setCpuHistory] = useState<number[]>([]);
   const [ramHistory, setRamHistory] = useState<number[]>([]);
@@ -64,11 +66,12 @@ export default function Page() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const [fleetResult, telemetryResult, autonomyResult, liveResult] = await Promise.allSettled([
+    const [fleetResult, telemetryResult, autonomyResult, liveResult, timelineResult] = await Promise.allSettled([
       requestJson<FleetSnapshot>("/api/agents/status"),
       requestJson<HostTelemetry>("/api/system_telemetry"),
       requestJson<AutonomySnapshot>("/api/autonomous/status"),
       requestJson<AgentsLiveSnapshot>("/api/agents/live"),
+      requestJson<TaskTimelineSnapshot>("/api/tasks/timeline?limit=50"),
     ]);
     if (fleetResult.status === "fulfilled") {
       setFleet(fleetResult.value);
@@ -90,6 +93,7 @@ export default function Page() {
     }
     if (autonomyResult.status === "fulfilled") setAutonomy(autonomyResult.value);
     if (liveResult.status === "fulfilled") setAgentsLive(liveResult.value);
+    if (timelineResult.status === "fulfilled") setTimeline(timelineResult.value);
   }, []);
 
   useEffect(() => {
@@ -119,8 +123,12 @@ export default function Page() {
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(String(event.data)) as LiveActivityEvent;
-          if (data.type === "activity" && data.agent) {
-            const key = String(data.agent).toLowerCase();
+          /* Checklist D11: accept the widened event coverage — legacy
+             "activity", delegation "agent_action", and "chat_command"
+             streams all land in the live feed. */
+          const known = ["activity", "agent_action", "chat_command"];
+          if (known.includes(String(data.type)) ) {
+            const key = String(data.agent || data.agents_involved || "friday").toLowerCase();
             setLiveActivity((current) => ({ ...current, [key]: data }));
           }
         } catch {
@@ -251,6 +259,14 @@ export default function Page() {
           </Reveal>
           <Reveal delay={80}>
             <ActivityFeed autonomy={autonomy} liveActivity={liveActivity} />
+          </Reveal>
+          {/* Checklist D13: delegation history with status chips */}
+          <Reveal delay={140}>
+            <div className="eyebrow" style={{ marginTop: 28 }}>
+              <Waypoints size={13} style={{ verticalAlign: -2, marginRight: 6 }} />
+              Task timeline · every delegation, newest first
+            </div>
+            <TaskTimeline timeline={timeline} />
           </Reveal>
         </section>
 

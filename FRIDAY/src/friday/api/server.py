@@ -932,6 +932,86 @@ async def get_system_telemetry() -> dict[str, Any]:
 from friday.core.task_manager import task_manager
 
 
+@app.get("/api/tasks/timeline")
+async def get_tasks_timeline(
+    limit: int = 50,
+    _: None = Depends(_require_origin_gate),
+) -> dict[str, Any]:
+    """Checklist D13: delegation history with status chips.
+
+    Returns the most recent unified-ledger task records (same store as
+    /api/agents/live and the C14 chat receipts), newest first, each mapped to
+    a dashboard chip class: queued (submitted/assigned), running (dispatched),
+    done (completed), failed (failed/routing_failed). Nothing is synthesized:
+    an empty ledger returns an empty timeline with total_records 0.
+    """
+    limit = max(1, min(int(limit or 50), 200))
+    records_store = None
+    try:
+        from friday_core.task_records import get_shared_task_records
+
+        records_store = get_shared_task_records()
+    except Exception as exc:
+        logger.debug(f"task ledger unavailable for /api/tasks/timeline: {exc}")
+
+    events: list[dict[str, Any]] = []
+    total = 0
+    if records_store is not None:
+        try:
+            all_records = records_store.list()
+            total = len(all_records)
+            ordered = sorted(all_records, key=lambda r: r.updated_at, reverse=True)[:limit]
+            for record in ordered:
+                status = str(record.status)
+                if status in {"submitted", "assigned"}:
+                    chip = "queued"
+                elif status == "dispatched":
+                    chip = "running"
+                elif status == "completed":
+                    chip = "done"
+                else:  # failed, routing_failed, anything unknown stays honest
+                    chip = "failed"
+                result_val = getattr(record, "result", None)
+                error_val = getattr(record, "error", None) or ""
+                result_str = result_val if isinstance(result_val, str) else (str(result_val) if result_val else "")
+                events.append({
+                    "task_id": record.task_id,
+                    "description": record.description,
+                    "owner_agent": record.owner_agent,
+                    "status": status,
+                    "chip": chip,
+                    "created_at": datetime.fromtimestamp(
+                        record.created_at, tz=timezone.utc
+                    ).isoformat(),
+                    "updated_at": datetime.fromtimestamp(
+                        record.updated_at, tz=timezone.utc
+                    ).isoformat(),
+                    "result": result_str[:280],
+                    "error": (error_val if isinstance(error_val, str) else str(error_val))[:280],
+                    "history_len": len(getattr(record, "history", []) or []),
+                })
+        except Exception as exc:
+            logger.debug(f"task ledger read failed for /api/tasks/timeline: {exc}")
+
+    chip_counts: dict[str, int] = {}
+    for ev in events:
+        chip_counts[ev["chip"]] = chip_counts.get(ev["chip"], 0) + 1
+    return {
+        "status": "ok",
+        "scope": "unified_task_ledger_history",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "total_records": total,
+        "returned": len(events),
+        "chip_counts": chip_counts,
+        "events": events,
+        "note": (
+            "Newest-first delegation history from the unified task ledger; "
+            "chips: queued/running/done/failed. Empty means no tracked work yet."
+        ),
+    }
+
+
+
 @app.get("/v1/tasks")
 @app.get("/api/tasks")
 async def list_tasks_endpoint(limit: int = 50) -> dict[str, Any]:
@@ -1755,6 +1835,33 @@ async def execute_command(req: CommandRequest, _: None = Depends(_require_contro
     """Execute a text command with PC, Android, and live 8-Agent execution."""
     result = await _dispatch_command(req.command)
     meta = result.get("metadata") or {}
+
+    # Checklist A13 (batch 3): response formatting policy — free-form LLM
+    # replies get the consistent shape (short paragraphs, bulleted run-on
+    # enumerations, no walls of text). Fast-path/tool replies are already
+    # structured by their tools and are exempt.
+    try:
+        if isinstance(result.get("reply"), str) and not meta.get("fast_path"):
+            from friday.persona.response_format import apply_response_formatting
+
+            result["reply"] = apply_response_formatting(result["reply"])
+    except Exception as exc:
+        logger.debug(f"response formatting skipped: {exc}")
+
+    # Checklist D11 (batch 3): every command streams to the live activity
+    # feed (fire-and-forget, never fatal).
+    try:
+        from friday.api.activity_stream import emit
+
+        emit({
+            "type": "chat_command",
+            "command": (req.command or "")[:140],
+            "agents_involved": meta.get("agent_id") or meta.get("peer_name") or "friday",
+            "status": "received",
+            "detail": (result.get("reply") or "")[:140],
+        })
+    except Exception as exc:
+        logger.debug(f"activity emit skipped in execute_command: {exc}")
     
     # Determine status for logging
     authorization = str(meta.get("authorization", "")).upper()

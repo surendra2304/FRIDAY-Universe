@@ -76,7 +76,7 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
     2226→2234 passed vs pre-batch baseline (8 previously-failing tests fixed,
     0 broken). Commit + notification recorded.
 
-## Batch 3 — Orchestration completion (C module: 10/14 → 14/14) — IN PROGRESS (1-3, 9 done 2026-11-11)
+## Batch 3 — Orchestration completion (C module: 10/14 → 14/14) — COMPLETE 2026-11-11
 
 1. ✅ C7 VyralX delegation: video script generation via chat —
    `vyralx_script` tool → FleetClient.request_vyralx_script → VyralX's REAL
@@ -89,16 +89,45 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
    `memora_memory` tool → FleetClient.request_memora_memory_op → Memora's
    REAL context DB (GET /v1/context/search, POST /v1/context/write),
    honest empties, MEMORA_OP_KEYWORDS routing
-4. ⬜ C12 Multi-agent pipelines: chained dispatch ("research X, then draft")
-5. ⬜ A10 Clarification quality: ONE sharp question when ambiguous
-6. ⬜ A13 Response formatting policy: consistent lists, no wall-of-text
-7. ⬜ D13 Task timeline: delegation history with status chips
-8. ⬜ D11 Live activity feed: full event coverage
-9. ✅ Tests for the completed items — tests/test_batch3_delegations.py (19
-   tests: routing table, extraction, stubbed tool behaviour, fast-path
-   ordering before the fleet probe); 126 tests green across the routing/
-   delegation suites, zero regressions
-10. ✅ Commit + notify "Batch 3 partial (C7/C9/C11)"
+4. ✅ C12 Multi-agent pipelines: chained dispatch — `ecosystem/pipeline.py`
+   (detect_pipeline splits "research X, then draft the script about it"
+   on chain connectors, maps every fragment to a stage kind via the router's
+   own keyword sets) + `_pipeline_fast_path` runs BEFORE every single-intent
+   fast path so a chain is never eaten by its first stage's dispatcher;
+   stages execute sequentially with real tool dispatches (IntelX / VyralX /
+   Memora write / Futuris / Cortex) and stage N consumes stage N-1's real
+   output as context; per-stage honest failures, combined report; every
+   stage emits a live activity event (D11); router excludes chains from
+   DIRECT_REASONING
+5. ✅ A10 Clarification quality: `routing/clarification.py` — when a
+   delegation intent matches but its operand is missing/"it" ("research",
+   "draft a video script", "save this to fleet memory", "forecast"),
+   FRIDAY asks EXACTLY ONE sharp Boss-tone question via
+   `_clarification_response` (state machine + memory + Memora record, so
+   the next turn resolves it); wired into the batch3 + research + forecast
+   fast paths; complete requests proceed untouched
+6. ✅ A13 Response formatting policy: `persona/response_format.py` —
+   deterministic idempotent post-processor on free-form LLM replies in
+   execute_command (fast-path/tool replies exempt): walls of text split into
+   ≤3-sentence paragraphs, run-on inline enumerations reflowed to bullet
+   lines, code blocks and structured lists untouched, blank lines collapsed
+7. ✅ D13 Task timeline: GET /api/tasks/timeline (newest-first unified-ledger
+   history with queued/running/done/failed chips, honest empties; registered
+   BEFORE /api/tasks/{task_id} so the parameterized route can't swallow it)
+   + dashboard TaskTimeline panel in the ACTIVITY tab with chip styling,
+   fetched in the 30s refresh
+8. ✅ D11 Live activity feed: widened event coverage — `chat_command` events
+   from execute_command (every command streams), `agent_action` events from
+   the batch3 delegation dispatch, per-stage events from pipelines; the
+   dashboard WS handler accepts activity + agent_action + chat_command
+9. ✅ Tests: tests/test_batch3_part2.py — 53 tests (pipeline detect/execute/
+   routing/ordering, clarification, formatting, timeline endpoint incl.
+   origin gate, activity emit); 91 sibling-suite + 36 batch3/agents-live
+   tests green; full-suite diff vs clean tree: 0 new failures
+   (239 pre-existing sandbox-env failures identical with and without the
+   changes). BONUS FIX: "save THIS to fleet memory" never matched
+   MEMORA_OP_KEYWORDS (routing gap since C11) — this-form keywords added
+10. ✅ Commit + notify "Batch 3 complete"
 
 ## Batch 4 — Memory + Brain maturity (B 9/12, A 5/14)
 
@@ -214,4 +243,4 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 
 ---
 
-**Current position: Batch 2 COMPLETE (2026-11-11) — 10/10 tasks done, 2234 tests passing (8 net fixes vs baseline). Next: Batch 3 remainder (C12 pipelines, A10, A13, D13, D11) — C7/C9/C11 landed with 126 tests green**
+**Current position: Batch 3 COMPLETE (2026-11-11) — 10/10 tasks done (C7/C9/C11 earlier + C12/A10/A13/D13/D11/tests/commit), 53 new tests green, 0 regressions (full-suite diff vs clean tree). Next: Batch 4 — memory + brain maturity (B8, B11, B12, A6, A7, A9, A11, A12, A14)**

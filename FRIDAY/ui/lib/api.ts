@@ -90,8 +90,37 @@ export interface LiveActivityEvent {
   target?: string;
   directive?: string;
   result?: string;
+  status?: string;
+  detail?: string;
+  command?: string;
+  agents_involved?: string;
   success?: boolean;
   timestamp?: string;
+}
+
+/** One delegation-history event from the unified task ledger (D13). */
+export interface TaskTimelineEvent {
+  task_id: string;
+  description: string;
+  owner_agent: string;
+  status: string;
+  chip: "queued" | "running" | "done" | "failed";
+  created_at: string;
+  updated_at: string;
+  result?: string;
+  error?: string;
+  history_len?: number;
+}
+
+export interface TaskTimelineSnapshot {
+  status: string;
+  scope: string;
+  timestamp: string;
+  total_records: number;
+  returned: number;
+  chip_counts?: Record<string, number>;
+  events: TaskTimelineEvent[];
+  note?: string;
 }
 
 export interface ChatMessage {

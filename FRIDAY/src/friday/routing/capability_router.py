@@ -211,6 +211,14 @@ class CapabilityRouter:
         "search cloud memory", "fleet memory for", "cloud memory for",
         "save to memora", "store in memora", "memora write", "save to fleet memory",
         "store in fleet memory", "save to cloud memory", "remember in memora",
+        # batch 3 part 2 (2026-11-11): the "this" form the owner actually
+        # types — "save this to fleet memory: X" — never matched before, so
+        # the live fast path silently missed it (tool supported it; routing
+        # never reached it).
+        "save this to fleet memory", "save this to cloud memory",
+        "save this to memora", "store this in fleet memory",
+        "store this in memora", "store this in cloud memory",
+        "write this to fleet memory", "write to fleet memory",
     }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
@@ -281,6 +289,17 @@ class CapabilityRouter:
             or self._matches(clean_input, self.WEB_OPS_KEYWORDS)
             or self._matches(clean_input, self.MEMORA_OP_KEYWORDS)
         )
+        # Checklist C12 (batch 3): chained instructions ("research X, then
+        # draft the script about it") are multi-stage dispatches, never plain
+        # conversation. Lazy import: pipeline maps stages through THIS
+        # router's keyword sets, so a module-level import would be circular.
+        try:
+            from friday.ecosystem.pipeline import detect_pipeline
+
+            chained = detect_pipeline(user_input) is not None
+        except Exception:
+            chained = False
+        is_conversational = is_conversational and not chained
         if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,

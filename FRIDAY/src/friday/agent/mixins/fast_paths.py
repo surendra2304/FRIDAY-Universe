@@ -640,6 +640,13 @@ class FastPathMixin:
         if not action_shaped:
             return None
 
+        # Checklist A10: "research" with no topic -> ONE sharp question.
+        from friday.routing.clarification import clarify_if_operand_missing
+
+        clarification = clarify_if_operand_missing(low, "research")
+        if clarification:
+            return self._clarification_response(clean_input, start_time, "research", clarification)
+
         from friday.tools.builtin.intelx_research import IntelXResearchTool
 
         # The research subject: strip the action prefix for a cleaner query.
@@ -775,6 +782,13 @@ class FastPathMixin:
         if _delegation_instruction_agent(low):
             return None
 
+        # Checklist A10: "forecast" with no target -> ONE sharp question.
+        from friday.routing.clarification import clarify_if_operand_missing
+
+        clarification = clarify_if_operand_missing(low, "forecast")
+        if clarification:
+            return self._clarification_response(clean_input, start_time, "forecast", clarification)
+
         from friday.tools.builtin.futuris_forecast import FuturisForecastTool
 
         result = FuturisForecastTool().execute(question=low)
@@ -812,6 +826,103 @@ class FastPathMixin:
             },
         )
 
+    def _clarification_response(
+        self, clean_input: str, start_time: float, intent: str, question: str
+    ) -> AgentResponse:
+        """Checklist A10: ONE sharp question when the operand is missing.
+
+        Wraps the single clarifying question in the same lifecycle as every
+        other fast path (state machine + memory + Memora record) so the next
+        turn can resolve it. Exactly ONE question — never an interrogation.
+        """
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Delegation intent recognized but its target is missing")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="One clarifying question before dispatch")
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=question))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=question,
+                agent_name="friday",
+                event_type="action",
+                tags=["clarification", intent, "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in clarification gate: {e}")
+        return AgentResponse(
+            content=question,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "clarification": True,
+                "clarification_intent": intent,
+                "probe_success": True,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
+    def _pipeline_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """Checklist C12 (batch 3): multi-agent pipelines — chained dispatch.
+
+        "Research X, then draft the script about it" is TWO delegations with
+        a data dependency: stage 2 consumes stage 1's real output. This path
+        runs BEFORE every single-intent fast path so a chained instruction
+        can never be eaten by its first stage's dispatcher. Every stage is a
+        real agent-engine dispatch (IntelX / VyralX / Memora / Futuris /
+        Cortex); failures are reported honestly per stage, never padded.
+        """
+        from friday.ecosystem.pipeline import detect_pipeline, run_pipeline
+
+        stages = detect_pipeline(clean_input)
+        if stages is None or len(stages) < 2:
+            return None
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason=f"{len(stages)}-stage pipeline recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Planning chained dispatch across agents")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="Executing pipeline stages sequentially")
+
+        outcome = run_pipeline(stages)
+        content = outcome["reply"]
+        success = bool(outcome["success"])
+
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Returning combined pipeline report")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["pipeline", "fast_path"] + [s.kind for s in stages],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in pipeline dispatch: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "pipeline_dispatch": True,
+                "pipeline_stages": [
+                    {
+                        "kind": s.get("kind"),
+                        "label": s.get("label"),
+                        "success": s.get("success"),
+                        "summary": (s.get("summary") or "")[:200],
+                    }
+                    for s in outcome["stages"]
+                ],
+                "probe_success": success,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _batch3_delegation_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
         """Checklist C7/C9/C11 (batch 3): first-class chat delegations.
 
@@ -839,6 +950,32 @@ class FastPathMixin:
             return None
         if _delegation_instruction_agent(low):
             return None
+
+        # Checklist A10: intent matched but operand missing -> ONE sharp
+        # question, never a dispatch on a junk title / empty memory write.
+        from friday.routing.clarification import clarify_if_operand_missing
+
+        if tool_cls == "vyralx_script":
+            question = clarify_if_operand_missing(low, "script")
+            if question:
+                return self._clarification_response(clean_input, start_time, "script", question)
+        elif tool_cls == "memora_memory":
+            question = clarify_if_operand_missing(low, "memory_save")
+            if question:
+                return self._clarification_response(clean_input, start_time, "memory_save", question)
+
+        # Checklist D11: every agent action streams to the live activity feed.
+        try:
+            from friday.api.activity_stream import emit
+            emit({
+                "type": "agent_action",
+                "agent": tool_cls,
+                "action": label,
+                "status": "running",
+                "detail": low[:120],
+            })
+        except Exception as e:
+            logger.debug(f"activity emit skipped in batch3 dispatch: {e}")
 
         if tool_cls == "vyralx_script":
             from friday.tools.builtin.vyralx_script import VyralXScriptTool
