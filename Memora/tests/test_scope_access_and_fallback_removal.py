@@ -1,4 +1,4 @@
-"""
+r"""
 Test: Memora scope + owner_agent model, access filter, SQLite fallback removal,
 bootstrap unqualified names.  Only touches D:\FRIDAY Universe\Memora.
 No .env / commit / SSH / deploy changes.

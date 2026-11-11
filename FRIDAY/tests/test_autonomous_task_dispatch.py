@@ -93,7 +93,12 @@ def test_user_delegation_uses_typed_mesh_and_preserves_completion_state(
         assert metadata["receipt"]["verification_evidence"]
     elif expected_state == "PENDING":
         assert metadata["task_id"] == "forge-task-27"
-        assert "unproven" in response.json()["reply"].lower()
+        # The pending reply must stay honest about the unproven result: FRIDAY
+        # states it cannot confirm the outcome yet (voice-first rewrite e8420d7
+        # reworded "unproven" into this phrasing) and never claims completion.
+        reply = response.json()["reply"].lower()
+        assert "cannot confirm" in reply
+        assert "still working" in reply
     else:
         assert metadata["error"]
         assert "receipt" in response.json()["reply"].lower()

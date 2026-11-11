@@ -668,6 +668,17 @@ class TestAgentAppsExposeTheNewCapabilities:
             "plan = c.post('/v1/scientific/plan', json={'task': 'rna-seq differential expression'})\n"
             "print(caps.status_code, plan.status_code, plan.json()['skills'][0]['skill'])\n",
             "200 200",
+            # This test exercises the scientific service endpoints, not the database
+            # backend. Inference's memory factory is fail-closed (it rejects non-Oracle
+            # schemes), and the inherited sandbox DATABASE_URL can be a 'file:' URL;
+            # pass the same placeholder Oracle URL Inference's own conftest uses so the
+            # app imports. OracleMemory connects lazily, so no live database is reached.
+            env_extra={
+                "DATABASE_URL": (
+                    "oracle+oracledb://INFERENCE:placeholder@adb.example.com:1522/"
+                    "?service_name=TEST"
+                ),
+            },
         )
 
     def test_vyralx_app(self):
