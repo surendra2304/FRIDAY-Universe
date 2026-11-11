@@ -17,6 +17,16 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 5. Priority order (owner-approved in the master checklist): Stratex trading
    health first, then C (orchestration) → D (website) → B (memory) → F (agents)
    → G (autonomy) → E (voice) → A (brain) → H (infra) → I (tech debt).
+6. **Two-agent lanes (2026-11-11, owner added ZAI Agent 2):**
+   - **ZAI Agent 1 (Lane A):** Batches 2, 3, 4, 9, 10, 11, 12 — Stratex,
+     orchestration, memory/brain, tech debt, final sweeps. Signs Telegram
+     notifications `— ZAI Agent 1`.
+   - **ZAI Agent 2 (Lane B):** Batches 6, 7, 5, 8 — agent depth F, autonomy G,
+     website polish D. Signs `— ZAI Agent 2`. Onboarding:
+     `docs/collaboration/ZAI_AGENT_2_ONBOARDING.md`.
+   - All notifications from `@zai_notifications_bot` (never
+     `@fridayuniverse_bot`). Claim cross-lane files in WORK_BOARD + issue #35
+     first.
 
 ## Status legend: ⬜ todo · 🔄 in progress · ✅ done · ⛔ blocked
 
@@ -42,7 +52,7 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 9. ✅ Tests: circuit breaker + anti-churn floor + honest priors; run suites
 10. ✅ Commit + Telegram notification "Batch 1 complete"
 
-## Batch 2 — Stratex strategy depth (owner: "more profitable trades") — COMPLETE 2026-11-11
+## Batch 2 — Stratex strategy depth (owner: "more profitable trades") — COMPLETE 2026-11-11 (Lane A / ZAI Agent 1)
 
 1. ✅ Walk-forward validated both dormant strategies on REAL 120-day futures
    candles (provenance-verified, 8 bps friction, 3 OOS folds):
@@ -155,7 +165,7 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 9. ⬜ H6 Docs sync pass
 10. ⬜ Commit + notify "Batch 5 complete"
 
-## Batch 6 — Agent depth I (F module: Sentinel, IntelX, Cortex)
+## Batch 6 — Agent depth I (F module: Sentinel, IntelX, Cortex) — Lane B / ZAI Agent 2, FIRST ASSIGNMENT
 
 1. ⬜ F8 Scheduled briefings on owner watchlist topics
 2. ⬜ F9 Watchlist monitoring with change detection
@@ -243,4 +253,4 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 
 ---
 
-**Current position: Batch 3 COMPLETE (2026-11-11) — 10/10 tasks done (C7/C9/C11 earlier + C12/A10/A13/D13/D11/tests/commit), 53 new tests green, 0 regressions (full-suite diff vs clean tree). Next: Batch 4 — memory + brain maturity (B8, B11, B12, A6, A7, A9, A11, A12, A14)**
+**Current position: Batches 1–3 COMPLETE (2026-11-11) by ZAI Agent 1 (Batch 2: Stratex strategy depth incl. honest walk-forward negatives; Batch 3: orchestration 10/10, 53 new tests green, 0 regressions). Two-agent lanes now active: ZAI Agent 1 (Lane A) → next **Batch 4** (memory + brain maturity: B8, B11, B12, A6, A7, A9, A11, A12, A14); ZAI Agent 2 (Lane B) → first assignment **Batch 6** (agent depth I), then 7 → 5 → 8. Onboarding: docs/collaboration/ZAI_AGENT_2_ONBOARDING.md**

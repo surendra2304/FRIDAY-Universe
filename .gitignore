@@ -72,6 +72,8 @@ temp_*
 # Secrets and Credentials
 CREDENTIALS*
 *CREDENTIALS*
+credentials.md
+credentials*.md
 docs/*CREDENTIALS*
 scripts/generate_credentials_pdf.py
 *.key

@@ -8,9 +8,18 @@ owner knows the turn completed without getting cut off mid-stream.
 Usage:
     python scripts/notify_turn_complete.py "Batch 1 complete: 10/10 tasks done"
 
-Credentials (never hardcoded):
-    TELEGRAM_BOT_TOKEN  — bot token (same token Stratex/FRIDAY bots use)
-    TELEGRAM_CHAT_ID    — owner chat id
+Credentials (never hardcoded), resolved in this order:
+    1. ZAI_NOTIFICATIONS_TOKEN  — @zai_notifications_bot token (owner directive
+       2026-11-11: turn notifications MUST come from @zai_notifications_bot, NOT
+       @fridayuniverse_bot)
+    2. credentials.md table in the repo root (parsed, gitignored)
+    3. TELEGRAM_BOT_TOKEN       — legacy fallback only (points at the Stratex
+       operations bot on production; produced the wrong-sender notification on
+       2026-11-11 — kept only so dev sandboxes still work)
+
+    TELEGRAM_CHAT_ID           — owner chat id
+    ZAI_AGENT_NAME             — signing name (default "ZAI Agent 1"; Agent 2 sets
+                                  "ZAI Agent 2")
 
 Both are read from the environment or a .env file (repo root or Stratex/.env).
 If credentials are absent (e.g. a dev sandbox), the message is logged to
@@ -33,6 +42,31 @@ sys.path.insert(0, str(REPO_ROOT))
 
 API_BASE = "https://api.telegram.org/bot"
 DEFAULT_LOCAL_LEDGER = REPO_ROOT / "logs" / "turn_notifications.jsonl"
+CREDENTIALS_FILE = REPO_ROOT / "credentials.md"
+DEFAULT_AGENT_NAME = "ZAI Agent 1"
+
+
+def _token_from_credentials_md() -> str:
+    """Parse the @zai_notifications_bot token from credentials.md (gitignored).
+
+    The file stores tokens in a markdown table row like:
+        | ... | @zai_notifications_bot | `9050935840:AA...` |
+    Never raises — returns "" when the file or pattern is missing.
+    """
+    try:
+        text = CREDENTIALS_FILE.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    lines = text.splitlines()
+    for idx, line in enumerate(lines):
+        if "@zai_notifications_bot" not in line:
+            continue
+        # search this row and the next two rows for a bot token
+        for row in lines[idx: idx + 3]:
+            for part in row.replace("|", " ").replace("`", " ").split():
+                if part.count(":") == 1 and part.split(":")[0].isdigit() and len(part) > 20:
+                    return part
+    return ""
 
 
 def _load_env_file() -> None:
@@ -89,10 +123,23 @@ def _record_locally(message: str, reason: str) -> None:
 def send_turn_notification(message: str) -> tuple[bool, str]:
     """Send (or record) the turn-complete notification. Returns (sent, detail)."""
     _load_env_file()
-    token = (os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+    # Owner directive 2026-11-11: notifications come from @zai_notifications_bot.
+    # Resolution order: ZAI_NOTIFICATIONS_TOKEN env -> credentials.md -> legacy
+    # TELEGRAM_BOT_TOKEN (Stratex ops bot — wrong sender, fallback only).
+    token = (os.getenv("ZAI_NOTIFICATIONS_TOKEN") or "").strip()
+    token_source = "ZAI_NOTIFICATIONS_TOKEN env"
+    if not token:
+        token = _token_from_credentials_md()
+        token_source = "credentials.md"
+    if not token:
+        token = (os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+        token_source = "TELEGRAM_BOT_TOKEN env (LEGACY — check sender!)"
     chat_id = (os.getenv("TELEGRAM_CHAT_ID") or "").strip()
+    agent_name = (os.getenv("ZAI_AGENT_NAME") or DEFAULT_AGENT_NAME).strip() or DEFAULT_AGENT_NAME
 
-    text = f"FRIDAY Universe — turn complete\n[{_now_ist()}]\n\n{message}"
+    text = (
+        f"FRIDAY Universe — turn complete\n[{_now_ist()}]\n\n{message}\n\n— {agent_name}"
+    )
 
     if not token or not chat_id:
         reason = "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID not set in this environment"

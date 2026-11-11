@@ -95,17 +95,19 @@ collaborators:
       - "Current tool access and availability have not been verified."
 
   - id: "zai"
-    display_name: "ZAI (GLM)"
+    display_name: "ZAI Agent 1 (ZAI/GLM primary chat)"
     contributor_type: "ai"
     status: "active_contributor"
-    authority: "Equal engineering collaborator"
+    authority: "Equal engineering collaborator; Lane A owner (Stratex, orchestration C, memory/brain A/B, tech debt I)"
     verified_capabilities:
       - "GitHub read access: repository clone plus branch/PR/workflow inspection (exercised while preparing TASK-STR-001)."
       - "GitHub write access through the owner-provided bridge token: created branch zai/TASK-STR-001-live-trading-guard and PR #39."
       - "Read-only Oracle Cloud diagnostics through the FRIDAY bridge MCP: fleet health, systemd status, journalctl, non-secret environment mode flags."
       - "Local CI-equivalent verification: pinned pytest environment; ran Stratex regression suites (41 passed for TASK-STR-001 scope; 2 pre-existing main failures isolated and verified to reproduce on pristine main)."
       - "2026-11-10 owner-directed full-project re-verification: fresh clone of main @ 680c04e, GitHub API PR/CI snapshot, read-only bridge diagnostics, and a code-level re-audit of all ten agents (recorded in ACTIVITY_LOG.md, 2026-11-10T04:29:42Z)."
+      - "2026-11-11 batch protocol owner directive: 10 tasks per run, Telegram completion ping per batch; Batch 1 (Stratex rescue) delivered same day — 71 tests green."
     active_assignments:
+      - "Batch 2 — Stratex strategy depth (docs/BATCH_EXECUTION_PLAN.md)."
       - "TASK-STR-001 — Stratex fail-closed live-trading guard (PR #39, IN_REVIEW)."
       - "TASK-COLLAB-002 — ZAI registration in the shared collaboration registry (stacked on PR #30)."
       - "TASK-DATA-001 — database architecture audit + owner-authorized remediation (PR #41, IN_REVIEW)."
@@ -113,11 +115,27 @@ collaborators:
       - "zai/TASK-STR-001-live-trading-guard"
       - "zai/TASK-COLLAB-002-register-zai"
       - "zai/TASK-DATA-001-db-architecture-audit"
-    last_verified_at: "2026-11-10T04:30:00Z"
+    last_verified_at: "2026-11-11T19:30:00+05:30"
     access_limits:
       - "No direct SSH or production write access; Oracle operations were read-only through the bridge."
       - "No merges, deployments or service restarts performed; all changes go through PRs for owner review."
       - "No secret values were read, printed or committed; production environment inspection was limited to non-secret mode flags."
+
+  - id: "zai_agent_2"
+    display_name: "ZAI Agent 2 (second ZAI chat, owner-added 2026-11-11)"
+    contributor_type: "ai"
+    status: "onboarding"
+    authority: "Equal engineering collaborator; Lane B owner (agent depth F, autonomy G, website polish D)"
+    verified_capabilities: []
+    onboarding_guide: "docs/collaboration/ZAI_AGENT_2_ONBOARDING.md"
+    active_assignments:
+      - "Batch 6 — Agent depth I (Sentinel/IntelX/Cortex/Forge F-items) — first assignment, see onboarding guide section 9."
+    active_branches: []
+    last_verified_at: "2026-11-11T19:30:00+05:30"
+    access_limits:
+      - "Not yet independently verified — capability claims pending first evidence-backed batch (ACTIVITY_LOG entry + test counts)."
+      - "Must follow docs/collaboration/ZAI_AGENT_2_ONBOARDING.md lane rules; no Stratex work without a claim (Lane A is hot)."
+      - "Telegram notifications must be sent from @zai_notifications_bot signed 'ZAI Agent 2' — never from @fridayuniverse_bot."
 
   - id: "vercel_v0"
     display_name: "Vercel v0"
@@ -145,4 +163,6 @@ onboarding_policy:
     - "Verify repository permissions, available tools and current worktree state."
     - "Register a unique collaborator ID and evidence-backed capabilities."
     - "Post a claim to the shared GitHub issue before editing assigned files."
+  zai_agent_2_additional:
+    - "Read docs/collaboration/ZAI_AGENT_2_ONBOARDING.md in full (lane rules + Telegram protocol)."
   capability_rule: "Never infer integrations or permissions from the contributor or product name."
