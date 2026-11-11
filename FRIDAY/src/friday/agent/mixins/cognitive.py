@@ -187,6 +187,13 @@ class CognitiveMixin:
             if conversational_response is not None:
                 return conversational_response
 
+            # TASK-ORCH-008 (C13): task-status questions read the real ledger —
+            # BEFORE delegation so "what happened to that IntelX task?" is a
+            # lookup, not a fresh dispatch to IntelX.
+            task_status_response = self._task_status_fast_path(clean_input, start_time)
+            if task_status_response is not None:
+                return task_status_response
+
             # TASK-ORCH-007: explicit delegation phrasings dispatch straight to
             # the named agent — BEFORE the fleet-status path so "send this task
             # to Sentinel: check the fleet" is a dispatch, not a status probe.

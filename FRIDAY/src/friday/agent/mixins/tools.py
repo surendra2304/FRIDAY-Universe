@@ -107,6 +107,7 @@ from friday.tools.builtin import (
     SystemInfoTool,
     FleetDispatchTool,
     FleetStatusTool,
+    TaskStatusQueryTool,
     ForgeCodeTool,
     IntelXResearchTool,
     StratexPortfolioTool,
@@ -143,6 +144,7 @@ class ToolExecutionMixin:
             registry.register(SystemInfoTool())
             registry.register(FleetStatusTool())
             registry.register(FleetDispatchTool())
+            registry.register(TaskStatusQueryTool())
             registry.register(ForgeCodeTool())
             registry.register(IntelXResearchTool())
             registry.register(StratexPortfolioTool())

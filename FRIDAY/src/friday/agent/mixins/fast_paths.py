@@ -297,6 +297,95 @@ class FastPathMixin:
             },
         )
 
+    def _task_status_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """TASK-ORCH-008 (checklist C13): task-status questions read the real ledger.
+
+        C14 gave every delegation a receipt ("[Task receipt: task_71f66986709e]").
+        When the owner asks "what happened to that IntelX task?", "status of
+        task_xxx" or "did the Stratex assignment finish?", the answer must come
+        from the unified TaskRecordStore (the same store the router and
+        dispatch bus write into) — never from the model's memory or invention.
+        This deterministic path fires only when a status question co-occurs
+        with an explicit receipt id or an agent+task reference; it runs BEFORE
+        delegation so a status question is never re-dispatched as new work.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.tools.builtin.task_status_query import TaskStatusQueryTool, _TASK_ID_RE
+
+        id_hit = _TASK_ID_RE.search(low)
+        status_marker = re.search(
+            r"\b(?:status|what happened|happened|finished|finish|done|completed|"
+            r"progress|result|outcome|any news|any update|check on|checking on)\b",
+            low,
+        )
+        agent_reference = None
+        m = re.search(
+            r"\b(?:intelx|stratex|forge|sentinel|cortex|futuris|vyralx|memora|inference)\b"
+            r"|\b(?:intelix|sentinal|viralx|vyral|memoria|inferance|futuristic)\b"
+            r"[^.?!]*\b(?:task|assignment|job|dispatch|brief)\b"
+            r"|\b(?:task|assignment|job|dispatch|brief)\b[^.?!]*"
+            r"\b(?:intelx|stratex|forge|sentinel|cortex|futuris|vyralx|memora|inference)\b"
+            r"|\b(?:task|assignment|job|dispatch|brief)\b[^.?!]*"
+            r"\b(?:intelix|sentinal|viralx|vyral|memoria|inferance|futuristic)\b",
+            low,
+        )
+        if m:
+            from friday.tools.builtin.fleet_dispatch import normalize_agent
+
+            for token in re.findall(r"[a-z]+", m.group(0)):
+                agent_reference = normalize_agent(token) or agent_reference
+                if agent_reference:
+                    break
+
+        # Fire on: explicit receipt id (any status phrasing, or a bare receipt),
+        # or a status question about a named agent's task.
+        if id_hit:
+            if not status_marker and len(low) <= 60 and low == low.strip():
+                # Bare receipt paste ("task_abc123def456") — still a status ask;
+                # but a long instruction containing an id is likely new work.
+                pass
+            elif not status_marker:
+                return None  # "assign task_abc to ..." style content — not ours
+        elif not (status_marker and agent_reference):
+            return None
+
+        result = TaskStatusQueryTool().execute(
+            query=clean_input,
+            agent=agent_reference or "",
+        )
+        content = result.content
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Task status question recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Reading the unified task ledger")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="task_status lookup")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Answering from the real record only")
+        self.state_machine.transition_to(TaskState.COMPLETED, reason="Task ledger lookup served")
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["task_status", "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in task status lookup: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "task_status_query": True,
+                "target_agent": agent_reference,
+                "lookup": (result.metadata or {}).get("task_status_query"),
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _delegation_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
         """TASK-ORCH-007: explicit delegation phrasings dispatch straight to the agent.
 

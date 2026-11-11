@@ -1483,25 +1483,53 @@ class WindowsFridayController:
             return False, f"Execution failed: {e}"
 
     def is_contact_directive(self, command: str) -> bool:
-        """Check if command matches contact management directives (save, list, lookup, delete)."""
+        """Check if command matches contact management directives (save, list, lookup, delete).
+
+        Checklist I8: this matcher must require EXPLICIT contact intent — the
+        word "contact" or a possessive contact field ("John's phone/email
+        is …"). The old optional-``contact`` patterns matched any
+        "get/save/remember <words>" sentence, so delegation phrasings ("get
+        IntelX to research crypto") and memory statements ("remember that the
+        market crashed") were hijacked into contact lookups. The handler's own
+        permissive regexes are only reachable through this gate, so this gate
+        defines the contract.
+        """
         if not command or not command.strip():
             return False
         clean = re.sub(r"^(?:hey\s+)?friday[,\s:]*\s*", "", command, flags=re.IGNORECASE).strip()
         cmd = clean.lower().rstrip(".!? ")
         if cmd in ["contacts", "list contacts", "show contacts", "my contacts", "view contacts", "all contacts", "address book"]:
             return True
-        if re.search(r"^(?:delete|remove)\s+(?:contact\s+)?[a-zA-Z\s]+$", cmd):
+        # Articles allowed between the verb and "contact" ("save a contact …").
+        _art = r"(?:the\s+|my\s+|a\s+|an\s+)?"
+        # delete/remove: explicit "contact" required ("delete contact John").
+        if re.search(r"^(?:delete|remove)\s+" + _art + r"contacts?\b", cmd):
             return True
-        if re.search(r"^(?:lookup|find|search|get|show)\s+(?:contact\s+)?[a-zA-Z\s]+$", cmd):
+        # lookup/find/search/get/show: "contact" or a possessive contact field
+        # ("find John's phone"). Bare "get IntelX to …" no longer matches.
+        if re.search(r"^(?:lookup|find|search|get|show)\s+" + _art + r"contacts?\b", cmd):
             return True
+        if re.search(r"^(?:lookup|find|search|get|show)\s+[a-zA-Z]+(?:'s)?\s+(?:phone|number|mobile|whatsapp|email)\b", cmd):
+            return True
+        # "who is <name>" — documented lookup form; delegation never starts with "who is".
         if re.search(r"^who\s+is\s+[a-zA-Z\s]+$", cmd):
             return True
-        if re.search(r"^contact\s+(?:details\s+(?:of|for)\s+)?[a-zA-Z\s]+$", cmd):
+        if re.search(r"^contacts?\s+(?:details\s+(?:of|for)\s+)?[a-zA-Z\s]+$", cmd):
             return True
-        if re.search(r"^(?:save|add|remember|set|update)\s+(?:contact\s+)?[a-zA-Z\s]+?", cmd):
+        # save/add/remember/set/update: "contact" or a possessive contact field.
+        if re.search(r"^(?:save|add|remember|set|update)\s+" + _art + r"contacts?\b", cmd):
             return True
-        if re.search(r"^[a-zA-Z\s]+?(?:'s)?\s+(?:phone|number|mobile|whatsapp|email)\s+(?:is|=|:)?\s*", cmd):
+        if re.search(r"^(?:save|add|remember|set|update)\s+[a-zA-Z]+(?:'s)?\s+(?:phone|number|mobile|whatsapp|email)\b", cmd):
             return True
+        # Possessive/field statement — but only with a real phone/email VALUE,
+        # so "get me the number for tonight's game" is not a contact save.
+        if re.search(
+            r"^[a-zA-Z\s]+?(?:'s)?\s+(?:phone(?:\s+number)?|number|mobile|whatsapp|email)\s+(?:is|=|:)\s*"
+            r"(?:\+?\d[\d\s-]{8,15}\d|[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)\s*$",
+            cmd,
+        ):
+            return True
+        # Bare phone statement: "John is +91 98765 43210".
         if re.search(r"^[a-zA-Z]+\s+is\s+[+\d\s-]{10,16}$", cmd):
             return True
         return False
