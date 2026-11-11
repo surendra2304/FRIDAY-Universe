@@ -359,3 +359,28 @@ Evidence: test_batch6_agent_depth.py 35/35; full battery A/B vs clean main —
 (Oracle-driver environmental), zero new failures. Checklist recount: 91/125 (73%).
 
 **Current position (merged 2026-11-12 IST): Batches 1-6 COMPLETE + Batch 9 part 1 - Agent 1: Batches 1-4 + Batch 9/I1-I4 (battery rescue: real-usage battery 29/29 green, hermetic test-only persistence, 3 routing hijacks fixed - contacts 'who is', portfolio-advice, website-status; 0 regressions vs clean tree); Agent 2: Batches 5 (autonomy G+H, 42 new tests) and 6 (agent depth I: F 18/27 - watchlist+briefings, change detection, SSRF-guarded fetch/summarize, uptime+sweeps, dep/CI health, Sentinel digest, pre-push secret guard; 35/35 batch tests, 0 regressions). Lanes active (ZAI_AGENT_2_ONBOARDING.md): ZAI Agent 1 (Lane A) -> next Batch 9b (I5 coverage gate, I6 dead-code sweep, A5/H10/E10 verifications); ZAI Agent 2 (Lane B) -> next Batch 7 (agent depth II: F3, F5, F6, F11, F12, F22-F24), then 8. Notification protocol: @zai_notifications_bot only, agent name on the FIRST LINE of the message (owner directive 2026-11-12). Checklist recount after this merge: see docs/MASTER_COMPLETION_CHECKLIST.md scoreboard.**
+
+## Batch 7 — Agent depth II (F 18/27 → 27/27, F module COMPLETE) — EXECUTED BY ZAI AGENT 2, COMPLETE 2026-11-12 IST
+
+> Lane B (claim: issue #35 comment 6803967919). Completes the F module to
+> 27/27. Cross-lane touches claimed there: capability_router.py (3 new
+> keyword sets), api/server.py (extended agent_watch loop with F5/F6/F11/F12
+> passes + alert fast-path + F3 usage endpoint), tools/__init__ +
+> mixins/tools.py (2 new tool registrations).
+
+1. ✅ F3 — UsageTracker + GET /api/agents/usage + rate-limit guard (80%/100%)
+2. ✅ F5 — scheduled 09:00 IST daily portfolio report via Stratex → Telegram
+3. ✅ F6 — price-alert rules engine (chat intake, hourly eval, latched firing)
+4. ✅ F11 — twice-daily forecast refresh (09:30 + 18:30 IST) on tracked markets
+5. ✅ F12 — prediction accuracy scoring at horizon end (HIT/MISS/PARTIAL)
+6. ✅ F22 — verified live (VyralXScriptTool, batch 3)
+7. ✅ F23 — vyralx_render tool (real VyralX hyperframes render pipeline)
+8. ✅ F24 — vyralx_publish tool (fail-closed draft; D-015 two-gate for prod)
+9. ✅ F27 — verified live (_nightly_consolidation_loop in server lifespan)
+10. ✅ batch protocol — tests + docs sync + claim/closure on issue #35
+
+Evidence: test_batch7_agent_depth_2.py 42/42; full A/B battery 15 suites:
+487 passed, 18 failed = byte-identical pre-existing baseline, zero new
+failures. Checklist recount: 100/125 (80%); F module 27/27 (100%).
+
+**Current position: Batches 1–7 + Batch 9 Part 1 COMPLETE (2026-11-12 IST). Checklist 104/125 (83%); F module COMPLETE 27/27; I module 6/8 (I1–I4 battery rescue done). Lanes: ZAI Agent 1 (Lane A) → Batch 9 Part 2 (I5–I6: coverage gate + dead-code sweep); ZAI Agent 2 (Lane B) → Batch 8 (D/E/H — mobile, accessibility, performance, voice, infra docs/uptime page).**

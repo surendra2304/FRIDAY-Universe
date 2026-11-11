@@ -1198,6 +1198,34 @@ claims:
     status: "DIRECT_COMMIT_BATCH6_AGENT2"
     task: "Checklist F18: weekly pip-audit + CI-failures digest workflow."
 
+  - path: "FRIDAY/src/friday/proactive/market_watch.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH7_AGENT2"
+    task: "Checklists F3/F5/F6/F11/F12: usage tracker + rate-limit guard, daily portfolio report, price-alert rules engine, forecast refresh, prediction accuracy scoring."
+
+  - path: "FRIDAY/src/friday/tools/builtin/vyralx_render.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH7_AGENT2"
+    task: "Checklist F23: VyralX render tool (free-tool ffmpeg pipeline dispatch)."
+
+  - path: "FRIDAY/src/friday/tools/builtin/vyralx_publish.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH7_AGENT2"
+    task: "Checklist F24: VyralX publish tool (fail-closed draft; D-015 two-gate for production)."
+
+  - path: "FRIDAY/tests/test_batch7_agent_depth_2.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH7_AGENT2"
+    task: "Batch 7 contract suite (42 tests)."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

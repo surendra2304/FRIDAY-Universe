@@ -1548,6 +1548,35 @@ async def get_agents_live(_: None = Depends(_require_origin_gate)) -> dict[str, 
     }
 
 
+@app.get("/api/agents/usage")
+async def get_agents_usage(_: None = Depends(_require_origin_gate)) -> dict[str, Any]:
+    """Checklist F3 (batch 7, ZAI Agent 2): per-agent usage dashboard + rate-limit guard.
+
+    Reports today's per-agent call/token counts against the free-tier limits,
+    flags agents above the soft-warning (80%) or hard-stop (100%) thresholds,
+    and surfaces the F12 forecast accuracy summary (logged predictions scored
+    at horizon end). Read-only — never mutates the counters.
+    """
+    from friday.proactive.market_watch import forecast_store, usage_tracker
+
+    usage = usage_tracker.today_summary()
+    guard = usage_tracker.rate_limit_guard()
+    forecasts = forecast_store.summary()
+    return {
+        "date": usage["date"],
+        "totals": usage["totals"],
+        "agents": usage["agents"],
+        "limits": usage["limits"],
+        "rate_limit_guard": guard,
+        "forecasts": forecasts,
+        "note": (
+            "Free-first gateway counters (per-agent, today IST). Soft-warning at "
+            "80% of the free tier, hard-stop at 100%. Forecast accuracy is logged "
+            "predictions scored at horizon end (F12)."
+        ),
+    }
+
+
 @app.get("/api/autonomous/status")
 async def get_autonomous_status() -> dict[str, Any]:
     """Expose real-time state of the autonomous execution and recovery subsystem."""
@@ -2560,6 +2589,78 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 "summary_stored": bool(_consol_res.get("summary_stored")),
             },
         }
+
+    # =========================================================================
+    # A0.59 Price Alerts (checklists F5/F6: alert rules → Telegram push)
+    # =========================================================================
+    # "alert me when BTC > 100k" parks a rule in the alert store; "my alerts"
+    # lists them; "cancel alert <symbol>" removes one. The market-watch loop
+    # (in agent_watch_tick) evaluates every rule hourly against the live Stratex
+    # market query and pushes a Telegram message when a rule fires (latched
+    # once per rule per day). Deterministic, BEFORE the watchlist path so
+    # alert phrasing is never eaten by "watch topic" (the alert store keys on
+    # rule_id; the watchlist store keys on topic text — disjoint namespaces).
+    try:
+        from friday.proactive.market_watch import (
+            alert_store,
+            is_alert_list_query,
+            parse_alert_add,
+            parse_alert_remove,
+        )
+
+        _alert_rule = parse_alert_add(raw_cmd)
+        if _alert_rule:
+            _stored = alert_store.add(_alert_rule)
+            _n_alerts = len(alert_store.list())
+            _reply = (
+                f"On it, Boss — alert set: {_stored['symbol']} {_stored['direction']} {_stored['target']}. "
+                f"The market-watch loop checks every hour; the moment it crosses, you'll get a Telegram ping. "
+                f"({_n_alerts} alert{'s' if _n_alerts != 1 else ''} active. Say \"my alerts\" to list them.)"
+            )
+            return {
+                "reply": _reply,
+                "metadata": {
+                    "fast_path": True,
+                    "conversational": True,
+                    "alert_add": True,
+                    "rule_id": _stored["rule_id"],
+                },
+            }
+        _cancel_target = parse_alert_remove(raw_cmd)
+        if _cancel_target:
+            _removed = False
+            for _r in alert_store.list():
+                if _cancel_target.upper() in _r["symbol"] or _cancel_target in _r.get("rule_id", ""):
+                    _removed = alert_store.remove(_r["rule_id"]) or _removed
+            _reply = (
+                f"Done, Boss — alert on \"{_cancel_target}\" cancelled." if _removed
+                else f"I checked my alert list, Boss, and nothing matched \"{_cancel_target}\". Say \"my alerts\" to see the active rules."
+            )
+            return {
+                "reply": _reply,
+                "metadata": {"fast_path": True, "conversational": True, "alert_remove": True, "removed": _removed},
+            }
+        if is_alert_list_query(cmd):
+            _alerts = alert_store.list()
+            if not _alerts:
+                _reply = (
+                    "No price alerts active, Boss. Tell me \"alert me when BTC > 100k\" "
+                    "(or any symbol, above/below, any price) and the market-watch loop will ping you when it fires."
+                )
+            else:
+                _lines = [f"You have {_len} price alert{'s' if (_len := len(_alerts)) != 1 else ''} active, Boss:"]
+                for _a in _alerts:
+                    _last = str(_a.get("last_fired_ist") or "")[:10]
+                    _when = f" (last fired {_last})" if _last else ""
+                    _lines.append(f"• {_a['symbol']} {_a['direction']} {_a['target']}{_when}")
+                _lines.append("The market-watch loop evaluates these hourly against the live Stratex market query.")
+                _reply = "\n".join(_lines)
+            return {
+                "reply": _reply,
+                "metadata": {"fast_path": True, "conversational": True, "alert_list": True},
+            }
+    except Exception as _ae:
+        logger.debug(f"alert fast-path skipped: {_ae}")
 
     # =========================================================================
     # A0.58 Watchlist (checklists F8/F9: watch topics + daily briefings)

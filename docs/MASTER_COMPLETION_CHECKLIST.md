@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-12 (IST; batch 4 COMPLETE by ZAI Agent 1: B8/B11/B12, A6/A7/A9/A11/A12/A14 - 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5/G6/G7/G8/G11/G12 + H8/H9 - 42 new tests, 0 regressions; batch 6 COMPLETE by ZAI Agent 2: F8/F9 watchlist briefings + change detection, F13 SSRF-guarded web fetch/summarize, F14/F15 site sweeps, F17/F18 dependency+CI health, F20 Sentinel digest, F21 pre-push secret guard - 35 new tests, 0 regressions; batch 9 part 1 COMPLETE by ZAI Agent 1: I1-I4 battery rescue, real-usage battery 29/29 green, 3 routing hijacks fixed, 0 regressions vs clean tree)
+**Snapshot:** 2026-11-12 (IST; batch 4 COMPLETE by ZAI Agent 1: B8/B11/B12, A6/A7/A9/A11/A12/A14 — 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5/G6/G7/G8/G11/G12 + H8/H9 — 42 new tests, 0 regressions; batch 6 COMPLETE by ZAI Agent 2: F8/F9 watchlist briefings + change detection, F13 SSRF-guarded web fetch/summarize, F14/F15 site sweeps, F17/F18 dependency+CI health, F20 Sentinel digest, F21 pre-push secret guard — 35 new tests, 0 regressions; batch 7 COMPLETE by ZAI Agent 2: F3 usage dashboard + rate-limit guard, F5 daily portfolio report, F6 price-alert rules engine, F11 forecast refresh, F12 prediction accuracy tracking, F23 vyralx_render, F24 vyralx_publish (fail-closed D-015), F22/F27 verified live — 42 new tests, 0 regressions; F module COMPLETE 27/27; batch 9 part 1 COMPLETE by ZAI Agent 1: I1-I4 battery rescue, real-usage battery 29/29 green, 3 routing hijacks fixed, 0 regressions vs clean tree) · 104/125 items done (83%)
 
 ---
 
@@ -96,12 +96,12 @@
 **Inference (AI gateway)**
 - [x] **F1** Free-model gateway serving chat (groq gpt-oss-120b live)
 - [x] **F2** Provider failover chain (free-first, cost_mode=free_first)
-- [ ] **F3** Usage dashboard + rate-limit guard (know before we hit limits)
+- [x] **F3** Usage dashboard + rate-limit guard (know before we hit limits) (DONE 2026-11-12 IST, batch 7 / ZAI Agent 2: `proactive/market_watch.py` UsageTracker (per-agent per-day call/token counters, file-backed, 14-day bounded) + `GET /api/agents/usage` dashboard endpoint (per-agent stats, totals, limits, F12 forecast summary) + rate-limit guard (soft-warning at 80% of free tier, hard-stop at 100%); the existing chat tools (intelx_research, stratex_portfolio, futuris_forecast, sentinel_security, vyralx_script/render/publish) now record into it)
 
 **Stratex (markets)**
 - [x] **F4** Portfolio answers via chat (live; paper portfolio — no exchange keys by design)
-- [ ] **F5** Scheduled daily portfolio report (Telegram, 09:00 IST)
-- [ ] **F6** Price/alert rules → Telegram push
+- [x] **F5** Scheduled daily portfolio report (Telegram, 09:00 IST) (DONE 2026-11-12 IST, batch 7 / ZAI Agent 2: scheduled 09:00 IST daily portfolio report through the same Stratex ask_stratex dispatch the chat tool uses, pushed on the owner Telegram channel; honest when Stratex is unreachable)
+- [x] **F6** Price/alert rules → Telegram push (DONE 2026-11-12 IST, batch 7 / ZAI Agent 2: price-alert rules engine (chat intake 'alert me when BTC > 100k' / 'watch NIFTY dip below 24500' with k-suffix + comma parsing + natural-language direction normalization); file-backed store; hourly evaluation loop through real Stratex market query; once-per-rule-per-day firing latch; silent on missing price readings (never invents a firing))
 
 **IntelX (research)**
 - [x] **F7** Research briefs with citations via chat (live)
@@ -110,8 +110,8 @@
 
 **Futuris (forecasting)**
 - [x] **F10** Forecast requests via chat (capability exists; untested live) (DONE 2026-11-11 IST: FuturisForecastTool + FleetClient.request_futuris_forecast — real POST /v1/friday/forecast (target + horizon 1h/24h/7d/30d + quoted-target/horizon extraction); Futuris's honest statuses (BLOCKED/INSUFFICIENT_DATA) reported as-is; every answer states prediction-never-authorization; FORECAST_KEYWORDS routing → TOOL_EXECUTION futuris_forecast, never VISION_MODEL/never DIRECT_REASONING; registered in the default registry; live E2E lands with the next deploy; 32-test suite + 347 related-suite passes)
-- [ ] **F11** Scheduled forecast refresh (markets/topics)
-- [ ] **F12** Prediction accuracy tracking (log predictions, score later)
+- [x] **F11** Scheduled forecast refresh (markets/topics) (DONE 2026-11-12 IST, batch 7 / ZAI Agent 2: twice-daily forecast refresh (09:30 AM + 18:30 PM IST) through the real request_futuris_forecast dispatch on owner-tracked markets (BTCUSDT, ETHUSDT, NIFTY by default), each forecast stored with its horizon-maturity timestamp for the F12 accuracy check)
+- [x] **F12** Prediction accuracy tracking (log predictions, score later) (DONE 2026-11-12 IST, batch 7 / ZAI Agent 2: ForecastStore logs every forecast with maturity timestamp; the 21:00 IST scoring pass checks every matured forecast against the actual Stratex market reading, classifies HIT/MISS/PARTIAL with the delta, and surfaces the accuracy summary in the F3 usage dashboard; honest when the actual reading is missing (forecast stays pending, never a fake MISS))
 
 **Cortex (web ops)**
 - [x] **F13** Web fetch/summarize on request (limited today) (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: `web_fetch_summarize` tool — SSRF guard the old fetch tools lacked (loopback/link-local/private/metadata/non-http/odd-port refused BEFORE connect + post-redirect re-check), cleaned page summarized through the same SynthesizeInformationTool; FETCH_SUMMARIZE_KEYWORDS routing → TOOL_EXECUTION, never DIRECT_REASONING)
@@ -129,14 +129,14 @@
 - [x] **F21** Secret-leak guard on the public repo (pre-push scan) (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: `scripts/guard_secrets_pre_push.py` + `.githooks/pre-push` — scans ADDED lines of pushed commits for the token shapes this fleet uses (Telegram bot, GitHub PAT, Oracle DSN, AWS key, private-key block, Binance key); allowlist for .example shapes; 7-case self-test green; local seatbelt next to CI Gitleaks)
 
 **VyralX (video)**
-- [ ] **F22** Video script generation on request
-- [ ] **F23** Free-tool render pipeline (ffmpeg/Remotion) for clips
-- [ ] **F24** Publish workflow (YouTube/Shorts draft upload)
+- [x] **F22** Video script generation on request (DONE 2026-11-12 IST, batch 3 / ZAI Agent 1 — verified live: VyralXScriptTool (VyralX real /api/v1/vyralx/engines/hyperframes/create-script dispatch with scene composition + manifest; drafting only — nothing rendered/published))
+- [x] **F23** Free-tool render pipeline (ffmpeg/Remotion) for clips (DONE 2026-11-12 IST, batch 7 / ZAI Agent 2: `vyralx_render` tool dispatches to VyralX's real /api/v1/real-engines/hyperframes/render (free-tool ffmpeg/edge_tts pipeline); honest manifest with output path, duration, bytes; render stays local on VyralX; RENDER_KEYWORDS routing → TOOL_EXECUTION)
+- [x] **F24** Publish workflow (YouTube/Shorts draft upload) (DONE 2026-11-12 IST, batch 7 / ZAI Agent 2: `vyralx_publish` tool with fail-closed two-gate guard (D-015 shape — same as Stratex live trading): DEFAULT = draft upload (private review), PRODUCTION publish (status=public) requires BOTH the exact owner phrase 'publish to youtube' AND the FRIDAY_VYRALX_PUBLISH_PROD_ALLOWED=true env flag; honest reply always states which mode ran)
 
 **Memora (memory)**
 - [x] **F25** Persistent cross-session store (live)
 - [x] **F26** Auto-record interactions (live)
-- [ ] **F27** Consolidation daemon (see B7)
+- [x] **F27** Consolidation daemon (see B7) (DONE 2026-11-12 IST (B7/D-013 — verified live in batch 7): the consolidation daemon IS the `_nightly_consolidation_loop` running in server lifespan (02:00-05:00 IST, once per night); merges near-duplicate memories through Memora's real consolidation engine, honest counters, never invents content)
 
 ## G. Autonomy — works while the owner sleeps (12 items)
 
@@ -188,16 +188,11 @@
 | C. Orchestration | 14 | 14 | 100% |
 | D. Website | 13 | 18 | 72% |
 | E. Voice | 2 | 10 | 20% |
-| A. Brain | 13 | 14 | 92% |
-| B. Memory | 12 | 12 | 100% |
-| C. Orchestration | 14 | 14 | 100% |
-| D. Website | 13 | 18 | 72% |
-| E. Voice | 2 | 10 | 20% |
-| F. Agents | 18 | 27 | 66% |
+| F. Agents | 27 | 27 | 100% |
 | G. Autonomy | 10 | 12 | 83% |
 | H. Infra | 7 | 10 | 70% |
 | I. Tech debt | 6 | 8 | 75% |
-| **Universe** | **95** | **125** | **76%** |
+| **Universe** | **104** | **125** | **83%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

@@ -431,7 +431,17 @@ async def run_sentinel_digest(
 _last_watch_date: str | None = None
 _last_site_date: str | None = None
 _last_sentinel_date: str | None = None
+_last_portfolio_date: str | None = None
+_last_forecast_am_date: str | None = None
+_last_forecast_pm_date: str | None = None
+_last_prediction_date: str | None = None
+_last_alert_check_ts: float = 0.0
 _latch_lock = threading.Lock()
+
+#: How often the alert check actually fires (every tick would be too chatty;
+#: the rule fires once per day per rule, but we don't need to query Stratex
+#: 144 times a day either).
+ALERT_CHECK_MIN_INTERVAL_SEC = 3600  # once per hour
 
 
 async def agent_watch_tick(
@@ -440,16 +450,29 @@ async def agent_watch_tick(
     watch_coro_factory: Callable[[], Awaitable[dict[str, Any]]] | None = None,
     site_coro_factory: Callable[[], Awaitable[dict[str, Any]]] | None = None,
     sentinel_coro_factory: Callable[[], Awaitable[dict[str, Any]]] | None = None,
+    portfolio_coro_factory: Callable[[], Awaitable[dict[str, Any]]] | None = None,
+    alert_coro_factory: Callable[[], Awaitable[dict[str, Any]]] | None = None,
+    forecast_coro_factory: Callable[[], Awaitable[dict[str, Any]]] | None = None,
+    prediction_coro_factory: Callable[[], Awaitable[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """One gate-check: run whichever scheduled pass is due and unlatched.
 
     Called every 10 minutes by the server's lifespan loop. Never raises —
-    a pass failure is reported inside its own result dict.
+    a pass failure is reported inside its own result dict. Batch 7 adds the
+    market-watch passes (F5 portfolio, F6 alerts, F11 forecast refresh,
+    F12 prediction scoring) into the same single lifespan task.
     """
     global _last_watch_date, _last_site_date, _last_sentinel_date
-    outcome: dict[str, Any] = {"watch": None, "site": None, "sentinel": None}
+    global _last_portfolio_date, _last_alert_check_ts
+    global _last_forecast_am_date, _last_forecast_pm_date, _last_prediction_date
+    outcome: dict[str, Any] = {
+        "watch": None, "site": None, "sentinel": None,
+        "portfolio": None, "alerts": None,
+        "forecast": None, "prediction": None,
+    }
     moment = (now or now_owner_tz()).astimezone(OWNER_TZ)
     today = owner_today()
+    now_ts = time.time()
 
     with _latch_lock:
         # Site sweep first (08:00–12:00): the morning line everyone reads.
@@ -463,6 +486,67 @@ async def agent_watch_tick(
             except Exception as exc:
                 logger.exception("[WATCH] site sweep crashed")
                 outcome["site"] = {"error": type(exc).__name__}
+
+        # F5: daily portfolio report (09:00–12:00 IST, before the 09:30 forecast).
+        if (
+            _in_window(moment, (9, 0), (12, 0))
+            and _last_portfolio_date != today
+        ):
+            _last_portfolio_date = today
+            try:
+                from friday.proactive.market_watch import run_daily_portfolio_report
+                outcome["portfolio"] = await (portfolio_coro_factory or run_daily_portfolio_report)()
+            except Exception as exc:
+                logger.exception("[WATCH] portfolio report crashed")
+                outcome["portfolio"] = {"error": type(exc).__name__}
+
+        # F11: forecast refresh — AM (09:30–10:30) and PM (18:30–19:30) passes.
+        if (
+            _in_window(moment, (9, 30), (10, 30))
+            and _last_forecast_am_date != today
+        ):
+            _last_forecast_am_date = today
+            try:
+                from friday.proactive.market_watch import run_forecast_refresh
+                outcome["forecast"] = await (forecast_coro_factory or run_forecast_refresh)()
+            except Exception as exc:
+                logger.exception("[WATCH] AM forecast refresh crashed")
+                outcome["forecast"] = {"error": type(exc).__name__}
+        elif (
+            _in_window(moment, (18, 30), (19, 30))
+            and _last_forecast_pm_date != today
+        ):
+            _last_forecast_pm_date = today
+            try:
+                from friday.proactive.market_watch import run_forecast_refresh
+                outcome["forecast"] = await (forecast_coro_factory or run_forecast_refresh)()
+            except Exception as exc:
+                logger.exception("[WATCH] PM forecast refresh crashed")
+                outcome["forecast"] = {"error": type(exc).__name__}
+
+        # F12: prediction scoring — 21:00–23:00 IST, score matured forecasts.
+        if (
+            _in_window(moment, (21, 0), (23, 0))
+            and _last_prediction_date != today
+        ):
+            _last_prediction_date = today
+            try:
+                from friday.proactive.market_watch import run_prediction_scoring
+                outcome["prediction"] = await (prediction_coro_factory or run_prediction_scoring)()
+            except Exception as exc:
+                logger.exception("[WATCH] prediction scoring crashed")
+                outcome["prediction"] = {"error": type(exc).__name__}
+
+        # F6: alert-rule check — runs every hour (no day latch; rules fire
+        # once per day per rule via the alert store's last_fired_ist field).
+        if (now_ts - _last_alert_check_ts) >= ALERT_CHECK_MIN_INTERVAL_SEC:
+            _last_alert_check_ts = now_ts
+            try:
+                from friday.proactive.market_watch import run_alert_check
+                outcome["alerts"] = await (alert_coro_factory or run_alert_check)()
+            except Exception as exc:
+                logger.exception("[WATCH] alert check crashed")
+                outcome["alerts"] = {"error": type(exc).__name__}
 
         # Watchlist briefing (17:30–20:00): before the 21:00 self-report.
         if (
@@ -496,15 +580,30 @@ async def agent_watch_tick(
             _last_watch_date = None
         if isinstance(outcome.get("sentinel"), dict) and outcome["sentinel"].get("delivered") is False:
             _last_sentinel_date = None
+        if isinstance(outcome.get("portfolio"), dict) and outcome["portfolio"].get("delivered") is False:
+            _last_portfolio_date = None
+        # Forecast passes: re-latch only on a clean run with stored forecasts.
+        if isinstance(outcome.get("forecast"), dict) and outcome["forecast"].get("error"):
+            if _in_window(moment, (9, 30), (10, 30)):
+                _last_forecast_am_date = None
+            else:
+                _last_forecast_pm_date = None
     return outcome
 
 
 def reset_latches_for_tests() -> None:
     global _last_watch_date, _last_site_date, _last_sentinel_date
+    global _last_portfolio_date, _last_alert_check_ts
+    global _last_forecast_am_date, _last_forecast_pm_date, _last_prediction_date
     with _latch_lock:
         _last_watch_date = None
         _last_site_date = None
         _last_sentinel_date = None
+        _last_portfolio_date = None
+        _last_alert_check_ts = 0.0
+        _last_forecast_am_date = None
+        _last_forecast_pm_date = None
+        _last_prediction_date = None
 
 
 # ---------------------------------------------------------------------------

@@ -1369,6 +1369,39 @@ tasks:
     blockers: []
     next_action: "Post-merge: Fleet CD deploys; the agent-watch loop starts with the next FRIDAY restart (first site sweep tomorrow 08:00 IST, first watchlist briefing 17:30 IST only if topics are queued, first Sentinel digest Monday). Optional: enable .githooks via git config core.hooksPath .githooks on working clones."
 
+  - id: "TASK-BATCH7-AGENT2"
+    title: "Checklist Batch 7 (ZAI Agent 2) — agent depth II: F3/F5/F6/F11/F12/F22/F23/F24/F27 (F module COMPLETE 27/27)"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Continue the checklist in Lane B (Batch 6 ✅). Lane assignment per ZAI_AGENT_2_ONBOARDING.md."
+    merge_note: "Claim posted to issue #35 (comment 6803967919) BEFORE editing the three cross-lane files. Direct main commit per the batch discipline."
+    milestone: "Master Completion Checklist F module 18/27 -> 27/27 (COMPLETE); Universe 100/125 (80%)"
+    files:
+      - "FRIDAY/src/friday/proactive/market_watch.py"
+      - "FRIDAY/src/friday/tools/builtin/vyralx_render.py"
+      - "FRIDAY/src/friday/tools/builtin/vyralx_publish.py"
+      - "FRIDAY/tests/test_batch7_agent_depth_2.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/src/friday/tools/builtin/__init__.py"
+      - "FRIDAY/src/friday/agent/mixins/tools.py"
+      - "FRIDAY/tests/test_batch6_agent_depth.py"
+    acceptance:
+      - "F3: GET /api/agents/usage returns per-agent + totals + limits + rate-limit guard + forecast summary."
+      - "F5: 09:00 IST push of the live Stratex portfolio snapshot on Telegram; honest on failure."
+      - "F6: alert-rule chat intake + hourly evaluation + latched firing once per rule per day; silent on missing prices."
+      - "F11: twice-daily forecast refresh on tracked markets; each stored with maturity timestamp."
+      - "F12: 21:00 IST scoring of matured forecasts (HIT/MISS/PARTIAL); honest on missing actuals."
+      - "F22/F27: verified already live (VyralXScriptTool, _nightly_consolidation_loop)."
+      - "F23: vyralx_render tool dispatches to real VyralX render pipeline."
+      - "F24: vyralx_publish tool fail-closed draft; production publish gated by D-015 two-gate."
+      - "Zero new test failures vs clean main."
+    evidence: "test_batch7_agent_depth_2.py 42/42; A/B battery 15 suites: 487 passed / 18 failed = byte-identical pre-existing baseline, zero new failures; server imports cleanly. Checklist recount: 100/125 (80%); F module 27/27 (100%)."
+    blockers: []
+    next_action: "Post-merge: Fleet CD deploys; the extended agent-watch loop starts with the next FRIDAY restart (first portfolio report tomorrow 09:00 IST, first forecast refresh 09:30/18:30 IST, first prediction scoring 21:00 IST, alert checks hourly). The owner's first alert can be queued immediately via chat. Batch 8 (Lane B): D/E/H module items (mobile, a11y, perf, voice, infra)."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

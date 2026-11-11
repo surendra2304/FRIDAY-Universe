@@ -196,12 +196,29 @@ class TestAgentWatchTick:
         assert fired == ["watch"]
 
     def test_nothing_outside_windows(self):
+        # The windowed passes (site/watch/sentinel/portfolio/forecast/prediction)
+        # must NOT run outside their windows. The alert check runs hourly by
+        # design (batch 7, F6 — alerts need 24/7 evaluation); we pass a noop
+        # factory for it here so this test isolates the windowed-pass contract.
         async def boom():  # must never be called
-            raise AssertionError("no pass should run outside its window")
+            raise AssertionError("no windowed pass should run outside its window")
+
+        async def noop():
+            return None
 
         noon = datetime(2026, 11, 12, 13, 30, tzinfo=OWNER_TZ)  # between windows
-        r = asyncio.run(aw.agent_watch_tick(now=noon, site_coro_factory=boom, watch_coro_factory=boom, sentinel_coro_factory=boom))
-        assert r == {"watch": None, "site": None, "sentinel": None}
+        r = asyncio.run(aw.agent_watch_tick(
+            now=noon,
+            site_coro_factory=boom,
+            watch_coro_factory=boom,
+            sentinel_coro_factory=boom,
+            portfolio_coro_factory=boom,
+            forecast_coro_factory=boom,
+            prediction_coro_factory=boom,
+            alert_coro_factory=noop,  # alert check is intentionally not window-gated
+        ))
+        assert r["watch"] is None and r["site"] is None and r["sentinel"] is None
+        assert r["portfolio"] is None and r["forecast"] is None and r["prediction"] is None
 
     def test_sentinel_digest_monday_only(self):
         fired: list[str] = []

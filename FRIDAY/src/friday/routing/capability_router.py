@@ -234,6 +234,35 @@ class CapabilityRouter:
         "summarize this for me", "tldr this", "tl;dr this",
         "summarize the website", "summarize this website",
     }
+    # Checklist F23 (batch 7, ZAI Agent 2): keywords signaling a render
+    # request for a drafted VyralX script. The answer must come from the REAL
+    # VyralX render pipeline (vyralx_render — free-tool ffmpeg/edge_tts,
+    # honest manifest with output/duration/bytes), never a fabricated "done".
+    RENDER_KEYWORDS = {
+        "render the script", "render this clip", "render this script",
+        "render this short", "render the clip", "render the short",
+        "turn that script into a video", "turn the script into a video",
+        "make a video from the script", "make a clip from the script",
+        "render it as a short", "render as a short", "render it as a video",
+    }
+    # Checklist F24 (batch 7, ZAI Agent 2): keywords signaling a publish
+    # request for a rendered clip. DEFAULT routes to draft upload; production
+    # publish stays fail-closed behind the confirm phrase + env flag (D-015).
+    PUBLISH_KEYWORDS = {
+        "publish the clip", "publish this clip", "publish the short",
+        "publish this short", "publish to youtube", "upload as draft",
+        "upload the clip", "upload the short", "send the clip to youtube",
+        "send the short to youtube", "publish the video",
+    }
+    # Checklist F6 (batch 7, ZAI Agent 2): keywords signaling a price-alert
+    # rule the owner is setting. Routes to TOOL_EXECUTION (alert store), never
+    # DIRECT_REASONING (which would "ok" the alert without recording it).
+    ALERT_KEYWORDS = {
+        "alert me when", "alert me if", "alert when", "alert if",
+        "watch for ", "notify me when", "notify me if",
+        "ping me when", "ping me if", "tell me when", "tell me if",
+        "cancel alert", "remove alert", "delete alert", "my alerts",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -303,6 +332,9 @@ class CapabilityRouter:
             or self._matches(clean_input, self.WEB_OPS_KEYWORDS)
             or self._matches(clean_input, self.MEMORA_OP_KEYWORDS)
             or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS)
+            or self._matches(clean_input, self.RENDER_KEYWORDS)
+            or self._matches(clean_input, self.PUBLISH_KEYWORDS)
+            or self._matches(clean_input, self.ALERT_KEYWORDS)
         )
         # Checklist C12 (batch 3): chained instructions ("research X, then
         # draft the script about it") are multi-stage dispatches, never plain
@@ -315,7 +347,7 @@ class CapabilityRouter:
         except Exception:
             chained = False
         is_conversational = is_conversational and not chained
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS) or self._matches(clean_input, self.RENDER_KEYWORDS) or self._matches(clean_input, self.PUBLISH_KEYWORDS) or self._matches(clean_input, self.ALERT_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -496,6 +528,53 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["web_fetch_summarize"],
                 rationale="Fetch-and-summarize request: read the shared URL's real content (SSRF-guarded), summarize what is actually there.",
+            ))
+
+        # Checklist F23 (batch 7, ZAI Agent 2): Evaluate Video Render — "render
+        # this script/clip" must reach vyralx_render (real VyralX hyperframes
+        # render pipeline, free-tool ffmpeg/edge_tts, honest manifest), never
+        # a DIRECT_REASONING "ok I rendered it".
+        if self._matches(clean_input, self.RENDER_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=30000.0,
+                confidence=0.93,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["vyralx_render"],
+                rationale="Render request: dispatch to VyralX's free-tool render pipeline for a real clip manifest.",
+            ))
+
+        # Checklist F24 (batch 7, ZAI Agent 2): Evaluate Video Publish —
+        # "publish the clip" must reach vyralx_publish (fail-closed draft by
+        # default; production publish gated behind the confirm phrase + env
+        # flag, D-015 shape).
+        if self._matches(clean_input, self.PUBLISH_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=30000.0,
+                confidence=0.92,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["vyralx_publish"],
+                rationale="Publish request: route to vyralx_publish (draft upload by default; production gated by D-015 two-gate).",
+            ))
+
+        # Checklist F6 (batch 7, ZAI Agent 2): Evaluate Price Alert —
+        # "alert me when X > Y" must reach the alert store (TOOL_EXECUTION),
+        # never a conversational "ok" that never records the rule.
+        if self._matches(clean_input, self.ALERT_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=200.0,
+                confidence=0.95,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=True,
+                required_tools=["price_alert"],
+                rationale="Price-alert rule: record it in the alert store (evaluated by the market-watch loop).",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)
