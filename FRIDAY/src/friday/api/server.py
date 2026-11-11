@@ -333,8 +333,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files for the FRIDAY dashboard (orb, voice, fleet, flow)
-app.mount("/static", StaticFiles(directory="src/friday/api"), name="static")
+# Static files for the FRIDAY dashboard (orb, voice, fleet, flow).
+# __file__-relative (not cwd-relative) so importing the server module from any
+# working directory — including pytest from the repo root — cannot break the app.
+_API_STATIC_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=str(_API_STATIC_DIR)), name="static")
 
 @app.middleware("http")
 async def _dashboard_cache_headers(request: Request, call_next):
@@ -1117,6 +1120,106 @@ async def get_agents_supervision() -> dict[str, Any]:
     }
 
 
+@app.get("/api/agents/live")
+async def get_agents_live(_: None = Depends(_require_origin_gate)) -> dict[str, Any]:
+    """Checklist D12: per-agent 'what is each agent doing RIGHT NOW' surface.
+
+    Combines the supervision snapshot's peer reachability with the unified
+    task ledger (TaskRecordStore — the same store the task router and
+    dispatch bus write into, and the source of the C14 chat receipts):
+    - ``in_flight``: the newest record still in submitted/assigned/dispatched
+      — real work under way, with its ledger status and start time;
+    - ``last_outcome``: the newest terminal record (completed/failed/
+      routing_failed) with its terminal time;
+    - nothing is ever synthesized: an agent with no records says so
+      (``total_records: 0``) and is never dressed up as busy.
+    """
+    records_store = None
+    try:
+        from friday_core.task_records import get_shared_task_records
+
+        records_store = get_shared_task_records()
+    except Exception as exc:
+        logger.debug(f"task ledger unavailable for /api/agents/live: {exc}")
+
+    supervision_agents = fleet_supervision_state.get("agents", [])
+    per_agent_reach: dict[str, dict[str, Any]] = {}
+    for agent in supervision_agents:
+        agent_id = str(agent.get("id") or agent.get("name") or "").strip().lower()
+        if agent_id:
+            per_agent_reach[agent_id] = agent
+
+    latest_by_agent: dict[str, dict[str, Any]] = {}
+    ledger_total = 0
+    if records_store is not None:
+        try:
+            all_records = records_store.list()
+            ledger_total = len(all_records)
+            for record in all_records:
+                owner = (record.owner_agent or "").strip().lower()
+                if not owner:
+                    continue
+                current = latest_by_agent.get(owner)
+                if current is None or record.updated_at >= current.updated_at:
+                    latest_by_agent[owner] = record
+        except Exception as exc:
+            logger.debug(f"task ledger read failed for /api/agents/live: {exc}")
+
+    agents_now: list[dict[str, Any]] = []
+    for agent_id, endpoint in CANONICAL_INTERNAL_MESH_URLS.items():
+        reach = per_agent_reach.get(agent_id, {})
+        entry: dict[str, Any] = {
+            "id": agent_id,
+            "reachability": str(reach.get("status") or "unknown"),
+            "latency_ms": reach.get("latency_ms"),
+            "last_checked": reach.get("last_checked"),
+            "in_flight": None,
+            "last_outcome": None,
+            "total_records": 0,
+        }
+        record = latest_by_agent.get(agent_id)
+        if record is not None:
+            entry["total_records"] = 1  # latest known; per-agent count follows
+            try:
+                entry["total_records"] = len(records_store.list(agent=agent_id))
+            except Exception:
+                pass
+            shared = {
+                "task_id": record.task_id,
+                "description": record.description,
+                "status": record.status,
+            }
+            if record.status in {"submitted", "assigned", "dispatched"}:
+                entry["in_flight"] = {
+                    **shared,
+                    "since": datetime.fromtimestamp(
+                        record.created_at, tz=timezone.utc
+                    ).isoformat(),
+                }
+            else:
+                entry["last_outcome"] = {
+                    **shared,
+                    "at": datetime.fromtimestamp(
+                        record.updated_at, tz=timezone.utc
+                    ).isoformat(),
+                }
+        agents_now.append(entry)
+
+    in_flight_count = sum(1 for a in agents_now if a["in_flight"])
+    return {
+        "status": "ok",
+        "scope": "reachability_plus_task_ledger",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "ledger_total": ledger_total,
+        "in_flight_count": in_flight_count,
+        "agents": agents_now,
+        "note": (
+            "in_flight reflects the unified task ledger (router+dispatch bus); "
+            "an agent with zero records has done no tracked work since service start."
+        ),
+    }
+
+
 @app.get("/api/autonomous/status")
 async def get_autonomous_status() -> dict[str, Any]:
     """Expose real-time state of the autonomous execution and recovery subsystem."""
@@ -1207,11 +1310,19 @@ async def decompose_goal_autonomous(
     goal: str,
     _: None = Depends(_require_control_access),
 ) -> dict[str, Any]:
-    """Decompose a complex goal into executable sub-tasks without executing."""
+    """Decompose a complex goal into executable sub-tasks without executing.
+
+    Checklist I7: this is the ONE live registration of this route. A second,
+    unauthenticated shadow handler used to be registered further down; the
+    first registration always won in Starlette, so the duplicate only caused
+    the route-truthfulness failure and confusion. ``plan_id`` is the
+    controller's real stable id (``plan_<ms>``), not the Python memory
+    address the old handler returned.
+    """
     plan = enhanced_controller.decompose_goal(goal)
     return {
         "status": "ok",
-        "plan_id": id(plan),
+        "plan_id": plan.plan_id,
         "goal": plan.goal,
         "subtasks": [
             {
@@ -1222,6 +1333,7 @@ async def decompose_goal_autonomous(
             }
             for st in plan.subtasks
         ],
+        "total_subtasks": plan.total_subtasks,
     }
 
 
@@ -3233,34 +3345,23 @@ async def voice_speak(
 
 
 # --- Enhanced Autonomous Controller Integration ---
-
-@app.post("/api/autonomous/decompose")
-async def decompose_goal_autonomous(goal: str):
-    """Decompose a complex goal into executable sub-tasks."""
-    from friday.autonomous.enhanced_controller import enhanced_controller
-    try:
-        plan = enhanced_controller.decompose_goal(goal)
-        return {
-            "plan_id": list(enhanced_controller.plans.keys())[-1] if enhanced_controller.plans else "",
-            "goal": plan.goal,
-            "subtasks": [
-                {
-                    "id": st.id,
-                    "description": st.description,
-                    "agent": st.agent,
-                    "dependencies": st.dependencies,
-                }
-                for st in plan.subtasks
-            ],
-            "total_subtasks": plan.total_subtasks,
-        }
-    except Exception as exc:
-        raise HTTPException(500, f"Goal decomposition failed: {exc}")
+# Checklist I7: the duplicate POST /api/autonomous/decompose registration that
+# used to live here was dead code (Starlette matches the first registration —
+# the authenticated handler above — so this unauthenticated copy was never
+# reachable) and tripped the route-truthfulness contract. Removed 2026-11-11.
 
 
 @app.post("/api/autonomous/execute")
-async def execute_plan_autonomous(goal: str):
-    """Execute a complete autonomous plan with dependency resolution."""
+async def execute_plan_autonomous(
+    goal: str,
+    _: None = Depends(_require_control_access),
+):
+    """Execute a complete autonomous plan with dependency resolution.
+
+    Gated like its sibling control routes (goals/repair/toggle): this route
+    drives real execution, so it must never be callable by an anonymous
+    remote caller (TASK-SEC-005 posture).
+    """
     from friday.autonomous.enhanced_controller import enhanced_controller
     try:
         plan = enhanced_controller.decompose_goal(goal)

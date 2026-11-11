@@ -10,7 +10,15 @@ dist/
 downloads/
 eggs/
 .eggs/
+# Python build artifacts (gitignore.io template).
+# NOTE (checklist D12 fix, 2026-11-11): the bare `lib/` rule silently hid the
+# Next.js UI source directory FRIDAY/ui/lib/ — which is why lib/api.ts was
+# never committed even though app/page.tsx imports it and the deploy bundle
+# was built against it (the source tree could not rebuild). Python-style lib/
+# build dirs stay ignored; UI TypeScript source under ui/lib/ is tracked.
 lib/
+!ui/lib/
+!ui/lib/**
 lib64/
 parts/
 sdist/

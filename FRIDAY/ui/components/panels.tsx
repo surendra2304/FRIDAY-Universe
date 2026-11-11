@@ -27,6 +27,7 @@ import {
   FleetSnapshot,
   HostTelemetry,
   LiveActivityEvent,
+  AgentsLiveSnapshot,
   cleanDirective,
   freshness,
   istTime,
@@ -90,14 +91,17 @@ export function FleetGrid({
   fleet,
   autonomy,
   liveActivity,
+  now,
   onAsk,
 }: {
   fleet: FleetSnapshot | null;
   autonomy: AutonomySnapshot | null;
   liveActivity: Record<string, LiveActivityEvent>;
+  now?: AgentsLiveSnapshot | null;
   onAsk: (agent: Agent) => void;
 }) {
   const agents = fleet?.agents ?? [];
+  const nowById = new Map((now?.agents ?? []).map((a) => [a.id, a] as const));
   const sorted = [...agents].sort((a, b) => {
     const ai = AGENT_ORDER.indexOf(a.id as (typeof AGENT_ORDER)[number]);
     const bi = AGENT_ORDER.indexOf(b.id as (typeof AGENT_ORDER)[number]);
@@ -117,6 +121,15 @@ export function FleetGrid({
     <div className="fleet-grid">
       {sorted.map((agent, index) => {
         const live = liveActivity[agent.id];
+        const ledger = nowById.get(agent.id);
+        const working = ledger?.in_flight
+          ? {
+              task_id: ledger.in_flight.task_id,
+              description: cleanDirective(ledger.in_flight.description, 120),
+              status: ledger.in_flight.status,
+              at: ledger.in_flight.since,
+            }
+          : null;
         const record = live
           ? {
               directive: cleanDirective(live.directive || `${live.action ?? "activity"} ${live.target ?? ""}`.trim()),
@@ -134,7 +147,7 @@ export function FleetGrid({
                 at: a.recorded_at ?? a.timestamp,
               };
             })();
-        const isActive = autonomy?.active_agent?.toLowerCase() === agent.id;
+        const isActive = autonomy?.active_agent?.toLowerCase() === agent.id || Boolean(working);
         const tone = statusTone(agent.status);
         return (
           <Reveal key={agent.id} delay={Math.min(index * 60, 360)} as="article">
@@ -157,18 +170,27 @@ export function FleetGrid({
                   {typeof agent.latency_ms === "number" ? `${Math.round(agent.latency_ms)} ms` : "latency n/a"}
                 </span>
                 <span className="agent-fresh">
-                  {record?.at
+                  {working
+                    ? `working ${freshness(working.at) || working.status}`
+                    : record?.at
                     ? freshness(record.at)
                       ? `active ${freshness(record.at)}`
                       : "active"
                     : `probe ${freshness(agent.last_checked) || "pending"}`}
                 </span>
               </div>
+              {working && (
+                <div className="agent-task working">
+                  <strong>Working now:</strong> {working.description}
+                </div>
+              )}
               <div className="agent-task">
                 {record?.directive ? (
                   <>
                     <strong>Last work:</strong> {record.directive}
                   </>
+                ) : working ? (
+                  <>{working.task_id} — {working.status}</>
                 ) : (
                   <>Idle — awaiting your directive</>
                 )}

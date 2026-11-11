@@ -9,6 +9,7 @@ import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel } from "@/components
 import { VoiceCall } from "@/components/VoiceCall";
 import {
   Agent,
+  AgentsLiveSnapshot,
   AutonomySnapshot,
   FleetSnapshot,
   HostTelemetry,
@@ -45,6 +46,7 @@ export default function Page() {
   const [tab, setTab] = useState<Tab>("console");
   const [now, setNow] = useState<Date | null>(null);
   const [fleet, setFleet] = useState<FleetSnapshot | null>(null);
+  const [agentsLive, setAgentsLive] = useState<AgentsLiveSnapshot | null>(null);
   const [telemetry, setTelemetry] = useState<HostTelemetry | null>(null);
   const [autonomy, setAutonomy] = useState<AutonomySnapshot | null>(null);
   const [liveActivity, setLiveActivity] = useState<Record<string, LiveActivityEvent>>({});
@@ -62,10 +64,11 @@ export default function Page() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const [fleetResult, telemetryResult, autonomyResult] = await Promise.allSettled([
+    const [fleetResult, telemetryResult, autonomyResult, liveResult] = await Promise.allSettled([
       requestJson<FleetSnapshot>("/api/agents/status"),
       requestJson<HostTelemetry>("/api/system_telemetry"),
       requestJson<AutonomySnapshot>("/api/autonomous/status"),
+      requestJson<AgentsLiveSnapshot>("/api/agents/live"),
     ]);
     if (fleetResult.status === "fulfilled") {
       setFleet(fleetResult.value);
@@ -86,6 +89,7 @@ export default function Page() {
       setTelemetry(null);
     }
     if (autonomyResult.status === "fulfilled") setAutonomy(autonomyResult.value);
+    if (liveResult.status === "fulfilled") setAgentsLive(liveResult.value);
   }, []);
 
   useEffect(() => {
@@ -228,7 +232,7 @@ export default function Page() {
               assign or ask anything and FRIDAY dispatches it.
             </p>
           </Reveal>
-          <FleetGrid fleet={fleet} autonomy={autonomy} liveActivity={liveActivity} onAsk={askAgent} />
+          <FleetGrid fleet={fleet} autonomy={autonomy} liveActivity={liveActivity} now={agentsLive} onAsk={askAgent} />
         </section>
 
         {/* ============ ACTIVITY — live operations ============ */}

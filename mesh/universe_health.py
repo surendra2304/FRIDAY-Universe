@@ -245,11 +245,12 @@ universe_health = UniverseHealthMonitor()
 
 # ── API Routes ──────────────────────────────────────────────────────────────
 
-
-@router.get("/api/v1/mesh/health")
-async def get_mesh_health():
-    """Get universe mesh health report."""
-    return await universe_health.get_full_report()
+# Checklist I7 note: GET /api/v1/mesh/health is served by the agent-mesh
+# coordinator router (friday_core/agent_mesh_coordinator.py:mesh_health),
+# which is registered BEFORE this router in the app — a second registration
+# here was shadowed dead code that tripped the route-truthfulness contract.
+# The full UniverseHealthMonitor report remains available through the
+# /api/v1/mesh/health/quick and per-agent routes below.
 
 
 @router.get("/api/v1/mesh/health/quick")

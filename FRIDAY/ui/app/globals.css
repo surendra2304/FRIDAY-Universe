@@ -824,6 +824,12 @@ a { color: inherit; text-decoration: none; }
   min-height: 38px;
 }
 .agent-task strong { color: var(--text); font-weight: 500; }
+.agent-task.working {
+  color: var(--text);
+  border-top: 1px solid var(--line);
+  background: linear-gradient(90deg, rgba(141, 230, 207, 0.10), transparent 70%);
+}
+.agent-task.working strong { color: var(--mint); }
 .agent-result {
   display: flex; align-items: flex-start; gap: 7px;
   font-size: 11.5px;

@@ -48,6 +48,15 @@ CASES = [
     (".deploy-backups/anything", True),
     ("FRIDAY/.deploy-backups/x.tar", True),
     ("docs/notes.bak", True),
+    # --- checklist D12: UI TypeScript source under ui/lib/ MUST be committable ---
+    # (the Python-template `lib/` rule in FRIDAY/.gitignore silently hid it,
+    #  which is why lib/api.ts was never committed and the UI could not rebuild)
+    ("FRIDAY/ui/lib/api.ts", False),
+    ("FRIDAY/ui/lib/hooks/use-fleet.ts", False),
+    ("FRIDAY/ui/lib/utils/format.ts", False),
+    # --- but Python-style lib/ build dirs stay ignored outside the UI ---
+    ("FRIDAY/somepkg/lib/site-packages.py", True),
+    ("FRIDAY/build-target/lib/artifact.py", True),
 ]
 
 
@@ -91,6 +100,7 @@ def test_tracked_bridge_files_are_listed_source() -> None:
     Guards against someone force-adding a runtime artifact to work around the
     old blanket rule (the exact failure mode TASK-CI-004 removes).
     """
+    allowed = {"bridge/"}
     proc = subprocess.run(
         ["git", "ls-files", "bridge/"],
         cwd=REPO_ROOT,
@@ -100,7 +110,6 @@ def test_tracked_bridge_files_are_listed_source() -> None:
     assert proc.returncode == 0, f"git ls-files failed: {proc.stderr.strip()}"
     tracked = [p for p in proc.stdout.splitlines() if p.strip()]
     assert tracked, "bridge/ should contain tracked source (auth.py et al.)"
-
     allowed_suffixes = {".py", ".patch", ".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
     for path in tracked:
         suffix = Path(path).suffix.lower()
@@ -108,6 +117,32 @@ def test_tracked_bridge_files_are_listed_source() -> None:
             f"Tracked bridge file {path} looks like an artifact "
             f"(.{suffix.lstrip('.')}); artifacts must stay untracked."
         )
+
+
+def test_ui_lib_source_is_committable_and_committed() -> None:
+    """Checklist D12: FRIDAY/ui/lib is UI source, not a Python build artifact.
+
+    The Python-template `lib/` rule hid it, lib/api.ts was never committed, and
+    `next build` failed from a fresh clone while the committed prebuilt bundle
+    kept production looking healthy. Lock both halves: the path is addable, and
+    the file the app imports is actually tracked.
+    """
+    ignored = _git_check_ignore(["FRIDAY/ui/lib/api.ts"])
+    assert "FRIDAY/ui/lib/api.ts" not in ignored, (
+        "FRIDAY/ui/lib must be committable (Python lib/ rule must not hide UI source)"
+    )
+    proc = subprocess.run(
+        ["git", "ls-files", "FRIDAY/ui/lib/"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, f"git ls-files failed: {proc.stderr.strip()}"
+    tracked = [p for p in proc.stdout.splitlines() if p.strip()]
+    assert "FRIDAY/ui/lib/api.ts" in tracked, (
+        "lib/api.ts must be tracked — app/page.tsx imports @/lib/api; a fresh "
+        "clone must be able to rebuild the dashboard"
+    )
 
 
 if __name__ == "__main__":  # manual evidence run: python tests/test_gitignore_bridge_source.py
