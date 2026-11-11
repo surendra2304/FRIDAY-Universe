@@ -289,17 +289,28 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 9. ⬜ E10 Indian-English accent check → moved to Batch 9b
 10. ✅ Commit + notify (this batch; items 5–9 continue in Batch 9b)
 
-## Batch 9b — Tech debt & tests, part 2 (I 6/8 → 8/8 + verification items) — NEXT (Lane A / ZAI Agent 1)
+## Batch 9b — Tech debt & tests, part 2 (I 6/8 → 8/8 + verification items) — COMPLETE 2026-11-12 (Lane A / ZAI Agent 1)
 
-1. ⬜ I5 Coverage gate in CI
-2. ⬜ I6 Dead-code sweep
-3. ⬜ A5 greeting fast-path verification (may already be done — verify + tick)
-4. ⬜ H10 $0-cost audit
-5. ⬜ E10 Indian-English accent check
-6. ⬜ Any fallout from the hermetic-battery change observed on the production
-   VM (battery now uses test-only sqlite there too — by design, it must
-   never touch the production schema)
-7. ⬜ Commit + notify "Batch 9b complete"
+1. ✅ I5 Coverage gate in CI — scripts/coverage_gate.py + tests/COVERAGE_MANIFEST.json
+   (total floor 16.0% + per-module floors for 7 regression modules), CI's
+   seven suites now one --cov invocation + gate step; 7 self-tests
+2. ✅ I6 Dead-code sweep — 24 verified-dead files removed (14 Inference
+   gateway duplicates, 10 Stratex legacy orphans), 0 new failures
+   (61=61 identical pre-existing sandbox errors; Stratex 40/40; CI set 194/194);
+   report docs/archive/dead_code_sweep_2026-11-12.md
+3. ✅ A5 greeting fast-path VERIFIED (suite hermetic 25/25; stale
+   pre-TASK-MEM-003 expectation retired)
+4. ✅ H10 $0-cost audit — scripts/zero_cost_audit.py 9/9 PASS +
+   docs/security/zero_cost_audit_2026-11-12.md (quarterly; next 2027-02-12)
+5. ✅ E10 Indian-English accent check — 18-phrase corpus + scoring sheet + 7
+   tests + worker accent-comprehension instruction (owner session closes it)
+6. ✅ Hermetic-battery fallout — RESOLVED: conftest sqlite env default
+   unlocked ~3,100 previously-unrunnable tests; 6 latent failures surfaced,
+   ALL fixed (stale persona/greeting assertions, env-test hermeticity, 25
+   fleet fields documented in FRIDAY/.env.example); battery 29/29; all test
+   writes stay in tmp paths (never the production schema); production-VM
+   pull checklist recorded in docs/handoff.md
+7. ✅ Commit + notify "Batch 9b complete"
 
 ## Batch 10 — Voice + remaining E items (E 2/10 → 9/10)
 

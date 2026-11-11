@@ -1,5 +1,19 @@
+import os
 import sys
+import tempfile
 from pathlib import Path
+
+# Hermetic test persistence (batch 9b, A5/E10 verification): the sanctioned
+# test-only backend is memory_backend='sqlite' inside a pytest run. Setting it
+# as an env DEFAULT (not override) before any friday import makes the
+# import-time Settings() singletons (fleet_client, etc.) resolvable in
+# sandboxes and CI, which have no Oracle Autonomous DB. Tests that need a
+# different backend pass it explicitly — Settings kwargs beat env vars.
+os.environ.setdefault("FRIDAY_MEMORY_BACKEND", "sqlite")
+os.environ.setdefault(
+    "FRIDAY_MEMORY_DB_PATH",
+    str(Path(tempfile.mkdtemp(prefix="friday_tests_")) / "conftest_memory.db"),
+)
 
 import pytest
 

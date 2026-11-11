@@ -1,0 +1,117 @@
+{
+  "_comment": "E10 accent-accuracy phrase corpus — Indian-English (Hyderabad/Telugu mix). Each phrase is spoken by the owner during a voice session; the scorer marks whether FRIDAY's ANSWER shows it understood (not whether the transcript matched exactly). pass_criteria describes what a correct understanding looks like. Category tags: retroflex=consonant contrasts ASR commonly fumbles, indian_vocab=Indian-English vocabulary, telugu_mix=code-mixing, numbers=Indian numbering (critical for trading), domain=owner's real fleet/trading phrasing, speed=natural fast speech.",
+  "version": "1.0",
+  "created": "2026-11-12",
+  "scoring_rule": "PASS = FRIDAY's answer demonstrably understood the phrase (per pass_criteria). A single 'pardon?' is allowed per phrase and does NOT fail it; failing to understand after one repeat, or answering something else, fails the phrase. Accuracy = passed/total; >= 90% = kit PASS.",
+  "phrases": [
+    {
+      "id": "AE-01",
+      "category": "domain",
+      "phrase": "FRIDAY, what is my portfolio balance today?",
+      "pass_criteria": "Speaks the real current demo balance (grounded snapshot), not a refusal or hallucinated figure"
+    },
+    {
+      "id": "AE-02",
+      "category": "numbers",
+      "phrase": "Did the bot make two lakh profit or lose fifty thousand?",
+      "pass_criteria": "Answer references actual P&L direction correctly and naturally handles lakh/fifty-thousand quantities"
+    },
+    {
+      "id": "AE-03",
+      "category": "indian_vocab",
+      "phrase": "FRIDAY, do the needful and close all open trades.",
+      "pass_criteria": "Recognises 'do the needful' as an action request; asks the boss-gate confirmation or explains the live-action policy instead of ignoring it"
+    },
+    {
+      "id": "AE-04",
+      "category": "telugu_mix",
+      "phrase": "Inka emi cheyyali? Portfolio chudu.",
+      "pass_criteria": "Understands the Telugu-English mix ('what should we do now? look at the portfolio'); answers with a portfolio snapshot or sensible next-step suggestions, mirroring the mix"
+    },
+    {
+      "id": "AE-05",
+      "category": "retroflex",
+      "phrase": "Tell me about the ten trades the bot did yesterday.",
+      "pass_criteria": "Numbers/order flow understood: talks about recent trades (ten vs. tens vs. dent must not derail the answer); if fewer than ten trades exist, it says the true count honestly"
+    },
+    {
+      "id": "AE-06",
+      "category": "telugu_mix",
+      "phrase": "Stratex status cheppu, any losses yesterday?",
+      "pass_criteria": "Answers Stratex status AND yesterday's loss/none in one reply — both halves of the mixed phrase understood"
+    },
+    {
+      "id": "AE-07",
+      "category": "domain",
+      "phrase": "What is IntelX doing right now?",
+      "pass_criteria": "Real per-agent status answer (the fleet surface), spoken, not a guess"
+    },
+    {
+      "id": "AE-08",
+      "category": "indian_vocab",
+      "phrase": "I am going out of station for two days — keep an eye on the bot.",
+      "pass_criteria": "Understands 'out of station' = away; acknowledges the monitoring request in context (does not ask what a station is)"
+    },
+    {
+      "id": "AE-09",
+      "category": "speed",
+      "phrase": "Okkati cheppu — yesterday lo bot emi chesindi?",
+      "pass_criteria": "Fast mixed speech understood: tells what the bot actually did yesterday (real trade/heartbeat summary), not a generic answer"
+    },
+    {
+      "id": "AE-10",
+      "category": "numbers",
+      "phrase": "Buy twenty-five, sell one seventy-five.",
+      "pass_criteria": "Treats as trading quantities/prices talk (or asks one clarifying question); does not garble twenty-five vs. one-seventy-five"
+    },
+    {
+      "id": "AE-11",
+      "category": "telugu_mix",
+      "phrase": "Chala mandi antunnaru market fall avtundi — nenu em cheyyali?",
+      "pass_criteria": "Full Telugu sentence understood: responds in Telugu (or mirrored mix) with honest, non-fabricated market-regime answer (no measured regime → says so)"
+    },
+    {
+      "id": "AE-12",
+      "category": "retroflex",
+      "category_note": "the classic dental/retroflex trap for Indian English ASR",
+      "phrase": "Did the daily report come today or not?",
+      "pass_criteria": "Yes/no grounded on the daily report schedule; does not mishear 'report' as 'support'/'import' and answer about something else"
+    },
+    {
+      "id": "AE-13",
+      "category": "domain",
+      "phrase": "How is the fleet doing, any agent down?",
+      "pass_criteria": "Per-agent health answer including any actually-down agent (truthful fleet surface)"
+    },
+    {
+      "id": "AE-14",
+      "category": "indian_vocab",
+      "phrase": "Prepone the morning briefing to seven o'clock.",
+      "pass_criteria": "Understands 'prepone' = move earlier; confirms the new 07:00 IST briefing time (or asks one short clarifying question)"
+    },
+    {
+      "id": "AE-15",
+      "category": "telugu_mix",
+      "phrase": "Revert back to me after checking, okay?",
+      "pass_criteria": "Acknowledges as 'check and get back to you'; does not ask what revert means"
+    },
+    {
+      "id": "AE-16",
+      "category": "numbers",
+      "phrase": "Konchem wait cheyyi — five minutes lo vastha.",
+      "pass_criteria": "Understands the owner will return in ~5 minutes; brief acknowledgement, no action triggered"
+    },
+    {
+      "id": "AE-17",
+      "category": "speed",
+      "phrase": "Night lo bot lechi lechi trades chesinda?",
+      "pass_criteria": "Understands the question about overnight trades; answers from the real overnight activity (or honest 'no overnight trades')"
+    },
+    {
+      "id": "AE-18",
+      "category": "domain",
+      "phrase": "Summarise ek ga — one line only.",
+      "pass_criteria": "Understands 'ek ga' (together/at once) + the one-line constraint; single-sentence summary follows"
+    }
+  ]
+}

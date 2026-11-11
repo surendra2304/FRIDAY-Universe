@@ -141,3 +141,6 @@ bridge/*.db
 # workflow (GitHub Secrets -> VM). NEVER commit real credentials (public repo).
 credentials.md
 credentials.md.bak-*
+coverage_ci.json
+*.coverage
+.coverage.*

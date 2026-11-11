@@ -1,10 +1,30 @@
 """Mock tests for semantic UI-action routing: IntentDetector -> pywinauto provider -> agent."""
 
+import tempfile
+from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
 from friday.core.types import AuthorizationDecision, AuthorizationResponse
 from friday.vision.intent_detector import ActionIntent, IntentDetector
+
+# Hermetic persistence root (batch 9b): one temp dir per pytest session, so
+# the sqlite test-only memory backend never touches the production schema.
+_HERMETIC_TMP = Path(tempfile.mkdtemp(prefix="semantic_ui_tests_"))
+
+
+def _hermetic_settings(**overrides):
+    """Settings that never require the Oracle DB (sanctioned sqlite test backend)."""
+    from friday.core.config import Settings
+
+    defaults = dict(
+        env="testing",
+        llm_provider="mock",
+        memory_backend="sqlite",
+        memory_db_path=str(_HERMETIC_TMP / "semantic_ui_memory.db"),
+    )
+    defaults.update(overrides)
+    return Settings(**defaults)
 
 # ---------------------------------------------------------------------------
 # IntentDetector patterns
@@ -183,12 +203,23 @@ class FakeUIProvider:
 
 
 def _make_agent_with(provider, llm):
-    """Build a FridayAgent wired with fake UI provider and mock LLM, no side effects."""
+    """Build a FridayAgent wired with fake UI provider and mock LLM, no side effects.
+
+    Hermetic persistence (batch 9b, same pattern as the real-usage battery):
+    memory_backend='sqlite' inside a pytest run is the sanctioned test-only
+    backend, so the suite never depends on a live Oracle Autonomous DB.
+    """
     from friday.agent.agent import FridayAgent
     from friday.core.config import Settings
     from friday.memory.in_memory import InMemoryConversationMemory
 
-    settings = Settings(env="testing", llm_provider="mock", ui_automation_enabled=True)
+    settings = Settings(
+        env="testing",
+        llm_provider="mock",
+        ui_automation_enabled=True,
+        memory_backend="sqlite",
+        memory_db_path=str(_HERMETIC_TMP / "semantic_ui_memory.db"),
+    )
     agent = FridayAgent.__new__(FridayAgent)
     agent.settings = settings
     agent.llm = llm
@@ -281,9 +312,21 @@ def test_greeting_fast_path_rejects_compound_requests():
         "hey, open notepad",
         "hi can you click the send button",
         "sup, what time is it",
-        "hello FRIDAY",  # addressed requests flow through the LLM pipeline
     ]:
         assert agent._greeting_fast_path(phrase) is None, phrase
+
+
+def test_greeting_fast_path_accepts_addressed_pure_greeting():
+    """TASK-MEM-003 (2026-11-10): "hello friday" / "hi friday" / "hey friday"
+    are the owner's natural greetings and DO take the fast path (which
+    volunteers a remembered line). The stale pre-TASK-MEM-003 expectation
+    (routed to the LLM pipeline) was found during the batch-9b A5
+    verification pass and retired here."""
+    agent = _make_agent_with(FakeUIProvider(), mock.MagicMock())
+    for phrase in ["hello FRIDAY", "hi friday", "hey friday", "hello"]:
+        response = agent._greeting_fast_path(phrase)
+        assert response is not None, phrase
+        assert response.metadata["greeting_fast_path"] is True
 
 
 def test_process_message_greeting_bypasses_cognitive_loop():
@@ -316,7 +359,7 @@ def test_system_prompt_is_provider_agnostic():
     from friday.agent.prompts import get_default_system_prompt
     from friday.core.config import Settings
 
-    prompt = get_default_system_prompt(Settings())
+    prompt = get_default_system_prompt(_hermetic_settings())
     assert "multi-provider architecture" in prompt
     for banned in ("Google Gemini", "Gemini", "OpenAI", "Groq", "OpenRouter", "powered by"):
         assert banned.lower() not in prompt.lower(), f"Found '{banned}' in system prompt"
@@ -326,7 +369,7 @@ def test_system_prompt_identity_uses_requested_wording():
     from friday.agent.prompts import get_default_system_prompt
     from friday.core.config import Settings
 
-    prompt = get_default_system_prompt(Settings())
+    prompt = get_default_system_prompt(_hermetic_settings())
     assert "You are FRIDAY" in prompt
     assert "Fully Responsive Intelligent Digital Assistant" in prompt
     assert "multi-provider architecture" in prompt
@@ -336,7 +379,7 @@ def test_system_prompt_contains_greeting_rule():
     from friday.agent.prompts import get_default_system_prompt
     from friday.core.config import Settings
 
-    prompt = get_default_system_prompt(Settings())
+    prompt = get_default_system_prompt(_hermetic_settings())
     assert "greeting" in prompt.lower()
     assert "Do not treat greetings as commands or tool targets" in prompt
     for greeting in ("'hi'", "'hello'", "'hey'"):

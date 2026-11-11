@@ -47,3 +47,25 @@ LiveKit telemetry logged **event-loop-blocked warnings (158–679 ms; threshold 
 | Token OK but room silent | `systemctl status FRIDAY-Voice` + journal (worker picks up sessions) |
 | Voice answers but wrong facts | that's the agent surface, not voice — report the phrase to the relevant task |
 | Choppy audio | the event-loop warnings above; grab the journal excerpt |
+
+---
+
+## E10 addendum — accent-accuracy module (2026-11-12, batch 9b)
+
+The kit above verifies the voice loop end-to-end. The E10 module verifies
+ACCURACY on the owner's actual speech patterns (Hyderabad Indian-English with
+natural Telugu-English code-mixing):
+
+- **Phrase corpus:** `FRIDAY/src/friday/voice/accent_phrase_corpus.json` — 18
+  phrases across retroflex traps, Indian-English vocabulary (do the needful,
+  prepone, out of station, revert), Telugu-English mixing, lakh/crore trading
+  quantities, and fleet-domain phrasing.
+- **Scoring sheet:** `python3 FRIDAY/scripts/accent_scoring_sheet.py` prints
+  (or `--out FILE.md` writes) the scoring sheet — one row per phrase with the
+  pass criteria; ≥90% (17/18) = kit PASS. One "pardon?" per phrase is allowed.
+- **Worker side:** the FRIDAY-Voice instruction now explicitly comprehends
+  Telugu-accented English and Telugu-English mixes, mirrors the owner's mix,
+  and never mocks or over-corrects his accent.
+- **Run it:** after the 6-phrase session above, speak the 18 corpus phrases
+  and fill the sheet (~5 extra minutes). Post the filled sheet to issue #35
+  (TASK-E10 evidence).

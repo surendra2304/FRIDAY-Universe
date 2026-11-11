@@ -1,0 +1,28 @@
+{
+  "_comment": "Regression-class coverage manifest (checklist I5). Baseline measured 2026-11-12 by running the seven non-HTTP CI suites of .github/workflows/friday-universe-ci.yml with --cov on friday_core. floors = floor(baseline * 0.9): any module in this manifest that drops below its floor (e.g. because its regression tests were deleted, skipped or broken) fails CI via scripts/coverage_gate.py. Ratchet floors upward only, with a fresh measured baseline.",
+  "package_root": "FRIDAY/apps/core/src/friday_core",
+  "total_floor_percent": 16.0,
+  "modules": {
+    "real_realtime_pipeline.py": 88.0,
+    "universe_dashboard.py": 80.0,
+    "universe_orchestrator.py": 80.0,
+    "real_cross_agent_engine.py": 60.0,
+    "agent_runtime.py": 47.0,
+    "real_harness_engineering.py": 36.0,
+    "real_browser_agent.py": 24.0
+  },
+  "baseline": {
+    "measured_total_percent": 16.67,
+    "measured_at": "2026-11-12",
+    "suites": [
+      "tests/test_real_functional_engines.py",
+      "tests/test_real_cross_agent_integration.py",
+      "tests/test_real_advanced_engines.py",
+      "tests/test_real_deep_engines.py",
+      "tests/test_real_universe_orchestrator.py",
+      "tests/test_real_realtime_pipeline.py",
+      "tests/test_real_universe_dashboard.py"
+    ],
+    "tests_passed": 194
+  }
+}

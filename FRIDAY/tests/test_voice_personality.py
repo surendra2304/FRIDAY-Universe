@@ -79,11 +79,15 @@ def test_voice_persona_system_prompt_guidelines(memory_db):
     assert sys_inst is not None
     prompt_text = sys_inst.parts[0].text
 
-    # Core personality checks
+    # Core personality checks (updated batch 9b to the owner-directed Boss
+    # contract persona of 2026-11-11: "Boss" is now the chosen title, used
+    # naturally and sparingly — the old "never use sycophantic titles" ban
+    # was deliberately retired; these tests were never runnable in the
+    # sandbox before the conftest sqlite default, so the staleness survived)
     assert "Calm, intelligent, concise, confident, natural" in prompt_text
     assert "The user is Surendra" in prompt_text
-    assert "do NOT prepend or repeat it on every response" in prompt_text
-    assert "Never use sycophantic titles like 'Boss'" in prompt_text
+    assert "do NOT repeat it on every response" in prompt_text
+    assert 'Use "Boss" or his name naturally and sparingly' in prompt_text
     assert "INTERRUPTION RECOVERY" in prompt_text
     assert "Speech Optimization: Never speak raw JSON" in prompt_text
     assert "Done." in prompt_text
@@ -296,4 +300,6 @@ def test_system_instruction_identity_and_timezone():
     assert "You are FRIDAY" in prompt_text
     assert "Surendra" in prompt_text
     assert "Indian Standard Time" in prompt_text or "IST" in prompt_text or "timezone" in prompt_text
-    assert "Surendra is your creator" in prompt_text
+    # Boss-contract phrasing (batch 4, 2026-11-11) — replaced the stale
+    # "Surendra is your creator" wording
+    assert "Surendra is your Boss — creator, owner, administrator" in prompt_text

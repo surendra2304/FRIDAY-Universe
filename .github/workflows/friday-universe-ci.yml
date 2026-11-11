@@ -18,35 +18,31 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install fastapi uvicorn httpx pydantic pytest requests numpy scipy matplotlib pandas
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas
 
-      - name: Run basic engine tests
+      # Checklist I5: the seven engine suites run as ONE invocation so coverage
+      # accumulates across them, then scripts/coverage_gate.py enforces the
+      # regression-class floors in tests/COVERAGE_MANIFEST.json. A PR that
+      # deletes/breaks the tests for a covered module fails here, not silently.
+      - name: Run engine test suites with coverage
         run: |
-          python3 -m pytest tests/test_real_functional_engines.py -v --tb=short
+          python3 -m pytest \
+            tests/test_real_functional_engines.py \
+            tests/test_real_cross_agent_integration.py \
+            tests/test_real_advanced_engines.py \
+            tests/test_real_deep_engines.py \
+            tests/test_real_universe_orchestrator.py \
+            tests/test_real_realtime_pipeline.py \
+            tests/test_real_universe_dashboard.py \
+            tests/test_coverage_gate.py \
+            -v --tb=short \
+            --cov=FRIDAY/apps/core/src/friday_core \
+            --cov-report=term-missing \
+            --cov-report=json:coverage_ci.json
 
-      - name: Run cross-agent integration tests
+      - name: Coverage gate (regression classes — checklist I5)
         run: |
-          python3 -m pytest tests/test_real_cross_agent_integration.py -v --tb=short
-
-      - name: Run advanced engine tests
-        run: |
-          python3 -m pytest tests/test_real_advanced_engines.py -v --tb=short
-
-      - name: Run deep engine tests
-        run: |
-          python3 -m pytest tests/test_real_deep_engines.py -v --tb=short
-
-      - name: Run orchestrator tests
-        run: |
-          python3 -m pytest tests/test_real_universe_orchestrator.py -v --tb=short
-
-      - name: Run realtime pipeline tests
-        run: |
-          python3 -m pytest tests/test_real_realtime_pipeline.py -v --tb=short
-
-      - name: Run dashboard tests
-        run: |
-          python3 -m pytest tests/test_real_universe_dashboard.py -v --tb=short
+          python3 scripts/coverage_gate.py coverage_ci.json
 
       - name: Run Memora vector tenant and transaction regressions
         working-directory: Memora

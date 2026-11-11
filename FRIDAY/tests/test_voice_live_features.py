@@ -429,9 +429,22 @@ def test_headphones_mode_disables_echo_gate_and_enables_barge_in():
 
 
 def test_env_example_documents_every_settings_field():
+    from pathlib import Path
+
+    import friday.core.config as config_module
     from friday.core.config import Settings
 
-    example = open(".env.example", encoding="utf-8").read()
+    # CWD-independent (batch 9b): resolve .env.example from the package tree
+    # (FRIDAY/.env.example), not from wherever pytest was launched — running
+    # from the repo root used to read the wrong .env.example and report every
+    # field as undocumented.
+    search = Path(config_module.__file__).resolve().parent
+    example_path = next(
+        (p / ".env.example" for p in [search, *search.parents] if (p / ".env.example").exists()),
+        None,
+    )
+    assert example_path is not None, "FRIDAY/.env.example not found above the package"
+    example = example_path.read_text(encoding="utf-8")
     missing = [f"FRIDAY_{n.upper()}" for n in Settings.model_fields
                if f"FRIDAY_{n.upper()}" not in example]
     assert not missing, f"Undocumented fields in .env.example: {missing}"
@@ -444,6 +457,11 @@ def test_missing_env_vars_fall_back_to_safe_defaults(monkeypatch):
     for var in list(os.environ):
         if var.startswith("FRIDAY_"):
             monkeypatch.delenv(var, raising=False)
+    # The database_url field also accepts UNPREFIXED aliases (DATABASE_URL,
+    # FRIDAY_UNIVERSE_DB_URL) — a sandbox/workspace DATABASE_URL must not leak
+    # into the "no env vars at all" scenario (batch 9b hermeticity fix).
+    for alias in ("DATABASE_URL", "FRIDAY_UNIVERSE_DB_URL"):
+        monkeypatch.delenv(alias, raising=False)
 
     from friday.core.config import Settings
 
@@ -453,7 +471,11 @@ def test_missing_env_vars_fall_back_to_safe_defaults(monkeypatch):
     assert s.voice_headphones_mode is False
     assert s.voice_enabled is False
     assert s.log_level == "INFO"
-    assert s.memory_backend == "sqlite"
+    # memory_backend field default is 'oracle' (fail-closed production
+    # doctrine: Oracle is THE production backend; sqlite is test-only and only
+    # ever set explicitly — never a no-env default). Fixed batch 9b: this test
+    # used to expect 'sqlite', which contradicts the fail-closed design.
+    assert s.memory_backend == "oracle"
     assert s.groq_api_key is None and s.mistral_api_key is None
 
 
@@ -471,11 +493,27 @@ def test_cli_voice_override_message_is_omitted_from_startup(monkeypatch, capsys)
 
     from friday.cli.main import main
 
+    # Batch 9b: main() calls setup_logging(), which mutates the GLOBAL
+    # "friday" logger (handlers.clear(), new console handler at CRITICAL,
+    # propagate=False). Inside pytest that silences every later
+    # caplog-based test in this process (test_voice_tool_security test_H
+    # captured an empty log). Snapshot and restore the logger state.
+    import logging as _logging
+    _fri_logger = _logging.getLogger("friday")
+    _saved = (_fri_logger.level, _fri_logger.propagate, list(_fri_logger.handlers))
+
     with _mock.patch(
         "friday.auth.credential_pool.GeminiCredentialPool.preflight_check",
         return_value={"status": "HEALTHY", "active_project": "PRIMARY"},
     ), _mock.patch("friday.voice.gemini_live_session.GeminiLiveVoiceSession", mock_cls):
-        main()
+        try:
+            main()
+        finally:
+            _fri_logger.setLevel(_saved[0])
+            _fri_logger.propagate = _saved[1]
+            _fri_logger.handlers.clear()
+            for _h in _saved[2]:
+                _fri_logger.addHandler(_h)
 
     out = capsys.readouterr().out
     assert "FRIDAY" in out
