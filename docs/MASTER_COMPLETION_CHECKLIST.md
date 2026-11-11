@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-11 (IST; batch 4 COMPLETE by ZAI Agent 1: B8 importance scoring + aging, B11 voice-path memory, B12 memory browser API, A6 12-turn coherence, A7 20-prompt reasoning benchmark, A9 tone matching, A11 long-goal persistence, A12 proactive follow-up, A14 boss-only command surface — 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5 Telegram two-way, G6 overnight missions, G7 daily self-report, G8 weekly summary, G11 self-heal sweep, G12 task intake, H8 cert check, H9 log-rotation verified — 42 new tests, 0 regressions; batch 6 COMPLETE by ZAI Agent 2: F8/F9 watchlist briefings + change detection, F13 SSRF-guarded web fetch/summarize, F14/F15 site sweeps, F17/F18 dependency+CI health, F20 Sentinel digest, F21 pre-push secret guard — 35 new tests, 0 regressions) · 91/125 items done (73%) · capability-weighted completion ≈ 65%
+**Snapshot:** 2026-11-12 (IST; batch 4 COMPLETE by ZAI Agent 1: B8/B11/B12, A6/A7/A9/A11/A12/A14 - 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5/G6/G7/G8/G11/G12 + H8/H9 - 42 new tests, 0 regressions; batch 6 COMPLETE by ZAI Agent 2: F8/F9 watchlist briefings + change detection, F13 SSRF-guarded web fetch/summarize, F14/F15 site sweeps, F17/F18 dependency+CI health, F20 Sentinel digest, F21 pre-push secret guard - 35 new tests, 0 regressions; batch 9 part 1 COMPLETE by ZAI Agent 1: I1-I4 battery rescue, real-usage battery 29/29 green, 3 routing hijacks fixed, 0 regressions vs clean tree)
 
 ---
 
@@ -168,10 +168,10 @@
 
 ## I. Tech debt & hygiene (6 items)
 
-- [ ] **I1** Fix `test_real_usage_battery.py::test_the_agent_remembers_and_recalls_a_fact` (pre-existing failure on main)
-- [ ] **I2** Fix `test_real_usage_battery.py::test_tasks_round_trip` (pre-existing failure on main)
-- [ ] **I3** Fix `test_real_usage_battery.py::test_user_rebalance_request_gets_no_fabricated_targets_without_market_data` (pre-existing)
-- [ ] **I4** Full battery green: `test_real_usage_battery.py` 29/29
+- [x] **I1** Fix `test_real_usage_battery.py::test_the_agent_remembers_and_recalls_a_fact` (pre-existing failure on main) (FIXED 2026-11-12, batch 9: hermetic test-only sqlite memory in the battery `_agent()` — shared per-test file so agent 2 recalls agent 1's fact through the real search_memory FTS path; PLUS contacts `who is <name>` hijack fixed — possessive/relational questions like "who is my sister" now reach the reasoning path, bare names still look up contacts)
+- [x] **I2** Fix `test_real_usage_battery.py::test_tasks_round_trip` (pre-existing failure on main) (FIXED 2026-11-12, batch 9: ManageTasksTool re-registered with the test-only SQLiteTaskStore per test; the task created by agent 1 is listed by agent 2 through the real tool path — battery 29/29)
+- [x] **I3** Fix `test_real_usage_battery.py::test_user_rebalance_request_gets_no_fabricated_targets_without_market_data` (pre-existing) (FIXED 2026-11-12, batch 9: `_portfolio_fast_path` no longer hijacks advice phrasing — "Should I rebalance my portfolio?" reaches VoiceTradingSkill, which answers honestly "can't recommend rebalancing — no supported market regime has been measured"; snapshot questions like "how is my portfolio" still get the Stratex snapshot)
+- [x] **I4** Full battery green: `test_real_usage_battery.py` 29/29 (DONE 2026-11-12, batch 9: 29/29 passed — also removed the batch-3 regression where "website status" (singular, the Nexus skill's domain) was swallowed by Cortex WEB_OPS_KEYWORDS; Cortex keeps every locked plural/fleet phrase; related-suite failure diff vs clean tree IDENTICAL — 0 regressions)
 - [ ] **I5** Coverage gate in CI (no untested regression classes)
 - [ ] **I6** Dead-code sweep: unused tools/modules removed or wired
 - [x] **I7** Fix duplicate `(path, method)` route registration in server.py (pre-existing `test_api_command_truthfulness` failure on main) (FIXED with the D12 tranche: unauthenticated shadow POST /api/autonomous/decompose deleted, live handler keeps the control gate + returns the real plan_id; shadowed GET /api/v1/mesh/health duplicate removed; BONUS: POST /api/autonomous/execute gained the control gate its siblings already had; route-truthfulness suite 57/57)
@@ -188,11 +188,16 @@
 | C. Orchestration | 14 | 14 | 100% |
 | D. Website | 13 | 18 | 72% |
 | E. Voice | 2 | 10 | 20% |
-| F. Agents | 18 | 27 | 67% |
+| A. Brain | 13 | 14 | 92% |
+| B. Memory | 12 | 12 | 100% |
+| C. Orchestration | 14 | 14 | 100% |
+| D. Website | 13 | 18 | 72% |
+| E. Voice | 2 | 10 | 20% |
+| F. Agents | 18 | 27 | 66% |
 | G. Autonomy | 10 | 12 | 83% |
 | H. Infra | 7 | 10 | 70% |
-| I. Tech debt | 2 | 8 | 25% |
-| **Universe** | **91** | **125** | **73%** |
+| I. Tech debt | 6 | 8 | 75% |
+| **Universe** | **95** | **125** | **76%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

@@ -33,10 +33,13 @@ from friday.core.types import (
 )
 from friday.llm.mock_provider import MockLLMProvider
 from friday.memory.in_memory import InMemoryConversationMemory
+from friday.persistence.task_store import SQLiteTaskStore
 from friday.skills.base_skill import BaseSkill, SkillExecutionResult
 from friday.skills.nexus_manager import NexusManagerSkill
 from friday.skills.registry import SkillRegistry
+from friday.tools.builtin.remember import RememberFactTool
 from friday.tools.builtin.skill_tools import RunSkillTool
+from friday.tools.builtin.task_management import ManageTasksTool
 from friday.tools.registry import ToolRegistry
 from tests.mock_nexus_api import MockNexusServer
 
@@ -121,14 +124,41 @@ class Planner:
 
 
 def _agent(tmp_path, planner: Planner, allow_sensitive: set[str] | None = None) -> FridayAgent:
-    settings = Settings(env="testing", llm_provider="mock", embedding_provider="none")
+    """Battery agent: real machinery, hermetic persistence (checklist I1/I2/I4).
+
+    The battery exercises FRIDAY's real routing, tool layer and truthfulness —
+    it must not depend on a live Oracle Autonomous DB. The sanctioned test-only
+    backend (memory_backend='sqlite' inside a pytest run) gives every agent in
+    one test a shared, file-backed store under tmp_path, so a fact or task
+    created by one agent is genuinely persisted and found by the next — which
+    is exactly what the memory and task round-trips assert.
+    """
+    settings = Settings(
+        env="testing",
+        llm_provider="mock",
+        embedding_provider="none",
+        memory_backend="sqlite",
+        memory_db_path=str(tmp_path / "battery_memory.db"),
+    )
     provider = MockLLMProvider(custom_responder=planner)
-    return FridayAgent(
+    agent = FridayAgent(
         settings=settings,
         llm_provider=provider,
         authorizer=OwnerApprover(allow_sensitive),
         max_tool_iterations=6,
     )
+    # remember_fact and manage_tasks persist to Oracle by default (they are
+    # not bound to the agent's memory backend); re-register them with the
+    # test-only SQLite stores. register() overwrites the default instances,
+    # and the same tmp_path file per test means cross-agent round-trips see
+    # each other's rows.
+    agent.tools.register(
+        RememberFactTool(memory=agent.memory, db_path=str(tmp_path / "battery_facts.db"))
+    )
+    agent.tools.register(
+        ManageTasksTool(store=SQLiteTaskStore(db_path=str(tmp_path / "battery_tasks.db")))
+    )
+    return agent
 
 
 @pytest.fixture(autouse=True)
@@ -404,6 +434,7 @@ def test_an_approved_skill_run_reports_what_the_skill_actually_saw(tmp_path):
     agent = FridayAgent(
         settings=settings,
         llm_provider=MockLLMProvider(custom_responder=planner),
+        memory=InMemoryConversationMemory(),
         authorizer=ApprovingOwner(allow={"run_skill"}),
         max_tool_iterations=6,
     )
@@ -422,6 +453,7 @@ def test_an_unknown_skill_name_is_refused_with_the_available_names(tmp_path):
     agent = FridayAgent(
         settings=settings,
         llm_provider=MockLLMProvider(custom_responder=planner),
+        memory=InMemoryConversationMemory(),
         authorizer=ApprovingOwner(allow={"run_skill"}),
         max_tool_iterations=6,
     )

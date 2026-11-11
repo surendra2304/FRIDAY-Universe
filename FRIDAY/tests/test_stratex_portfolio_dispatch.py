@@ -15,6 +15,7 @@ import pytest
 
 pytestmark = [pytest.mark.unit]
 
+from friday.memory.in_memory import InMemoryConversationMemory
 from friday.routing.capability_router import (
     CapabilityRouter,
     ExecutionCapabilityType,
@@ -142,7 +143,10 @@ class TestPortfolioFastPath:
             StratexPortfolioTool, "_client",
             return_value=_FakeFleetClient(_FakeResult("SUCCESS", dict(_SNAPSHOT))),
         ):
-            agent = FridayAgent(settings=Settings(env="testing"))
+            agent = FridayAgent(
+                settings=Settings(env="testing"),
+                memory=InMemoryConversationMemory(),
+            )
             response = agent.process_message("friday, how is my portfolio doing?")
         assert response.metadata.get("fast_path") is True
         assert response.metadata.get("portfolio_query") is True
@@ -159,7 +163,10 @@ class TestPortfolioFastPath:
             StratexPortfolioTool, "execute",
             side_effect=lambda *a, **k: captured.append(1) or None,
         ):
-            agent = FridayAgent(settings=Settings(env="testing"))
+            agent = FridayAgent(
+                settings=Settings(env="testing"),
+                memory=InMemoryConversationMemory(),
+            )
             # The fast path must decline; the cognitive path runs (mock LLM).
             response = agent.process_message("what is a portfolio in finance?")
         assert not captured or response is not None  # no crash either way

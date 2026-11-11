@@ -197,7 +197,7 @@ class CapabilityRouter:
     # monitoring request. The answer must come from Cortex's real health
     # summary and governed-properties roster (cortex_web_ops, read-only).
     WEB_OPS_KEYWORDS = {
-        "how are my websites", "how are my sites", "website status", "websites doing",
+        "how are my websites", "how are my sites", "websites doing",
         "web properties", "web ops", "web operations", "cortex status",
         "cortex health", "site health", "sites healthy", "my websites",
         "website health", "check my websites", "check the websites",

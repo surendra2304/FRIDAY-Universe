@@ -705,6 +705,20 @@ class FastPathMixin:
         low = clean_input.lower().strip().rstrip(".!? ")
         from friday.routing.capability_router import CapabilityRouter
 
+        # Advice questions are not snapshot questions (checklist I3 regression):
+        # "Should I rebalance my portfolio?" asks for the skill layer's
+        # regime-gated rebalancing advice — VoiceTradingSkill answers with an
+        # honest "can't recommend rebalancing, no measured market regime"
+        # refusal. Standing aside here keeps this snapshot fast path from
+        # swallowing the advice request and answering it with a Stratex
+        # outage report instead.
+        advice_phrasing = {
+            "should i", "rebalance", "rebalancing", "any advice",
+            "recommend", "recommendation", "good time to",
+        }
+        if CapabilityRouter._matches(low, advice_phrasing):
+            return None
+
         possessive = {
             "my portfolio", "the portfolio", "my balance", "my positions",
             "open positions", "any positions", "any open positions",

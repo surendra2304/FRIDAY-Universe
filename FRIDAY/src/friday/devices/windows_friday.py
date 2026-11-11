@@ -1628,7 +1628,18 @@ class WindowsFridayController:
             r"^(?:lookup|find|search|get|show)\s+(?:contact\s+)?(?P<name>[a-zA-Z\s]+)$", cmd
         )
         if not m_look:
-            m_look = re.search(r"^who\s+is\s+(?P<name>[a-zA-Z\s]+)$", cmd)
+            # "who is X" is a contact lookup only for a bare person name
+            # ("who is Priya"). Possessive or relational phrasing — "who is my
+            # sister", "who is your boss", "who is the prime minister of
+            # india", "who is the ceo of google" — is a knowledge / memory
+            # question and must fall through to the reasoning path, never be
+            # answered with "No contact found" (battery scenario 5, I1).
+            m_look = re.search(
+                r"^who\s+is\s+(?!(?:my|your|his|her|their|our|its|the|a|an)\b)(?P<name>[a-zA-Z\s]+)$",
+                cmd,
+            )
+            if m_look and re.search(r"\bof\b", m_look.group("name")):
+                m_look = None  # relational/genitive questions are not lookups
         if not m_look:
             m_look = re.search(r"^contact\s+(?:details\s+(?:of|for)\s+)?(?P<name>[a-zA-Z\s]+)$", cmd)
 

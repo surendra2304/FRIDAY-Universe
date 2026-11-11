@@ -253,18 +253,53 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 9. ⬜ E9 Voice quality tuning
 10. ⬜ Commit + notify "Batch 8 complete"
 
-## Batch 9 — Tech debt & tests (I 2/8 → 8/8)
+## Batch 9 — Tech debt & tests, part 1 (I 2/8 → 6/8: battery rescue I1–I4) — COMPLETE 2026-11-12 (Lane A / ZAI Agent 1)
 
-1. ⬜ I1 Fix `test_real_usage_battery.py::test_the_agent_remembers_and_recalls_a_fact`
-2. ⬜ I2 Fix `test_tasks_round_trip`
-3. ⬜ I3 Fix `test_user_rebalance_request_gets_no_fabricated_targets`
-4. ⬜ I4 Full battery green 29/29
-5. ⬜ I5 Coverage gate in CI
-6. ⬜ I6 Dead-code sweep
-7. ⬜ A5 greeting fast-path verification (may already be done — verify + tick)
-8. ⬜ H10 $0-cost audit
-9. ⬜ E10 Indian-English accent check
-10. ⬜ Commit + notify "Batch 9 complete"
+1. ✅ I1 Fix `test_real_usage_battery.py::test_the_agent_remembers_and_recalls_a_fact`
+   — root causes: battery agents bound to the Oracle backend (no DB in
+   sandbox/CI) AND a contacts `who is <name>` hijack intercepting "who is my
+   sister?" as a contact lookup. Fixes: battery `_agent()` now uses the
+   sanctioned test-only sqlite memory (shared per-test file under tmp_path so
+   cross-agent round-trips persist) + `RememberFactTool`/`ManageTasksTool`
+   re-registered with test-only sqlite stores; the `who is` contact regex now
+   declines possessive/relational questions ("who is my sister", "who is your
+   boss", "who is the ceo of google") while bare names ("who is Priya") still
+   look up contacts
+2. ✅ I2 Fix `test_tasks_round_trip` — hermetic `SQLiteTaskStore` per test
+   (tmp_path file shared across agents); task created by agent 1 is listed by
+   agent 2 through the real tool path
+3. ✅ I3 Fix `test_user_rebalance_request_gets_no_fabricated_targets_without_market_data`
+   — the `_portfolio_fast_path` snapshot matcher hijacked
+   "Should I rebalance my portfolio?" and answered with a Stratex outage
+   instead of the skill layer's honest "can't recommend rebalancing — no
+   measured market regime". Advice phrasing (should I / rebalance /
+   recommend / advice / good time to) now makes the fast path stand aside so
+   the request reaches the cognitive path and VoiceTradingSkill
+4. ✅ I4 Full battery green: `test_real_usage_battery.py` **29/29 passed**
+   (was 22 failed / 7 passed in the sandbox; hermetic battery also fixed the
+   nexus HTTP scenario — "website status" removed from WEB_OPS_KEYWORDS, it
+   is the Nexus skill's singular-website domain, Cortex keeps all its locked
+   plural/fleet phrases). Regression proof: related-suite failure diff vs
+   clean tree IDENTICAL (29 pre-existing sandbox-env failures, 0 new);
+   `test_stratex_portfolio_dispatch.py` agents made hermetic too (204 green)
+5. ⬜ I5 Coverage gate in CI → moved to Batch 9b
+6. ⬜ I6 Dead-code sweep → moved to Batch 9b
+7. ⬜ A5 greeting fast-path verification → moved to Batch 9b
+8. ⬜ H10 $0-cost audit → moved to Batch 9b
+9. ⬜ E10 Indian-English accent check → moved to Batch 9b
+10. ✅ Commit + notify (this batch; items 5–9 continue in Batch 9b)
+
+## Batch 9b — Tech debt & tests, part 2 (I 6/8 → 8/8 + verification items) — NEXT (Lane A / ZAI Agent 1)
+
+1. ⬜ I5 Coverage gate in CI
+2. ⬜ I6 Dead-code sweep
+3. ⬜ A5 greeting fast-path verification (may already be done — verify + tick)
+4. ⬜ H10 $0-cost audit
+5. ⬜ E10 Indian-English accent check
+6. ⬜ Any fallout from the hermetic-battery change observed on the production
+   VM (battery now uses test-only sqlite there too — by design, it must
+   never touch the production schema)
+7. ⬜ Commit + notify "Batch 9b complete"
 
 ## Batch 10 — Voice + remaining E items (E 2/10 → 9/10)
 
@@ -323,4 +358,4 @@ Evidence: test_batch6_agent_depth.py 35/35; full battery A/B vs clean main —
 446 passed, 18 failed, failing set IDENTICAL to the pre-existing baseline
 (Oracle-driver environmental), zero new failures. Checklist recount: 91/125 (73%).
 
-**Current position: Batches 1–6 COMPLETE (2026-11-11 IST) — Agent 1: Batches 1–4 (A 13/14, B 12/12); Agent 2: Batches 5 (autonomy G+H) and 6 (agent depth F 18/27). Checklist 91/125 (73%). Lanes active (ZAI_AGENT_2_ONBOARDING.md): ZAI Agent 1 (Lane A) → Batch 9 (tech debt & tests); ZAI Agent 2 (Lane B) → Batch 7 (agent depth II: F3, F5, F6, F11, F12, F22–F24), then 8.**
+**Current position (merged 2026-11-12 IST): Batches 1-6 COMPLETE + Batch 9 part 1 - Agent 1: Batches 1-4 + Batch 9/I1-I4 (battery rescue: real-usage battery 29/29 green, hermetic test-only persistence, 3 routing hijacks fixed - contacts 'who is', portfolio-advice, website-status; 0 regressions vs clean tree); Agent 2: Batches 5 (autonomy G+H, 42 new tests) and 6 (agent depth I: F 18/27 - watchlist+briefings, change detection, SSRF-guarded fetch/summarize, uptime+sweeps, dep/CI health, Sentinel digest, pre-push secret guard; 35/35 batch tests, 0 regressions). Lanes active (ZAI_AGENT_2_ONBOARDING.md): ZAI Agent 1 (Lane A) -> next Batch 9b (I5 coverage gate, I6 dead-code sweep, A5/H10/E10 verifications); ZAI Agent 2 (Lane B) -> next Batch 7 (agent depth II: F3, F5, F6, F11, F12, F22-F24), then 8. Notification protocol: @zai_notifications_bot only, agent name on the FIRST LINE of the message (owner directive 2026-11-12). Checklist recount after this merge: see docs/MASTER_COMPLETION_CHECKLIST.md scoreboard.**
