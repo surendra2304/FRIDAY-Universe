@@ -263,6 +263,25 @@ class CapabilityRouter:
         "ping me when", "ping me if", "tell me when", "tell me if",
         "cancel alert", "remove alert", "delete alert", "my alerts",
     }
+    # Checklist I6 (batch 8, ZAI Agent 2): keywords for tools that were
+    # registered but UNROUTED (dead-code audit found 3). Wiring them so the
+    # capability router reaches them by intent — they were available as
+    # LLM-callable tools but never keyword-routed, so the owner's phrasing
+    # could never reach them deterministically.
+    DICTIONARY_KEYWORDS = {
+        "define", "definition of", "what does this word mean",
+        "look up the word", "dictionary lookup", "spell the word",
+    }
+    GMAIL_DRAFT_KEYWORDS = {
+        "draft an email", "draft a gmail", "compose an email", "compose a gmail",
+        "write me an email", "write an email", "send an email draft",
+        "draft a message to", "compose a message to",
+    }
+    WHATSAPP_OPEN_KEYWORDS = {
+        "open whatsapp", "open whastsapp", "launch whatsapp",
+        "send a whatsapp message", "whatsapp message to",
+        "message on whatsapp", "open the whatsapp chat",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -335,6 +354,9 @@ class CapabilityRouter:
             or self._matches(clean_input, self.RENDER_KEYWORDS)
             or self._matches(clean_input, self.PUBLISH_KEYWORDS)
             or self._matches(clean_input, self.ALERT_KEYWORDS)
+            or self._matches(clean_input, self.DICTIONARY_KEYWORDS)
+            or self._matches(clean_input, self.GMAIL_DRAFT_KEYWORDS)
+            or self._matches(clean_input, self.WHATSAPP_OPEN_KEYWORDS)
         )
         # Checklist C12 (batch 3): chained instructions ("research X, then
         # draft the script about it") are multi-stage dispatches, never plain
@@ -347,7 +369,7 @@ class CapabilityRouter:
         except Exception:
             chained = False
         is_conversational = is_conversational and not chained
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS) or self._matches(clean_input, self.RENDER_KEYWORDS) or self._matches(clean_input, self.PUBLISH_KEYWORDS) or self._matches(clean_input, self.ALERT_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS) or self._matches(clean_input, self.RENDER_KEYWORDS) or self._matches(clean_input, self.PUBLISH_KEYWORDS) or self._matches(clean_input, self.ALERT_KEYWORDS) or self._matches(clean_input, self.DICTIONARY_KEYWORDS) or self._matches(clean_input, self.GMAIL_DRAFT_KEYWORDS) or self._matches(clean_input, self.WHATSAPP_OPEN_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -575,6 +597,44 @@ class CapabilityRouter:
                 is_local_deterministic=True,
                 required_tools=["price_alert"],
                 rationale="Price-alert rule: record it in the alert store (evaluated by the market-watch loop).",
+            ))
+
+        # Checklist I6 (batch 8, ZAI Agent 2): wire the 3 previously-unrouted
+        # tools so the owner's phrasing reaches them deterministically.
+        if self._matches(clean_input, self.DICTIONARY_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=500.0,
+                confidence=0.95,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=True,
+                required_tools=["dictionary"],
+                rationale="Dictionary lookup: define the word via the dictionary tool (was registered but unrouted — I6 wired it).",
+            ))
+
+        if self._matches(clean_input, self.GMAIL_DRAFT_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=2000.0,
+                confidence=0.92,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["send_gmail"],
+                rationale="Gmail draft: compose the email via the gmail tool (was registered but unrouted — I6 wired it).",
+            ))
+
+        if self._matches(clean_input, self.WHATSAPP_OPEN_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=1500.0,
+                confidence=0.92,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["open_whatsapp"],
+                rationale="WhatsApp open: launch the chat via the whatsapp tool (was registered but unrouted — I6 wired it).",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

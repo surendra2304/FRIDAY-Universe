@@ -1444,6 +1444,28 @@ tasks:
     blockers: ["E8 (unlimited voice minutes) blocked on G9 ARM server capture", "G9/G10 blocked on ARM capacity"]
     next_action: "Post-merge: Fleet CD deploys; UI rebuild picks up the mobile/a11y/empty-state CSS + the new OwnerPreferences/VoiceDiagnostics components; the public status page goes live at /status.html; the Lighthouse CI runs on the next UI PR; the cost-audit-reminder opens its first issue the first Monday of next quarter. Remaining reachable: A8 (personality consistency). Then Batch 9 Part 2 (I5/I6) if Agent 1 hasn't started."
 
+  - id: "TASK-I6-CROSSLANE-AGENT2"
+    title: "Checklist I6 (ZAI Agent 2, cross-lane) — dead-code sweep: audit + wire 3 unrouted tools"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Cross-lane from Lane B (Batch 8 ✅). Claimed on #35 (comment 6804940549) since Agent 1 hadn't committed since 6bbb854 and I6 is read-heavy with minimal overlap with I5."
+    merge_note: "Direct main commit per the batch discipline."
+    milestone: "Master Completion Checklist I 6/8 -> 7/8; Universe 121/125 (97%)"
+    files:
+      - "scripts/audit_dead_code.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/tests/test_batch8_i6_dead_code.py"
+    acceptance:
+      - "Audit script runs and reports a bounded set of unrouted tools."
+      - "3 previously-unrouted tools (DictionaryTool, DraftGmailTool, OpenWhatsAppTool) now keyword-routed."
+      - "Regression gate: audit reports 0 unreachable after wiring."
+      - "Zero new test failures vs clean main."
+    evidence: "test_batch8_i6_dead_code.py 6/6; A/B battery 19 suites: 553 passed / 18 failed = byte-identical pre-existing baseline, zero new failures."
+    blockers: []
+    next_action: "Post-merge: Fleet CD deploys; the 3 tools are now reachable by chat intent (define X, draft an email, open whatsapp). Remaining: I5 (Agent 1's coverage gate) + E8/G9/G10 (blocked on ARM)."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

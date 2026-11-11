@@ -1296,6 +1296,20 @@ claims:
     status: "DIRECT_COMMIT_BATCH8_AGENT2"
     task: "Checklist H10: quarterly cost-audit reminder workflow."
 
+  - path: "scripts/audit_dead_code.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_I6_CROSSLANE_AGENT2"
+    task: "Checklist I6: dead-code audit script (finds unrouted registered tools)."
+
+  - path: "FRIDAY/tests/test_batch8_i6_dead_code.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_I6_CROSSLANE_AGENT2"
+    task: "Checklist I6: dead-code regression gate (6 tests)."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:
