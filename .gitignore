@@ -117,6 +117,20 @@ FRIDAY/.data/research_api/
 # Cloud bridge and backup artifacts
 .deploy-backups/
 **/.deploy-backups/**
-bridge/**
+# TASK-CI-004: the blanket `bridge/**` rule (added 08a8606 to ignore runtime
+# artifacts before any bridge source existed in-repo) forced every deliberate
+# bridge commit through `git add -f` and silently hid new bridge source files
+# (tests import bridge.auth; auth.py + server_auth.patch are tracked source).
+# Ignore only artifact classes under bridge/ — never the source directory.
+bridge/**/*.log
+bridge/**/*.log.*
+bridge/**/.deploy-backups/
+bridge/**/*.bak
+bridge/**/*.tmp
+bridge/**/state/
+bridge/**/workspaces/
+bridge/*.sqlite
+bridge/*.sqlite3
+bridge/*.db
 *.bak
 **/*.bak*
