@@ -2,14 +2,14 @@ name: Lighthouse CI
 
 # Checklist D16 (MASTER_COMPLETION_CHECKLIST) — Batch 8, ZAI Agent 2.
 # Performance budget: Lighthouse >= 90 on the deployed build. The static
-# export is committed at FRIDAY/ui/out/ (built locally + checked in), so
-# Lighthouse audits that directly — no CI build step (which was OOM-failing
-# on the runner). Runs on push to main + PRs touching the UI.
+# export is committed at FRIDAY/ui/out/ — Lighthouse audits it directly.
+# Uses the official @lhci/cli (no third-party action wrapper — the
+# treosh action versions were unstable in CI).
 
 on:
   pull_request:
     paths:
-      - "FRIDAY/ui/**"
+      - "FRIDAY/ui/out/**"
       - ".github/workflows/lighthouse-ci.yml"
       - ".github/lighthouserc.json"
   push:
@@ -36,15 +36,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Run Lighthouse CI on the committed static export
-        uses: treosh/lighthouse-ci-action@v12
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          configPath: ./.github/lighthouserc.json
-          uploadArtifacts: true
-          temporaryPublicStorage: true
+          node-version: "20"
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.15.x
+
+      - name: Run Lighthouse CI (audit the committed static export)
+        run: lhci autorun --config=.github/lighthouserc.json
 
       - name: Assert budget (>= 90 on all categories)
-        uses: treosh/lighthouse-ci-action@v12
-        with:
-          configPath: ./.github/lighthouserc.json
-          assert: true
+        run: lhci assert --config=.github/lighthouserc.json
