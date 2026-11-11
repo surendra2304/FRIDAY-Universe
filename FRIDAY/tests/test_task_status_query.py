@@ -23,7 +23,7 @@ _CORE_SRC = REPO / "FRIDAY" / "apps" / "core" / "src"
 if _CORE_SRC.is_dir() and str(_CORE_SRC) not in sys.path:
     sys.path.insert(0, str(_CORE_SRC))
 
-from friday_core.task_records import TaskRecordStore  # noqa: E402
+from friday_core.task_records import TaskRecordStore, get_shared_task_records  # noqa: E402
 
 from friday.tools.builtin.fleet_dispatch import (  # noqa: E402
     FLEET_AGENTS,
@@ -340,3 +340,98 @@ class TestAgentNameNormalization:
 
     def test_nine_fleet_agents(self):
         assert len(FLEET_AGENTS) == 9
+
+
+# ---------------------------------------------------------------------------
+# C13 gap fix: chat delegations must land in the shared ledger
+# ---------------------------------------------------------------------------
+
+class TestChatDispatchRecording:
+    """FleetDispatchTool receipts must be recorded in the shared TaskRecordStore.
+
+    Live incident (2026-11-11, production): 'assign a quick task to IntelX …'
+    returned receipt task_c132e80e926e, but FleetClient posts straight to the
+    agent's HTTP endpoint — it never flows through the in-process dispatch bus
+    that writes the ledger, so 'what happened to that IntelX task?' honestly
+    answered 'ledger is empty'. record_chat_dispatch closes that gap.
+    """
+
+    @staticmethod
+    def _clear_shared_store() -> None:
+        store = get_shared_task_records()
+        with store._lock:
+            store._records.clear()
+
+    def setup_method(self, _method) -> None:
+        self._clear_shared_store()
+
+    def teardown_method(self, _method) -> None:
+        self._clear_shared_store()
+
+    def test_success_dispatch_is_recorded_completely(self):
+        from friday.tools.builtin.fleet_dispatch import record_chat_dispatch
+
+        record_chat_dispatch("task_rec001aaaa", "intelx", "Research note", "success",
+                             {"result": "3 citations"})
+        store = get_shared_task_records()
+        record = store.get("task_rec001aaaa")
+        assert record is not None
+        assert record.owner_agent == "intelx"
+        assert record.status == "completed"
+        assert record.description == "Research note"
+        assert record.result == {"result": "3 citations"}
+        assert [to for _, _, to in record.history] == [
+            "submitted", "assigned", "dispatched", "completed",
+        ]
+
+    def test_failed_dispatch_is_recorded_as_failed(self):
+        from friday.tools.builtin.fleet_dispatch import record_chat_dispatch
+
+        record_chat_dispatch("task_rec002bbbb", "futuris", "Forecast request", "failed",
+                             None, "HTTP 501: no handler")
+        record = get_shared_task_records().get("task_rec002bbbb")
+        assert record is not None
+        assert record.status == "failed"
+        assert "HTTP 501" in record.error
+
+    def test_retry_same_id_does_not_duplicate_or_crash(self):
+        from friday.tools.builtin.fleet_dispatch import record_chat_dispatch
+
+        record_chat_dispatch("task_rec003cccc", "stratex", "Snapshot", "success", {"result": "ok"})
+        # a second recording attempt for the same id (client retry) must not
+        # raise on duplicate create and must not corrupt the record
+        record_chat_dispatch("task_rec003cccc", "stratex", "Snapshot", "success", {"result": "ok"})
+        record = get_shared_task_records().get("task_rec003cccc")
+        assert record is not None
+        assert record.status == "completed"
+
+    def test_ledger_failure_never_breaks_the_call(self):
+        import friday.tools.builtin.fleet_dispatch as fd
+
+        original = fd.get_shared_task_records if hasattr(fd, "get_shared_task_records") else None
+        # Simulate an unavailable ledger module: the hook must swallow it.
+        import friday_core.task_records as tr
+
+        real_get = tr.get_shared_task_records
+
+        def exploding_get():
+            raise RuntimeError("ledger unavailable")
+
+        tr.get_shared_task_records = exploding_get
+        try:
+            fd.record_chat_dispatch("task_rec004dddd", "forge", "Code task", "success", None)
+        finally:
+            tr.get_shared_task_records = real_get
+        # no exception = pass; the dispatch contract survives ledger outages
+
+    def test_task_status_tool_now_finds_chat_dispatch(self):
+        from friday.tools.builtin.fleet_dispatch import record_chat_dispatch
+
+        record_chat_dispatch("task_rec005eeee", "intelx", "Research note on markets", "success",
+                             {"result": "BTC holding support"})
+        tool = TaskStatusQueryTool()  # default store = the shared one
+        result = tool.execute(query="what happened to that IntelX task?")
+        assert not result.is_error
+        assert "task_rec005eeee" in result.content
+        assert "COMPLETED" in result.content
+        assert "BTC holding support" in result.content

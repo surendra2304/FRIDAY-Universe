@@ -3,7 +3,7 @@
 import { Clock3, Globe2, LayoutGrid, Radio, TerminalSquare, Waypoints } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
-import { AuroraBackground, CountUp, FloatingOrbs, ParticleField, Reveal, ScrambleText } from "@/components/effects";
+import { AuroraBackground, CountUp, FloatingOrbs, Magnetic, Orbital, Parallax, ParticleField, Reveal, ScrambleText } from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
 import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
@@ -182,16 +182,17 @@ export default function Page() {
         </a>
         <div className="tabs" role="tablist" aria-label="Sections">
           {TABS.map(({ id, label, icon }) => (
-            <button
-              key={id}
-              role="tab"
-              aria-selected={tab === id}
-              className={`tab${tab === id ? " active" : ""}`}
-              onClick={() => setTab(id)}
-            >
-              {icon}
-              <span>{label}</span>
-            </button>
+            <Magnetic key={id}>
+              <button
+                role="tab"
+                aria-selected={tab === id}
+                className={`tab${tab === id ? " active" : ""}`}
+                onClick={() => setTab(id)}
+              >
+                {icon}
+                <span>{label}</span>
+              </button>
+            </Magnetic>
           ))}
         </div>
         <div className="nav-status">
@@ -208,12 +209,17 @@ export default function Page() {
         {/* ============ CONSOLE — FRIDAY communication only ============ */}
         <section className={`tabview${tab === "console" ? " on" : ""}`} hidden={tab !== "console"} aria-label="FRIDAY console">
           <div className="console">
-            <div className="console-left">
-              <VoiceCall onStateChange={setVoiceState} footer={<ConsoleStrip fleet={fleet} autonomy={autonomy} />} />
-            </div>
-            <div className="console-main">
-              <ChatPanel prefill={chatPrefill} />
-            </div>
+            <Parallax depth={6} className="console-left-wrap">
+              <div className="console-left">
+                <Orbital className="console-orbital" count={9} radius={128} duration={46} />
+                <VoiceCall onStateChange={setVoiceState} footer={<ConsoleStrip fleet={fleet} autonomy={autonomy} />} />
+              </div>
+            </Parallax>
+            <Parallax depth={2} className="console-main-wrap">
+              <div className="console-main">
+                <ChatPanel prefill={chatPrefill} />
+              </div>
+            </Parallax>
           </div>
         </section>
 

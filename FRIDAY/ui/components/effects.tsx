@@ -401,3 +401,106 @@ export function CountUp({ value, duration = 900, suffix }: { value: number; dura
     </>
   );
 }
+
+/* ---------- Pointer parallax (React-Bits Parallax pattern, pointer-driven) ----------
+   The dashboard does not scroll by design, so scroll-velocity parallax has no
+   surface to act on. This variant gives the hero layers depth from the
+   pointer: layers translate opposite the cursor at different rates.
+   Compositor-safe (transform only), rAF-throttled, and a strict no-op for
+   reduced-motion users and coarse (touch) pointers. */
+export function Parallax({
+  children,
+  depth = 10,
+  className,
+}: {
+  children: ReactNode;
+  /** max px of translation at the viewport edge; 0 disables */
+  depth?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef(0);
+  const targetRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || depth <= 0) return;
+    if (prefersReducedMotion()) return;
+    if (!window.matchMedia || !window.matchMedia("(pointer: fine)").matches) return;
+
+    function onMove(event: PointerEvent) {
+      if (event.pointerType !== "mouse") return;
+      const nx = event.clientX / window.innerWidth - 0.5; // -0.5 … 0.5
+      const ny = event.clientY / window.innerHeight - 0.5;
+      targetRef.current = { x: -nx * depth, y: -ny * depth };
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = 0;
+          if (ref.current) {
+            const { x, y } = targetRef.current;
+            ref.current.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+          }
+        });
+      }
+    }
+    function onLeave() {
+      targetRef.current = { x: 0, y: 0 };
+      if (ref.current) ref.current.style.transform = "translate3d(0, 0, 0)";
+    }
+
+    window.addEventListener("pointermove", onMove, { passive: true });
+    document.addEventListener("pointerleave", onLeave);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerleave", onLeave);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [depth]);
+
+  return (
+    <div ref={ref} className={className} style={{ willChange: "transform", transition: "transform 0.5s cubic-bezier(0.22,1,0.36,1)" }}>
+      {children}
+    </div>
+  );
+}
+
+/* ---------- Orbital satellites (D10: orbitals around the FRIDAY core) ----------
+   N dots evenly spaced on a rotating ring — one per fleet agent on the hero.
+   Pure CSS rotation (compositor-only), aria-hidden, and reduced-motion users
+   get a static ring (the dots still mark the agents, without motion). */
+export function Orbital({
+  count = 9,
+  radius = 150,
+  duration = 40,
+  className,
+}: {
+  /** number of satellite dots */
+  count?: number;
+  /** ring radius in px */
+  radius?: number;
+  /** one full revolution in seconds */
+  duration?: number;
+  className?: string;
+}) {
+  const dots: CSSProperties[] = [];
+  for (let i = 0; i < count; i++) {
+    const angle = (360 / count) * i;
+    dots.push({
+      transform: `rotate(${angle}deg) translate(${radius}px) rotate(${-angle}deg)`,
+    });
+  }
+  const reduced = typeof window !== "undefined" && prefersReducedMotion();
+
+  return (
+    <div
+      className={`orbital${reduced ? " static" : ""}${className ? ` ${className}` : ""}`}
+      style={{ width: radius * 2, height: radius * 2, animationDuration: `${duration}s` }}
+      aria-hidden="true"
+    >
+      <span className="orbital-ring" />
+      {dots.map((style, i) => (
+        <span key={i} className="orbital-dot" style={style} />
+      ))}
+    </div>
+  );
+}

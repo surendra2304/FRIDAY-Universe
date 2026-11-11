@@ -29,6 +29,36 @@ from friday.tools.base import BaseTool
 
 logger = logging.getLogger(__name__)
 
+
+def record_chat_dispatch(task_id: str, agent: str, task: str, status: str,
+                         result_summary: Any = None, error: str = "") -> None:
+    """Record a chat-path delegation into the unified TaskRecordStore (C13).
+
+    FleetClient posts envelopes straight to the target agent's HTTP endpoint —
+    it never flows through the in-process universe dispatch bus, so without
+    this hook the C14 receipts the owner sees are never written into the
+    shared ledger and "what happened to that IntelX task?" cannot find them
+    (live-proven 2026-11-11: dispatch returned task_c132e80e926e; the ledger
+    and /api/v1/dispatch/records/report both stayed empty). The full router →
+    bus lifecycle is mirrored compactly: create → assigned → dispatched →
+    completed | failed. A ledger failure NEVER breaks the dispatch itself.
+    """
+    try:
+        from friday_core.task_records import get_shared_task_records
+
+        store = get_shared_task_records()
+        if store.get(task_id) is None:
+            store.create(task_id, description=task, owner_agent=agent)
+            store.record_assignment(task_id, agent, rationale="chat delegation (fleet_dispatch)")
+            store.record_dispatch(task_id)
+        if status in {"success", "completed"}:
+            store.record_completion(task_id, result=result_summary)
+        else:
+            store.record_failure(task_id, error=error or f"status {status or 'unknown'}")
+    except Exception as exc:  # noqa: BLE001 — the ledger must never sink a dispatch
+        logger.debug(f"chat dispatch not recorded in task ledger ({type(exc).__name__}: {exc})")
+
+
 # The nine specialist agents of FRIDAY Universe (FRIDAY itself is the
 # dispatcher and is deliberately not a dispatch target).
 FLEET_AGENTS: dict[str, str] = {
@@ -221,6 +251,8 @@ class FleetDispatchTool(BaseTool):
 
         if status not in {"success", "completed"}:
             error = getattr(result, "error", None) or f"status {status or 'unknown'}"
+            if task_id:
+                record_chat_dispatch(task_id, canonical, task, status, None, error)
             content = (
                 f"{display} could not complete that assignment: {error}. {receipt} "
                 "That is the real outcome — nothing was fabricated."
@@ -236,6 +268,8 @@ class FleetDispatchTool(BaseTool):
         data = getattr(result, "result", None)
         if not isinstance(data, dict):
             data = {"response": str(data)} if data is not None else {}
+        if task_id:
+            record_chat_dispatch(task_id, canonical, task, status, data)
         body = _format_result(canonical, role, task, data)
         return ToolResult(
             name=self.name,

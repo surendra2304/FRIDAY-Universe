@@ -33,7 +33,7 @@ import {
   istTime,
   statusTone,
 } from "@/lib/api";
-import { CountUp, Reveal, SpotlightCard } from "./effects";
+import { CountUp, Magnetic, Reveal, SpotlightCard } from "./effects";
 
 /* ============================================================
    Fleet grid, activity feed and system panel.
@@ -202,17 +202,21 @@ export function FleetGrid({
                 </div>
               )}
               <div className="agent-actions">
-                <button className="mini-btn" onClick={() => onAsk(agent)}>
-                  <MessageSquareText size={13} /> Assign / ask
-                </button>
-                <a
-                  className="mini-btn"
-                  href={`https://friday-universe.duckdns.org/${agent.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open site <ArrowUpRight size={12} />
-                </a>
+                <Magnetic>
+                  <button className="mini-btn" onClick={() => onAsk(agent)}>
+                    <MessageSquareText size={13} /> Assign / ask
+                  </button>
+                </Magnetic>
+                <Magnetic>
+                  <a
+                    className="mini-btn"
+                    href={`https://friday-universe.duckdns.org/${agent.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open site <ArrowUpRight size={12} />
+                  </a>
+                </Magnetic>
               </div>
             </SpotlightCard>
           </Reveal>
