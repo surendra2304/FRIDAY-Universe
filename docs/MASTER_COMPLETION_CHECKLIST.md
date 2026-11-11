@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-12 (IST; batch 4 COMPLETE by ZAI Agent 1: B8/B11/B12, A6/A7/A9/A11/A12/A14 — 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5/G6/G7/G8/G11/G12 + H8/H9 — 42 new tests, 0 regressions; batch 6 COMPLETE by ZAI Agent 2: F8/F9 watchlist briefings + change detection, F13 SSRF-guarded web fetch/summarize, F14/F15 site sweeps, F17/F18 dependency+CI health, F20 Sentinel digest, F21 pre-push secret guard — 35 new tests, 0 regressions; batch 7 COMPLETE by ZAI Agent 2: F3 usage dashboard + rate-limit guard, F5 daily portfolio report, F6 price-alert rules engine, F11 forecast refresh, F12 prediction accuracy tracking, F23 vyralx_render, F24 vyralx_publish (fail-closed D-015), F22/F27 verified live — 42 new tests, 0 regressions; F module COMPLETE 27/27; batch 9 part 1 COMPLETE by ZAI Agent 1: I1-I4 battery rescue, real-usage battery 29/29 green, 3 routing hijacks fixed, 0 regressions vs clean tree) · 119/125 items done (95%)
+**Snapshot:** 2026-11-12 (IST; batch 4 COMPLETE by ZAI Agent 1: B8/B11/B12, A6/A7/A9/A11/A12/A14 — 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5/G6/G7/G8/G11/G12 + H8/H9 — 42 new tests, 0 regressions; batch 6 COMPLETE by ZAI Agent 2: F8/F9 watchlist briefings + change detection, F13 SSRF-guarded web fetch/summarize, F14/F15 site sweeps, F17/F18 dependency+CI health, F20 Sentinel digest, F21 pre-push secret guard — 35 new tests, 0 regressions; batch 7 COMPLETE by ZAI Agent 2: F3 usage dashboard + rate-limit guard, F5 daily portfolio report, F6 price-alert rules engine, F11 forecast refresh, F12 prediction accuracy tracking, F23 vyralx_render, F24 vyralx_publish (fail-closed D-015), F22/F27 verified live — 42 new tests, 0 regressions; F module COMPLETE 27/27; batch 9 part 1 COMPLETE by ZAI Agent 1: I1-I4 battery rescue, real-usage battery 29/29 green, 3 routing hijacks fixed, 0 regressions vs clean tree) · 120/125 items done (96%)
 
 ---
 
@@ -17,7 +17,7 @@
 - [x] **A5** Greeting fast-path (no tool-loop burn on "hello")
 - [x] **A6** Multi-turn coherence: 10+ turn conversation keeps context and goals (DONE 2026-11-11 IST, batch 4: `tests/test_batch4_memory_brain.py::test_a6_twelve_turn_conversation_keeps_context` — a scripted 12-turn conversation through the REAL chat router with a fake store: fact stored at turn 1 and goal stated at turn 3 both survive 9+ intervening turns spanning greetings, banter, identity, consolidation and follow-up surfaces; recall at turn 10+ returns the fact, goal query at turn 12 answers "still on it, Boss" with the exact goal text)
 - [x] **A7** Reasoning benchmark suite: 20 real delegation-style prompts scored pass/fail, run weekly (DONE 2026-11-11 IST, batch 4: `friday/evaluation/reasoning_benchmark.py` — 20 owner-style prompts (memory 7, goals 3, boss identity 2, boss-gate 1, tone 2, followup 1, consolidation 1, greeting/clarify/security 3) replayed through the REAL `_dispatch_command` with a deterministic fake store; per-case metadata + reply-content assertions, no case passes on a fabricated reply; JSON report persisted to reports/reasoning_benchmark/latest.json + timestamped run; weekly cadence hook (`should_run_weekly`, Sunday IST); benchmark test asserts 20/20 green)
-- [ ] **A8** Personality consistency across chat AND voice (same persona contract enforced on Gemini Live prompt)
+- [x] **A8** Personality consistency across chat AND voice (same persona contract enforced on Gemini Live prompt) (DONE 2026-11-12 IST, batch 8 / ZAI Agent 2: `persona/contract.py` is the single source of truth for the Boss contract — extracted so chat (prompts.py:build_system_message) and voice (gemini_live_session.py:_build_system_instruction) cannot drift; the voice prompt's wording was aligned to the exact contract phrases (no hesitation, personal creation AND assistant, You are Boss with period); `test_batch8_persona_parity.py` (15 tests) asserts every key phrase appears in BOTH paths — a future edit to one that forgets the contract is caught here, not in production)
 - [x] **A9** Casual/sarcastic tone matching (owner jokes → FRIDAY plays along, doesn't lecture) (DONE 2026-11-11 IST, batch 4: `friday/persona/tone.py` — narrow exact-match banter table (fired/useless/lift/sandwich/roast/sentient/sing/bored/praise/lol) with warm first-person comebacks, never lectures, never "as an AI"; wired into the chat ladder AFTER the memory gates and BEFORE the mode toggles so real commands are never hijacked — the non-fire matrix locks that: "can you make me a dashboard" and "you're fired but first tell me the portfolio balance" do NOT match)
 - [x] **A10** Clarification quality: asks ONE sharp question when ambiguous, never interrogates (DONE 2026-11-11 IST, batch 3: `routing/clarification.py` — intent matched but operand missing/bare-pronoun → exactly ONE Boss-tone question through `_clarification_response` (state machine + memory + Memora record so the next turn resolves it); wired into the batch3 + research + forecast fast paths; complete requests proceed untouched; every question verified single-question-mark by test)
 - [x] **A11** Long-goal persistence: a goal stated Monday is still tracked Friday ("still on it, Boss") (DONE 2026-11-11 IST, batch 4: `friday/proactive/goals.py` — "my goal this week is X" stores a PINNED `GOAL (active):` memory (importance 1.0); any goal-shaped query answers "Still on it, Boss" from the real store; "I finished my goal" retires it through the auditable supersede lifecycle and records a `GOAL (complete):` marker; active goals also join the morning brief (A11 line in `morning_brief.py`); goal gate wired into the chat ladder before recall/remember so goal phrasing is never eaten)
@@ -183,7 +183,7 @@
 
 | Module | Done | Total | % |
 |---|---|---|---|
-| A. Brain | 13 | 14 | 93% |
+| A. Brain | 14 | 14 | 100% |
 | B. Memory | 12 | 12 | 100% |
 | C. Orchestration | 14 | 14 | 100% |
 | D. Website | 18 | 18 | 100% |
@@ -192,7 +192,7 @@
 | G. Autonomy | 10 | 12 | 83% |
 | H. Infra | 10 | 10 | 100% |
 | I. Tech debt | 6 | 8 | 75% |
-| **Universe** | **119** | **125** | **95%** |
+| **Universe** | **120** | **125** | **96%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

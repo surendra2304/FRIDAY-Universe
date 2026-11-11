@@ -2,9 +2,9 @@ name: Lighthouse CI
 
 # Checklist D16 (MASTER_COMPLETION_CHECKLIST) — Batch 8, ZAI Agent 2.
 # Performance budget: Lighthouse >= 90 on the deployed build. Runs on every
-# push to main (after the build succeeds) and on PRs that touch the UI.
-# Uploads the HTML report as a 30-day artifact; fails the run if any
-# category drops below 90.
+# push to main (after the build) and on PRs that touch the UI. Uploads the
+# HTML report as a 30-day artifact; fails the run if any category drops
+# below 90.
 
 on:
   pull_request:
@@ -20,7 +20,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 concurrency:
   group: lighthouse-ci-${{ github.ref }}
@@ -51,14 +50,14 @@ jobs:
         run: npm run build
 
       - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v11
+        uses: treosh/lighthouse-ci-action@v12
         with:
           configPath: ./.github/lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
 
       - name: Assert budget (>= 90 on all categories)
-        uses: treosh/lighthouse-ci-action@v11
+        uses: treosh/lighthouse-ci-action@v12
         with:
           configPath: ./.github/lighthouserc.json
           assert: true
