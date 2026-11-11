@@ -431,8 +431,18 @@ def test_notify_turn_complete_records_locally_without_credentials(tmp_path, monk
 
     ledger = tmp_path / "turn_notifications.jsonl"
     monkeypatch.setattr(mod, "DEFAULT_LOCAL_LEDGER", ledger)
+    # Full credential isolation (2026-11-11 fix): the notifier now resolves
+    # tokens from THREE sources — ZAI_NOTIFICATIONS_TOKEN env, the repo-root
+    # credentials.md table, and the .env files _load_env_file reads. The
+    # "no credentials → local ledger" contract only holds when ALL of them
+    # are isolated; on the owner sandbox real credentials exist for the
+    # notification bot, so without isolation this test would fire a real
+    # Telegram message instead of recording locally.
+    monkeypatch.delenv("ZAI_NOTIFICATIONS_TOKEN", raising=False)
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
     monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+    monkeypatch.setattr(mod, "CREDENTIALS_FILE", tmp_path / "absent_credentials.md")
+    monkeypatch.setattr(mod, "_load_env_file", lambda: None)
 
     sent, detail = mod.send_turn_notification("batch-2 test ping")
     assert sent is False

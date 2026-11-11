@@ -1060,3 +1060,19 @@ conflicts_to_resolve:
     files: ["docs/MASTER_PLAN.md", "docs/handoff.md", "docs/ARCHITECTURE_AS_BUILT.md"]
     prs: [24, 26, 30]
     required_action: "RESOLVED 2026-11-10: PRs #24/#26/#30 merged in the owner-directed mass merge; Master Plan superseded by v2 (D-022, ZAI direct commit). handoff.md/ARCHITECTURE_AS_BUILT.md remain normal claim-gated files."
+
+  # --- ZAI Agent 1 batch 4 (memory + brain maturity, 2026-11-11) -------------
+  - id: "FILE-BATCH4-001"
+    files:
+      - "FRIDAY/src/friday/memory/importance.py"
+      - "FRIDAY/src/friday/memory/voice_memory.py"
+      - "FRIDAY/src/friday/proactive/goals.py"
+      - "FRIDAY/src/friday/proactive/followup.py"
+      - "FRIDAY/src/friday/security/boss_gate.py"
+      - "FRIDAY/src/friday/persona/tone.py"
+      - "FRIDAY/src/friday/evaluation/reasoning_benchmark.py"
+      - "FRIDAY/tests/test_batch4_memory_brain.py"
+    owner: "zai"
+    status: "COMPLETED_CLAIM"
+    task: "Batch 4 (B8/B11/B12/A6/A7/A9/A11/A12/A14) — memory importance + aging, voice-path memory, memory browser, tone matching, goals, follow-up, boss gate, reasoning benchmark."
+    note: "Shared-files touched under batch 4 (chat ladder sections + morning brief + nightly consolidation + gemini live session) are claim-free by design: the ladder is append-only with per-gate tests; cross-lane edits still require a WORK_BOARD claim."

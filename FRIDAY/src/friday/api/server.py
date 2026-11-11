@@ -225,6 +225,35 @@ async def _nightly_consolidation_loop() -> None:
             logger.exception("Nightly consolidation loop error (continuing)")
 
 
+async def _proactive_followup_loop() -> None:
+    """Checklist A12: unfinished tasks get a status ping without being asked.
+
+    A sweep every 30 minutes over the shared task ledger; stale in-flight
+    tasks (default: no transition for 45+ minutes) get ONE honest ping each
+    through the proactive NotificationManager (the same channel the morning
+    brief and the voice line read from), rate-limited per task. Failures are
+    logged and never fatal.
+    """
+    while True:
+        try:
+            await asyncio.sleep(1800)  # 30 minutes between sweeps
+            from friday.proactive.followup import followup_sweep
+
+            report = followup_sweep(agent.notifications, post=True)
+            if report.get("pings_posted") or report.get("post_failures"):
+                logger.info(
+                    "Proactive follow-up sweep: stale=%s posted=%s limited=%s failed=%s",
+                    report.get("stale_found"),
+                    report.get("pings_posted"),
+                    report.get("rate_limited"),
+                    report.get("post_failures"),
+                )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Proactive follow-up loop error (continuing)")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Pre-flight environment validation
@@ -250,12 +279,17 @@ async def lifespan(_: FastAPI):
     consolidation_task = asyncio.create_task(
         _nightly_consolidation_loop(), name="friday-nightly-consolidation"
     )
+    # Checklist A12: proactive follow-up pings on unfinished tasks (sweep
+    # every 30 min, one honest ping per stale task, rate-limited).
+    followup_task = asyncio.create_task(
+        _proactive_followup_loop(), name="friday-proactive-followup"
+    )
     try:
         yield
     finally:
         logger.info("Graceful shutdown initiated: stopping background tasks and listener loops...")
-        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task]
-        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task):
+        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task]
+        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task):
             task.cancel()
         try:
             await asyncio.wait_for(
@@ -1239,6 +1273,56 @@ async def get_agents_supervision() -> dict[str, Any]:
     }
 
 
+@app.get("/api/memory/browser")
+async def get_memory_browser(_: None = Depends(_require_control_access)) -> dict[str, Any]:
+    """Checklist B12: what-FRIDAY-knows browser — the owner's memory, visible.
+
+    Read-only view of the live Memora store for the dashboard: the most
+    recent ACTIVE memories with their importance tier (B8 scoring), plus a
+    tier/summary breakdown. Nothing is editable here — forget/correct stay
+    chat commands with their audit trails. Honest empties: an unreachable
+    store returns status "unreachable", never a fabricated list.
+    """
+    from friday.memory.importance import score_importance
+    from friday.memory.memora_client import memora_client as _mem
+
+    try:
+        rows = _mem.recent_memories("friday", limit=100) or []
+    except Exception as exc:
+        return {"status": "unreachable", "error": type(exc).__name__, "memories": [], "summary": {}}
+
+    memories: list[dict[str, Any]] = []
+    tier_counts = {"pinned": 0, "normal": 0, "trivial": 0, "other": 0}
+    for row in rows:
+        text = str(row.get("content_text", "") or "").strip()
+        if not text:
+            continue
+        verdict = score_importance(text)
+        tier = verdict.tier if verdict.tier in tier_counts else "other"
+        tier_counts[tier] = tier_counts.get(tier, 0) + 1
+        created = str(row.get("created_at", "") or "")
+        memories.append(
+            {
+                "id": str(row.get("id") or row.get("memory_id") or ""),
+                "text": text[:300],
+                "tier": tier,
+                "score": round(verdict.score, 2),
+                "category": str((row.get("provenance") or {}).get("category", "") if isinstance(row.get("provenance"), dict) else ""),
+                "created_at": created,
+                "active_goal": text.startswith("GOAL (active):"),
+            }
+        )
+    return {
+        "status": "ok",
+        "count": len(memories),
+        "memories": memories,
+        "summary": {
+            "tiers": tier_counts,
+            "active_goals": sum(1 for m in memories if m["active_goal"]),
+        },
+    }
+
+
 @app.get("/api/agents/live")
 async def get_agents_live(_: None = Depends(_require_origin_gate)) -> dict[str, Any]:
     """Checklist D12: per-agent 'what is each agent doing RIGHT NOW' surface.
@@ -1833,7 +1917,10 @@ def _which(name: str) -> str | None:
 @app.post("/api/command")
 async def execute_command(req: CommandRequest, _: None = Depends(_require_control_access)) -> Any:
     """Execute a text command with PC, Android, and live 8-Agent execution."""
-    result = await _dispatch_command(req.command)
+    # The console is origin-gated + control-token protected: a valid token
+    # IS the owner key (A14). Voice/remote surfaces call _dispatch_command
+    # with boss_verified=False and must authorize separately.
+    result = await _dispatch_command(req.command, boss_verified=True)
     meta = result.get("metadata") or {}
 
     # Checklist A13 (batch 3): response formatting policy — free-form LLM
@@ -1916,7 +2003,7 @@ async def execute_command(req: CommandRequest, _: None = Depends(_require_contro
     return result
 
 
-async def _dispatch_command(command: str) -> dict[str, Any]:
+async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dict[str, Any]:
     """The command router itself; :func:`execute_command` maps its result to HTTP."""
     raw_cmd = (command or "").strip()
     cmd = raw_cmd.lower()
@@ -1951,6 +2038,25 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
                 "command": raw_cmd,
             },
         }
+
+    # =========================================================================
+    # A14. Boss-only command gate (owner-exclusive commands, keyed to identity)
+    # =========================================================================
+    # Mode switches, agent shutdown, live-trading toggles, memory wipes and
+    # fleet-level control answer to the owner ONLY. The command console is
+    # origin-gated + control-token protected, so its requests carry
+    # boss_verified=True (the token IS the owner key). Any other surface
+    # (voice, remote) must authorize first: "authorize boss <passphrase>"
+    # (BOSS_PASSPHRASE env; unset = fail closed). Nothing is executed on a
+    # refused gate — the reply says exactly what was blocked and why.
+    from friday.security import boss_gate as _boss_gate
+
+    _authz = _boss_gate.handle_authorize(raw_cmd, source="console")
+    if _authz is not None:
+        return _authz
+    _boss_cat = _boss_gate.is_boss_only(raw_cmd)
+    if _boss_cat and not boss_verified:
+        return _boss_gate.refusal_reply(raw_cmd, _boss_cat)
 
     # =========================================================================
     # A0. Boss Identity Fast-path (owner directive 2026-11-11 IST)
@@ -2167,6 +2273,112 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
     # one-line day summary is stored. Runs BEFORE the recall gate because
     # "clean up your memory" contains "your memory" (a recall pattern) — the
     # recall gate would otherwise eat the request.
+    # =========================================================================
+    # A11. Goal gate (long-goal persistence: stated Monday, tracked Friday)
+    # =========================================================================
+    # A goal statement stores a PINNED goal memory; a goal query answers
+    # "still on it, Boss" from the REAL store; "I finished my goal" retires
+    # it through the auditable supersede lifecycle. Runs before the recall/
+    # remember gates — goal phrasing never matches theirs, and this keeps
+    # goal ownership unambiguous.
+    from friday.proactive import goals as _goals
+
+    _goal_text = _goals.extract_goal_statement(raw_cmd)
+    if _goal_text:
+        _goal_res: dict[str, Any] = {}
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _goal_res = _goals.record_goal(_memora, _goal_text) or {}
+        except Exception as _e:
+            logger.warning(f"Goal store failed in goal fast-path: {_e}")
+            _goal_res = {"status": "error", "error": type(_e).__name__}
+        if str(_goal_res.get("status")) == "stored":
+            _reply = (
+                f"Locked in, Boss. I'm tracking this goal now: {_goal_text}. "
+                "Ask me any day — Friday included — and I'll still be on it. "
+                "Say 'I finished my goal' when it's done and I'll cross it off."
+            )
+        else:
+            _reply = (
+                "I couldn't reach my memory store just now, Boss, so that goal is NOT saved — "
+                "say it again in a moment and I'll hold onto it."
+            )
+        return {
+            "reply": _reply,
+            "metadata": {
+                "fast_path": True,
+                "conversational": True,
+                "goal_store": True,
+                "goal_status": str(_goal_res.get("status", "error")),
+                "goal": _goal_text,
+            },
+        }
+
+    if _goals.is_goal_query(cmd):
+        _gq_res: dict[str, Any] = {}
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _gq_res = _goals.goal_reply_for_query(_memora) or {}
+        except Exception as _e:
+            logger.warning(f"Goal recall failed in goal fast-path: {_e}")
+            _gq_res = {
+                "reply": "I couldn't reach my memory store just now, Boss — say it again in a moment.",
+                "metadata": {"fast_path": True, "conversational": True, "goal_query": True, "active_goals": []},
+            }
+        return {
+            "reply": str(_gq_res.get("reply", "")),
+            "metadata": _gq_res.get("metadata", {}) or {"fast_path": True, "goal_query": True},
+        }
+
+    if _goals.is_goal_done(cmd):
+        _gd_res: dict[str, Any] = {}
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            _gd_res = _goals.mark_goal_done(_memora) or {}
+        except Exception as _e:
+            logger.warning(f"Goal completion failed in goal fast-path: {_e}")
+            _gd_res = {"status": "error", "error": type(_e).__name__}
+        _gd_st = str(_gd_res.get("status", "error"))
+        if _gd_st == "done":
+            _reply = (
+                f"Crossed off, Boss — {_gd_res.get('goal', 'it')}. That goal's complete; "
+                "the record stays in my audit trail, and I'm ready for the next one."
+            )
+        elif _gd_st == "not_found":
+            _reply = (
+                "I don't have an active goal on file to cross off, Boss. "
+                "Tell me a new one — 'my goal this week is …' — and I'll start tracking."
+            )
+        else:
+            _reply = (
+                "I couldn't reach my memory store just now, Boss, so nothing was crossed off — "
+                "say it again in a moment."
+            )
+        return {
+            "reply": _reply,
+            "metadata": {
+                "fast_path": True,
+                "conversational": True,
+                "goal_done": True,
+                "goal_status": _gd_st,
+            },
+        }
+
+    # =========================================================================
+    # A12. Proactive follow-up chat surface ("what needs my attention?")
+    # =========================================================================
+    # The sweep loop posts pings unasked; this is the owner's on-demand view
+    # of the same honest data. Exact-match phrases only, so the task-status
+    # gate (C13) keeps its own phrasing.
+    if cmd.rstrip(".!? ") in (
+        "what needs my attention", "what needs my attention right now",
+        "any updates on my tasks", "any updates on the tasks",
+        "check on unfinished tasks", "anything stuck",
+    ):
+        from friday.proactive.followup import followup_summary_reply
+
+        return followup_summary_reply()
+
     _is_consolidate = _memory_consolidation_intent(cmd)
 
     if _is_consolidate:
@@ -2199,6 +2411,12 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
                 )
                 if _consol_res.get("merges_skipped"):
                     _reply += f" {_consol_res['merges_skipped']} merge(s) were skipped because the store refused them — honest count, no faking."
+                if _consol_res.get("aging_examined"):
+                    _reply += (
+                        f" Importance pass: {_consol_res.get('aging_examined')} memories scored, "
+                        f"{_consol_res.get('aged_out', 0)} trivial one{'s' if _consol_res.get('aged_out', 0) != 1 else ''} aged out "
+                        "(pinned facts untouched)."
+                    )
         else:
             _reply = (
                 "I couldn't reach my memory store to consolidate just now, Boss — "
@@ -2331,20 +2549,35 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
             _payload = _payload[:397].rstrip() + "…"
         _stored = False
         _store_error = ""
+        _tier = "normal"
         try:
             from friday.memory.memora_client import memora_client as _memora
+            from friday.memory.importance import score_importance
+
+            # B8: every fact is scored BEFORE storing — core life facts are
+            # pinned (importance 0.98, exempt from aging), small talk is
+            # stored low (0.20) and ages out after a week; the owner is told
+            # which tier his fact landed in.
+            _verdict = score_importance(_payload)
+            _tier = _verdict.tier
             _res = _memora.record_fact(
                 agent_name="friday",
                 fact_text=_payload,
                 category="owner_fact",
-                importance=0.98,
+                importance=_verdict.score,
             )
             _stored = bool(_res) and _res.get("status") != "error"
         except Exception as _e:
             _store_error = f"{type(_e).__name__}"
             logger.warning(f"Memora record_fact failed in memory fast-path: {_e}")
         if _stored:
-            _reply = f"Got it, Boss — locked in: {_payload}. That's mine to keep now."
+            _tier_note = (
+                " That one's pinned — it never fades."
+                if _tier == "pinned"
+                else (" I'll keep it, but small stuff like that fades from my active memory after a while."
+                      if _tier == "trivial" else "")
+            )
+            _reply = f"Got it, Boss — locked in: {_payload}. That's mine to keep now.{_tier_note}"
         else:
             _reply = (
                 f"I couldn't reach my memory store just now, Boss, so I have NOT saved that — "
@@ -2359,8 +2592,22 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
                 "conversational": True,
                 "memory_store": _stored,
                 "fact": _payload,
+                "importance_tier": _tier,
             },
         }
+
+    # =========================================================================
+    # A9. Tone gate (casual / sarcastic banter — FRIDAY plays along)
+    # =========================================================================
+    # Narrow exact-match banter patterns answered with warm, first-person
+    # comebacks. Placed AFTER the memory gates ("remember" phrasing is never
+    # banter) and BEFORE the mode toggles — jokes never reach a router that
+    # might answer them literally.
+    from friday.persona.tone import tone_reply
+
+    _tone = tone_reply(raw_cmd)
+    if _tone is not None:
+        return _tone
 
     # =========================================================================
     # A. Autonomous Mode Toggles & Directives

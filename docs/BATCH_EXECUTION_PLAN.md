@@ -139,18 +139,35 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
    MEMORA_OP_KEYWORDS (routing gap since C11) — this-form keywords added
 10. ✅ Commit + notify "Batch 3 complete"
 
-## Batch 4 — Memory + Brain maturity (B 9/12, A 5/14)
+## Batch 4 — Memory + Brain maturity (B 9/12, A 5/14) — COMPLETE 2026-11-11 (Lane A / ZAI Agent 1)
 
-1. ⬜ B8 Importance scoring: trivial facts age out, core pinned
-2. ⬜ B11 Voice-path memory: "remember X" on the voice line
-3. ⬜ B12 Memory visibility: what-FRIDAY-knows browser in dashboard
-4. ⬜ A6 Multi-turn coherence: 10+ turn context retention test
-5. ⬜ A7 Reasoning benchmark suite: 20 delegation prompts, weekly run
-6. ⬜ A9 Casual/sarcastic tone matching
-7. ⬜ A11 Long-goal persistence: Monday goal tracked Friday
-8. ⬜ A12 Proactive follow-up pings on unfinished tasks
-9. ⬜ A14 Boss-only command surface (owner-exclusive commands)
-10. ⬜ Commit + notify "Batch 4 complete"
+1. ✅ B8 Importance scoring: pinned/normal/trivial tiers, scored at store time,
+   trivial facts age out after 7 days via the auditable supersede lifecycle
+   (nightly + on-demand consolidation), pinned facts never touched
+2. ✅ B11 Voice-path memory: both voice paths (typed CLI + completed spoken
+   turns) intercept remember/forget BEFORE the Live model and store through
+   the same scored path as chat; corrections redirected (transcript safety);
+   store outages spoken honestly
+3. ✅ B12 Memory visibility: GET /api/memory/browser (control-token, read-only)
+   with tier scoring + goal flags + honest unreachable status
+4. ✅ A6 Multi-turn coherence: scripted 12-turn conversation through the real
+   router — fact + goal survive 9+ intervening turns, "still on it, Boss"
+5. ✅ A7 Reasoning benchmark: 20 owner-style prompts through the real router,
+   per-case assertions, JSON report persisted, weekly cadence hook
+6. ✅ A9 Tone matching: exact-match banter table, plays along, never lectures;
+   non-fire matrix locks real commands out of it
+7. ✅ A11 Long-goal persistence: GOAL (active) memories pinned, "what about my
+   goal" answers from the real store, "i finished my goal" supersedes + done
+   marker; goals join the morning brief
+8. ✅ A12 Proactive follow-up: 30-min sweep loop posts one honest ping per
+   stale task (45+ min no transition) via the NotificationManager, rate-limited
+   6h/task; "what needs my attention" on-demand view
+9. ✅ A14 Boss-only surface: 5 command categories gated at the top of the
+   ladder; console = control token = owner; other surfaces fail closed unless
+   "authorize boss <passphrase>"; refusals honest
+10. ✅ Tests: 76/76 batch suite green; 235-test related battery green with 0
+    regressions (pre-existing environmental failures verified identical on
+    clean tree); Stratex batch-2 spot check 52/52. Commit + notification.
 
 ## Batch 5 — Autonomy (G 4/12 → 10/12)
 
@@ -253,4 +270,4 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 
 ---
 
-**Current position: Batches 1–3 COMPLETE (2026-11-11) by ZAI Agent 1 (Batch 2: Stratex strategy depth incl. honest walk-forward negatives; Batch 3: orchestration 10/10, 53 new tests green, 0 regressions). Two-agent lanes now active: ZAI Agent 1 (Lane A) → next **Batch 4** (memory + brain maturity: B8, B11, B12, A6, A7, A9, A11, A12, A14); ZAI Agent 2 (Lane B) → first assignment **Batch 6** (agent depth I), then 7 → 5 → 8. Onboarding: docs/collaboration/ZAI_AGENT_2_ONBOARDING.md**
+**Current position: Batches 1–4 COMPLETE (2026-11-11) by ZAI Agent 1 (checklist 71/125, 57%). Two-agent lanes active: ZAI Agent 1 (Lane A) → next **Batch 9** (tech debt & tests: I1–I6 battery fixes, coverage gate, dead-code sweep, A5 verification, H10 $0-cost audit, E10 accent check); ZAI Agent 2 (Lane B) → first assignment **Batch 6** (agent depth I), then 7 → 5 → 8. Onboarding: docs/collaboration/ZAI_AGENT_2_ONBOARDING.md**

@@ -144,6 +144,18 @@ def compose_morning_brief(notifications: Any | None = None) -> str | None:
                 if overnight:
                     sections.append("Overnight: " + " | ".join(overnight))
 
+            # A11: active long-term goals join the brief — a goal stated
+            # Monday is still reported Friday ("still on it, Boss").
+            try:
+                from friday.memory.memora_client import memora_client as _memora
+                from friday.proactive.goals import morning_brief_goal_line
+
+                goal_line = morning_brief_goal_line(_memora)
+                if goal_line:
+                    sections.append(goal_line)
+            except Exception as exc:
+                logger.debug(f"goal line skipped in morning brief: {exc}")
+
             _last_morning_date = today
             return " | ".join(sections)
         except Exception as exc:

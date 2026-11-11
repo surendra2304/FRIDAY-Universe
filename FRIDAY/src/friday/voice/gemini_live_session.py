@@ -623,6 +623,25 @@ class GeminiLiveVoiceSession:
         if not text:
             return ""
 
+        # B11: voice-path memory. "remember X" typed on the voice line is
+        # stored through the SAME deterministic memory path the chat console
+        # uses — the Live model has no Memora access, so without this the
+        # fact is answered conversationally and then lost. Never raises;
+        # returns None for non-memory input.
+        try:
+            from friday.memory.voice_memory import handle_voice_memory
+
+            _mem_reply = handle_voice_memory(text)
+        except Exception as _vm_exc:
+            logger.debug(f"voice memory handling skipped: {_vm_exc}")
+            _mem_reply = None
+        if _mem_reply is not None:
+            try:
+                await self.send_text(f"FRIDAY, say the following result out loud briefly: {_mem_reply}")
+            except Exception as _send_exc:
+                logger.debug(f"Could not send memory result to Live model: {_send_exc}")
+            return _mem_reply
+
         # Check if the typed text is an instant device command
         instant_key = None
         if self.agent is not None and type(self.agent).__name__ == "FridayAgent":
@@ -1220,6 +1239,34 @@ class GeminiLiveVoiceSession:
                                         logger.debug(f"Could not speak local action receipt: {e}")
                             except Exception as e:
                                 logger.warning(f"Local voice agent processing failed: {e}")
+
+                        # B11: voice-path memory — a completed spoken turn
+                        # whose transcript is a memory intent ("remember X",
+                        # "forget about X") is handled through the same
+                        # deterministic store path as chat, confirmed out
+                        # loud. Runs after the instant-command block; before
+                        # the plain persistence path so the fact is stored
+                        # exactly once with its receipt spoken.
+                        if not local_agent_handled and user_text and not turn_interrupted:
+                            _voice_mem_reply = None
+                            try:
+                                from friday.memory.voice_memory import handle_voice_memory
+
+                                _voice_mem_reply = handle_voice_memory(user_text)
+                            except Exception as _vm_exc:
+                                logger.debug(f"voice memory handling skipped: {_vm_exc}")
+                            if _voice_mem_reply is not None:
+                                agent_text = _voice_mem_reply
+                                local_agent_handled = True
+                                try:
+                                    from friday.cli.main import native_tts
+                                    from friday.voice.transcripts import speakable_action_receipt
+
+                                    _receipt = speakable_action_receipt(_voice_mem_reply)
+                                    if _receipt:
+                                        native_tts.speak(_receipt)
+                                except Exception as _tts_exc:
+                                    logger.debug(f"Could not speak memory receipt: {_tts_exc}")
 
                         # Check backup spoken stop command
                         if user_text.lower() in ("stop", "stop.", "cancel", "cancel.", "hold on", "quiet"):

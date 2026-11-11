@@ -249,6 +249,22 @@ def consolidate_day_memories(
         except Exception as exc:
             logger.warning(f"nightly consolidation summary store failed: {type(exc).__name__}")
 
+    # B8: importance aging — trivial-tier facts past AGE_OUT_DAYS retire
+    # through the same auditable supersede lifecycle (pinned facts are
+    # never touched). Runs after the day's merge so the day summary and the
+    # aging report land together; honest counters, never fatal.
+    aging_report: Dict[str, Any] = {"aged_out": 0, "examined": 0, "status": "skipped"}
+    if not records:
+        aging_report["status"] = "skipped_empty_day"
+    else:
+        try:
+            from friday.memory.importance import age_out_trivial_memories
+
+            aging_report = age_out_trivial_memories(client, agent_name=agent_name)
+        except Exception as exc:
+            aging_report = {"aged_out": 0, "examined": 0, "status": f"error:{type(exc).__name__}"}
+            logger.warning(f"nightly importance aging failed: {type(exc).__name__}")
+
     return {
         "status": "consolidated",
         "day": day,
@@ -258,6 +274,9 @@ def consolidate_day_memories(
         "summary_stored": summary_stored,
         "summary_id": summary_id,
         "summary_text": summary_text,
+        "aged_out": aging_report.get("aged_out", 0),
+        "aging_examined": aging_report.get("examined", 0),
+        "aging_status": aging_report.get("status", "skipped"),
     }
 
 
