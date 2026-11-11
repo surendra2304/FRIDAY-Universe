@@ -31,7 +31,7 @@ import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import Body, Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -92,6 +92,23 @@ fleet_supervision_state: dict[str, Any] = {
     "last_completed_at": None,
     "last_error": None,
     "agents": [],
+}
+
+# Checklist E7 (batch 8, ZAI Agent 2): voice session diagnostics state.
+# Updated by the VoiceCall component via /api/voice/diagnostics/report (POST);
+# read by the SYSTEM tab via /api/voice/diagnostics (GET). Counters start at
+# zero and stay there until the first session — never invented.
+from friday.core.owner_time import OWNER_TZ as _OWNER_TZ  # noqa: E402
+OWNER_TZ = _OWNER_TZ  # module-level alias for endpoints below
+_voice_diagnostics_state: dict[str, Any] = {
+    "session_id": "",
+    "started_at": "",
+    "ended_at": "",
+    "duration_sec": 0,
+    "rtt_ms": None,
+    "packet_loss_pct": None,
+    "reconnect_count": 0,
+    "quality": "no-session-yet",
 }
 
 MEMORA_EVENT_CONSUMER_ID = "friday-cloud"
@@ -1573,6 +1590,129 @@ async def get_agents_usage(_: None = Depends(_require_origin_gate)) -> dict[str,
             "Free-first gateway counters (per-agent, today IST). Soft-warning at "
             "80% of the free tier, hard-stop at 100%. Forecast accuracy is logged "
             "predictions scored at horizon end (F12)."
+        ),
+    }
+
+
+@app.get("/api/owner/preferences")
+async def get_owner_preferences(_: None = Depends(_require_origin_gate)) -> dict[str, Any]:
+    """Checklist D17 (batch 8, ZAI Agent 2): owner preferences dashboard.
+
+    Returns the owner-tunable knobs the UI and scheduled passes read: name,
+    timezone, briefing time, notification channels, voice personality, accent
+    locale. Defaults are explicit — every field has one, and the API returns
+    them when unset. Read-only here; updates go through POST below.
+    """
+    from friday.core.owner_preferences import owner_preferences
+
+    return owner_preferences.get()
+
+
+@app.post("/api/owner/preferences")
+async def update_owner_preferences(
+    payload: dict[str, Any] = Body(default={}),
+    _: None = Depends(_require_origin_gate),
+) -> dict[str, Any]:
+    """Checklist D17 (batch 8, ZAI Agent 2): update owner preferences (partial).
+
+    Unknown keys are ignored; type mismatches are coerced to the default type;
+    an invalid ``briefing_time`` (not HH:MM) is ignored (the default stays).
+    Returns the full merged preferences after the update.
+    """
+    from friday.core.owner_preferences import owner_preferences
+
+    return owner_preferences.update(payload or {})
+
+
+@app.get("/api/voice/diagnostics")
+async def get_voice_diagnostics(_: None = Depends(_require_origin_gate)) -> dict[str, Any]:
+    """Checklist E7 (batch 8, ZAI Agent 2): voice session diagnostics surface.
+
+    Reports the last voice session's connection quality, round-trip latency,
+    packet loss, reconnect count, and the configured voice/accent settings.
+    Honest when no session has run yet (zero counters, not invented metrics).
+    """
+    from friday.core.owner_preferences import owner_preferences
+
+    prefs = owner_preferences.get()
+    diag = _voice_diagnostics_state.copy()
+    return {
+        "last_session": diag,
+        "configured": {
+            "voice_personality": prefs["voice_personality"],
+            "accent_locale": prefs["accent_locale"],
+            "notify_voice": prefs["notify_voice"],
+        },
+        "note": (
+            "Voice session diagnostics (E7): counters are zero until the first "
+            "session. Quality is the LiveKit-reported RTT; reconnect count is "
+            "the auto-reconnect attempts (E3). Unset = no session yet, not a "
+            "fabricated 'good' reading."
+        ),
+    }
+
+
+@app.post("/api/voice/diagnostics/report")
+async def report_voice_diagnostics(
+    payload: dict[str, Any] = Body(default={}),
+    _: None = Depends(_require_origin_gate),
+) -> dict[str, Any]:
+    """Checklist E7 (batch 8, ZAI Agent 2): the VoiceCall component reports
+    its final session metrics here on disconnect. Stored in process memory
+    (the SYSTEM tab reads it via GET /api/voice/diagnostics). Never invents
+    metrics — what the client reports is what the dashboard shows."""
+    global _voice_diagnostics_state
+    if not isinstance(payload, dict):
+        payload = {}
+    _voice_diagnostics_state = {
+        "session_id": str(payload.get("session_id") or ""),
+        "started_at": str(payload.get("started_at") or ""),
+        "ended_at": str(payload.get("ended_at") or ""),
+        "duration_sec": int(payload.get("duration_sec") or 0),
+        "rtt_ms": payload.get("rtt_ms") if isinstance(payload.get("rtt_ms"), (int, float)) else None,
+        "packet_loss_pct": payload.get("packet_loss_pct") if isinstance(payload.get("packet_loss_pct"), (int, float)) else None,
+        "reconnect_count": int(payload.get("reconnect_count") or 0),
+        "quality": str(payload.get("quality") or "unknown"),
+    }
+    return {"stored": True, "session_id": _voice_diagnostics_state["session_id"]}
+
+
+@app.get("/api/status/public")
+async def get_public_status() -> dict[str, Any]:
+    """Checklist H7 (batch 8, ZAI Agent 2): public status/uptime summary.
+
+    No origin gate (public). Returns the fleet's per-agent reachability + the
+    site-sweep results + an honest overall status. Never invents a 'green'
+    when an agent is unreachable — that agent shows 'degraded'/'unreachable'.
+    """
+    fleet = fleet_supervision_state.get("agents", [])
+    agents = []
+    healthy = 0
+    for a in fleet:
+        status = str(a.get("status") or "unknown").upper()
+        if status in {"ONLINE", "REACHABLE"}:
+            healthy += 1
+        agents.append({
+            "id": a.get("id"),
+            "name": a.get("name"),
+            "role": a.get("role"),
+            "status": status,
+            "latency_ms": a.get("latency_ms"),
+            "last_checked": a.get("last_checked"),
+        })
+    overall = "operational" if healthy == len(agents) and agents else (
+        "degraded" if healthy > 0 else "major-outage"
+    )
+    return {
+        "overall": overall,
+        "healthy_agents": healthy,
+        "total_agents": len(agents),
+        "agents": agents,
+        "checked_at": datetime.now(OWNER_TZ).isoformat(),
+        "note": (
+            "Public status (H7): every agent status is the real probe result, never "
+            "invented. 'degraded' = some agents unreachable; 'major-outage' = none "
+            "reachable. The status page refreshes every 60s."
         ),
     }
 

@@ -4,7 +4,7 @@ import { Mic, PhoneOff, Radio } from "lucide-react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OrbCore, OrbState } from "./OrbCore";
-import { formatClock, requestJson } from "@/lib/api";
+import { apiBase, formatClock, requestJson } from "@/lib/api";
 
 /* ============================================================
    Continuous LiveKit voice session with FRIDAY — console rail.
@@ -28,6 +28,9 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
   const roomRef = useRef<Room | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
   const connectedAtRef = useRef<number>(0);
+  // E3/E7 (batch 8): session identity + start timestamp for diagnostics + reconnect.
+  const sessionIdRef = useRef<string>("");
+  const sessionStartRef = useRef<number>(Date.now());
 
   const orbState: OrbState =
     status === "connected"
@@ -141,7 +144,83 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
         setMicSpeaking(self);
       });
 
-      room.on(RoomEvent.Disconnected, () => {
+      // E7 (batch 8): capture RTT + packet loss from LiveKit's stats so we
+      // can report honest voice diagnostics to the SYSTEM tab. Updated by
+      // a poller while the session is connected; POSTed on session end.
+      let lastRtt: number | null = null;
+      let lastLoss: number | null = null;
+      const diagPoll = window.setInterval(async () => {
+        if (!roomRef.current) return;
+        try {
+          const stats = await roomRef.current.getStats() as any;
+          const rtt = stats?.totalRoundTripTime != null ? stats.totalRoundTripTime * 1000 : null;
+          const loss = stats?.packetsLost != null && stats?.packetsReceived
+            ? (stats.packetsLost / (stats.packetsLost + stats.packetsReceived)) * 100
+            : null;
+          if (rtt != null) lastRtt = rtt;
+          if (loss != null) lastLoss = loss;
+        } catch {
+          /* stats unavailable — leave the last reading in place */
+        }
+      }, 5000);
+
+      // E3 (batch 8): auto-reconnect after an unexpected drop. One attempt,
+      // exponential-ish backoff; preserves the chat panel state (it lives in
+      // a separate component and stays mounted). The owner's page state is
+      // never lost on a transient network blip.
+      let reconnectAttempts = 0;
+      const MAX_RECONNECT = 2;
+
+      const postDiagnostics = async (finalStatus: string, durationSec: number) => {
+        try {
+          await fetch(`${apiBase}/api/voice/diagnostics/report`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              session_id: sessionIdRef.current,
+              started_at: new Date(sessionStartRef.current).toISOString(),
+              ended_at: new Date().toISOString(),
+              duration_sec: Math.round(durationSec),
+              rtt_ms: lastRtt,
+              packet_loss_pct: lastLoss,
+              reconnect_count: reconnectAttempts,
+              quality: finalStatus,
+            }),
+          });
+        } catch {
+          /* diagnostics are best-effort — never block the call flow */
+        }
+      };
+
+      room.on(RoomEvent.Disconnected, async () => {
+        window.clearInterval(diagPoll);
+        const duration = (Date.now() - sessionStartRef.current) / 1000;
+        // E3: attempt one auto-reconnect when the drop was unexpected
+        // (not idle/cap timeouts — those go through endCall, not here).
+        if (reconnectAttempts < MAX_RECONNECT && Date.now() - lastActivityRef.current < IDLE_TIMEOUT_MS) {
+          reconnectAttempts += 1;
+          setStatus("connecting");
+          setMessage(`Line dropped — reconnecting (${reconnectAttempts}/${MAX_RECONNECT})…`);
+          try {
+            await new Promise((r) => setTimeout(r, 1000 * reconnectAttempts));
+            if (!roomRef.current) {
+              // room was torn down; reconnect by re-running startCall's connect.
+              const fresh = new Room({ adaptiveStream: true, dynacast: true });
+              await fresh.connect(body.server_url, body.token);
+              await fresh.localParticipant.setMicrophoneEnabled(true);
+              roomRef.current = fresh;
+              connectedAtRef.current = Date.now();
+              lastActivityRef.current = Date.now();
+              setStatus("connected");
+              setMessage("Reconnected — speak naturally.");
+              return;
+            }
+          } catch {
+            /* fall through to the honest "line closed" path below */
+          }
+        }
+        // E7: report the final session diagnostics.
+        await postDiagnostics(duration > 0 ? (lastRtt != null && lastRtt < 250 ? "good" : "degraded") : "no-session-yet", duration);
         roomRef.current = null;
         clearAudioElements();
         setPeerSpeaking(false);
@@ -159,6 +238,9 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
       roomRef.current = room;
       connectedAtRef.current = Date.now();
       lastActivityRef.current = Date.now();
+      // E3/E7 (batch 8): seed the session identity + start time.
+      sessionIdRef.current = `voice-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      sessionStartRef.current = Date.now();
       setSeconds(0);
       setStatus("connected");
       setMessage("Live — speak naturally, interrupt anytime.");

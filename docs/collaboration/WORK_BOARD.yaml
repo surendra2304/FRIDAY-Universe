@@ -1402,6 +1402,48 @@ tasks:
     blockers: []
     next_action: "Post-merge: Fleet CD deploys; the extended agent-watch loop starts with the next FRIDAY restart (first portfolio report tomorrow 09:00 IST, first forecast refresh 09:30/18:30 IST, first prediction scoring 21:00 IST, alert checks hourly). The owner's first alert can be queued immediately via chat. Batch 8 (Lane B): D/E/H module items (mobile, a11y, perf, voice, infra)."
 
+  - id: "TASK-BATCH8-AGENT2"
+    title: "Checklist Batch 8 (ZAI Agent 2) — D/E/H module polish: D14-D18, E3/E6/E7/E10 (+E4/E5/E9 verified), H6/H7/H10"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Continue the checklist in Lane B (Batch 7 ✅). Lane assignment per ZAI_AGENT_2_ONBOARDING.md."
+    merge_note: "Claim posted to issue #35 (comment 6804466165) BEFORE editing. Direct main commit per the batch discipline."
+    milestone: "Master Completion Checklist D 13->18 (COMPLETE), E 2->9, H 7->10 (COMPLETE); Universe 119/125 (95%)"
+    files:
+      - "FRIDAY/src/friday/core/owner_preferences.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/components/batch8.tsx"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+      - "FRIDAY/ui/public/status.html"
+      - "FRIDAY/tests/test_batch8_polish.py"
+      - "docs/voice/BARGE_IN_TEST_KIT_E6.md"
+      - "docs/voice/ACCENT_CHECK_E10.md"
+      - "docs/infra/COST_AUDIT_H10.md"
+      - ".github/workflows/lighthouse-ci.yml"
+      - ".github/workflows/cost-audit-reminder.yml"
+      - ".github/lighthouserc.json"
+    acceptance:
+      - "D14: mobile 320-430px breakpoint; no horizontal scroll on phones."
+      - "D15: focus-visible rings + skip-link + aria-labels on new controls."
+      - "D16: Lighthouse CI asserts >= 0.9 on performance/a11y/best-practices/SEO."
+      - "D17: GET/POST /api/owner/preferences; OwnerPreferences UI component."
+      - "D18: EmptyState + OnboardingHint shared components."
+      - "E3: VoiceCall auto-reconnect (2 attempts, exponential backoff)."
+      - "E4/E5/E9: verified already live (B11 voice memory, function_declarations, config.py)."
+      - "E6: barge-in 5-min test kit doc."
+      - "E7: GET /api/voice/diagnostics + POST /api/voice/diagnostics/report + VoiceDiagnostics card."
+      - "E10: accent check doc; en-IN default."
+      - "H6: docs sync (scoreboard recounted from ticks)."
+      - "H7: public status page (status.html + GET /api/status/public)."
+      - "H10: cost audit doc + quarterly reminder workflow."
+      - "Zero new test failures vs clean main."
+    evidence: "test_batch8_polish.py 21/21; A/B battery 17 suites: 517 passed / 18 failed = byte-identical pre-existing baseline, zero new failures; server imports cleanly. Checklist recount: 119/125 (95%); D 18/18, E 9/10, F 27/27, H 10/10 all COMPLETE."
+    blockers: ["E8 (unlimited voice minutes) blocked on G9 ARM server capture", "G9/G10 blocked on ARM capacity"]
+    next_action: "Post-merge: Fleet CD deploys; UI rebuild picks up the mobile/a11y/empty-state CSS + the new OwnerPreferences/VoiceDiagnostics components; the public status page goes live at /status.html; the Lighthouse CI runs on the next UI PR; the cost-audit-reminder opens its first issue the first Monday of next quarter. Remaining reachable: A8 (personality consistency). Then Batch 9 Part 2 (I5/I6) if Agent 1 hasn't started."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

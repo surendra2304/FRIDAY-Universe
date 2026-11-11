@@ -1226,6 +1226,76 @@ claims:
     status: "DIRECT_COMMIT_BATCH7_AGENT2"
     task: "Batch 7 contract suite (42 tests)."
 
+  - path: "FRIDAY/src/friday/core/owner_preferences.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklist D17: owner preferences store (file-backed, defaults explicit)."
+
+  - path: "FRIDAY/ui/components/batch8.tsx"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklists D17/E7/D18: OwnerPreferences + VoiceDiagnostics + EmptyState + OnboardingHint components."
+
+  - path: "FRIDAY/ui/public/status.html"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklist H7: public status/uptime page."
+
+  - path: "FRIDAY/tests/test_batch8_polish.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Batch 8 contract suite (21 tests)."
+
+  - path: "docs/voice/BARGE_IN_TEST_KIT_E6.md"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklist E6: barge-in 5-minute test kit."
+
+  - path: "docs/voice/ACCENT_CHECK_E10.md"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklist E10: Indian-English accent accuracy check."
+
+  - path: "docs/infra/COST_AUDIT_H10.md"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklist H10: quarterly $0-cost audit doc."
+
+  - path: ".github/workflows/lighthouse-ci.yml"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklist D16: Lighthouse CI workflow."
+
+  - path: ".github/lighthouserc.json"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklist D16: Lighthouse budget (>= 0.9 all categories)."
+
+  - path: ".github/workflows/cost-audit-reminder.yml"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH8_AGENT2"
+    task: "Checklist H10: quarterly cost-audit reminder workflow."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

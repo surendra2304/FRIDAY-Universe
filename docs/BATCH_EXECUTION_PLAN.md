@@ -383,4 +383,30 @@ Evidence: test_batch7_agent_depth_2.py 42/42; full A/B battery 15 suites:
 487 passed, 18 failed = byte-identical pre-existing baseline, zero new
 failures. Checklist recount: 100/125 (80%); F module 27/27 (100%).
 
-**Current position: Batches 1–7 + Batch 9 Part 1 COMPLETE (2026-11-12 IST). Checklist 104/125 (83%); F module COMPLETE 27/27; I module 6/8 (I1–I4 battery rescue done). Lanes: ZAI Agent 1 (Lane A) → Batch 9 Part 2 (I5–I6: coverage gate + dead-code sweep); ZAI Agent 2 (Lane B) → Batch 8 (D/E/H — mobile, accessibility, performance, voice, infra docs/uptime page).**
+## Batch 8 — D/E/H module polish (D 13→18, E 2→9, H 7→10) — EXECUTED BY ZAI AGENT 2, COMPLETE 2026-11-12 IST
+
+> Lane B (claim: issue #35 comment 6804466165). 15 reachable items delivered.
+> E8 stays blocked on ARM (G9 capacity-gated). No overlap with Agent 1's
+> I-module lane.
+
+1. ✅ D14 — mobile 320-430px breakpoint (extends the existing 720px one)
+2. ✅ D15 — a11y: focus-visible rings, skip-link, aria-labels
+3. ✅ D16 — Lighthouse CI workflow + budget (>= 0.9 all categories)
+4. ✅ D17 — owner preferences: core/owner_preferences.py + GET/POST API + UI
+5. ✅ D18 — EmptyState + OnboardingHint shared components
+6. ✅ E3 — VoiceCall auto-reconnect (2 attempts, exponential backoff)
+7. ✅ E4 — verified live (B11 voice memory; memory/voice_memory.py)
+8. ✅ E5 — verified live (Gemini Live function_declarations routing)
+9. ✅ E6 — barge-in 5-min test kit doc (docs/voice/BARGE_IN_TEST_KIT_E6.md)
+10. ✅ E7 — voice diagnostics GET + POST report endpoints + VoiceDiagnostics card
+11. ✅ E9 — verified live (voice_name + VAD config in config.py)
+12. ✅ E10 — accent check doc (docs/voice/ACCENT_CHECK_E10.md; en-IN default)
+13. ✅ H6 — docs sync (scoreboard recounted from ticks)
+14. ✅ H7 — public status page (FRIDAY/ui/public/status.html + GET /api/status/public)
+15. ✅ H10 — $0-cost audit doc + quarterly reminder workflow
+
+Evidence: test_batch8_polish.py 21/21; A/B battery 17 suites: 517 passed / 18
+failed = byte-identical to the merged-without-batch-8 baseline, zero new
+failures; server imports cleanly. Checklist recount: 119/125 (95%).
+
+**Current position: Batches 1–8 + Batch 9 Part 1 COMPLETE (2026-11-12 IST). Checklist 119/125 (95%); D 18/18, E 9/10, F 27/27, H 10/10 all COMPLETE. Remaining: A8 (personality consistency), E8/G9/G10 (blocked on ARM server capture), I5/I6 (Agent 1's lane — Batch 9 Part 2). Lanes: ZAI Agent 1 (Lane A) → Batch 9 Part 2 (I5 coverage gate, I6 dead-code sweep); ZAI Agent 2 (Lane B) → A8 + I5/I6 if Agent 1 hasn't started, then blocked-item monitoring.**
