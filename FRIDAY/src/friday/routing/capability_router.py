@@ -162,6 +162,19 @@ class CapabilityRouter:
         "trading signals", "what strategies", "active strategies", "stratex",
         "binance",
     }
+    # Checklist F19/C8 (2026-11-11): keywords signaling a security-posture or
+    # security-findings question. These are factual questions about the live
+    # security state — the answer must come from Sentinel's real posture /
+    # finding engines (sentinel_security, read-only), never the LLM's
+    # imagination. Active assessments stay behind Sentinel's owner-authorized
+    # scope gate by design; the tool states that in every answer.
+    SECURITY_SCAN_KEYWORDS = {
+        "security posture", "security status", "security check", "security scan",
+        "security score", "how secure", "am i vulnerable", "any vulnerabilities",
+        "vulnerabilities right now", "any security findings", "security findings",
+        "open findings", "any findings", "check the security", "run a security",
+        "security posture check", "fleet security", "sentinel", "cybersecurity",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -225,8 +238,9 @@ class CapabilityRouter:
             or self._matches(clean_input, self.RESEARCH_KEYWORDS)
             or self._matches(clean_input, self.PORTFOLIO_KEYWORDS)
             or self._matches(clean_input, self.CODE_TASK_KEYWORDS)
+            or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS)
         )
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -311,6 +325,23 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["forge_code_task"],
                 rationale="Code task: dispatch to Forge (sandboxed SWE agent, TASK-FOR-001 approved) for a real build with verification.",
+            ))
+
+        # Checklist F19/C8: Evaluate Sentinel Security Lookup — "what's the
+        # security posture?" / "any vulnerabilities?" are factual questions
+        # about the live security state; the answer must come from Sentinel's
+        # real posture/finding engines (sentinel_security, read-only). Active
+        # assessments are NOT performed (owner-authorized scope gate by design).
+        if self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=3000.0,
+                confidence=0.93,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["sentinel_security"],
+                rationale="Security question: read-only Sentinel posture/findings lookup; active assessments stay behind the owner-authorized scope gate.",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

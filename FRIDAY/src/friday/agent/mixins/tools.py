@@ -111,6 +111,7 @@ from friday.tools.builtin import (
     ForgeCodeTool,
     IntelXResearchTool,
     StratexPortfolioTool,
+    SentinelSecurityTool,
     SystemPowerControlTool,
     TimeDateTool,
     ToggleBluetoothTool,
@@ -148,6 +149,7 @@ class ToolExecutionMixin:
             registry.register(ForgeCodeTool())
             registry.register(IntelXResearchTool())
             registry.register(StratexPortfolioTool())
+            registry.register(SentinelSecurityTool())
             registry.register(TimeDateTool())
             registry.register(CalculatorTool())
             registry.register(FileReaderTool())

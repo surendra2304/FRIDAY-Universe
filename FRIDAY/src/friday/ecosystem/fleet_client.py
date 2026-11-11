@@ -967,6 +967,84 @@ class FleetClient:
                 "metadata": {"agent_id": "sentinel", "error": str(e)},
             }
 
+    async def ask_sentinel_findings(self, severity: str = "", limit: int = 10) -> dict[str, Any]:
+        """Checklist F19/C8: Sentinel's open security findings — read-only, honest.
+
+        Lists the REAL findings from Sentinel's finding engine (the same data
+        /api/v1/findings serves). An empty list is an honest empty list; a
+        connection failure is an honest failure; an actual security ASSESSMENT
+        is NOT performed — those stay behind Sentinel's owner-authorized scope
+        gate by design.
+        """
+        breaker = self.get_circuit_breaker("sentinel")
+        if not await breaker.can_execute():
+            return {
+                "reply": "🛡️ [SENTINEL FINDINGS // CIRCUIT OPEN] Requests blocked to protect mesh stability.",
+                "metadata": {"agent_id": "sentinel", "error": "circuit_open", "status": "degraded"},
+                "success": False,
+            }
+        headers = {"X-API-Key": self.sentinel_key, "Authorization": f"Bearer {self.sentinel_key}"}
+        try:
+            client = self.get_shared_client()
+            params: dict[str, str] = {}
+            if severity:
+                params["severity"] = severity
+            resp = await client.get(
+                f"{self.sentinel_url}/api/v1/findings",
+                headers=headers,
+                params=params or None,
+                timeout=5.0,
+            )
+            if resp.status_code != 200:
+                await breaker.record_failure()
+                return {
+                    "reply": (
+                        f"🛡️ [SENTINEL FINDINGS] Sentinel answered HTTP {resp.status_code} — "
+                        "the findings list could not be read. That is the real outcome."
+                    ),
+                    "metadata": {"agent_id": "sentinel", "error": f"http_{resp.status_code}"},
+                    "success": False,
+                }
+            await breaker.record_success()
+            findings = resp.json() if isinstance(resp.json(), list) else []
+            capped = findings[: max(1, min(int(limit), 25))]
+            if not capped:
+                reply = (
+                    "🛡️ [SENTINEL FINDINGS] No open security findings on record. "
+                    "This is the live finding ledger, not a guess."
+                )
+            else:
+                lines = []
+                for f in capped:
+                    lines.append(
+                        f"• [{str(f.get('severity', '?')).upper()}] {f.get('title', 'untitled')} "
+                        f"— {f.get('description', '')[:140]} (confidence {f.get('confidence', '?')})"
+                    )
+                more = f" (+{len(findings) - len(capped)} more)" if len(findings) > len(capped) else ""
+                reply = (
+                    f"🛡️ [SENTINEL FINDINGS] {len(findings)} open finding(s){more}:\n"
+                    + "\n".join(lines)
+                    + "\nThis was a read-only findings lookup; no security assessment was performed "
+                    "(assessments require the owner-authorized scope by design)."
+                )
+            return {
+                "reply": reply,
+                "metadata": {
+                    "agent_id": "sentinel",
+                    "agent_name": "Sentinel",
+                    "finding_count": len(findings),
+                    "assessment_completed": False,
+                },
+                "success": True,
+            }
+        except Exception as e:
+            await breaker.record_failure(e)
+            return {
+                "reply": f"🛡️ [SENTINEL FINDINGS] Error connecting to Sentinel: {e}",
+                "metadata": {"agent_id": "sentinel", "error": str(e)},
+                "success": False,
+            }
+
     async def ask_vyralx(self, query: str) -> dict[str, Any]:
         """Reports VyralX health and queue status; it never creates or publishes content."""
         breaker = self.get_circuit_breaker("vyralx")

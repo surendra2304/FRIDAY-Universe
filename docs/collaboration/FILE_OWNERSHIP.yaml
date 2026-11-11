@@ -993,6 +993,20 @@ claims:
     status: "DIRECT_COMMIT_WAVE14_VERIFY"
     task: "100% directive WAVE 14 pass: docstring made a raw string to clear the py_compile SyntaxWarning (Windows path escape)."
 
+  - path: "FRIDAY/src/friday/tools/builtin/sentinel_security.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_SENT_001_2026-11-11"
+    task: "Checklist F19/C8: SentinelSecurityTool — read-only posture + findings via FleetClient (ask_sentinel / new ask_sentinel_findings); active assessments stay behind Sentinel's owner-authorized scope gate."
+
+  - path: "FRIDAY/tests/test_sentinel_security_dispatch.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_SENT_001_2026-11-11"
+    task: "Checklist F19/C8: 33-test contract suite (routing, tool, HTTP-level ask_sentinel_findings, fast-path fire/non-fire, registry)."
+
   - path: "FRIDAY/src/friday/proactive/nightly_consolidation.py"
     owner: "zai"
     prs: []

@@ -201,6 +201,14 @@ class CognitiveMixin:
             if delegation_response is not None:
                 return delegation_response
 
+            # Checklist F19/C8: security questions get Sentinel's real
+            # posture/findings — BEFORE the fleet-status path so "check the
+            # fleet's security posture" is a security lookup, not a fleet
+            # health probe.
+            security_response = self._security_fast_path(clean_input, start_time)
+            if security_response is not None:
+                return security_response
+
             # TASK-API-002: fleet-health questions get a real probe, not an
             # LLM guess — "how's the fleet?" answers with live agent status.
             fleet_response = self._fleet_status_fast_path(clean_input, start_time)

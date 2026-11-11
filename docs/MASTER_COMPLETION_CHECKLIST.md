@@ -49,7 +49,7 @@
 - [x] **C5** Empty-turn fix unblocks delegation requests (ORCH-005 — this batch; live re-verify after deploy)
 - [x] **C6** Generic "assign <task> to <agent>" phrasing routes to the right agent tool (ORCH-006/007, live verified 2026-11-11)
 - [ ] **C7** VyralX delegation: video scripts/clips on request
-- [ ] **C8** Sentinel delegation: "run a security scan" on request
+- [x] **C8** Sentinel delegation: "run a security scan" on request (DONE 2026-11-11 IST with F19: "run a security check" / "any vulnerabilities" answer from Sentinel's REAL posture + finding engines via sentinel_security (read-only); active assessments stay behind Sentinel's owner-authorized scope gate — stated in every answer; security fast-path runs BEFORE the fleet-status probe so "check the fleet's security posture" is a security lookup, not a fleet ping; delegation-shaped asks ("tell Sentinel to run a security scan") still route to delegation; 33-test suite)
 - [ ] **C9** Cortex delegation: web fetch/monitor tasks on request
 - [ ] **C10** Futuris delegation: forecast requests on demand
 - [ ] **C11** Memora delegation: owner-facing memory ops (search/edit) as first-class tasks
@@ -124,7 +124,7 @@
 - [ ] **F18** Scheduled dependency/CI health report
 
 **Sentinel (security)**
-- [ ] **F19** Security scan on request (capability partial)
+- [x] **F19** Security scan on request (capability partial) (DONE 2026-11-11 IST: SentinelSecurityTool — posture (overall + per-domain scores, severity counts, audit-chain verdict, via FleetClient.ask_sentinel) + findings (open finding ledger, severity filter, via NEW FleetClient.ask_sentinel_findings, honest empties/failures); SECURITY_SCAN_KEYWORDS routing → TOOL_EXECUTION sentinel_security, never VISION_MODEL/never DIRECT_REASONING; registered in the default registry; read-only by construction — active assessments stay behind Sentinel's fail-closed owner-authorized scope (the live C6 400 rejection remains the correct behavior for unscoped assessments); 33-test suite + 191 related-suite passes)
 - [ ] **F20** Scheduled vulnerability scans + report
 - [ ] **F21** Secret-leak guard on the public repo (pre-push scan)
 
@@ -185,14 +185,14 @@
 |---|---|---|---|
 | A. Brain | 5 | 14 | 36% |
 | B. Memory | 9 | 12 | 75% |
-| C. Orchestration | 8 | 14 | 57% |
+| C. Orchestration | 9 | 14 | 64% |
 | D. Website | 11 | 18 | 61% |
 | E. Voice | 2 | 10 | 20% |
-| F. Agents | 7 | 27 | 26% |
+| F. Agents | 8 | 27 | 30% |
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
 | I. Tech debt | 2 | 8 | 25% |
-| **Universe** | **53** | **125** | **42%** |
+| **Universe** | **55** | **125** | **44%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

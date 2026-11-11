@@ -293,6 +293,83 @@ class FastPathMixin:
             },
         )
 
+    def _security_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """Checklist F19/C8: security questions answered with Sentinel's real data.
+
+        "What's the security posture?", "run a security check", "any
+        vulnerabilities right now?" are factual questions about the live
+        security state: the answer must come from Sentinel's real posture /
+        finding engines (sentinel_security, read-only), never a guess. Runs
+        BEFORE the fleet-status path so "check the fleet's security posture"
+        is a security lookup, not a fleet-health probe. Active assessments
+        are NOT performed — Sentinel's delegation ingress is deliberately
+        fail-closed behind a complete owner-authorized scope, and the reply
+        states that so the owner is never misled about what ran.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.routing.capability_router import CapabilityRouter
+
+        if not CapabilityRouter._matches(low, CapabilityRouter.SECURITY_SCAN_KEYWORDS):
+            return None
+        # Explicit security-QUESTION shape: a security keyword co-occurring
+        # with a question/check verb — not a delegation ("assign a security
+        # task to Sentinel" is the delegation path's job).
+        if _delegation_instruction_agent(low):
+            return None
+
+        from friday.tools.builtin.sentinel_security import SentinelSecurityTool
+
+        findings_shaped = CapabilityRouter._matches(
+            low,
+            {
+                "any vulnerabilities", "vulnerabilities", "any security findings",
+                "security findings", "open findings", "any findings", "findings",
+                "what did you find", "show the findings", "list the findings",
+            },
+        )
+        severity = ""
+        if re.search(r"\bcritical\b", low):
+            severity = "critical"
+        elif re.search(r"\bhigh\b", low):
+            severity = "high"
+        action = "findings" if findings_shaped else "posture"
+        result = SentinelSecurityTool().execute(question=low, action=action, severity=severity)
+        success = not result.is_error
+        content = result.content
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Security question recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Querying Sentinel's real security engines")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="sentinel_security lookup")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Returning Sentinel's real data")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["sentinel_security", "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in security lookup: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "security_lookup": True,
+                "action": action,
+                "severity_filter": severity,
+                "sentinel": (result.metadata or {}).get("sentinel"),
+                "probe_success": success,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _fleet_status_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
         """TASK-API-002: answer fleet-health questions with a REAL probe.
 
