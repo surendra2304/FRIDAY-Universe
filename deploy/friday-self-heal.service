@@ -1,0 +1,17 @@
+[Unit]
+Description=FRIDAY Universe daily self-healing sweep (checklists G11/H8/H9)
+# One honest daily pass: disk, TLS expiry, journald caps, failed units,
+# backup freshness (+ public gateway on Server 1). Alerts to Telegram.
+Documentation=https://github.com/surendra2304/FRIDAY-Universe
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/friday_universe
+# Server 1 (ingress) enables the public-gateway probe via the drop-in:
+#   /etc/systemd/system/friday-self-heal.service.d/gateway.conf
+#   [Service]
+#   Environment=FRIDAY_SELF_HEAL_PROBE_GATEWAY=1
+ExecStart=/bin/sh -c 'if [ "$FRIDAY_SELF_HEAL_PROBE_GATEWAY" = "1" ]; then exec /opt/friday_universe/venv/bin/python scripts/friday_self_heal_sweep.py --probe-gateway; else exec /opt/friday_universe/venv/bin/python scripts/friday_self_heal_sweep.py; fi'
+EnvironmentFile=-/opt/friday_universe/.env
+User=ubuntu
+Nice=10

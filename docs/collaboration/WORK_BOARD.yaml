@@ -1305,6 +1305,36 @@ tasks:
     blockers: []
     next_action: "Closed — C13 ticked live-verified. Note: Stratex's per-agent API key rejected the fleet dispatch (401 INVALID_API_KEY) — recorded for the F4/Stratex depth item."
 
+  - id: "TASK-BATCH5-AGENT2"
+    title: "Checklist Batch 5 (ZAI Agent 2) — autonomy module: G5/G6/G7/G8/G11/G12 + H8/H9"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Owner onboarded ZAI Agent 2 (2026-11-11 chat): work unitedly with ZAI Agent 1 on the Master Completion Checklist, communicate via GitHub, notify zai_notification_bot on completion."
+    merge_note: "Module-disjoint coordination with ZAI Agent 1 agreed on issue #35 comment 6800468222 (Agent 1: Batch 4 B/A modules; Agent 2: Batch 5 G/H items — no overlapping files). Direct main commit per the established batch discipline."
+    milestone: "Master Completion Checklist G module 4/12 -> 10/12; H module 5/10 -> 7/10 (73/125 = 58%)"
+    files:
+      - "FRIDAY/src/friday/proactive/telegram_gateway.py"
+      - "FRIDAY/src/friday/proactive/mission_queue.py"
+      - "FRIDAY/src/friday/proactive/daily_self_report.py"
+      - "scripts/friday_self_heal_sweep.py"
+      - "deploy/friday-self-heal.service"
+      - "deploy/friday-self-heal.timer"
+      - "FRIDAY/tests/test_batch5_autonomy.py"
+      - "FRIDAY/tests/test_mission_routing.py"
+      - "FRIDAY/src/friday/api/server.py"
+    acceptance:
+      - "G5: owner texts the FRIDAY Universe bot and gets an answer from the SAME brain as the dashboard; non-owners are refused and never reach the brain."
+      - "G6: missions queued in the evening execute overnight (03:00-05:00 IST) and report in the morning; bounded retries; nothing fabricated."
+      - "G7/G8: 21:00 IST daily self-report + Sunday 20:00 IST weekly summary on Telegram, composed only from real records."
+      - "G11/H8: daily 07:30 IST self-heal sweep per server (disk, TLS expiry, journald, failed units, backup freshness, gateway on S1) with threshold alerts."
+      - "G12: chat TODO intake queues real work with owner casing preserved."
+      - "Zero new test failures vs clean main."
+    evidence: "test_batch5_autonomy.py 34/34 + test_mission_routing.py 8/8 (route-level). Full A/B vs clean main across 13 related suites: failure sets IDENTICAL (18 pre-existing sandbox/Oracle-driver environmental), zero new failures. E2E on a local server: queue -> file persisted at FRIDAY/.data/missions/queue.json -> list -> run through the real brain. Sweep LIVE first run: TLS 61 days (exp 2027-01-12); self-test green. H9 read-only evidence: journald caps present on both servers."
+    blockers: []
+    next_action: "Post-merge: (1) Fleet CD deploys + FRIDAY restart brings the gateway/loops live — then live-verify a Telegram round-trip with the owner; (2) enable the self-heal timer on both servers (systemctl enable --now friday-self-heal.timer + the S1 gateway drop-in); (3) Stratex 409 second-poller (external, unidentified) handed to Agent 1/owner."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

@@ -169,18 +169,48 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
     regressions (pre-existing environmental failures verified identical on
     clean tree); Stratex batch-2 spot check 52/52. Commit + notification.
 
-## Batch 5 — Autonomy (G 4/12 → 10/12)
+## Batch 5 — Autonomy (G 4/12 → 10/12) — EXECUTED BY ZAI AGENT 2, COMPLETE 2026-11-11 IST
 
-1. ⬜ G5 Telegram two-way: text FRIDAY from phone, get answers
-2. ⬜ G6 Overnight mission loop: queue at night, execute, morning report
-3. ⬜ G7 Daily self-report 21:00 IST Telegram
-4. ⬜ G8 Weekly summary (Sunday evening)
-5. ⬜ G11 Self-healing sweep: disk, certs, backups daily
-6. ⬜ G12 Autonomous task intake: owner TODO → FRIDAY queue
-7. ⬜ H8 Cert-expiry auto-check (duckdns)
-8. ⬜ H9 Log rotation verified on both servers
-9. ⬜ H6 Docs sync pass
-10. ⬜ Commit + notify "Batch 5 complete"
+> Coordination note: the owner onboarded a second ZAI instance (ZAI Agent 2) to work
+> unitedly with ZAI Agent 1. Module-disjoint split agreed on issue #35 (comment
+> 6800468222): Agent 1 → Batch 4 (B/A modules), Agent 2 → this batch (G/H items).
+> Files touched here do not overlap Batch 4's scope.
+
+1. ✅ G5 Telegram two-way: `proactive/telegram_gateway.py` — owner-gated
+   (sender id = TELEGRAM_CHAT_ID; non-owners refused, never reach the brain),
+   polls the FRIDAY Universe bot, routes text through the SAME
+   execute_command brain (bridged onto the server's main loop);
+   /status + /missions deterministic; honest brain failures; rate-limited
+   4000-char-split sending; unconfigured → stays off (single poller rule,
+   409-conflict backoff with honest logging)
+2. ✅ G6 Overnight mission loop: `proactive/mission_queue.py` — file-backed
+   queue (atomic writes, survives restarts), 03:00–05:00 IST execution
+   window in the server lifespan, bounded retries (2), refused → skipped,
+   night budget cap; morning report feeds G7
+3. ✅ G7 Daily self-report 21:00 IST: `proactive/daily_self_report.py` —
+   composed ONLY from real records (conversation history, TaskRecordStore
+   report, fleet supervision, missions, Memora growth); zeros reported as
+   zeros; once-per-day latch; send-failure retries next cycle
+4. ✅ G8 Weekly summary (Sunday 20:00 IST, before the daily): ledger
+   per-status totals + fleet posture
+5. ✅ G11 Self-healing sweep: `scripts/friday_self_heal_sweep.py` +
+   `deploy/friday-self-heal.{service,timer}` — daily 07:30 IST timer;
+   disk/certs/journald/failed-units/backup-freshness (+ gateway 10/10 on
+   Server 1); Telegram alert on threshold crossings only; honest
+   "check failed" lines (LIVE first run: TLS 61 days left, exp 2027-01-12)
+6. ✅ G12 Task intake: chat phrasings "add to tonight's missions: X" /
+   "queue for tonight: X" / "add to my todo: X" (owner casing preserved),
+   "my missions" list, "run my missions now" on-demand execution
+   (run-intent precedence over list-intent — E2E lesson, locked by test)
+7. ✅ H8 Cert-expiry auto-check: sweep check with GMT-aware openssl parsing
+8. ✅ H9 Log rotation verified: both servers have journald
+   SystemMaxUse=200M caps (S1 212M, S2 180M usage — within cap); the sweep
+   re-checks daily
+9. ✅ Tests: 42 new (test_batch5_autonomy.py 34 + test_mission_routing.py 8
+   route-level); full A/B vs clean main on 13 related suites: 18 pre-existing
+   sandbox failures IDENTICAL with and without changes (Oracle-driver
+   environmental), zero new failures
+10. ✅ Commit + notify "Batch 5 complete" (ZAI Agent 2 → zai_notification_bot)
 
 ## Batch 6 — Agent depth I (F module: Sentinel, IntelX, Cortex) — Lane B / ZAI Agent 2, FIRST ASSIGNMENT
 
@@ -270,4 +300,4 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 
 ---
 
-**Current position: Batches 1–4 COMPLETE (2026-11-11) by ZAI Agent 1 (checklist 71/125, 57%). Two-agent lanes active: ZAI Agent 1 (Lane A) → next **Batch 9** (tech debt & tests: I1–I6 battery fixes, coverage gate, dead-code sweep, A5 verification, H10 $0-cost audit, E10 accent check); ZAI Agent 2 (Lane B) → first assignment **Batch 6** (agent depth I), then 7 → 5 → 8. Onboarding: docs/collaboration/ZAI_AGENT_2_ONBOARDING.md**
+**Current position: Batches 1–5 COMPLETE (2026-11-11 IST) — Agent 1: Batches 1–4 (Stratex rescue, strategy depth, orchestration, memory/brain; checklist A 13/14, B 12/12); Agent 2: Batch 5 (autonomy G5/G6/G7/G8/G11/G12 + H8/H9 — 42 new tests, 0 regressions). Checklist 79/125 (63%). Two-agent lanes active (see docs/collaboration/ZAI_AGENT_2_ONBOARDING.md): ZAI Agent 1 (Lane A) → next Batch 9 (tech debt & tests); ZAI Agent 2 (Lane B) → next Batch 6 (agent depth I: Sentinel/IntelX/Cortex), then 7 → 8.**

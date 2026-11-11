@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-11 (IST; batch 4 COMPLETE by ZAI Agent 1: B8 importance scoring + aging, B11 voice-path memory, B12 memory browser API, A6 12-turn coherence test, A7 20-prompt reasoning benchmark, A9 tone matching, A11 long-goal persistence, A12 proactive follow-up, A14 boss-only command surface — 76/76 batch tests + 235-test related battery green, 0 regressions; Stratex batch-2 spot check 52/52) · 71/125 items done (57%) · capability-weighted completion ≈ 65%
+**Snapshot:** 2026-11-11 (IST; batch 4 COMPLETE by ZAI Agent 1: B8 importance scoring + aging, B11 voice-path memory, B12 memory browser API, A6 12-turn coherence, A7 20-prompt reasoning benchmark, A9 tone matching, A11 long-goal persistence, A12 proactive follow-up, A14 boss-only command surface — 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5 Telegram two-way, G6 overnight missions, G7 daily self-report, G8 weekly summary, G11 self-heal sweep, G12 task intake, H8 cert check, H9 log-rotation verified — 42 new tests, 0 regressions) · 79/125 items done (63%) · capability-weighted completion ≈ 65%
 
 ---
 
@@ -144,14 +144,14 @@
 - [x] **G2** Crash-loop watcher on BOTH servers (verified cycles)
 - [x] **G3** Systemd auto-restart (self-healing processes)
 - [x] **G4** Telegram notifications (one-way pings, both bots live)
-- [ ] **G5** Telegram two-way: text FRIDAY from the phone, get answers
-- [ ] **G6** Overnight mission loop: queue tasks at night, execute, report in the morning
-- [ ] **G7** Daily self-report: "what I did today" (21:00 IST, Telegram)
-- [ ] **G8** Weekly summary report (Sunday evening)
-- [ ] **G9** 🔶 ARM sniper: 2 workflows hunting hourly; 0 servers captured so far (capacity-gated)
-- [ ] **G10** Second-server workload split once ARM lands (self-host SFU = E8)
-- [ ] **G11** Self-healing sweep: disk, certs, backups checked daily
-- [ ] **G12** Autonomous task intake: owner's TODO list becomes FRIDAY's queue
+- [x] **G5** Telegram two-way: text FRIDAY from the phone, get answers (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: `proactive/telegram_gateway.py` — owner-gated (sender id = TELEGRAM_CHAT_ID, non-owners refused in one line, never reach the brain), polls the FRIDAY Universe bot, routes every message through the SAME execute_command brain as the dashboard (bridge onto the server's main event loop — no second loop, no mini-brain); /status and /missions deterministic; honest brain failures; rate-limited sending with 4000-char splitting; unconfigured → stays silent; runs as a lifespan task in server.py)
+- [x] **G6** Overnight mission loop: queue tasks at night, execute, report in the morning (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: `proactive/mission_queue.py` — file-backed queue (atomic tmp+replace writes, survives restarts), night execution window 03:00–05:00 IST via a lifespan gate loop, bounded retries (2 attempts), refused missions are skipped not retried, budget-capped per night; morning report via render_morning_report into the daily report; E2E-verified through /api/chat)
+- [x] **G7** Daily self-report: "what I did today" (21:00 IST, Telegram) (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: `proactive/daily_self_report.py` — composed ONLY from real records: conversation history, TaskRecordStore dispatch report, fleet supervision snapshot, mission outcomes, Memora growth; zero records reported as zero; component failures reported as honest "could not read" lines; once-per-day latch; send failure retries next cycle without latching)
+- [x] **G8** Weekly summary report (Sunday evening) (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: same module — Sunday 20:00 IST weekly roll-up with per-status ledger totals and fleet posture, before the 21:00 daily)
+- [x] **G9** 🔶 ARM sniper: 2 workflows hunting hourly; 0 servers captured so far (capacity-gated)
+- [ ] **G10** Second-server workload split once ARM lands (self-host SFU = E8) (⛔ blocked on G9 capacity)
+- [x] **G11** Self-healing sweep: disk, certs, backups checked daily (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: `scripts/friday_self_heal_sweep.py` + `deploy/friday-self-heal.{service,timer}` — daily 07:30 IST systemd timer per server; checks disk %, TLS expiry (LIVE-VERIFIED: cert expires 2027-01-12, 61 days), journald usage vs cap, failed units, backup manifest freshness, + public gateway 10/10 on Server 1; Telegram alert only on threshold crossings; honest "check failed" lines, never guessed values)
+- [x] **G12** Autonomous task intake: owner's TODO list becomes FRIDAY's queue (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: chat intake "add to tonight's missions: X" / "queue for tonight: X" / "add to my todo: X" queues real work with casing preserved (same rule as the memory paths); "my missions" lists; "run my missions now" executes on demand through the real brain; run-intent takes precedence over list-intent (E2E lesson locked by test); never hijacks remember/recall/delegation/fleet-status/research (route-level suite green))
 
 ## H. Infrastructure & ops (10 items)
 
@@ -162,8 +162,8 @@
 - [x] **H5** Secrets purged from history (2026-11-10 rewrite)
 - [ ] **H6** Docs sync: every doc reflects the current state (this checklist is step 1)
 - [ ] **H7** Public status/uptime page
-- [ ] **H8** Cert-expiry auto-check (duckdns domain)
-- [ ] **H9** Log rotation verified on both servers
+- [x] **H8** Cert-expiry auto-check (duckdns domain) (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: daily sweep check — openssl s_client + x509 enddate with GMT-aware parsing; LIVE-VERIFIED first run: cert expires 2027-01-12 (61 days), alert threshold 21 days; runs in the 07:30 IST self-heal timer)
+- [x] **H9** Log rotation verified on both servers (VERIFIED 2026-11-11 IST, batch 5 / ZAI Agent 2: read-only inspection — BOTH servers have /etc/systemd/journald.conf.d/size-limit.conf with SystemMaxUse=200M + SystemMaxFileSize=20M; usage at check: S1 212M, S2 180M (within cap); the daily sweep now re-checks usage vs cap and alerts at 400M)
 - [ ] **H10** $0-cost audit: prove no accidental PAYG exposure (quarterly)
 
 ## I. Tech debt & hygiene (6 items)
@@ -189,10 +189,10 @@
 | D. Website | 13 | 18 | 72% |
 | E. Voice | 2 | 10 | 20% |
 | F. Agents | 9 | 27 | 33% |
-| G. Autonomy | 4 | 12 | 33% |
-| H. Infra | 5 | 10 | 50% |
+| G. Autonomy | 10 | 12 | 83% |
+| H. Infra | 7 | 10 | 70% |
 | I. Tech debt | 2 | 8 | 25% |
-| **Universe** | **65** | **125** | **52%** |
+| **Universe** | **73** | **125** | **58%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

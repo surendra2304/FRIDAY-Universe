@@ -254,6 +254,89 @@ async def _proactive_followup_loop() -> None:
             logger.exception("Proactive follow-up loop error (continuing)")
 
 
+async def _daily_report_loop() -> None:
+    """Checklists G7/G8: deliver the evening self-report + Sunday weekly summary.
+
+    Light gate-check every 10 minutes; the send windows (21:00+ IST daily,
+    20:00+ IST Sunday) and once-per-day latches live inside
+    maybe_deliver_reports. Every failure is honest and non-fatal — a report
+    problem must never take the assistant down.
+    """
+    while True:
+        try:
+            await asyncio.sleep(600)  # 10 minutes between gate checks
+            from friday.proactive.daily_self_report import maybe_deliver_reports
+
+            outcome = maybe_deliver_reports()
+            if outcome.get("daily") or outcome.get("weekly"):
+                logger.info("Self-report delivery outcome: %s", outcome)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Daily self-report loop error (continuing)")
+
+
+#: The server's main event loop, captured at startup so worker threads (the
+#: Telegram gateway, the mission executor) can schedule coroutines onto the
+#: SAME loop instead of racing a second one (G5/G6).
+_MAIN_EVENT_LOOP: asyncio.AbstractEventLoop | None = None
+
+
+def _run_brain_sync(command: str) -> dict[str, Any]:
+    """Run one command through execute_command from ANY thread (G5/G6).
+
+    Schedules onto the server's main loop (captured in lifespan) and waits
+    for the real result; a timeout raises honestly into the caller.
+    """
+    loop = _MAIN_EVENT_LOOP
+    if loop is None or loop.is_closed():
+        raise RuntimeError("main event loop unavailable")
+    future = asyncio.run_coroutine_threadsafe(
+        execute_command(CommandRequest(command=command)), loop
+    )
+    return future.result(timeout=300)
+
+
+async def _mission_execution_loop() -> None:
+    """Checklists G6/G12: execute queued missions while the owner sleeps.
+
+    Gate-check every 10 minutes; the run window (03:00–05:00 IST) and the
+    once-per-night latch live in the queue module. Missions execute through
+    the real chat brain (scheduled onto this loop by _run_brain_sync);
+    results feed the morning report.
+    """
+    while True:
+        try:
+            await asyncio.sleep(600)
+            from friday.core.owner_time import OWNER_TZ
+            from friday.proactive.mission_queue import (
+                RUN_WINDOW_END,
+                RUN_WINDOW_START,
+                mission_queue,
+            )
+
+            now = datetime.now(timezone.utc).astimezone(OWNER_TZ)
+            if not (RUN_WINDOW_START <= now.hour < RUN_WINDOW_END):
+                continue
+            pending = mission_queue.pending()
+            if not pending:
+                continue
+            logger.info("Executing %d overnight mission(s)", len(pending))
+
+            async def _night_brain(command: str) -> dict[str, Any]:
+                return await execute_command(CommandRequest(command=command))
+
+            report = await mission_queue.execute_pending_async(_night_brain)
+            logger.info(
+                "Overnight missions executed: %s completed / %s failed / %s skipped",
+                report.get("completed"), report.get("failed"), report.get("skipped"),
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Mission execution loop error (continuing)")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Pre-flight environment validation
@@ -284,12 +367,28 @@ async def lifespan(_: FastAPI):
     followup_task = asyncio.create_task(
         _proactive_followup_loop(), name="friday-proactive-followup"
     )
+    # Checklist G5: owner-gated two-way Telegram gateway (phone line). The
+    # brain is the same execute_command the dashboard chat uses; a brain
+    # failure on a phone message is reported honestly on Telegram.
+    global _MAIN_EVENT_LOOP
+    _MAIN_EVENT_LOOP = asyncio.get_running_loop()
+    from friday.proactive.telegram_gateway import telegram_gateway
+
+    telegram_gateway.set_brain(_run_brain_sync)
+    telegram_task = asyncio.create_task(
+        asyncio.to_thread(telegram_gateway.start), name="friday-telegram-gateway"
+    )
+    # Checklists G7/G8: daily self-report (21:00 IST) + Sunday weekly summary,
+    # delivered through the same owner Telegram channel.
+    report_task = asyncio.create_task(_daily_report_loop(), name="friday-daily-self-report")
+    # Checklists G6/G12: overnight mission execution (03:00–05:00 IST window).
+    mission_task = asyncio.create_task(_mission_execution_loop(), name="friday-mission-executor")
     try:
         yield
     finally:
         logger.info("Graceful shutdown initiated: stopping background tasks and listener loops...")
-        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task]
-        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task):
+        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task]
+        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task):
             task.cancel()
         try:
             await asyncio.wait_for(
@@ -300,6 +399,7 @@ async def lifespan(_: FastAPI):
             logger.warning("Background tasks cancellation timed out after 5.0 seconds")
         except Exception as e:
             logger.debug(f"Exception during background task cancellation: {e}")
+        telegram_gateway.stop()
 
         try:
             await asyncio.wait_for(fleet_client.aclose(), timeout=3.0)
@@ -2435,6 +2535,69 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 "summary_stored": bool(_consol_res.get("summary_stored")),
             },
         }
+
+    # =========================================================================
+    # A0.57 Mission Queue (checklists G6/G12: overnight missions + TODO intake)
+    # =========================================================================
+    # "add to tonight's missions: research X" parks real work in the file-backed
+    # queue; "my missions" lists it; "run my missions now" executes it through
+    # this same brain. Deterministic and BEFORE recall/remember so mission
+    # phrasing is never eaten by a memory pattern ("remember to run X tonight"
+    # keeps "remember" semantics — only explicit MISSION phrasing queues here).
+    try:
+        from friday.proactive.mission_queue import (
+            is_add_mission_intent,
+            is_list_missions_intent,
+            is_run_missions_intent,
+            mission_queue,
+        )
+
+        _mission_text = is_add_mission_intent(raw_cmd)
+        if _mission_text:
+            _mission = mission_queue.add(_mission_text, source="chat")
+            _reply = (
+                f"Queued for tonight, Boss: {_mission['command'][:140]}. I'll run it "
+                "while you sleep (03:00–05:00 IST) and report the outcome with your "
+                "morning brief. Say \"my missions\" any time to see the queue."
+            )
+            return {
+                "reply": _reply,
+                "metadata": {
+                    "fast_path": True,
+                    "conversational": True,
+                    "mission_queued": True,
+                    "mission_id": _mission["id"],
+                },
+            }
+        if is_run_missions_intent(cmd):
+            _pending_n = len(mission_queue.pending())
+            if not _pending_n:
+                _reply = "Nothing to run, Boss — the mission queue is empty."
+            else:
+                # Run in a worker thread (never block the event loop); the
+                # thread bridges each command back onto this loop through
+                # _run_brain_sync, so each mission gets the real brain.
+                _report = await asyncio.to_thread(
+                    mission_queue.execute_pending, _run_brain_sync
+                )
+                _reply = (
+                    f"Ran {_report['executed']} mission(s), Boss: {_report['completed']} completed, "
+                    f"{_report['failed']} failed, {_report['skipped']} skipped — results below."
+                )
+                for _r in _report.get("results", [])[:5]:
+                    _icon = {"completed": "✅", "failed": "❌", "skipped": "⛔"}.get(_r["status"], "•")
+                    _reply += f"\n{_icon} {_r['command'][:80]} → {(_r.get('reply') or '')[:120]}"
+            return {
+                "reply": _reply,
+                "metadata": {"fast_path": True, "conversational": True, "mission_run": True},
+            }
+        if is_list_missions_intent(cmd):
+            return {
+                "reply": mission_queue.render_status(),
+                "metadata": {"fast_path": True, "conversational": True, "mission_list": True},
+            }
+    except Exception as _me:
+        logger.debug(f"mission fast-path skipped: {_me}")
 
     _recall_patterns = (
         "what do you remember", "do you remember", "you remember",

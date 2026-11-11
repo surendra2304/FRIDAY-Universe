@@ -1036,6 +1036,119 @@ claims:
     task: "Checklist B7: 32-test contract suite (merge/idempotency/window/honest-failure/phrasing matrix)."
 
 
+  - path: "FRIDAY/src/friday/proactive/telegram_gateway.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH5_AGENT2"
+    task: "Checklist G5: owner-gated two-way Telegram gateway (same brain, phone line)."
+
+  - path: "FRIDAY/src/friday/proactive/mission_queue.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH5_AGENT2"
+    task: "Checklists G6/G12: file-backed overnight mission queue + chat intake."
+
+  - path: "FRIDAY/src/friday/proactive/daily_self_report.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH5_AGENT2"
+    task: "Checklists G7/G8: daily self-report (21:00 IST) + Sunday weekly summary."
+
+  - path: "scripts/friday_self_heal_sweep.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH5_AGENT2"
+    task: "Checklists G11/H8: daily self-healing sweep (disk/certs/journald/units/backups/gateway)."
+
+  - path: "deploy/friday-self-heal.service"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH5_AGENT2"
+    task: "Checklist G11: systemd oneshot unit for the daily sweep."
+
+  - path: "deploy/friday-self-heal.timer"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH5_AGENT2"
+    task: "Checklist G11: daily 07:30 IST timer (Asia/Kolkata calendar)."
+
+  - path: "FRIDAY/tests/test_batch5_autonomy.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH5_AGENT2"
+    task: "Batch 5 contract suite (34 tests): gateway gate/routing/honesty, queue lifecycle/retries/intents, report composition/latches, sweep checks."
+
+  - path: "FRIDAY/tests/test_mission_routing.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH5_AGENT2"
+    task: "Route-level mission fast-path contracts (8 tests) against the real _dispatch_command chain."
+
+  - path: "FRIDAY/src/friday/memory/importance.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH4"
+    task: "Checklist B8: importance scoring (pinned/normal/trivial) + nightly aging."
+
+  - path: "FRIDAY/src/friday/memory/voice_memory.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH4"
+    task: "Checklist B11: voice-path remember/forget intercepts before the Live model."
+
+  - path: "FRIDAY/src/friday/proactive/goals.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH4"
+    task: "Checklist A11: long-goal persistence (GOAL pinned memories + morning-brief lines)."
+
+  - path: "FRIDAY/src/friday/proactive/followup.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH4"
+    task: "Checklist A12: proactive follow-up pings on stale in-flight tasks."
+
+  - path: "FRIDAY/src/friday/security/boss_gate.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH4"
+    task: "Checklist A14: boss-only command gate (fail-closed, passphrase)."
+
+  - path: "FRIDAY/src/friday/persona/tone.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH4"
+    task: "Checklist A9: casual/sarcastic tone matching (banter table)."
+
+  - path: "FRIDAY/src/friday/evaluation/reasoning_benchmark.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH4"
+    task: "Checklist A7: 20-prompt reasoning benchmark with JSON report."
+
+  - path: "FRIDAY/tests/test_batch4_memory_brain.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH4"
+    task: "Batch 4 contract suite (76 tests)."
+
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

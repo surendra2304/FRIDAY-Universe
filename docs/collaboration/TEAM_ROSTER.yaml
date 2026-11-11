@@ -124,18 +124,23 @@ collaborators:
   - id: "zai_agent_2"
     display_name: "ZAI Agent 2 (second ZAI chat, owner-added 2026-11-11)"
     contributor_type: "ai"
-    status: "onboarding"
-    authority: "Equal engineering collaborator; Lane B owner (agent depth F, autonomy G, website polish D)"
-    verified_capabilities: []
-    onboarding_guide: "docs/collaboration/ZAI_AGENT_2_ONBOARDING.md"
+    status: "active_contributor"
+    authority: "Equal engineering collaborator — Lane B (batches 6, 7, 5, 8) per docs/collaboration/ZAI_AGENT_2_ONBOARDING.md"
+    verified_capabilities:
+      - "GitHub read/write through the owner-provided PAT + bridge token (clone, API comments, direct main commits to main)."
+      - "Read-only + write MCP bridge tools (fleet health, journalctl, run_shell on both servers) — owner granted full access 2026-11-11."
+      - "Local CI-equivalent verification: pinned pytest environment; batch suite green with zero new failures vs clean main (A/B with git stash)."
+      - "Read-only production diagnostics: Telegram bot states (getWebhookInfo/getUpdates/getMe by id, never printing tokens), journald caps, systemd units, TLS cert expiry (live probe: 61 days)."
+      - "Batch 5 delivered (TASK-BATCH5-AGENT2, MERGED): G5/G6/G7/G8/G11/G12 + H8/H9 — 42 new tests, zero regressions."
     active_assignments:
-      - "Batch 6 — Agent depth I (Sentinel/IntelX/Cortex/Forge F-items) — first assignment, see onboarding guide section 9."
+      - "TASK-BATCH5-AGENT2 — Checklist Batch 5 (autonomy: G5/G6/G7/G8/G11/G12 + H8/H9) — MERGED."
+      - "Next (Lane B): Batch 6 — agent depth I (Sentinel/IntelX/Cortex: F8, F9, F13, F14, F15, F20, F21, F17, F18)."
     active_branches: []
-    last_verified_at: "2026-11-11T19:30:00+05:30"
+    last_verified_at: "2026-11-11T23:00:00+05:30"
     access_limits:
-      - "Not yet independently verified — capability claims pending first evidence-backed batch (ACTIVITY_LOG entry + test counts)."
-      - "Must follow docs/collaboration/ZAI_AGENT_2_ONBOARDING.md lane rules; no Stratex work without a claim (Lane A is hot)."
-      - "Telegram notifications must be sent from @zai_notifications_bot signed 'ZAI Agent 2' — never from @fridayuniverse_bot."
+      - "Coordinates with ZAI Agent 1 through GitHub issue #35 and the lane rules in ZAI_AGENT_2_ONBOARDING.md."
+      - "No secret values read, printed or committed; Telegram tokens handled by id/masked name only."
+      - "Stratex (Lane A) not modified without a claim; the 409 second-poller finding was reported, not fixed."
 
   - id: "vercel_v0"
     display_name: "Vercel v0"
@@ -155,6 +160,7 @@ collaborators:
     access_limits:
       - "PR #36 must be reconciled with PR #30 before either branch is merged."
       - "Production and Oracle access have not been verified."
+
 
 onboarding_policy:
   required_before_task_claim:

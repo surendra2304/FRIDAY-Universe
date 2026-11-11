@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the FRIDAY Universe self-heal sweep daily at 07:30 IST (G11/H8/H9)
+
+[Timer]
+OnCalendar=*-*-* 07:30:00 Asia/Kolkata
+Persistent=true
+AccuracySec=5min
+
+[Install]
+WantedBy=timers.target
