@@ -1265,6 +1265,47 @@ tasks:
     next_action: "Live verification on the deployed site after Fleet CD: poll /api/agents/live (200 + real ledger fields), open the FLEET tab and watch a dispatched task appear as 'Working now'. Remaining D-module work: D9/D10 (React Bits + dynamic pass), D13 (task timeline), D14-D18."
 
 
+  - id: "TASK-MEM-005"
+    title: "Checklist B9/B10 — forget command + correction-supersede memory edit"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "Continue the checklist in owner-approved execution order (2026-11-11 chat: don't stop until the work is completed)."
+    merge_note: "Direct main commit 2a01659, deployed by Fleet CD run 183 (all green). B9: MemoraClient.forget_fact (remote DELETE /v1/memories/{id}?hard=false; local lifecycle_state='deleted' — soft, history preserved) + chat fast-path 'forget that'/'forget about X'/'remove memory X' with honest not-found answers. B10: MemoraClient.correct_fact writes the corrected fact then supersedes the old one (remote POST /v1/memories/{id}/supersede; local lifecycle_state='superseded') so recall stops returning both copies while the audit trail keeps the correction + chat fast-path for 'actually my X is Y'/'no wait'/'correction:'/'i meant'/'update my X'/'change my X' with a fact-shape gate so conversational rejections are never stored; 'don't forget that...' still means REMEMBER (B1/B4 guard). Facts keep the owner's original casing (sliced from raw_cmd like the remember path)."
+    milestone: "Checklist B9 + B10 (memory maturity)"
+    files:
+      - "FRIDAY/src/friday/memory/memora_client.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_memory_commands.py"
+    acceptance:
+      - "'forget about X' removes the matching fact; recall returns nothing afterwards."
+      - "A correction supersedes the old fact; recall returns ONLY the corrected version."
+      - "Soft transitions only: deleted/superseded records stay in the audit trail."
+      - "Conversational sentences are never intercepted as commands."
+    evidence: "LIVE-VERIFIED on production 2026-11-11 IST with a disposable marker (removed at the end, exercising B9 itself): 'remember this: my unique test marker color is teal 7f3a' → STORE; 'actually my unique test marker color is indigo 9c2b' → CORRECT ('replaced the old one'); recall → ONLY indigo (no duplicate); 'forget about the unique test marker color' → FORGET; recall → marker gone. Tests: test_memory_commands.py 34/34 (4 forget incl. soft-delete audit, 4 correct incl. supersede-not-duplicate, 22 phrasing fire/no-fire matrix incl. 'don't forget'=remember and rejection guards, 2 wiring-order, 2 client-method presence); proactive-greeting + fleet-recall suites identical on clean HEAD (5 pre-existing live-Memora-environmental failures, unchanged). Zero new failures."
+    blockers: []
+    next_action: "B7 (nightly consolidation) is the remaining memory-maturity item; B8 (importance scoring) after."
+
+  - id: "TASK-ORCH-009"
+    title: "C13 gap fix — chat delegation receipts recorded in the unified ledger"
+    status: "DEPLOYED"
+    owner: "zai"
+    branch: null
+    pr: null
+    merge_note: "Direct main commit 0055eef, deployed by Fleet CD run 182 (all green). Live finding: 'assign a quick task to IntelX' returned receipt task_c132e80e926e but 'what happened to that IntelX task?' honestly answered 'ledger is empty' — FleetClient posts envelopes straight to the target agent's HTTP endpoint and never flows through the in-process dispatch bus that writes the shared TaskRecordStore, so chat receipts were invisible to the ledger and /api/v1/dispatch/records/report. Fix: record_chat_dispatch hook in fleet_dispatch.py mirrors the full lifecycle (create → assigned → dispatched → completed|failed) into the shared store at dispatch time; idempotent on client retries; a ledger failure never breaks the dispatch."
+    milestone: "Checklist C13 (closure)"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/fleet_dispatch.py"
+      - "FRIDAY/tests/test_task_status_query.py"
+    acceptance:
+      - "Every chat-delegation receipt is queryable by task_status and appears in the records report."
+      - "Failed dispatches are recorded as failed with the real error text."
+    evidence: "LIVE-VERIFIED on production 2026-11-11 IST: 'assign a quick task to Stratex: one-line portfolio health note' → honest 401 failure with receipt task_036e6b93ecaa; 'what happened to the stratex task? show me the status of task_036e6b93ecaa' → the REAL record: FAILED, the actual Stratex 401 error, routing 'chat delegation (fleet_dispatch)', IST timestamps, trail submitted → assigned → dispatched → failed. Tests: C13 suite extended to 84 (5 new: complete-lifecycle recording, failed recording, retry idempotence, ledger-outage never breaks dispatch, tool-finds-chat-dispatch E2E). Dispatch/delegation batch identical to clean HEAD (20 environmental)."
+    blockers: []
+    next_action: "Closed — C13 ticked live-verified. Note: Stratex's per-agent API key rejected the fleet dispatch (401 INVALID_API_KEY) — recorded for the F4/Stratex depth item."
+
+task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

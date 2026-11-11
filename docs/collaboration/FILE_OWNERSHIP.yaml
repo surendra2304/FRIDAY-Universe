@@ -965,6 +965,20 @@ claims:
     status: "MERGED_UI_004_2026-11-11"
     task: "D12 fix: !ui/lib/ exception to the Python-template lib/ rule (UI TypeScript source tracked; Python build lib/ dirs stay ignored)."
 
+  - path: "FRIDAY/src/friday/memory/memora_client.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_MEM_005_2026-11-11"
+    task: "Checklist B9/B10: forget_fact + correct_fact (soft delete / supersede via Memora's lifecycle APIs) + _mark_record_state local/Oracle fallback."
+
+  - path: "FRIDAY/tests/test_memory_commands.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_MEM_005_2026-11-11"
+    task: "Checklist B9/B10: 34-test contract suite (client lifecycle + fast-path phrasing matrix + wiring order)."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

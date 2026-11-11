@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-11 (IST; updated after ORCH-008: C13 task-status queries + I8 contacts-hijack fix; after UI-004: D12 live per-agent status + I7 route dedupe + UI source restoration) · 48/125 items done (38%) · capability-weighted completion ≈ 59%
+**Snapshot:** 2026-11-11 (IST; LIVE-VERIFIED this session: C13 task-status loop incl. the ledger-recording gap fix, D12 agents/live, D9/D10 effects in the deployed build, B9 forget, B10 correction-supersede — all on production) · 52/125 items done (42%) · capability-weighted completion ≈ 62%
 
 ---
 
@@ -35,8 +35,8 @@
 - [x] **B6** Recall ranking: personal facts beat agent logs; noise filtered (committed; live-verified once — needs soak)
 - [ ] **B7** Nightly consolidation: summarize/dedupe/merge the day's memories
 - [ ] **B8** Importance scoring: trivial facts age out, core facts pinned
-- [ ] **B9** Forget command: "forget that" removes a stored fact
-- [ ] **B10** Memory edit: "actually my number is X" updates, doesn't duplicate
+- [x] **B9** Forget command: "forget that" removes a stored fact (LIVE 2026-11-11: 'forget about the unique test marker color' → soft-deleted, recall returns nothing; MemoraClient.forget_fact + chat fast-path; 34-test suite)
+- [x] **B10** Memory edit: "actually my number is X" updates, doesn't duplicate (LIVE 2026-11-11: teal marker corrected to indigo → recall returns ONLY indigo; old fact superseded in the audit trail, not duplicated; MemoraClient.correct_fact via Memora's supersede API + chat fast-path)
 - [ ] **B11** Voice-path memory: say "remember X" on the voice line → stored (untested)
 - [ ] **B12** Memory visibility: what-FRIDAY-knows browser in the dashboard
 
@@ -54,7 +54,7 @@
 - [ ] **C10** Futuris delegation: forecast requests on demand
 - [ ] **C11** Memora delegation: owner-facing memory ops (search/edit) as first-class tasks
 - [ ] **C12** Multi-agent pipelines: "research X, then draft the email about it" (chained dispatch)
-- [x] **C13** Task status queries: "what happened to that IntelX task?" → real record lookup (TASK-ORCH-008: TaskStatusQueryTool + deterministic fast-path BEFORE delegation; answers from the shared TaskRecordStore with IST timestamps and lifecycle trail; 79-test suite; honest empty/miss answers)
+- [x] **C13** Task status queries: "what happened to that IntelX task?" → real record lookup (TASK-ORCH-008 + gap fix, LIVE-VERIFIED 2026-11-11 end-to-end: chat dispatch → receipt task_036e6b93ecaa → 'what happened to the stratex task?' returned the REAL failed record with the actual 401 error, routing rationale, IST timestamps and full trail; the gap fix records chat delegations into the shared ledger because FleetClient bypasses the in-process bus; 84-test suite)
 - [x] **C14** Delegation receipts: every assignment returns a task ID the owner can reference (live: task_71f66986709e)
 
 ## D. Website — command center (18 items)
@@ -67,8 +67,8 @@
 - [x] **D6** Keyless + origin-gated public routes (owner decision D-024)
 - [x] **D7** IST clock and timestamps in the UI (D-026)
 - [x] **D8** LiveKit voice orb with graceful idle disconnect ("Voice line closed")
-- [ ] **D9** React Bits integration (owner request — animated component kit, not hand-rolled CSS only)
-- [ ] **D10** Floating/dynamic element pass: orbitals, parallax, magnet buttons, aurora backgrounds
+- [x] **D9** React Bits integration (owner request — animated component kit, not hand-rolled CSS only) (LIVE 2026-11-11: full React-Bits component inventory in effects.tsx — ScrambleText, Aurora(AuroraBackground), Magnetic, Spotlight(SpotlightCard), CountUp, Reveal + new pointer-driven Parallax and Orbital, all React components with compositor-safe animation, reduced-motion + touch-pointer safe; deployed in the 0055eef build)
+- [x] **D10** Floating/dynamic element pass: orbitals, parallax, magnet buttons, aurora backgrounds (LIVE 2026-11-11: Orbital = 9 satellite dots orbiting the voice core (one per fleet agent); Parallax = pointer-depth layers on console rail (6px) + chat (2px); Magnetic wired onto nav tabs + fleet card buttons; AuroraBackground + FloatingOrbs already live — deployed bundle serves orbitalSpin/orbital-dot CSS + the new effects chunk)
 - [ ] **D11** Live activity feed richness: every agent action streams in real time (WS exists; event coverage partial)
 - [x] **D12** "What is each agent doing RIGHT NOW" — live status per card, auto-refreshed (TASK-UI-004: GET /api/agents/live merges reachability + the unified task ledger — in_flight/last_outcome per agent; dashboard polls it in the 30s refresh and renders 'Working now' + 'working <freshness>'; 9/9 endpoint tests; ALSO fixed the blocking defect — the Python-template `lib/` gitignore rule had silently hidden FRIDAY/ui/lib, so lib/api.ts was never committed and a fresh clone could not rebuild the dashboard)
 - [ ] **D13** Task timeline: delegation history with status chips (queued/running/done/failed)
@@ -184,15 +184,15 @@
 | Module | Done | Total | % |
 |---|---|---|---|
 | A. Brain | 5 | 14 | 36% |
-| B. Memory | 6 | 12 | 50% |
+| B. Memory | 8 | 12 | 67% |
 | C. Orchestration | 8 | 14 | 57% |
-| D. Website | 9 | 18 | 50% |
+| D. Website | 11 | 18 | 61% |
 | E. Voice | 2 | 10 | 20% |
 | F. Agents | 7 | 27 | 26% |
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
 | I. Tech debt | 2 | 8 | 25% |
-| **Universe** | **48** | **125** | **38%** |
+| **Universe** | **52** | **125** | **42%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 
