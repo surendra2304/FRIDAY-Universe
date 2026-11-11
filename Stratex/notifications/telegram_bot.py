@@ -626,13 +626,28 @@ class TelegramBotClient:
     # ==========================================================================
 
     def _format_pnl_report(self, args: list[str] | None = None) -> str:
-        """Format live PnL across both IC Markets and Binance (Combined or Individual)."""
+        """Format live PnL across both IC Markets and Binance (Combined or Individual).
+
+        Batch-2: ``/pnl ledger`` reports daily + rolling 7-day settled PnL from
+        the trade ledger (survives demo-account resets); the combined view
+        appends the same ledger section so the owner always sees settled PnL.
+        """
+        target = (args[0].lower() if args else "combined")
+
+        if target in {"ledger", "settled", "day", "daily", "7d"}:
+            from notifications.ledger_pnl import format_ledger_pnl
+
+            return format_ledger_pnl()
+
         _hub, snap = self._hub()
         pnl = snap.get("pnl")
         if not pnl:
-            return "⚠️ <b>PnL unavailable</b>: no venue responded. Try again in a moment."
+            from notifications.ledger_pnl import format_ledger_pnl
 
-        target = args[0].lower() if args else "combined"
+            return (
+                "⚠️ <b>Live venue PnL unavailable</b> — showing the settled-trade ledger instead:\n\n"
+                + format_ledger_pnl()
+            )
 
         if target in {"icmarkets", "ctrader", "forex", "metals"}:
             if "oanda" not in (pnl.get("venues") or []):
@@ -748,6 +763,15 @@ class TelegramBotClient:
                 f"  • Floating PnL: <code>${(_as_float(bn.get('floating_pnl')) or 0):+,.2f} USDT</code>",
                 "",
             ]
+
+        # Batch-2: append the settled-ledger daily/7-day section so the
+        # combined view always carries ledger-measured PnL too.
+        try:
+            from notifications.ledger_pnl import format_ledger_pnl
+
+            lines += ["", format_ledger_pnl()]
+        except Exception:
+            pass
 
         lines.append(
             "💡 <i>Tip: /pnl binance for crypto detail"
@@ -965,7 +989,7 @@ class TelegramBotClient:
                 "🤖 <b>FRIDAY Universe — Stratex Autonomous Trading Intelligence</b>\n\n"
                 "<b>Performance</b>\n"
                 "• <code>/summary</code> — Daily / week / month PnL + equity chart\n"
-                "• <code>/pnl [binance|oanda]</code> — Floating &amp; realized PnL\n"
+                "• <code>/pnl [binance|oanda|ledger]</code> — Floating &amp; realized PnL · ledger = settled daily/7-day\n"
                 "• <code>/trades [n]</code> — Last n closed trades with realized PnL\n"
                 "• <code>/risk</code> — Risk dashboard (limits vs. utilisation)\n"
                 "• <code>/chart</code> — Equity curve image\n\n"
@@ -1051,6 +1075,46 @@ class TelegramBotClient:
 
         if cmd in {"/pnl", "/profit"}:
             return self._format_pnl_report(args)
+
+        if cmd in {"/alert", "/alerts", "/price"}:
+            from notifications.price_alerts import PriceAlertEngine, format_rules_help
+
+            engine = PriceAlertEngine()
+            if not args or args[0].lower() in {"help", "?"}:
+                return format_rules_help()
+            sub = args[0].lower()
+            if sub == "add" and len(args) >= 4:
+                symbol, rtype, value = args[1], args[2], args[3]
+                rest = args[4:]
+                rearm = "daily" if "--daily" in [a.lower() for a in rest] else "once"
+                note = " ".join(a for a in rest if not a.startswith("--"))
+                ok, msg, rule = engine.add_rule(symbol, rtype, value, note=note, rearm=rearm)
+                if ok and rule:
+                    extra = f"\n<i>{rule['note']}</i>" if rule.get("note") else ""
+                    return (
+                        "✅ <b>Alert added</b>\n"
+                        f"• <code>{rule['id']}</code> · {rule['symbol']} "
+                        f"{rule['type']} {rule['threshold']} · rearm {rule['rearm']}"
+                        + extra
+                    )
+                return f"⚠️ <b>Could not add alert</b>: {msg}"
+            if sub == "list":
+                rules = engine.load_rules()
+                if not rules:
+                    return "📭 <b>No alert rules.</b>\n\nAdd one: <code>/alert add BTCUSDT above 75000 breakout watch</code>"
+                lines = ["🔔 <b>Alert rules</b>", ""]
+                for r in rules:
+                    state = "🟢" if r.get("active", True) else "⚪️"
+                    note = f" · <i>{r['note']}</i>" if r.get("note") else ""
+                    lines.append(
+                        f"{state} <code>{r.get('id')}</code> · {r.get('symbol')} "
+                        f"{r.get('type')} {r.get('threshold')}{note}"
+                    )
+                return "\n".join(lines)
+            if sub in {"del", "remove", "rm"} and len(args) >= 2:
+                ok, msg = engine.remove_rule(args[1])
+                return ("✅ <b>Alert removed</b> " if ok else "⚠️ ") + msg
+            return format_rules_help()
 
         if cmd in {"/history", "/deals"}:
             return self._format_history_report(args)

@@ -42,24 +42,39 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 9. ✅ Tests: circuit breaker + anti-churn floor + honest priors; run suites
 10. ✅ Commit + Telegram notification "Batch 1 complete"
 
-## Batch 2 — Stratex strategy depth (owner: "more profitable trades")
+## Batch 2 — Stratex strategy depth (owner: "more profitable trades") — COMPLETE 2026-11-11
 
-1. ⬜ Walk-forward validate 2 dormant strategies with real data (candidates:
-   `strategy_trend_pullback`, `strategy_volatility_breakout`) — only promote
-   with ≥30 OOS trades, PF ≥ 1.0
-2. ⬜ Add regime filter to supertrend shorts (BLOCK_SHORTS_IN_BULL_REGIME
-   default true; ledger shows shorts fighting the trend)
-3. ⬜ Position sizing: volatility-scaled (target 1% risk per trade across ATR
-   regimes) — verify live sizing path uses it
-4. ⬜ Trailing-stop behavior audit: verify `testnet_engine/trailing.py` moves
-   stops to break-even at 1R (protects the 4:1 winners)
-5. ⬜ Confluence scoring: require ≥2 strategy agreement for full size, single
-   strategy = half size (uses `risk/strategy_coordinator.py`)
-6. ⬜ Max trades/day per symbol cooldown (stop revenge-entries on one symbol)
-7. ⬜ Telegram /pnl command: daily + rolling 7-day PnL from the ledger
-8. ⬜ F5: scheduled daily portfolio report (Telegram, 09:00 IST)
-9. ⬜ F6: price/alert rules → Telegram push
-10. ⬜ Commit + notify "Batch 2 complete"
+1. ✅ Walk-forward validated both dormant strategies on REAL 120-day futures
+   candles (provenance-verified, 8 bps friction, 3 OOS folds):
+   `trend_pullback` 721 OOS trades, net PF 0.764 → STAY DORMANT;
+   `volatility_breakout` 279 OOS trades, net PF 0.834 → STAY DORMANT.
+   Honest negative: neither cleared the PF ≥ 1.0 promotion bar, so neither
+   was promoted. Evidence: `research/validation/walkforward_dormant_report.{json,md}`
+2. ✅ Regime filter: `BLOCK_SHORTS_IN_BULL_REGIME` default true — supertrend
+   shorts now require full bear regime (close < EMA200 AND EMA50 < EMA200)
+3. ✅ Volatility-scaled sizing wired into the LIVE sizing path
+   (`RiskGate.calculate_position_size(atr_pct=...)` from the scanner candle
+   cache): risk scales to baseline/ATR% above 0.8% ATR, floored at 0.25×
+4. ✅ Trailing audit: BE lock moved 0.4R → **1.0R**, ATR trailing arms at
+   1.5R (after the BE lock); **PROFIT_HARVEST_PCT 1.5% → 0.0 (disabled)** —
+   it was amputating the 4:1 winners the strategy math depends on; zero-guard
+   added so 0.0 can never fire `profit >= 0` on every position
+5. ✅ Confluence sizing: `StrategyCoordinator.confluence_size_multiplier` —
+   ≥2 strategies agreeing on a symbol+side = full size, lone strategy = half
+   size, wired into the execution loop with LOT_SIZE re-flooring
+6. ✅ Anti-revenge cap: `MAX_TRADES_PER_SYMBOL_PER_DAY=3` executed entries per
+   symbol per UTC day, counter reset on day rollover
+7. ✅ Telegram `/pnl ledger` — daily + rolling 7-day settled PnL from the
+   trade ledger (IST day boundary, survives demo resets); combined `/pnl`
+   appends the ledger section too
+8. ✅ F5: daily portfolio report moved to **09:00 IST** (was 21:00 UTC =
+   02:30 IST) + ledger daily/7-day section appended
+9. ✅ F6: price-alert rules engine (`/alert add|list|del`, above/below/pct24h,
+   once vs daily re-arm) evaluated every 60s against scanner prices with
+   Telegram push
+10. ✅ Tests: 21 new batch-2 tests + 2 updated trailing tests; suite went
+    2226→2234 passed vs pre-batch baseline (8 previously-failing tests fixed,
+    0 broken). Commit + notification recorded.
 
 ## Batch 3 — Orchestration completion (C module: 10/14 → 14/14)
 
@@ -188,4 +203,4 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 
 ---
 
-**Current position: Batch 1 COMPLETE (2026-11-11) — all 10 tasks done, 71 tests green. Next: Batch 2 — Stratex strategy depth**
+**Current position: Batch 2 COMPLETE (2026-11-11) — 10/10 tasks done, 2234 tests passing (8 net fixes vs baseline). Next: Batch 3 — Orchestration completion (C module: 10/14 → 14/14)**

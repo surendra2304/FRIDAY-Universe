@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from collections import namedtuple
+import os
 
 
 class SignalResult(namedtuple("SignalResult", ["side", "sl", "tp", "strategy_type", "win_rate_prior", "rr_ratio"])):
@@ -22,6 +23,12 @@ class SignalResult(namedtuple("SignalResult", ["side", "sl", "tp", "strategy_typ
         return self.win_rate_prior
 
 _STRATEGY_TYPE = "RULE_BASED"
+
+# Batch 2 (2026-11-11): shorts fighting the dominant trend were a ledger loss
+# source. With this flag on (default), SELL entries require a FULL bear regime:
+# close < EMA200 AND EMA50 < EMA200. A pullback that dips price under the
+# EMA200 while the EMA50 still sits above it no longer counts as shortable.
+BLOCK_SHORTS_IN_BULL_REGIME = os.getenv("BLOCK_SHORTS_IN_BULL_REGIME", "true").strip().lower() in ("1", "true", "yes", "on")
 
 # Honest, evidence-based priors (2026-11-11):
 #   win rate 0.266 — measured on the closed-trade testnet ledger (17/64)
@@ -121,6 +128,10 @@ def get_signal(df):
             return SignalResult(None, None, None, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO)
 
     # --- 3. Fresh Bearish Trend Flip (Breakout Entry) ---
+    # Regime gate: a bearish flip inside a still-bull big-picture regime (EMA50
+    # above EMA200) is a pullback, not a trend change — shorts stay blocked.
+    if BLOCK_SHORTS_IN_BULL_REGIME and ema_50 > ema_200:
+        return SignalResult(None, None, None, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO)
     if st_now == False and st_prev == True and close < ema_200:
         sl = min(st_upper, close + (atr * 2.0))
         risk = max(sl - close, atr * 0.8)
@@ -130,6 +141,9 @@ def get_signal(df):
         return SignalResult(None, None, None, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO)
 
     # --- 4. Bearish Trend Continuation / Dynamic Pullback Entry ---
+    # Same regime gate as section 3: full bear regime required for shorts.
+    if BLOCK_SHORTS_IN_BULL_REGIME and ema_50 > ema_200:
+        return SignalResult(None, None, None, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO)
     # When established in a downtrend (Supertrend False for >1 bar, price below 200 EMA & EMA21 <= EMA50)
     if st_now == False and st_prev == False and close < ema_200 and ema_21 <= ema_50:
         # Price rallied to test EMA21 or EMA50 resistance during this candle or prev candle

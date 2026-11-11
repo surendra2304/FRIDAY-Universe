@@ -1,0 +1,549 @@
+{
+  "generated_at_utc": "2026-11-11T13:39:19.663391+00:00",
+  "method": {
+    "data": "real Binance USDT-M futures candles, provenance-verified cache",
+    "folds": 3,
+    "warmup_bars": 220,
+    "friction_round_trip_bps": 7.999999999999999,
+    "execution": "next-candle-open, conservative intrabar SL/TP",
+    "risk_per_trade": 0.01
+  },
+  "results": [
+    {
+      "strategy": "volatility_breakout",
+      "oos_trades": 279,
+      "win_rate": 0.2975,
+      "net_pf": 0.8343,
+      "net_pnl_usd": -2904.15,
+      "avg_win_usd": 176.2142,
+      "avg_loss_usd": -89.4384,
+      "promote": false,
+      "promotion_bars": {
+        "min_oos_trades": 30,
+        "min_net_pf": 1.0
+      },
+      "per_symbol_timeframe": [
+        {
+          "symbol": "BTCUSDT",
+          "timeframe": "15m",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 3045,
+              "range": [
+                "2026-07-14 13:30:00",
+                "2026-08-15 06:30:00"
+              ],
+              "trades": 33,
+              "win_rate": 0.303,
+              "net_pf": 0.8421,
+              "net_pnl": -229.43
+            },
+            {
+              "fold": 2,
+              "bars": 3045,
+              "range": [
+                "2026-08-12 23:45:00",
+                "2026-09-13 16:45:00"
+              ],
+              "trades": 26,
+              "win_rate": 0.3462,
+              "net_pf": 1.0876,
+              "net_pnl": 127.87
+            },
+            {
+              "fold": 3,
+              "bars": 3045,
+              "range": [
+                "2026-09-11 10:00:00",
+                "2026-10-13 03:00:00"
+              ],
+              "trades": 25,
+              "win_rate": 0.28,
+              "net_pf": 0.8304,
+              "net_pnl": -235.94
+            }
+          ]
+        },
+        {
+          "symbol": "BTCUSDT",
+          "timeframe": "1h",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 885,
+              "range": [
+                "2026-07-14 14:00:00",
+                "2026-08-20 10:00:00"
+              ],
+              "trades": 7,
+              "win_rate": 0.2857,
+              "net_pf": 0.8469,
+              "net_pnl": -78.62
+            },
+            {
+              "fold": 2,
+              "bars": 885,
+              "range": [
+                "2026-08-11 07:00:00",
+                "2026-09-17 03:00:00"
+              ],
+              "trades": 4,
+              "win_rate": 0.25,
+              "net_pf": 0.7404,
+              "net_pnl": -79.47
+            },
+            {
+              "fold": 3,
+              "bars": 885,
+              "range": [
+                "2026-09-08 00:00:00",
+                "2026-10-14 20:00:00"
+              ],
+              "trades": 7,
+              "win_rate": 0.2857,
+              "net_pf": 0.6619,
+              "net_pnl": -158.03
+            }
+          ]
+        },
+        {
+          "symbol": "ETHUSDT",
+          "timeframe": "15m",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 3045,
+              "range": [
+                "2026-07-14 13:30:00",
+                "2026-08-15 06:30:00"
+              ],
+              "trades": 19,
+              "win_rate": 0.2105,
+              "net_pf": 0.5115,
+              "net_pnl": -638.25
+            },
+            {
+              "fold": 2,
+              "bars": 3045,
+              "range": [
+                "2026-08-12 23:45:00",
+                "2026-09-13 16:45:00"
+              ],
+              "trades": 26,
+              "win_rate": 0.2692,
+              "net_pf": 0.7866,
+              "net_pnl": -352.86
+            },
+            {
+              "fold": 3,
+              "bars": 3045,
+              "range": [
+                "2026-09-11 10:00:00",
+                "2026-10-13 03:00:00"
+              ],
+              "trades": 24,
+              "win_rate": 0.4167,
+              "net_pf": 1.3778,
+              "net_pnl": 520.43
+            }
+          ]
+        },
+        {
+          "symbol": "ETHUSDT",
+          "timeframe": "1h",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 885,
+              "range": [
+                "2026-07-14 14:00:00",
+                "2026-08-20 10:00:00"
+              ],
+              "trades": 6,
+              "win_rate": 0.5,
+              "net_pf": 1.7002,
+              "net_pnl": 219.32
+            },
+            {
+              "fold": 2,
+              "bars": 885,
+              "range": [
+                "2026-08-11 07:00:00",
+                "2026-09-17 03:00:00"
+              ],
+              "trades": 6,
+              "win_rate": 0.0,
+              "net_pf": 0.0,
+              "net_pnl": -595.96
+            },
+            {
+              "fold": 3,
+              "bars": 885,
+              "range": [
+                "2026-09-08 00:00:00",
+                "2026-10-14 20:00:00"
+              ],
+              "trades": 7,
+              "win_rate": 0.4286,
+              "net_pf": 1.6982,
+              "net_pnl": 275.67
+            }
+          ]
+        },
+        {
+          "symbol": "SOLUSDT",
+          "timeframe": "15m",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 3045,
+              "range": [
+                "2026-07-14 13:45:00",
+                "2026-08-15 06:45:00"
+              ],
+              "trades": 21,
+              "win_rate": 0.2857,
+              "net_pf": 0.6708,
+              "net_pnl": -451.39
+            },
+            {
+              "fold": 2,
+              "bars": 3045,
+              "range": [
+                "2026-08-13 00:00:00",
+                "2026-09-13 17:00:00"
+              ],
+              "trades": 23,
+              "win_rate": 0.2609,
+              "net_pf": 0.6998,
+              "net_pnl": -510.7
+            },
+            {
+              "fold": 3,
+              "bars": 3045,
+              "range": [
+                "2026-09-11 10:15:00",
+                "2026-10-13 03:15:00"
+              ],
+              "trades": 26,
+              "win_rate": 0.2308,
+              "net_pf": 0.6563,
+              "net_pnl": -681.79
+            }
+          ]
+        },
+        {
+          "symbol": "SOLUSDT",
+          "timeframe": "1h",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 885,
+              "range": [
+                "2026-07-14 14:00:00",
+                "2026-08-20 10:00:00"
+              ],
+              "trades": 6,
+              "win_rate": 0.5,
+              "net_pf": 1.5694,
+              "net_pnl": 178.31
+            },
+            {
+              "fold": 2,
+              "bars": 885,
+              "range": [
+                "2026-08-11 07:00:00",
+                "2026-09-17 03:00:00"
+              ],
+              "trades": 7,
+              "win_rate": 0.1429,
+              "net_pf": 0.3769,
+              "net_pnl": -379.61
+            },
+            {
+              "fold": 3,
+              "bars": 885,
+              "range": [
+                "2026-09-08 00:00:00",
+                "2026-10-14 20:00:00"
+              ],
+              "trades": 6,
+              "win_rate": 0.5,
+              "net_pf": 1.521,
+              "net_pnl": 166.29
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "strategy": "trend_pullback",
+      "oos_trades": 721,
+      "win_rate": 0.319,
+      "net_pf": 0.7638,
+      "net_pnl_usd": -8572.73,
+      "avg_win_usd": 120.5027,
+      "avg_loss_usd": -73.907,
+      "promote": false,
+      "promotion_bars": {
+        "min_oos_trades": 30,
+        "min_net_pf": 1.0
+      },
+      "per_symbol_timeframe": [
+        {
+          "symbol": "BTCUSDT",
+          "timeframe": "15m",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 3045,
+              "range": [
+                "2026-07-14 13:30:00",
+                "2026-08-15 06:30:00"
+              ],
+              "trades": 63,
+              "win_rate": 0.2857,
+              "net_pf": 0.515,
+              "net_pnl": -1084.11
+            },
+            {
+              "fold": 2,
+              "bars": 3045,
+              "range": [
+                "2026-08-12 23:45:00",
+                "2026-09-13 16:45:00"
+              ],
+              "trades": 62,
+              "win_rate": 0.3387,
+              "net_pf": 0.8838,
+              "net_pnl": -276.5
+            },
+            {
+              "fold": 3,
+              "bars": 3045,
+              "range": [
+                "2026-09-11 10:00:00",
+                "2026-10-13 03:00:00"
+              ],
+              "trades": 71,
+              "win_rate": 0.4225,
+              "net_pf": 1.0735,
+              "net_pnl": 193.77
+            }
+          ]
+        },
+        {
+          "symbol": "BTCUSDT",
+          "timeframe": "1h",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 885,
+              "range": [
+                "2026-07-14 14:00:00",
+                "2026-08-20 10:00:00"
+              ],
+              "trades": 20,
+              "win_rate": 0.3,
+              "net_pf": 0.6284,
+              "net_pnl": -414.7
+            },
+            {
+              "fold": 2,
+              "bars": 885,
+              "range": [
+                "2026-08-11 07:00:00",
+                "2026-09-17 03:00:00"
+              ],
+              "trades": 13,
+              "win_rate": 0.1538,
+              "net_pf": 0.3652,
+              "net_pnl": -676.05
+            },
+            {
+              "fold": 3,
+              "bars": 885,
+              "range": [
+                "2026-09-08 00:00:00",
+                "2026-10-14 20:00:00"
+              ],
+              "trades": 12,
+              "win_rate": 0.25,
+              "net_pf": 0.5516,
+              "net_pnl": -385.33
+            }
+          ]
+        },
+        {
+          "symbol": "ETHUSDT",
+          "timeframe": "15m",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 3045,
+              "range": [
+                "2026-07-14 13:30:00",
+                "2026-08-15 06:30:00"
+              ],
+              "trades": 69,
+              "win_rate": 0.3333,
+              "net_pf": 0.8249,
+              "net_pnl": -578.9
+            },
+            {
+              "fold": 2,
+              "bars": 3045,
+              "range": [
+                "2026-08-12 23:45:00",
+                "2026-09-13 16:45:00"
+              ],
+              "trades": 65,
+              "win_rate": 0.2462,
+              "net_pf": 0.6457,
+              "net_pnl": -1222.97
+            },
+            {
+              "fold": 3,
+              "bars": 3045,
+              "range": [
+                "2026-09-11 10:00:00",
+                "2026-10-13 03:00:00"
+              ],
+              "trades": 71,
+              "win_rate": 0.2817,
+              "net_pf": 0.647,
+              "net_pnl": -1268.0
+            }
+          ]
+        },
+        {
+          "symbol": "ETHUSDT",
+          "timeframe": "1h",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 885,
+              "range": [
+                "2026-07-14 14:00:00",
+                "2026-08-20 10:00:00"
+              ],
+              "trades": 15,
+              "win_rate": 0.2667,
+              "net_pf": 0.6237,
+              "net_pnl": -366.69
+            },
+            {
+              "fold": 2,
+              "bars": 885,
+              "range": [
+                "2026-08-11 07:00:00",
+                "2026-09-17 03:00:00"
+              ],
+              "trades": 3,
+              "win_rate": 0.3333,
+              "net_pf": 1.2762,
+              "net_pnl": 42.63
+            },
+            {
+              "fold": 3,
+              "bars": 885,
+              "range": [
+                "2026-09-08 00:00:00",
+                "2026-10-14 20:00:00"
+              ],
+              "trades": 19,
+              "win_rate": 0.3158,
+              "net_pf": 0.8666,
+              "net_pnl": -172.05
+            }
+          ]
+        },
+        {
+          "symbol": "SOLUSDT",
+          "timeframe": "15m",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 3045,
+              "range": [
+                "2026-07-14 13:45:00",
+                "2026-08-15 06:45:00"
+              ],
+              "trades": 61,
+              "win_rate": 0.4098,
+              "net_pf": 1.1069,
+              "net_pnl": 266.38
+            },
+            {
+              "fold": 2,
+              "bars": 3045,
+              "range": [
+                "2026-08-13 00:00:00",
+                "2026-09-13 17:00:00"
+              ],
+              "trades": 56,
+              "win_rate": 0.375,
+              "net_pf": 1.0275,
+              "net_pnl": 85.81
+            },
+            {
+              "fold": 3,
+              "bars": 3045,
+              "range": [
+                "2026-09-11 10:15:00",
+                "2026-10-13 03:15:00"
+              ],
+              "trades": 72,
+              "win_rate": 0.3056,
+              "net_pf": 0.6998,
+              "net_pnl": -1221.08
+            }
+          ]
+        },
+        {
+          "symbol": "SOLUSDT",
+          "timeframe": "1h",
+          "folds": [
+            {
+              "fold": 1,
+              "bars": 885,
+              "range": [
+                "2026-07-14 14:00:00",
+                "2026-08-20 10:00:00"
+              ],
+              "trades": 19,
+              "win_rate": 0.3158,
+              "net_pf": 0.7921,
+              "net_pnl": -259.03
+            },
+            {
+              "fold": 2,
+              "bars": 885,
+              "range": [
+                "2026-08-11 07:00:00",
+                "2026-09-17 03:00:00"
+              ],
+              "trades": 18,
+              "win_rate": 0.1111,
+              "net_pf": 0.2504,
+              "net_pnl": -1105.95
+            },
+            {
+              "fold": 3,
+              "bars": 885,
+              "range": [
+                "2026-09-08 00:00:00",
+                "2026-10-14 20:00:00"
+              ],
+              "trades": 12,
+              "win_rate": 0.3333,
+              "net_pf": 0.8436,
+              "net_pnl": -129.95
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

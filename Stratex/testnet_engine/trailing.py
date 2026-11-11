@@ -346,7 +346,11 @@ def trailing_cycle(service):
     modified = False
     now = time.time()
     min_rearm = float(_cfg("TRAIL_MIN_REARM_SECONDS", 60))
-    harvest_pct = float(_cfg("PROFIT_HARVEST_PCT", 0.015))  # 1.5% profit target
+    harvest_pct = float(_cfg("PROFIT_HARVEST_PCT", 0.0))  # 0.0 = disabled (batch-2 default)
+    # Guard: harvest_pct <= 0 disables the early-winner amputation entirely.
+    # Without this guard a 0.0 config would trigger `profit >= 0` on every
+    # position (even flat ones) and market-close them instantly.
+    harvest_enabled = harvest_pct > 0
 
     for trade in active:
         try:
@@ -377,7 +381,7 @@ def trailing_cycle(service):
             price_diff = (entry_price - current_price) if is_short else (current_price - entry_price)
             current_profit_pct = price_diff / entry_price if entry_price > 0 else 0.0
 
-            if current_profit_pct >= harvest_pct:
+            if harvest_enabled and current_profit_pct >= harvest_pct:
                 logger.info(
                     f"[PROFIT_HARVEST] 🎯 {symbol} {side} hit harvest target "
                     f"{current_profit_pct:.2%} >= {harvest_pct:.2%}. Closing to bank WIN!"

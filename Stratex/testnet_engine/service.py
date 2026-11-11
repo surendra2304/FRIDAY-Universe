@@ -29,6 +29,7 @@ from testnet_engine.risk_gate import RiskGate
 from testnet_engine.signal_quality import evaluate_signal_quality
 from testnet_engine.trailing import trailing_cycle
 from testnet_engine.telemetry_manager import get_telemetry_manager
+from risk.strategy_coordinator import StrategyCoordinator
 
 logger = get_logger("service")
 
@@ -241,6 +242,10 @@ class TestnetService:
             self.cost_engine = CostEngine.get_binance_taker_config()
         self.profitability_gate = ProfitabilityGate(cost_engine=self.cost_engine)
         self.risk_gate = RiskGate(starting_balance=self.starting_equity)
+        # Batch-2 confluence sizing: >=2 strategies agreeing on a symbol+side
+        # trade full size; a lone strategy trades half size.
+        self.strategy_coordinator = StrategyCoordinator()
+        self._confluence_votes: dict[tuple[str, str], set[str]] = {}
         self.telemetry = get_telemetry_manager()
 
         # Freqtrade-inspired pre-trade protection layer
@@ -315,6 +320,9 @@ class TestnetService:
         self.safety_halt = False
         self.observe_only = False
         self.cooldowns = {} # symbol -> timestamp (float)
+        # Batch-2 anti-revenge cap: executed entries per symbol per UTC day.
+        self.symbol_daily_trade_counts: dict[str, int] = {}
+        self.symbol_daily_trade_day = datetime.datetime.now(datetime.timezone.utc).date()
         self.last_trade_execution_time = 0.0
         
         # Stratex Deep Upgrade: UpgradeRiskManager, MarketDataGuard
@@ -574,24 +582,83 @@ class TestnetService:
             logger.debug(f"[TELEGRAM] closed-trade alert failed for {symbol}: {exc}")
 
     def _daily_summary_loop(self):
-        """Send a daily PnL summary at STRATEX_DAILY_SUMMARY_HOUR (UTC)."""
-        hour = int(os.getenv("STRATEX_DAILY_SUMMARY_HOUR", "21"))
+        """F5: send the scheduled daily PORTFOLIO report at 09:00 IST.
+
+        The owner's day is IST (project standard). The old schedule fired at
+        21:00 UTC = 02:30 IST — the middle of the owner's night. Default is
+        now 09:00 IST; override with STRATEX_DAILY_SUMMARY_HOUR_IST (0-23).
+        The report appends the settled-ledger daily + rolling 7-day PnL so
+        the owner sees ledger-measured performance alongside the venue view.
+        """
+        hour_ist = int(os.getenv("STRATEX_DAILY_SUMMARY_HOUR_IST", "9"))
         last_sent_date = None
         while True:
             try:
-                now = datetime.datetime.utcnow()
+                ist = datetime.timezone(datetime.timedelta(hours=5, minutes=30), name="IST")
+                now = datetime.datetime.now(ist)
                 bot = self._tg()
-                if bot and now.hour == hour and last_sent_date != now.date():
+                if bot and now.hour == hour_ist and last_sent_date != now.date():
                     try:
                         from config import TRADING_MODE as _mode
 
-                        bot.send_daily_summary(mode=str(_mode), venue="Binance Futures Testnet")
-                        last_sent_date = now.date()
-                        logger.info("[TELEGRAM] Daily summary dispatched.")
+                        sent_ok = bot.send_daily_summary(mode=str(_mode), venue="Binance Futures Testnet")
+                        try:
+                            from notifications.ledger_pnl import format_ledger_pnl
+
+                            bot.send_message(format_ledger_pnl())
+                        except Exception as exc:
+                            logger.debug(f"[TELEGRAM] ledger PnL section failed: {exc}")
+                        if sent_ok:
+                            last_sent_date = now.date()
+                            logger.info("[TELEGRAM] Daily 09:00 IST portfolio report dispatched.")
                     except Exception as exc:
                         logger.warning(f"[TELEGRAM] Daily summary failed: {exc}")
             except Exception as exc:
                 logger.debug(f"[DAILY_SUMMARY] loop error: {exc}")
+            time.sleep(60)
+
+    def _price_alert_loop(self):
+        """F6: evaluate owner price-alert rules against scanner prices every 60s.
+
+        Prices come from the live candle cache (last close per symbol);
+        24h percent change is computed from the 1h cache (24 bars) or the
+        15m cache (96 bars) when 1h is unavailable. Missing data never
+        triggers an alert. Every trigger pushes one Telegram message.
+        """
+        from notifications.price_alerts import PriceAlertEngine
+
+        engine = PriceAlertEngine()
+        while True:
+            try:
+                bot = self._tg()
+                scanner = getattr(self, "scanner", None)
+                cache = getattr(scanner, "candle_cache", None) if scanner else None
+                if bot and cache:
+                    with getattr(scanner, "_cache_lock", threading.Lock()):
+                        snapshot = {k: v for k, v in (cache or {}).items()}
+                    prices: dict[str, float] = {}
+                    pct_24h: dict[str, float] = {}
+                    for (sym, tf), df in snapshot.items():
+                        if df is None or getattr(df, "empty", True) or "close" not in df.columns:
+                            continue
+                        last_close = float(df["close"].iloc[-1])
+                        if last_close > 0 and (sym not in prices or tf == "15m"):
+                            prices[sym] = last_close
+                        bars = {"1h": 24, "15m": 96, "30m": 48}.get(tf)
+                        if bars and len(df) > bars:
+                            ref = float(df["close"].iloc[-1 - bars])
+                            if ref > 0:
+                                pct = (last_close - ref) / ref * 100.0
+                                if tf == "1h" or sym not in pct_24h:
+                                    pct_24h[sym] = pct
+                    if prices:
+                        for rule in engine.evaluate(prices, pct_24h):
+                            try:
+                                bot.send_message(PriceAlertEngine.format_trigger(rule))
+                            except Exception as exc:
+                                logger.warning(f"[PRICE_ALERT] push failed: {exc}")
+            except Exception as exc:
+                logger.debug(f"[PRICE_ALERT] loop error: {exc}")
             time.sleep(60)
 
     def _register_active_strategies_in_registry(self):
@@ -1627,6 +1694,15 @@ class TestnetService:
                 
                 # Rank candidates by Deterministic Score (Descending), then Net Edge, Confidence, Risk, Symbol
                 candidates.sort(key=lambda x: (x["score"], x["net_edge"], x["confidence"], -x["risk"], x["symbol"]), reverse=True)
+
+                # Batch-2 confluence: same-direction strategy votes per (symbol, side)
+                # across this scan batch. Multiple strategies flagging the same
+                # symbol+direction is cheap signal confirmation.
+                self._confluence_votes = {}
+                for c in candidates:
+                    self._confluence_votes.setdefault(
+                        (c.get("symbol"), c.get("side")), set()
+                    ).add(c.get("strategy", "unknown"))
                 
                 executed_in_batch = 0
                 max_executions_per_batch = int(os.getenv("MAX_EXECUTIONS_PER_BATCH", "1"))
@@ -1679,6 +1755,23 @@ class TestnetService:
 
                         # Enforce per-symbol cooldown strictly across all strategies to prevent fee churning
                         now_ts = datetime.datetime.utcnow().timestamp()
+
+                        # Batch-2 anti-revenge cap: max executed entries per symbol
+                        # per UTC day (MAX_TRADES_PER_SYMBOL_PER_DAY, default 3).
+                        daily_cap = int(getattr(config, "MAX_TRADES_PER_SYMBOL_PER_DAY", 3))
+                        _today = datetime.datetime.now(datetime.timezone.utc).date()
+                        if _today != self.symbol_daily_trade_day:
+                            self.symbol_daily_trade_day = _today
+                            self.symbol_daily_trade_counts = {}
+                        _day_count = self.symbol_daily_trade_counts.get(symbol, 0)
+                        if daily_cap > 0 and _day_count >= daily_cap:
+                            logger.info(
+                                f"[SYMBOL_DAILY_CAP] {symbol} hit daily entry cap "
+                                f"({_day_count}/{daily_cap}); blocking revenge re-entry"
+                            )
+                            self.stats["OTHER_REJECTED"] = self.stats.get("OTHER_REJECTED", 0) + 1
+                            self.log_opportunity(signal_id, symbol, side, p_metrics, "REJECTED", "SYMBOL_DAILY_TRADE_CAP")
+                            continue
 
                         if symbol in self.cooldowns and now_ts - self.cooldowns[symbol] < _COOLDOWN_SECONDS:
                             self.stats["COOLDOWN_REJECTED"] += 1
@@ -1743,7 +1836,49 @@ class TestnetService:
                         # Sizing
                         filters = self.symbol_filters.get(symbol, {})
 
-                        qty = self.risk_gate.calculate_position_size(self.current_equity, current_price, sl, filters, side=side)
+                        # Batch-2: ATR% from the live candle cache feeds
+                        # volatility-scaled sizing (constant risk per unit of
+                        # volatility). Missing data degrades to unscaled 1%.
+                        _atr_pct = None
+                        try:
+                            if df is not None and not df.empty and "atr" in df.columns:
+                                _last = df.iloc[-1]
+                                _atr_v = float(_last.get("atr", 0.0) or 0.0)
+                                _close_v = float(_last.get("close", 0.0) or 0.0)
+                                if _atr_v > 0 and _close_v > 0:
+                                    _atr_pct = _atr_v / _close_v
+                        except Exception:
+                            _atr_pct = None
+
+                        qty = self.risk_gate.calculate_position_size(
+                            self.current_equity, current_price, sl, filters, side=side, atr_pct=_atr_pct
+                        )
+
+                        # Batch-2 confluence sizing: >=2 strategies agreeing on
+                        # this symbol+side keep full size; a lone strategy trades
+                        # half size; no directional agreement = no trade.
+                        voters = self._confluence_votes.get((symbol, side)) or {strategy_name}
+                        confluence_mult = self.strategy_coordinator.confluence_size_multiplier(
+                            symbol, {s: 1 for s in voters}
+                        )
+                        if confluence_mult < 0.5:
+                            self.stats["OTHER_REJECTED"] = self.stats.get("OTHER_REJECTED", 0) + 1
+                            self.log_opportunity(signal_id, symbol, side, fresh_metrics, "REJECTED", "NO_DIRECTIONAL_CONFLUENCE")
+                            continue
+                        if confluence_mult < 1.0 and qty > 0:
+                            try:
+                                from numeric_safety import floor_to_step
+                                _step = filters.get("stepSize", 1.0)
+                                qty = floor_to_step(qty * confluence_mult, _step)
+                            except Exception:
+                                qty = qty * confluence_mult
+                            self.stats["CONFLUENCE_HALF_SIZED"] = self.stats.get("CONFLUENCE_HALF_SIZED", 0) + 1
+                            logger.info(
+                                f"[CONFLUENCE] {symbol} {side}: single-strategy vote "
+                                f"({strategy_name}) -> half size"
+                            )
+                        else:
+                            self.stats["CONFLUENCE_FULL_SIZED"] = self.stats.get("CONFLUENCE_FULL_SIZED", 0) + 1
                         
                         if qty < 0.00000001:
                             self.stats["RISK_REJECTED"] += 1
@@ -2025,6 +2160,9 @@ class TestnetService:
                                     "status": "OPEN",
                                     "entry_client_id": signal_id
                                 }
+                                # Batch-2: count this executed entry toward the
+                                # symbol's daily cap (anti revenge-entry).
+                                self.symbol_daily_trade_counts[symbol] = _day_count + 1
                                 self.cooldowns[symbol] = datetime.datetime.utcnow().timestamp()
                                 self.last_trade_execution_time = datetime.datetime.utcnow().timestamp()
                                 executed_in_batch += 1
@@ -3516,6 +3654,8 @@ class TestnetService:
             try:
                 self._tg().start_polling_in_background()
                 threading.Thread(target=self._daily_summary_loop, daemon=True, name="DailySummary").start()
+                # F6: owner price-alert rules -> Telegram push (60s cadence)
+                threading.Thread(target=self._price_alert_loop, daemon=True, name="PriceAlerts").start()
                 strategies = sorted({name for pairs in self.strategies.values() for name, _ in pairs})
                 self._tg().send_message(
                     "🚀 <b>STRATEX ENGINE ONLINE</b>\n\n"

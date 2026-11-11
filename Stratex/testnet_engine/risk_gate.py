@@ -92,6 +92,32 @@ class RiskGate:
             return None
         return qty * price, str(position.get("side", "")).upper()
 
+    def volatility_risk_scale(self, atr_pct) -> float:
+        """Risk multiplier for an ATR% reading; 1.0 when scaling is off.
+
+        * volatility-scaled sizing disabled (config VOLATILITY_SCALED_SIZING
+          false) -> 1.0 (unchanged behaviour);
+        * atr_pct unreadable/not supplied -> 1.0 (no data, no opinion — the
+          old behaviour, never a silent zero);
+        * atr_pct <= baseline -> 1.0 (calm regime, full risk);
+        * atr_pct > baseline  -> baseline / atr_pct, floored at
+          SIZING_MIN_VOL_SCALE (extreme vol still trades, just smaller).
+        """
+        enabled = getattr(config, "VOLATILITY_SCALED_SIZING", True)
+        if not enabled:
+            return 1.0
+        atr = finite_float(atr_pct)
+        if atr is None or atr <= 0:
+            return 1.0
+        baseline = _config_fraction("SIZING_BASELINE_ATR_PCT", 0.008)
+        if baseline <= 0:
+            return 1.0
+        if atr <= baseline:
+            return 1.0
+        min_scale = _config_fraction("SIZING_MIN_VOL_SCALE", 0.25)
+        scale = baseline / atr
+        return max(min_scale, min(1.0, scale))
+
     def evaluate_risk(self, symbol, side, current_equity, active_positions, proposed_qty, entry_price, data_health_status):
         """
         Evaluates systemic and local risk before executing a signal.
@@ -246,10 +272,15 @@ class RiskGate:
         self.accounting_fault = None
 
     def calculate_position_size(self, current_equity, entry_price, sl_price, filters=None, confidence=None, tp_price=None,
-                                side=None):
+                                side=None, atr_pct=None):
         """
         Calculates position size strictly capped at MAX_TESTNET_RISK_PER_TRADE,
-        with optional Half-Kelly dynamic scaling when calibrated confidence and targets are provided.
+        with optional Half-Kelly dynamic scaling when calibrated confidence and targets are provided,
+        and batch-2 volatility scaling: when the symbol's ATR% (ATR / price) is
+        above the baseline (SIZING_BASELINE_ATR_PCT), risk scales DOWN by
+        baseline/ATR% (floored at SIZING_MIN_VOL_SCALE) so each trade targets
+        ~1% risk per unit of volatility across ATR regimes. A symbol in an
+        extreme-vol regime trades smaller, not same-size.
         Floors the value strictly to Binance's LOT_SIZE stepSize.
         Returns 0.0 (no trade) if any input is invalid, the stop sits on the
         wrong side of the entry for ``side``, or the rounded size is below
@@ -278,6 +309,15 @@ class RiskGate:
         # Base risk fraction
         max_risk_pct = _config_fraction("MAX_TESTNET_RISK_PER_TRADE", 0.0)
         risk_pct = max_risk_pct
+
+        # Batch-2 volatility scaling: constant risk per unit of volatility.
+        vol_scale = self.volatility_risk_scale(atr_pct)
+        if vol_scale is not None and vol_scale < 1.0:
+            risk_pct = risk_pct * vol_scale
+            logger.info(
+                f"[RISKGATE] Volatility-scaled sizing: atr_pct={atr_pct:.4f} "
+                f"-> risk {max_risk_pct:.4f} x {vol_scale:.3f} = {risk_pct:.4f}"
+            )
 
         # Adaptive Half-Kelly sizing when confidence & TP are available
         p = finite_float(confidence)

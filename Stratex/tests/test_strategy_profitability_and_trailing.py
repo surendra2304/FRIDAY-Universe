@@ -81,23 +81,31 @@ def test_active_strategies_asymmetric_risk_reward():
 
 
 def test_trailing_stages_and_targets():
-    """Verify breakeven and trailing stage transitions and target prices."""
+    """Verify breakeven and trailing stage transitions and target prices.
+
+    Batch-2 spec: break-even lock moves to +1.0R (was 0.4R) so winners get
+    room to breathe before the scratch lock; ATR trailing arms at +1.5R,
+    strictly after the breakeven lock.
+    """
     assert stage_for_r_multiple(0.3) is None
-    assert stage_for_r_multiple(0.4) == "BREAKEVEN"
-    assert stage_for_r_multiple(0.8) == "TRAILING"
+    assert stage_for_r_multiple(0.4) is None, "0.4R no longer arms breakeven (batch-2: BE at 1.0R)"
+    assert stage_for_r_multiple(0.9) is None
+    assert stage_for_r_multiple(1.0) == "BREAKEVEN"
+    assert stage_for_r_multiple(1.2) == "BREAKEVEN", "1.0R-1.5R band locks breakeven before trailing arms"
+    assert stage_for_r_multiple(1.5) == "TRAILING"
 
     # BUY trade: entry 100, SL 98 (risk = 2.0), TP 102
-    # Price reaches 101.0 (+0.5R -> BREAKEVEN)
-    be_sl, stage = compute_trail_target("BUY", 100.0, 101.0, 98.0, 102.0, 2.0, "BREAKEVEN")
+    # Price reaches 102.0 (+1.0R -> BREAKEVEN)
+    be_sl, stage = compute_trail_target("BUY", 100.0, 102.0, 98.0, 104.0, 2.0, "BREAKEVEN")
     assert stage == "BREAKEVEN"
     assert be_sl > 100.0, "Breakeven SL must be above entry price to cover fee buffer"
-    assert be_sl < 101.0, "Breakeven SL must be below current price"
+    assert be_sl < 102.0, "Breakeven SL must be below current price"
 
-    # Price reaches 102.0 (+1.0R -> TRAILING with ATR=0.5)
-    trail_sl, t_stage = compute_trail_target("BUY", 100.0, 102.0, be_sl, 104.0, 2.0, "TRAILING", 0.5)
+    # Price reaches 103.2 (+1.6R -> TRAILING with ATR=0.5, past the 1.5R arm)
+    trail_sl, t_stage = compute_trail_target("BUY", 100.0, 103.2, be_sl, 106.0, 2.0, "TRAILING", 0.5)
     assert t_stage == "TRAILING"
     assert trail_sl > be_sl, "Trailing SL must ratchet upward"
-    assert trail_sl < 102.0
+    assert trail_sl < 103.2
 
 
 def test_supertrend_honest_geometry_brackets_and_adx_filter():
@@ -217,7 +225,12 @@ def test_trailing_cycle_accepts_protected_state(monkeypatch):
 
 
 def test_trailing_cycle_short_profit_harvest(monkeypatch):
-    """Verify trailing_cycle correctly computes profit for SHORT positions and triggers profit harvest."""
+    """Batch-2: profit harvest is OFF by default (winners run to TP/trail);
+    a SHORT with +2.0% profit is NOT market-closed under the default 0.0
+    config, but still harvests when PROFIT_HARVEST_PCT is explicitly set.
+    """
+    import config as stratex_config
+
     mock_trade = {
         "symbol": "INJUSDT",
         "side": "SHORT",
@@ -251,18 +264,25 @@ def test_trailing_cycle_short_profit_harvest(monkeypatch):
 
     class MockClient:
         def futures_symbol_ticker(self, symbol):
-            # Price fell from 10.0 to 9.80 -> +2.0% profit for short! (above default 1.5% harvest)
+            # Price fell from 10.0 to 9.80 -> +2.0% profit for short.
             return {"price": "9.80"}
 
     class MockService:
         client = MockClient()
-        def get_atr(self, sym):
-            return 0.1
+        scanner = None
 
     service = MockService()
-    trailing_cycle(service)
 
-    assert len(closed_calls) == 1, "SHORT trade with >1.5% profit should be harvested"
+    # 1) Default config: harvest disabled (0.0) -> no market close, and the
+    #    zero-guard must NOT fire `profit >= 0` on every position either.
+    monkeypatch.setattr(stratex_config, "PROFIT_HARVEST_PCT", 0.0, raising=False)
+    trailing_cycle(service)
+    assert closed_calls == [], "harvest must be disabled at PROFIT_HARVEST_PCT=0.0"
+
+    # 2) Explicitly enabled at 1.5% -> the +2.0% SHORT harvests exactly once.
+    monkeypatch.setattr(stratex_config, "PROFIT_HARVEST_PCT", 0.015, raising=False)
+    trailing_cycle(service)
+    assert len(closed_calls) == 1, "SHORT trade with >1.5% profit should be harvested when enabled"
     sym, s, q = closed_calls[0]
     assert sym == "INJUSDT"
     assert s == "SHORT"

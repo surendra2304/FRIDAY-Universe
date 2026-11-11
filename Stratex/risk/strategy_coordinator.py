@@ -105,6 +105,39 @@ class StrategyCoordinator:
         logger.info(f"[STRAT_COORD] Rebalanced strategy allocations under regime {current_regime}: {final_weights}")
         return final_weights
 
+    def confluence_size_multiplier(self, symbol: str, signals: dict[str, int]) -> float:
+        """Size multiplier from strategy confluence on one symbol (batch-2 spec).
+
+        ``signals`` maps strategy name -> direction (+1 long / -1 short / 0 flat).
+        Two or more strategies agreeing on the SAME direction = full size (1.0).
+        A single strategy voting alone = half size (0.5). No directional votes
+        or a tie = no trade (0.0).
+
+        Rationale: with 6+ strategies scanning, an entry backed by only one of
+        them carries single-strategy variance (its win-rate prior alone);
+        agreement across independent logics is the cheapest signal-quality
+        filter available. The previous sizing path ignored cross-strategy
+        agreement entirely.
+        """
+        directions: dict[str, int] = {}
+        for strategy, sig in (signals or {}).items():
+            value = finite_float(sig)
+            directions[strategy] = 0 if value is None else (1 if value > 0 else -1 if value < 0 else 0)
+        long_votes = sum(1 for d in directions.values() if d > 0)
+        short_votes = sum(1 for d in directions.values() if d < 0)
+        if long_votes == 0 and short_votes == 0:
+            return 0.0
+        if long_votes > 0 and short_votes > 0:
+            # Split house: conflict resolution handles direction; size at half.
+            logger.info(f"[STRAT_COORD] Confluence on {symbol}: split {long_votes}L/{short_votes}S -> 0.5x")
+            return 0.5
+        agree = max(long_votes, short_votes)
+        if agree >= 2:
+            logger.info(f"[STRAT_COORD] Confluence on {symbol}: {agree} strategies agree -> full size")
+            return 1.0
+        logger.info(f"[STRAT_COORD] Confluence on {symbol}: single-strategy vote -> half size")
+        return 0.5
+
     def resolve_signal_conflict(
         self,
         symbol: str,

@@ -37,7 +37,11 @@ DEFAULT_LOCAL_LEDGER = REPO_ROOT / "logs" / "turn_notifications.jsonl"
 
 def _load_env_file() -> None:
     """Best-effort .env load (python-dotenv if present, else manual). — never fatal."""
-    candidates = [REPO_ROOT / ".env", REPO_ROOT / "Stratex" / ".env"]
+    candidates = [
+        REPO_ROOT / ".env",
+        REPO_ROOT / "Stratex" / ".env",
+        REPO_ROOT.parent / ".env",  # /home/z/my-project/.env (workspace-level)
+    ]
     try:
         from dotenv import load_dotenv  # type: ignore
 
@@ -93,6 +97,12 @@ def send_turn_notification(message: str) -> tuple[bool, str]:
     if not token or not chat_id:
         reason = "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID not set in this environment"
         _record_locally(message, reason)
+        print(
+            "[notify_turn_complete] *** TELEGRAM NOT SENT — credentials missing ***\n"
+            "[notify_turn_complete] Add to /home/z/my-project/.env (or friday-universe/.env):\n"
+            "[notify_turn_complete]   TELEGRAM_BOT_TOKEN=<bot token used by the Stratex bot>\n"
+            "[notify_turn_complete]   TELEGRAM_CHAT_ID=<owner chat id>"
+        )
         return False, f"recorded locally ({reason})"
 
     try:

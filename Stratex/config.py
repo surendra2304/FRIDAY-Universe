@@ -145,8 +145,21 @@ MIN_BRACKET_PCT = float(os.getenv("MIN_BRACKET_PCT", "0.0030"))
 DAILY_LOSS_LIMIT_PCT = float(os.getenv("DAILY_LOSS_LIMIT_PCT", "0.03"))
 MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "8"))                # Increased from 5 to 8
 MAX_OPEN_POSITIONS_AGGRESSIVE = int(os.getenv("MAX_OPEN_POSITIONS_AGGRESSIVE", "12")) # Bounded positions for aggressive mode
+# Batch-2 anti-revenge cap: max executed ENTRIES per symbol per UTC day. The
+# 5-minute cooldown alone let a losing symbol re-enter 10+ times a day;
+# this cap stops revenge-entries dead after N fills.
+MAX_TRADES_PER_SYMBOL_PER_DAY = int(os.getenv("MAX_TRADES_PER_SYMBOL_PER_DAY", "3"))
+# Batch-2 volatility-scaled sizing: risk fraction scales down when a symbol's
+# ATR% (ATR/price) exceeds the baseline, targeting constant ~1% risk per unit
+# of volatility across ATR regimes. Floor keeps extreme-vol symbols tradable.
+VOLATILITY_SCALED_SIZING = os.getenv("VOLATILITY_SCALED_SIZING", "true").lower() == "true"
+SIZING_BASELINE_ATR_PCT = float(os.getenv("SIZING_BASELINE_ATR_PCT", "0.008"))   # 0.8% of price
+SIZING_MIN_VOL_SCALE = float(os.getenv("SIZING_MIN_VOL_SCALE", "0.25"))           # never below 25% of base risk
 VOLATILITY_BUFFER = 0.15  # Scale down positions during high volatility (reduced from 0.2)
-BLOCK_SHORTS_IN_BULL_REGIME = os.getenv("BLOCK_SHORTS_IN_BULL_REGIME", "False").lower() == "true"
+# Regime filter for shorts (batch-2): shorts require a FULL bear regime
+# (close < EMA200 AND EMA50 < EMA200). The ledger showed shorts fighting the
+# dominant trend. Default true; strategy_supertrend reads the same env var.
+BLOCK_SHORTS_IN_BULL_REGIME = os.getenv("BLOCK_SHORTS_IN_BULL_REGIME", "true").lower() == "true"
 
 MAX_DAILY_LOSS_PCT = float(os.getenv("MAX_DAILY_LOSS_PCT", "0.03"))          # 3% daily loss limit (increased from 2%)
 MAX_TESTNET_DRAWDOWN_PCT = float(os.getenv("MAX_TESTNET_DRAWDOWN_PCT", "0.08"))    # 8% drawdown tolerance (increased from 5%)
@@ -210,9 +223,16 @@ OBSERVE_ONLY_COOLDOWN_SECONDS = float(os.getenv("OBSERVE_ONLY_COOLDOWN_SECONDS",
 # the exchange-side protective SL as a position moves into profit.
 # -------------------------------------------------------------------
 TRAILING_STOP_ENABLED = os.getenv("TRAILING_STOP_ENABLED", "True").lower() == "true"
-PROFIT_HARVEST_PCT = float(os.getenv("PROFIT_HARVEST_PCT", "0.015"))                      # 1.5% profit harvest trigger
-TRAIL_BREAKEVEN_TRIGGER_R = float(os.getenv("TRAIL_BREAKEVEN_TRIGGER_R", "0.4"))          # at +0.4R immediately move SL to breakeven(+fees)
-TRAIL_TRIGGER_R = float(os.getenv("TRAIL_TRIGGER_R", "0.8"))                              # at +0.8R start dynamic ATR trailing
+# Batch 2 (2026-11-11) — winner-protection audit:
+# PROFIT_HARVEST_PCT forced every winner into a market-close at +1.5% price
+# move, regardless of R. With honest priors (26.6% win rate) the whole edge
+# lives in the fat right tail (realized ~4:1 avg-win/avg-loss, TP=3R); capping
+# winners at ~1.5-2.5R while losers pay full R is mathematically negative.
+# Default now 0.0 (disabled) — breakeven lock + ATR trailing protect winners
+# instead of amputating them. Set PROFIT_HARVEST_PCT>0 to re-enable.
+PROFIT_HARVEST_PCT = float(os.getenv("PROFIT_HARVEST_PCT", "0.0"))                       # 0 = disabled (was 0.015)
+TRAIL_BREAKEVEN_TRIGGER_R = float(os.getenv("TRAIL_BREAKEVEN_TRIGGER_R", "1.0"))          # at +1.0R move SL to breakeven(+fees) (batch-2 spec; was 0.4)
+TRAIL_TRIGGER_R = float(os.getenv("TRAIL_TRIGGER_R", "1.5"))                              # at +1.5R start dynamic ATR trailing (after the BE lock, not before)
 TRAIL_ATR_MULT = float(os.getenv("TRAIL_ATR_MULT", "1.5"))                                # tight trail distance = 1.5 × ATR
 TRAIL_FEE_BUFFER_PCT = float(os.getenv("TRAIL_FEE_BUFFER_PCT", "0.002"))                  # breakeven buffer to cover round-trip fees
 TRAIL_MIN_REARM_SECONDS = float(os.getenv("TRAIL_MIN_REARM_SECONDS", "60"))               # min seconds between SL modifications per symbol

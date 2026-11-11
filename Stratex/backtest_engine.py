@@ -34,7 +34,15 @@ class DataValidator:
 class BacktestEngine:
     def __init__(self, df, strategies, fee_rate=0.001, slippage_rate=0.0005, 
                  initial_balance=10000.0, risk_per_trade=0.01, max_open_trades=1,
-                 symbol="SIM", long_only=True, intrabar_resolution="conservative"):
+                 symbol="SIM", long_only=True, intrabar_resolution="conservative",
+                 warmup=200):
+        # warmup is the signal window (bars) handed to get_signal(). Strategies
+        # that need longer windows (e.g. 200-EMA + EMA50/EMA200 stacks requiring
+        # >=210 bars) must receive a warmup >= their minimum window, otherwise
+        # they silently never fire.
+        if not isinstance(warmup, int) or warmup < 1:
+            raise ValueError(f"warmup must be a positive int, got {warmup!r}")
+        self.warmup = warmup
         self.df = df
         self.strategies = strategies if isinstance(strategies, list) else [strategies]
         self.fee_rate = fee_rate
@@ -84,7 +92,7 @@ class BacktestEngine:
         """Runs the bar-by-bar simulation."""
         DataValidator.validate(self.df)
         
-        warmup = 200
+        warmup = self.warmup
         if len(self.df) <= warmup:
             return [], pd.DataFrame()
             
