@@ -865,6 +865,69 @@ claims:
     status: "DIRECT_COMMIT_BRAIN_UI_2026-11-11"
     task: "TASK-BRAIN-002: recall guard fix (os.path.exists(None) TypeError killed recall on the Oracle backend) + tests/test_memora_recall_guard.py (3 tests)."
 
+  - path: "FRIDAY/src/friday/tools/builtin/task_status_query.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_ORCH_008_2026-11-11"
+    task: "TASK-ORCH-008/C13: TaskStatusQueryTool — real TaskRecordStore lookups by receipt id or agent."
+
+  - path: "FRIDAY/tests/test_task_status_query.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_ORCH_008_2026-11-11"
+    task: "TASK-ORCH-008/C13+I8: 79-test regression suite (tool contract, fast-path matching, wiring order, contacts hijack/keep matrix, agent normalization)."
+
+  - path: "FRIDAY/src/friday/devices/windows_friday.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_ORCH_008_2026-11-11"
+    task: "Checklist I8: is_contact_directive tightened to explicit contact intent (delegation/memory/fleet phrasings no longer hijacked)."
+
+  - path: "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_ORCH_008_2026-11-11"
+    task: "TASK-ORCH-008/C13: _task_status_fast_path (deterministic status-question gate BEFORE delegation)."
+
+  - path: "FRIDAY/src/friday/agent/mixins/cognitive.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_ORCH_008_2026-11-11"
+    task: "TASK-ORCH-008/C13: task-status fast path wired before delegation in the chain."
+
+  - path: "FRIDAY/src/friday/agent/mixins/tools.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_ORCH_008_2026-11-11"
+    task: "TASK-ORCH-008/C13: TaskStatusQueryTool registered in the default registry."
+
+  - path: "FRIDAY/src/friday/agent/prompts.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_ORCH_008_2026-11-11"
+    task: "TASK-ORCH-008/C13: prompt rule — call task_status for task-outcome questions, never invent a status."
+
+  - path: ".gitignore"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_CI_004_2026-11-11"
+    task: "Master Plan backlog TASK-CI-004: bridge/** narrowed to artifact classes (deliberate bridge source commits unblocked)."
+
+  - path: "tests/test_gitignore_bridge_source.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_CI_004_2026-11-11"
+    task: "Master Plan backlog TASK-CI-004: 19-case gitignore contract against real git check-ignore (source addable, artifacts ignored)."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

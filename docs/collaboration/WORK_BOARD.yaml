@@ -1208,6 +1208,33 @@ tasks:
     blockers: []
     next_action: "Live re-test of both probe phrasings on the deployed site after Fleet CD; tick checklist C6 on live success; C13 (status queries 'what happened to that task') is the next delegation item."
 
+  - id: "TASK-ORCH-008"
+    title: "C13 task-status queries from the real ledger + I8 contacts-hijack fix"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "Continue the checklist in owner-approved execution order (2026-11-11 chat: don't stop until the work is completed)."
+    merge_note: "Direct main commit 650a211, 2026-11-11 IST. C13: new TaskStatusQueryTool (task_status) answers 'what happened to that IntelX task?' / 'status of task_xxx' from the shared TaskRecordStore (router+bus records; same store that produced the C14 receipts) — real status/result/error, IST timestamps, lifecycle trail, honest empty/miss answers with known counts. Deterministic _task_status_fast_path runs BEFORE delegation in the cognitive chain so status questions are never re-dispatched; fires only on status question + receipt-id/agent-task reference. Prompt rule added; tool registered in the default registry. I8: is_contact_directive tightened to explicit contact intent (the word 'contact' or a possessive contact field; statement form requires a real phone/email value) — kills the live 'get IntelX to do Y' hijack plus the 'remember that…'/'get the fleet status'/'get me the number for tonight's game' hijack classes."
+    milestone: "Checklist C13 + I8 (tech debt)"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/task_status_query.py"
+      - "FRIDAY/src/friday/tools/builtin/__init__.py"
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"
+      - "FRIDAY/src/friday/agent/mixins/tools.py"
+      - "FRIDAY/src/friday/agent/prompts.py"
+      - "FRIDAY/src/friday/devices/windows_friday.py"
+      - "FRIDAY/tests/test_task_status_query.py"
+    acceptance:
+      - "'what happened to that <agent> task?' answers from the real TaskRecordStore record, never invention."
+      - "Receipt-id lookup (task_/disp_) returns the real lifecycle status, result/error and timing."
+      - "Unknown id / empty store answered honestly with known counts, never fabricated."
+      - "'get X to do Y' delegation phrasings are no longer intercepted by the contacts matcher; all documented contact forms still match."
+    evidence: "tests/test_task_status_query.py 79/79 (12 tool contract, 17 fast-path matching fire/no-fire, 3 wiring incl. chain-order-before-delegation, 40 contacts hijack/keep matrix, 9 agent-name normalization) — 0 skips; attack replay: 13 failures on the old matcher, all green on the fix. Related suites (delegation, router word boundaries, fast-path scope+truthfulness, intelx/stratex/forge dispatch, fleet status): 95 passed with 30 pre-existing sandbox-environmental failures reproduced identically on clean HEAD (Oracle DSN unreachable in sandbox); persona/resilience suites identical to clean HEAD. Zero new failures."
+    blockers: []
+    next_action: "Live re-test on the deployed site after Fleet CD: dispatch a task via chat, then ask 'what happened to that <agent> task?' — tick C13 live evidence on success. D12 (live per-card agent status) is next in the owner-approved order."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
@@ -1215,5 +1242,6 @@ task_id_warnings:
     resolution_owner: "claude"
   - id: "WARN-TASK-ID-002"
     severity: "high"
-    description: "PR #34 is labelled TASK-CI-004 but the Master Plan currently describes TASK-CI-004 as narrowing the bridge/** gitignore rule. PR #34 is a separate broad root-cause CI change."
+    description: "PR #34 is labelled TASK-CI-004 but the Master Plan currently describes TASK-CI-004 as narrowing the bridge/** gitignore rule. PR #34 is a separate broad root-cause CI change. RESOLVED 2026-11-11 (ZAI): the Master Plan backlog TASK-CI-004 (bridge gitignore) was implemented and closed as commit 57c5868 (.gitignore bridge/** narrowed to artifact classes + tests/test_gitignore_bridge_source.py 19-case contract, 21 tests green with the bridge-auth suite); PR #34's fleet-validation work remains recorded under its own merged entry. The two TASK-CI-004 scopes are now both closed and no longer collide; warning retired."
     resolution_owner: "claude"
+    resolution_note: "Closed by ZAI 2026-11-11; see ACTIVITY_LOG ORCH-008 session entry and the TASK-CI-004 backlog tick in the Master Completion Checklist infra notes."

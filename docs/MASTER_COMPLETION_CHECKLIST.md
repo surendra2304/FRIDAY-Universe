@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-11 (early hours IST; updated same night after ORCH-005/006/007) · 44/124 items done (35%) · capability-weighted completion ≈ 57%
+**Snapshot:** 2026-11-11 (IST; updated after ORCH-008: C13 task-status queries + I8 contacts-hijack fix) · 46/125 items done (37%) · capability-weighted completion ≈ 58%
 
 ---
 
@@ -54,7 +54,7 @@
 - [ ] **C10** Futuris delegation: forecast requests on demand
 - [ ] **C11** Memora delegation: owner-facing memory ops (search/edit) as first-class tasks
 - [ ] **C12** Multi-agent pipelines: "research X, then draft the email about it" (chained dispatch)
-- [ ] **C13** Task status queries: "what happened to that IntelX task?" → real record lookup
+- [x] **C13** Task status queries: "what happened to that IntelX task?" → real record lookup (TASK-ORCH-008: TaskStatusQueryTool + deterministic fast-path BEFORE delegation; answers from the shared TaskRecordStore with IST timestamps and lifecycle trail; 79-test suite; honest empty/miss answers)
 - [x] **C14** Delegation receipts: every assignment returns a task ID the owner can reference (live: task_71f66986709e)
 
 ## D. Website — command center (18 items)
@@ -175,7 +175,7 @@
 - [ ] **I5** Coverage gate in CI (no untested regression classes)
 - [ ] **I6** Dead-code sweep: unused tools/modules removed or wired
 - [ ] **I7** Fix duplicate `(path, method)` route registration in server.py (pre-existing `test_api_command_truthfulness` failure on main)
-- [ ] **I8** Contacts fast-path hijack: "get X to do Y" (no contact intent) is intercepted by the contacts lookup — reproduce test_delegation 'get IntelX' case; tighten the contacts matcher to explicit contact verbs (save/edit/find contact)
+- [x] **I8** Contacts fast-path hijack: "get X to do Y" (no contact intent) is intercepted by the contacts lookup — reproduce test_delegation 'get IntelX' case; tighten the contacts matcher to explicit contact verbs (save/edit/find contact) (FIXED with C13 tranche: matcher now requires the word "contact" or a possessive contact field; statement form requires a real phone/email value; 40-case hijack/keep matrix, 13-failure attack replay on old matcher)
 
 ---
 
@@ -185,14 +185,14 @@
 |---|---|---|---|
 | A. Brain | 5 | 14 | 36% |
 | B. Memory | 6 | 12 | 50% |
-| C. Orchestration | 7 | 14 | 50% |
+| C. Orchestration | 8 | 14 | 57% |
 | D. Website | 8 | 18 | 44% |
 | E. Voice | 2 | 10 | 20% |
 | F. Agents | 7 | 27 | 26% |
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
-| I. Tech debt | 0 | 8 | 0% |
-| **Universe** | **44** | **125** | **35%** |
+| I. Tech debt | 1 | 8 | 12% |
+| **Universe** | **46** | **125** | **37%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 
