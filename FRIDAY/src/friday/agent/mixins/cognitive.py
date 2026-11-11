@@ -209,6 +209,14 @@ class CognitiveMixin:
             if security_response is not None:
                 return security_response
 
+            # Checklist F10/C10: forecast requests reach Futuris's real
+            # pipeline — BEFORE the fleet-status path so "predict the fleet
+            # load" is a forecast, not a fleet-health ping; never the LLM's
+            # invented numbers.
+            forecast_response = self._forecast_fast_path(clean_input, start_time)
+            if forecast_response is not None:
+                return forecast_response
+
             # TASK-API-002: fleet-health questions get a real probe, not an
             # LLM guess — "how's the fleet?" answers with live agent status.
             fleet_response = self._fleet_status_fast_path(clean_input, start_time)

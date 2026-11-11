@@ -748,6 +748,70 @@ class FastPathMixin:
             },
         )
 
+    def _forecast_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """Checklist F10/C10: forecast requests reach Futuris's real pipeline.
+
+        "Forecast X over the next 24 hours" / "what does Futuris predict for
+        Y" are requests for a REAL computational product. The answer must come
+        from Futuris's evidence-backed FRIDAY delegation contract (research
+        enrichment, forecasting pipeline, honest calibration) — never the
+        LLM's invented numbers. Futuris's honest statuses (BLOCKED /
+        INSUFFICIENT_DATA) are reported as-is, and every answer states that a
+        prediction is never an authorization.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.routing.capability_router import CapabilityRouter
+
+        if not CapabilityRouter._matches(low, CapabilityRouter.FORECAST_KEYWORDS):
+            return None
+        # An explicit forecast ACTION: leading verb or an explicit futuris ask.
+        action_shaped = bool(re.match(
+            r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+            r"(?:forecast|predict|project|give me (?:a|the) forecast|get (?:me )?(?:a|the) forecast)\b",
+            low,
+        )) or CapabilityRouter._matches(low, {"what does futuris", "futuris forecast"})
+        if not action_shaped:
+            return None
+        if _delegation_instruction_agent(low):
+            return None
+
+        from friday.tools.builtin.futuris_forecast import FuturisForecastTool
+
+        result = FuturisForecastTool().execute(question=low)
+        success = not result.is_error
+        content = result.content
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Forecast request recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Dispatching to Futuris's real pipeline")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="futuris_forecast request")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Returning Futuris's evidence-backed forecast")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["futuris_forecast", "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in forecast dispatch: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "forecast_dispatch": True,
+                "futuris": (result.metadata or {}).get("futuris"),
+                "probe_success": success,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _deterministic_action_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
             """Execute safe geometric desktop actions without vision or an LLM."""
             intent = DeterministicActionDetector.detect(clean_input)

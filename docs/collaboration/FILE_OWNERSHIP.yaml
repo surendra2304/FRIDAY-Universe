@@ -993,6 +993,20 @@ claims:
     status: "DIRECT_COMMIT_WAVE14_VERIFY"
     task: "100% directive WAVE 14 pass: docstring made a raw string to clear the py_compile SyntaxWarning (Windows path escape)."
 
+  - path: "FRIDAY/src/friday/tools/builtin/futuris_forecast.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_FUT_002_2026-11-11"
+    task: "Checklist F10/C10: FuturisForecastTool — real POST /v1/friday/forecast via FleetClient.request_futuris_forecast; honest statuses; prediction-never-authorization stated."
+
+  - path: "FRIDAY/tests/test_futuris_forecast_dispatch.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_FUT_002_2026-11-11"
+    task: "Checklist F10/C10: 32-test contract suite (routing, extraction, tool, HTTP-level, fast-path fire/non-fire, registry)."
+
   - path: "FRIDAY/src/friday/tools/builtin/sentinel_security.py"
     owner: "zai"
     prs: []

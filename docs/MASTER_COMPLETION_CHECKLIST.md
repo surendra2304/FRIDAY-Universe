@@ -51,7 +51,7 @@
 - [ ] **C7** VyralX delegation: video scripts/clips on request
 - [x] **C8** Sentinel delegation: "run a security scan" on request (DONE 2026-11-11 IST with F19: "run a security check" / "any vulnerabilities" answer from Sentinel's REAL posture + finding engines via sentinel_security (read-only); active assessments stay behind Sentinel's owner-authorized scope gate — stated in every answer; security fast-path runs BEFORE the fleet-status probe so "check the fleet's security posture" is a security lookup, not a fleet ping; delegation-shaped asks ("tell Sentinel to run a security scan") still route to delegation; 33-test suite)
 - [ ] **C9** Cortex delegation: web fetch/monitor tasks on request
-- [ ] **C10** Futuris delegation: forecast requests on demand
+- [x] **C10** Futuris delegation: forecast requests on demand (DONE 2026-11-11 IST with F10: "forecast X over 24h" / "what does Futuris predict for Y" reach Futuris's real FRIDAY delegation contract (POST /v1/friday/forecast) via futuris_forecast; forecast fast-path runs BEFORE the fleet-status probe so "predict the fleet load" is a forecast, not a fleet ping; delegation-shaped asks still route to delegation; 32-test suite)
 - [ ] **C11** Memora delegation: owner-facing memory ops (search/edit) as first-class tasks
 - [ ] **C12** Multi-agent pipelines: "research X, then draft the email about it" (chained dispatch)
 - [x] **C13** Task status queries: "what happened to that IntelX task?" → real record lookup (TASK-ORCH-008 + gap fix, LIVE-VERIFIED 2026-11-11 end-to-end: chat dispatch → receipt task_036e6b93ecaa → 'what happened to the stratex task?' returned the REAL failed record with the actual 401 error, routing rationale, IST timestamps and full trail; the gap fix records chat delegations into the shared ledger because FleetClient bypasses the in-process bus; 84-test suite)
@@ -109,7 +109,7 @@
 - [ ] **F9** Watchlist monitoring with change detection
 
 **Futuris (forecasting)**
-- [ ] **F10** Forecast requests via chat (capability exists; untested live)
+- [x] **F10** Forecast requests via chat (capability exists; untested live) (DONE 2026-11-11 IST: FuturisForecastTool + FleetClient.request_futuris_forecast — real POST /v1/friday/forecast (target + horizon 1h/24h/7d/30d + quoted-target/horizon extraction); Futuris's honest statuses (BLOCKED/INSUFFICIENT_DATA) reported as-is; every answer states prediction-never-authorization; FORECAST_KEYWORDS routing → TOOL_EXECUTION futuris_forecast, never VISION_MODEL/never DIRECT_REASONING; registered in the default registry; live E2E lands with the next deploy; 32-test suite + 347 related-suite passes)
 - [ ] **F11** Scheduled forecast refresh (markets/topics)
 - [ ] **F12** Prediction accuracy tracking (log predictions, score later)
 
@@ -185,14 +185,14 @@
 |---|---|---|---|
 | A. Brain | 5 | 14 | 36% |
 | B. Memory | 9 | 12 | 75% |
-| C. Orchestration | 9 | 14 | 64% |
+| C. Orchestration | 10 | 14 | 71% |
 | D. Website | 11 | 18 | 61% |
 | E. Voice | 2 | 10 | 20% |
-| F. Agents | 8 | 27 | 30% |
+| F. Agents | 9 | 27 | 33% |
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
 | I. Tech debt | 2 | 8 | 25% |
-| **Universe** | **55** | **125** | **44%** |
+| **Universe** | **57** | **125** | **46%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

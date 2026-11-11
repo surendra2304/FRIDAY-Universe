@@ -175,6 +175,15 @@ class CapabilityRouter:
         "open findings", "any findings", "check the security", "run a security",
         "security posture check", "fleet security", "sentinel", "cybersecurity",
     }
+    # Checklist F10/C10 (2026-11-11): keywords signaling a forecast request
+    # for Futuris. A forecast is a real computational product (evidence-
+    # backed pipeline, honest calibration, prediction-never-authorization) —
+    # it must reach futuris_forecast, never the LLM's invented numbers.
+    FORECAST_KEYWORDS = {
+        "forecast", "forecast this", "give me a forecast", "get a forecast",
+        "predict", "prediction", "what does futuris", "futuris forecast",
+        "forecast for", "project the", "how likely is", "probability of",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -239,8 +248,9 @@ class CapabilityRouter:
             or self._matches(clean_input, self.PORTFOLIO_KEYWORDS)
             or self._matches(clean_input, self.CODE_TASK_KEYWORDS)
             or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS)
+            or self._matches(clean_input, self.FORECAST_KEYWORDS)
         )
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -342,6 +352,22 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["sentinel_security"],
                 rationale="Security question: read-only Sentinel posture/findings lookup; active assessments stay behind the owner-authorized scope gate.",
+            ))
+
+        # Checklist F10/C10: Evaluate Futuris Forecast — "forecast X" /
+        # "predict X" requests must reach futuris_forecast (the real
+        # evidence-backed pipeline); LLM-invented numbers are the exact
+        # failure class this prevents. A prediction is never an authorization.
+        if self._matches(clean_input, self.FORECAST_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=8000.0,
+                confidence=0.9,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["futuris_forecast"],
+                rationale="Forecast request: Futuris's evidence-backed pipeline with honest calibration; predictions inform, never authorize.",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

@@ -1045,6 +1045,89 @@ class FleetClient:
                 "success": False,
             }
 
+    async def request_futuris_forecast(self, target: str, horizon: str = "24h") -> dict[str, Any]:
+        """Checklist F10/C10: request a real forecast from Futuris.
+
+        POSTs Futuris's FRIDAY delegation contract (/v1/friday/forecast) — the
+        same evidence-backed pipeline Futuris serves its own API: research
+        enrichment, forecasting pipeline (lookback 14d), honest calibration,
+        and the invariant that a prediction is never an authorization. Every
+        failure (auth, connection, non-201) is returned honestly.
+        """
+        breaker = self.get_circuit_breaker("futuris")
+        if not await breaker.can_execute():
+            return {
+                "reply": "🔮 [FUTURIS // CIRCUIT OPEN] Requests blocked to protect mesh stability.",
+                "metadata": {"agent_id": "futuris", "error": "circuit_open", "status": "degraded"},
+                "success": False,
+            }
+        headers = {"X-API-Key": self.futuris_key, "Content-Type": "application/json"}
+        try:
+            client = self.get_shared_client()
+            payload = {
+                "target": target,
+                "horizon": horizon if horizon in {"1h", "24h", "7d", "30d"} else "24h",
+                "priority": "normal",
+            }
+            resp = await client.post(
+                f"{self.futuris_url}/v1/friday/forecast",
+                json=payload,
+                headers=headers,
+                timeout=20.0,
+            )
+            if resp.status_code not in (200, 201):
+                await breaker.record_failure()
+                return {
+                    "reply": (
+                        f"🔮 [FUTURIS FORECAST] Futuris answered HTTP {resp.status_code} — "
+                        "the forecast could not be produced. That is the real outcome."
+                    ),
+                    "metadata": {"agent_id": "futuris", "error": f"http_{resp.status_code}"},
+                    "success": False,
+                }
+            await breaker.record_success()
+            data = resp.json()
+            prediction = data.get("prediction") or {}
+            status_value = str(data.get("status", ""))
+            confidence = str(data.get("confidence", "not reported"))
+            point = prediction.get("point_estimate")
+            lower = prediction.get("lower_bound")
+            upper = prediction.get("upper_bound")
+            cal = data.get("calibration_score")
+            model_used = str((data.get("model_metadata") or {}).get("model", data.get("model_used", "not reported")))
+            drivers = ", ".join(str(d.get("name")) for d in (data.get("drivers_identified") or [])[:4])
+            lines = [
+                f"🔮 [FUTURIS FORECAST] target '{target}' over {payload['horizon']}:",
+                f"• Point estimate: {point} (80–90% band: {lower} – {upper})" if point is not None
+                else f"• Prediction: {prediction or 'not reported'}",
+                f"• Status: {status_value or 'not reported'} | Confidence: {confidence}"
+                + (f" | Calibration: {cal}" if cal is not None else " | Calibration: unmeasured"),
+                f"• Model: {model_used}" + (f" | Drivers: {drivers}" if drivers else ""),
+            ]
+            if status_value.upper() in {"BLOCKED", "INSUFFICIENT_DATA"}:
+                lines.append("Futuris refused to dress a weak data picture as a forecast — the honest status is above.")
+            lines.append("A prediction is not an authorization: forecasts inform, they never execute anything.")
+            return {
+                "reply": "\n".join(lines),
+                "metadata": {
+                    "agent_id": "futuris",
+                    "agent_name": "Futuris",
+                    "forecast_id": str(data.get("futuris_forecast_id", "")),
+                    "status": status_value,
+                    "confidence": confidence,
+                    "point_estimate": point,
+                    "prediction_is_not_authorization": True,
+                },
+                "success": True,
+            }
+        except Exception as e:
+            await breaker.record_failure(e)
+            return {
+                "reply": f"🔮 [FUTURIS FORECAST] Error connecting to Futuris: {e}",
+                "metadata": {"agent_id": "futuris", "error": str(e)},
+                "success": False,
+            }
+
     async def ask_vyralx(self, query: str) -> dict[str, Any]:
         """Reports VyralX health and queue status; it never creates or publishes content."""
         breaker = self.get_circuit_breaker("vyralx")

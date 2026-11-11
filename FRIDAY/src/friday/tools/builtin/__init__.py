@@ -21,6 +21,7 @@ from friday.tools.builtin.forge_code_task import ForgeCodeTool
 from friday.tools.builtin.intelx_research import IntelXResearchTool
 from friday.tools.builtin.stratex_portfolio import StratexPortfolioTool
 from friday.tools.builtin.sentinel_security import SentinelSecurityTool
+from friday.tools.builtin.futuris_forecast import FuturisForecastTool
 from friday.tools.builtin.task_status_query import TaskStatusQueryTool
 from friday.tools.builtin.calculator import CalculatorTool
 from friday.tools.builtin.calendar import GetTodaysEventsTool
@@ -174,6 +175,7 @@ __all__ = [
     "IntelXResearchTool",
     "StratexPortfolioTool",
     "SentinelSecurityTool",
+    "FuturisForecastTool",
     "SystemInfoTool",
     "SystemPowerControlTool",
     "TimeDateTool",
