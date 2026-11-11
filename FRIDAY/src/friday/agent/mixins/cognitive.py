@@ -217,6 +217,15 @@ class CognitiveMixin:
             if forecast_response is not None:
                 return forecast_response
 
+            # Checklist C7/C9/C11 (batch 3): first-class chat delegations —
+            # video scripts (VyralX), web-ops monitoring (Cortex, read-only),
+            # Memora cloud-memory ops. Real agent engines, never the LLM's
+            # imagination; BEFORE fleet-status so "cortex status" is a
+            # web-ops monitor, not a generic fleet ping.
+            batch3_response = self._batch3_delegation_fast_path(clean_input, start_time)
+            if batch3_response is not None:
+                return batch3_response
+
             # TASK-API-002: fleet-health questions get a real probe, not an
             # LLM guess — "how's the fleet?" answers with live agent status.
             fleet_response = self._fleet_status_fast_path(clean_input, start_time)

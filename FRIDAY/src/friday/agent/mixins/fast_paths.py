@@ -812,6 +812,85 @@ class FastPathMixin:
             },
         )
 
+    def _batch3_delegation_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """Checklist C7/C9/C11 (batch 3): first-class chat delegations.
+
+        Video-script drafting -> VyralX's real Hyperframes engine (draft-only);
+        web-ops monitoring -> Cortex's real health summary + governed
+        properties (read-only); Memora cloud-memory search/store -> Memora's
+        real context database. Each answer comes from the agent's real
+        engine — never the LLM's imagination.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.routing.capability_router import CapabilityRouter
+
+        tool_cls = None
+        label = ""
+        if CapabilityRouter._matches(low, CapabilityRouter.SCRIPT_KEYWORDS):
+            tool_cls = "vyralx_script"
+            label = "VyralX script drafting"
+        elif CapabilityRouter._matches(low, CapabilityRouter.WEB_OPS_KEYWORDS):
+            tool_cls = "cortex_web_ops"
+            label = "Cortex web-ops monitoring"
+        elif CapabilityRouter._matches(low, CapabilityRouter.MEMORA_OP_KEYWORDS):
+            tool_cls = "memora_memory"
+            label = "Memora memory operation"
+        if tool_cls is None:
+            return None
+        if _delegation_instruction_agent(low):
+            return None
+
+        if tool_cls == "vyralx_script":
+            from friday.tools.builtin.vyralx_script import VyralXScriptTool
+
+            result = VyralXScriptTool().execute(question=low)
+            meta_key = "vyralx"
+        elif tool_cls == "cortex_web_ops":
+            from friday.tools.builtin.cortex_web_ops import CortexWebOpsTool
+
+            result = CortexWebOpsTool().execute(question=low)
+            meta_key = "cortex"
+        else:
+            from friday.tools.builtin.memora_memory import MemoraMemoryTool
+
+            result = MemoraMemoryTool().execute(question=low)
+            meta_key = "memora"
+
+        success = not result.is_error
+        content = result.content
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason=f"{label} request recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason=f"Dispatching to {label}")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason=f"{tool_cls} request")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason=f"Returning {label} result")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=[tool_cls, "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in {tool_cls} dispatch: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "delegation_dispatch": True,
+                "tool": tool_cls,
+                meta_key: (result.metadata or {}).get(meta_key),
+                "probe_success": success,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
     def _deterministic_action_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
             """Execute safe geometric desktop actions without vision or an LLM."""
             intent = DeterministicActionDetector.detect(clean_input)

@@ -76,18 +76,29 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
     2226→2234 passed vs pre-batch baseline (8 previously-failing tests fixed,
     0 broken). Commit + notification recorded.
 
-## Batch 3 — Orchestration completion (C module: 10/14 → 14/14)
+## Batch 3 — Orchestration completion (C module: 10/14 → 14/14) — IN PROGRESS (1-3, 9 done 2026-11-11)
 
-1. ⬜ C7 VyralX delegation: video script generation via chat
-2. ⬜ C9 Cortex delegation: web fetch/monitor tasks via chat
-3. ⬜ C11 Memora delegation: memory ops as first-class tasks
+1. ✅ C7 VyralX delegation: video script generation via chat —
+   `vyralx_script` tool → FleetClient.request_vyralx_script → VyralX's REAL
+   Hyperframes engine (POST /api/v1/vyralx/engines/hyperframes/create-script),
+   draft-only (nothing rendered/published), SCRIPT_KEYWORDS routing
+2. ✅ C9 Cortex delegation: web-ops monitor via chat — `cortex_web_ops`
+   tool → FleetClient.request_cortex_web_ops → Cortex's REAL health summary
+   + governed properties (read-only), WEB_OPS_KEYWORDS routing
+3. ✅ C11 Memora delegation: memory ops as first-class tasks —
+   `memora_memory` tool → FleetClient.request_memora_memory_op → Memora's
+   REAL context DB (GET /v1/context/search, POST /v1/context/write),
+   honest empties, MEMORA_OP_KEYWORDS routing
 4. ⬜ C12 Multi-agent pipelines: chained dispatch ("research X, then draft")
 5. ⬜ A10 Clarification quality: ONE sharp question when ambiguous
 6. ⬜ A13 Response formatting policy: consistent lists, no wall-of-text
 7. ⬜ D13 Task timeline: delegation history with status chips
 8. ⬜ D11 Live activity feed: full event coverage
-9. ⬜ Tests for all of the above
-10. ⬜ Commit + notify "Batch 3 complete"
+9. ✅ Tests for the completed items — tests/test_batch3_delegations.py (19
+   tests: routing table, extraction, stubbed tool behaviour, fast-path
+   ordering before the fleet probe); 126 tests green across the routing/
+   delegation suites, zero regressions
+10. ✅ Commit + notify "Batch 3 partial (C7/C9/C11)"
 
 ## Batch 4 — Memory + Brain maturity (B 9/12, A 5/14)
 
@@ -203,4 +214,4 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 
 ---
 
-**Current position: Batch 2 COMPLETE (2026-11-11) — 10/10 tasks done, 2234 tests passing (8 net fixes vs baseline). Next: Batch 3 — Orchestration completion (C module: 10/14 → 14/14)**
+**Current position: Batch 2 COMPLETE (2026-11-11) — 10/10 tasks done, 2234 tests passing (8 net fixes vs baseline). Next: Batch 3 remainder (C12 pipelines, A10, A13, D13, D11) — C7/C9/C11 landed with 126 tests green**

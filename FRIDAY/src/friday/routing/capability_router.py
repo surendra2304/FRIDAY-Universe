@@ -184,6 +184,34 @@ class CapabilityRouter:
         "predict", "prediction", "what does futuris", "futuris forecast",
         "forecast for", "project the", "how likely is", "probability of",
     }
+    # Checklist C7 (2026-11-11, batch 3): keywords signaling a video-script
+    # drafting request. The script must come from VyralX's real Hyperframes
+    # engine (vyralx_script, draft-only) — never an LLM-invented screenplay.
+    SCRIPT_KEYWORDS = {
+        "video script", "draft a script", "draft a video", "write a script",
+        "write a video", "write a youtube", "youtube script", "script for a video",
+        "draft me a script", "script about", "script on", "vyralx script",
+        "compose a script", "create a script", "generate a script",
+    }
+    # Checklist C9 (2026-11-11, batch 3): keywords signaling a web-operations
+    # monitoring request. The answer must come from Cortex's real health
+    # summary and governed-properties roster (cortex_web_ops, read-only).
+    WEB_OPS_KEYWORDS = {
+        "how are my websites", "how are my sites", "website status", "websites doing",
+        "web properties", "web ops", "web operations", "cortex status",
+        "cortex health", "site health", "sites healthy", "my websites",
+        "website health", "check my websites", "check the websites",
+    }
+    # Checklist C11 (2026-11-11, batch 3): keywords signaling a Memora cloud
+    # memory operation (search or store). Distinct from FRIDAY's local memory
+    # keywords — these explicitly target the Memora fabric.
+    MEMORA_OP_KEYWORDS = {
+        "search memora", "memora search", "query memora", "memora lookup",
+        "recall from memora", "memora recall", "search fleet memory",
+        "search cloud memory", "fleet memory for", "cloud memory for",
+        "save to memora", "store in memora", "memora write", "save to fleet memory",
+        "store in fleet memory", "save to cloud memory", "remember in memora",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -249,8 +277,11 @@ class CapabilityRouter:
             or self._matches(clean_input, self.CODE_TASK_KEYWORDS)
             or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS)
             or self._matches(clean_input, self.FORECAST_KEYWORDS)
+            or self._matches(clean_input, self.SCRIPT_KEYWORDS)
+            or self._matches(clean_input, self.WEB_OPS_KEYWORDS)
+            or self._matches(clean_input, self.MEMORA_OP_KEYWORDS)
         )
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -368,6 +399,53 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["futuris_forecast"],
                 rationale="Forecast request: Futuris's evidence-backed pipeline with honest calibration; predictions inform, never authorize.",
+            ))
+
+        # Checklist C7 (batch 3): video-script drafting requests must reach
+        # vyralx_script — VyralX's real Hyperframes engine, draft-only.
+        if self._matches(clean_input, self.SCRIPT_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=10000.0,
+                confidence=0.9,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["vyralx_script"],
+                rationale="Script drafting: VyralX's real Hyperframes scene pipeline; a draft only, never a publish.",
+            ))
+
+        # Checklist C9 (batch 3): web-operations monitoring requests must
+        # reach cortex_web_ops — Cortex's real health summary + governed
+        # properties roster, read-only.
+        if self._matches(clean_input, self.WEB_OPS_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=6000.0,
+                confidence=0.9,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["cortex_web_ops"],
+                rationale="Web-ops monitor: Cortex's real health summary and governed properties; read-only, no outreach.",
+            ))
+
+        # Checklist C11 (batch 3): explicit Memora cloud-memory operations
+        # run as first-class tasks on Memora's real context database.
+        # Confidence 0.97 (not 0.9): "save this to fleet memory" also matches
+        # the generic fleet-status probe (0.97) — the SPECIFIC memory-op
+        # intent must win over the generic fleet ping, and this block is
+        # evaluated before the fleet probe.
+        if self._matches(clean_input, self.MEMORA_OP_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=5000.0,
+                confidence=0.97,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["memora_memory"],
+                rationale="Memora memory op: real search/store on the fleet's persistent memory fabric; honest empties.",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

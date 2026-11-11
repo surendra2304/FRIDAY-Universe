@@ -1590,6 +1590,265 @@ class FleetClient:
                 execution_time_ms=lat,
             )
 
+    # ── Batch 3 (2026-11-11): C7 / C9 / C11 first-class chat delegations ──
+
+    async def request_vyralx_script(self, title: str, text: str) -> dict[str, Any]:
+        """C7: generate a real video script via VyralX's Hyperframes engine.
+
+        POSTs VyralX's real script pipeline (/api/v1/vyralx/engines/hyperframes/
+        create-script): scene composition, pacing optimization and the HTML
+        scene manifest. Script DRAFTING only — nothing is rendered or
+        published by this call, and the reply says so.
+        """
+        breaker = self.get_circuit_breaker("vyralx")
+        if not await breaker.can_execute():
+            return {
+                "reply": "🎬 [VYRALX // CIRCUIT OPEN] Requests blocked to protect fleet stability.",
+                "metadata": {"agent_id": "vyralx", "error": "circuit_open", "status": "degraded"},
+                "success": False,
+            }
+        if not self.vyralx_url:
+            return {
+                "reply": "VyralX is not configured; no script request was attempted.",
+                "metadata": {"agent_id": "vyralx", "error": "base_url_not_configured"},
+                "success": False,
+            }
+        headers = {"Content-Type": "application/json"}
+        if self.vyralx_key:
+            headers["X-API-Key"] = self.vyralx_key
+            headers["Authorization"] = f"Bearer {self.vyralx_key}"
+        try:
+            client = self.get_shared_client()
+            resp = await client.post(
+                f"{self.vyralx_url}/api/v1/vyralx/engines/hyperframes/create-script",
+                json={"title": title, "text": text},
+                headers=headers,
+                timeout=20.0,
+            )
+            if resp.status_code not in (200, 201):
+                if resp.status_code >= 500:
+                    await breaker.record_failure()
+                return {
+                    "reply": (
+                        f"🎬 [VYRALX SCRIPT] VyralX answered HTTP {resp.status_code} — "
+                        "the script could not be drafted. That is the real outcome."
+                    ),
+                    "metadata": {"agent_id": "vyralx", "error": f"http_{resp.status_code}"},
+                    "success": False,
+                }
+            await breaker.record_success()
+            data = resp.json()
+            scene_count = data.get("scene_count")
+            duration = data.get("total_duration")
+            engine = str(data.get("engine", "Hyperframes"))
+            manifest = data.get("manifest")
+            scenes = manifest.get("scenes", []) if isinstance(manifest, dict) else []
+            lines = [
+                f"🎬 [VYRALX SCRIPT] '{data.get('title', title)}' drafted by {engine}:",
+                f"• Scenes: {scene_count if scene_count is not None else 'not reported'}"
+                + (f" | Total duration: {duration}s" if duration is not None else ""),
+            ]
+            for i, scene in enumerate(scenes[:5], 1):
+                if isinstance(scene, dict):
+                    lines.append(
+                        f"  {i}. {scene.get('id', f'scene-{i}')} — "
+                        f"{scene.get('duration', scene.get('duration_seconds', '?'))}s"
+                    )
+            lines.append(
+                "This is a script DRAFT: nothing was rendered, uploaded or published. "
+                "Publishing stays a separate, explicit owner action."
+            )
+            return {
+                "reply": "\n".join(lines),
+                "metadata": {
+                    "agent_id": "vyralx",
+                    "agent_name": "VyralX",
+                    "scene_count": scene_count,
+                    "total_duration": duration,
+                    "draft_only": True,
+                },
+                "success": True,
+            }
+        except Exception as e:
+            await breaker.record_failure(e)
+            return {
+                "reply": f"🎬 [VYRALX SCRIPT] Error connecting to VyralX: {e}",
+                "metadata": {"agent_id": "vyralx", "error": str(e)},
+                "success": False,
+            }
+
+    async def request_cortex_web_ops(self) -> dict[str, Any]:
+        """C9: real web-operations monitor via Cortex (read-only).
+
+        GETs Cortex's FRIDAY health summary (/v1/friday/health_summary) and
+        governed web-properties list (/v1/friday/properties): uptime
+        indicator, incident counts, error rates, and every website under
+        Cortex governance. No lead, outreach, or production operation is
+        performed — this is monitoring only.
+        """
+        breaker = self.get_circuit_breaker("cortex")
+        if not await breaker.can_execute():
+            return {
+                "reply": "🌐 [CORTEX // CIRCUIT OPEN] Requests blocked to protect mesh stability.",
+                "metadata": {"agent_id": "cortex", "error": "circuit_open", "status": "degraded"},
+                "success": False,
+            }
+        headers = {"X-Friday-Api-Key": self.cortex_key}
+        try:
+            client = self.get_shared_client()
+            r_health = await client.get(
+                f"{self.cortex_url}/v1/friday/health_summary", headers=headers, timeout=8.0
+            )
+            if r_health.status_code != 200:
+                if r_health.status_code >= 500:
+                    await breaker.record_failure()
+                return {
+                    "reply": (
+                        f"🌐 [CORTEX WEB OPS] Health summary answered HTTP {r_health.status_code} — "
+                        "monitoring data could not be read. That is the real outcome."
+                    ),
+                    "metadata": {"agent_id": "cortex", "error": f"http_{r_health.status_code}"},
+                    "success": False,
+                }
+            await breaker.record_success()
+            health = r_health.json() if isinstance(r_health.json(), dict) else {}
+
+            properties: list[dict[str, Any]] = []
+            try:
+                r_props = await client.get(
+                    f"{self.cortex_url}/v1/friday/properties", headers=headers, timeout=8.0
+                )
+                if r_props.status_code == 200:
+                    body = r_props.json()
+                    if isinstance(body, dict):
+                        raw = body.get("properties") or body.get("items") or body.get("websites") or []
+                    elif isinstance(body, list):
+                        raw = body
+                    else:
+                        raw = []
+                    properties = [p for p in raw if isinstance(p, dict)][:10]
+            except Exception:
+                properties = []
+
+            lines = [
+                "🌐 [CORTEX WEB OPS MONITOR]",
+                f"• Uptime indicator: {health.get('uptime_indicator', 'not reported')}",
+                f"• Active incidents (24h): {health.get('recent_errors_24h', 'not reported')}"
+                f" / total events {health.get('total_events_24h', 'not reported')}",
+                f"• Cognitive loops today: {health.get('cognitive_loops_today', 'not reported')}",
+            ]
+            if properties:
+                lines.append(f"• Governed web properties ({len(properties)}):")
+                for p in properties:
+                    lines.append(
+                        f"  - {p.get('name') or p.get('property_id') or 'unnamed'} "
+                        f"({p.get('url') or p.get('domain') or 'no url'})"
+                        f" — {p.get('status', p.get('state', 'status not reported'))}"
+                    )
+            else:
+                lines.append("• Governed web properties: none listed (or the properties endpoint did not respond)")
+            lines.append("Read-only monitoring: no lead, outreach, or production operation was performed.")
+            return {
+                "reply": "\n".join(lines),
+                "metadata": {
+                    "agent_id": "cortex",
+                    "agent_name": "Cortex",
+                    "uptime_indicator": health.get("uptime_indicator"),
+                    "properties_count": len(properties),
+                    "read_only": True,
+                },
+                "success": True,
+            }
+        except Exception as e:
+            await breaker.record_failure(e)
+            return {
+                "reply": f"🌐 [CORTEX WEB OPS] Error connecting to Cortex: {e}",
+                "metadata": {"agent_id": "cortex", "error": str(e)},
+                "success": False,
+            }
+
+    async def request_memora_memory_op(self, op: str, query: str = "", content: str = "", uri: str = "") -> dict[str, Any]:
+        """C11: real memory operations on Memora as first-class tasks.
+
+        op='search' -> GET /v1/context/search?query= (recall)
+        op='write'  -> POST /v1/context/write {uri, content} (store)
+
+        Every failure (auth, connection, non-2xx) is returned honestly. This
+        is Memora's real context-database surface, not FRIDAY's local memory.
+        """
+        breaker = self.get_circuit_breaker("memora")
+        if not await breaker.can_execute():
+            return {
+                "reply": "🧠 [MEMORA // CIRCUIT OPEN] Requests blocked to protect mesh stability.",
+                "metadata": {"agent_id": "memora", "error": "circuit_open", "status": "degraded"},
+                "success": False,
+            }
+        headers = {
+            "Authorization": f"Bearer {self.memora_key}",
+            "X-Agent-Name": "friday",
+        }
+        try:
+            client = self.get_shared_client()
+            if op == "write":
+                resp = await client.post(
+                    f"{self.memora_url}/v1/context/write",
+                    json={"uri": uri or "viking://memory/friday-chat", "content": content, "tags": ["friday", "chat"]},
+                    headers=headers,
+                    timeout=8.0,
+                )
+            else:
+                resp = await client.get(
+                    f"{self.memora_url}/v1/context/search",
+                    params={"query": query, "limit": 5},
+                    headers=headers,
+                    timeout=8.0,
+                )
+            if resp.status_code not in (200, 201):
+                if resp.status_code >= 500:
+                    await breaker.record_failure()
+                return {
+                    "reply": (
+                        f"🧠 [MEMORA {op.upper()}] Memora answered HTTP {resp.status_code} — "
+                        "the memory operation did not complete. That is the real outcome."
+                    ),
+                    "metadata": {"agent_id": "memora", "op": op, "error": f"http_{resp.status_code}"},
+                    "success": False,
+                }
+            await breaker.record_success()
+            data = resp.json() if isinstance(resp.json(), dict) else {}
+            lines = [f"🧠 [MEMORA {op.upper()}] completed:"]
+            if op == "write":
+                lines.append(f"• Stored at: {data.get('uri', uri or 'viking://memory/friday-chat')}")
+                size = data.get("bytes") or data.get("size")
+                if size is not None:
+                    lines.append(f"• Size: {size}")
+            else:
+                hits = data.get("hits") or []
+                if hits:
+                    lines.append(f"• {len(hits)} memory hit(s):")
+                    for i, hit in enumerate(hits[:5], 1):
+                        text = (hit.get("content") or hit.get("text") or hit.get("uri") or "")[:160]
+                        lines.append(f"  {i}. {text}")
+                else:
+                    lines.append("• No memory matched that query (honest empty result).")
+            return {
+                "reply": "\n".join(lines),
+                "metadata": {
+                    "agent_id": "memora",
+                    "agent_name": "Memora",
+                    "op": op,
+                    "hits": data.get("hits", []) if op == "search" else None,
+                },
+                "success": True,
+            }
+        except Exception as e:
+            await breaker.record_failure(e)
+            return {
+                "reply": f"🧠 [MEMORA {op.upper()}] Error connecting to Memora: {e}",
+                "metadata": {"agent_id": "memora", "op": op, "error": str(e)},
+                "success": False,
+            }
+
 
 # Global singleton instance
 fleet_client = FleetClient()
