@@ -476,6 +476,30 @@ class TestnetService:
             except Exception as exc:
                 logger.warning(f"[TELEGRAM] Could not initialize: {exc}")
 
+        # ── 2026-11-11 incident fix (RC1): daily-loss circuit breaker ─────
+        # Halts ALL new entries once day PnL breaches DAILY_LOSS_LIMIT_PCT
+        # of day-start equity; Telegram-alerts the owner. See
+        # Stratex/docs/INCIDENT_2026-11-11_LOSSES.md and
+        # testnet_engine/daily_loss_breaker.py.
+        from testnet_engine.daily_loss_breaker import DailyLossBreaker
+
+        def _breaker_alert(message: str) -> None:
+            bot = self._tg()
+            if bot:
+                try:
+                    bot.send_message(message)
+                except Exception as exc:
+                    logger.error(f"[DAILY_LOSS_BREAKER] telegram alert failed: {exc}")
+
+        try:
+            self.daily_loss_breaker = DailyLossBreaker(
+                getattr(config, "DAILY_LOSS_LIMIT_PCT", 0.03),
+                alerter=_breaker_alert,
+            )
+        except ValueError as exc:
+            logger.error(f"[DAILY_LOSS_BREAKER] invalid config ({exc}); breaker disabled")
+            self.daily_loss_breaker = None
+
     # ------------------------------------------------------------------
     # Telegram helpers
     # ------------------------------------------------------------------
@@ -2504,6 +2528,16 @@ class TestnetService:
                 self.current_equity = actual_binance_total
                 self.safety_halt = False
                     
+                # 2026-11-11 incident fix (RC1): daily-loss circuit breaker.
+                # Halts ALL new entries once day PnL (realized + open, because
+                # totalMarginBalance includes unrealized) breaches the limit.
+                try:
+                    self.daily_loss_breaker.check(actual_binance_total)
+                except Exception as breaker_err:
+                    # The breaker must never take the monitor loop down; a
+                    # broken breaker is loud but visible in logs.
+                    logger.error(f"[DAILY_LOSS_BREAKER] check failed: {breaker_err}")
+                
                 # Sync memory with disk
                 try:
                     active = _load_active_trades()

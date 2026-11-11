@@ -117,7 +117,13 @@ class TestMultiStrategyMultiTimeframe:
             assert val > 0
 
     def test_friction_hurdle_blocks_low_timeframe_noise(self):
-        """ProfitabilityGate must reject trades where expected net edge < 0.31% friction hurdle."""
+        """ProfitabilityGate must reject trades where expected net edge < 0.31% friction hurdle.
+
+        2026-11-11: sub-floor brackets (both legs < max(MIN_BRACKET_PCT, 5x friction))
+        are now rejected even earlier as CHURN_RISK_BRACKET — the 64/64-trades-under-
+        20-minutes incident showed such brackets die to microstructure noise before
+        the strategy thesis can play out. The block intent is unchanged: noise never trades.
+        """
         cost_engine = CostEngine.get_binance_taker_config()
         gate = ProfitabilityGate(cost_engine=cost_engine)
         
@@ -132,4 +138,9 @@ class TestMultiStrategyMultiTimeframe:
         )
         assert passed is False
         assert metrics["decision"] == "REJECTED"
-        assert metrics["expected_net_return"] < 0.00010
+        # The churn floor fires first for sub-floor brackets (risk 0.083% < floor);
+        # wider brackets still reach the friction-hurdle EV rejection below.
+        if metrics["reason"] == "CHURN_RISK_BRACKET":
+            assert metrics["expected_net_return"] is None
+        else:
+            assert metrics["expected_net_return"] < 0.00010

@@ -29,7 +29,19 @@ class TestProductionStrategyRegistry:
 
         # Only strategies with traceable OOS evidence may be marked validated.
         assert PRODUCTION_STRATEGY_REGISTRY["adx_ema"]["status"] == "OBSERVE_ONLY"
-        assert PRODUCTION_STRATEGY_REGISTRY["supertrend"]["status"] == "VALIDATED"
+        # 2026-11-11: supertrend demoted VALIDATED -> OBSERVE_ONLY. Its 0.80
+        # prior / 600 bps edge claim had no traceable OOS artifact; the realized
+        # ledger measured 17/64 = 0.266 (see
+        # Stratex/docs/INCIDENT_2026-11-11_LOSSES.md). Same principle that
+        # parks adx_ema without source candles parks supertrend without evidence.
+        assert PRODUCTION_STRATEGY_REGISTRY["supertrend"]["status"] == "OBSERVE_ONLY"
+        assert PRODUCTION_STRATEGY_REGISTRY["supertrend"]["oos_win_rate_prior"] is None
+        # Factory winners carry traceable mass-backtester artifacts, so they stay VALIDATED.
+        for i in range(1, 6):
+            entry = PRODUCTION_STRATEGY_REGISTRY[f"factory_winner_{i}"]
+            assert entry["status"] == "VALIDATED"
+            assert entry["oos_win_rate_prior"] is not None
+            assert entry["validated_assets"], f"factory_winner_{i} must cite its backtested assets"
 
     def test_unvalidated_registry_entries_carry_no_live_performance_priors(self):
         for entry in PRODUCTION_STRATEGY_REGISTRY.values():
@@ -96,7 +108,12 @@ class TestProfitabilityGateMath:
         
         # Low volatility creates net negative expectancy after 31 bps friction
         assert passed is False
-        assert metrics["expected_net_return"] < 0.0005
+        # 2026-11-11: sub-floor brackets (0.25% risk < MIN_BRACKET_PCT 0.30%) are
+        # rejected even earlier as CHURN_RISK_BRACKET; both paths block the noise.
+        if metrics.get("reason") == "CHURN_RISK_BRACKET":
+            assert metrics["expected_net_return"] is None
+        else:
+            assert metrics["expected_net_return"] < 0.0005
 
 class TestRiskGateLimits:
     def test_position_sizing_and_notional(self):
@@ -108,10 +125,12 @@ class TestRiskGateLimits:
         filters = {"stepSize": 0.00001, "minNotional": 5.0}
         qty = rg.calculate_position_size(equity, entry, sl, filters)
         
-        # Max risk = 10000 * 0.005 = $50. Qty = 50 / 1800 = 0.02777 BTC
-        # Capped by single asset max exposure = 10000 * 0.02 = $200. Qty = 200 / 60000 = 0.00333 BTC
+        # Config drift fix (pre-existing failure, 2026-11-11): config.py runs
+        # MAX_TESTNET_RISK_PER_TRADE=0.01 and MAX_SINGLE_ASSET_EXPOSURE=0.03
+        # ("increased from 0.5%/2%"), so: risk cap $100 -> qty 0.0555, single-asset
+        # notional cap 10000*0.03=$300 -> qty 0.005 -> binding cap is $300.
         notional = qty * entry
-        assert notional <= 200.01
+        assert notional <= 300.01
         assert notional >= 5.0
 
 class TestProvenanceAndAccounting:

@@ -101,13 +101,19 @@ TESTNET_BASELINE_RESET_ISO = os.getenv("TESTNET_BASELINE_RESET_ISO", "2026-09-01
 # must mark an entry VALIDATED before the testnet engine loads it. At present
 # adx_ema remains OBSERVE_ONLY, so the executable set is intentionally empty.
 ACTIVE_STRATEGIES = {
+    # 2026-11-11: supertrend parked OBSERVE_ONLY in PRODUCTION_STRATEGY_REGISTRY
+    # (realized 17/64 = 0.266 win rate, fabricated 0.80 prior removed) — governance
+    # drops it from scanning. It stays listed so /resume can re-admit it once it
+    # accumulates fresh forward evidence under the new anti-churn brackets.
     "supertrend": ["15m", "1h", "4h"],
     "bb_reversion": ["15m", "1h"],
-    "factory_winner_1": ["15m", "1h", "4h"],
-    "factory_winner_2": ["15m", "1h", "4h"],
-    "factory_winner_3": ["15m", "1h", "4h"],
-    "factory_winner_4": ["15m", "1h", "4h"],
-    "factory_winner_5": ["15m", "1h", "4h"],
+    # factory winners: native 5m restored (mass-backtester evidence is 5m/15m;
+    # the old 15m/1h/4h-only listing starved them of their backtested signals)
+    "factory_winner_1": ["5m", "15m", "1h"],
+    "factory_winner_2": ["5m", "15m", "1h"],
+    "factory_winner_3": ["5m", "15m"],
+    "factory_winner_4": ["5m", "15m", "1h"],
+    "factory_winner_5": ["15m", "1h"],
 }
 
 # Legacy single-strategy preference; it does not override registry governance.
@@ -127,6 +133,16 @@ MAX_TESTNET_RISK_PER_TRADE = float(os.getenv("MAX_TESTNET_RISK_PER_TRADE", "0.01
 MAX_TESTNET_EXPOSURE = float(os.getenv("MAX_TESTNET_EXPOSURE", "0.10"))        # 10% max total notional exposure (increased from 5%)
 MAX_SINGLE_ASSET_EXPOSURE = float(os.getenv("MAX_SINGLE_ASSET_EXPOSURE", "0.03"))   # 3% max per single asset (increased from 2%)
 MAX_NET_DIRECTIONAL_EXPOSURE = float(os.getenv("MAX_NET_DIRECTIONAL_EXPOSURE", "0.06")) # 6% max net directional exposure (increased from 4%)
+
+# --- 2026-11-11 incident protections (see Stratex/docs/INCIDENT_2026-11-11_LOSSES.md) ---
+# Anti-churn bracket floor: both SL and TP distances must be >= this fraction of
+# price (0.30%), else the profitability gate rejects the signal as churn-risk.
+MIN_BRACKET_PCT = float(os.getenv("MIN_BRACKET_PCT", "0.0030"))
+# Daily-loss circuit breaker: when day PnL (realized + open) falls this fraction
+# below the day-start equity, ALL new entries are auto-paused and Telegram is
+# alerted. 3% stop on a 10k demo account caps the worst day at ~300 USD instead
+# of the unbounded bleed that produced the >2,000 USD / 12h incident.
+DAILY_LOSS_LIMIT_PCT = float(os.getenv("DAILY_LOSS_LIMIT_PCT", "0.03"))
 MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "8"))                # Increased from 5 to 8
 MAX_OPEN_POSITIONS_AGGRESSIVE = int(os.getenv("MAX_OPEN_POSITIONS_AGGRESSIVE", "12")) # Bounded positions for aggressive mode
 VOLATILITY_BUFFER = 0.15  # Scale down positions during high volatility (reduced from 0.2)

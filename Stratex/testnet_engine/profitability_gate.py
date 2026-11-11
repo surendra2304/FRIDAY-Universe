@@ -188,6 +188,37 @@ class ProfitabilityGate:
             }
 
         # ------------------------------------------------------------------
+        # 2b. Anti-churn bracket floor (2026-11-11 incident fix)
+        #     The realized ledger showed 64/64 trades dying inside 20 minutes —
+        #     brackets sat inside a single candle's noise, so SL/TP were hit by
+        #     microstructure, not by the strategy's thesis. Both bracket legs
+        #     must clear max(MIN_BRACKET_PCT of price, 5x total friction).
+        # ------------------------------------------------------------------
+        min_bracket_pct = float(getattr(config, "MIN_BRACKET_PCT", 0.0030))
+        total_friction_pct_gate = self.cost_engine.get_total_friction()
+        bracket_floor = max(min_bracket_pct, 5.0 * total_friction_pct_gate)
+        if risk_pct < bracket_floor or reward_pct < bracket_floor:
+            logger.warning(
+                f"[PROFIT GATE] {symbol} {side} churn-risk bracket: "
+                f"risk={risk_pct:.5f} reward={reward_pct:.5f} < floor={bracket_floor:.5f}. Rejecting."
+            )
+            return False, {
+                "decision": "REJECTED",
+                "reason": "CHURN_RISK_BRACKET",
+                "details": (
+                    f"risk_pct={risk_pct:.5f}, reward_pct={reward_pct:.5f} both must be "
+                    f">= max(MIN_BRACKET_PCT={min_bracket_pct:.5f}, 5x friction={5.0 * total_friction_pct_gate:.5f})"
+                ),
+                "strategy_type": strategy_type,
+                "prob_source": prob_source,
+                "confidence": prob_win,
+                "prob_win": prob_win,
+                "prob_loss": 1.0 - prob_win,
+                "expected_gross_return": None,
+                "expected_net_return": None,
+            }
+
+        # ------------------------------------------------------------------
         # 3. Expected value calculation — consistent with benchmark
         #    E[gross] = P(win)×reward - P(loss)×risk
         #    E[net]   = E[gross] - total_friction

@@ -20,13 +20,24 @@ import strategy_factory_winners
 
 
 def test_supertrend_without_evidence_is_blocked_from_execution():
-    """Verify supertrend is VALIDATED with positive expectancy and allowed by governance."""
+    """2026-11-11 incident fix: supertrend's fabricated 0.80 prior is gone.
+
+    The realized testnet ledger measured 17/64 = 0.266 win rate with every
+    trade dying inside 20 minutes (see Stratex/docs/INCIDENT_2026-11-11_LOSSES.md).
+    A 0.266 prior cannot clear the platform probability floor, so the strategy
+    is OBSERVE_ONLY and governance must drop it from executable scanning.
+    """
     assert "supertrend" in PRODUCTION_STRATEGY_REGISTRY
     entry = PRODUCTION_STRATEGY_REGISTRY["supertrend"]
-    assert entry["status"] == "VALIDATED"
+    assert entry["status"] == "OBSERVE_ONLY"
+    assert entry["oos_win_rate_prior"] is None
+    assert entry["expected_net_edge_bps"] is None
+    assert entry["validated_assets"] == []
 
     filtered = governance_filter_strategies(config.ACTIVE_STRATEGIES)
-    assert "supertrend" in filtered
+    assert "supertrend" not in filtered
+    # The honest prior is the ledger-measured value (17/64).
+    assert strategy_supertrend._OOS_WIN_RATE_PRIOR == pytest.approx(0.266)
 
 
 def test_unverified_candidates_are_not_executable():
@@ -89,8 +100,8 @@ def test_trailing_stages_and_targets():
     assert trail_sl < 102.0
 
 
-def test_supertrend_high_winrate_geometry_and_adx_filter():
-    """Verify Supertrend enforces 80%+ prior, 1:1 RR, and ADX chop rejection."""
+def test_supertrend_honest_geometry_brackets_and_adx_filter():
+    """2026-11-11: honest prior (0.266), RR 3.0, SL 2.0x ATR, anti-churn floor, ADX chop rejection."""
     rows = []
     for i in range(60):
         rows.append({
@@ -112,18 +123,47 @@ def test_supertrend_high_winrate_geometry_and_adx_filter():
     # Qualified breakout with ADX = 28
     sig = strategy_supertrend.get_signal(df)
     assert sig.side == "BUY"
-    assert sig.win_rate_prior == 0.80
-    assert sig.rr_ratio == 1.0
+    assert sig.win_rate_prior == pytest.approx(0.266)
+    assert sig.rr_ratio == 3.0
     close = df.iloc[-1]["close"]
-    # 1:1 R:R target symmetry
+    # 3:1 R:R geometry; SL = max(st_lower, close - 2.0x ATR). Without a st_lower
+    # column the band defaults to close - 1.5*ATR, so the tighter band wins: risk = 1.5.
     risk = close - sig.sl
     gain = sig.tp - close
-    assert pytest.approx(gain, rel=1e-3) == risk
+    assert risk == pytest.approx(1.5, rel=1e-3)  # tighter of (1.5x ATR band, 2.0x ATR)
+    assert gain == pytest.approx(3.0 * risk, rel=1e-3)
+    # Anti-churn floor: both bracket legs clear MIN_BRACKET_PCT of price
+    floor = close * strategy_supertrend.MIN_BRACKET_PCT
+    assert risk >= floor and gain >= floor
 
     # Chop regime: ADX = 18 (< 25) -> Must return None signal
     df.loc[df.index[-1], "adx"] = 18.0
     sig_chop = strategy_supertrend.get_signal(df)
     assert sig_chop.side is None, "Should reject trade in chop regime when ADX < 25"
+
+
+def test_supertrend_anti_churn_floor_suppresses_noise_brackets():
+    """A tight-ATR candle whose 2x-ATR bracket sits inside the churn floor must NOT signal."""
+    close = 100.0
+    rows = []
+    for i in range(60):
+        rows.append({
+            "open": close - 0.05,
+            "high": close + 0.05,
+            "low": close - 0.06,
+            "close": close,
+            "volume": 5000.0,
+            "supertrend": True if i == 59 else False,
+            "ema_200": 95.0,
+            "ema_50": 98.0,
+            "ema_21": 99.0,
+            "atr": 0.05,  # 2x ATR = 0.10 < floor (100 * 0.003 = 0.30)
+            "rsi": 50.0,
+            "adx": 28.0,
+        })
+    df = pd.DataFrame(rows)
+    sig = strategy_supertrend.get_signal(df)
+    assert sig.side is None, "Sub-floor bracket must be suppressed (churn risk)"
 
 
 

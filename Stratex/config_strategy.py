@@ -239,9 +239,9 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
     },
     "factory_winner_1": {
         "status": "VALIDATED",
-        "version": "V1-factory (2026-08-24)",
-        "timeframe": "15m",
-        "timeframes": ["15m", "1h", "4h"],
+        "version": "V1-factory (2026-08-24; native-tf fix 2026-11-11)",
+        "timeframe": "5m",
+        "timeframes": ["5m", "15m", "1h"],
         "trading_mode": "FUTURES",
         "execution_model": "RULE_BASED",
         "entry_conditions": "MACD(12,26,9) crossover with Bollinger Bands(20,2) mean-dip confluence. SL: 1.5x ATR, TP: 3.0x ATR.",
@@ -253,16 +253,20 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "expected_net_edge_bps": 120.0,
         "minimum_required_edge": 0.0001,
         "validated_assets": [
-            "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "LINKUSDT", "INJUSDT",
-            "AVAXUSDT", "LTCUSDT", "ATOMUSDT", "UNIUSDT", "NEARUSDT", "APTUSDT", "ADAUSDT", "DOGEUSDT", "DOTUSDT"
+            "BTCUSDT", "ETHUSDT", "SOLUSDT"
         ],
-        "reason": "Factory winner #1 candidate.",
+        "reason": (
+            "Factory winner #1: mass-backtester artifact research/strategy_factory/top_winners.json id 182 — "
+            "5,403 trades on 5m across BTC/ETH/SOL, win rate 0.4307, net PF 1.481 under 8 bps futures friction. "
+            "2026-11-11: native 5m timeframe restored (was forced onto 15m+ where the backtested parameters "
+            "rarely triggered); validated_assets narrowed to the backtested set."
+        ),
     },
     "factory_winner_2": {
         "status": "VALIDATED",
-        "version": "V1-factory (2026-08-24)",
-        "timeframe": "15m",
-        "timeframes": ["15m", "1h", "4h"],
+        "version": "V1-factory (2026-08-24; native-tf fix 2026-11-11)",
+        "timeframe": "5m",
+        "timeframes": ["5m", "15m", "1h"],
         "trading_mode": "FUTURES",
         "execution_model": "RULE_BASED",
         "entry_conditions": "5m MACD(12,26,9) crossover with Bollinger Bands(20,2) mean-dip confluence. SL: 1.5x ATR, TP: 3.0x ATR.",
@@ -274,16 +278,19 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "expected_net_edge_bps": 110.0,
         "minimum_required_edge": 0.0001,
         "validated_assets": [
-            "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "LINKUSDT", "INJUSDT",
-            "AVAXUSDT", "LTCUSDT", "ATOMUSDT", "UNIUSDT", "NEARUSDT", "APTUSDT", "ADAUSDT", "DOGEUSDT", "DOTUSDT"
+            "BTCUSDT", "ETHUSDT", "SOLUSDT"
         ],
-        "reason": "Factory winner #2 candidate.",
+        "reason": (
+            "Factory winner #2: mass-backtester artifact research/strategy_factory/top_winners.json id 181 — "
+            "9,264 trades on 5m across BTC/ETH/SOL, win rate 0.4133, net PF 1.449 under 8 bps futures friction. "
+            "2026-11-11: native 5m timeframe restored; validated_assets narrowed to the backtested set."
+        ),
     },
     "factory_winner_3": {
         "status": "VALIDATED",
-        "version": "V1-factory (2026-08-24)",
-        "timeframe": "15m",
-        "timeframes": ["15m", "1h", "4h"],
+        "version": "V1-factory (2026-08-24; native-tf fix 2026-11-11)",
+        "timeframe": "5m",
+        "timeframes": ["5m", "15m"],
         "trading_mode": "FUTURES",
         "execution_model": "RULE_BASED",
         "entry_conditions": "5m MACD(12,26,9) crossover with Bollinger Bands(20,2) mean-dip confluence. SL: 1.5x ATR, TP: 4.5x ATR.",
@@ -295,16 +302,20 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "expected_net_edge_bps": 100.0,
         "minimum_required_edge": 0.0001,
         "validated_assets": [
-            "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "LINKUSDT", "INJUSDT",
-            "AVAXUSDT", "LTCUSDT", "ATOMUSDT", "UNIUSDT", "NEARUSDT", "APTUSDT", "ADAUSDT", "DOGEUSDT", "DOTUSDT"
+            "BTCUSDT", "ETHUSDT", "SOLUSDT"
         ],
-        "reason": "Factory winner #3 candidate.",
+        "reason": (
+            "Factory winner #3: mass-backtester artifact research/strategy_factory/top_winners.json id 183 — "
+            "11,338 trades on 5m across BTC/ETH/SOL, win rate 0.334, net PF 1.433 under 8 bps futures friction. "
+            "2026-11-11: native 5m timeframe restored; validated_assets narrowed to the backtested set. "
+            "SL 0.5x ATR is tight: signals below the engine anti-churn floor are rejected downstream."
+        ),
     },
     "factory_winner_4": {
         "status": "VALIDATED",
-        "version": "V1-factory (2026-08-24)",
-        "timeframe": "15m",
-        "timeframes": ["15m", "1h", "4h"],
+        "version": "V1-factory (2026-08-24; native-tf fix 2026-11-11)",
+        "timeframe": "5m",
+        "timeframes": ["5m", "15m", "1h"],
         "trading_mode": "FUTURES",
         "execution_model": "RULE_BASED",
         "entry_conditions": "5m MACD(12,26,9) crossover with Bollinger Bands(20,2) mean-dip confluence. SL: 2.0x ATR, TP: 4.0x ATR.",
@@ -316,16 +327,19 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "expected_net_edge_bps": 95.0,
         "minimum_required_edge": 0.0001,
         "validated_assets": [
-            "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "LINKUSDT", "INJUSDT",
-            "AVAXUSDT", "LTCUSDT", "ATOMUSDT", "UNIUSDT", "NEARUSDT", "APTUSDT", "ADAUSDT", "DOGEUSDT", "DOTUSDT"
+            "BTCUSDT", "ETHUSDT", "SOLUSDT"
         ],
-        "reason": "Factory winner #4 candidate.",
+        "reason": (
+            "Factory winner #4: mass-backtester artifact research/strategy_factory/top_winners.json id 184 — "
+            "3,731 trades on 5m across BTC/ETH/SOL, win rate 0.4103, net PF 1.390 under 8 bps futures friction. "
+            "2026-11-11: native 5m timeframe restored; validated_assets narrowed to the backtested set."
+        ),
     },
     "factory_winner_5": {
         "status": "VALIDATED",
-        "version": "V1-factory (2026-08-24)",
+        "version": "V1-factory (2026-08-24; native-tf fix 2026-11-11)",
         "timeframe": "15m",
-        "timeframes": ["15m", "1h", "4h"],
+        "timeframes": ["15m", "1h"],
         "trading_mode": "FUTURES",
         "execution_model": "RULE_BASED",
         "entry_conditions": "15m MACD(12,26,9) crossover with Bollinger Bands(20,2) mean-dip confluence. SL: 1.5x ATR, TP: 4.5x ATR.",
@@ -337,10 +351,14 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "expected_net_edge_bps": 90.0,
         "minimum_required_edge": 0.0001,
         "validated_assets": [
-            "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "LINKUSDT", "INJUSDT",
-            "AVAXUSDT", "LTCUSDT", "ATOMUSDT", "UNIUSDT", "NEARUSDT", "APTUSDT", "ADAUSDT", "DOGEUSDT", "DOTUSDT"
+            "BTCUSDT", "ETHUSDT", "SOLUSDT"
         ],
-        "reason": "Factory winner #5 candidate.",
+        "reason": (
+            "Factory winner #5: mass-backtester artifact research/strategy_factory/top_winners.json id 187 — "
+            "3,907 trades on 15m across BTC/ETH/SOL, win rate 0.3046, net PF 1.361 under 8 bps futures friction. "
+            "2026-11-11: validated_assets narrowed to the backtested set. "
+            "SL 0.5x ATR is tight: signals below the engine anti-churn floor are rejected downstream."
+        ),
     },
     "aggressor": {
         "status": "DISABLED",
@@ -355,25 +373,27 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "reason": "Disabled: 1m scalp mean-reversion fails positive expectancy under 31 bps friction."
     },
     "supertrend": {
-        "status": "VALIDATED",
-        "version": "V2-supertrend-high-winrate (2026-09-12)",
+        "status": "OBSERVE_ONLY",
+        "version": "V3-supertrend-honest-prior (2026-11-11)",
         "timeframe": "15m",
         "timeframes": ["15m", "1h", "4h"],
         "trading_mode": "FUTURES",
         "execution_model": "RULE_BASED",
-        "entry_conditions": "Supertrend breakout flip above EMA200, or EMA21 pullback bounce continuation with full EMA trend alignment & ADX >= 25. SL: 1.5x ATR, TP: 1.5x ATR.",
-        "sl_method": "1.5 * ATR(14)",
-        "tp_method": "1.5 * ATR(14)",
-        "rr_ratio": 1.0,
-        "oos_win_rate_prior": 0.80,
-        "total_friction_bps": 8.0,
-        "expected_net_edge_bps": 600.0,
+        "entry_conditions": "Supertrend breakout flip above EMA200, or EMA21 pullback bounce continuation with full EMA trend alignment & ADX >= 25. SL: 2.0x ATR with 0.30% anti-churn floor, TP: 3R.",
+        "sl_method": "2.0 * ATR(14), floored at 0.30% of price",
+        "tp_method": "3.0 * risk",
+        "rr_ratio": 3.0,
+        "oos_win_rate_prior": None,
+        "expected_net_edge_bps": None,
         "minimum_required_edge": 0.0001,
-        "validated_assets": [
-            "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "LINKUSDT", "INJUSDT",
-            "AVAXUSDT", "LTCUSDT", "ATOMUSDT", "UNIUSDT", "NEARUSDT", "APTUSDT", "ADAUSDT", "DOGEUSDT", "DOTUSDT"
-        ],
-        "reason": "V2 Supertrend high win rate trend-continuation engine.",
+        "validated_assets": [],
+        "reason": (
+            "Observe only (2026-11-11 incident, see Stratex/docs/INCIDENT_2026-11-11_LOSSES.md): "
+            "the previous V2 entry claimed oos_win_rate_prior 0.80 with 600 bps expected edge; the realized "
+            "testnet ledger measured 17/64 = 0.266 win rate and every closed trade lasted under 20 minutes. "
+            "A 0.266 prior cannot clear the platform probability floor, so the strategy is parked until it "
+            "accumulates fresh forward evidence under the new anti-churn brackets (SL 2.0x ATR, 0.30% floor, TP 3R)."
+        ),
     },
     "swing": {
         "status": "DISABLED",
