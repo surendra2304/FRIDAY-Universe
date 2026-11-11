@@ -193,6 +193,38 @@ async def _configure_memory_mirror() -> None:
         logger.exception("Shared memory mirroring could not be configured")
 
 
+async def _nightly_consolidation_loop() -> None:
+    """Checklist B7: consolidate the day's memories while the owner sleeps.
+
+    A light gate-check every 15 minutes; the run itself is gated to
+    02:00–05:00 IST and at most once per night inside
+    maybe_run_nightly_consolidation. Failures are logged and never fatal —
+    memory consolidation must never take the assistant down.
+    """
+    while True:
+        try:
+            await asyncio.sleep(900)  # 15 minutes between gate checks
+            from friday.memory.memora_client import memora_client as _consol_client
+            from friday.proactive.nightly_consolidation import maybe_run_nightly_consolidation
+
+            report = maybe_run_nightly_consolidation(_consol_client)
+            if report is not None:
+                if str(report.get("status")) == "error":
+                    logger.warning(f"Nightly consolidation failed honestly: {report}")
+                else:
+                    logger.info(
+                        "Nightly consolidation done: examined=%s merged=%s skipped=%s summary_stored=%s",
+                        report.get("records_examined"),
+                        report.get("duplicates_merged"),
+                        report.get("merges_skipped"),
+                        report.get("summary_stored"),
+                    )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Nightly consolidation loop error (continuing)")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Pre-flight environment validation
@@ -211,12 +243,19 @@ async def lifespan(_: FastAPI):
     # storm. Set FRIDAY_REFLEX_ENABLED=false to keep it out of this process.
     reflex_task = asyncio.create_task(_reflex_loop(), name="friday-reflex-brain")
     memory_mirror_task = asyncio.create_task(_configure_memory_mirror(), name="friday-memory-mirror")
+    # Checklist B7: nightly memory consolidation (02:00–05:00 IST, once per
+    # night). The loop is a light gate-check every 15 minutes; the heavy work
+    # is inside maybe_run_nightly_consolidation and fails honestly per
+    # component — a consolidation failure never takes the service down.
+    consolidation_task = asyncio.create_task(
+        _nightly_consolidation_loop(), name="friday-nightly-consolidation"
+    )
     try:
         yield
     finally:
         logger.info("Graceful shutdown initiated: stopping background tasks and listener loops...")
-        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task]
-        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task):
+        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task]
+        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task):
             task.cancel()
         try:
             await asyncio.wait_for(
@@ -2013,6 +2052,65 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
             },
         }
 
+    # =========================================================================
+    # A0.56 Memory Consolidation (checklist B7: nightly summarize/dedupe/merge)
+    # =========================================================================
+    # "Consolidate your memories" tidies the day's memories on demand: near
+    # duplicates are merged through the auditable supersede lifecycle and a
+    # one-line day summary is stored. Runs BEFORE the recall gate because
+    # "clean up your memory" contains "your memory" (a recall pattern) — the
+    # recall gate would otherwise eat the request.
+    _is_consolidate = _memory_consolidation_intent(cmd)
+
+    if _is_consolidate:
+        _consol_res: dict[str, Any] = {}
+        try:
+            from friday.memory.memora_client import memora_client as _memora
+            from friday.proactive.nightly_consolidation import consolidate_day_memories
+
+            _consol_res = consolidate_day_memories(_memora) or {}
+        except Exception as _e:
+            logger.warning(f"Memory consolidation failed in chat fast-path: {_e}")
+            _consol_res = {"status": "error", "error": type(_e).__name__}
+        _cs = str(_consol_res.get("status", "error"))
+        if _cs == "consolidated":
+            if not _consol_res.get("records_examined"):
+                _reply = (
+                    "Done, Boss — I looked through today's memories and there was "
+                    "nothing new to tidy up. Clean slate for tomorrow."
+                )
+            else:
+                _reply = (
+                    f"Done, Boss. I went through {_consol_res.get('records_examined')} memories from today: "
+                    f"{_consol_res.get('duplicates_merged', 0)} near-duplicate{'s' if _consol_res.get('duplicates_merged') != 1 else ''} merged "
+                    f"(the older copies stay in my audit trail), and "
+                    + (
+                        "I saved a one-line summary of the day."
+                        if _consol_res.get("summary_stored")
+                        else "I could not save the day summary — my memory store didn't answer."
+                    )
+                )
+                if _consol_res.get("merges_skipped"):
+                    _reply += f" {_consol_res['merges_skipped']} merge(s) were skipped because the store refused them — honest count, no faking."
+        else:
+            _reply = (
+                "I couldn't reach my memory store to consolidate just now, Boss — "
+                "nothing was changed. Try again in a moment."
+            )
+        return {
+            "reply": _reply,
+            "metadata": {
+                "fast_path": True,
+                "conversational": True,
+                "memory_consolidation": True,
+                "consolidation_status": _cs,
+                "records_examined": _consol_res.get("records_examined", 0),
+                "duplicates_merged": _consol_res.get("duplicates_merged", 0),
+                "merges_skipped": _consol_res.get("merges_skipped", 0),
+                "summary_stored": bool(_consol_res.get("summary_stored")),
+            },
+        }
+
     _recall_patterns = (
         "what do you remember", "do you remember", "you remember",
         "what do you know about me", "what do you know about my",
@@ -2594,6 +2692,38 @@ async def _dispatch_command(command: str) -> dict[str, Any]:
 
 class ChatRequest(BaseModel):
     message: str = ""
+
+
+def _memory_consolidation_intent(cmd: str) -> bool:
+    """Checklist B7: match explicit memory-consolidation requests.
+
+    Must NOT match remember/recall/forget/correct intents, plain "clean up
+    your workspace" chores, or "consolidate the fleet" style agent talk —
+    only memory tidy-up requests fire the consolidation pass.
+    """
+    exact = {
+        "consolidate your memories",
+        "consolidate my memories",
+        "consolidate your memory",
+        "consolidate memories",
+        "consolidate memory",
+        "clean up your memory",
+        "clean your memory",
+        "tidy your memory",
+        "tidy up your memories",
+        "tidy up your memory",
+        "organize your memories",
+        "organise your memories",
+        "summarize what you remember from today",
+        "summarise what you remember from today",
+        "run memory consolidation",
+    }
+    if cmd in exact:
+        return True
+    for prefix in ("consolidate ", "clean up ", "tidy up ", "organize ", "organise "):
+        if cmd.startswith(prefix) and "memor" in cmd:
+            return True
+    return False
 
 
 

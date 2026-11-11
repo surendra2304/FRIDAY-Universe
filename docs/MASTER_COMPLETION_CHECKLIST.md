@@ -33,7 +33,7 @@
 - [x] **B4** Auto-record dialogue turns to Memora (MEM-003)
 - [x] **B5** Proactive recall: relevant memory injected into answers (BRAIN-002)
 - [x] **B6** Recall ranking: personal facts beat agent logs; noise filtered (committed; live-verified once — needs soak)
-- [ ] **B7** Nightly consolidation: summarize/dedupe/merge the day's memories
+- [x] **B7** Nightly consolidation: summarize/dedupe/merge the day's memories (DONE 2026-11-11 IST: `friday/proactive/nightly_consolidation.py` — real MemoraClient.recent_memories (date-filtered, not keyword-guessed) gathers the day's live records; near-duplicates merged via containment-aware similarity (0.85) through the auditable supersede lifecycle (new public MemoraClient.supersede_fact — same one B10 corrections use); one marked day summary stored, idempotent per night; background loop in the server lifespan (15-min gate check, 02:00–05:00 IST window, once per night, honest per-component failures, never fatal); "consolidate your memories" chat fast-path runs it on demand (wired BEFORE the recall gate so "clean up your memory" is not eaten by the recall patterns); 32-test suite; BONUS: fixed a pre-existing routing regression found by the delegation suite — "assign a task to X… then show me its result" was intercepted by the task-status gate (ORCH-008 chain order); now a shared delegation matcher arbitrates, 99/99 delegation+status tests green)
 - [ ] **B8** Importance scoring: trivial facts age out, core facts pinned
 - [x] **B9** Forget command: "forget that" removes a stored fact (LIVE 2026-11-11: 'forget about the unique test marker color' → soft-deleted, recall returns nothing; MemoraClient.forget_fact + chat fast-path; 34-test suite)
 - [x] **B10** Memory edit: "actually my number is X" updates, doesn't duplicate (LIVE 2026-11-11: teal marker corrected to indigo → recall returns ONLY indigo; old fact superseded in the audit trail, not duplicated; MemoraClient.correct_fact via Memora's supersede API + chat fast-path)
@@ -184,7 +184,7 @@
 | Module | Done | Total | % |
 |---|---|---|---|
 | A. Brain | 5 | 14 | 36% |
-| B. Memory | 8 | 12 | 67% |
+| B. Memory | 9 | 12 | 75% |
 | C. Orchestration | 8 | 14 | 57% |
 | D. Website | 11 | 18 | 61% |
 | E. Voice | 2 | 10 | 20% |
@@ -192,7 +192,7 @@
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
 | I. Tech debt | 2 | 8 | 25% |
-| **Universe** | **52** | **125** | **42%** |
+| **Universe** | **53** | **125** | **42%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

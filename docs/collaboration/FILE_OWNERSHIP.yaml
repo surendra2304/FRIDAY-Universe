@@ -506,6 +506,8 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-SEC-005 (D-023, owner 'Do it'): control-session mint requires the owner key from remote callers (constant-time), loopback stays keyless, origin gate retained, fail-closed 503 unchanged. CONSOLIDATED 2026-11-11 (MERGED_UI_004): + TASK-UI-004/D12+I7 — /api/agents/live endpoint; __file__-relative /static mount; duplicate decompose route removed; /api/autonomous/execute control gate."
     risk: "Auth-critical surface. Any future auth change must extend tests/test_control_session_hardening.py and re-verify the attack replay fails closed."
+    note_2026_11_11_b7: "Checklist B7: _nightly_consolidation_loop in the lifespan + A0.56 consolidation chat gate (_memory_consolidation_intent) before the recall gate."
+
 
   - path: "FRIDAY/src/friday/api/app.js"
     owner: "zai"
@@ -864,6 +866,8 @@ claims:
     branches: []
     status: "MERGED_MEM_005_2026-11-11"
     task: "CONSOLIDATED (was DIRECT_COMMIT_BRAIN_UI_2026-11-11): TASK-BRAIN-002 recall guard fix (os.path.exists(None) TypeError killed recall on the Oracle backend) + tests/test_memora_recall_guard.py. + Checklist B9/B10 (2026-11-11): forget_fact + correct_fact (soft delete / supersede via Memora's lifecycle APIs) + _mark_record_state local/Oracle fallback; live-verified on production."
+    note_2026_11_11_b7: "Checklist B7: new public recent_memories (date-filtered recent active records) + supersede_fact (auditable merge primitive, same lifecycle as B10 corrections)."
+
 
   - path: "FRIDAY/src/friday/tools/builtin/task_status_query.py"
     owner: "zai"
@@ -892,6 +896,8 @@ claims:
     branches: []
     status: "MERGED_ORCH_008_2026-11-11"
     task: "TASK-ORCH-008/C13: _task_status_fast_path (deterministic status-question gate BEFORE delegation)."
+    note_2026_11_11_b7: "Checklist B7: shared _delegation_instruction_agent matcher — the task-status gate now yields to delegation (assign-with-result-tail routing regression fixed; 99/99 delegation+status tests green)."
+
 
   - path: "FRIDAY/src/friday/agent/mixins/cognitive.py"
     owner: "zai"
@@ -986,6 +992,20 @@ claims:
     branches: []
     status: "DIRECT_COMMIT_WAVE14_VERIFY"
     task: "100% directive WAVE 14 pass: docstring made a raw string to clear the py_compile SyntaxWarning (Windows path escape)."
+
+  - path: "FRIDAY/src/friday/proactive/nightly_consolidation.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BRAIN_003_2026-11-11"
+    task: "Checklist B7: nightly consolidation (gather via recent_memories, containment-aware dedupe, auditable supersede, idempotent day summary, 02:00–05:00 IST window)."
+
+  - path: "FRIDAY/tests/test_nightly_consolidation.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BRAIN_003_2026-11-11"
+    task: "Checklist B7: 32-test contract suite (merge/idempotency/window/honest-failure/phrasing matrix)."
 
 
 conflicts_to_resolve:

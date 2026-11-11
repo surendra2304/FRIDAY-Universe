@@ -616,6 +616,96 @@ class MemoraClient:
                 logger.debug(f"Memora local recall error: {type(e).__name__}")
         return []
 
+    def recent_memories(
+        self,
+        agent_name: str,
+        limit: int = 100,
+        since: Optional[str] = "",
+    ) -> List[Dict[str, Any]]:
+        """B7: the most recent ACTIVE memories, newest first, never raises.
+
+        ``since`` (optional, ``YYYY-MM-DD``) keeps only records created on or
+        after that IST date — the nightly consolidation pass needs "the day's
+        memories", not a keyword guess. Returns ``[]`` on any backend failure
+        (an honest empty day, never an exception into a sleep-window loop).
+        """
+        try:
+            rows = self._recent_rows(agent_name, limit)
+        except Exception as e:
+            logger.debug(f"Memora recent_memories error: {type(e).__name__}")
+            return []
+        if since:
+            kept = []
+            for row in rows:
+                stamp = str(row.get("created_at", "") or "")
+                # local writes use "YYYY-MM-DD HH:MM:SS"; remote may use full
+                # ISO — both compare cleanly on the date prefix
+                if stamp[:10] >= since:
+                    kept.append(row)
+            rows = kept
+        return rows
+
+    def _recent_rows(self, agent_name: str, limit: int) -> List[Dict[str, Any]]:
+        """Recent active records from the configured backend (never raises)."""
+        if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
+            try:
+                encoded = urllib.parse.quote(f"recent active memories {agent_name}")
+                url = f"{self.base_url}/v1/memories/search?q={encoded}&limit={limit}&min_score=0"
+                headers = self._remote_headers(agent_name)
+                req = urllib.request.Request(url, headers=headers, method="GET")
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    if resp.status == 200:
+                        return json.loads(resp.read().decode("utf-8")) or []
+            except Exception as e:
+                logger.debug(f"Memora remote recent_memories error: {type(e).__name__}")
+
+        if self._backend == "oracle":
+            rows = oracle.query_all(
+                "SELECT m.id, m.content_text, m.memory_type, m.importance, m.created_at "
+                "FROM memora_records m JOIN memora_agents a ON m.owner_id = a.id "
+                "WHERE m.lifecycle_state = 'active' "
+                "ORDER BY m.created_at DESC FETCH FIRST :n ROWS ONLY",
+                {"n": limit},
+            )
+            return [
+                {
+                    "id": row["id"],
+                    "content_text": row["content_text"],
+                    "memory_type": row["memory_type"],
+                    "importance": row["importance"],
+                    "created_at": row["created_at"],
+                }
+                for row in rows
+            ]
+        if self._backend == "sqlite":
+            if not (self.local_db_path and os.path.exists(self.local_db_path)):
+                return []
+            from friday.core.database import connect_sqlite
+
+            with connect_sqlite(self.local_db_path, timeout=5.0) as conn:
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    SELECT m.id, m.content_text, m.memory_type, m.importance, m.created_at
+                    FROM memory_records m JOIN agents a ON m.owner_id = a.id
+                    WHERE m.lifecycle_state = 'active'
+                    ORDER BY m.created_at DESC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                )
+                return [
+                    {
+                        "id": row[0],
+                        "content_text": row[1],
+                        "memory_type": row[2],
+                        "importance": row[3],
+                        "created_at": row[4],
+                    }
+                    for row in cur.fetchall()
+                ]
+        return []
+
     # ------------------------------------------------------------------
     # Checklist B9/B10: owner-facing memory commands — forget and correct.
     # ------------------------------------------------------------------
@@ -766,6 +856,48 @@ class MemoraClient:
         # The new fact is stored; the old one could not be marked — honest state.
         return {"status": "stored_new_only", "id": new_id, "content_text": new_fact_text,
                 "warning": "old fact could not be superseded"}
+
+    def supersede_fact(
+        self,
+        agent_name: str,
+        memory_id: str,
+        winner_id: str = "",
+        reason: str = "nightly consolidation",
+    ) -> Dict[str, Any]:
+        """B7: mark one stored fact superseded by another — merge, not delete.
+
+        Nightly consolidation keeps the best copy of a near-duplicate pair and
+        retires the other through the SAME auditable lifecycle the owner's own
+        corrections (B10) use. No new content is written by this call; the
+        winner keeps its record id and its text. Returns ``status`` in
+        ``superseded`` | ``not_found`` | ``error``.
+        """
+        if not str(memory_id or "").strip():
+            return {"status": "error", "error": "empty memory_id"}
+
+        if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
+            try:
+                url = f"{self.base_url}/v1/memories/{urllib.parse.quote(memory_id)}/supersede"
+                payload = {"new_memory_id": winner_id, "reason": reason}
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers=self._remote_headers(agent_name, json_body=True),
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    if resp.status in (200, 201):
+                        return {"status": "superseded", "id": memory_id, "winner_id": winner_id}
+            except Exception as e:
+                logger.debug(f"Memora remote supersede_fact error: {type(e).__name__}: {e}")
+
+        # local/oracle fallback: mark the record superseded directly
+        try:
+            if self._mark_record_state(memory_id, "superseded"):
+                return {"status": "superseded", "id": memory_id, "winner_id": winner_id, "cloud": False}
+        except Exception as e:
+            logger.debug(f"Memora local supersede_fact error: {type(e).__name__}: {e}")
+        return {"status": "error", "error": "could not supersede", "id": memory_id}
 
     def _mark_record_state(self, record_id: str, state: str) -> bool:
         """Set ``lifecycle_state`` on a local/Oracle record (soft transitions)."""

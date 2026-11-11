@@ -111,6 +111,56 @@ from friday.vision.windows_input_driver import (
 
 logger = logging.getLogger(__name__)
 
+
+#: TASK-ORCH-007 delegation instruction heads — the SAME three patterns the
+#: delegation fast path matches (kept in one place so the task-status gate and
+#: the delegation gate can never disagree about who owns a message).
+_DELEGATION_INSTRUCTION_PATTERNS = [
+    # assign/delegate/send/give/pass/hand (a/this/the/quick/small) task(s) to <agent>[: task]
+    r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+    r"(?:assign|delegate|send|give|pass|hand)\s+"
+    r"(?:a\s+|an\s+|this\s+|the\s+)?"
+    r"(?:quick\s+|small\s+|simple\s+|new\s+)?"
+    r"(?:task|work|job)s?\s+"
+    r"(?:to|for|over to|onto)\s+"
+    r"(?P<agent>[a-z]+)\s*[:\-]?\s*(?P<task>.*)$",
+    # send/forward this (task) to <agent>: task
+    r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+    r"(?:send|forward)\s+this(?:\s+task)?\s+to\s+"
+    r"(?P<agent>[a-z]+)\s*[:\-]?\s*(?P<task>.*)$",
+    # have/tell/ask/let <agent> (to) <task>
+    r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
+    r"(?:have|tell|ask|let)\s+(?P<agent>[a-z]+)\s+(?:to\s+)?(?P<task>.+)$",
+]
+
+
+def _delegation_instruction_agent(low: str) -> "str | None":
+    """Normalized fleet agent when ``low`` ASSIGNS new work, else ``None``.
+
+    A message that begins by assigning work to a fleet agent belongs to the
+    delegation fast path — even when a later tail mentions status words
+    ("assign a quick task to IntelX: sky note. then show me its result").
+    Used by the task-status gate (ORCH-008/C13) to yield to delegation.
+    """
+    if not low:
+        return None
+    for pattern in _DELEGATION_INSTRUCTION_PATTERNS:
+        match = re.match(pattern, low)
+        if match:
+            try:
+                from friday.tools.builtin.fleet_dispatch import normalize_agent
+
+                agent = normalize_agent(match.group("agent"))
+            except Exception:
+                return None
+            # Only a real fleet agent makes it a delegation instruction
+            # ("tell Rajesh to…" falls through to the normal path).
+            if agent:
+                return agent
+            return None
+    return None
+
+
 class FastPathMixin:
     _WAKE_PHRASE_PATTERN = re.compile(
         r"^\s*(?:(?:hey|okay|ok|please)\s+)?friday\s*[,!:;-]?\s*",
@@ -311,6 +361,15 @@ class FastPathMixin:
         """
         low = clean_input.lower().strip().rstrip(".!? ")
         from friday.tools.builtin.task_status_query import TaskStatusQueryTool, _TASK_ID_RE
+
+        # NEW WORK beats status words: a message that ASSIGNS work to a fleet
+        # agent ("assign a quick task to IntelX: sky note. then show me its
+        # result") belongs to the delegation fast path even when its tail
+        # mentions a status word ('result'). Found by the delegation suite
+        # after ORCH-008 moved this gate first — fixed with the shared matcher
+        # so the two gates can never disagree about ownership again.
+        if _delegation_instruction_agent(low):
+            return None
 
         id_hit = _TASK_ID_RE.search(low)
         status_marker = re.search(
