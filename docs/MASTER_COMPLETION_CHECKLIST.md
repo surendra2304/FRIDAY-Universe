@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-11 (IST; updated after ORCH-008: C13 task-status queries + I8 contacts-hijack fix) · 46/125 items done (37%) · capability-weighted completion ≈ 58%
+**Snapshot:** 2026-11-11 (IST; updated after ORCH-008: C13 task-status queries + I8 contacts-hijack fix; after UI-004: D12 live per-agent status + I7 route dedupe + UI source restoration) · 48/125 items done (38%) · capability-weighted completion ≈ 59%
 
 ---
 
@@ -70,7 +70,7 @@
 - [ ] **D9** React Bits integration (owner request — animated component kit, not hand-rolled CSS only)
 - [ ] **D10** Floating/dynamic element pass: orbitals, parallax, magnet buttons, aurora backgrounds
 - [ ] **D11** Live activity feed richness: every agent action streams in real time (WS exists; event coverage partial)
-- [ ] **D12** "What is each agent doing RIGHT NOW" — live status per card, auto-refreshed
+- [x] **D12** "What is each agent doing RIGHT NOW" — live status per card, auto-refreshed (TASK-UI-004: GET /api/agents/live merges reachability + the unified task ledger — in_flight/last_outcome per agent; dashboard polls it in the 30s refresh and renders 'Working now' + 'working <freshness>'; 9/9 endpoint tests; ALSO fixed the blocking defect — the Python-template `lib/` gitignore rule had silently hidden FRIDAY/ui/lib, so lib/api.ts was never committed and a fresh clone could not rebuild the dashboard)
 - [ ] **D13** Task timeline: delegation history with status chips (queued/running/done/failed)
 - [ ] **D14** Mobile responsiveness verified (320–430px widths)
 - [ ] **D15** Accessibility pass: contrast, aria labels, keyboard tabs
@@ -174,7 +174,7 @@
 - [ ] **I4** Full battery green: `test_real_usage_battery.py` 29/29
 - [ ] **I5** Coverage gate in CI (no untested regression classes)
 - [ ] **I6** Dead-code sweep: unused tools/modules removed or wired
-- [ ] **I7** Fix duplicate `(path, method)` route registration in server.py (pre-existing `test_api_command_truthfulness` failure on main)
+- [x] **I7** Fix duplicate `(path, method)` route registration in server.py (pre-existing `test_api_command_truthfulness` failure on main) (FIXED with the D12 tranche: unauthenticated shadow POST /api/autonomous/decompose deleted, live handler keeps the control gate + returns the real plan_id; shadowed GET /api/v1/mesh/health duplicate removed; BONUS: POST /api/autonomous/execute gained the control gate its siblings already had; route-truthfulness suite 57/57)
 - [x] **I8** Contacts fast-path hijack: "get X to do Y" (no contact intent) is intercepted by the contacts lookup — reproduce test_delegation 'get IntelX' case; tighten the contacts matcher to explicit contact verbs (save/edit/find contact) (FIXED with C13 tranche: matcher now requires the word "contact" or a possessive contact field; statement form requires a real phone/email value; 40-case hijack/keep matrix, 13-failure attack replay on old matcher)
 
 ---
@@ -186,13 +186,13 @@
 | A. Brain | 5 | 14 | 36% |
 | B. Memory | 6 | 12 | 50% |
 | C. Orchestration | 8 | 14 | 57% |
-| D. Website | 8 | 18 | 44% |
+| D. Website | 9 | 18 | 50% |
 | E. Voice | 2 | 10 | 20% |
 | F. Agents | 7 | 27 | 26% |
 | G. Autonomy | 4 | 12 | 33% |
 | H. Infra | 5 | 10 | 50% |
-| I. Tech debt | 1 | 8 | 12% |
-| **Universe** | **46** | **125** | **37%** |
+| I. Tech debt | 2 | 8 | 25% |
+| **Universe** | **48** | **125** | **38%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

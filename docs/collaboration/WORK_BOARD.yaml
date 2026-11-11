@@ -1235,6 +1235,36 @@ tasks:
     blockers: []
     next_action: "Live re-test on the deployed site after Fleet CD: dispatch a task via chat, then ask 'what happened to that <agent> task?' — tick C13 live evidence on success. D12 (live per-card agent status) is next in the owner-approved order."
 
+  - id: "TASK-UI-004"
+    title: "D12 live per-agent NOW status + UI source tree restored + I7 route dedupe"
+    status: "MERGED"
+    owner: "zai"
+    branch: null
+    pr: null
+    owner_directive: "Continue the checklist in owner-approved execution order (2026-11-11 chat: don't stop until the work is completed)."
+    merge_note: "Direct main commit 83ad932, 2026-11-11 IST. D12: new GET /api/agents/live merges the supervision reachability snapshot with the unified task ledger (TaskRecordStore) — per agent in_flight (newest submitted/assigned/dispatched record: description, status, start time), last_outcome (newest terminal record), total_records; zero-record agents say so honestly; origin-gated like the other keyless dashboard surfaces. The dashboard polls it inside the existing 30s refresh and FleetGrid renders a highlighted 'Working now:' line plus a 'working <freshness>' chip; in-flight cards count as active. BLOCKING DEFECT fixed en route: FRIDAY/.gitignore's Python-template 'lib/' rule silently hid FRIDAY/ui/lib — lib/api.ts was NEVER committed although app/page.tsx imports @/lib/api and the committed prebuilt bundle masked the gap; a fresh clone failed 'next build'. lib/api.ts reconstructed export-exact from every usage (types + apiBase/requestJson/istTime/formatClock/cleanDirective/freshness/statusTone), verified by a full 'next build' (compiles clean; regenerated static export committed). I7: deleted the unauthenticated shadow POST /api/autonomous/decompose (Starlette matches the first registration, so it was never reachable); the live handler keeps the control gate and returns the controller's real plan_id + total_subtasks instead of id(plan); removed the shadowed GET /api/v1/mesh/health duplicate (coordinator's registration wins by include order); POST /api/autonomous/execute gained the _require_control_access gate its siblings already had. Robustness: the /static mount is now __file__-relative (was cwd-relative 'src/friday/api', crashing server import from any other cwd — root cause of 5+ suites failing at collection in non-server environments)."
+    milestone: "Checklist D12 + I7 (tech debt)"
+    files:
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/ui/lib/api.ts"
+      - "FRIDAY/ui/app/page.tsx"
+      - "FRIDAY/ui/components/panels.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/**"
+      - "FRIDAY/.gitignore"
+      - "mesh/universe_health.py"
+      - "FRIDAY/tests/test_agents_live_endpoint.py"
+      - "tests/test_gitignore_bridge_source.py"
+    acceptance:
+      - "'What is each agent doing RIGHT NOW' answers from real ledger + reachability data, auto-refreshed on the dashboard."
+      - "An agent with no tracked work is shown as such — never fabricated as busy."
+      - "A fresh clone of the repository can rebuild the dashboard (next build green with tracked ui/lib source)."
+      - "No (path, method) route pair is registered twice (route-truthfulness suite green)."
+    evidence: "tests/test_agents_live_endpoint.py 9/9 (nine-agent map, in-flight/outcome classification, newest-wins, per-agent counts, origin gate, honest-empty); test_api_command_truthfulness + origin + agents-live 57/57 (I7 was 1 failed at HEAD); root suites test_real_universe_dashboard + orchestrator 28 passed, test_task_records + real_http_api 32 passed/14 known skips; gitignore contract 24/24 ALL GREEN incl. new lib/ cases; UI 'next build' green, static export regenerated and committed; codex-invariants/mesh 21 passed with 3 pre-existing production-env-assumption failures that were unobservable before the collection fix (documented, unchanged)."
+    blockers: []
+    next_action: "Live verification on the deployed site after Fleet CD: poll /api/agents/live (200 + real ledger fields), open the FLEET tab and watch a dispatched task appear as 'Working now'. Remaining D-module work: D9/D10 (React Bits + dynamic pass), D13 (task timeline), D14-D18."
+
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

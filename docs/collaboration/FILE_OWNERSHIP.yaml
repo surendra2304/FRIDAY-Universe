@@ -504,7 +504,7 @@ claims:
     prs: []
     branches: []
     status: "DIRECT_COMMIT_D023"
-    task: "TASK-SEC-005 (D-023, owner 'Do it'): control-session mint requires the owner key from remote callers (constant-time), loopback stays keyless, origin gate retained, fail-closed 503 unchanged."
+    task: "TASK-SEC-005 (D-023, owner 'Do it'): control-session mint requires the owner key from remote callers (constant-time), loopback stays keyless, origin gate retained, fail-closed 503 unchanged. CONSOLIDATED 2026-11-11 (MERGED_UI_004): + TASK-UI-004/D12+I7 — /api/agents/live endpoint; __file__-relative /static mount; duplicate decompose route removed; /api/autonomous/execute control gate."
     risk: "Auth-critical surface. Any future auth change must extend tests/test_control_session_hardening.py and re-verify the attack replay fails closed."
 
   - path: "FRIDAY/src/friday/api/app.js"
@@ -848,8 +848,8 @@ claims:
     owner: "zai"
     prs: []
     branches: []
-    status: "DIRECT_COMMIT_BRAIN_UI_2026-11-11"
-    task: "TASK-UI-003: API client library — was missing from the repo after TASK-UI-002 (export built from an uncommitted lib/); committed so the dashboard is rebuildable from a fresh clone."
+    status: "MERGED_UI_004_2026-11-11"
+    task: "CONSOLIDATED (was DIRECT_COMMIT_BRAIN_UI_2026-11-11 for TASK-UI-003): the earlier claim recorded an intent whose git add was silently swallowed by FRIDAY/.gitignore's Python-template lib/ rule — the file was NOT actually in git history (verified: git log --all -- FRIDAY/ui/lib/api.ts showed nothing before 83ad932). TASK-UI-004/D12 actually landed it: lib/api.ts reconstructed export-exact from every component usage (the .gitignore !ui/lib/ exception makes it addable), full 'next build' green; the dashboard is now rebuildable from a fresh clone. Checklist D12 fix."
 
   - path: "FRIDAY/tests/test_boss_identity_contract.py"
     owner: "zai"
@@ -927,6 +927,43 @@ claims:
     branches: []
     status: "MERGED_CI_004_2026-11-11"
     task: "Master Plan backlog TASK-CI-004: 19-case gitignore contract against real git check-ignore (source addable, artifacts ignored)."
+
+
+
+  - path: "mesh/universe_health.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_UI_004_2026-11-11"
+    task: "Checklist I7: shadowed GET /api/v1/mesh/health duplicate registration removed (coordinator's route serves it)."
+
+  - path: "FRIDAY/tests/test_agents_live_endpoint.py"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_UI_004_2026-11-11"
+    task: "TASK-UI-004/D12: 9-test /api/agents/live contract suite."
+
+  - path: "FRIDAY/ui/app/page.tsx"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_UI_004_2026-11-11"
+    task: "TASK-UI-004/D12: agentsLive state + /api/agents/live polled in the 30s refresh + passed to FleetGrid."
+
+  - path: "FRIDAY/ui/components/panels.tsx"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_UI_004_2026-11-11"
+    task: "TASK-UI-004/D12: FleetGrid 'Working now' line + 'working <freshness>' chip from the live ledger."
+
+  - path: "FRIDAY/.gitignore"
+    owner: "zai"
+    prs: []
+    branches: []
+    status: "MERGED_UI_004_2026-11-11"
+    task: "D12 fix: !ui/lib/ exception to the Python-template lib/ rule (UI TypeScript source tracked; Python build lib/ dirs stay ignored)."
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
