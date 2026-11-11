@@ -64,8 +64,11 @@ After **every** completed execution/turn, send a Telegram notification:
 - **Sender bot:** `@zai_notifications_bot` — NEVER `@fridayuniverse_bot`
   (that bot is reserved for FRIDAY Universe operations: Stratex alerts,
   /pnl, portfolio reports, owner commands).
-- **Signature:** end the message with `— ZAI Agent 2` (ZAI Agent 1 signs
-  `— ZAI Agent 1`). Never sign as the other agent.
+- **Agent name at the TOP (owner directive 2026-11-12):** the FIRST LINE of
+  every Telegram notification is the executing agent's name — you send
+  `ZAI Agent 2`, ZAI Agent 1 sends `ZAI Agent 1`. The notifier script does
+  this automatically since 2026-11-12. Never sign as the other agent; never
+  put the name only at the bottom.
 - **How:** run from the repo root:
 
 ```bash

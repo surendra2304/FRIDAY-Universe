@@ -19,13 +19,15 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
    → G (autonomy) → E (voice) → A (brain) → H (infra) → I (tech debt).
 6. **Two-agent lanes (2026-11-11, owner added ZAI Agent 2):**
    - **ZAI Agent 1 (Lane A):** Batches 2, 3, 4, 9, 10, 11, 12 — Stratex,
-     orchestration, memory/brain, tech debt, final sweeps. Signs Telegram
-     notifications `— ZAI Agent 1`.
+     orchestration, memory/brain, tech debt, final sweeps. Telegram
+     notifications start with `ZAI Agent 1` on the first line.
    - **ZAI Agent 2 (Lane B):** Batches 6, 7, 5, 8 — agent depth F, autonomy G,
-     website polish D. Signs `— ZAI Agent 2`. Onboarding:
+     website polish D. Telegram notifications start with `ZAI Agent 2` on the
+     first line. Onboarding:
      `docs/collaboration/ZAI_AGENT_2_ONBOARDING.md`.
    - All notifications from `@zai_notifications_bot` (never
-     `@fridayuniverse_bot`). Claim cross-lane files in WORK_BOARD + issue #35
+     `@fridayuniverse_bot`), agent name on the FIRST LINE (owner directive
+     2026-11-12). Claim cross-lane files in WORK_BOARD + issue #35
      first.
 
 ## Status legend: ⬜ todo · 🔄 in progress · ✅ done · ⛔ blocked

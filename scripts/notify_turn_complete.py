@@ -4,6 +4,9 @@ notify_turn_complete.py — Send a Telegram notification when a work batch/turn 
 
 Owner directive (2026-11-11): every 10-task batch ends with a Telegram ping so the
 owner knows the turn completed without getting cut off mid-stream.
+Owner directive (2026-11-12): the executing agent's name ("ZAI Agent 1" /
+"ZAI Agent 2") must be the FIRST LINE of the message — at the top, not a
+trailing signature.
 
 Usage:
     python scripts/notify_turn_complete.py "Batch 1 complete: 10/10 tasks done"
@@ -137,8 +140,10 @@ def send_turn_notification(message: str) -> tuple[bool, str]:
     chat_id = (os.getenv("TELEGRAM_CHAT_ID") or "").strip()
     agent_name = (os.getenv("ZAI_AGENT_NAME") or DEFAULT_AGENT_NAME).strip() or DEFAULT_AGENT_NAME
 
+    # Owner directive 2026-11-12: agent name goes at the TOP of the message
+    # (first line), not as a trailing signature.
     text = (
-        f"FRIDAY Universe — turn complete\n[{_now_ist()}]\n\n{message}\n\n— {agent_name}"
+        f"{agent_name}\nFRIDAY Universe — turn complete\n[{_now_ist()}]\n\n{message}"
     )
 
     if not token or not chat_id:

@@ -469,3 +469,52 @@ def test_notify_turn_complete_includes_workspace_env_candidate():
     src = inspect.getsource(mod._load_env_file)
     assert "parent" in src, "workspace-level .env (REPO_ROOT.parent) must be a load candidate"
 
+
+def test_notify_turn_complete_puts_agent_name_on_first_line(monkeypatch, tmp_path):
+    """Owner directive 2026-11-12: the agent name is the FIRST LINE of the
+    Telegram message — at the top, never only a trailing signature."""
+    import importlib.util
+
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    script_path = os.path.join(repo_root, "scripts", "notify_turn_complete.py")
+    spec = importlib.util.spec_from_file_location("notify_turn_complete_top", script_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    captured = {}
+
+    class _Resp:
+        status_code = 200
+        content = b'{"ok": true}'
+
+        @staticmethod
+        def json():
+            return {"ok": True}
+
+    def _fake_post(url, json=None, timeout=None):
+        captured["url"] = url
+        captured["json"] = json
+        return _Resp()
+
+    import requests
+
+    monkeypatch.setattr(requests, "post", _fake_post)
+    monkeypatch.setenv("ZAI_NOTIFICATIONS_TOKEN", "123456789:TESTTOKENAAAAAAAAAAAAAAAAAAA")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "6341781431")
+    monkeypatch.setenv("ZAI_AGENT_NAME", "ZAI Agent 2")
+    monkeypatch.setattr(mod, "CREDENTIALS_FILE", tmp_path / "absent_credentials.md")
+    monkeypatch.setattr(mod, "_load_env_file", lambda: None)
+
+    sent, detail = mod.send_turn_notification("batch-9 format test ping")
+    assert sent is True, f"should report sent, got: {detail}"
+    assert "zai-notifications-token" not in captured["url"]  # token in URL, not a name
+    text = captured["json"]["text"]
+    first_line = text.splitlines()[0]
+    assert first_line == "ZAI Agent 2", (
+        f"agent name must be the FIRST line, got first line: {first_line!r}"
+    )
+    assert "ZAI Agent 1" not in text, "never sign as the other agent"
+    assert not text.rstrip().endswith("ZAI Agent 2"), (
+        "name belongs at the TOP only — no trailing duplicate signature"
+    )
+
