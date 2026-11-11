@@ -134,3 +134,8 @@ bridge/*.sqlite3
 bridge/*.db
 *.bak
 **/*.bak*
+
+# Owner credentials — lives on the Oracle Cloud VMs via the Sync Credentials
+# workflow (GitHub Secrets -> VM). NEVER commit real credentials (public repo).
+credentials.md
+credentials.md.bak-*
