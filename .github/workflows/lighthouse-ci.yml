@@ -1,21 +1,23 @@
 name: Lighthouse CI
 
 # Checklist D16 (MASTER_COMPLETION_CHECKLIST) — Batch 8, ZAI Agent 2.
-# Performance budget: Lighthouse >= 90 on the deployed build. Runs on every
-# push to main (after the build) and on PRs that touch the UI. Uploads the
-# HTML report as a 30-day artifact; fails the run if any category drops
-# below 90.
+# Performance budget: Lighthouse >= 90 on the deployed build. The static
+# export is committed at FRIDAY/ui/out/ (built locally + checked in), so
+# Lighthouse audits that directly — no CI build step (which was OOM-failing
+# on the runner). Runs on push to main + PRs touching the UI.
 
 on:
   pull_request:
     paths:
       - "FRIDAY/ui/**"
       - ".github/workflows/lighthouse-ci.yml"
+      - ".github/lighthouserc.json"
   push:
     branches: [main]
     paths:
-      - "FRIDAY/ui/**"
+      - "FRIDAY/ui/out/**"
       - ".github/workflows/lighthouse-ci.yml"
+      - ".github/lighthouserc.json"
   workflow_dispatch: {}
 
 permissions:
@@ -29,27 +31,12 @@ jobs:
   lighthouse:
     name: Lighthouse audit (>= 90 all categories)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: FRIDAY/ui/package-lock.json
-
-      - name: Install UI dependencies
-        working-directory: FRIDAY/ui
-        run: npm ci
-
-      - name: Build the UI (static export)
-        working-directory: FRIDAY/ui
-        run: npm run build
-
-      - name: Run Lighthouse CI
+      - name: Run Lighthouse CI on the committed static export
         uses: treosh/lighthouse-ci-action@v12
         with:
           configPath: ./.github/lighthouserc.json
