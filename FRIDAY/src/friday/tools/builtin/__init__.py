@@ -22,6 +22,7 @@ from friday.tools.builtin.intelx_research import IntelXResearchTool
 from friday.tools.builtin.stratex_portfolio import StratexPortfolioTool
 from friday.tools.builtin.sentinel_security import SentinelSecurityTool
 from friday.tools.builtin.futuris_forecast import FuturisForecastTool
+from friday.tools.builtin.web_fetch_summarize import WebFetchSummarizeTool
 from friday.tools.builtin.vyralx_script import VyralXScriptTool
 from friday.tools.builtin.cortex_web_ops import CortexWebOpsTool
 from friday.tools.builtin.memora_memory import MemoraMemoryTool
@@ -179,6 +180,7 @@ __all__ = [
     "StratexPortfolioTool",
     "SentinelSecurityTool",
     "FuturisForecastTool",
+    "WebFetchSummarizeTool",
     "SystemInfoTool",
     "SystemPowerControlTool",
     "TimeDateTool",

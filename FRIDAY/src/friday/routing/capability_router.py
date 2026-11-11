@@ -220,6 +220,20 @@ class CapabilityRouter:
         "store this in memora", "store this in cloud memory",
         "write this to fleet memory", "write to fleet memory",
     }
+    # Checklist F13 (batch 6, ZAI Agent 2): keywords signaling a fetch-and-
+    # summarize request for a shared URL. The answer must come from the REAL
+    # page content through web_fetch_summarize (SSRF-guarded fetch + the
+    # synthesize path), never the LLM's imagination about the page.
+    FETCH_SUMMARIZE_KEYWORDS = {
+        "summarize this page", "summarize this article", "summarize this link",
+        "summarize the page", "summarize the article", "summarize the link",
+        "summarize this url", "fetch and summarize", "fetch this page",
+        "what does this page say", "what does this article say",
+        "what does this link say", "what's on this page", "whats on this page",
+        "read this page", "read this article", "read this link",
+        "summarize this for me", "tldr this", "tl;dr this",
+        "summarize the website", "summarize this website",
+    }
 
     # TASK-ORCH-001 (2026-11-10): keyword checks use whole-word/phrase boundaries.
     # The previous substring matching misrouted live traffic: "run a quick research
@@ -288,6 +302,7 @@ class CapabilityRouter:
             or self._matches(clean_input, self.SCRIPT_KEYWORDS)
             or self._matches(clean_input, self.WEB_OPS_KEYWORDS)
             or self._matches(clean_input, self.MEMORA_OP_KEYWORDS)
+            or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS)
         )
         # Checklist C12 (batch 3): chained instructions ("research X, then
         # draft the script about it") are multi-stage dispatches, never plain
@@ -300,7 +315,7 @@ class CapabilityRouter:
         except Exception:
             chained = False
         is_conversational = is_conversational and not chained
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -465,6 +480,22 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["memora_memory"],
                 rationale="Memora memory op: real search/store on the fleet's persistent memory fabric; honest empties.",
+            ))
+
+        # Checklist F13 (batch 6, ZAI Agent 2): Evaluate Web Fetch+Summarize —
+        # "summarize this page <url>" must reach web_fetch_summarize (real
+        # fetch, SSRF-guarded, synthesize on the actual text) — never a
+        # DIRECT_REASONING guess about page content.
+        if self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0,
+                estimated_latency_ms=8000.0,
+                confidence=0.94,
+                risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False,
+                required_tools=["web_fetch_summarize"],
+                rationale="Fetch-and-summarize request: read the shared URL's real content (SSRF-guarded), summarize what is actually there.",
             ))
 
         # 3. Evaluate Local Computation (e.g. system time or simple arithmetic)

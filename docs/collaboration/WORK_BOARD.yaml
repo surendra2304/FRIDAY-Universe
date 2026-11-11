@@ -1335,6 +1335,40 @@ tasks:
     blockers: []
     next_action: "Post-merge: (1) Fleet CD deploys + FRIDAY restart brings the gateway/loops live — then live-verify a Telegram round-trip with the owner; (2) enable the self-heal timer on both servers (systemctl enable --now friday-self-heal.timer + the S1 gateway drop-in); (3) Stratex 409 second-poller (external, unidentified) handed to Agent 1/owner."
 
+  - id: "TASK-BATCH6-AGENT2"
+    title: "Checklist Batch 6 (ZAI Agent 2) — agent depth I: F8/F9/F13/F14/F15/F17/F18/F20/F21"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Continue the checklist in Lane B after Batch 5 (owner: continue; lane assignment per ZAI_AGENT_2_ONBOARDING.md)."
+    merge_note: "Claim posted to issue #35 (comment 6802957472) BEFORE editing the three cross-lane files (capability_router.py, api/server.py, tools registration). Direct main commit per the batch discipline."
+    milestone: "Master Completion Checklist F module 9/27 -> 18/27; Universe 91/125 (73%)"
+    files:
+      - "FRIDAY/src/friday/proactive/agent_watch.py"
+      - "FRIDAY/src/friday/tools/builtin/web_fetch_summarize.py"
+      - "FRIDAY/tests/test_batch6_agent_depth.py"
+      - "scripts/guard_secrets_pre_push.py"
+      - ".githooks/pre-push"
+      - ".github/dependabot.yml"
+      - ".github/workflows/agent-health-digest.yml"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/src/friday/tools/builtin/__init__.py"
+      - "FRIDAY/src/friday/agent/mixins/tools.py"
+    acceptance:
+      - "F8: watch topics in chat; daily 17:30 IST IntelX briefing on the owner Telegram channel."
+      - "F9: change detection - only NEW lines reported; identical brief says no change."
+      - "F13: fetch/summarize with SSRF guard (loopback/private/metadata refused pre-connect, post-redirect recheck); routed to TOOL_EXECUTION."
+      - "F14/F15: daily site sweep of 10 gateway routes + Cortex properties; one line when healthy, alerts when degraded."
+      - "F17/F18: dependabot weekly config + weekly pip-audit/CI-failures digest workflow."
+      - "F20: Monday Sentinel digest from real posture/findings, honest when unreachable."
+      - "F21: pre-push secret guard with self-test."
+      - "Zero new test failures vs clean main."
+    evidence: "test_batch6_agent_depth.py 35/35; A/B battery (14 suites): 446 passed / 18 failed, failing set byte-identical to the pre-existing Oracle-driver baseline; server.py imports cleanly. Secret-guard self-test 7/7. Checklist scoreboard recounted from ticks (fixed a stale 73-vs-79 table and a false G9 tick)."
+    blockers: []
+    next_action: "Post-merge: Fleet CD deploys; the agent-watch loop starts with the next FRIDAY restart (first site sweep tomorrow 08:00 IST, first watchlist briefing 17:30 IST only if topics are queued, first Sentinel digest Monday). Optional: enable .githooks via git config core.hooksPath .githooks on working clones."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

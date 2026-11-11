@@ -113,6 +113,7 @@ from friday.tools.builtin import (
     StratexPortfolioTool,
     SentinelSecurityTool,
     FuturisForecastTool,
+    WebFetchSummarizeTool,
     SystemPowerControlTool,
     TimeDateTool,
     ToggleBluetoothTool,
@@ -152,6 +153,7 @@ class ToolExecutionMixin:
             registry.register(StratexPortfolioTool())
             registry.register(SentinelSecurityTool())
             registry.register(FuturisForecastTool())
+            registry.register(WebFetchSummarizeTool())
             registry.register(TimeDateTool())
             registry.register(CalculatorTool())
             registry.register(FileReaderTool())

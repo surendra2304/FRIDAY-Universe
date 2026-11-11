@@ -337,6 +337,28 @@ async def _mission_execution_loop() -> None:
             logger.exception("Mission execution loop error (continuing)")
 
 
+async def _agent_watch_loop() -> None:
+    """Checklists F8/F9/F14/F15/F20 (batch 6, ZAI Agent 2): scheduled agent-depth passes.
+
+    One loop owns all three passes (site sweep 08:00 IST, watchlist briefing
+    17:30 IST, Sentinel digest Monday 09:30 IST); windows and once-per-period
+    latches live in agent_watch.agent_watch_tick. Every failure is honest and
+    non-fatal — a watch pass must never take the assistant down.
+    """
+    while True:
+        try:
+            await asyncio.sleep(600)  # 10 minutes between gate checks
+            from friday.proactive.agent_watch import agent_watch_tick
+
+            outcome = await agent_watch_tick()
+            if any(v is not None for v in outcome.values()):
+                logger.info("Agent-watch passes: %s", {k: v for k, v in outcome.items() if v})
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Agent-watch loop error (continuing)")
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Pre-flight environment validation
@@ -383,12 +405,15 @@ async def lifespan(_: FastAPI):
     report_task = asyncio.create_task(_daily_report_loop(), name="friday-daily-self-report")
     # Checklists G6/G12: overnight mission execution (03:00–05:00 IST window).
     mission_task = asyncio.create_task(_mission_execution_loop(), name="friday-mission-executor")
+    # Checklists F8/F9/F14/F15/F20 (batch 6, ZAI Agent 2): scheduled
+    # agent-depth passes — watchlist briefings, site health, Sentinel digest.
+    agent_watch_task = asyncio.create_task(_agent_watch_loop(), name="friday-agent-watch")
     try:
         yield
     finally:
         logger.info("Graceful shutdown initiated: stopping background tasks and listener loops...")
-        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task]
-        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task):
+        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task]
+        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task):
             task.cancel()
         try:
             await asyncio.wait_for(
@@ -2535,6 +2560,82 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 "summary_stored": bool(_consol_res.get("summary_stored")),
             },
         }
+
+    # =========================================================================
+    # A0.58 Watchlist (checklists F8/F9: watch topics + daily briefings)
+    # =========================================================================
+    # "watch topic X" parks a topic in the watchlist store; "my watchlist"
+    # lists it; "stop watching X" removes it. The daily briefing + change
+    # detection run in the agent-watch lifespan loop (17:30 IST) — this path
+    # is intake/management only, deterministic, BEFORE recall/remember so
+    # watchlist phrasing is never eaten by a memory pattern.
+    try:
+        from friday.proactive.agent_watch import (
+            is_watchlist_query,
+            parse_watch_add,
+            parse_watch_remove,
+            watchlist_store,
+        )
+
+        _watch_topic = parse_watch_add(raw_cmd)
+        if _watch_topic:
+            _entry = watchlist_store.add_topic(_watch_topic)
+            _n_topics = len(watchlist_store.topics())
+            _reply = (
+                f"On it, Boss — I'm now watching \"{_entry['topic']}\". Every evening "
+                "(17:30 IST) I'll ask IntelX for an evidence-based brief and tell you "
+                "only what CHANGED since the last one. Say \"my watchlist\" to see "
+                f"everything I'm watching ({_n_topics} topic{'s' if _n_topics != 1 else ''})."
+            )
+            return {
+                "reply": _reply,
+                "metadata": {
+                    "fast_path": True,
+                    "conversational": True,
+                    "watchlist_add": True,
+                },
+            }
+        _unwatch_topic = parse_watch_remove(raw_cmd)
+        if _unwatch_topic:
+            if watchlist_store.remove_topic(_unwatch_topic):
+                _reply = f"Done, Boss — I've stopped watching \"{_unwatch_topic}\". No more briefs on it."
+            else:
+                _reply = (
+                    f"I checked my watchlist, Boss, and \"{_unwatch_topic}\" isn't on it — "
+                    "nothing was removed. Say \"my watchlist\" to see the current topics."
+                )
+            return {
+                "reply": _reply,
+                "metadata": {
+                    "fast_path": True,
+                    "conversational": True,
+                    "watchlist_remove": True,
+                    "removed": _unwatch_topic in raw_cmd and "stopped" in _reply,
+                },
+            }
+        if is_watchlist_query(cmd):
+            _topics = watchlist_store.topics()
+            if not _topics:
+                _reply = (
+                    "My watchlist is empty right now, Boss. Tell me \"watch topic <subject>\" "
+                    "and I'll follow it with a daily evidence-based brief from IntelX."
+                )
+            else:
+                _lines = [
+                    f"I'm watching {_len} topic{'s' if (_len := len(_topics)) != 1 else ''} for you, Boss:"
+                ]
+                for _t in _topics:
+                    _last = str(_t.get("last_brief_ist") or "")[:10]
+                    _when = f" (last brief {_last})" if _last else " (first brief this evening)"
+                    _lines.append(f"• {_t['topic']}{_when}")
+                _lines.append("The evening briefing (17:30 IST) tells you what changed on each.")
+                _reply = "\n".join(_lines)
+            return {
+                "reply": _reply,
+                "metadata": {"fast_path": True, "conversational": True, "watchlist_list": True},
+            }
+    except Exception as _we:
+        logger.debug(f"watchlist fast-path skipped: {_we}")
 
     # =========================================================================
     # A0.57 Mission Queue (checklists G6/G12: overnight missions + TODO intake)

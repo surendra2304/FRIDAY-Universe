@@ -302,4 +302,25 @@ notification is sent when each batch finishes (`scripts/notify_turn_complete.py`
 
 ---
 
-**Current position: Batches 1–5 COMPLETE (2026-11-11 IST) — Agent 1: Batches 1–4 (Stratex rescue, strategy depth, orchestration, memory/brain; checklist A 13/14, B 12/12); Agent 2: Batch 5 (autonomy G5/G6/G7/G8/G11/G12 + H8/H9 — 42 new tests, 0 regressions). Checklist 79/125 (63%). Two-agent lanes active (see docs/collaboration/ZAI_AGENT_2_ONBOARDING.md): ZAI Agent 1 (Lane A) → next Batch 9 (tech debt & tests); ZAI Agent 2 (Lane B) → next Batch 6 (agent depth I: Sentinel/IntelX/Cortex), then 7 → 8.**
+## Batch 6 — Agent depth I (F 9/27 → 18/27) — EXECUTED BY ZAI AGENT 2, COMPLETE 2026-11-11 IST
+
+> Lane B (claim: issue #35 comment 6802957472). Cross-lane touches claimed there:
+> capability_router.py (FETCH_SUMMARIZE_KEYWORDS), api/server.py (one lifespan
+> task + watchlist fast-path), tools/__init__ + mixins/tools.py (tool registration).
+
+1. ✅ F8a watchlist store + chat intake ("watch topic X", casing preserved)
+2. ✅ F8b scheduled daily briefing (17:30–20:00 IST, IntelX real dispatch, ≤6 topics)
+3. ✅ F9 change detection (SHA-256 + headline-line diff; no-change/what's-new/first-brief)
+4. ✅ F13 web_fetch_summarize tool + SSRF guard + FETCH_SUMMARIZE_KEYWORDS routing
+5. ✅ F14 uptime checks (10 gateway routes + Cortex governed properties, one truth)
+6. ✅ F15 scheduled site sweep (08:00–12:00 IST; healthy → one line, degraded → alert)
+7. ✅ F17 dependabot.yml (weekly Monday; github-actions + pip; grouped, security-first)
+8. ✅ F18 agent-health-digest.yml (weekly Monday 10:00 IST; pip-audit + CI failures digest)
+9. ✅ F20 Sentinel digest (Monday 09:30 IST; ask_sentinel + findings, read-only)
+10. ✅ F21 pre-push secret guard (scripts/guard_secrets_pre_push.py + .githooks/pre-push; self-test 7/7)
+
+Evidence: test_batch6_agent_depth.py 35/35; full battery A/B vs clean main —
+446 passed, 18 failed, failing set IDENTICAL to the pre-existing baseline
+(Oracle-driver environmental), zero new failures. Checklist recount: 91/125 (73%).
+
+**Current position: Batches 1–6 COMPLETE (2026-11-11 IST) — Agent 1: Batches 1–4 (A 13/14, B 12/12); Agent 2: Batches 5 (autonomy G+H) and 6 (agent depth F 18/27). Checklist 91/125 (73%). Lanes active (ZAI_AGENT_2_ONBOARDING.md): ZAI Agent 1 (Lane A) → Batch 9 (tech debt & tests); ZAI Agent 2 (Lane B) → Batch 7 (agent depth II: F3, F5, F6, F11, F12, F22–F24), then 8.**

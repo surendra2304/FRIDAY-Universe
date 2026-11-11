@@ -1,0 +1,94 @@
+name: Agent Health Digest
+
+# Checklist F18 (MASTER_COMPLETION_CHECKLIST) — Batch 6, ZAI Agent 2.
+# Weekly dependency + CI health report: fresh pip audit across the
+# monorepo's Python surfaces and a digest of the last week's workflow
+# failures, so "is the engineering side healthy?" has a dated answer.
+# Read-only — findings are reported, fixes stay in the owning lane.
+
+on:
+  schedule:
+    # Monday 10:00 IST (04:30 UTC) — after the Sentinel digest window.
+    - cron: "30 4 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: agent-health-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    name: Dependencies + CI health digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit FRIDAY requirements
+        run: |
+          mkdir -p /tmp/digest
+          {
+            echo "## FRIDAY requirements audit ($(date -u +%Y-%m-%dT%H:%MZ))"
+            if [ -f FRIDAY/requirements.txt ]; then
+              pip-audit -r FRIDAY/requirements.txt --no-deps || true
+            else
+              echo "no requirements.txt found"
+            fi
+          } | tee /tmp/digest/friday_audit.txt
+
+      - name: Audit Memora requirements
+        run: |
+          {
+            echo "## Memora requirements audit"
+            if [ -f Memora/requirements.txt ]; then
+              pip-audit -r Memora/requirements.txt --no-deps || true
+            else
+              echo "no requirements.txt found"
+            fi
+          } | tee /tmp/digest/memora_audit.txt
+
+      - name: Summarize last week's workflow failures
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "## Workflow failures (last 7 days)"
+            gh run list --repo "$GITHUB_REPOSITORY" --created "$(date -u -d '7 days ago' +%Y-%m-%d)" \
+              --status failure --limit 30 --json name,conclusion,createdAt,displayTitle \
+              --jq '.[] | "- \(.createdAt[:10]) \(.name): \(.displayTitle)"' || echo "(none or query failed)"
+          } | tee /tmp/digest/ci_failures.txt
+
+      - name: Compose digest
+        run: |
+          {
+            echo "# Agent Health Digest — $(date -u +%Y-%m-%d)"
+            echo
+            cat /tmp/digest/friday_audit.txt
+            echo
+            cat /tmp/digest/memora_audit.txt
+            echo
+            cat /tmp/digest/ci_failures.txt
+            echo
+            echo "_Read-only report (checklist F18). Fixes belong to the owning lane._"
+          } > agent_health_digest.md
+          cat agent_health_digest.md
+
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-health-digest-${{ github.run_id }}
+          path: agent_health_digest.md
+          retention-days: 30

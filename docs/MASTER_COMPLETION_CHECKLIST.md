@@ -4,7 +4,7 @@
 
 **Legend:** ✅ done & evidenced · 🔶 partial (works but gaps) · ⬜ not done · ⛔ blocked on an external dependency
 
-**Snapshot:** 2026-11-11 (IST; batch 4 COMPLETE by ZAI Agent 1: B8 importance scoring + aging, B11 voice-path memory, B12 memory browser API, A6 12-turn coherence, A7 20-prompt reasoning benchmark, A9 tone matching, A11 long-goal persistence, A12 proactive follow-up, A14 boss-only command surface — 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5 Telegram two-way, G6 overnight missions, G7 daily self-report, G8 weekly summary, G11 self-heal sweep, G12 task intake, H8 cert check, H9 log-rotation verified — 42 new tests, 0 regressions) · 79/125 items done (63%) · capability-weighted completion ≈ 65%
+**Snapshot:** 2026-11-11 (IST; batch 4 COMPLETE by ZAI Agent 1: B8 importance scoring + aging, B11 voice-path memory, B12 memory browser API, A6 12-turn coherence, A7 20-prompt reasoning benchmark, A9 tone matching, A11 long-goal persistence, A12 proactive follow-up, A14 boss-only command surface — 76/76 + 235 battery green; batch 5 COMPLETE by ZAI Agent 2: G5 Telegram two-way, G6 overnight missions, G7 daily self-report, G8 weekly summary, G11 self-heal sweep, G12 task intake, H8 cert check, H9 log-rotation verified — 42 new tests, 0 regressions; batch 6 COMPLETE by ZAI Agent 2: F8/F9 watchlist briefings + change detection, F13 SSRF-guarded web fetch/summarize, F14/F15 site sweeps, F17/F18 dependency+CI health, F20 Sentinel digest, F21 pre-push secret guard — 35 new tests, 0 regressions) · 91/125 items done (73%) · capability-weighted completion ≈ 65%
 
 ---
 
@@ -105,8 +105,8 @@
 
 **IntelX (research)**
 - [x] **F7** Research briefs with citations via chat (live)
-- [ ] **F8** Scheduled briefings on owner's watchlist topics
-- [ ] **F9** Watchlist monitoring with change detection
+- [x] **F8** Scheduled briefings on owner's watchlist topics (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: `proactive/agent_watch.py` — chat intake "watch topic X"/"keep an eye on X" (casing preserved); daily 17:30–20:00 IST brief per topic (≤6) through IntelX's real dispatch, delivered on the owner Telegram channel; empty watchlist sends nothing — no noise)
+- [x] **F9** Watchlist monitoring with change detection (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: each topic stores its last brief's SHA-256 + headline lines; identical brief → "no change since yesterday", changed brief → only NEW lines, first brief labeled as such — locked by tests)
 
 **Futuris (forecasting)**
 - [x] **F10** Forecast requests via chat (capability exists; untested live) (DONE 2026-11-11 IST: FuturisForecastTool + FleetClient.request_futuris_forecast — real POST /v1/friday/forecast (target + horizon 1h/24h/7d/30d + quoted-target/horizon extraction); Futuris's honest statuses (BLOCKED/INSUFFICIENT_DATA) reported as-is; every answer states prediction-never-authorization; FORECAST_KEYWORDS routing → TOOL_EXECUTION futuris_forecast, never VISION_MODEL/never DIRECT_REASONING; registered in the default registry; live E2E lands with the next deploy; 32-test suite + 347 related-suite passes)
@@ -114,19 +114,19 @@
 - [ ] **F12** Prediction accuracy tracking (log predictions, score later)
 
 **Cortex (web ops)**
-- [ ] **F13** Web fetch/summarize on request (limited today)
-- [ ] **F14** Uptime/availability checks for owned properties
-- [ ] **F15** Scheduled site health sweeps
+- [x] **F13** Web fetch/summarize on request (limited today) (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: `web_fetch_summarize` tool — SSRF guard the old fetch tools lacked (loopback/link-local/private/metadata/non-http/odd-port refused BEFORE connect + post-redirect re-check), cleaned page summarized through the same SynthesizeInformationTool; FETCH_SUMMARIZE_KEYWORDS routing → TOOL_EXECUTION, never DIRECT_REASONING)
+- [x] **F14** Uptime/availability checks for owned properties (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: daily site sweep probes all 10 gateway routes (status + latency, honest per-site results) + Cortex governed-properties through the same read-only path as the chat tool)
+- [x] **F15** Scheduled site health sweeps (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: 08:00–12:00 IST window, once per day; healthy fleet → ONE compact line, degraded → per-site alert lines; failed delivery unlatches and retries next tick)
 
 **Forge (engineering)**
 - [x] **F16** Real code tasks via chat (live, sandboxed)
-- [ ] **F17** Repo hygiene ops: dependency bumps, CI watch (partial tooling)
-- [ ] **F18** Scheduled dependency/CI health report
+- [x] **F17** Repo hygiene ops: dependency bumps, CI watch (partial tooling) (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: `.github/dependabot.yml` — weekly Monday cadence for github-actions (root + FRIDAY) and pip (FRIDAY), grouped minor/patch, security-first)
+- [x] **F18** Scheduled dependency/CI health report (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: `.github/workflows/agent-health-digest.yml` — weekly Monday 10:00 IST: pip-audit (FRIDAY + Memora) + last-7-days workflow failures; 30-day artifact; read-only, fixes stay in the owning lane)
 
 **Sentinel (security)**
 - [x] **F19** Security scan on request (capability partial) (DONE 2026-11-11 IST: SentinelSecurityTool — posture (overall + per-domain scores, severity counts, audit-chain verdict, via FleetClient.ask_sentinel) + findings (open finding ledger, severity filter, via NEW FleetClient.ask_sentinel_findings, honest empties/failures); SECURITY_SCAN_KEYWORDS routing → TOOL_EXECUTION sentinel_security, never VISION_MODEL/never DIRECT_REASONING; registered in the default registry; read-only by construction — active assessments stay behind Sentinel's fail-closed owner-authorized scope (the live C6 400 rejection remains the correct behavior for unscoped assessments); 33-test suite + 191 related-suite passes)
-- [ ] **F20** Scheduled vulnerability scans + report
-- [ ] **F21** Secret-leak guard on the public repo (pre-push scan)
+- [x] **F20** Scheduled vulnerability scans + report (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: weekly Monday 09:30–14:00 IST Sentinel digest via FleetClient.ask_sentinel + ask_sentinel_findings (read-only, real scores/severities) on the owner Telegram channel; unreachable Sentinel reported honestly, never "all clear")
+- [x] **F21** Secret-leak guard on the public repo (pre-push scan) (DONE 2026-11-11 IST, batch 6 / ZAI Agent 2: `scripts/guard_secrets_pre_push.py` + `.githooks/pre-push` — scans ADDED lines of pushed commits for the token shapes this fleet uses (Telegram bot, GitHub PAT, Oracle DSN, AWS key, private-key block, Binance key); allowlist for .example shapes; 7-case self-test green; local seatbelt next to CI Gitleaks)
 
 **VyralX (video)**
 - [ ] **F22** Video script generation on request
@@ -148,7 +148,7 @@
 - [x] **G6** Overnight mission loop: queue tasks at night, execute, report in the morning (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: `proactive/mission_queue.py` — file-backed queue (atomic tmp+replace writes, survives restarts), night execution window 03:00–05:00 IST via a lifespan gate loop, bounded retries (2 attempts), refused missions are skipped not retried, budget-capped per night; morning report via render_morning_report into the daily report; E2E-verified through /api/chat)
 - [x] **G7** Daily self-report: "what I did today" (21:00 IST, Telegram) (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: `proactive/daily_self_report.py` — composed ONLY from real records: conversation history, TaskRecordStore dispatch report, fleet supervision snapshot, mission outcomes, Memora growth; zero records reported as zero; component failures reported as honest "could not read" lines; once-per-day latch; send failure retries next cycle without latching)
 - [x] **G8** Weekly summary report (Sunday evening) (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: same module — Sunday 20:00 IST weekly roll-up with per-status ledger totals and fleet posture, before the 21:00 daily)
-- [x] **G9** 🔶 ARM sniper: 2 workflows hunting hourly; 0 servers captured so far (capacity-gated)
+- [ ] **G9** 🔶 ARM sniper: 2 workflows hunting hourly; 0 servers captured so far (capacity-gated) — partial, capacity-gated
 - [ ] **G10** Second-server workload split once ARM lands (self-host SFU = E8) (⛔ blocked on G9 capacity)
 - [x] **G11** Self-healing sweep: disk, certs, backups checked daily (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: `scripts/friday_self_heal_sweep.py` + `deploy/friday-self-heal.{service,timer}` — daily 07:30 IST systemd timer per server; checks disk %, TLS expiry (LIVE-VERIFIED: cert expires 2027-01-12, 61 days), journald usage vs cap, failed units, backup manifest freshness, + public gateway 10/10 on Server 1; Telegram alert only on threshold crossings; honest "check failed" lines, never guessed values)
 - [x] **G12** Autonomous task intake: owner's TODO list becomes FRIDAY's queue (DONE 2026-11-11 IST, batch 5 / ZAI Agent 2: chat intake "add to tonight's missions: X" / "queue for tonight: X" / "add to my todo: X" queues real work with casing preserved (same rule as the memory paths); "my missions" lists; "run my missions now" executes on demand through the real brain; run-intent takes precedence over list-intent (E2E lesson locked by test); never hijacks remember/recall/delegation/fleet-status/research (route-level suite green))
@@ -183,16 +183,16 @@
 
 | Module | Done | Total | % |
 |---|---|---|---|
-| A. Brain | 7 | 14 | 50% |
-| B. Memory | 9 | 12 | 75% |
+| A. Brain | 13 | 14 | 93% |
+| B. Memory | 12 | 12 | 100% |
 | C. Orchestration | 14 | 14 | 100% |
 | D. Website | 13 | 18 | 72% |
 | E. Voice | 2 | 10 | 20% |
-| F. Agents | 9 | 27 | 33% |
+| F. Agents | 18 | 27 | 67% |
 | G. Autonomy | 10 | 12 | 83% |
 | H. Infra | 7 | 10 | 70% |
 | I. Tech debt | 2 | 8 | 25% |
-| **Universe** | **73** | **125** | **58%** |
+| **Universe** | **91** | **125** | **73%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

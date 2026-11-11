@@ -1149,6 +1149,55 @@ claims:
     task: "Batch 4 contract suite (76 tests)."
 
 
+  - path: "FRIDAY/src/friday/proactive/agent_watch.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH6_AGENT2"
+    task: "Checklists F8/F9/F14/F15/F20: watchlist store + IntelX briefings with change detection; site sweeps; Sentinel digest; the agent-watch scheduler."
+
+  - path: "FRIDAY/src/friday/tools/builtin/web_fetch_summarize.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH6_AGENT2"
+    task: "Checklist F13: SSRF-guarded web fetch + summarize tool."
+
+  - path: "FRIDAY/tests/test_batch6_agent_depth.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH6_AGENT2"
+    task: "Batch 6 contract suite (35 tests)."
+
+  - path: "scripts/guard_secrets_pre_push.py"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH6_AGENT2"
+    task: "Checklist F21: pre-push secret guard (added-line scanner + self-test)."
+
+  - path: ".githooks/pre-push"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH6_AGENT2"
+    task: "Checklist F21: hook entry calling the secret guard."
+
+  - path: ".github/dependabot.yml"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH6_AGENT2"
+    task: "Checklist F17: weekly dependency-bump config (github-actions + pip)."
+
+  - path: ".github/workflows/agent-health-digest.yml"
+    owner: "zai_agent_2"
+    prs: []
+    branches: []
+    status: "DIRECT_COMMIT_BATCH6_AGENT2"
+    task: "Checklist F18: weekly pip-audit + CI-failures digest workflow."
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

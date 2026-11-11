@@ -1,0 +1,54 @@
+# Checklist F17 (MASTER_COMPLETION_CHECKLIST) — Batch 6, ZAI Agent 2.
+# Automated dependency hygiene: security-first updates, grouped to keep the
+# CI signal readable. Targets the surfaces CI actually pins: GitHub Actions
+# versions and Python requirements across the monorepo (pip manifests only —
+# Stratex/Cortex/Futuris keep their own lockstep cadence in their lanes).
+version: 2
+updates:
+  # GitHub Actions workflow dependencies (repo-level + agent CI folders).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor:
+        update-types: ["minor", "patch"]
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci(deps):"
+
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows/FRIDAY"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      actions-minor:
+        update-types: ["minor", "patch"]
+    labels:
+      - "dependencies"
+      - "ci"
+
+  # Python requirements (FRIDAY service).
+  - package-ecosystem: "pip"
+    directory: "/FRIDAY"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 5
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(friday):"

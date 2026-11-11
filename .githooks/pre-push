@@ -1,0 +1,6 @@
+#!/bin/sh
+# Checklist F21 (MASTER_COMPLETION_CHECKLIST) — pre-push secret guard.
+# Activate per clone with:  git config core.hooksPath .githooks
+# CI already runs Gitleaks (secret-scan.yml); this is the local seatbelt.
+python3 "$(dirname "$0")/../scripts/guard_secrets_pre_push.py" || exit 1
+exit 0
