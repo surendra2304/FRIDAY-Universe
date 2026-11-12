@@ -404,6 +404,22 @@ async def _try_gemini_realtime(instructions: str):
     return None
 
 
+def _fallback_tts():
+    """A working standalone TTS for fixed lines (greeting fallback), built on
+    the same proven Groq key the chat brain uses. None if unavailable — the
+    realtime session then simply has no say() fallback."""
+    key = _groq_key()
+    if not key or not GROQ_PLUGIN_AVAILABLE:
+        return None
+    try:
+        return _lk_groq.TTS(
+            api_key=key, model="canopylabs/orpheus-v1-english", voice="autumn",
+        )
+    except Exception as exc:
+        logger.warning("fallback groq TTS unavailable: %s", exc)
+        return None
+
+
 async def _try_groq_pipeline():
     """Path 2: full Groq pipeline on the key the chat brain already uses."""
     key = _groq_key()
@@ -461,8 +477,15 @@ async def entrypoint(ctx: JobContext):
     if realtime_model is not None:
         provider_name = f"gemini-realtime:{_voice_model()}"
         agent = Agent(instructions=instructions, tools=_voice_tools())
+        # Greeting-fallback fix (live journal 2026-11-13): on a realtime
+        # session, say() without a standalone TTS raises 'no TTS model' —
+        # the fallback line could never speak. Attach the working Groq
+        # orpheus TTS so fixed lines always have a voice; the realtime
+        # stream itself remains the Gemini audio path.
+        _fallback = _fallback_tts()
         session = _build_session(
             llm=realtime_model,
+            **({"tts": _fallback} if _fallback is not None else {}),
             turn_detection="realtime_llm",
             min_endpointing_delay=0.5,
             max_endpointing_delay=3.0,
@@ -471,6 +494,8 @@ async def entrypoint(ctx: JobContext):
             resume_false_interruption=True,
             false_interruption_timeout=1.0,
         )
+        if _fallback is not None:
+            logger.info("gemini session carries a groq fallback TTS for fixed lines")
         _write_status("ready", provider_name, model=_voice_model())
     else:
         groq_parts, reason = await _try_groq_pipeline()
@@ -558,12 +583,15 @@ async def entrypoint(ctx: JobContext):
     async def _greet_when_ready() -> None:
         """Greet only once a real generation can be attached.
 
-        Calling generate_reply() immediately after session.start() races the
-        model's turn registration: Gemini streams content, the plugin logs
-        "received server content but no active generation", and the audio is
-        discarded -- the participant then hears nothing at all. Waiting for
-        the human to actually join and giving the session a beat to arm
-        fixes that.
+        Live journal 2026-11-13 (two runs, identical): generate_reply() raced
+        the realtime session's arming on this CPU-starved host — the plugin
+        gave up after 5s ('timed out waiting for generation_created'), the
+        model's audio arrived at ~+11s with no generation attached and was
+        DROPPED, and the old say() fallback raised 'no TTS model' on a
+        realtime session. The owner heard nothing — 'voice chat is not
+        working'. Now: a longer arming beat, a generate_reply retry, and a
+        say() fallback that works because BOTH provider paths carry a real
+        TTS for fixed lines.
         """
         if not greeting_enabled:
             return
@@ -574,46 +602,48 @@ async def entrypoint(ctx: JobContext):
             except Exception:  # room state is best-effort, never fatal
                 break
             await asyncio.sleep(0.2)
-        await asyncio.sleep(0.9)
-        logger.info("VOICE greeting requested")
-        try:
-            # Honest greeting (remote main): no fleet-health claims. The
-            # Telugu line is spoken only on the bilingual Gemini path — the
-            # Groq TTS voice is English-only in this build.
-            _telugu_line = (
-                " Add one short Telugu line "
-                "(నమస్కారం, ఫ్రైడే సిద్ధంగా ఉంది) so the user knows Telugu works. "
-                if provider_name.startswith("gemini")
-                else " "
-            )
-            session.generate_reply(
-                user_input=(
-                    "Greet the user warmly as FRIDAY in one or two short sentences. "
-                    "Say you are here and ready to listen without claiming fleet health, "
-                    "then invite them to speak." + _telugu_line
-                )
-            )
-        except Exception as exc:
-            logger.error("VOICE greeting generation failed: %s", exc)
+        await asyncio.sleep(2.0)  # arming beat: first realtime turn needs ~11s here
 
-        # If the model swallowed the turn, speak a fixed line rather than
-        # leaving dead air. This is the difference between "voice is broken"
-        # and "voice answered but said something pre-scripted".
-        for _ in range(30):  # ~6s
-            if _speech_state["spoke"]:
-                return
-            await asyncio.sleep(0.2)
-        if not _speech_state["spoke"]:
-            logger.warning("VOICE no speech after greeting; using spoken fallback")
+        _telugu_line = (
+            " Add one short Telugu line "
+            "(నమస్కారం, ఫ్రైడే సిద్ధంగా ఉంది) so the user knows Telugu works. "
+            if provider_name.startswith("gemini")
+            else " "
+        )
+        _greeting_prompt = (
+            "Greet the user warmly as FRIDAY in one or two short sentences. "
+            "Say you are here and ready to listen without claiming fleet health, "
+            "then invite them to speak." + _telugu_line
+        )
+
+        for attempt in (1, 2):
+            logger.info("VOICE greeting requested (attempt %d)", attempt)
             try:
-                session.say(greeting_text, allow_interruptions=True)
-            except TypeError:
-                try:
-                    session.say(greeting_text)
-                except Exception as exc:
-                    logger.error("VOICE fallback speech failed: %s", exc)
+                session.generate_reply(user_input=_greeting_prompt)
+            except Exception as exc:
+                logger.error("VOICE greeting generation failed: %s", exc)
+            # watch up to 20s for real speech evidence
+            for _ in range(100):
+                if _speech_state["spoke"]:
+                    logger.info("VOICE greeting spoke (attempt %d)", attempt)
+                    return
+                await asyncio.sleep(0.2)
+            # no speech: give the realtime session a beat and retry once
+            await asyncio.sleep(3.0)
+
+        # Both realtime attempts dropped: speak the fixed line through the
+        # attached TTS. This is the difference between "voice is broken" and
+        # "voice answered with a fixed line" — and now it actually speaks.
+        logger.warning("VOICE no speech after greeting; using spoken fallback")
+        try:
+            session.say(greeting_text, allow_interruptions=True)
+        except TypeError:
+            try:
+                session.say(greeting_text)
             except Exception as exc:
                 logger.error("VOICE fallback speech failed: %s", exc)
+        except Exception as exc:
+            logger.error("VOICE fallback speech failed: %s", exc)
 
     asyncio.create_task(_greet_when_ready())
 
