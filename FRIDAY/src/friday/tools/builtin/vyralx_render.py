@@ -289,7 +289,7 @@ class VyralXRenderTool(BaseTool):
         job_id = data.get("job_id")
         job_status = data.get("status", "queued")
         lines = [
-            f"🎬 [VYRALX RENDER] Render job queued:",
+            "🎬 [VYRALX RENDER] Render job queued:",
             f"• Asset: {chosen.get('title', chosen['id'])} (asset_id={chosen['id']}, {chosen.get('duration_seconds', '?')}s)",
             f"• Preset: {preset} | Trim: {trim_start or 0}s → {trim_end or 'end'}",
             f"• Job: {job_id} — status: {job_status}",

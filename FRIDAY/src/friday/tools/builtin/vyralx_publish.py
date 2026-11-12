@@ -369,7 +369,7 @@ class VyralXPublishTool(BaseTool):
         job_id = data.get("job_id")
         job_status = data.get("status", "pending_approval")
         lines = [
-            f"📤 [VYRALX PUBLISH] Publish job queued for approval:",
+            "📤 [VYRALX PUBLISH] Publish job queued for approval:",
             f"• Asset: {chosen.get('title', chosen['id'])} (asset_id={chosen['id']})",
             f"• Render: job {render['id']} (completed)",
             f"• Title: {final_title} | Privacy: {privacy}",

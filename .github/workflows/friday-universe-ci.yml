@@ -25,7 +25,10 @@ jobs:
       # F13.4 (Tier-1 spec): lint before tests so style/import errors fail
       # fast with a readable report.
       - name: Lint (ruff check)
-        run: ruff check FRIDAY/src/friday --exclude FRIDAY/src/friday/tools/builtin --output-format=concise
+        # Net widened 2026-11-12 (ZAI Agent 2): the tools/builtin exclusion was
+        # stale — the legacy nest held only 2 trivial f-string findings, fixed.
+        # The lint now covers the entire friday package.
+        run: ruff check FRIDAY/src/friday --output-format=concise
 
       # regression-class floors in tests/COVERAGE_MANIFEST.json. A PR that
       # deletes/breaks the tests for a covered module fails here, not silently.
@@ -39,6 +42,7 @@ jobs:
             tests/test_real_universe_orchestrator.py \
             tests/test_real_realtime_pipeline.py \
             tests/test_real_universe_dashboard.py \
+            tests/test_real_deep_layer4b.py \
             tests/test_coverage_gate.py \
             -v --tb=short \
             --cov=FRIDAY/apps/core/src/friday_core \

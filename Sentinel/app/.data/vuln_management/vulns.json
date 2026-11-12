@@ -3622,5 +3622,53 @@
     "published_date": 1794300731.7537186,
     "fixed_version": "",
     "status": "open"
+  },
+  "vuln_e913230503ec": {
+    "vuln_id": "vuln_e913230503ec",
+    "cve_id": "AUTO-2ebf5af4",
+    "severity": "critical",
+    "title": "Code injection via eval()",
+    "description": "Code injection via eval()",
+    "cvss_score": 9.0,
+    "affected_product": "unknown",
+    "published_date": 1794472713.3006322,
+    "fixed_version": "",
+    "status": "open"
+  },
+  "vuln_fb17dd03b327": {
+    "vuln_id": "vuln_fb17dd03b327",
+    "cve_id": "AUTO-846eaf52",
+    "severity": "critical",
+    "title": "Code injection via eval()",
+    "description": "Code injection via eval()",
+    "cvss_score": 9.0,
+    "affected_product": "unknown",
+    "published_date": 1794472713.5226827,
+    "fixed_version": "",
+    "status": "open"
+  },
+  "vuln_b5a61e4f9fca": {
+    "vuln_id": "vuln_b5a61e4f9fca",
+    "cve_id": "AUTO-f953c057",
+    "severity": "critical",
+    "title": "Code injection via eval()",
+    "description": "Code injection via eval()",
+    "cvss_score": 9.0,
+    "affected_product": "unknown",
+    "published_date": 1794472713.8387177,
+    "fixed_version": "",
+    "status": "open"
+  },
+  "vuln_a60491a4e16c": {
+    "vuln_id": "vuln_a60491a4e16c",
+    "cve_id": "AUTO-1be589b9",
+    "severity": "critical",
+    "title": "Code injection via eval()",
+    "description": "Code injection via eval()",
+    "cvss_score": 9.0,
+    "affected_product": "unknown",
+    "published_date": 1794472714.1589088,
+    "fixed_version": "",
+    "status": "open"
   }
 }

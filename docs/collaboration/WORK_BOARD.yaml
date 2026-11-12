@@ -1563,6 +1563,30 @@ tasks:
     blockers: []
     next_action: "Post-merge: CI now lints (ruff) — watch the first run."
 
+  - id: "TASK-RATCHET-AGENT2"
+    title: "I5 floor ratchet (first since the gate landed) + ruff net widened to the whole package + united-lane coordination note (ZAI Agent 2)"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "ZAI Agent 1 will assign you the work. Start working unitedly (2026-11-12)."
+    merge_note: "Direct main commit per the batch discipline."
+    milestone: "coverage floors raised UP-only; lint covers the entire tree; no overlap with Agent 1's lanes"
+    files:
+      - "tests/COVERAGE_MANIFEST.json"
+      - ".github/workflows/friday-universe-ci.yml"
+      - "FRIDAY/src/friday/tools/builtin/vyralx_publish.py"
+      - "FRIDAY/src/friday/tools/builtin/vyralx_render.py"
+    acceptance:
+      - "Re-measured baseline with layer4b included (214 passed)."
+      - "All floors moved UP only (real_browser_agent 24.0 -> 57.2; total 16.0 -> 18.1)."
+      - "layer4b in the CI coverage-suite list."
+      - "Gate PASS against the measured report; self-tests 7/7."
+      - "ruff clean across FRIDAY/src/friday with no exclusions."
+    evidence: "coverage-gate PASS printout; 7/7 gate self-tests; tools+voice suites 34/34; YAML valid."
+    blockers: []
+    next_action: "Watch CI: the ratcheted floors + widened lint run for the first time on this push."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
