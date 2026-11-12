@@ -1625,6 +1625,29 @@ tasks:
     blockers: []
     next_action: "Post-merge: Fleet CD deploys. Watch production logs for the Forge memory path (its fallback now actually persists lessons)."
 
+  - id: "TASK-F401-SWEEP-AGENT2"
+    title: "F401 unused-import sweep (745 removals, 359 files) + B006 mutable defaults + F811 redefinitions across the 8 sibling apps (ZAI Agent 2)"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Continue (2026-11-12)."
+    merge_note: "Direct main commit per the batch discipline."
+    files:
+      - "8 sibling apps, 359 files (bulk) + 8 hand-trimmed dual-path import blocks"
+      - "Stratex/stratex_more_integrations/__init__.py"
+      - "Stratex/quantum/__init__.py"
+      - "Memora/core/memory/real_deep_memory.py"
+      - "Memora/apps/api/dependencies.py"
+    acceptance:
+      - "ruff F401/F811/F821 = 0 across all 8 sibling apps."
+      - "All 359 changed files compile; hand-edited modules import-probed."
+      - "Re-export casualties: 1 found (Memora get_db), restored; exact-name AST audit clean."
+      - "Every failing test in every app reproduced identically on stashed HEAD."
+    evidence: "CI all-green on 7ab94d3; Memora 76 / Stratex 82 / VyralX 24 / Sentinel 516 passed on final tree."
+    blockers: []
+    next_action: "None — the 3 real-bug lint classes (F821/F811/B006) and the F401 dead-weight class are now all zero across siblings."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
