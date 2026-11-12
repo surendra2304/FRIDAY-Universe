@@ -1876,10 +1876,10 @@ tasks:
 
   - id: TASK-WF-007
     title: Goal-specific real model code and valid generated tests through Forge/Inference
-    status: IN_PROGRESS
+    status: BLOCKED
     owner: arena_engineering_01
     branch: arena/TASK-WF-007-goal-fidelity
-    pr: null
+    pr: 60
     files:
     - .github/workflows/owner-workflows.yml
     - Forge/app/agents/roles.py
@@ -1891,7 +1891,7 @@ tasks:
     - Forge/tests/unit/test_goal_fidelity_contract.py
     - Inference/tests/test_forge_goal_and_test_generation.py
     claimed_at: '2026-11-12T15:58:59.115861+00:00'
-    last_update: '2026-11-12T15:58:59.115861+00:00'
+    last_update: '2026-11-12T16:35:47.675328+00:00'
     acceptance:
     - Preserve original goal and explicit requirements through execution context and
       code/test generation.
@@ -1912,14 +1912,41 @@ tasks:
       pass. Explicit provider fixtures, not live generated output acceptance.
     - Private credentials.md located on both hosts; getMe verified named zai_notifications_bot
       token. No notification yet; no token printed/copied/committed.
+    - PR60 exact head21d65af1b29ab458100343153017832a6f6d720c merged d252b9cc4070e88ca0adca35cf52ec059ffd96d3.
+      Eight successful CI checks including two test jobs; two main-only Docker skips
+      per existing workflow condition. Controlled deployment43257739146success.
+    - 46 focused Forge and48 Inference tests pass. Additional orchestrator diagnostic
+      stopped after3 db_path constructor TypeErrors, all3 reproduced on archived pre-WF007
+      source; not skipped or weakened. First baseline attempt lacked mesh import path
+      and collected no tests; corrected path reproduced same failures.
+    - One canonical request on runtime ab04445b96537e4acb4126debb0a315926859b28 (includes
+      Stratex collaborator work) timed out236.91s/unconfirmed. Reconciled by before/after
+      workspace inventory to exactly one new task1112112026162526. No duplicate build.
+    - Actual generated project is generic greet CLI, NOT CSV converter. No tests generated.
+      Saved manifest PARTIAL_FAILURE/all_passed=false,8passed/2failed; Ruff unused imports
+      exit1; test discovery exit1/no tests executed. Runtime --help exit0 only proves
+      generic CLI liveness, not requested behavior.
+    - 'Artifacts: /opt/friday_universe/Forge/workspaces/task1112112026162526/project/main.py
+      and artifacts/verification_manifest.json. Private canonical receipt /var/tmp/friday-workflow-acceptance/wf007-canonical.json.
+      Generated source never hand-edited/pushed/deployed.'
+    - Read-only source confirms peer-remediation delegate_repair context omits owner
+      goal/requirements, while default DirectProvider produces a prompt-summary scaffold.
+      Causation for this task not yet traced; no speculative coordinator/provider patch.
+    - 'Private protected-untracked preflight backups: S1 c504168 five files, S2 62daafe
+      six files. Own rollout did not touch Stratex source; newer collaborator commits
+      preserved. Do not infer unchanged daemon PID across collaborator deployments.'
+    - Owner-requested Telegram outcome delivered via verified zai_notifications_bot, message_id34. Private destination cross-checked against credentials.md; secrets never exposed.
+    - Later read-only git comparison proves release e6b7a88 contained CSV converter and embedded unittest tests, overwritten afterward by generic greet CLI. Byte-identical private release snapshot passed two generated and two independent tests (4total/exit0); CLI conversion exit0 and actual quoted.json persisted. Current workspace hash unchanged; final acceptance still fails. Private snapshot evidence.json retains exact command, source SHA256 and outputs.
     blockers:
-    - Real post-fix generated code/test and independent behavior acceptance pending
-      rollout.
-    - Continuous owner microphone/audio, reviewed video/YouTube OAuth and sustained
-      profitability remain outside this acceptance and unverified.
-    next_action: CI, controlled exact-head rollout, then one bounded goal-specific canonical
-      build; inspect existing task on timeout, no blind retry. Telegram completion notification
-      only after final outcome.
+    - Goal-specific generated tested CSV converter still rejected; no quoted-comma/empty-input
+      acceptance possible on generic greet CLI.
+    - Trace the proved post-release overwrite through peer-remediation/provider fallback and discover embedded unittest suites before another
+      build; do not compensate by editing delivered code.
+    - Owner continuous microphone, reviewed video/YouTube reauthorization and sustained
+      profitability remain unverified.
+    next_action: Preserve task1112112026162526 evidence; investigate goal loss and default
+      scaffold providers with focused tests before any further generation. Record owner
+      Telegram delivery receipt separately; no claim of complete software workflow.
     claim_policy: Update within2h; contact before takeover, no automatic expiration.
 
 task_id_warnings:
@@ -2019,54 +2046,6 @@ task_id_warnings:
     next_action: Focused PR/CI/controlled rollout, then reverify existing task without
       new generation; preserve task history and honest remaining blockers.
     claim_policy: Update within2h; contact before takeover.
-
-  - id: TASK-WF-007
-    title: Goal-specific real model code and valid generated tests through Forge/Inference
-    status: IN_PROGRESS
-    owner: arena_engineering_01
-    branch: arena/TASK-WF-007-goal-fidelity
-    pr: null
-    files:
-    - .github/workflows/owner-workflows.yml
-    - Forge/app/agents/roles.py
-    - Forge/app/core/context.py
-    - Forge/app/core/orchestrator.py
-    - Forge/app/integrations/ai_universe_client.py
-    - Inference/app/services/code_generation.py
-    - Inference/app/services/test_generation.py
-    - Forge/tests/unit/test_goal_fidelity_contract.py
-    - Inference/tests/test_forge_goal_and_test_generation.py
-    claimed_at: '2026-11-12T15:58:59.115861+00:00'
-    last_update: '2026-11-12T15:58:59.115861+00:00'
-    acceptance:
-    - Preserve original goal and explicit requirements through execution context and
-      code/test generation.
-    - Unwrap narrated fenced Python tests correctly, validate discovery/framework and
-      never invent measured coverage.
-    - Actually build/test the requested CSV converter, independently exercise quoted
-      commas and empty input; do not edit generated code to make acceptance pass.
-    - Notify owner via credentials-file zai_notifications_bot after this execution,
-      with no secret exposure.
-    evidence:
-    - Claim issue35 6828563174. Latest Stratex98891b9 preserved, no strategy/daemon
-      intervention.
-    - 'Read-only actual task0612112026152234 still generic text processor/no tests.
-      Inference test-generation extraction bug confirmed in source: prose before first
-      fence returned as code; source silently cut3000 characters; fixed confidence0.92
-      coverage had no measurement.'
-    - 41 focused Forge regressions and48 Inference goal/test/review/cache regressions
-      pass. Explicit provider fixtures, not live generated output acceptance.
-    - Private credentials.md located on both hosts; getMe verified named zai_notifications_bot
-      token. No notification yet; no token printed/copied/committed.
-    blockers:
-    - Real post-fix generated code/test and independent behavior acceptance pending
-      rollout.
-    - Continuous owner microphone/audio, reviewed video/YouTube OAuth and sustained
-      profitability remain outside this acceptance and unverified.
-    next_action: CI, controlled exact-head rollout, then one bounded goal-specific canonical
-      build; inspect existing task on timeout, no blind retry. Telegram completion notification
-      only after final outcome.
-    claim_policy: Update within2h; contact before takeover, no automatic expiration.
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
