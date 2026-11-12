@@ -1,5 +1,6 @@
 """Code Generation Service optimized for FORGE autonomous software engineering engine."""
 
+import ast
 import hashlib
 import json
 import re
@@ -26,7 +27,7 @@ from app.utils.logger import logger
 _FENCED_BLOCK = re.compile(r"```[ \t]*[A-Za-z0-9_+.-]*[ \t]*\n(.*?)```", re.S)
 
 
-def extract_code(text: str) -> str:
+def extract_code(text: str, file_type: str | None = None) -> str:
     """Return the code a model meant to write, not the whole reply.
 
     Models wrap code in prose ("Here is the module:") and in fences. The earlier extraction
@@ -34,10 +35,33 @@ def extract_code(text: str) -> str:
     closed on its own opening line and the "code" was just the prose. [FACT] measured: a reply
     of ``"Here it is:\\n```python\\nx = 1\\n```"`` returned ``"Here it is:"``.
 
-    Rules: the first non-empty fenced block wins; an unclosed fence (the model hit its token
+    Python prefers valid raw source or the earliest complete parseable outer block,
+    so inner documentation fences cannot truncate the implementation. For other
+    formats, the first non-empty fenced block wins; an unclosed fence (the model hit its token
     ceiling mid-block) yields the body after the opening fence, which will then fail the
     syntax check honestly rather than pass as complete code; unfenced text is returned as is.
     """
+    if file_type == "python":
+        # Valid raw Python may contain Markdown fences in a module docstring.
+        # A generic first-fence regex would return only that documentation.
+        try:
+            ast.parse(text.strip())
+            return text.strip()
+        except (SyntaxError, ValueError):
+            pass
+        opening = re.search(r"(?m)^[ \t]*```(?:python|py)?[ \t]*\r?\n", text)
+        if opening:
+            # A docstring's inner ``` fence is not necessarily the outer close.
+            # Choose the earliest closing boundary producing complete Python.
+            for closing in re.finditer(r"(?m)^[ \t]*```[ \t]*\r?$", text[opening.end():]):
+                candidate = text[opening.end():opening.end() + closing.start()].strip()
+                if not candidate:
+                    continue
+                try:
+                    ast.parse(candidate)
+                    return candidate
+                except (SyntaxError, ValueError):
+                    continue
     blocks = [block.strip("\n") for block in _FENCED_BLOCK.findall(text) if block.strip()]
     if blocks:
         return blocks[0].strip()
@@ -80,7 +104,7 @@ class CodeGenerationService:
 
     def _get_cache_key(self, req: CodeGenerationRequest) -> str:
         # A related module or architecture change is a different build input.
-        raw = "forge-objective-v2:" + json.dumps(req.model_dump(mode="json"), sort_keys=True)
+        raw = "forge-objective-v3-python-boundaries:" + json.dumps(req.model_dump(mode="json"), sort_keys=True)
         return hashlib.sha256(raw.encode()).hexdigest()
 
     async def generate_code(self, req: CodeGenerationRequest) -> CodeGenerationResponse:
@@ -111,7 +135,7 @@ class CodeGenerationService:
         exec_res = await unified_provider_manager.execute(exec_req)
         elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
 
-        code_text = extract_code(exec_res.content or "")
+        code_text = extract_code(exec_res.content or "", req.file_type)
 
         if exec_res.degraded:
             # No model produced code. Report the true path, zero confidence, and

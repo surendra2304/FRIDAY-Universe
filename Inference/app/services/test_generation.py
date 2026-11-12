@@ -74,7 +74,7 @@ class TestGenerationService:
                 generation_status="degraded", error=exec_res.error, latency_ms=elapsed_ms,
             )
 
-        test_text = extract_code(exec_res.content or "")
+        test_text = extract_code(exec_res.content or "", req.file_type)
         if not test_text.strip():
             return TestGenerationResponse(
                 test_code="", test_strategy="No test source generated.",

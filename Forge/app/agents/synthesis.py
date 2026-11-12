@@ -157,7 +157,9 @@ def _detect_kind(tokens: list[str], goal_l: str) -> ProjectKind:
         return ProjectKind.API
     if any(k in tokens for k in ["cli", "command", "commandline", "terminal", "argv"]):
         return ProjectKind.CLI
-    if any(k in goal_l for k in ["library", "module", "package", "sdk", "helper functions"]):
+    # A dependency constraint is not the requested deliverable type.
+    deliverable_text = re.sub(r"\bstandard[- ]library\b", "", goal_l)
+    if any(k in deliverable_text for k in ["library", "module", "package", "sdk", "helper functions"]):
         return ProjectKind.LIBRARY
     if any(k in goal_l for k in ["script", "batch", "automate", "rename", "convert",
                                  "backup", "scrape"]):
@@ -1906,6 +1908,12 @@ def synthesize_project(goal: str, requirements: list[str] | None = None) -> dict
     rather than something broken.
     """
     spec = parse_goal(goal, requirements)
+    # This generator implements JSON -> CSV, not the reverse. Until a real
+    # CSV -> JSON recipe exists, decline instead of substituting a path utility
+    # based on incidental "report artifact paths" instructions.
+    intent = " ".join([goal, *(requirements or [])]).lower()
+    if re.search(r"\bcsv\b.*?(?:\bto\b|\binto\b|->|→).*?\bjson\b", intent):
+        return {}
     files: dict[str, str] = {}
 
     if spec.kind is ProjectKind.CLI:

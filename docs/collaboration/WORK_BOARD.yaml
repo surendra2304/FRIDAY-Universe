@@ -1952,10 +1952,10 @@ tasks:
   - id: TASK-WF-008
     title: Preserve released goal-specific code during repair and execute embedded unittest
       suites
-    status: IN_PROGRESS
+    status: BLOCKED
     owner: arena_engineering_01
     branch: arena/TASK-WF-008-repair-preservation
-    pr: null
+    pr: 62
     files:
     - .github/workflows/owner-workflows.yml
     - Forge/app/agents/coordinator.py
@@ -1965,7 +1965,7 @@ tasks:
     - Forge/app/verification/python_tests.py
     - Forge/tests/unit/test_repair_preservation_and_embedded_tests.py
     claimed_at: '2026-11-12T17:39:25.982091+00:00'
-    last_update: '2026-11-12T17:39:25.982091+00:00'
+    last_update: '2026-11-12T18:07:10.652972+00:00'
     acceptance:
     - Discover/execute embedded unittest suites, reject zero-test success and preserve
       conventional mixed pytest coverage.
@@ -1990,13 +1990,78 @@ tasks:
     - Unknown objective refuses peer writes, zero-test unittest exit0 becomes failure,
       debugger sees current source/goal/requirements, orchestrator forwards persisted
       context and re-verifies repaired workspace.
+    - PR62 merged5c0d7a0939fbb586f51a8e3c4742a4a152d3fac5, deployment43274150206success;8checks
+      success/2conditional Docker skips. S1/S2 protected5/6 untracked backups verified.
+    - 'One canonical build task1812112026175500 returned honest failure in97.57s (not
+      timeout). Manifest PARTIAL_FAILURE9passed/1failed: pytest exit4 inherited host
+      Forge/pyproject.toml --asyncio-mode=auto without plugin. No duplicate build.'
+    - Actual output path.py/test_path.py is deterministic extension/basename utility,
+      NOT CSV converter. Requirements phrase standard library misclassified project
+      as library; incidental report paths selected path domain. Live Inference journal
+      shows two main.py responses rejected with SyntaxError at line2, unterminated triple-quoted
+      string detected16; no retained original output, exact cause unproved.
     blockers:
-    - No fresh deployed final-workspace converter acceptance yet. Existing task1112112026162526
-      remains rejected; do not restore/edit it to fabricate acceptance.
-    - Continuous microphone, reviewed video/Google authorization and sustained profits
-      remain unverified.
-    next_action: Focused review, CI and exact-head framework rollout, one bounded canonical
-      request, inspect task history on timeout instead of blind retry.
+    - Final CSV converter acceptance still fails; wrong deterministic fallback and test-host
+      configuration leak are now TASK-WF-009.
+    - Existing rejected tasks/workspaces preserved, no restore/hand edits.
+    next_action: WF008 repair/discovery component deployed and regression-proved. Follow
+      generation/execution boundaries under TASK-WF-009 before another live build.
+    claim_policy: Update within2h; contact before takeover.
+
+  - id: TASK-WF-009
+    title: Isolate generated-project tests, preserve Python code fences, reject unsupported
+      offline substitution
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-009-generation-boundaries
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/agents/roles.py
+    - Forge/app/agents/synthesis.py
+    - Forge/app/verification/checkers.py
+    - Forge/app/verification/python_tests.py
+    - Inference/app/services/code_generation.py
+    - Inference/app/services/test_generation.py
+    - Forge/tests/unit/test_generation_boundary_regressions.py
+    - Inference/tests/test_python_fence_boundaries.py
+    - Forge/app/agents/parser.py
+    claimed_at: '2026-11-12T18:07:10.652972+00:00'
+    last_update: '2026-11-12T18:07:10.652972+00:00'
+    acceptance:
+    - Pytest never inherits host-only options/conftest, but honors config explicitly
+      present inside delivered project.
+    - Python extraction preserves raw source and nested fenced documentation; invalid/truncated
+      output still fails honestly.
+    - Standard library dependency constraint is not a library-project request; unsupported
+      offline CSV-to-JSON conversion declines, never invents unrelated path utility.
+    - After green CI/controlled rollout, bounded final-workspace acceptance with independent
+      quoted-comma/empty-input checks; no generated source hand edit/restore/push/deploy.
+    evidence:
+    - Claim issue35 6831757083. Rooted in actual WF008 task1812112026175500 outcome,
+      not a hypothetical percentage.
+    - 128 Forge regressions passed;1existing website-no-suite skip unchanged.65 Inference
+      regressions pass. Real host-conftest/unknown-option isolation probes and own-project
+      pytest.ini honoring tested.
+    - Live raw model reply not retained. Nested docstring markdown fence truncation
+      is source-reproduced with regression and matching unterminated-docstring symptom,
+      not asserted as proven cause of the live rejection. Cache namespace advanced to
+      avoid prior extracted-code reuse.
+    - Previously overbroad generation tests initially had helper-import collection error;
+      removed cross-test import and reran full suite successfully; no skip introduced.
+    - 'Pre-merge downstream review added raw-Python priority in Forge parser: valid
+      code must not be replaced by parseable CSV documentation within its docstring.
+      Scope refinement issue35 6831923182. 129 Forge pass/1unchanged website skip;65
+      Inference pass. PR63 first merge watcher intentionally stopped, updated head requires
+      fresh CI.'
+    blockers:
+    - Fresh deployed final converter acceptance pending; wrong existing path utility
+      not accepted even if its own tests could pass.
+    - Continuous microphone, reviewed video/Google OAuth and sustained profits remain
+      unverified.
+    next_action: CI, exact-head framework rollout, one intentional post-fix build; inspect
+      actual task on timeout rather than blind retry. Notify actual outcome privately
+      at conclusion.
     claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:
