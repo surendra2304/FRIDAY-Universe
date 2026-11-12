@@ -88,7 +88,11 @@ jobs:
             Forge/tests/unit/test_goal_fidelity_contract.py \
             Forge/tests/unit/test_context_manager.py \
             Forge/tests/unit/test_repair_preservation_and_embedded_tests.py \
-            Forge/tests/unit/test_generation_boundary_regressions.py
+            Forge/tests/unit/test_generation_boundary_regressions.py \
+            Forge/tests/unit/test_release_consent.py \
+            Forge/tests/unit/test_github_tool.py \
+            Forge/tests/unit/test_execution_security_gates.py \
+            Forge/tests/unit/test_delivery_verification_consistency.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora

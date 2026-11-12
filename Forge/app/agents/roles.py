@@ -1481,7 +1481,17 @@ class ReleaseEngineerRole(BaseAgent):
             hasattr(engine, "github") and engine.github.settings.github_repo
         )
 
-        if push_to_gh or gh_token or gh_repo:
+        # Credentials describe capability, never consent. An explicit negative
+        # objective/requirement and failed verification both veto publication.
+        publication_prohibited = bool(re.search(
+            r"\b(?:do\s+not|don't|never|no)\s+(?:push|publish|upload|deploy)\b",
+            "\n".join([str(goal), *(str(req) for req in reqs)]), re.I,
+        ))
+        publish_allowed = (
+            push_to_gh is True and not publication_prohibited
+            and report_data.test_build_status.get("all_passed") is True
+        )
+        if publish_allowed:
             branch_name = f"forge/feature-{task_id[:8]}"
             logger.info(
                 f"[Task {task_id}] ReleaseEngineer executing GitHub PR flow on branch '{branch_name}'..."
@@ -1498,13 +1508,21 @@ class ReleaseEngineerRole(BaseAgent):
             )
 
             # 3. Push branch to remote
-            await engine.github.push_branch(
+            push_result = await engine.github.push_branch(
                 task_id=task_id,
                 branch_name=branch_name,
                 repo=gh_repo,
                 token=gh_token,
                 role=self.role_name,
             )
+            if push_result.get("status") != "success" or push_result.get("exit_code") != 0:
+                return {
+                    "status": "failed",
+                    "publication_status": "push_failed_or_denied",
+                    "release_tag": report_data.release_tag,
+                    "completion_report": report_data.model_dump(mode="json"),
+                    "agent": self.role_name,
+                }
 
             # 4. Open Pull Request with COMPLETION_REPORT.md as body
             completion_md = ""
