@@ -1647,6 +1647,78 @@ tasks:
     evidence: "CI all-green on 7ab94d3; Memora 76 / Stratex 82 / VyralX 24 / Sentinel 516 passed on final tree."
     blockers: []
     next_action: "None — the 3 real-bug lint classes (F821/F811/B006) and the F401 dead-weight class are now all zero across siblings."
+  - id: TASK-WF-004
+    title: 'Four owner workflows: canonical voice bridge and truthful specialist contracts'
+    status: IN_REVIEW
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-004-four-owner-workflows
+    pr: 56
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6825339336
+    files:
+    - .github/workflows/owner-workflows.yml
+    - FRIDAY/src/friday/agent/mixins/fast_paths.py
+    - FRIDAY/src/friday/agent/mixins/tools.py
+    - FRIDAY/src/friday/api/server.py
+    - FRIDAY/src/friday/ecosystem/fleet_client.py
+    - FRIDAY/src/friday/memory/voice_memory.py
+    - FRIDAY/src/friday/routing/capability_router.py
+    - FRIDAY/src/friday/tools/builtin/__init__.py
+    - FRIDAY/src/friday/tools/builtin/forge_code_task.py
+    - FRIDAY/src/friday/tools/builtin/intelx_research.py
+    - FRIDAY/src/friday/tools/builtin/vyralx_project.py
+    - FRIDAY/src/friday/tools/builtin/vyralx_publish.py
+    - FRIDAY/src/friday/tools/builtin/vyralx_render.py
+    - FRIDAY/src/friday/voice/brain_bridge.py
+    - FRIDAY/src/friday/voice/livekit_worker.py
+    - FRIDAY/tests/test_forge_code_dispatch.py
+    - FRIDAY/tests/test_four_owner_workflows.py
+    - IntelX/intelx/api/live_research_task.py
+    - IntelX/intelx/api/router.py
+    - VyralX/app/main.py
+    - VyralX/app/migrations.py
+    - VyralX/app/models.py
+    - VyralX/app/schemas.py
+    - VyralX/app/services/project_pipeline.py
+    - VyralX/tests/test_project_pipeline_e2e.py
+    - VyralX/tests/test_review_required_project.py
+    - docs/collaboration/TEAM_ROSTER.yaml
+    - docs/collaboration/WORK_BOARD.yaml
+    - tests/test_live_research_task_contract.py
+    acceptance:
+    - LiveKit tools reach canonical brain without acquiring owner authority.
+    - Fresh research fetches real documents, retains citations and spoken response;
+      no mock snippet evidence.
+    - Forge preserves real enum/nested verification manifest and transport uncertainty.
+    - Video validates exact completed render and real job acknowledgment; approval request
+      never executes publication.
+    - No false memory acknowledgment on empty/skipped responses; local-only is explicit.
+    test_results:
+    - 365 passed across eleven targeted FRIDAY/research suites; 39 VyralX tests in separate
+      sandbox DB invocation.
+    - Real local SQLite fact saved, client recreated, canonical voice bridge recalled
+      it; no live shared-cloud claim.
+    - Real VyralX API review flag persisted across sessions; replay cannot downgrade
+      it; additive migration preserves legacy rows.
+    - 'Pipeline tests with mocked provider/render boundaries: review_required blocks
+      global auto-publish; legacy opted-in projects unchanged.'
+    - Initial published commit remote contracts/test/secrets checks success; expanded
+      follow-up CI pending.
+    - Configured FRIDAY Ruff, changed VyralX F821, new-file F/E9, compile, whitespace
+      pass. One pre-existing unused task variable in VyralX main F841 left unchanged.
+    blockers:
+    - Owner microphone/interruption/continuous turn acceptance not verified.
+    - Live shared Memora lifecycle and deployed fresh research provider acceptance not
+      verified.
+    - Actual Forge instruction-to-generated-tested-artifact and actual VyralX topic-to-rendered-video/owner
+      review not verified.
+    - No durable fresh research job; extractive brief is not independent synthesis or
+      verification.
+    - Review-required additive schema code is not applied to production; no merge/deploy
+      approval.
+    last_update: '2026-11-12T14:04:41.201430+00:00'
+    next_action: Independent review/expanded CI; controlled real provider/build/render/microphone
+      acceptance. Draft remains blocked; do not auto-merge/deploy.
+    claim_policy: Update within two hours while active; contact required before takeover.
 
   - id: "TASK-STRATEX-PROFIT-GOVERNOR"
     title: "Stratex profitability governor — stop the >$1k/day demo bleed (user-directed mission, ZAI Agent 2)"

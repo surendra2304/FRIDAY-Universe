@@ -20,6 +20,7 @@ import asyncio
 import json
 import logging
 from typing import Any
+from urllib.parse import urlsplit
 
 from friday.core.types import SafetyLevel, ToolResult
 from friday.tools.base import BaseTool
@@ -45,8 +46,18 @@ def _format_brief(data: dict[str, Any]) -> str:
         lines.append("")
         lines.append(f"Evidence: {citations} citation(s) from IntelX.")
     if sources:
-        names = ", ".join(str(s.get("name", s.get("source", s)))[:60] for s in sources[:5])
-        lines.append(f"Sources: {names}")
+        lines.append("Sources:")
+        for source in sources[:8]:
+            if not isinstance(source, dict):
+                continue
+            title = str(source.get("title") or source.get("name") or source.get("source") or "Source")[:160]
+            url = str(source.get("url") or source.get("source_url") or "").strip()
+            try:
+                parsed = urlsplit(url)
+                safe = parsed.scheme in {"https", "http"} and bool(parsed.hostname) and not parsed.username and not parsed.password
+            except ValueError:
+                safe = False
+            lines.append(f"- {title}: {url}" if safe else f"- {title} (no public source URL returned)")
     if not spoken and not text:
         lines.append(
             "IntelX returned an empty brief for this query. That is its real "
@@ -67,7 +78,7 @@ class IntelXResearchTool(BaseTool):
         "market and give me the highlights'."
     )
     safety_level = SafetyLevel.SAFE
-    timeout = 60.0
+    timeout = 125.0
     parameters = {
         "type": "object",
         "properties": {
@@ -100,7 +111,7 @@ class IntelXResearchTool(BaseTool):
         envelope = TaskEnvelope(
             capability="intelx.research",
             objective=f"Research: {query}",
-            action="research",
+            action="research_live",
             target_agent="intelx",
             payload={"topic": query, **({"scope": scope} if scope else {})},
         )
@@ -129,7 +140,8 @@ class IntelXResearchTool(BaseTool):
                 metadata={"error": f"{type(exc).__name__}: {exc}"},
             )
 
-        status = str(getattr(result, "status", "")).lower()
+        status_value = getattr(result, "status", "")
+        status = str(getattr(status_value, "value", status_value)).lower()
         if status not in {"success", "completed"}:
             error = getattr(result, "error", None) or f"status {status or 'unknown'}"
             return ToolResult(
@@ -146,6 +158,10 @@ class IntelXResearchTool(BaseTool):
         data = getattr(result, "result", None) or {}
         if not isinstance(data, dict):
             data = {"text_response": str(data)}
+        # FleetClient preserves the remote task envelope. Old test doubles and
+        # integrations may still supply an already-flat result.
+        if isinstance(data.get("result"), dict) and "status" in data:
+            data = data["result"]
         brief = _format_brief(data)
         return ToolResult(
             name=self.name,
@@ -159,6 +175,8 @@ class IntelXResearchTool(BaseTool):
                     "citations_count": data.get("citations_count"),
                     "query": data.get("query", query),
                 },
+                "spoken_summary": str(data.get("spoken_summary") or ""),
+                "sources": data.get("sources") or [],
                 "raw": json.dumps(data, default=str)[:4000],
             },
         )

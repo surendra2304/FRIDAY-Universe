@@ -692,6 +692,8 @@ class FastPathMixin:
                 "fast_path": True,
                 "research_dispatch": True,
                 "intelx": (result.metadata or {}).get("intelx"),
+                "spoken_summary": (result.metadata or {}).get("spoken_summary"),
+                "sources": (result.metadata or {}).get("sources", []),
                 "probe_success": success,
                 "duration_seconds": time.perf_counter() - start_time,
                 "task_state": self.state_machine.current_state.value,
@@ -973,7 +975,10 @@ class FastPathMixin:
 
         tool_cls = None
         label = ""
-        if CapabilityRouter._matches(low, CapabilityRouter.SCRIPT_KEYWORDS):
+        if CapabilityRouter._matches(low, CapabilityRouter.PROJECT_KEYWORDS):
+            tool_cls = "vyralx_project"
+            label = "VyralX review-only video project"
+        elif CapabilityRouter._matches(low, CapabilityRouter.SCRIPT_KEYWORDS):
             tool_cls = "vyralx_script"
             label = "VyralX script drafting"
         elif CapabilityRouter._matches(low, CapabilityRouter.WEB_OPS_KEYWORDS):
@@ -1013,7 +1018,14 @@ class FastPathMixin:
         except Exception as e:
             logger.debug(f"activity emit skipped in batch3 dispatch: {e}")
 
-        if tool_cls == "vyralx_script":
+        if tool_cls == "vyralx_project":
+            from friday.tools.builtin.vyralx_project import VyralXProjectTool
+
+            # License confirmation is read from the raw user turn, not invented
+            # by a model tool call or remembered from a different project.
+            result = VyralXProjectTool().execute(question=clean_input)
+            meta_key = "vyralx"
+        elif tool_cls == "vyralx_script":
             from friday.tools.builtin.vyralx_script import VyralXScriptTool
 
             result = VyralXScriptTool().execute(question=low)
@@ -1057,6 +1069,8 @@ class FastPathMixin:
                 "fast_path": True,
                 "delegation_dispatch": True,
                 "tool": tool_cls,
+                "pending": bool((result.metadata or {}).get("pending")),
+                "projects": (result.metadata or {}).get("projects", []),
                 meta_key: (result.metadata or {}).get(meta_key),
                 "probe_success": success,
                 "duration_seconds": time.perf_counter() - start_time,

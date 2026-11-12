@@ -156,7 +156,7 @@ class VyralXPublishTool(BaseTool):
                     list_only=bool(list_only),
                 )
             )
-        except RuntimeError as exc:
+        except (RuntimeError, ValueError, TypeError, KeyError) as exc:
             return ToolResult(
                 name=self.name,
                 content=f"📤 [VYRALX PUBLISH] I couldn't complete the publish flow: {exc}. Nothing was queued.",
@@ -190,7 +190,6 @@ class VyralXPublishTool(BaseTool):
     ) -> dict[str, Any]:
         """Discover assets/renders via the REAL VyralX API, then queue the
         publish job through the REAL POST /api/publish contract."""
-        from friday.ecosystem.fleet_client import FleetClient
         from friday.proactive.market_watch import usage_tracker
 
         client = self._client()
@@ -264,7 +263,7 @@ class VyralXPublishTool(BaseTool):
                     "success": False,
                 }
         else:
-            verified = [a for a in assets if a.get("rights_verified")]
+            verified = [a for a in assets if a.get("rights_verified") is True]
             chosen = verified[0] if verified else None
             if chosen is None:
                 return {
@@ -278,14 +277,15 @@ class VyralXPublishTool(BaseTool):
 
         # ── Step 2: find a completed render for the asset ───────────────────
         try:
-            r_status, render_jobs = await _get(f"/api/jobs?asset_id={chosen['id']}&status=completed")
+            r_status, render_jobs = await _get("/api/render")
         except Exception as exc:
             await breaker.record_failure(exc)
             render_jobs, r_status = None, 0
         render = None
         if r_status == 200 and isinstance(render_jobs, list):
-            jobs = render_jobs if not render_job_id else [j for j in render_jobs if j.get("id") == render_job_id]
-            completed = [j for j in jobs if j.get("status") == "completed"]
+            jobs = [j for j in render_jobs if isinstance(j, dict) and (not render_job_id or j.get("id") == render_job_id)]
+            completed = [j for j in jobs if isinstance(j, dict) and j.get("status") == "completed"
+                         and j.get("asset_id") == chosen["id"] and j.get("output_path")]
             render = completed[0] if completed else None
         if render is None and render_job_id:
             return {
@@ -341,7 +341,7 @@ class VyralXPublishTool(BaseTool):
         except Exception as exc:
             await breaker.record_failure(exc)
             return {
-                "reply": f"📤 [VYRALX PUBLISH] I couldn't reach VyralX to queue the publish: {type(exc).__name__}: {exc}. Nothing was queued.",
+                "reply": f"📤 [VYRALX PUBLISH] I couldn't reach VyralX to queue the publish: {type(exc).__name__}. Submission is unconfirmed; check publish status before retrying.",
                 "metadata": {"agent_id": "vyralx", "error": str(exc)},
                 "success": False,
             }
@@ -366,8 +366,15 @@ class VyralXPublishTool(BaseTool):
         usage_tracker.record("vyralx", calls=2)
 
         data = resp.json() if resp.text else {}
+        if not isinstance(data, dict):
+            return {"success": False, "reply": "Invalid VyralX acknowledgement; submission is unconfirmed. Check job history before retrying.",
+                    "metadata": {"error": "invalid_job_receipt", "submission_unconfirmed": True}}
         job_id = data.get("job_id")
-        job_status = data.get("status", "pending_approval")
+        job_status = data.get("status")
+        if not isinstance(job_id, int) or isinstance(job_id, bool) or job_id <= 0 or job_status not in {'pending_approval'}:
+            return {"success": False,
+                    "reply": "VyralX returned an invalid publish acknowledgement. Submission is unconfirmed; inspect the job list before retrying.",
+                    "metadata": {"agent_id": "vyralx", "error": "invalid_job_receipt", "submission_unconfirmed": True}}
         lines = [
             "📤 [VYRALX PUBLISH] Publish job queued for approval:",
             f"• Asset: {chosen.get('title', chosen['id'])} (asset_id={chosen['id']})",

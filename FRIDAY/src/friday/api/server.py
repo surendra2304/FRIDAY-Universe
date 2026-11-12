@@ -2259,12 +2259,12 @@ def _which(name: str) -> str | None:
 
 
 @app.post("/api/command")
-async def execute_command(req: CommandRequest, _: None = Depends(_require_control_access)) -> Any:
+async def execute_command(req: CommandRequest, _: None = Depends(_require_control_access), *, boss_verified: bool = True) -> Any:
     """Execute a text command with PC, Android, and live 8-Agent execution."""
     # The console is origin-gated + control-token protected: a valid token
     # IS the owner key (A14). Voice/remote surfaces call _dispatch_command
     # with boss_verified=False and must authorize separately.
-    result = await _dispatch_command(req.command, boss_verified=True)
+    result = await _dispatch_command(req.command, boss_verified=boss_verified)
     meta = result.get("metadata") or {}
 
     # Checklist A13 (batch 3): response formatting policy — free-form LLM
@@ -3122,7 +3122,9 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 category="owner_fact",
                 importance=_verdict.score,
             )
-            _stored = bool(_res) and _res.get("status") != "error"
+            _status = str((_res or {}).get("status", "")).lower()
+            _stored = bool(_res) and (_status in {"success", "created", "stored", "local_only"}
+                                      or (not _status and bool(_res.get("id") or _res.get("memory_id"))))
         except Exception as _e:
             _store_error = f"{type(_e).__name__}"
             logger.warning(f"Memora record_fact failed in memory fast-path: {_e}")
@@ -3133,7 +3135,10 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 else (" I'll keep it, but small stuff like that fades from my active memory after a while."
                       if _tier == "trivial" else "")
             )
-            _reply = f"Got it, Boss — locked in: {_payload}. That's mine to keep now.{_tier_note}"
+            if _status == "local_only":
+                _reply = f"Saved on the local memory backend, Boss: {_payload}. Shared Memora synchronization is not confirmed."
+            else:
+                _reply = f"Got it, Boss — locked in: {_payload}. That's mine to keep now.{_tier_note}"
         else:
             _reply = (
                 "I couldn't reach my memory store just now, Boss, so I have NOT saved that — "
@@ -3645,7 +3650,7 @@ async def chat_endpoint(req: ChatRequest, _: None = Depends(_require_origin_gate
     origin-gated only (see ``_require_origin_gate``). Raw control endpoints
     (``/api/command`` and friends) keep the full key gate.
     """
-    return await execute_command(CommandRequest(command=req.message))
+    return await execute_command(CommandRequest(command=req.message), boss_verified=False)
 
 
 @app.get("/api/screenshot")

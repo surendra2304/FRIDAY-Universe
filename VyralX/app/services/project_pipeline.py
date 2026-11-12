@@ -911,10 +911,14 @@ def execute_project_pipeline(project_id: int, db: Session) -> None:
         db.refresh(render_job)
         db.refresh(project)
 
-        output_path = settings.render_dir / f"{project.project_key}-attempt-{project.attempts}.mp4"
-        enable_motion = getattr(settings, "render_enable_ken_burns", True)
-        has_stills = any(Path(a.file_path).suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"} for a in assets)
-        enable_motion = bool(enable_motion and has_stills)
+        output_path = settings.render_dir / f"{project.project_key}-attempt-{project.attempts}.mp4"
+
+        enable_motion = getattr(settings, "render_enable_ken_burns", True)
+
+        has_stills = any(Path(a.file_path).suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"} for a in assets)
+
+        enable_motion = bool(enable_motion and has_stills)
+
         rendered = render_montage(
             [asset.file_path for asset in assets],
             output_path,
@@ -1058,7 +1062,7 @@ def execute_project_pipeline(project_id: int, db: Session) -> None:
 
         # Autonomous mode: queue the rendered video for upload without a manual
         # approval click, but only when the operator explicitly opted in.
-        if bool(getattr(settings, "autonomous_auto_publish", False)):
+        if bool(getattr(settings, "autonomous_auto_publish", False)) and not bool(project.review_required):
             try:
                 title = str((pack.get("title_options") or [project.topic])[0])[:100]
                 if not title.strip():

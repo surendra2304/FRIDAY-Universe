@@ -238,6 +238,8 @@ class CapabilityRouter:
     # request for a drafted VyralX script. The answer must come from the REAL
     # VyralX render pipeline (vyralx_render — free-tool ffmpeg/edge_tts,
     # honest manifest with output/duration/bytes), never a fabricated "done".
+    from friday.tools.builtin.vyralx_project import PROJECT_WORDS as PROJECT_KEYWORDS
+
     RENDER_KEYWORDS = {
         "render the script", "render this clip", "render this script",
         "render this short", "render the clip", "render the short",
@@ -351,7 +353,7 @@ class CapabilityRouter:
             or self._matches(clean_input, self.WEB_OPS_KEYWORDS)
             or self._matches(clean_input, self.MEMORA_OP_KEYWORDS)
             or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS)
-            or self._matches(clean_input, self.RENDER_KEYWORDS)
+            or (self._matches(clean_input, self.RENDER_KEYWORDS) or self._matches(clean_input, self.PROJECT_KEYWORDS))
             or self._matches(clean_input, self.PUBLISH_KEYWORDS)
             or self._matches(clean_input, self.ALERT_KEYWORDS)
             or self._matches(clean_input, self.DICTIONARY_KEYWORDS)
@@ -369,7 +371,7 @@ class CapabilityRouter:
         except Exception:
             chained = False
         is_conversational = is_conversational and not chained
-        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS) or self._matches(clean_input, self.RENDER_KEYWORDS) or self._matches(clean_input, self.PUBLISH_KEYWORDS) or self._matches(clean_input, self.ALERT_KEYWORDS) or self._matches(clean_input, self.DICTIONARY_KEYWORDS) or self._matches(clean_input, self.GMAIL_DRAFT_KEYWORDS) or self._matches(clean_input, self.WHATSAPP_OPEN_KEYWORDS)):
+        if is_conversational and not (self._matches(clean_input, self.SCREEN_KEYWORDS) or self._matches(clean_input, self.MEMORY_KEYWORDS) or self._matches(clean_input, self.LOCAL_CALC_KEYWORDS) or self._matches(clean_input, self.FLEET_KEYWORDS) or self._matches(clean_input, self.RESEARCH_KEYWORDS) or self._matches(clean_input, self.PORTFOLIO_KEYWORDS) or self._matches(clean_input, self.CODE_TASK_KEYWORDS) or self._matches(clean_input, self.SECURITY_SCAN_KEYWORDS) or self._matches(clean_input, self.FORECAST_KEYWORDS) or self._matches(clean_input, self.SCRIPT_KEYWORDS) or self._matches(clean_input, self.WEB_OPS_KEYWORDS) or self._matches(clean_input, self.MEMORA_OP_KEYWORDS) or self._matches(clean_input, self.FETCH_SUMMARIZE_KEYWORDS) or (self._matches(clean_input, self.RENDER_KEYWORDS) or self._matches(clean_input, self.PROJECT_KEYWORDS)) or self._matches(clean_input, self.PUBLISH_KEYWORDS) or self._matches(clean_input, self.ALERT_KEYWORDS) or self._matches(clean_input, self.DICTIONARY_KEYWORDS) or self._matches(clean_input, self.GMAIL_DRAFT_KEYWORDS) or self._matches(clean_input, self.WHATSAPP_OPEN_KEYWORDS)):
             candidates.append(CapabilityMetadata(
                 capability_type=ExecutionCapabilityType.DIRECT_REASONING,
                 estimated_cost_usd=0.0,
@@ -550,6 +552,15 @@ class CapabilityRouter:
                 is_local_deterministic=False,
                 required_tools=["web_fetch_summarize"],
                 rationale="Fetch-and-summarize request: read the shared URL's real content (SSRF-guarded), summarize what is actually there.",
+            ))
+
+        if self._matches(clean_input, self.PROJECT_KEYWORDS):
+            candidates.append(CapabilityMetadata(
+                capability_type=ExecutionCapabilityType.TOOL_EXECUTION,
+                estimated_cost_usd=0.0, estimated_latency_ms=30000.0,
+                confidence=0.98, risk_level=SafetyLevel.SAFE,
+                is_local_deterministic=False, required_tools=["vyralx_project"],
+                rationale="Review-only topic-to-video project; explicit license confirmation required.",
             ))
 
         # Checklist F23 (batch 7, ZAI Agent 2): Evaluate Video Render — "render

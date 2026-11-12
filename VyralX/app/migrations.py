@@ -56,6 +56,7 @@ ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
         "trend_source_url": "VARCHAR(2048) NOT NULL DEFAULT ''",
         "trend_score": "FLOAT NOT NULL DEFAULT 0",
         "confirm_pexels_repeat_use": "BOOLEAN NOT NULL DEFAULT FALSE",
+        "review_required": "BOOLEAN NOT NULL DEFAULT FALSE",
     },
     "agent_tasks": {
         "idempotency_key": "VARCHAR(160)",
