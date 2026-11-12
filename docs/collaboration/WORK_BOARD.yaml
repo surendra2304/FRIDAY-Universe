@@ -1745,7 +1745,7 @@ tasks:
 
   - id: "TASK-STRATEX-TG409"
     title: "Stratex Telegram 409-conflict episode handling — backoff, once-per-episode owner alert, honest recovery (ZAI Agent 2)"
-    status: "IN_REVIEW"
+    status: "MERGED"
     owner: "zai_agent_2"
     branch: "zai/TASK-STRATEX-TG409"
     pr: 67
@@ -1765,7 +1765,8 @@ tasks:
       - "Stale /balance test contract made truthful: real venue report OR honest 'Balance unavailable' refusal (old 'Wallet Balances' title expectation dated pre-mesh commit 176bb22)."
     evidence: "PR #67 head 763af5b-class latest: 22/22 test_telegram_bot.py (was 13 pass/2 fail on clean main) + 31/31 test_profitability_governor.py + test_backtest_engine.py; A/B vs stashed clean main: the 2 pre-existing failures fixed to green, zero new failures. Ruff clean on both changed files. REMOTE CI on PR #67 ALL GREEN: Validate fleet layout and mirror safety / Validate monorepo-only policy / Validate roster/task IDs/file ownership / test / secret scan all success (docker skipped by design on PR branches)."
     blockers: []
-    next_action: "Push branch + PR; owner review. Runtime rollout requires the standard exact-head deploy (Stratex-Daemon restart needs owner authorization). ALSO owner action: find and stop the off-cloud process polling Stratex's bot token — otherwise inbound commands keep going to it."
+    merge_note: "MERGED 2026-11-12: PR #67 fast-merged at 21:11:55Z (merge commit 502c9536). The TG409 code entered main twice over — via the Server-1 checkout merge 2d5e2a6 (zai/TASK-STRATEX-PROFIT-2 already contained the TG409 commits) and via PR #67 — ancestry verified with git merge-base. Deployed to Server 1 by the Fleet CD run for faf6b84 (run 43309257001, SUCCESS) which restarted Stratex-Daemon. Live observation of the 409 backoff behavior in journald remains an open verification while the EXTERNAL poller persists."
+    next_action: "MERGED and deployed; remaining: (a) live journald confirmation that conflict episodes now back off instead of hammering every ~30s; (b) OWNER ACTION still required: find and stop the off-cloud process polling Stratex's bot token — otherwise inbound commands keep going to it."
 
   - id: TASK-WF-005
     title: Fix concrete live research/build/shared-memory failures and repeat real workflow
@@ -2326,103 +2327,57 @@ tasks:
       No claim microphone/video/OAuth/profit acceptance.
     claim_policy: Update within2h; contact before takeover.
 
-task_id_warnings:
-  - id: TASK-WF-005
-    title: Fix concrete live research/build/shared-memory failures and repeat real workflow
-      acceptance
-    status: IN_PROGRESS
-    owner: arena_engineering_01
-    branch: arena/TASK-WF-005-live-acceptance
+  - id: "TASK-CI-F821-MAIN"
+    title: "Repair main's red FRIDAY Universe CI/CD — F821 undefined 'datetime' in persona/friday.py (ZAI Agent 1)"
+    status: "IN_PROGRESS"
+    owner: "zai"
+    branch: "main (single-branch flow, post-D-016)"
     pr: null
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6836443339"
     files:
-    - .github/workflows/owner-workflows.yml
-    - FRIDAY/src/friday/agent/mixins/fast_paths.py
-    - FRIDAY/src/friday/ecosystem/fleet_client.py
-    - FRIDAY/src/friday/memory/memora_client.py
-    - FRIDAY/src/friday/routing/capability_router.py
-    - FRIDAY/src/friday/tools/builtin/forge_code_task.py
-    - FRIDAY/tests/test_four_owner_workflows.py
-    - FRIDAY/tests/test_memora_hardening.py
-    - Forge/app/agents/parser.py
-    - Forge/app/agents/roles.py
-    - Forge/app/api/delegate.py
-    - Forge/tests/unit/test_response_parser.py
-    - IntelX/intelx/api/live_research_task.py
-    - tests/test_live_research_task_contract.py
-    - Forge/requirements-verification.txt
-    - Forge/tests/unit/test_delegate_verification_status.py
-    - Forge/tests/unit/test_generated_test_ingestion.py
-    claimed_at: '2026-11-12T15:04:51.017727+00:00'
-    last_update: '2026-11-12T15:04:51.017727+00:00'
+      - "FRIDAY/src/friday/persona/friday.py"
+      - "FRIDAY/tests/test_friday_persona.py"
+    defect: "Commit 993a6d6 (memory hygiene round 2) introduced _ist_hour with a quoted annotation \"datetime.datetime | None\" satisfied only by a function-local 'import datetime as datetime'. Module-scope resolution (typing.get_type_hints, ruff F821) fails: FRIDAY Universe CI/CD run 43309536561 on head 993a6d6 FAILED at 'Lint (ruff check)' — FRIDAY/src/friday/persona/friday.py:82:21 F821 Undefined name 'datetime'. Main's CI/CD was RED."
     acceptance:
-    - Canonical natural-language coding request reaches Forge, actual generated tested
-      artifacts pass verification.
-    - Useful real-source research passages with matching citations and spoken output.
-    - Shared memory write and relevant recall through canonical voice/chat survive fresh
-      process.
-    - Preserve review-required video/channel boundaries; owner microphone and actual
-      video acceptance remain explicit.
+      - "datetime import moved to module level; function-local self-alias import removed; annotation unquoted."
+      - "ruff check FRIDAY/src/friday clean."
+      - "Regression tests added that pin the bug class: get_type_hints(_ist_hour) must resolve at module scope (NameError before the fix), _ist_hour IST conversion (UTC+05:30) correct, compose_greeting no-repeat contract."
+      - "FRIDAY persona suites green."
+      - "CI/CD on the new main head green."
     evidence:
-    - Claims issue35 6826830413/6827025902/6827127315/6827188178.
-    - 387 targeted FRIDAY/research/deployment/memory regressions and 32 separate Forge
-      regressions passed. External providers mocked in regressions, not live delivery.
-    - 'Direct actual Forge task0312112026145003 failed3/10 stages in173.97s: prose in
-      test_main.py and missing pytest/ruff. No hidden success.'
-    - 'Controlled S1 tools installed: pytest8.4.2,ruff0.14.14; private before-package
-      inventory saved.'
-    - Memora direct SEMANTIC write403 due service-only promotion policy. EPISODIC owner
-      observation returned201/storage_durable=true, GET by persisted ID200 from fresh
-      process. Search did not rank it in top10, so relevant shared recall still unaccepted.
-    - FRIDAY-Voice active/running,NRestarts0; not owner microphone acceptance.
-    - Both YouTube OAuth candidates invalid_grant; legitimate Google reauthorization
-      needed. No render/upload or new trading exposure.
-    blockers:
-    - Actual post-fix model-generated build acceptance pending deployment.
-    - Shared-memory relevant search/recall unconfirmed despite durable API write/read.
-    - Owner microphone/interruption continuous conversation not verified.
-    - YouTube OAuth invalid_grant and stock-media rights confirmation/item-license validation
-      unresolved.
-    - Stratex profitability not demonstrated; ZAI Agent2 retains lane, governor and
-      trend-exit fix56dd9e7 preserved.
-    next_action: Publish focused tested changes, verify CI, exact-head owner-authorized
-      merge/deploy without restarting Stratex daemon, then bounded canonical acceptance.
-    claim_policy: Update within2h; contact before takeover, no automatic expiry.
+      - "Local: ruff check FRIDAY/src/friday — All checks passed."
+      - "Local: FRIDAY/tests/test_friday_persona.py 13/13 (10 pre-existing + 3 new); combined with test_batch8_persona_parity.py, test_boss_identity_contract.py, test_proactive_greeting_memory.py, test_voice_personality.py — 58/58."
+      - "Direct check: typing.get_type_hints(_ist_hour) == {'now': datetime.datetime | None, 'return': int} (would NameError pre-fix); _ist_hour(06:30 UTC) == 12 IST."
+    blockers: []
+    next_action: "Commit to main; verify remote CI/CD green and Fleet CD deploy (FRIDAY + FRIDAY-Voice restart on S1 only; Stratex-Daemon untouched — ZAI Agent 2's backtest sweep is not disturbed)."
 
-  - id: TASK-WF-006
-    title: Reject zero-test false acceptance and preserve timeout uncertainty
-    status: IN_PROGRESS
-    owner: arena_engineering_01
-    branch: arena/TASK-WF-006-verification-truth
+  - id: "TASK-REGISTRY-001"
+    title: "Repair committed merge-conflict markers + stranded task records in the collaboration registry (ZAI Agent 1)"
+    status: "IN_PROGRESS"
+    owner: "zai"
+    branch: "main (single-branch flow, post-D-016)"
     pr: null
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6836443339"
     files:
-    - .github/workflows/owner-workflows.yml
-    - FRIDAY/src/friday/ecosystem/fleet_client.py
-    - FRIDAY/tests/test_four_owner_workflows.py
-    - Forge/app/integrations/ai_universe_client.py
-    - Forge/app/verification/checkers.py
-    - Forge/tests/unit/test_missing_test_truthfulness.py
-    claimed_at: '2026-11-12T15:31:28.134869+00:00'
-    last_update: '2026-11-12T15:31:28.134869+00:00'
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/TEAM_ROSTER.yaml"
+      - "docs/collaboration/FILE_OWNERSHIP.yaml"
+      - "docs/handoff.md"
+    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level 'task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
     acceptance:
-    - Python source with no tests cannot certify passed tests.
-    - Provider outage must not fabricate assert-True fallback tests.
-    - A dispatched HTTP timeout must explicitly say outcome unconfirmed and warn against
-      blind retry.
-    - Reverify the existing failed-acceptance workspace without regenerating or editing
-      its artifacts.
+      - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
+      - "Inline repair note recorded at the ACTIVITY_LOG repair site."
+      - "Stranded duplicate block removed; single task_id_warnings key remains (WARN-TASK-ID-001/002 intact); task count preserved (81 + 2 new = 83) with no duplicate ids under tasks:."
+      - "Merge-damage audit of the other touched registry files: no duplicate handoff rows, FILE_OWNERSHIP/WORK_BOARD/TEAM_ROSTER YAML-valid, strict-parse shows no duplicate keys."
+      - "scripts/validate_collaboration.py passes."
     evidence:
-    - 'Claim issue35 6827881797. Actual task0612112026152234: generic file processor,
-      zero tests, manifest all_passed=true; this is a rejected acceptance result.'
-    - 389 combined FRIDAY/research/memory/deployment regressions and38 Forge regressions
-      passed.
-    - Expanded diagnostic strict/delivery suite11passed/2failed; both db_path-constructor
-      failures reproduce on archived pristine baseline, not skipped or changed here.
-    blockers:
-    - No successful goal-specific generated tested CSV artifact.
-    - New truthfulness fixes require CI/deployment and actual reverification.
-    next_action: Focused PR/CI/controlled rollout, then reverify existing task without
-      new generation; preserve task history and honest remaining blockers.
-    claim_policy: Update within2h; contact before takeover.
+      - "git grep '^<<<<<<< ' HEAD before repair: exactly 1 hit (ACTIVITY_LOG.md); after repair: 0."
+      - "Strict YAML loader (duplicate-key detection) before repair: 'DUPLICATE KEY: task_id_warnings at line 2428'; after repair: clean."
+      - "Stranded records were stale duplicates: live TASK-WF-005 status DEPLOYED (PR #57) and TASK-WF-006 status VERIFIED (PR #58) vs stranded IN_PROGRESS copies."
+      - "scripts/validate_collaboration.py before repair: COLLABORATION REGISTRY VALID (8 contributors, 81 tasks, 234 file claims) — note it parsed through the duplicate key silently."
+    blockers: []
+    next_action: "Commit with the TASK-CI-F821-MAIN fix in the same session; post completion record to issue #35."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

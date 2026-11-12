@@ -260,11 +260,12 @@ claims:
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
   - path: "docs/collaboration/WORK_BOARD.yaml"
-    owner: "chatgpt + vercel_v0 (consolidation required)"
+    owner: "shared registry (PR #30/#36 consolidated in the 2026-11-10 mass merge); ZAI Agent 1 session repair 2026-11-13"
     prs: [30, 36]
     branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
-    status: "OVERLAPPING_CLAIMS"
+    status: "CONSOLIDATED_SHARED"
     risk: "PR #30 includes live open PR ownership and CI states; PR #36 has a shorter bootstrap board. Reconcile rather than replace."
+    consolidation_note: "2026-11-13 (ZAI Agent 1, TASK-REGISTRY-001): removed the stranded duplicate task_id_warnings block (stale IN_PROGRESS copies of TASK-WF-005/006; live DEPLOYED/VERIFIED records under tasks: untouched), added TASK-CI-F821-MAIN and TASK-REGISTRY-001, updated TASK-STRATEX-TG409 to MERGED per PR #67 evidence. Strict duplicate-key YAML parse clean; 83 tasks; no duplicate ids."
 
   - path: "docs/collaboration/FILE_OWNERSHIP.yaml"
     owner: "chatgpt + vercel_v0 (consolidation required)"
@@ -274,11 +275,12 @@ claims:
     risk: "Both PRs record file ownership; combine all observed PR overlaps and the protected untracked Forge test."
 
   - path: "docs/collaboration/ACTIVITY_LOG.md"
-    owner: "chatgpt + vercel_v0 (consolidation required)"
+    owner: "shared append-only log (PR #30/#36 consolidated in the 2026-11-10 mass merge); ZAI Agent 1 session repair 2026-11-13"
     prs: [30, 36]
     branches: ["chatgpt/TASK-DOC-SYNC-001", "v0/coordination-bootstrap"]
-    status: "OVERLAPPING_CLAIMS"
+    status: "CONSOLIDATED_SHARED"
     risk: "Append both contributors' dated activity; do not erase either history."
+    consolidation_note: "2026-11-13 (ZAI Agent 1, TASK-REGISTRY-001): conflict-marker repair at the 2d5e2a6 damage site — both sides retained in chronological order, inline repair note added; append-only contract preserved (no entries deleted or rewritten)."
 
   - path: "docs/collaboration/DECISIONS.md"
     owner: "chatgpt + vercel_v0 (consolidation required)"
@@ -2025,6 +2027,27 @@ claims:
     task: TASK-STRATEX-TG409
     claimed_at: '2026-11-12T20:15:00+00:00'
     expiry_policy: Contact before takeover; next update2h.
+
+  # --- ZAI Agent 1 session continuity, 2026-11-13 (TASK-CI-F821-MAIN + TASK-REGISTRY-001) ---
+  - path: FRIDAY/src/friday/persona/friday.py
+    owner: zai
+    prs: []
+    branches: []
+    status: COMPLETED_CLAIM
+    task: TASK-CI-F821-MAIN
+    note: "F821 repair: module-level datetime import replaces the function-local self-alias (commit 993a6d6 defect). Unclaimed file before this session; no prior owner."
+    claimed_at: '2026-11-13T03:05:00+05:30'
+    expiry_policy: Task complete; file returns to the unclaimed pool.
+
+  - path: FRIDAY/tests/test_friday_persona.py
+    owner: zai
+    prs: []
+    branches: []
+    status: COMPLETED_CLAIM
+    task: TASK-CI-F821-MAIN
+    note: "3 regression tests appended (get_type_hints module-scope resolution, IST conversion, greeting no-repeat)."
+    claimed_at: '2026-11-13T03:05:00+05:30'
+    expiry_policy: Task complete; file returns to the unclaimed pool.
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"

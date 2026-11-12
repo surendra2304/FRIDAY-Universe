@@ -101,25 +101,22 @@ collaborators:
     authority: "Equal engineering collaborator; Lane A owner (Stratex, orchestration C, memory/brain A/B, tech debt I)"
     verified_capabilities:
       - "GitHub read access: repository clone plus branch/PR/workflow inspection (exercised while preparing TASK-STR-001)."
-      - "GitHub write access through the owner-provided bridge token: created branch zai/TASK-STR-001-live-trading-guard and PR #39."
+      - "GitHub write access through the owner-provided bridge token: created branch zai/TASK-STR-001-live-trading-guard and PR #39 (merged)."
       - "Read-only Oracle Cloud diagnostics through the FRIDAY bridge MCP: fleet health, systemd status, journalctl, non-secret environment mode flags."
       - "Local CI-equivalent verification: pinned pytest environment; ran Stratex regression suites (41 passed for TASK-STR-001 scope; 2 pre-existing main failures isolated and verified to reproduce on pristine main)."
       - "2026-11-10 owner-directed full-project re-verification: fresh clone of main @ 680c04e, GitHub API PR/CI snapshot, read-only bridge diagnostics, and a code-level re-audit of all ten agents (recorded in ACTIVITY_LOG.md, 2026-11-10T04:29:42Z)."
-      - "2026-11-11 batch protocol owner directive: 10 tasks per run, Telegram completion ping per batch; Batch 1 (Stratex rescue) delivered same day — 71 tests green."
+      - "2026-11-11 batch protocol owner directive: 10 tasks per run, Telegram completion ping per batch; Batch 1 (Stratex rescue) delivered same day — 71 tests green. Batches 2, 3, 4, 9, 9b delivered (Lane A) — see ACTIVITY_LOG 2026-11-11/12 entries."
+      - "SESSION CONTINUITY 2026-11-13 03:00 IST: the owner re-seated ZAI Agent 1 in a fresh chat after the previous session degraded. Access re-verified live before this roster refresh: clone at main 993a6d6, GitHub API read/write (claim comment 6836443339), MCP bridge handshake v1.30.0 (31 tools), both Oracle servers ONLINE (bridge fleet health). Local pytest verification re-exercised this session (persona suites 58/58)."
     active_assignments:
-      - "Batch 2 — Stratex strategy depth (docs/BATCH_EXECUTION_PLAN.md)."
-      - "TASK-STR-001 — Stratex fail-closed live-trading guard (PR #39, IN_REVIEW)."
-      - "TASK-COLLAB-002 — ZAI registration in the shared collaboration registry (stacked on PR #30)."
-      - "TASK-DATA-001 — database architecture audit + owner-authorized remediation (PR #41, IN_REVIEW)."
-    active_branches:
-      - "zai/TASK-STR-001-live-trading-guard"
-      - "zai/TASK-COLLAB-002-register-zai"
-      - "zai/TASK-DATA-001-db-architecture-audit"
-    last_verified_at: "2026-11-11T19:30:00+05:30"
+      - "TASK-CI-F821-MAIN — repair main's red FRIDAY Universe CI/CD (F821 undefined 'datetime' in FRIDAY/src/friday/persona/friday.py, introduced by 993a6d6). Claim issue #35 comment 6836443339."
+      - "TASK-REGISTRY-001 — repair committed merge-conflict markers in ACTIVITY_LOG.md (merge 2d5e2a6) + stranded duplicate task records under a duplicated task_id_warnings key in WORK_BOARD.yaml."
+      - "Historical Lane A batch work (2/3/4/9/9b) COMPLETE; TASK-STR-001 (PR #39), TASK-DATA-001 (PR #41) and TASK-COLLAB-002 (stacked on PR #30) all MERGED — roster entries retired from active list."
+    active_branches: []
+    last_verified_at: "2026-11-13T03:05:00+05:30"
     access_limits:
-      - "No direct SSH or production write access; Oracle operations were read-only through the bridge."
-      - "No merges, deployments or service restarts performed; all changes go through PRs for owner review."
-      - "No secret values were read, printed or committed; production environment inspection was limited to non-secret mode flags."
+      - "No direct SSH access; Oracle operations go through the bridge (read diagnostics default; restarts/destructive ops only with owner authorization per fleet rule)."
+      - "No merges of other collaborators' PRs, deployments or service restarts beyond the standard automated Fleet CD flow without owner authorization."
+      - "No secret values read, printed or committed; production environment inspection limited to non-secret mode flags."
 
   - id: "zai_agent_2"
     display_name: "ZAI Agent 2 (second ZAI chat, owner-added 2026-11-11)"

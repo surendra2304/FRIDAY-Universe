@@ -10,6 +10,7 @@ persona is therefore warm and personal first: a loyal best friend with
 Jarvis-grade capability, wit and anticipation.
 """
 
+import datetime
 import random
 
 # ---------------------------------------------------------------------------
@@ -79,10 +80,8 @@ def greeting_responses_for(persona: str) -> tuple[str, ...]:
 _last_greeting: dict[str, str] = {}
 
 
-def _ist_hour(now: "datetime.datetime | None" = None) -> int:
+def _ist_hour(now: datetime.datetime | None = None) -> int:
     """Current hour in IST (the project clock — H1/D-026)."""
-    import datetime as datetime
-
     if now is None:
         now = datetime.datetime.now(datetime.timezone.utc)
     return (now + datetime.timedelta(hours=5, minutes=30)).hour
