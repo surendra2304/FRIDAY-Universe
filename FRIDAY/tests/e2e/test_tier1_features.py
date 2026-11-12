@@ -11,6 +11,14 @@ import re
 import sqlite3
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
+
+# Repo-anchored paths (ZAI Agent 2, 2026-11-12): these e2e spec tests read
+# FRIDAY package files (Dockerfile, README, .env.example) and the CI workflow.
+# Relative paths assumed cwd=FRIDAY/ (never true in the repo-root CI run), so
+# anchor at this test file's location instead: .../FRIDAY/tests/e2e/ -> FRIDAY/.
+_FRIDAY_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = _FRIDAY_ROOT.parent
+_CI_WORKFLOW = _REPO_ROOT / ".github" / "workflows" / "friday-universe-ci.yml"
 import pytest
 from fastapi.testclient import TestClient
 
@@ -617,19 +625,19 @@ def test_f10_05_recursive_sanitize_deep_dictionary() -> None:
 
 def test_f11_01_dockerfile_specifies_non_root_user() -> None:
     """F11.1: Verify Dockerfile switches to non-root appuser."""
-    dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+    dockerfile = (_FRIDAY_ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "USER appuser" in dockerfile
 
 
 def test_f11_02_dockerfile_exposes_port_10000() -> None:
     """F11.2: Verify Dockerfile exposes container port 10000."""
-    dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+    dockerfile = (_FRIDAY_ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "EXPOSE 10000" in dockerfile
 
 
 def test_f11_03_dockerfile_cmd_uses_exec_uvicorn() -> None:
     """F11.3: Verify Dockerfile CMD uses exec uvicorn for PID 1 signal forwarding."""
-    dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+    dockerfile = (_FRIDAY_ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "exec uvicorn" in dockerfile
     assert "10000" in dockerfile
 
@@ -714,7 +722,7 @@ def test_f12_05_offline_mock_safety() -> None:
 
 def test_f13_01_readme_contains_mermaid_diagram() -> None:
     """F13.1: Verify README.md contains Mermaid architecture topology diagram."""
-    readme_path = Path("README.md")
+    readme_path = _FRIDAY_ROOT / "README.md"
     assert readme_path.exists()
     content = readme_path.read_text(encoding="utf-8")
     assert "```mermaid" in content
@@ -722,13 +730,13 @@ def test_f13_01_readme_contains_mermaid_diagram() -> None:
 
 def test_f13_02_env_example_contains_port_10000() -> None:
     """F13.2: Verify .env.example references standard port 10000."""
-    env_example = Path(".env.example").read_text(encoding="utf-8")
+    env_example = (_FRIDAY_ROOT / ".env.example").read_text(encoding="utf-8")
     assert "10000" in env_example
 
 
 def test_f13_03_env_example_has_no_secrets() -> None:
     """F13.3: Verify .env.example does not leak live API keys."""
-    env_example = Path(".env.example").read_text(encoding="utf-8")
+    env_example = (_FRIDAY_ROOT / ".env.example").read_text(encoding="utf-8")
     # Check for live Google API keys
     assert not re.search(r"AIza[0-9A-Za-z-_]{35}", env_example)
     # Check for live OpenAI sk- keys
@@ -737,7 +745,7 @@ def test_f13_03_env_example_has_no_secrets() -> None:
 
 def test_f13_04_ci_workflow_has_linter_and_test_steps() -> None:
     """F13.4: Verify .github/workflows/ci.yml runs ruff check and pytest."""
-    ci_path = Path(".github/workflows/ci.yml")
+    ci_path = _CI_WORKFLOW
     assert ci_path.exists()
     content = ci_path.read_text(encoding="utf-8")
     assert "ruff check" in content
@@ -746,6 +754,6 @@ def test_f13_04_ci_workflow_has_linter_and_test_steps() -> None:
 
 def test_f13_05_ci_workflow_targets_python_311() -> None:
     """F13.5: Verify CI workflow specifies Python 3.11 environment."""
-    ci_path = Path(".github/workflows/ci.yml")
+    ci_path = _CI_WORKFLOW
     content = ci_path.read_text(encoding="utf-8")
     assert "3.11" in content

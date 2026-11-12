@@ -12,6 +12,14 @@ import sqlite3
 import threading
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
+
+# Repo-anchored paths (ZAI Agent 2, 2026-11-12): these e2e spec tests read
+# FRIDAY package files (Dockerfile, README, .env.example) and the CI workflow.
+# Relative paths assumed cwd=FRIDAY/ (never true in the repo-root CI run), so
+# anchor at this test file's location instead: .../FRIDAY/tests/e2e/ -> FRIDAY/.
+_FRIDAY_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = _FRIDAY_ROOT.parent
+_CI_WORKFLOW = _REPO_ROOT / ".github" / "workflows" / "friday-universe-ci.yml"
 import httpx
 import pytest
 from fastapi.testclient import TestClient
@@ -413,12 +421,15 @@ def test_f7_b01_ready_probe_low_disk_space_returns_503(client: TestClient) -> No
 
 def test_f7_b02_ready_probe_sqlite_failure_returns_503(client: TestClient) -> None:
     """F7.B2: Verify /ready returns 503 when SQLite probe connection fails."""
-    with patch("friday.api.server.connect_sqlite", side_effect=sqlite3.OperationalError("Database locked")):
+    with patch("sqlite3.connect", side_effect=sqlite3.OperationalError("Database locked")):
         resp = client.get("/ready")
         assert resp.status_code == 503
         data = resp.json()
         assert data["ready"] is False
-        assert "OperationalError" in data.get("database", "")
+        # The probe reports the store unreachable and records the failure
+        # class for the operator (database itself is "unavailable").
+        assert data["database"] == "unavailable"
+        assert data.get("database_error") == "OperationalError"
 
 
 def test_f7_b03_v1_tasks_id_with_special_characters_and_path_traversal(client: TestClient) -> None:
@@ -587,19 +598,19 @@ def test_f10_b05_recursive_sanitize_preserves_booleans_ints_and_none() -> None:
 
 def test_f11_b01_dockerfile_healthcheck_timeout_within_5s() -> None:
     """F11.B1: Verify Dockerfile HEALTHCHECK specifies timeout of 5 seconds."""
-    dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+    dockerfile = (_FRIDAY_ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "--timeout=5s" in dockerfile
 
 
 def test_f11_b02_dockerfile_healthcheck_interval_is_30s() -> None:
     """F11.B2: Verify Dockerfile HEALTHCHECK specifies interval of 30 seconds."""
-    dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+    dockerfile = (_FRIDAY_ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "--interval=30s" in dockerfile
 
 
 def test_f11_b03_dockerfile_port_fallback_syntax() -> None:
     """F11.B3: Verify Dockerfile CMD includes bash fallback syntax ${PORT:-10000}."""
-    dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+    dockerfile = (_FRIDAY_ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "${PORT:-10000}" in dockerfile
 
 
@@ -701,13 +712,13 @@ def test_f12_b05_options_preflight_cors_response(client: TestClient) -> None:
 
 def test_f13_b01_readme_documents_port_10000_explicitly() -> None:
     """F13.B1: Verify README.md explicitly documents port 10000."""
-    readme = Path("README.md").read_text(encoding="utf-8")
+    readme = (_FRIDAY_ROOT / "README.md").read_text(encoding="utf-8")
     assert "10000" in readme
 
 
 def test_f13_b02_env_example_has_valid_syntax_no_trailing_junk() -> None:
     """F13.B2: Verify .env.example contains properly formatted key-value pairs or comments."""
-    lines = Path(".env.example").read_text(encoding="utf-8").splitlines()
+    lines = (_FRIDAY_ROOT / ".env.example").read_text(encoding="utf-8").splitlines()
     for line in lines:
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -717,19 +728,19 @@ def test_f13_b02_env_example_has_valid_syntax_no_trailing_junk() -> None:
 
 def test_f13_b03_ci_workflow_no_pull_request_duplicates() -> None:
     """F13.B3: Verify CI workflow runs on pushes to main and pull requests without duplicated steps."""
-    ci = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    ci = _CI_WORKFLOW.read_text(encoding="utf-8")
     assert "branches:" in ci
     assert "main" in ci
 
 
 def test_f13_b04_readme_documents_health_and_ready_endpoints() -> None:
     """F13.B4: Verify README.md references /health and /ready probe endpoints."""
-    readme = Path("README.md").read_text(encoding="utf-8")
+    readme = (_FRIDAY_ROOT / "README.md").read_text(encoding="utf-8")
     assert "/health" in readme
     assert "/ready" in readme
 
 
 def test_f13_b05_dockerfile_base_image_is_python_311_slim() -> None:
     """F13.B5: Verify Dockerfile uses python:3.11-slim base image."""
-    dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+    dockerfile = (_FRIDAY_ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "python:3.11-slim" in dockerfile

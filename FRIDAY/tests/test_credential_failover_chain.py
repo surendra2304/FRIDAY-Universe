@@ -154,7 +154,9 @@ def test_interactive_friday_agent_path_failover(tmp_path, monkeypatch):
         provider._client = mock_client
 
         agent = FridayAgent(settings=settings, llm_provider=provider)
-        response = agent.process_message("Hello FRIDAY")
+        # A greeting intentionally fast-pasts past the LLM (A5, batch 9b) and
+        # can never exercise credential failover — probe with real work.
+        response = agent.process_message("Please summarize the failover chain status for me.")
 
         assert "Interactive agent response from Fallback 1" in response.content
         assert key_calls["KEY_PRIMARY"] == 1

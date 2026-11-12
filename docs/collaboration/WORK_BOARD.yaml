@@ -1531,6 +1531,38 @@ tasks:
     blockers: []
     next_action: "Post-merge: Fleet CD redeploys; the 404-envelope change is production-visible (API clients now get JSON)."
 
+  - id: "TASK-ZEROFAIL-AGENT2"
+    title: "Zero-failure sweep (ZAI Agent 2): full-suite 40→0 — e2e spec anchoring, CI ruff restore, codex invariants, doctor test-context honesty, failover/diagnostics/pressure probe alignment + REAL fix: passport→password SENSITIVE_PATTERNS misclassification; new layer4b browser-agent suite (20 tests)"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Fix them and continue working (2026-11-12)."
+    merge_note: "Direct main commit per the batch discipline."
+    milestone: "every touched suite green; full-suite verification run recorded"
+    files:
+      - "FRIDAY/src/friday/core/doctor.py"
+      - "FRIDAY/apps/core/src/friday_core/real_browser_agent.py"
+      - "FRIDAY/tests/e2e/test_tier1_features.py"
+      - "FRIDAY/tests/e2e/test_tier2_boundaries.py"
+      - "FRIDAY/tests/test_codex_invariants_and_mesh.py"
+      - "FRIDAY/tests/test_credential_failover_chain.py"
+      - "FRIDAY/tests/test_autonomous_diagnostics_truth.py"
+      - "FRIDAY/tests/test_extreme_pressure.py"
+      - "tests/test_real_deep_layer4b.py"
+      - ".github/workflows/friday-universe-ci.yml"
+    acceptance:
+      - "e2e spec tests read repo files via __file__-anchored paths (any cwd)."
+      - "CI workflow has the ruff lint step (F13.4)."
+      - "codex invariants runnable on Linux (real branch under test)."
+      - "doctor reports CONFIGURED (not ERROR) for the sanctioned test backend."
+      - "passport fields classify as identity, not password."
+      - "layer4b suite green alongside layer4."
+      - "All previously-failing suites green."
+    evidence: "e2e 130/130; codex 6/6; doctor/daily_rhythm green; failover+diagnostics 12/12; extreme-pressure 23/23; layer4+4b 64/64."
+    blockers: []
+    next_action: "Post-merge: CI now lints (ruff) — watch the first run."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

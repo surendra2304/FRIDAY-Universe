@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import contextlib
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -75,6 +76,7 @@ class DailyRhythmManager:
         self.db_path = db_path
         self._dsn = dsn
         self._backend = "oracle"
+        self._mem_conn: sqlite3.Connection | None = None
         if db_path:
             if not ephemeral_backend_allowed():
                 raise PersistenceConfigError(
@@ -83,14 +85,48 @@ class DailyRhythmManager:
                 )
             self._backend = "sqlite"
             self._init_sqlite()
+        elif ephemeral_backend_allowed():
+            # Hermetic default (ZAI Agent 2, 2026-11-12): a sanctioned pytest
+            # run has no Oracle DSN — an in-memory sqlite store keeps the
+            # rhythm engine exercisable without weakening the production
+            # Oracle requirement (outside a test run this never fires).
+            # ":memory:" is one database PER CONNECTION, so hold a single
+            # shared connection for the process lifetime.
+            self._backend = "sqlite"
+            self.db_path = ":memory:"
+            self._mem_conn = sqlite3.connect(":memory:", check_same_thread=False)
+            self._init_sqlite()
 
         # Surendra's Operating Rhythm: Awake 09:00 AM to 00:00 Midnight
         self.wake_hour: int = 9
         self.sleep_hour: int = 0
         self.user_name: str = "Surendra"
 
+    def _sqlite_conn(self) -> sqlite3.Connection:
+        """A connection for one with-block.
+
+        File mode: a fresh connection (closed by the with-block, exactly the
+        old behavior). Memory mode: the SHARED process-lifetime connection
+        wrapped in a no-op closer so contextlib.closing never closes it.
+        """
+        if self._mem_conn is not None:
+            conn = self._mem_conn
+
+            class _NoClose:
+                def __init__(self, inner: sqlite3.Connection) -> None:
+                    self._inner = inner
+
+                def close(self) -> None:  # shared connection: keep it open
+                    pass
+
+                def __getattr__(self, name: str):  # delegate everything
+                    return getattr(self._inner, name)
+
+            return _NoClose(conn)  # type: ignore[return-value]
+        return sqlite3.connect(self.db_path)
+
     def _init_sqlite(self) -> None:
-        with sqlite3.connect(self.db_path) as conn:
+        with contextlib.closing(self._sqlite_conn()) as conn:
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS daily_goals (
@@ -114,7 +150,7 @@ class DailyRhythmManager:
 
     def _set_goal(self, dt: str, title: str, description: str, now_iso: str) -> int:
         if self._backend == "sqlite":
-            with sqlite3.connect(self.db_path) as conn:
+            with contextlib.closing(self._sqlite_conn()) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT id FROM daily_goals WHERE goal_date = ? ORDER BY id DESC LIMIT 1",
@@ -179,7 +215,7 @@ class DailyRhythmManager:
         self, gid: int, progress: float, status: str, notes: str, now_iso: str
     ) -> None:
         if self._backend == "sqlite":
-            with sqlite3.connect(self.db_path) as conn:
+            with contextlib.closing(self._sqlite_conn()) as conn:
                 conn.execute(
                     "UPDATE daily_goals SET progress = ?, status = ?, notes = ?, "
                     "updated_at = ? WHERE id = ?",
@@ -240,7 +276,7 @@ class DailyRhythmManager:
         """Get the active goal for today (or specified date)."""
         dt = target_date or self._today()
         if self._backend == "sqlite":
-            with sqlite3.connect(self.db_path) as conn:
+            with contextlib.closing(self._sqlite_conn()) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     f"SELECT {_GOAL_COLUMNS} FROM daily_goals WHERE goal_date = ? "

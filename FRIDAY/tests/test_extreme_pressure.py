@@ -149,9 +149,15 @@ def test_two_hundred_concurrent_dispatches_all_come_back(contracts: dict[str, An
     assert len(mesh.history) == 200
     states = {outcome.state for outcome in outcomes}
     assert states <= set(OutcomeState)
-    # A peer that never answered must never be reported as degraded.
+    # A peer that never answered must never be reported as degraded. After the
+    # breaker opens (threshold 3), further dispatches honestly come back
+    # BLOCKED — "circuit open, not hammering" — which is the protective state,
+    # not a claim the peer answered. Both outcomes are non-degraded.
     unreachable = [o for o in outcomes if o.peer == peers[1]]
-    assert unreachable and all(o.state is OutcomeState.UNREACHABLE for o in unreachable)
+    assert unreachable and all(
+        o.state in (OutcomeState.UNREACHABLE, OutcomeState.BLOCKED) for o in unreachable
+    )
+    assert any(o.state is OutcomeState.UNREACHABLE for o in unreachable)
 
 
 def test_the_breaker_counts_every_attempt_once(contracts: dict[str, Any]) -> None:

@@ -615,7 +615,13 @@ class ActionRecord:
 # ── Sensitive data guard ──────────────────────────────────────────────────
 
 SENSITIVE_PATTERNS = {
-    "password": (r"pass(word|phrase)?", r"pin", r"secret"),
+    # Separator-anchored (ZAI Agent 2, 2026-11-12): the bare
+    # r"pass(word|phrase)?" also matched "passport_no" ("pass" + optional
+    # group) and misclassified an identity document as a password field.
+    # (?<![a-z]) and (?![a-z]) anchor at any non-letter edge (start, "_",
+    # "-", digits) so user_passphrase still matches but passport does not —
+    # the families stay disjoint: passport/aadhaar classify as identity.
+    "password": (r"(?<![a-z])pass(word|phrase)(?![a-z])", r"(?<![a-z])pin(?![a-z])", r"(?<![a-z])secret(?![a-z])"),
     "payment": (r"card", r"cvv", r"cvc", r"iban", r"account.?number", r"routing"),
     "identity": (r"ssn", r"social.?security", r"passport", r"aadhaar", r"national.?id", r"dob"),
     "secret": (r"api.?key", r"token", r"private.?key", r"seed.?phrase", r"otp"),

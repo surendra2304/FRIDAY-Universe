@@ -210,18 +210,20 @@ class TestBatch8Endpoints:
 # ---------------------------------------------------------------------------
 
 class TestServerImportsBatch8:
-    def test_server_imports_with_owner_preferences(self):
-        import os
-
-        os.environ.setdefault("DATABASE_URL", "oracle+oracledb://mock:mock@localhost:1521/FREE")
-        os.environ.setdefault("FRIDAY_ENV", "test")
+    def test_server_imports_with_owner_preferences(self, monkeypatch):
+        # Hermeticity fix (ZAI Agent 2, 2026-11-12): the old os.environ.setdefault
+        # LEAKED DATABASE_URL (and FRIDAY_ENV) into every later test — the
+        # tier1 /ready probe then saw a configured-but-dead Oracle DSN and
+        # failed with 503. monkeypatch restores the env after this test.
+        monkeypatch.setenv("DATABASE_URL", "oracle+oracledb://mock:mock@localhost:1521/FREE")
+        monkeypatch.setenv("FRIDAY_ENV", "test")
         import importlib.util
 
         spec = importlib.util.spec_from_file_location("friday_server_b8", str(REPO / "FRIDAY" / "src" / "friday" / "api" / "server.py"))
         mod = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(mod)
-        except Exception as e:
+        except Exception:
             # Oracle driver is absent in the test env — that's fine; we only
             # care that the batch-8 symbols are present.
             pass

@@ -18,10 +18,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas
+          pip install fastapi uvicorn httpx pydantic pytest pytest-cov requests numpy scipy matplotlib pandas ruff
 
       # Checklist I5: the seven engine suites run as ONE invocation so coverage
       # accumulates across them, then scripts/coverage_gate.py enforces the
+      # F13.4 (Tier-1 spec): lint before tests so style/import errors fail
+      # fast with a readable report.
+      - name: Lint (ruff check)
+        run: ruff check FRIDAY/src/friday --exclude FRIDAY/src/friday/tools/builtin --quiet || ruff check FRIDAY/src/friday --exclude FRIDAY/src/friday/tools/builtin --statistics --output-format=concise
+
       # regression-class floors in tests/COVERAGE_MANIFEST.json. A PR that
       # deletes/breaks the tests for a covered module fails here, not silently.
       - name: Run engine test suites with coverage
