@@ -17,7 +17,10 @@ def _run_cli(monkeypatch: pytest.MonkeyPatch, *arguments: str) -> None:
 
 @pytest.mark.parametrize("scope", ["typo", "tests,typo", ","])
 def test_reflex_cli_refuses_invalid_scope_before_starting_a_pass(
-    scope: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    scope: str,
+    monkeypatch: pytest.MonkeyPatch,
+    restore_friday_logger,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     from friday.cognition import reflex
 
@@ -40,7 +43,7 @@ def test_reflex_cli_refuses_invalid_scope_before_starting_a_pass(
 
 
 def test_reflex_cli_passes_a_valid_scope_without_widening(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch, restore_friday_logger, capsys: pytest.CaptureFixture[str]
 ) -> None:
     from friday.cognition import reflex
     from friday.cognition.reflex import IncidentKind

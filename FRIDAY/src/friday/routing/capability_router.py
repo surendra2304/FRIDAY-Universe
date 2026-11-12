@@ -127,6 +127,20 @@ class CapabilityRouter:
         "mesh status", "universe status", "who is online", "anyone down",
         "agents online", "status of the agents", "how are the agents",
     }
+    # TASK-DIAG-001 (2026-11-12): keywords signaling a FRIDAY self-diagnostics
+    # pass. "Run diagnostics" / "check your systems" is a factual question
+    # about FRIDAY's own twelve subsystems — the answer must come from the
+    # real FridayDoctor probe (the same engine the CLI doctor command and
+    # /api/diagnostics report), never from the LLM's imagination. Deliberately
+    # NARROW: only explicit diagnostics intent fires it — small-talk ("how are
+    # you doing", "are you okay") belongs to the A9 tone path, and fleet
+    # phrasings ("how's the fleet?") stay a fleet probe.
+    DIAGNOSTICS_KEYWORDS = {
+        "run diagnostics", "run a diagnostic", "run a diagnostics",
+        "run a self check", "run a self-check", "self check", "self-check",
+        "check your systems", "check your health", "check your subsystems",
+        "diagnostics", "system check", "doctor check",
+    }
     # TASK-INT-002 (2026-11-10): keywords signaling a research dispatch to
     # IntelX. The live incident ("run a quick research check" -> VISION_MODEL)
     # proved research requests were nobody's job: they must reach

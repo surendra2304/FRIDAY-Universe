@@ -13,7 +13,11 @@ async def test_remote_control_requires_non_example_key(monkeypatch):
     monkeypatch.delenv("FRIDAY_API_KEY", raising=False)
     monkeypatch.delenv("FRIDAY_UNIVERSE_API_KEY", raising=False)
     monkeypatch.setattr(server, "get_settings", lambda *a, **k: SimpleNamespace(api_key="friday_universe_api"))
-    request = SimpleNamespace(headers={}, client=SimpleNamespace(host="127.0.0.1"))
+    request = SimpleNamespace(
+        headers={},
+        client=SimpleNamespace(host="127.0.0.1"),
+        method="POST",  # _require_control_access reads request.method
+    )
 
     with pytest.raises(HTTPException) as exc:
         await server._require_control_access(request)
@@ -27,7 +31,11 @@ async def test_remote_control_checks_bearer_key_constant_time(monkeypatch):
     monkeypatch.delenv("FRIDAY_API_KEY", raising=False)
     monkeypatch.delenv("FRIDAY_UNIVERSE_API_KEY", raising=False)
     monkeypatch.setattr(server, "get_settings", lambda *a, **k: SimpleNamespace(api_key="a-long-configured-secret"))
-    request = SimpleNamespace(headers={"authorization": "Bearer a-long-configured-secret"}, client=SimpleNamespace(host="127.0.0.1"))
+    request = SimpleNamespace(
+        headers={"authorization": "Bearer a-long-configured-secret"},
+        client=SimpleNamespace(host="127.0.0.1"),
+        method="POST",  # _require_control_access reads request.method
+    )
     assert await server._require_control_access(request) is None
 
     request.headers = {"x-friday-api-key": "incorrect"}

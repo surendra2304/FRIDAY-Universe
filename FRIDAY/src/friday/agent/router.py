@@ -188,7 +188,7 @@ class ConsensusVote:
     """Individual vote and response telemetry from an agent during consensus routing."""
     agent: str
     decision: str
-    confidence: float
+    confidence: Optional[float]
     response_summary: str
     latency_ms: int
     status: TaskStatus
@@ -704,10 +704,12 @@ class SpecialistRouter:
                     or raw.get("status")
                     or res.summary
                 ).strip()
-                # Honesty fix (ZAI Agent 2, 2026-11-12): an agent that did not
-                # report confidence must not look maximally confident — 0.0 is
-                # the same "unreported" sentinel the coordinator dataclasses use.
-                confidence = float(raw.get("confidence") or 0.0)
+                # A peer that did not report a confidence gets None in the
+                # vote record - never an invented perfect 1.0 that would skew
+                # highest-confidence aggregation (BUG-042 lineage; pinned by
+                # test_no_invented_telemetry_defaults).
+                raw_confidence = raw.get("confidence")
+                confidence = float(raw_confidence) if raw_confidence is not None else None
                 return ConsensusVote(
                     agent=agent_id,
                     decision=decision,

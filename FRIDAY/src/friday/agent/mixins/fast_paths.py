@@ -177,9 +177,44 @@ class FastPathMixin:
             """Return a direct conversational greeting response, or None if not a greeting."""
             if not self._GREETING_PATTERN.match(clean_input):
                 return None
-            from friday.persona.friday import greeting_responses_for
-            responses = greeting_responses_for(getattr(self.settings, "persona", "friday"))
-            response = random.choice(responses).format(user_name=self.settings.user_name)
+            user_name = getattr(self.settings, "user_name", "Surendra")
+            persona = getattr(self.settings, "persona", "friday")
+            if persona == "friday":
+                # Context-aware greeting (owner directive: talk like a friend
+                # who knows you, never the same canned line). Composed from the
+                # IST clock, the previous conversation's topic, and the live
+                # mission queue; the canned pool remains only as a fallback.
+                last_topic: str | None = None
+                try:
+                    recent = [
+                        m for m in (self.memory.get_messages() or [])
+                        if str(getattr(m, "content", "")).strip()
+                    ]
+                    for message in reversed(recent):
+                        content = str(getattr(message, "content", "")).strip()
+                        role = str(getattr(getattr(message, "role", None), "value", "") or "")
+                        if role.upper() == "USER" and not self._GREETING_PATTERN.match(content):
+                            last_topic = content
+                            break
+                except Exception as exc:
+                    logger.debug(f"Last-topic recall skipped in greeting: {exc}")
+                pending: int | None = None
+                try:
+                    from friday.proactive.mission_queue import mission_queue
+
+                    pending = len(mission_queue.pending())
+                except Exception as exc:
+                    logger.debug(f"Mission queue count skipped in greeting: {exc}")
+                from friday.persona.friday import compose_greeting
+
+                response = compose_greeting(
+                    user_name, last_topic=last_topic, pending_tasks=pending
+                )
+            else:
+                from friday.persona.friday import greeting_responses_for
+
+                responses = greeting_responses_for(persona)
+                response = random.choice(responses).format(user_name=user_name)
             # TASK-MEM-003: proactive memory — a greeting is the moment the
             # owner returns, so FRIDAY volunteers a short reference to what it
             # remembers (past conversations, preferences) without being asked.
@@ -419,6 +454,103 @@ class FastPathMixin:
                 "fleet_status": True,
                 "probe_success": success,
                 "fleet": (result.metadata or {}).get("fleet"),
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+            },
+        )
+
+    def _diagnostics_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """TASK-DIAG-001 (2026-11-12): self-diagnostics from the REAL doctor.
+
+        "Run diagnostics" is a factual question about FRIDAY's own twelve
+        subsystems: the answer comes from FridayDoctor.run_full_diagnostics()
+        — the same engine the CLI doctor command uses — never from the LLM's
+        imagination. Every component is reported with its real status; a
+        failing probe is named with its remediation; an untested component is
+        reported as untested, never as healthy. Deterministic: no LLM call.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        from friday.routing.capability_router import CapabilityRouter
+
+        # RESEARCH beats the topic word: "research diagnostics trends" asks
+        # IntelX to research a topic, not for FRIDAY to probe itself. The
+        # research fast path runs later in the ladder, so the deferral must
+        # happen here (mirrors how the task-status gate defers to delegation).
+        if CapabilityRouter._matches(low, CapabilityRouter.RESEARCH_KEYWORDS):
+            return None
+
+        if not CapabilityRouter._matches(low, CapabilityRouter.DIAGNOSTICS_KEYWORDS):
+            return None
+
+        from friday.core.doctor import FridayDoctor
+
+        success = True
+        lines: list[str] = []
+        try:
+            doctor = FridayDoctor(settings=getattr(self, "settings", None))
+            report = doctor.run_full_diagnostics()
+            overall = report.overall_status.value
+            components = report.components
+            by_status: dict[str, list[str]] = {}
+            for name, comp in components.items():
+                by_status.setdefault(comp.status.value, []).append(name)
+            if overall == "AVAILABLE":
+                lines.append(f"Full self-check complete, {self.settings.user_name} — every subsystem I probed answered.")
+            elif overall in ("CONFIGURED", "DEGRADED"):
+                lines.append(f"Self-check complete, {self.settings.user_name} — I'm up, with a few honest caveats below.")
+            else:
+                success = False
+                lines.append(f"Self-check found a problem, {self.settings.user_name} — I'm not fully healthy right now.")
+            lines.append(f"Overall: {overall}.")
+            # Name the interesting components; quiet ones are counted.
+            quiet = {"AVAILABLE", "CONFIGURED"}
+            notable = [c for c in components.values() if c.status.value not in quiet]
+            if notable:
+                lines.append("")
+                for comp in notable:
+                    line = f"- {comp.name}: {comp.status.value} — {comp.message}"
+                    if comp.remediation:
+                        line += f" (fix: {comp.remediation})"
+                    lines.append(line)
+            ok_count = sum(len(names) for status, names in by_status.items() if status in quiet)
+            lines.append("")
+            lines.append(
+                f"{ok_count} of {len(components)} components are green or configured; "
+                f"{len(components) - ok_count} need attention or were not testable here."
+            )
+            content = "\n".join(lines)
+        except Exception as exc:
+            success = False
+            content = (
+                f"I tried to run my diagnostics, {self.settings.user_name}, but the self-check itself "
+                f"failed: {type(exc).__name__}. That is the real outcome — I have no report to give you."
+            )
+
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Self-diagnostics request recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Running the real FridayDoctor probe")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="run_full_diagnostics")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Reporting per-component truth")
+        self.state_machine.transition_to(TaskState.COMPLETED if success else TaskState.FAILED, reason=content[:120])
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=content))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=content,
+                agent_name="friday",
+                event_type="action",
+                tags=["diagnostics", "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in diagnostics: {e}")
+        return AgentResponse(
+            content=content,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "diagnostics": True,
+                "probe_success": success,
                 "duration_seconds": time.perf_counter() - start_time,
                 "task_state": self.state_machine.current_state.value,
             },

@@ -53,6 +53,7 @@ dev = [
     "aiosqlite>=0.19.0",
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
+    "respx>=0.21.0",
     "ruff>=0.6.0",
     "mypy>=1.11.0",
     "opencv-python-headless>=4.8.0",
@@ -86,6 +87,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+# windows-marked tests exercise Win32-only modules (ctypes.windll, win32gui)
+# and fail on Linux by design - the documented convention (FRIDAY_KNOWN_ISSUES
+# "Known limitations that are not defects") deselects them; run them with
+# `pytest -m windows` on a Windows host.
 addopts = "-m 'not live and not hardware and not windows'"
 markers = [
     "unit: Unit tests verifying isolated components and data models",

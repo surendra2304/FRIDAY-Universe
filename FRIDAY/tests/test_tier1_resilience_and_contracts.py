@@ -34,7 +34,7 @@ def test_health_endpoint_contract(client: TestClient) -> None:
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "friday_core"
+    assert data["service"] == "FRIDAY"
     assert data["version"] == "2.0.0"
     assert data["overall"] == "healthy"
     assert "observed_at" in data
@@ -48,7 +48,7 @@ def test_ready_endpoint_contract(client: TestClient, tmp_path: Path) -> None:
     data = response.json()
     assert data["ready"] is True
     assert data["status"] == "ready"
-    assert data["service"] == "friday_core"
+    assert data["service"] == "FRIDAY"
     assert data["database"] == "healthy"
     assert "timestamp" in data
 

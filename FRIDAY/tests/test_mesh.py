@@ -69,7 +69,12 @@ def test_the_contract_table_is_read_from_the_live_fleet_client() -> None:
     # The endpoints must be the ones the production client posts to.
     assert contracts["inference"].task_path == "/v1/task/execute"
     assert contracts["forge"].task_path == "/api/v1/forge/delegate"
-    assert contracts["sentinel"].task_path == "/api/v1/friday/delegate"
+    # Sentinel's /friday/delegate refuses generic dispatches (it requires a
+    # complete explicit scope, see cognition/mesh.py build_contracts), so the
+    # contract's generic dispatch surface is /friday/status, which answers
+    # with a verification receipt. The fleet client still posts explicit
+    # assessments to /friday/delegate.
+    assert contracts["sentinel"].task_path == "/api/v1/friday/status"
     assert contracts["inference"].url_for("/health").endswith("/health")
     # Credentials are carried the way each peer expects, and only when present.
     contracts["inference"].api_key = ""

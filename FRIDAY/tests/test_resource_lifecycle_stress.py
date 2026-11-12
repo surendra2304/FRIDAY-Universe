@@ -23,39 +23,49 @@ class TestResourceLifecycleAndStressCleanup:
 
     def test_agent_and_memory_lifecycle_thread_boundedness(self, tmp_path):
         """Repeatedly create, run, and destroy 50 FridayAgent sessions; assert zero thread leakage."""
-        initial_threads = threading.active_count()
         db_file = str(tmp_path / "lifecycle_test.db")
 
-        for i in range(50):
-            mock_llm = MockLLMProvider(
-                custom_responder=lambda msgs, tools: Message(role=Role.ASSISTANT, content=f"Session response {i}")
-            )
-            mem = SQLiteConversationMemory(db_path=db_file)
-            tools = ToolRegistry()
+        def run_batch(label: str) -> int:
+            for i in range(50):
+                mock_llm = MockLLMProvider(
+                    custom_responder=lambda msgs, tools: Message(role=Role.ASSISTANT, content=f"Session response {label}-{i}")
+                )
+                mem = SQLiteConversationMemory(db_path=db_file)
+                tools = ToolRegistry()
 
-            agent = FridayAgent(
-                llm_provider=mock_llm,
-                memory=mem,
-                tool_registry=tools,
-            )
+                agent = FridayAgent(
+                    llm_provider=mock_llm,
+                    memory=mem,
+                    tool_registry=tools,
+                )
 
-            res = agent.process_message(f"Turn {i}")
-            assert f"Session response {i}" in res.content
+                res = agent.process_message(f"Turn {label}-{i}")
+                assert f"Session response {label}-{i}" in res.content
 
-            # Deterministic cleanup
-            agent.close()
-            del agent
-            del mem
-            del tools
-            del mock_llm
+                # Deterministic cleanup
+                agent.close()
+                del agent
+                del mem
+                del tools
+                del mock_llm
 
-        # Run garbage collection
-        gc.collect()
-        time.sleep(0.05)
-        final_threads = threading.active_count()
+            # Run garbage collection
+            gc.collect()
+            time.sleep(0.05)
+            return threading.active_count()
 
-        # Thread count should not monotonically grow (allowing for standard pytest daemon threads)
-        assert abs(final_threads - initial_threads) <= 4, f"Thread leak detected: {initial_threads} -> {final_threads}"
+        # A fixed delta against the session start count is fragile in a full
+        # suite run: background work submitted by earlier suites (e.g. the
+        # shared memory executor's retries) can start or finish while this
+        # test runs and shift the global count without this test leaking
+        # anything. The leak invariant is BATCH-RELATIVE instead: a real
+        # per-session leak grows monotonically batch over batch, ambient
+        # background noise does not.
+        first_count = run_batch("a")
+        second_count = run_batch("b")
+        assert abs(second_count - first_count) <= 4, (
+            f"Thread leak detected across batches: {first_count} -> {second_count}"
+        )
 
     def test_audio_stream_lifecycle_cleanup(self):
         """Verify audio capture and playback components clean up immediately on close."""

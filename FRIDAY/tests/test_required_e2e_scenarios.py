@@ -237,6 +237,7 @@ def test_04b_whatsapp_contact_ambiguity(agent):
 # FRIDAY -> IntelX -> evidence & contradiction analysis -> cited report ->
 # optional Memora writeback
 # ==============================================================================
+@pytest.mark.live  # Reaches the deployed IntelX research service; run with -m live against the fleet.
 def test_05_research_company_cited_report_flow(agent):
     """Scenario 5: IntelX deep research with contradiction analysis and report."""
     directive = "FRIDAY, research this company and give me a cited report."
@@ -314,6 +315,7 @@ def test_07_security_assess_staging_server_flow(agent):
 # FRIDAY -> Futuris -> calibrated forecast -> uncertainty and assumptions ->
 # no automatic production change
 # ==============================================================================
+@pytest.mark.live  # Reaches the deployed Futuris forecast service; run with -m live against the fleet.
 def test_08_forecasting_website_traffic_flow(agent):
     """Scenario 8: Futuris probabilistic forecast with non-execution safety invariant."""
     directive = "FRIDAY, forecast website traffic for tomorrow."
@@ -339,6 +341,7 @@ def test_08_forecasting_website_traffic_flow(agent):
 # FRIDAY -> Stratex telemetry -> optional Inference advisory ->
 # deterministic Stratex gates -> explanation only
 # ==============================================================================
+@pytest.mark.live  # Reaches the deployed Stratex trading service; run with -m live against the fleet.
 def test_09_trading_check_stratex_performance_flow(agent):
     """Scenario 9: Stratex telemetry & Inference advisory with strict trade freeze invariant."""
     directive = "FRIDAY, check Stratex performance."

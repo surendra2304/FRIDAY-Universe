@@ -375,19 +375,28 @@ class FridayDoctor:
             )
 
     def diagnose_memory_database(self) -> ComponentHealth:
-        """Audit the Oracle conversation-memory schema."""
-        # Hermetic-test honesty (ZAI Agent 2, 2026-11-12): inside a sanctioned
-        # pytest run with the test-only sqlite backend, "no Oracle DSN" is the
-        # EXPECTED configuration, not a fault — probe the sqlite store instead
-        # so a genuinely broken store (e.g. a corrupt file) still reports
-        # ERROR. Production still audits Oracle for real.
+        """Audit the conversation-memory store for the backend actually in force.
+
+        Honors the configured memory backend instead of assuming Oracle: with
+        ``memory_backend='sqlite'`` (the sanctioned test backend, allowed only
+        inside a pytest run) the probe checks that SQLite store instead of
+        erroring against an Oracle DSN the deployment never configured.
+        Production still audits Oracle for real.
+        """
         from friday.core.oracle import ephemeral_backend_allowed
 
         backend = str(getattr(self.settings, "memory_backend", "oracle") or "oracle").lower()
         if ephemeral_backend_allowed() and backend == "sqlite":
             import sqlite3 as _sqlite3
 
-            db_path = getattr(self.settings, "memory_db_path", None) or "data/friday.db"
+            try:
+                db_path = str(
+                    getattr(self.settings, "sqlite_db_path", "")
+                    or getattr(self.settings, "memory_db_path", None)
+                    or "data/friday.db"
+                )
+            except Exception:
+                db_path = str(getattr(self.settings, "memory_db_path", None) or "data/friday.db")
             try:
                 probe = _sqlite3.connect(db_path)
                 probe.execute("SELECT 1")
@@ -396,14 +405,14 @@ class FridayDoctor:
                     name="memory_database",
                     status=DiagnosticStatus.CONFIGURED,
                     message="Test run with the sanctioned sqlite backend; store is readable.",
-                    details={"backend": "sqlite (test-only)", "path": str(db_path)},
+                    details={"backend": "sqlite (test-only)", "path": db_path},
                 )
             except Exception as exc:
                 return ComponentHealth(
                     name="memory_database",
                     status=DiagnosticStatus.ERROR,
                     message=f"Memory database error: {redact_secrets(str(exc))}",
-                    details={"backend": "sqlite (test-only)", "path": str(db_path)},
+                    details={"backend": "sqlite (test-only)", "path": db_path},
                 )
         try:
             from friday.core import oracle

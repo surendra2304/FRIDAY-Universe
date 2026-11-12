@@ -94,7 +94,12 @@ def test_cognition_mesh_contracts_include_vyralx():
     assert "vyralx" in contracts
     v_contract = contracts["vyralx"]
     assert v_contract.name == "vyralx"
-    assert v_contract.task_path == "/api/v1/tasks"
+    # VyralX serves FRIDAY's canonical task-envelope surface at
+    # /v1/task/execute (VyralX main.py:1931, "FRIDAY's canonical POST
+    # /v1/task/execute task-envelope contract"); /api/v1/tasks is the separate
+    # task.submit API the FleetClient uses. The mesh transport dispatches
+    # typed envelopes, so the envelope path is the contract's task_path.
+    assert v_contract.task_path == "/v1/task/execute"
     assert v_contract.health_path == "/health"
     assert v_contract.auth_style == "x-api-key"
 

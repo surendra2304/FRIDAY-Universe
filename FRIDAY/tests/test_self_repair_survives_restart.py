@@ -133,10 +133,19 @@ class Gate:
             # Exercise the production control-access guard, not the loopback bypass.
             "RENDER": "1",
             "FRIDAY_API_KEY": CONTROL_KEY,
-            "PYTHONPATH": str(REPO_ROOT / "src") + os.pathsep + str(REPO_ROOT),
+            # friday.api.server mounts the mesh routers at module level and the
+            # mesh package lives at the monorepo root, so the child needs the
+            # monorepo root on its PYTHONPATH (mirrors tests/conftest.py).
+            "PYTHONPATH": str(REPO_ROOT / "src") + os.pathsep + str(REPO_ROOT) + os.pathsep + str(REPO_ROOT.parent),
             # Keep background peer polling out of the transcript and the wall clock.
             "FRIDAY_FLEET_SUPERVISION_INTERVAL_SECONDS": "86400",
             "FRIDAY_MEMORA_POLL_INTERVAL_SECONDS": "86400",
+            # The gate is its own OS process, so the pytest-only sqlite guard
+            # (friday.memory.factory) would fail it closed at import even
+            # though the conftest exports FRIDAY_MEMORY_BACKEND=sqlite. Mark the
+            # child as the test environment it is: the memory factory's
+            # documented ephemeral fallback then applies and the gate boots.
+            "FRIDAY_ENV": "testing",
         }
         log = self.log_path.open("wb")
         self.proc = subprocess.Popen(

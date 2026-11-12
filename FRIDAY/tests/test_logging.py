@@ -2,6 +2,8 @@
 
 import logging
 
+import pytest
+
 from friday.core.logging import (
     SanitizedFormatter,
     SecretMaskingFilter,
@@ -48,7 +50,7 @@ def test_get_logger_namespace():
     assert log.name == "friday.custom_subsystem"
 
 
-def test_setup_logging(tmp_path):
+def test_setup_logging(tmp_path, restore_friday_logger):
     log_file = tmp_path / "test_friday.log"
     logger = setup_logging(level="DEBUG", log_file=str(log_file))
     logger.info("Test log message")

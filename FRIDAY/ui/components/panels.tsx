@@ -458,19 +458,23 @@ export function ConsoleStrip({
 }) {
   const online = fleet?.agents?.filter((a) => statusTone(a.status) === "good").length ?? 0;
   const total = fleet?.agent_count ?? fleet?.agents?.length ?? 10;
+  /* Truthful status color (fix 2026-11-13): green only when every agent is
+     reachable; amber for a partial fleet; RED when none are — the old dot
+     showed green whenever any fleet snapshot loaded, even at 0/9 online. */
+  const fleetTone = !fleet ? "muted" : online === 0 ? "bad" : online < total ? "warn" : "good";
   return (
     <div className="console-strip">
       <span className="strip-pill">
-        <span className={`dot ${fleet ? "good pulse" : "muted"}`} />
+        <span className={`dot ${fleetTone} ${fleet ? "pulse" : ""}`} />
         {fleet ? `${online}/${total} agents online` : "connecting…"}
       </span>
       <span className="strip-pill">
         <Zap size={12} style={{ color: "var(--amber)" }} />
         {autonomy?.autonomous_mode ? "autonomy running" : "autonomy manual"}
       </span>
-      <span className="strip-pill">
+      <span className="strip-pill" title="Autonomous actions logged by the fleet">
         <BarChart2 size={12} style={{ color: "var(--cyan)" }} />
-        {autonomy?.history_count ?? 0} actions
+        {autonomy?.history_count ?? 0} actions logged
       </span>
     </div>
   );

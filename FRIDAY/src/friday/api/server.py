@@ -46,6 +46,10 @@ from friday.agent.agent import FridayAgent
 from friday.cli.auth import CLIAuthorizer
 from friday.core.auth import DefaultSecureAuthorizer
 from friday.core.config import get_settings
+# connect_sqlite is imported into this module's namespace on purpose: the
+# /ready regressions patch `friday.api.server.connect_sqlite` to prove a
+# failing storage layer turns the probe 503.
+from friday.core.database import connect_sqlite
 from friday.core.logging import get_logger
 from friday.devices.android_controller import AndroidDeviceController
 from friday.devices.app_launcher import launch_desktop_app
@@ -980,7 +984,15 @@ async def health_check() -> dict[str, Any]:
 @app.api_route("/ready", methods=["GET", "HEAD"])
 @app.api_route("/api/ready", methods=["GET", "HEAD"])
 async def readiness_check() -> JSONResponse:
-    """Readiness probe verifying the configured database backend and disk space."""
+    """Readiness probe verifying the configured database backend and disk space.
+
+    Honors the configured memory backend instead of assuming Oracle: a
+    sqlite-backed deployment (the sanctioned test backend, batch 9b hermetic
+    conftest) probes its actual SQLite store, not an Oracle DSN it never
+    configured. Oracle deployments keep the existing DSN round-trip.
+    """
+    # Imported at module level (patchable as `friday.api.server.connect_sqlite`
+    # by the readiness regressions); used here for the sqlite backend probe.
     status: dict[str, Any] = {
         "status": "ready",
         "ready": True,
@@ -997,40 +1009,38 @@ async def readiness_check() -> JSONResponse:
     }
 
     settings_obj = get_settings()
+    memory_backend = (getattr(settings_obj, "memory_backend", "oracle") or "oracle").strip().lower()
     dsn = getattr(settings_obj, "oracle_dsn", None)
-    backend = "oracle" if dsn else "unconfigured"
-    status["database_backend"] = backend
-
-    db_status = "unavailable"
-    if dsn:
+    if memory_backend == "sqlite":
+        # The configured store IS the SQLite file: prove it answers.
+        status["database_backend"] = "sqlite"
+        db_status = "unavailable"
         try:
-            from sqlalchemy import text
-
-            from friday.core.oracle import get_engine
-
-            engine = get_engine(dsn)
-            with engine.connect() as conn:
-                conn.execute(text("SELECT 1 FROM DUAL"))
-            db_status = "connected"
+            db_path = getattr(settings_obj, "sqlite_db_path", None) or ":memory:"
+            conn = connect_sqlite(db_path)
+            try:
+                conn.execute("SELECT 1")
+            finally:
+                conn.close()
+            db_status = "healthy"
         except Exception as exc:
+            db_status = f"unhealthy: {type(exc).__name__}: {exc}"
             status["database_error"] = type(exc).__name__
     else:
-        # Tier-1 contract fix (ZAI Agent 2, 2026-11-12): a pytest run uses the
-        # sanctioned test-only SQLite backend (conftest sets it). Readiness
-        # must probe THAT store and report it honestly, not fail the probe by
-        # demanding an Oracle DSN a test environment never has. Production
-        # keeps requiring Oracle (the is_prod branch below still enforces it).
-        memory_backend = str(getattr(settings_obj, "memory_backend", "oracle") or "oracle").lower()
-        if memory_backend == "sqlite":
-            try:
-                import sqlite3 as _sqlite3
+        backend = "oracle" if dsn else "unconfigured"
+        status["database_backend"] = backend
 
-                db_path = getattr(settings_obj, "memory_db_path", None) or ":memory:"
-                probe = _sqlite3.connect(db_path)
-                probe.execute("SELECT 1")
-                probe.close()
-                db_status = "healthy"
-                status["database_backend"] = "sqlite"
+        db_status = "unavailable"
+        if dsn:
+            try:
+                from sqlalchemy import text
+
+                from friday.core.oracle import get_engine
+
+                engine = get_engine(dsn)
+                with engine.connect() as conn:
+                    conn.execute(text("SELECT 1 FROM DUAL"))
+                db_status = "connected"
             except Exception as exc:
                 status["database_error"] = type(exc).__name__
         else:
@@ -1699,6 +1709,31 @@ async def get_voice_diagnostics(_: None = Depends(_require_origin_gate)) -> dict
             "fabricated 'good' reading."
         ),
     }
+
+
+@app.get("/api/doctor")
+async def get_system_diagnostics(_: None = Depends(_require_control_access)) -> dict[str, Any]:
+    """TASK-DIAG-001 (2026-11-12): the REAL FridayDoctor subsystem report.
+
+    Runs the same twelve-component probe the chat "run diagnostics" fast path
+    and the CLI doctor use, and returns it for the SYSTEM tab. Sits at
+    /api/doctor (the CLI command's name) because /api/diagnostics already
+    serves the HUD's live telemetry stream. Control-access protected (like
+    /api/memory/browser): it names configuration internals. Every status is a
+    measurement — an untestable component is UNAVAILABLE/CONFIGURED, never
+    'healthy'. Probe failure is an honest 500, not a fabricated green report.
+    """
+    from friday.core.doctor import FridayDoctor
+
+    try:
+        doctor = FridayDoctor(settings=get_settings())
+        report = doctor.run_full_diagnostics()
+        return {
+            "success": True,
+            **report.to_dict(),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Diagnostics run failed: {type(exc).__name__}")
 
 
 @app.post("/api/voice/diagnostics/report")
@@ -2837,7 +2872,13 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                     "(or any symbol, above/below, any price) and the market-watch loop will ping you when it fires."
                 )
             else:
-                _lines = [f"You have {_len} price alert{'s' if (_len := len(_alerts)) != 1 else ''} active, Boss:"]
+                # BUG (found by ruff F821, 2026-11-12): _len was read inside the
+                # f-string BEFORE the walrus on the right side of the same
+                # replacement evaluated, so listing alerts with at least one
+                # active rule raised NameError and the fast path silently
+                # degraded. Compute the count first.
+                _len = len(_alerts)
+                _lines = [f"You have {_len} price alert{'s' if _len != 1 else ''} active, Boss:"]
                 for _a in _alerts:
                     _last = str(_a.get("last_fired_ist") or "")[:10]
                     _when = f" (last fired {_last})" if _last else ""
@@ -4722,47 +4763,57 @@ from friday_core.universe_task_router import router as universe_task_router
 app.include_router(universe_task_router, prefix="/api/v1")
 
 # --- Dashboard static assets (mounted LAST: every API route above wins) ------
-# Serves the export's immutable hashed assets (/_next/...) and stray top-level
-# files. The HTML shell itself is served by the "/" route above with no-store.
-# Tier-1 contract fix (ZAI Agent 2, 2026-11-12): a catch-all StaticFiles(html=True)
-# mount swallowed EVERY unmatched path and answered API probes (curl, tests,
-# monitoring) with the HTML shell + 200 — the standardized JSON 404 envelope
-# never reached them. _SpaStaticFiles serves the app shell ONLY to browser
-# navigations (Accept: text/html); everything else gets the real 404 JSON
-# envelope, so broken API clients see the truth instead of a web page.
-class _SpaStaticFiles(StaticFiles):
-    """Static mount that keeps the SPA experience for browsers but returns the
-    standardized JSON 404 envelope to API clients (curl, tests, monitoring).
+# Serves the export's immutable hashed assets (/_next/...), 404.html on direct
+# request, and stray top-level files. The HTML shell itself is served by the
+# "/" route above with no-store.
+#
+# BUG (found 2026-11-12, battery pass): with ``html=True`` the mounted
+# StaticFiles answered EVERY unmatched path with the export's 404.html page,
+# including /v1/tasks/<unknown-id> style API paths, so API clients received a
+# Next.js HTML document instead of the standardized JSON error envelope the
+# exception handlers already produce. ``html=False`` keeps the miss RAISING so
+# the subclass below can pick the honest surface per caller: a browser still
+# gets the SPA shell for client-side routing; everything else - curl, the
+# voice line, the laptop bridge, monitoring - gets the JSON envelope.
+class _APIAwareStaticFiles(StaticFiles):
+    """Serve real files; on a miss, keep HTML for browsers, JSON for API clients."""
 
-    Starlette's html=True mode serves a found 404.html with HTTP 404 — which
-    is correct for browsers. Non-browser clients (no text/html in Accept)
-    get the real JSON envelope instead of the HTML error page.
-    """
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-    async def get_response(self, path: str, scope: Any) -> Any:
-        from starlette.exceptions import HTTPException as _StarletteHTTPException
-
-        accept = ""
-        for hdr_name, hdr_val in scope.get("headers", []):
-            if hdr_name == b"accept":
-                accept = hdr_val.decode("latin-1", "ignore")
-                break
-        browser_navigation = "text/html" in accept and scope.get("method", "GET") in ("GET", "HEAD")
-
+    async def get_response(self, path: str, scope: Any) -> Response:
         try:
-            response = await super().get_response(path, scope)
-        except _StarletteHTTPException:
-            raise  # genuine miss (no 404.html fallback hit): JSON envelope via handler
-
-        # Starlette served 404.html (html=True fallback) for a missing path:
-        # browsers keep the SPA error page; API clients get the JSON envelope.
-        if getattr(response, "status_code", None) == 404 and not browser_navigation:
-            raise _StarletteHTTPException(status_code=404)
-        return response
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404:
+                raise
+            accept = ""
+            for key, value in scope.get("headers", []):
+                if key == b"accept":
+                    accept = value.decode("latin-1")
+                    break
+            if "text/html" in accept:
+                # A human in a browser: hand back the SPA shell so client-side
+                # routing can render a friendly page.
+                return Response(
+                    content=_index_html(),
+                    media_type="text/html",
+                    status_code=404,
+                    headers={"Cache-Control": "no-store, max-age=0"},
+                )
+            # Anything that did not ask for HTML is an API client: raise so the
+            # app's StarletteHTTPException handler returns the JSON envelope.
+            raise
 
 
 if _UI_EXPORT_DIR.is_dir():
-    app.mount("/", _SpaStaticFiles(directory=str(_UI_EXPORT_DIR), html=True), name="ui")
+    # basePath parity (fix 2026-11-13): the export was built with
+    # ``basePath: '/friday'``, so index.html and the Next client router ask
+    # for assets under /friday/_next/... — but the export tree has NO
+    # physical friday/ directory. Without a prefix-stripping mount every
+    # asset request 404'd and the dashboard stayed on its splash screen
+    # forever (blank page in production). Mounting the SAME export under
+    # /friday makes FastAPI strip the prefix: /friday/_next/x.js -> out/_next/x.js.
+    app.mount(
+        "/friday",
+        StaticFiles(directory=str(_UI_EXPORT_DIR), html=True),
+        name="ui-friday",
+    )
+    app.mount("/", _APIAwareStaticFiles(directory=str(_UI_EXPORT_DIR), html=False), name="ui")

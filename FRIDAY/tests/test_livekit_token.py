@@ -14,27 +14,28 @@ if str(apps_core_src) not in sys.path:
 if str(friday_src) not in sys.path:
     sys.path.insert(0, str(friday_src))
 
-os.environ["FRIDAY_ENV"] = "testing"
-os.environ["DATABASE_URL"] = "oracle+oracledb://ADMIN:testpass@adb.ap-hyderabad-1.oraclecloud.com:1521/g7e6177242670c3_friday_medium.adb.oraclecloud.com"
-os.environ["SYNC_DATABASE_URL"] = os.environ["DATABASE_URL"]
-os.environ["ASYNC_DATABASE_URL"] = "oracle+oracledb_async://ADMIN:testpass@adb.ap-hyderabad-1.oraclecloud.com:1521/g7e6177242670c3_friday_medium.adb.oraclecloud.com"
+# NOTE (2026-11-12 battery pass): this module used to set FRIDAY_ENV /
+# DATABASE_URL (a REAL Oracle ADB endpoint, with credentials) at MODULE
+# level, which leaked a live-Oracle configuration into every later test in
+# the session - the long-running-task suites then attempted real oracledb
+# connections and failed with connection resets. Environment is now scoped
+# to the client fixture only, and the DSN is the CI-standard loopback mock
+# (nothing listens on localhost:1521 in a test environment, so any
+# connection attempt fails fast and never leaves the runner).
 
 import pytest
 from fastapi.testclient import TestClient
 
 
+_MOCK_ORACLE_DSN = "oracle+oracledb://mock:mock@localhost:1521/FREE"
+
+
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     monkeypatch.setenv("FRIDAY_ENV", "testing")
-    monkeypatch.setenv(
-        "DATABASE_URL",
-        "oracle+oracledb://ADMIN:testpass@adb.ap-hyderabad-1.oraclecloud.com:1521/g7e6177242670c3_friday_medium.adb.oraclecloud.com",
-    )
-    monkeypatch.setenv("SYNC_DATABASE_URL", os.environ["DATABASE_URL"])
-    monkeypatch.setenv(
-        "ASYNC_DATABASE_URL",
-        "oracle+oracledb_async://ADMIN:testpass@adb.ap-hyderabad-1.oraclecloud.com:1521/g7e6177242670c3_friday_medium.adb.oraclecloud.com",
-    )
+    monkeypatch.setenv("DATABASE_URL", _MOCK_ORACLE_DSN)
+    monkeypatch.setenv("SYNC_DATABASE_URL", _MOCK_ORACLE_DSN)
+    monkeypatch.setenv("ASYNC_DATABASE_URL", "oracle+oracledb_async://mock:mock@localhost:1521/FREE")
     from friday.api.server import app
     with TestClient(app) as test_client:
         yield test_client

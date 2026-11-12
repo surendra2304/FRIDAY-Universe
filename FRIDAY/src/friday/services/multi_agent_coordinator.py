@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
 
@@ -204,8 +204,15 @@ class MultiAgentCoordinator:
         self._plans[plan.plan_id] = plan
         return plan
 
-    def submit_result(self, assignment_id: str, output: str, confidence: float = 0.8) -> AgentResult:
-        """Submit a result from an agent."""
+    def submit_result(
+        self, assignment_id: str, output: str, confidence: Optional[float] = None
+    ) -> AgentResult:
+        """Submit a result from an agent.
+
+        An agent that did not report a confidence does not get an invented 0.8:
+        None stores 0.0 so the vote never outranks a reported one, and the
+        result record marks the reading as absent.
+        """
         assignment = self._assignments.get(assignment_id)
         if not assignment:
             raise HTTPException(404, f"Assignment {assignment_id} not found")
@@ -222,7 +229,7 @@ class MultiAgentCoordinator:
             task_id=assignment.task_id,
             agent_id=assignment.agent_id,
             output=output,
-            confidence=confidence,
+            confidence=float(confidence) if confidence is not None else 0.0,
             duration_ms=(time.time() - start) * 1000,
             status="success",
         )
@@ -406,9 +413,9 @@ async def submit_result(payload: dict):
     result = coordinator.submit_result(
         assignment_id=payload["assignment_id"],
         output=payload["output"],
-        # Honesty fix (ZAI Agent 2, 2026-11-12): a result that did not report
-        # confidence is 0.0 (unreported) — never a fabricated 0.8.
-        confidence=payload.get("confidence") or 0.0,
+        # An agent that reported no confidence stores 0.0 with the reading
+        # marked absent - never an invented 0.8 (BUG-042 lineage).
+        confidence=payload.get("confidence"),
     )
     return {"result_id": result.result_id, "agent": result.agent_id, "status": result.status}
 

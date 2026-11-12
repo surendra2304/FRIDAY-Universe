@@ -28,6 +28,15 @@ SRC_PATH = Path(__file__).resolve().parent.parent / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
+# Ensure the monorepo root is importable too: friday.api.server mounts the
+# mesh routers (universe_health, fleet_orchestrator, ...) at module level and
+# the mesh package lives at the repo root, mirroring a dev launch where the
+# server is started from the repo root. Without this the e2e conftest dies at
+# collection with ModuleNotFoundError: mesh (found 2026-11-12).
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 import os
 from unittest.mock import patch
 
@@ -101,6 +110,30 @@ def mock_settings() -> Settings:
         agent_name="FRIDAY-TEST",
         user_name="Surendra",
     )
+
+
+@pytest.fixture
+def restore_friday_logger():
+    """Snapshot the global 'friday' logger and restore it after the test.
+
+    setup_logging() clears the 'friday' logger's handlers and sets
+    propagate=False; leaking that state silences caplog for every later test
+    in the process that captures friday.* records. Every test that calls
+    setup_logging() (directly or through a CLI main()) must use this fixture
+    (found twice: 2026-11-12 battery pass - test_logging.py and
+    test_ux_and_cli.py each broke test_voice_tool_security / memory-write-filter
+    / resource-lifecycle tests that ran after them).
+    """
+    import logging
+
+    logger = logging.getLogger("friday")
+    snap_handlers = list(logger.handlers)
+    snap_level = logger.level
+    snap_propagate = logger.propagate
+    yield logger
+    logger.handlers = snap_handlers
+    logger.setLevel(snap_level)
+    logger.propagate = snap_propagate
 
 
 @pytest.fixture

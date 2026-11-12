@@ -646,7 +646,10 @@ def test_agent_tool_callback():
         tool_callback=callback,
     )
 
-    agent.process_message("System check")
+    # Neutral phrasing on purpose: "system check" now expresses explicit
+    # self-diagnostics intent (TASK-DIAG-001) and would run the real doctor
+    # instead of reaching this tool-callback flow.
+    agent.process_message("Fetch the system information probe")
     assert len(events) == 1
     assert events[0] == ("get_system_info", False)
 
@@ -689,12 +692,14 @@ def test_agent_memory_persists_tool_calls():
     provider = MockLLMProvider(custom_responder=mock_responder)
     agent = FridayAgent(settings=Settings(env="testing"), llm_provider=provider)
 
-    response = agent.process_message("Please fetch diagnostics")
+    # Neutral phrasing on purpose: "diagnostics" now triggers the real
+    # self-check fast path (TASK-DIAG-001) before the tool loop runs.
+    response = agent.process_message("Please fetch the inventory snapshot")
     assert response.is_done
 
     history = agent.get_history()
     # The history should contain:
-    # 0: User: "Please fetch diagnostics"
+    # 0: User: the inventory request
     # 1: Assistant: "Triggering system info" (with tool calls)
     # 2: Tool: (result of get_system_info)
     # 3: Assistant: "Diagnostics report processed"

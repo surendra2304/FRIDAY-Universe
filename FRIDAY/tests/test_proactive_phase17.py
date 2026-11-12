@@ -155,9 +155,13 @@ def test_agent_surfaces_proactive_notifications():
     # Enqueue proactive notification
     agent.notifications.post_notification("file 'report.pdf' was modified")
 
-    # Next user message should prepend proactive insight
+    # Next user message should prepend proactive insight. TASK-VOI-002 composes
+    # the morning brief on the first greeting of the day and pushes it as its
+    # own notification, so the pending insight may arrive either as the bare
+    # line or inside the brief's "Overnight:" section - the invariant is that
+    # the event is surfaced with the while-you-were-away framing.
     resp = agent.process_message("hello")
-    assert "I noticed that file 'report.pdf' was modified while you were away." in resp.content
-    assert len(resp.content) > len("I noticed that file 'report.pdf' was modified while you were away.")
+    assert "file 'report.pdf' was modified" in resp.content
+    assert "while you were away" in resp.content
 
     agent.close()

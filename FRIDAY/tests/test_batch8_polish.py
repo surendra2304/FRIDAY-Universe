@@ -214,7 +214,9 @@ class TestServerImportsBatch8:
         # Hermeticity fix (ZAI Agent 2, 2026-11-12): the old os.environ.setdefault
         # LEAKED DATABASE_URL (and FRIDAY_ENV) into every later test — the
         # tier1 /ready probe then saw a configured-but-dead Oracle DSN and
-        # failed with 503. monkeypatch restores the env after this test.
+        # failed with 503. A leaked FRIDAY_ENV also flips every later Settings()
+        # in the session (BUG-043 pattern; caught by test_config::test_default_settings
+        # in full-suite runs). monkeypatch restores the env after this test.
         monkeypatch.setenv("DATABASE_URL", "oracle+oracledb://mock:mock@localhost:1521/FREE")
         monkeypatch.setenv("FRIDAY_ENV", "test")
         import importlib.util

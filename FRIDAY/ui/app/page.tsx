@@ -205,8 +205,27 @@ export default function Page() {
           ))}
         </div>
         <div className="nav-status">
-          <span className={`dot ${connected === "online" ? "good" : connected === "offline" ? "bad" : "muted"} ${connected === "online" ? "pulse" : ""}`} />
-          {connected === "online" ? `${onlineCount}/${totalAgents} live` : connected === "offline" ? "API offline" : "Connecting…"}
+          {/* Truthful status (fix 2026-11-13): the dot used to show green whenever
+             the dashboard API answered — even with 0/9 agents reachable, which
+             read as a status lie next to the "0/9 live" text. Green only when
+             at least one agent is actually reachable; amber for a connected
+             dashboard with zero agents; red only for a real API outage. */}
+          <span
+            className={`dot ${
+              connected === "online" && onlineCount > 0
+                ? "good"
+                : connected === "online"
+                  ? "warn"
+                  : connected === "offline"
+                    ? "bad"
+                    : "muted"
+            } ${connected === "online" ? "pulse" : ""}`}
+          />
+          {connected === "online"
+            ? `${onlineCount}/${totalAgents} agents live`
+            : connected === "offline"
+              ? "API offline"
+              : "Connecting…"}
           <span className="nav-clock" title="Indian Standard Time">
             <Clock3 size={12} />
             {now ? `${istTime(now)} IST` : "--:-- IST"}

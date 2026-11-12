@@ -58,8 +58,14 @@ async def test_peer_task_without_receipt_is_not_reported_as_task_completion(monk
     assert result["metadata"]["success"] is False
     assert result["metadata"]["task_completion_verified"] is False
     assert result["metadata"]["task_state"] == "UNVERIFIED"
-    # The honest wording drifted from "no receipt" to "could not get a
-    # verified receipt" — same invariant, updated phrase.
-    assert "verified receipt" in result["reply"].lower() or "no receipt" in result["reply"].lower()
+    # The controller's honest no-receipt replies all begin "I could not ..."
+    # ("could not get a verified receipt" / "could not confirm ... completed")
+    # and none claims the peer finished the task. The wording drifted from
+    # "no receipt" to "could not get a verified receipt" — same invariant,
+    # both phrasings accepted.
+    reply_lower = result["reply"].lower()
+    assert "verified receipt" in reply_lower or "no receipt" in reply_lower
+    assert "could not" in reply_lower
+    assert "finished" not in reply_lower
     assert len(transport.calls) == 1
     assert transport.calls[0].json_body["objective"] == "research today's news"

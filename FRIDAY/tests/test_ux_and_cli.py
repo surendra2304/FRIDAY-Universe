@@ -38,7 +38,7 @@ def test_banner_ascii_rendering():
 # -----------------------------------------------------------------------------
 # TEST 3: Clean Terminal Logging Default vs Debug Mode
 # -----------------------------------------------------------------------------
-def test_setup_logging_console_quiet_mode(tmp_path):
+def test_setup_logging_console_quiet_mode(tmp_path, restore_friday_logger):
     """Verify that default setup_logging console level can be set to WARNING for clean output."""
     log_file = tmp_path / "test.log"
     logger = setup_logging(level="DEBUG", log_file=str(log_file), console_level=logging.WARNING)
@@ -182,7 +182,7 @@ def test_trivial_turns_skip_memory_retrieval_and_embedding():
 # -----------------------------------------------------------------------------
 # TEST 15 & 16: CLI Mode Selection (--voice and --text)
 # -----------------------------------------------------------------------------
-def test_cli_voice_mode_flag_triggers_live_session(monkeypatch, capsys):
+def test_cli_voice_mode_flag_triggers_live_session(monkeypatch, capsys, restore_friday_logger):
     """Verify that --voice flag launches the real GeminiLiveVoiceSession."""
     import sys
 
@@ -210,7 +210,7 @@ def test_cli_voice_mode_flag_triggers_live_session(monkeypatch, capsys):
             assert "FRIDAY is starting..." in capsys.readouterr().out
 
 
-def test_cli_text_mode_override_suppresses_voice_mode(monkeypatch):
+def test_cli_text_mode_override_suppresses_voice_mode(monkeypatch, restore_friday_logger):
     """Verify that --text flag suppresses voice mode even if voice_enabled setting is True."""
     import sys
 

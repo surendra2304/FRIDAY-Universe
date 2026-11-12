@@ -90,8 +90,8 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
             <MessageSquareText size={17} />
           </div>
           <div>
-            <h3>FRIDAY</h3>
-            <span className="subtitle">Your universe&apos;s coordinator — talk, command, ask anything</span>
+            <h3>Console</h3>
+            <span className="subtitle">Commands, questions, fleet dispatch — same brain as the phone line</span>
           </div>
         </div>
       </div>
@@ -100,11 +100,10 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
         <div className="chat-scroll" ref={scrollRef}>
           {messages.length === 0 ? (
             <div className="chat-empty">
-              <span className="chat-empty-orb" aria-hidden="true" />
-              <h4 className="chat-empty-title">Good to see you, Boss.</h4>
+              <h4 className="chat-empty-title">How can I help, Boss?</h4>
               <p style={{ margin: 0, fontSize: 13.5, maxWidth: 380 }}>
-                This is your direct line — talk like a friend, command like an owner.
-                I remember you, and I can dispatch work to any agent in the fleet.
+                Talk or type below — commands, questions, fleet dispatch. Try a starter
+                if you&apos;re not sure where to begin.
               </p>
             </div>
           ) : (
@@ -138,6 +137,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
 
         {messages.length === 0 && (
           <div className="chat-chips">
+            <span className="chips-label">Try:</span>
             {CHIPS.map((chip) => (
               <button key={chip} className="chip" onClick={() => void send(chip)}>
                 {chip}

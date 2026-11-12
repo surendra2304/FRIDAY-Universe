@@ -69,6 +69,107 @@ def greeting_responses_for(persona: str) -> tuple[str, ...]:
     return CLASSIC_GREETING_RESPONSES
 
 
+# ---------------------------------------------------------------------------
+# Context-aware greeting composition (owner directive: greetings must feel
+# like a friend who knows you, not a random canned line)
+# ---------------------------------------------------------------------------
+
+#: Tracks the last composed greeting so the same opener never repeats
+#: back-to-back within a process lifetime.
+_last_greeting: dict[str, str] = {}
+
+
+def _ist_hour(now: "datetime.datetime | None" = None) -> int:
+    """Current hour in IST (the project clock — H1/D-026)."""
+    import datetime as datetime
+
+    if now is None:
+        now = datetime.datetime.now(datetime.timezone.utc)
+    return (now + datetime.timedelta(hours=5, minutes=30)).hour
+
+
+def _time_segment(hour: int) -> str:
+    if 5 <= hour < 12:
+        return "morning"
+    if 12 <= hour < 17:
+        return "afternoon"
+    if 17 <= hour < 22:
+        return "evening"
+    return "late"
+
+
+def compose_greeting(
+    user_name: str,
+    *,
+    hour: int | None = None,
+    last_topic: str | None = None,
+    pending_tasks: int | None = None,
+) -> str:
+    """Compose a greeting from real context; the canned pool is only a fallback.
+
+    Inputs (all optional, all real):
+    - ``hour``          — IST hour of the day (derived from the clock when absent)
+    - ``last_topic``    — the topic of the previous exchange, when there was one
+    - ``pending_tasks`` — live count of queued missions/tasks, when known
+
+    The composed line varies with time of day and continues the previous thread
+    the way a friend does; it never repeats the same opener twice in a row.
+    Nothing here invents facts: absent context simply narrows the greeting.
+    """
+    h = _ist_hour() if hour is None else int(hour) % 24
+    segment = _time_segment(h)
+
+    time_opener = {
+        "morning": (f"Morning, {user_name}.", f"Good morning, {user_name} —", f"Early start, {user_name}."),
+        "afternoon": (f"Afternoon, {user_name}.", f"Hey {user_name}.", f"There you are, {user_name}."),
+        "evening": (f"Evening, {user_name}.", f"Hey {user_name} —", f"Good evening, {user_name}."),
+        "late": (
+            f"It's late, {user_name}.",
+            f"Burning the midnight oil again, {user_name}?",
+            f"Late one tonight, {user_name}.",
+        ),
+    }[segment]
+
+    import random as _random
+
+    opener = _random.choice(time_opener)
+    if _last_greeting.get("opener") == opener and len(time_opener) > 1:
+        opener = _random.choice([o for o in time_opener if o != opener])
+    _last_greeting["opener"] = opener
+
+    parts: list[str] = [opener]
+
+    def _flow(fragment: str) -> str:
+        """Continue the opener's sentence when it flows with '—', else stand alone."""
+        if opener.endswith("—"):
+            return fragment[0].lower() + fragment[1:] if fragment else fragment
+        return fragment
+
+    if last_topic:
+        topic = str(last_topic).strip().rstrip(".!? ")
+        if len(topic) > 80:
+            topic = topic[:77].rstrip() + "…"
+        continuations = (
+            f"Still holding that {topic} thread for you whenever you want it.",
+            f"We left things on {topic} — pick it back up?",
+            f"Last we talked it was {topic}. Still on your mind?",
+        )
+        parts.append(_flow(_random.choice(continuations)))
+    elif pending_tasks is not None and int(pending_tasks) > 0:
+        n = int(pending_tasks)
+        parts.append(_flow(f"You've got {n} mission{'s' if n != 1 else ''} queued — say the word."))
+    else:
+        invites = (
+            "What are we doing?",
+            "What's on your mind?",
+            "Where do we start?",
+            "What do you need?",
+        )
+        parts.append(_flow(_random.choice(invites)))
+
+    return " ".join(parts)
+
+
 def proactive_style(persona: str, summary: str, user_name: str = "Surendra") -> str:
     """Wrap a raw notifications/alerts summary in the persona's spoken voice.
 

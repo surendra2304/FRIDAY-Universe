@@ -17,8 +17,11 @@
   --line: rgba(126, 168, 199, 0.14);
   --line-strong: rgba(126, 168, 199, 0.28);
   --text: #e8eef4;
-  --muted: #8ea0b3;
-  --faint: #5c6c7d;
+  /* Contrast fix 2026-11-13: the old #8ea0b3/#5c6c7d pair hovered near
+     3:1 on the deep-space background — below WCAG AA for UI text. Lifted
+     both without changing the palette's character. */
+  --muted: #a7b8cb;
+  --faint: #7d90a5;
   --mint: #85f0bf;
   --cyan: #70d4e8;
   --violet: #b9a6ff;
@@ -762,7 +765,17 @@ a { color: inherit; text-decoration: none; }
   font-weight: 600;
   color: var(--text);
 }
-.chat-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 20px 4px; }
+.chat-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 20px 4px; align-items: center; }
+/* Label for the starter chips (fix 2026-11-13): they floated orphaned above
+   the input — an explicit "Try:" cue explains what they are. */
+.chips-label {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 600;
+  padding-right: 2px;
+}
 .chip {
   padding: 7px 14px;
   border-radius: 999px;
@@ -772,6 +785,9 @@ a { color: inherit; text-decoration: none; }
   color: var(--muted);
   transition: color 0.22s ease, border-color 0.22s ease, transform 0.22s ease, background 0.22s ease;
 }
+/* Readability fix 2026-11-13: starter chips used to render in ALL-CAPS via
+   the parent rule — all-caps + small size + low contrast was a readability
+   double-fault; sentence case scans faster. */
 .chip:hover { color: var(--text); border-color: rgba(133, 240, 191, 0.4); background: rgba(24, 40, 38, 0.5); transform: translateY(-1px); }
 .chat-input-row {
   display: flex;

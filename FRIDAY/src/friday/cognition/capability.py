@@ -1165,9 +1165,21 @@ print(json.dumps(verdict))
 
             environment = dict(os.environ)
             source_root = str(self.repo_root / "src")
+            # The candidate imports ``friday.*`` exactly like every builtin
+            # tool does, so the smoke-test interpreter must be able to import
+            # the REAL friday package — the one this very process is running.
+            # With a custom repo_root (tests synthesise into a temp tree, and
+            # an agent may target a tree that has no friday package either)
+            # repo_root/src alone made the smoke test die on the first import
+            # and refuse every candidate. Prepend the runtime source root so
+            # the subprocess exercises the tool against the same package it
+            # will actually run with.
+            runtime_source_root = str(Path(__file__).resolve().parents[2])
             existing = environment.get("PYTHONPATH", "")
             environment["PYTHONPATH"] = os.pathsep.join(
-                part for part in (source_root, existing) if part
+                part
+                for part in (source_root, runtime_source_root, existing)
+                if part
             )
             environment["PYTHONDONTWRITEBYTECODE"] = "1"
 

@@ -20,18 +20,19 @@ def test_get_ephemeral_db_path_linux_tmpfs():
         assert path == "/dev/shm/test.db"
 
 
-def test_get_ephemeral_db_path_fallback_windows(tmp_path, monkeypatch):
-    """Verify the ~/.friday fallback when no RAM tmpfs is available.
+def test_get_ephemeral_db_path_fallback_windows(monkeypatch, tmp_path):
+    """Without RAM-backed /dev/shm, ephemeral databases default to ~/.friday/.
 
-    NOTE (2026-11-12): patching os.name='nt' makes pathlib construct
-    WindowsPath, whose expanduser reads the Windows registry — it cannot
-    resolve on Linux no matter what HOME says (the original failure). The
-    BRANCH under test is really "no writable /dev/shm → ~/.friday", which is
-    also the POSIX no-tmpfs case; pin HOME and disable the tmpfs so the
-    fallback fires deterministically on any runner.
+    NOTE (2026-11-12): patching ``os.name`` to 'nt' cannot work on a Linux
+    runner — pathlib would refuse to instantiate WindowsPath (its expanduser
+    reads the Windows registry), so the original approach failed regardless of
+    HOME. The BRANCH under test is really "no writable /dev/shm → ~/.friday",
+    exercised here by making /dev/shm unavailable instead - same code path,
+    platform-honest, fires deterministically on any runner.
     """
     monkeypatch.setenv("HOME", str(tmp_path))
-    with patch("os.path.isdir", return_value=False):
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    with patch("friday.core.database.os.path.isdir", return_value=False):
         path = get_ephemeral_db_path("test.db")
         assert path.endswith("test.db")
         assert ".friday" in path
@@ -40,8 +41,10 @@ def test_get_ephemeral_db_path_fallback_windows(tmp_path, monkeypatch):
 
 def test_settings_sqlite_db_path_tmpfs(monkeypatch):
     """Verify Settings.sqlite_db_path resolves via get_ephemeral_db_path for default paths."""
-    # The conftest sets FRIDAY_MEMORY_DB_PATH for the hermetic sqlite backend;
-    # this test pins the DEFAULT-path branch, so restore the defaults first.
+    # The hermetic conftest sets FRIDAY_MEMORY_DB_PATH to a per-run temp file
+    # for the sanctioned sqlite backend; this test pins the DEFAULT-path
+    # branch, so restore the defaults first (explicit default either form:
+    # "data/friday.db" and "friday.db" both take the ephemeral resolution).
     monkeypatch.delenv("FRIDAY_MEMORY_DB_PATH", raising=False)
     settings = Settings(memory_db_path="data/friday.db")
     with patch("friday.core.database.get_ephemeral_db_path", return_value="/dev/shm/friday.db"):
