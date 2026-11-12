@@ -57,6 +57,15 @@ def load_df(symbol: str, tf: str) -> pd.DataFrame | None:
     key = (symbol, tf)
     if key in _DF_CACHE:
         return _DF_CACHE[key]
+    if tf == "4h":  # resampled from the 1h pull (no separate 4h download)
+        base = load_df(symbol, "1h")
+        if base is None or len(base) < 400:
+            return None
+        df = base.resample("4h").agg(
+            {"open": "first", "high": "max", "low": "min",
+             "close": "last", "volume": "sum"}).dropna()
+        _DF_CACHE[key] = df
+        return df
     p = f"{DATA}/{symbol}_{tf}.csv"
     if not os.path.exists(p):
         return None
