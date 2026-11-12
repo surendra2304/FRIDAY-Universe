@@ -100,6 +100,40 @@ def api_v1_security_status():
     return jsonify(get_security_status_report())
 
 
+@app.route('/telegram-webhook', methods=['POST'])
+def telegram_webhook():
+    """Inbound Telegram updates in webhook mode (TASK-STRATEX-TGWEBHOOK).
+
+    When TELEGRAM_WEBHOOK_URL is configured the daemon registers this
+    endpoint (https://<public>/stratex/telegram-webhook) with Telegram
+    instead of long polling; Telegram then pushes each update exactly once
+    and rejects getUpdates for this token — the off-cloud poller that has
+    been stealing the owner's commands is locked out at the Telegram API
+    level. The X-Telegram-Bot-Api-Secret-Token header is verified when a
+    secret is configured; unauthenticated or malformed POSTs get 403/400.
+    Telegram requires a fast 200 response, so dispatch is asynchronous.
+    """
+    secret = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
+    try:
+        update = request.get_json(force=False, silent=True)
+    except Exception:
+        update = None
+    if not isinstance(update, dict):
+        return jsonify({"ok": False, "error": "invalid JSON body"}), 400
+    try:
+        from notifications.telegram_bot import get_telegram_bot
+        bot = get_telegram_bot()
+        accepted = bot.process_webhook_update(update, secret_header=secret)
+    except Exception as exc:
+        logger.exception("[TELEGRAM_WEBHOOK] dispatch failed")
+        accepted = False
+    # Always answer quickly; Telegram retries on non-2xx which we only use
+    # for hard rejections (auth), not for transient dispatch issues.
+    if not accepted and secret is not None:
+        return jsonify({"ok": False, "error": "rejected"}), 403
+    return jsonify({"ok": True}), 200
+
+
 @app.route('/api/agents', methods=['GET'])
 def api_stratex_agents():
     """Return the configured Stratex agent catalog without exposing credentials."""

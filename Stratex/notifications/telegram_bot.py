@@ -105,6 +105,26 @@ class TelegramBotClient:
         self._conflict_episode_count = 0
         self._conflict_alert_sent = False
         self._executor: ThreadPoolExecutor | None = None
+        # Webhook mode (TASK-STRATEX-TGWEBHOOK): when TELEGRAM_WEBHOOK_URL is
+        # set the bot registers a webhook instead of long polling, so an
+        # external poller of the same token can no longer consume the owner's
+        # commands (Telegram delivers each update exactly once to the
+        # registered webhook and rejects getUpdates while it is set).
+        self.webhook_url = (
+            os.getenv("TELEGRAM_WEBHOOK_URL")
+            or dotenv_dict.get("TELEGRAM_WEBHOOK_URL")
+            or ""
+        ).strip()
+        self.webhook_secret = (
+            os.getenv("TELEGRAM_WEBHOOK_SECRET")
+            or dotenv_dict.get("TELEGRAM_WEBHOOK_SECRET")
+            or ""
+        ).strip()
+
+    @property
+    def webhook_mode(self) -> bool:
+        """True when the bot is configured to receive updates via webhook."""
+        return bool(self.webhook_url)
 
     @property
     def is_configured(self) -> bool:
@@ -1362,6 +1382,104 @@ class TelegramBotClient:
             return bool(resp.json().get("ok"))
         except Exception:
             return False
+
+    def set_webhook(self) -> bool:
+        """Register the configured webhook URL with Telegram (TASK-STRATEX-TGWEBHOOK).
+
+        Telegram delivers each update exactly once to the registered webhook
+        and rejects getUpdates for other pollers with 409 while the webhook
+        is set — this is the mechanism that defeats an off-cloud poller of
+        the same bot token. Optional secret_token makes inbound POSTs
+        verifiable via the X-Telegram-Bot-Api-Secret-Token header.
+        """
+        if not self.bot_token or not self.webhook_mode:
+            return False
+        payload = {"url": self.webhook_url,
+                   "allowed_updates": ["message", "edited_message"]}
+        if self.webhook_secret:
+            payload["secret_token"] = self.webhook_secret
+        try:
+            resp = requests.post(
+                f"{DEFAULT_API_BASE}{self.bot_token}/setWebhook",
+                json=payload,
+                timeout=self.timeout,
+            )
+            ok = bool(resp.json().get("ok"))
+            if ok:
+                logger.info(
+                    "[TELEGRAM] Webhook registered (%s); inbound updates now "
+                    "arrive via HTTPS POST and getUpdates is disabled for this "
+                    "token — an external poller can no longer steal commands.",
+                    self.webhook_url,
+                )
+            else:
+                logger.error(
+                    "[TELEGRAM] setWebhook failed: %s", resp.json().get("description")
+                )
+            return ok
+        except Exception as exc:
+            logger.error("[TELEGRAM] setWebhook exception: %s", exc)
+            return False
+
+    def process_webhook_update(self, update: dict[str, Any], secret_header: str | None = None) -> bool:
+        """Authenticate + dispatch ONE webhook-delivered update.
+
+        The caller is an HTTPS endpoint that received POST /telegram-webhook
+        with this JSON body. Returns True when the update was dispatched.
+        Rejects the request when the secret header does not match (when a
+        secret is configured), and drops already-processed update_ids.
+        """
+        if self.webhook_secret:
+            if (secret_header or "") != self.webhook_secret:
+                logger.warning(
+                    "[TELEGRAM] Webhook update rejected: secret token mismatch"
+                )
+                return False
+        if not isinstance(update, dict):
+            return False
+        uid = int(update.get("update_id") or 0)
+        if uid and uid <= self._last_update_id:
+            return False  # duplicate delivery
+        if uid:
+            self._last_update_id = uid
+            self._save_offset()
+        if self._executor is None:
+            self._executor = ThreadPoolExecutor(
+                max_workers=3, thread_name_prefix="tg-cmd"
+            )
+        try:
+            self._executor.submit(self.process_update, update)
+        except RuntimeError:
+            self.process_update(update)
+        return True
+
+    def start_listening(self) -> bool:
+        """Start inbound command processing in the configured mode.
+
+        Webhook mode (TELEGRAM_WEBHOOK_URL set): register the webhook via
+        set_webhook() — Telegram then pushes updates to the HTTPS endpoint,
+        which calls process_webhook_update(). No local poller is started, so
+        no fleet-internal 409 is possible and an external getUpdates poller
+        is locked out by Telegram itself.
+
+        Polling mode (default): classic background long-poll thread.
+        """
+        if not self.is_configured:
+            logger.warning("[TELEGRAM] Listening not started: bot not configured.")
+            return False
+        self._load_offset()
+        if self.webhook_mode:
+            ok = self.set_webhook()
+            if not ok:
+                logger.warning(
+                    "[TELEGRAM] Webhook registration failed; falling back to "
+                    "long polling for this process lifetime."
+                )
+                self.start_polling_in_background()
+                return False
+            return True
+        self.start_polling_in_background()
+        return True
 
     def _repo_file(self, name: str) -> str:
         return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), name)
