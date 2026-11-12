@@ -10,6 +10,8 @@ on:
       - 'VyralX/app/**'
       - 'VyralX/tests/**'
       - 'tests/test_live_research_task_contract.py'
+      - 'tests/test_safe_fleet_deploy.py'
+      - '.github/workflows/deploy-monorepo.yml'
       - '.github/workflows/owner-workflows.yml'
   push:
     branches: [main, 'arena/TASK-WF-004-*']
@@ -20,6 +22,8 @@ on:
       - 'VyralX/app/**'
       - 'VyralX/tests/**'
       - 'tests/test_live_research_task_contract.py'
+      - 'tests/test_safe_fleet_deploy.py'
+      - '.github/workflows/deploy-monorepo.yml'
       - '.github/workflows/owner-workflows.yml'
 
 permissions:
@@ -44,6 +48,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_live_research_task_contract.py \
+            tests/test_safe_fleet_deploy.py \
             FRIDAY/tests/test_four_owner_workflows.py \
             FRIDAY/tests/test_intelx_research_dispatch.py \
             FRIDAY/tests/test_forge_code_dispatch.py \

@@ -763,6 +763,7 @@ claims:
     status: "DIRECT_COMMIT_M4_TRANCHE"
     task: "TASK-OBS-001: post-deploy health gate added to both server jobs (probe restarted agents, NRestarts visibility, fail the job on unhealthy agents)."
 
+    authorized_deploy_followup_task_wf_004: "Arena PR56, 2026-11-12T14:32:20.987715+00:00; exact-SHA fast-forward sync and explicit voice restart; owner authorized cloud updates; preserve collaborator work."
   - path: "tests/test_fleet_health_watcher.py"
     owner: "zai"
     prs: []
@@ -1610,6 +1611,18 @@ claims:
     task: TASK-WF-004
     claimed_at: '2026-11-12T14:04:41.201430+00:00'
     expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: tests/test_safe_fleet_deploy.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:32:20.987715+00:00'
+    expected_next_update: '2026-11-12T16:32:20.987715+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
 conflicts_to_resolve:
