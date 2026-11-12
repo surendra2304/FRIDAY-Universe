@@ -2341,6 +2341,8 @@ tasks:
     - Forge/tests/unit/test_delegate_verification_status.py
     - Forge/app/verification/source_integrity.py
     - Forge/tests/unit/test_source_bound_receipts.py
+    - FRIDAY/src/friday/persona/friday.py
+    - FRIDAY/tests/test_persona_clock_annotations.py
     claimed_at: '2026-11-12T21:26:20.261780+00:00'
     last_update: '2026-11-12T21:26:20.261780+00:00'
     acceptance:
@@ -2362,6 +2364,10 @@ tasks:
     - 219Forge pass/1unchangedskip; new11regressions execute actualpytest then reject5drift/legacytypes,
       beforeaftermutation, stale reportregeneration, caches/config, bounds and unavailableinventory.
       RuffF/E9+diff clean.
+    - PR71initialheadb2e13c2 bothCItestjobs blocked beforetests by inheritedbase993a6d6
+      F821 persona datetimeannotation. Minimal moduleglobaldatetime import (localimport
+      removed) + get_type_hints/ISTclock regression,1pass. No persona/greetingbehavior
+      changes. Contact/scopeupdate issue35comment6836497747.
     blockers:
     - Framework CI/rollout and actual production acceptance pending.
     next_action: Publish narrow PR, greenCI/controlledrollout, actual source-identical

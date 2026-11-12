@@ -2070,6 +2070,27 @@ claims:
     claimed_at: '2026-11-12T21:26:20.261780+00:00'
     expiry_policy: Contact before takeover/update2h.
 
+  - path: FRIDAY/src/friday/persona/friday.py
+    owner: arena_engineering_01
+    branches:
+    - arena/TASK-WF-014-source-bound-receipts
+    prs:
+    - 71
+    status: IN_PROGRESS
+    task: TASK-WF-014
+    scope: Minimum global datetime import/typehint regression only; contact6836497747,
+      no persona logic takeover.
+  - path: FRIDAY/tests/test_persona_clock_annotations.py
+    owner: arena_engineering_01
+    branches:
+    - arena/TASK-WF-014-source-bound-receipts
+    prs:
+    - 71
+    status: IN_PROGRESS
+    task: TASK-WF-014
+    scope: Minimum global datetime import/typehint regression only; contact6836497747,
+      no persona logic takeover.
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:
