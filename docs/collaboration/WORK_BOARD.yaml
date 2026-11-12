@@ -1936,10 +1936,11 @@ tasks:
       six files. Own rollout did not touch Stratex source; newer collaborator commits
       preserved. Do not infer unchanged daemon PID across collaborator deployments.'
     - Owner-requested Telegram outcome delivered via verified zai_notifications_bot, message_id34. Private destination cross-checked against credentials.md; secrets never exposed.
+    - Later read-only git comparison proves release e6b7a88 contained CSV converter and embedded unittest tests, overwritten afterward by generic greet CLI. Byte-identical private release snapshot passed two generated and two independent tests (4total/exit0); CLI conversion exit0 and actual quoted.json persisted. Current workspace hash unchanged; final acceptance still fails. Private snapshot evidence.json retains exact command, source SHA256 and outputs.
     blockers:
     - Goal-specific generated tested CSV converter still rejected; no quoted-comma/empty-input
       acceptance possible on generic greet CLI.
-    - Trace original objective through peer-remediation/provider fallback before another
+    - Trace the proved post-release overwrite through peer-remediation/provider fallback and discover embedded unittest suites before another
       build; do not compensate by editing delivered code.
     - Owner continuous microphone, reviewed video/YouTube reauthorization and sustained
       profitability remain unverified.
