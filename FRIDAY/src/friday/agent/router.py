@@ -393,26 +393,34 @@ class SpecialistRouter:
                 authorization_decision="REJECTED",
                 failure_reason=str(s_err),
             )
-            # Persist blocked execution checkpoint
+            # Persist blocked execution checkpoint (fail-safe: a trace-store
+            # outage must never mask the BLOCKED result the caller needs —
+            # the rejection itself is already logged above).
             if self.trace_store:
-                self.trace_store.record_checkpoint(
-                    ExecutionTraceCheckpoint(
-                        trace_id=envelope.trace_id,
-                        task_id=envelope.task_id,
-                        target_agent=target,
-                        action=action_name,
-                        status=TaskStatus.BLOCKED.value,
-                        consensus_status="NONE",
-                        participating_agents=[target],
-                        agreement_ratio=0.0,
-                        latency_ms=exec_ms,
-                        retry_count=0,
-                        payload_summary=payload_summary,
-                        result_summary="Blocked by safety invariant gate",
-                        error=str(s_err),
-                        receipt_json=json.dumps(receipt.model_dump()),
+                try:
+                    self.trace_store.record_checkpoint(
+                        ExecutionTraceCheckpoint(
+                            trace_id=envelope.trace_id,
+                            task_id=envelope.task_id,
+                            target_agent=target,
+                            action=action_name,
+                            status=TaskStatus.BLOCKED.value,
+                            consensus_status="NONE",
+                            participating_agents=[target],
+                            agreement_ratio=0.0,
+                            latency_ms=exec_ms,
+                            retry_count=0,
+                            payload_summary=payload_summary,
+                            result_summary="Blocked by safety invariant gate",
+                            error=str(s_err),
+                            receipt_json=json.dumps(receipt.model_dump()),
+                        )
                     )
-                )
+                except Exception as trace_exc:
+                    logger.warning(
+                        "Blocked-dispatch checkpoint persistence failed (rejection still returned): %s",
+                        trace_exc,
+                    )
             return TaskResult(
                 task_id=envelope.task_id,
                 target_agent=target,

@@ -35,7 +35,7 @@ from sqlalchemy import (
 )
 
 from friday.core import oracle
-from friday.core.exceptions import PersistenceConfigError
+from friday.core.exceptions import PersistenceConfigError, PersistenceError
 from friday.core.logging import get_logger
 
 logger = get_logger("agent.execution_trace")
@@ -156,6 +156,20 @@ class ExecutionTraceStore:
                 logger.warning(
                     "No Oracle DSN configured; execution traces are not persisted "
                     "because this process is a test run."
+                )
+                self._oracle_disabled = True
+                return None
+            except PersistenceError as pe:
+                # Fail-safe (ZAI Agent 2, 2026-11-12): a DSN may be configured
+                # while the database itself is unreachable (sandboxes, CI,
+                # transient outages). Trace persistence is observability — it
+                # must never break the dispatch it traces. Degrade to
+                # no-persistence for this process instead of raising through
+                # the caller's BLOCKED/success path.
+                logger.warning(
+                    "Oracle unreachable for execution traces (%s); traces are not "
+                    "persisted this session. Dispatch continues untraced.",
+                    pe,
                 )
                 self._oracle_disabled = True
                 return None

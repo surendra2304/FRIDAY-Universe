@@ -398,7 +398,10 @@ def build_contracts(fleet: Any | None = None, settings: Any | None = None) -> di
             role="Autonomous Video Production & Governed Distribution",
             base_url=fleet.vyralx_url,
             api_key=fleet.vyralx_key,
-            task_path="/v1/task/execute",
+            # MUST match the live client's dispatch path (fleet_client.py
+            # posts /api/v1/tasks, VyralX's Universal Task Protocol route).
+            # Drift here is what the mesh contract test catches (2026-11-12).
+            task_path="/api/v1/tasks",
             health_path="/health",
             auth_style="x-api-key",
             capability_prefix="vyralx",
