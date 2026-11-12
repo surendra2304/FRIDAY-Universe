@@ -15,12 +15,17 @@ Gates mirrored from autonomy/run_daemon.py:
 Costs: 0.08% round-trip fees + 0.05% slippage per side (market orders).
 Sizing: risk 0.5% of equity per trade (matches live).
 
-Usage: python backtest_engine.py <strategy_module> <symbol> <timeframe> [start] [end]
-Writes one CSV row per (strategy, symbol, tf) to /opt/friday_universe/backtest_results/
+Performance: get_signal costs ~24 ms/call (pandas op overhead), so this
+engine evaluates signals on a STRIDE with backward refinement: candidate
+bars every `stride` bars; when a candidate fires, bars inside the skipped
+gap are re-checked (earliest-first) so the entry bar equals what a
+per-bar evaluation would have produced for persistent conditions.
+Stride=1 is exactly per-bar. Position exits are vectorized numpy scans.
+
+Usage: python backtest_engine.py <strategy_module> <symbol> <timeframe> [start] [end] [stride]
 """
 from __future__ import annotations
 
-import importlib
 import math
 import os
 import sys
@@ -41,27 +46,44 @@ MIN_EXPECTANCY_R = 0.10
 COOLDOWN_BARS = {"1d": 1, "4h": 6, "1h": 15, "15m": 60, "5m": 180, "1m": 900}
 DAILY_LOSS_PCT = 0.03
 START_EQUITY = 10_000.0
+WARMUP = 150             # bars before the first candidate
+WINDOW = 300             # history rows passed to get_signal
+TF_SECONDS = {"1d": 86400, "4h": 14400, "1h": 3600, "15m": 900, "5m": 300, "1m": 60}
+
+_DF_CACHE: dict[tuple, pd.DataFrame] = {}
 
 
 def load_df(symbol: str, tf: str) -> pd.DataFrame | None:
+    key = (symbol, tf)
+    if key in _DF_CACHE:
+        return _DF_CACHE[key]
     p = f"{DATA}/{symbol}_{tf}.csv"
     if not os.path.exists(p):
         return None
     df = pd.read_csv(p, index_col=0, parse_dates=True)
     df.columns = [c.lower() for c in df.columns]
+    _DF_CACHE[key] = df
     return df
 
 
-def run_backtest(mod, symbol: str, tf: str, start=None, end=None,
-                 equity=START_EQUITY) -> dict | None:
+def _prepare(mod, symbol: str, tf: str, start, end):
+    """Returns (dfw, ts_n, high, low, close, day, entry_from_ts) or None."""
     df = load_df(symbol, tf)
     if df is None or len(df) < 120:
         return None
-    if start:
-        df = df[df.index >= start]
+    if start:  # OOS: keep warm-up history before start, but gate entries
+        buf = pd.Timedelta(seconds=400 * TF_SECONDS.get(tf, 3600))
+        df = df[df.index >= pd.Timestamp(start) - buf]
+        entry_from_ts = pd.Timestamp(start).value
+    else:
+        entry_from_ts = 0
     if end:
-        df = df[df.index <= end]
+        df = df[df.index <= pd.Timestamp(end)]
     if len(df) < 100:
+        return None
+
+    get_signal = getattr(mod, "get_signal", None)
+    if get_signal is None:
         return None
 
     bars = df.reset_index()
@@ -72,101 +94,134 @@ def run_backtest(mod, symbol: str, tf: str, start=None, end=None,
     if "ts" not in bars.columns:  # index had no name
         bars.columns = ["ts"] + list(bars.columns[1:])
 
-    get_signal = getattr(mod, "get_signal", None)
-    if get_signal is None:
-        return None
+    ts_n = bars["ts"].values.astype("int64")
+    high = bars["high"].values.astype(float)
+    low = bars["low"].values.astype(float)
+    close = bars["close"].values.astype(float)
+    day = ts_n // 86_400_000_000_000
+    return df, ts_n, high, low, close, day, entry_from_ts
 
+
+def run_backtest(mod, symbol: str, tf: str, start=None, end=None,
+                 equity=START_EQUITY, stride: int = 1) -> dict | None:
+    prep = _prepare(mod, symbol, tf, start, end)
+    if prep is None:
+        return None
+    df, ts_n, high, low, close, day, entry_from_ts = prep
+    n = len(df)
+    get_signal = mod.get_signal
     prior = float(getattr(mod, "_OOS_WIN_RATE_PRIOR", 0.5) or 0.5)
+    cd = COOLDOWN_BARS.get(tf, 15)
+    stride = max(1, int(stride))
 
     trades = []
-    in_pos = None          # dict(side, entry, qty, sl, tp, entry_i, entry_ts)
-    cooldown_until = -1
-    # warm-up: strategies need history; feed them the window up to i
-    warmup = 150
+    fills = []            # (bar_idx, eq_after)
+    n_evals = 0
+    cooldown_until = 0
+    first_allowed = int(np.searchsorted(ts_n, entry_from_ts)) if entry_from_ts else 0
+    i = max(WARMUP, first_allowed)
 
-    eq = equity
-    day = None
-    day_start_eq = equity
+    def window(k):
+        nonlocal n_evals
+        n_evals += 1
+        try:
+            return get_signal(df.iloc[max(0, k - WINDOW):k + 1])
+        except Exception:
+            return None
 
-    for i in range(warmup, len(bars)):
-        row = bars.iloc[i]
+    def day_start_equity(d):
+        eq0 = equity
+        for j, eq_after in fills:
+            if day[j] < d:
+                eq0 = eq_after
+        return eq0
 
-        # --- daily loss breaker (recomputed per UTC day) ---
-        ts = row["ts"]
-        d = ts.date() if hasattr(ts, "date") else pd.Timestamp(ts).date()
-        if d != day:
-            day = d
-            day_start_eq = eq
-        breaker = (day_start_eq - eq) / day_start_eq >= DAILY_LOSS_PCT
+    while i < n:
+        # --- flat: skip cooldown / OOS gate, then scan candidates on the stride grid ---
+        if i < cooldown_until:
+            i = cooldown_until
+            if i >= n:
+                break
+        k = i
+        sig = None
+        entry_k = -1
+        orig_k = -1
+        while k < n:
+            s = window(k)
+            if s is not None and getattr(s, "side", None) in ("BUY", "SELL"):
+                sig = s
+                orig_k = k
+                entry_k = k
+                lo = max(i, k - (stride - 1))
+                for m in range(lo, k):  # earliest-first refinement within the gap
+                    s2 = window(m)
+                    if s2 is not None and getattr(s2, "side", None) in ("BUY", "SELL"):
+                        sig = s2
+                        entry_k = m
+                        break
+                break
+            k += stride
+        if sig is None:
+            break
 
-        # --- manage open position: check SL/TP against this bar's H/L ---
-        if in_pos is not None:
-            hit_sl = hit_tp = False
-            if in_pos["side"] == "BUY":
-                if row["low"] <= in_pos["sl"]:
-                    hit_sl = True
-                elif row["high"] >= in_pos["tp"]:
-                    hit_tp = True
-            else:
-                if row["high"] >= in_pos["sl"]:
-                    hit_sl = True
-                elif row["low"] <= in_pos["tp"]:
-                    hit_tp = True
-            if hit_sl or hit_tp:
-                exit_px = in_pos["sl"] if hit_sl else in_pos["tp"]
-                # slippage worsens the fill
-                if in_pos["side"] == "BUY":
-                    exit_px *= (1 - SLIP) if hit_sl else (1 - SLIP)
-                    pnl = (exit_px - in_pos["entry"]) * in_pos["qty"]
-                else:
-                    exit_px *= (1 + SLIP) if hit_sl else (1 + SLIP)
-                    pnl = (in_pos["entry"] - exit_px) * in_pos["qty"]
-                eq += pnl
-                trades.append({
-                    "ts": in_pos["entry_ts"], "exit_ts": ts, "side": in_pos["side"],
-                    "entry": in_pos["entry"], "exit": exit_px, "pnl": pnl,
-                    "bars_held": i - in_pos["entry_i"],
-                })
-                cooldown_until = i + COOLDOWN_BARS.get(tf, 15)
-                in_pos = None
+        # daily loss breaker: skip to the next UTC day if this day is stopped
+        d = day[entry_k]
+        eq0 = day_start_equity(d)
+        if eq0 > 0 and (eq0 - equity) / eq0 >= DAILY_LOSS_PCT:
+            nxt = int(np.searchsorted(day, d + 1))
+            if nxt >= n:
+                break
+            i = max(nxt, orig_k + 1)
+            continue
 
-        # --- look for new entry ---
-        if in_pos is None and not breaker and i >= cooldown_until:
-            window = df.iloc[max(0, i - 300):i + 1]
-            try:
-                sig = get_signal(window)
-            except Exception:
-                sig = None
-            if sig is not None and getattr(sig, "side", None) in ("BUY", "SELL"):
-                px = float(row["close"])
-                sl = float(sig.sl) if sig.sl else None
-                tp = float(sig.tp) if sig.tp else None
-                if sl and tp and px > 0:
-                    stop_pct = abs(px - sl) / px
-                    tp_pct = abs(tp - px) / px
-                    if (MIN_STOP_PCT <= stop_pct <= MAX_STOP_PCT
-                            and tp_pct >= MIN_STOP_PCT):
-                        rr = tp_pct / stop_pct
-                        fee_r = FEE_RT / stop_pct
-                        exp = prior * rr - (1 - prior) - fee_r
-                        if exp >= MIN_EXPECTANCY_R:
-                            qty = (eq * RISK_PER_TRADE) / (abs(px - sl))
-                            entry_px = px * (1 + SLIP if sig.side == "BUY" else 1 - SLIP)
-                            in_pos = {"side": sig.side, "entry": entry_px,
-                                      "qty": qty, "sl": sl, "tp": tp,
-                                      "entry_i": i, "entry_ts": ts}
+        px = float(close[entry_k])
+        sl = float(sig.sl) if sig.sl else None
+        tp = float(sig.tp) if sig.tp else None
+        entered = False
+        if sl and tp and px > 0:
+            stop_pct = abs(px - sl) / px
+            tp_pct = abs(tp - px) / px
+            if (MIN_STOP_PCT <= stop_pct <= MAX_STOP_PCT and tp_pct >= MIN_STOP_PCT):
+                rr = tp_pct / stop_pct
+                fee_r = FEE_RT / stop_pct
+                exp = prior * rr - (1 - prior) - fee_r
+                if exp >= MIN_EXPECTANCY_R:
+                    qty = (equity * RISK_PER_TRADE) / abs(px - sl)
+                    entry_px = px * (1 + SLIP if sig.side == "BUY" else 1 - SLIP)
+                    side = sig.side
+                    entered = True
 
-    # close any open position at last close
-    if in_pos is not None:
-        exit_px = float(bars.iloc[-1]["close"])
-        pnl = ((exit_px - in_pos["entry"]) * in_pos["qty"] if in_pos["side"] == "BUY"
-               else (in_pos["entry"] - exit_px) * in_pos["qty"])
-        eq += pnl
+        if not entered:
+            i = orig_k + stride  # skip the known-firing region; resume the grid
+            continue
+
+        # --- in position: vectorized exit scan (SL wins if both hit in one bar) ---
+        seg_sl = (low[entry_k + 1:] <= sl) if side == "BUY" else (high[entry_k + 1:] >= sl)
+        seg_tp = (high[entry_k + 1:] >= tp) if side == "BUY" else (low[entry_k + 1:] <= tp)
+        hit = seg_sl | seg_tp
+        exit_j = n - 1
+        hit_sl_final = False
+        if hit.any():
+            rel = int(np.argmax(hit))
+            exit_j = entry_k + 1 + rel
+            hit_sl_final = bool(seg_sl[rel])
+        if side == "BUY":
+            exit_px = sl if hit_sl_final else tp
+            exit_px *= (1 - SLIP)
+            pnl = (exit_px - entry_px) * qty
+        else:
+            exit_px = sl if hit_sl_final else tp
+            exit_px *= (1 + SLIP)
+            pnl = (entry_px - exit_px) * qty
+        equity += pnl
+        fills.append((exit_j, equity))
+        cooldown_until = exit_j + cd
         trades.append({
-            "ts": in_pos["entry_ts"], "exit_ts": bars.iloc[-1]["ts"],
-            "side": in_pos["side"], "entry": in_pos["entry"], "exit": exit_px,
-            "pnl": pnl, "bars_held": len(bars) - 1 - in_pos["entry_i"],
+            "ts": pd.Timestamp(ts_n[entry_k]), "exit_ts": pd.Timestamp(ts_n[exit_j]),
+            "side": side, "entry": entry_px, "exit": exit_px, "pnl": pnl,
+            "bars_held": exit_j - entry_k,
         })
+        i = exit_j + 1
 
     if not trades:
         return None
@@ -174,9 +229,8 @@ def run_backtest(mod, symbol: str, tf: str, start=None, end=None,
     t = pd.DataFrame(trades)
     wins = t[t.pnl > 0]
     losses = t[t.pnl <= 0]
-    ret = eq - START_EQUITY
-    days = max((bars.iloc[-1]["ts"] - bars.iloc[0]["ts"]).days, 1)
-    # max drawdown on equity curve of per-trade pnl
+    ret = equity - START_EQUITY
+    days = max((ts_n[-1] - ts_n[0]) / 86_400_000_000_000, 1)
     curve = START_EQUITY + t.pnl.cumsum()
     dd = (curve - curve.cummax()).min()
 
@@ -188,25 +242,26 @@ def run_backtest(mod, symbol: str, tf: str, start=None, end=None,
         "avg_loss": losses.pnl.mean() if len(losses) else 0,
         "profit_factor": wins.pnl.sum() / abs(losses.pnl.sum()) if len(losses) and losses.pnl.sum() != 0 else float("inf") if len(wins) else 0,
         "max_dd": dd, "avg_bars_held": t.bars_held.mean(),
-        "start": str(bars.iloc[0]["ts"].date()), "end": str(bars.iloc[-1]["ts"].date()),
+        "start": str(pd.Timestamp(ts_n[0]).date()), "end": str(pd.Timestamp(ts_n[-1]).date()),
+        "n_evals": n_evals,
     }
 
 
 def main():
+    import importlib
     mod_name, symbol, tf = sys.argv[1], sys.argv[2], sys.argv[3]
-    start = sys.argv[4] if len(sys.argv) > 4 else None
-    end = sys.argv[5] if len(sys.argv) > 5 else None
+    start = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != "-" else None
+    end = sys.argv[5] if len(sys.argv) > 5 and sys.argv[5] != "-" else None
+    stride = int(sys.argv[6]) if len(sys.argv) > 6 else 1
     mod = importlib.import_module(mod_name)
-    res = run_backtest(mod, symbol, tf, start, end)
-    os.makedirs(OUT, exist_ok=True)
-    tag = "OOS" if start and str(start) >= "2024-01-01" else "IS"
-    out = f"{OUT}/{mod_name}__{symbol}__{tf}__{tag}.csv"
+    res = run_backtest(mod, symbol, tf, start, end, stride=stride)
+    tag = "OOS" if start else "IS"
     if res:
-        pd.DataFrame([res]).to_csv(out, index=False)
         print(f"OK {mod_name} {symbol} {tf} {tag}: {res['trades']} trades "
-              f"net {res['net_pnl']:+.0f} wr {res['win_rate']:.2f} pf {res['profit_factor']:.2f}")
+              f"net {res['net_pnl']:+.0f} wr {res['win_rate']:.2f} "
+              f"pf {res['profit_factor']:.2f} evals {res['n_evals']}")
     else:
-        print(f"NONE {mod_name} {symbol} {tf}")
+        print(f"NONE {mod_name} {symbol} {tf} {tag}")
 
 
 if __name__ == "__main__":
