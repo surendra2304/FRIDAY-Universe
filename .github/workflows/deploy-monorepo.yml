@@ -125,14 +125,25 @@ jobs:
             # published a track but produced ZERO audio frames). Install the
             # plugin into whatever interpreter runs the unit, then restart it.
             if echo "$CHANGED_AGENTS" | grep -qw "FRIDAY" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              if systemctl list-unit-files | grep -qw "FRIDAY-Voice.service"; then
+              if [ "$(systemctl show FRIDAY-Voice.service --property=LoadState --value)" = loaded ]; then
                 echo "=== Voice worker: ensuring livekit-plugins-groq ==="
-                VOICE_PY=$(systemctl show FRIDAY-Voice.service -p ExecStart --value 2>/dev/null | grep -oE '^[^ ]+' || true)
-                if [ -n "$VOICE_PY" ]; then
+                # ExecStart is systemd-JSON on systemd 249+ ("{ \"path\": ... }")
+                # and a plain command line on older systems — try the unit file
+                # first, then the JSON, then the plain value.
+                VOICE_PY=$(systemctl cat FRIDAY-Voice.service 2>/dev/null | grep -E '^ExecStart=' | head -1 | sed 's/^ExecStart=//' | awk '{print $1}' || true)
+                if [ -z "$VOICE_PY" ]; then
+                  VOICE_PY=$(systemctl show FRIDAY-Voice.service -p ExecStart --value 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("path",""))' 2>/dev/null || true)
+                fi
+                if [ -z "$VOICE_PY" ]; then
+                  VOICE_PY=$(systemctl show FRIDAY-Voice.service -p ExecStart --value 2>/dev/null | awk '{print $1}' || true)
+                fi
+                if [ -n "$VOICE_PY" ] && [ "${VOICE_PY:0:1}" != "{" ]; then
                   "$VOICE_PY" -m pip install -q livekit-plugins-groq 2>/dev/null \
                     || "$VOICE_PY" -m pip install -q --user livekit-plugins-groq 2>/dev/null \
                     || sudo "$VOICE_PY" -m pip install -q livekit-plugins-groq 2>/dev/null \
                     || echo "::warning::could not install livekit-plugins-groq into $VOICE_PY — worker will report 'no-provider' honestly"
+                  echo "=== groq plugin check ==="
+                  "$VOICE_PY" -c 'from livekit.plugins import groq; print("livekit-plugins-groq import OK")' 2>&1 || echo "::warning::groq plugin still not importable"
                 else
                   echo "::warning::FRIDAY-Voice ExecStart not parseable — skipping plugin install"
                 fi
@@ -151,13 +162,15 @@ jobs:
             FAILED_HEALTH=""
             for AGENT in "${SERVER1_AGENTS[@]}"; do
               PORT=""
+              PROBES=12   # 12 x 5s = 60s is enough for the lightweight agents
               case "$AGENT" in
-                FRIDAY) PORT=10000;; Inference) PORT=8001;; Memora) PORT=8002;;
+                FRIDAY) PORT=10000; PROBES=36;;   # FRIDAY boots the full FastAPI graph on 2 cores — measured slower than the old 60s window
+                Inference) PORT=8001;; Memora) PORT=8002;;
                 Stratex) PORT=8003;; Futuris) PORT=8004;; IntelX) PORT=8005;; Forge) PORT=8006;;
               esac
               [ -n "$PORT" ] || continue
               OK=""
-              for i in $(seq 1 12); do
+              for i in $(seq 1 $PROBES); do
                 if curl -sf -m 5 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then OK=yes; break; fi
                 sleep 5
               done
