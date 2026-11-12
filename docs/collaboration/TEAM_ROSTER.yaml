@@ -171,12 +171,12 @@ collaborators:
     - GitHub reads/writes through existing MCP bridge credentials; local Python engineering
       and runtime SDK tests.
     active_assignments:
-    - TASK-WF-007
+    - TASK-WF-008
     - TASK-VAL-003
     active_branches:
-    - arena/TASK-WF-007-acceptance-record
+    - arena/TASK-WF-008-repair-preservation
     - arena/TASK-VAL-003-runtime-audit
-    active_pr: 60
+    active_pr: null
     last_verified_at: '2026-11-12T13:56:06.410012+00:00'
     access_limits:
     - Owner authorized controlled GitHub merge and Oracle deployment; no unbounded real-money exposure or automatic publication. Exposed chat PAT never used or saved.

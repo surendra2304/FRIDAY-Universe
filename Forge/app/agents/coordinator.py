@@ -124,9 +124,11 @@ def _extract_target_file(detail: str) -> str | None:
 class AgentCoordinator:
     """Runs reviewer agents over a workspace and delegates repairs to fixers."""
 
-    def __init__(self, engine, max_rounds: int = 2):
+    def __init__(self, engine, max_rounds: int = 2, *, goal: str = "", requirements: list[str] | None = None):
         self.engine = engine
         self.max_rounds = max_rounds
+        self.goal = goal
+        self.requirements = list(requirements or [])
         self._reviewers = {name: cls() for name, cls in REVIEWERS.items()}
 
     # ------------------------------------------------------------------
@@ -167,30 +169,58 @@ class AgentCoordinator:
     ) -> list[str]:
         """Hand the findings to a fixer agent and report what it changed.
 
-        The Debugger is asked first because root-cause repair is its job; the
-        Developer is the fallback for anything the Debugger declines. Both write
-        through the normal workspace tools, so a repair is auditable and
-        permission-checked exactly like any other agent action.
+        Only a patch-oriented Debugger may attempt model repairs. DeveloperRole
+        regenerates the entire file manifest: it is not a repair fallback and
+        can overwrite a correct release with an unrelated scaffold.
         """
         if not findings:
             return []
+        if not self.goal.strip():
+            logger.warning(f"[Task {task_id}] Repair refused: original task objective is unavailable")
+            return []
 
-        from app.agents.roles import DebuggerRole, DeveloperRole
+        from app.agents.roles import DebuggerRole
 
         brief = "\n".join(f.as_prompt() for f in findings)
         changed: list[str] = []
 
-        for role_name, role_cls in (("debugger", DebuggerRole), ("developer", DeveloperRole)):
+        # Safe Ruff F401 fixes remove unused imports, not application logic.
+        # Keep the normal terminal/FS permissions and re-review every change.
+        import shlex
+        import sys
+
+        for finding in findings:
+            if finding.reviewer != "code_reviewer" or "Ruff" not in finding.check_name or "F401" not in finding.detail:
+                continue
+            path = finding.target_file
+            if not path or not path.endswith(".py"):
+                continue
+            try:
+                before = self.engine.fs.read_file(task_id, path, role="debugger")
+                await self.engine.terminal.run_command(
+                    task_id, f'"{sys.executable}" -B -m ruff check --no-cache --select F401 --fix -- {shlex.quote(path)}',
+                    env_vars={"PYTHONDONTWRITEBYTECODE": "1"}, role="debugger",
+                )
+                if before != self.engine.fs.read_file(task_id, path, role="debugger"):
+                    changed.append(path)
+            except Exception as exc:
+                logger.warning(f"[Task {task_id}] Unused-import repair failed: {type(exc).__name__}")
+        if changed:
+            return changed  # Re-review before attempting any different repair.
+
+        for role_name, role_cls in (("debugger", DebuggerRole),):
             try:
                 agent = role_cls()
                 result = await agent.execute_step(
                     task_id=task_id,
                     node_title=f"Peer review remediation ({len(findings)} findings)",
                     context={
+                        "goal": self.goal,
+                        "requirements": list(self.requirements),
                         "error": brief,
                         "terminal_logs": "",
                         "findings": [f.as_prompt() for f in findings],
-                        "project_files": [],
+                        "project_files": self.engine.fs.search_files(task_id, pattern="*.py", role="debugger"),
                     },
                     engine=self.engine,
                 )
