@@ -78,7 +78,13 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
     };
   }, []);
 
-  const workerDown = worker?.state && worker.state !== "ready";
+  /* Worker truth states: only real failures read as warnings; informational
+     states (registered / job-received / pending) are neutral chips. */
+  const workerFailed = worker?.state === "no-provider" || worker?.state === "error";
+  const workerInfo =
+    !workerFailed && worker?.state && worker.state !== "ready"
+      ? `Voice backend: ${worker.state}${worker?.detail ? ` — ${worker.detail}` : ""}`
+      : null;
 
   const clearAudioElements = useCallback(() => {
     document.querySelectorAll("audio[data-livekit]").forEach((el) => el.remove());
@@ -284,13 +290,19 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
           </span>
         )}
       </div>
-      {workerDown && status === "idle" && (
-        <p className="rail-note rail-warn" style={{ display: "flex", alignItems: "flex-start", gap: 7, textAlign: "left" }}>
-          <AlertTriangle size={14} style={{ flex: "none", marginTop: 2 }} />
-          <span>
-            Voice backend: {worker?.state ?? "unknown"}
-            {worker?.detail ? ` — ${worker.detail}` : ""}
-          </span>
+      {(workerFailed || workerInfo) && status === "idle" && (
+        <p
+          className="rail-note"
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 7,
+            textAlign: "left",
+            ...(workerFailed ? { color: "var(--warn)" } : {}),
+          }}
+        >
+          {workerFailed && <AlertTriangle size={14} style={{ flex: "none", marginTop: 2 }} />}
+          <span>{workerFailed ? `Voice line unavailable: ${worker?.detail || worker?.state}` : workerInfo}</span>
         </p>
       )}
       <button
