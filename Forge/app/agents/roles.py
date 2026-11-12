@@ -6,6 +6,7 @@ and sandboxed execution tool interactions.
 
 from __future__ import annotations
 
+import re
 import sys
 from typing import Any
 
@@ -1138,6 +1139,8 @@ class TesterRole(BaseAgent):
         goal = context.get("goal", "")
         workspace_summary = self.get_workspace_summary(task_id, engine)
 
+        test_framework = "unittest" if re.search(r"\bunittest\b", goal, re.I) else "pytest"
+
         # Check existing test files
         test_files = engine.fs.search_files(
             task_id=task_id, pattern="test_*.py", role=self.role_name
@@ -1175,8 +1178,10 @@ class TesterRole(BaseAgent):
                     test_res = await ai_client.generate_tests(
                         code=main_code,
                         file_type="python",
-                        test_framework="pytest",
+                        test_framework=test_framework,
                         coverage_targets=["happy_path", "boundary_conditions", "error_handling"],
+                        project_goal=goal,
+                        requirements=list(context.get("requirements", [])),
                     )
                     if test_res and test_res.get("test_code"):
                         test_code = test_res["test_code"]
@@ -1191,7 +1196,7 @@ class TesterRole(BaseAgent):
                     f"Objective: {goal}\n"
                     f"QA Task: {node_title}\n"
                     f"{workspace_summary}\n\n"
-                    f"Write comprehensive pytest unit tests for the existing application.\n"
+                    f"Write comprehensive {test_framework} unit tests for the existing application.\n"
                     f"Format tests as:\n### File: test_main.py\n```python\n...\n```"
                 )
                 response = await self.prompt_model(prompt)
@@ -1203,9 +1208,11 @@ class TesterRole(BaseAgent):
         # .pytest_cache plus rewritten __pycache__ files inside the project the
         # agent is delivering, so every finished build shipped test-runner junk to
         # the user. Use the hosting interpreter, and disable both caches.
+        command = (f'"{sys.executable}" -B -m unittest discover -v' if test_framework == "unittest"
+                   else f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider')
         cmd_res = await engine.terminal.run_command(
             task_id=task_id,
-            command=f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider',
+            command=command,
             env_vars={"PYTHONPATH": ".", "PYTHONDONTWRITEBYTECODE": "1"},
             role=self.role_name,
         )

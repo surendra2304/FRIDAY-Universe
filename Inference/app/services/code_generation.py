@@ -1,6 +1,7 @@
 """Code Generation Service optimized for FORGE autonomous software engineering engine."""
 
 import hashlib
+import json
 import re
 import time
 from collections.abc import AsyncIterator
@@ -78,8 +79,8 @@ class CodeGenerationService:
         self._cache_ttl = 3600.0  # 1 hour TTL
 
     def _get_cache_key(self, req: CodeGenerationRequest) -> str:
-        goal = str(req.context.get("project_goal", ""))
-        raw = f"{goal}:{req.filename}:{req.file_type}:{req.requirements}:{req.language_features}"
+        # A related module or architecture change is a different build input.
+        raw = "forge-objective-v2:" + json.dumps(req.model_dump(mode="json"), sort_keys=True)
         return hashlib.sha256(raw.encode()).hexdigest()
 
     async def generate_code(self, req: CodeGenerationRequest) -> CodeGenerationResponse:
@@ -212,6 +213,7 @@ class CodeGenerationService:
 
         return (
             f"Generate complete, production-ready, fully closed code for file: `{req.filename}` ({req.file_type}).\n"
+            f"Project objective (implement this, not a generic scaffold):\n{str(req.context.get('project_goal', ''))[:4000]}\n\n"
             f"Standards: {guide}\n"
             f"Language Features: {feat_list}\n"
             f"Specific Requirements:\n{req_list}\n\n"
@@ -223,13 +225,13 @@ class CodeGenerationService:
         """Prunes and limits context size (max 3 related files)."""
         pruned: dict[str, Any] = {}
         if "project_goal" in context:
-            pruned["project_goal"] = str(context["project_goal"])[:500]
+            pruned["project_goal"] = str(context["project_goal"])[:4000]
         if "architecture_spec" in context:
             pruned["architecture_spec"] = str(context["architecture_spec"])[:1000]
-        if "related_files" in context:
-            rel = context["related_files"]
+        if "related_files" in context or "sibling_files" in context:
+            rel = context.get("related_files", context.get("sibling_files"))
             if isinstance(rel, dict):
-                pruned["related_files"] = {k: str(v)[:400] for i, (k, v) in enumerate(rel.items()) if i < 3}
+                pruned["related_files"] = {k: str(v)[:2500] for i, (k, v) in enumerate(rel.items()) if i < 3}
             elif isinstance(rel, list):
                 pruned["related_files"] = [str(x)[:400] for x in rel[:3]]
         return pruned

@@ -1874,6 +1874,54 @@ tasks:
       Docs-only acceptance record follows on arena/TASK-WF-006-acceptance-record.
     claim_policy: Update within2h; contact before takeover.
 
+  - id: TASK-WF-007
+    title: Goal-specific real model code and valid generated tests through Forge/Inference
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-007-goal-fidelity
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/agents/roles.py
+    - Forge/app/core/context.py
+    - Forge/app/core/orchestrator.py
+    - Forge/app/integrations/ai_universe_client.py
+    - Inference/app/services/code_generation.py
+    - Inference/app/services/test_generation.py
+    - Forge/tests/unit/test_goal_fidelity_contract.py
+    - Inference/tests/test_forge_goal_and_test_generation.py
+    claimed_at: '2026-11-12T15:58:59.115861+00:00'
+    last_update: '2026-11-12T15:58:59.115861+00:00'
+    acceptance:
+    - Preserve original goal and explicit requirements through execution context and
+      code/test generation.
+    - Unwrap narrated fenced Python tests correctly, validate discovery/framework and
+      never invent measured coverage.
+    - Actually build/test the requested CSV converter, independently exercise quoted
+      commas and empty input; do not edit generated code to make acceptance pass.
+    - Notify owner via credentials-file zai_notifications_bot after this execution,
+      with no secret exposure.
+    evidence:
+    - Claim issue35 6828563174. Latest Stratex98891b9 preserved, no strategy/daemon
+      intervention.
+    - 'Read-only actual task0612112026152234 still generic text processor/no tests.
+      Inference test-generation extraction bug confirmed in source: prose before first
+      fence returned as code; source silently cut3000 characters; fixed confidence0.92
+      coverage had no measurement.'
+    - 41 focused Forge regressions and48 Inference goal/test/review/cache regressions
+      pass. Explicit provider fixtures, not live generated output acceptance.
+    - Private credentials.md located on both hosts; getMe verified named zai_notifications_bot
+      token. No notification yet; no token printed/copied/committed.
+    blockers:
+    - Real post-fix generated code/test and independent behavior acceptance pending
+      rollout.
+    - Continuous owner microphone/audio, reviewed video/YouTube OAuth and sustained
+      profitability remain outside this acceptance and unverified.
+    next_action: CI, controlled exact-head rollout, then one bounded goal-specific canonical
+      build; inspect existing task on timeout, no blind retry. Telegram completion notification
+      only after final outcome.
+    claim_policy: Update within2h; contact before takeover, no automatic expiration.
+
 task_id_warnings:
   - id: TASK-WF-005
     title: Fix concrete live research/build/shared-memory failures and repeat real workflow
@@ -1971,6 +2019,54 @@ task_id_warnings:
     next_action: Focused PR/CI/controlled rollout, then reverify existing task without
       new generation; preserve task history and honest remaining blockers.
     claim_policy: Update within2h; contact before takeover.
+
+  - id: TASK-WF-007
+    title: Goal-specific real model code and valid generated tests through Forge/Inference
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-007-goal-fidelity
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/agents/roles.py
+    - Forge/app/core/context.py
+    - Forge/app/core/orchestrator.py
+    - Forge/app/integrations/ai_universe_client.py
+    - Inference/app/services/code_generation.py
+    - Inference/app/services/test_generation.py
+    - Forge/tests/unit/test_goal_fidelity_contract.py
+    - Inference/tests/test_forge_goal_and_test_generation.py
+    claimed_at: '2026-11-12T15:58:59.115861+00:00'
+    last_update: '2026-11-12T15:58:59.115861+00:00'
+    acceptance:
+    - Preserve original goal and explicit requirements through execution context and
+      code/test generation.
+    - Unwrap narrated fenced Python tests correctly, validate discovery/framework and
+      never invent measured coverage.
+    - Actually build/test the requested CSV converter, independently exercise quoted
+      commas and empty input; do not edit generated code to make acceptance pass.
+    - Notify owner via credentials-file zai_notifications_bot after this execution,
+      with no secret exposure.
+    evidence:
+    - Claim issue35 6828563174. Latest Stratex98891b9 preserved, no strategy/daemon
+      intervention.
+    - 'Read-only actual task0612112026152234 still generic text processor/no tests.
+      Inference test-generation extraction bug confirmed in source: prose before first
+      fence returned as code; source silently cut3000 characters; fixed confidence0.92
+      coverage had no measurement.'
+    - 41 focused Forge regressions and48 Inference goal/test/review/cache regressions
+      pass. Explicit provider fixtures, not live generated output acceptance.
+    - Private credentials.md located on both hosts; getMe verified named zai_notifications_bot
+      token. No notification yet; no token printed/copied/committed.
+    blockers:
+    - Real post-fix generated code/test and independent behavior acceptance pending
+      rollout.
+    - Continuous owner microphone/audio, reviewed video/YouTube OAuth and sustained
+      profitability remain outside this acceptance and unverified.
+    next_action: CI, controlled exact-head rollout, then one bounded goal-specific canonical
+      build; inspect existing task on timeout, no blind retry. Telegram completion notification
+      only after final outcome.
+    claim_policy: Update within2h; contact before takeover, no automatic expiration.
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

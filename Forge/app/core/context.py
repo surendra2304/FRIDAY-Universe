@@ -185,6 +185,7 @@ class ContextManager:
 
         context_payload: dict[str, Any] = {
             "goal": goal,
+            "requirements": list(base_context.get("requirements", [])),
             "node_title": node_title,
             "file_tree": file_tree,
             "metadata": base_context.get("metadata", {}),

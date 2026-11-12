@@ -391,7 +391,9 @@ class OrchestratorCore:
                 task_id=task_id,
                 role_name=role_name,
                 node_title=node.title,
-                base_context={"goal": task.goal if task else "", "metadata": node.metadata},
+                base_context={"goal": task.goal if task else "",
+                              "requirements": list(task.requirements) if task else [],
+                              "metadata": node.metadata},
                 engine=self.engine,
             )
 
