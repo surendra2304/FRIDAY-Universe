@@ -337,14 +337,34 @@ async def get_task_status(
             import json
             try:
                 manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+                if not isinstance(manifest_data, dict):
+                    manifest_data = None
             except Exception:
                 manifest_data = None
 
     task_state_str = task.state.value if hasattr(task.state, "value") else str(task.state)
 
     status_str = "RUNNING"
+    verification_error = None
     if task.state == TaskState.COMPLETED:
-        status_str = "SUCCESS"
+        stages = manifest_data.get("stages") if isinstance(manifest_data, dict) else None
+        verified = (
+            manifest_data is not None
+            and manifest_data.get("all_passed") is True
+            and not manifest_data.get("failed_stages")
+            and isinstance(stages, dict) and bool(stages)
+            and all(isinstance(stage, dict) and stage.get("passed") is True
+                    and type(stage.get("exit_code")) is int and stage["exit_code"] == 0
+                    for stage in stages.values())
+        )
+        if verified:
+            status_str = "SUCCESS"
+        elif manifest_data:
+            status_str = "PARTIAL_FAILURE" if manifest_data.get("partial_failure") else "FAILED"
+            verification_error = manifest_data.get("failure_summary") or "Saved verification does not certify task completion."
+        else:
+            status_str = "DEGRADED"
+            verification_error = "Task execution completed but verification evidence is unavailable."
     elif task.state == TaskState.FAILED:
         status_str = "PARTIAL_FAILURE" if (manifest_data and manifest_data.get("partial_failure")) else "FAILED"
     elif task.state == TaskState.CANCELLED:
@@ -362,8 +382,8 @@ async def get_task_status(
             "progress_percentage": task.progress_percentage,
             "created_at": task.created_at.isoformat() if hasattr(task.created_at, "isoformat") else str(task.created_at),
         },
-        summary=f"Task '{task_id}' is currently {task_state_str} ({task.progress_percentage}%)",
-        error=task.error_message,
+        summary=f"Task '{task_id}' execution state {task_state_str}; verification status {status_str}.",
+        error=verification_error or task.error_message,
         verification_manifest=manifest_data,
     )
 

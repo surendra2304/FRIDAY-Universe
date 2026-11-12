@@ -438,3 +438,41 @@ def test_canonical_memory_save_and_recall_survives_client_recreation(tmp_path, m
         asyncio.run(via_voice_bridge())
     finally:
         reopened._executor.shutdown(wait=True)
+
+
+def test_live_csv_goal_reaches_forge_before_desktop_and_retains_evidence(monkeypatch):
+    from friday.agent.mixins.fast_paths import FastPathMixin
+    from friday.agent.state import TaskState
+    from friday.core.types import ToolResult
+    from friday.memory.memora_client import memora_client
+    monkeypatch.setattr(memora_client, "record_interaction_async", lambda **kw: None)
+    captured = []
+    manifest = {"stages": {"unit_tests": {"passed": True, "exit_code": 0}}}
+    def execute(self, goal, **kw):
+        captured.append(goal)
+        return ToolResult(name="forge_code_task", content="Fixture verification evidence", metadata={
+            "forge": {"task_id": "fixture-build"}, "verification_manifest": manifest, "artifacts": ["csv2json.py"]})
+    monkeypatch.setattr(ForgeCodeTool, "execute", execute)
+    host = SimpleNamespace(state_machine=SimpleNamespace(transition_to=lambda *a, **k: None,
+        current_state=TaskState.COMPLETED), memory=SimpleNamespace(add_message=lambda *a: None))
+    raw = "write a Python CSV to JSON converter using only the standard library. Include unittest tests and run them."
+    response = FastPathMixin._batch3_delegation_fast_path(host, raw, 0)
+    assert captured == [raw]
+    assert response.metadata["task_id"] == "fixture-build"
+    assert response.metadata["verification_manifest"] == manifest
+    assert response.metadata["artifacts"] == ["csv2json.py"]
+    decision = __import__("friday.routing.capability_router", fromlist=["CapabilityRouter"]).CapabilityRouter().route_request(raw)
+    assert any(c.required_tools == ["forge_code_task"] for c in decision.candidate_evaluations)
+
+
+def test_explicit_forge_failure_preserves_cause_and_task_reference_without_receipt():
+    def handler(req):
+        return httpx.Response(200, json={"task_id": "actual-peer-fixture", "target_agent": "forge",
+            "status": "PARTIAL_FAILURE", "summary": "Verification failed: generated test syntax error",
+            "error": "SyntaxError in test_main.py", "verification_manifest": {"all_passed": False, "failed_stages": 1}})
+    result = ForgeCodeTool(WireFleet(handler)).execute(goal="write a Python CSV converter")
+    assert result.is_error
+    assert "SyntaxError" in result.content
+    assert result.metadata["forge"]["task_id"] == "actual-peer-fixture"
+    assert result.metadata["verification_manifest"]["all_passed"] is False
+    assert "no receipt" not in result.content

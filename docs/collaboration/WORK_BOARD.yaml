@@ -1649,7 +1649,7 @@ tasks:
     next_action: "None — the 3 real-bug lint classes (F821/F811/B006) and the F401 dead-weight class are now all zero across siblings."
   - id: TASK-WF-004
     title: 'Four owner workflows: canonical voice bridge and truthful specialist contracts'
-    status: IN_REVIEW
+    status: DEPLOYED
     owner: arena_engineering_01
     branch: arena/TASK-WF-004-four-owner-workflows
     pr: 56
@@ -1706,19 +1706,14 @@ tasks:
     - Configured FRIDAY Ruff, changed VyralX F821, new-file F/E9, compile, whitespace
       pass. One pre-existing unused task variable in VyralX main F841 left unchanged.
     blockers:
-    - Owner microphone/interruption/continuous turn acceptance not verified.
-    - Live shared Memora lifecycle and deployed fresh research provider acceptance not
-      verified.
-    - Actual Forge instruction-to-generated-tested-artifact and actual VyralX topic-to-rendered-video/owner
-      review not verified.
-    - No durable fresh research job; extractive brief is not independent synthesis or
-      verification.
-    - Review-required additive schema code is not applied to production; no merge/deploy
-      approval.
-    last_update: '2026-11-12T14:04:41.201430+00:00'
-    next_action: Independent review/expanded CI; controlled real provider/build/render/microphone
-      acceptance. Draft remains blocked; do not auto-merge/deploy.
+    - Implementation deployed, but workflow acceptance remains incomplete; see TASK-WF-005.
+    last_update: '2026-11-12T15:04:51.017727+00:00'
+    next_action: Merged implementation retained; actual live workflow defects and unaccepted
+      experiences tracked under TASK-WF-005.
     claim_policy: Update within two hours while active; contact required before takeover.
+    merge_note: Owner authorized merge and controlled rollout. Merged13ab8aa; deployment43239838169
+      success; both hosts verified. Runtime acceptance exposed failures tracked separately
+      in TASK-WF-005.
 
   - id: "TASK-STRATEX-PROFIT-GOVERNOR"
     title: "Stratex profitability governor — stop the >$1k/day demo bleed (user-directed mission, ZAI Agent 2)"
@@ -1748,7 +1743,142 @@ tasks:
     blockers: []
     next_action: "Observe live P&L over 24-48h to confirm governor holds under real market action; if profitable, consider phase-2 (maker entries to cut the fee load, strategy denylist tuning from the per-strategy win-rate prior). Lane remains claimed on #35 until verified."
 
+  - id: TASK-WF-005
+    title: Fix concrete live research/build/shared-memory failures and repeat real workflow
+      acceptance
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-005-live-acceptance
+    pr: 57
+    files:
+    - .github/workflows/owner-workflows.yml
+    - FRIDAY/src/friday/agent/mixins/fast_paths.py
+    - FRIDAY/src/friday/ecosystem/fleet_client.py
+    - FRIDAY/src/friday/memory/memora_client.py
+    - FRIDAY/src/friday/routing/capability_router.py
+    - FRIDAY/src/friday/tools/builtin/forge_code_task.py
+    - FRIDAY/tests/test_four_owner_workflows.py
+    - FRIDAY/tests/test_memora_hardening.py
+    - Forge/app/agents/parser.py
+    - Forge/app/agents/roles.py
+    - Forge/app/api/delegate.py
+    - Forge/requirements-verification.txt
+    - Forge/tests/unit/test_delegate_verification_status.py
+    - Forge/tests/unit/test_generated_test_ingestion.py
+    - Forge/tests/unit/test_response_parser.py
+    - IntelX/intelx/api/live_research_task.py
+    - Memora/core/memory/search_service.py
+    - Memora/tests/test_direct_evidence_ranking.py
+    - tests/test_live_research_task_contract.py
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    last_update: '2026-11-12T15:11:14.199566+00:00'
+    acceptance:
+    - Canonical natural-language coding request reaches Forge, actual generated tested
+      artifacts pass verification.
+    - Useful real-source research passages with matching citations and spoken output.
+    - Shared memory write and relevant recall through canonical voice/chat survive fresh
+      process.
+    - Preserve review-required video/channel boundaries; owner microphone and actual
+      video acceptance remain explicit.
+    evidence:
+    - Claims issue35 6826830413/6827025902/6827127315/6827188178.
+    - 387 targeted FRIDAY/research/deployment/memory regressions and 32 separate Forge
+      regressions passed. External providers mocked in regressions, not live delivery.
+    - 'Direct actual Forge task0312112026145003 failed3/10 stages in173.97s: prose in
+      test_main.py and missing pytest/ruff. No hidden success.'
+    - 'Controlled S1 tools installed: pytest8.4.2,ruff0.14.14; private before-package
+      inventory saved.'
+    - Memora direct SEMANTIC write403 due service-only promotion policy. EPISODIC owner
+      observation returned201/storage_durable=true, GET by persisted ID200 from fresh
+      process. Search did not rank it in top10, so relevant shared recall still unaccepted.
+    - FRIDAY-Voice active/running,NRestarts0; not owner microphone acceptance.
+    - Both YouTube OAuth candidates invalid_grant; legitimate Google reauthorization
+      needed. No render/upload or new trading exposure.
+    - Actual memory single-token search returns persisted observation. Natural multi-token
+      query instead buries it below graph-only rows with zero lexical/vector match and
+      higher graph score.
+    - Scoped ranking fix prioritizes direct lexical/vector evidence before graph-only
+      companions, retaining companions and existing policy/tenant filters. New real
+      relational regression fails on archived baseline and passes on fix.
+    - 23 focused Memora ranking/hybrid/tenant/access tests passed. Two unrelated scope-suite
+      failures (hardcoded Windows path; fixture filename restriction) reproduce identically
+      in archived baseline; not skipped or repaired here.
+    - PR57 first CI387 regressions passed; Forge collection failed missing SQLAlchemy
+      asyncio greenlet, dependency declaration corrected, new checks pending.
+    blockers:
+    - Actual post-fix model-generated build acceptance pending deployment.
+    - Shared-memory relevant search/recall unconfirmed despite durable API write/read.
+    - Owner microphone/interruption continuous conversation not verified.
+    - YouTube OAuth invalid_grant and stock-media rights confirmation/item-license validation
+      unresolved.
+    - Stratex profitability not demonstrated; ZAI Agent2 retains lane, governor and
+      trend-exit fix56dd9e7 preserved.
+    next_action: Publish focused tested changes, verify CI, exact-head owner-authorized
+      merge/deploy without restarting Stratex daemon, then bounded canonical acceptance.
+    claim_policy: Update within2h; contact before takeover, no automatic expiry.
+
 task_id_warnings:
+  - id: TASK-WF-005
+    title: Fix concrete live research/build/shared-memory failures and repeat real workflow
+      acceptance
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-005-live-acceptance
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - FRIDAY/src/friday/agent/mixins/fast_paths.py
+    - FRIDAY/src/friday/ecosystem/fleet_client.py
+    - FRIDAY/src/friday/memory/memora_client.py
+    - FRIDAY/src/friday/routing/capability_router.py
+    - FRIDAY/src/friday/tools/builtin/forge_code_task.py
+    - FRIDAY/tests/test_four_owner_workflows.py
+    - FRIDAY/tests/test_memora_hardening.py
+    - Forge/app/agents/parser.py
+    - Forge/app/agents/roles.py
+    - Forge/app/api/delegate.py
+    - Forge/tests/unit/test_response_parser.py
+    - IntelX/intelx/api/live_research_task.py
+    - tests/test_live_research_task_contract.py
+    - Forge/requirements-verification.txt
+    - Forge/tests/unit/test_delegate_verification_status.py
+    - Forge/tests/unit/test_generated_test_ingestion.py
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    last_update: '2026-11-12T15:04:51.017727+00:00'
+    acceptance:
+    - Canonical natural-language coding request reaches Forge, actual generated tested
+      artifacts pass verification.
+    - Useful real-source research passages with matching citations and spoken output.
+    - Shared memory write and relevant recall through canonical voice/chat survive fresh
+      process.
+    - Preserve review-required video/channel boundaries; owner microphone and actual
+      video acceptance remain explicit.
+    evidence:
+    - Claims issue35 6826830413/6827025902/6827127315/6827188178.
+    - 387 targeted FRIDAY/research/deployment/memory regressions and 32 separate Forge
+      regressions passed. External providers mocked in regressions, not live delivery.
+    - 'Direct actual Forge task0312112026145003 failed3/10 stages in173.97s: prose in
+      test_main.py and missing pytest/ruff. No hidden success.'
+    - 'Controlled S1 tools installed: pytest8.4.2,ruff0.14.14; private before-package
+      inventory saved.'
+    - Memora direct SEMANTIC write403 due service-only promotion policy. EPISODIC owner
+      observation returned201/storage_durable=true, GET by persisted ID200 from fresh
+      process. Search did not rank it in top10, so relevant shared recall still unaccepted.
+    - FRIDAY-Voice active/running,NRestarts0; not owner microphone acceptance.
+    - Both YouTube OAuth candidates invalid_grant; legitimate Google reauthorization
+      needed. No render/upload or new trading exposure.
+    blockers:
+    - Actual post-fix model-generated build acceptance pending deployment.
+    - Shared-memory relevant search/recall unconfirmed despite durable API write/read.
+    - Owner microphone/interruption continuous conversation not verified.
+    - YouTube OAuth invalid_grant and stock-media rights confirmation/item-license validation
+      unresolved.
+    - Stratex profitability not demonstrated; ZAI Agent2 retains lane, governor and
+      trend-exit fix56dd9e7 preserved.
+    next_action: Publish focused tested changes, verify CI, exact-head owner-authorized
+      merge/deploy without restarting Stratex daemon, then bounded canonical acceptance.
+    claim_policy: Update within2h; contact before takeover, no automatic expiry.
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

@@ -1,0 +1,4 @@
+# Hosting-interpreter tools invoked by the production verification engine.
+# Install explicitly during deployment; generated code remains sandboxed.
+pytest>=8.3,<9
+ruff>=0.11,<0.15

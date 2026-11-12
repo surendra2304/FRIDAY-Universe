@@ -148,6 +148,8 @@ class CapabilityRouter:
     # (Forge plans + executes in its sandboxed workspace), never a
     # conversational "sure, here's how you could..." from the LLM.
     CODE_TASK_KEYWORDS = {
+        "write a python", "write a csv", "write a json", "write a program",
+        "create a python", "build a python", "build a csv", "create a program",
         "write me a script", "write a script", "write me a program",
         "write a program", "write me a function", "write a function",
         "write me a tool", "build me a", "build a script", "build a tool",
