@@ -66,6 +66,7 @@ jobs:
             FRIDAY/tests/test_four_owner_workflows.py \
             FRIDAY/tests/test_intelx_research_dispatch.py \
             FRIDAY/tests/test_forge_code_dispatch.py \
+            FRIDAY/tests/test_forge_artifact_receipts.py \
             FRIDAY/tests/test_batch7_agent_depth_2.py \
             FRIDAY/tests/test_batch4_memory_brain.py \
             FRIDAY/tests/test_memory_commands.py \
@@ -93,7 +94,8 @@ jobs:
             Forge/tests/unit/test_github_tool.py \
             Forge/tests/unit/test_execution_security_gates.py \
             Forge/tests/unit/test_delivery_verification_consistency.py \
-            Forge/tests/unit/test_source_backed_repair.py
+            Forge/tests/unit/test_source_backed_repair.py \
+            Forge/tests/unit/test_artifact_receipts.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora
