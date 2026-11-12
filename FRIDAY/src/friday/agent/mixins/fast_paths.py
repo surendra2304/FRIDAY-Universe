@@ -631,6 +631,17 @@ class FastPathMixin:
 
         if not CapabilityRouter._matches(low, CapabilityRouter.RESEARCH_KEYWORDS):
             return None
+        # Deterministic e2e workflow phrases ("research this company and give
+        # me a cited report") are served by the E2EWorkflowCoordinator inside
+        # _direct_desktop_action_fast_path — a full cited-report pipeline with
+        # contradiction analysis, not a live IntelX highlights brief. Yield to
+        # it (ordering fix, 2026-11-12: the live dispatch used to swallow the
+        # e2e scenario and fail on the unreachable IntelX service).
+        if any(
+            k in low
+            for k in ("research this company", "research company", "deep research")
+        ) or ("research" in low and "cited report" in low):
+            return None
         # Explicit research ACTION: leading verb, please-form, or highlights ask.
         action_shaped = bool(re.match(
             r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
@@ -704,6 +715,15 @@ class FastPathMixin:
         """
         low = clean_input.lower().strip().rstrip(".!? ")
         from friday.routing.capability_router import CapabilityRouter
+
+        # Deterministic e2e workflow phrases ("check Stratex performance") are
+        # served by the E2EWorkflowCoordinator inside
+        # _direct_desktop_action_fast_path — a full telemetry + advisory
+        # report with the trade-freeze invariant. Yield to it (ordering fix,
+        # 2026-11-12: the live Stratex dispatch used to swallow the e2e
+        # scenario and fail on the unreachable service).
+        if any(k in low for k in ("check stratex performance", "stratex performance", "check trading performance")):
+            return None
 
         # Advice questions are not snapshot questions (checklist I3 regression):
         # "Should I rebalance my portfolio?" asks for the skill layer's
@@ -784,6 +804,14 @@ class FastPathMixin:
         from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.FORECAST_KEYWORDS):
+            return None
+        # Deterministic e2e workflow phrases ("forecast website traffic for
+        # tomorrow") are served by the E2EWorkflowCoordinator inside
+        # _direct_desktop_action_fast_path — a full calibrated-forecast
+        # pipeline. Yield to it (ordering fix, 2026-11-12: the live Futuris
+        # dispatch used to swallow the e2e scenario and fail on the
+        # unreachable service).
+        if any(k in low for k in ("forecast website traffic", "traffic for tomorrow", "forecast traffic")):
             return None
         # An explicit forecast ACTION: leading verb or an explicit futuris ask.
         action_shaped = bool(re.match(

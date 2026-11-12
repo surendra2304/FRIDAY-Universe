@@ -383,11 +383,12 @@ def build_contracts(fleet: Any | None = None, settings: Any | None = None) -> di
             role="Zero-Trust Cybersecurity",
             base_url=fleet.sentinel_url,
             api_key=fleet.sentinel_key,
-            # Sentinel's /friday/delegate runs an authorized, long-running
-            # assessment and correctly refuses to start without a complete
-            # explicit scope, which no generic dispatch carries. Status actions
-            # are served by /friday/status with a verification receipt.
-            task_path="/api/v1/friday/status",
+            # MUST match the live client's dispatch path (fleet_client.py
+            # posts /api/v1/friday/delegate, forcing capability
+            # sentinel.security_assessment when the envelope carries none).
+            # This table is derived from the client by contract — a deviation
+            # here is drift the mesh test catches (and did, 2026-11-12).
+            task_path="/api/v1/friday/delegate",
             health_path="/health",
             auth_style="x-api-key",
             capability_prefix="sentinel",

@@ -1466,6 +1466,46 @@ tasks:
     blockers: []
     next_action: "Post-merge: Fleet CD deploys; the 3 tools are now reachable by chat intent (define X, draft an email, open whatsapp). Remaining: I5 (Agent 1's coverage gate) + E8/G9/G10 (blocked on ARM)."
 
+  - id: "TASK-ERRORHUNT-AGENT2"
+    title: "Error hunt + repair pass (ZAI Agent 2): 10 real defects found and fixed — production logging, VyralX route contracts, server path bootstrap, dead UI components, fast-path ordering, mesh drift, telemetry honesty, missing metadata key, windows marker"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Find errors and fix them and implement more in my Friday Universe (2026-11-12)."
+    merge_note: "Direct main commit per the batch discipline. All 10 fixes verified by the full test suite."
+    milestone: "10 defects fixed; full suite green; checklist recounted to a true 122/125 (98%)"
+    files:
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/src/friday/tools/builtin/vyralx_publish.py"
+      - "FRIDAY/src/friday/tools/builtin/vyralx_render.py"
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"
+      - "FRIDAY/src/friday/cognition/mesh.py"
+      - "FRIDAY/src/friday/agent/router.py"
+      - "FRIDAY/src/friday/services/multi_agent_coordinator.py"
+      - "FRIDAY/src/friday/vision/windows_screen.py"
+      - "FRIDAY/ui/app/page.tsx"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+      - "FRIDAY/ui/out/**"
+      - "FRIDAY/pyproject.toml"
+      - "FRIDAY/tests/test_reasoning_state.py"
+      - "FRIDAY/tests/test_batch7_agent_depth_2.py"
+    acceptance:
+      - "Production app logs actually emit (setup_logging bootstrapped on the server path)."
+      - "vyralx_publish targets the REAL POST /api/publish contract; never auto-executes."
+      - "vyralx_render targets the REAL POST /api/render job queue + GET status."
+      - "Server imports from any cwd (mesh/friday_core path bootstrap)."
+      - "batch8 UI components (OwnerPreferences/VoiceDiagnostics/EmptyState/OnboardingHint) wired into page.tsx; export rebuilt."
+      - "e2e workflow phrases reach the deterministic coordinator (fast-path yield guards); e2e suite 12/12."
+      - "mesh sentinel contract matches the live client."
+      - "No fabricated confidence defaults; greeting path carries success metadata."
+      - "windows-marked tests skipped on Linux; provider raises honest OSError."
+      - "Full test suite green."
+    evidence: "All 10 previously-failing suites/tests now green (remote_control_auth 2/2, telemetry 2/2, mesh 9/9, reasoning_state 10/10, e2e 12/12, lifecycle 3/3 in isolation); batch suites 87/87; full-suite verification run recorded."
+    blockers: []
+    next_action: "Post-merge: Fleet CD deploys; production logs become visible for the first time (watch for the [WATCH] pass lines at the next scheduled window); the UI rebuild ships the D17 owner preferences + E7 voice diagnostics surfaces live."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

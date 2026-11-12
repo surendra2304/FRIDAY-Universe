@@ -76,7 +76,30 @@ from friday.autonomous.self_repair import (
 from friday_deep.observability.metrics import DEFAULT as default_metrics
 from friday_deep.health import build as build_health_report
 
+# Production observability fix (ZAI Agent 2, 2026-11-12): uvicorn starts
+# this module directly, and setup_logging() was only ever called on the CLI
+# path — so the "friday" logger had NO handlers in production and every
+# app-level log line (agent-watch passes, loop crashes, startup banner) was
+# silently dropped. Bootstrapping here (before any get_logger child is used)
+# restores the console + sanitized file logging the whole fleet assumes.
+try:
+    from friday.core.logging import setup_logging as _setup_server_logging
+
+    _setup_server_logging()
+except Exception as _log_boot_exc:  # never block the server on logging setup
+    import logging as _stdlib_logging
+
+    _stdlib_logging.getLogger("friday.api.server").warning(
+        "setup_logging bootstrap failed (%s); falling back to stdlib defaults", _log_boot_exc
+    )
+
 logger = get_logger("api.server")
+
+logger.info(
+    "FRIDAY API server module loaded (pid=%s, env=%s)",
+    os.getpid(),
+    os.getenv("FRIDAY_ENV", "unspecified"),
+)
 
 try:
     FLEET_SUPERVISION_INTERVAL_SECONDS = max(
@@ -720,7 +743,10 @@ async def _require_control_access(request: Request) -> None:
         pass
     remotely_exposed = bool(os.getenv("RENDER") or client_is_remote)
     live = _live_settings()
-    http_method = request.method.upper()
+    # Robustness (ZAI Agent 2, 2026-11-12): tolerate requests without a method
+    # (test doubles, programmatic calls). A missing method cannot be proven
+    # idempotent, so it takes the STRICT path (key required) — fail-closed.
+    http_method = str(getattr(request, "method", "") or "").upper()
     loopback_hardening = bool(
         getattr(live, "require_api_key_on_loopback", False)
         and http_method not in _IDEMPOTENT_METHODS
@@ -4531,6 +4557,38 @@ try:
     app.include_router(mesh_coordinator_router)  # routes already start with /api/v1
 except Exception as _e:
     logger.warning(f"Could not load agent_mesh_coordinator router: {_e}")
+
+
+# Robustness fix (ZAI Agent 2, 2026-11-12): the mesh/friday_core/friday.services
+# router imports below are UNGUARDED module-level imports of packages scattered
+# across THREE roots: mesh/ at the repo root (parents[4]), friday_core/ under
+# FRIDAY/apps/core/src, and friday.services under FRIDAY/src. Production's
+# systemd unit only works because its venv install happens to put all of them
+# on sys.path; any other launcher (cwd=FRIDAY, IDE, test runner) dies on
+# ImportError before serving a single request. Adding each root explicitly if
+# its package is not already importable makes every launcher work; when the
+# packages resolve (production), this is a no-op.
+try:
+    import sys as _sys
+
+    def _ensure_importable(package: str, pkg_root: Path) -> None:
+        """Add ``pkg_root`` (the dir CONTAINING the package) to sys.path when
+        ``package`` is not importable. Adding the package dir itself would be
+        wrong — the path entry must be its parent."""
+        try:
+            __import__(package)
+        except ImportError:
+            if pkg_root.is_dir() and str(pkg_root) not in _sys.path:
+                _sys.path.insert(0, str(pkg_root))
+                logger.info("Added %s to sys.path for the '%s' routers", pkg_root, package)
+
+    _SRC_DIR = Path(__file__).resolve().parents[2]          # .../FRIDAY/src
+    _ensure_importable("mesh", _SRC_DIR.parents[1])                     # repo root (contains mesh/)
+    _ensure_importable("friday_core", _SRC_DIR.parent / "apps" / "core" / "src")
+    # friday.services lives inside the same 'friday' package as this server,
+    # so it resolves whenever this module did — no extra root needed.
+except Exception as _path_exc:  # never block startup on path setup
+    logger.warning("Router path bootstrap failed: %s", _path_exc)
 
 
 # --- Mesh Module Integrations ---

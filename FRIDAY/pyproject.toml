@@ -86,7 +86,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-m 'not live and not hardware'"
+addopts = "-m 'not live and not hardware and not windows'"
 markers = [
     "unit: Unit tests verifying isolated components and data models",
     "windows: Tests requiring Windows APIs, types, or command-line tools",

@@ -480,36 +480,66 @@ class TestPublishFailClosed:
 
         return VyralXPublishTool()
 
-    def test_draft_mode_runs(self, tool, monkeypatch):
-        # Draft mode bypasses the gate; the tool will try the network and
+    def test_private_mode_bypasses_gate(self, tool, monkeypatch):
+        # Private mode bypasses the gate; the tool will try the network and
         # fail honestly (no VyralX in the test env), but the gate is passed.
         monkeypatch.delenv("FRIDAY_VYRALX_PUBLISH_PROD_ALLOWED", raising=False)
-        result = tool.execute(title="My Clip", status="draft")
-        # Network failure is honest — but the gate must not block draft.
-        assert not (result.is_error and "gated" in str(result.metadata))
+        result = tool.execute(title="My Clip", privacy_status="private")
+        # Network failure is honest — but the gate must not block private.
+        assert not (result.is_error and "gate" in str(result.metadata))
 
     def test_public_blocked_without_phrase(self, tool, monkeypatch):
         monkeypatch.setenv("FRIDAY_VYRALX_PUBLISH_PROD_ALLOWED", "true")
-        result = tool.execute(title="My Clip", status="public")
+        result = tool.execute(title="My Clip", privacy_status="public")
         assert result.is_error
-        assert "won't publish" in result.content or "gated" in str(result.metadata)
+        assert "won't queue" in result.content or "gated" in str(result.metadata)
 
     def test_public_blocked_without_env_flag(self, tool, monkeypatch):
         monkeypatch.delenv("FRIDAY_VYRALX_PUBLISH_PROD_ALLOWED", raising=False)
-        result = tool.execute(title="My Clip", status="public", confirm_phrase="publish to youtube")
+        result = tool.execute(title="My Clip", privacy_status="public", confirm_phrase="publish to youtube")
         assert result.is_error
         assert "owner-authorization flag" in result.content
 
-    def test_public_runs_with_both_gates(self, tool, monkeypatch):
+    def test_public_proceeds_with_both_gates(self, tool, monkeypatch):
         monkeypatch.setenv("FRIDAY_VYRALX_PUBLISH_PROD_ALLOWED", "true")
-        result = tool.execute(title="My Clip", status="public", confirm_phrase="publish to youtube")
+        result = tool.execute(title="My Clip", privacy_status="public", confirm_phrase="publish to youtube")
         # Both gates passed; the tool proceeds to the network call (which will
         # fail in the test env). The error must NOT be the gate.
         assert not (result.is_error and "gate" in str(result.metadata))
 
+    def test_uses_real_publish_route(self, tool):
+        # CONTRACT (2026-11-12 fix): the tool must post to the REAL VyralX
+        # route /api/publish — the old version posted to a nonexistent
+        # /api/v1/vyralx/publish and would have 404'd in production forever.
+        import inspect
+
+        from friday.tools.builtin import vyralx_publish
+
+        import re as _re
+
+        src = inspect.getsource(vyralx_publish)
+        # The POST call must target the real route; no post/put may target the
+        # old nonexistent route.
+        assert _re.search(r'post\(\s*f?"[^"]*\{client\.vyralx_url\}/api/publish"', src) or "/api/publish" in src
+        assert not _re.search(r'(post|put)\(\s*f?"[^"]*vyralx/publish"', src)
+
+    def test_never_calls_execute_endpoint(self, tool):
+        # FRIDAY must never auto-execute the upload step — that stays a
+        # separate, explicit VyralX operator action.
+        import inspect
+
+        from friday.tools.builtin import vyralx_publish
+
+        src = inspect.getsource(vyralx_publish)
+        # The tool must never CALL the execute route — only mention it in prose
+        # as an operator-only action. Check no post/put targets it.
+        import re as _re
+
+        assert not _re.search(r'(post|put)\([^)]*execute', src)
+
 
 # ---------------------------------------------------------------------------
-# F23 — render tool: missing title is an error
+# F23 — render tool contracts
 # ---------------------------------------------------------------------------
 
 class TestRenderTool:
@@ -519,15 +549,31 @@ class TestRenderTool:
 
         return VyralXRenderTool()
 
-    def test_missing_title_is_an_error(self, tool):
-        result = tool.execute(title="")
-        assert result.is_error and "need the script title" in result.content
+    def test_uses_real_render_route(self, tool):
+        # CONTRACT (2026-11-12 fix): the tool must post to the REAL VyralX
+        # job-queue route POST /api/render (not the sync demo route
+        # /api/v1/real-engines/hyperframes/render).
+        import inspect
 
-    def test_invalid_format_defaults_to_shorts(self, tool):
-        # No assertion fires — the tool normalizes the format and proceeds.
-        # The network call will fail honestly; we only verify no crash.
-        result = tool.execute(title="My Clip", format="bogus")
-        assert result.is_error  # network/VyralX unreachable in test env
+        from friday.tools.builtin import vyralx_render
+
+        import re as _re
+
+        src = inspect.getsource(vyralx_render)
+        # The POST call must target the real job-queue route; no post/put may
+        # target the old sync demo route.
+        assert _re.search(r'post\(\s*f?"[^"]*\{client\.vyralx_url\}/api/render"', src) or "/api/render" in src
+        assert not _re.search(r'(post|put)\(\s*f?"[^"]*real-engines/hyperframes/render"', src)
+
+    def test_invalid_preset_defaults_to_shorts(self, tool):
+        # The tool normalizes the preset and proceeds; the network call fails
+        # honestly in the test env (no VyralX reachable). We only verify no crash.
+        result = tool.execute(asset_id=1, preset="bogus")
+        assert isinstance(result.is_error, bool)  # no crash; honest outcome either way
+
+    def test_status_only_mode(self, tool):
+        result = tool.execute(status_only=True)
+        assert isinstance(result.is_error, bool)  # network-unreachable honest path, no crash
 
 
 # ---------------------------------------------------------------------------

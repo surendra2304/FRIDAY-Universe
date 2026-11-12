@@ -696,7 +696,10 @@ class SpecialistRouter:
                     or raw.get("status")
                     or res.summary
                 ).strip()
-                confidence = float(raw.get("confidence", 1.0))
+                # Honesty fix (ZAI Agent 2, 2026-11-12): an agent that did not
+                # report confidence must not look maximally confident — 0.0 is
+                # the same "unreported" sentinel the coordinator dataclasses use.
+                confidence = float(raw.get("confidence") or 0.0)
                 return ConsensusVote(
                     agent=agent_id,
                     decision=decision,

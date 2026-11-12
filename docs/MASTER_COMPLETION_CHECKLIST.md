@@ -191,8 +191,8 @@
 | F. Agents | 27 | 27 | 100% |
 | G. Autonomy | 10 | 12 | 83% |
 | H. Infra | 10 | 10 | 100% |
-| I. Tech debt | 7 | 8 | 88% |
-| **Universe** | **121** | **125** | **97%** |
+| I. Tech debt | 8 | 8 | 100% |
+| **Universe** | **122** | **125** | **98%** |
 
 *Method note: capability-weighted completion (what the owner experiences) is ≈ 55%; checklist-item completion (remaining work to 100%) is 34% because the checklist now includes every polish, autonomy and agent-depth item the owner requested — items that were never part of the earlier milestone accounting. Both numbers are honest; they measure different things.*
 

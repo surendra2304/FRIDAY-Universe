@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FRIDAY Universe — Status</title>
+  <meta name="description" content="Live fleet status for the FRIDAY Universe — every agent's reachability, updated every 60 seconds. Honest: degraded/unreachable is reported as such, never invented as green." />
+  <style>
+    :root {
+      --bg: #05070b;
+      --panel: rgba(13, 18, 26, 0.62);
+      --line: rgba(126, 168, 199, 0.14);
+      --text: #e8eef4;
+      --muted: #8ea0b3;
+      --faint: #5c6c7d;
+      --mint: #85f0bf;
+      --cyan: #70d4e8;
+      --violet: #b9a6ff;
+      --amber: #f0c068;
+      --red: #f87a7a;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body {
+      background: radial-gradient(ellipse 80% 50% at 50% -12%, rgba(24, 62, 66, 0.55) 0%, transparent 60%), var(--bg);
+      padding: 32px 16px 64px;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 32px; }
+    h1 { font-size: 28px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.01em; }
+    .subtitle { color: var(--muted); font-size: 14px; }
+    .overall {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 10px 20px; border-radius: 999px;
+      font-size: 15px; font-weight: 600; margin: 20px 0;
+    }
+    .overall.operational { background: rgba(133, 240, 191, 0.10); color: var(--mint); border: 1px solid rgba(133, 240, 191, 0.28); }
+    .overall.degraded { background: rgba(240, 192, 104, 0.10); color: var(--amber); border: 1px solid rgba(240, 192, 104, 0.28); }
+    .overall.major-outage { background: rgba(248, 122, 122, 0.10); color: var(--red); border: 1px solid rgba(248, 122, 122, 0.28); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; }
+    .agents { display: grid; gap: 10px; }
+    .agent {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-radius: var(--radius);
+      background: var(--panel); border: 1px solid var(--line);
+    }
+    .agent-left { display: flex; align-items: center; gap: 12px; }
+    .agent-icon { font-size: 20px; }
+    .agent-name { font-weight: 600; font-size: 14px; }
+    .agent-role { color: var(--faint); font-size: 12px; }
+    .agent-right { display: flex; align-items: center; gap: 10px; }
+    .agent-latency { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .status-pill {
+      padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .status-pill.online, .status-pill.reachable { color: var(--mint); background: rgba(133, 240, 191, 0.10); border: 1px solid rgba(133, 240, 191, 0.28); }
+    .status-pill.degraded { color: var(--amber); background: rgba(240, 192, 104, 0.10); border: 1px solid rgba(240, 192, 104, 0.28); }
+    .status-pill.unreachable, .status-pill.offline, .status-pill.unknown { color: var(--red); background: rgba(248, 122, 122, 0.10); border: 1px solid rgba(248, 122, 122, 0.28); }
+    footer { text-align: center; margin-top: 32px; color: var(--faint); font-size: 12px; line-height: 1.6; }
+    .refresh-note { color: var(--faint); font-size: 11px; margin-top: 8px; }
+    .error-banner {
+      padding: 12px 16px; border-radius: 12px; background: rgba(248, 122, 122, 0.08);
+      border: 1px solid rgba(248, 122, 122, 0.28); color: var(--red); font-size: 13px;
+      margin: 16px 0; display: none;
+    }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>FRIDAY Universe — Status</h1>
+      <div class="subtitle">Live fleet reachability — every agent, every 60 seconds.</div>
+      <div id="overall" class="overall operational">
+        <span class="dot"></span>
+        <span id="overall-text">Loading…</span>
+      </div>
+      <div class="refresh-note" id="checked">—</div>
+      <div id="error" class="error-banner"></div>
+    </header>
+    <main>
+      <div id="agents" class="agents">
+        <div class="agent"><div class="agent-left"><span class="agent-name">Loading fleet status…</span></div></div>
+      </div>
+    </main>
+    <footer>
+      <p>Every status is the real probe result — never invented as "green".</p>
+      <p>"degraded" = some agents unreachable; "major-outage" = none reachable.</p>
+      <p>Owner: <a href="https://github.com/surendra2304/FRIDAY-Universe">FRIDAY Universe</a></p>
+    </footer>
+  </div>
+  <script>
+    const ICONS = {
+      friday: "🛰️", inference: "🧠", memora: "💾", stratex: "📈", futuris: "🔮",
+      intelx: "🔍", forge: "🛠️", cortex: "🌐", sentinel: "🛡️", vyralx: "🎬",
+    };
+    async function refresh() {
+      const errEl = document.getElementById("error");
+      try {
+        const r = await fetch("/api/status/public", { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const data = await r.json();
+        errEl.style.display = "none";
+        render(data);
+      } catch (e) {
+        errEl.textContent = "Could not reach the status endpoint: " + e.message + " — the page will retry in 60s.";
+        errEl.style.display = "block";
+      }
+    }
+    function render(data) {
+      const overall = document.getElementById("overall");
+      const overallText = document.getElementById("overall-text");
+      overall.className = "overall " + data.overall;
+      overallText.textContent = data.overall === "operational"
+        ? "All systems operational"
+        : data.overall === "degraded"
+          ? "Degraded — " + data.healthy_agents + "/" + data.total_agents + " agents reachable"
+          : "Major outage — no agents reachable";
+      const checked = document.getElementById("checked");
+      const when = data.checked_at ? new Date(data.checked_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST" : "—";
+      checked.textContent = "Last checked: " + when + " · auto-refresh 60s";
+      const agentsEl = document.getElementById("agents");
+      agentsEl.innerHTML = "";
+      for (const a of data.agents) {
+        const status = (a.status || "unknown").toLowerCase();
+        const latency = a.latency_ms != null ? Math.round(a.latency_ms) + " ms" : "";
+        const div = document.createElement("div");
+        div.className = "agent";
+        div.innerHTML = `
+          <div class="agent-left">
+            <span class="agent-icon">${ICONS[a.id] || "🤖"}</span>
+            <div>
+              <div class="agent-name">${a.name || a.id}</div>
+              <div class="agent-role">${a.role || ""}</div>
+            </div>
+          </div>
+          <div class="agent-right">
+            ${latency ? `<span class="agent-latency">${latency}</span>` : ""}
+            <span class="status-pill ${status}">${status}</span>
+          </div>
+        `;
+        agentsEl.appendChild(div);
+      }
+    }
+    refresh();
+    setInterval(refresh, 60000);
+  </script>
+</body>
+</html>

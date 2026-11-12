@@ -155,6 +155,11 @@ class CognitiveMixin:
                     metadata={
                         "task_state": self.state_machine.current_state.value,
                         "state_history": [r.to_dict() for r in self.state_machine.history],
+                        # Contract fix (ZAI Agent 2, 2026-11-12): every response
+                        # path carries `success` — the greeting fast-path was the
+                        # only one without it, so callers keying on it crashed.
+                        "success": True,
+                        "duration_seconds": time.perf_counter() - start_time,
                     }
                 )
 

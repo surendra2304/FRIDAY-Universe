@@ -138,7 +138,10 @@ def test_agent_process_message_lifecycle_direct_response():
         memory=InMemoryConversationMemory(),
     )
 
-    response = agent.process_message("Hello FRIDAY")
+    # NOTE (2026-11-12): a literal greeting intentionally fast-paths past the
+    # cognitive loop (A5, batch 9b) — to verify the FULL lifecycle this test
+    # exists for, probe with a simple non-greeting query instead.
+    response = agent.process_message("What is the capital of France?")
     assert response.is_done is True
     assert response.metadata["task_state"] == "COMPLETED"
     assert response.metadata["success"] is True

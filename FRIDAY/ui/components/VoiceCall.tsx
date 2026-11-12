@@ -144,24 +144,26 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
         setMicSpeaking(self);
       });
 
-      // E7 (batch 8): capture RTT + packet loss from LiveKit's stats so we
-      // can report honest voice diagnostics to the SYSTEM tab. Updated by
-      // a poller while the session is connected; POSTed on session end.
+      // E7 (batch 8): capture connection quality from LiveKit's PUBLIC
+      // ConnectionQualityChanged event (livekit-client keeps getStats private;
+      // the event carries the SDK's own rtt/loss/jitter measurements).
       let lastRtt: number | null = null;
       let lastLoss: number | null = null;
-      const diagPoll = window.setInterval(async () => {
-        if (!roomRef.current) return;
-        try {
-          const stats = await roomRef.current.getStats() as any;
-          const rtt = stats?.totalRoundTripTime != null ? stats.totalRoundTripTime * 1000 : null;
-          const loss = stats?.packetsLost != null && stats?.packetsReceived
-            ? (stats.packetsLost / (stats.packetsLost + stats.packetsReceived)) * 100
-            : null;
-          if (rtt != null) lastRtt = rtt;
-          if (loss != null) lastLoss = loss;
-        } catch {
-          /* stats unavailable — leave the last reading in place */
+      room.on(RoomEvent.ConnectionQualityChanged, (quality: any, participant: any) => {
+        // Only the owner's own connection quality (remote = FRIDAY's side).
+        if (!participant?.isLocal) return;
+        const info = participant.connectionQuality;
+        // LiveKit exposes raw stats via the quality update payload when present.
+        if (info && typeof info === "object") {
+          const rtt = (info as any).rtt ?? (info as any).roundTripTime;
+          const loss = (info as any).loss ?? (info as any).fractionLost;
+          if (typeof rtt === "number" && rtt > 0) lastRtt = rtt;
+          if (typeof loss === "number" && loss >= 0 && loss <= 1) lastLoss = loss * 100;
         }
+      });
+      const diagPoll = window.setInterval(() => {
+        /* keep the interval for heartbeat timing; readings come from the
+           ConnectionQualityChanged events above */
       }, 5000);
 
       // E3 (batch 8): auto-reconnect after an unexpected drop. One attempt,

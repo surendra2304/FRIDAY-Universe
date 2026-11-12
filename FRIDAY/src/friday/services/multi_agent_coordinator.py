@@ -406,7 +406,9 @@ async def submit_result(payload: dict):
     result = coordinator.submit_result(
         assignment_id=payload["assignment_id"],
         output=payload["output"],
-        confidence=payload.get("confidence", 0.8),
+        # Honesty fix (ZAI Agent 2, 2026-11-12): a result that did not report
+        # confidence is 0.0 (unreported) — never a fabricated 0.8.
+        confidence=payload.get("confidence") or 0.0,
     )
     return {"result_id": result.result_id, "agent": result.agent_id, "status": result.status}
 

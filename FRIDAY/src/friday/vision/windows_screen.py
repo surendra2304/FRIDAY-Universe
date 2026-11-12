@@ -50,6 +50,15 @@ class WindowsScreenCaptureProvider(BaseScreenCaptureProvider):
     """Windows native screen capture using Win32 GDI BitBlt and PowerShell .NET fallback."""
 
     def __init__(self) -> None:
+        # Platform guard (ZAI Agent 2, 2026-11-12): this provider is Windows-
+        # only by construction (ctypes.windll exists only on Windows). On any
+        # other platform raise the honest, catchable error instead of crashing
+        # with a confusing AttributeError deep in ctypes.
+        if not hasattr(ctypes, "windll"):
+            raise OSError(
+                "WindowsScreenCaptureProvider requires the Windows API (ctypes.windll); "
+                "this platform cannot capture the screen natively."
+            )
         self._user32 = ctypes.windll.user32
         self._gdi32 = ctypes.windll.gdi32
 

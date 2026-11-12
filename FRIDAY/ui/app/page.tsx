@@ -1,8 +1,9 @@
 "use client";
 
-import { Clock3, Globe2, LayoutGrid, Radio, TerminalSquare, Waypoints } from "lucide-react";
+import { Activity, Clock3, Globe2, LayoutGrid, Radio, TerminalSquare, Waypoints } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
+import { EmptyState, OnboardingHint, OwnerPreferences, VoiceDiagnostics } from "@/components/batch8";
 import { AuroraBackground, CountUp, FloatingOrbs, Magnetic, Orbital, Parallax, ParticleField, Reveal, ScrambleText } from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
 import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
@@ -229,6 +230,16 @@ export default function Page() {
               </div>
             </Parallax>
           </div>
+          {/* Checklist D17/D18 (batch 8, ZAI Agent 2): owner preferences +
+              first-visit onboarding hint, under the chat panel. */}
+          <Reveal delay={120}>
+            <OnboardingHint id="console-welcome">
+              <strong>Welcome back, Boss.</strong> Talk or type below — say <em>"watch topic X"</em> to queue a
+              briefing, <em>"alert me when BTC &gt; 100k"</em> for a price alert, or set your preferences below.
+            </OnboardingHint>
+            <div style={{ marginTop: 12 }} />
+            <OwnerPreferences />
+          </Reveal>
         </section>
 
         {/* ============ FLEET — the ten-agent universe ============ */}
@@ -285,6 +296,22 @@ export default function Page() {
             cpuHistory={cpuHistory}
             ramHistory={ramHistory}
           />
+          {/* Checklist E7 (batch 8, ZAI Agent 2): voice session diagnostics —
+              RTT, packet loss, reconnect count from the last LiveKit call;
+              honest zero-counters until the first session. */}
+          <Reveal delay={120}>
+            <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+              <VoiceDiagnostics />
+              {/* Checklist D18: honest empty state when the task ledger is empty. */}
+              {timeline && Array.isArray(timeline.events) && timeline.events.length === 0 && (
+                <EmptyState
+                  icon={<Activity size={22} />}
+                  title="No delegated tasks yet"
+                  hint={'Assign work from the Fleet tab (or say "assign IntelX: research X") — every delegation lands here with its live status.'}
+                />
+              )}
+            </div>
+          </Reveal>
         </section>
 
         <footer className="footer">
