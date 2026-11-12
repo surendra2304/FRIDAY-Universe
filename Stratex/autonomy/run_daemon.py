@@ -632,6 +632,19 @@ class StratexTradingEngine:
             if adapter is None:
                 continue
             try:
+                # The EMA20-cross exit is the documented edge of the DAILY
+                # trend strategy only. Applied to every position it became a
+                # permanent kill switch: any symbol whose price sits below its
+                # daily EMA20 (e.g. ETH at -8%) had EVERY new position force-
+                # closed within a minute of entry, confiscating scalps before
+                # they could develop (live: 16 ETH closes at +$0.01-0.04 each
+                # against ~$0.60 round-trip fees). Scalps keep their own
+                # exchange-side SL/TP; they do not get a daily-bar exit.
+                strat = self.engine.position_strategy.get(key, "")
+                tf = self.engine.position_timeframe.get(key, "")
+                if strat != "strategy_trend_daily" and tf != "1d":
+                    continue
+
                 candles = self.engine.get_candles(venue, symbol, "1d", 60)
                 if not candles:
                     continue
@@ -917,6 +930,17 @@ class StratexTradingEngine:
             rr_actual = target_pct / stop_pct if stop_pct > 0 else 0.0
             fee_r = self.fee_rate_roundtrip / stop_pct
             expectancy_r = win_rate * rr_actual - (1.0 - win_rate) - fee_r
+
+            # Reward-side fee floor: the stop side already refuses sub-0.5%
+            # stops, but a TP narrower than the round-trip fee means even a
+            # WINNER nets negative (live: TP hits paying +$0.02 against $0.60
+            # fees). The take-profit must clear the fee by the same margin.
+            if target_pct < self.min_stop_pct:
+                logger.info(
+                    f"[STRATEX] Skip {symbol}: TP {target_pct*100:.2f}% "
+                    f"< min {self.min_stop_pct*100:.2f}% (fee floor)"
+                )
+                return False
 
             if expectancy_r < self.min_expectancy_r:
                 logger.info(
