@@ -248,6 +248,7 @@ def run_backtest(mod, symbol: str, tf: str, start=None, end=None,
 
 
 def main():
+    sys.path.insert(0, "/opt/friday_universe/Stratex")
     import importlib
     mod_name, symbol, tf = sys.argv[1], sys.argv[2], sys.argv[3]
     start = sys.argv[4] if len(sys.argv) > 4 and sys.argv[4] != "-" else None
