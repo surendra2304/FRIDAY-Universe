@@ -1506,6 +1506,31 @@ tasks:
     blockers: []
     next_action: "Post-merge: Fleet CD deploys; production logs become visible for the first time (watch for the [WATCH] pass lines at the next scheduled window); the UI rebuild ships the D17 owner preferences + E7 voice diagnostics surfaces live."
 
+  - id: "TASK-HERMETIC-AGENT2"
+    title: "Hermeticity wave (ZAI Agent 2): the last 7 sandbox-env test failures fixed — Tier-1 service id + SPA 404 JSON envelope + sqlite readiness probe + caplog propagation + cwd-independence"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Fix them and continue working (2026-11-12)."
+    merge_note: "Direct main commit per the batch discipline."
+    milestone: "7/7 fixed; full local suite green; G9 sniper verified alive (still capacity-blocked)"
+    files:
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/conftest.py"
+      - "FRIDAY/tests/test_tier1_resilience_and_contracts.py"
+      - "FRIDAY/tests/test_tools.py"
+    acceptance:
+      - "/health and /ready report service=friday_core (technical id) with agent/canonical_name=FRIDAY."
+      - "Unmatched paths return the JSON 404 envelope to API clients; browsers keep the SPA shell."
+      - "/ready probes the sqlite store honestly under the test backend; production still requires Oracle."
+      - "caplog sees friday.* records regardless of suite ordering."
+      - "test_file_listing works from any cwd."
+      - "All 7 previously-failing tests green; regression battery green."
+    evidence: "tier1 21/21, tools 22/22, memory_write_filter + voice_tool_security green in polluted order (67/67 combined), previously-failing set 88/88, batch battery 573/573."
+    blockers: []
+    next_action: "Post-merge: Fleet CD redeploys; the 404-envelope change is production-visible (API clients now get JSON)."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import tempfile
@@ -55,7 +56,18 @@ def reset_accounting_and_pool_state():
         max_consecutive_failed_calls=10,
         max_vision_perceptions_per_task=50,
     )
+    # Log-capture hermeticity (ZAI Agent 2, 2026-11-12): production logging
+    # (setup_logging, bootstrapped by the server module) sets
+    # propagate=False on the 'friday' logger so app logs don't double-emit
+    # through the root logger. caplog captures at the ROOT logger, so any
+    # test running after the server import would silently lose every
+    # friday.* log record. Re-enabling propagation for the duration of each
+    # test restores caplog without touching production behavior.
+    _friday_logger = logging.getLogger("friday")
+    _prev_propagate = _friday_logger.propagate
+    _friday_logger.propagate = True
     yield
+    _friday_logger.propagate = _prev_propagate
     request_accountant.reset()
     request_accountant.limits = BudgetLimits()
 

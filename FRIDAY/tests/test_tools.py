@@ -307,9 +307,16 @@ def test_file_reader_tool_security_and_binary():
     assert "does not exist" in result_missing.content
 
 
-def test_file_listing_tool_valid():
+def test_file_listing_tool_valid(monkeypatch, tmp_path):
     tool = FileListingTool()
-    
+
+    # Cwd-independence fix (ZAI Agent 2, 2026-11-12): the workspace root IS
+    # the process cwd, so pin the test to a known fixture tree instead of
+    # assuming pytest was launched from the FRIDAY/ package dir.
+    (tmp_path / "README.md").write_text("readme", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
     # List workspace root
     result = tool.execute(path=".")
     assert not result.is_error

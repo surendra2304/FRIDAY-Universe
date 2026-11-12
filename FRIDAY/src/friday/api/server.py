@@ -967,7 +967,9 @@ async def health_check() -> dict[str, Any]:
     rep = build_health_report(["friday", "friday_deep"])
     data = rep.as_dict()
     data["status"] = "healthy"
-    data["service"] = "FRIDAY"
+    # `service` is the TECHNICAL service id the Tier-1 contract tests pin;
+    # the owner-facing name lives in `agent`/`canonical_name` ("FRIDAY").
+    data["service"] = "friday_core"
     data["agent"] = "FRIDAY"
     data["canonical_name"] = "FRIDAY"
     data["version"] = "2.0.0"
@@ -982,7 +984,9 @@ async def readiness_check() -> JSONResponse:
     status: dict[str, Any] = {
         "status": "ready",
         "ready": True,
-        "service": "FRIDAY",
+        # Technical service id (Tier-1 contract); the owner-facing name is
+        # `agent`/`canonical_name`.
+        "service": "friday_core",
         "agent": "FRIDAY",
         "canonical_name": "FRIDAY",
         "version": "2.0.0",
@@ -1011,9 +1015,28 @@ async def readiness_check() -> JSONResponse:
         except Exception as exc:
             status["database_error"] = type(exc).__name__
     else:
-        status["database_error"] = "NoOracleDSN"
+        # Tier-1 contract fix (ZAI Agent 2, 2026-11-12): a pytest run uses the
+        # sanctioned test-only SQLite backend (conftest sets it). Readiness
+        # must probe THAT store and report it honestly, not fail the probe by
+        # demanding an Oracle DSN a test environment never has. Production
+        # keeps requiring Oracle (the is_prod branch below still enforces it).
+        memory_backend = str(getattr(settings_obj, "memory_backend", "oracle") or "oracle").lower()
+        if memory_backend == "sqlite":
+            try:
+                import sqlite3 as _sqlite3
+
+                db_path = getattr(settings_obj, "memory_db_path", None) or ":memory:"
+                probe = _sqlite3.connect(db_path)
+                probe.execute("SELECT 1")
+                probe.close()
+                db_status = "healthy"
+                status["database_backend"] = "sqlite"
+            except Exception as exc:
+                status["database_error"] = type(exc).__name__
+        else:
+            status["database_error"] = "NoOracleDSN"
     status["database"] = db_status
-    if db_status != "connected":
+    if db_status not in ("connected", "healthy"):
         status["ready"] = False
         status["status"] = "not_ready"
 
@@ -4701,5 +4724,45 @@ app.include_router(universe_task_router, prefix="/api/v1")
 # --- Dashboard static assets (mounted LAST: every API route above wins) ------
 # Serves the export's immutable hashed assets (/_next/...) and stray top-level
 # files. The HTML shell itself is served by the "/" route above with no-store.
+# Tier-1 contract fix (ZAI Agent 2, 2026-11-12): a catch-all StaticFiles(html=True)
+# mount swallowed EVERY unmatched path and answered API probes (curl, tests,
+# monitoring) with the HTML shell + 200 — the standardized JSON 404 envelope
+# never reached them. _SpaStaticFiles serves the app shell ONLY to browser
+# navigations (Accept: text/html); everything else gets the real 404 JSON
+# envelope, so broken API clients see the truth instead of a web page.
+class _SpaStaticFiles(StaticFiles):
+    """Static mount that keeps the SPA experience for browsers but returns the
+    standardized JSON 404 envelope to API clients (curl, tests, monitoring).
+
+    Starlette's html=True mode serves a found 404.html with HTTP 404 — which
+    is correct for browsers. Non-browser clients (no text/html in Accept)
+    get the real JSON envelope instead of the HTML error page.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+    async def get_response(self, path: str, scope: Any) -> Any:
+        from starlette.exceptions import HTTPException as _StarletteHTTPException
+
+        accept = ""
+        for hdr_name, hdr_val in scope.get("headers", []):
+            if hdr_name == b"accept":
+                accept = hdr_val.decode("latin-1", "ignore")
+                break
+        browser_navigation = "text/html" in accept and scope.get("method", "GET") in ("GET", "HEAD")
+
+        try:
+            response = await super().get_response(path, scope)
+        except _StarletteHTTPException:
+            raise  # genuine miss (no 404.html fallback hit): JSON envelope via handler
+
+        # Starlette served 404.html (html=True fallback) for a missing path:
+        # browsers keep the SPA error page; API clients get the JSON envelope.
+        if getattr(response, "status_code", None) == 404 and not browser_navigation:
+            raise _StarletteHTTPException(status_code=404)
+        return response
+
+
 if _UI_EXPORT_DIR.is_dir():
-    app.mount("/", StaticFiles(directory=str(_UI_EXPORT_DIR), html=True), name="ui")
+    app.mount("/", _SpaStaticFiles(directory=str(_UI_EXPORT_DIR), html=True), name="ui")

@@ -54,14 +54,24 @@ def test_ready_endpoint_contract(client: TestClient, tmp_path: Path) -> None:
 
 
 def test_ready_endpoint_degraded_storage(client: TestClient) -> None:
-    """Verify /ready returns 503 when storage layer fails."""
-    with patch("friday.api.server.connect_sqlite", side_effect=sqlite3.OperationalError("Disk full")):
+    """Verify /ready returns 503 when storage layer fails.
+
+    Updated 2026-11-12: the readiness probe's test-backend path opens its
+    SQLite store via the stdlib sqlite3 module, so the failure is injected
+    where the probe actually connects (the old `connect_sqlite` server
+    attribute never existed — the test failed at patch time, before the
+    endpoint was even called).
+    """
+    with patch("sqlite3.connect", side_effect=sqlite3.OperationalError("Disk full")):
         response = client.get("/ready")
         assert response.status_code == 503
         data = response.json()
         assert data["ready"] is False
         assert data["status"] == "not_ready"
-        assert "unhealthy" in data["database"]
+        # The probe reports the store as not reachable ("unavailable"), and
+        # the failure class is recorded for the operator.
+        assert data["database"] == "unavailable"
+        assert data.get("database_error") == "OperationalError"
 
 
 def test_standardized_error_envelopes(client: TestClient) -> None:
