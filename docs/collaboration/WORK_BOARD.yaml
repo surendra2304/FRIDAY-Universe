@@ -2011,10 +2011,10 @@ tasks:
   - id: TASK-WF-009
     title: Isolate generated-project tests, preserve Python code fences, reject unsupported
       offline substitution
-    status: IN_PROGRESS
+    status: BLOCKED
     owner: arena_engineering_01
     branch: arena/TASK-WF-009-generation-boundaries
-    pr: null
+    pr: 63
     files:
     - .github/workflows/owner-workflows.yml
     - Forge/app/agents/roles.py
@@ -2027,7 +2027,7 @@ tasks:
     - Inference/tests/test_python_fence_boundaries.py
     - Forge/app/agents/parser.py
     claimed_at: '2026-11-12T18:07:10.652972+00:00'
-    last_update: '2026-11-12T18:07:10.652972+00:00'
+    last_update: '2026-11-12T18:26:01.667196+00:00'
     acceptance:
     - Pytest never inherits host-only options/conftest, but honors config explicitly
       present inside delivered project.
@@ -2054,14 +2054,62 @@ tasks:
       Scope refinement issue35 6831923182. 129 Forge pass/1unchanged website skip;65
       Inference pass. PR63 first merge watcher intentionally stopped, updated head requires
       fresh CI.'
+    - PR63 updated headbb33ad7 passed8CI/2conditionalDocker skips; merge82496051028b1695e427998c8f2e17d52a5bbfad/deploy43278124885success.
+      Both hosts exact8249605/protected5and6file hashes unchanged, tracked clean.
+    - 'One canonical build task1912112026181927 returned174.08s honestFAILED/PARTIAL_FAILURE9/10;
+      actual converter retained/no unrelated path utility. Embedded4unittest exit1:
+      extra missing-header test labels a,b,c header as missing. Quoted comma/header-only
+      empty tests pass.'
+    - 'Independent final-source CLI checks: quoted comma0/correct JSON;header-only0/[];zero-byte
+      empty1/no output. Full generated4test suite exit1. Proof /var/tmp/friday-workflow-acceptance/wf009-behavior-proof/evidence.json.
+      Source main.py untouched SHA256130b21d6a885cd5a2a43139d3091a4e0c98619d4c37be287050cd1b33fe551b0.
+      No converter acceptance claimed.'
     blockers:
-    - Fresh deployed final converter acceptance pending; wrong existing path utility
-      not accepted even if its own tests could pass.
-    - Continuous microphone, reviewed video/Google OAuth and sustained profits remain
-      unverified.
-    next_action: CI, exact-head framework rollout, one intentional post-fix build; inspect
-      actual task on timeout rather than blind retry. Notify actual outcome privately
-      at conclusion.
+    - Entirely empty input still fails, self-generated suite nonzero. Default Debugger
+      DirectProvider is completion stub; actual source-backed repair path still needed.
+    - ReleaseEngineer configured credentials incorrectly trigger publication flow despite
+      goal prohibition; existing terminal gate denies push without separate authorization.
+      Follow TASK-WF-010.
+    next_action: WF009 boundary components deployed/proved; full converter workflow
+      remains blocked. No duplicate model generation. Preserve existing failed artifacts.
+    claim_policy: Update within2h; contact before takeover.
+
+  - id: TASK-WF-010
+    title: Require explicit release consent, passing verification and confirmed push
+      before PR
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-010-release-consent
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/agents/roles.py
+    - Forge/tests/unit/test_github_tool.py
+    - Forge/tests/unit/test_release_consent.py
+    claimed_at: '2026-11-12T18:26:01.667196+00:00'
+    last_update: '2026-11-12T18:26:01.667196+00:00'
+    acceptance:
+    - Configured credentials/repo are capability, never publication consent. Only literal
+      boolean push_to_github true is intent.
+    - Explicit do-not-push/publish/upload/deploy objective or requirement vetoes publication,
+      including when flag is true.
+    - Failed/absent verification and failed/denied/unconfirmed push cannot open PR.
+      Existing separate terminal push authorization is never bypassed.
+    - CI and controlled framework rollout preserve colleague Stratex/untracked files.
+      No extra generated-code build in this safety task.
+    evidence:
+    - Claim issue35 6832247455; branch based da411ce includes ZAI Agent 2 Stratex changes
+      unchanged.
+    - 175 Forge tests pass/1pre-existing website-no-suite skip unchanged; release-consent
+      fixtures explicitly no GitHub network.
+    - Historical release test expected PR after print-only/no-test delivery; corrected
+      unsafe expectation to assert no PR and failing verification, not weakened acceptance.
+      Positive explicit/verified/confirmed-push fixture retained.
+    blockers:
+    - 'Actual CSV converter acceptance still fails: WF009task1912112026181927 zero-byte
+      input1/self-generated unittest1. No generated source edits/restoration/retry.'
+    next_action: CI and exact-head framework rollout, preserve protected files. Telegram
+      actual blocked converter outcome at conclusion.
     claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:

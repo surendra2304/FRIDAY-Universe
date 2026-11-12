@@ -1470,6 +1470,7 @@ claims:
     goal_fidelity_wf007: 'Arena Agent 1; arena/TASK-WF-007-goal-fidelity; issue35 claim6828563174; 2026-11-12T15:58:59.115861+00:00; update2h/contact before takeover.'
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
+    release_consent_wf010: "Arena Agent 1; claim6832247455; arena/TASK-WF-010-release-consent; 2026-11-12T18:26:01.667196+00:00; update2h/contact before takeover."
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1677,6 +1678,7 @@ claims:
     goal_fidelity_wf007: 'Arena Agent 1; arena/TASK-WF-007-goal-fidelity; issue35 claim6828563174; 2026-11-12T15:58:59.115861+00:00; update2h/contact before takeover.'
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
+    release_consent_wf010: "Arena Agent 1; claim6832247455; arena/TASK-WF-010-release-consent; 2026-11-12T18:26:01.667196+00:00; update2h/contact before takeover."
   - path: Forge/app/api/delegate.py
     owner: arena_engineering_01
     prs: []
@@ -1909,6 +1911,26 @@ claims:
     status: IN_PROGRESS
     task: TASK-WF-009
     claimed_at: '2026-11-12T18:07:10.652972+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/tests/unit/test_github_tool.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-010-release-consent
+    status: IN_PROGRESS
+    task: TASK-WF-010
+    claimed_at: '2026-11-12T18:26:01.667196+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/tests/unit/test_release_consent.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-010-release-consent
+    status: IN_PROGRESS
+    task: TASK-WF-010
+    claimed_at: '2026-11-12T18:26:01.667196+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
 conflicts_to_resolve:
