@@ -1,0 +1,46 @@
+name: Voice Worker Live Diagnostics
+
+# One-off read-only diagnostics (ZAI Agent 2, 2026-11-13): after the voice
+# worker rewrite, a synthetic caller joined the production room and the
+# worker joined back (+4.4s) but produced no audio and never advanced its
+# heartbeat past 'registered'. This dumps the ground truth: systemd unit
+# state, running processes, the worker journal tail, and the heartbeat
+# file. Read-only — nothing on the server is modified.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    name: Dump worker state
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: SSH and dump
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -uo pipefail
+            echo "=== systemctl status FRIDAY-Voice ==="
+            systemctl status FRIDAY-Voice.service --no-pager -l | head -30 || true
+            echo "=== voice-related processes ==="
+            ps aux | grep -E "livekit|voice" | grep -v grep | head -20 || true
+            echo "=== heartbeat file ==="
+            cat /opt/friday_universe/FRIDAY/data/voice_worker_status.json 2>/dev/null || echo "(missing)"
+            echo "=== journal tail (last 150 lines) ==="
+            sudo journalctl -u FRIDAY-Voice.service -n 150 --no-pager -o cat 2>/dev/null | tail -150 || true
+            echo "=== unit file ==="
+            systemctl cat FRIDAY-Voice.service 2>/dev/null | head -40 || true
+            echo "=== interpreter plugin check ==="
+            VOICE_PY=$(systemctl cat FRIDAY-Voice.service 2>/dev/null | grep -E '^ExecStart=' | head -1 | sed 's/^ExecStart=//' | awk '{print $1}')
+            echo "VOICE_PY=$VOICE_PY"
+            [ -n "$VOICE_PY" ] && "$VOICE_PY" -c "import livekit.agents, livekit.plugins.groq; print('agents+groq OK', livekit.agents.__version__ if hasattr(livekit.agents,'__version__') else '?')" || echo "plugin check failed"
+            echo "=== groq key present in service env? ==="
+            sudo systemctl show FRIDAY-Voice.service -p Environment -p EnvironmentFiles --no-pager 2>/dev/null | sed 's/API_KEY=.*/API_KEY=<redacted>/' | head -10
+            grep -cE "^GROQ_API_KEY=|^FRIDAY_GROQ_API_KEY=" /opt/friday_universe/FRIDAY/.env 2>/dev/null || echo "no GROQ keys in FRIDAY/.env"
