@@ -5,12 +5,21 @@ Enhances conversational depth:
 2. Multi-tier conversation repair (<0.70 repeat, 0.70-0.85 confirm, >=0.85 execute)
 3. Mid-speech voice interruption handling (stops speaking and listens)
 4. Emotion/stress tone detection: adapts response style to concise bullets under stress
+
+FAKE-RESULT FIX (2026-11-13): the EXECUTE tier used to answer "yesterday"
+and "status" with hardcoded fabricated numbers ("+1.8% gain ($185.00
+USDT)", "All systems are operating normally") and merely echoed every other
+command without executing anything. That was invented output — exactly what
+the owner banned. Now the interface accepts an ``executor`` callable: when a
+host wires the real command router in, EXECUTE decisions run it and speak
+the real outcome; without one, FRIDAY says the request was heard and routed,
+never a fabricated result. Nothing in this module invents data.
 """
 
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable
 
 from friday.core.logging import get_logger
 
@@ -33,10 +42,14 @@ class VoiceTurnResult:
 class ConversationalVoiceInterface:
     """Manages multi-turn conversation threads, confidence repair, interruptions, and tone adaptation."""
 
-    def __init__(self) -> None:
+    def __init__(self, executor: Callable[[str], str] | None = None) -> None:
         self.conversation_thread: list[dict[str, Any]] = []
         self._is_speaking = False
         self._lock = threading.RLock()
+        # Optional real command executor (e.g. the API command router). When
+        # present, EXECUTE-tier turns run the real command and speak the real
+        # outcome; when absent, the turn is acknowledged honestly.
+        self.executor = executor
 
     def process_voice_turn(
         self,
@@ -44,8 +57,13 @@ class ConversationalVoiceInterface:
         confidence: float,
         detected_stress_level: float = 0.2,  # 0.0 to 1.0
         is_interruption_event: bool = False,
+        executor: Callable[[str], str] | None = None,
     ) -> VoiceTurnResult:
-        """Processes a voice input turn, evaluates repair thresholds, and synthesizes response."""
+        """Processes a voice input turn, evaluates repair thresholds, and synthesizes response.
+
+        ``executor`` overrides the instance-level executor for this turn; the
+        real command router belongs to the host process, never this module.
+        """
         with self._lock:
             now = datetime.now(timezone.utc)
             turn_id = f"vturn_{int(now.timestamp())}_{len(self.conversation_thread)}"
@@ -68,13 +86,32 @@ class ConversationalVoiceInterface:
                 response = f"Did you mean: '{clean}'? Please confirm to execute."
             else:
                 decision = "EXECUTE"
-                # Contextual thread resolution (e.g. "what about yesterday?")
-                if "yesterday" in transcription.lower():
-                    response = "Yesterday's portfolio performance: +1.8% gain ($185.00 USDT), zero liquidation events." if style == "STANDARD" else "• Gain: +1.8% ($185 USDT)\n• Liquidations: 0"
-                elif "status" in transcription.lower():
-                    response = "All systems are operating normally across Trading, Nexus, Forge, and AI-Universe." if style == "STANDARD" else "• Trading: OK\n• Nexus: OK\n• Forge: OK\n• AI-Universe: OK"
+                # FAKE-RESULT FIX: run the REAL command router when wired; the
+                # old branch here invented "+1.8% gain ($185.00 USDT)" and
+                # "all systems normal" out of thin air. Now: real outcome or
+                # an honest routed-acknowledgment — never fabricated data.
+                router = executor if executor is not None else self.executor
+                if router is not None:
+                    try:
+                        response = str(router(transcription.strip()) or "").strip()
+                    except Exception as exc:
+                        decision = "CONFIRM"
+                        response = (
+                            f"That command failed on my side ({type(exc).__name__}). "
+                            "Want me to try it again?"
+                        )
+                    else:
+                        if not response:
+                            response = "The command returned nothing — that is the real outcome."
                 else:
-                    response = f"Understood. Processing your request: {transcription}."
+                    response = (
+                        f"Got it — '{transcription.strip()}' is routed. I don't have the "
+                        "live executor attached here, so I won't guess at a result."
+                    )
+                # Stress style: keep the REAL content, tighten the delivery.
+                if style == "CONCISE_BULLETS":
+                    bullets = [line.strip() for line in response.splitlines() if line.strip()]
+                    response = "\n".join(f"• {b}" for b in bullets) if bullets else f"• {response}"
 
             result = VoiceTurnResult(
                 turn_id=turn_id,

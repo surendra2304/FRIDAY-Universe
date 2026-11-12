@@ -21,7 +21,10 @@
      3:1 on the deep-space background — below WCAG AA for UI text. Lifted
      both without changing the palette's character. */
   --muted: #a7b8cb;
-  --faint: #7d90a5;
+  /* Theme fix 2026-11-13 (VLM review): 11px timestamps/nav/inactive labels
+     read as near-invisible on the deep-space background. Lifted --faint one
+     step; still secondary, now legible. */
+  --faint: #93a5b8;
   --mint: #85f0bf;
   --cyan: #70d4e8;
   --violet: #b9a6ff;
@@ -349,6 +352,11 @@ a { color: inherit; text-decoration: none; }
 .console-main-wrap .console-main { flex: 1; min-height: 0; }
 /* Orbital satellites ring behind the voice orb — one dot per fleet agent */
 .console-left { position: relative; }
+/* Theme fix 2026-11-13 (VLM review): the orbital satellite ring poked past
+   the voice card's border and read as a rendering artifact. Contain it to
+   the card's rounded bounds — satellites now orbit behind the frosted glass
+   instead of bleeding onto the page. */
+.console-left { overflow: hidden; border-radius: var(--radius); }
 .console-orbital {
   position: absolute;
   left: 50%;
@@ -449,7 +457,9 @@ a { color: inherit; text-decoration: none; }
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   font-size: 11.5px;
-  color: var(--muted);
+  /* Theme fix 2026-11-13 (VLM review): status-chip text hovered near 3:1 —
+     below WCAG AA at this size. Lifted to var(--muted)+2 steps. */
+  color: #bcc9d8;
   white-space: nowrap;
 }
 .strip-pill svg { color: var(--mint); }
@@ -766,6 +776,9 @@ a { color: inherit; text-decoration: none; }
   color: var(--text);
 }
 .chat-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 20px 4px; align-items: center; }
+/* Theme fix 2026-11-13 (VLM review): inside the centered empty state the
+   chips need their own padding rhythm — no bottom-hugging band. */
+.chat-chips-empty { padding: 6px 0 0; justify-content: center; }
 /* Label for the starter chips (fix 2026-11-13): they floated orphaned above
    the input — an explicit "Try:" cue explains what they are. */
 .chips-label {

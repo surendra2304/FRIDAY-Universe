@@ -465,17 +465,23 @@ export function ConsoleStrip({
   return (
     <div className="console-strip">
       <span className="strip-pill">
-        <span className={`dot ${fleetTone} ${fleet ? "pulse" : ""}`} />
+        {/* Theme fix 2026-11-13 (VLM review): a static dot while waiting reads
+            as stuck; pulse the dot for any live connection state. */}
+        <span className={`dot ${fleetTone} pulse`} />
         {fleet ? `${online}/${total} agents online` : "connecting…"}
       </span>
       <span className="strip-pill">
         <Zap size={12} style={{ color: "var(--amber)" }} />
         {autonomy?.autonomous_mode ? "autonomy running" : "autonomy manual"}
       </span>
-      <span className="strip-pill" title="Autonomous actions logged by the fleet">
-        <BarChart2 size={12} style={{ color: "var(--cyan)" }} />
-        {autonomy?.history_count ?? 0} actions logged
-      </span>
+      {/* Theme fix 2026-11-13 (VLM review): "0 actions logged" exposed an
+          empty state as a status chip. Show the count only when there is one. */}
+      {(autonomy?.history_count ?? 0) > 0 && (
+        <span className="strip-pill" title="Autonomous actions logged by the fleet">
+          <BarChart2 size={12} style={{ color: "var(--cyan)" }} />
+          {autonomy?.history_count} actions logged
+        </span>
+      )}
     </div>
   );
 }

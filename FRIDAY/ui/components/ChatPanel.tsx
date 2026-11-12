@@ -11,9 +11,9 @@ import { ChatMessage, requestJson } from "@/lib/api";
 
 const CHIPS = [
   "How's the fleet?",
-  "What do you remember about me?",
+  "What do you remember?",
   "Portfolio status",
-  "Research this week's macro news",
+  "Macro news",
 ];
 
 export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number } }) {
@@ -26,6 +26,40 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
 
   useEffect(() => {
     setHydrated(true);
+  }, []);
+
+  /* Conversation-memory fix 2026-11-13: the server has persisted history
+     (/api/v1/conversation/history, logged by every command), but the panel
+     started EMPTY on every page load — the owner relaoded to a blank chat and
+     concluded FRIDAY has no memory. Hydrate the last session's exchanges on
+     mount. Failure is silent and normal: a fresh install simply has nothing
+     to restore, and the chat starts empty as before. */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await requestJson<{
+          entries?: Array<{
+            user_input?: string;
+            friday_reply?: string;
+            timestamp?: string;
+          }>;
+        }>("/api/v1/conversation/history?limit=30");
+        if (cancelled || !res.entries?.length) return;
+        const restored: ChatMessage[] = [];
+        for (const e of [...res.entries].reverse()) {
+          const at = e.timestamp ? new Date(e.timestamp).getTime() : Date.now();
+          if (e.user_input?.trim()) restored.push({ role: "user", text: e.user_input, at });
+          if (e.friday_reply?.trim()) restored.push({ role: "friday", text: e.friday_reply, at });
+        }
+        if (restored.length) setMessages(restored.slice(-60));
+      } catch {
+        /* history unavailable → fresh chat, not an error surface */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /* external prefill (e.g. "Ask" on a Fleet card): focus the input in
@@ -105,6 +139,18 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
                 Talk or type below — commands, questions, fleet dispatch. Try a starter
                 if you&apos;re not sure where to begin.
               </p>
+              {/* Theme fix 2026-11-13 (VLM review): starter chips used to sit in a
+                  separate row pinned above the input, leaving a dead band between
+                  the centered greeting and the bottom controls. One centered unit:
+                  greeting + starters together. */}
+              <div className="chat-chips chat-chips-empty">
+                <span className="chips-label">Try:</span>
+                {CHIPS.map((chip) => (
+                  <button key={chip} className="chip" onClick={() => void send(chip)}>
+                    {chip}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             messages.map((m, i) => (
@@ -134,17 +180,6 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
             </div>
           )}
         </div>
-
-        {messages.length === 0 && (
-          <div className="chat-chips">
-            <span className="chips-label">Try:</span>
-            {CHIPS.map((chip) => (
-              <button key={chip} className="chip" onClick={() => void send(chip)}>
-                {chip}
-              </button>
-            ))}
-          </div>
-        )}
 
         <form className="chat-input-row" onSubmit={onSubmit}>
           <textarea

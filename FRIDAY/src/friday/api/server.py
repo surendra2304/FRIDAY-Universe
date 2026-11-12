@@ -3275,11 +3275,31 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
     # friend, Jarvis-style). A greeting may say that FRIDAY is listening; it
     # may not certify a fleet.
     if any(cmd.startswith(g) or cmd == g for g in ["hello", "hi", "hey", "hello friday", "hello friends", "good morning", "good afternoon", "good evening"]):
-        from friday.persona.friday import greeting_responses_for
-        import random as _random
         _persona = getattr(_live_settings(), "persona", "friday") or "friday"
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
-        _reply = _random.choice(greeting_responses_for(_persona)).format(user_name=_user)
+        # BUGFIX (2026-11-13): this API/voice greeting path still served random
+        # canned lines while the chat fast-path composed context-aware ones —
+        # the owner heard the same scripted greetings on every return. Use the
+        # SAME compose_greeting layer with real context: the IST clock and the
+        # live mission-queue count (the router is per-command, so last_topic is
+        # unknown here; compose_greeting degrades gracefully without it and
+        # never invents a topic).
+        _pending_n: int | None = None
+        try:
+            from friday.proactive.mission_queue import mission_queue as _mq
+
+            _pending_n = len(_mq.pending())
+        except Exception as _e:
+            logger.debug(f"Mission queue count skipped in API greeting: {_e}")
+        if _persona == "friday":
+            from friday.persona.friday import compose_greeting
+
+            _reply = compose_greeting(_user, pending_tasks=_pending_n)
+        else:
+            from friday.persona.friday import greeting_responses_for
+            import random as _random
+
+            _reply = _random.choice(greeting_responses_for(_persona)).format(user_name=_user)
         # TASK-MEM-003: proactive memory — the owner is (re)opening the
         # conversation, so FRIDAY volunteers one short remembered line without
         # being asked. Recall failure never breaks the greeting.
@@ -3716,13 +3736,30 @@ async def voice_endpoint(websocket: WebSocket) -> None:
                 cmd_text = data.get("command", "").strip()
                 logger.info(f"Received WS voice command: '{cmd_text}'")
                 if cmd_text:
+                    # LATENCY FIX (2026-11-13): measure the real server-side
+                    # execution time and return it with every voice reply. The
+                    # owner sees real numbers instead of impressions, and the
+                    # SYSTEM tab diagnostics gain a live p50/p95 track via
+                    # /api/voice/diagnostics/report. No estimate is fabricated:
+                    # this is wall-clock around the actual router call.
+                    import time as _time
+
+                    _t0 = _time.perf_counter()
                     req_obj = CommandRequest(command=cmd_text)
                     cmd_res = await execute_command(req_obj)
+                    _lat_ms = int((_time.perf_counter() - _t0) * 1000)
+                    try:
+                        _voice_diagnostics_state.setdefault("latency_samples_ms", []).append(_lat_ms)
+                        _voice_diagnostics_state["latency_samples_ms"] = _voice_diagnostics_state["latency_samples_ms"][-100:]
+                    except Exception:
+                        pass
+                    logger.info(f"WS voice command '{cmd_text[:40]}' executed in {_lat_ms} ms")
                     await websocket.send_json({
                         "type": "voice_reply",
                         "command": cmd_text,
                         "reply": cmd_res.get("reply", ""),
                         "metadata": cmd_res.get("metadata", {}),
+                        "latency_ms": _lat_ms,
                     })
 
             elif event_type == "gesture":

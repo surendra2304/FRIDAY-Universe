@@ -27,6 +27,36 @@
 
 The FRIDAY Universe is a multi-agent AI platform where each agent is a specialized service with independent APIs, domain expertise, and operational autonomy. Agents communicate through a shared Gateway and can collaborate on cross-domain tasks.
 
+## Turn-Completion Telegram Protocol (owner directive 2026-11-11/12/13)
+
+Every ZAI agent session MUST, at the end of its work turn:
+
+1. **Mark its own completion** in the shared state (lock-safe, atomic):
+   ```bash
+   python3 scripts/agents_completion_notifier.py \
+     --mark "ZAI Agent 1"   # or "ZAI Agent 2" — match your session
+     --summary "one-line summary of what was accomplished"
+   ```
+   When **both** ZAI Agent 1 and ZAI Agent 2 have fresh marks (≤ 6 h), the
+   agent that marks last automatically sends the combined
+   "BOTH ZAI AGENTS COMPLETE" Telegram notification to the owner.
+   Re-runs are deduplicated (`combined_sent_at` guard in
+   `data/agent_completion.json`).
+
+2. **Single-agent / mid-turn pings** use the per-turn script:
+   ```bash
+   python3 scripts/notify_turn_complete.py "Batch 1 complete: 10/10 tasks done"
+   ```
+   Notifications come **only from @zai_notifications_bot** (resolved via
+   `ZAI_NOTIFICATIONS_TOKEN` or `credentials.md`), never from
+   @fridayuniverse_bot. The executing agent's name is the FIRST line of the
+   message. If credentials are missing or Telegram is unreachable, the message
+   is recorded in `logs/turn_notifications.jsonl` and the turn still ends
+   cleanly — never fail a turn on a notification problem. A later
+   `agents_completion_notifier.py --check` retries the combined send.
+
+   Status inspection: `python3 scripts/agents_completion_notifier.py --status`
+
 ## Verified Production Deployment (2026-10-26)
 
 Ground truth from both OCI hosts. Production is **systemd + Caddy on two VMs**; the

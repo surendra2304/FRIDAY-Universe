@@ -294,7 +294,13 @@ class StratexPortfolioTool(BaseTool):
                 },
             )
 
-        status = str(getattr(result, "status", "")).lower()
+        # BUGFIX (2026-11-13): TaskStatus is a str-Enum, so str(TaskStatus.SUCCESS)
+        # stringifies as "TaskStatus.SUCCESS" — the old check compared that repr
+        # against {"success", "completed"} and rejected EVERY successful live
+        # Stratex response. Extract the enum .value when present (also accepts
+        # plain strings from non-enum callers).
+        raw_status = getattr(result, "status", None)
+        status = str(getattr(raw_status, "value", raw_status) or "").strip().lower()
         if status not in {"success", "completed"}:
             error = getattr(result, "error", None) or f"status {status or 'unknown'}"
             reason = (
@@ -314,6 +320,12 @@ class StratexPortfolioTool(BaseTool):
         data = getattr(result, "result", None) or {}
         if not isinstance(data, dict):
             data = {"summary": str(data)}
+        # The mesh-verified dispatch returns the FULL peer payload
+        # ({task_id, state, result: {...actual snapshot...}, receipt}); unwrap
+        # the nested result so the formatter sees the engine snapshot fields
+        # (balance, current_positions, ...) instead of the envelope around it.
+        if isinstance(data.get("result"), dict):
+            data = data["result"]
         content = _format_analysis(data) if action == "analyze" else _format_portfolio(data)
         return ToolResult(
             name=self.name,
