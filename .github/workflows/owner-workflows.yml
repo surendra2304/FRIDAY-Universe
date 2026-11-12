@@ -7,6 +7,8 @@ on:
       - 'FRIDAY/src/**'
       - 'FRIDAY/tests/**'
       - 'IntelX/intelx/api/**'
+      - 'VyralX/app/**'
+      - 'VyralX/tests/**'
       - 'tests/test_live_research_task_contract.py'
       - '.github/workflows/owner-workflows.yml'
   push:
@@ -15,6 +17,8 @@ on:
       - 'FRIDAY/src/**'
       - 'FRIDAY/tests/**'
       - 'IntelX/intelx/api/**'
+      - 'VyralX/app/**'
+      - 'VyralX/tests/**'
       - 'tests/test_live_research_task_contract.py'
       - '.github/workflows/owner-workflows.yml'
 
@@ -35,7 +39,7 @@ jobs:
           python -m pip install pytest pytest-asyncio fastapi uvicorn httpx
           pydantic-settings sqlalchemy rich python-dotenv psutil beautifulsoup4
           google-genai 'livekit-agents>=1,<2' mcp icalendar recurring-ical-events
-          pillow pyperclip openai numpy PyYAML
+          pillow pyperclip openai numpy PyYAML google-api-python-client
       - name: Exercise four workflow and authority contracts (no external calls)
         run: |
           python -m pytest -q \
@@ -47,7 +51,19 @@ jobs:
             FRIDAY/tests/test_batch4_memory_brain.py \
             FRIDAY/tests/test_memory_commands.py \
             FRIDAY/tests/test_voice_tool_security.py \
-            FRIDAY/tests/test_api_origin_enforcement.py
+            FRIDAY/tests/test_api_origin_enforcement.py \
+            FRIDAY/tests/test_batch3_delegations.py \
+            FRIDAY/tests/test_batch3_part2.py
+      - name: Review-required project persistence and worker boundaries
+        env:
+          APP_ENV: development
+          DATA_DIR: /tmp/vyralx-contract-data
+          MEDIA_DIR: /tmp/vyralx-contract-media
+          RENDER_DIR: /tmp/vyralx-contract-renders
+          PYTHONPATH: VyralX
+        run: |
+          python -m pytest -q VyralX/tests/test_review_required_project.py \
+            VyralX/tests/test_project_pipeline_e2e.py VyralX/tests/test_project_review.py
       - name: Compile fresh research and deployed voice wiring
         run: >-
           python -m compileall -q IntelX/intelx/api/router.py

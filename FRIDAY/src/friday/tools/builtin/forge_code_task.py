@@ -169,6 +169,19 @@ class ForgeCodeTool(BaseTool):
         if isinstance(manifest, dict) and (manifest.get("all_passed") is False or manifest.get("failed_stages", 0)):
             return ToolResult(name=self.name, content="Forge returned failing verification evidence. The build is not verified.",
                               is_error=True, safety_level=self.safety_level, metadata={"verification_manifest": manifest})
+        stages = manifest.get("stages") if isinstance(manifest, dict) else None
+        stages = list(stages.values()) if isinstance(stages, dict) else stages
+        verified_stages = isinstance(stages, list) and bool(stages) and all(
+            isinstance(stage, dict) and (
+                stage.get("passed") is True if "passed" in stage else
+                str(stage.get("status", "")).lower() in {"passed", "pass", "success"})
+            and ("exit_code" not in stage or type(stage["exit_code"]) is int and stage["exit_code"] == 0)
+            for stage in stages)
+        if not verified_stages:
+            return ToolResult(name=self.name,
+                              content="Forge did not provide nonempty passing verification stages. Execution and test completion are unverified.",
+                              is_error=True, safety_level=self.safety_level,
+                              metadata={"verification_manifest": manifest, "completion_verified": False})
         summary = str(getattr(result, "summary", "") or data.get("summary", ""))
         content = _format_build(data, summary)
         return ToolResult(

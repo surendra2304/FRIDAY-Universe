@@ -52,7 +52,7 @@ class VoiceBrainBridge:
         task_state = str(meta.get("task_state", "")).upper()
         if code in {401, 403} or meta.get("refused") or meta.get("security_blocked"):
             state = "refused"
-        elif code == 202 or task_state in {"PENDING", "RUNNING", "WAITING_APPROVAL"}:
+        elif code == 202 or meta.get("pending") is True or task_state in {"PENDING", "RUNNING", "WAITING_APPROVAL"}:
             state = "pending"
         elif code >= 400 or meta.get("execution_failed") or meta.get("error") or meta.get("success") is False or meta.get("probe_success") is False or meta.get("memory_store") is False or task_state == "FAILED":
             state = "failed"

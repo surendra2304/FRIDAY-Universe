@@ -185,6 +185,7 @@ class VideoProject(Base):
     scene_count: Mapped[int] = mapped_column(Integer, default=4)
     confirm_pexels_license: Mapped[bool] = mapped_column(Boolean, default=False)
     confirm_pexels_repeat_use: Mapped[bool] = mapped_column(Boolean, default=False)
+    review_required: Mapped[bool] = mapped_column(Boolean, default=False)
     use_voiceover: Mapped[bool] = mapped_column(Boolean, default=True)
     status: Mapped[str] = mapped_column(String(40), default="queued", index=True)
     content_pack_id: Mapped[int | None] = mapped_column(Integer, nullable=True)

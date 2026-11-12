@@ -176,7 +176,7 @@ collaborators:
     active_branches:
     - arena/TASK-WF-004-four-owner-workflows
     - arena/TASK-VAL-003-runtime-audit
-    active_pr: null
+    active_pr: 56
     last_verified_at: '2026-11-12T13:56:06.410012+00:00'
     access_limits:
     - No merge/deploy/restart/publication authorized; exposed chat PAT never used or

@@ -567,6 +567,7 @@ claims:
     status: "DIRECT_COMMIT_D023"
     task: "TASK-ORCH-001 first tranche: whole-word/phrase keyword matching (CapabilityRouter._matches)."
 
+    review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: "FRIDAY/src/friday/planning/orchestrator.py"
     owner: "zai"
     prs: []
@@ -665,6 +666,7 @@ claims:
       claimed_at: '2026-11-12T13:56:17.706503+00:00'
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
+    review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: "FRIDAY/tests/test_forge_code_dispatch.py"
     owner: "zai"
     prs: []
@@ -965,6 +967,7 @@ claims:
       claimed_at: '2026-11-12T13:56:17.706503+00:00'
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
+    review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: "FRIDAY/src/friday/agent/mixins/cognitive.py"
     owner: "zai"
     prs: []
@@ -979,6 +982,7 @@ claims:
     status: "MERGED_ORCH_008_2026-11-11"
     task: "TASK-ORCH-008/C13: TaskStatusQueryTool registered in the default registry."
 
+    review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: "FRIDAY/src/friday/agent/prompts.py"
     owner: "zai"
     prs: []
@@ -1453,6 +1457,7 @@ claims:
     expected_next_update: '2026-11-12T15:56:17.706503+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
+    review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1464,6 +1469,7 @@ claims:
     expected_next_update: '2026-11-12T15:56:17.706503+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
+    review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: FRIDAY/tests/test_four_owner_workflows.py
     owner: arena_engineering_01
     prs: []
@@ -1475,6 +1481,7 @@ claims:
     expected_next_update: '2026-11-12T15:56:17.706503+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
+    review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
   - path: IntelX/intelx/api/live_research_task.py
     owner: arena_engineering_01
     prs: []
@@ -1495,6 +1502,114 @@ claims:
     task: TASK-WF-004
     claimed_at: '2026-11-12T13:56:17.706503+00:00'
     expected_next_update: '2026-11-12T15:56:17.706503+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: FRIDAY/src/friday/tools/builtin/__init__.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: FRIDAY/src/friday/tools/builtin/vyralx_project.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: VyralX/app/main.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: VyralX/app/migrations.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: VyralX/app/models.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: VyralX/app/schemas.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: VyralX/app/services/project_pipeline.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: VyralX/tests/test_project_pipeline_e2e.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: VyralX/tests/test_review_required_project.py
+    owner: arena_engineering_01
+    prs:
+    - 56
+    branches:
+    - arena/TASK-WF-004-four-owner-workflows
+    status: IN_REVIEW
+    task: TASK-WF-004
+    claimed_at: '2026-11-12T14:04:41.201430+00:00'
+    expected_next_update: '2026-11-12T16:04:41.201430+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
 conflicts_to_resolve:

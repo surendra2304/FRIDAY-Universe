@@ -456,6 +456,7 @@ def _project_summary(project: VideoProject, db: Session | None = None) -> dict:
             })
     return {
         "project_id": project.id, "project_key": project.project_key, "topic": project.topic,
+        "review_required": bool(project.review_required),
         "content_preview": content_preview,
         "auto_discover_trend": project.auto_discover_trend, "trend_query": project.trend_query,
         "trend_max_results": project.trend_max_results, "trend_source_video_id": project.trend_source_video_id,
@@ -810,11 +811,11 @@ def create_video_project(payload: VideoProjectCreateRequest, db: Session = Depen
     existing = db.scalar(select(VideoProject).where(VideoProject.project_key == payload.project_key))
     if existing is not None:
         same = (payload.auto_discover_trend and existing.auto_discover_trend and existing.trend_query == payload.trend_query.strip()) or (not payload.auto_discover_trend and not existing.auto_discover_trend and existing.topic == payload.topic.strip())
-        same = same and existing.trend_max_results == payload.trend_max_results and existing.video_format == payload.video_format and existing.target_seconds == payload.target_seconds and existing.scene_count == payload.scene_count and existing.audience == payload.audience and existing.tone == payload.tone and existing.confirm_pexels_license == payload.confirm_pexels_license and existing.confirm_pexels_repeat_use == payload.confirm_pexels_repeat_use and existing.use_voiceover == payload.use_voiceover
+        same = same and existing.trend_max_results == payload.trend_max_results and existing.video_format == payload.video_format and existing.target_seconds == payload.target_seconds and existing.scene_count == payload.scene_count and existing.audience == payload.audience and existing.tone == payload.tone and existing.confirm_pexels_license == payload.confirm_pexels_license and existing.confirm_pexels_repeat_use == payload.confirm_pexels_repeat_use and existing.use_voiceover == payload.use_voiceover and existing.review_required == payload.review_required
         if not same:
             raise HTTPException(409, "project_key already exists with different settings")
         return {**_project_summary(existing, db), "idempotent_replay": True}
-    project = VideoProject(project_key=payload.project_key, topic=payload.topic.strip(), auto_discover_trend=payload.auto_discover_trend, trend_query=payload.trend_query.strip(), trend_max_results=payload.trend_max_results, video_format=payload.video_format, target_seconds=payload.target_seconds, audience=payload.audience, tone=payload.tone, scene_count=payload.scene_count, confirm_pexels_license=True, confirm_pexels_repeat_use=payload.confirm_pexels_repeat_use, use_voiceover=payload.use_voiceover, status="queued")
+    project = VideoProject(project_key=payload.project_key, topic=payload.topic.strip(), auto_discover_trend=payload.auto_discover_trend, trend_query=payload.trend_query.strip(), trend_max_results=payload.trend_max_results, video_format=payload.video_format, target_seconds=payload.target_seconds, audience=payload.audience, tone=payload.tone, scene_count=payload.scene_count, confirm_pexels_license=True, confirm_pexels_repeat_use=payload.confirm_pexels_repeat_use, use_voiceover=payload.use_voiceover, review_required=payload.review_required, status="queued")
     db.add(project)
     db.commit()
     db.refresh(project)
@@ -1321,6 +1322,8 @@ def agent_manifest():
         "readiness_url": "/ready",
         "integration_status_url": "/api/integrations",
         "authentication": {"schemes": ["Bearer", "X-API-Key"]},
+        "project_review_contract": {"version": 1, "persistent_review_required": True,
+                                    "blocks_autonomous_publish": True},
         "capabilities": [
             {"id": "universe.task.execute", "method": "POST", "path": "/v1/task/execute"},
             {"id": "universe.task.status", "method": "GET", "path": "/v1/task/{task_id}"},

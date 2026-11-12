@@ -23,6 +23,7 @@ from friday.tools.builtin.stratex_portfolio import StratexPortfolioTool
 from friday.tools.builtin.sentinel_security import SentinelSecurityTool
 from friday.tools.builtin.futuris_forecast import FuturisForecastTool
 from friday.tools.builtin.web_fetch_summarize import WebFetchSummarizeTool
+from friday.tools.builtin.vyralx_project import VyralXProjectTool
 from friday.tools.builtin.vyralx_render import VyralXRenderTool
 from friday.tools.builtin.vyralx_publish import VyralXPublishTool
 from friday.tools.builtin.vyralx_script import VyralXScriptTool
@@ -183,6 +184,7 @@ __all__ = [
     "SentinelSecurityTool",
     "FuturisForecastTool",
     "WebFetchSummarizeTool",
+    "VyralXProjectTool",
     "VyralXRenderTool",
     "VyralXPublishTool",
     "SystemInfoTool",
