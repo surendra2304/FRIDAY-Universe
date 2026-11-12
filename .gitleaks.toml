@@ -1,0 +1,42 @@
+# FRIDAY Universe — gitleaks configuration
+# ========================================
+#
+# Why this file exists (TASK-CI-SECRETSCAN-002, 2026-11-13, ZAI Agent 1):
+#   The Secret Scanning workflow (.github/workflows/secret-scan.yml,
+#   gitleaks-action@v3, GITLEAKS_VERSION 8.30.1) went RED on main head 9544300:
+#   docs/verification/WF014_SOURCE_BOUND_RECEIPTS.md line 30 carries a labeled
+#   `Source SHA256:`<64-hex> content digest (a verified-project artifact digest)
+#   in the same line as the words "owner credential" — the generic-api-key rule
+#   treats any high-entropy hex near a secret keyword as a leak. Verification
+#   receipts legitimately contain labeled SHA-256 digests, so this config makes
+#   exactly that class explicitly allowed while keeping every default rule.
+#
+# Coverage guarantee:
+#   [extend] useDefault = true loads ALL built-in gitleaks rules — the same rule
+#   set the action used before this file existed (A/B-verified on the
+#   fa9257d..9544300 range: identical findings except the one intended allow;
+#   pinned by tests/test_gitleaks_config.py). Real secrets remain flagged: an
+#   unlabeled hex value, a token or a key is never suppressed.
+#
+# Suppression scope (deliberately narrow):
+#   A finding is suppressed ONLY when the finding's own line contains an
+#   explicit sha256/sha-256 label immediately followed by a full 64-char hex
+#   digest. 32-hex (MD5), 40-hex (SHA-1) and 128-hex (SHA-512) labels are NOT
+#   covered; unlabeled hex is NOT covered; a label without a digest is NOT
+#   covered. If a future receipt format needs a wider label set, extend the
+#   regex — never widen it to bare hex.
+#
+# Residual tradeoff (accepted): a hypothetical real secret placed on the SAME
+# line as a labeled digest would also be suppressed. Project docs never
+# co-locate credential literals with digests, and committing real secrets is
+# forbidden by fleet policy regardless of scanner behavior.
+
+[extend]
+useDefault = true
+
+[allowlist]
+  description = "Labeled SHA-256 content digests (verification receipts, source inventories, package checksums) are project artifacts, not credentials"
+  regexTarget = "line"
+  regexes = [
+    '''(?i)\bsha-?256\b['"` ]*\s*[:=]\s*['"`]?[0-9a-fA-F]{64}''',
+  ]
