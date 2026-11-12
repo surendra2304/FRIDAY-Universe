@@ -413,7 +413,7 @@ def test_f7_01_get_health_probe_contract(client: TestClient) -> None:
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "FRIDAY"
+    assert data["service"] == "friday_core"
     assert data["version"] == "2.0.0"
     assert "peers_mesh" in data
 
@@ -425,7 +425,7 @@ def test_f7_02_get_ready_probe_contract(client: TestClient) -> None:
     data = resp.json()
     assert data["ready"] is True
     assert data["status"] == "ready"
-    assert data["service"] == "FRIDAY"
+    assert data["service"] == "friday_core"
     assert data["database"] == "healthy"
     assert "timestamp" in data
 

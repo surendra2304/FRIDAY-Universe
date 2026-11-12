@@ -1024,7 +1024,12 @@ async def readiness_check() -> JSONResponse:
                 conn.close()
             db_status = "healthy"
         except Exception as exc:
-            db_status = f"unhealthy: {type(exc).__name__}: {exc}"
+            # Contract (tier1 + e2e F7.B2, pinned 2026-11-12): the probe
+            # reports the store as NOT REACHABLE ("unavailable") — the
+            # failure CLASS is recorded separately in database_error for the
+            # operator. Never embed the raw exception string here: k8s/compose
+            # probes and fleet watchers compare this field literally.
+            db_status = "unavailable"
             status["database_error"] = type(exc).__name__
     else:
         backend = "oracle" if dsn else "unconfigured"

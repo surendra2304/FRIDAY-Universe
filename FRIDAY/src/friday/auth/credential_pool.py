@@ -379,10 +379,13 @@ class GeminiCredentialPool:
     def classify_error(error: Exception) -> FailureCategory:
         """Classify an exception into a FailureCategory for intelligent cooldown."""
         err_str = str(error).lower()
-        # WebSocket 1007 indicates an invalid session payload/configuration, not
-        # a bad API key. Avoid cooling down credentials for model config errors.
-        if "1007" in err_str or "invalid_argument" in err_str or "not supported for this model" in err_str:
-            return FailureCategory.INVALID_REQUEST
+        # Authentication failures are named FIRST. Google answers a bad API key
+        # with 400 INVALID_ARGUMENT + reason API_KEY_INVALID: classifying on the
+        # status string alone put the key in the "invalid request" bucket, and
+        # the provider sleep-retried a permanently dead key with exponential
+        # backoff (1+2+4 s) before failing over — the 7.2 s that made every
+        # LLM-path voice reply late (measured 2026-11-13). The error TEXT names
+        # the key, so auth must win over the generic 400 classification.
         if (
             "401" in err_str
             or "403" in err_str
@@ -394,6 +397,10 @@ class GeminiCredentialPool:
             or "api key not valid" in err_str
         ):
             return FailureCategory.AUTH_FAILED
+        # WebSocket 1007 indicates an invalid session payload/configuration, not
+        # a bad API key. Avoid cooling down credentials for model config errors.
+        if "1007" in err_str or "invalid_argument" in err_str or "not supported for this model" in err_str:
+            return FailureCategory.INVALID_REQUEST
         if "404" in err_str or "not_found" in err_str or ("model" in err_str and "no longer available" in err_str):
             return FailureCategory.MODEL_NOT_FOUND
         if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:

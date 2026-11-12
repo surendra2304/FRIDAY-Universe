@@ -484,6 +484,15 @@ class TestnetService:
             except Exception as exc:
                 logger.warning(f"[TELEGRAM] Could not initialize: {exc}")
 
+        self._init_breakers()
+
+    # ------------------------------------------------------------------
+    # Circuit breakers (daily-loss RC1 + loss-streak 2026-09-26 tail)
+    # ------------------------------------------------------------------
+    def _init_breakers(self) -> None:
+        """Wire the trading circuit breakers. Extracted from __init__ so the
+        wiring is testable without a Binance testnet connection (the engine
+        fails fast on unreachable credentials in __init__)."""
         # ── 2026-11-11 incident fix (RC1): daily-loss circuit breaker ─────
         # Halts ALL new entries once day PnL breaches DAILY_LOSS_LIMIT_PCT
         # of day-start equity; Telegram-alerts the owner. See
@@ -497,7 +506,7 @@ class TestnetService:
                 try:
                     bot.send_message(message)
                 except Exception as exc:
-                    logger.error(f"[DAILY_LOSS_BREAKER] telegram alert failed: {exc}")
+                    logger.error(f"[BREAKER] telegram alert failed: {exc}")
 
         try:
             self.daily_loss_breaker = DailyLossBreaker(
@@ -507,6 +516,22 @@ class TestnetService:
         except ValueError as exc:
             logger.error(f"[DAILY_LOSS_BREAKER] invalid config ({exc}); breaker disabled")
             self.daily_loss_breaker = None
+
+        # ── 2026-09-26 tail fix: consecutive-loss circuit breaker ────────
+        # The daily-loss breaker halts on a PERCENT of day-start equity, so a
+        # streak of small losses (the demo ledger's tail: 6 losses, -$0.61)
+        # never trips it. This breaker stops NEW entries on the STREAK count
+        # itself. Same durable trading_pause flag, same release (/resume).
+        from testnet_engine.loss_streak_breaker import LossStreakBreaker
+
+        try:
+            self.loss_streak_breaker = LossStreakBreaker(
+                getattr(config, "LOSS_STREAK_LIMIT", 5),
+                alerter=_breaker_alert,
+            )
+        except ValueError as exc:
+            logger.error(f"[LOSS_STREAK_BREAKER] invalid config ({exc}); breaker disabled")
+            self.loss_streak_breaker = None
 
     # ------------------------------------------------------------------
     # Telegram helpers
@@ -2691,6 +2716,21 @@ class TestnetService:
                             self._restore_daily_risk_state()
                             self.stats["CLOSED_TRADES"] += 1
                             self._alert_closed_trade(sym)
+                            # Loss-streak breaker (2026-09-26 tail): fold the
+                            # closed trade's net PnL into the consecutive-loss
+                            # streak; on breach all new entries pause. The
+                            # breaker never raises; a broken breaker is loud
+                            # in logs but never takes the monitor down.
+                            try:
+                                from trading_report import load_trades
+
+                                _closed = [t for t in load_trades() if t["symbol"] == sym]
+                                if _closed:
+                                    _pnl = _closed[-1].get("net_pnl")
+                                    if _pnl is not None and getattr(self, "loss_streak_breaker", None):
+                                        self.loss_streak_breaker.check_close(_pnl)
+                            except Exception as streak_err:
+                                logger.error(f"[LOSS_STREAK_BREAKER] close check failed: {streak_err}")
                             
                     self.active_positions = new_active_positions
                 except Exception as e:

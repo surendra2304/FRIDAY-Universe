@@ -398,10 +398,15 @@ def build_contracts(fleet: Any | None = None, settings: Any | None = None) -> di
             role="Autonomous Video Production & Governed Distribution",
             base_url=fleet.vyralx_url,
             api_key=fleet.vyralx_key,
-            # MUST match the live client's dispatch path (fleet_client.py
-            # posts /api/v1/tasks, VyralX's Universal Task Protocol route).
-            # Drift here is what the mesh contract test catches (2026-11-12).
-            task_path="/api/v1/tasks",
+            # MUST be the ENVELOPE route, not the FleetClient's task.submit
+            # route: the mesh transport posts raw TaskEnvelope JSON
+            # (mesh.py PeerTransport._attempt -> envelope.model_dump()) and
+            # VyralX's /v1/task/execute implements exactly that envelope
+            # contract (VyralX main.py:1931). /api/v1/tasks expects VyralX's
+            # own task_type/input payload — an envelope posted there would be
+            # misparsed. Reverted 2026-11-13; the vyralx contract test pins
+            # this.
+            task_path="/v1/task/execute",
             health_path="/health",
             auth_style="x-api-key",
             capability_prefix="vyralx",

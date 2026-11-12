@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from friday.autonomous.self_repair import GitRepairApplier, SelfRepairGate
+from friday.cognition.capability import smoke_environment
 from friday.cognition.installation import MAX_NEW_TOOL_LINES, CapabilityInstaller
 from friday.cognition.mandate import MandateAuthority, MandateLedger
 from friday.cognition.reviewer import MAX_REPLACEMENT_LINES, LocalReviewer
@@ -437,6 +438,7 @@ def test_a_composed_tool_is_installed_and_its_example_holds_where_it_landed(repo
         capture_output=True,
         text=True,
         timeout=120,
+        env=smoke_environment(repo),
     )
     assert check.returncode == 0, check.stderr
     assert check.stdout.strip() == "'4' False", check.stdout

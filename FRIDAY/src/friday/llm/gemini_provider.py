@@ -157,7 +157,18 @@ class GeminiLLMProvider(BaseLLMProvider):
         msg = str(error).lower()
         if "429" in msg or "resource_exhausted" in msg or "quota" in msg:
             return FailureCategory.QUOTA_EXHAUSTED
-        if "401" in msg or "403" in msg or "invalid_argument" in msg or "api_key" in msg:
+        # Auth markers win over the generic 400 status string (same reasoning
+        # as the credential pool: an invalid key arrives as 400 INVALID_ARGUMENT
+        # with reason API_KEY_INVALID).
+        if (
+            "401" in msg
+            or "403" in msg
+            or "permission_denied" in msg
+            or "api_key_invalid" in msg
+            or "invalid api key" in msg
+            or "api key not valid" in msg
+            or "api_key" in msg
+        ):
             return FailureCategory.AUTH_FAILED
         if "404" in msg or "not_found" in msg or ("model" in msg and "no longer available" in msg):
             return FailureCategory.MODEL_NOT_FOUND
@@ -652,7 +663,20 @@ class GeminiLLMProvider(BaseLLMProvider):
                     logger.error(f"Gemini DNS/Network resolution failure: {err_msg}")
                     raise LLMProviderError(f"Gemini network resolution failure (DNS lookup failed): {err_msg}") from e
 
-                # 5. Transient errors (SERVICE_ERROR 503, NETWORK_ERROR, UNKNOWN)
+                # 5. Permanent client errors (INVALID_REQUEST). A 400 is the
+                # server saying the request itself is wrong: sleeping and
+                # resending the same bytes can never change the answer. This
+                # used to fall through to the transient backoff below and burn
+                # 1+2+4 s on every attempt before the failover chain even
+                # started (measured 7.2 s per voice command, 2026-11-13).
+                # Raise at once so the chain moves to the next provider
+                # immediately; the key is NOT reported (a malformed request
+                # is not the credential's fault).
+                if category == FailureCategory.INVALID_REQUEST:
+                    logger.error(f"Gemini invalid request (not retryable): {err_msg}")
+                    raise LLMProviderError(f"Gemini invalid request (not retryable): {err_msg}") from e
+
+                # 6. Transient errors (SERVICE_ERROR 503, NETWORK_ERROR, UNKNOWN)
                 if use_pool and self.credential_pool and attempt < max_attempts:
                     try:
                         next_key = self.credential_pool.get_active_key()

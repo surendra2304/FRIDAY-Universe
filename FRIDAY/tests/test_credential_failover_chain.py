@@ -226,6 +226,30 @@ def test_websocket_1007_is_classified_as_request_error():
     ) == FailureCategory.INVALID_REQUEST
 
 
+def test_invalid_api_key_400_is_classified_as_auth_not_request():
+    """REGRESSION (2026-11-13): Google answers a bad key with 400 INVALID_ARGUMENT
+    + reason API_KEY_INVALID. Classified on the status string alone it landed in
+    the invalid-request bucket and the provider sleep-retried the permanently
+    dead key with exponential backoff (measured 7.2 s per LLM-path command —
+    the voice latency the owner reported). The error TEXT names the key, so
+    auth must win over the generic 400 classification.
+    """
+    err = Exception(
+        "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key not valid. "
+        "Please pass a valid API key.', 'status': 'INVALID_ARGUMENT', 'reason': 'API_KEY_INVALID'}}"
+    )
+    assert GeminiCredentialPool.classify_error(err) == FailureCategory.AUTH_FAILED
+    # and the same error through the provider-side (no-pool) classifier
+    from friday.llm.gemini_provider import GeminiLLMProvider
+
+    provider = GeminiLLMProvider.__new__(GeminiLLMProvider)
+    provider.credential_pool = None
+    assert provider._classify_error(err) == FailureCategory.AUTH_FAILED
+    # a config-shaped 400 (no auth markers) stays a request error — not retryable
+    config_err = Exception("400 INVALID_ARGUMENT. Thinking level is not supported for this model.")
+    assert GeminiCredentialPool.classify_error(config_err) == FailureCategory.INVALID_REQUEST
+
+
 
 def test_mark_key_unhealthy_rotates_active_key():
     """mark_key_unhealthy() must cooldown the key so get_active_key() rotates."""

@@ -143,6 +143,11 @@ MIN_BRACKET_PCT = float(os.getenv("MIN_BRACKET_PCT", "0.0030"))
 # alerted. 3% stop on a 10k demo account caps the worst day at ~300 USD instead
 # of the unbounded bleed that produced the >2,000 USD / 12h incident.
 DAILY_LOSS_LIMIT_PCT = float(os.getenv("DAILY_LOSS_LIMIT_PCT", "0.03"))
+# Loss-streak circuit breaker (2026-09-26 tail): pause ALL new entries after
+# this many CONSECUTIVE losing trades, regardless of amount. The percent
+# breaker above cannot see a streak of small losses (the demo ledger's tail:
+# 6 losses, -$0.61 total); the streak can. A winning trade resets the count.
+LOSS_STREAK_LIMIT = int(os.getenv("LOSS_STREAK_LIMIT", "5"))
 MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "8"))                # Increased from 5 to 8
 MAX_OPEN_POSITIONS_AGGRESSIVE = int(os.getenv("MAX_OPEN_POSITIONS_AGGRESSIVE", "12")) # Bounded positions for aggressive mode
 # Batch-2 anti-revenge cap: max executed ENTRIES per symbol per UTC day. The

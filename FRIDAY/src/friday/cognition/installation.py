@@ -360,10 +360,17 @@ class CapabilityInstaller:
         the driver runs it here too: "the file that landed behaves as claimed" is a
         stronger statement than "a file with this source once did".
         """
-        from friday.cognition.capability import ToolSynthesiser
+        from friday.cognition.capability import smoke_environment, ToolSynthesiser
 
         driver = ToolSynthesiser._SMOKE_DRIVER
         try:
+            # BUGFIX (2026-11-13): this spawn inherited bare os.environ, so on
+            # any machine without `pip install -e .` (fresh sandbox, CI, the
+            # owner's laptop) the interpreter could not import friday and
+            # EVERY install was refused with "ModuleNotFoundError: No module
+            # named 'friday'". The synthesiser's own smoke path always set
+            # PYTHONPATH — the two paths must agree, or the check that
+            # admitted a candidate is not the check that verifies it landed.
             proc = subprocess.run(
                 [
                     self.python,
@@ -378,6 +385,7 @@ class CapabilityInstaller:
                 capture_output=True,
                 text=True,
                 timeout=120,
+                env=smoke_environment(self.repo_root),
             )
         except (OSError, subprocess.SubprocessError) as exc:
             return {"ok": False, "checks": [], "detail": f"{type(exc).__name__}: {exc}"}

@@ -26,7 +26,7 @@ import pytest
 
 from friday.cognition import capability as capability_module
 from friday.cognition import composition as composition_module
-from friday.cognition.capability import CapabilityResolver, ToolSynthesiser
+from friday.cognition.capability import CapabilityResolver, ToolSynthesiser, smoke_environment
 from friday.cognition.composition import (
     COMPOSITIONS,
     FORBIDDEN_IN_BODY,
@@ -110,6 +110,7 @@ def test_each_intent_does_what_its_own_example_says(composition: Composition, tm
         capture_output=True,
         text=True,
         timeout=120,
+        env=smoke_environment(),
     )
     verdict = json.loads(completed.stdout.strip().splitlines()[-1])
 
@@ -237,6 +238,7 @@ def test_a_body_that_does_not_match_its_stated_example_is_caught(tmp_path: Path)
         capture_output=True,
         text=True,
         timeout=120,
+        env=smoke_environment(),
     )
     verdict = json.loads(completed.stdout.strip().splitlines()[-1])
 
@@ -279,6 +281,7 @@ def test_an_erroring_body_is_caught_by_the_example_too(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
         timeout=120,
+        env=smoke_environment(),
     )
     verdict = json.loads(completed.stdout.strip().splitlines()[-1])
 

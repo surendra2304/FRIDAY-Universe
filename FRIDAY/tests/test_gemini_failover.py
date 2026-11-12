@@ -254,3 +254,40 @@ def test_failover_test_8_secret_masking_in_failover_errors():
     assert secret_primary not in err_str
     assert secret_fallback not in err_str
     assert "***" in err_str
+
+
+# -----------------------------------------------------------------------------
+# REGRESSION (2026-11-13): a permanent 400 INVALID_ARGUMENT must fail fast.
+# It used to fall into the transient backoff and sleep 1+2+4 s before raising,
+# which made every LLM-path voice reply late by 7+ seconds.
+# -----------------------------------------------------------------------------
+def test_invalid_request_fails_fast_without_retry_sleeps():
+    keys = ["KEY_PRIMARY"]
+    pool = GeminiCredentialPool(keys=keys)
+    pool.load_keys(keys)
+    pool.reset_all()
+
+    provider = GeminiLLMProvider(api_key=None, credential_pool=pool, max_retries=5)
+
+    calls = {"n": 0}
+
+    def raise_400(*a, **k):
+        calls["n"] += 1
+        raise RuntimeError(
+            "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key not valid. "
+            "Please pass a valid API key.', 'reason': 'API_KEY_INVALID'}}"
+        )
+
+    mock_client = mock.MagicMock()
+    mock_client.models.generate_content.side_effect = raise_400
+    mock_client._is_mock = True
+    provider._client = mock_client
+
+    sleeps: list[float] = []
+    with mock.patch("time.sleep", side_effect=lambda s: sleeps.append(s)):
+        with pytest.raises(LLMProviderError):
+            provider.generate([Message(role=Role.USER, content="Hello")])
+
+    # No exponential-backoff sleeps for a permanent 400 — the raise is immediate.
+    assert sleeps == [], f"permanent 400 was sleep-retried: {sleeps}"
+    assert calls["n"] == 1, f"the request was re-sent {calls['n'] - 1} times it could never succeed"

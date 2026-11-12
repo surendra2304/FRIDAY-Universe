@@ -64,7 +64,7 @@ def test_server_app_health_routes() -> None:
     assert response.status_code == 200
     data = response.json()
     assert data.get("overall") == "healthy"
-    assert data.get("service") == "FRIDAY"
+    assert data.get("service") == "friday_core"
     assert data.get("evidence_class") == "process_liveness"
     assert "observed_at" in data
     assert data.get("peers_mesh") == "connected"
