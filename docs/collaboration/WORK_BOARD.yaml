@@ -2186,8 +2186,8 @@ tasks:
     title: Report existing artifact paths and real test command/exit code to owner
     status: IN_PROGRESS
     owner: arena_engineering_01
-    branch: arena/TASK-WF-012-artifact-receipts
-    pr: null
+    branch: arena/TASK-WF-012-saved-manifest-schema
+    pr: 66
     files:
     - .github/workflows/owner-workflows.yml
     - FRIDAY/src/friday/tools/builtin/forge_code_task.py
@@ -2195,7 +2195,7 @@ tasks:
     - FRIDAY/tests/test_forge_artifact_receipts.py
     - Forge/tests/unit/test_artifact_receipts.py
     claimed_at: '2026-11-12T19:41:40.428594+00:00'
-    last_update: '2026-11-12T19:41:40.428594+00:00'
+    last_update: '2026-11-12T19:52:26.504588+00:00'
     acceptance:
     - Build/status API includes bounded existing-file paths confined to actual task
       workspace, excluding Git/hidden/cache/dependency trees and symlink escapes. Never
@@ -2216,13 +2216,23 @@ tasks:
     - Filesystem fixtures exclude missing files, outside/hidden symlink targets, Git/env/cache;
       bound40. Same-task status tests do not invoke build. Formatter tests distinguish
       unavailable exits and build-only manifests.
+    - PR66 head9486cad CI8success/2Docker skips; merge535a7a472ff8ca441aa556efe6a42390b8f4c218/deploy43293736181SUCCESS.
+      Both hosts exact/protected5and6unchanged.
+    - 'Read-only SAME task statusSUCCESS includes real existing source/artifact paths,
+      source0a35e7f unchanged. Formatter assertion FAILED: actual saved stages have
+      stage=test, name is dictionary key; fixture used category/check_name. No new build/receipt-success
+      claim. Refinement issue35comment6834283078.'
+    - Follow-up preserves dictionary stage names without mutating manifest and recognizes
+      saved stage field. Real observed schema regression,82FRIDAYpass.
+    - Downloaded source API6independent cases pass on3.13 but embedded3tests error pathlib.os
+      alias missing; Python3.13 combined exit1 saved. Actual target3.12 generated3/independent6
+      exit0. Source unedited, package pins3.12/documents portability limit.
     blockers:
     - Fresh reporting API/formatter rollout/read-only same-task evidence check pending.
       Converter functional source already independently passes3generated+6independent
       unittest0.
-    next_action: GreenCI/exactheadrollout; read same completedtask/status and render
-      actual receipt; preserve sourcehash and protected work; downloadverifiedsoftware/evidence;
-      notify Telegram truthful bounded outcome.
+    next_action: Follow-up exactheadCI/rollout then repeat read-only same-task receipt
+      assertion; no regeneration. Notify bounded3.12success+3.13limitation at conclusion.
     claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:

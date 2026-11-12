@@ -45,7 +45,8 @@ def _format_build(data: dict[str, Any], summary: str) -> str:
     manifest = data.get("verification_manifest") or data.get("manifest") or {}
     stages = manifest.get("stages") if isinstance(manifest, dict) else None
     if isinstance(stages, dict):
-        stages = list(stages.values())
+        stages = [dict(value, check_name=value.get("check_name", name))
+                  if isinstance(value, dict) else value for name, value in stages.items()]
     if isinstance(stages, list) and stages:
         passed = sum(1 for st in stages if isinstance(st, dict) and (st.get("passed") is True or str(st.get("status", "")).lower() in {"passed", "pass", "success"}))
         lines.append("")
@@ -54,7 +55,7 @@ def _format_build(data: dict[str, Any], summary: str) -> str:
             if not isinstance(stage, dict):
                 continue
             name = str(stage.get("check_name", ""))
-            if str(stage.get("category", "")).lower() != "test" and "test" not in name.lower():
+            if str(stage.get("category", stage.get("stage", ""))).lower() != "test" and "test" not in name.lower():
                 continue
             exit_code = stage.get("exit_code")
             rendered_exit = str(exit_code) if type(exit_code) is int else "not recorded"

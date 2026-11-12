@@ -670,6 +670,7 @@ claims:
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
     artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
+    artifact_receipt_schema_wf012: "Arena Agent 1; refinement6834283078; arena/TASK-WF-012-saved-manifest-schema; same lane/contact before takeover."
   - path: "FRIDAY/tests/test_forge_code_dispatch.py"
     owner: "zai"
     prs: []
@@ -1981,6 +1982,7 @@ claims:
     claimed_at: '2026-11-12T19:41:40.428594+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+    artifact_receipt_schema_wf012: "Arena Agent 1; refinement6834283078; arena/TASK-WF-012-saved-manifest-schema; same lane/contact before takeover."
   - path: Forge/tests/unit/test_artifact_receipts.py
     owner: arena_engineering_01
     prs: []
