@@ -21,7 +21,6 @@ Tests in tests/test_real_deep_layer3h.py will verify actual memory processes.
 from __future__ import annotations
 
 import math
-import random
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any

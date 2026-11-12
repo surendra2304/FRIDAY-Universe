@@ -63,7 +63,7 @@ def _import_mods():
         pass
     try:
         from app.agents.real_advanced_reasoning import (
-            CausalQuery, CausalInferenceEngine, MultiAgentArgumentationEngine,
+            CausalInferenceEngine, MultiAgentArgumentationEngine,
             ProbabilisticLogicEngine,
         )
         mods["advanced_reasoning"] = {
@@ -94,9 +94,6 @@ def _import_mods():
     except Exception:
         pass
     try:
-        from app.agents.real_scientific_skills import (
-            normal_cdf,
-        )
         mods["scientific_skills"] = {
             "stats": "available",
         }

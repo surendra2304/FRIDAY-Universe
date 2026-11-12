@@ -8,7 +8,7 @@
 
 import pytest
 import time
-from stratex_nautilus.event_model import EventType, MarketEvent, OrderIntent, RuntimeState
+from stratex_nautilus.event_model import EventType, MarketEvent
 from stratex_nautilus.deterministic_runtime import DeterministicRuntime
 from stratex_vectorbt.adapter import VectorBTResearchAdapter, SweepSpec, SweepResult
 from stratex_jesse.optimization import HyperParameter, OptimizationSplit, JesseOptimizationAdapter

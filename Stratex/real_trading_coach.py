@@ -6,8 +6,7 @@ all thresholds are caller-supplied unless explicitly named as defaults.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
-import json
+from dataclasses import dataclass
 import math
 import os
 import re

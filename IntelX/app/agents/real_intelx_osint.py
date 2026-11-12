@@ -27,12 +27,10 @@ fallback to high-fidelity deterministic stdlib computation, ensuring 100% offlin
 
 from __future__ import annotations
 
-import base64
 import csv
 import hashlib
 import io
 import json
-import math
 import os
 import re
 import sys
@@ -41,7 +39,6 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 

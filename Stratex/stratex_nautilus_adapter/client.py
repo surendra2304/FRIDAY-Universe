@@ -8,7 +8,6 @@ Unified Facade for NautilusTrader integration in Stratex:
 from __future__ import annotations
 
 from typing import Any
-import pandas as pd
 
 from .models import (
     TradeTick,
@@ -20,13 +19,12 @@ from .models import (
     OrderType,
     RiskCheckResult,
     FillReport,
-    Position,
 )
 from .event_bus import NautilusEventBus, default_event_bus
 from .orders import NautilusOrderManager, default_order_manager
 from .bar_aggregator import BarAggregatorEngine
-from .risk import NautilusRiskEngine, default_risk_engine, RiskConfig
-from .simulator import NautilusExecutionSimulator, SimulatorConfig
+from .risk import NautilusRiskEngine, default_risk_engine
+from .simulator import NautilusExecutionSimulator
 
 
 class NautilusNativeEngine:

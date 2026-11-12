@@ -12,8 +12,6 @@ Tests:
 9. Flask REST API endpoints (/api/v1/openbb/*)
 """
 
-import datetime
-import math
 import numpy as np
 import pandas as pd
 import pytest
@@ -32,24 +30,17 @@ from stratex_openbb.providers.coingecko import FreeCoinGeckoProvider
 from stratex_openbb.providers.macro_free import FreeMacroProvider
 from stratex_openbb.economy.macro_regime import MacroRegimeDetector
 from stratex_openbb.quantitative.risk_metrics import (
-    calculate_returns,
     calculate_sharpe_ratio,
     calculate_sortino_ratio,
-    calculate_calmar_ratio,
     calculate_max_drawdown,
     calculate_var_historical,
-    calculate_var_parametric,
     calculate_cvar,
     calculate_beta,
     compute_quantitative_risk_report,
 )
 from stratex_openbb.quantitative.volatility_estimators import (
-    compute_parkinson_volatility,
-    compute_garman_klass_volatility,
-    compute_yang_zhang_volatility,
     compute_volatility_estimates_from_df,
 )
-from stratex_openbb.quantitative.distribution import analyze_return_distribution
 from stratex_openbb.technical.overlays import (
     compute_donchian_channels,
     compute_keltner_channels,

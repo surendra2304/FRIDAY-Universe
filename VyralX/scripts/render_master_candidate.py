@@ -27,7 +27,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.config import get_settings
 from app.services.audience_reach_learner import calculate_optimal_post_time
 from app.services.youtube import upload_video
 

@@ -9,18 +9,15 @@ from __future__ import annotations
 import json
 import os
 import time
-import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from exchanges.base_exchange import (
-    BaseExchange,
     UnifiedBalance,
     UnifiedOrderResult,
     UnifiedPosition,
     UnifiedTicker,
 )
-from exchanges.exchange_implementations import get_exchange_adapter
 from logger import get_logger
 
 logger = get_logger("multi_venue_engine")

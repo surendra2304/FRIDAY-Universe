@@ -5,7 +5,7 @@ CVaR (Expected Shortfall), Maximum Drawdown, and Beta using NumPy and SciPy.
 """
 
 import math
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Union
 import numpy as np
 import pandas as pd
 

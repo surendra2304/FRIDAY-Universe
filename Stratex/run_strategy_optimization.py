@@ -6,7 +6,6 @@ without touching frozen production configurations.
 """
 
 import os
-import sys
 import json
 import datetime
 import inspect
@@ -18,7 +17,6 @@ os.environ["RESEARCH_MODE"] = "1"
 os.environ["TRADING_MODE"] = "PAPER"
 
 from backtest_engine import BacktestEngine
-from metrics import calculate_metrics
 from stratex_freqtrade_adapter.optimizer import StrategyOptimizer, OptimizationConfig, get_git_commit_sha
 from stratex_freqtrade_adapter.walkforward import WalkForwardValidator
 from stratex_freqtrade_adapter.stratex_bridge import StratexStrategyBridge

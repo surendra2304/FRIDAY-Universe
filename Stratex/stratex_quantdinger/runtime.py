@@ -10,7 +10,7 @@ import threading
 
 from atomic_io import atomic_write_json, load_json_state, locked_path
 
-from .models import RuntimeHeartbeat, AuditEvent
+from .models import RuntimeHeartbeat
 
 logger = logging.getLogger("stratex_quantdinger.runtime")
 

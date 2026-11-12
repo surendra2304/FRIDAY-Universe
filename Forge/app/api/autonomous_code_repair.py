@@ -6,11 +6,9 @@ tests them, and deploys repairs. Closed-loop: detect → analyze → fix → tes
 """
 from __future__ import annotations
 
-import ast
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 

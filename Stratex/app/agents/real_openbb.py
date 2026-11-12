@@ -20,7 +20,6 @@ Tests in tests/test_real_deep_layer1.py will verify actual research operations.
 from __future__ import annotations
 
 import math
-import random
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any

@@ -6,7 +6,6 @@ Testnet environment, and never falls back to production prices or metadata.
 """
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from stratex_agents.venue.binance_futures_agent import BinanceFuturesAgent

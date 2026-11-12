@@ -2,7 +2,6 @@
 """Test Telegram bot functionality"""
 import os
 from notifications.telegram_bot import TelegramBotClient
-import requests
 
 token = os.getenv('TELEGRAM_BOT_TOKEN')
 if not token:

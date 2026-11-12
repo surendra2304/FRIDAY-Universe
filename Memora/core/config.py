@@ -2,7 +2,6 @@
 Memora Core Configuration
 Manages environment variables, connection URLs, and system constants.
 """
-import os
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

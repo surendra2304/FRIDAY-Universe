@@ -1,4 +1,3 @@
-import pytest
 from stratex_agents.venue.mt5_agent import MT5VenueAgent
 from stratex_agents.order_intent import TradeIntent
 from exchanges.mt5_bridge_adapter import MT5BridgeError

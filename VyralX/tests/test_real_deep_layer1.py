@@ -11,7 +11,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.agents.real_money_printer import (
     MoneyPrinterScriptGenerator,
     MoneyPrinterVideoAssembler,
-    MoneyPrinterPipeline,
     VideoSegment,
     VideoProject,
     ScriptChunk,

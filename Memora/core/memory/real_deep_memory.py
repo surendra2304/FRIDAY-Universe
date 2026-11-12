@@ -12,14 +12,11 @@ Real working implementations:
 from __future__ import annotations
 
 import json
-import math
 import os
-import random
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
-from collections import defaultdict
 
 
 # ── Episodic Memory Engine ────────────────────────────────────────────────
@@ -71,9 +68,10 @@ class EpisodicMemoryEngine:
     def store_episode(
         self, content: str, episode_type: str = "experience",
         location: str = "unknown", emotional_valence: float = 0.0,
-        tags: list[str] = [], importance: float = 0.5
+        tags: list[str] | None = None, importance: float = 0.5
     ) -> EpisodicMemory:
         """Store an episodic memory."""
+        tags = list(tags) if tags else []
         episode = EpisodicMemory(
             memory_id=f"ep_{uuid.uuid4().hex[:12]}",
             content=content,
@@ -192,9 +190,10 @@ class SemanticMemoryEngine:
 
     def add_concept(
         self, concept: str, definition: str,
-        properties: dict[str, str] = {}, category: str = "general"
+        properties: dict[str, str] | None = None, category: str = "general"
     ) -> SemanticNode:
         """Add a concept to the semantic network."""
+        properties = dict(properties) if properties else {}
         node = SemanticNode(
             node_id=f"concept_{uuid.uuid4().hex[:8]}",
             concept=concept,
@@ -308,9 +307,10 @@ class ProceduralMemoryEngine:
 
     def store_procedure(
         self, name: str, description: str,
-        steps: list[str], parameters: dict[str, str] = {}
+        steps: list[str], parameters: dict[str, str] | None = None
     ) -> Procedure:
         """Store a procedure."""
+        parameters = dict(parameters) if parameters else {}
         proc = Procedure(
             procedure_id=f"proc_{uuid.uuid4().hex[:8]}",
             name=name,

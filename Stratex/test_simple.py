@@ -3,7 +3,6 @@
 import os
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
-import signal
 
 class TimeoutError(Exception):
     pass

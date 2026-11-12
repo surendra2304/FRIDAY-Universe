@@ -8,12 +8,9 @@ try:
         SwarmAgent,
         SwarmConsensus,
         KellyPositionSizer,
-        RiskManager,
         PortfolioRebalancer,
         BacktestEngine,
         DrawdownController,
-        VolatilityTargeter,
-        AgentCoordinator,
     )
     from app.agents.real_vibe_trading import (
         MomentumFactor,
@@ -22,35 +19,24 @@ try:
         ValueFactor,
         LiquidityFactor,
         GTJAFactorLibrary,
-        FactorZScore,
-        FactorCorrelation,
-        FactorIC,
-        FactorRotation,
         FactorPortfolio,
         RiskDecomposition,
-        BacktestMetrics,
     )
     from app.agents.real_fincept_terminal import (
         CandlestickPattern,
-        TechnicalIndicators,
         OrderFlowAnalysis,
-        CrossAssetAnalysis,
-        EconomicCalendar,
         FinancialStatementAnalysis,
-        PortfolioAnalytics,
         MarketRegimeDetector,
+        TechnicalIndicators,
     )
 except ImportError:
     from Stratex.app.agents.real_autohedge import (
         SwarmAgent,
         SwarmConsensus,
         KellyPositionSizer,
-        RiskManager,
         PortfolioRebalancer,
         BacktestEngine,
         DrawdownController,
-        VolatilityTargeter,
-        AgentCoordinator,
     )
     from Stratex.app.agents.real_vibe_trading import (
         MomentumFactor,
@@ -59,22 +45,14 @@ except ImportError:
         ValueFactor,
         LiquidityFactor,
         GTJAFactorLibrary,
-        FactorZScore,
-        FactorCorrelation,
-        FactorIC,
-        FactorRotation,
         FactorPortfolio,
         RiskDecomposition,
-        BacktestMetrics,
     )
     from Stratex.app.agents.real_fincept_terminal import (
         CandlestickPattern,
         TechnicalIndicators,
         OrderFlowAnalysis,
-        CrossAssetAnalysis,
-        EconomicCalendar,
         FinancialStatementAnalysis,
-        PortfolioAnalytics,
         MarketRegimeDetector,
     )
 

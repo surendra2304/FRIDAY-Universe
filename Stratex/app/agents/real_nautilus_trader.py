@@ -24,7 +24,7 @@ import random
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 class OrderType(Enum):

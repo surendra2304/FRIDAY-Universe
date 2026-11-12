@@ -14,7 +14,6 @@ tests/test_daily_loss_breaker_and_churn_floor.py
    - accepts the same signal once the bracket clears the floor
 """
 
-import json
 
 import pytest
 

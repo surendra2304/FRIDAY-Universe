@@ -7,7 +7,6 @@ os.environ['TESTNET_ENABLED'] = 'true'
 from dotenv import load_dotenv
 load_dotenv()
 
-import time
 from testnet_engine.service import TestnetService
 
 print('Creating TestnetService...')

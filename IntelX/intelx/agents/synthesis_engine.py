@@ -11,16 +11,13 @@ Enhances IntelX with:
 """
 from __future__ import annotations
 
-import asyncio
 import hashlib
-import json
 import logging
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from intelx.agents.base import BaseAgent
 from intelx.agents.citations import CitationManager
 from intelx.agents.contradictions import ContradictionDetector
 from intelx.models.gateway import ModelGateway

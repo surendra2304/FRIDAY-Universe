@@ -3,11 +3,11 @@ Test: Memora scope + owner_agent model, access filter, SQLite fallback removal,
 bootstrap unqualified names.  Only touches D:\FRIDAY Universe\Memora.
 No .env / commit / SSH / deploy changes.
 """
-import os, sys
+import sys
 sys.path.insert(0, r"D:\FRIDAY Universe\Memora")
 
-from storage.relational.models import MemoryRecord, MemoryScopeType, MemorySharedAgent, normalize_agent_name
-from storage.relational.access_scope import SERVICE_AGENT, visible_memory_predicate, record_is_visible
+from storage.relational.models import MemoryRecord, MemoryScopeType
+from storage.relational.access_scope import visible_memory_predicate, record_is_visible
 from core.config import settings
 
 def test_memory_model_has_scope_and_owner_agent():

@@ -18,8 +18,7 @@ Tests in tests/test_real_deep_layer3f.py will verify actual trading.
 from __future__ import annotations
 
 import math
-import random
-from collections import defaultdict, deque
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 

@@ -5,47 +5,33 @@ path executes the research pipeline synchronously (planner→scout→extractor�
 bypassing the broken DB persistence layer (Oracle JSON deserializer crash).
 """
 
-import asyncio
 import hashlib
-import json
 import logging
 import time
 import uuid
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
-from fastapi.responses import StreamingResponse
 from pydantic import AliasChoices, BaseModel, Field, model_validator
-from sqlalchemy import select, or_
-from sqlalchemy.exc import OperationalError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from intelx.agents.base import format_external_document
 from intelx.agents.citations import export_spoken_citations, export_text_citations
-from intelx.agents.extractor import ExtractorAgent
-from intelx.agents.planner import Plan, PlannerAgent, ResearchQuestionEnhancer
-from intelx.agents.retriever import RetrieverAgent, RetrieverOutput
+from intelx.agents.planner import ResearchQuestionEnhancer
 from intelx.agents.scout import ScoutAgent, SourceCandidate
-from intelx.agents.synthesizer import SynthesizerAgent
 from intelx.core.auth import get_friday_api_key
-from intelx.core.enums import ArtifactFormat, ClaimStatus, RunOutcome, RunStatus, TaskStatus
-from intelx.core.errors import ProviderError
+from intelx.core.enums import RunOutcome, RunStatus
 from intelx.core.settings import get_settings
 from intelx.db.models import (
     ApiKey,
-    Artifact,
     Claim,
-    Chunk,
-    Document,
     Finding,
-    ResearchRun,
     Source,
-    Task,
 )
 from intelx.db.repos import RunRepo
-from intelx.db.session import get_db_session, get_sessionmaker, get_sqlite_write_lock
+from intelx.db.session import get_db_session
 from intelx.models.gateway import get_model_gateway
 from intelx.models.providers import MockProvider
 
@@ -666,9 +652,3 @@ async def cancel_friday_research(
         "status": "CANCELLED",
         "message": "Research run cancelled; partial evidence preserved.",
     }
-
-
-# Import at bottom to avoid circular
-from intelx.db.models import ApiKey
-from intelx.core.enums import RunOutcome
-from intelx.db.repos import RunRepo

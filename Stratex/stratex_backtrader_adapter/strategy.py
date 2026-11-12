@@ -8,7 +8,7 @@ Strategy base class and canonical strategies inspired by Backtrader:
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 import pandas as pd
 
 from numeric_safety import positive_float, safe_quantity

@@ -5,7 +5,7 @@ No access code, locked lessons or trading-performance claims are reproduced.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import json
 import math
 from pathlib import Path

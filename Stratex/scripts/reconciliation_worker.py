@@ -11,7 +11,6 @@ import os
 import signal
 import sys
 import threading
-import time
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:

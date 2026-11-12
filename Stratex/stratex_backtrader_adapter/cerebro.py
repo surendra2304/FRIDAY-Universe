@@ -11,17 +11,15 @@ from __future__ import annotations
 from typing import Any, Type
 import pandas as pd
 
-from .models import BacktestResult, TradeRecord
+from .models import BacktestResult
 from .broker import BacktraderBroker, CommissionScheme
 from .sizers import BaseSizer, FixedSize
 from .analyzers import (
     BaseAnalyzer,
     SharpeRatio,
-    SortinoRatio,
     DrawDown,
     TradeAnalyzer,
     SQN,
-    CalmarRatio,
 )
 from .strategy import Strategy
 

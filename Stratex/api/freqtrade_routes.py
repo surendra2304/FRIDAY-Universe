@@ -12,12 +12,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
-import pandas as pd
 
 from api.validation import query_int
 from stratex_freqtrade_adapter import ft
 from stratex_freqtrade_adapter.data.downloader import OHLCVUnavailable
-from stratex_freqtrade_adapter.strategy.adapter import FreqtradeStrategyAdapter
 
 freqtrade_bp = Blueprint("freqtrade_bp", __name__, url_prefix="/api/v1/freqtrade")
 

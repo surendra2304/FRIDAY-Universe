@@ -19,7 +19,6 @@ from typing import Any
 import numpy as np
 
 from logger import get_logger
-from numeric_safety import finite_float, positive_float
 from risk.dynamic_risk_manager import DynamicRiskManager, RiskBudget
 
 logger = get_logger("risk.enhanced")

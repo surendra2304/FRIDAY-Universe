@@ -12,10 +12,7 @@ from binance.exceptions import BinanceAPIException
 import config
 from config import (
     API_KEY,
-    LIVE_TRADING_ENABLED,
-    PAPER_SAFE_MODE,
     SECRET_KEY,
-    TESTNET_ENABLED,
     TRADE_QTY,
     TRADING_MODE,
 )
@@ -36,7 +33,7 @@ from testnet_engine.protection import (
     place_futures_bracket_protection,
     place_oco_protection,
 )
-from audit.audit_manager import get_audit_manager, get_idempotency_store
+from audit.audit_manager import get_idempotency_store
 
 sys_logger = get_logger("execution")
 ACTIVE_TRADES_FILE = os.getenv("ACTIVE_TRADES_FILE", "active_trades.json")

@@ -9,7 +9,7 @@ Simulated Broker inspired by Backtrader:
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from .models import (
     BacktestOrder,
     TradeRecord,

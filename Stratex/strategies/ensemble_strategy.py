@@ -10,11 +10,8 @@ high-confidence trade signal using:
 """
 from __future__ import annotations
 
-import math
 from collections import namedtuple
-from typing import Any
 
-import pandas as pd
 
 from logger import get_logger
 

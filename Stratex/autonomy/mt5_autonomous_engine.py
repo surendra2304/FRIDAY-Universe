@@ -51,7 +51,7 @@ from autonomy.agent_contracts import (
 from autonomy.ai_advisor import StratexAIAdvisor, get_ai_advisor
 from autonomy.cloud_data_feed import CloudMarketDataFeed, get_cloud_data_feed
 from exchanges.ctrader_fix_adapter import CTraderFixAdapter
-from exchanges.mt5_bridge_adapter import MT5BridgeAdapter, MT5BridgeError
+from exchanges.mt5_bridge_adapter import MT5BridgeAdapter
 from logger import get_logger
 from notifications.telegram_bot import TelegramBotClient, get_telegram_bot
 from panic_state import is_kill_switch_locked, is_panic_active

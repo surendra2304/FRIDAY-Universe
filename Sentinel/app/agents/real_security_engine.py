@@ -17,13 +17,11 @@ Tests in tests/test_real_deep_layer3b.py will verify actual security operations.
 
 from __future__ import annotations
 
-import json
 import math
-import os
 import random
 import re
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
 

@@ -13,7 +13,6 @@ from typing import Any
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-import uuid
 
 
 class OrderSide(str, Enum):

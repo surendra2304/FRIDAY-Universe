@@ -34,7 +34,6 @@ from apps.api.routers import (
     mesh_events_router,
     v1_resilience_router,
     v1_collaboration_router,
-    v1_reflection_router,
     semantic_search_router,
     encrypted_vector_router,
     causal_graph_router,

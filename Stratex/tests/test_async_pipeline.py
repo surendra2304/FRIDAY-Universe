@@ -4,8 +4,7 @@ tests/test_async_pipeline.py — Unit and integration tests for Async Pipeline &
 from __future__ import annotations
 
 import asyncio
-import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import httpx

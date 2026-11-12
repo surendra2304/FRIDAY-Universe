@@ -3,7 +3,6 @@ Stratex/api/trade_optimizer_routes.py — Stratex Trade Optimizer API (Flask Blu
 
 Exposes the TradeOptimizer engine via Flask routes matching Stratex's architecture.
 """
-import json
 
 from flask import Blueprint, jsonify, request
 

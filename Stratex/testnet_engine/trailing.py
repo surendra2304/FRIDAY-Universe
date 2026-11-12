@@ -27,7 +27,6 @@ Safety contract (mirrors protection.py):
 """
 
 import json
-import math
 import os
 import time
 import datetime

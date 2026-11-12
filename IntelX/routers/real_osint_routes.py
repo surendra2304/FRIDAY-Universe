@@ -23,7 +23,6 @@ try:
         GoogleDorkAssistant,
         EmailPermutator,
         ImageForensics,
-        OSINTChecklistGenerator,
     )
     from app.agents.real_maltego_graph import (
         MaltegoGraph,
@@ -40,7 +39,6 @@ except ImportError:
         GoogleDorkAssistant,
         EmailPermutator,
         ImageForensics,
-        OSINTChecklistGenerator,
     )
     from IntelX.app.agents.real_maltego_graph import (
         MaltegoGraph,

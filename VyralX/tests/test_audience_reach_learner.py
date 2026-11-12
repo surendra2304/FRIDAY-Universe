@@ -1,12 +1,9 @@
 """Tests for VyralX Audience & Reach Reinforcement Learning Engine."""
-import json
-import pytest
 from pathlib import Path
 from app.services.audience_reach_learner import (
     AudienceReachLearner,
     calculate_optimal_post_time,
-    find_cohort_for_topic,
-    AUDIENCE_COHORTS
+    find_cohort_for_topic
 )
 
 

@@ -10,8 +10,6 @@ Tests: tests/test_real_batch4a.py
 from __future__ import annotations
 
 import hashlib
-import json
-import math
 import re
 import time
 from collections import defaultdict

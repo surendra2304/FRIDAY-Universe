@@ -1,7 +1,6 @@
 """
 Universal Memora Client for Stratex Quantitative Trading Autonomy
 """
-import os
 import sys
 from pathlib import Path
 

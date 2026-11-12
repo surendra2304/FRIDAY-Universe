@@ -2,9 +2,7 @@
 """Publish Video 2 in True 4K Master as DRAFT (private) with default video thumbnail."""
 import json
 import logging
-import os
 import sys
-import time
 from pathlib import Path
 
 from googleapiclient.discovery import build

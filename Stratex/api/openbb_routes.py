@@ -11,7 +11,7 @@ Endpoints:
 """
 
 from dataclasses import asdict
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from api.data_shapes import format_api_response
 from api.validation import query_bool, query_int, query_symbol, query_timeframe

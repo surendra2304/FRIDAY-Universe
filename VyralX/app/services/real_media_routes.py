@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, HTTPException
+from typing import List
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 try:
@@ -18,7 +18,6 @@ try:
         TopRankManager,
         SEORanker,
         GEORanker,
-        AnalyticsTracker,
         SafetyRuleEngine,
     )
     from app.services.real_open_higgsfield import (
@@ -28,8 +27,6 @@ try:
     )
     from app.services.real_hyperframes import (
         HyperframesManager,
-        HTMLScene,
-        SceneTransition,
         AspectRatioHandler,
     )
 except ImportError:
@@ -44,7 +41,6 @@ except ImportError:
         TopRankManager,
         SEORanker,
         GEORanker,
-        AnalyticsTracker,
         SafetyRuleEngine,
     )
     from VyralX.app.services.real_open_higgsfield import (
@@ -54,8 +50,6 @@ except ImportError:
     )
     from VyralX.app.services.real_hyperframes import (
         HyperframesManager,
-        HTMLScene,
-        SceneTransition,
         AspectRatioHandler,
     )
 

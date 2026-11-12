@@ -8,3 +8,5 @@ QUANTUM_ADVISORY_ONLY = True
 
 # Export primary service class for convenience
 from .service import QuantumService
+
+__all__ = ["QuantumService"]

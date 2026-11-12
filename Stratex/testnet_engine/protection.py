@@ -44,9 +44,6 @@ Price constraint enforced by Binance:
   BUY OCO:  aboveStopPrice (SL) > last_price > belowPrice (TP)
 """
 
-import json
-import math
-import os
 import threading
 from decimal import ROUND_FLOOR, Decimal, InvalidOperation
 

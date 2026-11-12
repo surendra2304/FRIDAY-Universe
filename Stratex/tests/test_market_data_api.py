@@ -1,4 +1,3 @@
-from flask import Flask
 
 from dashboard import (
     api_v1_market_candles,

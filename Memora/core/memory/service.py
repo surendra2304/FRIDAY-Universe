@@ -24,7 +24,6 @@ from storage.relational.access_scope import (
     grant_shared_access,
     may_mutate_record,
     record_is_visible,
-    share_record_with,
     share_record_with_all,
     visible_memory_predicate,
 )

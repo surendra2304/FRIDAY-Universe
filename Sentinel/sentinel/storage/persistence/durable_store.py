@@ -29,7 +29,6 @@ from sqlalchemy import (
     Column,
     Engine,
     Float,
-    Integer,
     MetaData,
     String,
     Table,

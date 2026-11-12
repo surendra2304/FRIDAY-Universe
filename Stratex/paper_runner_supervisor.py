@@ -12,7 +12,6 @@ Isolation: pure additive module. The runner only touches paper_* files and
 never places exchange orders. Disable with SUPERVISE_PAPER_RUNNER=0.
 """
 import datetime
-import json
 import os
 import sys
 import threading

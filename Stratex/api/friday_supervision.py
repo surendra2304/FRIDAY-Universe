@@ -35,8 +35,6 @@ from security_hardening import SCOPE_FRIDAY, require_api_scope
 from panic_state import is_kill_switch_locked, is_panic_active, kill_switch_lock_file, write_panic_state
 from telemetry.health_guard import (
     MAX_TELEMETRY_STALENESS_SECONDS,
-    StaleTelemetryError,
-    check_telemetry_freshness,
 )
 
 logger = get_logger("friday_supervision")

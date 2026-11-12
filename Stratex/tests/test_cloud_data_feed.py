@@ -5,11 +5,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from autonomy.cloud_data_feed import (
-    SYMBOL_MAP,
-    TIMEFRAME_MAP,
     CloudMarketDataFeed,
     get_cloud_data_feed,
 )

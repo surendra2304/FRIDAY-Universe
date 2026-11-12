@@ -20,7 +20,6 @@ from typing import Any
 import json
 import os
 import re
-from collections import defaultdict
 
 
 @dataclass

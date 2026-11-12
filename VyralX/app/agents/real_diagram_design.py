@@ -28,7 +28,7 @@ import math
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 
 # ── Colour ────────────────────────────────────────────────────────────────

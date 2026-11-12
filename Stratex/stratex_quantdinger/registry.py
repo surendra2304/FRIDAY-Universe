@@ -9,7 +9,6 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import os
 import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone

@@ -20,7 +20,6 @@ import numpy as np
 from logger import get_logger
 from strategies.quantitative_engine import (
     KalmanFilterMeanReversionModel,
-    MarketRegime,
     StatisticalArbitrageModel,
     VolatilityRegimeBreakoutModel,
 )
