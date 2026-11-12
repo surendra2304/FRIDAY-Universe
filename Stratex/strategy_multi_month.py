@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""strategy_multi_month.py — multi-horizon monthly momentum, live-interface compatible.
+
+A classical "momentum across lookbacks" strategy: average of 1/3/6-month
+returns, position taken when the average clears a volatility-scaled
+threshold, aligned with price vs its 200-bar EMA regime filter.
+
+Entry : BUY  avg return of (21, 63, 126) bars > k * stdev(returns) and close > EMA200
+        SELL avg return < -k * stdev(returns) and close < EMA200
+Exit  : SL = 2.0 * ATR(20) adverse; TP = 3.5 * ATR(20) (typical momentum RR).
+"""
+from __future__ import annotations
+import math
+from collections import namedtuple
+import pandas as pd
+
+
+class SignalResult(namedtuple("SignalResult", ["side", "sl", "tp", "strategy_type", "win_rate_prior", "rr_ratio", "sl_dist", "tp_dist"], defaults=(None, None))):
+    @property
+    def confidence(self):
+        return self.win_rate_prior
+
+
+_STRATEGY_TYPE = "TREND"
+_OOS_WIN_RATE_PRIOR = 0.40
+_RR_RATIO = 2.5
+_ATR_MULT = 2.0
+_TP_ATR = 3.5
+_K = 0.8  # vol-scaled momentum threshold
+
+
+def _none():
+    return SignalResult(None, None, None, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, None, None)
+
+
+def _drop_forming_bar(df):
+    try:
+        last_ts = df.index[-1]
+        now = pd.Timestamp.now(tz="UTC")
+        if getattr(last_ts, "tzinfo", None) is None:
+            today = now.tz_localize(None).normalize()
+        else:
+            today = now.tz_convert(last_ts.tzinfo).normalize()
+        if last_ts >= today:
+            return df.iloc[:-1]
+    except Exception:
+        return df
+    return df
+
+
+def get_signal(df):
+    if df is None or len(df) < 260:
+        return _none()
+    work = _drop_forming_bar(df)
+    if len(work) < 250:
+        return _none()
+    if not {"close", "high", "low"}.issubset(work.columns):
+        return _none()
+    close = work["close"].astype(float)
+    high = work["high"].astype(float)
+    low = work["low"].astype(float)
+
+    c = float(close.iloc[-1])
+    if c <= 0:
+        return _none()
+
+    # multi-horizon momentum: mean of 21/63/126-bar returns
+    rets = []
+    for n in (21, 63, 126):
+        if len(close) <= n:
+            return _none()
+        rets.append(c / float(close.iloc[-1 - n]) - 1.0)
+    mom = sum(rets) / 3.0
+
+    # volatility scale of recent returns
+    r = close.pct_change()
+    vol = float(r.rolling(63).std().iloc[-1] or 0.0)
+
+    prev_close = close.shift(1)
+    tr = pd.concat([high - low, (high - prev_close).abs(), (low - prev_close).abs()], axis=1).max(axis=1)
+    atr = tr.rolling(20).mean()
+    a = float(atr.iloc[-1])
+    ema200 = close.ewm(span=200, adjust=False).mean()
+    s200 = float(ema200.iloc[-1])
+    if any(math.isnan(v) for v in (a, s200)) or a <= 0:
+        return _none()
+
+    thr = _K * vol if vol > 0 else 0.0
+    if mom > thr and c > s200:
+        sl = c - _ATR_MULT * a
+        tp = c + _TP_ATR * a
+        return SignalResult("BUY", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, c - sl, tp - c)
+    if mom < -thr and c < s200:
+        sl = c + _ATR_MULT * a
+        tp = c - _TP_ATR * a
+        return SignalResult("SELL", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, sl - c, c - tp)
+    return _none()

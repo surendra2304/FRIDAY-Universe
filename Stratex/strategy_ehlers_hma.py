@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""strategy_ehlers_hma.py — Ehlers Hull Moving Average trend strategy.
+
+HMA(WMA(2*WMA(n/2) - WMA(n)), sqrt(n)) is dramatically more responsive than
+EMAs with less lag; combined with a 200-bar regime EMA.
+
+Entry : BUY  close crosses above HMA(21) while HMA rising and close > EMA200
+        SELL close crosses below HMA(21) while HMA falling and close < EMA200
+Exit  : SL = 2.0 * ATR(20); TP = 4.0 * ATR(20).
+"""
+from __future__ import annotations
+import math
+from collections import namedtuple
+import pandas as pd
+
+
+class SignalResult(namedtuple("SignalResult", ["side", "sl", "tp", "strategy_type", "win_rate_prior", "rr_ratio", "sl_dist", "tp_dist"], defaults=(None, None))):
+    @property
+    def confidence(self):
+        return self.win_rate_prior
+
+
+_STRATEGY_TYPE = "TREND"
+_OOS_WIN_RATE_PRIOR = 0.42
+_RR_RATIO = 2.0
+_ATR_MULT = 2.0
+_TP_ATR = 4.0
+_HMA_N = 21
+
+
+def _none():
+    return SignalResult(None, None, None, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, None, None)
+
+
+def _drop_forming_bar(df):
+    try:
+        last_ts = df.index[-1]
+        now = pd.Timestamp.now(tz="UTC")
+        if getattr(last_ts, "tzinfo", None) is None:
+            today = now.tz_localize(None).normalize()
+        else:
+            today = now.tz_convert(last_ts.tzinfo).normalize()
+        if last_ts >= today:
+            return df.iloc[:-1]
+    except Exception:
+        return df
+    return df
+
+
+def _wma(s: pd.Series, n: int) -> pd.Series:
+    weights = pd.Series(range(1, n + 1), dtype=float)
+    return s.rolling(n).apply(lambda x: float((x * weights.values).sum() / weights.sum()), raw=True)
+
+
+def _hma(s: pd.Series, n: int) -> pd.Series:
+    half = max(2, n // 2)
+    sqrt_n = max(2, int(math.sqrt(n)))
+    return _wma(2.0 * _wma(s, half) - _wma(s, n), sqrt_n)
+
+
+def get_signal(df):
+    if df is None or len(df) < 260:
+        return _none()
+    work = _drop_forming_bar(df)
+    if len(work) < 250:
+        return _none()
+    if not {"close", "high", "low"}.issubset(work.columns):
+        return _none()
+    close = work["close"].astype(float)
+    high = work["high"].astype(float)
+    low = work["low"].astype(float)
+
+    c = float(close.iloc[-1])
+    c1 = float(close.iloc[-2])
+    if c <= 0:
+        return _none()
+
+    hma = _hma(close, _HMA_N)
+    h = float(hma.iloc[-1])
+    h1 = float(hma.iloc[-2])
+    h2 = float(hma.iloc[-3])
+    if any(math.isnan(v) for v in (h, h1, h2)):
+        return _none()
+
+    prev_close = close.shift(1)
+    tr = pd.concat([high - low, (high - prev_close).abs(), (low - prev_close).abs()], axis=1).max(axis=1)
+    atr = tr.rolling(20).mean()
+    a = float(atr.iloc[-1])
+    ema200 = close.ewm(span=200, adjust=False).mean()
+    s200 = float(ema200.iloc[-1])
+    if math.isnan(a) or a <= 0 or math.isnan(s200):
+        return _none()
+
+    cross_up = c > h and c1 <= h1
+    cross_dn = c < h and c1 >= h1
+    rising = h > h1 > h2
+    falling = h < h1 < h2
+    if (cross_up or (c > h and rising)) and rising and c > s200:
+        sl = c - _ATR_MULT * a
+        tp = c + _TP_ATR * a
+        return SignalResult("BUY", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, c - sl, tp - c)
+    if (cross_dn or (c < h and falling)) and falling and c < s200:
+        sl = c + _ATR_MULT * a
+        tp = c - _TP_ATR * a
+        return SignalResult("SELL", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, sl - c, c - tp)
+    return _none()

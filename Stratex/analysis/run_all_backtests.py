@@ -58,6 +58,10 @@ ALL_STRATEGIES = [
     # new strategies (ZAI Agent 2)
     "strategy_donchian_turtle", "strategy_vol_regime",
     "strategy_momentum_rotation", "strategy_pullback_ema",
+    # new strategies batch 2 (ZAI Agent 2, TASK-STRATEX-PROFIT-2)
+    "strategy_multi_month", "strategy_kama_adaptive", "strategy_ehlers_hma",
+    "strategy_choppiness_breakout", "strategy_kaufman_efficiency",
+    "strategy_bbi_blend", "strategy_supertrend_atr",
 ]
 
 MAJORS6 = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT"]
