@@ -1648,6 +1648,54 @@ tasks:
     blockers: []
     next_action: "None — the 3 real-bug lint classes (F821/F811/B006) and the F401 dead-weight class are now all zero across siblings."
 
+  - id: TASK-VAL-003
+    title: Read-only on-host runtime and checkout-drift evidence
+    description: Close the discovery gap between cached origin/main, GitHub main, service
+      liveness, health payloads and actual functional verification without touching
+      protected work.
+    priority: P1
+    status: IN_REVIEW
+    owner: arena_engineering_01
+    other_contributors: []
+    branch: arena/TASK-VAL-003-runtime-audit
+    pr: null
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6824912950
+    files:
+    - scripts/audit_fleet_runtime.py
+    - tests/test_audit_fleet_runtime.py
+    dependencies: []
+    acceptance:
+    - No writes, fetches, checkout/reset/clean, env/log reads or service changes.
+    - Exactly ten canonical agents across two host placements.
+    - Fresh caller-supplied full SHA required for successful checkout verification;
+      cached ref not remote truth.
+    - Unknown/degraded/malformed health is not success; HTTP liveness never equals functional
+      verification.
+    - No subprocess stderr, HTTP bodies, credentials or filenames in output; local proxies
+      and redirects disabled.
+    - Regression tests and read-only execution on both production VMs.
+    test_requirements:
+    - Hermetic regression suite plus adjacent fleet/backup tests; registry validator.
+    test_results:
+    - '98 passed: test_audit_fleet_runtime (30), fleet_health_watcher, agent_manifest_validation,
+      fleet_validation, backup_fleet_databases, restore_fleet_database.'
+    - 'Read-only in-memory execution on both VMs 2026-11-12T13:28Z: 10/10 canonical
+      units active, NRestarts=0, HTTP 200 with healthy/ok payloads. Exit 1 correctly
+      reports checkout mismatch.'
+    evidence:
+    - GitHub main e26aeff314cf3bec0cab76ee9327ee053059fc23; both host checkouts and
+      cached origin/main were 7ab94d39e6b06c76afae2fea741256b5f94165fe. Difference is
+      the subsequent documentation commit; not proof of runtime code failure.
+    - 'Protected work counts: Server 1 nine untracked entries; Server 2 six. No worktree
+      altered.'
+    - PRs 45–54 are Dependabot only at discovery; no overlapping source/test paths.
+    blockers: []
+    last_update: '2026-11-12T13:30:06.300605+00:00'
+    next_action: Owner/ZAI independent review; await CI. No merge/deploy. Coordinate
+      existing validate_fleet_live.py defects with its owner separately.
+    claim_policy: Update within 2 hours while active; stale claim requires contact,
+      never automatic takeover.
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

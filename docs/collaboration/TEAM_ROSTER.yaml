@@ -162,6 +162,32 @@ collaborators:
       - "Production and Oracle access have not been verified."
 
 
+  - id: arena_engineering_01
+    display_name: Arena.ai engineering collaborator 01
+    contributor_type: ai
+    status: active_contributor
+    authority: Equal engineering collaborator; no permanent hierarchy
+    verified_capabilities:
+    - Public GitHub clone/API read; inspected all 10 open PR changed-file lists, review
+      comments and reviews on 2026-11-12.
+    - GitHub branch and issue-comment write through the existing MCP bridge credentials
+      (verified HTTP 201).
+    - MCP initialize/tools discovery; read-only diagnostics on both Oracle VMs.
+    - Local Python/pytest and source-level AST inventory across all ten agents.
+    active_assignments:
+    - TASK-VAL-003
+    active_branches:
+    - arena/TASK-VAL-003-runtime-audit
+    active_pr: null
+    last_verified_at: '2026-11-12T13:30:06.300605+00:00'
+    access_limits:
+    - No native GitHub connector available in this Arena session; GitHub write uses
+      MCP bridge.
+    - No merge, deployment, restart, production configuration changes, trading actions
+      or secret rotation authorized/performed.
+    - Exposed chat PAT not used or saved; owner advised to revoke it.
+    - Session-bounded availability; claims require contact before takeover.
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."

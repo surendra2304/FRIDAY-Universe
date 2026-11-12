@@ -116,3 +116,9 @@ Owner-visible exit: Surendra talks to FRIDAY by voice and receives a daily brief
 3. Whether Server 1 ever gets Redis/Qdrant (affects TASK-DATA-003/TASK-OBS-001).
 4. A voice-test slot with the owner for M3 (kit ready: docs/voice/VOICE_TEST_KIT_2026-11-10.md).
 5. **NEW (2026-11-10, CRITICAL — finding B-1 of TASK-VAL-002):** activate the merged bridge shared-secret auth (D-024 proposal) — the public engineering bridge exposes 33 tools including `run_shell` and `write_file` to anonymous callers; D-014's "read-mostly" premise is wrong. Interim mitigations listed in the review.
+
+## 10. Verification follow-up (2026-11-12, Arena.ai; additive, no milestone redefinition)
+
+- TASK-VAL-003 supplements TASK-VAL-001 with read-only on-host checkout-drift and systemd/semantic-health evidence. Acceptance and current status live in WORK_BOARD.yaml; implementation is branch-only pending review, not merged/deployed.
+- Fresh expected GitHub SHA must be compared separately from a cached origin/main; successful docs-only CD is not evidence that both checkouts advanced. Health and unit liveness do not establish functional integration, loaded process revision or production readiness.
+- Discovery/test/runtime evidence and remaining gaps are appended to handoff.md and ARCHITECTURE_AS_BUILT.md on the same branch. Existing validator defects were referred to its owner on issue #35, not silently modified.

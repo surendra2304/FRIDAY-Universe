@@ -1310,6 +1310,28 @@ claims:
     status: "DIRECT_COMMIT_I6_CROSSLANE_AGENT2"
     task: "Checklist I6: dead-code regression gate (6 tests)."
 
+  - path: scripts/audit_fleet_runtime.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-VAL-003-runtime-audit
+    status: IN_REVIEW
+    task: TASK-VAL-003
+    claimed_at: '2026-11-12T13:30:06.300605+00:00'
+    expected_next_update: '2026-11-12T15:30:06.305774+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: tests/test_audit_fleet_runtime.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-VAL-003-runtime-audit
+    status: IN_REVIEW
+    task: TASK-VAL-003
+    claimed_at: '2026-11-12T13:30:06.300605+00:00'
+    expected_next_update: '2026-11-12T15:30:06.306937+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiration.
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:
