@@ -1658,7 +1658,7 @@ tasks:
     owner: arena_engineering_01
     other_contributors: []
     branch: arena/TASK-VAL-003-runtime-audit
-    pr: null
+    pr: 55
     claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6824912950
     files:
     - scripts/audit_fleet_runtime.py

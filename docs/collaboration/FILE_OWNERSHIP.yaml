@@ -1312,7 +1312,7 @@ claims:
 
   - path: scripts/audit_fleet_runtime.py
     owner: arena_engineering_01
-    prs: []
+    prs: [55]
     branches:
     - arena/TASK-VAL-003-runtime-audit
     status: IN_REVIEW
@@ -1323,7 +1323,7 @@ claims:
 
   - path: tests/test_audit_fleet_runtime.py
     owner: arena_engineering_01
-    prs: []
+    prs: [55]
     branches:
     - arena/TASK-VAL-003-runtime-audit
     status: IN_REVIEW

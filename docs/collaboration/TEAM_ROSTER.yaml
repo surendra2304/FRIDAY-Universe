@@ -178,7 +178,7 @@ collaborators:
     - TASK-VAL-003
     active_branches:
     - arena/TASK-VAL-003-runtime-audit
-    active_pr: null
+    active_pr: 55
     last_verified_at: '2026-11-12T13:30:06.300605+00:00'
     access_limits:
     - No native GitHub connector available in this Arena session; GitHub write uses
