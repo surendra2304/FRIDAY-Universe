@@ -16,7 +16,7 @@ from app.memory.models import TaskState
       "failure_summary": "syntax and missing tools", "stages": {"build": {"passed": False, "exit_code": 1}}}, "PARTIAL_FAILURE"),
     ({"all_passed": True, "failed_stages": 0, "stages": {}}, "FAILED"),
     ({"all_passed": True, "failed_stages": 0, "stages": {"test": {"passed": True, "exit_code": 1}}}, "FAILED"),
-    ({"all_passed": True, "failed_stages": 0, "stages": {"test": {"passed": True, "exit_code": 0}}}, "SUCCESS"),
+    ({"all_passed": True, "failed_stages": 0, "stages": {"test": {"passed": True, "exit_code": 0}}}, "DEGRADED"),
 ])
 async def test_completed_state_does_not_override_saved_verification(tmp_path, monkeypatch, manifest, expected):
     if manifest is not None:

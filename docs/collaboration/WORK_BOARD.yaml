@@ -2326,6 +2326,49 @@ tasks:
       No claim microphone/video/OAuth/profit acceptance.
     claim_policy: Update within2h; contact before takeover.
 
+  - id: TASK-WF-014
+    title: Bind completed software receipts to actually verified project bytes
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-014-source-bound-receipts
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/api/delegate.py
+    - Forge/app/verification/engine.py
+    - Forge/app/verification/evidence.py
+    - Forge/tests/unit/test_artifact_receipts.py
+    - Forge/tests/unit/test_delegate_verification_status.py
+    - Forge/app/verification/source_integrity.py
+    - Forge/tests/unit/test_source_bound_receipts.py
+    claimed_at: '2026-11-12T21:26:20.261780+00:00'
+    last_update: '2026-11-12T21:26:20.261780+00:00'
+    acceptance:
+    - Bounded deterministic SHA256 project inventory; regular files only, no symlinks;
+      cache/build/dependency exclusions explicit.
+    - Capture before and after actual checker battery; persistent changes fail integrity
+      stage. Manifest regeneration retains report snapshot; never bless current files
+      from old report.
+    - Saved COMPLETED status SUCCESS only when saved passing stages and current snapshot
+      match. Missing legacy snapshot, changed/added/deleted/unreadable files fail closed
+      as DEGRADED and request real re-verification.
+    - Controlled exactCIhead production rollout, protected work preserved; new isolated
+      registered sourcecopy real tests and live status positive/driftnegative/restoredpositive.
+      Keep historical tasks/source/download unchanged.
+    evidence:
+    - Claim6836331520. Main993a6d6; collaborator reconciled divergence via2d5e2a6; deployfaf6b84/43309257001SUCCESS,
+      latestmainrollout inprogress. No need to overwrite/reconcile collaborator branch
+      again.
+    - 219Forge pass/1unchangedskip; new11regressions execute actualpytest then reject5drift/legacytypes,
+      beforeaftermutation, stale reportregeneration, caches/config, bounds and unavailableinventory.
+      RuffF/E9+diff clean.
+    blockers:
+    - Framework CI/rollout and actual production acceptance pending.
+    next_action: Publish narrow PR, greenCI/controlledrollout, actual source-identical
+      task verification/live receipt drift control and protected recheck; only then
+      final notice.
+    claim_policy: Update within2h; contact before takeover.
+
 task_id_warnings:
   - id: TASK-WF-005
     title: Fix concrete live research/build/shared-memory failures and repeat real workflow

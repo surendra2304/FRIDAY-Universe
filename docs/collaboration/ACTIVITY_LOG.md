@@ -611,3 +611,11 @@ Owner re-verified ZAI Agent 2 access (PAT + MCP bridge 31 tools, both Oracle ser
 
 **Owner action needed (outside the fleet):** find and stop the off-cloud process polling Stratex's bot token — otherwise inbound commands keep being consumed by it. Runtime evidence on S1 journald; token values never read or printed (hash-identity comparison only).
 >>>>>>> origin/zai/TASK-STRATEX-PROFIT-2
+
+## TASK-WF-014 — source-bound receipts (Arena Agent 1)
+
+Owner renewed direct GitHub/Oracle continuation authority. Inspected main993a6d6 and both hosts: collaborator safely reconciled prior S1 divergence via2d5e2a6, deployfaf6b84/43309257001SUCCESS. Do not repeat reset/branch integration or take over Stratex; prior WF013 download/bothruntimeproofs remain unchanged. Fresh claim6836331520.
+
+Saved status previously trusted passing stages even after project bytes changed. New bounded project SHA256 inventory (2048files/32MiB, rejects symlinks/nonregular/unreadable files) excludes explicitly .git, bytecode/cache, env/venv, node_modules, dist/build trees; hidden config remains bound. Actual verification captures before/after: changed inventory fails dedicated source-integrity stage. Report carries checked snapshot; manifest generation NEVER recomputes a passing fingerprint for stale report. Completed ownerstatus SUCCESS additionally requires current snapshot equality. Missing legacy snapshot or source drift yields DEGRADED/re-run verification; no silently retroactive certification. Historical receipts remain as-of their timestamp. Scope detects persistent drift, not hostile code that mutates/restores between checks or authenticated host compromise.
+
+219Forge regressions pass/1unchangedskip,11newcases include realpytest execution then drift/legacy rejection, beforeafter mutation, stale report, cache/config, bounds/unavailablefilesystem. RuffF/E9 and diff clean. Actual framework CI/productionrollout/new registered sourcecopy realtest/live positive-negative-restored-positive acceptance pending; original tasks/download not edited. FinalTelegram only after real outcome. No generated push/deploy or real-money changes.
