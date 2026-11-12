@@ -186,27 +186,38 @@ class ProactiveEngine:
             self._stop_event.wait(self.poll_interval)
 
     def _evaluate(self, current: SystemSnapshot, previous: SystemSnapshot | None) -> None:
-        announcements: list[tuple[str, str]] = []
+        # Announcement-storm fix (2026-11-13, ZAI Agent 2, measured live):
+        # the old dedupe keyed on message[:60] — but the CPU message embeds
+        # the percentage ("hot at 99.8%" vs "99.6%"), so a pinned server
+        # produced a "different" alert every 30s poll and the summary burst
+        # with 17 near-identical lines on the owner's next question.
+        # Dedupe is now per CATEGORY with state-change awareness: one live
+        # alert per condition, re-announced only after the cooldown lapses.
+        announcements: list[tuple[str, str, str]] = []  # (category, message, severity)
         if current.cpu_hot():
             announcements.append((
+                "cpu_hot",
                 f"CPU is running hot at {current.cpu_percent}%. "
                 f"{'Top offender: ' + current.top_processes[0] if current.top_processes else 'Keeping an eye on it.'}",
                 "warning",
             ))
         if current.ram_critical():
             announcements.append((
+                "ram_critical",
                 f"RAM usage is at {current.ram_percent}% ({current.ram_used_gb}/{current.ram_total_gb} GB). "
                 "Might want to close a few things.",
                 "warning",
             ))
         if current.battery_low():
             announcements.append((
+                "battery_low",
                 f"Battery is at {current.battery_percent}% and not charging. "
                 "Plugging in would be wise.",
                 "warning",
             ))
         if current.disk_full():
             announcements.append((
+                "disk_full",
                 f"Disk is {current.disk_percent}% full. Running low on space.",
                 "warning",
             ))
@@ -217,28 +228,32 @@ class ProactiveEngine:
             and current.cpu_percent < 30
             and previous.cpu_percent >= 85
         ):
-            announcements.append(("CPU has cooled down. Crisis averted.", "info"))
+            announcements.append(("cpu_cooled", "CPU has cooled down. Crisis averted.", "info"))
         for fn in self._custom_checks:
             try:
                 result = fn(current, previous)
                 if result:
-                    announcements.append((result, "info"))
+                    announcements.append((f"custom:{fn.__name__}", result, "info"))
             except Exception as exc:
                 logger.warning(f"Custom proactive check failed: {exc}")
-        for message, severity in announcements:
-            if self._should_announce(message):
+        for category, message, severity in announcements:
+            if self._should_announce(category):
                 self.notifications.post_notification(
                     message=_phrase(message),
-                    category="system_monitor",
+                    category=category,
                     severity=severity,
                 )
 
-    def _should_announce(self, message: str) -> bool:
-        """Cooldown so we do not repeat the same announcement every poll."""
-        key = message[:60]
+    def _should_announce(self, category: str) -> bool:
+        """Per-category cooldown so we do not repeat the same condition.
+
+        The key is the CONDITION (cpu_hot, ram_critical, ...), never the
+        message text — a reading that merely drifted from 99.8% to 99.7%
+        is the same condition, not a new announcement.
+        """
         now = datetime.now(timezone.utc)
-        last = self._last_announcement_at.get(key)
+        last = self._last_announcement_at.get(category)
         if last and (now - last) < self._announcement_cooldown:
             return False
-        self._last_announcement_at[key] = now
+        self._last_announcement_at[category] = now
         return True

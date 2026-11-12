@@ -21,6 +21,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -90,12 +91,16 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
     setInput("");
     setMessages((current) => [...current, { role: "user", text: clean, at: Date.now() }]);
     try {
-      const result = await requestJson<{ reply?: string; mode?: string }>("/api/chat", {
+      const result = await requestJson<{ reply?: string; mode?: string; metadata?: { proactive_notice?: string | null } }>("/api/chat", {
         method: "POST",
         body: JSON.stringify({ message: clean }),
       });
       const answer = result.reply || result.mode || "FRIDAY accepted the message.";
       setMessages((current) => [...current, { role: "friday", text: answer, at: Date.now() }]);
+      /* Server pollution fix (2026-11-13): monitor alerts no longer arrive
+         glued to the answer text — they ride in metadata and render here as
+         a dismissible banner, so the answer itself stays clean. */
+      setNotice(result.metadata?.proactive_notice ?? null);
     } catch (error) {
       const reason = error instanceof Error ? error.message : "FRIDAY could not be reached.";
       setMessages((current) => [...current, { role: "friday", text: reason, at: Date.now(), error: true }]);
@@ -131,28 +136,24 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
       </div>
 
       <div className="chat-body">
+        {notice && (
+          <div className="onboarding-hint" style={{ margin: "12px 18px 0" }} role="status">
+            <span style={{ lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{notice}</span>
+            <button className="onboarding-dismiss" onClick={() => setNotice(null)} aria-label="Dismiss notice">
+              dismiss
+            </button>
+          </div>
+        )}
         <div className="chat-scroll" ref={scrollRef}>
-          {messages.length === 0 ? (
+          {messages.length === 0 && (
             <div className="chat-empty">
               <h4 className="chat-empty-title">How can I help, Boss?</h4>
               <p style={{ margin: 0, fontSize: 13.5, maxWidth: 380 }}>
-                Talk or type below — commands, questions, fleet dispatch. Try a starter
-                if you&apos;re not sure where to begin.
+                Talk or type below — commands, questions, fleet dispatch.
               </p>
-              {/* Theme fix 2026-11-13 (VLM review): starter chips used to sit in a
-                  separate row pinned above the input, leaving a dead band between
-                  the centered greeting and the bottom controls. One centered unit:
-                  greeting + starters together. */}
-              <div className="chat-chips chat-chips-empty">
-                <span className="chips-label">Try:</span>
-                {CHIPS.map((chip) => (
-                  <button key={chip} className="chip" onClick={() => void send(chip)}>
-                    {chip}
-                  </button>
-                ))}
-              </div>
             </div>
-          ) : (
+          )}
+          {messages.length > 0 &&
             messages.map((m, i) => (
               <div
                 key={i}
@@ -171,7 +172,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
                 </div>
               </div>
             ))
-          )}
+          }
           {busy && (
             <div className="typing-row panel" style={{ padding: "13px 18px" }}>
               <span className="typing-dot" />
@@ -182,6 +183,16 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
         </div>
 
         <form className="chat-input-row" onSubmit={onSubmit}>
+          {messages.length === 0 && (
+            <div className="chat-chips chat-chips-anchor">
+              <span className="chips-label">Try:</span>
+              {CHIPS.map((chip) => (
+                <button type="button" key={chip} className="chip" onClick={() => void send(chip)}>
+                  {chip}
+                </button>
+              ))}
+            </div>
+          )}
           <textarea
             ref={inputRef}
             className="chat-input"

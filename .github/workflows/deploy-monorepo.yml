@@ -90,6 +90,33 @@ jobs:
               fi
             fi
 
+            # ── Voice worker (2026-11-13): the LiveKit worker is its own unit
+            # (FRIDAY-Voice.service) that the loop above never restarted, so
+            # worker code changes silently stayed unloaded. It also needs the
+            # livekit-plugins-groq package for the WORKING Groq speech path
+            # (the Gemini key on this host is dead — 400 API_KEY_INVALID —
+            # proven by the live-chain probe 2026-11-13: worker joined and
+            # published a track but produced ZERO audio frames). Install the
+            # plugin into whatever interpreter runs the unit, then restart it.
+            if echo "$CHANGED_AGENTS" | grep -qw "FRIDAY" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              if systemctl list-unit-files | grep -qw "FRIDAY-Voice.service"; then
+                echo "=== Voice worker: ensuring livekit-plugins-groq ==="
+                VOICE_PY=$(systemctl show FRIDAY-Voice.service -p ExecStart --value 2>/dev/null | grep -oE '^[^ ]+' || true)
+                if [ -n "$VOICE_PY" ]; then
+                  "$VOICE_PY" -m pip install -q livekit-plugins-groq 2>/dev/null \
+                    || "$VOICE_PY" -m pip install -q --user livekit-plugins-groq 2>/dev/null \
+                    || sudo "$VOICE_PY" -m pip install -q livekit-plugins-groq 2>/dev/null \
+                    || echo "::warning::could not install livekit-plugins-groq into $VOICE_PY — worker will report 'no-provider' honestly"
+                else
+                  echo "::warning::FRIDAY-Voice ExecStart not parseable — skipping plugin install"
+                fi
+                echo "=== Restarting FRIDAY-Voice.service ==="
+                sudo systemctl restart FRIDAY-Voice.service
+                sleep 5
+                sudo systemctl is-active FRIDAY-Voice.service || echo "::error::FRIDAY-Voice is not running after restart"
+              fi
+            fi
+
             # ── TASK-OBS-001 post-deploy health gate ─────────────────────────────
             # A unit under Restart=always can sit in a crash loop and still read
             # "active". Probe each restarted agent over HTTP and surface failures

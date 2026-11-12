@@ -1,22 +1,34 @@
 "use client";
 
-import { Mic, PhoneOff, Radio } from "lucide-react";
+import { AlertTriangle, Mic, PhoneOff, Radio } from "lucide-react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OrbCore, OrbState } from "./OrbCore";
 import { apiBase, formatClock, requestJson } from "@/lib/api";
 
 /* ============================================================
-   Continuous LiveKit voice session with FRIDAY — console rail.
+   Continuous LiveKit voice session with FRIDAY — voice dock.
    One tap connects right here (nothing ever scrolls the page),
    the mic stays open the whole call, and free-tier minutes are
    protected by idle / hard-cap auto-disconnect.
+
+   Worker truth (2026-11-13 redesign): the /api/voice/diagnostics
+   endpoint now reports the cloud worker's heartbeat — which
+   speech provider it has, and if none, WHY. That reason is shown
+   in the dock instead of letting a dead line look like silence.
    ============================================================ */
 
 const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
 const HARD_CAP_MS = 30 * 60 * 1000;
 
 type VoiceStatus = "idle" | "connecting" | "connected" | "error";
+
+type WorkerStatus = {
+  state?: string;
+  provider?: string;
+  detail?: string;
+  updated_at?: string;
+};
 
 export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: OrbState) => void; footer?: React.ReactNode }) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
@@ -25,10 +37,10 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
   const [micSpeaking, setMicSpeaking] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [worker, setWorker] = useState<WorkerStatus | null>(null);
   const roomRef = useRef<Room | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
   const connectedAtRef = useRef<number>(0);
-  // E3/E7 (batch 8): session identity + start timestamp for diagnostics + reconnect.
   const sessionIdRef = useRef<string>("");
   const sessionStartRef = useRef<number>(Date.now());
 
@@ -48,6 +60,25 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
   useEffect(() => {
     onStateChange?.(orbState);
   }, [orbState, onStateChange]);
+
+  /* worker heartbeat: fetch once + on reconnect-to-page; explains in plain
+     language when the line cannot open (e.g. no valid speech credential). */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await requestJson<{ worker?: WorkerStatus }>("/api/voice/diagnostics");
+        if (!cancelled && res?.worker) setWorker(res.worker);
+      } catch {
+        /* endpoint absent (older server) → dock behaves like before */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const workerDown = worker?.state && worker.state !== "ready";
 
   const clearAudioElements = useCallback(() => {
     document.querySelectorAll("audio[data-livekit]").forEach((el) => el.remove());
@@ -144,16 +175,11 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
         setMicSpeaking(self);
       });
 
-      // E7 (batch 8): capture connection quality from LiveKit's PUBLIC
-      // ConnectionQualityChanged event (livekit-client keeps getStats private;
-      // the event carries the SDK's own rtt/loss/jitter measurements).
       let lastRtt: number | null = null;
       let lastLoss: number | null = null;
       room.on(RoomEvent.ConnectionQualityChanged, (quality: any, participant: any) => {
-        // Only the owner's own connection quality (remote = FRIDAY's side).
         if (!participant?.isLocal) return;
         const info = participant.connectionQuality;
-        // LiveKit exposes raw stats via the quality update payload when present.
         if (info && typeof info === "object") {
           const rtt = (info as any).rtt ?? (info as any).roundTripTime;
           const loss = (info as any).loss ?? (info as any).fractionLost;
@@ -161,21 +187,13 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
           if (typeof loss === "number" && loss >= 0 && loss <= 1) lastLoss = loss * 100;
         }
       });
-      const diagPoll = window.setInterval(() => {
-        /* keep the interval for heartbeat timing; readings come from the
-           ConnectionQualityChanged events above */
-      }, 5000);
 
-      // E3 (batch 8): auto-reconnect after an unexpected drop. One attempt,
-      // exponential-ish backoff; preserves the chat panel state (it lives in
-      // a separate component and stays mounted). The owner's page state is
-      // never lost on a transient network blip.
       let reconnectAttempts = 0;
       const MAX_RECONNECT = 2;
 
       const postDiagnostics = async (finalStatus: string, durationSec: number) => {
         try {
-          await fetch(`${apiBase}/api/voice/diagnostics/report`, {
+          await fetch(`${apiBase()}/api/voice/diagnostics/report`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -195,10 +213,7 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
       };
 
       room.on(RoomEvent.Disconnected, async () => {
-        window.clearInterval(diagPoll);
         const duration = (Date.now() - sessionStartRef.current) / 1000;
-        // E3: attempt one auto-reconnect when the drop was unexpected
-        // (not idle/cap timeouts — those go through endCall, not here).
         if (reconnectAttempts < MAX_RECONNECT && Date.now() - lastActivityRef.current < IDLE_TIMEOUT_MS) {
           reconnectAttempts += 1;
           setStatus("connecting");
@@ -206,7 +221,6 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
           try {
             await new Promise((r) => setTimeout(r, 1000 * reconnectAttempts));
             if (!roomRef.current) {
-              // room was torn down; reconnect by re-running startCall's connect.
               const fresh = new Room({ adaptiveStream: true, dynacast: true });
               await fresh.connect(body.server_url, body.token);
               await fresh.localParticipant.setMicrophoneEnabled(true);
@@ -221,7 +235,6 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
             /* fall through to the honest "line closed" path below */
           }
         }
-        // E7: report the final session diagnostics.
         await postDiagnostics(duration > 0 ? (lastRtt != null && lastRtt < 250 ? "good" : "degraded") : "no-session-yet", duration);
         roomRef.current = null;
         clearAudioElements();
@@ -233,14 +246,11 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
       });
 
       await room.connect(body.server_url, body.token);
-
-      /* publish the microphone — without this the room is listen-only */
       await room.localParticipant.setMicrophoneEnabled(true);
 
       roomRef.current = room;
       connectedAtRef.current = Date.now();
       lastActivityRef.current = Date.now();
-      // E3/E7 (batch 8): seed the session identity + start time.
       sessionIdRef.current = `voice-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       sessionStartRef.current = Date.now();
       setSeconds(0);
@@ -263,7 +273,7 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
   return (
     <div className="voice-rail panel">
       <div className="rail-orb">
-        <OrbCore state={orbState} showLabel={false} />
+        <OrbCore state={orbState} showLabel={true} />
       </div>
       <div className="rail-state" aria-live="polite">
         <strong>{message}</strong>
@@ -274,6 +284,15 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
           </span>
         )}
       </div>
+      {workerDown && status === "idle" && (
+        <p className="rail-note rail-warn" style={{ display: "flex", alignItems: "flex-start", gap: 7, textAlign: "left" }}>
+          <AlertTriangle size={14} style={{ flex: "none", marginTop: 2 }} />
+          <span>
+            Voice backend: {worker?.state ?? "unknown"}
+            {worker?.detail ? ` — ${worker.detail}` : ""}
+          </span>
+        </p>
+      )}
       <button
         className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg btn-voice`}
         onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
@@ -297,9 +316,7 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
       {audioBlocked && (
         <p className="rail-note rail-warn">Browser blocked playback — tap anywhere on the page, then press the button again.</p>
       )}
-      <p className="rail-note">
-        English or Telugu · full-duplex · auto-closes when idle to protect free minutes
-      </p>
+      <p className="rail-note">English or Telugu · full-duplex · auto-closes when idle to protect free minutes</p>
       {footer && <div className="rail-footer">{footer}</div>}
     </div>
   );

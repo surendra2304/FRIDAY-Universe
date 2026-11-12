@@ -11,6 +11,13 @@ google-genai>=1.0.0
 openai>=1.0.0
 websockets>=11.0
 livekit-api>=1.0.0
+# Voice stack (FRIDAY-Voice worker). livekit-agents/google were historically
+# installed out-of-band on Server 1; pinning the full set here keeps fresh
+# machines reproducible. livekit-plugins-groq is the WORKING speech path
+# (Groq STT+LLM+TTS on the key the chat brain already uses live).
+livekit-agents>=1.0.0
+livekit-plugins-google>=1.0.0
+livekit-plugins-groq>=1.0.0
 python-dotenv>=1.0.0
 duckduckgo-search>=6.0.0
 beautifulsoup4>=4.12.0

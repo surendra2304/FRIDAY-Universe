@@ -1,12 +1,35 @@
 """
 FRIDAY Sovereign Voice Agent Worker for LiveKit.
-Connects to LiveKit Cloud and participates in voice rooms with low-latency Gemini Live audio.
+
+Redesigned 2026-11-13 (ZAI Agent 2) after the live-chain probe proved the
+old worker joins the room but never speaks: the single hardcoded Gemini
+key on the host is DEAD (400 INVALID_ARGUMENT / API_KEY_INVALID — the
+chat brain fails over to Groq, but the voice worker had no failover and
+went silently mute).
+
+New provider chain, per job:
+
+  1. Gemini Live realtime — IF the credential pool has a healthy key
+     (full English+Telugu, native VAD, best quality).
+  2. Groq modular pipeline — Groq STT (whisper-large-v3-turbo,
+     multilingual in) + Groq LLM (openai/gpt-oss-120b — the SAME model
+     the chat brain uses live) + Groq TTS (orpheus, English out). This
+     runs on the key that is PROVEN working on this host.
+  3. Neither → the job exits honestly with a reason written to the
+     status file; the dashboard shows it instead of silent failure.
+
+Every path injects the owner's recent memories into the system prompt so
+voice FRIDAY remembers who it is talking to (the "not remembering me"
+complaint). A heartbeat file (data/voice_worker_status.json) reports the
+worker's provider + state; /api/voice/diagnostics serves it.
 """
 import asyncio
+import json
 import logging
 import os
 import ssl
 import sys
+import time
 from pathlib import Path
 
 # Ensure FRIDAY source is in path
@@ -30,19 +53,12 @@ import aiohttp  # noqa: F401
 import certifi
 import httpx  # noqa: F401
 import numpy  # noqa: F401
-from google import genai  # noqa: F401
-from google.genai import types as genai_types
 
 _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 from livekit.agents import AutoSubscribe, JobContext, JobExecutorType, WorkerOptions, cli
 from livekit.agents.voice import Agent, AgentSession
 from livekit.agents.voice.room_io import RoomInputOptions, RoomOutputOptions
-from livekit.plugins import google
-
-# The loop monitor emits multi-kilobyte JSON warnings that themselves block
-# the audio loop. Keep genuine errors, drop the repetitive stall reports.
-logging.getLogger("livekit.agents.telemetry.loop_monitor").setLevel(logging.ERROR)
 
 logger = logging.getLogger("friday.voice")
 if not logger.handlers:
@@ -51,36 +67,299 @@ if not logger.handlers:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
 
+# The loop monitor emits multi-kilobyte JSON warnings that themselves block
+# the audio loop. Keep genuine errors, drop the repetitive stall reports.
+logging.getLogger("livekit.agents.telemetry.loop_monitor").setLevel(logging.ERROR)
+
 # Warm the URL/regex/httpx code paths that otherwise stall the job loop for
-# seconds the first time the Gemini client is built inside a live session.
+# seconds the first time a client is built inside a live session.
+_ = httpx.Client(base_url="https://api.groq.com")
+_ = httpx.AsyncClient(base_url="https://api.groq.com")
 _ = httpx.Client(base_url="https://generativelanguage.googleapis.com")
 _ = httpx.AsyncClient(base_url="https://generativelanguage.googleapis.com")
 
+STATUS_FILE = FRIDAY_ROOT / "data" / "voice_worker_status.json"
 
-FRIDAY_INSTRUCTIONS = (
+
+def _write_status(state: str, provider: str, detail: str = "", model: str = "") -> None:
+    """Heartbeat file — read by /api/voice/diagnostics and shown in the dock."""
+    try:
+        STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        STATUS_FILE.write_text(
+            json.dumps(
+                {
+                    "state": state,
+                    "provider": provider,
+                    "model": model,
+                    "detail": detail,
+                    "pid": os.getpid(),
+                    "updated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+    except Exception as exc:  # never let a status write kill the worker
+        logger.warning("status file write failed: %s", exc)
+
+
+def _groq_key() -> str:
+    """The Groq key the chat brain already uses (proven live on this host)."""
+    for name in ("FRIDAY_GROQ_API_KEY", "GROQ_API_KEY"):
+        val = (os.getenv(name) or "").strip()
+        if val:
+            return val
+    try:  # .env fallback for service units with a sparse environment
+        from dotenv import dotenv_values
+
+        vals = dotenv_values(FRIDAY_ROOT / ".env")
+        for name in ("FRIDAY_GROQ_API_KEY", "GROQ_API_KEY"):
+            val = (vals.get(name) or "").strip()
+            if val:
+                os.environ[name] = val
+                return val
+    except Exception:
+        pass
+    return ""
+
+
+def _gemini_pool_keys() -> list[str]:
+    """Every Gemini key the credential pool knows (primary + fallbacks)."""
+    try:
+        from friday.auth.credential_pool import credential_pool
+
+        keys = [c.api_key for c in credential_pool.credentials if c.api_key]
+        healthy = []
+        for cred in credential_pool.credentials:
+            if cred.is_healthy(1, 60):
+                healthy.append(cred.api_key)
+        return healthy or keys
+    except Exception as exc:
+        logger.warning("credential pool unavailable: %s", exc)
+        keys = []
+        for name in ("FRIDAY_GEMINI_API_KEY", "GEMINI_API_KEY"):
+            val = (os.getenv(name) or "").strip()
+            if val:
+                keys.extend([k.strip() for k in val.split(",") if k.strip()])
+        for i in range(1, 10):
+            val = (os.getenv(f"FRIDAY_GEMINI_FALLBACK_API_KEY_{i}") or "").strip()
+            if val:
+                keys.extend([k.strip() for k in val.split(",") if k.strip()])
+        return keys
+
+
+def _owner_memory_lines() -> str:
+    """Recent owner memories, injected so voice FRIDAY remembers the owner."""
+    try:
+        from friday.memory.memora_client import memora_client
+        from friday.memory.hygiene import is_memory_noise
+
+        hits = memora_client.recall_memories("friday", "Surendra owner facts preferences", limit=6) or []
+        lines = []
+        seen = set()
+        for m in hits:
+            text = str(m.get("content_text", "")).strip()
+            low = text.lower()
+            if not text or len(text) > 160 or low in seen:
+                continue
+            # never inject agent-log noise or telemetry spam as "memory"
+            if is_memory_noise(text):
+                continue
+            seen.add(low)
+            lines.append(f"- {text}")
+        if lines:
+            return (
+                "You remember these facts about the owner (Surendra):\n"
+                + "\n".join(lines[:6])
+                + "\nUse them naturally when relevant; never list them unprompted."
+            )
+        return ""
+    except Exception as exc:
+        logger.debug("owner memory injection skipped: %s", exc)
+        return ""
+
+
+def _voice_model() -> str:
+    return (os.getenv("FRIDAY_VOICE_LIVE_MODEL") or "gemini-2.0-flash-live-001").strip()
+
+
+def _voice_name() -> str:
+    return (os.getenv("FRIDAY_VOICE_NAME") or "Aoede").strip()
+
+
+def _llm_chat_model() -> str:
+    return (os.getenv("FRIDAY_VOICE_CHAT_MODEL") or "openai/gpt-oss-120b").strip()
+
+
+BASE_INSTRUCTIONS = (
     "You are FRIDAY, the central intelligence and sovereign AI operating system of the FRIDAY Universe. "
     "You orchestrate all 10 specialized agents: Stratex (trading), VyralX (video/media), Cortex (CRM), "
     "Inference (model router), Forge (autonomous coding), Memora (memory fabric), IntelX (threat intel), "
     "Futuris (forecasting), Sentinel (security operations), and yourself FRIDAY (the coordinator). "
-    "You are fluent in English and Telugu (తెలుగు). Always answer in the language the user just spoke: "
-    "if they speak Telugu, reply in natural conversational Telugu; if they speak English, reply in English. "
-    "If they mix both, mirror their mix. Never claim an action succeeded unless a tool result confirms it. "
     "You are speaking with Surendra, an Indian-English speaker from Hyderabad whose phrasing mixes "
     "Telugu and English naturally. Understand Indian-English accents and vocabulary confidently "
     "(do the needful, prepone, out of station, revert, lakh and crore quantities, doubled and "
     "retroflex consonants); never mock or correct his accent; only ask him to repeat when a phrase is "
     "genuinely unintelligible, and then ask in one short friendly line. "
-    "Respond concisely, politely, and intelligently with a crisp British accent in English. "
-    "Keep replies brief, conversational, and voice-friendly."
+    "Never claim an action succeeded unless a tool result confirms it. "
+    "Respond concisely, politely, and intelligently. Keep replies brief, conversational, and "
+    "voice-friendly — one to four sentences unless he asks for detail."
 )
 
 
-def _voice_model() -> str:
-    return (os.getenv("FRIDAY_VOICE_LIVE_MODEL") or "gemini-3.8-live").strip()
+def _instructions(with_memory: bool = True, english_out: bool = False) -> str:
+    prompt = BASE_INSTRUCTIONS
+    if english_out:
+        prompt += (
+            " You fully understand spoken Telugu and Telugu-English mix. For this call, answer in "
+            "English (your current speech voice is English-only); a warm Telugu greeting word is fine."
+        )
+    else:
+        prompt += (
+            " Answer in the language the user just spoke: Telugu in natural conversational Telugu, "
+            "English in English, mirroring a mix."
+        )
+    if with_memory:
+        memory = _owner_memory_lines()
+        if memory:
+            prompt += "\n\n" + memory
+    return prompt
 
 
-def _voice_name() -> str:
-    return (os.getenv("FRIDAY_VOICE_NAME") or "Aoede").strip()
+def _build_session(**kwargs) -> AgentSession:
+    """AgentSession constructor that survives livekit-agents API generations.
+
+    The host currently runs a livekit-agents old enough to take the flat
+    kwargs (turn_detection=..., min_endpointing_delay=...); 1.8+ moved
+    them into turn_handling=TurnHandlingOptions. Try the old signature
+    first (it is what is deployed), fall back to the new one.
+    """
+    try:
+        return AgentSession(**kwargs)
+    except TypeError as exc:
+        if "turn_detection" not in str(exc) and "turn_handling" not in str(exc):
+            raise
+        turn_handling = {}
+        simple = {
+            "turn_detection": "turn_detection",
+            "min_endpointing_delay": ("endpointing", "min_delay"),
+            "max_endpointing_delay": ("endpointing", "max_delay"),
+            "allow_interruptions": ("interruption", "enabled"),
+            "min_interruption_duration": ("interruption", "min_duration"),
+        }
+        for old, target in simple.items():
+            if old in kwargs:
+                value = kwargs.pop(old)
+                if isinstance(target, tuple):
+                    group, field = target
+                    turn_handling.setdefault(group, {})[field] = value
+                else:
+                    turn_handling[target] = value
+        kwargs.pop("resume_false_interruption", None)
+        kwargs.pop("false_interruption_timeout", None)
+        kwargs["turn_handling"] = turn_handling
+        return AgentSession(**kwargs)
+
+
+def _probe_gemini_key_sync(key: str) -> bool:
+    """One tiny real request: does Google accept this key?
+
+    Building a RealtimeModel with a dead key SUCCEEDS and only fails at
+    connect time — the exact silent-mute failure the live probe caught
+    (worker joins, publishes a track, zero frames). So the Gemini path is
+    only chosen after a key proves itself with a cheap generateContent.
+    Any answer that is not an auth failure (API_KEY_INVALID / 401 / 403)
+    counts as a working key — a model-not-found with valid auth still
+    means the key is alive.
+    """
+    try:
+        from google import genai
+
+        client = genai.Client(api_key=key)
+        client.models.generate_content(model="gemini-2.0-flash", contents="ping")
+        return True
+    except Exception as exc:
+        text = f"{type(exc).__name__}: {exc}".lower()
+        if any(m in text for m in ("api_key_invalid", "api key not valid", "401", "403", "permission")):
+            logger.info("gemini key probe rejected: %s", text[:180])
+            return False
+        # quota or model errors mean the key itself is valid
+        logger.info("gemini key probe non-auth result (key counts as valid): %s", text[:180])
+        return True
+
+
+async def _try_gemini_realtime(instructions: str):
+    """Path 1: Gemini Live realtime — only if the plugin AND a proven key exist."""
+    try:
+        from livekit.plugins import google
+        from google import genai  # noqa: F401
+        from google.genai import types as genai_types
+    except ImportError as exc:
+        logger.info("gemini realtime unavailable (plugin import): %s", exc)
+        return None
+
+    keys = _gemini_pool_keys()
+    if not keys:
+        logger.info("gemini realtime unavailable: no keys in the credential pool")
+        return None
+
+    # Probe at most the first two keys; the pool orders healthy-first.
+    for key in keys[:2]:
+        try:
+            valid = await asyncio.wait_for(
+                asyncio.to_thread(_probe_gemini_key_sync, key), timeout=15.0
+            )
+        except asyncio.TimeoutError:
+            logger.info("gemini key probe timed out")
+            valid = False
+        if not valid:
+            continue
+        try:
+            model = google.realtime.RealtimeModel(
+                api_key=key,
+                model=_voice_model(),
+                voice=_voice_name(),
+                temperature=0.6,
+                instructions=instructions,
+                http_options=genai_types.HttpOptions(
+                    client_args={"verify": _SSL_CONTEXT},
+                    async_client_args={"ssl": _SSL_CONTEXT},
+                ),
+            )
+            logger.info("gemini realtime model built on a probe-verified key")
+            return model
+        except Exception as exc:
+            logger.warning("gemini realtime model build failed on a verified key: %s", exc)
+            return None
+
+    logger.warning("no probe-valid gemini key found; falling back to the groq pipeline")
+    return None
+
+
+async def _try_groq_pipeline():
+    """Path 2: full Groq pipeline on the key the chat brain already uses."""
+    key = _groq_key()
+    if not key:
+        logger.info("groq pipeline unavailable: no GROQ key in env")
+        return None, "no_groq_key"
+    try:
+        from livekit.plugins import groq
+    except ImportError as exc:
+        logger.warning(
+            "groq pipeline unavailable (livekit-plugins-groq not installed): %s", exc,
+        )
+        _write_status("no-provider", "none", "livekit-plugins-groq not installed on the voice host")
+        return None, "no_plugin"
+
+    stt = groq.STT(
+        api_key=key,
+        model="whisper-large-v3-turbo",
+        detect_language=True,
+    )
+    llm = groq.LLM(api_key=key, model=_llm_chat_model(), temperature=0.6)
+    tts = groq.TTS(api_key=key, model="canopylabs/orpheus-v1-english", voice="autumn")
+    logger.info("groq pipeline ready: whisper-large-v3-turbo + %s + orpheus", _llm_chat_model())
+    return (stt, llm, tts), None
 
 
 async def entrypoint(ctx: JobContext):
@@ -89,20 +368,7 @@ async def entrypoint(ctx: JobContext):
     def _on_track_subscribed(track, publication, participant):
         logger.info(
             "VOICE track_subscribed kind=%s source=%s sid=%s participant=%s",
-            track.kind,
-            publication.source,
-            publication.sid,
-            participant.identity,
-        )
-
-    def _on_track_published(publication, participant):
-        logger.info(
-            "VOICE track_published kind=%s source=%s sid=%s participant=%s subscribed=%s",
-            publication.kind,
-            publication.source,
-            publication.sid,
-            participant.identity,
-            publication.subscribed,
+            track.kind, publication.source, publication.sid, participant.identity,
         )
 
     def _on_participant_connected(participant):
@@ -112,43 +378,58 @@ async def entrypoint(ctx: JobContext):
         logger.info("VOICE participant_disconnected %s", participant.identity)
 
     ctx.room.on("track_subscribed", _on_track_subscribed)
-    ctx.room.on("track_published", _on_track_published)
     ctx.room.on("participant_connected", _on_participant_connected)
     ctx.room.on("participant_disconnected", _on_participant_disconnected)
 
-    api_key = (os.getenv("FRIDAY_GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY") or "").strip()
-    if not api_key:
-        raise RuntimeError("FRIDAY_GEMINI_API_KEY is not configured")
+    instructions = _instructions()
 
-    model = google.realtime.RealtimeModel(
-        api_key=api_key,
-        model=_voice_model(),
-        voice=_voice_name(),
-        temperature=0.6,
-        # Put the system prompt in the connect config. If it is only set on the
-        # Agent, LiveKit sends it as a mid-session `turn_complete=False` model
-        # turn after connecting, which can leave Gemini waiting instead of
-        # running VAD on the user's microphone audio.
-        instructions=FRIDAY_INSTRUCTIONS,
-        # Reuse the process-wide SSL context. Creating a fresh context inside
-        # the live session blocks the event loop for 1-4 seconds on this host.
-        http_options=genai_types.HttpOptions(
-            client_args={"verify": _SSL_CONTEXT},
-            async_client_args={"ssl": _SSL_CONTEXT},
-        ),
-    )
+    # ---------------- provider selection ----------------
+    session: AgentSession | None = None
+    agent: Agent
+    provider_name = "none"
 
-    agent = Agent(instructions=FRIDAY_INSTRUCTIONS)
-    session = AgentSession(
-        llm=model,
-        turn_detection="realtime_llm",
-        min_endpointing_delay=0.5,
-        max_endpointing_delay=3.0,
-        allow_interruptions=True,
-        min_interruption_duration=0.8,
-        resume_false_interruption=True,
-        false_interruption_timeout=1.0,
-    )
+    realtime_model = await _try_gemini_realtime(instructions)
+    if realtime_model is not None:
+        provider_name = f"gemini-realtime:{_voice_model()}"
+        agent = Agent(instructions=instructions)
+        session = _build_session(
+            llm=realtime_model,
+            turn_detection="realtime_llm",
+            min_endpointing_delay=0.5,
+            max_endpointing_delay=3.0,
+            allow_interruptions=True,
+            min_interruption_duration=0.8,
+            resume_false_interruption=True,
+            false_interruption_timeout=1.0,
+        )
+        _write_status("ready", provider_name, model=_voice_model())
+    else:
+        groq_parts, reason = await _try_groq_pipeline()
+        if groq_parts is None:
+            detail = {
+                "no_groq_key": "no Groq key in the service environment",
+                "no_plugin": "livekit-plugins-groq not installed on the voice host",
+            }.get(reason or "", "no speech provider available")
+            _write_status("no-provider", "none", detail)
+            logger.error("VOICE job refused: %s", detail)
+            # Leave honestly: joining a room with no way to speak is the
+            # silent-dead-line failure mode this redesign exists to kill.
+            return
+        stt, llm, tts = groq_parts
+        provider_name = f"groq:{_llm_chat_model()}"
+        instructions = _instructions(with_memory=True, english_out=True)
+        agent = Agent(instructions=instructions)
+        session = _build_session(
+            stt=stt,
+            llm=llm,
+            tts=tts,
+            turn_detection="stt",
+            min_endpointing_delay=0.5,
+            max_endpointing_delay=4.0,
+            allow_interruptions=True,
+            min_interruption_duration=0.9,
+        )
+        _write_status("ready", provider_name, model=_llm_chat_model())
 
     # Tracks whether the agent has actually produced speech. The realtime model
     # can accept a generate_reply() and then drop the audio, which is silent to
@@ -159,8 +440,7 @@ async def entrypoint(ctx: JobContext):
     def _on_user_transcribed(ev):
         logger.info(
             "VOICE user_input_transcribed final=%s text=%r",
-            getattr(ev, "is_final", None),
-            getattr(ev, "transcript", None),
+            getattr(ev, "is_final", None), getattr(ev, "transcript", None),
         )
 
     @session.on("conversation_item_added")
@@ -178,8 +458,7 @@ async def entrypoint(ctx: JobContext):
             _speech_state["spoke"] = True
         logger.info(
             "VOICE agent_state %s -> %s",
-            getattr(ev, "old_state", None),
-            getattr(ev, "new_state", None),
+            getattr(ev, "old_state", None), getattr(ev, "new_state", None),
         )
 
     @session.on("error")
@@ -201,22 +480,19 @@ async def entrypoint(ctx: JobContext):
         ),
     )
     greeting_enabled = (os.getenv("FRIDAY_VOICE_GREETING") or "1").strip().lower() not in (
-        "0",
-        "false",
-        "no",
+        "0", "false", "no",
     )
-    greeting_text = (
-        "Systems are online and all agents are standing by. What can I do for you?"
-    )
+    greeting_text = "Systems are online and all agents are standing by. What can I do for you?"
 
     async def _greet_when_ready() -> None:
         """Greet only once a real generation can be attached.
 
         Calling generate_reply() immediately after session.start() races the
-        realtime model's turn registration: Gemini streams content, the plugin
-        logs "received server content but no active generation", and the audio is
-        discarded -- the participant then hears nothing at all. Waiting for the
-        human to actually join and giving the session a beat to arm fixes that.
+        model's turn registration: Gemini streams content, the plugin logs
+        "received server content but no active generation", and the audio is
+        discarded -- the participant then hears nothing at all. Waiting for
+        the human to actually join and giving the session a beat to arm
+        fixes that.
         """
         if not greeting_enabled:
             return
@@ -234,16 +510,15 @@ async def entrypoint(ctx: JobContext):
                 user_input=(
                     "Greet the user warmly as FRIDAY in one or two short sentences. "
                     "Say that systems are online and the agents are standing by, "
-                    "then invite them to speak. Add one short Telugu line "
-                    "(నమస్కారం, ఫ్రైడే సిద్ధంగా ఉంది) so the user knows Telugu works."
+                    "then invite them to speak."
                 )
             )
         except Exception as exc:
             logger.error("VOICE greeting generation failed: %s", exc)
 
-        # If the model swallowed the turn, speak a fixed line rather than leaving
-        # dead air. This is the difference between "voice is broken" and "voice
-        # answered but said something pre-scripted".
+        # If the model swallowed the turn, speak a fixed line rather than
+        # leaving dead air. This is the difference between "voice is broken"
+        # and "voice answered but said something pre-scripted".
         for _ in range(30):  # ~6s
             if _speech_state["spoke"]:
                 return
@@ -252,13 +527,30 @@ async def entrypoint(ctx: JobContext):
             logger.warning("VOICE no speech after greeting; using spoken fallback")
             try:
                 session.say(greeting_text, allow_interruptions=True)
+            except TypeError:
+                try:
+                    session.say(greeting_text)
+                except Exception as exc:
+                    logger.error("VOICE fallback speech failed: %s", exc)
             except Exception as exc:
                 logger.error("VOICE fallback speech failed: %s", exc)
 
     asyncio.create_task(_greet_when_ready())
 
 
+def _on_worker_started() -> None:
+    """Worker process heartbeat: the service is up and registered."""
+    _write_status("registered", "pending", detail="waiting for the first job")
+
+
 if __name__ == "__main__":
+    try:
+        from livekit.agents import RunConfig, run_kwargs  # type: ignore
+
+        _RK = run_kwargs  # noqa: F841 — availability probe for new versions
+    except Exception:
+        pass
+    _on_worker_started()
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,

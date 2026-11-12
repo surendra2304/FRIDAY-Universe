@@ -236,15 +236,18 @@ export function VoiceDiagnostics() {
   const hasSession = !!(s && s.session_id);
   const rtt = s?.rtt_ms;
   const loss = s?.packet_loss_pct;
-  const quality = s?.quality ?? "no-session-yet";
+  const qualityLabel =
+    !hasSession || !s?.quality
+      ? "no session yet"
+      : s.quality.replace(/[-_]/g, " ");
 
   return (
     <article className="voice-diag-card" aria-label="Voice session diagnostics">
       <div className="stat-label">
         <Mic size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
         Voice session (last)
-        <span className={`status-pill ${quality === "good" ? "good" : quality === "degraded" ? "muted" : "muted"}`}>
-          {quality}
+        <span className={`status-pill ${qualityLabel === "good" ? "good" : "muted"}`}>
+          {qualityLabel}
         </span>
       </div>
       <div className="voice-diag-grid">

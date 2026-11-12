@@ -134,7 +134,13 @@ class NotificationManager:
         metadata: dict[str, Any] | None = None,
         notification_id: str | None = None,
     ) -> str:
-        """Enqueue a new proactive notification."""
+        """Enqueue a new proactive notification.
+
+        Queue-storm guard (2026-11-13): same-condition alerts (a CPU pinned
+        at ~100% for hours) may legally pass the engine cooldown on restarts;
+        the in-memory queue is capped so the backlog can never outgrow the
+        summary that presents it.
+        """
         notif_id = notification_id or str(uuid.uuid4())
         notif = ProactiveNotification(
             notification_id=notif_id,
@@ -152,6 +158,11 @@ class NotificationManager:
                     connection.commit()
             else:
                 self._queue.append(notif)
+                if len(self._queue) > 12:
+                    # drop the OLDEST undelivered items, keep the freshest 12
+                    delivered = [n for n in self._queue if n.delivered]
+                    undelivered = [n for n in self._queue if not n.delivered][-12:]
+                    self._queue = delivered[-12:] + undelivered
         logger.info(f"Queued proactive notification [{category}/{severity}]: {message}")
         return notif_id
 
@@ -211,16 +222,28 @@ class NotificationManager:
         return pending
 
     def pop_notifications_summary(self) -> str | None:
-        """Fetch unread notifications and format as conversational lead-in."""
+        """Fetch unread notifications and format as conversational lead-in.
+
+        Summary-storm fix (2026-11-13, ZAI Agent 2): a live server measured
+        17 near-identical CPU lines burst into one reply (and from there
+        straight into long-term memory). The summary is now capped at the
+        three most recent pending items; the rest are marked delivered so
+        they stop haunting every future answer.
+        """
         pending = self.fetch_pending_notifications(mark_delivered=True)
         if not pending:
             return None
 
-        if len(pending) == 1:
-            return f"I noticed that {pending[0].message} while you were away."
+        newest_first = list(reversed(pending))
+        shown = newest_first[:3]
+        if len(shown) == 1:
+            return f"I noticed that {shown[0].message} while you were away."
 
-        bullet_lines = [f"- {p.message}" for p in pending]
-        return "I noticed the following while you were away:\n" + "\n".join(bullet_lines)
+        bullet_lines = [f"- {p.message}" for p in shown]
+        summary = "I noticed the following while you were away:\n" + "\n".join(bullet_lines)
+        if len(newest_first) > len(shown):
+            summary += f"\n(+ {len(newest_first) - len(shown)} older alerts cleared)"
+        return summary
 
     def clear(self) -> None:
         """Clear all stored notifications."""

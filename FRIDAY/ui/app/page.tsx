@@ -1,10 +1,10 @@
 "use client";
 
-import { Activity, Clock3, Globe2, LayoutGrid, Radio, TerminalSquare, Waypoints } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Activity, Clock3, LayoutGrid, Radio, TerminalSquare, Waypoints } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { EmptyState, OnboardingHint, OwnerPreferences, VoiceDiagnostics } from "@/components/batch8";
-import { AuroraBackground, CountUp, FloatingOrbs, Magnetic, Orbital, Parallax, ParticleField, Reveal, ScrambleText } from "@/components/effects";
+import { Reveal } from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
 import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
@@ -22,16 +22,17 @@ import {
 } from "@/lib/api";
 
 /* ============================================================
-   FRIDAY Universe — sectioned command center.
+   FRIDAY Universe — console-first command center.
+   Redesigned 2026-11-13 (ZAI Agent 2) — "Obsidian Console":
+   the conversation IS the product. Chat dominates, voice docks
+   beside it, telemetry lives in its own tabs. No decorative
+   layers; every pixel carries information.
 
-   Owner directives honored here (2026-11-11 IST):
-   - The Dashboard (Console) is FRIDAY communication ONLY — voice
-     and chat side by side, fits the viewport, nothing scrolls.
-   - Fleet / Activity / System live in their own sections.
-   - No scroll-jump when starting voice (it connects in place).
-   - IST is the only clock shown.
-   - Chat history and any live call survive tab switches (all
-     sections stay mounted; hidden sections pause their fetches).
+   Kept owner directives:
+   - no scroll-jump when starting voice (connects in place)
+   - IST is the only clock
+   - chat history and live calls survive tab switches (all
+     sections stay mounted; hidden sections pause fetches)
    ============================================================ */
 
 type Tab = "console" | "fleet" | "activity" | "system";
@@ -124,11 +125,8 @@ export default function Page() {
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(String(event.data)) as LiveActivityEvent;
-          /* Checklist D11: accept the widened event coverage — legacy
-             "activity", delegation "agent_action", and "chat_command"
-             streams all land in the live feed. */
           const known = ["activity", "agent_action", "chat_command"];
-          if (known.includes(String(data.type)) ) {
+          if (known.includes(String(data.type))) {
             const key = String(data.agent || data.agents_involved || "friday").toLowerCase();
             setLiveActivity((current) => ({ ...current, [key]: data }));
           }
@@ -170,9 +168,7 @@ export default function Page() {
       <main className="splash" role="status" aria-label="Loading FRIDAY">
         <div className="splash-inner">
           <div className="splash-ring" />
-          <span className="splash-text">
-            <ScrambleText text="FRIDAY" speed={60} />
-          </span>
+          <span className="splash-text">FRIDAY</span>
         </div>
       </main>
     );
@@ -180,37 +176,28 @@ export default function Page() {
 
   return (
     <>
-      <AuroraBackground />
-      <ParticleField />
-      <FloatingOrbs />
-
       <nav className="nav" aria-label="Main navigation">
         <a className="nav-logo" href="#top" aria-label="FRIDAY home">
           <span className="logo-dot" aria-hidden="true" />
-          <ScrambleText text="FRIDAY" />
+          FRIDAY
         </a>
         <div className="tabs" role="tablist" aria-label="Sections">
           {TABS.map(({ id, label, icon }) => (
-            <Magnetic key={id}>
-              <button
-                role="tab"
-                aria-selected={tab === id}
-                className={`tab${tab === id ? " active" : ""}`}
-                onClick={() => setTab(id)}
-              >
-                {icon}
-                <span>{label}</span>
-              </button>
-            </Magnetic>
+            <button
+              key={id}
+              role="tab"
+              aria-selected={tab === id}
+              className={`tab${tab === id ? " active" : ""}`}
+              onClick={() => setTab(id)}
+            >
+              {icon}
+              <span>{label}</span>
+            </button>
           ))}
         </div>
         <div className="nav-status">
-          {/* Truthful status (fix 2026-11-13): the dot used to show green whenever
-             the dashboard API answered — even with 0/9 agents reachable, which
-             read as a status lie next to the "0/9 live" text. Green only when
-             at least one agent is actually reachable; amber for a connected
-             dashboard with zero agents; red only for a real API outage. */}
           <span
+            title="Agents answering live health probes right now"
             className={`dot ${
               connected === "online" && onlineCount > 0
                 ? "good"
@@ -222,7 +209,9 @@ export default function Page() {
             } ${connected === "online" ? "pulse" : ""}`}
           />
           {connected === "online"
-            ? `${onlineCount}/${totalAgents} agents live`
+            ? onlineCount > 0
+              ? `${onlineCount}/${totalAgents} agents live`
+              : <span className="nav-alert" role="status">dashboard online · agents unreachable</span>
             : connected === "offline"
               ? "API offline"
               : "Connecting…"}
@@ -233,30 +222,26 @@ export default function Page() {
         </div>
       </nav>
 
-      <main className="shell" id="top" style={{ paddingTop: "var(--nav-h)" }}>
+      <main className="shell" id="top" style={{ paddingTop: "calc(var(--nav-h) + 20px)" }}>
         {/* ============ CONSOLE — FRIDAY communication only ============ */}
         <section className={`tabview${tab === "console" ? " on" : ""}`} hidden={tab !== "console"} aria-label="FRIDAY console">
           <div className="console">
-            <Parallax depth={6} className="console-left-wrap">
+            <div className="console-left-wrap">
               <div className="console-left">
-                <Orbital className="console-orbital" count={9} radius={128} duration={46} />
                 <VoiceCall onStateChange={setVoiceState} footer={<ConsoleStrip fleet={fleet} autonomy={autonomy} />} />
               </div>
-            </Parallax>
-            <Parallax depth={2} className="console-main-wrap">
+            </div>
+            <div className="console-main-wrap">
               <div className="console-main">
                 <ChatPanel prefill={chatPrefill} />
               </div>
-            </Parallax>
+            </div>
           </div>
-          {/* Checklist D17/D18 (batch 8, ZAI Agent 2): owner preferences +
-              first-visit onboarding hint, under the chat panel. */}
-          <Reveal delay={120}>
+          <Reveal delay={80}>
             <OnboardingHint id="console-welcome">
-              <strong>Welcome back, Boss.</strong> Talk or type below — say <em>"watch topic X"</em> to queue a
-              briefing, <em>"alert me when BTC &gt; 100k"</em> for a price alert, or set your preferences below.
+              <strong>Welcome back, Boss.</strong> Talk or type — try <em>&quot;watch topic X&quot;</em> for briefings or{" "}
+              <em>&quot;alert me when BTC &gt; 100k&quot;</em> for price alerts.
             </OnboardingHint>
-            <div style={{ marginTop: 12 }} />
             <OwnerPreferences />
           </Reveal>
         </section>
@@ -264,16 +249,12 @@ export default function Page() {
         {/* ============ FLEET — the ten-agent universe ============ */}
         <section className={`tabview${tab === "fleet" ? " on" : ""}`} hidden={tab !== "fleet"} aria-label="Agent fleet">
           <Reveal>
-            <div className="eyebrow">
-              <Globe2 size={13} style={{ verticalAlign: -2, marginRight: 6 }} />
-              Live fleet · what every agent is doing
-            </div>
-            <h2 className="section-title">
-              The <span className="grad-text">ten-agent</span> universe
-            </h2>
+            <div className="eyebrow">Live fleet · real health probes</div>
+            <h2 className="section-title">The ten-agent universe</h2>
             <p className="section-sub">
-              Every agent answers a real health probe. Cards show each agent&apos;s last piece of work and how fresh it is —
-              assign or ask anything and FRIDAY dispatches it.
+              FRIDAY coordinates; nine specialists report here. Every card answers a real health
+              probe and shows its last piece of work and how fresh it is — ask anything and
+              FRIDAY dispatches it.
             </p>
           </Reveal>
           <FleetGrid fleet={fleet} autonomy={autonomy} liveActivity={liveActivity} now={agentsLive} onAsk={askAgent} />
@@ -283,17 +264,13 @@ export default function Page() {
         <section className={`tabview${tab === "activity" ? " on" : ""}`} hidden={tab !== "activity"} aria-label="Live activity">
           <Reveal>
             <div className="eyebrow">Live operations</div>
-            <h2 className="section-title">
-              What the fleet is <span className="grad-text">doing</span> right now
-            </h2>
+            <h2 className="section-title">What the fleet is doing right now</h2>
           </Reveal>
-          <Reveal delay={80}>
+          <Reveal delay={60}>
             <ActivityFeed autonomy={autonomy} liveActivity={liveActivity} />
           </Reveal>
-          {/* Checklist D13: delegation history with status chips */}
-          <Reveal delay={140}>
+          <Reveal delay={120}>
             <div className="eyebrow" style={{ marginTop: 28 }}>
-              <Waypoints size={13} style={{ verticalAlign: -2, marginRight: 6 }} />
               Task timeline · every delegation, newest first
             </div>
             <TaskTimeline timeline={timeline} />
@@ -304,9 +281,7 @@ export default function Page() {
         <section className={`tabview${tab === "system" ? " on" : ""}`} hidden={tab !== "system"} aria-label="System telemetry">
           <Reveal>
             <div className="eyebrow">System</div>
-            <h2 className="section-title">
-              Your Oracle <span className="grad-text">servers</span>, live
-            </h2>
+            <h2 className="section-title">Your Oracle servers, live</h2>
           </Reveal>
           <SystemPanel
             fleet={fleet}
@@ -315,13 +290,9 @@ export default function Page() {
             cpuHistory={cpuHistory}
             ramHistory={ramHistory}
           />
-          {/* Checklist E7 (batch 8, ZAI Agent 2): voice session diagnostics —
-              RTT, packet loss, reconnect count from the last LiveKit call;
-              honest zero-counters until the first session. */}
-          <Reveal delay={120}>
+          <Reveal delay={100}>
             <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
               <VoiceDiagnostics />
-              {/* Checklist D18: honest empty state when the task ledger is empty. */}
               {timeline && Array.isArray(timeline.events) && timeline.events.length === 0 && (
                 <EmptyState
                   icon={<Activity size={22} />}

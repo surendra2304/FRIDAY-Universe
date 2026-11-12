@@ -431,25 +431,33 @@ class CognitiveMixin:
                 self.state_machine.fail(reason=exec_res.content or "LLM generation failed")
                 
             final_content = exec_res.content
-            
-            # Check and prepend any pending proactive notifications
-            proactive_summary = None
-            if hasattr(self, "notifications") and self.notifications:
-                proactive_summary = self.notifications.pop_notifications_summary()
 
-            if proactive_summary:
-                final_content = f"{proactive_summary}\n\n{final_content}"
+            # Notification-pollution fix (2026-11-13, ZAI Agent 2, measured
+            # live): pending monitor alerts used to be PREPENDED to the
+            # answer text — the owner asked for 17*23 and got 17 CPU-heat
+            # lines before the math — and then that glued blob was recorded
+            # into Memora, so even long-term "memory" filled with alert
+            # spam (the 'not remembering me' experience). The answer text is
+            # now kept clean; the pending notice travels in metadata for
+            # surfaces that want a lead-in banner, and Memora records only
+            # the assistant's real answer.
+            proactive_notice: str | None = None
+            if hasattr(self, "notifications") and self.notifications:
+                proactive_notice = self.notifications.pop_notifications_summary()
+            memory_record_content = (final_content or "").strip()
 
             # Persist turns and intermediate tool traces in conversation memory
             user_msg = Message(role=Role.USER, content=clean_input)
             self.memory.add_message(user_msg)
 
-            # Record turn and extract long-term facts/preferences into Memora
+            # Record turn and extract long-term facts/preferences into Memora.
+            # Only the CLEAN assistant answer is recorded — never the glued
+            # proactive-notice blob (pollution fix 2026-11-13).
             try:
                 from friday.memory.memora_client import memora_client
                 memora_client.record_interaction_async(
                     user_input=clean_input,
-                    agent_output=final_content or "",
+                    agent_output=memory_record_content,
                     agent_name="friday",
                     event_type="dialogue"
                 )
@@ -519,5 +527,9 @@ class CognitiveMixin:
                     "total_tasks": exec_res.metadata.get("total_tasks"),
                     "completed_tasks": exec_res.metadata.get("completed_tasks"),
                     "recalled_memories": context["recalled_memories"],
+                    # Pending monitor alerts travel OUT of the reply text so
+                    # UIs can render them as a dismissible banner (pollution
+                    # fix 2026-11-13). None = nothing pending.
+                    "proactive_notice": proactive_notice,
                 },
             )

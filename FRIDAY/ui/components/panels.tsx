@@ -436,11 +436,9 @@ export function SystemPanel({
           <div className="stat-value grad-text">{autonomy?.history_count ?? 0}</div>
           <div className="stat-foot">
             <span>autonomous actions recorded</span>
-            {autonomy?.active_agent ? (
-              <span style={{ color: "var(--cyan)" }}>{autonomy.active_agent}</span>
-            ) : (
-              <span>standby</span>
-            )}
+            <span style={{ color: "var(--cyan)" }}>
+              {autonomy?.active_agent ? `active: ${autonomy.active_agent}` : "· standby"}
+            </span>
           </div>
         </SpotlightCard>
       </Reveal>
@@ -458,28 +456,26 @@ export function ConsoleStrip({
 }) {
   const online = fleet?.agents?.filter((a) => statusTone(a.status) === "good").length ?? 0;
   const total = fleet?.agent_count ?? fleet?.agents?.length ?? 10;
-  /* Truthful status color (fix 2026-11-13): green only when every agent is
-     reachable; amber for a partial fleet; RED when none are — the old dot
-     showed green whenever any fleet snapshot loaded, even at 0/9 online. */
-  const fleetTone = !fleet ? "muted" : online === 0 ? "bad" : online < total ? "warn" : "good";
   return (
     <div className="console-strip">
-      <span className="strip-pill">
-        {/* Theme fix 2026-11-13 (VLM review): a static dot while waiting reads
-            as stuck; pulse the dot for any live connection state. */}
-        <span className={`dot ${fleetTone} pulse`} />
-        {fleet ? `${online}/${total} agents online` : "connecting…"}
-      </span>
+      {/* Redundancy fix (VLM review 2026-11-13): the nav already shows the
+          live fleet count — repeating "N/9 agents" here made the dock read
+          as a status dashboard instead of a voice dock. The dock now shows
+          what the nav does NOT: autonomy mode and the delegation ledger. */}
       <span className="strip-pill">
         <Zap size={12} style={{ color: "var(--amber)" }} />
         {autonomy?.autonomous_mode ? "autonomy running" : "autonomy manual"}
       </span>
-      {/* Theme fix 2026-11-13 (VLM review): "0 actions logged" exposed an
-          empty state as a status chip. Show the count only when there is one. */}
       {(autonomy?.history_count ?? 0) > 0 && (
         <span className="strip-pill" title="Autonomous actions logged by the fleet">
           <BarChart2 size={12} style={{ color: "var(--cyan)" }} />
           {autonomy?.history_count} actions logged
+        </span>
+      )}
+      {fleet && online > 0 && (
+        <span className="strip-pill" title="Agents answering health probes">
+          <span className={`dot ${online < total ? "warn" : "good"}`} />
+          {online} of {total} agents answering
         </span>
       )}
     </div>

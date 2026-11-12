@@ -1695,13 +1695,36 @@ async def get_voice_diagnostics(_: None = Depends(_require_origin_gate)) -> dict
     Reports the last voice session's connection quality, round-trip latency,
     packet loss, reconnect count, and the configured voice/accent settings.
     Honest when no session has run yet (zero counters, not invented metrics).
+
+    Voice truth fix (2026-11-13, ZAI Agent 2): the live-chain probe proved the
+    old worker joined LiveKit and went SILENTLY mute (dead key, zero audio
+    frames). The cloud worker now writes a heartbeat file
+    (data/voice_worker_status.json) naming its speech provider and state; it
+    is merged here so the console dock can tell the owner WHY the line is
+    down instead of presenting dead air.
     """
     from friday.core.owner_preferences import owner_preferences
 
     prefs = owner_preferences.get()
     diag = _voice_diagnostics_state.copy()
+
+    worker: dict[str, Any] | None = None
+    try:
+        from pathlib import Path as _P
+
+        _status_path = _P(__file__).resolve().parents[3] / "data" / "voice_worker_status.json"
+        if _status_path.is_file():
+            import json as _json
+
+            _raw = _json.loads(_status_path.read_text(encoding="utf-8"))
+            if isinstance(_raw, dict) and _raw.get("updated_at"):
+                worker = _raw
+    except Exception as _exc:
+        logger.debug(f"voice worker heartbeat unreadable: {_exc}")
+
     return {
         "last_session": diag,
+        "worker": worker,
         "configured": {
             "voice_personality": prefs["voice_personality"],
             "accent_locale": prefs["accent_locale"],
@@ -1711,7 +1734,8 @@ async def get_voice_diagnostics(_: None = Depends(_require_origin_gate)) -> dict
             "Voice session diagnostics (E7): counters are zero until the first "
             "session. Quality is the LiveKit-reported RTT; reconnect count is "
             "the auto-reconnect attempts (E3). Unset = no session yet, not a "
-            "fabricated 'good' reading."
+            "fabricated 'good' reading. 'worker' is the speech-provider "
+            "heartbeat written by the LiveKit worker process."
         ),
     }
 
@@ -2466,9 +2490,12 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _memory_line = ""
         try:
             from friday.memory.memora_client import memora_client as _memora
+            from friday.memory.hygiene import is_memory_noise as _is_noise
             _hits = _memora.recall_memories("friday", f"{_user} preferences boss", limit=3)
             for _m in _hits or []:
                 _text = str(_m.get("content_text", "")).strip()
+                if _is_noise(_text):
+                    continue
                 if _text and len(_text) > 8:
                     _memory_line = _text.rstrip(".!? ")
                     if len(_memory_line) > 120:
@@ -3062,6 +3089,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _q_personal = any(p in cmd for p in (" me", "my ", "myself", "i "))
         try:
             from friday.memory.memora_client import memora_client as _memora
+            from friday.memory.hygiene import is_memory_noise as _is_noise
             # Search with the owner's own words — appending generic terms
             # ("preferences facts…") buried the real subject (live lesson:
             # "do you remember my chai preference" returned research junk).
@@ -3073,6 +3101,10 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                     _memora.recall_memories("friday", "my favorite preference boss surendra", limit=10)
                     or []
                 )
+            # Memory-hygiene fix (2026-11-13): stored monitor-spam lines
+            # ("RAM usage is at 9%…", dialogue dumps) never reach a recall
+            # answer — they are not memories of the owner.
+            _hits = [h for h in _hits if not _is_noise(str(h.get("content_text", "")))]
         except Exception as _e:
             _mem_error = f"{type(_e).__name__}"
             logger.debug(f"Memora recall skipped in memory fast-path: {_e}")
@@ -3279,7 +3311,18 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
     # speaks with one voice everywhere (owner directive 2026-11-10: talk like a
     # friend, Jarvis-style). A greeting may say that FRIDAY is listening; it
     # may not certify a fleet.
-    if any(cmd.startswith(g) or cmd == g for g in ["hello", "hi", "hey", "hello friday", "hello friends", "good morning", "good afternoon", "good evening"]):
+    # Router truth fix (2026-11-13, ZAI Agent 2): this used to be a
+    # startswith() match, so "Hey FRIDAY, compute 17*23" was answered with a
+    # GREETING and the real question never reached the brain — measured live:
+    # three phrasings, three wrong fast-path hijacks (date, greeting, CPU
+    # briefing). A greeting is only a greeting when it is the WHOLE message
+    # (anchored pattern, same rule as the agent layer's _GREETING_PATTERN).
+    _GREETING_ONLY = re.compile(
+        r"^\s*(?:hello|hi|hey|sup|good\s(?:morning|afternoon|evening))"
+        r"(?:\s+there|\s+friday|\s+friends)?[\s,!.?]*$",
+        re.IGNORECASE,
+    )
+    if _GREETING_ONLY.match(raw_cmd):
         _persona = getattr(_live_settings(), "persona", "friday") or "friday"
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
         # BUGFIX (2026-11-13): this API/voice greeting path still served random
@@ -3311,12 +3354,15 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _remembered_line = ""
         try:
             from friday.memory.memora_client import memora_client as _memora
+            from friday.memory.hygiene import is_memory_noise as _is_noise
             _hits = _memora.recall_memories(
                 "friday", f"{_user} recent work preferences", limit=3,
             )
             _seen: set[str] = set()
             for _m in _hits or []:
                 _text = str(_m.get("content_text", "")).strip()
+                if _is_noise(_text):
+                    continue
                 if _text and _text not in _seen and len(_text) > 8:
                     _seen.add(_text)
                     if not _remembered_line:
@@ -3483,9 +3529,19 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
 
     try:
         # Screen Perception Fast-path ("What's on my screen now")
-        if any(k in cmd for k in ["what's on my screen", "what is on my screen", "whats on my screen", "read my screen", "screen content", "look at my screen", "screen now", "view my screen"]):
+        # Truth fix (2026-11-13, ZAI Agent 2): on the cloud host this path used
+        # to answer "Screen and window telemetry is active" for a HEADLESS
+        # container that has no screen — a fabricated result, exactly the
+        # "fake answers" class the owner called out. Real routing now:
+        # a locally-attached desktop (laptop/Windows runner) reports its real
+        # foreground window; otherwise the laptop bridge is asked, and if no
+        # laptop tunnel is connected the reply says so and how to fix it.
+        if any(k in cmd for k in ["what's on my screen", "what is on my screen", "whats on my screen", "read my screen", "screen content", "look at my screen", "screen now", "view my screen", "access my screen", "see my screen"]):
             import ctypes
+
             if hasattr(ctypes, "windll"):
+                # Running ON a real Windows desktop (owner's laptop build):
+                # the foreground window title is a real measurement.
                 user32 = ctypes.windll.user32
                 hwnd = user32.GetForegroundWindow()
                 length = user32.GetWindowTextLengthW(hwnd)
@@ -3495,17 +3551,56 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                     user32.GetWindowTextW(hwnd, buff, length + 1)
                     title = buff.value
                 active_summary = f"Active window: '{title}'." if title else "Desktop display active."
-                device_type = "windows"
-            else:
-                title = "Cloud Container (Render Headless)"
-                active_summary = "Running in cloud headless environment on Render."
-                device_type = "cloud"
+                reply = (
+                    f"I am perceiving your environment. {active_summary} Screen and window telemetry is "
+                    "active; specialist-agent status is a separate check."
+                )
+                return {"reply": reply, "metadata": {"fast_path": True, "device": "windows", "action": "screen_perception", "active_window": title}}
 
-            reply = (
-                f"I am perceiving your environment. {active_summary} Screen and window telemetry is "
-                "active; specialist-agent status is a separate check."
-            )
-            return {"reply": reply, "metadata": {"fast_path": True, "device": device_type, "action": "screen_perception", "active_window": title}}
+            # Cloud host: the owner's screen is only reachable through a
+            # connected laptop-bridge tunnel. Anything else would be theater.
+            _screen_meta: dict[str, Any] = {"fast_path": True, "action": "screen_perception"}
+            try:
+                devices = await laptop_bridge.list_devices()
+                connected = [d for d in devices if d.get("online")]
+                if connected:
+                    _dev = connected[0]
+                    _laptop_id = str(_dev.get("laptop_id") or _dev.get("id") or "laptop")
+                    evidence = await laptop_bridge.execute(
+                        _laptop_id, "screenshot", 20.0, {}
+                    )
+                    _shot = ""
+                    if isinstance(evidence, dict) and evidence.get("ok"):
+                        _shot = str(evidence.get("output") or "").strip()
+                    if _shot:
+                        reply = (
+                            f"Your laptop '{_laptop_id}' is bridged. I just captured your live screen — "
+                            f"it's saved on the laptop at {_shot}. (The bridge ships evidence, not image "
+                            "bytes, so I can't render it in this chat yet — but the capture is real and fresh.)"
+                        )
+                    else:
+                        _err = str(evidence.get("error") or "unknown error") if isinstance(evidence, dict) else "unknown error"
+                        reply = (
+                            f"Your laptop '{_laptop_id}' is bridged, but the screenshot command failed "
+                            f"on the laptop side: {_err}. Nothing was captured."
+                        )
+                    return {
+                        "reply": reply,
+                        "metadata": {**_screen_meta, "device": "laptop-bridge", "laptop_id": _laptop_id, "capture_ok": bool(_shot)},
+                    }
+            except Exception as _bridge_exc:
+                logger.debug(f"laptop-bridge screen access failed: {_bridge_exc}")
+
+            return {
+                "reply": (
+                    "I can't see your screen from the cloud, and I won't pretend I can: this server is "
+                    "headless, and no laptop bridge is connected right now. To give me real screen access, "
+                    "run the FRIDAY laptop bridge on your Windows machine "
+                    "(python FRIDAY/scripts/laptop_bridge_client.py) with your control key — then "
+                    "'what's on my screen' returns your live screenshot and active window."
+                ),
+                "metadata": {**_screen_meta, "device": "cloud", "bridge_connected": False},
+            }
 
         # Universal Application & File Launcher Fast-path
         if cmd.startswith("open ") or cmd.startswith("launch ") or cmd.startswith("start "):
@@ -3615,7 +3710,13 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                     },
                 },
             }
-        elif any(k in cmd for k in ["current time", "what time is it", "today's date", "time", "date"]):
+        # Router truth fix (2026-11-13): the old bare-substring list
+        # ("time", "date") hijacked "What is 17 TIMES 23" into a clock
+        # reading. Time/date intent must be the WHOLE question.
+        elif re.fullmatch(
+            r"(?:what(?:'s| is)? (?:the |current )?)?(?:time|date|day|today)(?: is it)?[\s?.!]*",
+            cmd.strip(),
+        ):
             res = agent.tools.execute(name="get_time_date", arguments={})
             return {"reply": res.content, "metadata": {"fast_path": True, "device": "windows"}}
     except Exception as e:

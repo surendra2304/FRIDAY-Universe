@@ -223,6 +223,7 @@ class FastPathMixin:
             remembered: list[str] = []
             try:
                 from friday.memory.memora_client import memora_client
+                from friday.memory.hygiene import is_memory_noise
                 user_name = getattr(self.settings, "user_name", "Surendra")
                 hits = memora_client.recall_memories(
                     "friday", f"{user_name} recent work preferences", limit=3,
@@ -230,6 +231,8 @@ class FastPathMixin:
                 seen: set[str] = set()
                 for m in hits or []:
                     text = str(m.get("content_text", "")).strip()
+                    if is_memory_noise(text):
+                        continue
                     if text and text not in seen and len(text) > 8:
                         seen.add(text)
                         remembered.append(text)

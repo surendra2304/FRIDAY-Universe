@@ -3,10 +3,23 @@
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 
 /* ============================================================
-   FRIDAY effects kit — React-Bits-style dynamic components.
-   Every effect is mobile-safe: compositor-only animations,
-   adaptive counts, pauses when offscreen or tab-hidden, and
-   full prefers-reduced-motion compliance.
+   FRIDAY effects kit — REDESIGNED 2026-11-13 (ZAI Agent 2).
+
+   The owner rejected the previous theme, and the VLM review named
+   the cause: decorative screensaver layers (aurora blobs, particle
+   canvas, floating orbs, parallax, magnetic hover) that made the
+   dashboard feel like a template and drowned the content. All of
+   those are now retired — every export keeps its original call
+   signature so callers stay source-compatible, but each renders
+   at most a plain wrapper or a static string:
+
+     AuroraBackground / FloatingOrbs / ParticleField / Orbital → null
+     Parallax / Magnetic / SpotlightCard                  → plain wrappers
+     ScrambleText / CountUp                              → static text
+     Reveal                                              → kept (subtle fade)
+
+   What remains is the ONLY motion the new design wants: a quiet
+   fade-in for sections and the voice orb's state animation.
    ============================================================ */
 
 export function prefersReducedMotion(): boolean {
@@ -14,262 +27,106 @@ export function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/* ---------- Aurora background (pure CSS, GPU transforms) ---------- */
+/* ---------- retired ambient layers ---------- */
+
 export function AuroraBackground() {
-  return (
-    <>
-      <div className="aurora" aria-hidden="true">
-        <div className="aurora-blob b1" />
-        <div className="aurora-blob b2" />
-        <div className="aurora-blob b3" />
-      </div>
-      <div className="noise" aria-hidden="true" />
-      <div className="grid-overlay" aria-hidden="true" />
-    </>
-  );
+  return null;
 }
 
-/* ---------- Floating glass orbs (pure CSS drift, reduced-motion safe) ---------- */
 export function FloatingOrbs() {
+  return null;
+}
+
+export function ParticleField() {
+  return null;
+}
+
+export function Orbital({ className, count, radius, duration }: {
+  className?: string; count?: number; radius?: number; duration?: number;
+}) {
+  void className; void count; void radius; void duration;
+  return null;
+}
+
+/* ---------- retired interactions → plain wrappers ---------- */
+
+export function Parallax({
+  children,
+  depth,
+  className,
+}: {
+  children: ReactNode;
+  depth?: number;
+  className?: string;
+}) {
+  void depth;
+  return <div className={className}>{children}</div>;
+}
+
+export function Magnetic({ children }: { children: ReactNode }) {
+  return <>{children}</>;
+}
+
+export function SpotlightCard({
+  children,
+  className,
+  style,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+}) {
   return (
-    <div className="float-orbs" aria-hidden="true">
-      <span className="float-orb o1" />
-      <span className="float-orb o2" />
-      <span className="float-orb o3" />
-      <span className="float-orb o4" />
-      <span className="float-orb o5" />
+    <div className={className ? `${className} spotlight` : "spotlight"} style={style}>
+      {children}
     </div>
   );
 }
 
-/* ---------- Particle field (canvas, adaptive + self-pausing) ---------- */
-type Particle = { x: number; y: number; vx: number; vy: number; r: number; c: string; a: number };
+/* ---------- retired text effects → static renders ---------- */
 
-export function ParticleField() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const realCtx = canvas.getContext("2d");
-    if (!realCtx) return;
-
-    const reduced = prefersReducedMotion();
-    let width = 0;
-    let height = 0;
-    let dpr = 1;
-    let particles: Particle[] = [];
-    let raf = 0;
-    let running = true;
-    const mouse = { x: -9999, y: -9999 };
-    const palette = ["133,240,191", "112,212,232", "185,166,255"];
-
-    function resize() {
-      if (!canvas) return;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      realCtx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // Adaptive count: phones get a light field, desktops a richer one.
-      const target = Math.round(Math.min(110, Math.max(26, (width * height) / 22000)));
-      particles = Array.from({ length: target }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.22,
-        vy: (Math.random() - 0.5) * 0.22,
-        r: 0.7 + Math.random() * 1.6,
-        c: palette[Math.floor(Math.random() * palette.length)],
-        a: 0.25 + Math.random() * 0.45,
-      }));
-    }
-
-    function frame() {
-      if (!running) return;
-      const ctx2 = realCtx!;
-      ctx2.clearRect(0, 0, width, height);
-      const linkDist = width < 720 ? 88 : 110;
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        // Gentle mouse attraction on fine-pointer devices only.
-        if (mouse.x > -999) {
-          const dx = mouse.x - p.x;
-          const dy = mouse.y - p.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < 32400 && d2 > 1) {
-            const f = 0.012 / Math.sqrt(d2);
-            p.vx += dx * f;
-            p.vy += dy * f;
-          }
-        }
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.995;
-        p.vy *= 0.995;
-        if (p.x < -20) p.x = width + 20;
-        if (p.x > width + 20) p.x = -20;
-        if (p.y < -20) p.y = height + 20;
-        if (p.y > height + 20) p.y = -20;
-        ctx2.beginPath();
-        ctx2.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx2.fillStyle = `rgba(${p.c},${p.a})`;
-        ctx2.fill();
-        if (i % 2 === 0) continue; // halve link work on mobile-class devices
-        for (let j = i + 1; j < particles.length; j++) {
-          const q = particles[j];
-          const dx = p.x - q.x;
-          const dy = p.y - q.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < linkDist * linkDist) {
-            const alpha = (1 - Math.sqrt(d2) / linkDist) * 0.14;
-            ctx2.strokeStyle = `rgba(133,240,191,${alpha})`;
-            ctx2.lineWidth = 1;
-            ctx2.beginPath();
-            ctx2.moveTo(p.x, p.y);
-            ctx2.lineTo(q.x, q.y);
-            ctx2.stroke();
-          }
-        }
-      }
-      raf = requestAnimationFrame(frame);
-    }
-
-    function start() {
-      if (reduced) return;
-      if (!running) {
-        running = true;
-        raf = requestAnimationFrame(frame);
-      }
-    }
-    function stop() {
-      running = false;
-      cancelAnimationFrame(raf);
-    }
-
-    function onVisibility() {
-      if (document.hidden) stop();
-      else if (inView) start();
-    }
-
-    function onMouse(event: PointerEvent) {
-      if (event.pointerType !== "mouse") return;
-      mouse.x = event.clientX;
-      mouse.y = event.clientY;
-    }
-    function onMouseLeave() {
-      mouse.x = -9999;
-      mouse.y = -9999;
-    }
-
-    let inView = true;
-    const io = new IntersectionObserver(
-      (entries) => {
-        inView = entries[0]?.isIntersecting ?? true;
-        if (inView && !document.hidden) start();
-        else stop();
-      },
-      { threshold: 0 },
-    );
-    io.observe(canvas);
-
-    resize();
-    window.addEventListener("resize", resize);
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("pointermove", onMouse, { passive: true });
-    window.addEventListener("pointerleave", onMouseLeave);
-    if (!reduced) start();
-
-    return () => {
-      stop();
-      io.disconnect();
-      window.removeEventListener("resize", resize);
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("pointermove", onMouse);
-      window.removeEventListener("pointerleave", onMouseLeave);
-    };
-  }, []);
-
-  if (typeof window !== "undefined" && prefersReducedMotion()) return null;
-  return <canvas id="particles" ref={canvasRef} aria-hidden="true" />;
+export function ScrambleText({ text, speed }: { text: string; speed?: number }) {
+  void speed;
+  return <span className="scramble">{text}</span>;
 }
 
-/* ---------- Scramble / decrypt text ---------- */
-const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+<>/";
-
-export function ScrambleText({
-  text,
-  className,
-  speed = 34,
-  once = true,
-  style,
-}: {
-  text: string;
-  className?: string;
-  speed?: number;
-  once?: boolean;
-  style?: CSSProperties;
+export function CountUp({ value, duration = 900, suffix }: {
+  value: number;
+  duration?: number;
+  suffix?: string;
 }) {
-  const [display, setDisplay] = useState(text);
-  const ref = useRef<HTMLSpanElement | null>(null);
-
+  void duration;
+  const [shown, setShown] = useState(0);
   useEffect(() => {
-    if (prefersReducedMotion()) {
-      setDisplay(text);
+    // one quick ease to the final number; reduced-motion users see it instantly
+    const reduced = prefersReducedMotion();
+    if (reduced) {
+      setShown(value);
       return;
     }
     let frame = 0;
-    let interval: ReturnType<typeof setInterval> | undefined;
-    const queue = text.split("").map((_, i) => ({ start: i * 2 + 4, end: i * 2 + 12 }));
-
-    function run() {
-      frame = 0;
-      interval = setInterval(() => {
-        let out = "";
-        let done = 0;
-        for (let i = 0; i < text.length; i++) {
-          const ch = text[i];
-          if (ch === " ") { out += " "; done++; continue; }
-          const q = queue[i];
-          if (frame >= q.end) { out += ch; done++; }
-          else if (frame >= q.start) { out += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]; }
-          else { out += ch; done++; }
-        }
-        setDisplay(out);
-        frame++;
-        if (done === text.length && interval) clearInterval(interval);
-      }, speed);
-    }
-
-    if (once) {
-      run();
-      return () => { if (interval) clearInterval(interval); };
-    }
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          run();
-          if (!once) io.disconnect();
-        }
-      },
-      { threshold: 0.4 },
-    );
-    io.observe(el);
-    return () => { io.disconnect(); if (interval) clearInterval(interval); };
-  }, [text, speed, once]);
-
+    const total = Math.min(Math.max(duration, 200), 1200);
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / total, 1);
+      setShown(Math.round(value * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
   return (
-    <span ref={ref} className={`scramble ${className ?? ""}`} style={style}>
-      {display}
+    <span>
+      {shown.toLocaleString()}
+      {suffix ?? ""}
     </span>
   );
 }
 
-/* ---------- Scroll reveal ---------- */
+/* ---------- kept: subtle section entrance ---------- */
+
 export function Reveal({
   children,
   delay = 0,
@@ -279,228 +136,39 @@ export function Reveal({
   children: ReactNode;
   delay?: number;
   className?: string;
-  as?: "div" | "section" | "article" | "header";
+  as?: "div" | "section" | "article";
 }) {
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    if (prefersReducedMotion()) {
-      el.classList.add("revealed");
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setVisible(true);
       return;
     }
-    el.style.setProperty("--reveal-delay", `${delay}ms`);
-    const io = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
-          el.classList.add("revealed");
-          io.disconnect();
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            observer.disconnect();
+          }
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
+      { threshold: 0.06 },
     );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [delay]);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <Tag
-      ref={ref as never}
-      className={`reveal ${className ?? ""}`}
+      ref={ref as React.Ref<HTMLDivElement>}
+      className={`reveal${visible ? " on" : ""}${className ? ` ${className}` : ""}`}
+      style={visible ? { animationDelay: `${delay}ms` } : { opacity: 0 }}
     >
       {children}
     </Tag>
-  );
-}
-
-/* ---------- Magnetic button (fine pointers only) ---------- */
-export function Magnetic({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLSpanElement | null>(null);
-
-  function onMove(event: React.PointerEvent) {
-    const el = ref.current;
-    if (!el || event.pointerType !== "mouse") return;
-    const rect = el.getBoundingClientRect();
-    const x = event.clientX - rect.left - rect.width / 2;
-    const y = event.clientY - rect.top - rect.height / 2;
-    el.style.transform = `translate(${x * 0.16}px, ${y * 0.22}px)`;
-  }
-  function onLeave() {
-    const el = ref.current;
-    if (!el) return;
-    el.style.transform = "translate(0px, 0px)";
-  }
-
-  return (
-    <span
-      ref={ref}
-      onPointerMove={onMove}
-      onPointerLeave={onLeave}
-      style={{ display: "inline-flex", transition: "transform 0.32s cubic-bezier(0.22,1,0.36,1)", willChange: "transform" }}
-    >
-      {children}
-    </span>
-  );
-}
-
-/* ---------- Spotlight card ---------- */
-export function SpotlightCard({
-  children,
-  className,
-  onClick,
-}: {
-  children: ReactNode;
-  className?: string;
-  onClick?: () => void;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  function onMove(event: React.PointerEvent) {
-    const el = ref.current;
-    if (!el || event.pointerType !== "mouse") return;
-    const rect = el.getBoundingClientRect();
-    el.style.setProperty("--mx", `${event.clientX - rect.left}px`);
-    el.style.setProperty("--my", `${event.clientY - rect.top}px`);
-  }
-
-  return (
-    <div ref={ref} onPointerMove={onMove} onClick={onClick} className={`spotlight ${className ?? ""}`}>
-      {children}
-    </div>
-  );
-}
-
-/* ---------- Count-up number ---------- */
-export function CountUp({ value, duration = 900, suffix }: { value: number; duration?: number; suffix?: string }) {
-  const [display, setDisplay] = useState(0);
-  const prev = useRef(0);
-
-  useEffect(() => {
-    const from = prev.current;
-    const to = value;
-    prev.current = value;
-    if (from === to) { setDisplay(to); return; }
-    if (prefersReducedMotion()) { setDisplay(to); return; }
-    const start = performance.now();
-    let raf = 0;
-    function tick(now: number) {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setDisplay(Math.round(from + (to - from) * eased));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    }
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value, duration]);
-
-  return (
-    <>
-      {display}
-      {suffix ? <small>{suffix}</small> : null}
-    </>
-  );
-}
-
-/* ---------- Pointer parallax (React-Bits Parallax pattern, pointer-driven) ----------
-   The dashboard does not scroll by design, so scroll-velocity parallax has no
-   surface to act on. This variant gives the hero layers depth from the
-   pointer: layers translate opposite the cursor at different rates.
-   Compositor-safe (transform only), rAF-throttled, and a strict no-op for
-   reduced-motion users and coarse (touch) pointers. */
-export function Parallax({
-  children,
-  depth = 10,
-  className,
-}: {
-  children: ReactNode;
-  /** max px of translation at the viewport edge; 0 disables */
-  depth?: number;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const rafRef = useRef(0);
-  const targetRef = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || depth <= 0) return;
-    if (prefersReducedMotion()) return;
-    if (!window.matchMedia || !window.matchMedia("(pointer: fine)").matches) return;
-
-    function onMove(event: PointerEvent) {
-      if (event.pointerType !== "mouse") return;
-      const nx = event.clientX / window.innerWidth - 0.5; // -0.5 … 0.5
-      const ny = event.clientY / window.innerHeight - 0.5;
-      targetRef.current = { x: -nx * depth, y: -ny * depth };
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = 0;
-          if (ref.current) {
-            const { x, y } = targetRef.current;
-            ref.current.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-          }
-        });
-      }
-    }
-    function onLeave() {
-      targetRef.current = { x: 0, y: 0 };
-      if (ref.current) ref.current.style.transform = "translate3d(0, 0, 0)";
-    }
-
-    window.addEventListener("pointermove", onMove, { passive: true });
-    document.addEventListener("pointerleave", onLeave);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerleave", onLeave);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [depth]);
-
-  return (
-    <div ref={ref} className={className} style={{ willChange: "transform", transition: "transform 0.5s cubic-bezier(0.22,1,0.36,1)" }}>
-      {children}
-    </div>
-  );
-}
-
-/* ---------- Orbital satellites (D10: orbitals around the FRIDAY core) ----------
-   N dots evenly spaced on a rotating ring — one per fleet agent on the hero.
-   Pure CSS rotation (compositor-only), aria-hidden, and reduced-motion users
-   get a static ring (the dots still mark the agents, without motion). */
-export function Orbital({
-  count = 9,
-  radius = 150,
-  duration = 40,
-  className,
-}: {
-  /** number of satellite dots */
-  count?: number;
-  /** ring radius in px */
-  radius?: number;
-  /** one full revolution in seconds */
-  duration?: number;
-  className?: string;
-}) {
-  const dots: CSSProperties[] = [];
-  for (let i = 0; i < count; i++) {
-    const angle = (360 / count) * i;
-    dots.push({
-      transform: `rotate(${angle}deg) translate(${radius}px) rotate(${-angle}deg)`,
-    });
-  }
-  const reduced = typeof window !== "undefined" && prefersReducedMotion();
-
-  return (
-    <div
-      className={`orbital${reduced ? " static" : ""}${className ? ` ${className}` : ""}`}
-      style={{ width: radius * 2, height: radius * 2, animationDuration: `${duration}s` }}
-      aria-hidden="true"
-    >
-      <span className="orbital-ring" />
-      {dots.map((style, i) => (
-        <span key={i} className="orbital-dot" style={style} />
-      ))}
-    </div>
   );
 }
