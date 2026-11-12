@@ -1587,6 +1587,44 @@ tasks:
     blockers: []
     next_action: "Watch CI: the ratcheted floors + widened lint run for the first time on this push."
 
+  - id: "TASK-F821-SWEEP-AGENT2"
+    title: "Undefined-name sweep: 38 latent NameError crashes fixed across all 8 sibling apps + CI F821 gate (ZAI Agent 2)"
+    status: "MERGED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Just work and complete the upgradation of my Friday Universe. Communicate with the ZAI Agent 1 and complete the work (2026-11-12)."
+    merge_note: "Direct main commit per the batch discipline."
+    files:
+      - "Forge/forge_upgrade/memora_client.py"
+      - "Forge/code_reviewer.py"
+      - "Forge/code_intelligence.py"
+      - "Forge/app/api/code_intelligence.py"
+      - "Forge/app/main.py"
+      - "Stratex/autonomy/multi_venue_engine.py"
+      - "Stratex/autonomy/run_daemon.py"
+      - "Stratex/app/agents/real_vibe_trading.py"
+      - "Stratex/execution/options_pricing_engine.py"
+      - "Stratex/portfolio/optimized_portfolio_manager.py"
+      - "Memora/apps/api/routers/knowledge_graph.py"
+      - "Memora/apps/api/routers/temporal_context_retriever.py"
+      - "Inference/app/memory/oracle.py"
+      - "Inference/app/main.py"
+      - "Inference/app/agents/deliberation_engine.py"
+      - "VyralX/app/services/visual_content_synthesis.py"
+      - "VyralX/app/services/real_open_higgsfield.py"
+      - "VyralX/app/agents/real_assistant_voice.py"
+      - "Futuris/predict/forecasting_engine.py"
+      - ".github/workflows/friday-universe-ci.yml"
+    acceptance:
+      - "ruff --select F821 = 0 findings on all 8 sibling apps."
+      - "All 19 touched files compile and import."
+      - "Every failing test reproduced identically on stashed HEAD (zero new failures)."
+      - "New CI F821 gate green on first run (6da5054)."
+    evidence: "CI all-green on 6da5054; VyralX 18/18, Memora 2/2, Stratex 93 passed; Forge memory fallback smoke-tested end-to-end."
+    blockers: []
+    next_action: "Post-merge: Fleet CD deploys. Watch production logs for the Forge memory path (its fallback now actually persists lessons)."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
