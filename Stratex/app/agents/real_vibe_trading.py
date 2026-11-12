@@ -356,9 +356,11 @@ class GTJAFactorLibrary:
                 result.append(-(close[i] / close[i-60]))
         return result
 
-    def alpha_101(self, close: list[float], high: list[float], volumes: list[float]) -> list[float]:
+    def alpha_101(self, close: list[float], high: list[float], volumes: list[float], low: list[float] | None = None) -> list[float]:
         """GTJA #101: (high + close + low) / 3 * volume / (max(high - low, 0.01))."""
         result = []
+        if low is None:
+            low = high  # degenerate fallback: caller omitted lows
         for c, h, l, v in zip(close, high, low, volumes):
             denom = max(h - l, 0.01)
             result.append((h + c + l) / 3 * v / denom)

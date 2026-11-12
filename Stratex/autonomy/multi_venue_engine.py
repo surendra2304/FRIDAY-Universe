@@ -429,7 +429,9 @@ class MultiVenueEngine:
                 logger.info(f"[MULTI_VENUE] Order placed: {venue} {symbol} {side} {quantity} @ {result.avg_price}")
 
                 # Track the filled position so reconciliation can detect a
-                # broker-side SL/TP exit and book its PnL.
+                # broker-side SL/TP exit and book its PnL. Keyed venue:symbol to
+                # match the exit path and the reconciliation reader below.
+                key = f"{venue}:{symbol}"
                 if result.status in ("FILLED", "PARTIALLY_FILLED"):
                     filled_qty = result.executed_qty or quantity
                     self.positions[key] = UnifiedPosition(

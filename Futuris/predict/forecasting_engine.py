@@ -315,6 +315,7 @@ class ForecastingEngine:
                     "rmse": f.rmse,
                 }
                 for f in list(self._forecasts.values())[-5:]
+                if (s := self._series.get(f.series_id)) is not None
             ],
         }
 

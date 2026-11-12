@@ -11,6 +11,7 @@ import re
 import shutil
 import struct
 import subprocess
+import sys
 from typing import Callable
 from urllib.request import Request, urlopen
 import uuid

@@ -178,10 +178,11 @@ class OptionsPricingEngine:
         market_price: float = 0.0,
     ) -> OptionContract:
         """Create an options contract."""
+        contract_id = hashlib.md5(
+            f"option:{symbol}:{strike_price}:{expiry_days}:{option_type}:{time.time()}".encode()
+        ).hexdigest()[:12]
         contract = OptionContract(
-            contract_id=hashlib.md5(
-                f"option:{symbol}:{strike_price}:{expiry_days}:{option_type}:{time.time()}".encode()
-            ).hexdigest()[:12],
+            contract_id=contract_id,
             symbol=symbol,
             strike_price=strike_price,
             expiry_days=expiry_days,
@@ -190,8 +191,8 @@ class OptionsPricingEngine:
             market_price=market_price,
             bid=market_price * 0.99,
             ask=market_price * 1.01,
-            volume=100 + (ord(hashlib.md5(contract_id_str.encode()).hexdigest()[:1]) % 900),
-            open_interest=200 + (ord(hashlib.md5(f"oi:{contract_id_str}".encode()).hexdigest()[:1]) % 1800),
+            volume=100 + (ord(hashlib.md5(contract_id.encode()).hexdigest()[:1]) % 900),
+            open_interest=200 + (ord(hashlib.md5(f"oi:{contract_id}".encode()).hexdigest()[:1]) % 1800),
         )
 
         # Calculate IV

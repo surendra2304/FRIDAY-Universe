@@ -640,8 +640,8 @@ class StratexTradingEngine:
         except Exception as e:
             logger.debug(f"Prefetch error: {e}")
 
-    def _candles_to_df(self, candles: list) -> "pd.DataFrame | None":
-        """Convert candle list to DataFrame."""
+    def _candles_to_df(self, candles: list) -> "object | None":
+        """Convert candle list to a pandas DataFrame (None when pandas is unavailable)."""
         try:
             import pandas as pd
             df = pd.DataFrame(candles)

@@ -30,6 +30,15 @@ jobs:
         # The lint now covers the entire friday package.
         run: ruff check FRIDAY/src/friday --output-format=concise
 
+      # Undefined-name sweep 2026-11-12 (ZAI Agent 2): all 8 sibling apps held
+      # latent NameError crashes (38 sites) — missing imports, self-referencing
+      # constructors, wrong loop variables. All fixed; F821 now gated in CI so
+      # the bug class can never land again.
+      - name: Lint siblings (ruff F821 — undefined names)
+        run: |
+          ruff check Memora Stratex Inference Sentinel IntelX Futuris VyralX Forge \
+            --select F821 --output-format=concise
+
       # regression-class floors in tests/COVERAGE_MANIFEST.json. A PR that
       # deletes/breaks the tests for a covered module fails here, not silently.
       - name: Run engine test suites with coverage

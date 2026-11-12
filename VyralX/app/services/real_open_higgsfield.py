@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field

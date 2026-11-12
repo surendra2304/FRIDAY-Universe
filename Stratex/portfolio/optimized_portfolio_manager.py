@@ -209,7 +209,7 @@ class OptimizedPortfolioManager:
         for symbol, view_return in views.items():
             if symbol in adjusted_weights:
                 current_weight = adjusted_weights[symbol]
-                base_return = base_result.weights[symbol] * assets[symbols_index(symbol, assets)].expected_return
+                base_return = base_result.weights[symbol] * assets[self.symbols_index(symbol, assets)].expected_return
 
                 # Adjust weight based on view
                 view_diff = view_return - base_return
@@ -240,6 +240,7 @@ class OptimizedPortfolioManager:
 
         return result
 
+    @staticmethod
     def symbols_index(symbol: str, assets: list[Asset]) -> int:
         """Find asset index by symbol."""
         for i, a in enumerate(assets):
