@@ -57,9 +57,35 @@ import numpy  # noqa: F401
 _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 from livekit.agents import AutoSubscribe, JobContext, JobExecutorType, WorkerOptions, cli
-from friday.voice.brain_bridge import build_voice_tools
 from livekit.agents.voice import Agent, AgentSession
 from livekit.agents.voice.room_io import RoomInputOptions, RoomOutputOptions
+
+# Speech plugins MUST import at process start, on the main thread: livekit
+# 1.8.x registers plugins at import time and refuses job-thread imports
+# ("RuntimeError: Plugins must be registered on the main thread" — live
+# journal 2026-11-13: the job crashed exactly here when the import lived
+# inside the entrypoint). Guarded imports keep the worker bootable on
+# hosts where a plugin package is missing.
+try:
+    from livekit.plugins import google as _lk_google
+    from google import genai as _genai  # noqa: F401
+    from google.genai import types as genai_types
+
+    GOOGLE_PLUGIN_AVAILABLE = True
+except Exception as _exc:  # ImportError or a missing optional dependency
+    GOOGLE_PLUGIN_AVAILABLE = False
+    _lk_google = None
+    genai_types = None
+    print(f"[friday.voice] google plugin unavailable at import: {_exc}")
+
+try:
+    from livekit.plugins import groq as _lk_groq
+
+    GROQ_PLUGIN_AVAILABLE = True
+except Exception as _exc:
+    GROQ_PLUGIN_AVAILABLE = False
+    _lk_groq = None
+    print(f"[friday.voice] groq plugin unavailable at import: {_exc}")
 
 logger = logging.getLogger("friday.voice")
 if not logger.handlers:
@@ -94,7 +120,10 @@ async def _owner_memory_lines_async() -> str:
     never to a silent dead line.
     """
     try:
-        return await asyncio.wait_for(asyncio.to_thread(_owner_memory_lines), timeout=8.0)
+        # 12s: the first recall in a fresh job process pays the friday import
+        # chain too (measured ~10s on the 300M-capped host) — thread + budget
+        # means it degrades to no memory context, never a dead line.
+        return await asyncio.wait_for(asyncio.to_thread(_owner_memory_lines), timeout=12.0)
     except asyncio.TimeoutError:
         logger.warning("owner memory recall timed out in the voice job; skipping")
         return ""
@@ -333,12 +362,8 @@ def _probe_gemini_key_sync(key: str) -> bool:
 
 async def _try_gemini_realtime(instructions: str):
     """Path 1: Gemini Live realtime — only if the plugin AND a proven key exist."""
-    try:
-        from livekit.plugins import google
-        from google import genai  # noqa: F401
-        from google.genai import types as genai_types
-    except ImportError as exc:
-        logger.info("gemini realtime unavailable (plugin import): %s", exc)
+    if not GOOGLE_PLUGIN_AVAILABLE:
+        logger.info("gemini realtime unavailable: plugin not importable on this host")
         return None
 
     keys = _gemini_pool_keys()
@@ -358,7 +383,7 @@ async def _try_gemini_realtime(instructions: str):
         if not valid:
             continue
         try:
-            model = google.realtime.RealtimeModel(
+            model = _lk_google.realtime.RealtimeModel(
                 api_key=key,
                 model=_voice_model(),
                 voice=_voice_name(),
@@ -385,22 +410,18 @@ async def _try_groq_pipeline():
     if not key:
         logger.info("groq pipeline unavailable: no GROQ key in env")
         return None, "no_groq_key"
-    try:
-        from livekit.plugins import groq
-    except ImportError as exc:
-        logger.warning(
-            "groq pipeline unavailable (livekit-plugins-groq not installed): %s", exc,
-        )
+    if not GROQ_PLUGIN_AVAILABLE:
+        logger.warning("groq pipeline unavailable: livekit-plugins-groq not importable on this host")
         _write_status("no-provider", "none", "livekit-plugins-groq not installed on the voice host")
         return None, "no_plugin"
 
-    stt = groq.STT(
+    stt = _lk_groq.STT(
         api_key=key,
         model="whisper-large-v3-turbo",
         detect_language=True,
     )
-    llm = groq.LLM(api_key=key, model=_llm_chat_model(), temperature=0.6)
-    tts = groq.TTS(api_key=key, model="canopylabs/orpheus-v1-english", voice="autumn")
+    llm = _lk_groq.LLM(api_key=key, model=_llm_chat_model(), temperature=0.6)
+    tts = _lk_groq.TTS(api_key=key, model="canopylabs/orpheus-v1-english", voice="autumn")
     logger.info("groq pipeline ready: whisper-large-v3-turbo + %s + orpheus", _llm_chat_model())
     return (stt, llm, tts), None
 
