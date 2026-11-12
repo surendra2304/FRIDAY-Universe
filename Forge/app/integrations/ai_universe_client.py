@@ -300,16 +300,12 @@ class AIUniverseClient:
                 return response.json()
         except (httpx.RequestError, httpx.HTTPStatusError) as exc:
             logger.warning(
-                f"Inference test generation remote call failed: {exc}. Returning structured fallback test suite."
+                f"Inference test generation remote call failed ({type(exc).__name__}); no tests generated."
             )
             return {
-                "test_code": (
-                    f"# Fallback generated test battery for {file_type}\n"
-                    f"import pytest\n\n"
-                    f"def test_module_sanity():\n"
-                    f"    assert True\n"
-                ),
-                "confidence": 0.8,
+                "test_code": "",
+                "confidence": 0.0,
+                "error": f"Test generation unavailable ({type(exc).__name__}); no tests generated.",
             }
 
     async def debate(self, question: str, max_agents: int = 5) -> AIUniverseResponse:

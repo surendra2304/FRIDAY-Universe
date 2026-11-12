@@ -72,10 +72,13 @@ jobs:
         env:
           PYTHONPATH: Forge
         run: |
+          python -m pip install -r Forge/requirements-verification.txt
           python -m pytest -q Forge/tests/unit/test_response_parser.py \
             Forge/tests/unit/test_parser_and_webstudio_regressions.py \
             Forge/tests/unit/test_generated_test_ingestion.py \
-            Forge/tests/unit/test_delegate_verification_status.py
+            Forge/tests/unit/test_delegate_verification_status.py \
+            Forge/tests/unit/test_missing_test_truthfulness.py \
+            Forge/tests/unit/test_verification.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora

@@ -476,3 +476,13 @@ def test_explicit_forge_failure_preserves_cause_and_task_reference_without_recei
     assert result.metadata["forge"]["task_id"] == "actual-peer-fixture"
     assert result.metadata["verification_manifest"]["all_passed"] is False
     assert "no receipt" not in result.content
+
+
+def test_dispatched_forge_timeout_is_unconfirmed_not_generic_status_error():
+    def handler(req):
+        raise httpx.ReadTimeout("", request=req)
+    result = ForgeCodeTool(WireFleet(handler)).execute(goal="write a Python CSV converter")
+    assert result.is_error
+    assert "ReadTimeout" in result.content
+    assert "outcome unconfirmed" in result.content
+    assert "history before retrying" in result.content
