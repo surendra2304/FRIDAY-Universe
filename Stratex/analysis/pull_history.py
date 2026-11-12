@@ -74,7 +74,7 @@ def main():
     manifest = {}
     for symbol in SYMBOLS:
         for iv, cap in LIMITS.items():
-            dest = f"{OUT}/{symbol}_{iv}.parquet"
+            dest = f"{OUT}/{symbol}_{iv}.csv"
             if os.path.exists(dest):
                 df_old = pd.read_parquet(dest)
                 manifest[f"{symbol}_{iv}"] = f"{len(df_old)} bars {df_old.index[0].date()}->{df_old.index[-1].date()} (cached)"
@@ -102,7 +102,7 @@ def main():
                 continue
             if cap:  # keep only the most recent `cap` bars
                 df = df.iloc[-cap:]
-            df.to_parquet(dest)
+            df.to_csv(dest)
             manifest[f"{symbol}_{iv}"] = f"{len(df)} bars {df.index[0].date()}->{df.index[-1].date()}"
             print(f"  {symbol} {iv}: {manifest[f'{symbol}_{iv}']}", flush=True)
     print("MANIFEST", json.dumps(manifest, indent=0))
