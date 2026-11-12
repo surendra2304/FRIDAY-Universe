@@ -69,6 +69,16 @@
         "x": 1
       },
       "level": "info"
+    },
+    {
+      "entry_id": "audit_9c9631746556",
+      "timestamp": 1794522449.526506,
+      "action": "test",
+      "agent": "test",
+      "details": {
+        "x": 1
+      },
+      "level": "info"
     }
   ]
 }

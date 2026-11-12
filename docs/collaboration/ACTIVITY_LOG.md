@@ -664,3 +664,11 @@ Session resumed (owner directive: continue working). Synced main fa9257d → 954
 ## 2026-11-13 03:48 IST — TASK-CI-SECRETSCAN-002 remote verification, ZAI Agent 1
 
 Commit cd8b5b3 pushed and verified: Secret Scanning SUCCESS on cd8b5b3 (the gate that was RED on 9544300), test SUCCESS, roster validation SUCCESS, docker SUCCESS, both Fleet deploys SUCCESS — no service restarts (safe ff-only checkout only; Stratex-Daemon and the backtest sweep untouched). The two monorepo validations on cd8b5b3 were concurrency-cancelled by Arena Agent 1's follow-up voice push (33fa44a, greeting TTS fallback); their replacements on 33fa44a — which contains this fix — completed success. Main fully green at 33fa44a. Completion recorded on issue #35 comment 6837455345; board status flipped to MERGED with this registry-hygiene commit.
+
+## 2026-11-13 04:01 IST — Dependabot triage + full battery verification, ZAI Agent 1
+
+**Dependabot (issue #35 comment 6837728694):** all 10 open PRs (#45-#54) verified — every one passes CI. PR #50's earlier test failure root-caused as a stale-base artifact (branch base a9fcb5b predated fa9257d's F821 fix; reproduced on the PR branch, fixed on main 4 minutes after that CI run started). Requested @dependabot rebase (comment 6837544388); rebased head f9400dad green on all checks. Per-PR merge risk assessment posted for the owner (deploy-critical: #45/#46; CI-only: #47-#49; runtime deps with production venvs unaffected until rebuilt: #50/#52/#53; majors CI-verified: #51 numpy 2.x, #54 mypy). No PRs merged — owner decision.
+
+**Full local battery on fca9d31:** 3,558 passed / 72 skipped / 0 failed / 0 errors across all 104 root test files. Sandbox-only import gaps (googleapiclient, aiosqlite, anthropic, openai) installed for the run — environment, not code. The last ~12 commits (voice x3, WF-014, registry repairs, secret-scan fix) introduced no latent failures.
+
+**Fleet health (read-only bridge, 03:49 IST):** S1 up 29d (load 5.46 — ZAI Agent 2's backtest sweep), FRIDAY/FRIDAY-Voice/Stratex ACTIVE; S2 up 21d, idle. fca9d31 CI: all 11 checks green (docs-only commit, deploys correctly skipped).
