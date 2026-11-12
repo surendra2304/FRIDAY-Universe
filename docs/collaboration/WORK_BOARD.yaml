@@ -1827,10 +1827,10 @@ tasks:
 
   - id: TASK-WF-006
     title: Reject zero-test false acceptance and preserve timeout uncertainty
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: arena_engineering_01
     branch: arena/TASK-WF-006-verification-truth
-    pr: null
+    pr: 58
     files:
     - .github/workflows/owner-workflows.yml
     - FRIDAY/src/friday/ecosystem/fleet_client.py
@@ -1839,7 +1839,7 @@ tasks:
     - Forge/app/verification/checkers.py
     - Forge/tests/unit/test_missing_test_truthfulness.py
     claimed_at: '2026-11-12T15:31:28.134869+00:00'
-    last_update: '2026-11-12T15:31:28.134869+00:00'
+    last_update: '2026-11-12T15:41:57.795219+00:00'
     acceptance:
     - Python source with no tests cannot certify passed tests.
     - Provider outage must not fabricate assert-True fallback tests.
@@ -1854,11 +1854,24 @@ tasks:
       passed.
     - Expanded diagnostic strict/delivery suite11passed/2failed; both db_path-constructor
       failures reproduce on archived pristine baseline, not skipped or changed here.
+    - PR58 merged62daafeca95c4bd166b5a961c3e0c22b2eb135f5; controlled deployment43249819436
+      success. Both test jobs and seven distinct checks including workload images passed.
+    - Actual existing task0612112026152234 reverified with prior reports backed up and
+      generated source hashes unchanged. New manifest all_passed=false,1/10failed, test_discovery
+      exit1; actual authenticated status endpoint200/PARTIAL_FAILURE.
+    - Initial standalone script import-only attempt failed before verification because
+      mesh root absent from script path. Fixed script import path, then executed verification
+      once; no second generation submitted.
+    - Final S1 exactSHA62daafe; tracked checkout clean. FRIDAY-Voice active/running,NRestarts0;
+      Stratex daemonPID2423388 unchanged.
     blockers:
-    - No successful goal-specific generated tested CSV artifact.
-    - New truthfulness fixes require CI/deployment and actual reverification.
-    next_action: Focused PR/CI/controlled rollout, then reverify existing task without
-      new generation; preserve task history and honest remaining blockers.
+    - This VERIFIED status covers rejecting false acceptance and preserving uncertainty,
+      not software workflow completion.
+    - Goal-specific generated tested CSV artifact, owner microphone/continuous context,
+      actual reviewed video/channel OAuth and profitability remain unaccepted.
+    next_action: Truthfulness repair live-verified. Goal-specific generation remains
+      rejected and needs separate root-cause work; no duplicate expensive generation.
+      Docs-only acceptance record follows on arena/TASK-WF-006-acceptance-record.
     claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:
