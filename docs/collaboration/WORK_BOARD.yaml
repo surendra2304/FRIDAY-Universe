@@ -1949,6 +1949,56 @@ tasks:
       Telegram delivery receipt separately; no claim of complete software workflow.
     claim_policy: Update within2h; contact before takeover, no automatic expiration.
 
+  - id: TASK-WF-008
+    title: Preserve released goal-specific code during repair and execute embedded unittest
+      suites
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-008-repair-preservation
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/agents/coordinator.py
+    - Forge/app/agents/roles.py
+    - Forge/app/core/orchestrator.py
+    - Forge/app/verification/checkers.py
+    - Forge/app/verification/python_tests.py
+    - Forge/tests/unit/test_repair_preservation_and_embedded_tests.py
+    claimed_at: '2026-11-12T17:39:25.982091+00:00'
+    last_update: '2026-11-12T17:39:25.982091+00:00'
+    acceptance:
+    - Discover/execute embedded unittest suites, reject zero-test success and preserve
+      conventional mixed pytest coverage.
+    - Peer repair receives persisted objective/requirements; no wholesale DeveloperRole
+      regeneration fallback. Minimal safe unused-import fixes are objectively re-reviewed
+      and saved evidence re-generated after repair.
+    - One fresh actual canonical CSV build after green CI/rollout, independent quoted-comma
+      and empty-input checks on FINAL workspace, no generated source hand-edits/restoration/push/deploy.
+    - Preserve Stratex collaborator work and remote untracked files; private Telegram
+      actual outcome notification at completion.
+    evidence:
+    - Claim issue35 6831092256, Arena Agent 1 retains existing arena_engineering_01
+      identity.
+    - Clean public clone at4892ecb after previous local .git metadata absent in persisted
+      snapshot; prior workspace untouched. No new active overlapping source PRs.
+    - 56 focused Forge regressions pass, including real embedded unittest execution
+      and real review->F401-only import repair->re-review with converter logic/tests
+      unchanged. No live model proof claimed yet.
+    - Mixed-suite regression initially caught pytest collecting only explicit embedded
+      module when passed alongside dot; fixed by explicit conventional+embedded file
+      paths, regression asserts all3tests.
+    - Unknown objective refuses peer writes, zero-test unittest exit0 becomes failure,
+      debugger sees current source/goal/requirements, orchestrator forwards persisted
+      context and re-verifies repaired workspace.
+    blockers:
+    - No fresh deployed final-workspace converter acceptance yet. Existing task1112112026162526
+      remains rejected; do not restore/edit it to fabricate acceptance.
+    - Continuous microphone, reviewed video/Google authorization and sustained profits
+      remain unverified.
+    next_action: Focused review, CI and exact-head framework rollout, one bounded canonical
+      request, inspect task history on timeout instead of blind retry.
+    claim_policy: Update within2h; contact before takeover.
+
 task_id_warnings:
   - id: TASK-WF-005
     title: Fix concrete live research/build/shared-memory failures and repeat real workflow

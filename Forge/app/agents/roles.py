@@ -1145,6 +1145,10 @@ class TesterRole(BaseAgent):
         test_files = engine.fs.search_files(
             task_id=task_id, pattern="test_*.py", role=self.role_name
         )
+        from app.verification.python_tests import discover_unittest_targets, unittest_command, unittest_executed
+
+        paths = engine.wm.get_workspace_paths(task_id) if getattr(engine, "wm", None) else None
+        embedded_targets = discover_unittest_targets(paths.project) if paths else []
         existing_test_is_stub = False
         if test_files:
             try:
@@ -1160,7 +1164,7 @@ class TesterRole(BaseAgent):
                 pass
 
         # If no tests exist or only dummy stub exists, synthesize tests via Inference
-        if not test_files or existing_test_is_stub:
+        if (not test_files and not embedded_targets) or existing_test_is_stub:
             test_synthesized = False
             try:
                 from app.integrations.ai_universe_client import get_ai_universe_client
@@ -1208,8 +1212,14 @@ class TesterRole(BaseAgent):
         # .pytest_cache plus rewritten __pycache__ files inside the project the
         # agent is delivering, so every finished build shipped test-runner junk to
         # the user. Use the hosting interpreter, and disable both caches.
-        command = (f'"{sys.executable}" -B -m unittest discover -v' if test_framework == "unittest"
+        # Re-scan after generation; embedded TestCase suites need explicit targets.
+        targets = discover_unittest_targets(paths.project) if paths else []
+        command = (unittest_command(targets) if test_framework == "unittest"
                    else f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider')
+        if test_framework != "unittest" and embedded_targets:
+            import shlex
+            files = sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py" for target in embedded_targets})
+            command += " " + " ".join(shlex.quote(path) for path in sorted(set(files + test_files)))
         cmd_res = await engine.terminal.run_command(
             task_id=task_id,
             command=command,
@@ -1217,11 +1227,13 @@ class TesterRole(BaseAgent):
             role=self.role_name,
         )
 
+        executed = test_framework != "unittest" or unittest_executed(cmd_res.stdout, cmd_res.stderr)
+        exit_code = cmd_res.exit_code if executed else (cmd_res.exit_code or 1)
         return {
-            "status": "success" if cmd_res.exit_code == 0 else "failed",
-            "exit_code": cmd_res.exit_code,
+            "status": "success" if exit_code == 0 else "failed",
+            "exit_code": exit_code,
             "stdout": cmd_res.stdout,
-            "stderr": cmd_res.stderr,
+            "stderr": cmd_res.stderr if executed else cmd_res.stderr + "\nNo unittest tests were executed.",
             "agent": self.role_name,
         }
 
@@ -1275,7 +1287,21 @@ class DebuggerRole(BaseAgent):
         except Exception:
             pass
 
+        source_context = []
+        for path in context.get("project_files", [])[:20]:
+            if not isinstance(path, str) or not path.endswith(".py"):
+                continue
+            try:
+                source = engine.fs.read_file(task_id, path, role=self.role_name)
+                if len(source) <= 64000:
+                    source_context.append(f"File: {path}\n```python\n{source}\n```")
+            except Exception:
+                pass
         prompt = (
+            f"Original objective: {context.get('goal', '')}\n"
+            f"Requirements: {context.get('requirements', [])}\n"
+            f"Preserve existing behavior and tests. Make only the minimal repair; never substitute a generic scaffold.\n"
+            f"Current source:\n{''.join(source_context)}\n"
             f"Diagnostic Scope: {node_title}\n"
             f"Error Information:\n{error_context}\n\n"
             f"Recent Terminal Logs:\n{terminal_logs}\n\n"

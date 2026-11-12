@@ -15,6 +15,7 @@ from typing import Any
 from app.core.logging import get_logger
 from app.execution.engine import ExecutionEngine
 from app.verification.evidence import CheckCategory, VerificationEvidence
+from app.verification.python_tests import discover_unittest_targets, unittest_command, unittest_executed
 
 logger = get_logger("verification.checkers")
 
@@ -463,6 +464,24 @@ class TestChecker(BaseChecker):
             (paths.project / "tests").glob("*.py")
         )
 
+        unittest_targets = discover_unittest_targets(paths.project)
+        if not py_test_files and not has_tests_dir and unittest_targets:
+            result = await engine.terminal.run_command(
+                task_id, unittest_command(unittest_targets),
+                env_vars={"PYTHONPATH": ".", "PYTHONDONTWRITEBYTECODE": "1"}, role="tester",
+            )
+            executed = unittest_executed(result.stdout, result.stderr)
+            return VerificationEvidence(
+                check_name="Embedded Unittest Suite Runner", category=self.category,
+                command=result.command, exit_code=result.exit_code if executed else (result.exit_code or 1),
+                passed=result.exit_code == 0 and executed,
+                duration_ms=round((time.perf_counter() - start_time) * 1000, 2),
+                stdout=result.stdout,
+                stderr=result.stderr if executed else result.stderr + "\nNo unittest tests were executed.",
+                artifacts_inspected=sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py"
+                                           for target in unittest_targets}),
+            )
+
         if not py_test_files and not has_tests_dir:
             python_sources = [p for p in paths.project.rglob("*.py")
                               if not set(p.parts) & {".venv", "venv", "node_modules", ".git"}]
@@ -483,9 +502,16 @@ class TestChecker(BaseChecker):
         # hosting FORGE; sys.executable is the one that actually has the deps.
         # And -p no:cacheprovider stops pytest from writing .pytest_cache into
         # the project it is verifying.
+        import shlex
+
+        embedded_files = sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py"
+                                 for target in unittest_targets
+                                 if not Path(target.rsplit(".", 1)[0].replace(".", "/")).name.startswith("test_")})
+        selected_files = sorted(set(py_test_files + embedded_files))
+        extra = " " + " ".join(shlex.quote(path) for path in selected_files) if embedded_files else ""
         cmd_res = await engine.terminal.run_command(
             task_id,
-            f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider',
+            f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider{extra}',
             env_vars={"PYTHONPATH": ".", "PYTHONDONTWRITEBYTECODE": "1"},
             role="tester",
         )
@@ -500,7 +526,7 @@ class TestChecker(BaseChecker):
             duration_ms=round(duration_ms, 2),
             stdout=cmd_res.stdout,
             stderr=cmd_res.stderr,
-            artifacts_inspected=py_test_files,
+            artifacts_inspected=selected_files,
         )
 
 

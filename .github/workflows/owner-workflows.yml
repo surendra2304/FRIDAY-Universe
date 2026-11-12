@@ -84,7 +84,8 @@ jobs:
             Forge/tests/unit/test_missing_test_truthfulness.py \
             Forge/tests/unit/test_verification.py \
             Forge/tests/unit/test_goal_fidelity_contract.py \
-            Forge/tests/unit/test_context_manager.py
+            Forge/tests/unit/test_context_manager.py \
+            Forge/tests/unit/test_repair_preservation_and_embedded_tests.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora
