@@ -1662,6 +1662,7 @@ claims:
     expected_next_update: '2026-11-12T17:04:51.017727+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
+    generation_boundaries_wf009: "Arena Agent 1; scope refinement6831923182; raw Python/docstring boundary; contact before takeover."
   - path: Forge/app/agents/roles.py
     owner: arena_engineering_01
     prs: []

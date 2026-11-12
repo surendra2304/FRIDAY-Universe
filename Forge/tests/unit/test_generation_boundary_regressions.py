@@ -54,3 +54,22 @@ async def test_only_delivered_project_pytest_config_is_honored(tmp_path):
     assert evidence.passed, evidence.stderr
     assert '-c pytest.ini' in evidence.command
     assert '1 passed' in evidence.stdout and '1 deselected' in evidence.stdout
+
+
+def test_unwrapped_python_is_not_replaced_by_parseable_csv_in_docstring():
+    from app.agents.parser import LLMResponseParser
+    source = '''"""Convert CSV — preserve Unicode and documentation.
+```csv
+name,city
+"Doe, Jane",Guntur
+```
+"""
+import csv
+import io
+
+def convert(text):
+    return list(csv.DictReader(io.StringIO(text)))
+'''
+    files = LLMResponseParser.extract_files(source, default_filename='main.py')
+    assert len(files) == 1 and files[0].relative_path == 'main.py'
+    assert files[0].content == source.strip()

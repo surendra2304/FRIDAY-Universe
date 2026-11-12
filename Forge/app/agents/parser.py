@@ -97,6 +97,13 @@ class LLMResponseParser:
                 return False
             return not bool(re.match(r"^<[a-zA-Z0-9_\s-]+>$", stripped_content))
 
+        # An Inference adapter may already have unwrapped a complete module.
+        # Its docstring can contain Markdown/CSV examples that themselves parse
+        # as Python. Never replace valid source with those inner code blocks.
+        raw = response_text.strip()
+        if default_filename and default_filename.lower().endswith(".py") and _is_valid_file(default_filename, raw):
+            return [ExtractedFile(relative_path=_normalize_path(default_filename), content=raw, language="python")]
+
         # 1. XML Style: <file path="relative/path/to/file.ext">...</file>
         xml_matches = re.finditer(
             r'<file\s+(?:path|name|filename)=["\']([^"\']+)["\']\s*>\s*([\s\S]*?)\s*</file>',
