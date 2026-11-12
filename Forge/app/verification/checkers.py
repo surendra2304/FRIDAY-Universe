@@ -391,9 +391,9 @@ class TestChecker(BaseChecker):
             return VerificationEvidence(
                 check_name=self.name,
                 category=self.category,
-                exit_code=0,
-                passed=True,
-                stdout="No workspace to test.",
+                exit_code=1,
+                passed=False,
+                stderr="No workspace exists; no tests were executed.",
             )
 
         # 1. Go Tests
@@ -464,14 +464,18 @@ class TestChecker(BaseChecker):
         )
 
         if not py_test_files and not has_tests_dir:
+            python_sources = [p for p in paths.project.rglob("*.py")
+                              if not set(p.parts) & {".venv", "venv", "node_modules", ".git"}]
             return VerificationEvidence(
                 check_name="Pytest Test Suite Runner",
                 category=self.category,
-                command="pytest -v",
-                exit_code=0,
-                passed=True,
+                command="python_test_discovery",
+                exit_code=1 if python_sources else 0,
+                passed=not bool(python_sources),
                 duration_ms=0.1,
-                stdout="No test files discovered in workspace.",
+                stdout="No Python source files; Python test runner is not applicable." if not python_sources else "",
+                stderr="Python source exists but no test files were discovered; no tests were executed." if python_sources else "",
+                artifacts_inspected=[str(p.relative_to(paths.project)) for p in python_sources],
             )
 
         # Two fixes in one line. `python` was a bare name resolved from PATH, so
@@ -1234,7 +1238,7 @@ class FeaturePresenceChecker(BaseChecker):
         passed = len(issues) == 0
 
         stdout = (
-            f"Verified {len(artifacts_inspected)} project files. All requested features, libraries, and objective elements are present and implemented."
+            f"Static presence checks passed for supported rules across {len(artifacts_inspected)} files. Functional requirement coverage is not established by this check."
             if passed
             else ""
         )

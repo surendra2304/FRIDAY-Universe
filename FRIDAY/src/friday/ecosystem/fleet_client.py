@@ -1593,7 +1593,8 @@ class FleetClient:
                 task_id=envelope.task_id,
                 target_agent=envelope.target_agent,
                 status=TaskStatus.ERROR,
-                error=str(e),
+                error=(f"{type(e).__name__}: outcome unconfirmed after dispatch; check peer task history before retrying."
+                       if isinstance(e, httpx.TimeoutException) else f"{type(e).__name__}: {e}"),
                 execution_time_ms=lat,
             )
 

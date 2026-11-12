@@ -1430,6 +1430,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
+    verification_truth_wf006: 'arena/TASK-WF-006-verification-truth; scoped issue35 claim6827881797; 2026-11-12T15:31:28.134869+00:00; contact before takeover.'
   - path: FRIDAY/src/friday/voice/livekit_worker.py
     owner: arena_engineering_01
     prs: []
@@ -1465,6 +1466,7 @@ claims:
 
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
+    verification_truth_wf006: 'arena/TASK-WF-006-verification-truth; scoped issue35 claim6827881797; 2026-11-12T15:31:28.134869+00:00; contact before takeover.'
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1490,6 +1492,7 @@ claims:
 
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
+    verification_truth_wf006: 'arena/TASK-WF-006-verification-truth; scoped issue35 claim6827881797; 2026-11-12T15:31:28.134869+00:00; contact before takeover.'
   - path: IntelX/intelx/api/live_research_task.py
     owner: arena_engineering_01
     prs: []
@@ -1742,6 +1745,36 @@ claims:
     status: IN_PROGRESS
     task: TASK-WF-005
     claimed_at: '2026-11-12T15:11:14.199566+00:00'
+    expiry_policy: Contact before takeover; update within2h.
+
+  - path: Forge/app/integrations/ai_universe_client.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-006-verification-truth
+    status: IN_PROGRESS
+    task: TASK-WF-006
+    claimed_at: '2026-11-12T15:31:28.134869+00:00'
+    expiry_policy: Contact before takeover; update within2h.
+
+  - path: Forge/app/verification/checkers.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-006-verification-truth
+    status: IN_PROGRESS
+    task: TASK-WF-006
+    claimed_at: '2026-11-12T15:31:28.134869+00:00'
+    expiry_policy: Contact before takeover; update within2h.
+
+  - path: Forge/tests/unit/test_missing_test_truthfulness.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-006-verification-truth
+    status: IN_PROGRESS
+    task: TASK-WF-006
+    claimed_at: '2026-11-12T15:31:28.134869+00:00'
     expiry_policy: Contact before takeover; update within2h.
 
 conflicts_to_resolve:

@@ -1746,7 +1746,7 @@ tasks:
   - id: TASK-WF-005
     title: Fix concrete live research/build/shared-memory failures and repeat real workflow
       acceptance
-    status: IN_PROGRESS
+    status: DEPLOYED
     owner: arena_engineering_01
     branch: arena/TASK-WF-005-live-acceptance
     pr: 57
@@ -1771,7 +1771,7 @@ tasks:
     - Memora/tests/test_direct_evidence_ranking.py
     - tests/test_live_research_task_contract.py
     claimed_at: '2026-11-12T15:04:51.017727+00:00'
-    last_update: '2026-11-12T15:11:14.199566+00:00'
+    last_update: '2026-11-12T15:31:28.134869+00:00'
     acceptance:
     - Canonical natural-language coding request reaches Forge, actual generated tested
       artifacts pass verification.
@@ -1805,17 +1805,61 @@ tasks:
       in archived baseline; not skipped or repaired here.
     - PR57 first CI387 regressions passed; Forge collection failed missing SQLAlchemy
       asyncio greenlet, dependency declaration corrected, new checks pending.
+    - PR57 merged c3ba387; deployed S1 by Actions43246508443 success. FRIDAY-Voice active/running,NRestarts0;
+      Stratex daemonPID2423388 unchanged.
+    - Actual canonical memory store2.67s and recall5.65s returned genuine owner instruction;
+      separate deployed-client search returns API-persisted ID055a8d5a-afd5-4a7f-8b0e-448fd1c92a91.
+      Actual research15.28s returns useful cited serialization prose. This is voice-to-brain
+      tool-path evidence, not owner microphone/audio acceptance.
+    - Actual canonical build timed out211.94s. Later real task0612112026152234 claimsSUCCESS/all_passed=true
+      but test stage says no tests, and generic text-processing CLI does not meet CSV
+      converter request. Not accepted; follow-up TASK-WF-006.
     blockers:
-    - Actual post-fix model-generated build acceptance pending deployment.
-    - Shared-memory relevant search/recall unconfirmed despite durable API write/read.
-    - Owner microphone/interruption continuous conversation not verified.
-    - YouTube OAuth invalid_grant and stock-media rights confirmation/item-license validation
-      unresolved.
-    - Stratex profitability not demonstrated; ZAI Agent2 retains lane, governor and
-      trend-exit fix56dd9e7 preserved.
-    next_action: Publish focused tested changes, verify CI, exact-head owner-authorized
-      merge/deploy without restarting Stratex daemon, then bounded canonical acceptance.
+    - Actual CSV converter generated/tested artifact still not delivered; false no-tests
+      acceptance addressed under TASK-WF-006.
+    - Owner microphone/interruption continuous context unaccepted.
+    - YouTube OAuth invalid_grant requires legitimate reauthorization; item rights and
+      real reviewed rendered video remain unresolved.
+    - Stratex profitability remains unproven; ZAI Agent2 active lane preserved.
+    next_action: Keep real memory/research evidence; continue unaccepted build under
+      TASK-WF-006 and owner microphone/video/channel acceptance separately.
     claim_policy: Update within2h; contact before takeover, no automatic expiry.
+
+  - id: TASK-WF-006
+    title: Reject zero-test false acceptance and preserve timeout uncertainty
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-006-verification-truth
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - FRIDAY/src/friday/ecosystem/fleet_client.py
+    - FRIDAY/tests/test_four_owner_workflows.py
+    - Forge/app/integrations/ai_universe_client.py
+    - Forge/app/verification/checkers.py
+    - Forge/tests/unit/test_missing_test_truthfulness.py
+    claimed_at: '2026-11-12T15:31:28.134869+00:00'
+    last_update: '2026-11-12T15:31:28.134869+00:00'
+    acceptance:
+    - Python source with no tests cannot certify passed tests.
+    - Provider outage must not fabricate assert-True fallback tests.
+    - A dispatched HTTP timeout must explicitly say outcome unconfirmed and warn against
+      blind retry.
+    - Reverify the existing failed-acceptance workspace without regenerating or editing
+      its artifacts.
+    evidence:
+    - 'Claim issue35 6827881797. Actual task0612112026152234: generic file processor,
+      zero tests, manifest all_passed=true; this is a rejected acceptance result.'
+    - 389 combined FRIDAY/research/memory/deployment regressions and38 Forge regressions
+      passed.
+    - Expanded diagnostic strict/delivery suite11passed/2failed; both db_path-constructor
+      failures reproduce on archived pristine baseline, not skipped or changed here.
+    blockers:
+    - No successful goal-specific generated tested CSV artifact.
+    - New truthfulness fixes require CI/deployment and actual reverification.
+    next_action: Focused PR/CI/controlled rollout, then reverify existing task without
+      new generation; preserve task history and honest remaining blockers.
+    claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:
   - id: TASK-WF-005
@@ -1878,6 +1922,42 @@ task_id_warnings:
     next_action: Publish focused tested changes, verify CI, exact-head owner-authorized
       merge/deploy without restarting Stratex daemon, then bounded canonical acceptance.
     claim_policy: Update within2h; contact before takeover, no automatic expiry.
+
+  - id: TASK-WF-006
+    title: Reject zero-test false acceptance and preserve timeout uncertainty
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-006-verification-truth
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - FRIDAY/src/friday/ecosystem/fleet_client.py
+    - FRIDAY/tests/test_four_owner_workflows.py
+    - Forge/app/integrations/ai_universe_client.py
+    - Forge/app/verification/checkers.py
+    - Forge/tests/unit/test_missing_test_truthfulness.py
+    claimed_at: '2026-11-12T15:31:28.134869+00:00'
+    last_update: '2026-11-12T15:31:28.134869+00:00'
+    acceptance:
+    - Python source with no tests cannot certify passed tests.
+    - Provider outage must not fabricate assert-True fallback tests.
+    - A dispatched HTTP timeout must explicitly say outcome unconfirmed and warn against
+      blind retry.
+    - Reverify the existing failed-acceptance workspace without regenerating or editing
+      its artifacts.
+    evidence:
+    - 'Claim issue35 6827881797. Actual task0612112026152234: generic file processor,
+      zero tests, manifest all_passed=true; this is a rejected acceptance result.'
+    - 389 combined FRIDAY/research/memory/deployment regressions and38 Forge regressions
+      passed.
+    - Expanded diagnostic strict/delivery suite11passed/2failed; both db_path-constructor
+      failures reproduce on archived pristine baseline, not skipped or changed here.
+    blockers:
+    - No successful goal-specific generated tested CSV artifact.
+    - New truthfulness fixes require CI/deployment and actual reverification.
+    next_action: Focused PR/CI/controlled rollout, then reverify existing task without
+      new generation; preserve task history and honest remaining blockers.
+    claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
