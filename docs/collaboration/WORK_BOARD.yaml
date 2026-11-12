@@ -1749,7 +1749,7 @@ tasks:
     status: IN_PROGRESS
     owner: arena_engineering_01
     branch: arena/TASK-WF-005-live-acceptance
-    pr: null
+    pr: 57
     files:
     - .github/workflows/owner-workflows.yml
     - FRIDAY/src/friday/agent/mixins/fast_paths.py
@@ -1762,14 +1762,16 @@ tasks:
     - Forge/app/agents/parser.py
     - Forge/app/agents/roles.py
     - Forge/app/api/delegate.py
-    - Forge/tests/unit/test_response_parser.py
-    - IntelX/intelx/api/live_research_task.py
-    - tests/test_live_research_task_contract.py
     - Forge/requirements-verification.txt
     - Forge/tests/unit/test_delegate_verification_status.py
     - Forge/tests/unit/test_generated_test_ingestion.py
+    - Forge/tests/unit/test_response_parser.py
+    - IntelX/intelx/api/live_research_task.py
+    - Memora/core/memory/search_service.py
+    - Memora/tests/test_direct_evidence_ranking.py
+    - tests/test_live_research_task_contract.py
     claimed_at: '2026-11-12T15:04:51.017727+00:00'
-    last_update: '2026-11-12T15:04:51.017727+00:00'
+    last_update: '2026-11-12T15:11:14.199566+00:00'
     acceptance:
     - Canonical natural-language coding request reaches Forge, actual generated tested
       artifacts pass verification.
@@ -1792,6 +1794,17 @@ tasks:
     - FRIDAY-Voice active/running,NRestarts0; not owner microphone acceptance.
     - Both YouTube OAuth candidates invalid_grant; legitimate Google reauthorization
       needed. No render/upload or new trading exposure.
+    - Actual memory single-token search returns persisted observation. Natural multi-token
+      query instead buries it below graph-only rows with zero lexical/vector match and
+      higher graph score.
+    - Scoped ranking fix prioritizes direct lexical/vector evidence before graph-only
+      companions, retaining companions and existing policy/tenant filters. New real
+      relational regression fails on archived baseline and passes on fix.
+    - 23 focused Memora ranking/hybrid/tenant/access tests passed. Two unrelated scope-suite
+      failures (hardcoded Windows path; fixture filename restriction) reproduce identically
+      in archived baseline; not skipped or repaired here.
+    - PR57 first CI387 regressions passed; Forge collection failed missing SQLAlchemy
+      asyncio greenlet, dependency declaration corrected, new checks pending.
     blockers:
     - Actual post-fix model-generated build acceptance pending deployment.
     - Shared-memory relevant search/recall unconfirmed despite durable API write/read.

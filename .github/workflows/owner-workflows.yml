@@ -8,6 +8,8 @@ on:
       - 'FRIDAY/tests/**'
       - 'Forge/app/**'
       - 'Forge/tests/**'
+      - 'Memora/core/memory/search_service.py'
+      - 'Memora/tests/test_direct_evidence_ranking.py'
       - 'IntelX/intelx/api/**'
       - 'VyralX/app/**'
       - 'VyralX/tests/**'
@@ -22,6 +24,8 @@ on:
       - 'FRIDAY/tests/**'
       - 'Forge/app/**'
       - 'Forge/tests/**'
+      - 'Memora/core/memory/search_service.py'
+      - 'Memora/tests/test_direct_evidence_ranking.py'
       - 'IntelX/intelx/api/**'
       - 'VyralX/app/**'
       - 'VyralX/tests/**'
@@ -72,6 +76,19 @@ jobs:
             Forge/tests/unit/test_parser_and_webstudio_regressions.py \
             Forge/tests/unit/test_generated_test_ingestion.py \
             Forge/tests/unit/test_delegate_verification_status.py
+      - name: Direct memory evidence outranks graph-only context
+        env:
+          PYTHONPATH: Memora
+          MEMORA_ENV: testing
+          ENVIRONMENT: testing
+          MEMORA_EMBEDDING_MODE: hashing
+        run: |
+          python -m pip install -r Memora/requirements.txt
+          python -m pytest -q Memora/tests/test_direct_evidence_ranking.py \
+            Memora/tests/test_hybrid_search.py \
+            Memora/tests/test_oracle_vector_tenant_isolation.py \
+            Memora/tests/test_cross_tenant_context_isolation.py \
+            Memora/tests/test_memory_access_controller_auth.py
       - name: Review-required project persistence and worker boundaries
         env:
           APP_ENV: development

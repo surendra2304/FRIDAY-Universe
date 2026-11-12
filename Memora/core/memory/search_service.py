@@ -379,9 +379,13 @@ class SearchService:
                     )
                 )
 
-        # Deterministic sort with tie-breaking: (-final_score, -confidence, -created_at timestamp, id)
+        # Direct query evidence must precede graph-only companions. Graph
+        # degree/weight is contextual expansion, not query relevance: high-degree
+        # unrelated memories otherwise bury even a complete lexical match.
+        # Keep companions after direct matches; never widen scope or policy.
         scored_results.sort(
             key=lambda x: (
+                0 if x.keyword_score > 0 or x.semantic_score > 0 else 1,
                 -round(x.final_score, 4),
                 -round(x.record.confidence, 4),
                 -(x.record.created_at.timestamp() if x.record.created_at else 0.0),

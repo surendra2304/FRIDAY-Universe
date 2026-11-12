@@ -1722,6 +1722,28 @@ claims:
     expected_next_update: '2026-11-12T17:04:51.017727+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
+  - path: Memora/core/memory/search_service.py
+    owner: arena_engineering_01
+    prs:
+    - 57
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:11:14.199566+00:00'
+    expiry_policy: Contact before takeover; update within2h.
+
+  - path: Memora/tests/test_direct_evidence_ranking.py
+    owner: arena_engineering_01
+    prs:
+    - 57
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:11:14.199566+00:00'
+    expiry_policy: Contact before takeover; update within2h.
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:
