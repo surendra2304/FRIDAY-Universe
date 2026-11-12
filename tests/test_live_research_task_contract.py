@@ -112,3 +112,15 @@ def test_malformed_or_unmatched_findings_have_no_receipt(finding):
     result = asyncio.run(m.run_live_research("fixture", "batteries", AsyncMock(return_value=payload)))
     assert result["status"] == "DEGRADED"
     assert "receipt" not in result
+
+
+def test_official_document_heading_is_not_a_research_finding():
+    search = SimpleNamespace(fetch=AsyncMock(side_effect=AssertionError("explicit URL needs no search")))
+    content = b'''<h1>json JSON encoder and decoder Python 3.15.2 documentation</h1>
+        <p>Serialize obj to a JSON formatted string using this conversion table. The JSON encoder preserves order.</p>'''
+    fetch = SimpleNamespace(fetch=AsyncMock(return_value=SimpleNamespace(status_code=200,
+        content_type="text/html", final_url="https://docs.python.org/3/library/json.html", content=content)))
+    result = asyncio.run(m.collect_live_brief("research https://docs.python.org/3/library/json.html and summarize JSON serialization", search, fetch))
+    assert result["status"] == "SUCCESS"
+    assert "Serialize obj" in result["findings"][0]["quote"]
+    assert "documentation" not in result["findings"][0]["quote"]

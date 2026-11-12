@@ -555,12 +555,17 @@ class MemoraClient:
         category: str = "preference",
         importance: float = 0.95,
     ) -> Dict[str, Any]:
-        """Directly store an explicit fact into Memora after credential sanitization."""
+        """Store the user's statement as an observation, not promoted knowledge.
+
+        Memora reserves SEMANTIC promotion for its evidence-checked service
+        workflow. An authenticated peer may record EPISODIC observations;
+        category provenance preserves the explicit preference/fact intent.
+        """
         fact_clean = self.sanitize_for_persistence(fact_text)
         if self.remote_enabled:
             payload = {
                 "content_text": fact_clean,
-                "memory_type": "semantic",
+                "memory_type": "episodic",
                 "source": f"agent:{agent_name.lower()}",
                 "confidence": 1.0,
                 "importance": importance,

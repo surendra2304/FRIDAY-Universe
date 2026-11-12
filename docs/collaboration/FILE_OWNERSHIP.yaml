@@ -568,6 +568,7 @@ claims:
     task: "TASK-ORCH-001 first tranche: whole-word/phrase keyword matching (CapabilityRouter._matches)."
 
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: "FRIDAY/src/friday/planning/orchestrator.py"
     owner: "zai"
     prs: []
@@ -667,6 +668,7 @@ claims:
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: "FRIDAY/tests/test_forge_code_dispatch.py"
     owner: "zai"
     prs: []
@@ -927,6 +929,7 @@ claims:
     note_2026_11_11_b7: "Checklist B7: new public recent_memories (date-filtered recent active records) + supersede_fact (auditable merge primitive, same lifecycle as B10 corrections)."
 
 
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: "FRIDAY/src/friday/tools/builtin/task_status_query.py"
     owner: "zai"
     prs: []
@@ -969,6 +972,7 @@ claims:
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: "FRIDAY/src/friday/agent/mixins/cognitive.py"
     owner: "zai"
     prs: []
@@ -1425,6 +1429,7 @@ claims:
     expected_next_update: '2026-11-12T15:56:17.706503+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: FRIDAY/src/friday/voice/livekit_worker.py
     owner: arena_engineering_01
     prs: []
@@ -1459,6 +1464,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1483,6 +1489,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: IntelX/intelx/api/live_research_task.py
     owner: arena_engineering_01
     prs: []
@@ -1494,6 +1501,7 @@ claims:
     expected_next_update: '2026-11-12T15:56:17.706503+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: tests/test_live_research_task_contract.py
     owner: arena_engineering_01
     prs: []
@@ -1505,6 +1513,7 @@ claims:
     expected_next_update: '2026-11-12T15:56:17.706503+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
 
+    live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
   - path: FRIDAY/src/friday/tools/builtin/__init__.py
     owner: arena_engineering_01
     prs:
@@ -1624,6 +1633,94 @@ claims:
     claimed_at: '2026-11-12T14:32:20.987715+00:00'
     expected_next_update: '2026-11-12T16:32:20.987715+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiration.
+
+  - path: FRIDAY/tests/test_memora_hardening.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    expected_next_update: '2026-11-12T17:04:51.017727+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiry.
+
+  - path: Forge/app/agents/parser.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    expected_next_update: '2026-11-12T17:04:51.017727+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiry.
+
+  - path: Forge/app/agents/roles.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    expected_next_update: '2026-11-12T17:04:51.017727+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiry.
+
+  - path: Forge/app/api/delegate.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    expected_next_update: '2026-11-12T17:04:51.017727+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiry.
+
+  - path: Forge/tests/unit/test_response_parser.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    expected_next_update: '2026-11-12T17:04:51.017727+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiry.
+
+  - path: Forge/requirements-verification.txt
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    expected_next_update: '2026-11-12T17:04:51.017727+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiry.
+
+  - path: Forge/tests/unit/test_delegate_verification_status.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    expected_next_update: '2026-11-12T17:04:51.017727+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiry.
+
+  - path: Forge/tests/unit/test_generated_test_ingestion.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-005-live-acceptance
+    status: IN_PROGRESS
+    task: TASK-WF-005
+    claimed_at: '2026-11-12T15:04:51.017727+00:00'
+    expected_next_update: '2026-11-12T17:04:51.017727+00:00'
+    expiry_policy: Contact owner before takeover; no automatic expiry.
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"

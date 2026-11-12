@@ -199,3 +199,32 @@ def test_agent_injects_recalled_memory_as_user_role():
                 assert m.role == Role.USER
                 assert "UNTRUSTED HISTORICAL MEMORY CONTEXT" in m.content
         assert found_memory is True
+
+
+def test_explicit_fact_is_remote_observation_not_unauthorized_semantic_promotion(monkeypatch):
+    import json
+    captured = {}
+
+    class Response:
+        status = 201
+        def __enter__(self):
+            return self
+        def __exit__(self, *_):
+            return False
+        def read(self):
+            return b'{"id":"explicit-fixture","memory_type":"episodic","storage_durable":true}'
+
+    def fake_urlopen(request, timeout):
+        captured["payload"] = json.loads(request.data)
+        captured["headers"] = request.headers
+        return Response()
+
+    monkeypatch.setenv("FRIDAY_API_KEY", "friday-test-key")
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    client = MemoraClient(local_db_path=":memory:", remote_enabled=True)
+    client._record_fact_locally = lambda *_a, **_k: pytest.fail("unexpected local fallback")
+    result = client.record_fact("friday", "I require actual task evidence", category="owner_fact")
+    assert result["id"] == "explicit-fixture"
+    assert captured["payload"]["memory_type"] == "episodic"
+    assert captured["payload"]["provenance"]["category"] == "owner_fact"
+    assert captured["headers"]["Authorization"] == "Bearer friday-test-key"

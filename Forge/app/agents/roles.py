@@ -1180,13 +1180,9 @@ class TesterRole(BaseAgent):
                     )
                     if test_res and test_res.get("test_code"):
                         test_code = test_res["test_code"]
-                        engine.fs.create_file(
-                            task_id=task_id,
-                            relative_path="test_main.py",
-                            content=test_code,
-                            role=self.role_name,
-                        )
-                        test_synthesized = True
+                        test_synthesized = bool(self.apply_extracted_files(
+                            task_id, test_code, engine, default_filename="test_main.py"
+                        ))
             except Exception:
                 pass
 

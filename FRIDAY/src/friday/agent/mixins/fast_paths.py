@@ -978,6 +978,9 @@ class FastPathMixin:
         if CapabilityRouter._matches(low, CapabilityRouter.PROJECT_KEYWORDS):
             tool_cls = "vyralx_project"
             label = "VyralX review-only video project"
+        elif CapabilityRouter._matches(low, CapabilityRouter.CODE_TASK_KEYWORDS):
+            tool_cls = "forge_code_task"
+            label = "Forge sandboxed build and verification"
         elif CapabilityRouter._matches(low, CapabilityRouter.SCRIPT_KEYWORDS):
             tool_cls = "vyralx_script"
             label = "VyralX script drafting"
@@ -1025,6 +1028,11 @@ class FastPathMixin:
             # by a model tool call or remembered from a different project.
             result = VyralXProjectTool().execute(question=clean_input)
             meta_key = "vyralx"
+        elif tool_cls == "forge_code_task":
+            from friday.tools.builtin.forge_code_task import ForgeCodeTool
+
+            result = ForgeCodeTool().execute(goal=clean_input)
+            meta_key = "forge"
         elif tool_cls == "vyralx_script":
             from friday.tools.builtin.vyralx_script import VyralXScriptTool
 
@@ -1071,6 +1079,9 @@ class FastPathMixin:
                 "tool": tool_cls,
                 "pending": bool((result.metadata or {}).get("pending")),
                 "projects": (result.metadata or {}).get("projects", []),
+                "task_id": ((result.metadata or {}).get("forge") or {}).get("task_id") if tool_cls == "forge_code_task" else None,
+                "verification_manifest": (result.metadata or {}).get("verification_manifest"),
+                "artifacts": (result.metadata or {}).get("artifacts", []),
                 meta_key: (result.metadata or {}).get(meta_key),
                 "probe_success": success,
                 "duration_seconds": time.perf_counter() - start_time,

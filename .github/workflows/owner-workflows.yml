@@ -6,6 +6,8 @@ on:
     paths:
       - 'FRIDAY/src/**'
       - 'FRIDAY/tests/**'
+      - 'Forge/app/**'
+      - 'Forge/tests/**'
       - 'IntelX/intelx/api/**'
       - 'VyralX/app/**'
       - 'VyralX/tests/**'
@@ -18,6 +20,8 @@ on:
     paths:
       - 'FRIDAY/src/**'
       - 'FRIDAY/tests/**'
+      - 'Forge/app/**'
+      - 'Forge/tests/**'
       - 'IntelX/intelx/api/**'
       - 'VyralX/app/**'
       - 'VyralX/tests/**'
@@ -43,7 +47,7 @@ jobs:
           python -m pip install pytest pytest-asyncio fastapi uvicorn httpx
           pydantic-settings sqlalchemy rich python-dotenv psutil beautifulsoup4
           google-genai 'livekit-agents>=1,<2' mcp icalendar recurring-ical-events
-          pillow pyperclip openai numpy PyYAML google-api-python-client
+          pillow pyperclip openai numpy PyYAML google-api-python-client anthropic aiosqlite
       - name: Exercise four workflow and authority contracts (no external calls)
         run: |
           python -m pytest -q \
@@ -58,7 +62,16 @@ jobs:
             FRIDAY/tests/test_voice_tool_security.py \
             FRIDAY/tests/test_api_origin_enforcement.py \
             FRIDAY/tests/test_batch3_delegations.py \
-            FRIDAY/tests/test_batch3_part2.py
+            FRIDAY/tests/test_batch3_part2.py \
+            FRIDAY/tests/test_memora_hardening.py
+      - name: Generated-code ingestion and saved verification status
+        env:
+          PYTHONPATH: Forge
+        run: |
+          python -m pytest -q Forge/tests/unit/test_response_parser.py \
+            Forge/tests/unit/test_parser_and_webstudio_regressions.py \
+            Forge/tests/unit/test_generated_test_ingestion.py \
+            Forge/tests/unit/test_delegate_verification_status.py
       - name: Review-required project persistence and worker boundaries
         env:
           APP_ENV: development

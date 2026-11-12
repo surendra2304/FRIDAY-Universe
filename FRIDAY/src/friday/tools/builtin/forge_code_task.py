@@ -154,7 +154,10 @@ class ForgeCodeTool(BaseTool):
                 ),
                 is_error=True,
                 safety_level=self.safety_level,
-                metadata={"status": status, "error": error},
+                metadata={"status": status, "error": error,
+                          "forge": {"task_id": getattr(result, "task_id", ""), "status": status},
+                          "verification_manifest": (getattr(result, "result", None) or {}).get("verification_manifest")
+                          if isinstance(getattr(result, "result", None), dict) else None},
             )
 
         data = getattr(result, "result", None) or {}

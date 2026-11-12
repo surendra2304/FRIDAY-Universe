@@ -81,20 +81,22 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
             self.parts = []
 
         def handle_starttag(self, tag, attrs):
-            if tag in {"script", "style", "noscript"}:
+            if tag in {"script", "style", "noscript", "pre", "nav", "header", "footer"}:
                 self.hidden += 1
             if tag in {"p", "div", "li", "h1", "h2", "h3", "br"} and not self.hidden:
                 self.parts.append("\n")
 
         def handle_endtag(self, tag):
-            if tag in {"script", "style", "noscript"}:
+            if tag in {"script", "style", "noscript", "pre", "nav", "header", "footer"}:
                 self.hidden = max(0, self.hidden - 1)
             if tag in {"p", "div", "li"} and not self.hidden:
                 self.parts.append("\n")
 
         def handle_data(self, data):
             if not self.hidden:
-                self.parts.append(data)
+                # Source formatting newlines are not paragraph boundaries.
+                # Splitting on them returned isolated sentence tails in live docs.
+                self.parts.append(data.replace("\r", " ").replace("\n", " "))
 
     # Explicit source URLs are fetched directly; they are still subject to the
     # hardened connector's SSRF, redirect, robots, MIME and byte limits.
@@ -105,7 +107,12 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
     else:
         results = await search.fetch(query, max_results=min(15, max_sources * 3))
     findings, sources, failures, seen = [], [], [], set()
-    terms = {t for t in re.findall(r"\w{3,}", query.lower()) if t not in {"the", "and", "for", "what", "with", "from"}}
+    topical_query = re.sub(r"https?://[^\s]+", " ", query.lower())
+    def normalized_words(text):
+        # Treat serialize/serialization as the same topic, not URL tokens.
+        return {"serializ" if word.startswith("serializ") else word
+                for word in re.findall(r"\w{3,}", text.lower())}
+    terms = normalized_words(topical_query) - {"the", "and", "for", "what", "with", "from", "research", "summarize"}
     for candidate in results[:15]:
         if len(sources) >= max_sources:
             break
@@ -131,12 +138,15 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
                 parser.feed(text)
                 text = "".join(parser.parts)
             paragraphs = [" ".join(p.split()) for p in text.splitlines()]
-            paragraphs = [p for p in paragraphs if 40 <= len(p) <= 4000]
-            ranked = sorted(enumerate(paragraphs), key=lambda p: (-len(terms & set(re.findall(r"\w{3,}", p[1].lower()))), p[0]))
+            # Titles, function signatures and navigation are not useful sourced
+            # answers. Require a prose sentence; version-number dots don't count.
+            paragraphs = [p for p in paragraphs if 40 <= len(p) <= 4000
+                          and re.search(r"[.!?](?:\s|$)", p)]
+            ranked = sorted(enumerate(paragraphs), key=lambda p: (-len(terms & normalized_words(p[1])), p[0]))
             if not ranked:
                 failures.append({"url": url, "reason": "no_readable_passage"})
                 continue
-            excerpt = ranked[0][1][:600]
+            excerpt = " ".join(passage for _, passage in ranked[:3])[:600]
             sid = hashlib.sha256(final_url.encode()).hexdigest()[:16]
             title = str(getattr(candidate, "title", "") or final_url)[:160]
             source = {"id": sid, "title": title, "url": final_url,

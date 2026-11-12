@@ -1535,6 +1535,7 @@ class FleetClient:
                     "error": TaskStatus.ERROR,
                     "failed": TaskStatus.ERROR,
                     "failure": TaskStatus.ERROR,
+                    "partial_failure": TaskStatus.ERROR,
                     "blocked": TaskStatus.BLOCKED,
                     "cancelled": TaskStatus.CANCELLED,
                     "degraded": TaskStatus.DEGRADED,
@@ -1549,7 +1550,13 @@ class FleetClient:
                     execution_time_ms=lat,
                 )
                 verdict = verify_receipt(envelope, candidate)
-                if verdict.ok:
+                if candidate_status not in {TaskStatus.SUCCESS}:
+                    # Explicit peer failure is evidence of failure, not missing
+                    # success certification. Keep its cause and task reference.
+                    result_status = candidate_status
+                    summary = candidate.summary or f"{target} reported {state}."
+                    error = str(result_data.get("error") or f"peer_{state}")
+                elif verdict.ok:
                     result_status = TaskStatus.SUCCESS
                     summary = candidate.summary or f"Task '{envelope.action}' completed by {target} in {lat}ms."
                     error = None
