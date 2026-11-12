@@ -169,7 +169,8 @@ async def test_debugger_prompt_includes_original_goal_and_actual_source(tmp_path
     engine = make_engine(tmp_path)
     monkeypatch.setattr(ai_universe_client, 'get_ai_universe_client', lambda: SimpleNamespace(
         consult_with_verification=AsyncMock(return_value=None)))
-    role = DebuggerRole()
+    from app.providers.direct import DirectProvider
+    role = DebuggerRole(provider=DirectProvider())
     role.prompt_model = AsyncMock(return_value=SimpleNamespace(content='No usable patch.'))
     await role.execute_step('fixture', 'repair', {'goal': 'CSV converter', 'requirements': ['quoted commas'],
                                                'project_files': ['main.py'], 'error': 'unused import'}, engine)

@@ -1239,6 +1239,7 @@ class DebuggerRole(BaseAgent):
     """Specialist in root-cause error diagnosis and stack trace analysis."""
 
     def __init__(self, provider: BaseModelProvider | None = None):
+        self._inference_repair = provider is None
         super().__init__(
             role_name="debugger",
             display_name="Debugger & Diagnostics Specialist",
@@ -1254,6 +1255,10 @@ class DebuggerRole(BaseAgent):
     async def execute_step(
         self, task_id: str, node_title: str, context: dict[str, Any], engine
     ) -> dict[str, Any]:
+        if self._inference_repair:
+            from app.agents.repair import repair_with_inference
+            return await repair_with_inference(task_id, context, engine, self.role_name)
+
         error_context = context.get("error", "No explicit error provided")
         terminal_logs = context.get("terminal_logs", "No terminal logs.")
         workspace_summary = self.get_workspace_summary(task_id, engine)

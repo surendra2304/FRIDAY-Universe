@@ -92,7 +92,8 @@ jobs:
             Forge/tests/unit/test_release_consent.py \
             Forge/tests/unit/test_github_tool.py \
             Forge/tests/unit/test_execution_security_gates.py \
-            Forge/tests/unit/test_delivery_verification_consistency.py
+            Forge/tests/unit/test_delivery_verification_consistency.py \
+            Forge/tests/unit/test_source_backed_repair.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora
@@ -115,7 +116,8 @@ jobs:
             Inference/tests/test_unified_manager_cache_scope.py \
             Inference/tests/test_forge_code_review_is_evidence_based.py \
             Inference/tests/test_python_fence_boundaries.py \
-            Inference/tests/test_forge_output_is_verified.py
+            Inference/tests/test_forge_output_is_verified.py \
+            Inference/tests/test_source_repair_context.py
       - name: Review-required project persistence and worker boundaries
         env:
           APP_ENV: development

@@ -2077,17 +2077,17 @@ tasks:
   - id: TASK-WF-010
     title: Require explicit release consent, passing verification and confirmed push
       before PR
-    status: IN_PROGRESS
+    status: DEPLOYED
     owner: arena_engineering_01
     branch: arena/TASK-WF-010-release-consent
-    pr: null
+    pr: 64
     files:
     - .github/workflows/owner-workflows.yml
     - Forge/app/agents/roles.py
     - Forge/tests/unit/test_github_tool.py
     - Forge/tests/unit/test_release_consent.py
     claimed_at: '2026-11-12T18:26:01.667196+00:00'
-    last_update: '2026-11-12T18:26:01.667196+00:00'
+    last_update: '2026-11-12T19:23:46.438910+00:00'
     acceptance:
     - Configured credentials/repo are capability, never publication consent. Only literal
       boolean push_to_github true is intent.
@@ -2105,11 +2105,68 @@ tasks:
     - Historical release test expected PR after print-only/no-test delivery; corrected
       unsafe expectation to assert no PR and failing verification, not weakened acceptance.
       Positive explicit/verified/confirmed-push fixture retained.
+    - PR64 head6823c6d CI8success/2conditionalDocker skips; merge592da1880ce7d060910041bc087ff90e566d0f4b
+      checked out both nodes.175Forge pass/1unchanged skip.
+    - Deploy43280851193 FAILEDinitialForgehealthdeadline~65s; log confirms fastforward/Forge
+      restart18:32:52UTC. Later independent7Server1HTTP200/allactive0restarts; protected5/6files
+      unchanged/trackedclean. Observed recovered runtime, NOT a green deployment run.
+    - Outcome issue35comment6832519181; Telegram48 sent by verified zai_notifications_bot/private
+      credentials destination. No new acceptance build in safety task.
     blockers:
     - 'Actual CSV converter acceptance still fails: WF009task1912112026181927 zero-byte
       input1/self-generated unittest1. No generated source edits/restoration/retry.'
-    next_action: CI and exact-head framework rollout, preserve protected files. Telegram
-      actual blocked converter outcome at conclusion.
+    next_action: Safety source deployed/recovered health; historical failed health gate
+      retained. Actual source-backed debugger/traceback lane follows TASK-WF-011; converter
+      workflow still blocked.
+    claim_policy: Update within2h; contact before takeover.
+
+  - id: TASK-WF-011
+    title: Real source-backed debugger repair with immutable tests, API guards and complete
+      failure evidence
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-011-source-backed-repair
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/agents/coordinator.py
+    - Forge/app/agents/roles.py
+    - Forge/tests/unit/test_repair_preservation_and_embedded_tests.py
+    - Inference/app/services/code_generation.py
+    - Forge/app/agents/repair.py
+    - Forge/tests/unit/test_source_backed_repair.py
+    - Inference/tests/test_source_repair_context.py
+    claimed_at: '2026-11-12T19:23:46.438910+00:00'
+    last_update: '2026-11-12T19:23:46.438910+00:00'
+    acceptance:
+    - Default debugger calls real Inference code endpoint with original objective, complete
+      bounded source and actual failure evidence, not DirectProvider completion stub.
+      Explicitly injected providers remain honored.
+    - Reject unrelated files, test rewrites, signature/definition loss, invalid/oversize/low-confidence/no-op
+      source and observed source races before writing. No generated test weakening to
+      force green.
+    - Keep diagnostic head and traceback tail; preserve full repair source in actual
+      Inference prompt and pruned context, reject oversize rather than silently slice.
+    - Real local unittest arithmetic failure -> guarded fixture patch -> real passing
+      suite and coordinator rereview. Fixture proofs are not live converter acceptance.
+    - After CI/controlled rollout verify preserved collaborator work, then one intentional
+      fresh canonical build with explicit zero-byte/header-only semantics and no generated
+      push/deploy; inspect existing task on uncertainty.
+    evidence:
+    - Claim issue35 6833562740; fresh clone /home/user/friday-current based592da18 because
+      prior workspace snapshots lack git/source files. Older directories untouched.
+    - 191Forge passed/1unchanged website-no-suite skip;73Inference passed. Test-source/API/scaffold/low-confidence/race
+      rejections and real engine review/repair/rereview exercised without network fixtures.
+    - Existing debugger prompt fixture now explicitly injects DirectProvider to verify
+      supported explicit-provider behavior; default-path regression forbids completion
+      stub. No test skip introduced.
+    blockers:
+    - Fresh deployed final converter acceptance pending; previous task1912112026181927
+      remains rejected/untouched.
+    - Microphone/video/OAuth/profits remain unaccepted.
+    next_action: Green CI/exact-head framework rollout, protected work checks, single
+      intentional build and independent final-source behavior proof; truthful Telegram
+      outcome at conclusion.
     claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:

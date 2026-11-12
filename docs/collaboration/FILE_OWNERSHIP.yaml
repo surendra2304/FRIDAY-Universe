@@ -1471,6 +1471,7 @@ claims:
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
     release_consent_wf010: "Arena Agent 1; claim6832247455; arena/TASK-WF-010-release-consent; 2026-11-12T18:26:01.667196+00:00; update2h/contact before takeover."
+    source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1679,6 +1680,7 @@ claims:
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
     release_consent_wf010: "Arena Agent 1; claim6832247455; arena/TASK-WF-010-release-consent; 2026-11-12T18:26:01.667196+00:00; update2h/contact before takeover."
+    source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: Forge/app/api/delegate.py
     owner: arena_engineering_01
     prs: []
@@ -1821,6 +1823,7 @@ claims:
     expiry_policy: Contact before takeover; next update2h.
 
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
+    source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: Inference/app/services/test_generation.py
     owner: arena_engineering_01
     prs: []
@@ -1862,6 +1865,7 @@ claims:
     claimed_at: '2026-11-12T17:39:25.982091+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+    source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: Forge/app/verification/python_tests.py
     owner: arena_engineering_01
     prs: []
@@ -1883,6 +1887,7 @@ claims:
     claimed_at: '2026-11-12T17:39:25.982091+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+    source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
   - path: Forge/app/agents/synthesis.py
     owner: arena_engineering_01
     prs: []
@@ -1931,6 +1936,36 @@ claims:
     status: IN_PROGRESS
     task: TASK-WF-010
     claimed_at: '2026-11-12T18:26:01.667196+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/app/agents/repair.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-011-source-backed-repair
+    status: IN_PROGRESS
+    task: TASK-WF-011
+    claimed_at: '2026-11-12T19:23:46.438910+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/tests/unit/test_source_backed_repair.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-011-source-backed-repair
+    status: IN_PROGRESS
+    task: TASK-WF-011
+    claimed_at: '2026-11-12T19:23:46.438910+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Inference/tests/test_source_repair_context.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-011-source-backed-repair
+    status: IN_PROGRESS
+    task: TASK-WF-011
+    claimed_at: '2026-11-12T19:23:46.438910+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
 conflicts_to_resolve:

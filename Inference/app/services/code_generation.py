@@ -8,7 +8,7 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.gateway import model_gateway
@@ -84,6 +84,22 @@ class CodeGenerationRequest(BaseModel):
     requirements: list[str] = Field(default_factory=list, description="Specific functional requirements")
     language_features: list[str] = Field(default_factory=list, description="Target syntax/framework features")
 
+    @field_validator("context")
+    @classmethod
+    def bounded_repair_context(cls, context):
+        if "repair" not in context:
+            return context
+        repair = context["repair"]
+        if not isinstance(repair, dict):
+            raise ValueError("repair context must be an object")
+        source = repair.get("original_source")
+        evidence = repair.get("failure_evidence", "")
+        if not isinstance(source, str) or not source.strip() or len(source) > 32000:
+            raise ValueError("repair needs complete source, at most 32000 characters")
+        if not isinstance(evidence, str) or len(evidence) > 12000:
+            raise ValueError("repair evidence must be text, at most 12000 characters")
+        return context
+
 
 class CodeGenerationResponse(BaseModel):
     code: str
@@ -104,7 +120,7 @@ class CodeGenerationService:
 
     def _get_cache_key(self, req: CodeGenerationRequest) -> str:
         # A related module or architecture change is a different build input.
-        raw = "forge-objective-v3-python-boundaries:" + json.dumps(req.model_dump(mode="json"), sort_keys=True)
+        raw = "forge-objective-v4-source-repair:" + json.dumps(req.model_dump(mode="json"), sort_keys=True)
         return hashlib.sha256(raw.encode()).hexdigest()
 
     async def generate_code(self, req: CodeGenerationRequest) -> CodeGenerationResponse:
@@ -235,6 +251,22 @@ class CodeGenerationService:
         req_list = "\n".join([f"- {r}" for r in req.requirements]) if req.requirements else "None specified."
         feat_list = ", ".join(req.language_features) if req.language_features else "Standard"
 
+        repair = req.context.get("repair")
+        if repair:
+            # Full source is deliberately carried in the actual prompt, not
+            # only context that another adapter may prune. Never silently slice
+            # a module and ask a model to replace the rest with a scaffold.
+            return (
+                f"Repair existing file `{req.filename}` minimally. Return ONLY its complete replacement source.\n"
+                f"Original objective: {req.context.get('project_goal', '')}\n"
+                f"Requirements:\n{req_list}\n"
+                "Preserve all existing behavior, tests, imports needed by tests and public signatures. "
+                "Never weaken/remove/skip tests or substitute a generic scaffold. "
+                "If constraints conflict and no safe implementation repair exists, return the original source unchanged.\n"
+                f"Actual failing-check evidence:\n{repair.get('failure_evidence', '')}\n"
+                f"Complete original source:\n{repair['original_source']}"
+            )
+
         return (
             f"Generate complete, production-ready, fully closed code for file: `{req.filename}` ({req.file_type}).\n"
             f"Project objective (implement this, not a generic scaffold):\n{str(req.context.get('project_goal', ''))[:4000]}\n\n"
@@ -248,6 +280,12 @@ class CodeGenerationService:
     def _prune_context(self, context: dict[str, Any]) -> dict[str, Any]:
         """Prunes and limits context size (max 3 related files)."""
         pruned: dict[str, Any] = {}
+        if "repair" in context:
+            repair = context["repair"]
+            pruned["repair"] = {
+                "original_source": repair["original_source"],
+                "failure_evidence": repair.get("failure_evidence", ""),
+            }
         if "project_goal" in context:
             pruned["project_goal"] = str(context["project_goal"])[:4000]
         if "architecture_spec" in context:
