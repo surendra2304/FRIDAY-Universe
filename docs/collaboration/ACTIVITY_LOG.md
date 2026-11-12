@@ -566,7 +566,6 @@ Model replacements validated before writes: complete parseable Python; exact exi
 
 191Forge tests passed/1unchanged website-no-suite skip;73Inference tests passed. Generic arithmetic failing unittest -> fixture source patch -> actual2test suite0 and real coordinator rereview verified. Guards tested for test mutation/skip, lost APIs, unrelatedfiles, malformed/lowconfidence/noop/race. Existing explicit-provider prompt test adjusted to explicit injection; no skip added. These are fixture proofs, not fresh live converter acceptance. Next greenCI/controlled exact-head rollout/protected work verification, then one intentional canonical build explicitly requiring [] for zero-byte/header-only CSV. No old generated source edit/restore/push/deploy; inspect same task on timeout. Stratex collaborator lane preserved, no trading changes. Microphone/video/OAuth/profits unaccepted. Telegram actual outcome at conclusion privately.
 
-<<<<<<< HEAD
 ## 2026-11-12 — WF011 software proof / WF012 owner artifact receipt
 
 Arena Agent 1: PR65 headcca8ea6 CI8success/2conditionalDocker skips, merge15d4cc785709ddb8cb2d8fa3cdbf5b43fe706578/deploy43290748726SUCCESS. Both hosts exactrevision/trackedclean/protected5and6files byte-identical; Forge/Inference restarted/200. Independent postprobe6Server1HTTP200 but IntelX8stimeout; no blanket all-fleet-health claim or unrelated restart.191Forge/73Inferencepass/1unchangedForge skip. Actual cloud repair invocation not asserted: debugger path regression-proved/deployed, fresh generation itself may not need a model patch.
@@ -596,7 +595,13 @@ Actual Inference endpoint /v1/forge/generate-code16.00s source-backed repair on 
 Runtime label correction is explicit: the current remote venv actually reports3.10.12, not assumed3.12. Initial harness provisionalpython312 fieldnames renamed deployedruntime/deployedcombined, rawruntime retained, correction audited. Separate actual Python3.12.16 and3.13.18 both test SAME repairedbytes: embedded3exit0, independent6exit0, combined9exit0 EACH. Independentcases quotedcommas/escapedquotes,zero-byte[],header-only[],normalheader,Telugu,missingfile. Deliberate return[]throwawaynegativecontrol exits1/fourfailures onBOTHversions; not shipped. No remaining3.13fixturefailure.
 
 Oracle task COMPLETED100 after bothruntimeproofs;5auditeventtypes including runtimecorrection/repairverified,8artifactregistrations. Manifest12/12 includes real remote10checkbattery and2actualexternalruntimechecks, commands/exit0 preserved. Live actual readonlyownerstatusSUCCESS, savedmanifest12/12, existingartifactpaths, formatter reports alltestcommands+integerexit0. Finalproof /var/tmp/friday-workflow-acceptance/wf013-receipt-proof.json; runtime/evidence under newtask/artifacts; actualsource newtask/project/main.py. ProtectedS1five/S2sixfingerprints unchanged/trackedindexclean; S1colleagueadvanced8b6ec77 independently, branchuntouched/S2at83d5f4a. Portable download supersedes rejected3.12-onlypackage. This verifies the requestedsoftware, not blanketfleet/continuousvoice/video/OAuth/profit goals.
-=======
+
+<!-- TASK-REGISTRY-001 (ZAI Agent 1, 2026-11-13): the merge commit 2d5e2a6 committed
+     unresolved conflict markers here (Arena Agent 1's WF011/WF012/WF013 entries vs
+     ZAI Agent 2's TASK-STRATEX-TG409 entry). Repair: both sides retained, chronological
+     order preserved (2026-11-12 entries above, 2026-11-13 TG409 entry below). No
+     history rewritten; nothing deleted. -->
+
 ## 2026-11-13 01:20 IST — TASK-STRATEX-TG409, ZAI Agent 2 (session resume after owner re-onboarding)
 
 Owner re-verified ZAI Agent 2 access (PAT + MCP bridge 31 tools, both Oracle servers reachable); cloned latest main 15d4cc7 (post PR #65 merge). Read central docs, collaboration registry, issue #35 tail (latest: Arena Agent 1's WF-011 claim 6833562740), live fleet state via MCP.
@@ -610,7 +615,18 @@ Owner re-verified ZAI Agent 2 access (PAT + MCP bridge 31 tools, both Oracle ser
 **Registry updates:** WORK_BOARD (TASK-STRATEX-TG409 IN_REVIEW), FILE_OWNERSHIP (2 files claimed), this entry, TEAM_ROSTER refreshed, handoff.md section A row added. No production restart performed (Stratex-Daemon restart needs owner authorization per fleet rule); rollout path is the standard exact-head deploy after merge.
 
 **Owner action needed (outside the fleet):** find and stop the off-cloud process polling Stratex's bot token — otherwise inbound commands keep being consumed by it. Runtime evidence on S1 journald; token values never read or printed (hash-identity comparison only).
->>>>>>> origin/zai/TASK-STRATEX-PROFIT-2
+
+## 2026-11-13 03:05 IST — ZAI Agent 1 session continuity + TASK-CI-F821-MAIN + TASK-REGISTRY-001
+
+Owner re-seated ZAI Agent 1 in a fresh chat (previous session degraded); working unitedly with ZAI Agent 2 (Stratex lane) and Arena Agent 1 (TASK-WF-014, Forge verification — untouched). Access re-verified live before any edit: clone at main 993a6d6; GitHub API (open PRs #45-#55 incl. 10 dependabot, PR #67 MERGED 21:11:55Z, issue #35 tail read); MCP bridge handshake v1.30.0 (31 tools); both Oracle servers ONLINE (S1 load 7.5 — ZAI Agent 2's backtest sweep, not disturbed); Fleet CD for faf6b84 SUCCESS.
+
+**TASK-CI-F821-MAIN (claim 6836443339, posted BEFORE edits):** main's FRIDAY Universe CI/CD was RED on head 993a6d6 (run 43309536561): `FRIDAY/src/friday/persona/friday.py:82:21 F821 Undefined name 'datetime'` — commit 993a6d6 used a function-local `import datetime as datetime` that cannot satisfy the quoted annotation `"datetime.datetime | None"` at module scope (ruff F821; `typing.get_type_hints` NameError). Fix: module-level `import datetime`, local self-alias import removed, annotation unquoted. Regression tests added (3): `get_type_hints(_ist_hour)` must resolve at module scope (the actual bug class), `_ist_hour` UTC→IST conversion (UTC+05:30, D-026), `compose_greeting` no-repeat opener contract. Evidence: ruff check FRIDAY/src/friday — all checks passed; test_friday_persona.py 13/13; combined persona battery (persona parity, boss identity contract, proactive greeting memory, voice personality) 58/58; direct check `get_type_hints(_ist_hour) == {'now': datetime.datetime | None, 'return': int}` (NameError pre-fix).
+
+**TASK-REGISTRY-001 (same claim):** two registry defects found on main HEAD and repaired. (1) Merge 2d5e2a6 committed unresolved conflict markers into ACTIVITY_LOG.md (lines 569-613): Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry — repair retains BOTH sides in chronological order (append-only log; nothing deleted; inline repair note at the site). (2) WORK_BOARD.yaml carried a DUPLICATE top-level `task_id_warnings:` key: the first occurrence stranded Arena's stale IN_PROGRESS copies of TASK-WF-005/006, silently dropped by YAML duplicate-key semantics while the live DEPLOYED (PR #57) / VERIFIED (PR #58) records sat under `tasks:`; the stranded block was removed after verifying the live records are newer (strict duplicate-key-detecting loader used for proof; now clean). Also: TASK-STRATEX-TG409 board status updated IN_REVIEW → MERGED with evidence (PR #67 merge 502c9536; deploy 43309257001; ancestry verified with git merge-base); roster zai entry refreshed for session continuity (stale IN_REVIEW assignments retired — #39/#41/#30 all merged); FILE_OWNERSHIP claims added; handoff.md rows updated. scripts/validate_collaboration.py re-run on final state: COLLABORATION REGISTRY VALID (8 contributors, 83 tasks, 238 file claims).
+
+**Coordination notes:** (a) TASK-WF-014 (Arena, claimed 21:23:59Z) and TASK-VAL-003 are not yet registered in WORK_BOARD — flagged to Arena on issue #35 rather than fabricated by me. (b) TG409 runtime verification remains open while the EXTERNAL poller of Stratex's bot token persists — owner action still required (stop the off-cloud instance). (c) CI/CD red on main also affects dependabot branch 200555f0 (appleboy/ssh-action bump, PR #45) — unrelated pre-existing, same lint gate.
+
+Registry updates: WORK_BOARD (2 new tasks + TG409 status), FILE_OWNERSHIP (4 claims), TEAM_ROSTER (zai refresh), handoff.md (3 rows), this entry. Single-branch main flow post-D-016; no force-push; no service restarts beyond the standard Fleet CD; Stratex-Daemon untouched (ZAI Agent 2's sweep protected).
 
 ## TASK-WF-014 — source-bound receipts (Arena Agent 1)
 
@@ -621,3 +637,5 @@ Saved status previously trusted passing stages even after project bytes changed.
 219Forge regressions pass/1unchangedskip,11newcases include realpytest execution then drift/legacy rejection, beforeafter mutation, stale report, cache/config, bounds/unavailablefilesystem. RuffF/E9 and diff clean. Actual framework CI/productionrollout/new registered sourcecopy realtest/live positive-negative-restored-positive acceptance pending; original tasks/download not edited. FinalTelegram only after real outcome. No generated push/deploy or real-money changes.
 
 WF014 CI correction: PR71initialheadb2e13c2 inherited FRIDAY base993a6d6 RuffF821: quoted datetimeannotation has no global datetime (localimport cannot resolve typehint). Both CItestjobs fail beforetesting; no merge/deploy. Scope/contact6836497747: minimum moduleglobaldatetime import/localimport removed, no persona/greetinglogic changes; get_type_hints/ISTbehavior regression1passed and fullFRIDAYruffclean. New head must rerun CI.
+
+WF014 integrates concurrent mainfa9257d, preserving ZAI Agent1 registry normalization/F821 fix and4a1c8bd asyncvoice fix. No collaborator source reverted. Fresh scoped regressions and exactheadCI required.

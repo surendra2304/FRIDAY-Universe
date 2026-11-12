@@ -126,3 +126,47 @@ def test_agent_greeting_falls_back_to_classic_for_other_personas():
     assert response.metadata.get("greeting_fast_path") is True
     # Response must come from the classic (non-FRIDAY) greeting pool
     assert response.content in [g.format(user_name="Surendra") for g in CLASSIC_GREETING_RESPONSES]
+
+# ---------------------------------------------------------------------------
+# TASK-CI-F821-MAIN regression (ZAI Agent 1, 2026-11-13): _ist_hour's
+# annotation must be resolvable by typing.get_type_hints at module scope.
+# The bug: a function-local `import datetime` cannot satisfy the quoted
+# annotation `datetime.datetime | None` (ruff F821; get_type_hints()
+# NameError). The import must live at module level.
+# ---------------------------------------------------------------------------
+
+def test_ist_hour_type_hints_resolve_at_module_scope():
+    import datetime as dt
+    from typing import get_type_hints
+
+    from friday.persona import friday as persona_mod
+
+    hints = get_type_hints(persona_mod._ist_hour)
+    assert hints["now"] == dt.datetime | None
+    assert hints["return"] is int
+
+
+def test_ist_hour_converts_utc_to_ist():
+    import datetime as dt
+
+    from friday.persona.friday import _ist_hour
+
+    # 06:30 UTC == 12:00 IST (IST = UTC+05:30, project clock per D-026)
+    assert _ist_hour(dt.datetime(2026, 11, 13, 6, 30, tzinfo=dt.timezone.utc)) == 12
+    # 18:29 UTC == 23:59 IST -> late segment boundary
+    assert _ist_hour(dt.datetime(2026, 11, 13, 18, 29, tzinfo=dt.timezone.utc)) == 23
+    # Explicit now argument is respected
+    assert _ist_hour(dt.datetime(2026, 11, 13, 0, 0, tzinfo=dt.timezone.utc)) == 5
+
+
+def test_compose_greeting_uses_time_segment():
+    from friday.persona.friday import compose_greeting
+
+    morning = compose_greeting("Surendra", hour=8)
+    evening = compose_greeting("Surendra", hour=20)
+    assert morning
+    assert evening
+    # The same context never repeats the identical opener back-to-back
+    first = compose_greeting("Surendra", hour=9, last_topic="crypto research")
+    second = compose_greeting("Surendra", hour=9, last_topic="crypto research")
+    assert first != second

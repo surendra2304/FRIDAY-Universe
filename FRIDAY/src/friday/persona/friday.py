@@ -80,7 +80,7 @@ def greeting_responses_for(persona: str) -> tuple[str, ...]:
 _last_greeting: dict[str, str] = {}
 
 
-def _ist_hour(now: "datetime.datetime | None" = None) -> int:
+def _ist_hour(now: datetime.datetime | None = None) -> int:
     """Current hour in IST (the project clock — H1/D-026)."""
     if now is None:
         now = datetime.datetime.now(datetime.timezone.utc)
