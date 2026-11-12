@@ -154,7 +154,10 @@ class AgentCoordinator:
                     reviewer=name,
                     check_name=evidence.check_name,
                     severity=_severity_for(evidence.check_name, evidence.exit_code),
-                    detail=detail[:600],
+                    # Preserve the first failing test AND the tail containing
+                    # the traceback/assertion. Never truncate only the useful end.
+                    detail=(detail if len(detail) <= 12000 else
+                            detail[:4000] + "\n... diagnostic middle omitted ...\n" + detail[-7900:]),
                     target_file=_extract_target_file(detail),
                 )
             )
