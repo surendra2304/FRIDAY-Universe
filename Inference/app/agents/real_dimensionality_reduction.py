@@ -17,13 +17,9 @@ Tests in tests/test_real_deep_layer3c.py will verify actual dimensionality reduc
 
 from __future__ import annotations
 
-import json
 import math
-import os
 import random
-from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any
 
 
 @dataclass

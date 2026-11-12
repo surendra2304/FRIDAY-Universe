@@ -3211,6 +3211,50 @@
       "last_seen": 1794300731.7569277,
       "tags": [],
       "related_indicators": []
+    },
+    "ioc_26f90eb81ec9": {
+      "indicator_id": "ioc_26f90eb81ec9",
+      "value": "Detected command_injection pattern: ",
+      "type": "Detected command_injection pattern: ",
+      "tlp": "amber",
+      "confidence": 0.5,
+      "first_seen": 1794472713.3215718,
+      "last_seen": 1794472713.3215723,
+      "tags": [],
+      "related_indicators": []
+    },
+    "ioc_d23e4899e4e5": {
+      "indicator_id": "ioc_d23e4899e4e5",
+      "value": "Detected command_injection pattern: ",
+      "type": "Detected command_injection pattern: ",
+      "tlp": "amber",
+      "confidence": 0.5,
+      "first_seen": 1794472713.5434968,
+      "last_seen": 1794472713.5434968,
+      "tags": [],
+      "related_indicators": []
+    },
+    "ioc_48808293ef05": {
+      "indicator_id": "ioc_48808293ef05",
+      "value": "Detected command_injection pattern: ",
+      "type": "Detected command_injection pattern: ",
+      "tlp": "amber",
+      "confidence": 0.5,
+      "first_seen": 1794472713.8595936,
+      "last_seen": 1794472713.8595939,
+      "tags": [],
+      "related_indicators": []
+    },
+    "ioc_50abbaf890a7": {
+      "indicator_id": "ioc_50abbaf890a7",
+      "value": "Detected command_injection pattern: ",
+      "type": "Detected command_injection pattern: ",
+      "tlp": "amber",
+      "confidence": 0.5,
+      "first_seen": 1794472714.1798463,
+      "last_seen": 1794472714.1798463,
+      "tags": [],
+      "related_indicators": []
     }
   },
   "campaigns": {},

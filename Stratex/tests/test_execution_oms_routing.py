@@ -1,4 +1,3 @@
-import types
 
 import execution
 import pytest

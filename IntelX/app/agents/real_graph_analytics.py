@@ -16,13 +16,10 @@ Tests in tests/test_real_deep_layer3d.py will verify actual graph analytics.
 
 from __future__ import annotations
 
-import json
 import math
-import os
 import random
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any
 
 
 @dataclass

@@ -1359,8 +1359,8 @@ class FleetClient:
             elif target == "intelx":
                 url = f"{self.intelx_url}/v1/task/execute"
                 headers = {"Authorization": f"Bearer {self.intelx_key}", "Content-Type": "application/json"}
-                resp = await client.post(url, json=envelope.model_dump(), headers=headers, timeout=15.0)
-                if resp.status_code in (404, 405):
+                resp = await client.post(url, json=envelope.model_dump(), headers=headers, timeout=115.0 if envelope.action == "research_live" else 15.0)
+                if resp.status_code in (404, 405) and envelope.action != "research_live":
                     contract_endpoint_used = False
                     alt_url = f"{self.intelx_url}/api/v1/friday-universe/intelligence?agent={envelope.source_agent}&limit=5"
                     resp = await client.get(alt_url, headers=headers, timeout=15.0)
@@ -1386,7 +1386,7 @@ class FleetClient:
             elif target == "forge":
                 url = f"{self.forge_url}/api/v1/forge/delegate"
                 headers = {"Authorization": f"Bearer {self.forge_key}", "Content-Type": "application/json"}
-                resp = await client.post(url, json=envelope.model_dump(), headers=headers, timeout=15.0)
+                resp = await client.post(url, json=envelope.model_dump(), headers=headers, timeout=210.0 if envelope.payload.get("execute_now") else 15.0)
 
             elif target == "sentinel":
                 url = f"{self.sentinel_url}/api/v1/friday/delegate"
@@ -1535,6 +1535,7 @@ class FleetClient:
                     "error": TaskStatus.ERROR,
                     "failed": TaskStatus.ERROR,
                     "failure": TaskStatus.ERROR,
+                    "partial_failure": TaskStatus.ERROR,
                     "blocked": TaskStatus.BLOCKED,
                     "cancelled": TaskStatus.CANCELLED,
                     "degraded": TaskStatus.DEGRADED,
@@ -1549,7 +1550,13 @@ class FleetClient:
                     execution_time_ms=lat,
                 )
                 verdict = verify_receipt(envelope, candidate)
-                if verdict.ok:
+                if candidate_status not in {TaskStatus.SUCCESS}:
+                    # Explicit peer failure is evidence of failure, not missing
+                    # success certification. Keep its cause and task reference.
+                    result_status = candidate_status
+                    summary = candidate.summary or f"{target} reported {state}."
+                    error = str(result_data.get("error") or f"peer_{state}")
+                elif verdict.ok:
                     result_status = TaskStatus.SUCCESS
                     summary = candidate.summary or f"Task '{envelope.action}' completed by {target} in {lat}ms."
                     error = None
@@ -1586,7 +1593,8 @@ class FleetClient:
                 task_id=envelope.task_id,
                 target_agent=envelope.target_agent,
                 status=TaskStatus.ERROR,
-                error=str(e),
+                error=(f"{type(e).__name__}: outcome unconfirmed after dispatch; check peer task history before retrying."
+                       if isinstance(e, httpx.TimeoutException) else f"{type(e).__name__}: {e}"),
                 execution_time_ms=lat,
             )
 

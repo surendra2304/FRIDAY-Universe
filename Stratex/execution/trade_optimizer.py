@@ -478,7 +478,7 @@ class TradeOptimizer:
 
 
 # FastAPI Router
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 router = APIRouter()
 

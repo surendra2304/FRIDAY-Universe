@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import ast
 import re
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -477,11 +476,19 @@ class CodeReviewer:
             lines_added=sum(len(c.split("\n")) for c in files.values()),
             lines_removed=0,
             issues=all_issues,
-            review_score=sum(
-                self._calculate_score(f_issues)
-                for f_issues in [result.issues]
-                for result in [self._reviews.get(fp, ReviewResult(fp, [], 100, {}, []))]
-            ) / max(1, len(files)) if files else 100,
+            # Average the per-file scores review_file() just stored for this
+            # PR's files (the loop variable is `file_path`, not `fp` — the old
+            # expression crashed with NameError on every PR analysis).
+            review_score=(
+                sum(
+                    self._reviews[file_path].score
+                    for file_path in files
+                    if file_path in self._reviews
+                )
+                / len(files)
+                if files
+                else 100
+            ),
             risk_level=risk,
             merge_recommendation=recommendation,
         )

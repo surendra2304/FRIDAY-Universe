@@ -21,29 +21,25 @@ from typing import Any
 from dataclasses import dataclass, field
 
 try:
-    from app.agents.real_ccxt import CCXTManager, ExchangeConfig, ExchangeBase
+    from app.agents.real_ccxt import CCXTManager, ExchangeConfig
     from app.agents.real_backtrader import BacktraderCerebro
-    from app.agents.real_vectorbt import SignalGenerator, PortfolioSimulation, VectorbtMetrics
+    from app.agents.real_vectorbt import SignalGenerator, PortfolioSimulation
     from app.agents.real_freqtrade import FreqtradeConfig, FreqtradeBacktest, FreqtradeStrategy
-    from app.agents.real_hummingbot import MarketMakingStrategy, CrossExchangeArbitrage
-    from app.agents.real_lumibot import LumibotManager, LumibotBacktest
-    from app.agents.real_polymarket import PolymarketAPI, PredictionMarketAnalyzer
+    from app.agents.real_hummingbot import MarketMakingStrategy
+    from app.agents.real_lumibot import LumibotManager
+    from app.agents.real_polymarket import PolymarketAPI
     from app.agents.real_trading_agents import TradingAgentsManager, BullBearDebate
-    from app.agents.real_autohedge import SwarmConsensus, KellyPositionSizer
-    from app.agents.real_vibe_trading import GTJAFactorLibrary, FactorPortfolio
-    from app.agents.real_fincept_terminal import TechnicalIndicators, MarketRegimeDetector
+    from app.agents.real_autohedge import KellyPositionSizer
 except ImportError:
-    from Stratex.app.agents.real_ccxt import CCXTManager, ExchangeConfig, ExchangeBase
+    from Stratex.app.agents.real_ccxt import CCXTManager, ExchangeConfig
     from Stratex.app.agents.real_backtrader import BacktraderCerebro
-    from Stratex.app.agents.real_vectorbt import SignalGenerator, PortfolioSimulation, VectorbtMetrics
+    from Stratex.app.agents.real_vectorbt import SignalGenerator, PortfolioSimulation
     from Stratex.app.agents.real_freqtrade import FreqtradeConfig, FreqtradeBacktest, FreqtradeStrategy
-    from Stratex.app.agents.real_hummingbot import MarketMakingStrategy, CrossExchangeArbitrage
-    from Stratex.app.agents.real_lumibot import LumibotManager, LumibotBacktest
-    from Stratex.app.agents.real_polymarket import PolymarketAPI, PredictionMarketAnalyzer
+    from Stratex.app.agents.real_hummingbot import MarketMakingStrategy
+    from Stratex.app.agents.real_lumibot import LumibotManager
+    from Stratex.app.agents.real_polymarket import PolymarketAPI
     from Stratex.app.agents.real_trading_agents import TradingAgentsManager, BullBearDebate
-    from Stratex.app.agents.real_autohedge import SwarmConsensus, KellyPositionSizer
-    from Stratex.app.agents.real_vibe_trading import GTJAFactorLibrary, FactorPortfolio
-    from Stratex.app.agents.real_fincept_terminal import TechnicalIndicators, MarketRegimeDetector
+    from Stratex.app.agents.real_autohedge import KellyPositionSizer
 
 
 @dataclass

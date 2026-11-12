@@ -9,18 +9,15 @@ from __future__ import annotations
 import json
 import os
 import time
-import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from exchanges.base_exchange import (
-    BaseExchange,
     UnifiedBalance,
     UnifiedOrderResult,
     UnifiedPosition,
     UnifiedTicker,
 )
-from exchanges.exchange_implementations import get_exchange_adapter
 from logger import get_logger
 
 logger = get_logger("multi_venue_engine")
@@ -251,6 +248,15 @@ class MultiVenueEngine:
             self.realized_pnl = float(data.get("realized_pnl", 0.0) or 0.0)
             self.daily_realized_pnl = float(data.get("daily_realized_pnl", 0.0) or 0.0)
             self.daily_start_date = str(data.get("daily_start_date", "") or "")
+            # Restore the breaker latch: a restart used to clear it, so a
+            # limit-hit day resumed trading the moment the daemon recycled.
+            if self.daily_start_date == time.strftime("%Y-%m-%d"):
+                self.daily_loss_limit_hit = bool(data.get("daily_loss_limit_hit", False))
+                if self.daily_loss_limit_hit:
+                    logger.warning(
+                        "[MULTI_VENUE] Restored DAILY LOSS LIMIT latch from state; "
+                        "entries remain halted for today"
+                    )
             logger.info(
                 f"[MULTI_VENUE] Restored state: realized=${self.realized_pnl:+.2f} "
                 f"daily=${self.daily_realized_pnl:+.2f} ({self.daily_start_date or 'n/a'})"
@@ -267,6 +273,8 @@ class MultiVenueEngine:
                 "realized_pnl": round(self.realized_pnl, 8),
                 "daily_realized_pnl": round(self.daily_realized_pnl, 8),
                 "daily_start_date": self.daily_start_date,
+                "daily_loss_limit_hit": self.daily_loss_limit_hit,
+                "daily_start_equity": round(self.daily_start_equity, 8),
                 "updated_at": time.time(),
             }
             tmp = path.with_suffix(".json.tmp")
@@ -316,12 +324,79 @@ class MultiVenueEngine:
             f"re-entry blocked for {self.symbol_cooldown_sec}s"
         )
 
+    def symbol_in_cooldown(self, venue: str, symbol: str) -> bool:
+        """True while the symbol is quarantined after a recent exit.
+
+        The 900s re-entry cooldown was previously write-only: mark_exit()
+        recorded the timestamp but nothing ever read it, so the daemon
+        re-entered the same symbol within seconds of being stopped out.
+        """
+        last = self.last_exit.get(f"{venue}:{symbol}")
+        if last is None:
+            return False
+        if time.time() - last < self.symbol_cooldown_sec:
+            return True
+        # Expired: drop the entry so the dict does not grow forever.
+        self.last_exit.pop(f"{venue}:{symbol}", None)
+        return False
+
+    def has_open_position(self, venue: str, symbol: str) -> bool:
+        """True if the engine already tracks a position on this symbol.
+
+        Anti-pyramiding gate: without it every 15s scan re-fired the same
+        strategy signal and stacked a new entry on the existing position
+        (live evidence: NEARUSDT, 991 fills in 2 days, position grew to
+        128k units bought). One position per symbol, no averaging down.
+        """
+        return f"{venue}:{symbol}" in self.positions
+
+    def get_free_margin(self, venue: str) -> float:
+        """Free margin on a venue in USD terms.
+
+        Used to stop the margin-exhaustion loop: when positions consumed
+        100% of margin the daemon still attempted ~2,000 orders/day, each
+        bouncing with -2019 'Margin is insufficient'.
+        """
+        v = self.venues.get(venue)
+        if v is None:
+            return 0.0
+        try:
+            free = 0.0
+            balances = v.get_balance() or {}
+            for asset, bal in balances.items():
+                free += self._to_usd(v, asset, bal.free)
+            return free
+        except Exception as e:
+            logger.debug(f"Free margin calc failed for {venue}: {e}")
+            return 0.0
+
     def can_open_position(self, venue: str) -> Tuple[bool, str]:
-        """Check if we can open a new position on venue. NO RESTRICTIONS."""
+        """Check if we can open a new position on this venue.
+
+        The old body returned (True, "OK") unconditionally ("All limits
+        removed for demo testing"). That is what allowed the account to
+        run 100% margined with thousands of rejected orders per day.
+        Limits restored: per-venue count, total count, and a free-margin
+        floor so new entries stop before the exchange rejects them.
+        """
         if venue not in self.venues:
             return False, f"Venue {venue} not available"
 
-        # All limits removed for demo testing
+        by_venue = self.get_position_count(venue)
+        if by_venue >= self.max_positions_per_venue:
+            return False, f"venue position limit ({by_venue}/{self.max_positions_per_venue})"
+
+        total = self.get_position_count(None)
+        if total >= self.max_total_positions:
+            return False, f"total position limit ({total}/{self.max_total_positions})"
+
+        # Margin floor: refuse to attempt entries when almost no free margin
+        # is left. Each rejected order costs an API call and log spam; worse,
+        # a later success would put the account in liquidation range.
+        free = self.get_free_margin(venue)
+        if free <= 0:
+            return False, "no free margin on venue"
+
         return True, "OK"
 
     # ------------------------------------------------------------------------
@@ -429,9 +504,16 @@ class MultiVenueEngine:
                 logger.info(f"[MULTI_VENUE] Order placed: {venue} {symbol} {side} {quantity} @ {result.avg_price}")
 
                 # Track the filled position so reconciliation can detect a
-                # broker-side SL/TP exit and book its PnL.
+                # broker-side SL/TP exit and book its PnL. Keyed venue:symbol to
+                # match the exit path and the reconciliation reader below.
+                key = f"{venue}:{symbol}"
                 if result.status in ("FILLED", "PARTIALLY_FILLED"):
                     filled_qty = result.executed_qty or quantity
+                    # NOTE: UnifiedPosition has no strategy/timeframe fields —
+                    # attribution lives in self.position_strategy /
+                    # self.position_timeframe below. This call used to pass
+                    # strategy=/timeframe= and raised TypeError AFTER the fill,
+                    # leaving an untracked, unprotected position at the broker.
                     self.positions[key] = UnifiedPosition(
                         symbol=symbol,
                         side="LONG" if side in ("BUY", "LONG") else "SHORT",
@@ -442,8 +524,6 @@ class MultiVenueEngine:
                         exchange=venue,
                         stop_loss=float(stop_loss or 0.0),
                         take_profit=float(take_profit or 0.0),
-                        strategy=strategy_name,
-                        timeframe=timeframe,
                     )
                     self.position_opened_at[key] = int(time.time() * 1000)
                     self.position_strategy[key] = strategy_name
@@ -546,8 +626,44 @@ class MultiVenueEngine:
         """Record realized PnL from closed position."""
         self.realized_pnl += realized_pnl
         self.daily_realized_pnl += realized_pnl
+        self._check_daily_loss_limit()
         self.save_state()
         logger.info(f"[MULTI_VENUE] Realized PnL: {venue}:{symbol} = ${realized_pnl:+.2f} (Total: ${self.realized_pnl:+.2f})")
+
+    def book_reconciled_pnl(self, venue: str, symbol: str, net: float) -> None:
+        """Book broker-side realized PnL (reconciliation path).
+
+        The daemon previously mutated realized_pnl / daily_realized_pnl
+        directly, which bypassed the daily-loss check below.
+        """
+        self.realized_pnl += net
+        self.daily_realized_pnl += net
+        self._check_daily_loss_limit()
+        self.save_state()
+
+    def _check_daily_loss_limit(self) -> None:
+        """Latch the daily-loss circuit breaker when realized losses breach the cap.
+
+        The flag was read in five places but never set anywhere: on
+        2026-11-11 the account lost 63% in one day and the daemon kept
+        trading. Latched here on REALIZED day PnL only (unrealized swings
+        would halt on noise); auto-clears at the UTC daily reset.
+        """
+        if self.daily_loss_limit_hit:
+            return
+        if self.daily_start_equity <= 0:
+            return
+        cap = self.max_daily_loss_pct * self.daily_start_equity
+        if cap <= 0:
+            return
+        if self.daily_realized_pnl <= -cap:
+            self.daily_loss_limit_hit = True
+            logger.warning(
+                f"[MULTI_VENUE] DAILY LOSS LIMIT HIT: realized "
+                f"{self.daily_realized_pnl:+.2f} <= -{cap:.2f} "
+                f"({self.max_daily_loss_pct*100:.1f}% of day-start equity "
+                f"{self.daily_start_equity:.2f}). Entries halted until UTC midnight."
+            )
 
     def get_risk_summary(self) -> Dict[str, Any]:
         """Get comprehensive risk summary."""

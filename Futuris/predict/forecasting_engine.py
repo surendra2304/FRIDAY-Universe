@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -315,6 +314,7 @@ class ForecastingEngine:
                     "rmse": f.rmse,
                 }
                 for f in list(self._forecasts.values())[-5:]
+                if (s := self._series.get(f.series_id)) is not None
             ],
         }
 

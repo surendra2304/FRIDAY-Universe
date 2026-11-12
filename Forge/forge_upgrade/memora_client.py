@@ -31,8 +31,12 @@ to "no memory" rather than abort an engineering step.
 from __future__ import annotations
 
 import asyncio
+import os
 import re
+import sqlite3
 import sys
+import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +61,43 @@ try:
     _USING_SDK = True
 except Exception:
     _USING_SDK = False
+
+    # Portable mirror of the canonical Memora SQLite schema subset this
+    # fallback reads and writes (agents / namespaces / memory_records).
+    _SCHEMA = """
+        CREATE TABLE IF NOT EXISTS agents (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            role TEXT,
+            tenant_id TEXT NOT NULL DEFAULT 'default',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS namespaces (
+            id TEXT PRIMARY KEY,
+            path TEXT NOT NULL,
+            type TEXT NOT NULL,
+            agent_id TEXT NOT NULL REFERENCES agents(id),
+            tenant_id TEXT NOT NULL DEFAULT 'default',
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS memory_records (
+            id TEXT PRIMARY KEY,
+            namespace_id TEXT NOT NULL REFERENCES namespaces(id),
+            owner_id TEXT NOT NULL REFERENCES agents(id),
+            memory_type TEXT NOT NULL,
+            content_text TEXT NOT NULL,
+            source TEXT,
+            confidence REAL NOT NULL DEFAULT 1.0,
+            importance REAL NOT NULL DEFAULT 0.5,
+            lifecycle_state TEXT NOT NULL DEFAULT 'active',
+            tenant_id TEXT NOT NULL DEFAULT 'default',
+            created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_memory_records_owner
+            ON memory_records(owner_id, lifecycle_state);
+        CREATE INDEX IF NOT EXISTS idx_memory_records_created
+            ON memory_records(created_at);
+    """
 
     # Tokens too common to be useful for retrieval.
     _STOPWORDS = frozenset(

@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 import sys
 import time
 from pathlib import Path
@@ -25,7 +24,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.services.audience_reach_learner import AudienceReachLearner, calculate_optimal_post_time
+from app.services.audience_reach_learner import AudienceReachLearner
 from scripts.render_master_candidate import MASTER_CATALOG, render_and_draft_video
 
 sys.stdout.reconfigure(encoding="utf-8")

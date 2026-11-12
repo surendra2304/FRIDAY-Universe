@@ -205,7 +205,6 @@ class BinanceFuturesAdapter(BaseExchange):
             import base64
 
             if self.key_type == "ed25519":
-                from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
                 raw = self._private_key.sign(query_string.encode("utf-8"))
             else:
@@ -291,15 +290,6 @@ class BinanceFuturesAdapter(BaseExchange):
 
     def _delete(self, endpoint: str, signed: bool = False, **kwargs) -> Optional[Dict]:
         return self._request("DELETE", endpoint, signed=signed, **kwargs)
-
-    # ------------------------------------------------------------------------
-    # Symbol handling
-    # ------------------------------------------------------------------------
-    def normalize_symbol(self, symbol: str) -> str:
-        return symbol.upper().replace("_", "").replace("-", "")
-
-    def denormalize_symbol(self, unified_symbol: str) -> str:
-        return unified_symbol.upper()
 
     # ------------------------------------------------------------------------
     # BaseExchange implementation

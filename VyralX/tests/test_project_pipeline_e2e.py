@@ -9,17 +9,19 @@ from uuid import uuid4
 import pytest
 
 from app.database import SessionLocal
-from app.models import Asset, ContentPack, RenderJob, Source, VideoProject
+from app.models import Asset, ContentPack, PublishJob, RenderJob, Source, VideoProject
 from app.services import project_pipeline
 
 
-def test_project_pipeline_persists_render_captions_provenance_and_qa(tmp_path, monkeypatch):
+@pytest.mark.parametrize("review_required", [True, False])
+def test_project_pipeline_persists_render_captions_provenance_and_qa(tmp_path, monkeypatch, review_required):
     settings = SimpleNamespace(
         data_dir=tmp_path / "data",
         media_dir=tmp_path / "media",
         render_dir=tmp_path / "renders",
         max_upload_mb=256,
         max_stock_clip_mb=150,
+        autonomous_auto_publish=True,
     )
     settings.data_dir.mkdir(parents=True)
     settings.render_dir.mkdir(parents=True)
@@ -89,6 +91,7 @@ def test_project_pipeline_persists_render_captions_provenance_and_qa(tmp_path, m
 
             project = VideoProject(
                 project_key="e2e-" + suffix,
+                review_required=review_required,
                 topic="How solar panels work",
                 video_format="shorts",
                 target_seconds=30,
@@ -136,6 +139,8 @@ def test_project_pipeline_persists_render_captions_provenance_and_qa(tmp_path, m
             project_pipeline.execute_project_pipeline(project_id, db)
             db.refresh(project)
             assert project.status == "completed", project.error
+            queued_publishes = db.query(PublishJob).filter(PublishJob.render_job_id == project.render_job_id).all()
+            assert len(queued_publishes) == (0 if review_required else 1)
             assert project.render_job_id is not None
             assert Path(project.thumbnail_path).is_file()
             assert Path(settings.render_dir / f"{project.project_key}-attempt-1.mp4").is_file()
@@ -159,6 +164,7 @@ def test_project_pipeline_persists_render_captions_provenance_and_qa(tmp_path, m
     finally:
         with SessionLocal() as db:
             if render_id is not None:
+                db.query(PublishJob).filter(PublishJob.render_job_id == render_id).delete()
                 db.query(RenderJob).filter(RenderJob.id == render_id).delete()
             if project_id is not None:
                 db.query(VideoProject).filter(VideoProject.id == project_id).delete()

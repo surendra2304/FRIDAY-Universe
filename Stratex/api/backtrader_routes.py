@@ -31,8 +31,6 @@ from api.validation import (
 from stratex_backtrader_adapter import (
     bt,
     Cerebro,
-    SMACrossStrategy,
-    RSIStrategy,
     TradeRecord,
     TradeAnalyzer,
     SQN,

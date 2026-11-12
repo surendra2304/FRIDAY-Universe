@@ -6,8 +6,7 @@ Implements OpenBB-grade technical overlays:
 - Standard, Fibonacci, and Camarilla Pivot Points
 """
 
-from typing import Any, Dict
-import numpy as np
+from typing import Dict
 import pandas as pd
 
 

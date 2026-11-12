@@ -5,9 +5,9 @@ import pytest
 from datetime import datetime, timedelta, timezone
 
 from stratex_freqtrade_adapter.parameters import (
-    BaseParameter, IntParameter, RealParameter, CategoricalParameter
+    IntParameter, RealParameter, CategoricalParameter
 )
-from stratex_freqtrade_adapter.protections import ProtectionManager, ProtectionDecision
+from stratex_freqtrade_adapter.protections import ProtectionManager
 from stratex_freqtrade_adapter.optimizer import StrategyOptimizer, OptimizationConfig
 from stratex_freqtrade_adapter.walkforward import WalkForwardValidator, Window
 from stratex_freqtrade_adapter.stratex_bridge import StratexStrategyBridge

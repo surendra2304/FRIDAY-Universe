@@ -6,7 +6,6 @@ subscriber lifetime value analysis.
 """
 from __future__ import annotations
 
-import hashlib
 import time
 import uuid
 from dataclasses import dataclass, field

@@ -101,11 +101,16 @@ def handle_voice_memory(text: str) -> str | None:
                 category="owner_fact",
                 importance=verdict.score,
             ) or {}
-            if str(res.get("status", "success")) == "error":
+            status = str(res.get("status", "")).lower()
+            stored = status in {"success", "created", "stored", "local_only"} or (
+                not status and bool(res.get("id") or res.get("memory_id")))
+            if not stored:
                 return (
                     "I couldn't reach my memory store just now, Boss, so I have NOT saved that. "
                     "Say it again in a moment, or type it in the console and it's locked in."
                 )
+            if status == "local_only":
+                return f"Saved on the local memory backend, Boss: {payload}. Shared Memora synchronization is not confirmed."
             tier_note = (
                 " That one's pinned — it never fades."
                 if verdict.is_pinned

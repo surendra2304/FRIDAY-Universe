@@ -1,4 +1,3 @@
-import pytest
 
 from scripts.reconciliation_worker import reconcile_worker_configuration_error
 

@@ -11,16 +11,14 @@ Enhances Inference with:
 """
 from __future__ import annotations
 
-import asyncio
-import hashlib
 import json
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from app.core.security import require_inference_api_key
 from app.providers.gateway import model_gateway
 
 logger = logging.getLogger(__name__)

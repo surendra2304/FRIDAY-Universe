@@ -12,9 +12,7 @@ which assumes ``""`` is a valid value not ``None``. Apply with:
 from __future__ import annotations
 
 from sqlalchemy import String, Text, TypeDecorator
-from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database import Base
 
 
 class EmptyStringType(TypeDecorator):

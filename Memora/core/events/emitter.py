@@ -8,8 +8,6 @@ import json
 import logging
 import os
 import uuid
-import threading
-from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List, Optional
 from collections import deque
 from datetime import datetime, timezone

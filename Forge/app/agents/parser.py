@@ -5,6 +5,7 @@ Extracts structured file paths, source code, and artifacts from markdown-formatt
 
 from __future__ import annotations
 
+import ast
 import re
 
 from pydantic import BaseModel, Field
@@ -77,6 +78,11 @@ class LLMResponseParser:
             ] or lower_path.startswith(("path/to/", "relative/path/to/")):
                 return False
 
+            if lower_path.endswith(".py"):
+                try:
+                    ast.parse(content)
+                except (SyntaxError, ValueError):
+                    return False
             stripped_content = content.strip()
             if stripped_content.lower() in [
                 "<code>",
@@ -90,6 +96,13 @@ class LLMResponseParser:
             ]:
                 return False
             return not bool(re.match(r"^<[a-zA-Z0-9_\s-]+>$", stripped_content))
+
+        # An Inference adapter may already have unwrapped a complete module.
+        # Its docstring can contain Markdown/CSV examples that themselves parse
+        # as Python. Never replace valid source with those inner code blocks.
+        raw = response_text.strip()
+        if default_filename and default_filename.lower().endswith(".py") and _is_valid_file(default_filename, raw):
+            return [ExtractedFile(relative_path=_normalize_path(default_filename), content=raw, language="python")]
 
         # 1. XML Style: <file path="relative/path/to/file.ext">...</file>
         xml_matches = re.finditer(
@@ -189,4 +202,9 @@ class LLMResponseParser:
                             )
                         )
 
+        # Inference adapters may return already-unwrapped Python. Accept it
+        # only when it parses, never write surrounding model narration as code.
+        if not extracted and default_filename and default_filename.lower().endswith(".py"):
+            if _is_valid_file(default_filename, text):
+                extracted.append(ExtractedFile(relative_path=_normalize_path(default_filename), content=text, language="python"))
         return extracted

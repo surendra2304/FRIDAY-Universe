@@ -9,7 +9,6 @@ Orchestrates:
 from __future__ import annotations
 
 import os
-import sys
 import time
 import signal
 import json
@@ -36,25 +35,28 @@ class StratexTradingEngine:
         self.scan_interval = float(os.getenv("SCAN_INTERVAL_SECONDS", "0"))
         # No position limits
         self.max_positions = int(os.getenv("STRATEX_MAX_TOTAL_POSITIONS", "9999"))
-        # No confidence filter
-        self.min_confidence = float(os.getenv("STRATEX_MIN_CONFIDENCE", "0.0"))
+        # Confidence floor for entries. Was parsed and never used — the env
+        # file sets 0.55 but the daemon ignored it.
+        self.min_confidence = float(os.getenv("STRATEX_MIN_CONFIDENCE", "0.55"))
         # No minimum R:R filter
-        self.min_rr = float(os.getenv("STRATEX_MIN_RR", "0.0"))
-        # Higher risk per trade for demo
-        self.risk_per_trade = float(os.getenv("STRATEX_RISK_PER_TRADE_PCT", "0.02"))
+        self.min_rr = float(os.getenv("STRATEX_MIN_RR", "1.5"))
+        # Risk per trade. The daemon sizes with this number; the ENGINE must
+        # receive it too or it falls back to its own 0.02 default (4x larger).
+        self.risk_per_trade = float(os.getenv("STRATEX_RISK_PER_TRADE_PCT", "0.005"))
         # No notional cap per position
-        self.max_position_pct = float(os.getenv("STRATEX_MAX_POSITION_PCT", "1.0"))
+        self.max_position_pct = float(os.getenv("STRATEX_MAX_POSITION_PCT", "0.10"))
         # No stop distance limits
-        self.min_stop_pct = float(os.getenv("STRATEX_MIN_STOP_PCT", "0.0"))
-        self.max_stop_pct = float(os.getenv("STRATEX_MAX_STOP_PCT", "1.0"))
+        self.min_stop_pct = float(os.getenv("STRATEX_MIN_STOP_PCT", "0.005"))
+        self.max_stop_pct = float(os.getenv("STRATEX_MAX_STOP_PCT", "0.030"))
         # No confluence requirement - single strategy can trade
-        self.entry_confluence = int(os.getenv("STRATEX_ENTRY_CONFLUENCE", "1"))
+        self.entry_confluence = int(os.getenv("STRATEX_ENTRY_CONFLUENCE", "2"))
         # No ADX filter
-        self.adx_threshold = float(os.getenv("STRATEX_ADX_THRESHOLD", "0"))
+        self.adx_threshold = float(os.getenv("STRATEX_ADX_THRESHOLD", "25"))
         # Fees: Binance USD-M taker is 0.04% per side (0.08% round trip).
         self.fee_rate_roundtrip = float(os.getenv("STRATEX_FEE_ROUNDTRIP", "0.0008"))
-        # No expectancy filter
-        self.min_expectancy_r = float(os.getenv("STRATEX_MIN_EXPECTANCY_R", "-1.0"))
+        # Expectancy floor in R after fees. 0.0 let every marginal setup
+        # through; fees and spread then ate the remainder (14d: -4.5k commissions).
+        self.min_expectancy_r = float(os.getenv("STRATEX_MIN_EXPECTANCY_R", "0.10"))
         # Track confluenced signals per symbol this cycle.
         self._confluence_signals: dict[tuple[str, str, str], list[tuple[str, dict, str]]] = {}
         # Latched closed bar per (venue, symbol, strategy, tf)
@@ -135,8 +137,19 @@ class StratexTradingEngine:
         # Runs before the loss-limit gate so a losing book can still be exited.
         self._manage_trend_positions()
 
-        # Check daily loss limit
+        # Check daily loss limit. get_risk_summary() runs the daily reset and
+        # seeds daily_start_equity on first call, so the breaker below has a
+        # baseline to measure against.
         risk = self.engine.get_risk_summary()
+        # Belt and braces: re-evaluate the realized-PnL breach directly in
+        # case bookings happened through a path that skipped the check.
+        if not risk.get("daily_loss_limit_hit", False):
+            start_eq = float(getattr(self.engine, "daily_start_equity", 0.0) or 0.0)
+            day_pnl = float(getattr(self.engine, "daily_realized_pnl", 0.0) or 0.0)
+            cap = float(getattr(self.engine, "max_daily_loss_pct", 0.0) or 0.0) * start_eq
+            if cap > 0 and day_pnl <= -cap:
+                self.engine.daily_loss_limit_hit = True
+                risk["daily_loss_limit_hit"] = True
         if risk.get("daily_loss_limit_hit", False):
             logger.warning("[STRATEX] Daily loss limit hit, skipping scan")
             return results
@@ -163,6 +176,15 @@ class StratexTradingEngine:
                         df = self._candles_to_df(candles)
                         if df is None or len(df) < min_bars:
                             continue
+
+                        # Bar-latch key: the last CLOSED bar's timestamp. A
+                        # 15s scan sees the same closed 1m/5m bar ~4-12 times;
+                        # without latching, a strategy signal on that bar
+                        # re-fired every scan and pyramided entries.
+                        try:
+                            last_bar_ts = df.index[-2] if len(df.index) > 1 else df.index[-1]
+                        except Exception:
+                            last_bar_ts = None
 
                         # Track symbols actually scanned this cycle.
                         scanned_symbols.add((venue, symbol))
@@ -200,6 +222,17 @@ class StratexTradingEngine:
                             logger.info(f"[STRATEX] Strategy {strat_name} on {venue}:{symbol} {tf}: {result.get('status')} - {result.get('side', 'N/A')}")
 
                             if result.get("status") == "SIGNAL" and result.get("side", "HOLD") != "HOLD":
+                                # One signal per (strategy, symbol, tf, bar):
+                                # the same closed bar must not re-arm entry on
+                                # every 15s scan pass.
+                                latch_key = (strat_name, venue, symbol, tf, str(last_bar_ts))
+                                if latch_key in self._last_signal_bar:
+                                    continue
+                                self._last_signal_bar[latch_key] = True
+                                # Bound the latch dict (24h of 1m bars x universe
+                                # is large; a stale key never refires anyway).
+                                if len(self._last_signal_bar) > 20000:
+                                    self._last_signal_bar.clear()
                                 results["signals"] += 1
 
                                 # Fail-closed quality gate. Missing metrics used to
@@ -218,9 +251,9 @@ class StratexTradingEngine:
                                 except (TypeError, ValueError):
                                     rr = 0.0
                                 try:
-                                    win_rate = float(wr_raw)
+                                    win_rate = float(wr_raw)  # noqa: F841 — scan gate log below; expectancy re-read in _execute_signal
                                 except (TypeError, ValueError):
-                                    win_rate = 0.0
+                                    win_rate = 0.0  # noqa: F841
 
                                 if rr <= 0:
                                     logger.info(
@@ -232,6 +265,19 @@ class StratexTradingEngine:
                                     logger.info(
                                         f"[STRATEX] Skip {strat_name} {symbol}: "
                                         f"R:R {rr:.2f} < {self.min_rr}"
+                                    )
+                                    continue
+                                # Confidence floor (was parsed but never
+                                # applied; the env sets 0.55).
+                                conf = 0.0
+                                try:
+                                    conf = float(result.get("confidence") or 0)
+                                except (TypeError, ValueError):
+                                    conf = 0.0
+                                if conf > 0 and conf < self.min_confidence:
+                                    logger.info(
+                                        f"[STRATEX] Skip {strat_name} {symbol}: "
+                                        f"confidence {conf:.2f} < {self.min_confidence:.2f}"
                                     )
                                     continue
 
@@ -477,6 +523,10 @@ class StratexTradingEngine:
 
                     self.engine.realized_pnl += net
                     self.engine.daily_realized_pnl += net
+                    # Route through the breaker check instead of mutating the
+                    # counters directly: broker-side losses must count toward
+                    # the daily loss limit too.
+                    self.engine._check_daily_loss_limit()
                     self.engine.save_state()
 
                     # Write per-strategy ledger entry for analytics and auto-pruning
@@ -545,10 +595,13 @@ class StratexTradingEngine:
                             f"• <b>Entry</b>: <code>{pos.entry_price:.5f}</code>\n"
                             f"• <b>Exit</b>: <code>{exit_price:.5f}</code>\n"
                             f"• <b>Realized PnL</b>: {emoji} <code>${net:+.2f}</code>\n"
-                            f"• <b>Fees</b>: <code>${fees:.2f}</code>\n"
+                            f"• <b>Fees</b>: <code>{fees:.2f}</code>\n"
                             f"• <b>Trades</b>: <code>{trades}</code>\n"
                             f"• <b>Ticket</b>: <code>{pos.position_id}</code>"
                         )
+                    # Position is flat at the broker: start the re-entry
+                    # cooldown so a stale signal cannot instantly re-open it.
+                    self.engine.mark_exit(venue, symbol)
                 except Exception as e:
                     logger.debug(f"Reconciliation error for {key}: {e}")
         except Exception as e:
@@ -579,6 +632,19 @@ class StratexTradingEngine:
             if adapter is None:
                 continue
             try:
+                # The EMA20-cross exit is the documented edge of the DAILY
+                # trend strategy only. Applied to every position it became a
+                # permanent kill switch: any symbol whose price sits below its
+                # daily EMA20 (e.g. ETH at -8%) had EVERY new position force-
+                # closed within a minute of entry, confiscating scalps before
+                # they could develop (live: 16 ETH closes at +$0.01-0.04 each
+                # against ~$0.60 round-trip fees). Scalps keep their own
+                # exchange-side SL/TP; they do not get a daily-bar exit.
+                strat = self.engine.position_strategy.get(key, "")
+                tf = self.engine.position_timeframe.get(key, "")
+                if strat != "strategy_trend_daily" and tf != "1d":
+                    continue
+
                 candles = self.engine.get_candles(venue, symbol, "1d", 60)
                 if not candles:
                     continue
@@ -640,8 +706,8 @@ class StratexTradingEngine:
         except Exception as e:
             logger.debug(f"Prefetch error: {e}")
 
-    def _candles_to_df(self, candles: list) -> "pd.DataFrame | None":
-        """Convert candle list to DataFrame."""
+    def _candles_to_df(self, candles: list) -> "object | None":
+        """Convert candle list to a pandas DataFrame (None when pandas is unavailable)."""
         try:
             import pandas as pd
             df = pd.DataFrame(candles)
@@ -745,10 +811,26 @@ class StratexTradingEngine:
             except Exception as e:
                 logger.warning(f"[STRATEX] Panic-state read failed: {e}")
 
-            # Check position limits
+            # Check position limits + free-margin floor (restored gates; the
+            # exchange-side rejection loop this replaces produced ~2,000
+            # failed orders/day when fully margined).
             can_open, reason = self.engine.can_open_position(venue)
             if not can_open:
                 logger.debug(f"Cannot open position on {venue}: {reason}")
+                return False
+
+            # Anti-pyramiding: one position per symbol. Without this gate the
+            # same signal re-fired every 15s scan and stacked entries (live:
+            # NEARUSDT 991 fills in 2 days, 128k units accumulated).
+            if self.engine.has_open_position(venue, symbol):
+                logger.debug(f"[STRATEX] {venue}:{symbol} already has a position; no adds")
+                return False
+
+            # Re-entry cooldown: a symbol that just stopped out is
+            # quarantined (default 900s). The engine recorded exits but
+            # nothing read them, so the daemon instantly re-entered.
+            if self.engine.symbol_in_cooldown(venue, symbol):
+                logger.info(f"[STRATEX] {venue}:{symbol} in re-entry cooldown; skipping")
                 return False
 
             # Get current price for sizing
@@ -849,6 +931,17 @@ class StratexTradingEngine:
             fee_r = self.fee_rate_roundtrip / stop_pct
             expectancy_r = win_rate * rr_actual - (1.0 - win_rate) - fee_r
 
+            # Reward-side fee floor: the stop side already refuses sub-0.5%
+            # stops, but a TP narrower than the round-trip fee means even a
+            # WINNER nets negative (live: TP hits paying +$0.02 against $0.60
+            # fees). The take-profit must clear the fee by the same margin.
+            if target_pct < self.min_stop_pct:
+                logger.info(
+                    f"[STRATEX] Skip {symbol}: TP {target_pct*100:.2f}% "
+                    f"< min {self.min_stop_pct*100:.2f}% (fee floor)"
+                )
+                return False
+
             if expectancy_r < self.min_expectancy_r:
                 logger.info(
                     f"[STRATEX] Skip {symbol}: {strategy_name} expectancy "
@@ -909,6 +1002,18 @@ class StratexTradingEngine:
                     )
                     return False
                 position_size = units
+
+            # Margin sanity: only send the order if the venue's free margin
+            # covers the notional with headroom. This kills the
+            # "Margin is insufficient" rejection loop at the source.
+            free_margin = self.engine.get_free_margin(venue)
+            est_notional = position_size * current_price
+            if free_margin > 0 and est_notional > free_margin * 0.8:
+                logger.info(
+                    f"[STRATEX] Skip {symbol}: notional {est_notional:,.0f} "
+                    f"> 80% of free margin {free_margin:,.0f}"
+                )
+                return False
 
             # Execute
             result = self.engine.place_order(

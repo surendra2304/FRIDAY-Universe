@@ -6,11 +6,11 @@ import io
 import json
 import math
 import os
-from pathlib import Path
 import re
 import shutil
 import struct
 import subprocess
+import sys
 from typing import Callable
 from urllib.request import Request, urlopen
 import uuid
@@ -251,7 +251,6 @@ class NativeSpeechOutput:
 def main() -> int:
     """Run a true live voice loop on a host with an explicitly consented provider."""
     import argparse
-    import getpass
     import os
     parser = argparse.ArgumentParser(description="FRIDAY/Jarvis local microphone assistant")
     parser.add_argument("--allow-cloud", action="store_true", help="send captured audio to Groq Whisper and unknown queries to the configured Groq chat provider")

@@ -27,10 +27,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import config
-from advisory_gate import AdvisoryGate, BoundedRecommendation
+from advisory_gate import AdvisoryGate
 from advisory_params import AdvisoryParameterOverlay
 from ai_universe_client import AIUniverseClient
-from audit.audit_manager import AuditManager, IdempotencyStore, get_audit_manager
+from audit.audit_manager import AuditManager, IdempotencyStore
 from dashboard import app
 import execution
 from execution import ExecutionPolicy

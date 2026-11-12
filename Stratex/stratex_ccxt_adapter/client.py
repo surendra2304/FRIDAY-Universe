@@ -7,7 +7,6 @@ import pandas as pd
 
 from .errors import CCXTErrorMapper
 from .models import NormalizedMarket, NormalizedOrder, NormalizedTicker
-from .precision import PrecisionHelper
 
 try:
     import ccxt

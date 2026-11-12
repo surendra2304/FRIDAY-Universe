@@ -9,7 +9,6 @@ Implements OpenBB-grade multi-bar volatility estimators:
 
 import datetime
 import math
-from typing import Optional, Union
 import numpy as np
 import pandas as pd
 

@@ -58,7 +58,7 @@ async def test_github_tool_create_pull_request_fallback():
 
 
 @pytest.mark.asyncio
-async def test_release_engineer_role_github_pr_workflow(temp_dir: Path):
+async def test_release_engineer_role_unverified_delivery_cannot_publish(temp_dir: Path):
     settings = Settings()
     settings.workspaces_dir = temp_dir / "workspaces"
     settings.github_repo = "owner/repo"
@@ -88,6 +88,8 @@ async def test_release_engineer_role_github_pr_workflow(temp_dir: Path):
 
     assert res["status"] == "success"
     assert res["release_tag"] == "v1.0-forge-delivery"
-    assert "pull_request" in res
-    assert "pull_request_url" in res
-    assert "github.com/owner/repo/pull/" in res["pull_request_url"]
+    # A print-only module has no passing test suite. Explicit publication
+    # intent alone must not produce a mock-success PR from unverified output.
+    assert res['completion_report']['test_build_status']['all_passed'] is False
+    assert "pull_request" not in res
+    assert "pull_request_url" not in res

@@ -7,7 +7,7 @@ every line of client-side behaviour still runs. A live-network variant of this
 flow belongs in deployment smoke checks, never in the unit/integration suite.
 """
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 

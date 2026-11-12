@@ -12,7 +12,6 @@ from app.agents.real_nautilus_trader import (
     NautilusStrategy,
     NautilusBacktestEngine,
     NautilusOrderBook,
-    NautilusDataFeed,
     Account,
     Position,
     Order,

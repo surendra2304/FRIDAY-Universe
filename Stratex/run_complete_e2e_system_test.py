@@ -22,9 +22,7 @@ from __future__ import annotations
 import os
 import sys
 import time
-import json
 import tempfile
-import hashlib
 from decimal import Decimal
 import pandas as pd
 
@@ -38,27 +36,23 @@ sys.path.insert(0, os.path.abspath("."))
 # Core imports
 import config
 from advisory_gate import AdvisoryGate
-from risk.risk_orchestrator import RiskOrchestrator
 from testnet_engine.protection import emergency_market_close
 from paper_engine.exceptions import PersistenceError
 
 
 # Deep upgrade overlay imports
 from stratex_upgrade.models import (
-    Side, OrderType, OrderStatus, Signal, OrderIntent, InstrumentRules,
-    RiskDecision, MarketSnapshot, Fill, Position
+    Side, OrderStatus, Signal, OrderIntent
 )
 from stratex_upgrade.risk import RiskManager, RiskState, RiskLimits
 from stratex_upgrade.market import MarketDataGuard, FreshnessPolicy
 from stratex_upgrade.strategy_registry import StrategyRegistry, StrategySpec
-from stratex_upgrade.governance import ValidationGate
 from stratex_upgrade.adapters.quantconnect_ideas import BuyingPowerGuard
 from stratex_upgrade.adapters.freqtrade_ideas import ProtectionEvaluator
-from stratex_upgrade.execution import ExecutionEngine, ExecutionConfig
+from stratex_upgrade.execution import ExecutionEngine
 from stratex_upgrade.reconcile import ExchangeReconciler, AtomicJsonStore
-from stratex_upgrade.costs import CostModel, net_pnl
 from stratex_upgrade.backtest import Bar, BacktestConfig, EventDrivenBacktester, BacktestOrder
-from stratex_upgrade.walk_forward import Window, tiled_windows, summarize_fold
+from stratex_upgrade.walk_forward import tiled_windows
 from backtest_engine import BacktestEngine
 
 

@@ -13,7 +13,6 @@ from __future__ import annotations
 from collections import namedtuple
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
-import numpy as np
 import pandas as pd
 
 from .interface import IStrategy

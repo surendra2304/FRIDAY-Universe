@@ -16,21 +16,17 @@ import json
 import urllib.error
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from autonomy.agent_contracts import (
-    AdvisoryEvaluation,
     AgentAdvisorySupervisor,
     FuturisContractClient,
     FuturisForecast,
     InferenceContractClient,
-    InferenceExplanation,
     IntelXContractClient,
     IntelXResearch,
     MemoraScope,
     MemoraScopedClient,
     SentinelContractClient,
-    SentinelPolicyResult,
 )
 
 

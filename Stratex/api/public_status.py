@@ -16,7 +16,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
 from advisory_ledger import read_recent_advisory_entries
 from advisory_params import get_advisory_overlay

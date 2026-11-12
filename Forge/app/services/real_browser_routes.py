@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
-from fastapi import APIRouter, HTTPException
+from typing import Any, Dict, Optional, Tuple
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 try:
@@ -10,8 +10,6 @@ try:
         BrowserFingerprint,
         StealthDetector,
         AntiBotBypass,
-        ProxyManager,
-        BrowserContext,
         CamofoxManager,
     )
 except ImportError:
@@ -19,8 +17,6 @@ except ImportError:
         BrowserFingerprint,
         StealthDetector,
         AntiBotBypass,
-        ProxyManager,
-        BrowserContext,
         CamofoxManager,
     )
 

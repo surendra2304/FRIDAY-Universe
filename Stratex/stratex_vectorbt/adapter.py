@@ -3,7 +3,7 @@
 VectorBT is used as an optional acceleration/research backend only. The canonical
 Stratex BacktestEngine remains authoritative for final validation and promotion.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Mapping
 import itertools
 import math

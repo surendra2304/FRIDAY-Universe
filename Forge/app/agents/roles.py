@@ -6,7 +6,7 @@ and sandboxed execution tool interactions.
 
 from __future__ import annotations
 
-import sys
+import re
 from typing import Any
 
 from app.agents.base import BaseAgent
@@ -1138,10 +1138,16 @@ class TesterRole(BaseAgent):
         goal = context.get("goal", "")
         workspace_summary = self.get_workspace_summary(task_id, engine)
 
+        test_framework = "unittest" if re.search(r"\bunittest\b", goal, re.I) else "pytest"
+
         # Check existing test files
         test_files = engine.fs.search_files(
             task_id=task_id, pattern="test_*.py", role=self.role_name
         )
+        from app.verification.python_tests import discover_unittest_targets, pytest_command, unittest_command, unittest_executed
+
+        paths = engine.wm.get_workspace_paths(task_id) if getattr(engine, "wm", None) else None
+        embedded_targets = discover_unittest_targets(paths.project) if paths else []
         existing_test_is_stub = False
         if test_files:
             try:
@@ -1157,7 +1163,7 @@ class TesterRole(BaseAgent):
                 pass
 
         # If no tests exist or only dummy stub exists, synthesize tests via Inference
-        if not test_files or existing_test_is_stub:
+        if (not test_files and not embedded_targets) or existing_test_is_stub:
             test_synthesized = False
             try:
                 from app.integrations.ai_universe_client import get_ai_universe_client
@@ -1175,18 +1181,16 @@ class TesterRole(BaseAgent):
                     test_res = await ai_client.generate_tests(
                         code=main_code,
                         file_type="python",
-                        test_framework="pytest",
+                        test_framework=test_framework,
                         coverage_targets=["happy_path", "boundary_conditions", "error_handling"],
+                        project_goal=goal,
+                        requirements=list(context.get("requirements", [])),
                     )
                     if test_res and test_res.get("test_code"):
                         test_code = test_res["test_code"]
-                        engine.fs.create_file(
-                            task_id=task_id,
-                            relative_path="test_main.py",
-                            content=test_code,
-                            role=self.role_name,
-                        )
-                        test_synthesized = True
+                        test_synthesized = bool(self.apply_extracted_files(
+                            task_id, test_code, engine, default_filename="test_main.py"
+                        ))
             except Exception:
                 pass
 
@@ -1195,7 +1199,7 @@ class TesterRole(BaseAgent):
                     f"Objective: {goal}\n"
                     f"QA Task: {node_title}\n"
                     f"{workspace_summary}\n\n"
-                    f"Write comprehensive pytest unit tests for the existing application.\n"
+                    f"Write comprehensive {test_framework} unit tests for the existing application.\n"
                     f"Format tests as:\n### File: test_main.py\n```python\n...\n```"
                 )
                 response = await self.prompt_model(prompt)
@@ -1207,18 +1211,26 @@ class TesterRole(BaseAgent):
         # .pytest_cache plus rewritten __pycache__ files inside the project the
         # agent is delivering, so every finished build shipped test-runner junk to
         # the user. Use the hosting interpreter, and disable both caches.
+        # Re-scan after generation; embedded TestCase suites need explicit targets.
+        targets = discover_unittest_targets(paths.project) if paths else []
+        embedded_files = sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py" for target in embedded_targets})
+        command = (unittest_command(targets) if test_framework == "unittest"
+                   else pytest_command(test_files + embedded_files if embedded_files else None,
+                                       project=paths.project if paths else None))
         cmd_res = await engine.terminal.run_command(
             task_id=task_id,
-            command=f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider',
+            command=command,
             env_vars={"PYTHONPATH": ".", "PYTHONDONTWRITEBYTECODE": "1"},
             role=self.role_name,
         )
 
+        executed = test_framework != "unittest" or unittest_executed(cmd_res.stdout, cmd_res.stderr)
+        exit_code = cmd_res.exit_code if executed else (cmd_res.exit_code or 1)
         return {
-            "status": "success" if cmd_res.exit_code == 0 else "failed",
-            "exit_code": cmd_res.exit_code,
+            "status": "success" if exit_code == 0 else "failed",
+            "exit_code": exit_code,
             "stdout": cmd_res.stdout,
-            "stderr": cmd_res.stderr,
+            "stderr": cmd_res.stderr if executed else cmd_res.stderr + "\nNo unittest tests were executed.",
             "agent": self.role_name,
         }
 
@@ -1227,6 +1239,7 @@ class DebuggerRole(BaseAgent):
     """Specialist in root-cause error diagnosis and stack trace analysis."""
 
     def __init__(self, provider: BaseModelProvider | None = None):
+        self._inference_repair = provider is None
         super().__init__(
             role_name="debugger",
             display_name="Debugger & Diagnostics Specialist",
@@ -1242,6 +1255,10 @@ class DebuggerRole(BaseAgent):
     async def execute_step(
         self, task_id: str, node_title: str, context: dict[str, Any], engine
     ) -> dict[str, Any]:
+        if self._inference_repair:
+            from app.agents.repair import repair_with_inference
+            return await repair_with_inference(task_id, context, engine, self.role_name)
+
         error_context = context.get("error", "No explicit error provided")
         terminal_logs = context.get("terminal_logs", "No terminal logs.")
         workspace_summary = self.get_workspace_summary(task_id, engine)
@@ -1272,7 +1289,21 @@ class DebuggerRole(BaseAgent):
         except Exception:
             pass
 
+        source_context = []
+        for path in context.get("project_files", [])[:20]:
+            if not isinstance(path, str) or not path.endswith(".py"):
+                continue
+            try:
+                source = engine.fs.read_file(task_id, path, role=self.role_name)
+                if len(source) <= 64000:
+                    source_context.append(f"File: {path}\n```python\n{source}\n```")
+            except Exception:
+                pass
         prompt = (
+            f"Original objective: {context.get('goal', '')}\n"
+            f"Requirements: {context.get('requirements', [])}\n"
+            f"Preserve existing behavior and tests. Make only the minimal repair; never substitute a generic scaffold.\n"
+            f"Current source:\n{''.join(source_context)}\n"
             f"Diagnostic Scope: {node_title}\n"
             f"Error Information:\n{error_context}\n\n"
             f"Recent Terminal Logs:\n{terminal_logs}\n\n"
@@ -1455,7 +1486,17 @@ class ReleaseEngineerRole(BaseAgent):
             hasattr(engine, "github") and engine.github.settings.github_repo
         )
 
-        if push_to_gh or gh_token or gh_repo:
+        # Credentials describe capability, never consent. An explicit negative
+        # objective/requirement and failed verification both veto publication.
+        publication_prohibited = bool(re.search(
+            r"\b(?:do\s+not|don't|never|no)\s+(?:push|publish|upload|deploy)\b",
+            "\n".join([str(goal), *(str(req) for req in reqs)]), re.I,
+        ))
+        publish_allowed = (
+            push_to_gh is True and not publication_prohibited
+            and report_data.test_build_status.get("all_passed") is True
+        )
+        if publish_allowed:
             branch_name = f"forge/feature-{task_id[:8]}"
             logger.info(
                 f"[Task {task_id}] ReleaseEngineer executing GitHub PR flow on branch '{branch_name}'..."
@@ -1472,13 +1513,21 @@ class ReleaseEngineerRole(BaseAgent):
             )
 
             # 3. Push branch to remote
-            await engine.github.push_branch(
+            push_result = await engine.github.push_branch(
                 task_id=task_id,
                 branch_name=branch_name,
                 repo=gh_repo,
                 token=gh_token,
                 role=self.role_name,
             )
+            if push_result.get("status") != "success" or push_result.get("exit_code") != 0:
+                return {
+                    "status": "failed",
+                    "publication_status": "push_failed_or_denied",
+                    "release_tag": report_data.release_tag,
+                    "completion_report": report_data.model_dump(mode="json"),
+                    "agent": self.role_name,
+                }
 
             # 4. Open Pull Request with COMPLETION_REPORT.md as body
             completion_md = ""

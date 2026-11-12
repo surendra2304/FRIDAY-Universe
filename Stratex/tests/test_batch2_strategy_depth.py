@@ -116,7 +116,6 @@ def _supertrend_frame(ema_50, ema_200, close, *, bearish=False):
 
 def test_supertrend_shorts_blocked_in_bull_regime():
     """Batch-2: EMA50 > EMA200 (bull regime) blocks the bearish-flip short."""
-    import importlib
     import strategy_supertrend
 
     # close < ema_200 (pullback dip) but ema_50 still above ema_200 (bull):

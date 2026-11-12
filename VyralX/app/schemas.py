@@ -272,6 +272,8 @@ class VideoProjectCreateRequest(BaseModel):
     scene_count: int = Field(default=4, ge=2, le=4)
     confirm_pexels_license: bool = False
     confirm_pexels_repeat_use: bool = False
+    # Explicit per-project boundary; global autonomous settings cannot override it.
+    review_required: bool = False
     use_voiceover: bool = True
 
 

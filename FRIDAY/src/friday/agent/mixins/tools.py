@@ -114,6 +114,7 @@ from friday.tools.builtin import (
     SentinelSecurityTool,
     FuturisForecastTool,
     WebFetchSummarizeTool,
+    VyralXProjectTool,
     VyralXRenderTool,
     VyralXPublishTool,
     SystemPowerControlTool,
@@ -156,6 +157,7 @@ class ToolExecutionMixin:
             registry.register(SentinelSecurityTool())
             registry.register(FuturisForecastTool())
             registry.register(WebFetchSummarizeTool())
+            registry.register(VyralXProjectTool())
             registry.register(VyralXRenderTool())
             registry.register(VyralXPublishTool())
             registry.register(TimeDateTool())

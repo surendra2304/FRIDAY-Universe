@@ -19,8 +19,6 @@ Tests in tests/test_real_deep_layer3g.py will verify actual climate modeling.
 from __future__ import annotations
 
 import math
-import random
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -36,7 +34,6 @@ class EnergyBalanceModel:
 
     def equilibrium_temperature(self) -> float:
         """Calculate equilibrium temperature (K)."""
-        import math
         # Stefan-Boltzmann constant
         sigma = 5.67e-8
 

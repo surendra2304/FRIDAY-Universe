@@ -8,7 +8,7 @@ Verifies:
 4. Security barrier dropping unauthorized chat IDs.
 5. Polling updates, offset tracking, and background daemon lifecycle.
 """
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 

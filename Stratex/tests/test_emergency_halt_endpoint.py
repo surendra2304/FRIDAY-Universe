@@ -1,7 +1,6 @@
 """Tests for Safety Invariant 3: Atomic Emergency Halt (/api/v1/emergency-halt)."""
 from __future__ import annotations
 
-import os
 import pytest
 
 import dashboard

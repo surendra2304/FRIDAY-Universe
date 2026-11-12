@@ -4,13 +4,11 @@ Strictly local rendering. Zero automated uploads performed.
 """
 from __future__ import annotations
 
-import json
 import logging
 import shutil
 import sys
 from pathlib import Path
 
-from app.config import get_settings
 from app.services.multiplatform_publisher import package_multiplatform_release
 from app.services.thumbnail_designer import generate_genre_thumbnail
 from app.services.transformative_commentator import (

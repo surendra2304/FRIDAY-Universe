@@ -18,9 +18,7 @@ Tests in tests/test_real_deep_layer3b.py will verify actual code analysis.
 from __future__ import annotations
 
 import ast
-import json
 import math
-import os
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field

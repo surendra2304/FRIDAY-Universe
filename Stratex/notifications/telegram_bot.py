@@ -18,20 +18,18 @@ Features:
 """
 from __future__ import annotations
 
-import logging
 import hashlib
 import os
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable
+from typing import Any
 
 from dotenv import load_dotenv
 import requests
 
 from logger import get_logger
 from panic_state import is_kill_switch_locked, is_panic_active, write_panic_state
-from resilience import sanitize_secrets
 
 load_dotenv()
 

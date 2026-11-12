@@ -16,11 +16,8 @@ Tests in tests/test_real_deep_layer3c.py will verify actual crypto operations.
 
 from __future__ import annotations
 
-import json
 import math
-import os
 import random
-from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -311,7 +308,7 @@ class CryptoVolatilityAnalyzer:
             return spot * norm_cdf(d1) - strike * exp(-r * T) * norm_cdf(d2)
 
         def vega(sigma: float) -> float:
-            from math import log, sqrt, exp, erf
+            from math import log, sqrt, erf
             d1 = (log(spot / strike) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))
             norm_cdf = lambda x: 0.5 * (1.0 + erf(x / sqrt(2.0)))
             return spot * sqrt(T) * norm_cdf(d1)

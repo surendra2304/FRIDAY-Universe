@@ -12,7 +12,6 @@ their mutual authentication posture, assigned burst quotas, and active model aff
 
 from __future__ import annotations
 
-import os
 import time
 import uuid
 from typing import Any

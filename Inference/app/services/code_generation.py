@@ -1,12 +1,14 @@
 """Code Generation Service optimized for FORGE autonomous software engineering engine."""
 
+import ast
 import hashlib
+import json
 import re
 import time
 from collections.abc import AsyncIterator
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.gateway import model_gateway
@@ -25,7 +27,7 @@ from app.utils.logger import logger
 _FENCED_BLOCK = re.compile(r"```[ \t]*[A-Za-z0-9_+.-]*[ \t]*\n(.*?)```", re.S)
 
 
-def extract_code(text: str) -> str:
+def extract_code(text: str, file_type: str | None = None) -> str:
     """Return the code a model meant to write, not the whole reply.
 
     Models wrap code in prose ("Here is the module:") and in fences. The earlier extraction
@@ -33,10 +35,33 @@ def extract_code(text: str) -> str:
     closed on its own opening line and the "code" was just the prose. [FACT] measured: a reply
     of ``"Here it is:\\n```python\\nx = 1\\n```"`` returned ``"Here it is:"``.
 
-    Rules: the first non-empty fenced block wins; an unclosed fence (the model hit its token
+    Python prefers valid raw source or the earliest complete parseable outer block,
+    so inner documentation fences cannot truncate the implementation. For other
+    formats, the first non-empty fenced block wins; an unclosed fence (the model hit its token
     ceiling mid-block) yields the body after the opening fence, which will then fail the
     syntax check honestly rather than pass as complete code; unfenced text is returned as is.
     """
+    if file_type == "python":
+        # Valid raw Python may contain Markdown fences in a module docstring.
+        # A generic first-fence regex would return only that documentation.
+        try:
+            ast.parse(text.strip())
+            return text.strip()
+        except (SyntaxError, ValueError):
+            pass
+        opening = re.search(r"(?m)^[ \t]*```(?:python|py)?[ \t]*\r?\n", text)
+        if opening:
+            # A docstring's inner ``` fence is not necessarily the outer close.
+            # Choose the earliest closing boundary producing complete Python.
+            for closing in re.finditer(r"(?m)^[ \t]*```[ \t]*\r?$", text[opening.end():]):
+                candidate = text[opening.end():opening.end() + closing.start()].strip()
+                if not candidate:
+                    continue
+                try:
+                    ast.parse(candidate)
+                    return candidate
+                except (SyntaxError, ValueError):
+                    continue
     blocks = [block.strip("\n") for block in _FENCED_BLOCK.findall(text) if block.strip()]
     if blocks:
         return blocks[0].strip()
@@ -59,6 +84,22 @@ class CodeGenerationRequest(BaseModel):
     requirements: list[str] = Field(default_factory=list, description="Specific functional requirements")
     language_features: list[str] = Field(default_factory=list, description="Target syntax/framework features")
 
+    @field_validator("context")
+    @classmethod
+    def bounded_repair_context(cls, context):
+        if "repair" not in context:
+            return context
+        repair = context["repair"]
+        if not isinstance(repair, dict):
+            raise ValueError("repair context must be an object")
+        source = repair.get("original_source")
+        evidence = repair.get("failure_evidence", "")
+        if not isinstance(source, str) or not source.strip() or len(source) > 32000:
+            raise ValueError("repair needs complete source, at most 32000 characters")
+        if not isinstance(evidence, str) or len(evidence) > 12000:
+            raise ValueError("repair evidence must be text, at most 12000 characters")
+        return context
+
 
 class CodeGenerationResponse(BaseModel):
     code: str
@@ -78,8 +119,8 @@ class CodeGenerationService:
         self._cache_ttl = 3600.0  # 1 hour TTL
 
     def _get_cache_key(self, req: CodeGenerationRequest) -> str:
-        goal = str(req.context.get("project_goal", ""))
-        raw = f"{goal}:{req.filename}:{req.file_type}:{req.requirements}:{req.language_features}"
+        # A related module or architecture change is a different build input.
+        raw = "forge-objective-v4-source-repair:" + json.dumps(req.model_dump(mode="json"), sort_keys=True)
         return hashlib.sha256(raw.encode()).hexdigest()
 
     async def generate_code(self, req: CodeGenerationRequest) -> CodeGenerationResponse:
@@ -110,7 +151,7 @@ class CodeGenerationService:
         exec_res = await unified_provider_manager.execute(exec_req)
         elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
 
-        code_text = extract_code(exec_res.content or "")
+        code_text = extract_code(exec_res.content or "", req.file_type)
 
         if exec_res.degraded:
             # No model produced code. Report the true path, zero confidence, and
@@ -210,8 +251,25 @@ class CodeGenerationService:
         req_list = "\n".join([f"- {r}" for r in req.requirements]) if req.requirements else "None specified."
         feat_list = ", ".join(req.language_features) if req.language_features else "Standard"
 
+        repair = req.context.get("repair")
+        if repair:
+            # Full source is deliberately carried in the actual prompt, not
+            # only context that another adapter may prune. Never silently slice
+            # a module and ask a model to replace the rest with a scaffold.
+            return (
+                f"Repair existing file `{req.filename}` minimally. Return ONLY its complete replacement source.\n"
+                f"Original objective: {req.context.get('project_goal', '')}\n"
+                f"Requirements:\n{req_list}\n"
+                "Preserve all existing behavior, tests, imports needed by tests and public signatures. "
+                "Never weaken/remove/skip tests or substitute a generic scaffold. "
+                "If constraints conflict and no safe implementation repair exists, return the original source unchanged.\n"
+                f"Actual failing-check evidence:\n{repair.get('failure_evidence', '')}\n"
+                f"Complete original source:\n{repair['original_source']}"
+            )
+
         return (
             f"Generate complete, production-ready, fully closed code for file: `{req.filename}` ({req.file_type}).\n"
+            f"Project objective (implement this, not a generic scaffold):\n{str(req.context.get('project_goal', ''))[:4000]}\n\n"
             f"Standards: {guide}\n"
             f"Language Features: {feat_list}\n"
             f"Specific Requirements:\n{req_list}\n\n"
@@ -222,14 +280,20 @@ class CodeGenerationService:
     def _prune_context(self, context: dict[str, Any]) -> dict[str, Any]:
         """Prunes and limits context size (max 3 related files)."""
         pruned: dict[str, Any] = {}
+        if "repair" in context:
+            repair = context["repair"]
+            pruned["repair"] = {
+                "original_source": repair["original_source"],
+                "failure_evidence": repair.get("failure_evidence", ""),
+            }
         if "project_goal" in context:
-            pruned["project_goal"] = str(context["project_goal"])[:500]
+            pruned["project_goal"] = str(context["project_goal"])[:4000]
         if "architecture_spec" in context:
             pruned["architecture_spec"] = str(context["architecture_spec"])[:1000]
-        if "related_files" in context:
-            rel = context["related_files"]
+        if "related_files" in context or "sibling_files" in context:
+            rel = context.get("related_files", context.get("sibling_files"))
             if isinstance(rel, dict):
-                pruned["related_files"] = {k: str(v)[:400] for i, (k, v) in enumerate(rel.items()) if i < 3}
+                pruned["related_files"] = {k: str(v)[:2500] for i, (k, v) in enumerate(rel.items()) if i < 3}
             elif isinstance(rel, list):
                 pruned["related_files"] = [str(x)[:400] for x in rel[:3]]
         return pruned

@@ -15,7 +15,6 @@ from flask import Flask, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 import config
-from config import ACTIVE_STRATEGIES
 from data import get_candles as fetch_candles
 from logger import get_logger
 
@@ -6782,8 +6781,6 @@ if _AUTOSTART_SERVICES:
 
 # --- Pattern Recognition Engine & Order Flow Analyzer Integration ---
 try:
-    from execution.pattern_recognition_engine import engine as pattern_engine
-    from execution.order_flow_analyzer import engine as orderflow_engine
     print("[DASHBOARD] Deep execution modules loaded")
 except Exception as _deep_err:
     print(f"[DASHBOARD] Deep execution modules unavailable: {_deep_err}")

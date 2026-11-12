@@ -17,8 +17,8 @@ def _import_mods():
     mods: dict[str, Any] = {}
     try:
         from app.services.real_advanced_code import (
-            BugReport, AutonomousCodeRepair, PipelineStage, DeploymentPipelineManager,
-            ArchitectureReport, CodeArchitectureAnalyzer,
+            BugReport, AutonomousCodeRepair, DeploymentPipelineManager,
+            CodeArchitectureAnalyzer,
         )
         mods["advanced_code"] = {
             "bug": BugReport, "repair": AutonomousCodeRepair,
@@ -38,8 +38,8 @@ def _import_mods():
         pass
     try:
         from app.services.real_deep_code import (
-            SecurityFinding, CodeSecurityScanner, DependencyInfo, DependencyAnalyzer,
-            RefactoringSuggestion, CodeRefactoringEngine,
+            CodeSecurityScanner, DependencyAnalyzer,
+            CodeRefactoringEngine,
         )
         mods["deep_code"] = {
             "security": CodeSecurityScanner, "dependency": DependencyAnalyzer,

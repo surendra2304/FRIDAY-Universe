@@ -53,6 +53,7 @@ from sqlalchemy.types import CLOB
 from app.core.config import settings
 from app.memory.base import (
     BaseMemory,
+    DeliberationRecord,
     ExperimentRecord,
     MemoryRecord,
     MessageRecord,

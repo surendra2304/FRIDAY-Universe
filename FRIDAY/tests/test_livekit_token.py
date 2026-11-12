@@ -14,15 +14,15 @@ if str(apps_core_src) not in sys.path:
 if str(friday_src) not in sys.path:
     sys.path.insert(0, str(friday_src))
 
-# NOTE (2026-11-12 battery pass): this module used to set FRIDAY_ENV /
-# DATABASE_URL (a REAL Oracle ADB endpoint, with credentials) at MODULE
-# level, which leaked a live-Oracle configuration into every later test in
-# the session - the long-running-task suites then attempted real oracledb
-# connections and failed with connection resets. Environment is now scoped
-# to the client fixture only, and the DSN is the CI-standard loopback mock
-# (nothing listens on localhost:1521 in a test environment, so any
-# connection attempt fails fast and never leaves the runner).
-
+# Hermeticity fix (ZAI Agent 2, 2026-11-12): these module-level env writes
+# LEAKED a (dead) Oracle ADMIN DSN into every test that ran after this file
+# in the session — the tier1/e2e /ready probes then saw a configured-but-
+# unreachable DSN and failed 503 in full-suite runs while passing alone.
+# (Original battery-pass note: a REAL Oracle ADB endpoint with credentials
+# leaked a live-Oracle configuration into every later test.) Environment is
+# now scoped to the client fixture only, and the DSN is the CI-standard
+# loopback mock (nothing listens on localhost:1521 in a test environment,
+# so any connection attempt fails fast and never leaves the runner).
 import pytest
 from fastapi.testclient import TestClient
 

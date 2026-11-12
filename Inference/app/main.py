@@ -7,7 +7,7 @@ from collections.abc import Callable
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import Depends, FastAPI, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -494,7 +494,7 @@ async def multi_model_deliberation(
     require_evidence: bool = False,
 ):
     """Deliberate on a question using multiple model families."""
-    from app.agents.deliberation_engine import deliberation_engine, DeliberationStrategy, RiskLevel
+    from app.agents.deliberation_engine import deliberation_engine
     from app.agents.deliberation_engine import DeliberationStrategy as DS, RiskLevel as RL
     try:
         strat = DS(strategy) if strategy in [s.value for s in DS] else DS.MULTI_MODEL_CONSENSUS

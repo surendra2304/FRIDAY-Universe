@@ -4,7 +4,7 @@ import os
 import pytest
 import pandas as pd
 
-from stratex_ccxt_adapter.models import NormalizedMarket, NormalizedTicker, NormalizedOrder
+from stratex_ccxt_adapter.models import NormalizedMarket, NormalizedTicker
 from stratex_ccxt_adapter.precision import PrecisionHelper
 from stratex_ccxt_adapter.errors import CCXTErrorMapper
 from stratex_ccxt_adapter.client import CCXTExchangeAdapter

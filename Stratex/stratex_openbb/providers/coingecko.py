@@ -4,7 +4,6 @@ Fetches global market cap, 24h volume, BTC/ETH dominance, and trending coins wit
 """
 
 import datetime
-import json
 import logging
 import threading
 import time

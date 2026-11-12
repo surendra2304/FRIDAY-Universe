@@ -16,7 +16,6 @@ Nothing is traded by this script.
 """
 import os
 import sys
-import json
 
 sys.path.insert(0, "/opt/friday_universe/Stratex")
 

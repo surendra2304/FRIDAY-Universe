@@ -7,7 +7,6 @@ once at startup and cannot observe trades written by the engine process afterwar
 """
 
 import json
-import os
 
 import pytest
 

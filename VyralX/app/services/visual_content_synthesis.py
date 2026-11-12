@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -254,10 +253,11 @@ class VisualContentSynthesisEngine:
             if not scene.visual_elements and scene.visual_type == "b_roll":
                 issues.append(f"Scene '{scene.name}' has no visual elements for b-roll")
 
+        render_id = hashlib.md5(
+            f"render:{project_id}:{resolution}:{time.time()}".encode()
+        ).hexdigest()[:12]
         render = RenderOutput(
-            render_id=hashlib.md5(
-                f"render:{project_id}:{resolution}:{time.time()}".encode()
-            ).hexdigest()[:12],
+            render_id=render_id,
             project_id=project_id,
             resolution=resolution,
             duration_sec=total_duration,

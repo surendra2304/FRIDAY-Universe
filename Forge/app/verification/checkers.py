@@ -15,6 +15,7 @@ from typing import Any
 from app.core.logging import get_logger
 from app.execution.engine import ExecutionEngine
 from app.verification.evidence import CheckCategory, VerificationEvidence
+from app.verification.python_tests import discover_unittest_targets, pytest_command, unittest_command, unittest_executed
 
 logger = get_logger("verification.checkers")
 
@@ -391,9 +392,9 @@ class TestChecker(BaseChecker):
             return VerificationEvidence(
                 check_name=self.name,
                 category=self.category,
-                exit_code=0,
-                passed=True,
-                stdout="No workspace to test.",
+                exit_code=1,
+                passed=False,
+                stderr="No workspace exists; no tests were executed.",
             )
 
         # 1. Go Tests
@@ -463,15 +464,37 @@ class TestChecker(BaseChecker):
             (paths.project / "tests").glob("*.py")
         )
 
+        unittest_targets = discover_unittest_targets(paths.project)
+        if not py_test_files and not has_tests_dir and unittest_targets:
+            result = await engine.terminal.run_command(
+                task_id, unittest_command(unittest_targets),
+                env_vars={"PYTHONPATH": ".", "PYTHONDONTWRITEBYTECODE": "1"}, role="tester",
+            )
+            executed = unittest_executed(result.stdout, result.stderr)
+            return VerificationEvidence(
+                check_name="Embedded Unittest Suite Runner", category=self.category,
+                command=result.command, exit_code=result.exit_code if executed else (result.exit_code or 1),
+                passed=result.exit_code == 0 and executed,
+                duration_ms=round((time.perf_counter() - start_time) * 1000, 2),
+                stdout=result.stdout,
+                stderr=result.stderr if executed else result.stderr + "\nNo unittest tests were executed.",
+                artifacts_inspected=sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py"
+                                           for target in unittest_targets}),
+            )
+
         if not py_test_files and not has_tests_dir:
+            python_sources = [p for p in paths.project.rglob("*.py")
+                              if not set(p.parts) & {".venv", "venv", "node_modules", ".git"}]
             return VerificationEvidence(
                 check_name="Pytest Test Suite Runner",
                 category=self.category,
-                command="pytest -v",
-                exit_code=0,
-                passed=True,
+                command="python_test_discovery",
+                exit_code=1 if python_sources else 0,
+                passed=not bool(python_sources),
                 duration_ms=0.1,
-                stdout="No test files discovered in workspace.",
+                stdout="No Python source files; Python test runner is not applicable." if not python_sources else "",
+                stderr="Python source exists but no test files were discovered; no tests were executed." if python_sources else "",
+                artifacts_inspected=[str(p.relative_to(paths.project)) for p in python_sources],
             )
 
         # Two fixes in one line. `python` was a bare name resolved from PATH, so
@@ -479,9 +502,13 @@ class TestChecker(BaseChecker):
         # hosting FORGE; sys.executable is the one that actually has the deps.
         # And -p no:cacheprovider stops pytest from writing .pytest_cache into
         # the project it is verifying.
+        embedded_files = sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py"
+                                 for target in unittest_targets
+                                 if not Path(target.rsplit(".", 1)[0].replace(".", "/")).name.startswith("test_")})
+        selected_files = sorted(set(py_test_files + embedded_files))
         cmd_res = await engine.terminal.run_command(
             task_id,
-            f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider',
+            pytest_command(selected_files if embedded_files else None, project=paths.project),
             env_vars={"PYTHONPATH": ".", "PYTHONDONTWRITEBYTECODE": "1"},
             role="tester",
         )
@@ -496,7 +523,7 @@ class TestChecker(BaseChecker):
             duration_ms=round(duration_ms, 2),
             stdout=cmd_res.stdout,
             stderr=cmd_res.stderr,
-            artifacts_inspected=py_test_files,
+            artifacts_inspected=selected_files,
         )
 
 
@@ -1234,7 +1261,7 @@ class FeaturePresenceChecker(BaseChecker):
         passed = len(issues) == 0
 
         stdout = (
-            f"Verified {len(artifacts_inspected)} project files. All requested features, libraries, and objective elements are present and implemented."
+            f"Static presence checks passed for supported rules across {len(artifacts_inspected)} files. Functional requirement coverage is not established by this check."
             if passed
             else ""
         )

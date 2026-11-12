@@ -4,7 +4,6 @@ Fetches the Crypto Fear & Greed Index from the public Alternative.me API without
 """
 
 import datetime
-import json
 import logging
 import threading
 import time

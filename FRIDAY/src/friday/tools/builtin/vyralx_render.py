@@ -102,7 +102,7 @@ class VyralXRenderTool(BaseTool):
                     status_only=bool(status_only),
                 )
             )
-        except RuntimeError as exc:
+        except (RuntimeError, ValueError, TypeError, KeyError) as exc:
             return ToolResult(
                 name=self.name,
                 content=f"🎬 [VYRALX RENDER] I couldn't queue the render: {exc}. Nothing was queued.",
@@ -234,7 +234,7 @@ class VyralXRenderTool(BaseTool):
                     "success": False,
                 }
         else:
-            verified = [a for a in assets if a.get("rights_verified")]
+            verified = [a for a in assets if a.get("rights_verified") is True]
             chosen = verified[0] if verified else None
             if chosen is None:
                 return {
@@ -262,7 +262,7 @@ class VyralXRenderTool(BaseTool):
         except Exception as exc:
             await breaker.record_failure(exc)
             return {
-                "reply": f"🎬 [VYRALX RENDER] I couldn't reach VyralX to queue the render: {type(exc).__name__}: {exc}. Nothing was queued.",
+                "reply": f"🎬 [VYRALX RENDER] I couldn't reach VyralX to queue the render: {type(exc).__name__}. Submission is unconfirmed; check render status before retrying.",
                 "metadata": {"agent_id": "vyralx", "error": str(exc)},
                 "success": False,
             }
@@ -286,10 +286,17 @@ class VyralXRenderTool(BaseTool):
         await breaker.record_success()
         usage_tracker.record("vyralx", calls=1)
         data = resp.json() if resp.text else {}
+        if not isinstance(data, dict):
+            return {"success": False, "reply": "Invalid VyralX acknowledgement; submission is unconfirmed. Check job history before retrying.",
+                    "metadata": {"error": "invalid_job_receipt", "submission_unconfirmed": True}}
         job_id = data.get("job_id")
-        job_status = data.get("status", "queued")
+        job_status = data.get("status")
+        if not isinstance(job_id, int) or isinstance(job_id, bool) or job_id <= 0 or job_status not in {'completed', 'queued', 'running'}:
+            return {"success": False,
+                    "reply": "VyralX returned an invalid render acknowledgement. Submission is unconfirmed; inspect the job list before retrying.",
+                    "metadata": {"agent_id": "vyralx", "error": "invalid_job_receipt", "submission_unconfirmed": True}}
         lines = [
-            f"🎬 [VYRALX RENDER] Render job queued:",
+            "🎬 [VYRALX RENDER] Render job queued:",
             f"• Asset: {chosen.get('title', chosen['id'])} (asset_id={chosen['id']}, {chosen.get('duration_seconds', '?')}s)",
             f"• Preset: {preset} | Trim: {trim_start or 0}s → {trim_end or 'end'}",
             f"• Job: {job_id} — status: {job_status}",

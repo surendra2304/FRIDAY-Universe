@@ -1883,7 +1883,8 @@ async def submit_autonomous_goal(
     if not autonomous_daemon.is_running:
         await autonomous_daemon.start()
     return {
-        "status": "ok",
+        # The literal "ok" here was silently overwritten by the real status
+        # below (duplicate dict key) — keep only the honest value.
         "goal_id": goal.id,
         "goal": goal.goal,
         "priority": goal.priority,
@@ -2322,12 +2323,12 @@ def _which(name: str) -> str | None:
 
 
 @app.post("/api/command")
-async def execute_command(req: CommandRequest, _: None = Depends(_require_control_access)) -> Any:
+async def execute_command(req: CommandRequest, _: None = Depends(_require_control_access), *, boss_verified: bool = True) -> Any:
     """Execute a text command with PC, Android, and live 8-Agent execution."""
     # The console is origin-gated + control-token protected: a valid token
     # IS the owner key (A14). Voice/remote surfaces call _dispatch_command
     # with boss_verified=False and must authorize separately.
-    result = await _dispatch_command(req.command, boss_verified=True)
+    result = await _dispatch_command(req.command, boss_verified=boss_verified)
     meta = result.get("metadata") or {}
 
     # Checklist A13 (batch 3): response formatting policy — free-form LLM
@@ -3198,7 +3199,9 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 category="owner_fact",
                 importance=_verdict.score,
             )
-            _stored = bool(_res) and _res.get("status") != "error"
+            _status = str((_res or {}).get("status", "")).lower()
+            _stored = bool(_res) and (_status in {"success", "created", "stored", "local_only"}
+                                      or (not _status and bool(_res.get("id") or _res.get("memory_id"))))
         except Exception as _e:
             _store_error = f"{type(_e).__name__}"
             logger.warning(f"Memora record_fact failed in memory fast-path: {_e}")
@@ -3209,11 +3212,14 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 else (" I'll keep it, but small stuff like that fades from my active memory after a while."
                       if _tier == "trivial" else "")
             )
-            _reply = f"Got it, Boss — locked in: {_payload}. That's mine to keep now.{_tier_note}"
+            if _status == "local_only":
+                _reply = f"Saved on the local memory backend, Boss: {_payload}. Shared Memora synchronization is not confirmed."
+            else:
+                _reply = f"Got it, Boss — locked in: {_payload}. That's mine to keep now.{_tier_note}"
         else:
             _reply = (
-                f"I couldn't reach my memory store just now, Boss, so I have NOT saved that — "
-                f"say it again in a moment and I'll keep it safe."
+                "I couldn't reach my memory store just now, Boss, so I have NOT saved that — "
+                "say it again in a moment and I'll keep it safe."
             )
             if _store_error:
                 logger.warning(f"memory fast-path store error: {_store_error}")
@@ -3401,7 +3407,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
 
     if any(k in cmd for k in ["who are you", "who made you", "what are you", "your name", "are you there", "can you hear me"]):
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
-        return {"reply": f"I'm FRIDAY — Fully Responsive Intelligent Digital Assistant for You. You built me, Boss — you and me plus my nine specialist agents run this universe together. I'm here, I'm listening, and I remember where we left off. What do you need?", "metadata": {"fast_path": True, "conversational": True}}
+        return {"reply": "I'm FRIDAY — Fully Responsive Intelligent Digital Assistant for You. You built me, Boss — you and me plus my nine specialist agents run this universe together. I'm here, I'm listening, and I remember where we left off. What do you need?", "metadata": {"fast_path": True, "conversational": True}}
 
     if any(k in cmd for k in ["thank you", "thanks", "great job", "good job", "nice", "awesome"]):
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
@@ -3810,7 +3816,7 @@ async def chat_endpoint(req: ChatRequest, _: None = Depends(_require_origin_gate
     origin-gated only (see ``_require_origin_gate``). Raw control endpoints
     (``/api/command`` and friends) keep the full key gate.
     """
-    return await execute_command(CommandRequest(command=req.message))
+    return await execute_command(CommandRequest(command=req.message), boss_verified=False)
 
 
 @app.get("/api/screenshot")
@@ -4093,7 +4099,6 @@ start_proactive_monitoring()
 # =========================================================================
 
 from collections import deque
-from datetime import datetime, timezone
 import uuid as _uuid
 
 # In-memory conversation history store (max 10000 entries)

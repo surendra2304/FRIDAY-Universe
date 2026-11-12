@@ -5,7 +5,7 @@ Order book depth, wall detection, and volume-weighted micro-price analyzer.
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from .models import OrderBookDepthAnalysis
 
 

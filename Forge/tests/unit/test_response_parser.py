@@ -79,3 +79,20 @@ def main():
 def test_parse_empty_or_no_code():
     assert LLMResponseParser.extract_files("") == []
     assert LLMResponseParser.extract_files("Just plain text with no code blocks.") == []
+
+
+def test_generated_test_prose_is_not_python_source():
+    assert LLMResponseParser.extract_files("Here is an exhaustive, professional test suite.", default_filename="test_main.py") == []
+
+
+def test_generated_test_markdown_is_unwrapped_and_syntax_checked():
+    text = "Here are the tests.\n```python\ndef test_csv():\n    assert 1 == 1\n```\n"
+    files = LLMResponseParser.extract_files(text, default_filename="test_main.py")
+    assert len(files) == 1
+    assert files[0].content.startswith("def test_csv")
+    assert "Here are" not in files[0].content
+
+
+def test_already_unwrapped_python_is_accepted_but_broken_fenced_code_is_not():
+    assert len(LLMResponseParser.extract_files("def test_csv():\n    assert 1 == 1", default_filename="test_main.py")) == 1
+    assert LLMResponseParser.extract_files("```python\ndef invalid(\n```", default_filename="test_main.py") == []

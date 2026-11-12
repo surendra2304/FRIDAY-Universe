@@ -15,7 +15,6 @@ from app.agents.real_openbb import (
     FundamentalMetrics,
     TechnicalSignal,
     NewsItem,
-    CalendarEvent,
     PortfolioAnalytics,
 )
 

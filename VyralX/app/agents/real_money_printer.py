@@ -21,10 +21,7 @@ Tests in tests/test_real_deep_layer1.py will verify actual video operations.
 
 from __future__ import annotations
 
-import math
-import random
 import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 

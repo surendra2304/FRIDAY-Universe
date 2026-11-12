@@ -2,7 +2,6 @@
 """Publish 4K Master with Google Official Resumable Uploader & Futuristic Thumbnail."""
 import json
 import logging
-import os
 import sys
 import time
 from pathlib import Path

@@ -345,7 +345,6 @@ class FastPathMixin:
         states that so the owner is never misled about what ran.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.SECURITY_SCAN_KEYWORDS):
             return None
@@ -418,7 +417,6 @@ class FastPathMixin:
         no hallucination surface. Probe failure is reported honestly.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.FLEET_KEYWORDS):
             return None
@@ -762,7 +760,6 @@ class FastPathMixin:
         honest "no conclusive evidence" — never a fabricated summary.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.RESEARCH_KEYWORDS):
             return None
@@ -830,6 +827,8 @@ class FastPathMixin:
                 "fast_path": True,
                 "research_dispatch": True,
                 "intelx": (result.metadata or {}).get("intelx"),
+                "spoken_summary": (result.metadata or {}).get("spoken_summary"),
+                "sources": (result.metadata or {}).get("sources", []),
                 "probe_success": success,
                 "duration_seconds": time.perf_counter() - start_time,
                 "task_state": self.state_machine.current_state.value,
@@ -849,7 +848,6 @@ class FastPathMixin:
         the fail-closed guard (D-015).
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         # Deterministic e2e workflow phrases ("check Stratex performance") are
         # served by the E2EWorkflowCoordinator inside
@@ -936,7 +934,6 @@ class FastPathMixin:
         prediction is never an authorization.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.FORECAST_KEYWORDS):
             return None
@@ -1110,11 +1107,16 @@ class FastPathMixin:
         engine — never the LLM's imagination.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         tool_cls = None
         label = ""
-        if CapabilityRouter._matches(low, CapabilityRouter.SCRIPT_KEYWORDS):
+        if CapabilityRouter._matches(low, CapabilityRouter.PROJECT_KEYWORDS):
+            tool_cls = "vyralx_project"
+            label = "VyralX review-only video project"
+        elif CapabilityRouter._matches(low, CapabilityRouter.CODE_TASK_KEYWORDS):
+            tool_cls = "forge_code_task"
+            label = "Forge sandboxed build and verification"
+        elif CapabilityRouter._matches(low, CapabilityRouter.SCRIPT_KEYWORDS):
             tool_cls = "vyralx_script"
             label = "VyralX script drafting"
         elif CapabilityRouter._matches(low, CapabilityRouter.WEB_OPS_KEYWORDS):
@@ -1154,7 +1156,19 @@ class FastPathMixin:
         except Exception as e:
             logger.debug(f"activity emit skipped in batch3 dispatch: {e}")
 
-        if tool_cls == "vyralx_script":
+        if tool_cls == "vyralx_project":
+            from friday.tools.builtin.vyralx_project import VyralXProjectTool
+
+            # License confirmation is read from the raw user turn, not invented
+            # by a model tool call or remembered from a different project.
+            result = VyralXProjectTool().execute(question=clean_input)
+            meta_key = "vyralx"
+        elif tool_cls == "forge_code_task":
+            from friday.tools.builtin.forge_code_task import ForgeCodeTool
+
+            result = ForgeCodeTool().execute(goal=clean_input)
+            meta_key = "forge"
+        elif tool_cls == "vyralx_script":
             from friday.tools.builtin.vyralx_script import VyralXScriptTool
 
             result = VyralXScriptTool().execute(question=low)
@@ -1198,6 +1212,11 @@ class FastPathMixin:
                 "fast_path": True,
                 "delegation_dispatch": True,
                 "tool": tool_cls,
+                "pending": bool((result.metadata or {}).get("pending")),
+                "projects": (result.metadata or {}).get("projects", []),
+                "task_id": ((result.metadata or {}).get("forge") or {}).get("task_id") if tool_cls == "forge_code_task" else None,
+                "verification_manifest": (result.metadata or {}).get("verification_manifest"),
+                "artifacts": (result.metadata or {}).get("artifacts", []),
                 meta_key: (result.metadata or {}).get(meta_key),
                 "probe_success": success,
                 "duration_seconds": time.perf_counter() - start_time,

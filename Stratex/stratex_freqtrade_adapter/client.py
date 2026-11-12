@@ -14,21 +14,17 @@ Provides clean namespaced access:
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-import pandas as pd
 
 from .strategy.interface import IStrategy
-from .strategy.adapter import FreqtradeStrategyAdapter, SignalResult
+from .strategy.adapter import FreqtradeStrategyAdapter
 from .strategy.registry import StrategyRegistry, registry
 from .pairlist.manager import PairListManager
 from .pairlist.volume_pairlist import VolumePairList
 from .pairlist.static_pairlist import StaticPairList
-from .pairlist.filters import PriceFilter, SpreadFilter, VolatilityFilter
-from .protections import ProtectionManager, ProtectionDecision
+from .protections import ProtectionManager
 from .roi.roi_engine import ROIEngine
 from .roi.trailing_engine import TrailingStopEngine
 from .data.downloader import FreqtradeDataDownloader
-from .optimizer import StrategyOptimizer, OptimizationConfig
-from .walkforward import WalkForwardValidator, Window
 
 
 class StrategyNamespace:

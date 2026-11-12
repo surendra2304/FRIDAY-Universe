@@ -17,7 +17,7 @@ def _import_mods():
     mods: dict[str, Any] = {}
     try:
         from app.agents.real_diagram_design import (
-            RGB, hex_to_rgb, rgb_to_hsl, hsl_to_rgb,
+            RGB,
         )
         mods["diagram"] = {"rgb": RGB}
     except Exception:
@@ -77,7 +77,7 @@ def _import_mods():
         pass
     try:
         from app.services.real_advanced_content import (
-            DaemonTask, AutonomousContentDaemon, FullPipelineEngine,
+            AutonomousContentDaemon, FullPipelineEngine,
         )
         mods["advanced_content"] = {
             "daemon": AutonomousContentDaemon, "pipeline": FullPipelineEngine,

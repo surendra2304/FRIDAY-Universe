@@ -10,9 +10,6 @@ Tests: tests/test_real_batch4b.py
 
 from __future__ import annotations
 
-import math
-import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 

@@ -391,7 +391,9 @@ class OrchestratorCore:
                 task_id=task_id,
                 role_name=role_name,
                 node_title=node.title,
-                base_context={"goal": task.goal if task else "", "metadata": node.metadata},
+                base_context={"goal": task.goal if task else "",
+                              "requirements": list(task.requirements) if task else [],
+                              "metadata": node.metadata},
                 engine=self.engine,
             )
 
@@ -598,7 +600,7 @@ class OrchestratorCore:
 
             from app.recovery.engine import RecoveryEngine
 
-            recovery = RecoveryEngine(exec_engine=self.engine, verifier=engine)
+            recovery = RecoveryEngine(exec_engine=self.engine, verifier=engine, store=self.store)
             recovered_any = False
             for evidence in report.evidence:
                 if evidence.passed:
@@ -618,12 +620,21 @@ class OrchestratorCore:
             try:
                 from app.agents.coordinator import AgentCoordinator
 
-                coordinator = AgentCoordinator(engine=self.engine, max_rounds=2)
+                original_task = await self.store.get_task(task_id)
+                coordinator = AgentCoordinator(
+                    engine=self.engine, max_rounds=2,
+                    goal=original_task.goal if original_task else "",
+                    requirements=list(original_task.requirements) if original_task else [],
+                )
                 review = await coordinator.review_and_repair(task_id)
                 logger.info(
                     f"Peer review for '{task_id}': {review.summary} "
                     f"(repairs={review.repairs})"
                 )
+                if review.repairs:
+                    # Saved evidence must describe the files after peer repair,
+                    # even when it fixed only some findings.
+                    await engine.verify_task(task_id)
                 if review.clean:
                     logger.info(f"Peer review cleared all findings for '{task_id}'")
             except Exception as exc:

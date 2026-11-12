@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from autonomy.ai_advisor import AITradeVerdict, StratexAIAdvisor, get_ai_advisor
+from autonomy.ai_advisor import StratexAIAdvisor, get_ai_advisor
 
 
 class TestStratexAIAdvisor:

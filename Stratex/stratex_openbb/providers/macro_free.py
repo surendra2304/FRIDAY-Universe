@@ -8,7 +8,7 @@ import datetime
 import logging
 import threading
 import time
-from typing import Dict, List, Optional
+from typing import Dict
 
 import requests
 

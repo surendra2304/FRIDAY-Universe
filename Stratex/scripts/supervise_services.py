@@ -130,7 +130,7 @@ class ServiceSupervisor:
 
         # Check if gunicorn is available
         try:
-            import gunicorn
+            import gunicorn  # noqa: F401 — availability probe only
             has_gunicorn = True
         except ImportError:
             has_gunicorn = False

@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -164,8 +163,8 @@ class TemporalContextRetriever:
             query_id=query.query_id,
             memories=[m for m, s in scored[:max_results]],
             total_relevance=sum(s for _, s in scored[:max_results]),
-            time_range_start=min((m.timestamp for m in window.memories), default=0),
-            time_range_end=max((m.timestamp for m in window.memories), default=time.time()),
+            time_range_start=min((m.timestamp for m, s in scored[:max_results]), default=0),
+            time_range_end=max((m.timestamp for m, s in scored[:max_results]), default=time.time()),
         )
 
         # Generate summary

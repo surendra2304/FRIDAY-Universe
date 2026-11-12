@@ -2,8 +2,8 @@
 stratex_openbb/models.py — Strongly-typed models for OpenBB market intelligence and quantitative analytics.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(frozen=True)

@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .parameters import IntParameter, RealParameter, CategoricalParameter
+from .parameters import IntParameter, RealParameter
 
 class SignalResult(namedtuple("SignalResult", ["side", "sl", "tp", "strategy_type", "win_rate_prior", "rr_ratio"])):
     @property

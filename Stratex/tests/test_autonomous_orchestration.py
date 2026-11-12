@@ -281,7 +281,6 @@ def test_ecosystem_report_uses_real_ledger_metrics_not_fabricated(tmp_path, monk
 
 
 def test_ecosystem_report_without_ledger_is_honest(monkeypatch, tmp_path):
-    import json as _json
 
     from dashboard import app as flask_app
 
