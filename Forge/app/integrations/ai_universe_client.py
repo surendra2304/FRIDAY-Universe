@@ -269,6 +269,8 @@ class AIUniverseClient:
         file_type: str = "python",
         test_framework: str = "pytest",
         coverage_targets: list[str] | None = None,
+        project_goal: str = "",
+        requirements: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Query Inference specialized test generation service: POST /v1/forge/generate-tests
@@ -288,6 +290,8 @@ class AIUniverseClient:
             "file_type": file_type,
             "test_framework": test_framework,
             "coverage_targets": coverage_targets or [],
+            "project_goal": project_goal,
+            "requirements": requirements or [],
         }
 
         logger.info(

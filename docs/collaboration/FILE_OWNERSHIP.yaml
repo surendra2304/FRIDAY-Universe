@@ -1467,6 +1467,7 @@ claims:
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
     verification_truth_wf006: 'arena/TASK-WF-006-verification-truth; scoped issue35 claim6827881797; 2026-11-12T15:31:28.134869+00:00; contact before takeover.'
+    goal_fidelity_wf007: 'Arena Agent 1; arena/TASK-WF-007-goal-fidelity; issue35 claim6828563174; 2026-11-12T15:58:59.115861+00:00; update2h/contact before takeover.'
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1670,6 +1671,7 @@ claims:
     expected_next_update: '2026-11-12T17:04:51.017727+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
+    goal_fidelity_wf007: 'Arena Agent 1; arena/TASK-WF-007-goal-fidelity; issue35 claim6828563174; 2026-11-12T15:58:59.115861+00:00; update2h/contact before takeover.'
   - path: Forge/app/api/delegate.py
     owner: arena_engineering_01
     prs: []
@@ -1757,6 +1759,7 @@ claims:
     claimed_at: '2026-11-12T15:31:28.134869+00:00'
     expiry_policy: Contact before takeover; update within2h.
 
+    goal_fidelity_wf007: 'Arena Agent 1; arena/TASK-WF-007-goal-fidelity; issue35 claim6828563174; 2026-11-12T15:58:59.115861+00:00; update2h/contact before takeover.'
   - path: Forge/app/verification/checkers.py
     owner: arena_engineering_01
     prs: []
@@ -1776,6 +1779,66 @@ claims:
     task: TASK-WF-006
     claimed_at: '2026-11-12T15:31:28.134869+00:00'
     expiry_policy: Contact before takeover; update within2h.
+
+  - path: Forge/app/core/context.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-007-goal-fidelity
+    status: IN_PROGRESS
+    task: TASK-WF-007
+    claimed_at: '2026-11-12T15:58:59.115861+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/app/core/orchestrator.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-007-goal-fidelity
+    status: IN_PROGRESS
+    task: TASK-WF-007
+    claimed_at: '2026-11-12T15:58:59.115861+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Inference/app/services/code_generation.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-007-goal-fidelity
+    status: IN_PROGRESS
+    task: TASK-WF-007
+    claimed_at: '2026-11-12T15:58:59.115861+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Inference/app/services/test_generation.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-007-goal-fidelity
+    status: IN_PROGRESS
+    task: TASK-WF-007
+    claimed_at: '2026-11-12T15:58:59.115861+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/tests/unit/test_goal_fidelity_contract.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-007-goal-fidelity
+    status: IN_PROGRESS
+    task: TASK-WF-007
+    claimed_at: '2026-11-12T15:58:59.115861+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Inference/tests/test_forge_goal_and_test_generation.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-007-goal-fidelity
+    status: IN_PROGRESS
+    task: TASK-WF-007
+    claimed_at: '2026-11-12T15:58:59.115861+00:00'
+    expiry_policy: Contact before takeover; next update2h.
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
