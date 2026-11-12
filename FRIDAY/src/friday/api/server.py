@@ -3135,8 +3135,12 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             # A personal question never gets agent-log noise in the answer.
             if _q_personal and _is_agent_log(_low):
                 continue
-            if _text and len(_text) > 6 and _low not in _seen_mem:
-                _seen_mem.add(_low)
+            # Dedupe on the first 60 chars too: near-duplicates that differ
+            # only in a tail still read as the same line to the owner (live
+            # 2026-11-13: the same boilerplate printed twice, differing late).
+            _dedupe_key = _low[:60]
+            if _text and len(_text) > 6 and _dedupe_key not in _seen_mem:
+                _seen_mem.add(_dedupe_key)
                 if len(_text) > 130:
                     _text = _text[:127].rstrip() + "…"
                 _lines.append(f"• {_text}")

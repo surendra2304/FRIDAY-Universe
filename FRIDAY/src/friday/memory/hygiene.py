@@ -45,6 +45,12 @@ _LOG_MARKERS = (
     "emora response",
     "workspace task reference",
     "carry out this owner-approved",
+    # agent-task dispatch boilerplate (live 2026-11-13): upstream context
+    # notes and task instructions are work orders, not owner facts
+    "upstream findings from the previous step",
+    "use this as context for your work",
+    "verify storage and create retrieval index",
+    "store the research findings",
 )
 
 # A stored "dialogue dump" line: "User: X | Assistant: Y" transcripts are

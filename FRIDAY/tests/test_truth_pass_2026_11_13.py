@@ -165,6 +165,13 @@ class TestMemoryHygiene:
 
         assert is_memory_noise("User: Access my screen | Assistant: I noticed the following while you were away: RAM usage is at 9%")
 
+    def test_task_dispatch_boilerplate_is_noise(self) -> None:
+        from friday.memory.hygiene import is_memory_noise
+
+        # live 2026-11-13: these recalled as "memories of the owner"
+        assert is_memory_noise("Verify storage and create retrieval index Upstream findings from the previous step, use this as context for your work: MEMORA response")
+        assert is_memory_noise("Store the research findings and analysis in persistent memory: Research the c")
+
     def test_real_owner_facts_are_kept(self) -> None:
         from friday.memory.hygiene import is_memory_noise
 
