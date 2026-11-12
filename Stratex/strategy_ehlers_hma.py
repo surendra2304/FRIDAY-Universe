@@ -58,6 +58,25 @@ def _hma(s: pd.Series, n: int) -> pd.Series:
     return _wma(2.0 * _wma(s, half) - _wma(s, n), sqrt_n)
 
 
+
+# Governor-legal bracket: ATR-based distance clamped into [1.0%, 3.0%] of
+# price so the live governor's [0.5%, 3%] stop window accepts the signal on
+# every timeframe (raw 2*ATR on dailies is ~9-14% and always rejected).
+_MIN_STOP_FRAC = 0.010
+_MAX_STOP_FRAC = 0.030
+
+
+def _bracket(c: float, a: float, tp_mult: float):
+    """Return (sl_dist, tp_dist) with stop clamped legal and TP = tp_mult * stop."""
+    dist = 2.0 * a
+    if dist < _MIN_STOP_FRAC * c:
+        dist = _MIN_STOP_FRAC * c
+    if dist > _MAX_STOP_FRAC * c:
+        dist = _MAX_STOP_FRAC * c
+    tp = dist * tp_mult
+    return dist, tp
+
+
 def get_signal(df):
     if df is None or len(df) < 260:
         return _none()
@@ -96,11 +115,13 @@ def get_signal(df):
     rising = h > h1 > h2
     falling = h < h1 < h2
     if (cross_up or (c > h and rising)) and rising and c > s200:
-        sl = c - _ATR_MULT * a
-        tp = c + _TP_ATR * a
+        dist, tp_d = _bracket(c, a, 2.0)
+        sl = c - dist
+        tp = c + tp_d
         return SignalResult("BUY", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, c - sl, tp - c)
     if (cross_dn or (c < h and falling)) and falling and c < s200:
-        sl = c + _ATR_MULT * a
-        tp = c - _TP_ATR * a
+        dist, tp_d = _bracket(c, a, 2.0)
+        sl = c + dist
+        tp = c - tp_d
         return SignalResult("SELL", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, sl - c, c - tp)
     return _none()
