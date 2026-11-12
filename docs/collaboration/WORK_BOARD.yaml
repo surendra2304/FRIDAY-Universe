@@ -1748,7 +1748,7 @@ tasks:
     status: "IN_REVIEW"
     owner: "zai_agent_2"
     branch: "zai/TASK-STRATEX-TG409"
-    pr: null
+    pr: 67
     claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6833959651"
     files:
       - "Stratex/notifications/telegram_bot.py"

@@ -1970,7 +1970,8 @@ claims:
 
   - path: Stratex/notifications/telegram_bot.py
     owner: zai_agent_2
-    prs: []
+    prs:
+    - 67
     branches:
     - zai/TASK-STRATEX-TG409
     status: IN_REVIEW
@@ -1980,7 +1981,8 @@ claims:
 
   - path: Stratex/tests/test_telegram_bot.py
     owner: zai_agent_2
-    prs: []
+    prs:
+    - 67
     branches:
     - zai/TASK-STRATEX-TG409
     status: IN_REVIEW
