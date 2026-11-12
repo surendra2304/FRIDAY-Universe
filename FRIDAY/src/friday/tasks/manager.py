@@ -232,13 +232,32 @@ class TaskPersistenceStore:
 
     @property
     def engine(self):
-        """Resolve the shared Oracle engine on first use (never at import)."""
+        """Resolve the shared Oracle engine on first use (never at import).
+
+        Fail-safe (ZAI Agent 2, 2026-11-12): a configured-but-unreachable
+        Oracle (sandboxes, CI, transient outages) degrades to the in-memory
+        SQLite backend instead of raising through every task operation —
+        background tasks are the product, the Oracle row is persistence.
+        """
         if self._backend != "oracle":
             return None
         if self._engine is None:
             from friday.core import oracle
+            from friday.core.exceptions import PersistenceError
 
-            self._engine = oracle.get_engine(getattr(self, "_dsn", None))
+            try:
+                self._engine = oracle.get_engine(getattr(self, "_dsn", None))
+            except PersistenceError as pe:
+                logger.warning(
+                    "Oracle unreachable for background tasks (%s); degrading to "
+                    "in-memory SQLite for this session.",
+                    pe,
+                )
+                self._backend = "sqlite"
+                self.db_path = ":memory:"
+                self._conn = sqlite3.connect(":memory:", check_same_thread=False)
+                self._init_db()
+                return None
         return self._engine
 
     @property
