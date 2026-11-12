@@ -82,6 +82,27 @@ _ = httpx.AsyncClient(base_url="https://generativelanguage.googleapis.com")
 STATUS_FILE = FRIDAY_ROOT / "data" / "voice_worker_status.json"
 
 
+async def _owner_memory_lines_async() -> str:
+    """Memory injection with a hard timeout — never freeze the audio loop.
+
+    Lesson from the first deployed probe (2026-11-13, second live run): the
+    synchronous `memora_client.recall_memories` call inside the async
+    entrypoint BLOCKED the job's event loop — the worker joined the room
+    and then hung before ever selecting a provider (heartbeat stuck at
+    'registered' for 15+ minutes). The recall now runs in a worker thread
+    with an 8-second budget; a slow Memora degrades to no memory context,
+    never to a silent dead line.
+    """
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(_owner_memory_lines), timeout=8.0)
+    except asyncio.TimeoutError:
+        logger.warning("owner memory recall timed out in the voice job; skipping")
+        return ""
+    except Exception as exc:
+        logger.warning("owner memory recall failed in the voice job: %s", exc)
+        return ""
+
+
 def _voice_tools() -> list:
     """The execute_friday_task bridge: voice requests hit the SAME brain as
     chat (memory recall, fleet dispatch, research) instead of the voice LLM
@@ -228,7 +249,7 @@ BASE_INSTRUCTIONS = (
 )
 
 
-def _instructions(with_memory: bool = True, english_out: bool = False) -> str:
+def _instructions(with_memory: bool = True, english_out: bool = False, memory_block: str = "") -> str:
     prompt = BASE_INSTRUCTIONS
     if english_out:
         prompt += (
@@ -241,9 +262,10 @@ def _instructions(with_memory: bool = True, english_out: bool = False) -> str:
             "English in English, mirroring a mix."
         )
     if with_memory:
-        memory = _owner_memory_lines()
-        if memory:
-            prompt += "\n\n" + memory
+        # the caller passes the ALREADY-RESOLVED memory block (fetched with
+        # a thread + timeout) so nothing in this path can block the loop
+        if memory_block:
+            prompt += "\n\n" + memory_block
     return prompt
 
 
@@ -385,6 +407,9 @@ async def _try_groq_pipeline():
 
 async def entrypoint(ctx: JobContext):
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    # Heartbeat truth: a job that hangs anywhere below this line must never
+    # read as 'waiting for the first job' again (live lesson 2026-11-13).
+    _write_status("job-received", "pending", "participant joined; resolving speech provider")
 
     def _on_track_subscribed(track, publication, participant):
         logger.info(
@@ -402,7 +427,9 @@ async def entrypoint(ctx: JobContext):
     ctx.room.on("participant_connected", _on_participant_connected)
     ctx.room.on("participant_disconnected", _on_participant_disconnected)
 
-    instructions = _instructions()
+    # resolved once with a thread + timeout, reused on both provider paths
+    _memory_block = await _owner_memory_lines_async()
+    instructions = _instructions(memory_block=_memory_block)
 
     # ---------------- provider selection ----------------
     session: AgentSession | None = None
@@ -438,7 +465,7 @@ async def entrypoint(ctx: JobContext):
             return
         stt, llm, tts = groq_parts
         provider_name = f"groq:{_llm_chat_model()}"
-        instructions = _instructions(with_memory=True, english_out=True)
+        instructions = _instructions(with_memory=True, english_out=True, memory_block=_memory_block)
         agent = Agent(instructions=instructions, tools=_voice_tools())
         session = _build_session(
             stt=stt,
