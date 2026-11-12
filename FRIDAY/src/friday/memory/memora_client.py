@@ -600,7 +600,7 @@ class MemoraClient:
                 url = f"{self.base_url}/v1/memories/search?q={encoded_q}&limit={limit}&min_score=0"
                 headers = self._remote_headers(agent_name)
                 req = urllib.request.Request(url, headers=headers, method="GET")
-                with urllib.request.urlopen(req, timeout=0.8) as resp:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                     if resp.status == 200:
                         results = json.loads(resp.read().decode("utf-8"))
                         if results:
@@ -1033,7 +1033,7 @@ class MemoraClient:
 
             try:
                 req = urllib.request.Request(url, headers=headers, method="GET")
-                with urllib.request.urlopen(req, timeout=0.8) as resp:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                     if resp.status == 200:
                         results = json.loads(resp.read().decode("utf-8"))
                         if results:
