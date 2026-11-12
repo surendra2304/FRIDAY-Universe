@@ -2123,10 +2123,10 @@ tasks:
   - id: TASK-WF-011
     title: Real source-backed debugger repair with immutable tests, API guards and complete
       failure evidence
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: arena_engineering_01
     branch: arena/TASK-WF-011-source-backed-repair
-    pr: null
+    pr: 65
     files:
     - .github/workflows/owner-workflows.yml
     - Forge/app/agents/coordinator.py
@@ -2137,7 +2137,7 @@ tasks:
     - Forge/tests/unit/test_source_backed_repair.py
     - Inference/tests/test_source_repair_context.py
     claimed_at: '2026-11-12T19:23:46.438910+00:00'
-    last_update: '2026-11-12T19:23:46.438910+00:00'
+    last_update: '2026-11-12T19:41:40.428594+00:00'
     acceptance:
     - Default debugger calls real Inference code endpoint with original objective, complete
       bounded source and actual failure evidence, not DirectProvider completion stub.
@@ -2160,13 +2160,69 @@ tasks:
     - Existing debugger prompt fixture now explicitly injects DirectProvider to verify
       supported explicit-provider behavior; default-path regression forbids completion
       stub. No test skip introduced.
+    - PR65 headcca8ea6 CI8success/2conditionalDocker skips; merge15d4cc785709ddb8cb2d8fa3cdbf5b43fe706578/deploy43290748726SUCCESS.
+      Both hosts exact/trackedclean/protected5and6unchanged. Forge/Inference restarted/HTTP200.
+      Postprobe other6HTTP200 and IntelX8stimeout; no unrelated restart or blanket all-fleet-health
+      claim.
+    - 'Exactly one canonical build task2412112026193320 returned121.90s COMPLETED, manifest10/10PASSED,
+      generated3unittest0. Independent6unittest0: quoted/escapedquotes,zero-byte,header-only,normal
+      a,b,c header,Telugu Unicode,missing file. Real final converter API csv_to_json(path)->JSONstring;
+      script entrypoint runs tests, NOT conversion CLI.'
+    - Final source unchanged SHA2560a35e7f87aaf6488f70604044575fa7867504efd4c54f0c0eab53d9c6af622f5.
+      Proof /var/tmp/friday-workflow-acceptance/wf011-behavior-proof/evidence.json and5actualJSON
+      files. No executedgitpush/no release-remote setup in tasklog.
+    - First independent-harness nested quoting SyntaxError occurred before execution/writes;
+      corrected harness only, no extra build/source changes. Unicode codepoints independently
+      verified via ASCII-escaped comparison despite MCP display mojibake.
     blockers:
-    - Fresh deployed final converter acceptance pending; previous task1912112026181927
-      remains rejected/untouched.
-    - Microphone/video/OAuth/profits remain unaccepted.
-    next_action: Green CI/exact-head framework rollout, protected work checks, single
-      intentional build and independent final-source behavior proof; truthful Telegram
-      outcome at conclusion.
+    - Software behavior accepted narrowly for requested converter cases. Canonical owner
+      reply omits artifact paths/test exit code; follows TASK-WF-012. Voice bridge completion_verified=false
+      deliberately retained and not a blanket microphone/authority success.
+    next_action: Preserve verified source/task; report same task real artifact paths/test
+      exit through read-only status after WF012. No regeneration or generated publication.
+    claim_policy: Update within2h; contact before takeover.
+
+  - id: TASK-WF-012
+    title: Report existing artifact paths and real test command/exit code to owner
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-012-artifact-receipts
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - FRIDAY/src/friday/tools/builtin/forge_code_task.py
+    - Forge/app/api/delegate.py
+    - FRIDAY/tests/test_forge_artifact_receipts.py
+    - Forge/tests/unit/test_artifact_receipts.py
+    claimed_at: '2026-11-12T19:41:40.428594+00:00'
+    last_update: '2026-11-12T19:41:40.428594+00:00'
+    acceptance:
+    - Build/status API includes bounded existing-file paths confined to actual task
+      workspace, excluding Git/hidden/cache/dependency trees and symlink escapes. Never
+      invent deleted temp artifacts.
+    - Owner formatter prints recorded test command and integer exit code; unknown/bool/missing
+      exit never invented as zero. Build-only manifests never imply tests.
+    - Keep VoiceBrainBridge conservative completion_verified=false and authorization
+      boundaries intact.
+    - CI/controlled rollout/protected work, then read-only status/formatter check on
+      SAME completed task2412112026193320; no build retry, generated source edits or
+      push/deploy.
+    evidence:
+    - Claim issue35 6833971149 based15d4cc7. Rooted in actual successful121.90s canonical
+      reply containing only task ID/10stagecount, missing requested paths/exit.
+    - 194Forge passed/1unchanged website skip,81FRIDAY passed. Initial FRIDAY conftest
+      import lacked google-genai; installed declared CI dependencies and reran without
+      skip.73Inference unchanged prior pass.
+    - Filesystem fixtures exclude missing files, outside/hidden symlink targets, Git/env/cache;
+      bound40. Same-task status tests do not invoke build. Formatter tests distinguish
+      unavailable exits and build-only manifests.
+    blockers:
+    - Fresh reporting API/formatter rollout/read-only same-task evidence check pending.
+      Converter functional source already independently passes3generated+6independent
+      unittest0.
+    next_action: GreenCI/exactheadrollout; read same completedtask/status and render
+      actual receipt; preserve sourcehash and protected work; downloadverifiedsoftware/evidence;
+      notify Telegram truthful bounded outcome.
     claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:

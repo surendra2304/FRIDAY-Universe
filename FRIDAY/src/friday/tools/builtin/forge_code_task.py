@@ -50,6 +50,18 @@ def _format_build(data: dict[str, Any], summary: str) -> str:
         passed = sum(1 for st in stages if isinstance(st, dict) and (st.get("passed") is True or str(st.get("status", "")).lower() in {"passed", "pass", "success"}))
         lines.append("")
         lines.append(f"Verification: {passed}/{len(stages)} stages passed.")
+        for stage in stages:
+            if not isinstance(stage, dict):
+                continue
+            name = str(stage.get("check_name", ""))
+            if str(stage.get("category", "")).lower() != "test" and "test" not in name.lower():
+                continue
+            exit_code = stage.get("exit_code")
+            rendered_exit = str(exit_code) if type(exit_code) is int else "not recorded"
+            lines.append(f"Test exit code: {rendered_exit} ({name or 'test stage'})")
+            command = stage.get("command")
+            if isinstance(command, str) and command.strip():
+                lines.append(f"Test command: {command}")
     artifacts = data.get("artifacts") or []
     if artifacts:
         names = [str(a.get("name", a.get("path", a))) if isinstance(a, dict) else str(a) for a in artifacts[:6]]

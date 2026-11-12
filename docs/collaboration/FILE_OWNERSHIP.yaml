@@ -669,6 +669,7 @@ claims:
       expiry_policy: Contact owner before takeover; no automatic expiration.
     review_followup_task_wf_004: "PR56 arena/TASK-WF-004-four-owner-workflows; scoped review-only project/verification continuation, claim renewed 2026-11-12T14:04:41.201430+00:00, next update within 2h; no automatic takeover."
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
+    artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
   - path: "FRIDAY/tests/test_forge_code_dispatch.py"
     owner: "zai"
     prs: []
@@ -1472,6 +1473,7 @@ claims:
     generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
     release_consent_wf010: "Arena Agent 1; claim6832247455; arena/TASK-WF-010-release-consent; 2026-11-12T18:26:01.667196+00:00; update2h/contact before takeover."
     source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
+    artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1692,6 +1694,7 @@ claims:
     expected_next_update: '2026-11-12T17:04:51.017727+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
+    artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_response_parser.py
     owner: arena_engineering_01
     prs: []
@@ -1966,6 +1969,26 @@ claims:
     status: IN_PROGRESS
     task: TASK-WF-011
     claimed_at: '2026-11-12T19:23:46.438910+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: FRIDAY/tests/test_forge_artifact_receipts.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-012-artifact-receipts
+    status: IN_PROGRESS
+    task: TASK-WF-012
+    claimed_at: '2026-11-12T19:41:40.428594+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/tests/unit/test_artifact_receipts.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-012-artifact-receipts
+    status: IN_PROGRESS
+    task: TASK-WF-012
+    claimed_at: '2026-11-12T19:41:40.428594+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
 conflicts_to_resolve:

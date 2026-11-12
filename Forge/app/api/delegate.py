@@ -6,6 +6,7 @@ import asyncio
 import time
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -66,6 +67,46 @@ def _forge_receipt(
         "verification_evidence": verification_evidence,
         "failure_reason": None,
     }
+
+
+def _task_artifact_paths(task_id: str) -> list[str]:
+    """Return bounded real paths only; never advertise deleted temp artifacts.
+
+    Omit Git/config/cache/dependency trees and any symlink escaping the task.
+    Existence is evidence of a file, not evidence that its behavior is correct.
+    """
+    import os
+
+    paths = workspace_manager.get_workspace_paths(task_id)
+    if not paths or not getattr(paths, "project", None) or not getattr(paths, "root", None):
+        return []
+    root = paths.root.resolve()
+    found: list[str] = []
+
+    def add(path):
+        resolved = path.resolve()
+        if not resolved.is_relative_to(root) or not resolved.is_file():
+            return
+        parts = resolved.relative_to(root).parts
+        if any(part.startswith(".") or part in {"__pycache__", "node_modules", "venv", "env", "site-packages"}
+               for part in parts):
+            return
+        name = str(resolved)
+        if name not in found:
+            found.append(name)
+
+    for name in ("verification_manifest.json", "completion_report.json", "COMPLETION_REPORT.md"):
+        add(paths.artifacts / name)
+    for directory, dirs, files in os.walk(paths.project, followlinks=False):
+        dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in {
+            "__pycache__", "node_modules", "venv", "env", "site-packages"})
+        for name in sorted(files):
+            if name.startswith("."):
+                continue
+            add(Path(directory) / name)
+            if len(found) >= 40:
+                return found
+    return found
 
 
 async def _dispatch_webhook_callback(callback_url: str, result: TaskResultModel) -> None:
@@ -253,6 +294,7 @@ async def delegate_task(
                         "goal": task.goal,
                         "state": completed_task.state.value if hasattr(completed_task.state, "value") else str(completed_task.state),
                         "manifest": manifest_dict,
+                        "artifacts": _task_artifact_paths(task.id),
                     },
                     summary=f"Code generation finished, but verification failed: {manifest.failure_summary}",
                     error=manifest.failure_summary,
@@ -272,6 +314,7 @@ async def delegate_task(
                     "goal": task.goal,
                     "state": completed_task.state.value if hasattr(completed_task.state, "value") else str(completed_task.state),
                     "manifest": manifest_dict,
+                    "artifacts": _task_artifact_paths(task.id),
                 },
                 summary=f"Forge successfully synthesized and verified goal (Task ID: {task.id})",
                 verification_manifest=manifest_dict,
@@ -380,6 +423,7 @@ async def get_task_status(
             "goal": task.goal,
             "state": task_state_str,
             "progress_percentage": task.progress_percentage,
+            "artifacts": _task_artifact_paths(task_id),
             "created_at": task.created_at.isoformat() if hasattr(task.created_at, "isoformat") else str(task.created_at),
         },
         summary=f"Task '{task_id}' execution state {task_state_str}; verification status {status_str}.",
