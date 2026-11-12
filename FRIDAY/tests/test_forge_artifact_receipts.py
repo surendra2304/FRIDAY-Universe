@@ -26,3 +26,15 @@ def test_build_only_manifest_does_not_invent_test_execution_or_paths():
     reply = _format_build({'manifest': {'stages': [{'category': 'build', 'passed': True, 'exit_code': 0}]}}, '')
     assert 'Test exit code:' not in reply
     assert 'Artifacts:' not in reply
+
+
+def test_actual_saved_manifest_stage_field_and_dictionary_name_are_preserved():
+    # This is the persisted shape observed in task2412112026193320, not the
+    # checker's pre-serialization category/check_name shape.
+    data = {'verification_manifest': {'stages': {'Embedded Unittest Suite Runner': {
+        'stage': 'test', 'passed': True, 'exit_code': 0,
+        'command': '"/opt/friday_universe/venv/bin/python" -B -m unittest -v main.TestCsvToJson'}}}}
+    reply = _format_build(data, 'Same completed task, read-only status')
+    assert 'Test exit code: 0 (Embedded Unittest Suite Runner)' in reply
+    assert '-m unittest -v main.TestCsvToJson' in reply
+    assert 'check_name' not in data['verification_manifest']['stages']['Embedded Unittest Suite Runner']
