@@ -9,6 +9,7 @@ from app.api import delegate
 from app.core.config import Settings
 from app.core.workspace import WorkspaceManager
 from app.memory.models import TaskState
+from app.verification.source_integrity import project_snapshot
 
 
 def setup_workspace(tmp_path, monkeypatch):
@@ -48,7 +49,7 @@ def test_receipt_bound_and_missing_workspace(tmp_path, monkeypatch):
 @pytest.mark.asyncio
 async def test_status_read_reports_same_completed_task_files_without_rebuilding(tmp_path, monkeypatch):
     paths = setup_workspace(tmp_path, monkeypatch)
-    manifest = {'all_passed': True, 'failed_stages': 0, 'stages': {
+    manifest = {'source_snapshot': project_snapshot(paths.project), 'all_passed': True, 'failed_stages': 0, 'stages': {
         'tests': {'passed': True, 'exit_code': 0, 'category': 'test', 'command': 'python -m unittest'}}}
     (paths.artifacts/'verification_manifest.json').write_text(json.dumps(manifest))
     task = SimpleNamespace(state=TaskState.COMPLETED, goal='Converter', progress_percentage=100,

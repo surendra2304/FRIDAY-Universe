@@ -22,6 +22,7 @@ from app.memory.models import TaskMode, TaskState
 from app.memory.state_store import StateStore
 from app.verification.engine import verification_engine
 from app.verification.evidence import VerificationManifest, VerificationReport
+from app.verification.source_integrity import snapshot_matches
 
 logger = get_logger("api.delegate")
 delegate_router = APIRouter(prefix="/forge", tags=["FRIDAY Universe Forge Delegation"])
@@ -401,7 +402,12 @@ async def get_task_status(
                     for stage in stages.values())
         )
         if verified:
-            status_str = "SUCCESS"
+            project = getattr(paths, "project", None) if paths else None
+            if project is not None and snapshot_matches(project, manifest_data.get("source_snapshot")):
+                status_str = "SUCCESS"
+            else:
+                status_str = "DEGRADED"
+                verification_error = "Saved verification is not bound to the current project files; re-run verification."
         elif manifest_data:
             status_str = "PARTIAL_FAILURE" if manifest_data.get("partial_failure") else "FAILED"
             verification_error = manifest_data.get("failure_summary") or "Saved verification does not certify task completion."

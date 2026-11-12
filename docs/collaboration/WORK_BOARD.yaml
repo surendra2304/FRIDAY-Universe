@@ -2364,7 +2364,60 @@ tasks:
       - "docs/collaboration/TEAM_ROSTER.yaml"
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
-    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level 'task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
+    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '  - id: TASK-WF-014
+    title: Bind completed software receipts to actually verified project bytes
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-014-source-bound-receipts
+    pr: 71
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/api/delegate.py
+    - Forge/app/verification/engine.py
+    - Forge/app/verification/evidence.py
+    - Forge/tests/unit/test_artifact_receipts.py
+    - Forge/tests/unit/test_delegate_verification_status.py
+    - Forge/app/verification/source_integrity.py
+    - Forge/tests/unit/test_source_bound_receipts.py
+    - FRIDAY/src/friday/persona/friday.py
+    - FRIDAY/tests/test_persona_clock_annotations.py
+    claimed_at: '2026-11-12T21:26:20.261780+00:00'
+    last_update: '2026-11-12T21:26:20.261780+00:00'
+    acceptance:
+    - Bounded deterministic SHA256 project inventory; regular files only, no symlinks;
+      cache/build/dependency exclusions explicit.
+    - Capture before and after actual checker battery; persistent changes fail integrity
+      stage. Manifest regeneration retains report snapshot; never bless current files
+      from old report.
+    - Saved COMPLETED status SUCCESS only when saved passing stages and current snapshot
+      match. Missing legacy snapshot, changed/added/deleted/unreadable files fail closed
+      as DEGRADED and request real re-verification.
+    - Controlled exactCIhead production rollout, protected work preserved; new isolated
+      registered sourcecopy real tests and live status positive/driftnegative/restoredpositive.
+      Keep historical tasks/source/download unchanged.
+    evidence:
+    - Claim6836331520. Main993a6d6; collaborator reconciled divergence via2d5e2a6; deployfaf6b84/43309257001SUCCESS,
+      latestmainrollout inprogress. No need to overwrite/reconcile collaborator branch
+      again.
+    - 219Forge pass/1unchangedskip; new11regressions execute actualpytest then reject5drift/legacytypes,
+      beforeaftermutation, stale reportregeneration, caches/config, bounds and unavailableinventory.
+      RuffF/E9+diff clean.
+    - PR71initialheadb2e13c2 bothCItestjobs blocked beforetests by inheritedbase993a6d6
+      F821 persona datetimeannotation. Minimal moduleglobaldatetime import (localimport
+      removed) + get_type_hints/ISTclock regression,1pass. No persona/greetingbehavior
+      changes. Contact/scopeupdate issue35comment6836497747.
+    - 'Head e624f28 CI8success2skips; mergeability unknown then found concurrent mainfa9257d:
+      ZAI Agent1 independently fixed F821 and normalized corrupted legacy registry.
+      Integrating latestmain preserving all collaborator registry/voice changes; retain
+      own sourcebinding/typehintregressions. Fresh exacthead CI required.'
+    blockers:
+    - Framework CI/rollout and actual production acceptance pending.
+    next_action: Publish narrow PR, greenCI/controlledrollout, actual source-identical
+      task verification/live receipt drift control and protected recheck; only then
+      final notice.
+    claim_policy: Update within2h; contact before takeover.
+
+task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
     acceptance:
       - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
       - "Inline repair note recorded at the ACTIVITY_LOG repair site."

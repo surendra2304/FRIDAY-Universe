@@ -50,6 +50,7 @@ class VerificationReport(BaseModel):
     passed_checks: int
     failed_checks: int
     evidence: list[VerificationEvidence] = Field(default_factory=list)
+    source_snapshot: dict[str, Any] | None = None
     baseline_comparison: dict[str, Any] | None = Field(
         default=None, description="Pre/post baseline regression comparison"
     )
@@ -99,6 +100,7 @@ class VerificationManifest(BaseModel):
     """
 
     task_id: str
+    source_snapshot: dict[str, Any] | None = None
     overall_status: str = "PASSED"  # PASSED, FAILED, PARTIAL_FAILURE
     all_passed: bool = True
     partial_failure: bool = False

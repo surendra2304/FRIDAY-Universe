@@ -1478,6 +1478,7 @@ claims:
     source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
     artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
     portable_fixtures_wf013: "Arena Agent 1; claim6835005672; arena/TASK-WF-013-portable-fixture-repair; 2026-11-12T20:28:58.267072+00:00; update2h/contact before takeover."
+    source_integrity_wf014: "Arena Agent 1; claim6836331520; arena/TASK-WF-014-source-bound-receipts; 2026-11-12T21:26:20.261780+00:00; contact before takeover/update2h."
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1699,6 +1700,7 @@ claims:
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
     artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
+    source_integrity_wf014: "Arena Agent 1; claim6836331520; arena/TASK-WF-014-source-bound-receipts; 2026-11-12T21:26:20.261780+00:00; contact before takeover/update2h."
   - path: Forge/tests/unit/test_response_parser.py
     owner: arena_engineering_01
     prs: []
@@ -1732,6 +1734,7 @@ claims:
     expected_next_update: '2026-11-12T17:04:51.017727+00:00'
     expiry_policy: Contact owner before takeover; no automatic expiry.
 
+    source_integrity_wf014: "Arena Agent 1; claim6836331520; arena/TASK-WF-014-source-bound-receipts; 2026-11-12T21:26:20.261780+00:00; contact before takeover/update2h."
   - path: Forge/tests/unit/test_generated_test_ingestion.py
     owner: arena_engineering_01
     prs: []
@@ -1997,6 +2000,7 @@ claims:
     claimed_at: '2026-11-12T19:41:40.428594+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+    source_integrity_wf014: "Arena Agent 1; claim6836331520; arena/TASK-WF-014-source-bound-receipts; 2026-11-12T21:26:20.261780+00:00; contact before takeover/update2h."
   - path: Forge/tests/unit/test_portable_fixture_repair.py
     owner: arena_engineering_01
     prs: []
@@ -2039,6 +2043,7 @@ claims:
     claimed_at: '2026-11-13T03:05:00+05:30'
     expiry_policy: Task complete; file returns to the unclaimed pool.
 
+    source_integrity_wf014: "Arena Agent 1 TASK-WF-014/PR71; narrow typehint regression; preserve collaborator ownership, contact6836497747."
   - path: FRIDAY/tests/test_friday_persona.py
     owner: zai
     prs: []
@@ -2048,6 +2053,57 @@ claims:
     note: "3 regression tests appended (get_type_hints module-scope resolution, IST conversion, greeting no-repeat)."
     claimed_at: '2026-11-13T03:05:00+05:30'
     expiry_policy: Task complete; file returns to the unclaimed pool.
+
+  - path: Forge/app/verification/engine.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-014-source-bound-receipts
+    status: IN_PROGRESS
+    task: TASK-WF-014
+    claimed_at: '2026-11-12T21:26:20.261780+00:00'
+    expiry_policy: Contact before takeover/update2h.
+
+  - path: Forge/app/verification/evidence.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-014-source-bound-receipts
+    status: IN_PROGRESS
+    task: TASK-WF-014
+    claimed_at: '2026-11-12T21:26:20.261780+00:00'
+    expiry_policy: Contact before takeover/update2h.
+
+  - path: Forge/app/verification/source_integrity.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-014-source-bound-receipts
+    status: IN_PROGRESS
+    task: TASK-WF-014
+    claimed_at: '2026-11-12T21:26:20.261780+00:00'
+    expiry_policy: Contact before takeover/update2h.
+
+  - path: Forge/tests/unit/test_source_bound_receipts.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-014-source-bound-receipts
+    status: IN_PROGRESS
+    task: TASK-WF-014
+    claimed_at: '2026-11-12T21:26:20.261780+00:00'
+    expiry_policy: Contact before takeover/update2h.
+
+  - path: FRIDAY/tests/test_persona_clock_annotations.py
+    owner: arena_engineering_01
+    branches:
+    - arena/TASK-WF-014-source-bound-receipts
+    prs:
+    - 71
+    status: IN_PROGRESS
+    task: TASK-WF-014
+    scope: Minimum global datetime import/typehint regression only; contact6836497747,
+      no persona logic takeover.
 
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"

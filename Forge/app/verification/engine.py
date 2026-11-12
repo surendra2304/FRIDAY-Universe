@@ -29,6 +29,7 @@ from app.verification.evidence import (
     VerificationReport,
     VerificationStageResult,
 )
+from app.verification.source_integrity import project_snapshot
 from app.verification.expanded_battery import (
     AccessibilityChecker,
     CodeQualityComplexityChecker,
@@ -185,6 +186,13 @@ class VerificationEngine:
         )
         evidence_list: list[VerificationEvidence] = []
 
+        paths = self.wm.get_workspace_paths(task_id)
+        initial_snapshot = None
+        try:
+            initial_snapshot = project_snapshot(paths.project) if paths else None
+        except (OSError, ValueError):
+            pass  # The explicit integrity stage below prevents certification.
+
         # Load baseline report from artifacts if not explicitly passed
         if baseline_report is None:
             paths = self.wm.get_workspace_paths(task_id)
@@ -214,6 +222,19 @@ class VerificationEngine:
                         stderr=str(e),
                     )
                 )
+
+        from app.verification.evidence import CheckCategory
+        snapshot_stable = False
+        try:
+            snapshot_stable = bool(initial_snapshot) and initial_snapshot == project_snapshot(paths.project)
+        except (OSError, ValueError, AttributeError):
+            pass
+        evidence_list.append(VerificationEvidence(
+            check_name="Project Source Integrity", category=CheckCategory.SECURITY,
+            command="compare bounded project SHA256 inventory before/after verification",
+            exit_code=0 if snapshot_stable else 1, passed=snapshot_stable,
+            stderr="" if snapshot_stable else "Project changed during verification or cannot be fingerprinted; re-run verification on stable regular files.",
+        ))
 
         # Evaluate Regression Guard across all check categories against baseline
         baseline_comparison = None
@@ -262,6 +283,7 @@ class VerificationEngine:
 
         report = VerificationReport(
             task_id=task_id,
+            source_snapshot=initial_snapshot if snapshot_stable else None,
             all_passed=all_passed,
             total_checks=len(evidence_list),
             passed_checks=passed_count,
@@ -322,6 +344,7 @@ class VerificationEngine:
 
         manifest = VerificationManifest(
             task_id=task_id,
+            source_snapshot=report.source_snapshot,
             overall_status=overall_status,
             all_passed=(failed_stages == 0),
             partial_failure=partial_failure,
