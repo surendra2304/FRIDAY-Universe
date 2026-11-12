@@ -174,9 +174,9 @@ collaborators:
     - TASK-WF-007
     - TASK-VAL-003
     active_branches:
-    - arena/TASK-WF-007-goal-fidelity
+    - arena/TASK-WF-007-acceptance-record
     - arena/TASK-VAL-003-runtime-audit
-    active_pr: null
+    active_pr: 60
     last_verified_at: '2026-11-12T13:56:06.410012+00:00'
     access_limits:
     - Owner authorized controlled GitHub merge and Oracle deployment; no unbounded real-money exposure or automatic publication. Exposed chat PAT never used or saved.
