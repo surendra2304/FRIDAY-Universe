@@ -1968,6 +1968,26 @@ claims:
     claimed_at: '2026-11-12T19:23:46.438910+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+  - path: Stratex/notifications/telegram_bot.py
+    owner: zai_agent_2
+    prs: []
+    branches:
+    - zai/TASK-STRATEX-TG409
+    status: IN_REVIEW
+    task: TASK-STRATEX-TG409
+    claimed_at: '2026-11-12T20:15:00+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Stratex/tests/test_telegram_bot.py
+    owner: zai_agent_2
+    prs: []
+    branches:
+    - zai/TASK-STRATEX-TG409
+    status: IN_REVIEW
+    task: TASK-STRATEX-TG409
+    claimed_at: '2026-11-12T20:15:00+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
 conflicts_to_resolve:
   - id: "FILE-CONFLICT-004"
     files:

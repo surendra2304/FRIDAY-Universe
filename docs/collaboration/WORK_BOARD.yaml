@@ -1743,6 +1743,30 @@ tasks:
     blockers: []
     next_action: "Observe live P&L over 24-48h to confirm governor holds under real market action; if profitable, consider phase-2 (maker entries to cut the fee load, strategy denylist tuning from the per-strategy win-rate prior). Lane remains claimed on #35 until verified."
 
+  - id: "TASK-STRATEX-TG409"
+    title: "Stratex Telegram 409-conflict episode handling — backoff, once-per-episode owner alert, honest recovery (ZAI Agent 2)"
+    status: "IN_REVIEW"
+    owner: "zai_agent_2"
+    branch: "zai/TASK-STRATEX-TG409"
+    pr: null
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6833959651"
+    files:
+      - "Stratex/notifications/telegram_bot.py"
+      - "Stratex/tests/test_telegram_bot.py"
+    live_defect: "Stratex-Daemon.service logged '[TELEGRAM] 409 Conflict: another process is polling this bot token' every ~30s continuously (observed 00:00-01:01 IST Nov 13, 2026). Only two processes fleet-wide hold Telegram TCP connections (FRIDAY pid 2424773 on the repo-root token, Stratex daemon pid 2426521 on the Stratex/.env token; different token identities verified by hash, values never printed). The competing getUpdates poller of Stratex's token is therefore EXTERNAL to the fleet (e.g. an off-cloud/laptop instance — the exact failure mode Stratex/run_stratex.py's docstring warns about). While it persists, the owner's inbound /pnl and command messages are consumed by that other poller."
+    acceptance:
+      - "poll_once on HTTP 409 registers a conflict episode: exponential backoff 1s -> cap 120s, consumed by the polling loop (no more getUpdates hammering)."
+      - "Exactly ONE owner-visible Telegram alert per conflict episode (episode number embedded so send_message's 120s dedupe cache treats each episode as a new event)."
+      - "Alert failure never raises into the polling loop; episode state still tracked honestly."
+      - "Recovery path: first successful poll closes the episode, logs cumulative episode count, resets backoff."
+      - "conflict_episode property for diagnostics; no conflict ever -> None."
+      - "7 new unit tests: first-hit episode/backoff, doubling+cap, once-per-episode alert, re-alert on a NEW episode only, recovery clears state, alert-failure tolerance, healthy-polling cleanliness."
+      - "Latent pre-existing dispatch-loss bug fixed in the same path: poll_once without start_polling_in_background had _executor=None -> AttributeError swallowed by the bare except -> updates dropped (the reason test_poll_once was failing on clean main). Executor now created lazily; shutdown executor falls back to inline dispatch."
+      - "Stale /balance test contract made truthful: real venue report OR honest 'Balance unavailable' refusal (old 'Wallet Balances' title expectation dated pre-mesh commit 176bb22)."
+    evidence: "Branch zai/TASK-STRATEX-TG409 commit d7dbc60: 22/22 test_telegram_bot.py (was 13 pass/2 fail on clean main) + 31/31 test_profitability_governor.py + test_backtest_engine.py; A/B vs stashed clean main: the 2 pre-existing failures fixed to green, zero new failures. Ruff clean on both changed files."
+    blockers: []
+    next_action: "Push branch + PR; owner review. Runtime rollout requires the standard exact-head deploy (Stratex-Daemon restart needs owner authorization). ALSO owner action: find and stop the off-cloud process polling Stratex's bot token — otherwise inbound commands keep going to it."
+
   - id: TASK-WF-005
     title: Fix concrete live research/build/shared-memory failures and repeat real workflow
       acceptance
