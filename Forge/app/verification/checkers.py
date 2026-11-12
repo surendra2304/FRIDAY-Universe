@@ -15,7 +15,7 @@ from typing import Any
 from app.core.logging import get_logger
 from app.execution.engine import ExecutionEngine
 from app.verification.evidence import CheckCategory, VerificationEvidence
-from app.verification.python_tests import discover_unittest_targets, unittest_command, unittest_executed
+from app.verification.python_tests import discover_unittest_targets, pytest_command, unittest_command, unittest_executed
 
 logger = get_logger("verification.checkers")
 
@@ -502,16 +502,13 @@ class TestChecker(BaseChecker):
         # hosting FORGE; sys.executable is the one that actually has the deps.
         # And -p no:cacheprovider stops pytest from writing .pytest_cache into
         # the project it is verifying.
-        import shlex
-
         embedded_files = sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py"
                                  for target in unittest_targets
                                  if not Path(target.rsplit(".", 1)[0].replace(".", "/")).name.startswith("test_")})
         selected_files = sorted(set(py_test_files + embedded_files))
-        extra = " " + " ".join(shlex.quote(path) for path in selected_files) if embedded_files else ""
         cmd_res = await engine.terminal.run_command(
             task_id,
-            f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider{extra}',
+            pytest_command(selected_files if embedded_files else None, project=paths.project),
             env_vars={"PYTHONPATH": ".", "PYTHONDONTWRITEBYTECODE": "1"},
             role="tester",
         )

@@ -10,6 +10,7 @@ on:
       - 'Forge/tests/**'
       - 'Inference/app/services/**'
       - 'Inference/tests/test_forge_goal_and_test_generation.py'
+      - 'Inference/tests/test_python_fence_boundaries.py'
       - 'Memora/core/memory/search_service.py'
       - 'Memora/tests/test_direct_evidence_ranking.py'
       - 'IntelX/intelx/api/**'
@@ -28,6 +29,7 @@ on:
       - 'Forge/tests/**'
       - 'Inference/app/services/**'
       - 'Inference/tests/test_forge_goal_and_test_generation.py'
+      - 'Inference/tests/test_python_fence_boundaries.py'
       - 'Memora/core/memory/search_service.py'
       - 'Memora/tests/test_direct_evidence_ranking.py'
       - 'IntelX/intelx/api/**'
@@ -85,7 +87,8 @@ jobs:
             Forge/tests/unit/test_verification.py \
             Forge/tests/unit/test_goal_fidelity_contract.py \
             Forge/tests/unit/test_context_manager.py \
-            Forge/tests/unit/test_repair_preservation_and_embedded_tests.py
+            Forge/tests/unit/test_repair_preservation_and_embedded_tests.py \
+            Forge/tests/unit/test_generation_boundary_regressions.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora
@@ -106,7 +109,9 @@ jobs:
           python -m pip install -r Inference/requirements.txt
           python -m pytest -q Inference/tests/test_forge_goal_and_test_generation.py \
             Inference/tests/test_unified_manager_cache_scope.py \
-            Inference/tests/test_forge_code_review_is_evidence_based.py
+            Inference/tests/test_forge_code_review_is_evidence_based.py \
+            Inference/tests/test_python_fence_boundaries.py \
+            Inference/tests/test_forge_output_is_verified.py
       - name: Review-required project persistence and worker boundaries
         env:
           APP_ENV: development

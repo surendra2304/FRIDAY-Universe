@@ -6,6 +6,7 @@ permission-checked terminal. Merely having a TestCase name is not passing eviden
 from __future__ import annotations
 
 import ast
+import os
 import re
 import shlex
 import sys
@@ -62,3 +63,21 @@ def unittest_executed(stdout: str, stderr: str) -> bool:
     """unittest exits zero for an empty suite: that is not successful testing."""
     counts = re.findall(r"Ran\s+(\d+)\s+tests?\b", stdout + "\n" + stderr)
     return bool(counts) and int(counts[-1]) > 0
+
+
+def pytest_command(files: list[str] | None = None, *, project: Path | None = None) -> str:
+    """Never inherit the hosting repository's pytest options or conftest files."""
+    config = os.devnull
+    if project:
+        for name, section in [("pytest.ini", None), (".pytest.ini", None),
+                              ("pyproject.toml", "[tool.pytest.ini_options]"),
+                              ("tox.ini", "[pytest]"), ("setup.cfg", "[tool:pytest]")]:
+            path = project / name
+            if path.is_file() and (section is None or section in path.read_text(encoding="utf-8")):
+                config = name  # Honor only the delivered project's own config.
+                break
+    command = (f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider '
+               f'-c {shlex.quote(config)} --rootdir=. --confcutdir=.')
+    if files:
+        command += " " + " ".join(shlex.quote(path) for path in sorted(set(files)))
+    return command

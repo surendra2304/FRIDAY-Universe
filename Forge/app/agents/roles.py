@@ -7,7 +7,6 @@ and sandboxed execution tool interactions.
 from __future__ import annotations
 
 import re
-import sys
 from typing import Any
 
 from app.agents.base import BaseAgent
@@ -1145,7 +1144,7 @@ class TesterRole(BaseAgent):
         test_files = engine.fs.search_files(
             task_id=task_id, pattern="test_*.py", role=self.role_name
         )
-        from app.verification.python_tests import discover_unittest_targets, unittest_command, unittest_executed
+        from app.verification.python_tests import discover_unittest_targets, pytest_command, unittest_command, unittest_executed
 
         paths = engine.wm.get_workspace_paths(task_id) if getattr(engine, "wm", None) else None
         embedded_targets = discover_unittest_targets(paths.project) if paths else []
@@ -1214,12 +1213,10 @@ class TesterRole(BaseAgent):
         # the user. Use the hosting interpreter, and disable both caches.
         # Re-scan after generation; embedded TestCase suites need explicit targets.
         targets = discover_unittest_targets(paths.project) if paths else []
+        embedded_files = sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py" for target in embedded_targets})
         command = (unittest_command(targets) if test_framework == "unittest"
-                   else f'"{sys.executable}" -B -m pytest -v -p no:cacheprovider')
-        if test_framework != "unittest" and embedded_targets:
-            import shlex
-            files = sorted({target.rsplit(".", 1)[0].replace(".", "/") + ".py" for target in embedded_targets})
-            command += " " + " ".join(shlex.quote(path) for path in sorted(set(files + test_files)))
+                   else pytest_command(test_files + embedded_files if embedded_files else None,
+                                       project=paths.project if paths else None))
         cmd_res = await engine.terminal.run_command(
             task_id=task_id,
             command=command,

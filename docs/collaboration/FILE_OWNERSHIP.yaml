@@ -1469,6 +1469,7 @@ claims:
     verification_truth_wf006: 'arena/TASK-WF-006-verification-truth; scoped issue35 claim6827881797; 2026-11-12T15:31:28.134869+00:00; contact before takeover.'
     goal_fidelity_wf007: 'Arena Agent 1; arena/TASK-WF-007-goal-fidelity; issue35 claim6828563174; 2026-11-12T15:58:59.115861+00:00; update2h/contact before takeover.'
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
+    generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1674,6 +1675,7 @@ claims:
 
     goal_fidelity_wf007: 'Arena Agent 1; arena/TASK-WF-007-goal-fidelity; issue35 claim6828563174; 2026-11-12T15:58:59.115861+00:00; update2h/contact before takeover.'
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
+    generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: Forge/app/api/delegate.py
     owner: arena_engineering_01
     prs: []
@@ -1773,6 +1775,7 @@ claims:
     expiry_policy: Contact before takeover; update within2h.
 
     repair_preservation_wf008: "Arena Agent 1; issue35 claim6831092256; arena/TASK-WF-008-repair-preservation; 2026-11-12T17:39:25.982091+00:00; update2h/contact before takeover."
+    generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_missing_test_truthfulness.py
     owner: arena_engineering_01
     prs: []
@@ -1814,6 +1817,7 @@ claims:
     claimed_at: '2026-11-12T15:58:59.115861+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+    generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: Inference/app/services/test_generation.py
     owner: arena_engineering_01
     prs: []
@@ -1824,6 +1828,7 @@ claims:
     claimed_at: '2026-11-12T15:58:59.115861+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+    generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_goal_fidelity_contract.py
     owner: arena_engineering_01
     prs: []
@@ -1864,6 +1869,7 @@ claims:
     claimed_at: '2026-11-12T17:39:25.982091+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+    generation_boundaries_wf009: "Arena Agent 1; claim6831757083; arena/TASK-WF-009-generation-boundaries; 2026-11-12T18:07:10.652972+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_repair_preservation_and_embedded_tests.py
     owner: arena_engineering_01
     prs: []
@@ -1872,6 +1878,36 @@ claims:
     status: IN_PROGRESS
     task: TASK-WF-008
     claimed_at: '2026-11-12T17:39:25.982091+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/app/agents/synthesis.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-009-generation-boundaries
+    status: IN_PROGRESS
+    task: TASK-WF-009
+    claimed_at: '2026-11-12T18:07:10.652972+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/tests/unit/test_generation_boundary_regressions.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-009-generation-boundaries
+    status: IN_PROGRESS
+    task: TASK-WF-009
+    claimed_at: '2026-11-12T18:07:10.652972+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Inference/tests/test_python_fence_boundaries.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-009-generation-boundaries
+    status: IN_PROGRESS
+    task: TASK-WF-009
+    claimed_at: '2026-11-12T18:07:10.652972+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
 conflicts_to_resolve:
