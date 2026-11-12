@@ -509,6 +509,11 @@ class MultiVenueEngine:
                 key = f"{venue}:{symbol}"
                 if result.status in ("FILLED", "PARTIALLY_FILLED"):
                     filled_qty = result.executed_qty or quantity
+                    # NOTE: UnifiedPosition has no strategy/timeframe fields —
+                    # attribution lives in self.position_strategy /
+                    # self.position_timeframe below. This call used to pass
+                    # strategy=/timeframe= and raised TypeError AFTER the fill,
+                    # leaving an untracked, unprotected position at the broker.
                     self.positions[key] = UnifiedPosition(
                         symbol=symbol,
                         side="LONG" if side in ("BUY", "LONG") else "SHORT",
@@ -519,8 +524,6 @@ class MultiVenueEngine:
                         exchange=venue,
                         stop_loss=float(stop_loss or 0.0),
                         take_profit=float(take_profit or 0.0),
-                        strategy=strategy_name,
-                        timeframe=timeframe,
                     )
                     self.position_opened_at[key] = int(time.time() * 1000)
                     self.position_strategy[key] = strategy_name
