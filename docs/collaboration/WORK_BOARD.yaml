@@ -1720,6 +1720,34 @@ tasks:
       acceptance. Draft remains blocked; do not auto-merge/deploy.
     claim_policy: Update within two hours while active; contact required before takeover.
 
+  - id: "TASK-STRATEX-PROFIT-GOVERNOR"
+    title: "Stratex profitability governor — stop the >$1k/day demo bleed (user-directed mission, ZAI Agent 2)"
+    status: "DEPLOYED"
+    owner: "zai_agent_2"
+    branch: null
+    pr: null
+    owner_directive: "Make Stratex profitable; it is losing >$1,000/day on the demo account (2026-11-12)."
+    merge_note: "Direct main commits 427b620 + 5493ee3; deployed to /opt/friday_universe and the Stratex-Daemon service restarted on the live server."
+    files:
+      - "Stratex/autonomy/multi_venue_engine.py"
+      - "Stratex/autonomy/run_daemon.py"
+      - "Stratex/tests/test_profitability_governor.py"
+    diagnosis: "Pulled the live Binance DEMO account income API: 14d realized -5,241 + commissions -4,530 + funding -7.5; 800-1,000 taker fills/day; 2,062 'Margin is insufficient' rejections on 2026-11-12 alone. Root causes (each confirmed in code): pyramiding (no existing-position check in _execute_signal; NEARUSDT 991 fills in 2 days), write-only cooldown (last_exit recorded, never read), daily-loss circuit breaker never set True, can_open_position returned True unconditionally, bar-latch dict initialized and never used (same closed 1m bar re-fired every 15s scan), reconciliation booked strategy='unknown' so auto-prune saw nothing, position-tracking crash after fill (UnifiedPosition had no strategy/timeframe kwargs — latent, only reachable once margin freed up)."
+    acceptance:
+      - "Anti-pyramiding gate present and unit-tested: one position per symbol, no adds."
+      - "Symbol cooldown enforced on entry (read last_exit), self-cleaning on expiry."
+      - "Daily-loss circuit breaker latches at -max_daily_loss_pct of day-start equity on REALIZED PnL, sticky, persisted across restart, both booking paths route through it."
+      - "Position limits restored (per-venue, total) + free-margin floor in can_open_position."
+      - "Bar-latch: one signal per (strategy, venue, symbol, tf, closed bar); bounded dict."
+      - "Margin-aware sizing: skip entries when notional > 80% of free margin."
+      - "Reconciliation now starts the re-entry cooldown on broker-side exits."
+      - "Confidence floor (STRATEX_MIN_CONFIDENCE) actually applied; defaults un-zeroed (min_rr 1.5, min_stop 0.5%, max_stop 3%, entry_confluence 2, adx 25, min_expectancy_r +0.10R, risk 0.5%)."
+      - "16/16 governor tests pass; full Stratex suite A/B clean vs HEAD (65F/2250P on branch vs 77F/2238P on stashed HEAD — zero new failures; 12-test delta is the new governor suite)."
+      - "Live verification after deploy: 0 new orders in 5 min, 0 margin-insufficient, 2 anti-pyramid/cooldown blocks firing, 0 kwarg errors."
+    evidence: "Live daemon (pid 2421693) running commit 5493ee3; orders placed/minute dropped from ~5-12 to 0 once 5 positions filled (one per symbol); SL/TP algo orders acknowledged for every fill; bleed stopped."
+    blockers: []
+    next_action: "Observe live P&L over 24-48h to confirm governor holds under real market action; if profitable, consider phase-2 (maker entries to cut the fee load, strategy denylist tuning from the per-strategy win-rate prior). Lane remains claimed on #35 until verified."
+
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
