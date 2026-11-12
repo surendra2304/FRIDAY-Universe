@@ -199,20 +199,23 @@ def run_backtest(mod, symbol: str, tf: str, start=None, end=None,
         seg_sl = (low[entry_k + 1:] <= sl) if side == "BUY" else (high[entry_k + 1:] >= sl)
         seg_tp = (high[entry_k + 1:] >= tp) if side == "BUY" else (low[entry_k + 1:] <= tp)
         hit = seg_sl | seg_tp
-        exit_j = n - 1
-        hit_sl_final = False
         if hit.any():
             rel = int(np.argmax(hit))
             exit_j = entry_k + 1 + rel
-            hit_sl_final = bool(seg_sl[rel])
-        if side == "BUY":
-            exit_px = sl if hit_sl_final else tp
-            exit_px *= (1 - SLIP)
-            pnl = (exit_px - entry_px) * qty
+            hit_sl = bool(seg_sl[rel])
+            if side == "BUY":
+                exit_px = (sl if hit_sl else tp) * (1 - SLIP)
+                pnl = (exit_px - entry_px) * qty
+            else:
+                exit_px = (sl if hit_sl else tp) * (1 + SLIP)
+                pnl = (entry_px - exit_px) * qty
         else:
-            exit_px = sl if hit_sl_final else tp
-            exit_px *= (1 + SLIP)
-            pnl = (entry_px - exit_px) * qty
+            # never hit: force-close at the last bar's close (no slippage,
+            # matches the original engine's end-of-data convention)
+            exit_j = n - 1
+            exit_px = float(close[-1])
+            pnl = ((exit_px - entry_px) * qty if side == "BUY"
+                   else (entry_px - exit_px) * qty)
         equity += pnl
         fills.append((exit_j, equity))
         cooldown_until = exit_j + cd
