@@ -76,7 +76,7 @@ def main():
         for iv, cap in LIMITS.items():
             dest = f"{OUT}/{symbol}_{iv}.csv"
             if os.path.exists(dest):
-                df_old = pd.read_parquet(dest)
+                df_old = pd.read_csv(dest, index_col=0, parse_dates=True)
                 manifest[f"{symbol}_{iv}"] = f"{len(df_old)} bars {df_old.index[0].date()}->{df_old.index[-1].date()} (cached)"
                 continue
             # try futures first, then spot (longer history)
