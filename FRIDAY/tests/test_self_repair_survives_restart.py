@@ -138,6 +138,39 @@ class Gate:
             "FRIDAY_FLEET_SUPERVISION_INTERVAL_SECONDS": "86400",
             "FRIDAY_MEMORA_POLL_INTERVAL_SECONDS": "86400",
         }
+        # Hermeticity fix (ZAI Agent 2, 2026-11-12): {**os.environ} forwards the
+        # pytest conftest's test-only FRIDAY_MEMORY_BACKEND=sqlite into the
+        # spawned uvicorn — a NON-pytest process, which the memory factory
+        # correctly refuses. The gate must boot like production: default
+        # backend, no inherited test-only overrides.
+        gate_env = {
+            k: v for k, v in os.environ.items()
+            if k not in ("FRIDAY_MEMORY_BACKEND", "FRIDAY_MEMORY_DB_PATH", "DATABASE_URL",
+                         "SYNC_DATABASE_URL", "ASYNC_DATABASE_URL")
+        }
+        # The gate boots in PRODUCTION mode (default backend = oracle), which
+        # requires a resolvable DSN at config time. This test exercises the
+        # self-repair lifecycle, not persistence — a syntactically valid but
+        # unreachable mock DSN satisfies the config contract; the gate never
+        # actually queries Oracle for it (the ledger is a signed file).
+        gate_env["DATABASE_URL"] = "oracle+oracledb://mock:mock@127.0.0.1:1521/FREE"
+        env = {
+            **gate_env,
+            # What the gate applies to.
+            "FRIDAY_SELF_REPAIR_REPO": str(self.repo),
+            # The ledger that has to outlive this process.
+            "FRIDAY_SELF_REPAIR_STATE": str(self.ledger),
+            # The key the gate verifies Sentinel's signature with. Without it the
+            # gate accepts no review at all, and this test would prove nothing.
+            "FRIDAY_SELF_REPAIR_REVIEW_KEY": REVIEW_KEY,
+            # Exercise the production control-access guard, not the loopback bypass.
+            "RENDER": "1",
+            "FRIDAY_API_KEY": CONTROL_KEY,
+            "PYTHONPATH": str(REPO_ROOT / "src") + os.pathsep + str(REPO_ROOT),
+            # Keep background peer polling out of the transcript and the wall clock.
+            "FRIDAY_FLEET_SUPERVISION_INTERVAL_SECONDS": "86400",
+            "FRIDAY_MEMORA_POLL_INTERVAL_SECONDS": "86400",
+        }
         log = self.log_path.open("wb")
         self.proc = subprocess.Popen(
             [
