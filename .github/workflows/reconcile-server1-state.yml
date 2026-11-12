@@ -1,0 +1,52 @@
+name: Reconcile Server 1 Diverged Checkout
+
+# One-off diagnostic + state preservation (ZAI Agent 2, 2026-11-13).
+# The safe fast-forward deploy refuses when /opt/friday_universe has local
+# commits (guard: "Checkout diverges from deployment revision"). Instead of
+# bypassing the guard, this workflow:
+#   1. prints exactly which commits the server is ahead with,
+#   2. pushes the server HEAD to refs/heads/server1/local-state (a branch,
+#      NOT main) if its credentials allow,
+#   3. prints bounded patches so the divergent work can be reconstructed
+#      and merged through a reviewed PR even when push is read-only.
+# Nothing on the server is modified. Never runs automatically.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    name: Snapshot server checkout state
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: SSH and snapshot
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -uo pipefail
+            cd /opt/friday_universe
+            echo "=== HEAD and branch ==="
+            git rev-parse HEAD
+            git branch --show-current || true
+            git status --short | head -30
+            echo "=== ahead of origin/main ==="
+            git fetch --no-tags origin main || true
+            git log --oneline origin/main..HEAD | head -40 || true
+            echo "=== behind origin/main ==="
+            git log --oneline HEAD..origin/main | head -5 || true
+            echo "=== try pushing server HEAD to server1/local-state ==="
+            if git push origin HEAD:refs/heads/server1/local-state 2>&1; then
+              echo "PUSH_OK: server state preserved on branch server1/local-state"
+            else
+              echo "PUSH_FAILED (read-only credentials?) — printing bounded patches"
+              git format-patch origin/main..HEAD --stdout 2>/dev/null | head -c 200000
+              echo ""
+              echo "PATCH_STREAM_END"
+            fi
