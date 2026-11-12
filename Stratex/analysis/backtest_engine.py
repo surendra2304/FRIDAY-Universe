@@ -65,7 +65,12 @@ def run_backtest(mod, symbol: str, tf: str, start=None, end=None,
         return None
 
     bars = df.reset_index()
-    bars.columns = [c if c != "index" else "ts" for c in bars.columns]
+    if "index" in bars.columns:
+        bars = bars.rename(columns={"index": "ts"})
+    elif "timestamp" in bars.columns:
+        bars = bars.rename(columns={"timestamp": "ts"})
+    if "ts" not in bars.columns:  # index had no name
+        bars.columns = ["ts"] + list(bars.columns[1:])
 
     get_signal = getattr(mod, "get_signal", None)
     if get_signal is None:
