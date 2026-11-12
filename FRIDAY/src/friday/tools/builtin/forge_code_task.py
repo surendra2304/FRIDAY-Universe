@@ -42,10 +42,12 @@ def _format_build(data: dict[str, Any], summary: str) -> str:
             for i, s in enumerate(steps[:6], 1):
                 text = s.get("description", s.get("title", s)) if isinstance(s, dict) else str(s)
                 lines.append(f"  {i}. {str(text)[:120]}")
-    manifest = data.get("verification_manifest") or {}
+    manifest = data.get("verification_manifest") or data.get("manifest") or {}
     stages = manifest.get("stages") if isinstance(manifest, dict) else None
+    if isinstance(stages, dict):
+        stages = list(stages.values())
     if isinstance(stages, list) and stages:
-        passed = sum(1 for st in stages if str(st.get("status", "")).lower() in {"passed", "pass", "success"})
+        passed = sum(1 for st in stages if isinstance(st, dict) and (st.get("passed") is True or str(st.get("status", "")).lower() in {"passed", "pass", "success"}))
         lines.append("")
         lines.append(f"Verification: {passed}/{len(stages)} stages passed.")
     artifacts = data.get("artifacts") or []
@@ -53,7 +55,7 @@ def _format_build(data: dict[str, Any], summary: str) -> str:
         names = [str(a.get("name", a.get("path", a))) if isinstance(a, dict) else str(a) for a in artifacts[:6]]
         lines.append(f"Artifacts: {', '.join(names)}")
     if not lines:
-        lines.append("Forge completed the task in its sandbox (no further detail was returned).")
+        lines.append("Forge returned no build details; execution and verification cannot be established from this response.")
     lines.append("")
     lines.append("Executed inside Forge's sandboxed workspace (security-reviewed, TASK-FOR-001).")
     return "\n".join(lines)
@@ -131,14 +133,15 @@ class ForgeCodeTool(BaseTool):
                 name=self.name,
                 content=(
                     f"I could not reach Forge for that code task "
-                    f"({type(exc).__name__}: {exc}). Nothing was built — try again shortly."
+                    f"({type(exc).__name__}: {exc}). The outcome is unconfirmed — check Forge task history before retrying."
                 ),
                 is_error=True,
                 safety_level=self.safety_level,
                 metadata={"error": f"{type(exc).__name__}: {exc}"},
             )
 
-        status = str(getattr(result, "status", "")).upper()
+        status_value = getattr(result, "status", "")
+        status = str(getattr(status_value, "value", status_value)).upper()
         if status not in {"SUCCESS", "COMPLETED"}:
             error = getattr(result, "error", None) or f"status {status or 'unknown'}"
             summary = getattr(result, "summary", "") or ""
@@ -157,6 +160,15 @@ class ForgeCodeTool(BaseTool):
         data = getattr(result, "result", None) or {}
         if not isinstance(data, dict):
             data = {"summary": str(data)}
+        if isinstance(data.get("result"), dict) and "status" in data:
+            outer = data
+            data = dict(outer["result"])
+            if isinstance(outer.get("verification_manifest"), dict):
+                data.setdefault("verification_manifest", outer["verification_manifest"])
+        manifest = data.get("verification_manifest") or data.get("manifest") or {}
+        if isinstance(manifest, dict) and (manifest.get("all_passed") is False or manifest.get("failed_stages", 0)):
+            return ToolResult(name=self.name, content="Forge returned failing verification evidence. The build is not verified.",
+                              is_error=True, safety_level=self.safety_level, metadata={"verification_manifest": manifest})
         summary = str(getattr(result, "summary", "") or data.get("summary", ""))
         content = _format_build(data, summary)
         return ToolResult(
@@ -170,6 +182,8 @@ class ForgeCodeTool(BaseTool):
                     "execution_time_ms": getattr(result, "execution_time_ms", 0),
                     "status": status,
                 },
+                "verification_manifest": manifest,
+                "artifacts": data.get("artifacts") or [],
                 "raw": json.dumps(data, default=str)[:4000],
             },
         )

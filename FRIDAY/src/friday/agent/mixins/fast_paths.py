@@ -692,6 +692,8 @@ class FastPathMixin:
                 "fast_path": True,
                 "research_dispatch": True,
                 "intelx": (result.metadata or {}).get("intelx"),
+                "spoken_summary": (result.metadata or {}).get("spoken_summary"),
+                "sources": (result.metadata or {}).get("sources", []),
                 "probe_success": success,
                 "duration_seconds": time.perf_counter() - start_time,
                 "task_state": self.state_machine.current_state.value,

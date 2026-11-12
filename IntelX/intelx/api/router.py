@@ -3,7 +3,7 @@
 import logging
 from datetime import UTC
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from intelx.api.v1 import v1_router
 from routers.universal_crawler import router as universal_crawler_router
@@ -99,7 +99,7 @@ root_api_router.include_router(cortex_root_router, prefix="/v1")
 
 
 @root_api_router.post("/v1/task/execute", tags=["Universal Task Protocol"])
-async def execute_task(body: dict, api_key: ApiKey = Depends(get_friday_api_key)):
+async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(get_friday_api_key)):
     """Universal Task Protocol endpoint for IntelX."""
     import time
 
@@ -116,6 +116,25 @@ async def execute_task(body: dict, api_key: ApiKey = Depends(get_friday_api_key)
     payload = body.get("payload") if isinstance(body.get("payload"), dict) else body
 
     sessionmaker = get_sessionmaker()
+
+    # Fresh research is not a successful lookup of unrelated historical runs.
+    # Keep legacy "research"/query consumers compatible; new chat asks explicitly
+    # for research_live and uses the existing real scout/retrieve/synthesis path.
+    if action == "research_live":
+        from intelx.api.live_research_task import collect_live_brief, run_live_research
+        from intelx.connectors.search import WebSearchConnector
+        from intelx.connectors.web import HttpFetchConnector
+        from intelx.core.settings import get_settings
+
+        query = str(payload.get("topic") or payload.get("query") or "").strip()
+        if len(query) < 5 or len(query) > 1000:
+            raise HTTPException(status_code=422, detail="Research query must contain 5 to 1000 characters")
+        cfg = get_settings()
+        if cfg.MOCK_MODE:
+            raise HTTPException(status_code=503, detail="Live research refuses MOCK_MODE; no fixture evidence will be returned")
+        async def run_pipeline():
+            return await collect_live_brief(query, WebSearchConnector(settings=cfg), HttpFetchConnector(settings=cfg))
+        return await run_live_research(task_id, query, run_pipeline)
 
     # 1. Action = Cancel
     if action == "cancel":

@@ -106,7 +106,8 @@ class TestForgeToolReportsTruth:
         result = ForgeCodeTool(fleet_client=_BrokenFleetClient()).execute(goal="build a thing")
         assert result.is_error
         assert "could not reach Forge" in result.content
-        assert "Nothing was built" in result.content
+        assert "outcome is unconfirmed" in result.content
+        assert "Nothing was built" not in result.content
 
     def test_empty_goal_rejected(self) -> None:
         result = ForgeCodeTool(fleet_client=_FakeFleetClient(_FakeResult("SUCCESS", {}))).execute(goal="  ")
