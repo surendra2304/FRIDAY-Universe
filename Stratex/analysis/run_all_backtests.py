@@ -97,7 +97,7 @@ def _existing_keys():
     done = set()
     if os.path.exists(RESULTS_CSV):
         done = {(r["strategy"], r["symbol"], r["tf"], r["tag"])
-                for r in _read_rows()}
+                for r in _read_rows() if not (r.get("error") or "").strip()}
     return done
 
 

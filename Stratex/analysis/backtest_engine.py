@@ -62,6 +62,9 @@ def load_df(symbol: str, tf: str) -> pd.DataFrame | None:
         return None
     df = pd.read_csv(p, index_col=0, parse_dates=True)
     df.columns = [c.lower() for c in df.columns]
+    if getattr(df.index, "tz", None) is not None:
+        # normalize to naive UTC so start/end comparisons are tz-consistent
+        df.index = df.index.tz_convert("UTC").tz_localize(None)
     _DF_CACHE[key] = df
     return df
 
