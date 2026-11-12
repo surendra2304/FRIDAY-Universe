@@ -2364,9 +2364,24 @@ tasks:
       - "docs/collaboration/TEAM_ROSTER.yaml"
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
-    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '  - id: TASK-WF-014
+    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level 'task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
+    acceptance:
+      - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
+      - "Inline repair note recorded at the ACTIVITY_LOG repair site."
+      - "Stranded duplicate block removed; single task_id_warnings key remains (WARN-TASK-ID-001/002 intact); task count preserved (81 + 2 new = 83) with no duplicate ids under tasks:."
+      - "Merge-damage audit of the other touched registry files: no duplicate handoff rows, FILE_OWNERSHIP/WORK_BOARD/TEAM_ROSTER YAML-valid, strict-parse shows no duplicate keys."
+      - "scripts/validate_collaboration.py passes."
+    evidence:
+      - "git grep '^<<<<<<< ' HEAD before repair: exactly 1 hit (ACTIVITY_LOG.md); after repair: 0."
+      - "Strict YAML loader (duplicate-key detection) before repair: 'DUPLICATE KEY: task_id_warnings at line 2428'; after repair: clean."
+      - "Stranded records were stale duplicates: live TASK-WF-005 status DEPLOYED (PR #57) and TASK-WF-006 status VERIFIED (PR #58) vs stranded IN_PROGRESS copies."
+      - "scripts/validate_collaboration.py before repair: COLLABORATION REGISTRY VALID (8 contributors, 81 tasks, 234 file claims) — note it parsed through the duplicate key silently."
+    blockers: []
+    next_action: "Commit with the TASK-CI-F821-MAIN fix in the same session; post completion record to issue #35."
+
+  - id: TASK-WF-014
     title: Bind completed software receipts to actually verified project bytes
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: arena_engineering_01
     branch: arena/TASK-WF-014-source-bound-receipts
     pr: 71
@@ -2382,7 +2397,7 @@ tasks:
     - FRIDAY/src/friday/persona/friday.py
     - FRIDAY/tests/test_persona_clock_annotations.py
     claimed_at: '2026-11-12T21:26:20.261780+00:00'
-    last_update: '2026-11-12T21:26:20.261780+00:00'
+    last_update: '2026-11-12T21:56:05.213103+00:00'
     acceptance:
     - Bounded deterministic SHA256 project inventory; regular files only, no symlinks;
       cache/build/dependency exclusions explicit.
@@ -2406,31 +2421,22 @@ tasks:
       F821 persona datetimeannotation. Minimal moduleglobaldatetime import (localimport
       removed) + get_type_hints/ISTclock regression,1pass. No persona/greetingbehavior
       changes. Contact/scopeupdate issue35comment6836497747.
-    - 'Head e624f28 CI8success2skips; mergeability unknown then found concurrent mainfa9257d:
-      ZAI Agent1 independently fixed F821 and normalized corrupted legacy registry.
-      Integrating latestmain preserving all collaborator registry/voice changes; retain
-      own sourcebinding/typehintregressions. Fresh exacthead CI required.'
-    blockers:
-    - Framework CI/rollout and actual production acceptance pending.
-    next_action: Publish narrow PR, greenCI/controlledrollout, actual source-identical
-      task verification/live receipt drift control and protected recheck; only then
-      final notice.
-    claim_policy: Update within2h; contact before takeover.
-
-task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
-    acceptance:
-      - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
-      - "Inline repair note recorded at the ACTIVITY_LOG repair site."
-      - "Stranded duplicate block removed; single task_id_warnings key remains (WARN-TASK-ID-001/002 intact); task count preserved (81 + 2 new = 83) with no duplicate ids under tasks:."
-      - "Merge-damage audit of the other touched registry files: no duplicate handoff rows, FILE_OWNERSHIP/WORK_BOARD/TEAM_ROSTER YAML-valid, strict-parse shows no duplicate keys."
-      - "scripts/validate_collaboration.py passes."
-    evidence:
-      - "git grep '^<<<<<<< ' HEAD before repair: exactly 1 hit (ACTIVITY_LOG.md); after repair: 0."
-      - "Strict YAML loader (duplicate-key detection) before repair: 'DUPLICATE KEY: task_id_warnings at line 2428'; after repair: clean."
-      - "Stranded records were stale duplicates: live TASK-WF-005 status DEPLOYED (PR #57) and TASK-WF-006 status VERIFIED (PR #58) vs stranded IN_PROGRESS copies."
-      - "scripts/validate_collaboration.py before repair: COLLABORATION REGISTRY VALID (8 contributors, 81 tasks, 234 file claims) — note it parsed through the duplicate key silently."
+    - Finalheadc20b802 CI8success/2conditionalDocker skips; mergeaaf4c340/deploy43313423891SUCCESS
+      on bothhosts.219Forgepass1skip;14persona tests pass.
+    - Actual Oracle tasktask3212112026215130 COMPLETED100; real11/11verification; live
+      status SUCCESS/DEGRADED/SUCCESS after add/removecontrolfile. Snapshot source05a2dc8990bc
+      unchanged; no generated edits/generation/push/deploy.
+    - Rawruntime3.10.12; acceptancecheckout72118c7 (collaborator voice-only descendant).
+      Legacy oldtaskstatusDEGRADED intentionally; historicalmanifest/source unchanged.
+      Final6+6protectedfilesunchanged/trackedindexclean, S172118c7/S2aaf4c34.
+    - Proof /var/tmp/friday-workflow-acceptance/wf014-live-acceptance.json. Finalrecord
+      fixes literal task-row insertion into quoted defect description, restores collaborator
+      text verbatim; actualparsedtaskmembership asserted. Existing validator missed
+      semantic placement; runtime proof unaffected.
     blockers: []
-    next_action: "Commit with the TASK-CI-F821-MAIN fix in the same session; post completion record to issue #35."
+    next_action: Verified and deployed. Legacy unhashed receipts require explicit actual
+      re-verification; preserve collaborator voice/trading lanes.
+    claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
