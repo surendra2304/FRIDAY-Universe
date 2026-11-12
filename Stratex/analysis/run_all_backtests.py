@@ -41,6 +41,9 @@ STRATEGIES = [
     "strategy_trend_continuation", "strategy_trend_daily", "strategy_trend_pullback",
     "strategy_volatility_breakout", "strategy_volume_breakout",
     "strategy_vwap_scalper", "strategy_vwap_trend",
+    # new strategies (ZAI Agent 2)
+    "strategy_donchian_turtle", "strategy_vol_regime",
+    "strategy_momentum_rotation", "strategy_pullback_ema",
 ]
 
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT",
