@@ -184,6 +184,14 @@ def _groq_key() -> str:
                 return val
     except Exception:
         pass
+    try:  # last resort: the same Settings path the chat brain uses
+        from friday.core.config import get_settings
+
+        val = (getattr(get_settings(), "groq_api_key", "") or "").strip()
+        if val:
+            return val
+    except Exception:
+        pass
     return ""
 
 
@@ -579,19 +587,23 @@ async def entrypoint(ctx: JobContext):
     # Honest fallback (remote main, 2026-11-13): a greeting must never claim
     # fleet health it has not probed.
     greeting_text = "I am here, Boss. What would you like to work on?"
+    # the standalone TTS for fixed lines (both provider paths carry one; on
+    # the Gemini path it is the orpheus fallback attached to the session)
+    _fixed_voice = _fallback_tts()
 
     async def _greet_when_ready() -> None:
-        """Greet only once a real generation can be attached.
+        """Speak a greeting the owner can actually HEAR, in this order:
 
-        Live journal 2026-11-13 (two runs, identical): generate_reply() raced
-        the realtime session's arming on this CPU-starved host — the plugin
-        gave up after 5s ('timed out waiting for generation_created'), the
-        model's audio arrived at ~+11s with no generation attached and was
-        DROPPED, and the old say() fallback raised 'no TTS model' on a
-        realtime session. The owner heard nothing — 'voice chat is not
-        working'. Now: a longer arming beat, a generate_reply retry, and a
-        say() fallback that works because BOTH provider paths carry a real
-        TTS for fixed lines.
+        1. say() the honest fixed line through the standalone TTS — the
+           standard audio path, no realtime-arming race, no dropped
+           generations. Live lesson 2026-11-13: the 'speaking' agent-state
+           fired while the realtime plugin DROPPED every audio chunk
+           ('received server content but no active generation') — state is
+           NOT proof of audible audio, so the deterministic voice speaks
+           first.
+        2. Best-effort warm greeting through the realtime model (personal,
+           bilingual) — dropped generations are non-fatal: the fixed line
+           already played.
         """
         if not greeting_enabled:
             return
@@ -602,8 +614,25 @@ async def entrypoint(ctx: JobContext):
             except Exception:  # room state is best-effort, never fatal
                 break
             await asyncio.sleep(0.2)
-        await asyncio.sleep(2.0)  # arming beat: first realtime turn needs ~11s here
+        await asyncio.sleep(1.0)
 
+        # 1) deterministic fixed line
+        if _fixed_voice is not None:
+            try:
+                session.say(greeting_text, allow_interruptions=True)
+                logger.info("VOICE fixed-line greeting spoken via fallback TTS")
+            except TypeError:
+                try:
+                    session.say(greeting_text)
+                    logger.info("VOICE fixed-line greeting spoken via fallback TTS")
+                except Exception as exc:
+                    logger.error("VOICE fixed-line say() failed: %s", exc)
+            except Exception as exc:
+                logger.error("VOICE fixed-line say() failed: %s", exc)
+            # let the fixed line finish before layering the warm one
+            await asyncio.sleep(4.0)
+
+        # 2) warm realtime greeting (best-effort)
         _telugu_line = (
             " Add one short Telugu line "
             "(నమస్కారం, ఫ్రైడే సిద్ధంగా ఉంది) so the user knows Telugu works. "
@@ -615,35 +644,11 @@ async def entrypoint(ctx: JobContext):
             "Say you are here and ready to listen without claiming fleet health, "
             "then invite them to speak." + _telugu_line
         )
-
-        for attempt in (1, 2):
-            logger.info("VOICE greeting requested (attempt %d)", attempt)
-            try:
-                session.generate_reply(user_input=_greeting_prompt)
-            except Exception as exc:
-                logger.error("VOICE greeting generation failed: %s", exc)
-            # watch up to 20s for real speech evidence
-            for _ in range(100):
-                if _speech_state["spoke"]:
-                    logger.info("VOICE greeting spoke (attempt %d)", attempt)
-                    return
-                await asyncio.sleep(0.2)
-            # no speech: give the realtime session a beat and retry once
-            await asyncio.sleep(3.0)
-
-        # Both realtime attempts dropped: speak the fixed line through the
-        # attached TTS. This is the difference between "voice is broken" and
-        # "voice answered with a fixed line" — and now it actually speaks.
-        logger.warning("VOICE no speech after greeting; using spoken fallback")
         try:
-            session.say(greeting_text, allow_interruptions=True)
-        except TypeError:
-            try:
-                session.say(greeting_text)
-            except Exception as exc:
-                logger.error("VOICE fallback speech failed: %s", exc)
+            session.generate_reply(user_input=_greeting_prompt)
+            logger.info("VOICE warm greeting requested")
         except Exception as exc:
-            logger.error("VOICE fallback speech failed: %s", exc)
+            logger.error("VOICE warm greeting generation failed: %s", exc)
 
     asyncio.create_task(_greet_when_ready())
 
