@@ -1819,7 +1819,8 @@ async def submit_autonomous_goal(
     if not autonomous_daemon.is_running:
         await autonomous_daemon.start()
     return {
-        "status": "ok",
+        # The literal "ok" here was silently overwritten by the real status
+        # below (duplicate dict key) — keep only the honest value.
         "goal_id": goal.id,
         "goal": goal.goal,
         "priority": goal.priority,
@@ -2837,7 +2838,8 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                     "(or any symbol, above/below, any price) and the market-watch loop will ping you when it fires."
                 )
             else:
-                _lines = [f"You have {_len} price alert{'s' if (_len := len(_alerts)) != 1 else ''} active, Boss:"]
+                _len = len(_alerts)
+                _lines = [f"You have {_len} price alert{'s' if _len != 1 else ''} active, Boss:"]
                 for _a in _alerts:
                     _last = str(_a.get("last_fired_ist") or "")[:10]
                     _when = f" (last fired {_last})" if _last else ""
@@ -3134,8 +3136,8 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             _reply = f"Got it, Boss — locked in: {_payload}. That's mine to keep now.{_tier_note}"
         else:
             _reply = (
-                f"I couldn't reach my memory store just now, Boss, so I have NOT saved that — "
-                f"say it again in a moment and I'll keep it safe."
+                "I couldn't reach my memory store just now, Boss, so I have NOT saved that — "
+                "say it again in a moment and I'll keep it safe."
             )
             if _store_error:
                 logger.warning(f"memory fast-path store error: {_store_error}")
@@ -3289,7 +3291,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
 
     if any(k in cmd for k in ["who are you", "who made you", "what are you", "your name", "are you there", "can you hear me"]):
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
-        return {"reply": f"I'm FRIDAY — Fully Responsive Intelligent Digital Assistant for You. You built me, Boss — you and me plus my nine specialist agents run this universe together. I'm here, I'm listening, and I remember where we left off. What do you need?", "metadata": {"fast_path": True, "conversational": True}}
+        return {"reply": "I'm FRIDAY — Fully Responsive Intelligent Digital Assistant for You. You built me, Boss — you and me plus my nine specialist agents run this universe together. I'm here, I'm listening, and I remember where we left off. What do you need?", "metadata": {"fast_path": True, "conversational": True}}
 
     if any(k in cmd for k in ["thank you", "thanks", "great job", "good job", "nice", "awesome"]):
         _user = getattr(_live_settings(), "user_name", "Surendra") or "Surendra"
@@ -3909,7 +3911,6 @@ start_proactive_monitoring()
 # =========================================================================
 
 from collections import deque
-from datetime import datetime, timezone
 import uuid as _uuid
 
 # In-memory conversation history store (max 10000 entries)

@@ -14,11 +14,12 @@ if str(apps_core_src) not in sys.path:
 if str(friday_src) not in sys.path:
     sys.path.insert(0, str(friday_src))
 
-os.environ["FRIDAY_ENV"] = "testing"
-os.environ["DATABASE_URL"] = "oracle+oracledb://ADMIN:testpass@adb.ap-hyderabad-1.oraclecloud.com:1521/g7e6177242670c3_friday_medium.adb.oraclecloud.com"
-os.environ["SYNC_DATABASE_URL"] = os.environ["DATABASE_URL"]
-os.environ["ASYNC_DATABASE_URL"] = "oracle+oracledb_async://ADMIN:testpass@adb.ap-hyderabad-1.oraclecloud.com:1521/g7e6177242670c3_friday_medium.adb.oraclecloud.com"
-
+# Hermeticity fix (ZAI Agent 2, 2026-11-12): these module-level env writes
+# LEAKED a (dead) Oracle ADMIN DSN into every test that ran after this file
+# in the session — the tier1/e2e /ready probes then saw a configured-but-
+# unreachable DSN and failed 503 in full-suite runs while passing alone.
+# The client fixture below sets exactly what these tests need via
+# monkeypatch (restored automatically); nothing needs to happen at import.
 import pytest
 from fastapi.testclient import TestClient
 

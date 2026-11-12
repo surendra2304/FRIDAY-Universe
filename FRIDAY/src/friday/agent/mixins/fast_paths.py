@@ -307,7 +307,6 @@ class FastPathMixin:
         states that so the owner is never misled about what ran.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.SECURITY_SCAN_KEYWORDS):
             return None
@@ -380,7 +379,6 @@ class FastPathMixin:
         no hallucination surface. Probe failure is reported honestly.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.FLEET_KEYWORDS):
             return None
@@ -627,7 +625,6 @@ class FastPathMixin:
         honest "no conclusive evidence" — never a fabricated summary.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.RESEARCH_KEYWORDS):
             return None
@@ -714,7 +711,6 @@ class FastPathMixin:
         the fail-closed guard (D-015).
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         # Deterministic e2e workflow phrases ("check Stratex performance") are
         # served by the E2EWorkflowCoordinator inside
@@ -801,7 +797,6 @@ class FastPathMixin:
         prediction is never an authorization.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         if not CapabilityRouter._matches(low, CapabilityRouter.FORECAST_KEYWORDS):
             return None
@@ -975,7 +970,6 @@ class FastPathMixin:
         engine — never the LLM's imagination.
         """
         low = clean_input.lower().strip().rstrip(".!? ")
-        from friday.routing.capability_router import CapabilityRouter
 
         tool_cls = None
         label = ""
