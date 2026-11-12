@@ -1139,7 +1139,10 @@ def main() -> None:
         logger.warning("[STRATEX_DAEMON] Telegram bot is not configured. Outbound alerts will be suppressed.")
     else:
         logger.info("[STRATEX_DAEMON] Starting Telegram bot background listener daemon...")
-        telegram.start_polling_in_background()
+        # start_listening honors TELEGRAM_WEBHOOK_URL when set (webhook mode
+        # locks out external getUpdates pollers — TASK-STRATEX-TGWEBHOOK),
+        # and falls back to the classic polling thread otherwise.
+        telegram.start_listening()
         telegram.send_message(
             "🚀 <b>Stratex Online — Multi-Venue</b>\n\n"
             "• Venues: Binance Futures (Crypto) + OANDA (Forex/Indices/Commodities)\n"

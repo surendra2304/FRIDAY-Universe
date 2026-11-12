@@ -99,7 +99,32 @@ class TelegramBotClient:
         self._sent_text_cache: dict[str, float] = {}
         self._portfolio_cache: tuple[float, dict[str, Any]] | None = None
         self._conflict_logged = False
+        # 409-conflict episode state: backoff seconds, episode counter, and the
+        # flag that guarantees exactly ONE owner alert per conflict episode.
+        self._conflict_backoff = 0.0
+        self._conflict_episode_count = 0
+        self._conflict_alert_sent = False
         self._executor: ThreadPoolExecutor | None = None
+        # Webhook mode (TASK-STRATEX-TGWEBHOOK): when TELEGRAM_WEBHOOK_URL is
+        # set the bot registers a webhook instead of long polling, so an
+        # external poller of the same token can no longer consume the owner's
+        # commands (Telegram delivers each update exactly once to the
+        # registered webhook and rejects getUpdates while it is set).
+        self.webhook_url = (
+            os.getenv("TELEGRAM_WEBHOOK_URL")
+            or dotenv_dict.get("TELEGRAM_WEBHOOK_URL")
+            or ""
+        ).strip()
+        self.webhook_secret = (
+            os.getenv("TELEGRAM_WEBHOOK_SECRET")
+            or dotenv_dict.get("TELEGRAM_WEBHOOK_SECRET")
+            or ""
+        ).strip()
+
+    @property
+    def webhook_mode(self) -> bool:
+        """True when the bot is configured to receive updates via webhook."""
+        return bool(self.webhook_url)
 
     @property
     def is_configured(self) -> bool:
@@ -1358,6 +1383,104 @@ class TelegramBotClient:
         except Exception:
             return False
 
+    def set_webhook(self) -> bool:
+        """Register the configured webhook URL with Telegram (TASK-STRATEX-TGWEBHOOK).
+
+        Telegram delivers each update exactly once to the registered webhook
+        and rejects getUpdates for other pollers with 409 while the webhook
+        is set — this is the mechanism that defeats an off-cloud poller of
+        the same bot token. Optional secret_token makes inbound POSTs
+        verifiable via the X-Telegram-Bot-Api-Secret-Token header.
+        """
+        if not self.bot_token or not self.webhook_mode:
+            return False
+        payload = {"url": self.webhook_url,
+                   "allowed_updates": ["message", "edited_message"]}
+        if self.webhook_secret:
+            payload["secret_token"] = self.webhook_secret
+        try:
+            resp = requests.post(
+                f"{DEFAULT_API_BASE}{self.bot_token}/setWebhook",
+                json=payload,
+                timeout=self.timeout,
+            )
+            ok = bool(resp.json().get("ok"))
+            if ok:
+                logger.info(
+                    "[TELEGRAM] Webhook registered (%s); inbound updates now "
+                    "arrive via HTTPS POST and getUpdates is disabled for this "
+                    "token — an external poller can no longer steal commands.",
+                    self.webhook_url,
+                )
+            else:
+                logger.error(
+                    "[TELEGRAM] setWebhook failed: %s", resp.json().get("description")
+                )
+            return ok
+        except Exception as exc:
+            logger.error("[TELEGRAM] setWebhook exception: %s", exc)
+            return False
+
+    def process_webhook_update(self, update: dict[str, Any], secret_header: str | None = None) -> bool:
+        """Authenticate + dispatch ONE webhook-delivered update.
+
+        The caller is an HTTPS endpoint that received POST /telegram-webhook
+        with this JSON body. Returns True when the update was dispatched.
+        Rejects the request when the secret header does not match (when a
+        secret is configured), and drops already-processed update_ids.
+        """
+        if self.webhook_secret:
+            if (secret_header or "") != self.webhook_secret:
+                logger.warning(
+                    "[TELEGRAM] Webhook update rejected: secret token mismatch"
+                )
+                return False
+        if not isinstance(update, dict):
+            return False
+        uid = int(update.get("update_id") or 0)
+        if uid and uid <= self._last_update_id:
+            return False  # duplicate delivery
+        if uid:
+            self._last_update_id = uid
+            self._save_offset()
+        if self._executor is None:
+            self._executor = ThreadPoolExecutor(
+                max_workers=3, thread_name_prefix="tg-cmd"
+            )
+        try:
+            self._executor.submit(self.process_update, update)
+        except RuntimeError:
+            self.process_update(update)
+        return True
+
+    def start_listening(self) -> bool:
+        """Start inbound command processing in the configured mode.
+
+        Webhook mode (TELEGRAM_WEBHOOK_URL set): register the webhook via
+        set_webhook() — Telegram then pushes updates to the HTTPS endpoint,
+        which calls process_webhook_update(). No local poller is started, so
+        no fleet-internal 409 is possible and an external getUpdates poller
+        is locked out by Telegram itself.
+
+        Polling mode (default): classic background long-poll thread.
+        """
+        if not self.is_configured:
+            logger.warning("[TELEGRAM] Listening not started: bot not configured.")
+            return False
+        self._load_offset()
+        if self.webhook_mode:
+            ok = self.set_webhook()
+            if not ok:
+                logger.warning(
+                    "[TELEGRAM] Webhook registration failed; falling back to "
+                    "long polling for this process lifetime."
+                )
+                self.start_polling_in_background()
+                return False
+            return True
+        self.start_polling_in_background()
+        return True
+
     def _repo_file(self, name: str) -> str:
         return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), name)
 
@@ -1483,8 +1606,73 @@ class TelegramBotClient:
             f"• Failed: <code>{len(failed)}</code> {', '.join(failed) if failed else ''}\n\n"
             "<i>Realized PnL is booked by the reconciler on its next pass.</i>"
         )
+    def _register_poll_conflict(self) -> float:
+        """Record one 409-conflict observation and return the backoff seconds.
+
+        Telegram returns 409 when another getUpdates poller owns this bot token
+        (run_stratex.py exists precisely to prevent that inside the fleet; the
+        second poller can also be an off-cloud instance). While the conflict
+        persists the OTHER poller consumes the owner's inbound commands, so the
+        daemon must back off instead of hammering, log once per episode (not
+        every cycle), and tell the owner once per episode what is happening.
+        """
+        if self._conflict_backoff <= 0.0:
+            # New conflict episode.
+            self._conflict_backoff = 1.0
+            self._conflict_episode_count += 1
+            self._conflict_alert_sent = False
+            if not self._conflict_logged:
+                logger.error(
+                    "[TELEGRAM] 409 Conflict: another process is polling this bot "
+                    "token. Run only ONE Stratex instance per bot. Backing off "
+                    "with exponential backoff; inbound commands may be consumed "
+                    "by the other poller until it stops."
+                )
+                self._conflict_logged = True
+            # One owner-visible alert per episode: the conflict is silent for
+            # the owner otherwise (their /pnl just never gets answered).
+            self._send_conflict_alert()
+        else:
+            self._conflict_backoff = min(120.0, self._conflict_backoff * 2)
+        return self._conflict_backoff
+
+    def _send_conflict_alert(self) -> None:
+        """Send the once-per-episode owner alert about the 409 conflict.
+
+        Deliberately tolerant of failures: the outbound path can work while
+        polling conflicts, but if it does not, this must never raise into the
+        polling loop. The episode number is embedded so a later episode's alert
+        is a genuinely new message for send_message's 120s dedupe cache.
+        """
+        if self._conflict_alert_sent or not self.is_configured:
+            return
+        try:
+            sent = self.send_message(
+                "\u26a0\ufe0f <b>STRATEX BOT CONFLICT #%d</b>\n"
+                "Another process is polling this bot's token (HTTP 409). Your "
+                "commands here may go unanswered until it stops. I will keep "
+                "retrying with backoff and will notify when I regain control."
+                % self._conflict_episode_count
+            )
+            if sent:
+                self._conflict_alert_sent = True
+        except Exception:
+            # Never let the alert path break polling.
+            pass
+
+    @property
+    def conflict_episode(self) -> int | None:
+        """Current conflict episode number, or None when polling is healthy."""
+        return self._conflict_episode_count if self._conflict_backoff > 0.0 else None
+
     def poll_once(self) -> int:
-        """Poll for new updates once using long polling."""
+        """Poll for new updates once using long polling.
+
+        Returns the number of updates dispatched. On HTTP 409 (another poller
+        owns this token) it registers a conflict episode via
+        ``_register_poll_conflict`` so the polling loop can back off instead of
+        hammering getUpdates every cycle.
+        """
         if not self.is_configured:
             return 0
 
@@ -1494,14 +1682,18 @@ class TelegramBotClient:
         try:
             resp = requests.get(url, params=params, timeout=self.timeout + 15)
             if resp.status_code == 409:
-                # Another process (e.g. the Oracle deployment) owns this bot token.
-                if not getattr(self, "_conflict_logged", False):
-                    logger.error(
-                        "[TELEGRAM] 409 Conflict: another process is polling this bot token. "
-                        "Run only ONE Stratex instance per bot."
-                    )
-                    self._conflict_logged = True
+                self._register_poll_conflict()
                 return 0
+
+            if self._conflict_backoff > 0.0:
+                # Conflict episode ended: the daemon regained its token.
+                logger.info(
+                    "[TELEGRAM] Polling recovered after %d conflict episode(s); "
+                    "inbound commands are ours again. (episode backoff was %.0fs)",
+                    self._conflict_episode_count,
+                    self._conflict_backoff,
+                )
+                self._conflict_backoff = 0.0
             self._conflict_logged = False
 
             data = resp.json()
@@ -1517,9 +1709,18 @@ class TelegramBotClient:
                     continue
                 self._last_update_id = uid
                 dispatched += 1
+                # poll_once can be invoked directly (tests, diagnostics) without
+                # start_polling_in_background; ensure the executor exists so a
+                # dispatch is never silently dropped by the except below.
+                if self._executor is None:
+                    self._executor = ThreadPoolExecutor(
+                        max_workers=3, thread_name_prefix="tg-cmd"
+                    )
                 try:
                     self._executor.submit(self.process_update, u)
                 except RuntimeError:
+                    # Executor shut down mid-dispatch: run inline so the update
+                    # is still handled rather than lost.
                     self.process_update(u)
 
             if updates:
@@ -1550,7 +1751,14 @@ class TelegramBotClient:
             while self._polling_active:
                 try:
                     self.poll_once()
-                    backoff = 1.0
+                    # poll_once returns normally on 409 too; the conflict
+                    # backoff (if any) must override the normal 1s cadence so
+                    # we stop hammering getUpdates while another poller owns
+                    # the token.
+                    if self._conflict_backoff > 0.0:
+                        backoff = self._conflict_backoff
+                    else:
+                        backoff = 1.0
                 except Exception as exc:
                     logger.warning("[TELEGRAM] Unexpected error in polling loop: %s", exc)
                     backoff = min(30.0, backoff * 2)

@@ -133,14 +133,16 @@ collaborators:
       - "Read-only production diagnostics: Telegram bot states (getWebhookInfo/getUpdates/getMe by id, never printing tokens), journald caps, systemd units, TLS cert expiry (live probe: 61 days)."
       - "Batch 5 delivered (TASK-BATCH5-AGENT2, MERGED): G5/G6/G7/G8/G11/G12 + H8/H9 — 42 new tests, zero regressions."
     active_assignments:
-      - "TASK-BATCH5-AGENT2 — Checklist Batch 5 (autonomy: G5/G6/G7/G8/G11/G12 + H8/H9) — MERGED."
-      - "Next (Lane B): Batch 6 — agent depth I (Sentinel/IntelX/Cortex: F8, F9, F13, F14, F15, F20, F21, F17, F18)."
-    active_branches: []
-    last_verified_at: "2026-11-11T23:00:00+05:30"
+      - "TASK-STRATEX-PROFIT-GOVERNOR — Stratex profitability governor DEPLOYED on main (427b620 + 5493ee3); observation window continuing; backtest sweep stage 1h running on Server 1."
+      - "TASK-STRATEX-TG409 — Stratex Telegram 409-conflict episode handling IN_REVIEW on branch zai/TASK-STRATEX-TG409 (commit d7dbc60; 22/22 + 31/31 tests, A/B clean)."
+      - "Lane B batches 5-8 previously delivered (checklist 122/125 with Agent 1)."
+    active_branches:
+      - "zai/TASK-STRATEX-TG409"
+    last_verified_at: "2026-11-13T01:20:00+05:30"
     access_limits:
       - "Coordinates with ZAI Agent 1 through GitHub issue #35 and the lane rules in ZAI_AGENT_2_ONBOARDING.md."
-      - "No secret values read, printed or committed; Telegram tokens handled by id/masked name only."
-      - "Stratex (Lane A) not modified without a claim; the 409 second-poller finding was reported, not fixed."
+      - "No secret values read, printed or committed; Telegram tokens handled by id/masked-name/hash-identity only."
+      - "Stratex production restarts require owner authorization; TG409 fix is code+tests only until the standard exact-head deploy."
 
   - id: "vercel_v0"
     display_name: "Vercel v0"

@@ -8,7 +8,7 @@ Verifies:
 4. Security barrier dropping unauthorized chat IDs.
 5. Polling updates, offset tracking, and background daemon lifecycle.
 """
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -128,7 +128,11 @@ class TestTelegramBotClient:
         assert "Active Positions" in pos
 
         bal = bot.handle_command("/balance")
-        assert "Wallet Balances" in bal
+        # The balance command's honest contract: a real venue report when a
+        # venue responds, or the explicit "Balance unavailable" refusal when
+        # none does (sandbox has no live venue). Either is truthful; a fake
+        # number is not acceptable.
+        assert "Account Balance" in bal or "Balance unavailable" in bal
 
     def test_handle_command_halt_and_resume(self, bot):
         halt_resp = bot.handle_command("/halt")
@@ -184,7 +188,120 @@ class TestTelegramBotClient:
         count = bot.poll_once()
         assert count == 1
         assert bot._last_update_id == 1001
+        # The update dispatches through the executor thread pool; drain it
+        # before asserting on the outbound reply so the test is race-free.
+        executor = bot._executor
+        if executor is not None:
+            executor.shutdown(wait=True)
         mock_post.assert_called_once()
+
+    # ------------------------------------------------------------------
+    # TASK-STRATEX-TG409 — 409-conflict episode handling (ZAI Agent 2)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _conflict_response(status: int = 409):
+        """Build a requests-like mock response carrying a 409 status."""
+        resp = MagicMock()
+        resp.status_code = status
+        resp.json.return_value = {"ok": False, "description": "Conflict: terminated by other getUpdates request"}
+        return resp
+
+    @staticmethod
+    def _ok_empty_response():
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {"ok": True, "result": []}
+        return resp
+
+    @patch("notifications.telegram_bot.requests.get")
+    def test_conflict_first_hit_sets_backoff_and_episode(self, mock_get, bot):
+        """First 409 opens episode #1 with a 1s backoff, not zero."""
+        mock_get.return_value = self._conflict_response()
+        bot.poll_once()
+        assert bot._conflict_episode_count == 1
+        assert bot._conflict_backoff == 1.0
+        assert bot.conflict_episode == 1
+
+    @patch("notifications.telegram_bot.requests.get")
+    def test_conflict_backoff_doubles_and_caps_at_120s(self, mock_get, bot):
+        """Backoff grows 1 -> 2 -> 4 ... and caps at 120s."""
+        mock_get.return_value = self._conflict_response()
+        expected = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 120.0, 120.0]
+        for step, want in enumerate(expected, start=1):
+            bot.poll_once()
+            assert bot._conflict_backoff == want, f"step {step}: expected {want}, got {bot._conflict_backoff}"
+        assert bot._conflict_episode_count == 1, "repeated conflicts are ONE episode until recovery"
+
+    @patch("notifications.telegram_bot.requests.get")
+    @patch("notifications.telegram_bot.requests.post")
+    def test_conflict_alert_sent_once_per_episode(self, mock_post, mock_get, bot):
+        """The owner-visible alert fires exactly once per episode, not per conflict."""
+        mock_get.return_value = self._conflict_response()
+        mock_post.return_value.json.return_value = {"ok": True}
+        for _ in range(5):
+            bot.poll_once()
+        outbound = [c for c in mock_post.call_args_list if "getUpdates" not in str(c)]
+        conflict_alerts = [c for c in outbound if "CONFLICT" in str(c)]
+        assert len(conflict_alerts) == 1, f"expected exactly one owner alert, saw {len(conflict_alerts)}"
+
+    @patch("notifications.telegram_bot.requests.get")
+    @patch("notifications.telegram_bot.requests.post")
+    def test_conflict_alert_not_resent_after_realert_in_next_episode(self, mock_post, mock_get, bot):
+        """Recovery then a NEW conflict re-alerts (new episode) — once again."""
+        mock_get.side_effect = [
+            self._conflict_response(),
+            self._ok_empty_response(),   # recovery
+            self._conflict_response(),  # new episode
+            self._conflict_response(),  # same new episode
+        ]
+        mock_post.return_value.json.return_value = {"ok": True}
+        bot.poll_once()  # conflict 1 -> alert #1
+        bot.poll_once()  # recovery -> backoff reset
+        assert bot.conflict_episode is None
+        assert bot._conflict_backoff == 0.0
+        bot.poll_once()  # conflict episode 2 -> alert #2
+        bot.poll_once()  # still episode 2 -> NO third alert
+        conflict_alerts = [c for c in mock_post.call_args_list if "CONFLICT" in str(c)]
+        assert len(conflict_alerts) == 2
+        assert bot._conflict_episode_count == 2
+
+    @patch("notifications.telegram_bot.requests.get")
+    def test_recovery_clears_backoff_and_reports_episode_count(self, mock_get, bot):
+        """A successful poll after a conflict closes the episode: backoff -> 0."""
+        mock_get.side_effect = [
+            self._conflict_response(),
+            self._ok_empty_response(),
+        ]
+        bot.poll_once()
+        assert bot._conflict_backoff == 1.0
+        bot.poll_once()
+        assert bot._conflict_backoff == 0.0
+        assert bot.conflict_episode is None
+        # episode count is cumulative history, not current state
+        assert bot._conflict_episode_count == 1
+
+    @patch("notifications.telegram_bot.requests.get")
+    @patch("notifications.telegram_bot.requests.post")
+    def test_alert_failure_never_breaks_polling(self, mock_post, mock_get, bot):
+        """When the outbound alert fails, polling still returns normally and
+        episode state is tracked (honest accounting, no exception raised)."""
+        mock_get.return_value = self._conflict_response()
+        mock_post.side_effect = Exception("network down")
+        result = bot.poll_once()  # must not raise
+        assert result == 0
+        assert bot._conflict_episode_count == 1
+        assert bot._conflict_alert_sent is False, "failed alert may be retried next episode"
+
+    @patch("notifications.telegram_bot.requests.get")
+    def test_healthy_polling_keeps_conflict_state_clean(self, mock_get, bot):
+        """No 409 ever seen: no episode, no backoff, property stays None."""
+        mock_get.return_value = self._ok_empty_response()
+        for _ in range(3):
+            assert bot.poll_once() == 0
+        assert bot.conflict_episode is None
+        assert bot._conflict_backoff == 0.0
+        assert bot._conflict_episode_count == 0
 
     def test_polling_daemon_lifecycle(self, bot):
         with patch.object(bot, "poll_once") as mock_poll:
