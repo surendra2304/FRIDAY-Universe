@@ -2443,7 +2443,8 @@ tasks:
 
   - id: "TASK-CI-SECRETSCAN-002"
     title: "Repair main's red Secret Scanning check — gitleaks false positive on labeled SHA256 content digests (ZAI Agent 1)"
-    status: "IN_PROGRESS"
+    status: "MERGED"
+    merge_note: "Direct commit cd8b5b3 on main (2026-11-13 03:50 IST). Remote verification: Secret Scanning SUCCESS on cd8b5b3 (was RED on 9544300), test SUCCESS, roster validation SUCCESS, docker SUCCESS, both Fleet deploys SUCCESS (no service restarts — safe ff-only checkout only). The two monorepo validations on cd8b5b3 were concurrency-cancelled by the next push (33fa44a voice fix); their replacements on 33fa44a — which contains this fix — completed success. Completion recorded on issue #35 comment 6837455345."
     owner: "zai"
     branch: "main (single-branch flow, post-D-016)"
     pr: null
@@ -2462,7 +2463,7 @@ tasks:
       - "Local: tests/test_gitleaks_config.py 10/10 (9 structural/behavioral + 1 live-binary integration with gitleaks 8.30.1 on PATH)."
       - "Full working-tree dir scan (53.88 MB) reviewed: all 152 findings are test fixtures with fake secrets, README curl examples, .env.example placeholders and key_pool.json placeholder strings — no real credentials (consistent with D-016's preserved-fixture policy); CI never dir-scans the full tree (change-range only)."
     blockers: []
-    next_action: "Commit to main and verify all six workflows green on the new head (no service restarts expected: tests/docs/root-config paths match no agent folder, so the deploy does a safe ff-only checkout only; Stratex-Daemon and ZAI Agent 2's backtest sweep untouched)."
+    next_action: "Complete. All gates green on cd8b5b3 and on the following head 33fa44a (which includes this fix); evidence on issue #35 comment 6837455345."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
