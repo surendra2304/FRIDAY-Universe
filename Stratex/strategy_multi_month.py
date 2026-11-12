@@ -106,12 +106,12 @@ def get_signal(df):
 
     thr = _K * vol if vol > 0 else 0.0
     if mom > thr and c > s200:
-        dist, tp_d = _bracket(c, a, 1.75)
+        dist, tp_d = _bracket(c, a, 2.1)
         sl = c - dist
         tp = c + tp_d
         return SignalResult("BUY", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, c - sl, tp - c)
     if mom < -thr and c < s200:
-        dist, tp_d = _bracket(c, a, 1.75)
+        dist, tp_d = _bracket(c, a, 2.1)
         sl = c + dist
         tp = c - tp_d
         return SignalResult("SELL", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, sl - c, c - tp)

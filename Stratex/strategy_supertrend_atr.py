@@ -148,14 +148,14 @@ def get_signal(df):
     stayed = d0 == d1 == d3
 
     if (flip_up or (bullish_now and stayed)) and c > s200:
-        dist, tp_d = _bracket(c, a, 1.5)
+        dist, tp_d = _bracket(c, a, 2.1)
         sl = min(ln, c - dist) if ln > 0 else c - dist  # trailing line if wider, else legal clamp
         if c - sl > 0.03 * c:  # governor stop cap
             sl = c - dist
         tp = c + tp_d
         return SignalResult("BUY", sl, tp, _STRATEGY_TYPE, _OOS_WIN_RATE_PRIOR, _RR_RATIO, c - sl, tp - c)
     if (flip_dn or (bearish_now and stayed)) and c < s200:
-        dist, tp_d = _bracket(c, a, 1.5)
+        dist, tp_d = _bracket(c, a, 2.1)
         sl = max(ln, c + dist) if ln > 0 else c + dist
         if sl - c > 0.03 * c:
             sl = c + dist
