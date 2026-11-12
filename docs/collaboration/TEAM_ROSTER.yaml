@@ -174,7 +174,7 @@ collaborators:
     - TASK-WF-013
     - TASK-VAL-003
     active_branches:
-    - arena/TASK-WF-013-portable-fixture-repair
+    - arena/TASK-WF-013-portable-repair-verified
     - arena/TASK-VAL-003-runtime-audit
     active_pr: null
     last_verified_at: '2026-11-12T13:56:06.410012+00:00'
