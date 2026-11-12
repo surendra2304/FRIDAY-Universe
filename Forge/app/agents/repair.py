@@ -6,6 +6,7 @@ Unsupported/ambiguous changes are left for a human rather than weakening tests.
 from __future__ import annotations
 
 import ast
+import copy
 from pathlib import PurePosixPath
 
 
@@ -16,6 +17,63 @@ MAX_REPAIR_FILES = 3
 def is_test_path(path: str) -> bool:
     p = PurePosixPath(path)
     return 'tests' in p.parts or p.name.startswith('test_') or p.name.endswith('_test.py')
+
+
+def _protected_ast(node: ast.AST, module: ast.Module, *, allow_private: bool = True) -> str:
+    """Compare tests modulo ONE equivalent public stdlib import correction.
+
+    pathlib.os is an accidental export removed in Python 3.13. Replacing that
+    module reference with an explicit import of os does not change assertions,
+    fixture logic or test selection. No source is rewritten by this function.
+    Ambiguous/shadowed bindings disable normalization and fail closed.
+    """
+    marker = "__forge_public_stdlib_os__"
+    imports = {}
+    top_imports = set()
+    for item in module.body:
+        if isinstance(item, ast.Import):
+            top_imports.add(id(item))
+            for alias in item.names:
+                bound = alias.asname or alias.name.split(".")[0]
+                if bound in imports and imports[bound] != alias.name:
+                    return ast.dump(node)
+                imports[bound] = alias.name
+    imports = {name: target for name, target in imports.items() if target in {"pathlib", "os"}}
+    shadowed = set()
+    for item in ast.walk(module):
+        if isinstance(item, ast.Name) and isinstance(item.ctx, (ast.Store, ast.Del)):
+            shadowed.add(item.id)
+        elif isinstance(item, (ast.Attribute, ast.Subscript)) and isinstance(item.ctx, (ast.Store, ast.Del)):
+            shadowed.update(n.id for n in ast.walk(item) if isinstance(n, ast.Name))
+        elif isinstance(item, ast.arg):
+            shadowed.add(item.arg)
+        elif isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            shadowed.add(item.name)
+        elif isinstance(item, ast.ExceptHandler) and item.name:
+            shadowed.add(item.name)
+        elif isinstance(item, ast.ImportFrom) or isinstance(item, ast.Import) and id(item) not in top_imports:
+            for alias in item.names:
+                if alias.name == "*":
+                    return ast.dump(node)
+                shadowed.add(alias.asname or alias.name.split(".")[0])
+        if isinstance(item, ast.Name) and item.id == marker:
+            return ast.dump(node)
+    if shadowed.intersection(imports):
+        return ast.dump(node)
+
+    class PublicOS(ast.NodeTransformer):
+        def visit_Attribute(self, item):
+            if (allow_private and isinstance(item.value, ast.Name) and item.attr == "os"
+                    and imports.get(item.value.id) == "pathlib"):
+                return ast.copy_location(ast.Name(id=marker, ctx=item.ctx), item)
+            return self.generic_visit(item)
+
+        def visit_Name(self, item):
+            if isinstance(item.ctx, ast.Load) and imports.get(item.id) == "os":
+                return ast.copy_location(ast.Name(id=marker, ctx=item.ctx), item)
+            return item
+
+    return ast.dump(PublicOS().visit(copy.deepcopy(node)))
 
 
 def validate_replacement(original: str, candidate: str) -> str | None:
@@ -58,7 +116,8 @@ def validate_replacement(original: str, candidate: str) -> str | None:
                 for n in ast.walk(node)
             )
         )
-        if protected and ast.dump(node) != ast.dump(other):
+        if (protected and ast.dump(node) != ast.dump(other)
+                and _protected_ast(node, old) != _protected_ast(other, new, allow_private=False)):
             return 'test_changed:' + key
     return None
 

@@ -2184,10 +2184,10 @@ tasks:
 
   - id: TASK-WF-012
     title: Report existing artifact paths and real test command/exit code to owner
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: arena_engineering_01
     branch: arena/TASK-WF-012-saved-manifest-schema
-    pr: 66
+    pr: 68
     files:
     - .github/workflows/owner-workflows.yml
     - FRIDAY/src/friday/tools/builtin/forge_code_task.py
@@ -2195,7 +2195,7 @@ tasks:
     - FRIDAY/tests/test_forge_artifact_receipts.py
     - Forge/tests/unit/test_artifact_receipts.py
     claimed_at: '2026-11-12T19:41:40.428594+00:00'
-    last_update: '2026-11-12T19:52:26.504588+00:00'
+    last_update: '2026-11-12T20:28:58.267072+00:00'
     acceptance:
     - Build/status API includes bounded existing-file paths confined to actual task
       workspace, excluding Git/hidden/cache/dependency trees and symlink escapes. Never
@@ -2227,12 +2227,60 @@ tasks:
     - Downloaded source API6independent cases pass on3.13 but embedded3tests error pathlib.os
       alias missing; Python3.13 combined exit1 saved. Actual target3.12 generated3/independent6
       exit0. Source unedited, package pins3.12/documents portability limit.
+    - PR68head162bc17 CI7success/2conditionalDocker skips, mergeec96fe329ccc377b50440c8c87391ea45a68c78d/deploy43295344892SUCCESS.
+      Actual same-task status/formatter proof nowSUCCESS, realpaths+testcommand+exit0/source0a35e7f
+      unchanged.
+    - S1ec96fe3/S2intentionally535a7a4(FRIDAY-onlyfollowupS2skipped), protected5/6unchanged+tracked/indexclean.
+      Outcomeissue35comment6834520711, Telegram51. Download remains limited3.12; Python3.13embeddedtest
+      defect is TASK-WF-013, not finished software.
     blockers:
     - Fresh reporting API/formatter rollout/read-only same-task evidence check pending.
       Converter functional source already independently passes3generated+6independent
       unittest0.
-    next_action: Follow-up exactheadCI/rollout then repeat read-only same-task receipt
-      assertion; no regeneration. Notify bounded3.12success+3.13limitation at conclusion.
+    next_action: Reporting component verified. User rejects stopping with known portability
+      defect; close actual Python3.13 failure under TASK-WF-013 before final completion.
+    claim_policy: Update within2h; contact before takeover.
+
+  - id: TASK-WF-013
+    title: Complete portable source-backed repair without weakening test logic
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-013-portable-fixture-repair
+    pr: null
+    files:
+    - .github/workflows/owner-workflows.yml
+    - Forge/app/agents/repair.py
+    - Forge/tests/unit/test_portable_fixture_repair.py
+    claimed_at: '2026-11-12T20:28:58.267072+00:00'
+    last_update: '2026-11-12T20:28:58.267072+00:00'
+    acceptance:
+    - Permit only equivalent public stdlib import correction inside protected tests
+      (pathlib.os module reference -> explicitly imported os), with fail-closed shadow/alias
+      checks. Keep all assertions/signatures/decorators/fixture behavior protected.
+    - Regression must reproduce actual Python3.13 failure and execute actual suite after
+      provider-fixture repair, plus reject assertion/skip/control-flow/argument/shadow
+      mutations.
+    - After greenCI/controlledrollout, real model source-backed repair of isolated copy
+      of existing task2412112026193320, not unrelated regeneration/manual generated-source
+      patch. Preserve old source/workspaces.
+    - Register/audit actual repair execution; complete only after same repaired source
+      generated+independent suites pass3.12and3.13, negativecontrol fails as expected,
+      owner receipt reports paths/exit, download replaced. No generatedpush/deploy.
+    evidence:
+    - Claim issue35 6835005672. User explicitly requires continued execution until work
+      complete, not another partial-final answer.
+    - 208Forge regressions pass/1unchanged website skip. Default debugger real local3.13fixture
+      failure -> providerfixture publicimportpatch -> actualsuite0. Guards reject10unsafeproposals
+      and shadowed old modules.
+    - Normalization compares AST only, does not author or rewrite delivered source;
+      actual portable source must come from real Inference reply and pass guarded normal
+      filesystem workflow.
+    blockers:
+    - Actual portable model repair/runtime3.12+3.13/receipt and replacement package
+      pending; old3.13combinedsuiteexit1 remains recorded, not waived.
+    next_action: CI/exactheadrollout+protectedwork, then registered model-backed repair
+      and both runtime proofs, complete only after all scoped criteria pass; finalTelegram
+      truthful outcome.
     claim_policy: Update within2h; contact before takeover.
 
 task_id_warnings:

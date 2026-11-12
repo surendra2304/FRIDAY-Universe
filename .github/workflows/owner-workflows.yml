@@ -95,7 +95,8 @@ jobs:
             Forge/tests/unit/test_execution_security_gates.py \
             Forge/tests/unit/test_delivery_verification_consistency.py \
             Forge/tests/unit/test_source_backed_repair.py \
-            Forge/tests/unit/test_artifact_receipts.py
+            Forge/tests/unit/test_artifact_receipts.py \
+            Forge/tests/unit/test_portable_fixture_repair.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora

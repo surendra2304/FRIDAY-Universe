@@ -1475,6 +1475,7 @@ claims:
     release_consent_wf010: "Arena Agent 1; claim6832247455; arena/TASK-WF-010-release-consent; 2026-11-12T18:26:01.667196+00:00; update2h/contact before takeover."
     source_repair_wf011: "Arena Agent 1; claim6833562740; arena/TASK-WF-011-source-backed-repair; 2026-11-12T19:23:46.438910+00:00; update2h/contact before takeover."
     artifact_receipts_wf012: "Arena Agent 1; claim6833971149; arena/TASK-WF-012-artifact-receipts; 2026-11-12T19:41:40.428594+00:00; update2h/contact before takeover."
+    portable_fixtures_wf013: "Arena Agent 1; claim6835005672; arena/TASK-WF-013-portable-fixture-repair; 2026-11-12T20:28:58.267072+00:00; update2h/contact before takeover."
   - path: FRIDAY/src/friday/voice/brain_bridge.py
     owner: arena_engineering_01
     prs: []
@@ -1952,6 +1953,7 @@ claims:
     claimed_at: '2026-11-12T19:23:46.438910+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
+    portable_fixtures_wf013: "Arena Agent 1; claim6835005672; arena/TASK-WF-013-portable-fixture-repair; 2026-11-12T20:28:58.267072+00:00; update2h/contact before takeover."
   - path: Forge/tests/unit/test_source_backed_repair.py
     owner: arena_engineering_01
     prs: []
@@ -1991,6 +1993,16 @@ claims:
     status: IN_PROGRESS
     task: TASK-WF-012
     claimed_at: '2026-11-12T19:41:40.428594+00:00'
+    expiry_policy: Contact before takeover; next update2h.
+
+  - path: Forge/tests/unit/test_portable_fixture_repair.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-013-portable-fixture-repair
+    status: IN_PROGRESS
+    task: TASK-WF-013
+    claimed_at: '2026-11-12T20:28:58.267072+00:00'
     expiry_policy: Contact before takeover; next update2h.
 
 conflicts_to_resolve:
