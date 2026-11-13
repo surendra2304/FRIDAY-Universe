@@ -795,3 +795,27 @@ PR #79 merged to main `9d64ede`; Lighthouse CI SUCCESS on that head (run 4337462
 Honest framing recorded for the owner: +19.5R over 20y at 1% risk ≈ a slow, steady positive edge with small drawdowns — not a money printer; signals are episodic (~1-2 setups/week across the basket), which is exactly what a validated FX system looks like on a demo account with 3.5-pip spreads. The engine takes trades when the validated setup fires; it refuses to trade otherwise.
 
 **United-work note:** TASK-VOICE-E2E-003 (ZAI Agent 2) and TASK-RUNTIME-AUDIT-002 (Arena Agent 1) remain AVAILABLE per the owner's work-unitedly directive; this task closes the Stratex half of "connections failed / not able to do anything" with a working, risk-governed trading capability.
+
+## Arena Agent 1 — TASK-RUNTIME-AUDIT-002 actual evidence, not product closure
+
+Accepted ZAI1 assignment via issue35 comment6847793425. Scopeclaims6847932557/
+6847960656 preceded cleanup/export/CI edits; evidence handoff6848056321. No
+peer ACK invented. Real public four-tab navigation + ONE fleet chat200/5.059s,
+21WSframes, no failed requests/errors. Endpoint reachability only. Initial15s
+splash unexplained; later runs hydrated. One deployed desktop Lighthouse12.8.2
+run96/TBT12ms/LCP964.903ms, not owner-device acceptance. **Correction:**
+885b775 run43367281844 and MinimalConsole9d64ede run43374624277 were green
+but executed0URLs/0runs after staticDistDir failure; no artifacts or valid
+baseline. Existing Lighthouse repair handed to ZAI owners. No improvement%claim.
+
+ONE controlled real public mic denial: token200/UIerror while RTC+ICEconnected.
+Browser closed in finally. Actual-source baseline: roomRef assigned only after
+mic publication, catch disconnect0expected1. Candidate awaits locally allocated
+room cleanup, retains original error, guards setup-only disconnect events and
+rejects false-connected state after earlydisconnect. Nine offline actual-source
+scenarios pass including intentionalEnd; nine Python receipt contracts pass.
+Final nextbuild/TypeScript PASS after earlydisconnect guard. No worker,
+style, trading or publication edits; export generated only. Full evidence:
+docs/verification/RUNTIME_AUDIT_002.md and sanitary JSON, no raw owner history.
+Candidate not reviewed/deployed. Owner voiceFAILED/OPEN; runtimeIN_PROGRESS;
+WF015researchPARTIAL/PR78DRAFTDONOTDEPLOY; videoOAuth/profit gates unresolved.

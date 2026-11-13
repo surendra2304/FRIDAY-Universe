@@ -1,0 +1,180 @@
+{
+  "state": "partial",
+  "owner_audio_accepted": false,
+  "lighthouse": {
+    "lighthouse_version": "12.8.2",
+    "url": "https://friday-universe.duckdns.org/friday/",
+    "fetch_time": "2026-11-13T08:22:54.122Z",
+    "runtime_error": null,
+    "warnings": [],
+    "performance_score": 0.96,
+    "metrics": {
+      "first-contentful-paint": {
+        "value": 565.903,
+        "display": "0.6\u00a0s"
+      },
+      "largest-contentful-paint": {
+        "value": 964.903,
+        "display": "1.0\u00a0s"
+      },
+      "speed-index": {
+        "value": 1837.075159974775,
+        "display": "1.8\u00a0s"
+      },
+      "total-blocking-time": {
+        "value": 12,
+        "display": "10\u00a0ms"
+      },
+      "cumulative-layout-shift": {
+        "value": 0.0066301086631789154,
+        "display": "0.007"
+      },
+      "interactive": {
+        "value": 964.9030000000001,
+        "display": "1.0\u00a0s"
+      }
+    }
+  },
+  "controlled_denial": {
+    "at": "2026-11-13T08:28:53.001508+00:00",
+    "scenario": "controlled_getUserMedia_denial",
+    "owner_audio_accepted": false,
+    "token_responses": [
+      200
+    ],
+    "browser_teardown": true,
+    "trace": {
+      "mic_attempts": 1,
+      "peers": [
+        {
+          "connection_state": "connected",
+          "ice_state": "connected",
+          "signaling_state": "stable"
+        }
+      ],
+      "audio_elements": 0
+    }
+  },
+  "historical_ci": [
+    {
+      "run": 43367281844,
+      "artifacts": [],
+      "jobs": [
+        {
+          "job": 131694568049,
+          "conclusion": "success",
+          "matched_lines": [
+            "2026-11-13T04:43:09.5339066Z ERROR:",
+            "2026-11-13T04:43:09.5346580Z Error: Failed to automatically determine `staticDistDir`",
+            "2026-11-13T04:43:09.5432137Z ##[group]Run lhci assert --config=.github/lighthouserc.json || true",
+            "2026-11-13T04:43:09.5432663Z \u001b[36;1mlhci assert --config=.github/lighthouserc.json || true\u001b[0m",
+            "2026-11-13T04:43:09.8360203Z Checking assertions against 0 URL(s), 0 total run(s)"
+          ]
+        }
+      ]
+    },
+    {
+      "run": 43374624277,
+      "artifacts": [],
+      "jobs": [
+        {
+          "job": 131718099261,
+          "conclusion": "success",
+          "matched_lines": [
+            "2026-11-13T05:50:45.2957420Z ERROR:",
+            "2026-11-13T05:50:45.2963461Z Error: Failed to automatically determine `staticDistDir`",
+            "2026-11-13T05:50:45.3031717Z ##[group]Run lhci assert --config=.github/lighthouserc.json || true",
+            "2026-11-13T05:50:45.3032174Z \u001b[36;1mlhci assert --config=.github/lighthouserc.json || true\u001b[0m",
+            "2026-11-13T05:50:45.5562868Z Checking assertions against 0 URL(s), 0 total run(s)"
+          ]
+        }
+      ]
+    }
+  ],
+  "raw_owner_history_published": false,
+  "candidate_validation": {
+    "source_sha256": "13e1db55829f0162368c69d94b982f7c9ae8f959ff821c031975cf245a51503e",
+    "actual_source_tests": {
+      "state": "passed",
+      "network_calls": 0,
+      "owner_audio_accepted": false,
+      "source_sha256": "13e1db55829f0162368c69d94b982f7c9ae8f959ff821c031975cf245a51503e",
+      "tests": [
+        {
+          "name": "microphone_denied",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 1,
+          "diagnostic_posts": 0
+        },
+        {
+          "name": "microphone_missing",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 1,
+          "diagnostic_posts": 0
+        },
+        {
+          "name": "token_failure",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 1,
+          "diagnostic_posts": 0
+        },
+        {
+          "name": "connect_failure",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 1,
+          "diagnostic_posts": 0
+        },
+        {
+          "name": "startup_disconnect",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 1,
+          "diagnostic_posts": 0
+        },
+        {
+          "name": "startup_disconnect_without_rejection",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 1,
+          "diagnostic_posts": 0
+        },
+        {
+          "name": "cleanup_failure",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 1,
+          "diagnostic_posts": 0
+        },
+        {
+          "name": "successful_startup",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 0,
+          "diagnostic_posts": 0
+        },
+        {
+          "name": "intentional_end",
+          "state": "passed",
+          "rooms_created": 1,
+          "disconnect_calls": 1,
+          "diagnostic_posts": 1
+        }
+      ]
+    },
+    "baseline_expected_failure": "microphone_denied: disconnect the locally allocated room; actual0expected1",
+    "receipt_contract_tests": {
+      "passed": 9,
+      "exit_code": 0
+    },
+    "next_build_and_typescript": {
+      "exit_code": 0,
+      "static_export_generated": true
+    },
+    "reviewed": false,
+    "deployed": false
+  }
+}

@@ -131,24 +131,37 @@ tasks:
 
   - id: TASK-RUNTIME-AUDIT-002
     title: "Live runtime audit — intermittent agent-connection failures + page-lag measurement on the Minimal Console"
-    status: AVAILABLE
-    owner: null
-    branch: null
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-RUNTIME-AUDIT-002
     pr: null
     contributors: []
     priority: P1
     created_at: "2026-11-13T11:10:00+05:30"
     updated_at: "2026-11-13T11:25:00+05:30"
-    files: []
+    files:
+      - FRIDAY/ui/components/VoiceCall.tsx
+      - FRIDAY/ui/out/
+      - scripts/verification/runtime_audit/
+      - .github/workflows/voice-startup-regressions.yml
+      - tests/test_runtime_audit_contract.py
+      - docs/verification/RUNTIME_AUDIT_002.md
     description: "Owner directive: united work. Arena Agent 1 owns the runtime-truth lane (experience from the WF-013/014 acceptance waves). Two questions to answer with MEASUREMENT, not opinion: (1) Under what conditions do fleet probes / agent dispatches fail from the public site (time-of-day pattern, specific agent, WebSocket vs polling path, Caddy 502s)? The 05:39 UTC snapshot showed 9/9 ONLINE — capture the failure when it happens. (2) Quantify the Minimal Console page load + interaction latency (Lighthouse CI + manual timing on a mid-range laptop) and confirm the lag complaint is resolved by the UI overhaul; if any residual jank, name the component with a profile."
     acceptance:
       - "Failure capture: at least one real occurrence of 'connection failed' from the public site reproduced and root-caused (service logs, Caddy logs, bridge fleet health at that moment), with a fix ticket or fix PR opened."
       - "Lag numbers: Lighthouse CI on the deployed Minimal Console (perf score + TBT) recorded alongside the pre-overhaul numbers; residual jank, if any, profiled and ticketed."
       - "Findings + evidence in ACTIVITY_LOG; work items split to the owning lane."
-    evidence: []
+    evidence:
+      - "Accepted issue35 comment6847793425; scope6847932557/6847960656; handoff6848056321, no peer ACK yet."
+      - "One deployed desktop Lighthouse12.8.2 run96/TBT12ms/LCP964.903ms. Historical green CI executed0audits; no numeric baseline."
+      - "Four public tabs and ONE fleet chat200/5.059s/21WSframes; endpoint reachability only."
+      - "Controlled public mic denial leaves RTCconnected after error; browser closed. Actual-source baseline disconnect0expected1; candidate9offline cases pass."
+      - "docs/verification/RUNTIME_AUDIT_002.md and sanitary adjacent evidence JSON. Owner voice FAILED/OPEN."
     blockers:
-      - "TASK-DEPLOY-GAP-001 must reach DEPLOYED first (the audit targets the new build)."
-    next_action: "Arena Agent 1 to claim via issue #35 and execute once the deploy is confirmed."
+      - "Spontaneous fleet failure not captured/correlated; initial15s splash cause unknown."
+      - "Manual owner-device timing/audio acceptance and fair historical baseline unavailable."
+      - "Cleanup candidate needs peer review, exact-head CI and protected rollout; Lighthouse fix handed to ZAI owners."
+    next_action: "Review startup cleanup, exact-head CI/protected rollout, then post-deploy denial control; continue whole-owner-workflow acceptance."
 
   - id: TASK-WF-015
     title: United owner-workflow acceptance and real shared-memory/research lifecycle
