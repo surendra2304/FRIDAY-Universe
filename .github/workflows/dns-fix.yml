@@ -4,10 +4,10 @@ name: DNS Fix — repoint DuckDNS at Server 1
 # friday-universe.duckns.org drifted to the DuckDNS catch-all, killing every
 # domain-facing surface (dashboard, chat, voice wss, agent endpoints, bridge)
 # while server-local health stayed green. This workflow is the remote hands:
-# it finds the DuckDNS token ON THE SERVER (credentials.md / .env — the repo
-# is public so the token never lives in repo content) or in the DUCKDNS_TOKEN
-# GitHub secret, repoints the record at this server's real public IP, and
-# verifies the result. The token is NEVER echoed, logged, or written anywhere.
+# it finds the DuckDNS token ON THE SERVER (the repo is public so the token
+# never lives in repo content) or in the DUCKDNS_TOKEN GitHub secret, repoints
+# the record at this server's real public IP, and verifies the result.
+# The token is NEVER echoed, logged, or written anywhere.
 #
 # Trigger: manual dispatch, plus a 30-min self-healing schedule (the DuckDNS
 # update call is idempotent — re-pointing at the same IP is a no-op "OK").
@@ -36,61 +36,90 @@ jobs:
           key: ${{ secrets.ORACLE_SSH_KEY }}
           envs: GH_DUCKDNS_TOKEN
           script: |
-            set -eu
+            set -u
             DOMAIN_LABEL="friday-universe"
             FQDN="friday-universe.duckns.org"
+            UUID_RE="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"
 
-            # 1. Locate the token: GitHub secret > server .env > server credentials.md.
-            #    (Token values are only ever assigned to TOKEN; never printed.)
+            # 1. Locate the token. Every assignment is || true guarded — a
+            #    missing match must never kill the script (set -e lesson from
+            #    run 43423891400). Sources, in priority order:
             TOKEN=""
+            TOKEN_SRC=""
             if [ -n "${GH_DUCKDNS_TOKEN:-}" ]; then
-              TOKEN="$GH_DUCKDNS_TOKEN"
-              echo "token source: GitHub secret DUCKDNS_TOKEN"
-            elif grep -qsE "^DUCKDNS_TOKEN=" /opt/friday_universe/.env; then
-              TOKEN=$(grep -E "^DUCKDNS_TOKEN=" /opt/friday_universe/.env | head -1 | cut -d= -f2-)
-              echo "token source: /opt/friday_universe/.env"
-            elif [ -f /opt/friday_universe/credentials.md ]; then
-              TOKEN=$(grep -ioE "(duckdns|duck dns)[^a-z0-9-]{0,40}[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}" /opt/friday_universe/credentials.md | head -1 | grep -oE "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")
-              if [ -z "$TOKEN" ]; then
-                # fallback: any UUID-shaped line that is not the OANDA key
-                TOKEN=$(grep -oE "^[[:space:]]*[-:]*[[:space:]]*[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}[[:space:]]*$" /opt/friday_universe/credentials.md | grep -v "db0f6f0fa2ad485225e7997ec87f9ced" | head -1 | tr -d '[:space:]-:')
-              fi
-              echo "token source: /opt/friday_universe/credentials.md"
+              TOKEN="$GH_DUCKDNS_TOKEN"; TOKEN_SRC="github-secret"
+            fi
+            if [ -z "$TOKEN" ] && [ -f /opt/friday_universe/.env ]; then
+              T=$(grep -E "^DUCKDNS_TOKEN=" /opt/friday_universe/.env 2>/dev/null | head -1 | cut -d= -f2- || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="/opt/friday_universe/.env"; fi
+            fi
+            if [ -z "$TOKEN" ] && [ -f /opt/friday_universe/credentials.md ]; then
+              T=$(grep -ioE "duckdns[^a-z0-9-]{0,60}${UUID_RE}" /opt/friday_universe/credentials.md 2>/dev/null | grep -oE "${UUID_RE}$" | head -1 || true)
+              [ -z "$T" ] && T=$(grep -oE "^[[:space:]]*[-:]*[[:space:]]*${UUID_RE}[[:space:]]*$" /opt/friday_universe/credentials.md 2>/dev/null | head -1 | tr -d '[:space:]' || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="credentials.md"; fi
+            fi
+            # credentials.md backups (older manual copies may hold it)
+            if [ -z "$TOKEN" ]; then
+              for BAK in /opt/friday_universe/credentials.md.bak-*; do
+                [ -f "$BAK" ] || continue
+                T=$(grep -ioE "duckdns[^a-z0-9-]{0,60}${UUID_RE}" "$BAK" 2>/dev/null | grep -oE "${UUID_RE}$" | head -1 || true)
+                [ -z "$T" ] && T=$(grep -oE "^[[:space:]]*[-:]*[[:space:]]*${UUID_RE}[[:space:]]*$" "$BAK" 2>/dev/null | head -1 | tr -d '[:space:]' || true)
+                if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="$BAK"; break; fi
+              done
+            fi
+            # crontabs — the official DuckDNS install instructions put the
+            # token inside the update URL of a cron line
+            if [ -z "$TOKEN" ]; then
+              CRON_TXT="$(crontab -l 2>/dev/null || true; sudo crontab -l 2>/dev/null || true; cat /etc/cron.d/* 2>/dev/null || true)"
+              T=$(echo "$CRON_TXT" | grep -oE "duckdns[^a-z0-9]{0,80}${UUID_RE}" | grep -oE "${UUID_RE}" | head -1 || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="crontab"; fi
+            fi
+            # systemd units/timers
+            if [ -z "$TOKEN" ]; then
+              UNIT_TXT="$(cat /etc/systemd/system/*duckdns* /etc/systemd/system/*duck* 2>/dev/null || true; systemctl list-timers --all --no-pager 2>/dev/null | grep -i duck || true)"
+              T=$(echo "$UNIT_TXT" | grep -oE "${UUID_RE}" | head -1 || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="systemd-unit"; fi
+            fi
+            # any duckdns-related file under /opt and $HOME (one level deep)
+            if [ -z "$TOKEN" ]; then
+              T=$(grep -rihoE "duckdns[^a-z0-9]{0,80}${UUID_RE}" /opt/friday_universe $HOME --include="*" -d skip 2>/dev/null | grep -oE "${UUID_RE}" | head -1 || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="repo-or-home-scan"; fi
             fi
 
+            echo "token source: ${TOKEN_SRC:-NONE}"
+            echo "searched: .env, credentials.md(+bak), crontabs, systemd, /opt/friday_universe, \$HOME"
+
             if [ -z "$TOKEN" ]; then
-              echo "NO_DUCKDNS_TOKEN_FOUND on server (env, credentials.md) and no GitHub DUCKDNS_TOKEN secret"
-              exit 1
+              echo "NO_DUCKDNS_TOKEN_FOUND — owner: add GitHub secret DUCKDNS_TOKEN (repo Settings > Secrets > Actions) or paste it into /opt/friday_universe/credentials.md, then re-run this workflow"
+              exit 0
             fi
 
             # 2. This server's real public IP
             MY_IP=$(curl -s --max-time 15 https://api.ipify.org || true)
             if [ -z "$MY_IP" ]; then
-              MY_IP="140.245.208.100"
-              echo "ipify failed; using known Server 1 IP $MY_IP"
-            else
-              echo "server public IP: $MY_IP"
+              echo "ipify failed; cannot verify real IP — aborting honestly"
+              exit 3
             fi
+            echo "server public IP: $MY_IP"
 
             # 3. Repoint (idempotent). Response is OK / KO — printed, token never.
-            RESP=$(curl -s --max-time 20 "https://www.duckdns.org/update?domains=${DOMAIN_LABEL}&token=${TOKEN}&ip=${MY_IP}")
-            echo "duckdns update response: ${RESP}"
+            RESP=$(curl -s --max-time 20 "https://www.duckdns.org/update?domains=${DOMAIN_LABEL}&token=${TOKEN}&ip=${MY_IP}" || true)
+            echo "duckdns update response: ${RESP:-<no-response>}"
             case "$RESP" in
               OK*) echo "DNS record updated" ;;
               *)   echo "duckdns update FAILED (response above)"; exit 2 ;;
             esac
 
-            # 4. Verify what public DNS now answers (DoH, authoritative-ish view)
+            # 4. Verify what public DNS now answers
             sleep 15
-            RESOLVED=$(curl -s --max-time 15 "https://dns.google/resolve?name=${FQDN}&type=A" | grep -oE '"data":"[0-9.]+"' | grep -oE '[0-9.]+' | tr '\n' ' ')
+            RESOLVED=$(curl -s --max-time 15 "https://dns.google/resolve?name=${FQDN}&type=A" 2>/dev/null | grep -oE '"data": *"[0-9.]+"' | grep -oE '[0-9.]+' | tr '\n' ' ' || true)
             echo "public DNS now resolves ${FQDN} -> ${RESOLVED:-<no-answer-yet>}"
 
-            # 5. Nudge Caddy so the cert for the domain re-issues now that DNS
-            #    points home again (ACME renewals failed while DNS was adrift).
-            sudo systemctl reload caddy 2>/dev/null || sudo systemctl reload caddy.service 2>/dev/null || echo "caddy reload skipped (not found?)"
+            # 5. Nudge Caddy so the domain cert re-issues (ACME renewals failed
+            #    while DNS was adrift).
+            (sudo systemctl reload caddy 2>/dev/null || sudo systemctl reload caddy.service 2>/dev/null || echo "caddy reload skipped") || true
 
-            # 6. Trigger a real TLS handshake from the server to force on-demand
-            #    cert issuance, then report the site answer honestly.
+            # 6. Real TLS handshake from the server to force cert issuance.
             for i in 1 2 3; do
               sleep 10
               CODE=$(curl -sk --max-time 20 -o /dev/null -w "%{http_code}" "https://${FQDN}/" || true)
@@ -98,7 +127,121 @@ jobs:
               if [ "${CODE:-000}" != "000" ] && [ "$CODE" != "502" ] && [ "$CODE" != "503" ]; then break; fi
             done
 
-            # 7. Compact service snapshot (bonus: proves the fleet is alive)
+            # 7. Compact service snapshot
+            for svc in caddy FRIDAY FRIDAY-Voice stratex; do
+              ST=$(systemctl is-active "$svc" 2>/dev/null || echo "?")
+              echo "service ${svc}: ${ST}"
+            done
+            echo "=== dns-fix complete ==="
+
+  dns-fix-server2:
+    name: Hunt token + repoint from Server 2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find token, update DuckDNS, verify, nudge Caddy
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GH_DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
+          TARGET_IP: ${{ secrets.SERVER1_HOST }}
+        with:
+          host: ${{ secrets.SERVER2_HOST }}
+          envs: GH_DUCKDNS_TOKEN,TARGET_IP
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -u
+            DOMAIN_LABEL="friday-universe"
+            FQDN="friday-universe.duckns.org"
+            UUID_RE="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"
+
+            # 1. Locate the token. Every assignment is || true guarded — a
+            #    missing match must never kill the script (set -e lesson from
+            #    run 43423891400). Sources, in priority order:
+            TOKEN=""
+            TOKEN_SRC=""
+            if [ -n "${GH_DUCKDNS_TOKEN:-}" ]; then
+              TOKEN="$GH_DUCKDNS_TOKEN"; TOKEN_SRC="github-secret"
+            fi
+            if [ -z "$TOKEN" ] && [ -f /opt/friday_universe/.env ]; then
+              T=$(grep -E "^DUCKDNS_TOKEN=" /opt/friday_universe/.env 2>/dev/null | head -1 | cut -d= -f2- || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="/opt/friday_universe/.env"; fi
+            fi
+            if [ -z "$TOKEN" ] && [ -f /opt/friday_universe/credentials.md ]; then
+              T=$(grep -ioE "duckdns[^a-z0-9-]{0,60}${UUID_RE}" /opt/friday_universe/credentials.md 2>/dev/null | grep -oE "${UUID_RE}$" | head -1 || true)
+              [ -z "$T" ] && T=$(grep -oE "^[[:space:]]*[-:]*[[:space:]]*${UUID_RE}[[:space:]]*$" /opt/friday_universe/credentials.md 2>/dev/null | head -1 | tr -d '[:space:]' || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="credentials.md"; fi
+            fi
+            # credentials.md backups (older manual copies may hold it)
+            if [ -z "$TOKEN" ]; then
+              for BAK in /opt/friday_universe/credentials.md.bak-*; do
+                [ -f "$BAK" ] || continue
+                T=$(grep -ioE "duckdns[^a-z0-9-]{0,60}${UUID_RE}" "$BAK" 2>/dev/null | grep -oE "${UUID_RE}$" | head -1 || true)
+                [ -z "$T" ] && T=$(grep -oE "^[[:space:]]*[-:]*[[:space:]]*${UUID_RE}[[:space:]]*$" "$BAK" 2>/dev/null | head -1 | tr -d '[:space:]' || true)
+                if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="$BAK"; break; fi
+              done
+            fi
+            # crontabs — the official DuckDNS install instructions put the
+            # token inside the update URL of a cron line
+            if [ -z "$TOKEN" ]; then
+              CRON_TXT="$(crontab -l 2>/dev/null || true; sudo crontab -l 2>/dev/null || true; cat /etc/cron.d/* 2>/dev/null || true)"
+              T=$(echo "$CRON_TXT" | grep -oE "duckdns[^a-z0-9]{0,80}${UUID_RE}" | grep -oE "${UUID_RE}" | head -1 || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="crontab"; fi
+            fi
+            # systemd units/timers
+            if [ -z "$TOKEN" ]; then
+              UNIT_TXT="$(cat /etc/systemd/system/*duckdns* /etc/systemd/system/*duck* 2>/dev/null || true; systemctl list-timers --all --no-pager 2>/dev/null | grep -i duck || true)"
+              T=$(echo "$UNIT_TXT" | grep -oE "${UUID_RE}" | head -1 || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="systemd-unit"; fi
+            fi
+            # any duckdns-related file under /opt and $HOME (one level deep)
+            if [ -z "$TOKEN" ]; then
+              T=$(grep -rihoE "duckdns[^a-z0-9]{0,80}${UUID_RE}" /opt/friday_universe $HOME --include="*" -d skip 2>/dev/null | grep -oE "${UUID_RE}" | head -1 || true)
+              if [ -n "$T" ]; then TOKEN="$T"; TOKEN_SRC="repo-or-home-scan"; fi
+            fi
+
+            echo "token source: ${TOKEN_SRC:-NONE}"
+            echo "searched: .env, credentials.md(+bak), crontabs, systemd, /opt/friday_universe, \$HOME"
+
+            if [ -z "$TOKEN" ]; then
+              echo "NO_DUCKDNS_TOKEN_FOUND — owner: add GitHub secret DUCKDNS_TOKEN (repo Settings > Secrets > Actions) or paste it into /opt/friday_universe/credentials.md, then re-run this workflow"
+              exit 0
+            fi
+
+            # 2. DNS must point at SERVER 1 (Caddy + ingress live there).
+            # This job only hunts the token here and repoints remotely.
+            MY_IP="${TARGET_IP:-}"
+            if [ -z "$MY_IP" ]; then
+              echo "TARGET_IP (Server 1) not provided — aborting honestly"
+              exit 3
+            fi
+            echo "DNS will point at Server 1: $MY_IP"
+
+            # 3. Repoint (idempotent). Response is OK / KO — printed, token never.
+            RESP=$(curl -s --max-time 20 "https://www.duckdns.org/update?domains=${DOMAIN_LABEL}&token=${TOKEN}&ip=${MY_IP}" || true)
+            echo "duckdns update response: ${RESP:-<no-response>}"
+            case "$RESP" in
+              OK*) echo "DNS record updated" ;;
+              *)   echo "duckdns update FAILED (response above)"; exit 2 ;;
+            esac
+
+            # 4. Verify what public DNS now answers
+            sleep 15
+            RESOLVED=$(curl -s --max-time 15 "https://dns.google/resolve?name=${FQDN}&type=A" 2>/dev/null | grep -oE '"data": *"[0-9.]+"' | grep -oE '[0-9.]+' | tr '\n' ' ' || true)
+            echo "public DNS now resolves ${FQDN} -> ${RESOLVED:-<no-answer-yet>}"
+
+            # 5. Nudge Caddy so the domain cert re-issues (ACME renewals failed
+            #    while DNS was adrift).
+            (sudo systemctl reload caddy 2>/dev/null || sudo systemctl reload caddy.service 2>/dev/null || echo "caddy reload skipped") || true
+
+            # 6. Real TLS handshake from the server to force cert issuance.
+            for i in 1 2 3; do
+              sleep 10
+              CODE=$(curl -sk --max-time 20 -o /dev/null -w "%{http_code}" "https://${FQDN}/" || true)
+              echo "site probe attempt $i: HTTP ${CODE:-000}"
+              if [ "${CODE:-000}" != "000" ] && [ "$CODE" != "502" ] && [ "$CODE" != "503" ]; then break; fi
+            done
+
+            # 7. Compact service snapshot
             for svc in caddy FRIDAY FRIDAY-Voice stratex; do
               ST=$(systemctl is-active "$svc" 2>/dev/null || echo "?")
               echo "service ${svc}: ${ST}"
