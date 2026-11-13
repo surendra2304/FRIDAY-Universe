@@ -463,7 +463,9 @@ async def _probe_orpheus_tts() -> bool:
     if not key or not GROQ_PLUGIN_AVAILABLE:
         return False
     try:
-        async with httpx.AsyncClient(base_url="https://api.groq.com", timeout=15) as client:
+        async with httpx.AsyncClient(
+            base_url="https://api.groq.com", timeout=15, verify=_SSL_CONTEXT
+        ) as client:
             resp = await client.post(
                 "/openai/v1/audio/speech",
                 headers={"Authorization": f"Bearer {key}"},
@@ -724,6 +726,9 @@ async def entrypoint(ctx: JobContext):
     # the Gemini path it is the orpheus fallback attached to the session)
     _fixed_voice = _fallback_tts()
 
+    session_closing = False
+    greeting_task: asyncio.Task | None = None
+
     async def _greet_when_ready() -> None:
         """Speak a greeting the owner can actually HEAR, in this order:
 
@@ -784,12 +789,15 @@ async def entrypoint(ctx: JobContext):
             "then invite them to speak." + _telugu_line
         )
         try:
+            if session_closing:
+                logger.info("VOICE warm greeting skipped: session is already closing")
+                return
             session.generate_reply(user_input=_greeting_prompt)
             logger.info("VOICE warm greeting requested")
         except Exception as exc:
             logger.error("VOICE warm greeting generation failed: %s", exc)
 
-    asyncio.create_task(_greet_when_ready())
+    greeting_task = asyncio.create_task(_greet_when_ready())
 
     # ---- Clean exit when the owner leaves (2026-11-13, ZAI Agent 1) ----
     # Live probes proved agent pileup in the shared room: every call
@@ -799,9 +807,13 @@ async def entrypoint(ctx: JobContext):
     # its session promptly when the last human leaves, instead of lingering
     # until the room timeout.
     async def _close_session_when_empty() -> None:
+        nonlocal session_closing
         try:
             if session is None:
                 return
+            session_closing = True
+            if greeting_task is not None and not greeting_task.done():
+                greeting_task.cancel()
             closer = getattr(session, "aclose", None) or getattr(session, "close", None)
             if closer is not None:
                 result = closer()
