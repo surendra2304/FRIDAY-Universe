@@ -19,6 +19,32 @@ status_definitions:
   CLOSED: "Formally closed; reason and evidence recorded."
 
 tasks:
+  - id: TASK-WF-015-INFERENCE-001
+    title: "Preserve explicit inference model and honest completion metadata through cache"
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-015-inference-model-contract
+    pr: null
+    contributors: []
+    priority: P1
+    files:
+      - Inference/app/api/v1_core_routes.py
+      - Inference/app/providers/unified_manager.py
+      - tests/test_inference_explicit_model_contract.py
+      - docs/verification/WF015_INFERENCE_MODEL_CONTRACT.md
+    acceptance:
+      - "Explicit model reaches existing policy ModelGateway and separates cache identity; actual served model remains honest."
+      - "Truncated/unknown/failure finish reasons cannot become stop on cache hit; auto fast-lane defaults unchanged."
+      - "Exact-head CI, peer review, protected coordinated rollout and one bounded actual research-answer gate; no fabricated synthesis."
+    evidence:
+      - "Issue35 source proof6848248304 and pre-edit scope6848266494. Actual-source before12FAIL/3PASS, candidate15PASS, zero network/modelcalls."
+      - "Existing native Inference gateway/cache/no-fabrication/local-tier62PASS; ruffPASS; source/docs remain candidate only."
+      - "docs/verification/WF015_INFERENCE_MODEL_CONTRACT.md; previous live synthesisValueError exact cause remains unproven."
+    blockers:
+      - "Peer review/CI/protected joint rollout pending; S2 peer PR83 branch ahead of main must not be overwritten."
+      - "Research answer relevance remains PARTIAL; PR78 DRAFT DO NOT MERGE/DEPLOY."
+    next_action: "Review isolated model/cache/finish repair; run exact-head CI and coordinate reviewed peer branches before any rollout/live answer probe."
+
   - id: TASK-STRATEX-OANDA-001
     title: "OANDA demo trading — credential vault, adapter hardening, validated profitable strategy, live 24/5 engine"
     status: IN_PROGRESS

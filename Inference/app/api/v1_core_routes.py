@@ -838,7 +838,7 @@ class ChatMessage(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    model: str = "auto"
+    model: str = Field(default="auto", min_length=1, max_length=200)
     messages: list[ChatMessage] = Field(default_factory=list)
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=1024, ge=1, le=128000)
@@ -951,6 +951,7 @@ async def chat_completions(req: ChatCompletionRequest):
 
     exec_req = UnifiedExecutionRequest(
         provider=exec_provider,
+        model=None if req.model == "auto" else req.model,
         agent_role="system_architect",
         prompt=f"{system_instruction}\n\n{prompt}",
         temperature=exec_temp,
@@ -973,7 +974,8 @@ async def chat_completions(req: ChatCompletionRequest):
                     "role": "assistant",
                     "content": res.content,
                 },
-                "finish_reason": res.finish_reason or "stop",
+                # Missing metadata is unknown, not proof of completed generation.
+                "finish_reason": res.finish_reason,
             }
         ],
         "usage": {

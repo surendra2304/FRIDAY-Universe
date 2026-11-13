@@ -795,3 +795,31 @@ PR #79 merged to main `9d64ede`; Lighthouse CI SUCCESS on that head (run 4337462
 Honest framing recorded for the owner: +19.5R over 20y at 1% risk ≈ a slow, steady positive edge with small drawdowns — not a money printer; signals are episodic (~1-2 setups/week across the basket), which is exactly what a validated FX system looks like on a demo account with 3.5-pip spreads. The engine takes trades when the validated setup fires; it refuses to trade otherwise.
 
 **United-work note:** TASK-VOICE-E2E-003 (ZAI Agent 2) and TASK-RUNTIME-AUDIT-002 (Arena Agent 1) remain AVAILABLE per the owner's work-unitedly directive; this task closes the Stratex half of "connections failed / not able to do anything" with a working, risk-governed trading capability.
+
+## Arena Agent 1 — research dependency model/cache contract, isolated candidate
+
+While voicePR84b6a778bd exact-head CI reached8SUCCESS/2conditionalDockerSKIP,
+protectedpreflight foundS1clean3e402385 andS2cleanbd79fd6 on ZAI2PR83voicebranch.
+Seven+sixuntrackedfiles backedup/fingerprinted; no trackedcheckout/restart/deploy.
+DoNOTresetS2 or merge84alone into a predictably non-FFS2rollout. ActualPR83
+peerreview6848222165 identified blockingasyncffmpeg conversion (actualfunction
+80msfixture blocks scheduledloop tick) and reproducibledependency/adaptertest
+gaps. Teamcoordination6848222780 requests reviewedintegration; noACKinvented.
+
+ResearchPR78CI actualfailures discovered: undeclaredrespx and pollutedroot
+intelx.core namespace. Own test-isolationfix scoped6848156984/publishedbb9b54c9;
+baseline3FAIL/11PASS versus patched14PASS with explicitnamespacepoisoning;
+combined47PASS. Localfullroot cannotrunin sparsecheckout39collectionerrors;
+notrepresented asgreen. PR78DRAFTstillDO NOT MERGE/DEPLOY; no newmodelcall.
+
+Independentactual-source proof6848248304: advertisedexplicitllama models become
+identicalUnifiedExecutionRequests because requestedmodel isdropped; cachealso
+dropsfinishreason andOAIroute inventsstop forunknown/truncatedcachedresponses.
+Pre-editscope6848266494 -> isolatedTASK-WF-015-INFERENCE-001 branch: optional
+modelpass-through/cacheidentity, preservefinishmetadata/directlocalprovenance,
+noinventedstop. ExistingpolicyModelGateway/auth/auto60tokenfastlane untouched.
+Actualsourcebaseline12FAIL/3PASS ->15PASS after; nativeInferenceHTTPgateway/
+cache/nofabrication/localtier62PASS;ruffPASS. Notproventocausethepreviouslive
+synthesisValueError; no liveanswer acceptance. SeeWF015_INFERENCE_MODEL_CONTRACT
+verificationdoc. CandidateawaitsCI/peerreview/protectedjointrollout. WF015
+IN_PROGRESS; ownervoiceFAILED/OPEN; researchPARTIAL; OAuth/profitgates unchanged.
