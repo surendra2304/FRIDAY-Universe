@@ -15,9 +15,13 @@ livekit-api>=1.0.0
 # installed out-of-band on Server 1; pinning the full set here keeps fresh
 # machines reproducible. livekit-plugins-groq is the WORKING speech path
 # (Groq STT+LLM+TTS on the key the chat brain already uses live).
+# edge-tts: keyless fallback TTS (en-IN native) — live 2026-11-13, the Groq
+# orpheus model requires console terms acceptance and 400s until the org
+# admin accepts them; without this the voice line is silent dead air.
 livekit-agents>=1.0.0
 livekit-plugins-google>=1.0.0
 livekit-plugins-groq>=1.0.0
+edge-tts>=7.0.0
 python-dotenv>=1.0.0
 duckduckgo-search>=6.0.0
 beautifulsoup4>=4.12.0
