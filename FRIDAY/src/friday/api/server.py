@@ -1329,7 +1329,19 @@ async def livekit_token(
     room: str = "friday",
     identity: str = "owner",
 ) -> dict[str, str]:
-    """Mint a short-lived LiveKit room token for the authenticated dashboard."""
+    """Mint a short-lived LiveKit room token for the authenticated dashboard.
+
+    Voice dispatch fix (2026-11-13, ZAI Agent 1): the bare RoomJoin token
+    relied on LiveKit-console dispatch rules to route a job to the voice
+    worker — they do not fire for the per-call rooms the dashboard mints
+    (``friday-<id>``), so the worker sat at "registered / waiting for the
+    first job" and the owner heard dead air. The token now carries the
+    agent dispatch itself (RoomConfiguration.agents, the LiveKit template
+    pattern): joining the room ALWAYS dispatches the FRIDAY voice worker
+    registered under the matching agent name. Older livekit-api builds
+    fall back to an explicit AgentDispatchService call; both paths
+    degrade to the legacy bare token if anything is unavailable.
+    """
     room = room.strip()
     identity = identity.strip()
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}", room):
@@ -1352,15 +1364,55 @@ async def livekit_token(
         logger.error("LiveKit token service is unavailable: %s", exc)
         raise HTTPException(status_code=503, detail="LiveKit server SDK is unavailable") from exc
 
-    token = (
+    # Must match WorkerOptions(agent_name=...) in src/friday/voice/livekit_worker.py.
+    voice_agent_name = os.getenv("FRIDAY_VOICE_AGENT_NAME", "friday").strip() or "friday"
+
+    builder = (
         api.AccessToken(api_key, api_secret)
         .with_identity(identity)
         .with_name(identity)
         .with_ttl(timedelta(minutes=10))
         .with_grants(api.VideoGrants(room_join=True, room=room))
-        .to_jwt()
     )
-    return {"server_url": livekit_url, "token": token, "room": room, "identity": identity}
+
+    dispatch_mode = "none"
+    try:
+        room_config = api.RoomConfiguration(
+            agents=[api.RoomAgentDispatch(agent_name=voice_agent_name)],
+        )
+        builder = builder.with_room_config(room_config)
+        dispatch_mode = "token-room-config"
+    except AttributeError:
+        # livekit-api too old for token-attached dispatch — explicit API below.
+        dispatch_mode = "none"
+    except Exception as exc:
+        logger.warning("token room-config dispatch unavailable (%s); trying explicit dispatch", exc)
+
+    token = builder.to_jwt()
+
+    if dispatch_mode == "none":
+        # Fallback: create the dispatch explicitly through the server API.
+        # Best effort — a failure still returns the joinable token (the call
+        # degrades to the legacy console-rule behavior, never to an error).
+        try:
+            lkapi = api.LiveKitAPI(livekit_url, api_key, api_secret)
+            try:
+                await lkapi.agent_dispatch.create_dispatch(
+                    api.CreateAgentDispatchRequest(room=room, agent=voice_agent_name)
+                )
+                dispatch_mode = "explicit-api"
+            finally:
+                await lkapi.aclose()
+        except Exception as exc:
+            logger.warning("explicit agent dispatch failed for room %s: %s", room, exc)
+
+    return {
+        "server_url": livekit_url,
+        "token": token,
+        "room": room,
+        "identity": identity,
+        "agent_dispatch": dispatch_mode,
+    }
 
 
 @app.get("/api/agents")

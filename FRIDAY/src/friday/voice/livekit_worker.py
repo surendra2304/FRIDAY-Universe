@@ -736,6 +736,19 @@ def _on_worker_started() -> None:
     _write_status("registered", "pending", detail="waiting for the first job")
 
 
+def _agent_name() -> str:
+    """Registration name — MUST match the dispatch in /api/livekit/token.
+
+    Voice dispatch fix (2026-11-13, ZAI Agent 1): the dashboard token now
+    carries RoomConfiguration.agents=[RoomAgentDispatch(agent_name="friday")],
+    so joining a room deterministically dispatches THIS worker. An unnamed
+    worker registers under LiveKit's default agent name and never receives
+    those jobs — the "registered / waiting for the first job" dead-air
+    failure the owner reported.
+    """
+    return (os.getenv("FRIDAY_VOICE_AGENT_NAME") or "friday").strip() or "friday"
+
+
 if __name__ == "__main__":
     try:
         from livekit.agents import RunConfig, run_kwargs  # type: ignore
@@ -747,6 +760,7 @@ if __name__ == "__main__":
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,
+            agent_name=_agent_name(),
             ws_url=os.getenv("LIVEKIT_URL"),
             api_key=os.getenv("LIVEKIT_API_KEY"),
             api_secret=os.getenv("LIVEKIT_API_SECRET"),

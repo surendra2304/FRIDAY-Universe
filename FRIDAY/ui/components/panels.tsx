@@ -36,7 +36,7 @@ import {
   istTime,
   statusTone,
 } from "@/lib/api";
-import { CountUp, Magnetic, Reveal, SpotlightCard } from "./effects";
+import { CountUp, Magnetic, Reveal, SpotlightCard, Tilt } from "./effects";
 
 /* ============================================================
    Fleet grid, activity feed and system panel.
@@ -154,8 +154,9 @@ export function FleetGrid({
         const tone = statusTone(agent.status);
         return (
           <Reveal key={agent.id} delay={Math.min(index * 60, 360)} as="article">
-            <SpotlightCard className={`agent-card tone-${tone}${isActive ? " active" : ""}`}>
-              <span className="edge" aria-hidden="true" />
+            <Tilt max={6}>
+              <SpotlightCard className={`agent-card tone-${tone}${isActive ? " active" : ""}`}>
+                <span className="edge" aria-hidden="true" />
               <div className="agent-head">
                 <div className="agent-icon">{AGENT_ICONS[agent.id] ?? <Database size={17} />}</div>
                 <div className="agent-identity">
@@ -222,6 +223,7 @@ export function FleetGrid({
                 </Magnetic>
               </div>
             </SpotlightCard>
+            </Tilt>
           </Reveal>
         );
       })}

@@ -31,10 +31,14 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
 
   /* Conversation-memory fix 2026-11-13: the server has persisted history
      (/api/v1/conversation/history, logged by every command), but the panel
-     started EMPTY on every page load — the owner relaoded to a blank chat and
+     started EMPTY on every page load — the owner reloaded to a blank chat and
      concluded FRIDAY has no memory. Hydrate the last session's exchanges on
-     mount. Failure is silent and normal: a fresh install simply has nothing
-     to restore, and the chat starts empty as before. */
+     mount. Round 2 (2026-11-13, owner directive): restore at most the last
+     20 messages — a full 60-message wall (mostly one-line failures) read as
+     a broken product on first paint. A divider marks it as restored context
+     so the fresh session reads clean. Failure is silent and normal: a fresh
+     install simply has nothing to restore. */
+  const [restoredCount, setRestoredCount] = useState(0);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -45,7 +49,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
             friday_reply?: string;
             timestamp?: string;
           }>;
-        }>("/api/v1/conversation/history?limit=30");
+        }>("/api/v1/conversation/history?limit=10");
         if (cancelled || !res.entries?.length) return;
         const restored: ChatMessage[] = [];
         for (const e of [...res.entries].reverse()) {
@@ -53,7 +57,11 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
           if (e.user_input?.trim()) restored.push({ role: "user", text: e.user_input, at });
           if (e.friday_reply?.trim()) restored.push({ role: "friday", text: e.friday_reply, at });
         }
-        if (restored.length) setMessages(restored.slice(-60));
+        const capped = restored.slice(-20);
+        if (capped.length) {
+          setMessages(capped);
+          setRestoredCount(capped.length);
+        }
       } catch {
         /* history unavailable → fresh chat, not an error surface */
       }
@@ -145,6 +153,11 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
           </div>
         )}
         <div className="chat-scroll" ref={scrollRef}>
+          {restoredCount > 0 && (
+            <div className="session-divider" aria-label="Restored conversation history">
+              last session · {restoredCount} messages
+            </div>
+          )}
           {messages.length === 0 && (
             <div className="chat-empty">
               <h4 className="chat-empty-title">How can I help, Boss?</h4>

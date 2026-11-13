@@ -4,7 +4,15 @@ import { Activity, Clock3, LayoutGrid, Radio, TerminalSquare, Waypoints } from "
 import { useCallback, useEffect, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { EmptyState, OnboardingHint, OwnerPreferences, VoiceDiagnostics } from "@/components/batch8";
-import { AuroraBackground, FloatingOrbs, ParticleField, Reveal, ScrambleText } from "@/components/effects";
+import {
+  AuroraBackground,
+  CountUp,
+  FloatingOrbs,
+  ParticleField,
+  Reveal,
+  ScrambleText,
+  SplitText,
+} from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
 import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
@@ -19,6 +27,7 @@ import {
   apiBase,
   istTime,
   requestJson,
+  statusTone,
 } from "@/lib/api";
 
 /* ============================================================
@@ -155,7 +164,11 @@ export default function Page() {
     };
   }, [mounted]);
 
-  const onlineCount = fleet?.agents?.filter((a) => a.status?.toUpperCase() === "ONLINE").length ?? 0;
+  /* Unified live count (VLM review round 2): the nav used to count strictly
+     ONLINE while the console strip counted ONLINE+REACHABLE — the two numbers
+     disagreed on screen. One definition now: an agent is live when it answers
+     the probe (good tone). */
+  const onlineCount = fleet?.agents?.filter((a) => statusTone(a.status) === "good").length ?? 0;
   const totalAgents = fleet?.agent_count ?? fleet?.agents?.length ?? 10;
 
   function askAgent(agent: Agent) {
@@ -233,16 +246,46 @@ export default function Page() {
         {/* ============ CONSOLE — FRIDAY communication only ============ */}
         <section className={`tabview${tab === "console" ? " on" : ""}`} hidden={tab !== "console"} aria-label="FRIDAY console">
           <Reveal className="console-hero">
+            <div className="hero-grid" aria-hidden="true" />
             <div className="hero-eyebrow">
               <span className="hero-live-dot" aria-hidden="true" />
               <ScrambleText text="SOVEREIGN OPERATING SYSTEM" />
             </div>
             <h1 className="hero-title">
-              One voice moves the <span className="grad-text">whole universe</span>.
+              <SplitText text="One voice moves the" />{" "}
+              <SplitText text="whole universe." delay={420} gradient step={120} />
             </h1>
             <p className="hero-sub">
               Ten specialist agents, one continuous line. Speak or type — FRIDAY listens, remembers and dispatches in real time.
             </p>
+            {/* Live stat band — animated counters on REAL fleet/ledger data,
+                never decorative claims (values are omitted while loading). */}
+            <div className="stat-band" role="status" aria-label="Live universe statistics">
+              <div className="stat-cell">
+                <span className="num">
+                  {fleet ? (
+                    <>
+                      <CountUp value={onlineCount} /><span style={{ fontSize: 15, opacity: 0.7 }}>/{totalAgents}</span>
+                    </>
+                  ) : (
+                    "··"
+                  )}
+                </span>
+                <span className="lbl">Agents live</span>
+              </div>
+              <div className="stat-cell">
+                <span className="num">{autonomy ? <CountUp value={autonomy.history_count ?? 0} /> : "··"}</span>
+                <span className="lbl">Auto actions</span>
+              </div>
+              <div className="stat-cell">
+                <span className="num">{timeline ? <CountUp value={timeline.total_records ?? 0} /> : "··"}</span>
+                <span className="lbl">Tasks delegated</span>
+              </div>
+              <div className="stat-cell">
+                <span className="num">{autonomy?.autonomous_mode ? "ON" : "STANDBY"}</span>
+                <span className="lbl">Autonomy mode</span>
+              </div>
+            </div>
           </Reveal>
           <div className="console">
             <div className="console-left-wrap">

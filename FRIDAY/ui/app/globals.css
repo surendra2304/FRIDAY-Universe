@@ -89,6 +89,13 @@ a { color: inherit; text-decoration: none; }
    LIVING BACKGROUND — aurora / starfield / floating orbs
    ============================================================ */
 
+/* Owner directive round 2 (2026-11-13): the first Living Universe pass
+   was measured "too subtle to see on most monitors" — the aurora now
+   carries real luminous weight: five saturated blobs, brighter gradient
+   stops, and a top-of-sky aurora ribbon. (A global hue-rotate animation
+   was tried and dropped: repainting the full-viewport filter every frame
+   is a real GPU cost for zero information.) */
+
 .aurora {
   position: fixed;
   inset: 0;
@@ -96,44 +103,76 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden;
   pointer-events: none;
   background:
-    radial-gradient(120% 90% at 50% -10%, rgba(124, 92, 255, 0.10), transparent 55%),
+    radial-gradient(120% 90% at 50% -10%, rgba(124, 92, 255, 0.16), transparent 55%),
     var(--bg);
 }
 
 .aurora-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.5;
+  filter: blur(72px);
+  opacity: 0.85;
   will-change: transform;
 }
 
 .aurora-blob.a1 {
-  width: 55vw; height: 55vw; min-width: 420px; min-height: 420px;
+  width: 58vw; height: 58vw; min-width: 440px; min-height: 440px;
   left: -12vw; top: -18vh;
-  background: radial-gradient(circle at 30% 30%, rgba(124, 92, 255, 0.55), rgba(124, 92, 255, 0) 65%);
+  background: radial-gradient(circle at 30% 30%, rgba(124, 92, 255, 0.78), rgba(124, 92, 255, 0) 66%);
   animation: aurora-drift-1 34s ease-in-out infinite alternate;
 }
 
 .aurora-blob.a2 {
-  width: 48vw; height: 48vw; min-width: 380px; min-height: 380px;
+  width: 50vw; height: 50vw; min-width: 400px; min-height: 400px;
   right: -14vw; top: -6vh;
-  background: radial-gradient(circle at 60% 40%, rgba(34, 211, 238, 0.42), rgba(34, 211, 238, 0) 65%);
+  background: radial-gradient(circle at 60% 40%, rgba(34, 211, 238, 0.62), rgba(34, 211, 238, 0) 66%);
   animation: aurora-drift-2 40s ease-in-out infinite alternate;
 }
 
 .aurora-blob.a3 {
-  width: 44vw; height: 44vw; min-width: 340px; min-height: 340px;
+  width: 46vw; height: 46vw; min-width: 360px; min-height: 360px;
   left: 22vw; bottom: -26vh;
-  background: radial-gradient(circle at 50% 50%, rgba(245, 165, 36, 0.30), rgba(245, 165, 36, 0) 65%);
+  background: radial-gradient(circle at 50% 50%, rgba(245, 165, 36, 0.44), rgba(245, 165, 36, 0) 66%);
   animation: aurora-drift-3 48s ease-in-out infinite alternate;
 }
 
 .aurora-blob.a4 {
-  width: 36vw; height: 36vw; min-width: 300px; min-height: 300px;
+  width: 38vw; height: 38vw; min-width: 320px; min-height: 320px;
   right: -6vw; bottom: -18vh;
-  background: radial-gradient(circle at 40% 60%, rgba(96, 165, 250, 0.32), rgba(96, 165, 250, 0) 65%);
+  background: radial-gradient(circle at 40% 60%, rgba(96, 165, 250, 0.5), rgba(96, 165, 250, 0) 66%);
   animation: aurora-drift-2 52s ease-in-out infinite alternate-reverse;
+}
+
+.aurora-blob.a5 {
+  width: 34vw; height: 34vw; min-width: 280px; min-height: 280px;
+  left: 38vw; top: -14vh;
+  background: radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.34), rgba(244, 114, 182, 0) 66%);
+  animation: aurora-drift-3 58s ease-in-out infinite alternate-reverse;
+}
+
+.aurora-ribbon {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  top: -12vh;
+  height: 36vh;
+  background: linear-gradient(
+    100deg,
+    rgba(124, 92, 255, 0) 0%,
+    rgba(124, 92, 255, 0.22) 22%,
+    rgba(34, 211, 238, 0.26) 48%,
+    rgba(245, 165, 36, 0.16) 72%,
+    rgba(124, 92, 255, 0) 100%
+  );
+  filter: blur(46px);
+  transform: rotate(-6deg);
+  animation: ribbon-sweep 26s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+@keyframes ribbon-sweep {
+  from { transform: rotate(-6deg) translateX(-6vw) scaleY(1); opacity: 0.75; }
+  to   { transform: rotate(-3deg) translateX(6vw) scaleY(1.35); opacity: 1; }
 }
 
 @keyframes aurora-drift-1 {
@@ -152,7 +191,7 @@ a { color: inherit; text-decoration: none; }
 .aurora-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 100% at 50% 40%, transparent 55%, rgba(4, 5, 12, 0.75) 100%);
+  background: radial-gradient(120% 100% at 50% 40%, transparent 48%, rgba(4, 5, 12, 0.72) 100%);
 }
 
 .starfield {
@@ -175,28 +214,38 @@ a { color: inherit; text-decoration: none; }
 .fo {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(170, 185, 255, 0.12);
+  border: 1px solid rgba(170, 185, 255, 0.22);
   background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.10), transparent 42%),
-    radial-gradient(circle at 68% 74%, rgba(124, 92, 255, 0.12), transparent 55%),
-    rgba(150, 170, 255, 0.03);
-  backdrop-filter: blur(2px);
-  box-shadow: inset 0 0 40px rgba(160, 180, 255, 0.07), 0 20px 60px -30px rgba(90, 110, 255, 0.25);
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.22), transparent 44%),
+    radial-gradient(circle at 68% 74%, rgba(124, 92, 255, 0.28), transparent 58%),
+    radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.10), transparent 70%),
+    rgba(150, 170, 255, 0.05);
+  backdrop-filter: blur(3px);
+  box-shadow:
+    inset 0 0 50px rgba(170, 190, 255, 0.16),
+    inset -10px -14px 40px rgba(124, 92, 255, 0.14),
+    0 24px 70px -28px rgba(100, 120, 255, 0.45);
   will-change: transform;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-.fo1 { width: 92px; height: 92px; left: 2.5vw; top: 34vh; animation: fo-float-1 26s ease-in-out infinite alternate; }
-.fo2 { width: 64px; height: 64px; right: 3vw; top: 18vh; animation: fo-float-2 32s ease-in-out infinite alternate; }
-.fo3 { width: 78px; height: 78px; right: 5vw; bottom: 8vh; animation: fo-float-1 38s ease-in-out infinite alternate-reverse; }
+.fo1 { width: 190px; height: 190px; left: 2.5vw; top: 30vh; animation: fo-float-1 26s ease-in-out infinite alternate; }
+.fo2 { width: 120px; height: 120px; right: 3vw; top: 16vh; animation: fo-float-2 32s ease-in-out infinite alternate; }
+.fo3 { width: 160px; height: 160px; right: 5vw; bottom: 9vh; animation: fo-float-1 38s ease-in-out infinite alternate-reverse; }
+.fo4 { width: 90px; height: 90px; left: 12vw; bottom: 14vh; animation: fo-float-2 30s ease-in-out infinite alternate; border-color: rgba(245, 180, 100, 0.28);
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 235, 200, 0.22), transparent 44%),
+    radial-gradient(circle at 68% 74%, rgba(245, 165, 36, 0.24), transparent 58%),
+    rgba(255, 210, 150, 0.04); }
+.fo5 { width: 56px; height: 56px; left: 45vw; top: 12vh; animation: fo-float-1 22s ease-in-out infinite alternate-reverse; }
 
 @keyframes fo-float-1 {
   from { transform: translate3d(0, 0, 0) rotate(0deg); }
-  to   { transform: translate3d(4vw, -6vh, 0) rotate(28deg); }
+  to   { transform: translate3d(5vw, -7vh, 0) rotate(32deg); }
 }
 @keyframes fo-float-2 {
   from { transform: translate3d(0, 0, 0) rotate(0deg); }
-  to   { transform: translate3d(-5vw, 7vh, 0) rotate(-34deg); }
+  to   { transform: translate3d(-6vw, 8vh, 0) rotate(-38deg); }
 }
 
 /* ============================================================
@@ -413,7 +462,156 @@ a { color: inherit; text-decoration: none; }
    CONSOLE HERO
    ============================================================ */
 
-.console-hero { margin-bottom: 18px; }
+.console-hero { margin-bottom: 18px; position: relative; }
+
+/* Animated perspective grid behind the hero (react-bits signature). */
+.hero-grid {
+  position: absolute;
+  inset: -40px -60px -60px -60px;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 255, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 255, 0.10) 1px, transparent 1px);
+  background-size: 44px 44px;
+  transform: perspective(600px) rotateX(58deg) translateY(28%) scale(1.6);
+  transform-origin: center bottom;
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 30%, rgba(0,0,0,0.9), transparent 78%);
+  mask-image: radial-gradient(70% 70% at 50% 30%, rgba(0,0,0,0.9), transparent 78%);
+  animation: hero-grid-flow 14s linear infinite;
+}
+
+@keyframes hero-grid-flow {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 44px, 44px 0; }
+}
+
+/* SplitText — per-word blur-rise entrance. */
+.split-text { display: inline; }
+.split-word {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateY(0.5em) scale(0.97);
+  animation: split-in 0.7s cubic-bezier(0.22, 0.9, 0.32, 1.02) forwards;
+}
+
+@keyframes split-in {
+  to { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+}
+
+/* Per-word animated gradient (used by SplitText gradient mode — see the
+   comment in effects.tsx for why the gradient lives on each word). */
+.grad-word {
+  background: linear-gradient(100deg, #b9a6ff, #8be9ff 45%, #ffd9a0 80%, #b9a6ff);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: split-in 0.7s cubic-bezier(0.22, 0.9, 0.32, 1.02) forwards,
+             grad-sweep 5s ease-in-out 0.8s infinite alternate;
+}
+
+@keyframes grad-sweep {
+  from { background-position: 0% 0%; }
+  to   { background-position: 100% 0%; }
+}
+
+/* Stat band — animated counters under the hero (real fleet data). */
+.stat-band {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+  max-width: 720px;
+}
+
+.stat-cell {
+  position: relative;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: linear-gradient(160deg, rgba(23, 28, 48, 0.72), rgba(14, 17, 32, 0.55));
+  border: 1px solid var(--line);
+  overflow: hidden;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-cell:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-strong);
+  box-shadow: 0 14px 40px -18px rgba(124, 92, 255, 0.5);
+}
+
+.stat-cell::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(124, 92, 255, 0.65), rgba(34, 211, 238, 0.5), transparent);
+  opacity: 0.75;
+}
+
+.stat-cell { text-align: center; }
+
+.stat-cell .num {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+  background: linear-gradient(100deg, #b9a6ff, #8be9ff 60%, #ffd9a0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stat-cell .lbl {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* ClickSpark host — covers the child button, canvas on top. */
+.click-spark { position: relative; display: inline-flex; width: 100%; max-width: 320px; }
+
+.click-spark-canvas {
+  position: absolute;
+  inset: -26px;
+  width: calc(100% + 52px);
+  height: calc(100% + 52px);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Tilt host. */
+.tilt { transition: transform 0.35s cubic-bezier(0.22, 0.8, 0.36, 1); transform-style: preserve-3d; will-change: transform; }
+
+/* Session divider in the restored chat history. */
+.session-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.session-divider::before,
+.session-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
 
 .hero-eyebrow {
   display: inline-flex;
@@ -1105,10 +1303,20 @@ a { color: inherit; text-decoration: none; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
+
+/* Equal-height rows (VLM review round 2): cards fill their grid cell as a
+   flex column and the action row pins to the bottom, so button rows align
+   across a row even when one card carries a taller "working now" block. */
+.fleet-grid > article,
+.fleet-grid .tilt { height: 100%; }
 
 .agent-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: 18px;
   transition: transform 0.3s cubic-bezier(0.22, 0.8, 0.36, 1), box-shadow 0.3s, border-color 0.3s;
 }
@@ -1131,6 +1339,43 @@ a { color: inherit; text-decoration: none; }
 }
 
 .agent-card.tone-good .edge { background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.75), transparent); }
+
+/* Border beam (react-bits signature) on agents that are actually online:
+   a rotating conic highlight travels the card border. */
+.agent-card.tone-good::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--beam-angle, 0deg),
+    transparent 0%,
+    rgba(52, 211, 153, 0.0) 12%,
+    rgba(52, 211, 153, 0.55) 22%,
+    rgba(124, 92, 255, 0.5) 32%,
+    rgba(34, 211, 238, 0.35) 40%,
+    transparent 52%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0.9;
+  animation: border-beam 5.5s linear infinite;
+  pointer-events: none;
+}
+
+@property --beam-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes border-beam {
+  to { --beam-angle: 360deg; }
+}
 .agent-card.tone-warn .edge { background: linear-gradient(90deg, transparent, rgba(229, 184, 75, 0.75), transparent); }
 .agent-card.tone-bad .edge { background: linear-gradient(90deg, transparent, rgba(248, 113, 113, 0.75), transparent); }
 
@@ -1205,7 +1450,7 @@ a { color: inherit; text-decoration: none; }
 .agent-result.good { color: #6ee7b7; }
 .agent-result.bad { color: #fca5a5; }
 
-.agent-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.agent-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 14px; flex-wrap: wrap; }
 
 /* ============================================================
    FEEDS (activity + timeline)
@@ -1568,4 +1813,9 @@ a { color: inherit; text-decoration: none; }
   .reveal { opacity: 1; }
   .btn-primary::after { display: none; }
   .magnetic, .parallax { transform: none !important; }
+  .aurora, .aurora-ribbon, .hero-grid { animation: none !important; }
+  .split-word, .grad-word { opacity: 1; filter: none; transform: none; animation: none !important; color: inherit; background: none; }
+  .agent-card.tone-good::after { animation: none !important; opacity: 0.35; }
+  .tilt { transform: none !important; }
+  .stat-cell, .stat-cell:hover { transform: none !important; }
 }

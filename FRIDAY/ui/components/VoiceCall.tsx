@@ -3,7 +3,7 @@
 import { AlertTriangle, Mic, PhoneOff, Radio } from "lucide-react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Orbital } from "./effects";
+import { ClickSpark, Orbital } from "./effects";
 import { OrbCore, OrbState } from "./OrbCore";
 import { Agent, apiBase, formatClock, requestJson } from "@/lib/api";
 
@@ -95,13 +95,12 @@ export function VoiceCall({
     };
   }, []);
 
-  /* Worker truth states: only real failures read as warnings; informational
-     states (registered / job-received / pending) are neutral chips. */
+  /* Worker truth states: ONLY real failures surface (no-provider / error).
+     The idle "registered — waiting for the first job" heartbeat is the
+     worker's NORMAL resting state, but showing it in the dock read as
+     "voice is broken" (owner feedback 2026-11-13) — informational states
+     stay internal now. */
   const workerFailed = worker?.state === "no-provider" || worker?.state === "error";
-  const workerInfo =
-    !workerFailed && worker?.state && worker.state !== "ready"
-      ? `Voice backend: ${worker.state}${worker?.detail ? ` — ${worker.detail}` : ""}`
-      : null;
 
   const clearAudioElements = useCallback(() => {
     document.querySelectorAll("audio[data-livekit]").forEach((el) => el.remove());
@@ -341,7 +340,7 @@ export function VoiceCall({
           </span>
         )}
       </div>
-      {(workerFailed || workerInfo) && status === "idle" && (
+      {(workerFailed) && status === "idle" && (
         <p
           className="rail-note"
           style={{
@@ -349,34 +348,36 @@ export function VoiceCall({
             alignItems: "flex-start",
             gap: 7,
             textAlign: "left",
-            ...(workerFailed ? { color: "var(--warn)" } : {}),
+            color: "var(--warn)",
           }}
         >
-          {workerFailed && <AlertTriangle size={14} style={{ flex: "none", marginTop: 2 }} />}
-          <span>{workerFailed ? `Voice line unavailable: ${worker?.detail || worker?.state}` : workerInfo}</span>
+          <AlertTriangle size={14} style={{ flex: "none", marginTop: 2 }} />
+          <span>Voice line unavailable: {worker?.detail || worker?.state}</span>
         </p>
       )}
-      <button
-        className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg btn-voice`}
-        onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
-        disabled={status === "connecting" || (workerFailed && status === "idle")}
-        title={workerFailed && status === "idle" ? `Voice backend unavailable: ${worker?.detail || worker?.state}` : undefined}
-        aria-label={status === "connected" ? "End voice call" : "Start voice call"}
-      >
-        {status === "connecting" ? (
-          <>
-            <Radio size={17} className="spin" /> Connecting…
-          </>
-        ) : status === "connected" ? (
-          <>
-            <PhoneOff size={16} /> End call
-          </>
-        ) : (
-          <>
-            <Mic size={17} /> Start voice
-          </>
-        )}
-      </button>
+      <ClickSpark>
+        <button
+          className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg btn-voice`}
+          onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
+          disabled={status === "connecting" || (workerFailed && status === "idle")}
+          title={workerFailed && status === "idle" ? `Voice backend unavailable: ${worker?.detail || worker?.state}` : undefined}
+          aria-label={status === "connected" ? "End voice call" : "Start voice call"}
+        >
+          {status === "connecting" ? (
+            <>
+              <Radio size={17} className="spin" /> Connecting…
+            </>
+          ) : status === "connected" ? (
+            <>
+              <PhoneOff size={16} /> End call
+            </>
+          ) : (
+            <>
+              <Mic size={17} /> Start voice
+            </>
+          )}
+        </button>
+      </ClickSpark>
       {audioBlocked && (
         <p className="rail-note rail-warn">Browser blocked playback — tap anywhere on the page, then press the button again.</p>
       )}
