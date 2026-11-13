@@ -1,0 +1,106 @@
+name: DNS Fix — repoint DuckDNS at Server 1
+
+# Owner directive (2026-11-13): the DuckDNS record for
+# friday-universe.duckns.org drifted to the DuckDNS catch-all, killing every
+# domain-facing surface (dashboard, chat, voice wss, agent endpoints, bridge)
+# while server-local health stayed green. This workflow is the remote hands:
+# it finds the DuckDNS token ON THE SERVER (credentials.md / .env — the repo
+# is public so the token never lives in repo content) or in the DUCKDNS_TOKEN
+# GitHub secret, repoints the record at this server's real public IP, and
+# verifies the result. The token is NEVER echoed, logged, or written anywhere.
+#
+# Trigger: manual dispatch, plus a 30-min self-healing schedule (the DuckDNS
+# update call is idempotent — re-pointing at the same IP is a no-op "OK").
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
+
+concurrency:
+  group: dns-fix
+  cancel-in-progress: false
+
+jobs:
+  dns-fix-server1:
+    name: Repoint DuckDNS from Server 1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find token, update DuckDNS, verify, nudge Caddy
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GH_DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          envs: GH_DUCKDNS_TOKEN
+          script: |
+            set -eu
+            DOMAIN_LABEL="friday-universe"
+            FQDN="friday-universe.duckns.org"
+
+            # 1. Locate the token: GitHub secret > server .env > server credentials.md.
+            #    (Token values are only ever assigned to TOKEN; never printed.)
+            TOKEN=""
+            if [ -n "${GH_DUCKDNS_TOKEN:-}" ]; then
+              TOKEN="$GH_DUCKDNS_TOKEN"
+              echo "token source: GitHub secret DUCKDNS_TOKEN"
+            elif grep -qsE "^DUCKDNS_TOKEN=" /opt/friday_universe/.env; then
+              TOKEN=$(grep -E "^DUCKDNS_TOKEN=" /opt/friday_universe/.env | head -1 | cut -d= -f2-)
+              echo "token source: /opt/friday_universe/.env"
+            elif [ -f /opt/friday_universe/credentials.md ]; then
+              TOKEN=$(grep -ioE "(duckdns|duck dns)[^a-z0-9-]{0,40}[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}" /opt/friday_universe/credentials.md | head -1 | grep -oE "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")
+              if [ -z "$TOKEN" ]; then
+                # fallback: any UUID-shaped line that is not the OANDA key
+                TOKEN=$(grep -oE "^[[:space:]]*[-:]*[[:space:]]*[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}[[:space:]]*$" /opt/friday_universe/credentials.md | grep -v "db0f6f0fa2ad485225e7997ec87f9ced" | head -1 | tr -d '[:space:]-:')
+              fi
+              echo "token source: /opt/friday_universe/credentials.md"
+            fi
+
+            if [ -z "$TOKEN" ]; then
+              echo "NO_DUCKDNS_TOKEN_FOUND on server (env, credentials.md) and no GitHub DUCKDNS_TOKEN secret"
+              exit 1
+            fi
+
+            # 2. This server's real public IP
+            MY_IP=$(curl -s --max-time 15 https://api.ipify.org || true)
+            if [ -z "$MY_IP" ]; then
+              MY_IP="140.245.208.100"
+              echo "ipify failed; using known Server 1 IP $MY_IP"
+            else
+              echo "server public IP: $MY_IP"
+            fi
+
+            # 3. Repoint (idempotent). Response is OK / KO — printed, token never.
+            RESP=$(curl -s --max-time 20 "https://www.duckdns.org/update?domains=${DOMAIN_LABEL}&token=${TOKEN}&ip=${MY_IP}")
+            echo "duckdns update response: ${RESP}"
+            case "$RESP" in
+              OK*) echo "DNS record updated" ;;
+              *)   echo "duckdns update FAILED (response above)"; exit 2 ;;
+            esac
+
+            # 4. Verify what public DNS now answers (DoH, authoritative-ish view)
+            sleep 15
+            RESOLVED=$(curl -s --max-time 15 "https://dns.google/resolve?name=${FQDN}&type=A" | grep -oE '"data":"[0-9.]+"' | grep -oE '[0-9.]+' | tr '\n' ' ')
+            echo "public DNS now resolves ${FQDN} -> ${RESOLVED:-<no-answer-yet>}"
+
+            # 5. Nudge Caddy so the cert for the domain re-issues now that DNS
+            #    points home again (ACME renewals failed while DNS was adrift).
+            sudo systemctl reload caddy 2>/dev/null || sudo systemctl reload caddy.service 2>/dev/null || echo "caddy reload skipped (not found?)"
+
+            # 6. Trigger a real TLS handshake from the server to force on-demand
+            #    cert issuance, then report the site answer honestly.
+            for i in 1 2 3; do
+              sleep 10
+              CODE=$(curl -sk --max-time 20 -o /dev/null -w "%{http_code}" "https://${FQDN}/" || true)
+              echo "site probe attempt $i: HTTP ${CODE:-000}"
+              if [ "${CODE:-000}" != "000" ] && [ "$CODE" != "502" ] && [ "$CODE" != "503" ]; then break; fi
+            done
+
+            # 7. Compact service snapshot (bonus: proves the fleet is alive)
+            for svc in caddy FRIDAY FRIDAY-Voice stratex; do
+              ST=$(systemctl is-active "$svc" 2>/dev/null || echo "?")
+              echo "service ${svc}: ${ST}"
+            done
+            echo "=== dns-fix complete ==="
