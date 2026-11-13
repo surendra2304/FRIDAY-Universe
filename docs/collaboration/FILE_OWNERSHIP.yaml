@@ -16,6 +16,13 @@ protected_worktree:
     - "Re-check git status before any worktree operation."
 
 claims:
+  - path: FRIDAY/tests/test_memory_mutation_targets.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-015-safe-memory-mutations
+    status: ACTIVE_CLAIM
+    task: TASK-WF-015 safety; claim6843332553
   - path: FRIDAY/tests/test_memory_recall_subject.py
     owner: arena_engineering_01
     prs: []
@@ -561,6 +568,7 @@ claims:
       claimed_at: '2026-11-12T13:56:17.706503+00:00'
       expected_next_update: '2026-11-12T15:56:17.706503+00:00'
       expiry_policy: Contact owner before takeover; no automatic expiration.
+    memory_safety_wf015: 'Arena Agent 1 claim6843332553 ONLY forget/correction gates; arena/TASK-WF-015-safe-memory-mutations; 2026-11-13T03:57:52.870495+00:00'
   - path: "FRIDAY/src/friday/api/app.js"
     owner: "zai"
     prs: []
@@ -962,7 +970,7 @@ claims:
 
 
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
-    shared_lifecycle_wf015: 'Arena Agent 1 active followup claim6842961865; arena/TASK-WF-015-recall-subject; PR72merged7a0e9a04; 2026-11-13T03:33:11.802654+00:00'
+    shared_lifecycle_wf015: 'Arena Agent 1 active safetyclaim6843332553; arena/TASK-WF-015-safe-memory-mutations; 2026-11-13T03:57:52.870495+00:00'
   - path: "FRIDAY/src/friday/tools/builtin/task_status_query.py"
     owner: "zai"
     prs: []
