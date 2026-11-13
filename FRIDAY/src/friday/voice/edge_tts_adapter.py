@@ -15,8 +15,6 @@ import os
 import subprocess
 import tempfile
 
-from livekit import rtc
-from livekit.agents import tts as lk_tts
 from livekit.agents.tts import ChunkedStream, TTS, TTSCapabilities
 
 try:
