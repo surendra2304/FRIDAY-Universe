@@ -152,18 +152,7 @@ async def test_probe_accepts_200():
 
 def test_groq_pipeline_uses_edge_when_orpheus_dead():
     """The full groq pipeline path degrades to edge TTS, not a dead orpheus."""
-    with mock.patch.object(worker, "_ORPHEUS_CACHE", {"ok": False, "ts": 1e18}), \
-         mock.patch.object(worker, "GROQ_PLUGIN_AVAILABLE", True), \
-         mock.patch.object(worker, "_groq_key", return_value="gsk_test"), \
-         mock.patch.object(worker, "_lk_groq") as fake_groq, \
-         mock.patch.object(worker, "EDGE_TTS_AVAILABLE", True), \
-         mock.patch.object(worker, "EdgeTTS", _FakeEdgeTTS), \
-         mock.patch.object(worker, "_llm_chat_model", return_value="openai/gpt-oss-120b"):
-        fake_groq.STT = lambda **kw: object()
-        fake_groq.LLM = lambda **kw: object()
-        parts, reason = worker._try_groq_pipeline.__wrapped__() if hasattr(
-            worker._try_groq_pipeline, "__wrapped__") else (None, None)
-    # _try_groq_pipeline is async — call it through asyncio in the same test
+    # _try_groq_pipeline is async; run it in a fresh event loop.
     import asyncio
     with mock.patch.object(worker, "_ORPHEUS_CACHE", {"ok": False, "ts": 1e18}), \
          mock.patch.object(worker, "GROQ_PLUGIN_AVAILABLE", True), \

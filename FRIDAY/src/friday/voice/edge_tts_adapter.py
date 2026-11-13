@@ -1,4 +1,4 @@
-"""edge_tts_adapter.py — a livekit TTS provider backed by edge-tts (no API key).
+"""edge_tts_adapter.py — a LiveKit TTS provider backed by keyless Edge TTS.
 
 The Groq orpheus TTS is broken on the fleet key ('model_terms_required' —
 the org admin has not accepted the canopylabs model terms), so the worker's
@@ -29,7 +29,7 @@ _SAMPLE_RATE = 24000
 _NUM_CHANNELS = 1
 
 
-async def _mp3_to_pcm(data: bytes) -> bytes | None:
+def _mp3_to_pcm(data: bytes) -> bytes | None:
     """mp3 bytes -> s16le PCM via ffmpeg.
 
     ffmpeg resolution order: PATH, then the static-ffmpeg wheel bundled
@@ -78,7 +78,8 @@ class _EdgeChunkedStream(ChunkedStream):
                 mp3.write(chunk["data"])
         audio = mp3.getvalue()
         if audio:
-            pcm = await _mp3_to_pcm(audio)
+            # ffmpeg is a blocking subprocess; keep it off LiveKit's audio loop.
+            pcm = await asyncio.to_thread(_mp3_to_pcm, audio)
             if pcm:
                 output_emitter.initialize(
                     request_id=str(id(self)),
@@ -92,7 +93,7 @@ class _EdgeChunkedStream(ChunkedStream):
 
 
 class EdgeTTS(TTS):
-    """Offline-capable TTS (Microsoft Edge neural voices) for AgentSession.tts."""
+    """Keyless, network-backed TTS (Microsoft Edge neural voices) for AgentSession.tts."""
 
     def __init__(self, voice: str = "en-IN-NeerjaNeural") -> None:
         if not EDGE_TTS_AVAILABLE:

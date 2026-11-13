@@ -607,11 +607,8 @@ async def entrypoint(ctx: JobContext):
     agent: Agent
     provider_name = "none"
 
-    # Probe orpheus BEFORE building any session: _fallback_tts() is sync and
-    # reads this cache. Unprobed = dead = the keyless EdgeTTS speaks instead
-    # (live 2026-11-13: silent-dead-air root cause, TASK-VOICE-E2E-003).
-    await _probe_orpheus_tts()
-
+    # Try the preferred realtime provider first. Do not spend up to 15 seconds
+    # probing a Groq TTS model on a path that never uses Groq.
     realtime_model = await _try_gemini_realtime(instructions, verified_key=_verified_key)
     if realtime_model is not None:
         provider_name = f"gemini-realtime:{_voice_model()}"
@@ -637,6 +634,9 @@ async def entrypoint(ctx: JobContext):
             logger.info("gemini session carries a groq fallback TTS for fixed lines")
         _write_status("ready", provider_name, model=_voice_model())
     else:
+        # Only probe Orpheus when Gemini realtime is unavailable and the
+        # modular Groq pipeline is actually needed.
+        await _probe_orpheus_tts()
         groq_parts, reason = await _try_groq_pipeline()
         if groq_parts is None:
             detail = {
