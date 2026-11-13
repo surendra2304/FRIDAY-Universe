@@ -2,7 +2,7 @@ schema_version: 1
 scope: Owner workflows; component success is never whole-system acceptance
 coordinator: Arena Agent 1
 claim_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842655427
-observed_checkout: 7a0e9a043bd79066896dcfc8e28fd08b29cbb09c
+observed_checkout: 474c34856eb8b72f680ffc7991da233ca1ab4a37
 team_coordination:
   zai_agent_1:
     existing_lane: Voice-room lifecycle/UI redesign plus CI; preserve their current
@@ -41,9 +41,9 @@ workflows:
       source fidelity, not citation count alone.
     private_receipt: /var/tmp/friday-workflow-acceptance/wf015-canonical-probe.json
   shared_memory:
-    state: client_lifecycle_and_canonical_recall_verified_mutation_safety_in_progress
-    marker: wf0153274db929d
-    exact_synthetic_id: 60a97947-99e8-4812-8b1d-64123fde7750
+    state: bounded_canonical_lifecycle_verified
+    marker: wf015safe92b44403c2
+    exact_synthetic_id: 14ec83f4-a569-4717-8f9b-590229d92604
     evidence:
     - Canonical store acknowledged memory_store=true; immediate canonical recall returned
       remembered_count=0.
@@ -68,18 +68,27 @@ workflows:
       exact Oracle states reconciled; both synthetic IDs deleted; final proof wf015-lifecycle-final.json.
     - Mutation-target unsafe semantic miss reproduced offline; scoped canonical safety
       repair181tests pass, not deployed yet.
+    - PR75 final4e4309f3/merge474c348/deploy43363885223SUCCESS;181localtests pass.
+    - 14fresh-process phases actualcanonical store/recall/correct/forget plus exactOraclestate/cleanup;
+      both synthetic rows deleted.
+    - Contextless403clarification and nonexistent-marker502not_found verified, no
+      broad owner mutation.
     missing:
-    - End-to-end canonical conversational correction/forget with unique safe subject
-      and exact backend reconciliation.
-    - Fresh exact-head CI/preflight/rollout/live proof for mutation-safety repair.
+    - This proves tested explicit subjects and safe refusal, not every natural-language
+      paraphrase.
     private_receipts:
     - /var/tmp/friday-workflow-acceptance/wf015-lifecycle-before-fix.json
     - /var/tmp/friday-workflow-acceptance/wf015-correction-reconciliation.json
     - /var/tmp/friday-workflow-acceptance/wf015-lifecycle-final.json
+    - /var/tmp/friday-workflow-acceptance/wf015-canonical-mutation-verified.json
+    corrected_synthetic_id: 178fcb54-3343-4e2b-8d90-0763f209b103
+    verified_phases: 14
+    proof_sha256: 254521e42d16ea5054b3f56f36daf2015cc22ead13738efcc8d558922ff086dc
   microphone_voice:
     state: owner_session_required
-    evidence: Collaborator voice commits present; canonical brain HTTP probe is not
-      microphone/ear-speaker proof.
+    evidence: ZAI1 reports real single-call audio within~10s, intentional-End guard/last_session
+      recorded; code835fe0c andhandoffb169b05 preserved. Collaborator reports, not
+      an owner-device acceptance by Arena.
     missing: Actual owner device session, intelligible audio, interruptions and memory/research/task
       replies.
     lane: ZAI Agent 2 voice handoff requested, no new agreement observed
@@ -105,3 +114,8 @@ workflows:
     changes_by_this_task: none
 notification_policy: Historical WF014 Telegram55 already sent. No whole-work-complete
   notification for a narrow fix.
+known_cross_lane_issue:
+  owner: ZAI Agent 1 requested
+  issue_comment: 6843571980
+  description: Unseeded optimizer CI quality assertion stochastic; one documented
+    rerun passed; not fixed.
