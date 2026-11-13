@@ -73,3 +73,24 @@ def test_invalid_remote_schema_not_treated_as_authoritative_empty(client, monkey
     monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: Response(json.dumps(body).encode()))
     assert client.recall_memories("friday", "synthetic marker")[0]["id"] == "stale"
     client._recall_locally.assert_called_once()
+
+
+@pytest.mark.parametrize(("kwargs", "expected"), [
+    ({"timeout": 3.5}, 3.5),
+    ({"timeout": 0.9}, 0.9),
+    ({"timeout": 3.5, "recall_timeout": 12.0}, 12.0),
+])
+def test_explicit_transport_budget_is_never_silently_overridden(monkeypatch, kwargs, expected):
+    monkeypatch.setattr(MemoraClient, "_ensure_tables", lambda self: None)
+    seen = []
+    def transport(req, **options):
+        seen.append(options["timeout"])
+        return Response(b"[]")
+    monkeypatch.setattr("urllib.request.urlopen", transport)
+    c = MemoraClient(base_url="http://memora:8000", remote_enabled=True, **kwargs)
+    try:
+        assert c.recall_memories("friday", "my subject") == []
+        assert seen == [expected]
+        assert c.timeout == kwargs["timeout"]
+    finally:
+        c._executor.shutdown(wait=True)

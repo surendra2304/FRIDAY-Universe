@@ -154,8 +154,9 @@ class MemoraClient:
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         local_db_path: Optional[str] = None,
-        timeout: float = 3.5,
+        timeout: Optional[float] = None,
         remote_enabled: Optional[bool] = None,
+        recall_timeout: Optional[float] = None,
     ):
         if remote_enabled is not None:
             self.remote_enabled = remote_enabled
@@ -168,7 +169,12 @@ class MemoraClient:
             )
         self.base_url = (base_url or os.getenv("MEMORA_URL", "http://memora:8000")).rstrip("/")
         self.api_key = api_key or os.getenv("MEMORA_API_KEY")
-        self.timeout = timeout
+        self.timeout = 3.5 if timeout is None else timeout
+        # Distinguish defaults from an explicitly configured transport budget.
+        # Never silently override a caller's chosen timeout (WF015 CI contract).
+        self.recall_timeout = recall_timeout if recall_timeout is not None else (
+            15.0 if timeout is None else timeout
+        )
         self._executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="friday-memory")
 
         # Local fallback storage. Production uses the FRIDAY Oracle schema; an
@@ -624,7 +630,7 @@ class MemoraClient:
                 # Read-only hybrid search measured 11.2s on the loaded host.
                 # Give it a separate bounded budget; mutation timeout/retry
                 # semantics are deliberately unchanged.
-                with urllib.request.urlopen(req, timeout=max(self.timeout, 15.0)) as resp:
+                with urllib.request.urlopen(req, timeout=getattr(self, "recall_timeout", self.timeout)) as resp:
                     if resp.status == 200:
                         results = json.loads(resp.read().decode("utf-8"))
                         if not isinstance(results, list) or not all(isinstance(row, dict) for row in results):
