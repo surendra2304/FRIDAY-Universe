@@ -148,7 +148,6 @@ jobs:
           envs: GH_DUCKDNS_TOKEN,TARGET_IP
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
-          envs: GH_DUCKDNS_TOKEN
           script: |
             set -u
             DOMAIN_LABEL="friday-universe"
