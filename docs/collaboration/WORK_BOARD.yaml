@@ -21,7 +21,7 @@ status_definitions:
 tasks:
   - id: TASK-UI-MINIMAL-001
     title: "Minimal Console — replace the Living Universe UI (owner directive: minimalistic, dynamic, not laggy; chat too long)"
-    status: DEPLOYED
+    status: VERIFIED
     owner: zai_agent_1
     branch: zai/TASK-UI-MINIMAL-001
     pr: null
@@ -49,11 +49,11 @@ tasks:
       - "VLM design review of the rendered console: 'genuinely sleek dark-mode design… polished AI assistant command deck'; fold check: chat input visible at 1440x900 after hero compaction."
       - "Root-caused and fixed the font-token bug: --font-body/--font-display defined on :root referenced --font-inter (defined by next/font on body) — var() substitution failed on html and the whole page fell back to Times New Roman; tokens moved to body."
     blockers: []
-    next_action: "Deploy to Server 2 (checkout main, restart FRIDAY), then live screenshot + VLM verification on https://friday-universe.duckdns.org/friday/."
+    next_action: "Complete and live-verified 2026-11-13 11:35 IST. Live evidence: PR #79 merged to main 9d64ede, Lighthouse CI SUCCESS on that head (run 43374624277); Fleet CD auto-deployed (FRIDAY.service restarted 11:22:12 IST from main); live /friday/ serves the Minimal Console CSS (aurora-ribbon count 0; r-panel/chat-clear/orbital-sat present) with real stats 9/9 agents / 50 auto actions / autonomy ON, page 200 in 0.57s; live VLM review: 'restrained dark palette with a single cyan accent — disciplined'. Residual-jank profiling handed to Arena Agent 1 (TASK-RUNTIME-AUDIT-002)."
 
   - id: TASK-DEPLOY-GAP-001
     title: "Close the deployment gap — live Server 2 runs claude/TASK-CI-004 @ 64b1df8, 6+ verified commits behind main (voice dispatch fix, schema routing repair never went live)"
-    status: IN_PROGRESS
+    status: DEPLOYED
     owner: zai_agent_1
     branch: main
     pr: null
@@ -72,7 +72,7 @@ tasks:
       - "oracle_curl_health /api/agents/status (05:39 UTC): 200, 9/9 agents ONLINE (Stratex 72ms, Inference 86ms, Memora 72ms, IntelX 85ms, Futuris 84ms, Cortex 61ms, Forge 158ms, Sentinel 72ms, +1) — 'connections failed' is the stale frontend/dispatch layer, not the fleet."
       - "git log origin/main 64b1df8..1262d58: 885b775 (fix(voice) deterministic agent dispatch + UI), 7fca221, f0be4f6, 4125fcb (fix research schemas), 621d402, 1262d58 (schema routing repair) — all merged, none deployed."
     blockers: []
-    next_action: "Execute the deploy (checkout main on Server 2, restart FRIDAY + friday-voice), verify live, then hand E2E voice verification to ZAI Agent 2 (TASK-VOICE-E2E-003)."
+    next_action: "DEPLOYED 2026-11-13 11:35 IST. Evidence: Server 2 workspace reset to canonical main 9d64edec (local main was a stale pre-rewrite diverged branch; untracked collaborator files preserved); Server 1 production host synced to 9d64edec by Fleet CD after the PR #79 merge, FRIDAY.service restarted 11:22:12 IST (uvicorn friday.api.server:app on :10000, graceful restart in journal) — the deterministic voice dispatch + per-call rooms + intentional-end guard now RUN in production; live 11:35 IST: /friday/ 200 in 0.57s, 9/9 agents ONLINE (stratex 495ms, forge 492ms, intelx 303ms…), voice worker heartbeat registered. E2E voice verification handed to ZAI Agent 2 (TASK-VOICE-E2E-003)."
 
   - id: TASK-VOICE-E2E-003
     title: "United voice E2E verification on live after the main deploy — 'Friday can't talk properly' closure"
