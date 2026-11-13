@@ -16,6 +16,13 @@ protected_worktree:
     - "Re-check git status before any worktree operation."
 
 claims:
+  - path: FRIDAY/tests/test_memory_recall_subject.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-015-recall-subject
+    status: ACTIVE_CLAIM
+    task: TASK-WF-015 followup recall subject/read budget; claim6842961865
   - path: FRIDAY/tests/test_shared_memory_lifecycle.py
     owner: arena_engineering_01
     prs: []
@@ -955,7 +962,7 @@ claims:
 
 
     live_acceptance_wf005: 'arena/TASK-WF-005-live-acceptance; issue35 scoped claims; 2026-11-12T15:04:51.017727+00:00; next update2h, contact before takeover.'
-    shared_lifecycle_wf015: 'Arena Agent 1 active scoped claim6842719695; arena/TASK-WF-015-shared-memory; contact before takeover; 2026-11-13T03:20:09.274913+00:00'
+    shared_lifecycle_wf015: 'Arena Agent 1 active followup claim6842961865; arena/TASK-WF-015-recall-subject; PR72merged7a0e9a04; 2026-11-13T03:33:11.802654+00:00'
   - path: "FRIDAY/src/friday/tools/builtin/task_status_query.py"
     owner: "zai"
     prs: []
