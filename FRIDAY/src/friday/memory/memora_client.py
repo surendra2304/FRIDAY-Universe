@@ -597,21 +597,41 @@ class MemoraClient:
         query: str,
         limit: int = 5,
     ) -> List[Dict[str, Any]]:
-        """Retrieve relevant persistent memories from Memora."""
+        """Retrieve relevant persistent memories from Memora.
+
+        Strip only an anchored conversational wrapper. Common question words
+        otherwise consume the bounded lexical candidate set before the subject
+        is ranked (observed against the real production corpus in WF015).
+        """
         if not query or not query.strip():
+            return []
+        query = query.strip().rstrip("?").strip()
+        query = re.sub(
+            r"^(?:(?:what\s+do\s+you\s+remember|(?:do\s+)?you\s+remember|"
+            r"do\s+you\s+have\s+(?:any\s+)?memory|what\s+do\s+you\s+know)"
+            r"\s+(?:(?:about|of)\s+)?|recall\s+)",
+            "", query, count=1, flags=re.IGNORECASE,
+        ).strip()
+        if not query:
             return []
 
         if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
             try:
-                encoded_q = urllib.parse.quote(query.strip())
+                encoded_q = urllib.parse.quote(query)
                 url = f"{self.base_url}/v1/memories/search?q={encoded_q}&limit={limit}&min_score=0"
                 headers = self._remote_headers(agent_name)
                 req = urllib.request.Request(url, headers=headers, method="GET")
-                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                # Read-only hybrid search measured 11.2s on the loaded host.
+                # Give it a separate bounded budget; mutation timeout/retry
+                # semantics are deliberately unchanged.
+                with urllib.request.urlopen(req, timeout=max(self.timeout, 15.0)) as resp:
                     if resp.status == 200:
                         results = json.loads(resp.read().decode("utf-8"))
-                        if results:
-                            return results
+                        if not isinstance(results, list) or not all(isinstance(row, dict) for row in results):
+                            raise ValueError("invalid memory search response")
+                        # Shared empty is authoritative: falling through to a
+                        # stale local mirror can resurrect forgotten facts.
+                        return results
             except Exception as e:
                 logger.debug(f"Memora remote recall error: {type(e).__name__}")
 

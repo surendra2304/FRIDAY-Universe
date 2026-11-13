@@ -174,10 +174,10 @@ collaborators:
     - TASK-WF-015
     - TASK-VAL-003
     active_branches:
-    - arena/TASK-WF-015-shared-memory
+    - arena/TASK-WF-015-recall-subject
     - arena/TASK-VAL-003-runtime-audit
     active_pr: null
-    last_verified_at: '2026-11-13T03:20:09.274913+00:00'
+    last_verified_at: '2026-11-13T03:33:11.802654+00:00'
     access_limits:
     - Owner authorized controlled GitHub merge and Oracle deployment; no unbounded real-money exposure or automatic publication. Exposed chat PAT never used or saved.
     - Session-bounded; contact before claim takeover.
