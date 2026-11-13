@@ -3,7 +3,7 @@ import asyncio
 import importlib.util
 import sys
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
@@ -83,30 +83,40 @@ def test_whitespace_only_quote_does_not_pass_substring_check():
 @pytest.mark.parametrize('finish_reason', ['stop', 'length'])
 def test_inference_completion_honors_budget_auth_and_refuses_truncation(monkeypatch, finish_reason):
     import httpx
-    import respx
-    import intelx.core.settings as settings_module
-    monkeypatch.setattr(settings_module, 'get_settings', lambda: SimpleNamespace(MOCK_MODE=False, INFERENCE_URL='https://inference.example.test', INFERENCE_API_KEY='fixture-only-key'))
-    with respx.mock as router:
-        route = router.post('https://inference.example.test/v1/chat/completions').mock(return_value=httpx.Response(200, json={
-            'model': 'real-fixture-model', 'choices': [{'finish_reason': finish_reason, 'message': {'content': result().model_dump_json()}}]}))
-        call = m.GroundedInferenceGateway().complete([{'role': 'user', 'content': 'Public fixture'}], schema_model=m.GroundedDraft, max_tokens=2400, temperature=0)
-        if finish_reason == 'length':
-            with pytest.raises(ValueError, match='Incomplete') as refused:
-                asyncio.run(call)
-            assert refused.value.public_details['finish_reason'] == 'length'
-            assert 'output' not in refused.value.public_details
-        else:
-            assert asyncio.run(call).parsed.findings[0].quote == TEXT
-        assert route.call_count == 1
-        request = route.calls.last.request
-        import json
-        assert json.loads(request.content)['max_tokens'] == 2400
-        assert json.loads(request.content)['model'] != 'auto'  # auto activates a 60-token fast lane
-        assert request.headers['X-API-Key'] == 'fixture-only-key'
+    settings_module = ModuleType('intelx.core.settings')
+    settings_module.get_settings = lambda: SimpleNamespace(MOCK_MODE=False, INFERENCE_URL='https://inference.example.test', INFERENCE_API_KEY='fixture-only-key')
+    # Other root suites legitimately install a lightweight intelx.core stub.
+    # Patch only this import for this test; monkeypatch restores prior state.
+    monkeypatch.setitem(sys.modules, 'intelx.core.settings', settings_module)
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        assert str(request.url) == 'https://inference.example.test/v1/chat/completions'
+        return httpx.Response(200, json={
+            'model': 'real-fixture-model', 'choices': [{'finish_reason': finish_reason, 'message': {'content': result().model_dump_json()}}]})
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(m.httpx, 'AsyncClient', lambda **kwargs: real_client(transport=httpx.MockTransport(respond), **kwargs))
+    call = m.GroundedInferenceGateway().complete([{'role': 'user', 'content': 'Public fixture'}], schema_model=m.GroundedDraft, max_tokens=2400, temperature=0)
+    if finish_reason == 'length':
+        with pytest.raises(ValueError, match='Incomplete') as refused:
+            asyncio.run(call)
+        assert refused.value.public_details['finish_reason'] == 'length'
+        assert 'output' not in refused.value.public_details
+    else:
+        assert asyncio.run(call).parsed.findings[0].quote == TEXT
+    assert len(requests) == 1
+    request = requests[0]
+    import json
+    assert json.loads(request.content)['max_tokens'] == 2400
+    assert json.loads(request.content)['model'] != 'auto'  # auto activates a 60-token fast lane
+    assert request.headers['X-API-Key'] == 'fixture-only-key'
 
 
 def test_completion_gateway_mock_mode_refused_before_network(monkeypatch):
-    import intelx.core.settings as settings_module
-    monkeypatch.setattr(settings_module, 'get_settings', lambda: SimpleNamespace(MOCK_MODE=True))
+    settings_module = ModuleType('intelx.core.settings')
+    settings_module.get_settings = lambda: SimpleNamespace(MOCK_MODE=True)
+    monkeypatch.setitem(sys.modules, 'intelx.core.settings', settings_module)
     with pytest.raises(ValueError, match='MOCK_MODE'):
         asyncio.run(m.GroundedInferenceGateway().complete([], schema_model=m.GroundedDraft, max_tokens=2400, temperature=0))
