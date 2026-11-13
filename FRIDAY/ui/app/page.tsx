@@ -4,7 +4,7 @@ import { Activity, Clock3, LayoutGrid, Radio, TerminalSquare, Waypoints } from "
 import { useCallback, useEffect, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { EmptyState, OnboardingHint, OwnerPreferences, VoiceDiagnostics } from "@/components/batch8";
-import { Reveal } from "@/components/effects";
+import { AuroraBackground, FloatingOrbs, ParticleField, Reveal, ScrambleText } from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
 import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
@@ -176,6 +176,13 @@ export default function Page() {
 
   return (
     <>
+      {/* ---- Living Universe ambient stack (owner directive 2026-11-13:
+          attractive and dynamic — floating elements, aurora, particles).
+          Fixed layers behind everything; never intercept the pointer. ---- */}
+      <AuroraBackground />
+      <ParticleField />
+      <FloatingOrbs />
+
       <nav className="nav" aria-label="Main navigation">
         <a className="nav-logo" href="#top" aria-label="FRIDAY home">
           <span className="logo-dot" aria-hidden="true" />
@@ -210,11 +217,11 @@ export default function Page() {
           />
           {connected === "online"
             ? onlineCount > 0
-              ? `${onlineCount}/${totalAgents} agents live`
-              : <span className="nav-alert" role="status">dashboard online · agents unreachable</span>
+              ? <span className="nav-count">{`${onlineCount}/${totalAgents} agents live`}</span>
+              : <span className="nav-count nav-alert" role="status">dashboard online · agents unreachable</span>
             : connected === "offline"
-              ? "API offline"
-              : "Connecting…"}
+              ? <span className="nav-count">API offline</span>
+              : <span className="nav-count">Connecting…</span>}
           <span className="nav-clock" title="Indian Standard Time">
             <Clock3 size={12} />
             {now ? `${istTime(now)} IST` : "--:-- IST"}
@@ -225,10 +232,22 @@ export default function Page() {
       <main className="shell" id="top" style={{ paddingTop: "calc(var(--nav-h) + 20px)" }}>
         {/* ============ CONSOLE — FRIDAY communication only ============ */}
         <section className={`tabview${tab === "console" ? " on" : ""}`} hidden={tab !== "console"} aria-label="FRIDAY console">
+          <Reveal className="console-hero">
+            <div className="hero-eyebrow">
+              <span className="hero-live-dot" aria-hidden="true" />
+              <ScrambleText text="SOVEREIGN OPERATING SYSTEM" />
+            </div>
+            <h1 className="hero-title">
+              One voice moves the <span className="grad-text">whole universe</span>.
+            </h1>
+            <p className="hero-sub">
+              Ten specialist agents, one continuous line. Speak or type — FRIDAY listens, remembers and dispatches in real time.
+            </p>
+          </Reveal>
           <div className="console">
             <div className="console-left-wrap">
               <div className="console-left">
-                <VoiceCall onStateChange={setVoiceState} footer={<ConsoleStrip fleet={fleet} autonomy={autonomy} />} />
+                <VoiceCall onStateChange={setVoiceState} orbitAgents={fleet?.agents} footer={<ConsoleStrip fleet={fleet} autonomy={autonomy} />} />
               </div>
             </div>
             <div className="console-main-wrap">

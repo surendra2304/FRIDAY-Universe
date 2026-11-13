@@ -3,8 +3,9 @@
 import { AlertTriangle, Mic, PhoneOff, Radio } from "lucide-react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Orbital } from "./effects";
 import { OrbCore, OrbState } from "./OrbCore";
-import { apiBase, formatClock, requestJson } from "@/lib/api";
+import { Agent, apiBase, formatClock, requestJson } from "@/lib/api";
 
 /* ============================================================
    Continuous LiveKit voice session with FRIDAY — voice dock.
@@ -30,7 +31,16 @@ type WorkerStatus = {
   updated_at?: string;
 };
 
-export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: OrbState) => void; footer?: React.ReactNode }) {
+export function VoiceCall({
+  onStateChange,
+  footer,
+  orbitAgents,
+}: {
+  onStateChange?: (state: OrbState) => void;
+  footer?: React.ReactNode;
+  /** Live fleet — rendered as the satellite ring around the orb (real data, real colors). */
+  orbitAgents?: Agent[];
+}) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [message, setMessage] = useState("Tap once — we talk like we're on the phone.");
   const [peerSpeaking, setPeerSpeaking] = useState(false);
@@ -132,10 +142,21 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
   async function startCall() {
     if (status === "connecting" || status === "connected") return;
     setStatus("connecting");
-    setMessage("Opening the voice line…");
+    setMessage("Opening a private voice room…");
     setPeerSpeaking(false);
     setMicSpeaking(false);
     setAudioBlocked(false);
+
+    // Per-call room (2026-11-13, ZAI Agent 1): the shared fixed room
+    // "friday" accumulated one agent per call — live probes found two
+    // agent participants in the room at once (one streaming a dead audio
+    // track), which is exactly the erratic-dead-air failure the owner
+    // heard. A fresh room per call gives every call exactly one agent and
+    // a clean job lifecycle: the room empties when the call ends, the
+    // agent's session closes, nothing lingers into the next call.
+    const roomName = `friday-${
+      typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)
+    }`;
 
     const room = new Room({ adaptiveStream: true, dynacast: true });
     try {
@@ -147,7 +168,7 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
     try {
       const identity = `owner-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)}`;
       const body = await requestJson<{ server_url: string; token: string }>(
-        `/api/livekit/token?room=friday&identity=${encodeURIComponent(identity)}`,
+        `/api/livekit/token?room=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(identity)}`,
       );
 
       const attachAudio = (track: Track) => {
@@ -179,6 +200,11 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
         const self = speakers.some((s) => s.identity?.startsWith("owner-"));
         setPeerSpeaking(peer);
         setMicSpeaking(self);
+        /* progressive honesty: once FRIDAY actually speaks, the dock stops
+           saying "waking up" — the owner sees the line came alive. */
+        if (peer) {
+          setMessage((current) => (current.startsWith("Line open") ? "Live — speak naturally, interrupt anytime." : current));
+        }
       });
 
       let lastRtt: number | null = null;
@@ -261,7 +287,7 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
       sessionStartRef.current = Date.now();
       setSeconds(0);
       setStatus("connected");
-      setMessage("Live — speak naturally, interrupt anytime.");
+      setMessage("Line open — FRIDAY is waking up and will greet you in a few seconds.");
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Voice connection failed.";
       roomRef.current?.disconnect();
@@ -279,7 +305,9 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
   return (
     <div className="voice-rail panel">
       <div className="rail-orb">
-        <OrbCore state={orbState} showLabel={true} />
+        <Orbital agents={orbitAgents} duration={46}>
+          <OrbCore state={orbState} showLabel={true} />
+        </Orbital>
       </div>
       <div className="rail-state" aria-live="polite">
         <strong>{message}</strong>
@@ -308,7 +336,8 @@ export function VoiceCall({ onStateChange, footer }: { onStateChange?: (state: O
       <button
         className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg btn-voice`}
         onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
-        disabled={status === "connecting"}
+        disabled={status === "connecting" || (workerFailed && status === "idle")}
+        title={workerFailed && status === "idle" ? `Voice backend unavailable: ${worker?.detail || worker?.state}` : undefined}
         aria-label={status === "connected" ? "End voice call" : "Start voice call"}
       >
         {status === "connecting" ? (
