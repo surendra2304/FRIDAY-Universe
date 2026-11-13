@@ -19,6 +19,39 @@ status_definitions:
   CLOSED: "Formally closed; reason and evidence recorded."
 
 tasks:
+  - id: TASK-INTENT-001
+    title: "Wave 3: LLM intent classification mid-tier — bounded, fail-open labeler between deterministic fast paths and the generic tool loop"
+    status: IN_REVIEW
+    owner: zai
+    branch: zai/TASK-INTENT-001-llm-intent-tier
+    pr: 89
+    contributors: []
+    priority: P1
+    created_at: "2026-11-13T23:45:00+05:30"
+    updated_at: "2026-11-13T23:45:00+05:30"
+    files:
+      - "FRIDAY/src/friday/routing/intent_classifier.py"   # NEW — LLMIntentClassifier: fail-open classify, LRU cache, bounded executor, kill switch
+      - "FRIDAY/src/friday/routing/capability_router.py"   # new public deterministic_match_count() across the 20 _INTENT_TABLES (route_request untouched)
+      - "FRIDAY/src/friday/core/config.py"                 # Settings.intent_classify_timeout (2.5, ge=1 le=30) + intent_classify_enabled (True)
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"      # hook after the confirmation block: weak-signal gate, upgrade-only fold, exec-goal steering, context telemetry
+      - "FRIDAY/tests/test_intent_classifier_tier.py"      # 14 tests: fail-open, weak-signal gate, fold/steer through REAL process_message, parsing, cache, kill switch
+      - "FRIDAY/tests/conftest.py"                         # FRIDAY_INTENT_CLASSIFIER=off default — suite hermeticity (no real provider via the hook)
+    defect: "The routing ladder is deterministic keyword tables: phrasings no table matches fall through to the generic LLM tool loop (multi-second, unsteered), and phrasings matching >=2 tables are resolved by score arithmetic — the documented misroute class (research->VISION_MODEL, trading-intent->launcher, 'write a script'->video-script engine). required_tools on the deterministic router was telemetry-only; the generic loop never saw it."
+    acceptance:
+      - "Fail-open invariant: provider timeout/error/malformed output returns None and the pipeline proceeds byte-identical to pre-tier behaviour; the classifier can only add information, never block a turn."
+      - "Weak-signal gate: fires only when 0 or >=2 intent tables match (deterministic_match_count); a single unambiguous table hit never pays a model call."
+      - "Upgrade-only fold: verdict confidence >= CLARITY_CONFIDENCE (0.65) may raise cognitive understanding confidence, never lower it."
+      - "Steering: verdict confidence >= STEER_CONFIDENCE (0.85) with required tools appends '[intent routing hint: ...]' to the EXECUTION goal only; effective_goal stays clean for memory recall and Memora."
+      - "Bounded + kill-switched: Settings.intent_classify_timeout wall-clock in a single-worker pool, LRU cache (256), FRIDAY_INTENT_CLASSIFIER=off prevents lazy CREATION (injected test doubles still returned) and tests/conftest.py defaults it on process-wide."
+      - "route_request stays a pure function; fast_path exclusivity unchanged; compound requests never claimed by this tier."
+      - "178 tests green: intent tier 14/14 + contract suites (word-boundaries 15, capability-routing 7, fast-path-scope 22, voice-instant 14, diagnostics 16, memory-commands 34, batch3-delegations 27, real-usage-battery 29) all passing with the tier enabled."
+    evidence:
+      - "PR #89 (branch zai/TASK-INTENT-001-llm-intent-tier off main 342c8afb, commit 25df87e8) — 6 files, +751/-2."
+      - "tests/test_intent_classifier_tier.py 14/14 passed; fold/steer asserted through the REAL CognitiveMixin.process_message (bare-agent harness; input rerouted past _research_dispatch_fast_path which eats 'look into ...')."
+      - "All 8 pinned contract suites green with the tier enabled — zero deterministic-routing behaviour change; zero failures, so no stash-comparison classification was needed."
+    blockers: []
+    next_action: "CI review + owner merge (PR #89). Wave 4 queued after owner review."
+
   - id: TASK-STRATEX-OANDA-001
     title: "OANDA demo trading — credential vault, adapter hardening, validated profitable strategy, live 24/5 engine"
     status: IN_PROGRESS
