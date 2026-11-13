@@ -23,12 +23,12 @@ tasks:
     title: United owner-workflow acceptance and real shared-memory/research lifecycle
     status: IN_PROGRESS
     owner: arena_engineering_01
-    branch: arena/TASK-WF-015-structured-research
-    pr: 76
+    branch: arena/TASK-WF-015-grounded-research
+    pr: 77
     contributors: []
     priority: P0
     created_at: '2026-11-13T03:20:09.274913+00:00'
-    updated_at: '2026-11-13T04:45:57.065446+00:00'
+    updated_at: '2026-11-13T05:11:44.592634+00:00'
     files:
     - FRIDAY/src/friday/memory/memora_client.py
     - FRIDAY/tests/test_shared_memory_lifecycle.py
@@ -41,6 +41,10 @@ tasks:
     - tests/test_grounded_live_research.py
     - IntelX/intelx/models/ai_universe_provider.py
     - IntelX/tests/test_ai_universe_provider.py
+    - IntelX/intelx/api/grounded_live_research.py
+    - IntelX/intelx/api/router.py
+    - tests/test_grounded_research_synthesis.py
+    - tests/test_live_research_task_contract.py
     dependencies: []
     acceptance:
     - Separate implementation/tests/deployment/actual behavior/owner-only gates in shared
@@ -82,17 +86,23 @@ tasks:
       indices[1]/providerinference, NOT deployed.
     - Schema5negativecontrolsfailbefore;25provider+gatewaytests passafter; noInference/voice/trading
       sourcechanges.
+    - PR77final621d4027/merge1262d584/deploy43368790766SUCCESS, protected7+6unchanged.
+    - Grounded candidate43purecontracts/60combinedtests pass; actualdraftanswerFAILEDclosed
+      in all preserved larger-answer probes.
+    - Actualgeneric-instruction-token negativecontrol fixed in candidate, but sourcedanswer/modelcompletion
+      gate remains unresolved.
     risk_flags:
     - No broad-query memory deletion.
     - No generated-converter changes, live trading changes or video publication.
     blockers:
-    - Research-answer relevance remains partial; next engineering gate.
-    - Owner microphone/OAuth/render-review and sustained exchange-reconciledprofit remain
-      distinct.
-    next_action: Complete exact-head schema-repair CI/preflight/rollout and actual deployed
-      modelprobe; continue grounded research-answer relevance, not just excerpts.
+    - 'Grounded integration is DRAFT: real larger-answer Inference completion refused;
+      response metadata needed before any further probe or production rollout.'
+    - Actual owner microphone/video/OAuth and sustained net exchange-reconciled profit
+      remain distinct.
+    next_action: Inspect precise Inference completion metadata with team; do not merge/deploy
+      failing grounded draft. Continue actual owner acceptance, not test-only closure.
     claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842655427
-    last_update_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6844197272
+    last_update_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6844630417
     component_acceptance:
       memory: "VERIFIED \u2014 realcanonical14/14 freshprocess phases, exactOraclecleanup,\
         \ PR75/deploy43363885223"

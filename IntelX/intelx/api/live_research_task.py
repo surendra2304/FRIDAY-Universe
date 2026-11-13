@@ -63,11 +63,12 @@ async def run_live_research(task_id: str, query: str, run: Callable[[], Awaitabl
                                                   "findings_count": len(findings), "durable_run": False}}}
 
 
-async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) -> dict:
+async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, synthesize=None) -> dict:
     """Fetch real documents and quote relevant passages without mock extraction.
 
-    This is an explicitly extractive brief, not independent fact verification or
-    an LLM-written synthesis. A search snippet alone is never promoted to a
+    Without a synthesis callback this is explicitly extractive. A configured
+    callback may produce a source-attributed model draft, never independent fact
+    verification. A search snippet alone is never promoted to a
     retrieved-document finding. Existing SSRF/robots/byte guards belong to fetch.
     """
     import hashlib
@@ -107,6 +108,7 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
     else:
         results = await search.fetch(query, max_results=min(15, max_sources * 3))
     findings, sources, failures, seen = [], [], [], set()
+    source_documents = []
     topical_query = re.sub(r"https?://[^\s]+", " ", query.lower())
     def normalized_words(text):
         # Treat serialize/serialization as the same topic, not URL tokens.
@@ -116,7 +118,8 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
     terms = normalized_words(topical_query) - {"the", "and", "for", "what", "with", "from", "research", "summarize",
         "explain", "how", "does", "works", "handles", "give", "highlights",
         "cite", "actual", "source", "sources", "urls", "not", "build", "code",
-        "publish", "anything", "please", "tell", "about", "this", "that"}
+        "publish", "anything", "please", "tell", "about", "this", "that", "only", "directly", "relevant", "passages",
+        "excerpts", "answer", "question", "using", "based"}
     for candidate in results[:15]:
         if len(sources) >= max_sources:
             break
@@ -146,6 +149,10 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
             # answers. Require a prose sentence; version-number dots don't count.
             paragraphs = [p for p in paragraphs if 40 <= len(p) <= 4000
                           and re.search(r"[.!?](?:\s|$)", p)]
+            document_terms = set().union(*(normalized_words(p) for p in paragraphs))
+            if len(terms) >= 3 and len(terms & document_terms) < 2:
+                failures.append({"url": url, "reason": "insufficient_topic_overlap"})
+                continue
             ranked = sorted(enumerate(paragraphs), key=lambda p: (-len(terms & normalized_words(p[1])), p[0]))
             if terms:
                 ranked = [p for p in ranked if terms & normalized_words(p[1])]
@@ -161,6 +168,8 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
                       "retrieved_at": datetime.now(timezone.utc).isoformat(),
                       "evidence_kind": "retrieved_document", "independently_verified": False}
             sources.append(source)
+            source_documents.append({"source_id": sid, "title": title, "url": final_url,
+                                     "text": "\n".join(paragraphs)[:18_000]})
             for passage in passages:
                 excerpt = passage[:1200]
                 findings.append({"statement": excerpt, "status": "source_excerpt", "quote": excerpt,
@@ -170,15 +179,39 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
             raise
         except Exception as exc:
             failures.append({"url": url, "reason": type(exc).__name__})
+    answer_kind = "source_excerpts"
+    synthesis_metadata = {}
+    if synthesize is not None and source_documents:
+        try:
+            draft = await synthesize(query, source_documents)
+            if draft.get("status") != "SUCCESS":
+                findings = []
+                failures.append({"reason": str(draft.get("error") or "synthesis_unverified")})
+            else:
+                findings = draft["findings"]
+                answer_kind = draft["answer_kind"]
+                synthesis_metadata = {k: draft[k] for k in ["quotes_verified", "semantic_entailment_verified", "synthesis_provider"]}
+                used_ids = {c["source_id"] for f in findings for c in f["citations"]}
+                sources = [s for s in sources if s["id"] in used_ids]
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            findings = []
+            failures.append({"reason": "synthesis_" + type(exc).__name__})
     spoken = " ".join(f"According to {f['citations'][0]['source_title']}, {f['statement']}" for f in findings[:3])
     if not spoken:
-        spoken = "I could not retrieve readable sources for that query. I will not invent a research brief."
-    lines = ["Retrieved-source excerpts — not independently verified facts or a verified answer to every part of the question."]
+        spoken = ("I retrieved sources but could not produce a source-grounded answer. No completed brief is being claimed."
+                  if sources else "I could not retrieve topical readable sources for that query. I will not invent a research brief.")
+    lines = ["Source-attributed model draft — quotations checked, claims not independently verified." if answer_kind != "source_excerpts" else
+             "Retrieved-source excerpts — not independently verified facts or a verified answer to every part of the question."]
     for finding in findings:
         citation = finding["citations"][0]
         lines.extend([f"\n{citation['source_title']}: {finding['statement']}", citation["source_url"]])
+        if answer_kind != "source_excerpts":
+            lines.append(f"Supporting source quotation: {finding['quote']}")
     return {"status": "SUCCESS" if findings else "DEGRADED", "query": query,
-            "answer_kind": "source_excerpts", "question_answered": False,
+            "answer_kind": answer_kind, "question_answered": False, **synthesis_metadata,
             "findings": findings, "sources": sources, "spoken_summary": spoken,
             "text_response": "\n".join(lines), "source_failures": failures,
-            "summary": f"Retrieved {len(sources)} source document(s); findings are attributed excerpts, not independent verification."}
+            "summary": (f"Retrieved {len(sources)} source document(s); findings are source-attributed, not independent verification."
+                        if findings else f"Retrieved {len(sources)} source document(s), but no grounded answer was verified.")}

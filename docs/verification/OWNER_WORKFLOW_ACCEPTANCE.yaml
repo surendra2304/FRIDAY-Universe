@@ -2,7 +2,7 @@ schema_version: 1
 scope: Owner workflows; component success is never whole-system acceptance
 coordinator: Arena Agent 1
 claim_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842655427
-observed_checkout: 64b1df82c76a506cf6df914a38bb8e1c307cfa21
+observed_checkout: 1262d5841efd8505a788e195febd2145fa440b6c
 team_coordination:
   zai_agent_1:
     existing_lane: Voice-room lifecycle/UI redesign plus CI; preserve their current
@@ -47,6 +47,11 @@ workflows:
     - PR76evidenceintegrityrepair deployed43367015991;protected7+6unchanged;fullanswerNOTaccepted.
     - Schema-routingrootcause5beforefailures/25aftertests; realcandidateModelGatewayindices[1]vsoriginalStructuredOutputError;
       candidatestagingNOTdeployedacceptance.
+    - PR77schemarouting deployed43368790766; bothprotectedsetsunchanged.
+    - CanonicalunrelatedqubitquestionreturnedCSVtext; followupnegativecontrolfixed
+      in candidate, notyetdeployed.
+    - GroundedoptionalintegrationDRAFT;60combinedtestspass but actualsourcedanswers
+      allFAILEDclosed; completionfailurecause notfullyknown.
   shared_memory:
     state: bounded_canonical_lifecycle_verified
     marker: wf015safe92b44403c2
