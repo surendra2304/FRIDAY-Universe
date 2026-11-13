@@ -5,7 +5,8 @@
 > A run that ends without updating this file is a FAILED run.
 
 ## LAST_RUN
-- none yet (file seeded 2026-11-13 by ZAI Agent 1)
+- 2026-11-13 17:30 IST CHAOS run (surface 1: chat-brain), commit 20dbfc1
+- battery 11/11 green; regression suites: api-command/origin/fleet 64, persona/router 65
 
 ## IN_PROGRESS (must be finished or cleanly reverted FIRST, before any new work)
 - TASK-STRATEX-OANDA-001 — OANDA demo trading live (cron job 528111 runs the validated
@@ -17,6 +18,15 @@
 ## FINDINGS_QUEUE (severity | repro | discovered by | status)
 - MEDIUM | 2026-11-13 16:57 IST: trades 57-77 flattened externally 2 min after open,
   -42.47 USD realized; not SL/TP, not this loop. Confirm = owner manual close. | SWEEP | OPEN
+- CRITICAL | datetime in command-result metadata crashed raw json.dumps on every
+  502/refusal branch -> empty 500. FIXED commit 20dbfc1 (_json_safe), pinned in
+  test_json_safe_converts_datetimes_not_evidence | CHAOS | DONE
+- HIGH | "Open a live OANDA position ..." swallowed by launcher fast path (2 sites),
+  answered "no application called '...'". FIXED commit 20dbfc1 (trading-intent guard),
+  pinned | CHAOS | DONE
+- HIGH | /api/chat shipped honest failure replies as 502; dashboard discarded the words
+  and faked "I lost the link". FIXED commit 20dbfc1 (rewrap readable reply as 200;
+  403/500 untouched) | CHAOS | DONE
 - (sweep runs append here; fixed items move to DONE with commit hash)
 
 ## UPGRADE_BACKLOG (CHAOS run implements exactly ONE per run, smallest-first)
@@ -25,6 +35,7 @@
 3. TASK-WF-007 — Goal-specific real model code + valid generated tests through Forge/Inference.
 4. Owner standing asks: site performance polish (minimal dynamic design), chat reply brevity,
    agent autonomy depth (screen-read / app-open), voice robustness.
+   (chat-surface honesty slice of item 4 shipped in commit 20dbfc1; the rest remains)
 
 ## CHAOS_ROTATION (one surface per CHAOS run, cycle top to bottom)
 1. chat-brain (rapid-fire, long/unicode/malformed input, secret-siphon prompts, live-money refusal)
@@ -33,7 +44,9 @@
 4. website (load timing, mobile viewport, asset 404s, JS console errors)
 5. stratex-oanda (quotes fresh, bad-order rejection, SL/TP on every open trade, breaker states)
 6. security (unauthenticated /bridge and /api probes must be fail-closed per D-023; no secrets in responses)
-(next surface = 1)
+(next surface = 2)
 
 ## DONE
-- none yet
+- 2026-11-13 17:30 IST CHAOS run 1 (chat-brain): commit 20dbfc1 — chat chaos battery
+  (11 tests) + JSON-safe failure branches + trading-intent launcher guard + /api/chat
+  honest-reply contract. Zero regressions (129 related tests green).

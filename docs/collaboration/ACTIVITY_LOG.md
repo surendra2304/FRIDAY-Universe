@@ -805,3 +805,10 @@ Honest framing recorded for the owner: +19.5R over 20y at 1% risk ≈ a slow, st
 3. **Defect found in the deployed Stratex-OANDA-Demo service** — bot.log 07:02 UTC shows the batch pricing fallback returning ONE stale price for the whole basket (identical entry/SL ~1.22000/1.20659 across USDCAD, NZDUSD, EURGBP) with tp=0.00000. This is the "Stratex can't do anything" symptom the owner reported. Fix tracked in TASK-STRATEX-PORTFOLIO-002 next_action.
 
 4. **Deliverable** — `Stratex/portfolio_v2/` (8 files, 817 lines, zero dependencies, reads the credentials.md vault format), branch zai/TASK-STRATEX-PORTFOLIO-002, **PR #85**.
+
+## 2026-11-13 17:30 IST (QA Chaos Loop run 1 — surface: chat-brain, commit 20dbfc1)
+- New permanent hostile-user battery `FRIDAY/tests/test_chat_chaos_battery.py` (11 tests: empty/10k-char/unicode-mixed, 12-message rapid-fire burst, live-money fabrication guard for Binance+OANDA, secret-siphon probes that load REAL credential values and assert zero leakage, jailbreak compliance guard, launcher-misroute and JSON-safety pins).
+- CRITICAL fixed: `datetime` in command-result metadata crashed raw `json.dumps` on every 502/refusal branch — clients got an empty 500 instead of FRIDAY's honest reply. `_json_safe` (datetimes -> ISO-8601, exotic objects -> repr) now runs before all response branches.
+- HIGH fixed: "Open a live OANDA position ..." was swallowed by TWO launcher fast paths and answered "There is no application or file called '...'"; trading-intent regex guard added to both gates.
+- UPGRADE shipped: `/api/chat` rewraps a 502 that carries a readable honest reply as HTTP 200 — the dashboard previously discarded FRIDAY's actual words and showed a fabricated "I lost the link" error. 403 refusals / 500 crashes / `/api/command` pinned contract untouched.
+- Evidence: battery 11/11 green; regressions zero (api-command/origin/fleet 64, persona/router/boss 65). STATE.md rotation pointer -> surface 2 (voice).
