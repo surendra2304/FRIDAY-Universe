@@ -238,7 +238,10 @@ class OandaDemoTrader:
         trades = self.adapter.open_trades()
         open_instruments = {t["instrument"] for t in trades}
 
-        pricing = self.adapter.get_pricing(WATCHLIST + ["USDJPY"])
+        # Dedupe (USDJPY is both a watchlist pair and the JPY-quote
+        # conversion source — a duplicate instrument 400s the whole batch).
+        pricing_symbols = list(dict.fromkeys(WATCHLIST + ["USDJPY"]))
+        pricing = self.adapter.get_pricing(pricing_symbols)
         if not pricing:
             summary["error"] = "pricing unavailable"
             self._save_state(state)
