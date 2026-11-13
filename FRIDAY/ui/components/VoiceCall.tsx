@@ -53,6 +53,13 @@ export function VoiceCall({
   const connectedAtRef = useRef<number>(0);
   const sessionIdRef = useRef<string>("");
   const sessionStartRef = useRef<number>(Date.now());
+  /* Intentional-end guard (2026-11-13, ZAI Agent 1): the Disconnected
+     handler used to auto-reconnect even after the owner deliberately
+     ended the call — the line resurrected into a room whose agent
+     session had already closed (the worker now closes it when the last
+     owner leaves), i.e. a connected-but-silent line that also swallowed
+     the diagnostics POST (last_session stayed empty forever). */
+  const intentionalEndRef = useRef(false);
 
   const orbState: OrbState =
     status === "connected"
@@ -102,6 +109,7 @@ export function VoiceCall({
 
   const endCall = useCallback(
     (note: string) => {
+      intentionalEndRef.current = true;
       roomRef.current?.disconnect();
       roomRef.current = null;
       clearAudioElements();
@@ -146,6 +154,7 @@ export function VoiceCall({
     setPeerSpeaking(false);
     setMicSpeaking(false);
     setAudioBlocked(false);
+    intentionalEndRef.current = false;
 
     // Per-call room (2026-11-13, ZAI Agent 1): the shared fixed room
     // "friday" accumulated one agent per call — live probes found two
@@ -246,6 +255,20 @@ export function VoiceCall({
 
       room.on(RoomEvent.Disconnected, async () => {
         const duration = (Date.now() - sessionStartRef.current) / 1000;
+        /* Intentional end (End-call button): never resurrect the line,
+           never burn a reconnect attempt — post the session report and
+           settle. The auto-reconnect below stays for GENUINE drops. */
+        if (intentionalEndRef.current) {
+          await postDiagnostics(duration > 0 ? (lastRtt != null && lastRtt < 250 ? "good" : "degraded") : "no-session-yet", duration);
+          roomRef.current = null;
+          clearAudioElements();
+          setPeerSpeaking(false);
+          setMicSpeaking(false);
+          setSeconds(0);
+          setStatus("idle");
+          setMessage("Voice line closed.");
+          return;
+        }
         if (reconnectAttempts < MAX_RECONNECT && Date.now() - lastActivityRef.current < IDLE_TIMEOUT_MS) {
           reconnectAttempts += 1;
           setStatus("connecting");
