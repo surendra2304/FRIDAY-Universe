@@ -153,3 +153,4 @@ credentials.md.bak-*
 coverage_ci.json
 *.coverage
 .coverage.*
+scripts/.dns_guard_state.json
