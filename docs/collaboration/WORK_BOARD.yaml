@@ -1,9 +1,9 @@
 schema_version: 1
-snapshot_at: "2026-11-13T03:40:19+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST)
+snapshot_at: "2026-11-13T09:20:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST); refreshed by ZAI Agent 1 after the Living- Universe + voice wave
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
-main_head_at_snapshot: "9544300"  # pre-v2-plan-push head; Master Plan v2 published under D-022 same day
+main_head_at_snapshot: "0fe3ea4"  # fonts gitignore fix head; code wave: 908167e (voice worker) + 63f2108 (UI Living Universe + per-call rooms, rebased over collaborator 7a0e9a0) + 0fe3ea4
 warning: "Snapshot only. Refresh GitHub branches, PRs, workflows and runtime state before acting. NOTE (2026-11-10): the repository history was rewritten to purge leaked credentials; all pre-rewrite commit SHAs recorded anywhere in this registry are historical references only. The pre-rewrite bundle is preserved offline by ZAI. All collaborator branches were deleted after merge (single-branch main)."
 
 status_definitions:
@@ -2513,6 +2513,80 @@ tasks:
       - "Full working-tree dir scan (53.88 MB) reviewed: all 152 findings are test fixtures with fake secrets, README curl examples, .env.example placeholders and key_pool.json placeholder strings — no real credentials (consistent with D-016's preserved-fixture policy); CI never dir-scans the full tree (change-range only)."
     blockers: []
     next_action: "Complete. All gates green on cd8b5b3 and on the following head 33fa44a (which includes this fix); evidence on issue #35 comment 6837455345."
+
+  - id: "TASK-VOICE-ROOM-001"
+    title: "Voice line reliability: per-call LiveKit rooms + concurrent provider resolution + fast audible greeting (ZAI Agent 1)"
+    status: "VERIFIED"
+    merge_note: "Direct commits 908167e (worker) and 63f2108 (dashboard) on main, deployed by Fleet CD run for 63f2108 (Server 1 SUCCESS; FRIDAY.service + FRIDAY-Voice.service restarted — worker pid refreshed, heartbeat state reset). Live verification 2026-11-13 ~09:05 IST: Playwright E2E against production."
+    owner: "zai"
+    branch: "main (single-branch flow, rebased over collaborator 7a0e9a0)"
+    pr: null
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842902784"
+    files:
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+    defect: "Owner report 'the voice is not working'. Live E2E probes (read-only, no fabricated states) measured: connect succeeds and an audio track flows, but time-to-first-audible-word was 20-75s and sometimes never; probe #2 found TWO agent participants in the shared room 'friday' — every call dispatched a new job while earlier agents never left (one streamed a dead track). Root causes: (1) serial entrypoint chain owner-memory recall (<=12s thread) then Gemini key probe (<=15s) then greeting sleeps (1.0s + 4.0s); (2) fixed shared room accumulating agents across calls; (3) jobs lingering after the owner left."
+    acceptance:
+      - "Dashboard opens a per-call room friday-<random> (token endpoint already accepted arbitrary room names — verified live before the change); reconnects within a call reuse the same room."
+      - "Worker resolves owner-memory recall and the Gemini key probe CONCURRENTLY (asyncio.gather); session built with whatever resolves when both budgets return (max, not sum)."
+      - "Fixed-line greeting fires the moment the session exists (1.0s pre-sleep -> 0.3s; warm realtime greeting layered at 2.5s, was 4.0s)."
+      - "Session closes promptly when the last owner-* participant leaves (heartbeat 'closed'); no agent lingers into the next call."
+      - "Call button disabled with reason when the worker heartbeat reports no-provider; progressive honest states 'Opening a private voice room' -> 'Line open — FRIDAY is waking up' -> 'Live — speak naturally' once the agent actually speaks."
+    evidence:
+      - "Pre-fix probes: run 1 — 'Speaking' label only at the 40s sample with the audio element at t=22s; run 2 — no speech within 75s, TWO audio elements (one paused, ready 0 — the dead-track agent), remote audio flowed 74s below the active-speaker threshold."
+      - "Post-deploy probe (production, 2026-11-13 ~09:05 IST): tap -> line open at 3s ('Line open — FRIDAY is waking up') -> audio track attached and playing at ~5s (t=0.61) -> orb 'Speaking' + message auto-advanced to 'Live — speak naturally' by the 10s sample with 5.6s of audio played. Exactly ONE audio element (one agent per call)."
+      - "CI on 63f2108: Deploy Core Fleet (Server 1) SUCCESS, Secret Scanning SUCCESS, test/docker/contracts SUCCESS, both monorepo validators SUCCESS, Lighthouse audit SUCCESS (non-blocking)."
+    blockers: []
+    next_action: "Complete and live-verified. If the owner still reports silent calls from a real device, next probe should capture browser autoplay-block events (the dock already surfaces 'Browser blocked playback — tap anywhere') and per-device mic-permission denials."
+
+  - id: "TASK-UI-LIVING-001"
+    title: "'Living Universe' dashboard redesign under owner directive D-028: aurora + starfield + floating orbs + REAL-fleet satellite ring + glassmorphism (ZAI Agent 1)"
+    status: "VERIFIED"
+    merge_note: "Direct commit 63f2108 on main (rebased over collaborator 7a0e9a0 — registry-only changes, no overlap). Deployed by Fleet CD run for 63f2108 (Server 1 SUCCESS). Production verified byte-identical to the new export."
+    owner: "zai"
+    branch: "main (single-branch flow)"
+    pr: null
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842902784"
+    files:
+      - "FRIDAY/ui/app/page.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/components/effects.tsx"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+      - "FRIDAY/ui/out/**"
+    defect: "Owner directive 2026-11-13: the dashboard is not attractive/dynamic enough — wants floating elements and motion (the reactbits aesthetic). The Obsidian Console (same morning) had retired every ambient layer to null wrappers; the owner is the final arbiter of direction and rejected the minimal result."
+    acceptance:
+      - "Ambient stack mounted as fixed pointer-transparent layers: AuroraBackground (CSS drift blobs), ParticleField (canvas starfield, 3 depth layers, pointer parallax, parks on tab-hide, ~30fps), FloatingOrbs (subtle glass drift) — all collapsed to static under prefers-reduced-motion."
+      - "Orbital satellite ring around the voice orb driven by the REAL live fleet: satellites are actual agents with real status colors (good/warn/bad/muted) and tooltips — never decorative status claims; decorative fallback ring only when no fleet data. Inner ring offset 45 degrees so the bottom-center slot stays clear for the state pill."
+      - "Glassmorphism panels (backdrop blur), gradient hero with scramble eyebrow, spotlight cards, magnetic buttons, animated gradient text, shimmer CTA, chat bubble slide-ins, orb state glow per data-state."
+      - "Owner-standing directives preserved: no scroll jumps (per-call connect happens in place), IST is the only clock (kept on mobile — nav-count hidden, clock kept), all four tabs fully readable at 360px (two-row nav), no fabricated data anywhere."
+      - "next build clean; export committed under FRIDAY/ui/out (repo convention: the export is the deploy artifact, served by FRIDAY.service's root static mount)."
+    evidence:
+      - "Production md5 check: live /friday/ page byte-identical to the new export (1ad6a4aa91503a7974e5004858323a21); new chunk 0_yxmh0ft3a8l.css -> 200; old chunk 0rrtoxc4dr64a.css -> 404."
+      - "VLM (vision model) review across three fix iterations on screenshots (console desktop, fleet, system, full-page desktop, mobile 360px): final PASS — 'attractive and dynamic… feels premium'; all four tabs readable at 360px with IST clock; satellite dots clear of the state pill and panel edges; nothing clipped on the full page."
+      - "Iteration fixes applied from the reviews: subtler floating orbs, footer pinned to the natural bottom (flex shell), voice dock vertically centered, glass state pill under the orb, stat-foot single-line ellipsis, mobile two-row nav, 45-degree inner-ring offset."
+    blockers: []
+    next_action: "Complete and live-verified. Owner to view on his device; further visual tuning on request."
+
+  - id: "TASK-UI-FONTS-001"
+    title: "Dashboard webfonts were never deployed — .gitignore exception-ordering fix (ZAI Agent 1)"
+    status: "VERIFIED"
+    merge_note: "Direct commit 0fe3ea4 on main. Deployed by Fleet CD run for 0fe3ea4 (Server 1 SUCCESS). Fonts verified serving in production."
+    owner: "zai"
+    branch: "main (single-branch flow)"
+    pr: null
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842902784"
+    files:
+      - ".gitignore"
+      - "FRIDAY/ui/out/_next/static/media/**"
+    defect: "Every production dashboard load 404'd the export's hashed webfonts: .gitignore lines media/ and **/media/ re-ignored FRIDAY/ui/out/_next/static/media/ even though the earlier !FRIDAY/ui/out/** exception intended to ship it. In gitignore semantics a re-negation must come AFTER the ignoring rule to win, so the Inter / Space Grotesk woff2 files (and the hashed favicon) were never committed; the dashboard rendered with system fallback fonts — a large part of why the site read as plain to the owner."
+    acceptance:
+      - "Narrow re-negation for the export's media dir placed after the media/ block; no other media path (uploads, renders) changes."
+      - "Fonts tracked and deployed; verified serving."
+    evidence:
+      - "Production: both preloaded woff2 now 200 font/woff2 (0c89a48fa5027cee… and 83afe278b6a6bb3c…); identified via a Playwright response probe that caught the two 404s on every load."
+      - "CI on 0fe3ea4: all gates green (Deploy Server 1 SUCCESS, Secret Scanning SUCCESS, test/docker/contracts SUCCESS, both monorepo validators SUCCESS, Lighthouse SUCCESS)."
+    blockers: []
+    next_action: "Complete and live-verified."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
