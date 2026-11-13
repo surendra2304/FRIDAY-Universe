@@ -368,8 +368,17 @@ def _probe_gemini_key_sync(key: str) -> bool:
         return True
 
 
-async def _try_gemini_realtime(instructions: str):
-    """Path 1: Gemini Live realtime — only if the plugin AND a proven key exist."""
+async def _gemini_best_key() -> "str | None":
+    """Concurrent-safe key probe: verify and return the first healthy key.
+
+    Split out of _try_gemini_realtime (2026-11-13, ZAI Agent 1) so the
+    entrypoint can run the key probe and the owner-memory recall AT THE
+    SAME TIME. The serial chain (memory ≤12s, then probe ≤15s) was the
+    single biggest cause of the 20-75s time-to-first-audible-word measured
+    by the live probes: the owner heard nothing for so long that the line
+    read as dead. Only this function may block on the probe; the realtime
+    model build itself stays in the entrypoint's critical path.
+    """
     if not GOOGLE_PLUGIN_AVAILABLE:
         logger.info("gemini realtime unavailable: plugin not importable on this host")
         return None
@@ -390,26 +399,45 @@ async def _try_gemini_realtime(instructions: str):
             valid = False
         if not valid:
             continue
-        try:
-            model = _lk_google.realtime.RealtimeModel(
-                api_key=key,
-                model=_voice_model(),
-                voice=_voice_name(),
-                temperature=0.6,
-                instructions=instructions,
-                http_options=genai_types.HttpOptions(
-                    client_args={"verify": _SSL_CONTEXT},
-                    async_client_args={"ssl": _SSL_CONTEXT},
-                ),
-            )
-            logger.info("gemini realtime model built on a probe-verified key")
-            return model
-        except Exception as exc:
-            logger.warning("gemini realtime model build failed on a verified key: %s", exc)
-            return None
-
-    logger.warning("no probe-valid gemini key found; falling back to the groq pipeline")
+        return key
     return None
+
+
+async def _try_gemini_realtime(instructions: str, verified_key: "str | None" = None):
+    """Path 1: Gemini Live realtime — only if the plugin AND a proven key exist.
+
+    ``verified_key``: a key already proven by _gemini_best_key() in the
+    entrypoint's concurrent phase (None here means probe inline — the
+    legacy serial path kept for any other caller).
+    """
+    if not GOOGLE_PLUGIN_AVAILABLE:
+        logger.info("gemini realtime unavailable: plugin not importable on this host")
+        return None
+
+    if verified_key is None:
+        verified_key = await _gemini_best_key()
+    if verified_key is None:
+        logger.warning("no probe-valid gemini key found; falling back to the groq pipeline")
+        return None
+    key = verified_key
+
+    try:
+        model = _lk_google.realtime.RealtimeModel(
+            api_key=key,
+            model=_voice_model(),
+            voice=_voice_name(),
+            temperature=0.6,
+            instructions=instructions,
+            http_options=genai_types.HttpOptions(
+                client_args={"verify": _SSL_CONTEXT},
+                async_client_args={"ssl": _SSL_CONTEXT},
+            ),
+        )
+        logger.info("gemini realtime model built on a probe-verified key")
+        return model
+    except Exception as exc:
+        logger.warning("gemini realtime model build failed on a verified key: %s", exc)
+        return None
 
 
 def _fallback_tts():
@@ -465,15 +493,22 @@ async def entrypoint(ctx: JobContext):
     def _on_participant_connected(participant):
         logger.info("VOICE participant_connected %s", participant.identity)
 
-    def _on_participant_disconnected(participant):
-        logger.info("VOICE participant_disconnected %s", participant.identity)
+    # ---- CONCURRENT resolution (2026-11-13, ZAI Agent 1) ----
+    # Owner-memory recall (thread, ≤12s: the friday import chain alone
+    # measures ~10s on the 300M-capped host) and the Gemini key probe
+    # (≤15s) used to run SERIALLY: memory → probe → session → greeting.
+    # Live probes measured 20-75s to the first audible word; the owner
+    # heard dead air that long and reasonably read the line as broken.
+    # They now run at the same time; the session is built with whatever
+    # is resolved when BOTH budgets return (max, not sum).
+    _memory_task = asyncio.ensure_future(_owner_memory_lines_async())
+    _key_task = asyncio.ensure_future(_gemini_best_key())
 
     ctx.room.on("track_subscribed", _on_track_subscribed)
     ctx.room.on("participant_connected", _on_participant_connected)
-    ctx.room.on("participant_disconnected", _on_participant_disconnected)
 
-    # resolved once with a thread + timeout, reused on both provider paths
-    _memory_block = await _owner_memory_lines_async()
+    # resolved once concurrently, reused on both provider paths
+    _memory_block, _verified_key = await asyncio.gather(_memory_task, _key_task)
     instructions = _instructions(memory_block=_memory_block)
 
     # ---------------- provider selection ----------------
@@ -481,7 +516,7 @@ async def entrypoint(ctx: JobContext):
     agent: Agent
     provider_name = "none"
 
-    realtime_model = await _try_gemini_realtime(instructions)
+    realtime_model = await _try_gemini_realtime(instructions, verified_key=_verified_key)
     if realtime_model is not None:
         provider_name = f"gemini-realtime:{_voice_model()}"
         agent = Agent(instructions=instructions, tools=_voice_tools())
@@ -614,7 +649,11 @@ async def entrypoint(ctx: JobContext):
             except Exception:  # room state is best-effort, never fatal
                 break
             await asyncio.sleep(0.2)
-        await asyncio.sleep(1.0)
+        # Fast-greeting fix (2026-11-13, ZAI Agent 1): the job is dispatched
+        # BY the owner joining, so remote_participants is virtually always
+        # non-empty already; the extra 1.0s pre-sleep only delayed the first
+        # audible word. 0.3s is enough for the audio pipeline to settle.
+        await asyncio.sleep(0.3)
 
         # 1) deterministic fixed line
         if _fixed_voice is not None:
@@ -630,7 +669,9 @@ async def entrypoint(ctx: JobContext):
             except Exception as exc:
                 logger.error("VOICE fixed-line say() failed: %s", exc)
             # let the fixed line finish before layering the warm one
-            await asyncio.sleep(4.0)
+            # (was 4.0s; the orpheus line is ~3s of audio — 2.5s overlaps
+            # just enough that the warm greeting starts as the line ends)
+            await asyncio.sleep(2.5)
 
         # 2) warm realtime greeting (best-effort)
         _telugu_line = (
@@ -651,6 +692,43 @@ async def entrypoint(ctx: JobContext):
             logger.error("VOICE warm greeting generation failed: %s", exc)
 
     asyncio.create_task(_greet_when_ready())
+
+    # ---- Clean exit when the owner leaves (2026-11-13, ZAI Agent 1) ----
+    # Live probes proved agent pileup in the shared room: every call
+    # dispatched a NEW job while earlier agents stayed in the room forever
+    # (a probe found two agent participants at once — one streaming a dead
+    # track). The dashboard now opens a per-call room, and this worker ends
+    # its session promptly when the last human leaves, instead of lingering
+    # until the room timeout.
+    async def _close_session_when_empty() -> None:
+        try:
+            if session is None:
+                return
+            closer = getattr(session, "aclose", None) or getattr(session, "close", None)
+            if closer is not None:
+                result = closer()
+                if asyncio.iscoroutine(result):
+                    await result
+            logger.info("VOICE session closed: last human left the room")
+        except Exception as exc:
+            logger.warning("VOICE session close on empty room failed: %s", exc)
+
+    @ctx.room.on("participant_disconnected")
+    def _on_human_left(participant):
+        logger.info("VOICE participant_disconnected %s", participant.identity)
+        try:
+            # The only humans on this deployment are owner-* identities (the
+            # dashboard mints them); anything else is an agent/worker.
+            humans = [
+                p for p in ctx.room.remote_participants.values()
+                if str(p.identity).startswith("owner")
+            ]
+            if not humans:
+                _write_status("closed", provider_name, "owner left; session closed")
+                asyncio.create_task(_close_session_when_empty())
+        except Exception:
+            pass  # never let cleanup break the job
+
 
 
 def _on_worker_started() -> None:
