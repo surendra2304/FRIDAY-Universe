@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 from sqlalchemy import create_engine as create_sync_engine
+from sqlalchemy import event as sa_event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -24,8 +25,31 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from futuris.storage import db as storage_db
-from futuris.storage.db import install_sqlite_pragmas
 from futuris.storage.models import Base
+
+
+def install_sqlite_pragmas(target_engine: AsyncEngine) -> None:
+    """Install the WAL / busy-timeout / foreign-key PRAGMAs on a SQLite engine.
+
+    TASK-TRUST-001 repair: this helper lived in ``futuris/storage/db.py`` and was
+    removed by the Oracle-only persistence sweep, leaving this conftest with a
+    dead import that broke collection of the ENTIRE Futuris suite. Production is
+    Oracle-only now, so the helper (used only by tests that build throwaway
+    SQLite engines that behave like the old production one — in particular
+    ``PRAGMA foreign_keys=ON``, which makes the flush-ordering contract in
+    ``futuris/storage/models.py`` real instead of decorative) belongs here.
+    """
+
+    @sa_event.listens_for(target_engine.sync_engine, "connect")
+    def _sqlite_pragmas(dbapi_connection: object, _record: object) -> None:
+        cursor = dbapi_connection.cursor()  # type: ignore[attr-defined]
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA busy_timeout=30000;")
+            cursor.execute("PRAGMA foreign_keys=ON;")
+        finally:
+            cursor.close()
 
 
 @pytest.fixture(scope="session")

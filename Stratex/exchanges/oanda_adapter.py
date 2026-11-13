@@ -259,10 +259,12 @@ class OandaExchangeAdapter(BaseExchange):
                     side = "LONG"
                     qty = long_units
                     avg_price = float(pos.get("long", {}).get("averagePrice", "0") or 0)
+                    unrealized_pl = float(pos.get("long", {}).get("unrealizedPL", "0") or 0)
                 else:
                     side = "SHORT"
                     qty = abs(short_units)
                     avg_price = float(pos.get("short", {}).get("averagePrice", "0") or 0)
+                    unrealized_pl = float(pos.get("short", {}).get("unrealizedPL", "0") or 0)
 
                 instrument = pos.get("instrument", "")
                 mark_price = float(pos.get("long", {}).get("marginRate", "0") or 0)  # not mark
@@ -275,7 +277,11 @@ class OandaExchangeAdapter(BaseExchange):
                     quantity=qty,
                     entry_price=avg_price,
                     mark_price=current_price,
-                    unrealized_pnl=0.0,  # OANDA provides unrealizedPL per position separately
+                    # TASK-TRUST-001: report the real per-side unrealizedPL that
+                    # OANDA already includes in the account positions payload —
+                    # the old comment claimed OANDA provides it "separately",
+                    # so every position reported 0.0 unrealized PnL.
+                    unrealized_pnl=unrealized_pl,
                     leverage=1.0 / float(pos.get("long", {}).get("marginRate", "1") or 1) if side == "LONG" else 1.0 / float(pos.get("short", {}).get("marginRate", "1") or 1),
                     exchange="oanda",
                 ))

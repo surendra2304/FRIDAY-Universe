@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException, Query, Body
 try:
     from app.agents.real_intelx_osint import (
         IntelXSearchEngine,
+        IntelXSearchQuery,
         IntelXPhonebook,
         IntelXSelector,
         GoogleDorkAssistant,
@@ -34,6 +35,7 @@ try:
 except ImportError:
     from IntelX.app.agents.real_intelx_osint import (
         IntelXSearchEngine,
+        IntelXSearchQuery,
         IntelXPhonebook,
         IntelXSelector,
         GoogleDorkAssistant,
@@ -56,28 +58,40 @@ router = APIRouter(prefix="/api/v1/intelx", tags=["Real OSINT & Maltego Intellig
 
 @router.post("/osint/search")
 async def search_intelx(body: dict[str, Any] = Body(...)):
-    """Query Intelligence X engine across breaches, darknet, leaks, and pastebins."""
+    """Query Intelligence X engine across breaches, darknet, leaks, and pastebins.
+
+    TASK-TRUST-001: the response always states its data source. When no live
+    Intelligence X API key is configured (or the upstream call fails), the
+    engine's deterministic offline fallback runs and the response is labelled
+    ``data_source="synthetic_fallback"`` / ``status="simulated"`` so no
+    fabricated record can ever be mistaken for live OSINT evidence.
+    """
     query = body.get("query", "")
     if not query:
         raise HTTPException(status_code=400, detail="Missing query parameter")
     max_results = int(body.get("max_results", 10))
 
     engine = IntelXSearchEngine()
-    results = engine.search(query, max_results=max_results)
-    selector_type = IntelXSelector.detect_type(query)
+    q = IntelXSearchQuery(selector=query, limit=max_results)
+    results = engine.search(q)
+    simulated = bool(getattr(engine, "last_search_simulated", False))
+    selector_type = IntelXSelector.classify(query)
 
     return {
-        "status": "success",
+        "status": "simulated" if simulated else "success",
         "engine": "IntelligenceX",
+        "data_source": "synthetic_fallback" if simulated else "live_intelx",
+        "simulated": simulated,
         "query": query,
         "detected_selector": selector_type,
         "results_count": len(results),
         "results": [
             {
-                "id": getattr(r, "id", str(r)),
-                "name": getattr(r, "name", str(r)),
+                "id": getattr(r, "result_id", str(r)),
+                "name": getattr(r, "data", str(r)),
                 "bucket": getattr(r, "bucket", "general"),
                 "date": getattr(r, "date", ""),
+                "simulated": bool(getattr(r, "simulated", False)),
             }
             for r in results
         ],

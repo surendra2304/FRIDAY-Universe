@@ -171,7 +171,12 @@ class IntelXBucket:
 
 @dataclass
 class IntelXSearchResult:
-    """A single Intelligence X search result."""
+    """A single Intelligence X search result.
+
+    ``simulated`` marks records produced by the deterministic offline fallback
+    (TASK-TRUST-001): they are hash-seeded placeholders, NOT live Intelligence
+    X records, and must never be treated as OSINT evidence.
+    """
 
     result_id: str
     bucket: str
@@ -183,6 +188,7 @@ class IntelXSearchResult:
     media_type: str = ""
     source_url: str = ""
     preview: str = ""
+    simulated: bool = False
 
     @property
     def size_mb(self) -> float:
@@ -380,6 +386,9 @@ class IntelXSearchEngine:
         self.api_key = api_key or os.getenv("INTELX_API_KEY", "")
         self.client = IntelligenceX(api_key=self.api_key)
         self._results: list[IntelXSearchResult] = []
+        # TASK-TRUST-001: set by search(); True when the last results came
+        # from the deterministic offline fallback instead of live Intelligence X.
+        self.last_search_simulated: bool = False
 
     def search(self, query: IntelXSearchQuery) -> list[IntelXSearchResult]:
         """Execute a search query and return results."""
@@ -414,8 +423,13 @@ class IntelXSearchEngine:
                 )
                 results.append(result)
 
-        # If offline or no live results obtained, run high-fidelity deterministic computation
+        # If offline or no live results obtained, run high-fidelity deterministic computation.
+        # TASK-TRUST-001: these records are hash-seeded placeholders, not live
+        # intel. Every one is marked simulated=True and the engine records the
+        # fallback so the API layer can label the response honestly.
+        self.last_search_simulated = False
         if not results:
+            self.last_search_simulated = True
             for bucket in buckets:
                 seed = hashlib.sha256(f"{selector.normalized}:{bucket}".encode()).hexdigest()
                 count = int(seed[:8], 16) % 20  # 0-19 results per bucket
@@ -432,6 +446,7 @@ class IntelXSearchEngine:
                         media_type=self._pick_media_type(result_seed),
                         source_url=f"https://intelx.io/?s={selector.normalized}&b={bucket}#{result_seed[:12]}",
                         preview=f"Preview of {selector.normalized} in {bucket}...",
+                        simulated=True,
                     )
                     results.append(result)
 

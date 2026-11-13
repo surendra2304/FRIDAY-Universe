@@ -352,7 +352,12 @@ async def _generate_market_prediction(
                 ],
                 evidence=[evidence_item],
                 assumptions=[rationale],
-                model_version="statsforecast:market_volatility@v2",
+                # TASK-TRUST-001 honest attribution: this forecast is a
+                # deterministic rule over LIVE Stratex telemetry (the 503 gate
+                # above guarantees fresh inputs), NOT a statsforecast run. The
+                # previous label claimed "statsforecast:...@v2" for numbers
+                # computed by a hand-rolled formula.
+                model_version="heuristic:telemetry_vol_rule@v2",
                 status=ForecastStatus.ACTIVE,
                 evidence_class=EvidenceClass.LIVE,
                 evidence_source="stratex_telemetry",
