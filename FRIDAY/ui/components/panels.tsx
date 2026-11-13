@@ -36,7 +36,7 @@ import {
   istTime,
   statusTone,
 } from "@/lib/api";
-import { CountUp, Magnetic, Reveal, SpotlightCard, Tilt } from "./effects";
+import { CountUp, Reveal } from "./effects";
 
 /* ============================================================
    Fleet grid, activity feed and system panel.
@@ -154,8 +154,7 @@ export function FleetGrid({
         const tone = statusTone(agent.status);
         return (
           <Reveal key={agent.id} delay={Math.min(index * 60, 360)} as="article">
-            <Tilt max={6}>
-              <SpotlightCard className={`agent-card tone-${tone}${isActive ? " active" : ""}`}>
+            <div className={`agent-card tone-${tone}${isActive ? " active" : ""}`}>
                 <span className="edge" aria-hidden="true" />
               <div className="agent-head">
                 <div className="agent-icon">{AGENT_ICONS[agent.id] ?? <Database size={17} />}</div>
@@ -206,24 +205,19 @@ export function FleetGrid({
                 </div>
               )}
               <div className="agent-actions">
-                <Magnetic>
-                  <button className="mini-btn" onClick={() => onAsk(agent)}>
-                    <MessageSquareText size={13} /> Assign / ask
-                  </button>
-                </Magnetic>
-                <Magnetic>
-                  <a
-                    className="mini-btn"
-                    href={`https://friday-universe.duckdns.org/${agent.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open site <ArrowUpRight size={12} />
-                  </a>
-                </Magnetic>
+                <button className="mini-btn" onClick={() => onAsk(agent)}>
+                  <MessageSquareText size={13} /> Assign / ask
+                </button>
+                <a
+                  className="mini-btn"
+                  href={`https://friday-universe.duckdns.org/${agent.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open site <ArrowUpRight size={12} />
+                </a>
               </div>
-            </SpotlightCard>
-            </Tilt>
+            </div>
           </Reveal>
         );
       })}
@@ -367,7 +361,7 @@ export function SystemPanel({
   return (
     <div className="telemetry-grid">
       <Reveal as="article">
-        <SpotlightCard className="panel stat-card">
+        <div className="panel stat-card">
           <div className="stat-head">
             <span className="stat-label">
               <Cpu size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Server 1 CPU
@@ -381,11 +375,11 @@ export function SystemPanel({
             <span>{telemetry?.cpu_cores ?? "—"} cores · Oracle Always Free</span>
             <Sparkline values={cpuHistory} color="#8de6cf" />
           </div>
-        </SpotlightCard>
+        </div>
       </Reveal>
 
       <Reveal as="article" delay={70}>
-        <SpotlightCard className="panel stat-card">
+        <div className="panel stat-card">
           <div className="stat-head">
             <span className="stat-label">
               <Gauge size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Server 1 memory
@@ -403,11 +397,11 @@ export function SystemPanel({
             </span>
             <Sparkline values={ramHistory} color="#b9a6ff" />
           </div>
-        </SpotlightCard>
+        </div>
       </Reveal>
 
       <Reveal as="article" delay={140}>
-        <SpotlightCard className="panel stat-card">
+        <div className="panel stat-card">
           <div className="stat-head">
             <span className="stat-label">
               <Globe2 size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Fleet online
@@ -422,11 +416,11 @@ export function SystemPanel({
             <span>agents reachable right now</span>
             <Wifi size={15} style={{ color: "var(--mint)" }} />
           </div>
-        </SpotlightCard>
+        </div>
       </Reveal>
 
       <Reveal as="article" delay={210}>
-        <SpotlightCard className="panel stat-card">
+        <div className="panel stat-card">
           <div className="stat-head">
             <span className="stat-label">
               <Zap size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Autonomy
@@ -442,7 +436,7 @@ export function SystemPanel({
               {autonomy?.active_agent ? `active: ${autonomy.active_agent}` : "· standby"}
             </span>
           </div>
-        </SpotlightCard>
+        </div>
       </Reveal>
     </div>
   );
