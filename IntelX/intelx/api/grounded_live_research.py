@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import httpx
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 
 class GroundedFinding(BaseModel):
@@ -24,6 +24,14 @@ class GroundedDraft(BaseModel):
     findings: list[GroundedFinding] = Field(max_length=3)
     insufficient_evidence: bool
 
+
+
+class GroundedCompletionError(ValueError):
+    """Bounded status metadata only; never include prompt, credentials or output."""
+
+    def __init__(self, message: str, details: dict):
+        super().__init__(message)
+        self.public_details = details
 
 
 class GroundedInferenceGateway:
@@ -58,12 +66,20 @@ class GroundedInferenceGateway:
             response.raise_for_status()
             data = response.json()
         choice = data["choices"][0]
-        if choice.get("finish_reason") != "stop" or "mock" in str(data.get("model", "")).lower():
-            raise ValueError("Incomplete or mock inference completion refused")
+        finish = str(choice.get("finish_reason") or "unknown")
+        details = {"finish_reason": finish[:32], "output_characters": len(str(choice.get("message", {}).get("content") or ""))}
+        if finish != "stop":
+            raise GroundedCompletionError("Incomplete inference completion refused", {**details, "reason_code": "incomplete_completion"})
+        if "mock" in str(data.get("model", "")).lower():
+            raise GroundedCompletionError("Mock inference completion refused", {**details, "reason_code": "mock_completion"})
         text = choice["message"]["content"].strip()
         if text.startswith("```") and text.endswith("```"):
             text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-        return SimpleNamespace(provider="inference", parsed=schema_model.model_validate_json(text))
+        try:
+            parsed = schema_model.model_validate_json(text)
+        except ValidationError:
+            raise GroundedCompletionError("Invalid structured completion refused", {**details, "reason_code": "invalid_schema"}) from None
+        return SimpleNamespace(provider="inference", parsed=parsed)
 
 
 def normalized(text: str) -> str:

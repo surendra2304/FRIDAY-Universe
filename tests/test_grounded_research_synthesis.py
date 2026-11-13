@@ -91,8 +91,10 @@ def test_inference_completion_honors_budget_auth_and_refuses_truncation(monkeypa
             'model': 'real-fixture-model', 'choices': [{'finish_reason': finish_reason, 'message': {'content': result().model_dump_json()}}]}))
         call = m.GroundedInferenceGateway().complete([{'role': 'user', 'content': 'Public fixture'}], schema_model=m.GroundedDraft, max_tokens=2400, temperature=0)
         if finish_reason == 'length':
-            with pytest.raises(ValueError, match='Incomplete'):
+            with pytest.raises(ValueError, match='Incomplete') as refused:
                 asyncio.run(call)
+            assert refused.value.public_details['finish_reason'] == 'length'
+            assert 'output' not in refused.value.public_details
         else:
             assert asyncio.run(call).parsed.findings[0].quote == TEXT
         assert route.call_count == 1

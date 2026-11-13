@@ -197,7 +197,13 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             raise
         except Exception as exc:
             findings = []
-            failures.append({"reason": "synthesis_" + type(exc).__name__})
+            failure = {"reason": "synthesis_" + type(exc).__name__}
+            # Explicit diagnostic codes only, never arbitrary exception strings,
+            # model deliberation, prompts, credentials or response bodies.
+            details = getattr(exc, "public_details", {})
+            if isinstance(details, dict):
+                failure.update({k: details[k] for k in ["reason_code", "finish_reason", "output_characters"] if k in details})
+            failures.append(failure)
     spoken = " ".join(f"According to {f['citations'][0]['source_title']}, {f['statement']}" for f in findings[:3])
     if not spoken:
         spoken = ("I retrieved sources but could not produce a source-grounded answer. No completed brief is being claimed."
