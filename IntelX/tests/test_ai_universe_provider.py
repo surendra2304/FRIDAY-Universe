@@ -319,3 +319,54 @@ async def test_ai_universe_provider_fails_loudly_when_bypass_yields_nothing():
             )
 
     assert "canned mock" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_non_canned_role_shape_uses_real_ask_for_requested_schema():
+    """Deployed analyst timeline JSON is not a generic requested output schema."""
+    endpoint = 'https://inference.example.test'
+    primary = respx.post(endpoint + '/v1/intelx/research').mock(return_value=httpx.Response(200, json={
+        'response': {'timeline': [], 'themes': [], 'gaps': ['No evidence']}, 'confidence': None,
+        'provenance': {'agents_consulted': ['data_analyst']}}))
+    ask = respx.post(endpoint + '/ask').mock(return_value=httpx.Response(200, json={
+        'answer': json.dumps({'summary': 'Selected from supplied public passages.', 'confidence': 0.1})}))
+    settings = Settings(INFERENCE_API_KEY='fixture-inference-key', AI_UNIVERSE_API_KEY='fixture-role-key')
+    provider = AIUniverseProvider(base_url=endpoint, settings=settings)
+    messages = [{'role': 'user', 'content': 'Choose only the relevant supplied public passages.'}]
+    text, _ = await provider.complete(messages, model='fixture', role='analyst', schema_model=DummySchema)
+    assert primary.call_count == ask.call_count == 1
+    assert DummySchema.model_validate_json(text).summary == 'Selected from supplied public passages.'
+    request = ask.calls.last.request
+    assert request.headers['X-API-Key'] == 'fixture-inference-key'
+    payload = json.loads(request.content)
+    assert messages[0]['content'] in payload['question']
+    assert 'DummySchema' in payload['question']
+    assert provider.last_metadata['schema_recovery'] is True
+    assert provider.last_metadata['confidence'] is None
+    assert provider.last_metadata['provenance']['endpoint'] == '/ask'
+
+
+@pytest.mark.asyncio
+@respx.mock
+@pytest.mark.parametrize('answer', ['', 'not json', '{"wrong": "shape"}'])
+async def test_wrong_role_shape_and_invalid_genuine_output_fail_closed(answer):
+    endpoint = 'https://inference.example.test'
+    respx.post(endpoint + '/v1/intelx/research').mock(return_value=httpx.Response(200, json={'response': {'timeline': []}}))
+    ask = respx.post(endpoint + '/ask').mock(return_value=httpx.Response(200, json={'answer': answer}))
+    provider = AIUniverseProvider(base_url=endpoint)
+    with pytest.raises(ProviderError, match='requested schema'):
+        await provider.complete([{'role': 'user', 'content': 'Public fixture question'}], model='fixture', role='analyst', schema_model=DummySchema)
+    assert ask.call_count == 1
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_canned_recovery_with_invalid_schema_is_not_retried_or_certified():
+    endpoint = 'https://inference.example.test'
+    respx.post(endpoint + '/v1/intelx/research').mock(return_value=httpx.Response(200, json=CANNED_RESEARCH_RESPONSE))
+    ask = respx.post(endpoint + '/ask').mock(return_value=httpx.Response(200, json={'answer': '{"wrong": "shape"}'}))
+    provider = AIUniverseProvider(base_url=endpoint)
+    with pytest.raises(ProviderError, match='requested schema'):
+        await provider.complete([{'role': 'user', 'content': 'Public fixture question'}], model='fixture', role='analyst', schema_model=DummySchema)
+    assert ask.call_count == 1

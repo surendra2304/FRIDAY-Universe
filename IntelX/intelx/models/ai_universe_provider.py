@@ -7,7 +7,7 @@ import uuid
 from typing import Any
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from intelx.core.errors import ProviderError
 from intelx.core.settings import Settings, get_settings
@@ -185,11 +185,13 @@ class AIUniverseProvider(BaseLLMProvider):
             "Patterns indicate high consistency across peer-reviewed",
         )
         is_canned = any(marker in text_output for marker in canned_markers)
+        used_ask = False
         if is_canned:
             logger.info(
                 f"[AI-Universe] Detected canned mock response for role=[{role}]. "
                 "Executing live reasoning /ask bypass for genuine intelligence synthesis..."
             )
+            used_ask = True
             real_answer = await self._execute_ask_bypass(
                 messages=messages,
                 headers=headers,
@@ -214,9 +216,34 @@ class AIUniverseProvider(BaseLLMProvider):
             if m:
                 text_output = m.group(1).strip()
 
-        confidence = data.get("confidence", 0.90)
-        dissent = data.get("dissent")
-        provenance = data.get("provenance", {})
+        if schema_model is not None:
+            try:
+                schema_model.model_validate_json(text_output)
+            except ValidationError:
+                # The role endpoint can legitimately return its fixed timeline
+                # schema while ignoring messages/schema_json. Repeating that
+                # endpoint cannot generate an arbitrary requested schema. Use
+                # the existing authenticated model path ONCE, then fail closed.
+                if used_ask:
+                    raise ProviderError("Genuine inference output failed the requested schema") from None
+                used_ask = True
+                real_answer = await self._execute_ask_bypass(
+                    messages=messages, headers=headers, schema_model=schema_model,
+                )
+                if not real_answer or any(marker in real_answer for marker in canned_markers):
+                    raise ProviderError("No genuine inference output for the requested schema")
+                try:
+                    schema_model.model_validate_json(real_answer)
+                except ValidationError:
+                    raise ProviderError("Genuine inference output failed the requested schema") from None
+                text_output = real_answer
+
+        # Metadata belongs to the successful response, not the earlier role
+        # endpoint. Schema validation is not fact or confidence calibration.
+        latency = time.time() - t0
+        confidence = None if used_ask else data.get("confidence", 0.90)
+        dissent = None if used_ask else data.get("dissent")
+        provenance = {"endpoint": "/ask", "independently_verified": False} if used_ask else data.get("provenance", {})
 
         self.last_metadata = {
             "request_id": req_id,
@@ -227,6 +254,7 @@ class AIUniverseProvider(BaseLLMProvider):
             "provenance": provenance,
             "latency_seconds": round(latency, 3),
             "provider": "ai_universe",
+            "schema_recovery": used_ask and schema_model is not None,
         }
 
         # Calculate token accounting
