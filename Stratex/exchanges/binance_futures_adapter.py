@@ -33,6 +33,21 @@ from logger import get_logger
 logger = get_logger("binance_futures_adapter")
 
 
+def _env_flag(name: str, default: str = "false") -> bool:
+    """True when the env var holds a truthy value (1/true/yes/on, case-insensitive)."""
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _live_trading_authorized() -> bool:
+    """True only when the owner explicitly sets ALLOW_LIVE_TRADING=true (TASK-STR-001).
+
+    Default false: this adapter refuses to construct against live endpoints
+    (and refuses live order paths) unless this explicit opt-in exists —
+    the same invariant exchange_implementations.py enforces for its adapters.
+    """
+    return _env_flag("ALLOW_LIVE_TRADING", "false")
+
+
 class BinanceFuturesAdapter(BaseExchange):
     """
     Binance USD-M Futures Adapter (Testnet/Live).
@@ -88,6 +103,26 @@ class BinanceFuturesAdapter(BaseExchange):
         else:
             self.base_url = "https://testnet.binancefuture.com"
 
+        # TASK-TRUST-001 fail-closed gate: a live-endpoint adapter must never
+        # exist without the owner's explicit opt-in. Checked BEFORE any network
+        # activity (_sync_time / _ensure_position_mode fire signed requests),
+        # so an unguarded live resolution cannot even reach fapi.binance.com.
+        # TRADING_MODE=LIVE stays permanently blocked by design regardless of
+        # ALLOW_LIVE_TRADING, mirroring exchange_implementations.py.
+        trading_mode = os.environ.get("TRADING_MODE", "TESTNET").upper()
+        if trading_mode == "LIVE" or os.environ.get("LIVE_TRADING_ENABLED") == "1":
+            raise PermissionError(
+                "SECURITY CRITICAL: LIVE trading is permanently blocked by design "
+                f"(venue=binance_futures, TRADING_MODE={trading_mode})."
+            )
+        if self.environment == "live" and not _live_trading_authorized():
+            raise PermissionError(
+                "SECURITY CRITICAL: refusing to construct a live-endpoint "
+                "BinanceFuturesAdapter without explicit ALLOW_LIVE_TRADING=true "
+                f"(resolved environment={self.environment}, base_url={self.base_url}). "
+                "Set BINANCE_ENV=demo/testnet, or provide ALLOW_LIVE_TRADING=true."
+            )
+
         logger.info(f"[BINANCE_FUTURES] Environment: {self.environment} ({self.base_url})")
 
         self.session = requests.Session()
@@ -117,6 +152,26 @@ class BinanceFuturesAdapter(BaseExchange):
         self._exchange_info: Optional[Dict] = None
         self._leverage_set: set = set()
         self.target_leverage = int(os.getenv("BINANCE_LEVERAGE", "3"))
+
+    def _enforce_no_live_trading(self) -> None:
+        """Re-checked on every order/cancel path (defense in depth).
+
+        Covers the window after construction where the environment could have
+        been re-resolved or env changed: TRADING_MODE=LIVE /
+        LIVE_TRADING_ENABLED=1 is permanently blocked, and a live-endpoint
+        adapter still requires ALLOW_LIVE_TRADING=true (TASK-TRUST-001).
+        """
+        trading_mode = os.environ.get("TRADING_MODE", "TESTNET").upper()
+        if trading_mode == "LIVE" or os.environ.get("LIVE_TRADING_ENABLED") == "1":
+            raise PermissionError(
+                "SECURITY CRITICAL: LIVE trading is permanently blocked by design "
+                f"(venue=binance_futures, TRADING_MODE={trading_mode})."
+            )
+        if self.environment == "live" and not _live_trading_authorized():
+            raise PermissionError(
+                "SECURITY CRITICAL: live-endpoint order refused without explicit "
+                "ALLOW_LIVE_TRADING=true (venue=binance_futures)."
+            )
 
     def _ensure_position_mode(self) -> None:
         """Prefer one-way mode; fall back to tagging orders with positionSide."""
@@ -501,6 +556,7 @@ class BinanceFuturesAdapter(BaseExchange):
         take_profit: Optional[float] = None,
     ) -> UnifiedOrderResult:
         """Place order with native SL/TP (bracket order via OCO or separate)."""
+        self._enforce_no_live_trading()
         u_sym = self.denormalize_symbol(symbol)
         side = side.upper()
         if side not in ("BUY", "SELL", "LONG", "SHORT"):
@@ -658,6 +714,7 @@ class BinanceFuturesAdapter(BaseExchange):
         return data or []
 
     def cancel_algo_order(self, algo_id: Any) -> bool:
+        self._enforce_no_live_trading()
         data = self._delete(
             "/fapi/v1/algoOrder",
             signed=True,
@@ -735,6 +792,7 @@ class BinanceFuturesAdapter(BaseExchange):
         return result
 
     def cancel_order(self, symbol: str, order_id: str) -> bool:
+        self._enforce_no_live_trading()
         data = self._delete("/fapi/v1/order", signed=True, params={"symbol": self.denormalize_symbol(symbol), "orderId": order_id})
         return data is not None
 

@@ -35,24 +35,15 @@ from futuris.api.routers.market import router as market_router
 from futuris.api.routers.models import router as models_router
 from futuris.api.routers.predictions import router as predictions_router
 from futuris.api.routers.risk import router as risk_router
-try:
-    from futuris.predict.forecasting_engine import router as forecasting_engine_router
-    from futuris.predict.realtime_event_impact import router as event_impact_router
-    from futuris.predict.ensemble_reconciliation import router as ensemble_recon_router
-    from futuris.predict.predictive_maintenance import router as predictive_maintenance_router
-    from futuris.predict.market_regime_detector import router as market_regime_router
-    from futuris.predict.event_probability_forecaster import router as event_prob_router
-    from futuris.predict.scenario_stress_tester import router as stress_test_router
-    from futuris.predict.prediction_calibration_optimizer import router as calibration_router
-except ModuleNotFoundError:
-    from predict.forecasting_engine import router as forecasting_engine_router
-    from predict.realtime_event_impact import router as event_impact_router
-    from predict.ensemble_reconciliation import router as ensemble_recon_router
-    from predict.predictive_maintenance import router as predictive_maintenance_router
-    from predict.market_regime_detector import router as market_regime_router
-    from predict.event_probability_forecaster import router as event_prob_router
-    from predict.scenario_stress_tester import router as stress_test_router
-    from predict.prediction_calibration_optimizer import router as calibration_router
+# TASK-TRUST-001: the legacy ``predict/*`` routers are UNMOUNTED. Three of
+# them (forecasting_engine, event_probability_forecaster, scenario_stress_
+# tester) generated their values from md5 hashes while looking like real
+# forecasts, and the rest were heuristic duplicates of the real pipeline.
+# They were also mounted with doubled paths (prefix "/api/v1/futuris" plus
+# full paths in their decorators), so they were never reachable at the
+# documented URLs anyway. The real surfaces are: /v1/forecasts + /v1/friday/*
+# (ForecastingPipeline with statsforecast adapters) and the market router
+# below. The modules stay on disk for reference; nothing imports them.
 from futuris.api.routers.scenarios import fan_chart_router
 from futuris.api.routers.scenarios import router as scenarios_router
 from futuris.api.routers.self_status import router as self_status_router
@@ -323,14 +314,7 @@ app.include_router(ecosystem_router)
 app.include_router(market_router, prefix="/v1/futuris")
 app.include_router(market_router, prefix="/api/v1/futuris", include_in_schema=False)
 app.include_router(market_router, prefix="/v1/market", include_in_schema=False)
-app.include_router(forecasting_engine_router, prefix="/api/v1/futuris")
-app.include_router(event_impact_router, prefix="/api/v1/futuris")
-app.include_router(ensemble_recon_router, prefix="/api/v1/futuris")
-app.include_router(predictive_maintenance_router, prefix="/api/v1/futuris")
-app.include_router(market_regime_router, prefix="/api/v1/futuris")
-app.include_router(event_prob_router, prefix="/api/v1/futuris")
-app.include_router(stress_test_router, prefix="/api/v1/futuris")
-app.include_router(calibration_router, prefix="/api/v1/futuris")
+# (TASK-TRUST-001: legacy predict/* routers unmounted — see the import block note)
 app.include_router(predictions_router)
 app.include_router(self_status_router)
 app.include_router(streaming_router)

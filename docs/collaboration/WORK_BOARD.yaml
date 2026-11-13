@@ -19,6 +19,54 @@ status_definitions:
   CLOSED: "Formally closed; reason and evidence recorded."
 
 tasks:
+  - id: TASK-TRUST-001
+    title: "Wave 1 Trust & Safety sweep — no fabricated numbers anywhere (live-trading gate, honest read paths, unmount md5-fake routes, IntelX provenance)"
+    status: IN_REVIEW
+    owner: zai
+    branch: zai/TASK-TRUST-001-trust-safety-sweep
+    pr: 88
+    contributors: []
+    priority: P0
+    created_at: "2026-11-13T21:20:00+05:30"
+    updated_at: "2026-11-13T21:45:00+05:30"
+    files:
+      - "Stratex/exchanges/binance_futures_adapter.py"
+      - "Stratex/exchanges/exchange_implementations.py"
+      - "Stratex/exchanges/oanda_adapter.py"
+      - "Stratex/exchanges/ctrader_fix_adapter.py"
+      - "Stratex/execution/router.py"
+      - "Stratex/execution/exchange_router.py"
+      - "Stratex/dashboard.py"
+      - "Stratex/tests/test_binance_futures_live_gate.py"
+      - "Stratex/tests/test_trust001_oanda_ctrader_honesty.py"
+      - "Stratex/tests/test_multi_exchange_expansion.py"
+      - "Stratex/tests/test_multi_exchange.py"
+      - "Stratex/tests/integration/test_multi_exchange_integration.py"
+      - "Stratex/tests/test_live_trading_guard.py"
+      - "Futuris/futuris/api/app.py"
+      - "Futuris/futuris/api/routers/market.py"
+      - "Futuris/tests/conftest.py"
+      - "Futuris/tests/api/test_legacy_predict_routers_unmounted.py"
+      - "IntelX/app/agents/real_intelx_osint.py"
+      - "IntelX/routers/real_osint_routes.py"
+      - "IntelX/tests/test_search_provenance.py"
+    defect: "Full 4-survey code audit of all 10 agents (this session) found: BinanceFuturesAdapter had NO code-level live-trading gate (BINANCE_ENV unset + BINANCE_TESTNET=false resolved to live fapi.binance.com silently); exchange adapters returned hardcoded BTC ~60,490 tickers, fake orderbooks, synthetic candles, fake balances (USDT 2700 / USD 1000) and a fabricated Bybit ETH position on API failure; the execution router invented a 60500.0 best price when no venue quoted; OANDA positions always reported unrealized PnL 0.0; the cTrader FIX adapter defaulted to the LIVE endpoint with a hardcoded 'stratex' password in source; three Futuris predict/ routers generated values from md5 hashes while mounted; IntelX /osint/search returned unlabeled synthetic results (and was doubly broken — wrong engine signature + nonexistent IntelXSelector.detect_type — so it 500'd on every call)."
+    acceptance:
+      - "Fail-closed live-trading gate on BinanceFuturesAdapter: TRADING_MODE=LIVE permanently blocked; live endpoint requires ALLOW_LIVE_TRADING=true; checked at construction BEFORE any network call and re-checked on every order/cancel path (11-test suite)."
+      - "Exchange read paths honest: no fabricated tickers/orderbooks/candles/balances/positions anywhere; bare adapters raise RuntimeError or return honest empties; execution router refuses to fabricate a best price; dashboard route returns 200 NO_DATA envelope."
+      - "OANDA get_positions reports real per-side unrealizedPL; regression lock asserts PnL != 0 when the payload carries it."
+      - "cTrader demo-first defaults; no credential literals in source; live FIX endpoint gated; logon without credentials refuses (11-test suite incl. OANDA honesty)."
+      - "Futuris legacy predict/* routers unmounted; real surfaces (/v1/forecasts, /v1/friday/forecast, /api/v1/futuris/forecast, /v1/market/forecast, /api/v1/task/execute) verified routed; market.py honest model attribution heuristic:telemetry_vol_rule@v2."
+      - "IntelX /osint/search labels data_source=synthetic_fallback / status=simulated with per-result simulated flags; the doubly-broken route actually works now."
+      - "Futuris tests/conftest repaired (dead install_sqlite_pragmas import broke collection of the entire suite since the Oracle sweep)."
+      - "117 tests green locally: Stratex 98 (7 suites), IntelX 16, Futuris 3."
+    evidence:
+      - "PR #88 (branch zai/TASK-TRUST-001-trust-safety-sweep, commit 4410ef7b) — 20 files, +1291/-261."
+      - "Local test evidence in PR body; stash-comparison classification for every failure (4 NEW failures fixed test-only, 2 pre-existing found-not-fixed documented: ensemble/explain doubled URLs — live-URL change deferred; round2 HSTS env-dependent assertion)."
+      - "Parallel verification: 2 subagents (Stratex suites + Futuris suites) + coordinator-run IntelX verification."
+    blockers: []
+    next_action: "CI review + owner merge; Fleet CD deploys on merge (no behavior change on running services — gates match current production env). Wave 2 (Forge reliability) queued next."
+
   - id: TASK-STRATEX-OANDA-001
     title: "OANDA demo trading — credential vault, adapter hardening, validated profitable strategy, live 24/5 engine"
     status: IN_PROGRESS

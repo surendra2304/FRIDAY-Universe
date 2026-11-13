@@ -169,37 +169,57 @@ class BinanceExchangeAdapter(BaseExchange):
         return []
 
     def get_ticker(self, symbol: str) -> UnifiedTicker:
+        """Real ticker only (TASK-TRUST-001): raise instead of fabricating prices.
+
+        The previous behaviour returned a hardcoded BTC ticker (~60,490) when
+        no client was configured or the API failed — a strategy consuming that
+        ticker could trade on invented prices. Read paths now fail exactly like
+        order paths already do.
+        """
         u_sym = self.normalize_symbol(symbol)
         client = self._get_client()
-        if client:
-            try:
-                raw_sym = self.denormalize_symbol(u_sym)
-                t = client.get_ticker(symbol=raw_sym)
-                bid = float(t.get("bidPrice", 60490.0))
-                ask = float(t.get("askPrice", 60510.0))
-                last = float(t.get("lastPrice", 60500.0))
-                vol = float(t.get("volume", 15000.0))
-                return UnifiedTicker(symbol=u_sym, bid=bid, ask=ask, last=last, volume_24h=vol)
-            except Exception:
-                pass
-        return UnifiedTicker(symbol=u_sym, bid=60490.0, ask=60510.0, last=60500.0, volume_24h=15000.0)
+        if client is None:
+            raise RuntimeError(
+                f"[BINANCE_ADAPTER] No real ticker for {u_sym}: no exchange client configured "
+                "(credentials missing, or live endpoints blocked by ALLOW_LIVE_TRADING=false). "
+                "Refusing to fabricate prices."
+            )
+        try:
+            raw_sym = self.denormalize_symbol(u_sym)
+            t = client.get_ticker(symbol=raw_sym)
+            bid = float(t.get("bidPrice") or 0.0)
+            ask = float(t.get("askPrice") or 0.0)
+            last = float(t.get("lastPrice") or 0.0)
+            if bid <= 0 or ask <= 0 or last <= 0:
+                raise RuntimeError(f"incomplete ticker payload for {u_sym}")
+            return UnifiedTicker(
+                symbol=u_sym, bid=bid, ask=ask, last=last,
+                volume_24h=float(t.get("volume") or 0.0),
+            )
+        except Exception as e:
+            logger.warning(f"[BINANCE_ADAPTER] get_ticker failed: {e}")
+            raise RuntimeError(f"[BINANCE_ADAPTER] No real ticker for {u_sym}: {e}") from e
 
     def get_orderbook(self, symbol: str, limit: int = 20) -> dict[str, list[list[float]]]:
+        """Real order book only (TASK-TRUST-001): raise instead of returning a fake book."""
+        u_sym = self.normalize_symbol(symbol)
         client = self._get_client()
-        if client:
-            try:
-                raw_sym = self.denormalize_symbol(self.normalize_symbol(symbol))
-                ob = client.get_order_book(symbol=raw_sym, limit=limit)
-                return {
-                    "bids": [[float(p), float(q)] for p, q in ob.get("bids", [])],
-                    "asks": [[float(p), float(q)] for p, q in ob.get("asks", [])]
-                }
-            except Exception:
-                pass
-        return {
-            "bids": [[60490.0, 1.5], [60480.0, 3.0], [60470.0, 5.0]],
-            "asks": [[60510.0, 1.2], [60520.0, 2.5], [60530.0, 4.0]]
-        }
+        if client is None:
+            raise RuntimeError(
+                f"[BINANCE_ADAPTER] No real order book for {u_sym}: no exchange client configured. "
+                "Refusing to fabricate liquidity."
+            )
+        try:
+            raw_sym = self.denormalize_symbol(u_sym)
+            ob = client.get_order_book(symbol=raw_sym, limit=limit)
+            bids = [[float(p), float(q)] for p, q in ob.get("bids", [])]
+            asks = [[float(p), float(q)] for p, q in ob.get("asks", [])]
+            if not bids or not asks:
+                raise RuntimeError(f"empty order book payload for {u_sym}")
+            return {"bids": bids, "asks": asks}
+        except Exception as e:
+            logger.warning(f"[BINANCE_ADAPTER] get_orderbook failed: {e}")
+            raise RuntimeError(f"[BINANCE_ADAPTER] No real order book for {u_sym}: {e}") from e
 
     def place_order(
         self,
@@ -272,19 +292,41 @@ class BinanceExchangeAdapter(BaseExchange):
             return False
 
     def get_historical_data(self, symbol: str, timeframe: str = "15m", limit: int = 100) -> list[dict[str, Any]]:
-        now_ts = int(time.time())
-        step = 900 if timeframe == "15m" else 300
-        return [
-            {
-                "timestamp": now_ts - (i * step),
-                "open": 60000.0 + (i * 10),
-                "high": 60100.0 + (i * 10),
-                "low": 59900.0 + (i * 10),
-                "close": 60050.0 + (i * 10),
-                "volume": 100.0 + i
-            }
-            for i in range(min(limit, 100))
-        ]
+        """Real klines only (TASK-TRUST-001): raise instead of returning synthetic candles.
+
+        The previous behaviour never contacted the venue at all — it returned a
+        deterministic ascending 60,000+i*10 series presented as market history.
+        """
+        u_sym = self.normalize_symbol(symbol)
+        client = self._get_client()
+        if client is None:
+            raise RuntimeError(
+                f"[BINANCE_ADAPTER] No real candles for {u_sym}: no exchange client configured. "
+                "Refusing to fabricate historical data."
+            )
+        try:
+            raw = client.futures_klines(
+                symbol=self.denormalize_symbol(u_sym), interval=timeframe, limit=min(limit, 1000)
+            )
+            candles = [
+                {
+                    "timestamp": int(k[0] / 1000),
+                    "open": float(k[1]),
+                    "high": float(k[2]),
+                    "low": float(k[3]),
+                    "close": float(k[4]),
+                    "volume": float(k[5]),
+                }
+                for k in (raw or [])
+            ]
+            if not candles:
+                raise RuntimeError(f"empty klines payload for {u_sym}")
+            return candles
+        except RuntimeError:
+            raise
+        except Exception as e:
+            logger.warning(f"[BINANCE_ADAPTER] get_historical_data failed: {e}")
+            raise RuntimeError(f"[BINANCE_ADAPTER] No real candles for {u_sym}: {e}") from e
 
     def get_fees(self, symbol: str) -> tuple[float, float]:
         return 0.0002, 0.0004
@@ -330,6 +372,11 @@ class BybitExchangeAdapter(BaseExchange):
             self._ccxt_client = None
 
     def get_balance(self) -> dict[str, UnifiedBalance]:
+        """Real balances only (TASK-TRUST-001): honest empty dict when unavailable.
+
+        The previous behaviour fabricated a USDT 2,700 balance for the unified
+        portfolio endpoint when no client was configured.
+        """
         if self._ccxt_client and self.api_key:
             try:
                 b = self._ccxt_client.fetch_balance()
@@ -337,57 +384,80 @@ class BybitExchangeAdapter(BaseExchange):
                 for cur, data in b.items():
                     if isinstance(data, dict) and data.get("total", 0) > 0:
                         res[cur] = UnifiedBalance(cur, free=data.get("free", 0.0), used=data.get("used", 0.0), total=data.get("total", 0.0))
-                if res: return res
-            except Exception:
-                pass
-        return {
-            "USDT": UnifiedBalance("USDT", free=2500.0, used=200.0, total=2700.0)
-        }
+                if res:
+                    return res
+            except Exception as e:
+                logger.warning(f"[BYBIT_ADAPTER] get_balance failed: {e}")
+        return {}
 
     def get_positions(self) -> list[UnifiedPosition]:
-        return [
-            UnifiedPosition(
-                symbol="ETH/USDT",
-                side="LONG",
-                quantity=1.0,
-                entry_price=3000.0,
-                mark_price=3050.0,
-                unrealized_pnl=50.0,
-                leverage=3.0,
-                exchange="bybit"
-            )
-        ]
+        """Real positions only (TASK-TRUST-001): honest empty list when unavailable.
+
+        The previous behaviour returned a fabricated ETH/USDT LONG position
+        that appeared in cross-exchange portfolio aggregations.
+        """
+        if self._ccxt_client and self.api_key:
+            try:
+                raw = self._ccxt_client.fetch_positions() or []
+                res: list[UnifiedPosition] = []
+                for p in raw:
+                    amt = float(p.get("contracts") or 0.0) * (1 if p.get("side") == "long" else -1)
+                    if amt == 0:
+                        continue
+                    res.append(UnifiedPosition(
+                        symbol=self.normalize_symbol(p.get("symbol", "")),
+                        side="LONG" if amt > 0 else "SHORT",
+                        quantity=abs(amt),
+                        entry_price=float(p.get("entryPrice") or 0.0),
+                        mark_price=float(p.get("markPrice") or 0.0),
+                        unrealized_pnl=float(p.get("unrealizedPnl") or 0.0),
+                        leverage=float(p.get("leverage") or 1.0),
+                        exchange="bybit",
+                    ))
+                if res:
+                    return res
+            except Exception as e:
+                logger.warning(f"[BYBIT_ADAPTER] get_positions failed: {e}")
+        return []
 
     def get_ticker(self, symbol: str) -> UnifiedTicker:
+        """Real ticker only (TASK-TRUST-001): raise instead of fabricating prices."""
         u_sym = self.normalize_symbol(symbol)
-        if self._ccxt_client:
-            try:
-                t = self._ccxt_client.fetch_ticker(u_sym)
-                return UnifiedTicker(
-                    symbol=u_sym,
-                    bid=float(t.get("bid", 60495.0)),
-                    ask=float(t.get("ask", 60515.0)),
-                    last=float(t.get("last", 60505.0)),
-                    volume_24h=float(t.get("baseVolume", 12000.0))
-                )
-            except Exception:
-                pass
-        return UnifiedTicker(symbol=u_sym, bid=60495.0, ask=60515.0, last=60505.0, volume_24h=12000.0)
+        if self._ccxt_client is None:
+            raise RuntimeError(
+                f"[BYBIT_ADAPTER] No real ticker for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate prices."
+            )
+        try:
+            t = self._ccxt_client.fetch_ticker(u_sym)
+            bid = float(t.get("bid") or 0.0)
+            ask = float(t.get("ask") or 0.0)
+            last = float(t.get("last") or 0.0)
+            if bid <= 0 or ask <= 0 or last <= 0:
+                raise RuntimeError(f"incomplete ticker payload for {u_sym}")
+            return UnifiedTicker(symbol=u_sym, bid=bid, ask=ask, last=last, volume_24h=float(t.get("baseVolume") or 0.0))
+        except Exception as e:
+            logger.warning(f"[BYBIT_ADAPTER] get_ticker failed: {e}")
+            raise RuntimeError(f"[BYBIT_ADAPTER] No real ticker for {u_sym}: {e}") from e
 
     def get_orderbook(self, symbol: str, limit: int = 20) -> dict[str, list[list[float]]]:
-        if self._ccxt_client:
-            try:
-                ob = self._ccxt_client.fetch_order_book(self.normalize_symbol(symbol), limit=limit)
-                return {
-                    "bids": [[float(p), float(q)] for p, q in ob.get("bids", [])],
-                    "asks": [[float(p), float(q)] for p, q in ob.get("asks", [])]
-                }
-            except Exception:
-                pass
-        return {
-            "bids": [[60495.0, 2.0], [60485.0, 4.0], [60475.0, 6.0]],
-            "asks": [[60515.0, 1.8], [60525.0, 3.0], [60535.0, 5.0]]
-        }
+        """Real order book only (TASK-TRUST-001): raise instead of returning a fake book."""
+        u_sym = self.normalize_symbol(symbol)
+        if self._ccxt_client is None:
+            raise RuntimeError(
+                f"[BYBIT_ADAPTER] No real order book for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate liquidity."
+            )
+        try:
+            ob = self._ccxt_client.fetch_order_book(u_sym, limit=limit)
+            bids = [[float(p), float(q)] for p, q in ob.get("bids", [])]
+            asks = [[float(p), float(q)] for p, q in ob.get("asks", [])]
+            if not bids or not asks:
+                raise RuntimeError(f"empty order book payload for {u_sym}")
+            return {"bids": bids, "asks": asks}
+        except Exception as e:
+            logger.warning(f"[BYBIT_ADAPTER] get_orderbook failed: {e}")
+            raise RuntimeError(f"[BYBIT_ADAPTER] No real order book for {u_sym}: {e}") from e
 
     def place_order(
         self,
@@ -419,19 +489,28 @@ class BybitExchangeAdapter(BaseExchange):
         )
 
     def get_historical_data(self, symbol: str, timeframe: str = "15m", limit: int = 100) -> list[dict[str, Any]]:
-        now_ts = int(time.time())
-        step = 900 if timeframe == "15m" else 300
-        return [
-            {
-                "timestamp": now_ts - (i * step),
-                "open": 60010.0 + (i * 10),
-                "high": 60110.0 + (i * 10),
-                "low": 59910.0 + (i * 10),
-                "close": 60060.0 + (i * 10),
-                "volume": 80.0 + i
-            }
-            for i in range(min(limit, 100))
-        ]
+        """Real OHLCV only (TASK-TRUST-001): raise instead of returning synthetic candles."""
+        u_sym = self.normalize_symbol(symbol)
+        if self._ccxt_client is None:
+            raise RuntimeError(
+                f"[BYBIT_ADAPTER] No real candles for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate historical data."
+            )
+        try:
+            ohlcv = self._ccxt_client.fetch_ohlcv(u_sym, timeframe=timeframe, limit=min(limit, 1000))
+            candles = [
+                {"timestamp": int(c[0] / 1000), "open": float(c[1]), "high": float(c[2]),
+                 "low": float(c[3]), "close": float(c[4]), "volume": float(c[5])}
+                for c in (ohlcv or [])
+            ]
+            if not candles:
+                raise RuntimeError(f"empty OHLCV payload for {u_sym}")
+            return candles
+        except RuntimeError:
+            raise
+        except Exception as e:
+            logger.warning(f"[BYBIT_ADAPTER] get_historical_data failed: {e}")
+            raise RuntimeError(f"[BYBIT_ADAPTER] No real candles for {u_sym}: {e}") from e
 
     def get_fees(self, symbol: str) -> tuple[float, float]:
         return 0.0002, 0.00055
@@ -483,6 +562,7 @@ class OKXExchangeAdapter(BaseExchange):
         return unified_symbol.replace("/", "-")
 
     def get_balance(self) -> dict[str, UnifiedBalance]:
+        """Real balances only (TASK-TRUST-001): honest empty dict when unavailable."""
         if self._ccxt_client and self.api_key:
             try:
                 b = self._ccxt_client.fetch_balance()
@@ -490,46 +570,76 @@ class OKXExchangeAdapter(BaseExchange):
                 for cur, data in b.items():
                     if isinstance(data, dict) and data.get("total", 0) > 0:
                         res[cur] = UnifiedBalance(cur, free=data.get("free", 0.0), used=data.get("used", 0.0), total=data.get("total", 0.0))
-                if res: return res
-            except Exception:
-                pass
-        return {
-            "USDT": UnifiedBalance("USDT", free=1500.0, used=0.0, total=1500.0)
-        }
+                if res:
+                    return res
+            except Exception as e:
+                logger.warning(f"[OKX_ADAPTER] get_balance failed: {e}")
+        return {}
 
     def get_positions(self) -> list[UnifiedPosition]:
+        """Real positions only (TASK-TRUST-001): honest empty list when unavailable."""
+        if self._ccxt_client and self.api_key:
+            try:
+                raw = self._ccxt_client.fetch_positions() or []
+                res: list[UnifiedPosition] = []
+                for p in raw:
+                    amt = float(p.get("contracts") or 0.0) * (1 if p.get("side") == "long" else -1)
+                    if amt == 0:
+                        continue
+                    res.append(UnifiedPosition(
+                        symbol=self.normalize_symbol(p.get("symbol", "")),
+                        side="LONG" if amt > 0 else "SHORT",
+                        quantity=abs(amt),
+                        entry_price=float(p.get("entryPrice") or 0.0),
+                        mark_price=float(p.get("markPrice") or 0.0),
+                        unrealized_pnl=float(p.get("unrealizedPnl") or 0.0),
+                        leverage=float(p.get("leverage") or 1.0),
+                        exchange="okx",
+                    ))
+                if res:
+                    return res
+            except Exception as e:
+                logger.warning(f"[OKX_ADAPTER] get_positions failed: {e}")
         return []
 
     def get_ticker(self, symbol: str) -> UnifiedTicker:
+        """Real ticker only (TASK-TRUST-001): raise instead of fabricating prices."""
         u_sym = self.normalize_symbol(symbol)
-        if self._ccxt_client:
-            try:
-                t = self._ccxt_client.fetch_ticker(u_sym)
-                return UnifiedTicker(
-                    symbol=u_sym,
-                    bid=float(t.get("bid", 60485.0)),
-                    ask=float(t.get("ask", 60505.0)),
-                    last=float(t.get("last", 60495.0)),
-                    volume_24h=float(t.get("baseVolume", 9500.0))
-                )
-            except Exception:
-                pass
-        return UnifiedTicker(symbol=u_sym, bid=60485.0, ask=60505.0, last=60495.0, volume_24h=9500.0)
+        if self._ccxt_client is None:
+            raise RuntimeError(
+                f"[OKX_ADAPTER] No real ticker for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate prices."
+            )
+        try:
+            t = self._ccxt_client.fetch_ticker(u_sym)
+            bid = float(t.get("bid") or 0.0)
+            ask = float(t.get("ask") or 0.0)
+            last = float(t.get("last") or 0.0)
+            if bid <= 0 or ask <= 0 or last <= 0:
+                raise RuntimeError(f"incomplete ticker payload for {u_sym}")
+            return UnifiedTicker(symbol=u_sym, bid=bid, ask=ask, last=last, volume_24h=float(t.get("baseVolume") or 0.0))
+        except Exception as e:
+            logger.warning(f"[OKX_ADAPTER] get_ticker failed: {e}")
+            raise RuntimeError(f"[OKX_ADAPTER] No real ticker for {u_sym}: {e}") from e
 
     def get_orderbook(self, symbol: str, limit: int = 20) -> dict[str, list[list[float]]]:
-        if self._ccxt_client:
-            try:
-                ob = self._ccxt_client.fetch_order_book(self.normalize_symbol(symbol), limit=limit)
-                return {
-                    "bids": [[float(p), float(q)] for p, q in ob.get("bids", [])],
-                    "asks": [[float(p), float(q)] for p, q in ob.get("asks", [])]
-                }
-            except Exception:
-                pass
-        return {
-            "bids": [[60485.0, 1.0], [60475.0, 2.0], [60465.0, 3.5]],
-            "asks": [[60505.0, 1.5], [60515.0, 2.0], [60525.0, 4.0]]
-        }
+        """Real order book only (TASK-TRUST-001): raise instead of returning a fake book."""
+        u_sym = self.normalize_symbol(symbol)
+        if self._ccxt_client is None:
+            raise RuntimeError(
+                f"[OKX_ADAPTER] No real order book for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate liquidity."
+            )
+        try:
+            ob = self._ccxt_client.fetch_order_book(u_sym, limit=limit)
+            bids = [[float(p), float(q)] for p, q in ob.get("bids", [])]
+            asks = [[float(p), float(q)] for p, q in ob.get("asks", [])]
+            if not bids or not asks:
+                raise RuntimeError(f"empty order book payload for {u_sym}")
+            return {"bids": bids, "asks": asks}
+        except Exception as e:
+            logger.warning(f"[OKX_ADAPTER] get_orderbook failed: {e}")
+            raise RuntimeError(f"[OKX_ADAPTER] No real order book for {u_sym}: {e}") from e
 
     def place_order(
         self,
@@ -561,19 +671,28 @@ class OKXExchangeAdapter(BaseExchange):
         )
 
     def get_historical_data(self, symbol: str, timeframe: str = "15m", limit: int = 100) -> list[dict[str, Any]]:
-        now_ts = int(time.time())
-        step = 900 if timeframe == "15m" else 300
-        return [
-            {
-                "timestamp": now_ts - (i * step),
-                "open": 60005.0 + (i * 10),
-                "high": 60105.0 + (i * 10),
-                "low": 59905.0 + (i * 10),
-                "close": 60055.0 + (i * 10),
-                "volume": 60.0 + i
-            }
-            for i in range(min(limit, 100))
-        ]
+        """Real OHLCV only (TASK-TRUST-001): raise instead of returning synthetic candles."""
+        u_sym = self.normalize_symbol(symbol)
+        if self._ccxt_client is None:
+            raise RuntimeError(
+                f"[OKX_ADAPTER] No real candles for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate historical data."
+            )
+        try:
+            ohlcv = self._ccxt_client.fetch_ohlcv(u_sym, timeframe=timeframe, limit=min(limit, 1000))
+            candles = [
+                {"timestamp": int(c[0] / 1000), "open": float(c[1]), "high": float(c[2]),
+                 "low": float(c[3]), "close": float(c[4]), "volume": float(c[5])}
+                for c in (ohlcv or [])
+            ]
+            if not candles:
+                raise RuntimeError(f"empty OHLCV payload for {u_sym}")
+            return candles
+        except RuntimeError:
+            raise
+        except Exception as e:
+            logger.warning(f"[OKX_ADAPTER] get_historical_data failed: {e}")
+            raise RuntimeError(f"[OKX_ADAPTER] No real candles for {u_sym}: {e}") from e
 
     def get_fees(self, symbol: str) -> tuple[float, float]:
         return 0.0002, 0.0005
@@ -623,12 +742,14 @@ class CoinbaseExchangeAdapter(BaseExchange):
         return self._client
 
     def get_balance(self) -> dict[str, UnifiedBalance]:
+        """Real balances only (TASK-TRUST-001): honest empty dict when unavailable.
+
+        The previous behaviour fabricated a USD 1,000 / BTC 0.01 balance when
+        no client was configured — contradicting this adapter's own docstring.
+        """
         client = self._get_client()
         if not client:
-            return {
-                "USD": UnifiedBalance("USD", free=1000.0, used=0.0, total=1000.0),
-                "BTC": UnifiedBalance("BTC", free=0.01, used=0.0, total=0.01)
-            }
+            return {}
         try:
             bal = client.fetch_balance()
             res: dict[str, UnifiedBalance] = {}
@@ -648,37 +769,45 @@ class CoinbaseExchangeAdapter(BaseExchange):
         return []
 
     def get_ticker(self, symbol: str) -> UnifiedTicker:
+        """Real ticker only (TASK-TRUST-001): raise instead of fabricating prices."""
         u_sym = self.normalize_symbol(symbol)
         client = self._get_client()
         if not client:
-            return UnifiedTicker(symbol=u_sym, bid=60495.0, ask=60515.0, last=60505.0, volume_24h=5000.0)
+            raise RuntimeError(
+                f"[COINBASE_ADAPTER] No real ticker for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate prices."
+            )
         try:
             t = client.fetch_ticker(self.denormalize_symbol(u_sym))
-            return UnifiedTicker(
-                symbol=u_sym,
-                bid=float(t.get("bid") or 60495.0),
-                ask=float(t.get("ask") or 60515.0),
-                last=float(t.get("last") or t.get("close") or 60505.0),
-                volume_24h=float(t.get("quoteVolume") or 5000.0)
-            )
-        except Exception:
-            return UnifiedTicker(symbol=u_sym, bid=60495.0, ask=60515.0, last=60505.0, volume_24h=5000.0)
+            bid = float(t.get("bid") or 0.0)
+            ask = float(t.get("ask") or 0.0)
+            last = float(t.get("last") or t.get("close") or 0.0)
+            if bid <= 0 or ask <= 0 or last <= 0:
+                raise RuntimeError(f"incomplete ticker payload for {u_sym}")
+            return UnifiedTicker(symbol=u_sym, bid=bid, ask=ask, last=last, volume_24h=float(t.get("quoteVolume") or 0.0))
+        except Exception as e:
+            logger.warning(f"[COINBASE_ADAPTER] get_ticker failed: {e}")
+            raise RuntimeError(f"[COINBASE_ADAPTER] No real ticker for {u_sym}: {e}") from e
 
     def get_orderbook(self, symbol: str, limit: int = 20) -> dict[str, list[list[float]]]:
+        """Real order book only (TASK-TRUST-001): raise instead of returning a fake book."""
+        u_sym = self.normalize_symbol(symbol)
         client = self._get_client()
         if not client:
-            return {
-                "bids": [[60495.0, 1.5], [60490.0, 2.0]],
-                "asks": [[60515.0, 1.2], [60520.0, 3.0]]
-            }
+            raise RuntimeError(
+                f"[COINBASE_ADAPTER] No real order book for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate liquidity."
+            )
         try:
-            ob = client.fetch_order_book(self.denormalize_symbol(self.normalize_symbol(symbol)), limit=limit)
-            return {"bids": ob.get("bids", []), "asks": ob.get("asks", [])}
-        except Exception:
-            return {
-                "bids": [[60495.0, 1.5], [60490.0, 2.0]],
-                "asks": [[60515.0, 1.2], [60520.0, 3.0]]
-            }
+            ob = client.fetch_order_book(self.denormalize_symbol(u_sym), limit=limit)
+            bids = [[float(p), float(q)] for p, q in ob.get("bids", [])]
+            asks = [[float(p), float(q)] for p, q in ob.get("asks", [])]
+            if not bids or not asks:
+                raise RuntimeError(f"empty order book payload for {u_sym}")
+            return {"bids": bids, "asks": asks}
+        except Exception as e:
+            logger.warning(f"[COINBASE_ADAPTER] get_orderbook failed: {e}")
+            raise RuntimeError(f"[COINBASE_ADAPTER] No real order book for {u_sym}: {e}") from e
 
     def place_order(
         self,
@@ -741,33 +870,32 @@ class CoinbaseExchangeAdapter(BaseExchange):
             return False
 
     def get_historical_data(self, symbol: str, timeframe: str = "15m", limit: int = 100) -> list[dict[str, Any]]:
+        """Real OHLCV only (TASK-TRUST-001): raise instead of returning synthetic candles."""
+        u_sym = self.normalize_symbol(symbol)
         client = self._get_client()
-        if client:
-            try:
-                ohlcv = client.fetch_ohlcv(
-                    self.denormalize_symbol(self.normalize_symbol(symbol)),
-                    timeframe=timeframe, limit=min(limit, 300)
-                )
-                if ohlcv:
-                    return [
-                        {"timestamp": int(c[0] / 1000), "open": c[1], "high": c[2], "low": c[3], "close": c[4], "volume": c[5]}
-                        for c in ohlcv
-                    ]
-            except Exception:
-                pass
-        now_ts = int(time.time())
-        step = 900 if timeframe == "15m" else 300
-        return [
-            {
-                "timestamp": now_ts - (i * step),
-                "open": 60000.0 + (i * 10),
-                "high": 60100.0 + (i * 10),
-                "low": 59900.0 + (i * 10),
-                "close": 60050.0 + (i * 10),
-                "volume": 50.0 + i
-            }
-            for i in range(min(limit, 100))
-        ]
+        if not client:
+            raise RuntimeError(
+                f"[COINBASE_ADAPTER] No real candles for {u_sym}: no ccxt client configured. "
+                "Refusing to fabricate historical data."
+            )
+        try:
+            ohlcv = client.fetch_ohlcv(
+                self.denormalize_symbol(u_sym),
+                timeframe=timeframe, limit=min(limit, 300)
+            )
+            candles = [
+                {"timestamp": int(c[0] / 1000), "open": float(c[1]), "high": float(c[2]),
+                 "low": float(c[3]), "close": float(c[4]), "volume": float(c[5])}
+                for c in (ohlcv or [])
+            ]
+            if not candles:
+                raise RuntimeError(f"empty OHLCV payload for {u_sym}")
+            return candles
+        except RuntimeError:
+            raise
+        except Exception as e:
+            logger.warning(f"[COINBASE_ADAPTER] get_historical_data failed: {e}")
+            raise RuntimeError(f"[COINBASE_ADAPTER] No real candles for {u_sym}: {e}") from e
 
     def get_fees(self, symbol: str) -> tuple[float, float]:
         client = self._get_client()

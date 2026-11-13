@@ -58,12 +58,16 @@ class CTraderFixAdapter(BaseExchange):
                 max_leverage=1000.0,
             ),
         )
-        self.host = host or os.getenv("CTRADER_FIX_HOST", "live.cfixapi.com")
+        # TASK-TRUST-001: demo-first, fail-closed defaults. The previous
+        # defaults pointed at the LIVE FIX endpoint (live.cfixapi.com) with a
+        # live account id as sender comp id and a hardcoded password fallback
+        # ("stratex") in source. Credentials must now come from env/args.
+        self.host = host or os.getenv("CTRADER_FIX_HOST", "demo.cfixapi.com")
         self.port = int(port or os.getenv("CTRADER_FIX_PORT", "5212"))
-        self.sender_comp_id = sender_comp_id or os.getenv("CTRADER_FIX_SENDER_COMP_ID", "live4.icmarkets.6188250")
+        self.sender_comp_id = sender_comp_id or os.getenv("CTRADER_FIX_SENDER_COMP_ID", "")
         self.target_comp_id = target_comp_id or os.getenv("CTRADER_FIX_TARGET_COMP_ID", "CSERVER")
-        self.account_id = account_id or os.getenv("CTRADER_FIX_ACCOUNT_ID", "6188250")
-        self.password = password or os.getenv("CTRADER_FIX_PASSWORD", "stratex")
+        self.account_id = account_id or os.getenv("CTRADER_FIX_ACCOUNT_ID", "")
+        self.password = password or os.getenv("CTRADER_FIX_PASSWORD", "")
         self.enabled = os.getenv("CTRADER_FIX_ENABLED", "true").lower() in {"1", "true", "yes"}
 
         self.seq_num = 1
@@ -245,6 +249,23 @@ class CTraderFixAdapter(BaseExchange):
         """Ensure SSL socket is open and logged on to CSERVER."""
         if self._sock and self._is_logged_on:
             return
+
+        # TASK-TRUST-001: the LIVE FIX endpoint requires the owner's explicit
+        # opt-in, mirroring the fail-closed invariant on the other adapters.
+        if "live.cfixapi" in self.host and not os.getenv(
+            "ALLOW_LIVE_TRADING", ""
+        ).strip().lower() in {"1", "true", "yes", "on"}:
+            raise PermissionError(
+                "SECURITY CRITICAL: refusing to connect to the LIVE cTrader FIX "
+                f"endpoint ({self.host}) without explicit ALLOW_LIVE_TRADING=true."
+            )
+
+        # Credentials are never defaulted: without them no logon is attempted.
+        if not self.sender_comp_id or not self.account_id or not self.password:
+            raise CTraderFixError(
+                "cTrader FIX credentials not configured (CTRADER_FIX_SENDER_COMP_ID / "
+                "CTRADER_FIX_ACCOUNT_ID / CTRADER_FIX_PASSWORD); refusing to log on."
+            )
 
         try:
             raw_sock = socket.create_connection((self.host, self.port), timeout=10)

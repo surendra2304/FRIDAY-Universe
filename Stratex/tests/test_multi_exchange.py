@@ -29,6 +29,18 @@ class FakeBinanceClient:
     def get_account(self):
         return {"balances": [{"asset": "USDT", "free": "1000.0", "locked": "50.0"}]}
 
+    def get_ticker(self, symbol):
+        # Test-double market data: since TASK-TRUST-001 the adapter no longer
+        # fabricates a ~60,490 ticker when a read fails, so every read path a
+        # test exercises must be backed by an explicit double.
+        return {"bidPrice": "60490.0", "askPrice": "60510.0", "lastPrice": "60500.0", "volume": "15000.0"}
+
+    def get_order_book(self, symbol, limit=20):
+        return {
+            "bids": [[60490.0, 1.5], [60480.0, 3.0]],
+            "asks": [[60510.0, 1.2], [60520.0, 2.5]],
+        }
+
     def futures_account_positions(self):
         return [{
             "symbol": "BTCUSDT", "positionAmt": "0.05", "entryPrice": "60000.0",
@@ -71,6 +83,46 @@ class FakeCcxtClient:
         return {"maker": 0.004, "taker": 0.006}
 
 
+class FakeCcxtVenueClient:
+    """Test double for ccxt-style venue clients (bybit/okx) — deterministic test data.
+
+    Since TASK-TRUST-001 the bybit/okx adapters no longer fabricate balances,
+    positions or tickers, so tests that exercise aggregation across venues must
+    supply their own explicit test doubles here.
+    """
+
+    def __init__(self, positions=None):
+        self._positions = positions or []
+
+    def fetch_balance(self):
+        return {"USDT": {"free": 800.0, "used": 200.0, "total": 1000.0}}
+
+    def fetch_positions(self):
+        return list(self._positions)
+
+    def fetch_ticker(self, symbol):
+        return {"bid": 60520.0, "ask": 60540.0, "last": 60530.0, "baseVolume": 12000.0}
+
+    def fetch_order_book(self, symbol, limit=20):
+        return {
+            "bids": [[60520.0, 0.8], [60510.0, 1.5]],
+            "asks": [[60540.0, 0.9], [60550.0, 1.4]],
+        }
+
+
+# Test-double position (ccxt fetch_positions shape) standing in for the ETH/USDT
+# position the bybit adapter used to fabricate before TASK-TRUST-001.
+FAKE_BYBIT_ETH_POSITION = {
+    "symbol": "ETH/USDT",
+    "contracts": 2.0,
+    "side": "long",
+    "entryPrice": 3000.0,
+    "markPrice": 3050.0,
+    "unrealizedPnl": 100.0,
+    "leverage": 3.0,
+}
+
+
 @pytest.fixture
 def mock_exchanges():
     exchanges = {
@@ -80,7 +132,14 @@ def mock_exchanges():
         "coinbase": CoinbaseExchangeAdapter()
     }
     # Inject test-double API clients so live-call paths are exercised deterministically.
+    # Adapters without a configured client honestly report no data since TASK-TRUST-001
+    # (they never fabricate balances/tickers/positions), so every venue whose data the
+    # assertions consume needs an explicit double here.
     exchanges["binance"]._client = FakeBinanceClient()
+    exchanges["bybit"]._ccxt_client = FakeCcxtVenueClient(positions=[FAKE_BYBIT_ETH_POSITION])
+    exchanges["bybit"].api_key = "test-bybit-key"
+    exchanges["okx"]._ccxt_client = FakeCcxtVenueClient()
+    exchanges["okx"].api_key = "test-okx-key"
     exchanges["coinbase"]._client = FakeCcxtClient()
     exchanges["coinbase"].is_connected = True
     return exchanges
@@ -96,6 +155,8 @@ def test_symbol_normalization(mock_exchanges):
 
 
 def test_exchange_implementations_data(mock_exchanges):
+    """Every venue is backed by an injected test double: reads return that
+    double's data, never adapter-fabricated values (TASK-TRUST-001 contract)."""
     for ex_id, ex in mock_exchanges.items():
         bals = ex.get_balance()
         assert len(bals) > 0
@@ -117,6 +178,12 @@ def test_adapters_without_credentials_return_no_fabricated_data():
     bare_binance = BinanceExchangeAdapter()
     assert bare_binance.get_balance() == {}
     assert bare_binance.get_positions() == []
+
+    # TASK-TRUST-001: the ccxt-based adapters now share the same honest contract.
+    for adapter_cls in (BybitExchangeAdapter, OKXExchangeAdapter):
+        bare = adapter_cls()
+        assert bare.get_balance() == {}
+        assert bare.get_positions() == []
 
 
 def test_unified_portfolio_manager(mock_exchanges):
@@ -140,10 +207,15 @@ def test_unified_portfolio_manager(mock_exchanges):
     assert len(drift_map) == 4
 
 
-def test_multi_exchange_router_and_failover(mock_exchanges):
+def test_multi_exchange_router_and_failover(mock_exchanges, monkeypatch):
+    # Hermetic order-path gate: the adapter refuses orders in PAPER/LIVE modes,
+    # so pin TESTNET explicitly instead of depending on the local .env file.
+    monkeypatch.setenv("TRADING_MODE", "TESTNET")
     router = MultiExchangeRouter(mock_exchanges)
 
-    # Best venue routing
+    # Best venue routing — quotes come from the injected test doubles; the
+    # router raises RuntimeError instead of inventing a price when no venue
+    # returns real data (TASK-TRUST-001).
     venue, price, fee = router.find_best_execution_venue("BTC/USDT", "BUY", 0.1)
     assert venue in mock_exchanges
     assert price > 0

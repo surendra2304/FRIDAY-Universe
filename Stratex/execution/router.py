@@ -144,10 +144,13 @@ class MultiExchangeRouter:
                 continue
 
         if not best_ex:
-            best_ex = list(self.exchanges.keys())[0]
-            best_price = 60500.0
-            lowest_total_cost = quantity * 60500.0 * 0.0006
-            best_slippage = 0.0002
+            # TASK-TRUST-001: refuse to fabricate a "best venue" quote when no
+            # venue returned real data (the previous fallback invented
+            # 60500.0 as the best price).
+            raise RuntimeError(
+                "[ROUTER] No venue returned a real quote for this symbol; "
+                "refusing to fabricate a best-execution price."
+            )
 
         return best_ex, round(best_price, 2), round(lowest_total_cost, 4), round(best_slippage, 6)
 

@@ -42,6 +42,13 @@ _ENV_KEYS = (
     "ALLOW_LIVE_TRADING",
     "BINANCE_TESTNET",
     "RESEARCH_MODE",
+    # TASK-TRUST-001 hermeticity: adapters fall back to these env vars when
+    # constructed with empty keys, so a .env loaded earlier in the same pytest
+    # session (dashboard import chain) used to leak real demo credentials into
+    # "unconfigured adapter" tests and change their behavior.
+    "BINANCE_API_KEY",
+    "BINANCE_API_SECRET",
+    "BINANCE_ENV",
 )
 
 

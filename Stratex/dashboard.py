@@ -6323,7 +6323,18 @@ def api_multiexchange_router():
         health_mon = MultiExchangeHealthMonitor(list(exchanges.keys()))
         router = MultiExchangeRouter(exchanges, health_monitor=health_mon)
 
-        best_venue, exp_p, est_c, est_s = router.find_best_execution_venue("BTC/USDT", "BUY", 0.05)
+        # TASK-TRUST-001: with no configured venue credentials the router now
+        # refuses to fabricate a best price — report an honest no-data state
+        # instead of an HTTP error so the panel renders an empty state.
+        try:
+            best_venue, exp_p, est_c, est_s = router.find_best_execution_venue("BTC/USDT", "BUY", 0.05)
+        except RuntimeError as e:
+            return jsonify({
+                "status": "NO_DATA",
+                "reason": str(e),
+                "telemetry": router.get_router_telemetry(),
+                "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+            })
         telemetry = router.get_router_telemetry()
 
         return jsonify({
