@@ -1,9 +1,9 @@
 schema_version: 1
-snapshot_at: "2026-11-13T09:20:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST); refreshed by ZAI Agent 1 after the Living- Universe + voice wave
+snapshot_at: "2026-11-13T10:05:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST); refreshed by ZAI Agent 1 after the Living- Universe + voice wave
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
-main_head_at_snapshot: "0fe3ea4"  # fonts gitignore fix head; code wave: 908167e (voice worker) + 63f2108 (UI Living Universe + per-call rooms, rebased over collaborator 7a0e9a0) + 0fe3ea4
+main_head_at_snapshot: "835fe0c"  # fonts gitignore fix head; code wave: 908167e (voice worker) + 63f2108 (UI Living Universe + per-call rooms, rebased over collaborator 7a0e9a0) + 0fe3ea4
 warning: "Snapshot only. Refresh GitHub branches, PRs, workflows and runtime state before acting. NOTE (2026-11-10): the repository history was rewritten to purge leaked credentials; all pre-rewrite commit SHAs recorded anywhere in this registry are historical references only. The pre-rewrite bundle is preserved offline by ZAI. All collaborator branches were deleted after merge (single-branch main)."
 
 status_definitions:
@@ -2542,6 +2542,7 @@ tasks:
       - "Pre-fix probes: run 1 — 'Speaking' label only at the 40s sample with the audio element at t=22s; run 2 — no speech within 75s, TWO audio elements (one paused, ready 0 — the dead-track agent), remote audio flowed 74s below the active-speaker threshold."
       - "Post-deploy probe (production, 2026-11-13 ~09:05 IST): tap -> line open at 3s ('Line open — FRIDAY is waking up') -> audio track attached and playing at ~5s (t=0.61) -> orb 'Speaking' + message auto-advanced to 'Live — speak naturally' by the 10s sample with 5.6s of audio played. Exactly ONE audio element (one agent per call)."
       - "CI on 63f2108: Deploy Core Fleet (Server 1) SUCCESS, Secret Scanning SUCCESS, test/docker/contracts SUCCESS, both monorepo validators SUCCESS, Lighthouse audit SUCCESS (non-blocking)."
+      - "Follow-up 835fe0c (all CI green, deployed S1): intentional-end guard — the Disconnected handler used to auto-reconnect even after a deliberate End-call, resurrecting a connected-but-SILENT line (the agent session had already closed; the worker closes it when the last owner leaves) and consuming the diagnostics POST so last_session stayed empty forever (API confirmed single-worker; the report endpoint was fine). Verified live: post-fix probe — call, speak, End call: no resurrect, report posted, /api/voice/diagnostics last_session POPULATED for the first time ever (session voice-1794542304062-ikkc, 25s, honest quality 'degraded' with null rtt — never fabricated as 'good')."
     blockers: []
     next_action: "Complete and live-verified. If the owner still reports silent calls from a real device, next probe should capture browser autoplay-block events (the dock already surfaces 'Browser blocked playback — tap anywhere') and per-device mic-permission denials."
 
@@ -2570,6 +2571,7 @@ tasks:
       - "Production md5 check: live /friday/ page byte-identical to the new export (1ad6a4aa91503a7974e5004858323a21); new chunk 0_yxmh0ft3a8l.css -> 200; old chunk 0rrtoxc4dr64a.css -> 404."
       - "VLM (vision model) review across three fix iterations on screenshots (console desktop, fleet, system, full-page desktop, mobile 360px): final PASS — 'attractive and dynamic… feels premium'; all four tabs readable at 360px with IST clock; satellite dots clear of the state pill and panel edges; nothing clipped on the full page."
       - "Iteration fixes applied from the reviews: subtler floating orbs, footer pinned to the natural bottom (flex shell), voice dock vertically centered, glass state pill under the orb, stat-foot single-line ellipsis, mobile two-row nav, 45-degree inner-ring offset."
+      - "Round-4 polish 0075c87 (all CI green, deployed S1) from the 8/10 production review: brighter orb equalizer bars (glow + 5px) and more state-pill clearance."
     blockers: []
     next_action: "Complete and live-verified. Owner to view on his device; further visual tuning on request."
 
