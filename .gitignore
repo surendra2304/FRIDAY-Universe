@@ -102,6 +102,15 @@ renders/
 *.tar.gz
 *.lock
 
+# Exception (2026-11-13, ZAI Agent 1): FRIDAY/ui/out/_next/static/media/
+# holds the dashboard export's hashed webfonts (Inter / Space Grotesk woff2)
+# and hashed favicon. The blanket media/ rules above re-ignored them, so the
+# fonts were never committed and production served the dashboard with system
+# fallback fonts (two 404s on every load). Must be re-negated AFTER the
+# media/ rules to win.
+!FRIDAY/ui/out/_next/static/media/
+!FRIDAY/ui/out/_next/static/media/**
+
 # Logs, Runtime & Cache
 bot.log
 test_bot.log
