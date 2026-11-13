@@ -261,7 +261,21 @@ def _owner_memory_lines() -> str:
 
 
 def _voice_model() -> str:
-    return (os.getenv("FRIDAY_VOICE_LIVE_MODEL") or "gemini-2.0-flash-live-001").strip()
+    explicit = (os.getenv("FRIDAY_VOICE_LIVE_MODEL") or "").strip()
+    if explicit:
+        return explicit
+    try:
+        from friday.core.config import get_settings
+
+        configured = (getattr(get_settings(), "voice_live_model", None) or "").strip()
+        if configured:
+            return configured
+    except Exception as exc:
+        logger.warning(
+            "voice model config unavailable; using canonical fallback: %s",
+            type(exc).__name__,
+        )
+    return "gemini-3.1-flash-live-preview"
 
 
 def _voice_name() -> str:
@@ -365,7 +379,7 @@ def _probe_gemini_key_sync(key: str) -> bool:
         from google import genai
 
         client = genai.Client(api_key=key)
-        client.models.generate_content(model="gemini-2.0-flash", contents="ping")
+        client.models.generate_content(model="gemini-3.8-flash", contents="ping")
         return True
     except Exception as exc:
         text = f"{type(exc).__name__}: {exc}".lower()

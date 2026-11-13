@@ -48,6 +48,21 @@ class _FakeEdgeTTS:
         self.voice = voice
 
 
+def test_voice_model_honors_explicit_live_model_override(monkeypatch):
+    monkeypatch.setenv("FRIDAY_VOICE_LIVE_MODEL", "gemini-3.8-live")
+    assert worker._voice_model() == "gemini-3.8-live"
+
+
+def test_gemini_key_probe_uses_current_flash_model():
+    with mock.patch("google.genai.Client") as client_class:
+        worker._probe_gemini_key_sync("test-gemini-key")
+    client_class.assert_called_once_with(api_key="test-gemini-key")
+    client_class.return_value.models.generate_content.assert_called_once_with(
+        model="gemini-3.8-flash",
+        contents="ping",
+    )
+
+
 def test_unprobed_orpheus_is_not_selected():
     """Unprobed (fresh job, probe failed to run) must never pick orpheus."""
     with mock.patch.object(worker, "GROQ_PLUGIN_AVAILABLE", True), \
