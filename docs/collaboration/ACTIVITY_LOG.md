@@ -775,3 +775,23 @@ Board snapshot refreshed to 1262d58 with the deployment-gap warning recorded in 
 ### Deploy-gap closure verified live (ZAI Agent 1, 2026-11-13 11:35 IST)
 
 PR #79 merged to main `9d64ede`; Lighthouse CI SUCCESS on that head (run 43374624277). Fleet CD auto-deployed to Server 1: FRIDAY.service restarted 11:22:12 IST from main — the deterministic voice dispatch + per-call LiveKit rooms + intentional-end guard now RUN in production, closing the merged-but-never-deployed gap behind "Friday can't talk properly". Server 2 workspace reset to canonical main `9d64edec` (its local main was a stale pre-rewrite diverged branch; untracked collaborator files preserved). Live verification 11:35 IST: /friday/ 200 in 0.57s serving the Minimal Console (aurora-ribbon count 0 in the live CSS; r-panel/chat-clear/orbital-sat present); 9/9 agents ONLINE (stratex 495ms, forge 492ms, intelx 303ms, futuris 302ms, memora 294ms, inference 211ms, cortex/sentinel/vyralx 182-184ms); voice worker heartbeat registered. TASK-UI-MINIMAL-001 → VERIFIED; TASK-DEPLOY-GAP-001 → DEPLOYED. TASK-VOICE-E2E-003 (ZAI Agent 2) and TASK-RUNTIME-AUDIT-002 (Arena Agent 1) remain AVAILABLE on the board for the united close-out.
+
+## 2026-11-13 12:30 IST — OANDA demo trading built, validated and shipped, ZAI Agent 1 (Lane A / Stratex)
+
+**Owner directive (this session):** "Build it. [token] It is the oanda demo account api key. Store it in credentials.md and implement oanda demo trading also. Also make Stratex take profitable trades."
+
+**TASK-STRATEX-OANDA-001.** Full build, evidence-first:
+
+1. **Credentials** — key verified live against api-fxpractice.oanda.com (account `101-001-40988523-001`, USD 100,000 demo, 68 FX instruments, no metals/indices). Stored in the gitignored `credentials.md` master copy (VM + local, house format with env-var labels) and wired into `Stratex/.env` as `OANDA_API_KEY`/`OANDA_ACCOUNT_ID`/`OANDA_PRACTICE=true`. Loader (`oanda_demo/credentials.py`) resolves env → credentials.md and never logs values.
+
+2. **Adapter hardening** (`exchanges/oanda_adapter.py`) — fixed a real order-rejection bug (SL/TP sent as raw `str(float)` → `1.0854300000000001` gets 400'd by OANDA; now rounded to each instrument's displayPrecision), added the missing trade lifecycle (`open_trades`, `close_trade`, `update_trade_stop_loss`), batch `get_pricing` with per-instrument fallback (one non-tradable symbol no longer blinds the whole call), and OANDA tradeID propagation on fills.
+
+3. **Strategy selection by evidence, not vibes** — validated on the 8-pair basket with real practice spreads before anything was allowed to trade: SMT-v2 EMA-stack −309R (H4/2.9y, 3,240 trades) and Donchian-v3 breakout+chandelier −97R (D1/20y, 704 trades) — both REJECTED on the data. The same data says the basket mean-reverts: **FX-MR-v4** (RSI(2)<10 dips gated by EMA200 regime, EMA5 rule exit, 4×ATR disaster stop, 15%-of-ATR spread filter) validates **+19.5R / 1,302 trades / 64.4% win rate / max DD ≈ 6% on 20 years of D1**, positive in both 10-year holdout halves (+11.3R / +7.2R). That is the live default.
+
+4. **Live engine** (`oanda_demo/trader.py`) — risk governor: 1% equity risk per trade, 25% notional cap, max 4 concurrent positions, −3% daily NAV circuit breaker, 60-min per-instrument cooldowns, native OANDA stop on every order (survives restarts), kill-switch file, trade log CSV + Telegram notifications to the owner chat. 29/29 offline unit tests green; live selftest 9/9 including a 1-unit order round-trip on the practice account. First live scan 06:53 UTC: no open signals (correctly selective — EURUSD/GBPUSD/AUDUSD RSI(2) sit at 10.3-10.9, just above threshold, and below the EMA200 regime line).
+
+5. **Deployment** — `Stratex-OANDA-Demo.service` (Server 1, 5-minute scan loop, D1 MR signals) + `oanda_demo/README.md` with the full validation tables. Branch `zai-agent-1/oanda-demo-trading`.
+
+Honest framing recorded for the owner: +19.5R over 20y at 1% risk ≈ a slow, steady positive edge with small drawdowns — not a money printer; signals are episodic (~1-2 setups/week across the basket), which is exactly what a validated FX system looks like on a demo account with 3.5-pip spreads. The engine takes trades when the validated setup fires; it refuses to trade otherwise.
+
+**United-work note:** TASK-VOICE-E2E-003 (ZAI Agent 2) and TASK-RUNTIME-AUDIT-002 (Arena Agent 1) remain AVAILABLE per the owner's work-unitedly directive; this task closes the Stratex half of "connections failed / not able to do anything" with a working, risk-governed trading capability.
