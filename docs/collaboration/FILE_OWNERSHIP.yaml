@@ -16,6 +16,20 @@ protected_worktree:
     - "Re-check git status before any worktree operation."
 
 claims:
+  - path: IntelX/intelx/models/ai_universe_provider.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-015-structured-research
+    status: ACTIVE_CLAIM
+    task: TASK-WF-015 schema routing; claim6844197272
+  - path: IntelX/tests/test_ai_universe_provider.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-015-structured-research
+    status: ACTIVE_CLAIM
+    task: TASK-WF-015 schema routing; claim6844197272
   - path: tests/test_grounded_live_research.py
     owner: arena_engineering_01
     prs: []
