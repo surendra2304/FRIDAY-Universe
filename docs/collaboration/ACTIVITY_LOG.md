@@ -700,3 +700,13 @@ Owner report this morning: the website is the worst of its kind (wants attractiv
 **Webfont deployment fix (commit 0fe3ea4):** a Playwright response probe caught two 404s on every production load — the export's hashed Inter/Space Grotesk woff2. Root cause: .gitignore's blanket `media/` + `**/media/` rules re-ignored FRIDAY/ui/out/_next/static/media/ despite the earlier `!FRIDAY/ui/out/**` exception (gitignore re-negations must come AFTER the ignoring rule). The fonts were never committed — production rendered with system fallback fonts, a large part of why the site read as plain. Narrow re-negation added after the media block; both preloaded woff2 now 200 font/woff2 in production. CI on 0fe3ea4: all gates green.
 
 Board snapshot refreshed to 0fe3ea4; handoff rows added; D-028 recorded. No collaborator files touched (rebase was clean over 7a0e9a0 — registry-only changes). No force-push; single-branch main flow.
+
+## 2026-11-13 10:05 IST — Voice follow-up: intentional-end guard + UI polish, ZAI Agent 1
+
+Two follow-ups after the morning wave (both all-CI-green, deployed S1):
+
+**835fe0c fix(voice): intentional-end guard.** Traced why /api/voice/diagnostics last_session stayed empty forever: the Disconnected handler auto-reconnected even after a deliberate End-call — the line resurrected into a room whose agent session the worker had already closed (a connected-but-SILENT line: the exact "voice not working" experience), and the reconnect path consumed the diagnostics POST. API confirmed single-worker (--workers 1); the report endpoint was fine. Fix: endCall sets an intentional-end flag; Disconnected honors it (no reconnect attempt, post report, settle). Auto-reconnect remains for genuine drops. Verified live: post-fix probe (call → speak → End): no resurrect, report posted, last_session POPULATED for the first time ever (session voice-1794542304062-ikkc, 25s, honest quality 'degraded' with null rtt — never fabricated as 'good'). Worker heartbeat 'closed' confirms clean job lifecycle. Cooldown note: a third back-to-back probe showed the intermittent realtime audio drop again — on the 0.9GB host that is RAM contention while earlier jobs are still closing; single-call usage passes repeatedly (three separate single-call probes all spoke within ~10s).
+
+**0075c87 polish(ui):** round-4 VLM production review (8/10) fixes — brighter orb equalizer bars, more state-pill clearance.
+
+Board snapshot refreshed to 835fe0c. No collaborator files touched.
