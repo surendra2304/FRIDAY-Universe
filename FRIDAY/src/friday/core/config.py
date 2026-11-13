@@ -248,6 +248,16 @@ class Settings(BaseSettings):
     gemini_temperature: float | None = Field(default=None, ge=0.0, le=2.0, description="Temperature override for Gemini")
     cost_mode: str = Field(default="free_first", description="Operating cost policy: 'free_first', 'custom'")
     max_daily_requests: int | None = Field(default=None, ge=1, description="Optional safety limit on total daily LLM requests")
+    intent_classify_timeout: float = Field(
+        default=2.5,
+        ge=1.0,
+        le=30.0,
+        description="Wall-clock budget for the optional LLM intent-classification mid-tier (TASK-INTENT-001); fail-open on timeout",
+    )
+    intent_classify_enabled: bool = Field(
+        default=True,
+        description="Master switch for the LLM intent mid-tier (deterministic fast paths always run first regardless)",
+    )
     llm_base_url: str = Field(default="https://api.openai.com/v1", description="Base URL for provider API")
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature")
     llm_thinking_level: str = Field(
