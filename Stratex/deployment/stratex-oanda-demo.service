@@ -1,0 +1,24 @@
+# /etc/systemd/system/Stratex-OANDA-Demo.service
+# FRIDAY Universe — Stratex OANDA Demo Trading Engine (practice account)
+# Deploy: sudo cp stratex-oanda-demo.service /etc/systemd/system/ &&
+#         sudo systemctl daemon-reload && sudo systemctl enable --now Stratex-OANDA-Demo
+[Unit]
+Description=FRIDAY Universe - Stratex OANDA Demo Trading Engine (practice account)
+After=network.target Stratex.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/friday_universe/Stratex
+EnvironmentFile=/opt/friday_universe/Stratex/.env
+Environment="PYTHONPATH=/opt/friday_universe/Stratex:/opt/friday_universe"
+Environment="STRATEX_OANDA_STRATEGY=mr"
+Environment="STRATEX_OANDA_TF=1d"
+ExecStart=/opt/friday_universe/venv/bin/python -u -m oanda_demo.trader --loop --interval 300
+Restart=always
+RestartSec=15
+TimeoutStopSec=15
+MemoryMax=150M
+
+[Install]
+WantedBy=multi-user.target

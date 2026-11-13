@@ -776,3 +776,57 @@ Optional grounded draft synthesis now collects bounded public prose from existin
 - wf015-grounded-nonfast-candidate.json: an advertised explicit non-auto routing hint avoided that known fast-lane branch, but still failed strict completion gate (ValueError). Exact response metadata was not captured, so DO NOT invent its final cause or claim the output budget fixed the complete workflow. Unrelated control remains correctly DEGRADED on every candidate.
 
 No incomplete/invalid output was accepted or deployed. All real probes were public-only disposable processes; runtime tracked files unchanged. Current grounded integration is DRAFT pending precise Inference completion failure diagnosis, a real source-supported answer, exact-head CI and protected rollout. The original PR77 tiny typed passage-selection candidate succeeded, but that is not evidence this larger draft works. Do not merge/deploy this optional synthesis merely because its offline tests pass. TASK-WF-015 remains IN_PROGRESS; no whole-completion Telegram. Owner microphone/video/OAuth and sustained net exchange-reconciled profit remain distinct gates; actual ZAI2 unrealized snapshot was acknowledged/reviewed, not accepted as realized profit.
+
+## 2026-11-13 11:25 IST — Minimal Console + deployment-gap root cause, ZAI Agent 1
+
+**Owner verdict on Living Universe round 2:** "the website is very laggy… change the theme and all and make the website minimalistic and dynamic… why is the chat that much long… stratex and other agent connections failed… Friday can't talk properly… Assign the work to ZAI Agent 2 and Arena Agent 1 and work unitedly." The maximalist layers (canvas plexus starfield with pointer parallax, animated blur aurora, floating glass orbs, per-letter timers, Tilt/Magnetic tracking) were decoration at real CPU cost. Round 3 inverts the direction: **Minimal Console**.
+
+**TASK-UI-MINIMAL-001 (DEPLOYED).** Full theme + motion-budget overhaul on branch `zai/TASK-UI-MINIMAL-001` (off main 1262d58): every decorative rAF/canvas/pointer-tracking layer deleted; survivors are transform/opacity only, one-shot or single slow CSS loops (Reveal entrances, CountUp, Orbital satellite ring, orb equalizer, live-dot pulse). New quiet theme: near-black surfaces, hairline 1px borders, one cyan accent + semantic tones, Inter/Space Grotesk, compact hero (chat input above the fold at 1440×900). Chat-length fix: transcript capped at last 40 messages, history restore capped at 12, explicit Clear button (full history stays server-side in Memora). Root-caused the font-token bug: `--font-body/--font-display` on `:root` referenced `--font-inter` (which next/font defines on `body`), so var() substitution failed on html and the entire page silently fell back to Times New Roman — tokens moved to body, verified Inter/Space Grotesk computed. Verified: `next build` clean; agent-browser DOM audit (zero canvas/.aurora/.fo nodes, all four tabs render, zero console errors); VLM review "genuinely sleek dark-mode design… polished AI assistant command deck"; fold check pass after hero compaction.
+
+**TASK-DEPLOY-GAP-001 (IN_PROGRESS → executed this session).** Root cause of "it is not able to do anything / can't talk properly / connections failed": **the live Server 2 workspace runs claude/TASK-CI-004 @ 64b1df8, six verified commits behind origin/main 1262d58.** The deterministic voice agent-dispatch fix (885b775), per-call LiveKit rooms, and the schema routing repair (1262d58) were merged but never deployed — merged ≠ live. Meanwhile the fleet itself is healthy: oracle_curl_health /api/agents/status at 05:39 UTC shows 9/9 agents ONLINE (Stratex 72ms, Inference 86ms, Memora 72ms, IntelX 85ms, Futuris 84ms, Cortex 61ms, Forge 158ms, Sentinel 72ms). The owner was looking at a stale orchestrator, not broken agents. Deploy: Server 2 checked out main, FRIDAY + friday-voice restarted, /friday/ verified serving the Minimal Console build; voice dispatch code confirmed present in the RUNNING tree.
+
+**United-work assignment per owner directive.** TASK-VOICE-E2E-003 (AVAILABLE, P0) — ZAI Agent 2 lane: live voice E2E on the deployed main (greet/answer round, intentional-end guard stays down, last_session records). TASK-RUNTIME-AUDIT-002 (AVAILABLE, P1) — Arena Agent 1 lane: capture and root-cause one real "connection failed" occurrence from the public site + Lighthouse/TBT numbers for the Minimal Console vs the laggy build. Both blocked only on TASK-DEPLOY-GAP-001 reaching DEPLOYED (done this session); claim via issue #35.
+
+Board snapshot refreshed to 1262d58 with the deployment-gap warning recorded in the header. Collaborator lanes untouched.
+
+### Deploy-gap closure verified live (ZAI Agent 1, 2026-11-13 11:35 IST)
+
+PR #79 merged to main `9d64ede`; Lighthouse CI SUCCESS on that head (run 43374624277). Fleet CD auto-deployed to Server 1: FRIDAY.service restarted 11:22:12 IST from main — the deterministic voice dispatch + per-call LiveKit rooms + intentional-end guard now RUN in production, closing the merged-but-never-deployed gap behind "Friday can't talk properly". Server 2 workspace reset to canonical main `9d64edec` (its local main was a stale pre-rewrite diverged branch; untracked collaborator files preserved). Live verification 11:35 IST: /friday/ 200 in 0.57s serving the Minimal Console (aurora-ribbon count 0 in the live CSS; r-panel/chat-clear/orbital-sat present); 9/9 agents ONLINE (stratex 495ms, forge 492ms, intelx 303ms, futuris 302ms, memora 294ms, inference 211ms, cortex/sentinel/vyralx 182-184ms); voice worker heartbeat registered. TASK-UI-MINIMAL-001 → VERIFIED; TASK-DEPLOY-GAP-001 → DEPLOYED. TASK-VOICE-E2E-003 (ZAI Agent 2) and TASK-RUNTIME-AUDIT-002 (Arena Agent 1) remain AVAILABLE on the board for the united close-out.
+
+## 2026-11-13 12:30 IST — OANDA demo trading built, validated and shipped, ZAI Agent 1 (Lane A / Stratex)
+
+**Owner directive (this session):** "Build it. [token] It is the oanda demo account api key. Store it in credentials.md and implement oanda demo trading also. Also make Stratex take profitable trades."
+
+**TASK-STRATEX-OANDA-001.** Full build, evidence-first:
+
+1. **Credentials** — key verified live against api-fxpractice.oanda.com (account `101-001-40988523-001`, USD 100,000 demo, 68 FX instruments, no metals/indices). Stored in the gitignored `credentials.md` master copy (VM + local, house format with env-var labels) and wired into `Stratex/.env` as `OANDA_API_KEY`/`OANDA_ACCOUNT_ID`/`OANDA_PRACTICE=true`. Loader (`oanda_demo/credentials.py`) resolves env → credentials.md and never logs values.
+
+2. **Adapter hardening** (`exchanges/oanda_adapter.py`) — fixed a real order-rejection bug (SL/TP sent as raw `str(float)` → `1.0854300000000001` gets 400'd by OANDA; now rounded to each instrument's displayPrecision), added the missing trade lifecycle (`open_trades`, `close_trade`, `update_trade_stop_loss`), batch `get_pricing` with per-instrument fallback (one non-tradable symbol no longer blinds the whole call), and OANDA tradeID propagation on fills.
+
+3. **Strategy selection by evidence, not vibes** — validated on the 8-pair basket with real practice spreads before anything was allowed to trade: SMT-v2 EMA-stack −309R (H4/2.9y, 3,240 trades) and Donchian-v3 breakout+chandelier −97R (D1/20y, 704 trades) — both REJECTED on the data. The same data says the basket mean-reverts: **FX-MR-v4** (RSI(2)<10 dips gated by EMA200 regime, EMA5 rule exit, 4×ATR disaster stop, 15%-of-ATR spread filter) validates **+19.5R / 1,302 trades / 64.4% win rate / max DD ≈ 6% on 20 years of D1**, positive in both 10-year holdout halves (+11.3R / +7.2R). That is the live default.
+
+4. **Live engine** (`oanda_demo/trader.py`) — risk governor: 1% equity risk per trade, 25% notional cap, max 4 concurrent positions, −3% daily NAV circuit breaker, 60-min per-instrument cooldowns, native OANDA stop on every order (survives restarts), kill-switch file, trade log CSV + Telegram notifications to the owner chat. 29/29 offline unit tests green; live selftest 9/9 including a 1-unit order round-trip on the practice account. First live scan 06:53 UTC: no open signals (correctly selective — EURUSD/GBPUSD/AUDUSD RSI(2) sit at 10.3-10.9, just above threshold, and below the EMA200 regime line).
+
+5. **Deployment** — `Stratex-OANDA-Demo.service` (Server 1, 5-minute scan loop, D1 MR signals) + `oanda_demo/README.md` with the full validation tables. Branch `zai-agent-1/oanda-demo-trading`.
+
+Honest framing recorded for the owner: +19.5R over 20y at 1% risk ≈ a slow, steady positive edge with small drawdowns — not a money printer; signals are episodic (~1-2 setups/week across the basket), which is exactly what a validated FX system looks like on a demo account with 3.5-pip spreads. The engine takes trades when the validated setup fires; it refuses to trade otherwise.
+
+**United-work note:** TASK-VOICE-E2E-003 (ZAI Agent 2) and TASK-RUNTIME-AUDIT-002 (Arena Agent 1) remain AVAILABLE per the owner's work-unitedly directive; this task closes the Stratex half of "connections failed / not able to do anything" with a working, risk-governed trading capability.
+
+## Arena Agent 1 — PR78 normal current-main integration, DRAFT retained
+
+Testfixbb9b54c9 removed undeclaredrespx and isolatedsettingsimports; explicit
+namespacepoisoning baseline3FAIL/11PASS ->14PASS, combined47PASS. Normalmerge
+ofmain3e402385 preserves allMinimalConsole/OANDA/registry work and both full
+activitylogappends; noforce/rollout/repeatedlivecall. Earlierlocalfullroot
+sparsecheckout39collectionerrors notrepresented asgreen. This integration
+restoresmergeability so fullrootCI can actuallyrun onthecandidate.
+
+Separateactual-sourceInferencecontractPR86c130974b (12FAIL/3PASSbefore,15PASSafter
+plus62nativePASS) addresses droppedexplicitmodels/falsecachedstop metadata;
+notintegratedhere andnotclaimedasthecauseofpriorlivesynthesisValueError.
+PR84voicecleanupb6a778bd8SUCCESS/2DockerSKIP remainsunmerged; S2peerPR83branch
+preserved; jointrolloutcoordinationpending. PR83/85actualsourcereviewcomments
+6848222165/6848376308 sent, nopeerACKinvented. PR78DO NOT MERGE/DEPLOY despite
+greencomponents: actualresearchanswerPARTIAL, ownervoiceFAILED/OPEN, WF015
+IN_PROGRESS. No financial/OAuth/publication/generatedconverterchanges.

@@ -73,6 +73,7 @@ class OandaExchangeAdapter(BaseExchange):
 
         self._instrument_cache: Optional[Dict] = None
         self._symbol_map: Dict[str, str] = {}  # unified -> oanda
+        self._precision_cache: Dict[str, int] = {}  # oanda instrument -> displayPrecision
 
     # ------------------------------------------------------------------------
     # Symbol normalization
@@ -134,6 +135,75 @@ class OandaExchangeAdapter(BaseExchange):
     def _get_account(self) -> Optional[Dict]:
         """Get account details including balance, margin, positions."""
         return self._request("GET", f"/accounts/{self.account_id}")
+
+    # ------------------------------------------------------------------------
+    # Pricing / precision (used by oanda_demo trader + risk engine)
+    # ------------------------------------------------------------------------
+    def get_pricing(self, symbols: List[str]) -> Dict[str, Dict[str, float]]:
+        """Batch bid/ask/mid/spread for unified symbols in a single API call.
+        Falls back to per-instrument calls when the batch fails (e.g. one
+        non-tradable symbol makes the whole batch request 400)."""
+        oanda_syms = [self.denormalize_symbol(self.normalize_symbol(s)) for s in symbols]
+        data = self._request(
+            "GET",
+            f"/accounts/{self.account_id}/pricing",
+            params={"instruments": ",".join(oanda_syms)},
+        )
+        if not data or "prices" not in data:
+            if len(symbols) <= 1:
+                return {}          # never recurse for single-symbol calls
+            # Per-instrument fallback so one bad symbol can't blind the rest.
+            merged: Dict[str, Dict[str, float]] = {}
+            for sym in symbols:
+                one = self.get_pricing([sym])
+                merged.update(one)
+            return merged
+        out: Dict[str, Dict[str, float]] = {}
+        for p in data["prices"]:
+            try:
+                bid = float(p.get("closeoutBid", 0) or 0)
+                ask = float(p.get("closeoutAsk", 0) or 0)
+                if bid <= 0 or ask <= 0:
+                    continue
+                out[self.normalize_symbol(p["instrument"])] = {
+                    "bid": bid,
+                    "ask": ask,
+                    "mid": (bid + ask) / 2.0,
+                    "spread": round(ask - bid, 10),
+                }
+            except (KeyError, ValueError):
+                continue
+        return out
+
+    def _instrument_precision(self, oanda_symbol: str) -> int:
+        """displayPrecision for an OANDA-native instrument (cached)."""
+        if oanda_symbol in self._precision_cache:
+            return self._precision_cache[oanda_symbol]
+        precision = None
+        data = self._request(
+            "GET",
+            f"/accounts/{self.account_id}/instruments",
+            params={"instruments": oanda_symbol},
+        )
+        try:
+            precision = int(data["instruments"][0]["displayPrecision"])
+        except (TypeError, KeyError, IndexError, ValueError):
+            precision = None
+        if precision is None:
+            # Heuristic fallback from price magnitude (EURUSD 5, USDJPY 3, XAU 2)
+            px = self.get_pricing([oanda_symbol]).get(self.normalize_symbol(oanda_symbol), {})
+            mid = px.get("mid", 0) or 0
+            precision = 2 if mid >= 500 else (3 if mid >= 20 else 5)
+        self._precision_cache[oanda_symbol] = precision
+        return precision
+
+    def _fmt_price(self, oanda_symbol: str, price: float) -> str:
+        """Format a price to the instrument's display precision.
+
+        OANDA rejects prices carrying more precision than displayPrecision,
+        and Python str(float) can emit e.g. 1.0854300000000001 — always round.
+        """
+        return f"{price:.{self._instrument_precision(oanda_symbol)}f}"
 
     # ------------------------------------------------------------------------
     # BaseExchange implementation
@@ -290,9 +360,15 @@ class OandaExchangeAdapter(BaseExchange):
             order_data["order"]["price"] = str(price)
 
         if stop_loss:
-            order_data["order"]["stopLossOnFill"] = {"price": str(stop_loss)}
+            order_data["order"]["stopLossOnFill"] = {
+                "price": self._fmt_price(oanda_sym, float(stop_loss)),
+                "timeInForce": "GTC",
+            }
         if take_profit:
-            order_data["order"]["takeProfitOnFill"] = {"price": str(take_profit)}
+            order_data["order"]["takeProfitOnFill"] = {
+                "price": self._fmt_price(oanda_sym, float(take_profit)),
+                "timeInForce": "GTC",
+            }
 
         data = self._request("POST", f"/accounts/{self.account_id}/orders", json=order_data)
         if not data or "orderFillTransaction" not in data:
@@ -302,7 +378,7 @@ class OandaExchangeAdapter(BaseExchange):
         fill_price = float(fill.get("price", price or 0))
         fill_qty = abs(float(fill.get("units", 0)))
 
-        return UnifiedOrderResult(
+        result = UnifiedOrderResult(
             order_id=fill.get("id", f"OANDA_{int(time.time()*1000)}"),
             symbol=self.normalize_symbol(symbol),
             side=side,
@@ -315,10 +391,61 @@ class OandaExchangeAdapter(BaseExchange):
             fee_paid=0.0,  # OANDA includes spread in price
             exchange="oanda",
         )
+        # OANDA trade id (different from the transaction id) so callers can
+        # close/modify the resulting trade without an extra lookup.
+        trade_opened = fill.get("tradeOpened") or {}
+        result.trade_id = trade_opened.get("tradeID")  # type: ignore[attr-defined]
+        return result
 
     def cancel_order(self, symbol: str, order_id: str) -> bool:
         data = self._request("PUT", f"/accounts/{self.account_id}/orders/{order_id}/cancel")
         return data is not None
+
+    # ------------------------------------------------------------------------
+    # Trade lifecycle (used by the oanda_demo trader)
+    # ------------------------------------------------------------------------
+    def open_trades(self) -> List[Dict[str, Any]]:
+        """All currently open trades on the account (normalized)."""
+        data = self._request("GET", f"/accounts/{self.account_id}/trades")
+        if not data or "trades" not in data:
+            return []
+        trades: List[Dict[str, Any]] = []
+        for t in data["trades"]:
+            try:
+                sl_info = t.get("stopLoss") or {}
+                tp_info = t.get("takeProfit") or {}
+                trades.append({
+                    "id": str(t.get("id", "")),
+                    "instrument": self.normalize_symbol(t.get("instrument", "")),
+                    "units": float(t.get("currentUnits", 0) or 0),
+                    "price": float(t.get("price", 0) or 0),
+                    "unrealized_pl": float(t.get("unrealizedPL", 0) or 0),
+                    "open_time": t.get("openTime", ""),
+                    "stop_loss": float(sl_info.get("price", 0) or 0) if sl_info else 0.0,
+                    "take_profit": float(tp_info.get("price", 0) or 0) if tp_info else 0.0,
+                    "financing": float(t.get("financing", 0) or 0),
+                })
+            except (KeyError, ValueError):
+                continue
+        return trades
+
+    def close_trade(self, trade_id: str, units: Optional[float] = None) -> bool:
+        """Close a trade fully (or partially when units is given)."""
+        body = {"units": str(int(units))} if units else {}
+        data = self._request("PUT", f"/accounts/{self.account_id}/trades/{trade_id}/close", json=body)
+        return bool(data)
+
+    def update_trade_stop_loss(self, symbol: str, trade_id: str, price: float) -> bool:
+        """Move a trade's stop loss (e.g. to breakeven) via a trade-dependent
+        STOP_LOSS order bound to the trade."""
+        oanda_sym = self.denormalize_symbol(self.normalize_symbol(symbol))
+        body = {"order": {
+            "type": "STOP_LOSS",
+            "tradeID": str(trade_id),
+            "price": self._fmt_price(oanda_sym, float(price)),
+        }}
+        data = self._request("POST", f"/accounts/{self.account_id}/orders", json=body)
+        return bool(data)
 
     def get_historical_data(self, symbol: str, timeframe: str = "15m", limit: int = 100) -> List[Dict[str, Any]]:
         """Get real OANDA candles."""
