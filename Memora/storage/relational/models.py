@@ -490,3 +490,42 @@ class EventConsumerCursor(Base):
     consumer_id: Mapped[str] = mapped_column(String(64), primary_key=True, default="default")
     last_event_id: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False)
+
+
+class ContextSnapshot(Base):
+    """Durable snapshot of the ``viking://`` context filesystem (TASK-MEM-010).
+
+    The in-memory ``VikingFS`` is lost on process restart; this table is its
+    persistence point. One row per ``(tenant_id, scope_key)`` holds the whole
+    serialized context state (FS tree, open sessions, commit history and the
+    session-id sequence) as a JSON document stored in a ``Text`` column. The
+    payload is opaque to SQL — it is only ever read back whole by
+    ``core/memory/context_durability.py`` — so a CLOB keeps the row size limits
+    of the dialect out of the way and avoids the Oracle JSON serializer path
+    that ``event_log`` needed.
+
+    Isolation follows the ``access_scope`` conventions: every lookup filters on
+    ``tenant_id`` and ``scope_key`` together, an unknown pair matches nothing
+    (fail-closed), and a restored snapshot can therefore never materialise
+    another tenant's (or another context user's) files. ``content_sha256`` lets
+    the reader verify the blob it loaded; a mismatched digest is treated as an
+    unavailable store (start empty, log honestly) rather than trusted content —
+    restore never fabricates.
+    """
+    __tablename__ = "context_snapshots"
+
+    tenant_id: Mapped[str] = mapped_column(String(64), primary_key=True, default="default")
+    scope_key: Mapped[str] = mapped_column(String(128), primary_key=True)
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    payload: Mapped[str] = mapped_column(Text, nullable=False)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    node_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now, nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<ContextSnapshot(tenant={self.tenant_id}, scope={self.scope_key}, "
+            f"version={self.schema_version}, nodes={self.node_count})>"
+        )
