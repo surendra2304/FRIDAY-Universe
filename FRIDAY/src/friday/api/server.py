@@ -2604,77 +2604,72 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                     break
 
     if _is_forget:
+        # There is no authenticated conversational referent for "that" here.
+        # Never substitute an arbitrary owner-preference search for a target.
+        if _FORGET_QUERY == raw_cmd:
+            return {"reply": "Which fact should I forget, Boss? Tell me the exact words; I haven't changed any memory.",
+                    "metadata": {"fast_path": True, "conversational": True, "memory_forget": True,
+                                 "forget_status": "needs_clarification", "refused": True, "success": False}}
         _forget_res: dict[str, Any] = {}
         try:
             from friday.memory.memora_client import memora_client as _memora
-            _probe = _FORGET_QUERY if _FORGET_QUERY != raw_cmd else "my favorite preference boss surendra"
-            _forget_res = _memora.forget_fact("friday", _probe) or {}
+            _forget_res = _memora.forget_fact("friday", _FORGET_QUERY) or {}
         except Exception as _e:
             logger.warning(f"Memora forget failed in memory fast-path: {_e}")
-            _forget_res = {"status": "error", "error": f"{type(_e).__name__}"}
+            _forget_res = {"status": "error"}
         _st = str(_forget_res.get("status", "error"))
         if _st == "deleted":
             _gone = str(_forget_res.get("content_text", "")).strip()
-            _reply = (
-                f"Done, Boss — I've forgotten {_gone or 'it'}. "
-                "It's out of my active memory now."
-            )
+            if _forget_res.get("cloud") is False:
+                _reply = f"Removed {_gone or 'that fact'} from the local memory backend, Boss. Shared Memora deletion is not confirmed."
+            else:
+                _reply = f"Done, Boss — I've forgotten {_gone or 'that fact'} from shared active memory. The audit history is retained."
         elif _st == "not_found":
-            _reply = (
-                "I checked my memory, Boss, and I don't have a stored fact matching that — "
-                "there's nothing to forget. If it was something else, tell me the exact words."
-            )
+            _reply = "I couldn't identify a matching fact to forget, Boss. Tell me the exact words; I haven't selected another memory instead."
+        elif _st == "needs_clarification":
+            _reply = "That doesn't identify one unique fact, Boss. Please give me the exact memory text before I change anything."
         else:
-            _reply = (
-                "I couldn't reach my memory store just now, so nothing was forgotten — "
-                "say it again in a moment and I'll take care of it."
-            )
-        return {
-            "reply": _reply,
-            "metadata": {
-                "fast_path": True,
-                "conversational": True,
-                "memory_forget": True,
-                "forget_status": _st,
-            },
-        }
+            _reply = "I couldn't confirm the forgetting outcome, Boss. Check memory history before repeating it; I won't assume nothing happened."
+        return {"reply": _reply, "metadata": {
+            "fast_path": True, "conversational": True, "memory_forget": True,
+            "forget_status": _st, "success": _st == "deleted",
+            "refused": _st == "needs_clarification", "unconfirmed": _st == "unconfirmed",
+            "memory_cloud": _forget_res.get("cloud"), "memory_id": _forget_res.get("id"),
+        }}
 
     if _CORRECTION_TEXT:
         _corr_res: dict[str, Any] = {}
         try:
             from friday.memory.memora_client import memora_client as _memora
-            _corr_res = _memora.correct_fact(
-                "friday",
-                new_fact_text=_CORRECTION_TEXT,
-                old_query=_CORRECTION_TEXT,
-            ) or {}
+            _corr_res = _memora.correct_fact("friday", new_fact_text=_CORRECTION_TEXT, old_query=_CORRECTION_TEXT) or {}
         except Exception as _e:
             logger.warning(f"Memora correct failed in memory fast-path: {_e}")
-            _corr_res = {"status": "error", "error": f"{type(_e).__name__}"}
+            _corr_res = {"status": "error"}
         _st = str(_corr_res.get("status", "error"))
         if _st == "corrected":
-            _reply = (
-                f"Updated, Boss — I've replaced the old one. I now remember: "
-                f"{_CORRECTION_TEXT}. The earlier version stays in my audit trail, "
-                "but my active memory only carries the correction."
-            )
+            if _corr_res.get("cloud") is False:
+                _reply = f"Updated the local memory backend, Boss: {_CORRECTION_TEXT}. Shared Memora synchronization is not confirmed."
+            else:
+                _reply = f"Updated, Boss — shared active memory now carries {_CORRECTION_TEXT}. The earlier version remains in the audit trail."
         elif _st == "stored_new_only":
-            _reply = f"Noted, Boss: {_CORRECTION_TEXT}. (I didn't find an older version of that to replace.)"
+            _scope = "local memory backend" if _corr_res.get("cloud") is False else "shared memory"
+            _reply = f"Stored a new fact in {_scope}, Boss: {_CORRECTION_TEXT}. No older fact was replaced."
+            if _corr_res.get("cloud") is False:
+                _reply += " Shared synchronization is not confirmed."
+        elif _st == "not_applied":
+            _reply = "The correction was not applied, Boss. The memory service retained the earlier fact; I won't claim it was replaced."
+        elif _st == "needs_clarification":
+            _reply = "I couldn't identify one unique fact to correct, Boss. Tell me the exact earlier memory before I change anything."
         else:
-            _reply = (
-                "I couldn't reach my memory store just now, so that correction is NOT saved — "
-                "say it again in a moment and I'll keep it safe."
-            )
-        return {
-            "reply": _reply,
-            "metadata": {
-                "fast_path": True,
-                "conversational": True,
-                "memory_correction": True,
-                "correction_status": _st,
-                "fact": _CORRECTION_TEXT,
-            },
-        }
+            _reply = "I couldn't confirm the correction outcome, Boss. Check memory history before repeating it; I won't claim it is unsaved or retry automatically."
+        return {"reply": _reply, "metadata": {
+            "fast_path": True, "conversational": True, "memory_correction": True,
+            "correction_status": _st, "fact": _CORRECTION_TEXT,
+            "success": _st in {"corrected", "stored_new_only"},
+            "refused": _st == "needs_clarification", "unconfirmed": _st == "unconfirmed",
+            "memory_cloud": _corr_res.get("cloud"),
+            "memory_id": _corr_res.get("winner_id") or _corr_res.get("id"),
+        }}
 
     # =========================================================================
     # A0.56 Memory Consolidation (checklist B7: nightly summarize/dedupe/merge)

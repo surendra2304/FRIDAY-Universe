@@ -748,6 +748,37 @@ class MemoraClient:
     # Checklist B9/B10: owner-facing memory commands — forget and correct.
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _mutation_subject(query: str, *, correction: bool = False) -> set[str]:
+        if correction:
+            query = re.split(r"\b(?:is|are|to|now)\b", query, maxsplit=1, flags=re.IGNORECASE)[0]
+        ignored = {"my", "the", "a", "an", "about", "of", "that", "this", "it", "your", "please"}
+        return set(re.findall(r"\w+", query.lower())) - ignored
+
+    @staticmethod
+    def _mutation_target(query: str, hits: List[Dict[str, Any]], *, correction: bool = False) -> tuple[str, str, str]:
+        """Require a unique lexical subject, never an unrelated semantic top hit.
+
+        Conservative false negatives ask for exact words rather than changing
+        the wrong owner fact. Explicit IDs remain available to trusted callers.
+        """
+        subject = MemoraClient._mutation_subject(query, correction=correction)
+        if not subject:
+            return "needs_clarification", "", ""
+        targets = {}
+        from friday.memory.hygiene import is_memory_noise
+        for hit in hits:
+            text = str(hit.get("content_text", "")).strip()
+            mid = str(hit.get("id") or hit.get("memory_id") or "")
+            if mid and len(text) > 6 and not is_memory_noise(text) and subject <= set(re.findall(r"\w+", text.lower())):
+                targets[mid] = text
+        if not targets:
+            return "not_found", "", ""
+        if len(targets) != 1:
+            return "needs_clarification", "", ""
+        mid, text = next(iter(targets.items()))
+        return "matched", mid, text
+
     def forget_fact(
         self,
         agent_name: str,
@@ -756,9 +787,10 @@ class MemoraClient:
     ) -> Dict[str, Any]:
         """B9: remove a stored fact (soft delete — history is never hard-purged).
 
-        ``query`` finds the best-matching live memory (top recall hit) unless a
-        concrete ``memory_id`` is given. Returns an honest result dict:
-        ``status`` is one of ``deleted`` | ``not_found`` | ``error``; the
+        ``query`` must identify a unique lexical subject unless a concrete
+        ``memory_id`` is given. Ambiguity never chooses the top semantic hit.
+        ``status`` includes ``deleted``, ``not_found``, ``needs_clarification``,
+        ``unconfirmed`` or ``error``; the
         removed text is echoed so the owner sees exactly what was forgotten.
         """
         if not query.strip() and not memory_id:
@@ -767,15 +799,11 @@ class MemoraClient:
         target_id = memory_id or ""
         target_text = ""
         if not target_id:
-            hits = self.recall_memories(agent_name, query, limit=5) or []
-            for hit in hits:
-                text = str(hit.get("content_text", "")).strip()
-                if text and len(text) > 6:
-                    target_id = str(hit.get("id") or hit.get("memory_id") or "")
-                    target_text = text
-                    break
-        if not target_id:
-            return {"status": "not_found", "reason": "no matching memory", "query": query}
+            subject_query = " ".join(sorted(self._mutation_subject(query)))
+            hits = self.recall_memories(agent_name, subject_query, limit=5) if subject_query else []
+            status, target_id, target_text = self._mutation_target(query, hits or [])
+            if status != "matched":
+                return {"status": status, "reason": "no unique matching memory", "query": query}
 
         if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
             try:
@@ -796,9 +824,14 @@ class MemoraClient:
                             "status": "deleted",
                             "id": target_id,
                             "content_text": target_text or str(body.get("content_text", "")),
+                            "cloud": True,
                         }
             except Exception as e:
                 logger.debug(f"Memora remote forget_fact error: {type(e).__name__}: {e}")
+            # Never certify shared forgetting by deleting only a local mirror.
+            # A timed-out DELETE may already have executed; do not retry it.
+            return {"status": "unconfirmed", "id": target_id,
+                    "warning": "shared deletion outcome is unconfirmed"}
 
         # local fallback: soft-delete by id (lifecycle_state stays auditable)
         try:
@@ -827,16 +860,15 @@ class MemoraClient:
         if not new_fact_text.strip():
             return {"status": "error", "error": "empty correction"}
 
-        # Find the old fact (best live hit for the correction subject).
+        # Find a unique matching subject, not an arbitrary semantic neighbor.
         old_id = ""
         old_text = ""
         if old_query.strip():
-            for hit in self.recall_memories(agent_name, old_query, limit=5) or []:
-                text = str(hit.get("content_text", "")).strip()
-                if text and len(text) > 6:
-                    old_id = str(hit.get("id") or hit.get("memory_id") or "")
-                    old_text = text
-                    break
+            subject_query = " ".join(sorted(self._mutation_subject(old_query, correction=True)))
+            hits = self.recall_memories(agent_name, subject_query, limit=5) if subject_query else []
+            target_status, old_id, old_text = self._mutation_target(old_query, hits or [], correction=True)
+            if target_status == "needs_clarification":
+                return {"status": "needs_clarification", "reason": "no unique correction subject"}
 
         # Write the corrected fact first (it must exist before supersede).
         stored = self.record_fact(

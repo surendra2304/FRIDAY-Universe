@@ -41,7 +41,7 @@ workflows:
       source fidelity, not citation count alone.
     private_receipt: /var/tmp/friday-workflow-acceptance/wf015-canonical-probe.json
   shared_memory:
-    state: defect_reproduced_fix_in_progress
+    state: client_lifecycle_and_canonical_recall_verified_mutation_safety_in_progress
     marker: wf0153274db929d
     exact_synthetic_id: 60a97947-99e8-4812-8b1d-64123fde7750
     evidence:
@@ -63,15 +63,19 @@ workflows:
     - Followup strips anchored recall wrapper,15s default read budget (writes unchanged),
       authoritative shared-empty does not revive local mirror.149tests pass exit0;
       production followup pending.
+    - PR74 final42784b7/mergeb80002d8/deploy43360913746SUCCESS; S1updated/S2pathskipped;7+6protectedunchanged.
+    - Real guarded client lifecycle and canonical before/after/deleted recall verified;
+      exact Oracle states reconciled; both synthetic IDs deleted; final proof wf015-lifecycle-final.json.
+    - Mutation-target unsafe semantic miss reproduced offline; scoped canonical safety
+      repair181tests pass, not deployed yet.
     missing:
-    - Post-rollout fresh-process correction and exact-ID forget with actual backend
-      state receipts.
-    - Mutation by unqualified top semantic hit remains a safety concern; do not probe
-      broad owner memories.
-    - Followup deployed canonical recall/root-cause repair not yet accepted.
+    - End-to-end canonical conversational correction/forget with unique safe subject
+      and exact backend reconciliation.
+    - Fresh exact-head CI/preflight/rollout/live proof for mutation-safety repair.
     private_receipts:
     - /var/tmp/friday-workflow-acceptance/wf015-lifecycle-before-fix.json
     - /var/tmp/friday-workflow-acceptance/wf015-correction-reconciliation.json
+    - /var/tmp/friday-workflow-acceptance/wf015-lifecycle-final.json
   microphone_voice:
     state: owner_session_required
     evidence: Collaborator voice commits present; canonical brain HTTP probe is not
