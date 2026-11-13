@@ -640,7 +640,7 @@ class OrchestratorCore:
             await _finalize_tracker(task_id, success=False)
         return task
 
-    async def _verify_and_repair(self, task_id: str) -> "VerificationReport | None":
+    async def _verify_and_repair(self, task_id: str) -> "Any | None":
         """Run the verification battery and attempt self-repair on failures.
 
         Returns the final verification report, or None when verification could
