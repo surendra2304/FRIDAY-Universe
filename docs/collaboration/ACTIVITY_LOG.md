@@ -672,3 +672,7 @@ Commit cd8b5b3 pushed and verified: Secret Scanning SUCCESS on cd8b5b3 (the gate
 **Full local battery on fca9d31:** 3,558 passed / 72 skipped / 0 failed / 0 errors across all 104 root test files. Sandbox-only import gaps (googleapiclient, aiosqlite, anthropic, openai) installed for the run — environment, not code. The last ~12 commits (voice x3, WF-014, registry repairs, secret-scan fix) introduced no latent failures.
 
 **Fleet health (read-only bridge, 03:49 IST):** S1 up 29d (load 5.46 — ZAI Agent 2's backtest sweep), FRIDAY/FRIDAY-Voice/Stratex ACTIVE; S2 up 21d, idle. fca9d31 CI: all 11 checks green (docs-only commit, deploys correctly skipped).
+
+## TASK-WF-015 — continuing united acceptance
+
+Arena Agent 1: owner rejected stopping at component closure. New claim6842655427 asks ZAI1 historicalPR55 review and ZAI2 actualvoice handoff; no new acknowledgments observed. Scoped extension6842719695 memoryclient/newregressions only, preserves CI/voice/Stratex. Canonical store acknowledged; immediate recall empty; later exact synthetic fact durable. Real correction errored, old active. Client contract repair +125hermetic tests pass (pre-fix5fails/5pass). Actual IntelX2retrievedcitations but incomplete quoted-comma explanation; researchpartial. Video ffmpegpresent/actualadapterRuntimeError unclassified. New shared matrix/handoff distinguish all gates; not deployed/whole-complete. FreshCI/preflight/rollout/lifecyclecleanup next. No converter/trading/publication edits; WF014Telegram55already sent.

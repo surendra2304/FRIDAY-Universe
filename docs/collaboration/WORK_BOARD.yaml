@@ -19,6 +19,49 @@ status_definitions:
   CLOSED: "Formally closed; reason and evidence recorded."
 
 tasks:
+  - id: TASK-WF-015
+    title: United owner-workflow acceptance and real shared-memory/research lifecycle
+    status: IN_PROGRESS
+    owner: arena_engineering_01
+    branch: arena/TASK-WF-015-shared-memory
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: '2026-11-13T03:20:09.274913+00:00'
+    updated_at: '2026-11-13T03:20:09.274913+00:00'
+    files:
+    - FRIDAY/src/friday/memory/memora_client.py
+    - FRIDAY/tests/test_shared_memory_lifecycle.py
+    - docs/verification/OWNER_WORKFLOW_ACCEPTANCE.yaml
+    - docs/verification/TEAM_ACCEPTANCE_HANDOFF.md
+    dependencies: []
+    acceptance:
+    - Separate implementation/tests/deployment/actual behavior/owner-only gates in shared
+      matrix.
+    - Real canonical research and memory store/recall/correct/forget across fresh processes;
+      exact synthetic cleanup.
+    - Repair reproduced defects with regressions, exact-head CI and protected rollout.
+    - Preserve ZAI1 CI/registry and ZAI2 voice/Stratex lanes; record actual acknowledgments
+      only.
+    evidence:
+    - Issue35 initial claim6842655427 and exact-path extension6842719695.
+    - Actual canonical store acknowledged but immediate recall empty; later exact synthetic
+      fact durable. Real correction error, old still active.
+    - Real IntelX task task_5cb407ee2846 retrieved two citations; relevance remains
+      partial.
+    - Regression5failed/5passed before;125passed exit0 after client repair. Hermetic
+      tests not live acceptance.
+    risk_flags:
+    - No broad-query memory deletion.
+    - No generated-converter changes, live trading changes or video publication.
+    blockers:
+    - Post-rollout acceptance pending; immediate-recall root cause unresolved.
+    - No replies yet to new ZAI1/ZAI2 coordination; owner microphone/review/OAuth and
+      sustained profit separate.
+    next_action: Publish reviewed client fix with exact-head CI; preflight, rollout
+      and fresh-process lifecycle; continue remaining acceptance.
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842655427
+    last_update_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842719695
   - id: "TASK-COLLAB-001"
     title: "Shared multi-AI collaboration centre"
     status: "MERGED"

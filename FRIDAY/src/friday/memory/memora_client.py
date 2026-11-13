@@ -554,6 +554,8 @@ class MemoraClient:
         fact_text: str,
         category: str = "preference",
         importance: float = 0.95,
+        *,
+        allow_duplicates: bool = False,
     ) -> Dict[str, Any]:
         """Store the user's statement as an observation, not promoted knowledge.
 
@@ -571,6 +573,11 @@ class MemoraClient:
                 "importance": importance,
                 "provenance": {"category": category, "entities": ["user_preference", category]},
             }
+            # An intentional correction must create a distinct candidate, even
+            # when its wording is near-identical to the old fact. Normal writes
+            # retain Memora's duplicate suppression.
+            if allow_duplicates:
+                payload["allow_duplicates"] = True
             try:
                 url = f"{self.base_url}/v1/memories"
                 headers = self._remote_headers(agent_name, json_body=True)
@@ -811,19 +818,32 @@ class MemoraClient:
             fact_text=new_fact_text,
             category="owner_fact",
             importance=0.98,
+            allow_duplicates=True,
         )
         new_id = str((stored or {}).get("id") or (stored or {}).get("memory_id") or "")
-        stored_ok = bool(stored) and (stored.get("status") not in {None, "error"})
+        # The deployed MemoryWriteResponse has id/storage_durable but NO status.
+        # Require an ID and an accepted receipt, not merely any non-error string.
+        store_status = (stored or {}).get("status")
+        stored_ok = bool(new_id) and (
+            store_status in {"success", "created", "stored", "local_only"}
+            or store_status is None
+        ) and (stored or {}).get("storage_durable") is not False
 
         if not stored_ok:
-            return {"status": "error", "error": "could not store the corrected fact"}
+            return {"status": "error", "error": "could not confirm storage of the corrected fact",
+                    "id": new_id}
+        if new_id == old_id:
+            return {"status": "not_applied", "id": new_id,
+                    "warning": "write returned the old record; correction was not applied"}
 
         if not old_id:
             # Nothing to supersede (owner states something new) — not an error,
             # but the caller should know no old fact was replaced.
-            return {"status": "stored_new_only", "id": new_id, "content_text": new_fact_text}
+            return {"status": "stored_new_only", "id": new_id, "content_text": new_fact_text,
+                    "cloud": self.remote_enabled and store_status != "local_only" and stored.get("cloud") is not False}
 
-        if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
+        if (self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost")
+                and store_status != "local_only" and stored.get("cloud") is not False):
             try:
                 url = f"{self.base_url}/v1/memories/{urllib.parse.quote(old_id)}/supersede"
                 payload = {"new_memory_id": new_id, "reason": reason}
@@ -834,16 +854,30 @@ class MemoraClient:
                     method="POST",
                 )
                 with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                    if resp.status_code in (200, 201):
+                    if resp.status in (200, 201):
+                        body = json.loads(resp.read().decode("utf-8"))
+                        # Memora resolves evidence conflicts; HTTP success alone
+                        # does not prove the requested candidate actually won.
+                        winner = body.get("winner_id")
+                        loser = body.get("superseded_id")
+                        if {winner, loser} != {old_id, new_id} or winner == loser:
+                            return {"status": "unconfirmed", "id": new_id,
+                                    "warning": "supersession returned an unexpected receipt"}
                         return {
-                            "status": "corrected",
-                            "superseded_id": old_id,
-                            "winner_id": new_id,
+                            "status": "corrected" if winner == new_id else "not_applied",
+                            "superseded_id": loser,
+                            "winner_id": winner,
                             "old_text": old_text,
                             "content_text": new_fact_text,
+                            "cloud": True,
                         }
             except Exception as e:
                 logger.debug(f"Memora remote supersede error: {type(e).__name__}: {e}")
+            # The shared write is confirmed, but the transition is not. Never
+            # certify shared correction by changing only a local mirror, and
+            # never automatically retry a possibly-executed mutation.
+            return {"status": "unconfirmed", "id": new_id, "content_text": new_fact_text,
+                    "warning": "shared supersession outcome is unconfirmed"}
 
         # local fallback: mark the old record superseded directly
         try:
