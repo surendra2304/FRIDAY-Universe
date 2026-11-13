@@ -40,6 +40,10 @@ workflows:
     missing: Quoted-comma explanation incomplete; validate question relevance and
       source fidelity, not citation count alone.
     private_receipt: /var/tmp/friday-workflow-acceptance/wf015-canonical-probe.json
+    evidence_updates:
+    - Candidate evidence-integrity regressions25pass/4beforefails, notyetdeployed.
+    - Actualpublicdocsreplay stillmissesquotedcommadefinition; actualproductionModelGatewayprobeStructuredOutputError,
+      nomockaccepted.
   shared_memory:
     state: bounded_canonical_lifecycle_verified
     marker: wf015safe92b44403c2
