@@ -37,6 +37,7 @@ import re
 import threading
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import Any
 
 from friday.core.types import Message, Role
 
