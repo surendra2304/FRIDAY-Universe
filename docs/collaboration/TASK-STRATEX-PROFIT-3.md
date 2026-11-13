@@ -43,14 +43,24 @@ few, losing trades — exactly what the owner observed.
 4. `state/strategy_priors.json` → measured OOS win rates (2/3 measured + 1/3 module prior)
 5. `systemctl restart Stratex-Daemon` (08:52 IST)
 
-## Verified live after restart (08:52–08:53 IST)
+## Verified live after restart (08:52–09:50 IST)
 
 - Daemon re-registered all strategies; winner signals firing on 1h/15m/5m
-- Orders EXECUTED: BTC SELL @ 69,556, ETH SELL @ 1,959, BNB SELL @ 641, XRP SELL @ 1.0124
-  (all `strategy_hybrid`, native STOP_MARKET + TAKE_PROFIT_MARKET brackets placed)
-- Expectancy gate visibly working: rejected SOL at +0.033R < +0.05R, accepted
-  the four above
-- No errors in daemon logs
+- Orders EXECUTED: BTC SELL @ 69,556, ETH SELL @ 1,959, BNB SELL @ 641, XRP SELL @ 1.0124, PAXG LONG @ 3,874 (native STOP_MARKET + TAKE_PROFIT_MARKET brackets)
+- Expectancy gate visibly working: rejected SOL at +0.033R < +0.05R, accepted the five above
+- **09:50 IST position check (live engine read): all 5 open positions GREEN**
+
+  | Position | Side | Entry | Unrealized |
+  | --- | --- | --- | --- |
+  | ETHUSDT | SHORT | 1,959.35 | **+$8.65** |
+  | BTCUSDT | SHORT | 69,556.8 | **+$6.50** |
+  | BNBUSDT | SHORT | 641.27 | **+$6.38** |
+  | PAXGUSDT | LONG | 3,874.59 | **+$6.09** |
+  | XRPUSDT | SHORT | 1.0124 | **+$4.21** |
+  | **Total** | | | **+$31.83** |
+
+- No errors in daemon logs; ~22 further entries attempted and correctly gated by
+  the venue 5-position limit while winners hold.
 
 ## Ongoing
 
