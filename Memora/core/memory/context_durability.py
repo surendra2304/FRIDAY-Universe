@@ -131,24 +131,28 @@ class RelationalContextSnapshotStore:
                 "durable content that was never restored (TASK-MEM-010 fail-closed "
                 "guard). Fix the backend and restart, or clear the row explicitly.")
         blob, digest = self._encode(payload)
+        schema_version = int(payload.get("schema_version", 1))
+        node_count = int(payload.get("node_count", 0))
         factory = self._factory()
         with factory() as session:
             row = session.get(ContextSnapshot, (self.tenant_id, self.scope_key))
             if row is None:
                 row = ContextSnapshot(tenant_id=self.tenant_id, scope_key=self.scope_key)
                 session.add(row)
-            row.schema_version = int(payload.get("schema_version", 1))
+            row.schema_version = schema_version
             row.payload = blob
             row.content_sha256 = digest
-            row.node_count = int(payload.get("node_count", 0))
+            row.node_count = node_count
             row.updated_at = get_utc_now()
             session.commit()
+        # Receipt from locals: the session context closed above, so the ORM row
+        # is detached and must not be touched again.
         return {
             "backend": "relational",
             "tenant_id": self.tenant_id,
             "scope_key": self.scope_key,
-            "schema_version": row.schema_version,
-            "node_count": row.node_count,
+            "schema_version": schema_version,
+            "node_count": node_count,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
