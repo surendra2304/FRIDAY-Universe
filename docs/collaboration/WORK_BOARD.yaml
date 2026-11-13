@@ -1,9 +1,9 @@
 schema_version: 1
-snapshot_at: "2026-11-13T11:25:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST); refreshed by ZAI Agent 1 after the owner's Minimal-Console directive (Living Universe superseded)
+snapshot_at: "2026-11-13T12:30:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST); refreshed by ZAI Agent 1 after the owner's Minimal-Console directive (Living Universe superseded)
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
-main_head_at_snapshot: "1262d58"  # schema routing repair head; supersedes the 885b775 snapshot. NOTE: live Server 2 workspace was found on claude/TASK-CI-004 @ 64b1df8 (BEHIND main) — deployment gap root-caused this session, see TASK-DEPLOY-GAP-001.
+main_head_at_snapshot: "6368173"  # Merge PR #80 (TASK-DEPLOY-GAP-001 evidence). NOTE: live Server 2 workspace was found on claude/TASK-CI-004 @ 64b1df8 (BEHIND main) — deployment gap root-caused and closed, see TASK-DEPLOY-GAP-001.
 warning: "Snapshot only. Refresh GitHub branches, PRs, workflows and runtime state before acting. NOTE (2026-11-10): the repository history was rewritten to purge leaked credentials; all pre-rewrite commit SHAs recorded anywhere in this registry are historical references only. The pre-rewrite bundle is preserved offline by ZAI. All collaborator branches were deleted after merge (single-branch main)."
 
 status_definitions:
@@ -19,10 +19,41 @@ status_definitions:
   CLOSED: "Formally closed; reason and evidence recorded."
 
 tasks:
+  - id: TASK-STRATEX-OANDA-001
+    title: "OANDA demo trading — credential vault, adapter hardening, validated profitable strategy, live 24/5 engine"
+    status: IN_PROGRESS
+    owner: zai
+    branch: zai/TASK-STRATEX-OANDA-001
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-13T12:10:00+05:30"
+    updated_at: "2026-11-13T12:30:00+05:30"
+    files:
+      - "credentials.md"                # gitignored master copy (VM + local), OANDA section appended
+      - "Stratex/oanda_demo/"           # credentials/strategy/trader/backtest/selftest + README
+      - "Stratex/exchanges/oanda_adapter.py"  # precision bug fix + trade lifecycle + pricing fallback
+      - "Stratex/tests/test_oanda_demo.py"
+      - "Stratex/deployment/stratex-oanda-demo.service"
+      - "Stratex/.env"                  # OANDA_API_KEY / OANDA_ACCOUNT_ID (VM, gitignored)
+    defect: "Owner directive 2026-11-13: 'Store it in credentials.md and implement oanda demo trading also. Also make Stratex take profitable trades.' The existing oanda_adapter had a price-precision bug (raw str(float) emits 1.0854300000000001 — OANDA rejects), no trade-lifecycle methods (open/close/modify), and no strategy validated against real history."
+    acceptance:
+      - "OANDA demo key stored in credentials.md (house format, gitignored, VM master copy + .env wiring)."
+      - "Live selftest 9/9 PASS against practice account 101-001-40988523-001 including a 1-unit order round-trip (place + close)."
+      - "Strategy validated on real OANDA history before trading: candidate trend systems rejected on evidence (SMT-v2 −309R H4/2.9y; Donchian −97R D1/20y); FX-MR-v4 (RSI-2 reversion, EMA200 regime gate, EMA5 rule exit) validated +19.5R / 1302 trades / 64.4% win / maxDD ~6% on D1 20y, holdout positive both halves."
+      - "Risk governor live: 1% risk per trade, notional cap 25%, max 4 positions, −3% daily NAV breaker, 60-min cooldowns, native SL on every order, kill-switch file, Telegram notifications."
+      - "29/29 offline unit tests green; deployed as Stratex-OANDA-Demo.service on Server 1 with 5-min scan loop."
+    evidence:
+      - "Live selftest run 2026-11-13 06:45 UTC: accounts/pricing/candles/instruments/precision/order-place/order-close/trades all PASS."
+      - "Backtest reports: Stratex/data/oanda_demo_backtest_D.json (mr), bt_D1_mr_filtered.json, bt_D1_donchian.json, bt_H4_*.json — per-instrument and aggregate metrics with practice-account spread costs."
+      - "First live scan 2026-11-13 06:53 UTC: account read $100,000 demo, spreads sampled across 8 pairs, no open signals at scan time (engine correctly selective: EURUSD RSI2 10.9 / GBPUSD 10.7 near threshold but below EMA200 regime line)."
+    blockers: []
+    next_action: "Merge branch, deploy service on Server 1, verify first autonomous trade cycle; monitor via Telegram + --status."
+
   - id: TASK-UI-MINIMAL-001
     title: "Minimal Console — replace the Living Universe UI (owner directive: minimalistic, dynamic, not laggy; chat too long)"
     status: VERIFIED
-    owner: zai_agent_1
+    owner: zai
     branch: zai/TASK-UI-MINIMAL-001
     pr: null
     contributors: []
@@ -54,7 +85,7 @@ tasks:
   - id: TASK-DEPLOY-GAP-001
     title: "Close the deployment gap — live Server 2 runs claude/TASK-CI-004 @ 64b1df8, 6+ verified commits behind main (voice dispatch fix, schema routing repair never went live)"
     status: DEPLOYED
-    owner: zai_agent_1
+    owner: zai
     branch: main
     pr: null
     contributors: []
