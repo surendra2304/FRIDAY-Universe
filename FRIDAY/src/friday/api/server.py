@@ -23,7 +23,7 @@ import subprocess
 import sys
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -2300,6 +2300,30 @@ _DESTRUCTIVE_VERBS = (
 _LAUNCH_PREFIXES = ("open ", "launch ", "start ", "run ", "show ", "switch to ", "go to ", "bring up ")
 
 
+def _json_safe(obj: Any) -> Any:
+    """Make a command result JSON-serializable without losing information.
+
+    Chaos-loop finding (2026-11-13): the honest-failure branches built
+    ``JSONResponse(content=result)`` from dicts that sometimes carried
+    ``datetime`` fields, and raw ``json.dumps`` raised ``TypeError: Object of
+    type datetime is not JSON serializable`` — so instead of FRIDAY's honest
+    structured reply the client got an empty 500 crash. FastAPI's own return
+    path already tolerates datetimes; only the explicit JSONResponse branches
+    needed this. ``datetime``/``date`` become ISO-8601 strings (what FastAPI's
+    jsonable_encoder would have produced), anything exotic degrades to its
+    ``repr`` string — the failure evidence stays readable, never vanishes.
+    """
+    if isinstance(obj, dict):
+        return {str(k): _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(v) for v in obj]
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    return repr(obj)
+
+
 def _refusal(payload: dict[str, Any], status_code: int = 403) -> JSONResponse:
     """A refusal a client can act on without parsing prose.
 
@@ -2316,11 +2340,26 @@ def _is_destructive(cmd: str) -> bool:
     return any(verb in cmd for verb in _DESTRUCTIVE_VERBS)
 
 
+_TRADING_INTENT_RE = re.compile(
+    r"\b(?:oanda|binance|bybit|okx|coinbase)\b"
+    r"|\b(?:live|real)\s+(?:money|funds|trading)\b"
+    r"|\b(?:open|close|place|buy|sell)\b[^.?!]*\b(?:trade|position|order)\b",
+    re.IGNORECASE,
+)
+
+
 def _looks_like_launch(cmd: str) -> bool:
     """Whether this is a request to *start* something, rather than mere chat
     that happens to contain a word an application also uses."""
     stripped = cmd.strip()
     if not stripped:
+        return False
+    # Chaos-loop finding (2026-11-13): "Open a live OANDA position ..." was
+    # swallowed by the launcher fast path and answered with "There is no
+    # application or file called 'a live OANDA position ...'" — a trading
+    # request must reach the trading/portfolio surface or an honest refusal,
+    # never the desktop launcher.
+    if _TRADING_INTENT_RE.search(stripped):
         return False
     if stripped in {"chrome", "notepad", "calculator", "explorer", "paint", "terminal"}:
         return True
@@ -2442,6 +2481,9 @@ async def execute_command(req: CommandRequest, _: None = Depends(_require_contro
         metadata=meta,
     )
     
+    # Chaos-loop fix (2026-11-13): every branch below serializes ``result``
+    # through raw json.dumps; datetimes in the metadata crashed the response.
+    result = _json_safe(result)
     if is_refused:
         return _refusal(result, 403)
     if meta.get("execution_failed"):
@@ -3660,7 +3702,13 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             }
 
         # Universal Application & File Launcher Fast-path
-        if cmd.startswith("open ") or cmd.startswith("launch ") or cmd.startswith("start "):
+        # (trading-intent guard: "open a live OANDA position ..." is a trade
+        # request, never a desktop launch — QA-loop misroute fix 2026-11-13)
+        if (
+            cmd.startswith("open ")
+            or cmd.startswith("launch ")
+            or cmd.startswith("start ")
+        ) and not _TRADING_INTENT_RE.search(cmd):
             target_str = re.sub(r"^(?:open|launch|start)\s+(?:the\s+)?(?:file|folder|app|application|program|directory)?\s*", "", raw_cmd, flags=re.IGNORECASE).strip()
             t_low = target_str.lower()
             
@@ -3866,8 +3914,24 @@ async def chat_endpoint(req: ChatRequest, _: None = Depends(_require_origin_gate
     Owner decision (2026-11-10 IST): the chat surface is public and keyless —
     origin-gated only (see ``_require_origin_gate``). Raw control endpoints
     (``/api/command`` and friends) keep the full key gate.
+
+    QA-loop upgrade (2026-11-13): when the brain cannot reach its LLM it still
+    composes an honest, readable reply — but the command layer mapped that to
+    HTTP 502, the dashboard's ``if (!res.ok) throw`` discarded FRIDAY's actual
+    words and showed a fake "I lost the link" message. A reply the owner can
+    read is not a transport failure: /api/chat rewraps a 502 that carries a
+    non-empty ``reply`` as 200. Security refusals (403) and hard crashes (500)
+    keep their status codes, and /api/command's pinned contract is untouched.
     """
-    return await execute_command(CommandRequest(command=req.message), boss_verified=False)
+    result = await execute_command(CommandRequest(command=req.message), boss_verified=False)
+    if isinstance(result, Response) and result.status_code == 502:
+        try:
+            body = json.loads(result.body.decode("utf-8"))
+        except Exception:
+            body = None
+        if isinstance(body, dict) and isinstance(body.get("reply"), str) and body["reply"].strip():
+            return JSONResponse(status_code=200, content=body)
+    return result
 
 
 @app.get("/api/screenshot")
