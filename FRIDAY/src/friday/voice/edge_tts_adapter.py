@@ -30,13 +30,32 @@ _NUM_CHANNELS = 1
 
 
 async def _mp3_to_pcm(data: bytes) -> bytes | None:
-    """mp3 bytes -> s16le PCM via ffmpeg (present on both hosts)."""
+    """mp3 bytes -> s16le PCM via ffmpeg.
+
+    ffmpeg resolution order: PATH, then the static-ffmpeg wheel bundled
+    binary (Server 1 has no system ffmpeg; static_ffmpeg ships one and is
+    a worker-venv dependency since TASK-VOICE-E2E-003).
+    """
+    import shutil
+
+    exe = shutil.which("ffmpeg")
+    if exe is None:
+        try:
+            from static_ffmpeg import add_paths
+
+            add_paths()
+            exe = shutil.which("ffmpeg")
+        except Exception:
+            exe = None
+    if exe is None:
+        return None
+
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tf:
         tf.write(data)
         path = tf.name
     try:
         out = subprocess.run(
-            ["ffmpeg", "-i", path, "-f", "s16le", "-ac", "1",
+            [exe, "-i", path, "-f", "s16le", "-ac", "1",
              "-ar", str(_SAMPLE_RATE), "-"],
             capture_output=True, timeout=30,
         )
