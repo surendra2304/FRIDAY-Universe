@@ -110,9 +110,13 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
     topical_query = re.sub(r"https?://[^\s]+", " ", query.lower())
     def normalized_words(text):
         # Treat serialize/serialization as the same topic, not URL tokens.
-        return {"serializ" if word.startswith("serializ") else word
+        return {"serializ" if word.startswith("serializ") else
+                "quot" if word.startswith("quot") else word
                 for word in re.findall(r"\w{3,}", text.lower())}
-    terms = normalized_words(topical_query) - {"the", "and", "for", "what", "with", "from", "research", "summarize"}
+    terms = normalized_words(topical_query) - {"the", "and", "for", "what", "with", "from", "research", "summarize",
+        "explain", "how", "does", "works", "handles", "give", "highlights",
+        "cite", "actual", "source", "sources", "urls", "not", "build", "code",
+        "publish", "anything", "please", "tell", "about", "this", "that"}
     for candidate in results[:15]:
         if len(sources) >= max_sources:
             break
@@ -143,29 +147,38 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5) ->
             paragraphs = [p for p in paragraphs if 40 <= len(p) <= 4000
                           and re.search(r"[.!?](?:\s|$)", p)]
             ranked = sorted(enumerate(paragraphs), key=lambda p: (-len(terms & normalized_words(p[1])), p[0]))
+            if terms:
+                ranked = [p for p in ranked if terms & normalized_words(p[1])]
             if not ranked:
-                failures.append({"url": url, "reason": "no_readable_passage"})
+                failures.append({"url": url, "reason": "no_topical_passage" if paragraphs else "no_readable_passage"})
                 continue
-            excerpt = " ".join(passage for _, passage in ranked[:3])[:600]
+            # Keep separate contiguous passages; never label disjoint text as
+            # a single verbatim quote or let one long paragraph erase the rest.
+            passages = list(dict.fromkeys(passage for _, passage in ranked))[:3]
             sid = hashlib.sha256(final_url.encode()).hexdigest()[:16]
             title = str(getattr(candidate, "title", "") or final_url)[:160]
             source = {"id": sid, "title": title, "url": final_url,
                       "retrieved_at": datetime.now(timezone.utc).isoformat(),
                       "evidence_kind": "retrieved_document", "independently_verified": False}
             sources.append(source)
-            findings.append({"statement": excerpt, "status": "source_excerpt", "quote": excerpt,
-                             "citations": [{"source_id": sid, "source_title": title, "source_url": final_url}]})
+            for passage in passages:
+                excerpt = passage[:1200]
+                findings.append({"statement": excerpt, "status": "source_excerpt", "quote": excerpt,
+                                 "truncated": len(passage) > len(excerpt),
+                                 "citations": [{"source_id": sid, "source_title": title, "source_url": final_url}]})
         except asyncio.CancelledError:
             raise
         except Exception as exc:
             failures.append({"url": url, "reason": type(exc).__name__})
-    spoken = " ".join(f"According to {s['title']}, {f['statement']}" for s, f in zip(sources[:3], findings[:3]))
+    spoken = " ".join(f"According to {f['citations'][0]['source_title']}, {f['statement']}" for f in findings[:3])
     if not spoken:
         spoken = "I could not retrieve readable sources for that query. I will not invent a research brief."
-    lines = ["Retrieved-source excerpts — not independently verified facts."]
-    for source, finding in zip(sources, findings):
-        lines.extend([f"\n{source['title']}: {finding['statement']}", source["url"]])
+    lines = ["Retrieved-source excerpts — not independently verified facts or a verified answer to every part of the question."]
+    for finding in findings:
+        citation = finding["citations"][0]
+        lines.extend([f"\n{citation['source_title']}: {finding['statement']}", citation["source_url"]])
     return {"status": "SUCCESS" if findings else "DEGRADED", "query": query,
+            "answer_kind": "source_excerpts", "question_answered": False,
             "findings": findings, "sources": sources, "spoken_summary": spoken,
             "text_response": "\n".join(lines), "source_failures": failures,
             "summary": f"Retrieved {len(sources)} source document(s); findings are attributed excerpts, not independent verification."}

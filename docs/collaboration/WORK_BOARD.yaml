@@ -23,12 +23,12 @@ tasks:
     title: United owner-workflow acceptance and real shared-memory/research lifecycle
     status: IN_PROGRESS
     owner: arena_engineering_01
-    branch: arena/TASK-WF-015-acceptance-record
+    branch: arena/TASK-WF-015-research-relevance
     pr: 75
     contributors: []
     priority: P0
     created_at: '2026-11-13T03:20:09.274913+00:00'
-    updated_at: '2026-11-13T04:23:15.823531+00:00'
+    updated_at: '2026-11-13T04:33:54.817679+00:00'
     files:
     - FRIDAY/src/friday/memory/memora_client.py
     - FRIDAY/tests/test_shared_memory_lifecycle.py
@@ -37,6 +37,8 @@ tasks:
     - FRIDAY/tests/test_memory_recall_subject.py
     - FRIDAY/src/friday/api/server.py
     - FRIDAY/tests/test_memory_mutation_targets.py
+    - IntelX/intelx/api/live_research_task.py
+    - tests/test_grounded_live_research.py
     dependencies: []
     acceptance:
     - Separate implementation/tests/deployment/actual behavior/owner-only gates in shared
@@ -67,6 +69,12 @@ tasks:
     - Actualcanonical14/14 freshprocessphases verified; bothsyntheticrows deleted; wf015-canonical-mutation-verified.json.
     - One documented unrelatedstochasticCIrerun passed; 11/10000seedfailures reproduced
       and handedtoZAI1; notclaimedfixed.
+    - Research4negativecontrolsfailedbefore;7newregressions/25tests pass; explicit sourcedexcerpts
+      NOT questionanswered.
+    - Read-onlyactualpublicCSV/JSONreplay partial; specificquotedcommadefinitionnotselected;
+      ModelGatewayrealprobeStructuredOutputError/no mockfallback.
+    - ZAI2newunrealizedsnapshot6843802278/PR73head38e9bb02 reviewedfollowup6843995713;
+      no profitacceptance.
     risk_flags:
     - No broad-query memory deletion.
     - No generated-converter changes, live trading changes or video publication.
@@ -74,10 +82,10 @@ tasks:
     - Research-answer relevance remains partial; next engineering gate.
     - Owner microphone/OAuth/render-review and sustained exchange-reconciledprofit remain
       distinct.
-    next_action: Continue research relevance acceptance and actual team review; do not
-      stop at memory component pass.
+    next_action: Controlled evidence-integrity repair gate; continue real groundedanswer
+      relevance/model readiness, never equate excerptSUCCESS with questionanswered.
     claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842655427
-    last_update_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6843332553
+    last_update_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6843903294
     component_acceptance:
       memory: "VERIFIED \u2014 realcanonical14/14 freshprocess phases, exactOraclecleanup,\
         \ PR75/deploy43363885223"

@@ -16,6 +16,13 @@ protected_worktree:
     - "Re-check git status before any worktree operation."
 
 claims:
+  - path: tests/test_grounded_live_research.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-015-research-relevance
+    status: ACTIVE_CLAIM
+    task: TASK-WF-015 research evidence integrity; claim6843903294
   - path: FRIDAY/tests/test_memory_mutation_targets.py
     owner: arena_engineering_01
     prs: []
