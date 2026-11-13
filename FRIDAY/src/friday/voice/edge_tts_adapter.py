@@ -75,18 +75,24 @@ class _EdgeChunkedStream(ChunkedStream):
             if chunk["type"] == "audio":
                 mp3.write(chunk["data"])
         audio = mp3.getvalue()
-        if audio:
-            # ffmpeg is a blocking subprocess; keep it off LiveKit's audio loop.
-            pcm = await asyncio.to_thread(_mp3_to_pcm, audio)
-            if pcm:
-                output_emitter.initialize(
-                    request_id=str(id(self)),
-                    sample_rate=_SAMPLE_RATE,
-                    num_channels=_NUM_CHANNELS,
-                    mime_type="audio/pcm",
-                )
-                # push() re-chunks raw PCM into frame_size_ms frames itself
-                output_emitter.push(pcm)
+        if not audio:
+            raise RuntimeError("Edge TTS returned no audio bytes")
+
+        # ffmpeg is a blocking subprocess; keep it off LiveKit's audio loop.
+        pcm = await asyncio.to_thread(_mp3_to_pcm, audio)
+        if not pcm:
+            raise RuntimeError(
+                "Edge TTS audio could not be decoded; ffmpeg is unavailable or conversion failed"
+            )
+
+        output_emitter.initialize(
+            request_id=str(id(self)),
+            sample_rate=_SAMPLE_RATE,
+            num_channels=_NUM_CHANNELS,
+            mime_type="audio/pcm",
+        )
+        # push() re-chunks raw PCM into frame_size_ms frames itself
+        output_emitter.push(pcm)
         output_emitter.flush()
 
 

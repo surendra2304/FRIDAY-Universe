@@ -24,6 +24,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from friday.voice import livekit_worker as worker  # noqa: E402
+from friday.voice import edge_tts_adapter as edge_adapter  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -168,6 +169,94 @@ def test_groq_pipeline_uses_edge_when_orpheus_dead():
     stt, llm, tts = parts
     assert isinstance(tts, _FakeEdgeTTS), "pipeline would ship a dead orpheus TTS"
     assert reason is None
+
+
+@pytest.mark.asyncio
+async def test_edge_tts_refuses_empty_audio_and_decode_failure(monkeypatch):
+    class _Emitter:
+        def __init__(self):
+            self.initialized = False
+            self.pushed = False
+            self.flushed = False
+
+        def initialize(self, **kwargs):
+            self.initialized = True
+
+        def push(self, data):
+            self.pushed = True
+
+        def flush(self):
+            self.flushed = True
+
+    class _Communicate:
+        chunks = []
+
+        def __init__(self, text, voice):
+            pass
+
+        async def stream(self):
+            for chunk in self.chunks:
+                yield chunk
+
+    monkeypatch.setattr(edge_adapter.edge_tts, "Communicate", _Communicate)
+    stream = edge_adapter._EdgeChunkedStream(
+        tts=object(), input_text="hello", conn_options=object(),
+        voice="en-IN-NeerjaNeural",
+    )
+    emitter = _Emitter()
+
+    with pytest.raises(RuntimeError, match="returned no audio"):
+        await stream._run(emitter)
+    assert not emitter.initialized
+    assert not emitter.pushed
+    assert not emitter.flushed
+
+    _Communicate.chunks = [{"type": "audio", "data": b"fake-mp3"}]
+    monkeypatch.setattr(edge_adapter, "_mp3_to_pcm", lambda data: None)
+    with pytest.raises(RuntimeError, match="could not be decoded"):
+        await stream._run(emitter)
+    assert not emitter.initialized
+    assert not emitter.pushed
+    assert not emitter.flushed
+
+
+@pytest.mark.asyncio
+async def test_edge_tts_emits_pcm_after_threaded_conversion(monkeypatch):
+    class _Communicate:
+        def __init__(self, text, voice):
+            pass
+
+        async def stream(self):
+            yield {"type": "audio", "data": b"fake-mp3"}
+
+    class _Emitter:
+        def __init__(self):
+            self.initialized = False
+            self.data = None
+            self.flushed = False
+
+        def initialize(self, **kwargs):
+            self.initialized = True
+
+        def push(self, data):
+            self.data = data
+
+        def flush(self):
+            self.flushed = True
+
+    monkeypatch.setattr(edge_adapter.edge_tts, "Communicate", _Communicate)
+    monkeypatch.setattr(edge_adapter, "_mp3_to_pcm", lambda data: b"pcm-data")
+    stream = edge_adapter._EdgeChunkedStream(
+        tts=object(), input_text="hello", conn_options=object(),
+        voice="en-IN-NeerjaNeural",
+    )
+    emitter = _Emitter()
+
+    await stream._run(emitter)
+
+    assert emitter.initialized
+    assert emitter.data == b"pcm-data"
+    assert emitter.flushed
 
 
 def test_edge_voice_env_override():
