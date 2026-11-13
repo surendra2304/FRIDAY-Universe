@@ -45,6 +45,28 @@ class RecoveryEngine:
         """Assign an active model provider for LLM-driven patch synthesis."""
         self.provider = provider
 
+    async def _load_task_objective(self, task_id: str) -> tuple[str, list[str]]:
+        """Fetch the persisted task objective for repair prompts.
+
+        TASK-FORGE-002 (GAP 4): ``repair_with_inference`` rejects with
+        ``missing_objective`` when the context has no goal, so the escalation
+        routes must hand the model the same objective the orchestrator passes
+        into agent context (``task.goal`` / ``task.requirements``).
+        """
+        goal, requirements = "", []
+        try:
+            task = await self.store.get_task(task_id)
+        except Exception as exc:
+            logger.warning(
+                f"[Task {task_id}] Could not load task record for repair context: "
+                f"{type(exc).__name__}: {exc}"
+            )
+            return goal, requirements
+        if task:
+            goal = (getattr(task, "goal", "") or "").strip()
+            requirements = [str(r) for r in (getattr(task, "requirements", None) or [])]
+        return goal, requirements
+
     async def attempt_recovery(
         self,
         task_id: str,
@@ -396,7 +418,16 @@ class RecoveryEngine:
             except Exception:
                 terminal_logs = ""
 
+            # TASK-FORGE-002 (GAP 4): the escalation context carried no goal and
+            # no requirements, so repair_with_inference (DebuggerRole with no
+            # injected provider) rejected every escalation with
+            # 'missing_objective' and the Inference-backed repair could never
+            # fire from verification-failure recovery. Fetch the task record so
+            # the objective reaches the repair.
+            goal, requirements = await self._load_task_objective(task_id)
             context = {
+                "goal": goal,
+                "requirements": requirements,
                 "error": (
                     f"Verification check '{failed_evidence.check_name}' failed.\n"
                     f"Failure class: {diagnosis.failure_class.value}\n"
@@ -488,6 +519,64 @@ class RecoveryEngine:
         except Exception:
             pass
 
+    async def _inference_repair_patch(
+        self,
+        task_id: str,
+        diagnosis: FailureDiagnosis,
+        target_file: str,
+        current_content: str,
+    ) -> RepairPatch | None:
+        """Route 1's Inference-backed patch when no model provider is injected.
+
+        TASK-FORGE-002 (GAP 4): nothing in production ever calls set_provider(),
+        so the injected-provider branch in _synthesize_patch_for_diagnosis was
+        dead code and the synthesis route had no LLM path at all. This calls
+        the Inference-backed repair directly (the same entry point the Debugger
+        escalation uses). The repair is validated inside repair_with_inference;
+        re-verification still decides whether the run recovered.
+        """
+        from app.agents.repair import repair_with_inference
+
+        goal, requirements = await self._load_task_objective(task_id)
+        context = {
+            "goal": goal,
+            "requirements": requirements,
+            "error": (
+                f"Verification check failed.\n"
+                f"Failure class: {diagnosis.failure_class.value}\n"
+                f"Error: {diagnosis.error_message}\n"
+                f"Suggested strategy: {diagnosis.suggested_strategy}\n"
+                f"Failing file: {target_file}"
+            ),
+            "project_files": [target_file],
+            "target_file": target_file,
+        }
+        try:
+            result = await repair_with_inference(
+                task_id, context, self.exec_engine, role="debugger"
+            )
+        except Exception as exc:
+            logger.warning(f"[Task {task_id}] Inference-backed repair failed: {exc}")
+            return None
+        if not (result or {}).get("fixed_files"):
+            return None
+        try:
+            after = self.exec_engine.fs.read_file(task_id, target_file, role="debugger")
+        except Exception:
+            return None
+        if not after or after == current_content:
+            return None
+        return RepairPatch(
+            target_file=target_file,
+            original_snippet=current_content or None,
+            replacement_snippet=after,
+            explanation=(
+                f"Inference-backed repair for {diagnosis.failure_class.value}: "
+                f"{diagnosis.error_message[:60]}"
+            ),
+            patch_type="rewrite",
+        )
+
     async def _synthesize_patch_for_diagnosis(
         self, task_id: str, diagnosis: FailureDiagnosis
     ) -> RepairPatch | None:
@@ -570,6 +659,17 @@ class RecoveryEngine:
                 logger.warning(
                     f"LLM patch synthesis failed: {e}. Falling back to rule-based repair."
                 )
+        else:
+            # TASK-FORGE-002 (GAP 4): with no provider injected -- which is the
+            # only state production runs in, since set_provider has no caller --
+            # route 1's LLM branch never executed. Call the Inference-backed
+            # repair directly; an injected provider keeps the original
+            # synthesis behavior unchanged.
+            patch = await self._inference_repair_patch(
+                task_id, diagnosis, target_file, current_content
+            )
+            if patch:
+                return patch
 
         # 2. Basic syntax or indentation repair heuristics fallback
         if diagnosis.failure_class.value == "syntax_error":

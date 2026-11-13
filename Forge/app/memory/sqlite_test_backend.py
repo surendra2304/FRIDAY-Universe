@@ -140,6 +140,32 @@ class SQLiteTestCursor:
         return [DbRow(dict(row)) for row in rows]
 
 
+class SQLiteTestAwaitableCursor:
+    """Promise of a cursor that works with both ``await`` and ``async with``.
+
+    TASK-FORGE-002: the store mixes the aiosqlite idiom
+    (``async with conn.execute(...)``) with plain ``await conn.execute(...)``.
+    Mirrors ``app.memory.db._AwaitableCursor``; without it every
+    ``async with conn.execute(...)`` call on this backend raised
+    ``TypeError: 'coroutine' object does not support the asynchronous context
+    manager protocol``.
+    """
+
+    __slots__ = ("_coro",)
+
+    def __init__(self, coro):
+        self._coro = coro
+
+    def __await__(self):
+        return self._coro.__await__()
+
+    async def __aenter__(self) -> "SQLiteTestCursor":
+        return await self._coro
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool:
+        return False
+
+
 class SQLiteTestConnection:
     """Thin adapter with the same ``execute`` surface as the Oracle wrapper."""
 
@@ -147,7 +173,16 @@ class SQLiteTestConnection:
         self._conn = conn
         self.row_factory = aiosqlite.Row
 
-    async def execute(
+    def execute(
+        self,
+        query: str,
+        params: Mapping[str, Any] | Sequence[Any] | None = None,
+        clob_params: Sequence[str] = (),
+    ) -> "SQLiteTestAwaitableCursor":
+        # ``clob_params`` is accepted for signature parity; SQLite has no CLOBs.
+        return SQLiteTestAwaitableCursor(self._execute(query, params, clob_params))
+
+    async def _execute(
         self,
         query: str,
         params: Mapping[str, Any] | Sequence[Any] | None = None,

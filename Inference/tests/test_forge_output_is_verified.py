@@ -133,6 +133,44 @@ async def test_unverifiable_type_is_reported_as_unverified_not_as_verified(scrip
     assert response.confidence == 0.55
 
 
+@pytest.mark.asyncio
+async def test_template_fallback_that_parses_is_parser_verified_not_flattened(
+    scripted_provider, monkeypatch
+):
+    """TASK-FORGE-002: a template_fallback answer that the parser verified used to
+    carry the blanket 0.55 unverified prior, so Forge's 0.70 acceptance gate
+    auto-rejected parseable, QA-passed code. The tier follows the measurement,
+    not the internal route that served the answer."""
+    async def fallback_execute(exec_req, *args, **kwargs):  # noqa: ARG001 - real signature
+        return _provider_reply("```python\nk = 2\n```", status="fallback_success")
+
+    monkeypatch.setattr(cg.unified_provider_manager, "execute", fallback_execute)
+
+    response = await code_generation_service.generate_code(
+        CodeGenerationRequest(file_type="python", filename="fallback_ok.py"))
+
+    assert response.generation_path == "template_fallback"
+    assert response.confidence == 0.92
+    assert response.code == "k = 2"
+
+
+@pytest.mark.asyncio
+async def test_template_fallback_prose_is_still_invalid_and_zero_confidence(
+    scripted_provider, monkeypatch
+):
+    """Genuinely degraded output keeps the low tier on the fallback path too."""
+    async def fallback_execute(exec_req, *args, **kwargs):  # noqa: ARG001 - real signature
+        return _provider_reply("still prose, not code (", status="fallback_success")
+
+    monkeypatch.setattr(cg.unified_provider_manager, "execute", fallback_execute)
+
+    response = await code_generation_service.generate_code(
+        CodeGenerationRequest(file_type="python", filename="fallback_bad.py"))
+
+    assert response.generation_path == "invalid_output"
+    assert response.confidence == 0.0
+
+
 # -- the quality report carries only measurements ---------------------------------------
 
 

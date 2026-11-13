@@ -157,38 +157,57 @@ async def repair_with_inference(task_id, context, engine, role='debugger'):
         return result
     client = get_ai_universe_client()
     for path, original in originals.items():
-        try:
-            reply = await client.generate_code(
-                filename=path, goal=goal, file_type='python',
-                requirements=[*context.get('requirements', []),
-                              'Repair existing implementation minimally. Preserve every existing test and public API. '
-                              'Do not change tests, invent unrelated scaffolds, push, or deploy.'],
-                context={'project_goal': goal, 'repair': {
-                    'original_source': original,
-                    'failure_evidence': str(context.get('error', ''))[-12000:],
-                }},
-            )
-            if not reply or reply.confidence < 0.7:
-                result['rejections'].append('unavailable_or_low_confidence:' + path)
+        # TASK-FORGE-002 (GAP 1): a single rejected reply (low confidence,
+        # wrong file set, replacement failing validation) used to end the
+        # file's repair. Two attempts, mirroring the DeveloperRole loop: the
+        # retry prompt carries the rejection reason as evidence. An accepted
+        # repair is never retried, and a concurrent source change is not worth
+        # resending against.
+        rejection = ''
+        for attempt in range(2):
+            requirements = [*context.get('requirements', []),
+                            'Repair existing implementation minimally. Preserve every existing test and public API. '
+                            'Do not change tests, invent unrelated scaffolds, push, or deploy.']
+            if attempt and rejection:
+                requirements.append(
+                    f'Previous attempt was rejected ({rejection}). Fix exactly that '
+                    'and return the complete corrected file.')
+            try:
+                reply = await client.generate_code(
+                    filename=path, goal=goal, file_type='python',
+                    requirements=requirements,
+                    context={'project_goal': goal, 'repair': {
+                        'original_source': original,
+                        'failure_evidence': str(context.get('error', ''))[-12000:],
+                    }},
+                )
+                if not reply or reply.confidence < 0.7:
+                    rejection = 'unavailable_or_low_confidence'
+                    continue
+                files = LLMResponseParser.extract_files(reply.answer, default_filename=path)
+                if len(files) != 1 or files[0].relative_path != path:
+                    rejection = 'unexpected_file_set'
+                    continue
+                replacement = files[0].content
+                reason = validate_replacement(original, replacement)
+                if reason:
+                    rejection = reason
+                    continue
+                if engine.fs.read_file(task_id, path, role=role) != original:
+                    result['rejections'].append('source_changed_during_request:' + path)
+                    rejection = ''
+                    break
+                engine.fs.create_file(task_id=task_id, relative_path=path,
+                                      content=replacement, role=role)
+                result['fixed_files'].append(path)
+                rejection = ''
+                break
+            except Exception as exc:
+                # Log only exception class: provider errors can carry credentials.
+                rejection = type(exc).__name__
                 continue
-            files = LLMResponseParser.extract_files(reply.answer, default_filename=path)
-            if len(files) != 1 or files[0].relative_path != path:
-                result['rejections'].append('unexpected_file_set:' + path)
-                continue
-            replacement = files[0].content
-            reason = validate_replacement(original, replacement)
-            if reason:
-                result['rejections'].append(reason + ':' + path)
-                continue
-            if engine.fs.read_file(task_id, path, role=role) != original:
-                result['rejections'].append('source_changed_during_request:' + path)
-                continue
-            engine.fs.create_file(task_id=task_id, relative_path=path,
-                                  content=replacement, role=role)
-            result['fixed_files'].append(path)
-        except Exception as exc:
-            # Log only exception class: provider errors can carry credentials.
-            result['rejections'].append(type(exc).__name__ + ':' + path)
+        if rejection:
+            result['rejections'].append(rejection + ':' + path)
     if result['fixed_files']:
         result['status'] = 'success'
     return result

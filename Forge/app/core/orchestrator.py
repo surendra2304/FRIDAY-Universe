@@ -422,7 +422,20 @@ class OrchestratorCore:
 
         for nid, success, res, err, role in wave_results:
             node = dag.graph.nodes[nid]
-            if success:
+            # TASK-FORGE-002 (GAP 5): nodes only "failed" when execute_step
+            # RAISED. A verification-gate node (tester / security_reviewer)
+            # that returned normally with status="failed" -- tests exited
+            # non-zero, security findings open -- was recorded as a completed
+            # node and the run marched on to COMPLETED. A failed gate result is
+            # a failure trigger: it takes the same retry/repair path a raised
+            # exception does.
+            gate_failed = (
+                success
+                and isinstance(res, dict)
+                and res.get("status") == "failed"
+                and node.metadata.get("node_type") == "verification_gate"
+            )
+            if success and not gate_failed:
                 dag.mark_completed(nid, result=res)
                 executed_nodes.append(nid)
                 if res and isinstance(res, dict):
@@ -449,13 +462,31 @@ class OrchestratorCore:
                         description=f"Checkpoint at gate: {node.title}",
                     )
             else:
+                if gate_failed:
+                    err = (
+                        f"Verification gate '{node.title}' returned status=failed "
+                        f"(exit_code={res.get('exit_code')})"
+                    )
+                    # Keep the real failure evidence (stdout/stderr) recorded
+                    # before the node is marked failed: the recovery engine and
+                    # the Debugger read it from the context manager.
+                    self.context_manager.record_step_result(task_id, nid, role, res)
+                    if "stdout" in res or "exit_code" in res:
+                        self.context_manager.record_terminal_output(
+                            task_id=task_id,
+                            command=res.get("command", f"{role} execution"),
+                            exit_code=res.get("exit_code", 0),
+                            stdout=res.get("stdout", ""),
+                            stderr=res.get("stderr", ""),
+                            role=role,
+                        )
                 has_failed = True
-                first_error = err or "Unknown error"
+                first_error = first_error or err or "Unknown error"
                 dag.mark_failed(nid, error=first_error)
                 await self.store.record_event(
                     task_id=task_id,
                     event_type="node.failed",
-                    payload={"node_id": nid, "error": first_error},
+                    payload={"node_id": nid, "error": first_error, "gate_failed": gate_failed},
                 )
 
         # Update saved graph and task progress
@@ -572,12 +603,52 @@ class OrchestratorCore:
             if not executed:
                 break
 
-        await self._verify_and_repair(task_id)
+        final_report = await self._verify_and_repair(task_id)
         task = await self.store.get_task(task_id) or task
+        # TASK-FORGE-002 (GAP 5): verification is a truthfulness gate, not only
+        # a reporting gate. When the battery ran and still fails after every
+        # repair and peer-review route, a COMPLETED task is demoted to FAILED --
+        # the owner must never hear "completed" about a build whose tests fail.
+        # A battery that crashed instead of reporting leaves the task state
+        # untouched (see the except branch of _verify_and_repair).
+        if (
+            final_report is not None
+            and not final_report.all_passed
+            and task.state == TaskState.COMPLETED
+        ):
+            demote_reason = (
+                "Objective verification failed after repair attempts: "
+                f"{final_report.passed_checks}/{final_report.total_checks} checks passed"
+            )
+            task = await self.lifecycle.transition(
+                task_id=task_id,
+                to_state=TaskState.FAILED,
+                reason=demote_reason,
+                error_message=demote_reason,
+                progress_percentage=100,
+            )
+            await self.store.record_event(
+                task_id=task_id,
+                event_type="task.failed",
+                payload={
+                    "reason": demote_reason,
+                    "verification_gate": True,
+                    "failed_checks": final_report.failure_reasons[:10],
+                },
+            )
+            production_monitor.record_task_event("failed")
+            await _finalize_tracker(task_id, success=False)
         return task
 
-    async def _verify_and_repair(self, task_id: str) -> None:
-        """Run the verification battery and attempt self-repair on failures."""
+    async def _verify_and_repair(self, task_id: str) -> "VerificationReport | None":
+        """Run the verification battery and attempt self-repair on failures.
+
+        Returns the final verification report, or None when verification could
+        not run at all. TASK-FORGE-002 (GAP 5): the caller demotes a COMPLETED
+        task to FAILED when this report still fails -- a build whose tests fail
+        must never be reported as completed.
+        """
+        final_report = None
         try:
             from app.verification.engine import VerificationEngine
 
@@ -591,12 +662,13 @@ class OrchestratorCore:
             # reached FAILED with zero verification events recorded against it.
             engine = VerificationEngine(engine=self.engine, wm=self.wm)
             report = await engine.verify_task(task_id)
+            final_report = report
             logger.info(
                 f"Verification for '{task_id}': "
                 f"{report.passed_checks}/{report.total_checks} passed"
             )
             if report.all_passed:
-                return
+                return final_report
 
             from app.recovery.engine import RecoveryEngine
 
@@ -612,7 +684,9 @@ class OrchestratorCore:
                 else:
                     logger.warning(f"Self-repair did not fix '{task_id}': {message}")
             if recovered_any:
-                await engine.verify_task(task_id)
+                # The re-verification after repairs decides the task's fate:
+                # capture it as the final report instead of discarding it.
+                final_report = await engine.verify_task(task_id)
 
             # Peer review: specialist agents inspect each other's output and the
             # fixers act on it. This is the collaboration loop that makes the
@@ -634,15 +708,20 @@ class OrchestratorCore:
                 if review.repairs:
                     # Saved evidence must describe the files after peer repair,
                     # even when it fixed only some findings.
-                    await engine.verify_task(task_id)
+                    final_report = await engine.verify_task(task_id)
                 if review.clean:
                     logger.info(f"Peer review cleared all findings for '{task_id}'")
             except Exception as exc:
                 logger.warning(f"Peer review failed for '{task_id}': {exc}")
         except Exception as exc:
-            # Verification is a reporting gate, not a reason to kill a finished
-            # task: log loudly and leave the task in its terminal state.
+            # Verification failing to *run* (infrastructure error) is still not
+            # a reason to kill a finished task: log loudly and leave the task in
+            # its terminal state. What changed under TASK-FORGE-002 (GAP 5) is
+            # that a battery which RAN and reported failures is a truthfulness
+            # gate -- run_task() demotes a COMPLETED task to FAILED on a failing
+            # final report.
             logger.error(f"Verification/repair failed for '{task_id}': {exc}", exc_info=True)
+        return final_report
 
 
 orchestrator = OrchestratorCore()

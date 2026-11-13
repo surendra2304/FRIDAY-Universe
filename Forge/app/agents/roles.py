@@ -20,6 +20,8 @@ WEB_STUDIO_KEYWORDS = [
     "website",
     "landing page",
     "web page",
+    "webpage",
+    "webapp",
     "html",
     "portfolio",
     "css",
@@ -62,6 +64,27 @@ WEB_STUDIO_KEYWORDS = [
     "developer profile",
 ]
 
+# TASK-FORGE-002 (GAP 3): WEB_STUDIO_KEYWORDS alone routed on generic product
+# words, so "Build a REST API for a book shop with pricing rules" was planned as
+# a static website and a CLI telemetry tool became a 3D site. Web-studio routing
+# now additionally requires an explicit web-deliverable noun in the goal — the
+# domain keywords above only say the subject, this list says the artifact.
+WEB_DELIVERABLE_KEYWORDS = [
+    "website",
+    "landing page",
+    "web page",
+    "webpage",
+    "html page",
+    "html site",
+    "static site",
+    "static website",
+    "web app",
+    "webapp",
+    "web ui",
+    "web interface",
+    "web dashboard",
+]
+
 BACKEND_EXCLUSIVE_KEYWORDS = [
     "backend",
     "fastapi",
@@ -75,13 +98,42 @@ BACKEND_EXCLUSIVE_KEYWORDS = [
     "grpc",
 ]
 
+# TASK-FORGE-002 (GAP 3): API/CLI surfaces are never web-studio work. These are
+# matched on word boundaries rather than substrings because "javascript"
+# contains "script" and "rapid" contains "api" — a plain substring veto would
+# reject genuine web goals that mention JavaScript.
+BACKEND_EXCLUSIVE_WORD_KEYWORDS = [
+    "api",
+    "rest",
+    "cli",
+    "script",
+    "command-line",
+    "command line",
+]
+
+
+def _has_backend_exclusive_keyword(text: str) -> bool:
+    return any(k in text for k in BACKEND_EXCLUSIVE_KEYWORDS) or any(
+        re.search(rf"\b{re.escape(k)}\b", text) for k in BACKEND_EXCLUSIVE_WORD_KEYWORDS
+    )
+
 
 def is_web_studio_goal(goal_or_title: str) -> bool:
-    """Check if a project goal should be synthesized via ForgeWebStudio."""
+    """Check if a project goal should be synthesized via ForgeWebStudio.
+
+    TASK-FORGE-002 (GAP 3): a goal must name an explicit web deliverable, carry
+    a web-domain keyword, and not hit a backend-exclusive veto. Generic words
+    like "shop", "pricing", "dashboard" or "telemetry" no longer route on their
+    own.
+    """
     text = (goal_or_title or "").lower()
+    has_deliverable = any(k in text for k in WEB_DELIVERABLE_KEYWORDS)
     has_web_kw = any(k in text for k in WEB_STUDIO_KEYWORDS)
-    has_backend_exclusive = any(k in text for k in BACKEND_EXCLUSIVE_KEYWORDS)
-    return has_web_kw and not has_backend_exclusive
+    return (
+        has_deliverable
+        and has_web_kw
+        and not _has_backend_exclusive_keyword(text)
+    )
 
 
 WEB_3D_KEYWORDS = [
@@ -107,11 +159,15 @@ WEB_3D_KEYWORDS = [
 
 
 def is_web_3d_goal(goal_or_title: str) -> bool:
-    """Check if a project goal requires 3D WebGL immersion or master Web Studio synthesis."""
+    """Check if a project goal requires 3D WebGL immersion or master Web Studio synthesis.
+
+    TASK-FORGE-002 (GAP 3): the backend-exclusive veto (including the new
+    api/rest/cli/script/command-line words) applies here too, so a CLI tool or
+    REST API goal can never be synthesized into a 3D site.
+    """
     text = (goal_or_title or "").lower()
     has_3d_kw = any(k in text for k in WEB_3D_KEYWORDS)
-    has_backend_exclusive = any(k in text for k in BACKEND_EXCLUSIVE_KEYWORDS)
-    return has_3d_kw and not has_backend_exclusive
+    return has_3d_kw and not _has_backend_exclusive_keyword(text)
 
 
 class PlannerRole(BaseAgent):
@@ -530,6 +586,28 @@ def _sanitize_web_asset(filename: str, content: str, goal: str, is_web_3d: bool)
     return clean
 
 
+def _describe_code_rejection(ai_res, filename: str) -> str:
+    """Build the failure evidence string for a rejected code-generation answer.
+
+    TASK-FORGE-002 (GAP 1): the retry prompt must carry the QA verdict, not
+    just "try again". Inference reports the parser verdict in ``error``; the
+    client zeroes the confidence for rate-limited or unavailable text, so the
+    answer excerpt itself is the evidence when no verdict came back.
+    """
+    if ai_res is None:
+        return "provider returned no usable response"
+    error_text = (getattr(ai_res, "error", None) or "").strip()
+    if error_text:
+        verdict = f"quality verdict: {error_text[:400]}"
+    else:
+        answer = (getattr(ai_res, "answer", "") or "").strip()
+        verdict = f"rejected answer excerpt: {answer[:400]!r}" if answer else "empty answer"
+    return (
+        f"confidence {ai_res.confidence:.2f} is below the 0.70 acceptance threshold "
+        f"for '{filename}' ({verdict})"
+    )
+
+
 class DeveloperRole(BaseAgent):
     """General Software Engineer implementing core business logic and algorithms."""
 
@@ -765,49 +843,91 @@ class DeveloperRole(BaseAgent):
 
                 ask_prompt += "\nReturn ONLY the raw code."
 
-                try:
-                    ai_res = await ai_client.generate_code(
-                        filename=filename,
-                        goal=goal or node_title,
-                        file_type=file_type,
-                        requirements=enriched_requirements,
-                        context={
-                            "project_goal": goal,
-                            "prompt": ask_prompt,
-                            "stage": "developer",
-                            "sibling_files": sibling_files,
-                            "memora_context": memora_context_str,
-                        },
-                    )
-                except Exception:
-                    ai_res = await ai_client.ask(question=ask_prompt, mode="auto")
-
-                if (
-                    ai_res
-                    and ai_res.confidence >= 0.70
-                    and ai_res.answer
-                    and ai_res.answer.strip()
-                    and not any(
-                        k in ai_res.answer.lower()
-                        for k in ["rate-limited", "temporarily offline", "high demand on"]
-                    )
-                ):
-                    ai_code = ai_res.answer
-                    last_run_id = ai_res.run_id
-                    if hasattr(engine, "store") and engine.store:
-                        await engine.store.record_event(
-                            task_id=task_id,
-                            event_type="ai_universe.code_generated",
-                            payload={
-                                "file": filename,
-                                "run_id": ai_res.run_id,
-                                "confidence": ai_res.confidence,
+                # TASK-FORGE-002 (GAP 1): a single sub-threshold or unparseable
+                # answer used to end the file's build: one warning, no retry,
+                # straight to deterministic synthesis or the local stub -- which
+                # fails the whole task. Each file now gets two attempts, and the
+                # second prompt carries the rejection evidence (confidence tier
+                # and the QA verdict text) so the model corrects the actual
+                # failure instead of resending blind.
+                rejection = ""
+                for attempt in range(2):
+                    attempt_requirements = enriched_requirements
+                    attempt_prompt = ask_prompt
+                    if attempt and rejection:
+                        attempt_requirements = [
+                            *enriched_requirements,
+                            f"Previous attempt was rejected: {rejection}. "
+                            "Fix exactly that failure and return the complete corrected file.",
+                        ]
+                        attempt_prompt = (
+                            f"{ask_prompt}\n\nPrevious attempt was rejected: {rejection}\n"
+                            "Return a corrected, complete implementation. Raw code only."
+                        )
+                    ai_res = None
+                    try:
+                        ai_res = await ai_client.generate_code(
+                            filename=filename,
+                            goal=goal or node_title,
+                            file_type=file_type,
+                            requirements=attempt_requirements,
+                            context={
+                                "project_goal": goal,
+                                "prompt": attempt_prompt,
                                 "stage": "developer",
+                                "sibling_files": sibling_files,
+                                "memora_context": memora_context_str,
                             },
                         )
-                elif ai_res and ai_res.confidence < 0.70:
+                    except Exception:
+                        try:
+                            ai_res = await ai_client.ask(question=attempt_prompt, mode="auto")
+                        except Exception as ask_exc:
+                            rejection = f"provider call failed ({type(ask_exc).__name__})"
+                            logger.warning(
+                                f"AI Universe code generation call for '{filename}' failed ({ask_exc})."
+                                + (
+                                    " Retrying once with the failure evidence."
+                                    if attempt == 0
+                                    else " Falling back to local model."
+                                )
+                            )
+                            continue
+
+                    if (
+                        ai_res
+                        and ai_res.confidence >= 0.70
+                        and ai_res.answer
+                        and ai_res.answer.strip()
+                        and not any(
+                            k in ai_res.answer.lower()
+                            for k in ["rate-limited", "temporarily offline", "high demand on"]
+                        )
+                    ):
+                        ai_code = ai_res.answer
+                        last_run_id = ai_res.run_id
+                        if hasattr(engine, "store") and engine.store:
+                            await engine.store.record_event(
+                                task_id=task_id,
+                                event_type="ai_universe.code_generated",
+                                payload={
+                                    "file": filename,
+                                    "run_id": ai_res.run_id,
+                                    "confidence": ai_res.confidence,
+                                    "stage": "developer",
+                                    "attempt": attempt + 1,
+                                },
+                            )
+                        break
+
+                    rejection = _describe_code_rejection(ai_res, filename)
                     logger.warning(
-                        f"AI Universe code generation for '{filename}' confidence ({ai_res.confidence:.2f}) below threshold 0.70. Falling back to local model."
+                        f"AI Universe code generation for '{filename}' rejected on attempt {attempt + 1}: {rejection}."
+                        + (
+                            " Retrying once with the failure evidence."
+                            if attempt == 0
+                            else " Falling back to local model."
+                        )
                     )
             except Exception as e:
                 logger.warning(
