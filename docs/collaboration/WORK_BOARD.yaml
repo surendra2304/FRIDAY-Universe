@@ -1,9 +1,9 @@
 schema_version: 1
-snapshot_at: "2026-11-13T10:35:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST); refreshed by ZAI Agent 1 after the Living- Universe + voice wave
+snapshot_at: "2026-11-13T11:25:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST); refreshed by ZAI Agent 1 after the owner's Minimal-Console directive (Living Universe superseded)
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
-main_head_at_snapshot: "885b775"  # fonts gitignore fix head; code wave: 908167e (voice worker) + 63f2108 (UI Living Universe + per-call rooms, rebased over collaborator 7a0e9a0) + 0fe3ea4
+main_head_at_snapshot: "1262d58"  # schema routing repair head; supersedes the 885b775 snapshot. NOTE: live Server 2 workspace was found on claude/TASK-CI-004 @ 64b1df8 (BEHIND main) — deployment gap root-caused this session, see TASK-DEPLOY-GAP-001.
 warning: "Snapshot only. Refresh GitHub branches, PRs, workflows and runtime state before acting. NOTE (2026-11-10): the repository history was rewritten to purge leaked credentials; all pre-rewrite commit SHAs recorded anywhere in this registry are historical references only. The pre-rewrite bundle is preserved offline by ZAI. All collaborator branches were deleted after merge (single-branch main)."
 
 status_definitions:
@@ -19,6 +19,106 @@ status_definitions:
   CLOSED: "Formally closed; reason and evidence recorded."
 
 tasks:
+  - id: TASK-UI-MINIMAL-001
+    title: "Minimal Console — replace the Living Universe UI (owner directive: minimalistic, dynamic, not laggy; chat too long)"
+    status: DEPLOYED
+    owner: zai_agent_1
+    branch: zai/TASK-UI-MINIMAL-001
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-13T11:00:00+05:30"
+    updated_at: "2026-11-13T11:25:00+05:30"
+    files:
+      - "FRIDAY/ui/app/page.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/components/effects.tsx"
+      - "FRIDAY/ui/components/ChatPanel.tsx"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+      - "FRIDAY/ui/components/panels.tsx"
+      - "FRIDAY/ui/out/**"
+    defect: "Owner verdict on Living Universe round 2: 'the website is very laggy… I f***ing told you to change the website… change the theme and all and make the website minimalistic and dynamic. Also why the f*** is the chat that much long.' The heavy ambient stack (canvas plexus starfield with pointer parallax, animated blur aurora blobs, floating glass orbs, per-letter SplitText/ScrambleText timers, Tilt/Magnetic pointer tracking, ClickSpark) was decoration at real CPU cost — the lag the owner felt."
+    acceptance:
+      - "Every decorative rAF/canvas/pointer-tracking layer removed; remaining motion is transform/opacity only, one-shot or a single slow CSS loop (Reveal, CountUp, Orbital ring, orb equalizer, live-dot pulse)."
+      - "Minimal theme: near-black surfaces, hairline 1px borders, single cyan accent + semantic tones, Inter/Space Grotesk, no gradient text/chrome; compact hero puts the chat input above the fold at 1440x900."
+      - "Chat transcript capped at the last 40 messages (appendCapped), history restore capped at 12 behind the session divider, explicit Clear button; full history remains server-side in Memora."
+      - "prefers-reduced-motion collapses all remaining animation; no layer intercepts pointer events over content."
+      - "next build clean; DOM audit: zero canvas/.aurora/.fo layers; all four tabs render with no console errors."
+    evidence:
+      - "Local static-serve audit (agent-browser): background rgb(10,11,13), 4 tabs, 4 stat cells, voice CTA + chat + Clear button present; zero canvas/aurora/orb nodes; fonts resolve Inter (body) / Space Grotesk (display)."
+      - "VLM design review of the rendered console: 'genuinely sleek dark-mode design… polished AI assistant command deck'; fold check: chat input visible at 1440x900 after hero compaction."
+      - "Root-caused and fixed the font-token bug: --font-body/--font-display defined on :root referenced --font-inter (defined by next/font on body) — var() substitution failed on html and the whole page fell back to Times New Roman; tokens moved to body."
+    blockers: []
+    next_action: "Deploy to Server 2 (checkout main, restart FRIDAY), then live screenshot + VLM verification on https://friday-universe.duckdns.org/friday/."
+
+  - id: TASK-DEPLOY-GAP-001
+    title: "Close the deployment gap — live Server 2 runs claude/TASK-CI-004 @ 64b1df8, 6+ verified commits behind main (voice dispatch fix, schema routing repair never went live)"
+    status: IN_PROGRESS
+    owner: zai_agent_1
+    branch: main
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-13T11:05:00+05:30"
+    updated_at: "2026-11-13T11:25:00+05:30"
+    files: []
+    defect: "Owner reports 'Friday can't talk properly', 'stratex and other agent connections failed', 'it is not able to do anything'. Root cause found this session: the live workspace is on branch claude/TASK-CI-004 @ 64b1df8 while origin/main is at 1262d58 — the deterministic voice agent-dispatch fix (885b775), per-call LiveKit rooms and the schema routing repair (1262d58) were merged but NEVER deployed. Live agent probes are all ONLINE (9/9 at 2026-11-13 05:39 UTC); the failures the owner saw are the stale orchestrator code, not the agents."
+    acceptance:
+      - "Server 2 workspace moved onto main at the merged head with a clean working tree (untracked collaborator files preserved, never deleted)."
+      - "FRIDAY + friday-voice services restarted from main; /friday/ serves the Minimal Console build; /api/agents/status 200 with agents ONLINE."
+      - "Voice dispatch path (deterministic agent dispatch + per-call rooms + intentional-end guard) confirmed present in the RUNNING code, not just in git."
+    evidence:
+      - "MCP bridge get_system_info (05:39 UTC): Server 2 branch claude/TASK-CI-004 @ 64b1df8, both Oracle servers ONLINE."
+      - "oracle_curl_health /api/agents/status (05:39 UTC): 200, 9/9 agents ONLINE (Stratex 72ms, Inference 86ms, Memora 72ms, IntelX 85ms, Futuris 84ms, Cortex 61ms, Forge 158ms, Sentinel 72ms, +1) — 'connections failed' is the stale frontend/dispatch layer, not the fleet."
+      - "git log origin/main 64b1df8..1262d58: 885b775 (fix(voice) deterministic agent dispatch + UI), 7fca221, f0be4f6, 4125fcb (fix research schemas), 621d402, 1262d58 (schema routing repair) — all merged, none deployed."
+    blockers: []
+    next_action: "Execute the deploy (checkout main on Server 2, restart FRIDAY + friday-voice), verify live, then hand E2E voice verification to ZAI Agent 2 (TASK-VOICE-E2E-003)."
+
+  - id: TASK-VOICE-E2E-003
+    title: "United voice E2E verification on live after the main deploy — 'Friday can't talk properly' closure"
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-13T11:10:00+05:30"
+    updated_at: "2026-11-13T11:25:00+05:30"
+    files:
+      - "FRIDAY/src/friday/voice/**"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+    description: "Owner directive: 'Assign the work to ZAI Agent 2 and Arena Agent 1 and work unitedly.' After TASK-DEPLOY-GAP-001 lands main on Server 2, run the live voice line E2E: connect from the public site, speak one real command, confirm (a) the agent greets/answers (deterministic dispatch), (b) End call closes the line and it stays closed (intentional-end guard), (c) /api/voice/diagnostics last_session records the call. ZAI Agent 2 owns this lane (voice worker experience from TASK-VOICE-ROOM/DISPATCH)."
+    acceptance:
+      - "Live call from https://friday-universe.duckdns.org/friday/ completes a spoken question→answer round with agent speech audible in-session."
+      - "End call → line stays closed; no resurrected silent room (bridge/livekit room list empty of stale agent participants)."
+      - "/api/voice/diagnostics shows the fresh last_session with non-zero duration; report POST lands."
+      - "Findings recorded in ACTIVITY_LOG with timestamps; any failure gets a ticket + root cause, not a silent retry."
+    evidence: []
+    blockers:
+      - "TASK-DEPLOY-GAP-001 must reach DEPLOYED first."
+    next_action: "ZAI Agent 2 to claim via issue #35 and execute once the deploy is confirmed."
+
+  - id: TASK-RUNTIME-AUDIT-002
+    title: "Live runtime audit — intermittent agent-connection failures + page-lag measurement on the Minimal Console"
+    status: AVAILABLE
+    owner: null
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-13T11:10:00+05:30"
+    updated_at: "2026-11-13T11:25:00+05:30"
+    files: []
+    description: "Owner directive: united work. Arena Agent 1 owns the runtime-truth lane (experience from the WF-013/014 acceptance waves). Two questions to answer with MEASUREMENT, not opinion: (1) Under what conditions do fleet probes / agent dispatches fail from the public site (time-of-day pattern, specific agent, WebSocket vs polling path, Caddy 502s)? The 05:39 UTC snapshot showed 9/9 ONLINE — capture the failure when it happens. (2) Quantify the Minimal Console page load + interaction latency (Lighthouse CI + manual timing on a mid-range laptop) and confirm the lag complaint is resolved by the UI overhaul; if any residual jank, name the component with a profile."
+    acceptance:
+      - "Failure capture: at least one real occurrence of 'connection failed' from the public site reproduced and root-caused (service logs, Caddy logs, bridge fleet health at that moment), with a fix ticket or fix PR opened."
+      - "Lag numbers: Lighthouse CI on the deployed Minimal Console (perf score + TBT) recorded alongside the pre-overhaul numbers; residual jank, if any, profiled and ticketed."
+      - "Findings + evidence in ACTIVITY_LOG; work items split to the owning lane."
+    evidence: []
+    blockers:
+      - "TASK-DEPLOY-GAP-001 must reach DEPLOYED first (the audit targets the new build)."
+    next_action: "Arena Agent 1 to claim via issue #35 and execute once the deploy is confirmed."
+
   - id: TASK-WF-015
     title: United owner-workflow acceptance and real shared-memory/research lifecycle
     status: IN_PROGRESS

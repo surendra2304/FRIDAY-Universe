@@ -1,12 +1,20 @@
 "use client";
 
-import { Loader2, MessageSquareText, Send } from "lucide-react";
+import { Eraser, Loader2, MessageSquareText, Send } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessage, requestJson } from "@/lib/api";
 
 /* ============================================================
    FRIDAY chat — talks to the friend-persona /api/chat pipeline
    (the same engine that routes to the 10-agent fleet).
+
+   Chat-length fix (2026-11-13, owner directive "why is the chat
+   that much long"): the transcript used to grow without bound —
+   an hour of commands produced a wall of bubbles. Now the panel
+   keeps only the last MAX_RENDERED exchanges in view, restores
+   at most the last session tail, and has an explicit Clear
+   button. The full history stays on the server (Memora) — only
+   the rendered transcript is capped.
    ============================================================ */
 
 const CHIPS = [
@@ -15,6 +23,15 @@ const CHIPS = [
   "Portfolio status",
   "Macro news",
 ];
+
+/** Hard cap on rendered bubbles (most recent win). */
+const MAX_RENDERED = 40;
+/** Restored-from-history tail — enough context, never a wall. */
+const RESTORE_LIMIT = 12;
+
+function appendCapped(current: ChatMessage[], next: ChatMessage[]): ChatMessage[] {
+  return [...current, ...next].slice(-MAX_RENDERED);
+}
 
 export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number } }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -37,7 +54,9 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
      20 messages — a full 60-message wall (mostly one-line failures) read as
      a broken product on first paint. A divider marks it as restored context
      so the fresh session reads clean. Failure is silent and normal: a fresh
-     install simply has nothing to restore. */
+     install simply has nothing to restore. Round 3 (2026-11-13,
+     owner directive): restore only a short tail — chat must read
+     like a console, not an archive. */
   const [restoredCount, setRestoredCount] = useState(0);
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +68,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
             friday_reply?: string;
             timestamp?: string;
           }>;
-        }>("/api/v1/conversation/history?limit=10");
+        }>("/api/v1/conversation/history?limit=" + RESTORE_LIMIT);
         if (cancelled || !res.entries?.length) return;
         const restored: ChatMessage[] = [];
         for (const e of [...res.entries].reverse()) {
@@ -57,7 +76,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
           if (e.user_input?.trim()) restored.push({ role: "user", text: e.user_input, at });
           if (e.friday_reply?.trim()) restored.push({ role: "friday", text: e.friday_reply, at });
         }
-        const capped = restored.slice(-20);
+        const capped = restored.slice(-RESTORE_LIMIT);
         if (capped.length) {
           setMessages(capped);
           setRestoredCount(capped.length);
@@ -97,21 +116,21 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
     if (!clean || busy) return;
     setBusy(true);
     setInput("");
-    setMessages((current) => [...current, { role: "user", text: clean, at: Date.now() }]);
+    setMessages((current) => appendCapped(current, [{ role: "user", text: clean, at: Date.now() }]));
     try {
       const result = await requestJson<{ reply?: string; mode?: string; metadata?: { proactive_notice?: string | null } }>("/api/chat", {
         method: "POST",
         body: JSON.stringify({ message: clean }),
       });
       const answer = result.reply || result.mode || "FRIDAY accepted the message.";
-      setMessages((current) => [...current, { role: "friday", text: answer, at: Date.now() }]);
+      setMessages((current) => appendCapped(current, [{ role: "friday", text: answer, at: Date.now() }]));
       /* Server pollution fix (2026-11-13): monitor alerts no longer arrive
          glued to the answer text — they ride in metadata and render here as
          a dismissible banner, so the answer itself stays clean. */
       setNotice(result.metadata?.proactive_notice ?? null);
     } catch (error) {
       const reason = error instanceof Error ? error.message : "FRIDAY could not be reached.";
-      setMessages((current) => [...current, { role: "friday", text: reason, at: Date.now(), error: true }]);
+      setMessages((current) => appendCapped(current, [{ role: "friday", text: reason, at: Date.now(), error: true }]));
     } finally {
       setBusy(false);
     }
@@ -141,6 +160,19 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
             <span className="subtitle">Commands, questions, fleet dispatch — same brain as the phone line</span>
           </div>
         </div>
+        <button
+          className="mini-btn chat-clear"
+          onClick={() => {
+            setMessages([]);
+            setRestoredCount(0);
+            setNotice(null);
+          }}
+          disabled={messages.length === 0}
+          title="Clear the transcript — full history stays in FRIDAY's memory"
+          aria-label="Clear chat transcript"
+        >
+          <Eraser size={13} /> Clear
+        </button>
       </div>
 
       <div className="chat-body">

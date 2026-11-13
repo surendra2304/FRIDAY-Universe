@@ -3,7 +3,7 @@
 import { AlertTriangle, Mic, PhoneOff, Radio } from "lucide-react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ClickSpark, Orbital } from "./effects";
+import { Orbital } from "./effects";
 import { OrbCore, OrbState } from "./OrbCore";
 import { Agent, apiBase, formatClock, requestJson } from "@/lib/api";
 
@@ -355,29 +355,27 @@ export function VoiceCall({
           <span>Voice line unavailable: {worker?.detail || worker?.state}</span>
         </p>
       )}
-      <ClickSpark>
-        <button
-          className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg btn-voice`}
-          onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
-          disabled={status === "connecting" || (workerFailed && status === "idle")}
-          title={workerFailed && status === "idle" ? `Voice backend unavailable: ${worker?.detail || worker?.state}` : undefined}
-          aria-label={status === "connected" ? "End voice call" : "Start voice call"}
-        >
-          {status === "connecting" ? (
-            <>
-              <Radio size={17} className="spin" /> Connecting…
-            </>
-          ) : status === "connected" ? (
-            <>
-              <PhoneOff size={16} /> End call
-            </>
-          ) : (
-            <>
-              <Mic size={17} /> Start voice
-            </>
-          )}
-        </button>
-      </ClickSpark>
+      <button
+        className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg btn-voice`}
+        onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
+        disabled={status === "connecting" || (workerFailed && status === "idle")}
+        title={workerFailed && status === "idle" ? `Voice backend unavailable: ${worker?.detail || worker?.state}` : undefined}
+        aria-label={status === "connected" ? "End voice call" : "Start voice call"}
+      >
+        {status === "connecting" ? (
+          <>
+            <Radio size={17} className="spin" /> Connecting…
+          </>
+        ) : status === "connected" ? (
+          <>
+            <PhoneOff size={16} /> End call
+          </>
+        ) : (
+          <>
+            <Mic size={17} /> Start voice
+          </>
+        )}
+      </button>
       {audioBlocked && (
         <p className="rail-note rail-warn">Browser blocked playback — tap anywhere on the page, then press the button again.</p>
       )}

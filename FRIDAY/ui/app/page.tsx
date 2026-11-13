@@ -4,15 +4,7 @@ import { Activity, Clock3, LayoutGrid, Radio, TerminalSquare, Waypoints } from "
 import { useCallback, useEffect, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { EmptyState, OnboardingHint, OwnerPreferences, VoiceDiagnostics } from "@/components/batch8";
-import {
-  AuroraBackground,
-  CountUp,
-  FloatingOrbs,
-  ParticleField,
-  Reveal,
-  ScrambleText,
-  SplitText,
-} from "@/components/effects";
+import { CountUp, Reveal } from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
 import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
@@ -31,11 +23,14 @@ import {
 } from "@/lib/api";
 
 /* ============================================================
-   FRIDAY Universe — console-first command center.
-   Redesigned 2026-11-13 (ZAI Agent 2) — "Obsidian Console":
-   the conversation IS the product. Chat dominates, voice docks
-   beside it, telemetry lives in its own tabs. No decorative
-   layers; every pixel carries information.
+   FRIDAY Universe — "Minimal Console" (2026-11-13, ZAI Agent 1).
+
+   Owner directive after the Living Universe rounds: the site was
+   laggy and busy — make it MINIMALISTIC and dynamic instead.
+   This edition strips every decorative layer (aurora, canvas
+   particles, floating orbs, scramble/split hero text) and keeps
+   a single quiet motion budget: one-shot entrances, animated
+   counters, live status pulses. Every pixel carries information.
 
    Kept owner directives:
    - no scroll-jump when starting voice (connects in place)
@@ -164,10 +159,7 @@ export default function Page() {
     };
   }, [mounted]);
 
-  /* Unified live count (VLM review round 2): the nav used to count strictly
-     ONLINE while the console strip counted ONLINE+REACHABLE — the two numbers
-     disagreed on screen. One definition now: an agent is live when it answers
-     the probe (good tone). */
+  /* Unified live count: an agent is live when it answers the probe. */
   const onlineCount = fleet?.agents?.filter((a) => statusTone(a.status) === "good").length ?? 0;
   const totalAgents = fleet?.agent_count ?? fleet?.agents?.length ?? 10;
 
@@ -189,12 +181,7 @@ export default function Page() {
 
   return (
     <>
-      {/* ---- Living Universe ambient stack (owner directive 2026-11-13:
-          attractive and dynamic — floating elements, aurora, particles).
-          Fixed layers behind everything; never intercept the pointer. ---- */}
-      <AuroraBackground />
-      <ParticleField />
-      <FloatingOrbs />
+      <div className="ambient" aria-hidden="true" />
 
       <nav className="nav" aria-label="Main navigation">
         <a className="nav-logo" href="#top" aria-label="FRIDAY home">
@@ -246,15 +233,8 @@ export default function Page() {
         {/* ============ CONSOLE — FRIDAY communication only ============ */}
         <section className={`tabview${tab === "console" ? " on" : ""}`} hidden={tab !== "console"} aria-label="FRIDAY console">
           <Reveal className="console-hero">
-            <div className="hero-grid" aria-hidden="true" />
-            <div className="hero-eyebrow">
-              <span className="hero-live-dot" aria-hidden="true" />
-              <ScrambleText text="SOVEREIGN OPERATING SYSTEM" />
-            </div>
-            <h1 className="hero-title">
-              <SplitText text="One voice moves the" />{" "}
-              <SplitText text="whole universe." delay={420} gradient step={120} />
-            </h1>
+            <p className="hero-eyebrow">Sovereign operating system</p>
+            <h1 className="hero-title">One voice moves the whole universe.</h1>
             <p className="hero-sub">
               Ten specialist agents, one continuous line. Speak or type — FRIDAY listens, remembers and dispatches in real time.
             </p>
