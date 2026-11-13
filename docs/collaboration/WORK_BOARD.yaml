@@ -48,7 +48,27 @@ tasks:
       - "Backtest reports: Stratex/data/oanda_demo_backtest_D.json (mr), bt_D1_mr_filtered.json, bt_D1_donchian.json, bt_H4_*.json — per-instrument and aggregate metrics with practice-account spread costs."
       - "First live scan 2026-11-13 06:53 UTC: account read $100,000 demo, spreads sampled across 8 pairs, no open signals at scan time (engine correctly selective: EURUSD RSI2 10.9 / GBPUSD 10.7 near threshold but below EMA200 regime line)."
     blockers: []
-    next_action: "Merge branch, deploy service on Server 1, verify first autonomous trade cycle; monitor via Telegram + --status."
+    next_action: "Branch merged via PR #81/#82. OPEN DEFECT (found 2026-11-13 08:30 UTC, portfolio_v2 session): the deployed service's bot.log 07:02 UTC shows batch pricing fallback returning ONE stale price for the whole basket — identical entry/SL (~1.22000/1.20659) across USDCAD, NZDUSD, EURGBP, and tp=0.00000 rr=90.99. Fix: per-instrument pricing + always attach TP in oanda_demo/trader.py (tracked in TASK-STRATEX-PORTFOLIO-002)."
+
+  - id: TASK-STRATEX-PORTFOLIO-002
+    title: "Stratex portfolio_v2 — second validated engine (breakout-d1 + meanrev-d1), live trades on the practice account, deployed-service pricing defect"
+    status: IN_REVIEW
+    owner: zai
+    branch: zai/TASK-STRATEX-PORTFOLIO-002
+    pr: 85
+    contributors: []
+    priority: P0
+    created_at: "2026-11-13T14:20:00+05:30"
+    updated_at: "2026-11-13T14:30:00+05:30"
+    files:
+      - "Stratex/portfolio_v2/"            # zero-dependency dual-strategy package (client, indicators, strategy, risk, backtest, engine)
+    defect: "Owner directive 2026-11-13: 'Do the work properly.' Independent validation session: H1 strategy families (trend-pullback, meanrev, breakout — 192 configs, two windows) are ALL unprofitable after spread; moved to D1. Deployed-service pricing defect documented under TASK-STRATEX-OANDA-001 next_action."
+    acceptance:
+      - "Dual D1 portfolio validated on ~20y real candles net of practice spreads, two non-overlapping decades: breakout-d1 +26.7R/+30.9R per half (1088 trades); meanrev-d1 +23.0R/−1.7R per half, 69.0% win (994 trades); combined 2082 trades, 51.6% win, +78.9R, PF 1.08, ~4%/yr at 1% risk."
+      - "Live engine places per-instrument-priced market orders with server-side SL/TP (GTC); first run 2026-11-13 08:36 UTC placed 6 breakout-d1 positions (tradeIDs 9,13,17,21,25,29), NAV +48 USD within 30 minutes."
+      - "Zero third-party dependencies; reads repo credentials.md vault format; every action logged to logs/stratex_trades.jsonl."
+    blockers: []
+    next_action: "PR #85 review; then per-instrument pricing + TP fix for the deployed Stratex-OANDA-Demo service (TASK-STRATEX-OANDA-001 follow-up) so the two engines can share the account safely."
 
   - id: TASK-UI-MINIMAL-001
     title: "Minimal Console — replace the Living Universe UI (owner directive: minimalistic, dynamic, not laggy; chat too long)"

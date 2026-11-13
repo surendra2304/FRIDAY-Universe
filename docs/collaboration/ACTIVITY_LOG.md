@@ -795,3 +795,13 @@ PR #79 merged to main `9d64ede`; Lighthouse CI SUCCESS on that head (run 4337462
 Honest framing recorded for the owner: +19.5R over 20y at 1% risk ≈ a slow, steady positive edge with small drawdowns — not a money printer; signals are episodic (~1-2 setups/week across the basket), which is exactly what a validated FX system looks like on a demo account with 3.5-pip spreads. The engine takes trades when the validated setup fires; it refuses to trade otherwise.
 
 **United-work note:** TASK-VOICE-E2E-003 (ZAI Agent 2) and TASK-RUNTIME-AUDIT-002 (Arena Agent 1) remain AVAILABLE per the owner's work-unitedly directive; this task closes the Stratex half of "connections failed / not able to do anything" with a working, risk-governed trading capability.
+
+**TASK-STRATEX-PORTFOLIO-002.** Owner directive: "Do the work properly." Evidence-first continuation of the Stratex trading lane:
+
+1. **Independent strategy validation** — H1 families tested first (trend-pullback, meanrev, breakout; 192 configs across two non-overlapping 5000-candle windows): ALL unprofitable net of practice spreads (best H1 config −80.9R out-of-sample). Moved to D1 where spread/ATR drops ~8x: **breakout-d1** (10-day Donchian + EMA200 regime gate, SL 2×ATR / TP 4×ATR) validates +26.7R / +30.9R per decade half over 1088 trades; **meanrev-d1** (RSI(3) ≤15/≥85 vs EMA200, SL 1.5×ATR / TP 0.75×ATR) 69.0% win, +21.3R full period. Combined: 2082 trades, 51.6% win, +78.9R, PF 1.08, ~4%/yr at 1% risk — positive across the whole bracket plateau, not a tuned spike.
+
+2. **Live proof** — engine placed 6 breakout-d1 positions on the practice account 2026-11-13 08:36 UTC with per-instrument pricing and server-side SL/TP (tradeIDs 9, 13, 17, 21, 25, 29); NAV +48 USD within 30 minutes. Dollar-breakout day: short EUR/GBP/AUD, long USD/JPY/CAD/CHF. Audit trail in logs/stratex_trades.jsonl.
+
+3. **Defect found in the deployed Stratex-OANDA-Demo service** — bot.log 07:02 UTC shows the batch pricing fallback returning ONE stale price for the whole basket (identical entry/SL ~1.22000/1.20659 across USDCAD, NZDUSD, EURGBP) with tp=0.00000. This is the "Stratex can't do anything" symptom the owner reported. Fix tracked in TASK-STRATEX-PORTFOLIO-002 next_action.
+
+4. **Deliverable** — `Stratex/portfolio_v2/` (8 files, 817 lines, zero dependencies, reads the credentials.md vault format), branch zai/TASK-STRATEX-PORTFOLIO-002, **PR #85**.
