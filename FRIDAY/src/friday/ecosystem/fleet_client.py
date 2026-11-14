@@ -99,6 +99,13 @@ CANONICAL_INTERNAL_MESH_URLS: dict[str, str] = {
     "vyralx": "http://10.0.0.120:8010",
 }
 
+# TASK-REL-007D: overall deadline for one fleet probe sweep (seconds).
+try:
+    FLEET_PROBE_DEADLINE_SECONDS = float(os.getenv("FRIDAY_FLEET_PROBE_DEADLINE_SECONDS", "10"))
+except (TypeError, ValueError):
+    FLEET_PROBE_DEADLINE_SECONDS = 10.0
+
+
 class FleetClient:
     """Unified client for live communication with all FRIDAY Universe specialist agents."""
 
@@ -492,28 +499,63 @@ class FleetClient:
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
 
+    # TASK-REL-007D: static identity table for deadline-synthesized statuses.
+    _PROBE_IDENTITIES: dict[str, tuple[str, str, str]] = {
+        "inference": ("Inference", "Cloud AI Gateway", "⚡"),
+        "memora": ("Memora", "Persistent Memory", "🧠"),
+        "stratex": ("Stratex", "Algorithmic Trading", "📈"),
+        "intelx": ("IntelX", "Macro Research", "🔍"),
+        "futuris": ("Futuris", "Predictive Forecaster", "🔮"),
+        "cortex": ("Cortex", "Web Operations", "🌐"),
+        "forge": ("Forge", "Software Engineering", "🛠️"),
+        "sentinel": ("Sentinel", "Cybersecurity Shield", "🛡️"),
+        "vyralx": ("VyralX", "Video Production", "🎬"),
+    }
+
     async def get_all_statuses(self, force_refresh: bool = False) -> list[AgentStatus]:
-        """Probes all 9 specialist agents concurrently with caching."""
+        """Probes all 9 specialist agents concurrently with caching.
+
+        TASK-REL-007D: the gather has an OVERALL deadline
+        (``FLEET_PROBE_DEADLINE_SECONDS``, default 10s). Round 1's status
+        asks took 30-35s because every caller force-refreshed and a slow
+        probe could hold the whole matrix hostage; a probe that misses
+        the deadline is now reported UNREACHABLE with the reason instead
+        of stalling the reply.
+        """
         now = time.time()
         if not force_refresh and self._status_cache and (now - self._last_cache_time < self._cache_ttl):
             return list(self._status_cache.values())
 
         client = self.get_shared_client()
-        tasks = [
-            self.probe_inference(client),
-            self.probe_memora(client),
-            self.probe_stratex(client),
-            self.probe_intelx(client),
-            self.probe_futuris(client),
-            self.probe_cortex(client),
-            self.probe_forge(client),
-            self.probe_sentinel(client),
-            self.probe_vyralx(client),
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        probes = {
+            "inference": self.probe_inference,
+            "memora": self.probe_memora,
+            "stratex": self.probe_stratex,
+            "intelx": self.probe_intelx,
+            "futuris": self.probe_futuris,
+            "cortex": self.probe_cortex,
+            "forge": self.probe_forge,
+            "sentinel": self.probe_sentinel,
+            "vyralx": self.probe_vyralx,
+        }
+        deadline = FLEET_PROBE_DEADLINE_SECONDS
+        tasks = {aid: asyncio.ensure_future(fn(client)) for aid, fn in probes.items()}
+        done, pending = await asyncio.wait(tasks.values(), timeout=deadline)
 
         statuses: list[AgentStatus] = []
-        for res in results:
+        for aid, task in tasks.items():
+            if task in pending:
+                task.cancel()
+                name, role, icon = self._PROBE_IDENTITIES[aid]
+                statuses.append(AgentStatus(
+                    id=aid, name=name, role=role, icon=icon,
+                    status="UNREACHABLE", latency_ms=int(deadline * 1000),
+                    endpoint=getattr(self, f"{aid}_url", ""),
+                    details=f"Health probe exceeded the {deadline:.0f}s fleet deadline.",
+                    last_checked=datetime.now(timezone.utc).isoformat(),
+                ))
+                continue
+            res = task.result() if not task.exception() else None
             if isinstance(res, AgentStatus):
                 statuses.append(res)
                 self._status_cache[res.id] = res
@@ -1246,7 +1288,9 @@ class FleetClient:
 
     async def get_fleet_summary(self) -> dict[str, Any]:
         """Generates a complete real-time status matrix across all 9 agents."""
-        statuses = await self.get_all_statuses(force_refresh=True)
+        # TASK-REL-007D: respect the probe cache — a status question does
+        # not need a 9-probe sweep when one ran seconds ago.
+        statuses = await self.get_all_statuses()
         online_count = sum(1 for s in statuses if s.status == "ONLINE")
         total_count = len(statuses)
 
@@ -1886,3 +1930,14 @@ class FleetClient:
 
 # Global singleton instance
 fleet_client = FleetClient()
+
+
+def get_shared_fleet_client() -> FleetClient:
+    """TASK-REL-007D: the one shared FleetClient for tools and endpoints.
+
+    Tools used to construct a fresh FleetClient per call — a cold probe
+    cache and a brand-new httpx pool every time, on a 956MB box — so a
+    simple status question re-probed all nine agents from scratch. The
+    module singleton already exists; this is its accessor.
+    """
+    return fleet_client
