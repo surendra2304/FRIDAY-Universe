@@ -22,7 +22,10 @@ These tests pin the defences added by TASK-REL-028:
   4. the recovery ladder's create route can create a project module that
      verification proved missing (the manifest never listed string_utils.py,
      so in the follow-up acceptance run nothing corrupt existed -- the file
-     was simply absent, and no existing route could create it).
+     was simply absent, and no existing route could create it);
+  5. the write boundary repairs the generated tests' parent.parent
+     sibling-path misconception when Forge's flat layout is provably the
+     real one (acceptance runs 3 and 4 died at test collection on it).
 
 The artifact fixture below is the exact production file, base64-encoded so
 the test source itself cannot accidentally re-escape or normalize it.
@@ -134,6 +137,71 @@ def test_create_file_leaves_valid_python_byte_identical(fs_tool: FilesystemTool)
         task_id="rel028", relative_path="ok.py", content=valid, role="developer"
     )
     assert fs_tool.read_file("rel028", "ok.py", role="developer") == valid
+
+
+_PARENT_PARENT_TEST = (
+    "import pathlib as _pathlib\n\n"
+    'SCRIPT_PATH = _pathlib.Path(__file__).parent.parent / "main.py"\n'
+)
+
+
+def test_write_boundary_repairs_parent_parent_sibling_path(
+    fs_tool: FilesystemTool,
+):
+    """Verbatim shape from production tasks task189/task190: the generated
+    suite loaded the code under test one directory too high and died at
+    collection with FileNotFoundError, even though main.py sat beside it.
+    The write boundary drops the spurious hop when the flat layout is
+    provably the real one, and the stored file then resolves correctly."""
+    task_id = "rel028sibling"
+    fs_tool.wm.create_workspace(task_id)
+    fs_tool.create_file(
+        task_id=task_id, relative_path="main.py",
+        content="def main() -> int:\n    return 0\n", role="developer",
+    )
+    fs_tool.create_file(
+        task_id=task_id, relative_path="test_main.py",
+        content=_PARENT_PARENT_TEST, role="tester",
+    )
+    stored = fs_tool.read_file(task_id, "test_main.py", role="tester")
+    assert "parent.parent" not in stored
+    assert '.parent / "main.py"' in stored
+
+    paths = fs_tool.wm.get_workspace_paths(task_id)
+    assert paths is not None
+    namespace: dict = {"__file__": str(paths.project / "test_main.py")}
+    exec(compile(stored, "test_main.py", "exec"), namespace)
+    assert namespace["SCRIPT_PATH"] == paths.project / "main.py"
+    assert namespace["SCRIPT_PATH"].exists()
+
+
+def test_sibling_path_repair_only_when_flat_layout_is_provable(
+    fs_tool: FilesystemTool,
+):
+    # A copy one level up makes parent.parent CORRECT -- leave it alone.
+    task_id = "rel028siblingnested"
+    fs_tool.wm.create_workspace(task_id)
+    fs_tool.create_file(
+        task_id=task_id, relative_path="main.py",
+        content="def main() -> int:\n    return 0\n", role="developer",
+    )
+    paths = fs_tool.wm.get_workspace_paths(task_id)
+    assert paths is not None
+    (paths.root / "main.py").write_text("def main() -> int:\n    return 1\n")
+    fs_tool.create_file(
+        task_id=task_id, relative_path="test_main.py",
+        content=_PARENT_PARENT_TEST, role="tester",
+    )
+    assert fs_tool.read_file(task_id, "test_main.py", role="tester") == _PARENT_PARENT_TEST
+
+    # No sibling at all: the reference may be intentional -- leave it alone.
+    task_id = "rel028siblingabsent"
+    fs_tool.wm.create_workspace(task_id)
+    fs_tool.create_file(
+        task_id=task_id, relative_path="test_main.py",
+        content=_PARENT_PARENT_TEST, role="tester",
+    )
+    assert fs_tool.read_file(task_id, "test_main.py", role="tester") == _PARENT_PARENT_TEST
 
 
 def test_create_file_non_python_untouched(fs_tool: FilesystemTool):
