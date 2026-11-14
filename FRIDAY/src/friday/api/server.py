@@ -2521,6 +2521,13 @@ async def execute_command(req: CommandRequest, _: None = Depends(_require_contro
         agents_involved.append(f"friday-{meta['device']}")
     elif meta.get("peer_name"):
         agents_involved.append(meta["peer_name"])
+    # TASK-REL-007C: specialist-tool results carry the agent in target_agent
+    # or in their per-tool metadata blocks — count them as involved too.
+    if meta.get("target_agent") and meta["target_agent"] not in agents_involved:
+        agents_involved.append(str(meta["target_agent"]))
+    for _tool_key in ("forge", "intelx", "futuris", "stratex"):
+        if isinstance(meta.get(_tool_key), dict) and _tool_key not in agents_involved:
+            agents_involved.append(_tool_key)
     
     # Complete the persist-first conversation entry in place (TASK-REL-007B).
     await _finalize_conversation_entry(
@@ -3625,24 +3632,42 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 "success": False,
                 "error": "PEER_TIMEOUT",
             }
-            if agent_id == "inference":
-                return await safe_peer_call(fleet_client.ask_inference(sub_q), fallback_data=fallback_data, peer_name="inference")
-            elif agent_id == "memora":
-                return await safe_peer_call(fleet_client.ask_memora(sub_q), fallback_data=fallback_data, peer_name="memora")
-            elif agent_id == "stratex":
-                return await safe_peer_call(fleet_client.ask_stratex(sub_q), fallback_data=fallback_data, peer_name="stratex")
-            elif agent_id == "intelx":
-                return await safe_peer_call(fleet_client.ask_intelx(sub_q), fallback_data=fallback_data, peer_name="intelx")
-            elif agent_id == "futuris":
-                return await safe_peer_call(fleet_client.ask_futuris(sub_q), fallback_data=fallback_data, peer_name="futuris")
-            elif agent_id == "cortex":
-                return await safe_peer_call(fleet_client.ask_cortex(sub_q), fallback_data=fallback_data, peer_name="cortex")
-            elif agent_id == "forge":
-                return await safe_peer_call(fleet_client.ask_forge(sub_q), fallback_data=fallback_data, peer_name="forge")
-            elif agent_id == "sentinel":
-                return await safe_peer_call(fleet_client.ask_sentinel(sub_q), fallback_data=fallback_data, peer_name="sentinel")
-            elif agent_id == "vyralx":
-                return await safe_peer_call(fleet_client.ask_vyralx(sub_q), fallback_data=fallback_data, peer_name="vyralx")
+            _askers = {
+                "inference": fleet_client.ask_inference,
+                "memora": fleet_client.ask_memora,
+                "stratex": fleet_client.ask_stratex,
+                "intelx": fleet_client.ask_intelx,
+                "futuris": fleet_client.ask_futuris,
+                "cortex": fleet_client.ask_cortex,
+                "forge": fleet_client.ask_forge,
+                "sentinel": fleet_client.ask_sentinel,
+                "vyralx": fleet_client.ask_vyralx,
+            }
+            peer_result = await safe_peer_call(
+                _askers[agent_id](sub_q), fallback_data=fallback_data, peer_name=agent_id
+            )
+            # TASK-REL-007C: direct-agent asks are real delegations — record
+            # them in the unified ledger the console counter reads (they
+            # previously never landed there, so the counter stayed 0).
+            try:
+                from friday.tools.builtin.fleet_dispatch import record_specialist_dispatch
+
+                _meta = peer_result.get("metadata") or {} if isinstance(peer_result, dict) else {}
+                _ok = not (
+                    not isinstance(peer_result, dict)
+                    or peer_result.get("success") is False
+                    or _meta.get("fallback")
+                )
+                record_specialist_dispatch(
+                    "",
+                    agent_id,
+                    sub_q,
+                    "success" if _ok else "failed",
+                    error="" if _ok else str(peer_result.get("error") or "peer call failed"),
+                )
+            except Exception as exc:  # noqa: BLE001 — ledger must never sink a reply
+                logger.debug(f"direct-agent dispatch not recorded ({type(exc).__name__}: {exc})")
+            return peer_result
 
     # 2. Android Automation Fast-paths
     try:

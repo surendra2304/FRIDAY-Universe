@@ -59,6 +59,27 @@ def record_chat_dispatch(task_id: str, agent: str, task: str, status: str,
         logger.debug(f"chat dispatch not recorded in task ledger ({type(exc).__name__}: {exc})")
 
 
+def record_specialist_dispatch(task_id: str, agent: str, task: str, status: str,
+                               result_summary: Any = None, error: str = "") -> str:
+    """TASK-REL-007C: record a specialist-tool dispatch in the unified ledger.
+
+    Round 1 (2026-11-14) left the console's TASKS DELEGATED counter at 0
+    across research/forecast/coding/status asks because ONLY this module's
+    FleetDispatchTool wrote to the TaskRecordStore the counter reads — a
+    successful Forge build (task14714112026084837) never entered the
+    ledger. The specialist tools (IntelX research, Futuris forecast,
+    Forge code) now record through here; when the upstream gives no task
+    id (Futuris returns a bare reply dict), one is synthesized so the
+    delegation is still counted. Returns the id used.
+    """
+    if not task_id:
+        import uuid as _uuid
+
+        task_id = f"task_{_uuid.uuid4().hex[:12]}"
+    record_chat_dispatch(task_id, agent, task, status, result_summary, error)
+    return task_id
+
+
 # The nine specialist agents of FRIDAY Universe (FRIDAY itself is the
 # dispatcher and is deliberately not a dispatch target).
 FLEET_AGENTS: dict[str, str] = {
