@@ -4125,6 +4125,32 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "LATENCY: identical probe (POST /api/chat 'What is the capital of France?' x5, Server 1 localhost). Before: warm 0.70/0.30/0.38/0.56s (median ~0.47s) plus one 54.7s cold outlier from evening pool exhaustion. After: 0.465/0.426/0.784/0.626/0.356s (median 0.465s) -- no material regression. Store micro-timing against production Oracle: steady-state upsert 28.7ms, load(5) 31.7ms per call; the first write in a fresh process additionally pays one-time engine + ensure_schema bootstrap (~0.77s measured cold, overlapped with boot in production). Probe row cleaned up and verified deleted; table held 14 real entries at last count."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-REL-029 crew): durable conversation history shipped in PR #216 (merge 460703c6), deployed and fingerprint-verified on Server 1, and proven live across two production restarts with the marked-turn acceptance above. Residuals (not this task): (1) turns written while Oracle is unreachable stay memory-only until a later write retries them -- if FRIDAY restarts inside that window they are lost (accepted trade-off: chat availability over strict durability, same precedent as ExecutionTraceStore); (2) history written before this deploy was memory-only and is unrecoverable -- durability starts at the 2026-11-15 02:45 IST deploy; (3) the 10000-row trim runs on every insert (one indexed DELETE) -- revisit only if write latency ever becomes a measured problem."
+  - id: TASK-STR-RETIRE-001
+    title: "Retire the classic Binance futures testnet venue (testnet.binancefuture.com) - owner decision: keep only demo-fapi futures + OANDA"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-retire-001-board
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T02:53:00+05:30"
+    updated_at: "2026-11-15T03:05:00+05:30"
+    files:
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6884515582"
+    defect: "Stratex ran TWO Binance demo venues in parallel: the daemon on demo-fapi (the owner's $10,000 futures demo account) and the Stratex-Testnet engine (bot.py) on the legacy classic futures testnet (testnet.binancefuture.com, USDT wallet 4,978.19) executing factory_winner_1..5 + bb_reversion. Owner decision 2026-11-15 ~02:53 IST: 'Retire that. Keep only the binance futures and oanda.'"
+    acceptance:
+      - "Classic testnet account verified flat (0 positions, 0 open orders) via signed exchange reads through the engine's own venue resolution BEFORE any change."
+      - "Stratex-Testnet engine stopped and disabled durably: cannot be restarted by Fleet CD, reboot, timers, cron, watchers or a manual systemctl start."
+      - "Measurement history preserved: fill ledger, equity snapshots and scorecard for the retired venue intact and readable."
+      - "Untouched venues verified live afterwards: daemon (demo-fapi) heartbeat RUNNING and evaluating; OANDA practice state unchanged (phase-2 entries pause file in force); Stratex API healthy."
+      - "Observation window after the stop: zero journal activity attributable to the retired engine; account still flat on re-check."
+    evidence:
+      - "PRE-STATE (2026-11-14T21:2xZ): Stratex-Testnet.service active+enabled (unit /etc/systemd/system/Stratex-Testnet.service, file timestamp 2026-11-14 13:51), engine actively scanning (factory_winner_5 evaluating NEARUSDT at 03:00:57 IST). Flat check via BinanceFuturesAgent.create_client with config credentials - the engine's own resolution: ENV_LABEL=legacy_futures_testnet, FUTURES_URL=https://testnet.binancefuture.com/fapi, NONZERO_POSITIONS=0, OPEN_ORDERS=0, USDT_WALLET=4978.18658767 (matches the 2026-11-15 revert crew's independent read exactly)."
+      - "PROVISIONING AUDIT: Fleet CD (.github/workflows/deploy-monorepo.yml) never references Stratex-Testnet - it restarts only the 7 API agents, FRIDAY-Voice and Stratex-Daemon, and installs no units. deploy/setup_fleet.sh writes units only for the 10 API agents; deploy/bootstrap.sh touches only docker/fail2ban; no systemd timer or cron entry references the engine; fleet_health_watcher and friday_self_heal_sweep only probe and alert (no restart calls); no other unit depends on Stratex-Testnet (reverse dependencies: only multi-user.target via its own enablement)."
+      - "RETIREMENT (2026-11-15 03:01 IST): systemctl stop (graceful shutdown in journal, deactivated 03:01:39 IST) + disable (multi-user.target.wants symlink removed) + unit file renamed in place to /etc/systemd/system/Stratex-Testnet.service.retired-20261115 (content preserved, 492 bytes) + daemon-reload + mask (the unit path is now a symlink to /dev/null). Read-back: is-active=inactive, is-enabled=masked, LoadState=masked; a deliberate systemctl start attempt was refused ('Unit Stratex-Testnet.service is masked'); no bot.py process exists."
+      - "POST-STATE: daemon heartbeat RUNNING (Stratex/state/daemon_heartbeat.json fresh, scan_count advancing, total_equity ~20,558 - the demo-fapi + OANDA read paths live); Stratex /health HTTP 200; Stratex-OANDA-Demo active with data/oanda_demo_entries_paused present (phase-2 state unchanged); fill_ledger.jsonl still 9 lines, equity_snapshots.jsonl 437 lines - nothing deleted or rewritten; testnet journal has ZERO entries after the shutdown lines; signed flat re-check after the stop: 0 positions / 0 orders / wallet unchanged at 4,978.18658767."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RETIRE-001 crew). Stratex trading venues are now demo-fapi futures (daemon) + OANDA practice only. Reversal, if the owner ever orders it, on Server 1: systemctl unmask Stratex-Testnet.service; mv /etc/systemd/system/Stratex-Testnet.service.retired-20261115 back to Stratex-Testnet.service; systemctl daemon-reload; systemctl enable --now Stratex-Testnet.service. The repo template deploy/Stratex-Testnet.service is unchanged (Fleet CD never installs it); a fresh manual install from that template plus removing the mask would also resurrect the engine - the mask + this board record are the standing controls."
 
 
 task_id_warnings:
