@@ -12,7 +12,7 @@ session transcript afterwards. Root causes pinned by these tests:
 
 The fix: persist-first entries (begin before dispatch, finalize in place)
 and an ``asyncio.wait_for`` budget (``FRIDAY_CHAT_TIMEOUT_SECONDS``,
-default 120s) that returns an honest timeout reply.
+default 300s since TASK-REL-023; 120s originally) that returns an honest timeout reply.
 """
 
 from __future__ import annotations
@@ -131,11 +131,11 @@ def test_dispatch_exception_still_keeps_user_message(client, monkeypatch):
 
 def test_chat_timeout_seconds_parsing(monkeypatch):
     monkeypatch.delenv("FRIDAY_CHAT_TIMEOUT_SECONDS", raising=False)
-    assert server._chat_timeout_seconds() == 120.0
+    assert server._chat_timeout_seconds() == 300.0
     monkeypatch.setenv("FRIDAY_CHAT_TIMEOUT_SECONDS", "45")
     assert server._chat_timeout_seconds() == 45.0
     monkeypatch.setenv("FRIDAY_CHAT_TIMEOUT_SECONDS", "not-a-number")
-    assert server._chat_timeout_seconds() == 120.0
+    assert server._chat_timeout_seconds() == 300.0
     monkeypatch.setenv("FRIDAY_CHAT_TIMEOUT_SECONDS", "99999")
     assert server._chat_timeout_seconds() == 600.0
     monkeypatch.setenv("FRIDAY_CHAT_TIMEOUT_SECONDS", "1")

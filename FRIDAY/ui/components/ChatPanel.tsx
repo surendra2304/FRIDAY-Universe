@@ -20,7 +20,8 @@ import { prefersReducedMotion } from "./effects";
    - Transport failures render as a designed SYSTEM NOTICE: a
      plain-language headline, the technical detail in mono, and
      a Retry action that resends the failed message.
-   - A 75s client-side ceiling on /api/chat with honest copy.
+   - A client-side ceiling on /api/chat (CHAT_TIMEOUT_MS, 300s
+     since TASK-REL-023) with honest copy.
    - Live replies reveal progressively (rAF, tap-to-complete,
      full text always available to AT).
 
@@ -48,10 +49,23 @@ const MAX_RENDERED = 40;
  * number must never be used to slice the expanded bubble list — that
  * unit mix-up silently halved the restored transcript (12 entries
  * fetched, only the last 12 BUBBLES rendered = 6 exchanges shown).
+ * TASK-REL-023: REL-012 fixed the render slice but left this FETCH at
+ * 12, so the fetch became the binding cap — a 15-exchange session
+ * restored as "LAST SESSION · 24 MESSAGES" (round 3, 2026-11-14).
+ * Invariant: RESTORE_LIMIT (entries) × 2 ≥ MAX_RENDERED (bubbles), so
+ * the fetch window always covers the full render window.
  */
-const RESTORE_LIMIT = 12;
-/** Client ceiling for one /api/chat round-trip before we say so. */
-const CHAT_TIMEOUT_MS = 75_000;
+const RESTORE_LIMIT = 20;
+/**
+ * Client ceiling for one /api/chat round-trip before we say so.
+ * TASK-REL-023: was 75s while the server budget is larger and a Forge
+ * execute_now delegation legitimately runs for minutes — the console
+ * declared "No answer within 75 seconds" and threw away outcomes that
+ * were still coming (round 3: Forge's terminal failure never shown).
+ * Aligned with the server chat budget (300s): the spinner waits for
+ * the real outcome instead of abandoning the turn.
+ */
+const CHAT_TIMEOUT_MS = 300_000;
 
 type LiveMessage = ChatMessage & {
   /** Arrived during this session → eligible for the reveal effect. */
@@ -206,7 +220,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
     } catch (error) {
       const timedOut = error instanceof DOMException && error.name === "AbortError";
       const reason = timedOut
-        ? "No answer within 75 seconds. FRIDAY may still be working on it — long tasks keep running server-side and the reply can still land in history."
+        ? `No answer within ${Math.round(CHAT_TIMEOUT_MS / 1000)} seconds. FRIDAY may still be working on it — long tasks keep running server-side and the reply can still land in history.`
         : error instanceof Error
           ? error.message
           : "FRIDAY could not be reached.";

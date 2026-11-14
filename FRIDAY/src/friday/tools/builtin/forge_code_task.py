@@ -68,11 +68,35 @@ def _format_build(data: dict[str, Any], summary: str) -> str:
     if artifacts:
         names = [str(a.get("name", a.get("path", a))) if isinstance(a, dict) else str(a) for a in artifacts[:6]]
         lines.append(f"Artifacts: {', '.join(names)}")
+    source_block = _source_block(data)
+    if source_block:
+        lines.append("")
+        lines.append(source_block)
     if not lines:
         lines.append("Forge returned no build details; execution and verification cannot be established from this response.")
     lines.append("")
     lines.append("Executed inside Forge's sandboxed workspace (security-reviewed, TASK-FOR-001).")
     return "\n".join(lines)
+
+
+def _source_block(data: dict[str, Any]) -> str:
+    """Render the primary generated source file (TASK-REL-023).
+
+    Forge's delegate result carries ``primary_source`` (the real file
+    content, bounded server-side) since REL-023 — before that the reply
+    could only name files, so "show me the code" was unanswerable.
+    Returns "" when Forge sent no source (older build / no file made).
+    """
+    source = data.get("primary_source")
+    if not isinstance(source, dict):
+        return ""
+    content = str(source.get("content") or "")
+    if not content.strip():
+        return ""
+    name = str(source.get("name") or "source")
+    lang = name.rsplit(".", 1)[-1] if "." in name else ""
+    note = " (truncated)" if source.get("truncated") else ""
+    return f"Code — {name}{note}:\n```{lang}\n{content}\n```"
 
 
 class ForgeCodeTool(BaseTool):
@@ -162,11 +186,29 @@ class ForgeCodeTool(BaseTool):
             error = getattr(result, "error", None) or f"status {status or 'unknown'}"
             record_specialist_dispatch(getattr(result, "task_id", "") or "", "forge", goal, status.lower(), error=str(error))
             summary = getattr(result, "summary", "") or ""
+            # TASK-REL-023: a failed build still produced real artifacts —
+            # show them. Round 3's palindrome task failed its verification
+            # gate, but its working main.py existed and the user, who had
+            # asked to see the code, was shown nothing at all.
+            inner = getattr(result, "result", None) or {}
+            if isinstance(inner, dict) and isinstance(inner.get("result"), dict):
+                inner = inner["result"]
+            if not isinstance(inner, dict):
+                inner = {}
+            artifact_note = ""
+            failed_artifacts = inner.get("artifacts") or []
+            if failed_artifacts:
+                names = [str(a.get("name", a.get("path", a))) if isinstance(a, dict) else str(a) for a in failed_artifacts[:6]]
+                artifact_note = f" Artifacts produced: {', '.join(names)}."
+            source_block = _source_block(inner)
+            if source_block:
+                artifact_note += f"\n\nThe code Forge produced before the failure:\n{source_block}"
             return ToolResult(
                 name=self.name,
                 content=(
                     f"Forge could not complete that code task: {error}."
                     + (f" {summary}" if summary else "")
+                    + artifact_note
                     + " That is the real outcome — nothing was fabricated."
                 ),
                 is_error=True,

@@ -2424,6 +2424,93 @@ def _which(name: str) -> str | None:
     return shutil.which(name)
 
 
+_SIMPLE_QUESTION_START = re.compile(
+    r"^(?:what|who|whom|whose|where|when|which|why|how many|how much|how old|"
+    r"how far|how long|is|are|was|were|do|does|did|can|could|would|should)\b"
+)
+_SIMPLE_QUESTION_EXCLUDES = re.compile(
+    r"\b(?:my|me|your|you|i|we|our|time|date|today|yesterday|tomorrow|now|"
+    r"current|currently|latest|news|weather|forecast|predict|prediction|price|"
+    r"stock|portfolio|trade|trading|market|fleet|status|health|remember|forget|"
+    r"remind|research|write|code|script|build|create|delete|send|email|open|"
+    r"launch|search|find|look up|play|show|tell|give|get|set|friday|stratex|"
+    r"intelx|futuris|forge|sentinel|cortex|vyralx|memora|inference|agent|agents)\b"
+)
+_SIMPLE_QUESTION_ARITHMETIC = re.compile(
+    r"^(?:what is|what's|calculate|compute)\s+[\d\s\+\-\*/x\.\(\)]+(?:plus|minus|times|divided by|[\+\-\*/x])"
+)
+
+
+def _looks_like_simple_factual_question(cmd: str) -> bool:
+    """TASK-REL-023: is this a single, self-contained general-knowledge question?
+
+    Deliberately narrow — the general-knowledge lane may only claim a
+    question when NOTHING about it needs a tool, live data, the owner's
+    own information, or an action. ``cmd`` is the lowercased command.
+    Compound questions ("... and ..."), personal questions ("my ..."),
+    time-sensitive topics, fleet/agent topics, action verbs, and pure
+    arithmetic (a deterministic tool owns it) all fall through to the
+    cognitive loop.
+    """
+    text = (cmd or "").strip()
+    if not text or len(text) > 140 or "\n" in text:
+        return False
+    # Compound asks join clauses with ", and" or chain a second question
+    # ("... and what time is it?") — but a bare " and " inside one question
+    # ("who wrote romeo and juliet?") is a single fact, not a compound.
+    if ", and " in text or ";" in text or text.count("?") > 1:
+        return False
+    if re.search(r"\band (?:what|who|whom|where|when|which|why|how|is|are|was|were|do|does|did|tell|give|show|say)\b", text):
+        return False
+    if not _SIMPLE_QUESTION_START.match(text):
+        return False
+    if _SIMPLE_QUESTION_EXCLUDES.search(text):
+        return False
+    if _SIMPLE_QUESTION_ARITHMETIC.match(text):
+        return False
+    return True
+
+
+def _simple_question_answer(question: str) -> str | None:
+    """TASK-REL-023: one no-tools provider call for a simple factual question.
+
+    Uses the agent's own provider (``agent.llm`` — the same pool and
+    exhaustion failover as the cognitive loop) with NO tool schemas
+    attached, which is most of the latency the full loop charges a
+    one-fact question. Returns None on any failure, empty reply, tool
+    call, or the model's NO_LANE verdict so the caller falls through to
+    the full loop — the lane can only ever help, never answer wrongly
+    in a new way.
+    """
+    try:
+        from friday.core.types import Message, Role
+
+        messages = [
+            Message(
+                role=Role.SYSTEM,
+                content=(
+                    "You are FRIDAY, Surendra's personal AI. Address him as Boss. "
+                    "Answer the question directly and concisely — one or two "
+                    "sentences, no preamble. You have no tools in this call: if "
+                    "the question actually needs live data, current events, the "
+                    "owner's personal information, a calculation tool, or an "
+                    "action, reply with exactly NO_LANE and nothing else."
+                ),
+            ),
+            Message(role=Role.USER, content=question),
+        ]
+        response = agent.llm.generate(messages, tools=None)
+        if getattr(response, "tool_calls", None):
+            return None
+        text = (getattr(response, "content", "") or "").strip()
+        if not text or "NO_LANE" in text:
+            return None
+        return text
+    except Exception as exc:
+        logger.debug(f"general-knowledge lane skipped: {type(exc).__name__}: {exc}")
+        return None
+
+
 def _chat_timeout_seconds() -> float:
     """Overall budget for one console chat turn (TASK-REL-007B).
 
@@ -2433,11 +2520,22 @@ def _chat_timeout_seconds() -> float:
     is generous for legitimate work (a warm Forge build measured 50.4s)
     while guaranteeing the user always gets an answer. Override with the
     FRIDAY_CHAT_TIMEOUT_SECONDS env var (clamped to 5..600).
+
+    TASK-REL-023: the default rises to 300s. Round 3 (2026-11-14) showed
+    120s is BELOW the legitimate work it must outlast: the fleet client's
+    Forge execute_now budget is 210s and a real build's terminal outcome
+    landed at ~150s (verification-gate failure, task17414112026145722) —
+    the turn had already been abandoned at 120s, so the user got a bare
+    "still running" placeholder and Forge's actual result (and the
+    delegation-ledger record written when the dispatch returns) never
+    surfaced. 300s covers the 210s dispatch budget plus the agent's own
+    overhead; the persist-first entry still guarantees the message is
+    never lost when a turn genuinely overruns.
     """
     try:
-        value = float(os.getenv("FRIDAY_CHAT_TIMEOUT_SECONDS", "120"))
+        value = float(os.getenv("FRIDAY_CHAT_TIMEOUT_SECONDS", "300"))
     except (TypeError, ValueError):
-        value = 120.0
+        value = 300.0
     return min(max(value, 5.0), 600.0)
 
 
@@ -3950,6 +4048,36 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             return {"reply": res.content, "metadata": {"fast_path": True, "device": "windows"}}
     except Exception as e:
         return {"reply": f"Fast-path error: {e}", "metadata": {"error": True}}
+
+    # 2.5 TASK-REL-023: simple factual-question lane. A one-fact general
+    # knowledge question ("What is the capital of Australia?") otherwise
+    # pays the full cognitive loop — intent tier, memory recall, and an
+    # LLM call carrying ~95 tool schemas — measured 12.4s end-to-end for
+    # a one-word answer on an idle evening and 50-60s under round-3 load.
+    # The lane answers with ONE provider call, no tools attached, and is
+    # strictly fail-open: any doubt about the question's shape, any
+    # provider error, an empty reply, or the model's own NO_LANE verdict
+    # falls through to the cognitive loop unchanged.
+    if _looks_like_simple_factual_question(cmd):
+        try:
+            lane_reply = await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(None, _simple_question_answer, raw_cmd),
+                timeout=25.0,
+            )
+        except Exception:
+            lane_reply = None
+        if lane_reply:
+            return {
+                "reply": lane_reply,
+                "metadata": {
+                    "fast_path": True,
+                    "conversational": True,
+                    "general_knowledge_lane": True,
+                    "provider": getattr(agent.llm, "provider_name", None),
+                    "model": getattr(agent.llm, "model", None),
+                    "success": True,
+                },
+            }
 
     # 3. Central Agent Cognitive & Tool Execution Loop
     try:

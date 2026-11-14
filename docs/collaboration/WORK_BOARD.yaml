@@ -3763,6 +3763,38 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "LIVE 2026-11-14 ~19:30-19:50 IST (Server 1, deployed HEAD 52d4a995): plan_only -> PLANNED/no receipt, polled PLANNED with raw state READY and 0 artifacts after 15 min; plan_only+execute_now -> PLANNED in 204ms; autonomous bg -> RUNNING 57% -> FAILED/PARTIAL_FAILURE consistent; autonomous execute_now -> PARTIAL_FAILURE with state FAILED + manifest (10/11 stages); verify_only on an existing project -> COMPLETED/SUCCESS certified, project files byte-untouched; POST /api/v1/tasks autonomous -> RUNNING 57% -> FAILED (executes; pre-fix parked in READY); POST /api/tasks plan_only -> resting READY plan; cancel nonexistent -> ERROR not found; cancel COMPLETED task15814112026123354 -> ERROR, record still COMPLETED; cancel READY plan -> CANCELLED; FRIDAY FleetClient dispatch of plan_only -> DEGRADED plan_only_no_execution with plan-only summary"
     blockers: []
     next_action: "None. Residual noted: Forge synthesis quality itself (probe builds failed the no-tests-discovered stage) is a Forge capability matter, not status truthfulness — the surface now reports it honestly."
+  - id: TASK-REL-023
+    title: "Console round-3 residuals: history restore fetch cap, Forge outcomes never reach chat, agents-live flapping, simple-question latency"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-023-console-residuals
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T20:40:00+05:30"
+    updated_at: "2026-11-14T21:20:00+05:30"
+    files:
+      - "FRIDAY/ui/components/ChatPanel.tsx"
+      - "FRIDAY/ui/out/** (regenerated static export)"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/src/friday/ecosystem/fleet_client.py"
+      - "FRIDAY/src/friday/tools/builtin/forge_code_task.py"
+      - "Forge/app/api/delegate.py"
+      - "Forge/app/agents/roles.py"
+      - "FRIDAY/tests/test_rel023_console_residuals.py"
+      - "FRIDAY/tests/test_chat_persistence_timeout_rel007.py"
+      - "Forge/tests/unit/test_delegate_primary_source_rel023.py"
+      - "Forge/tests/unit/test_tester_synthesis_note_rel023.py"
+    defect: "Round-3 human-style console test (production, 2026-11-14 20:20-20:35 IST, browser): (a) after 15 exchanges (30 messages) a page reload restored only 'LAST SESSION - 24 MESSAGES' = the last 12 exchanges — TASK-REL-012 raised the UI RENDER cap to 40 messages (verified in the served chunk), so the binding limit is now the history FETCH (entries requested/returned), not rendering; a pre-existing earlier session's messages also disappeared entirely from restore (append vs overwrite to be established). (b) Forge palindrome task via chat ended in a bare 75s timeout with TASKS DELEGATED unmoved (2 before, 2 after), while the task timeline later showed FORGE failed at 20:29:53 IST with 'Verification gate returned status=failed' — the delegated task's terminal outcome (produced code / honest failure) never reached the user; why a trivial task fails Forge's verification gate is the second half of the defect (same class as TASK-REL-019's 'no test files discovered' residual). (c) AGENTS LIVE flapped 6/9 -> 9/9 -> 8/9 -> 6/9 throughout the round (Cortex/VyralX/Sentinel/Stratex/IntelX/Futuris flipping ONLINE/UNREACHABLE) — probe-budget timeouts vs real unreachability to be established with numbers. (d) 'What is the capital of Australia?' took ~50-60s; typical chat answers took 20-60s — one slow simple-question turn to be profiled end-to-end and code-fixable causes fixed."
+    acceptance:
+      - "History: a >12-exchange chat session survives a reload with ALL exchanges restored (LAST SESSION count quoted before/after); the committed static export FRIDAY/ui/out is regenerated and the served chunk shown to carry the fix, per the TASK-REL-012 lesson."
+      - "Forge via chat: a trivial build task (palindrome or equivalent) returns the produced code OR an honest terminal failure with the artifact in the chat reply — never a bare timeout; the verification-gate failure cause for trivial tasks is fixed in code or documented with evidence if it is a Forge-internal generation-quality issue beyond a bounded fix."
+      - "Agents-live: stability readings over several minutes post-fix; probe budgets aligned to measured server response times if budgets are the cause (TASK-REL-007 B4 precedent), with numbers reported either way."
+      - "Latency: before/after timings for a simple factual question, profiled end-to-end (dispatch path, provider, pool state/retries, server load); no improvement claimed beyond what the evidence shows."
+    evidence:
+      - "Claim: issue #35 comment 6879437773 (2026-11-14)."
+    blockers: []
+    next_action: "Investigation under way on branch claude/task-rel-023-console-residuals: locate the history fetch limit (UI fetch + FRIDAY history endpoint), trace the chat->Forge delegation completion path, measure fleet health-probe budgets vs live response times, profile one slow simple-question turn."
 
   - id: TASK-REL-024
     title: "Memora hybrid ranking: graph boosts saturate the merged result list and bury fresh semantic hits"
