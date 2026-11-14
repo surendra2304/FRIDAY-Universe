@@ -3851,14 +3851,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-VOI-003
     title: 'FRIDAY voice: stop the mid-call session collapse (session pinning, context-carrying watchdog rebuild, bounded brain budget)'
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-voi-003-voice-session-pinning
     pr: 182
     contributors: []
     priority: P1
     created_at: '2026-11-14T21:05:00+05:30'
-    updated_at: '2026-11-14T22:45:00+05:30'
+    updated_at: '2026-11-14T23:20:00+05:30'
     files:
     - FRIDAY/src/friday/voice/livekit_worker.py
     - FRIDAY/src/friday/voice/brain_bridge.py
@@ -3880,9 +3880,37 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'ACCEPTANCE RUN 2 (2026-11-14 22:20-22:31 IST, room friday-d6dcbd7a, PR #189 build): FAIL (improved). Warm-up resolved a Gemini key in 13.2 s and the call ran on Gemini Live; greeting spoken (fixed line + warm greeting, journal 22:22:42/22:22:50); London answered audibly in 2.8 s (''It is currently 4:53 PM UTC'' — Gemini STT truncated the question to ''Hello Friday, what time'', dropping ''in London'', so the zone was wrong); the teal turn WEDGED AGAIN on Gemini (its tool call reached FRIDAY only at 22:25:58, ~138 s after the utterance — the stall is in Gemini''s AFC dispatch under the day''s free-tier high-demand, not in FRIDAY or the brain bridge: exactly 1 POST /api/chat in the whole run) — BUT the write verifiably LANDED this time (post-run recall returns ''my favorite color is teal'', remembered_count 3). The watchdog fired (22:25:51), rebuilt with context, no re-greeting, and re-asked the pending question — then the rebuilt session DIED at 22:27:13 on a Gemini Live opening-handshake
       timeout (recoverable=False). Recall/forget/joke/Stratex: no audible answers (forget/joke/Stratex never executed). No re-greeting in either run; no probe-driven abandonment in either run.'
     - 'VERDICT: acceptance NOT passed (greeting + pinning/no-re-greet criteria pass; London partial; memory execution verified in run 2 but inaudible; recall/forget/joke/delegation fail). Remaining blocker is dominated by Gemini Live session stalls under free-tier high-demand (AFC dispatch ~138 s; rebuild handshake timeout) on a ~956 MB host at load 5-9, not by the session-management defects this task fixed.'
+    - 'CLOSED BY TASK-VOI-004 (2026-11-14): the rebuild-resilience ladder shipped (PR #195, merged 1c051b2b, deploy fingerprint-verified) and the acceptance re-run PASSED IN FULL — see the TASK-VOI-004 entry for the full evidence (run 2026-11-14 23:06-23:10 IST, room friday-2435e933, Muse-voice utterances): greeting, London (correct zone and instant), remember (write landed; proven by the recall step against a pre-run store verified teal-free), recall, forget (post-run store probe teal-free), joke, Stratex delegation dispatched (FRIDAY journal 23:08:47) — every step heard, executed and audibly answered; no re-greeting, no session abandonment. The ladder itself did not need to fire (no wedge or provider death occurred in the run); a live-fire under provider strain remains an opportunistic follow-up recorded on TASK-VOI-004.'
     blockers: []
-    next_action: 'Follow-up (proposed, not yet claimed): watchdog rebuild resilience — if the rebuilt session dies on a provider-level failure (e.g. realtime handshake timeout, recoverable=False), retry the rebuild once on the pinned provider, then once on the fallback Groq pipeline WITH context and still no greeting (the brief allows failover on actual provider failure; a dead rebuilt session is one). Separately: voice-turn audibility of memory writes depends on FRIDAY-side persistence surfacing in recall (run 1''s claimed save never became retrievable) — memory-side, REL-022/024 territory. Re-run acceptance when Gemini free-tier strain is lower or on a less loaded host.'
+    next_action: 'Complete (VERIFIED via TASK-VOI-004''s acceptance re-run, PR #195). Remaining voice follow-ups live on TASK-VOI-004''s next_action (Stratex reply substance — a FRIDAY-brain matter; opportunistic ladder live-fire in a strained window). Orpheus terms acceptance remains an owner-side console action for the fallback pipeline''s preferred TTS.'
 
+  - id: TASK-VOI-004
+    title: 'FRIDAY voice: watchdog rebuild-resilience ladder (pinned retry, context-carrying Groq failover) + acceptance re-run'
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-voi-004-recovery-ladder
+    pr: 195
+    contributors: []
+    priority: P1
+    created_at: '2026-11-14T22:45:00+05:30'
+    updated_at: '2026-11-14T23:20:00+05:30'
+    files:
+    - FRIDAY/src/friday/voice/livekit_worker.py
+    - FRIDAY/tests/test_voice_recovery_ladder.py
+    defect: 'TASK-VOI-003 acceptance run 2 (2026-11-14 22:20-22:31 IST): the watchdog rebuilt the wedged session once and returned; the rebuilt session then died at its Gemini Live opening handshake (session error type=realtime_model_error, error=TimeoutError ''timed out during opening handshake'', recoverable=False; journal 22:27:13-15 IST) and nothing recovered further — recall/forget/joke/delegation were never even transcribed.'
+    acceptance:
+    - 'If a watchdog-rebuilt session dies on a provider-level failure (handshake timeout / session setup failure / provider error before the re-asked turn completes), the rebuild is retried ONCE more on the pinned provider.'
+    - 'If that also fails at provider level, the ladder fails over ONCE to the Groq pipeline carrying the session context (transcript + instructions, same no-greeting discipline, pending turn re-asked). Failover only on actual provider failure — a healthy live session is never torn down.'
+    - 'The ladder is bounded by a total elapsed cap per wedged turn (FRIDAY_VOICE_RECOVERY_BUDGET_S, default 300 s; per-rung prove window FRIDAY_VOICE_RUNG_PROVE_S, default 100 s); on exhaustion the user hears the honest unconfirmed outcome (brain-budget pattern) instead of silence. Each rung is logged distinctly.'
+    - 'A second watchdog trigger covers provider death between turns: an unrecoverable / provider-classified session error on the live session runs the ladder too. The watchdog stays alive for the job''s whole life.'
+    - 'Unit tests cover provider-failure classification, rung sequencing and plan invariants, no-greet/context invariants and the total cap; the pre-existing voice suite stays green.'
+    - 'Acceptance: ONE run of the full spoken script on the new build (server-side LiveKit participant on Server 1): greeting, London time, remember teal, recall, forget, joke, Stratex delegation — each scored heard / executed (journal + store evidence) / audibly answered; a memory save counts only if recall verifies it landed. VERIFIED only on a full pass; if Gemini-side stalls eat answers while the ladder works, the entry stays IN_PROGRESS with per-failure attribution.'
+    evidence:
+    - 'Claim: issue #35 comment 6881243996 (2026-11-14). Ladder shipped in PR #195, merged 1c051b2b, CI green (8/8 checks incl. voice-regressions and the new tests). Local voice suite: 163 passed (145 pre-existing across the 12 voice test files, unchanged, + 18 new ladder tests in FRIDAY/tests/test_voice_recovery_ladder.py; classification calibrated on the verbatim run-2 journal strings; sequencer budget/ordering proven under a fake clock). Deploy fingerprint-verified: Server 1 livekit_worker.py sha256 9efacc220c48cac9 matches the merged file byte-for-byte; FRIDAY-Voice restarted 2026-11-14 23:02:48 IST (MainPID 2516152) and re-registered (status file 23:03:27 IST).'
+    - 'ACCEPTANCE RUN (2026-11-14 23:06-23:10 IST, room friday-2435e933, PR #195 build, Gemini Live throughout): FULL PASS on the VOI-003 criteria. Utterances were Muse''s recorded voice files (owner request 2026-11-14 ~22:47 IST — ''can you test Friday using your voice''; files ~/workspace/voice-test/muse-voice/, staged to /tmp/vt5/muse on Server 1, sha256-verified, converted to WAV there). Pre-run hygiene: VOI-003 run 2''s leftover ''my favorite color is teal'' fact was forgotten via /api/chat (forget_status deleted) and recall verified teal-free, so this run''s recall answer could only come from its own write. GREETING pass: fixed line via fallback TTS 23:06:40 + warm greeting, both recorded. LONDON pass: heard complete (final=True; no truncation this time), answered audibly in 3.3 s — journal item ''It is currently 5:37 PM in London, Boss.'' (correct zone AND instant; run 2''s zone defect gone). REMEMBER pass: heard final=True, FRIDAY journal POST /api/chat 200 at 23:07:28, audible confirmation in 7.6 s. RECALL pass: heard, POST /api/chat 200 23:07:56, audible ''Of course I remember, Boss. Your favorite color is teal.'' — the write verifiably landed. FORGET pass: heard, POST /api/chat 200 23:08:18, audible confirmation; post-run /api/chat recall probe returns the fact set WITHOUT teal — forget verifiably executed in the store. JOKE pass: heard, audible atoms joke in 2.9 s. STRATEX pass on the voice chain with a content caveat: heard exactly (''Ask Stratex how my portfolio is doing.'' — no mishear), FRIDAY journal 23:08:47 ''[AUTONOMOUS DISPATCH] Sending typed task to STRATEX via Mesh routing'', POST /api/chat 200 23:09:15, audible reply in 33.4 s — but the brain''s spoken reply carried NO portfolio substance (''Stratex has finished that, and the supervision status has been retrieved for you.''), a FRIDAY-brain answer-content gap, not a voice failure (see next_action). No re-greeting, no session abandonment, no session error, no watchdog/ladder engagement. Artifacts on Server 1: /tmp/vt5 (logs/timeline.jsonl, logs/session_summary.json, logs/transcripts.json, replies/agent_master.wav + seg*.wav). Whisper transcription of the fragmented reply audio proved unreliable (single-word shards); the FRIDAY-Voice journal conversation items are the content record of what was said.'
+    - 'LADDER LIVE-FIRE STATUS, stated plainly: the ladder did NOT fire in the acceptance run because no turn wedged and no session died — Gemini Live served the whole call cleanly in this window (all seven steps in ~3.5 minutes). The ladder logic is unit-tested and its per-rung journal lines are in the deployed build; its live-fire under provider strain remains UNPROVEN and is recorded as an opportunistic follow-up below, not claimed as exercised.'
+    blockers: []
+    next_action: 'None for the voice session chain. Follow-ups outside this task: (1) FRIDAY-brain Stratex voice replies should carry portfolio substance, not a bare completion claim (observed 2026-11-14 23:09 IST); a Memora 404 on the stratex outcome store (POST /api/v1/memora/context/store) was also logged in the FRIDAY journal at 23:09:14 IST. (2) Opportunistic: exercise the recovery ladder live in a future Gemini-strained window to prove rung transitions in production.'
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
