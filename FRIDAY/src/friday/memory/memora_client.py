@@ -787,28 +787,95 @@ class MemoraClient:
         return set(re.findall(r"\w+", query.lower())) - ignored
 
     @staticmethod
+    def _normalized_fact_text(text: str) -> str:
+        """Canonical form for duplicate detection.
+
+        The same fact stored twice (split local/shared writes, a re-save
+        during verification) differs at most in casing, whitespace and
+        surrounding quotes or terminal punctuation.
+        """
+        norm = " ".join(str(text).lower().split())
+        return norm.strip(" \t\"'“”‘’").rstrip(".").strip()
+
+    @staticmethod
+    def _is_dialogue_echo(hit: Dict[str, Any], text: str) -> bool:
+        """True when a hit is the archived transcript of a conversation turn
+        rather than a stored fact in its own right.
+
+        Two independent signals: the text is transcript-shaped (turn markers
+        with glued user/assistant segments — including transcripts whose
+        first line is not the user turn, which the hygiene prefix filter
+        misses), or the record's provenance marks it as an interaction log
+        (dialogue tags / dialogue event type) carrying neither a fact
+        category nor a raw owner statement.
+        """
+        low = text.lower()
+        if "|" in text and re.search(r"(?:^|\s)(user|assistant)\s*:", low):
+            return True
+        if low.lstrip().startswith(("user:", "assistant:")):
+            return True
+        prov = hit.get("provenance")
+        if isinstance(prov, dict) and not prov.get("category") and not prov.get("raw_statement"):
+            tags = {str(t).lower() for t in (prov.get("tags") or [])}
+            if tags & {"dialogue", "turn"} or str(prov.get("event_type", "")).lower() == "dialogue":
+                return True
+        return False
+
+    @staticmethod
+    def _mutation_targets(query: str, hits: List[Dict[str, Any]], *, correction: bool = False) -> tuple[str, str, str, List[str]]:
+        """Resolve a forget/correct subject to the record(s) it identifies.
+
+        Returns ``(status, primary_id, text, all_ids)``. A subject is
+        ambiguous only when it matches two DISTINCT facts. TASK-REL-014
+        (REL-005b): two production shapes used to fake ambiguity —
+        (1) the same fact stored under several ids (identical-text twins
+        from split local/shared writes; proven live 2026-11-14: the probe
+        fact 'my safe word is "amber falcon 3"' existed as two semantic
+        records, 14:29 and 14:47) — twins are ONE logical target and every
+        twin id is returned so the mutation removes them all, since a
+        survivor would resurface as if never forgotten;
+        (2) the remember turn's archived dialogue echo ranking beside the
+        canonical fact — echoes are considered only when no stored fact
+        matches at all, so a lone transcript record can still be forgotten
+        exactly as before.
+        """
+        subject = MemoraClient._mutation_subject(query, correction=correction)
+        if not subject:
+            return "needs_clarification", "", "", []
+        from friday.memory.hygiene import is_memory_noise
+        fact_groups: Dict[str, Dict[str, Any]] = {}
+        echo_groups: Dict[str, Dict[str, Any]] = {}
+        for hit in hits:
+            text = str(hit.get("content_text", "")).strip()
+            mid = str(hit.get("id") or hit.get("memory_id") or "")
+            if not mid or len(text) <= 6 or is_memory_noise(text):
+                continue
+            if not subject <= set(re.findall(r"\w+", text.lower())):
+                continue
+            groups = echo_groups if MemoraClient._is_dialogue_echo(hit, text) else fact_groups
+            key = MemoraClient._normalized_fact_text(text)
+            group = groups.setdefault(key, {"text": text, "ids": []})
+            if mid not in group["ids"]:
+                group["ids"].append(mid)
+        for groups in (fact_groups, echo_groups):
+            if len(groups) == 1:
+                group = next(iter(groups.values()))
+                return "matched", group["ids"][0], group["text"], list(group["ids"])
+            if len(groups) > 1:
+                return "needs_clarification", "", "", []
+        return "not_found", "", "", []
+
+    @staticmethod
     def _mutation_target(query: str, hits: List[Dict[str, Any]], *, correction: bool = False) -> tuple[str, str, str]:
         """Require a unique lexical subject, never an unrelated semantic top hit.
 
         Conservative false negatives ask for exact words rather than changing
         the wrong owner fact. Explicit IDs remain available to trusted callers.
+        Thin wrapper over :meth:`_mutation_targets` (TASK-REL-014): duplicate
+        records of one fact and dialogue echoes no longer fake ambiguity.
         """
-        subject = MemoraClient._mutation_subject(query, correction=correction)
-        if not subject:
-            return "needs_clarification", "", ""
-        targets = {}
-        from friday.memory.hygiene import is_memory_noise
-        for hit in hits:
-            text = str(hit.get("content_text", "")).strip()
-            mid = str(hit.get("id") or hit.get("memory_id") or "")
-            if mid and len(text) > 6 and not is_memory_noise(text) and subject <= set(re.findall(r"\w+", text.lower())):
-                targets[mid] = text
-        if not targets:
-            return "not_found", "", ""
-        if len(targets) != 1:
-            return "needs_clarification", "", ""
-        mid, text = next(iter(targets.items()))
-        return "matched", mid, text
+        status, mid, text, _ids = MemoraClient._mutation_targets(query, hits, correction=correction)
+        return status, mid, text
 
     def _local_record_exists(self, record_id: str) -> bool:
         """True when ``record_id`` is a row of the local fallback store."""
@@ -848,13 +915,53 @@ class MemoraClient:
 
         target_id = memory_id or ""
         target_text = ""
+        target_ids: List[str] = []
         if not target_id:
             subject_query = " ".join(sorted(self._mutation_subject(query)))
-            hits = self.recall_memories(agent_name, subject_query, limit=5) if subject_query else []
-            status, target_id, target_text = self._mutation_target(query, hits or [])
+            # TASK-REL-014: mutation resolution recalls wider than the chat
+            # surface (limit 5) so every duplicate record of the target fact
+            # is visible; a twin left behind resurfaces as if never forgotten.
+            hits = self.recall_memories(agent_name, subject_query, limit=25) if subject_query else []
+            status, target_id, target_text, target_ids = self._mutation_targets(query, hits or [])
             if status != "matched":
                 return {"status": status, "reason": "no unique matching memory", "query": query}
+        if not target_ids:
+            target_ids = [target_id]
 
+        # TASK-REL-014: delete EVERY record of the matched fact (identical-
+        # text twins included), each in the store that holds it. A single
+        # target keeps the exact pre-existing result shape.
+        results = [self._delete_record(agent_name, tid, target_text) for tid in target_ids]
+        if len(results) == 1:
+            return results[0]
+        if all(r.get("status") == "deleted" for r in results):
+            return {
+                "status": "deleted",
+                "id": target_id,
+                "ids": target_ids,
+                "content_text": target_text,
+                "cloud": all(r.get("cloud") for r in results),
+            }
+        if any(r.get("status") == "unconfirmed" for r in results):
+            return {
+                "status": "unconfirmed",
+                "id": target_id,
+                "ids": target_ids,
+                "warning": "shared deletion outcome is unconfirmed for at least one duplicate record",
+            }
+        return {
+            "status": "error",
+            "id": target_id,
+            "ids": target_ids,
+            "error": "could not delete every duplicate record of that fact",
+        }
+
+    def _delete_record(self, agent_name: str, target_id: str, target_text: str = "") -> Dict[str, Any]:
+        """Delete one record in the store that holds it (forget_fact's unit).
+
+        Extracted verbatim from forget_fact (TASK-REL-014) so duplicate
+        records of one fact can each be deleted with identical semantics.
+        """
         # TASK-REL-005 (2026-11-14): a target whose id lives in the LOCAL
         # fallback store is a local_only fact — the shared store never held
         # it, so a shared DELETE of that id can only 404 and the old flow
@@ -928,12 +1035,17 @@ class MemoraClient:
         # Find a unique matching subject, not an arbitrary semantic neighbor.
         old_id = ""
         old_text = ""
+        old_ids: List[str] = []
         if old_query.strip():
             subject_query = " ".join(sorted(self._mutation_subject(old_query, correction=True)))
-            hits = self.recall_memories(agent_name, subject_query, limit=5) if subject_query else []
-            target_status, old_id, old_text = self._mutation_target(old_query, hits or [], correction=True)
+            # TASK-REL-014: same widened recall as forget_fact, so duplicate
+            # records of the old fact are all resolved (and superseded below).
+            hits = self.recall_memories(agent_name, subject_query, limit=25) if subject_query else []
+            target_status, old_id, old_text, old_ids = self._mutation_targets(old_query, hits or [], correction=True)
             if target_status == "needs_clarification":
                 return {"status": "needs_clarification", "reason": "no unique correction subject"}
+        if old_id and not old_ids:
+            old_ids = [old_id]
 
         # Write the corrected fact first (it must exist before supersede).
         stored = self.record_fact(
@@ -967,33 +1079,64 @@ class MemoraClient:
 
         if (self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost")
                 and store_status != "local_only" and stored.get("cloud") is not False):
+            # TASK-REL-014: supersede EVERY duplicate record of the old fact,
+            # each with the same evidence-checked receipt as the primary; a
+            # surviving twin would resurrect the old wording in recall.
             try:
-                url = f"{self.base_url}/v1/memories/{urllib.parse.quote(old_id)}/supersede"
-                payload = {"new_memory_id": new_id, "reason": reason}
-                req = urllib.request.Request(
-                    url,
-                    data=json.dumps(payload).encode("utf-8"),
-                    headers=self._remote_headers(agent_name, json_body=True),
-                    method="POST",
-                )
-                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                    if resp.status in (200, 201):
+                all_won = True
+                receipts_valid = True
+                first_loss = None  # (winner, loser) of the first receipt the new fact lost
+                for oid in old_ids:
+                    url = f"{self.base_url}/v1/memories/{urllib.parse.quote(oid)}/supersede"
+                    payload = {"new_memory_id": new_id, "reason": reason}
+                    req = urllib.request.Request(
+                        url,
+                        data=json.dumps(payload).encode("utf-8"),
+                        headers=self._remote_headers(agent_name, json_body=True),
+                        method="POST",
+                    )
+                    with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                        if resp.status not in (200, 201):
+                            receipts_valid = False
+                            break
                         body = json.loads(resp.read().decode("utf-8"))
                         # Memora resolves evidence conflicts; HTTP success alone
                         # does not prove the requested candidate actually won.
                         winner = body.get("winner_id")
                         loser = body.get("superseded_id")
-                        if {winner, loser} != {old_id, new_id} or winner == loser:
-                            return {"status": "unconfirmed", "id": new_id,
-                                    "warning": "supersession returned an unexpected receipt"}
-                        return {
-                            "status": "corrected" if winner == new_id else "not_applied",
-                            "superseded_id": loser,
-                            "winner_id": winner,
-                            "old_text": old_text,
-                            "content_text": new_fact_text,
-                            "cloud": True,
-                        }
+                        if {winner, loser} != {oid, new_id} or winner == loser:
+                            receipts_valid = False
+                            break
+                        if winner != new_id:
+                            all_won = False
+                            if first_loss is None:
+                                first_loss = (winner, loser)
+                if not receipts_valid:
+                    return {"status": "unconfirmed", "id": new_id,
+                            "warning": "supersession returned an unexpected receipt"}
+                if not all_won:
+                    # The service kept an old record as winner (its receipt
+                    # names the actual winner/loser — report them verbatim).
+                    winner, loser = first_loss
+                    return {
+                        "status": "not_applied",
+                        "superseded_id": loser,
+                        "winner_id": winner,
+                        "old_text": old_text,
+                        "content_text": new_fact_text,
+                        "cloud": True,
+                    }
+                corrected = {
+                    "status": "corrected",
+                    "superseded_id": old_id,
+                    "winner_id": new_id,
+                    "old_text": old_text,
+                    "content_text": new_fact_text,
+                    "cloud": True,
+                }
+                if len(old_ids) > 1:
+                    corrected["superseded_ids"] = list(old_ids)
+                return corrected
             except Exception as e:
                 logger.debug(f"Memora remote supersede error: {type(e).__name__}: {e}")
             # The shared write is confirmed, but the transition is not. Never
@@ -1002,10 +1145,11 @@ class MemoraClient:
             return {"status": "unconfirmed", "id": new_id, "content_text": new_fact_text,
                     "warning": "shared supersession outcome is unconfirmed"}
 
-        # local fallback: mark the old record superseded directly
+        # local fallback: mark every duplicate of the old record superseded
         try:
-            if self._mark_record_state(old_id, "superseded"):
-                return {
+            marked = [oid for oid in old_ids if self._mark_record_state(oid, "superseded")]
+            if old_id in marked:
+                corrected_local = {
                     "status": "corrected",
                     "superseded_id": old_id,
                     "winner_id": new_id,
@@ -1013,6 +1157,9 @@ class MemoraClient:
                     "content_text": new_fact_text,
                     "cloud": False,
                 }
+                if len(old_ids) > 1:
+                    corrected_local["superseded_ids"] = marked
+                return corrected_local
         except Exception as e:
             logger.debug(f"Memora local correct_fact error: {type(e).__name__}: {e}")
         # The new fact is stored; the old one could not be marked — honest state.

@@ -169,7 +169,9 @@ def test_correction_searches_stable_subject_not_replacement_value(monkeypatch):
     monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: Response(b'{"status":"superseded","superseded_id":"old","winner_id":"new-synthetic"}'))
     result = c.correct_fact("friday", "my deployment marker is violet", "my deployment marker is violet")
     assert result["status"] == "corrected"
-    c.recall_memories.assert_called_once_with("friday", "deployment marker", limit=5)
+    # TASK-REL-014: mutation resolution recalls at limit=25 (not the chat
+    # surface's 5) so duplicate records of the old fact are all visible.
+    c.recall_memories.assert_called_once_with("friday", "deployment marker", limit=25)
 
 
 def test_unspecified_subject_does_not_even_search():
