@@ -84,3 +84,24 @@ def test_behavioral_train_reports_only_real_metrics():
     assert model.accuracy is None
     report = detector.get_report()
     assert report["avg_model_accuracy"] is None
+
+
+# 5/6. Documented router paths work; missing fields are 422, not 500 ---------
+
+def test_vuln_scan_reachable_at_documented_path():
+    resp = client.post(
+        "/api/v1/sentinel/vuln/scan",
+        json={"target": "https://example.com", "scan_type": "full"},
+    )
+    assert resp.status_code == 200
+    assert resp.json().get("simulated") is True
+
+
+def test_threat_match_missing_field_is_422_not_500():
+    resp = client.post("/api/v1/sentinel/threat-match/signatures", json={"name": "x"})
+    assert resp.status_code == 422
+
+
+def test_vuln_scan_missing_target_is_422_not_500():
+    resp = client.post("/api/v1/sentinel/vuln/scan", json={})
+    assert resp.status_code == 422

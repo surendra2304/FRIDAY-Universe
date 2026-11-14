@@ -11,7 +11,7 @@ import hashlib
 import time
 from dataclasses import dataclass, field
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
@@ -389,9 +389,17 @@ threat_matcher = RealtimeThreatMatcher()
 # ── API Routes ──────────────────────────────────────────────────────────────
 
 
+def _require(payload: dict, *fields: str) -> None:
+    """TASK-SEN-001: missing fields are a client error (422), not a 500."""
+    for f in fields:
+        if payload.get(f) is None:
+            raise HTTPException(422, f"{f} is required")
+
+
 @router.post("/api/v1/sentinel/threat-match/signatures")
 async def add_signature(payload: dict):
     """Add a detection signature."""
+    _require(payload, "name", "event_type", "description", "pattern")
     signature = threat_matcher.add_signature(
         name=payload["name"],
         event_type=payload["event_type"],
@@ -405,6 +413,7 @@ async def add_signature(payload: dict):
 @router.post("/api/v1/sentinel/threat-match/baselines")
 async def add_baseline(payload: dict):
     """Add an anomaly detection baseline."""
+    _require(payload, "metric", "mean", "stddev")
     baseline = threat_matcher.add_baseline(
         metric=payload["metric"],
         mean=payload["mean"],
@@ -417,6 +426,7 @@ async def add_baseline(payload: dict):
 @router.post("/api/v1/sentinel/threat-match/profiles")
 async def add_behavioral_profile(payload: dict):
     """Add a behavioral profile."""
+    _require(payload, "entity_type", "entity_id")
     profile = threat_matcher.add_behavioral_profile(
         entity_type=payload["entity_type"],
         entity_id=payload["entity_id"],
@@ -428,6 +438,7 @@ async def add_behavioral_profile(payload: dict):
 @router.post("/api/v1/sentinel/threat-match/rules")
 async def add_correlation_rule(payload: dict):
     """Add a correlation rule."""
+    _require(payload, "name", "description", "conditions")
     rule = threat_matcher.add_correlation_rule(
         name=payload["name"],
         description=payload["description"],
