@@ -635,9 +635,26 @@ class MemoraClient:
                         results = json.loads(resp.read().decode("utf-8"))
                         if not isinstance(results, list) or not all(isinstance(row, dict) for row in results):
                             raise ValueError("invalid memory search response")
-                        # Shared empty is authoritative: falling through to a
-                        # stale local mirror can resurrect forgotten facts.
-                        return results
+                        if results:
+                            # A non-empty shared result stays authoritative:
+                            # a stale local twin of a shared-deleted fact must
+                            # not resurface alongside real shared hits.
+                            return results
+                        # TASK-REL-005 (2026-11-14): a shared EMPTY is NOT
+                        # authoritative. record_fact falls back to the local
+                        # store whenever the shared write fails (status
+                        # "local_only"), so a fact the owner was just told is
+                        # "saved on the local memory backend" lives ONLY
+                        # locally — returning the shared empty here made the
+                        # save and the recall contradict each other live.
+                        # Fall through to the local fallback below; its rows
+                        # are lifecycle-filtered (active only), so facts
+                        # forgotten locally stay forgotten. Residual edge: a
+                        # write that timed out client-side but committed
+                        # shared-side leaves a local twin; if the shared
+                        # copy is later deleted, the twin can resurface on
+                        # an otherwise-empty shared result. Accepted: the
+                        # alternative (this bug) hid EVERY local_only save.
             except Exception as e:
                 logger.debug(f"Memora remote recall error: {type(e).__name__}")
 
