@@ -167,6 +167,9 @@ export function VoiceCall({
     }`;
 
     const room = new Room({ adaptiveStream: true, dynacast: true });
+    let startupComplete = false;
+    let startupFailed = false;
+    let startupDisconnected = false;
     try {
       void room.startAudio().catch(() => {});
     } catch {
@@ -253,6 +256,13 @@ export function VoiceCall({
       };
 
       room.on(RoomEvent.Disconnected, async () => {
+        // A failed setup owns its cleanup/error state. It was never a live
+        // session: do not reconnect it or asynchronously overwrite its error.
+        if (startupFailed) return;
+        if (!startupComplete) {
+          startupDisconnected = true;
+          return;
+        }
         const duration = (Date.now() - sessionStartRef.current) / 1000;
         /* Intentional end (End-call button): never resurrect the line,
            never burn a reconnect attempt — post the session report and
@@ -301,7 +311,9 @@ export function VoiceCall({
 
       await room.connect(body.server_url, body.token);
       await room.localParticipant.setMicrophoneEnabled(true);
+      if (startupDisconnected) throw new Error("Voice disconnected during startup. Tap to retry.");
 
+      startupComplete = true;
       roomRef.current = room;
       connectedAtRef.current = Date.now();
       lastActivityRef.current = Date.now();
@@ -312,7 +324,11 @@ export function VoiceCall({
       setMessage("Line open — FRIDAY is waking up and will greet you in a few seconds.");
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Voice connection failed.";
-      roomRef.current?.disconnect();
+      startupFailed = true;
+      intentionalEndRef.current = true;
+      // roomRef is assigned only after microphone publication succeeds. Clean
+      // the locally allocated room even when setup failed before that point.
+      try { await room.disconnect(); } catch { /* retain the original error */ }
       roomRef.current = null;
       clearAudioElements();
       setStatus("error");

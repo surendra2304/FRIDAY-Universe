@@ -1,0 +1,7 @@
+{
+  "name": "friday-voice-startup-regressions",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "test": "node voice_startup.cjs" },
+  "devDependencies": { "esbuild": "0.25.12" }
+}
