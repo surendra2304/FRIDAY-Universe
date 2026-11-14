@@ -1,12 +1,12 @@
 "use client";
 
-import { Activity, Bot, Clock3, LayoutGrid, Radio, TerminalSquare, Waypoints, Zap } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Activity, Clock3 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { EmptyState, OnboardingHint, OwnerPreferences, VoiceDiagnostics } from "@/components/batch8";
-import { CountUp, Reveal, TextReveal } from "@/components/effects";
+import { CountUp, Reveal } from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
-import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
+import { ActivityFeed, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
 import {
   Agent,
@@ -21,41 +21,46 @@ import {
   requestJson,
   statusTone,
 } from "@/lib/api";
+import { BUILD_NAME, BUILD_TAG } from "@/lib/build-info";
 
 /* ============================================================
-   FRIDAY Universe — "Sovereign Aurora" console (2026-11-14).
+   FRIDAY Universe — "Reactor Deck" console (2026-11-14,
+   rebuild #2).
 
-   Full frontend rebuild on the owner's verdict that the site
-   was "worst of its kind": dynamic aurora stage, floating glass
-   stat cards, word-reveal hero, tilt fleet cards, streaming-feel
-   chat. The richness is delivered under the Living Universe
-   performance lessons — compositor-only motion, no canvas loops,
-   reduced-motion respected everywhere.
+   The owner rejected rebuild #1 (Sovereign Aurora) as "worst
+   as before — completely change the theme and all": Aurora had
+   restyled the SAME skeleton (top nav + tabs + left voice rail
+   + right chat panel + stat band). This edition throws the
+   skeleton away:
 
-   Data wiring is IDENTICAL to the Minimal Console edition:
-   30s snapshot polling (agents/status, system_telemetry,
+   - NO tabs, NO side rail, NO stat-card band. One flowing deck.
+   - THE STAGE: the reactor core (voice orb) is the hero — a
+     full-width stage at the top of the viewport whose own glow
+     carries FRIDAY's state; the call control sits under it.
+   - THE VITALS RIBBON: fleet vitals as one slim mono strip.
+   - THE STREAM: conversation flows beneath the stage, no box.
+   - THE CONSTELLATION: the fleet as a horizontal rail of agent
+     nodes to flick through and tap.
+   - OPS / MACHINE ROOM / CONTROL: ledgers and instruments in
+     numbered deck sections below.
+   - Warm graphite + amber/copper "reactor" palette; DM Mono is
+     the display voice. Nothing of Aurora's cyan/violet glass
+     remains.
+
+   Data wiring is IDENTICAL to the previous editions: 30s
+   snapshot polling (agents/status, system_telemetry,
    autonomous/status, agents/live, tasks/timeline), the
-   /api/ws/activity live socket, and every panel contract.
+   /api/ws/activity live socket, and every component contract.
 
    Kept owner directives:
    - no scroll-jump when starting voice (connects in place)
    - IST is the only clock
-   - chat history and live calls survive tab switches (all
-     sections stay mounted; hidden sections pause fetches)
+   - chat and live calls survive anything (everything stays
+     mounted — there are no tabs left to switch)
    ============================================================ */
-
-type Tab = "console" | "fleet" | "activity" | "system";
-
-const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
-  { id: "console", label: "Console", icon: <Radio size={14} /> },
-  { id: "fleet", label: "Fleet", icon: <LayoutGrid size={14} /> },
-  { id: "activity", label: "Activity", icon: <Waypoints size={14} /> },
-  { id: "system", label: "System", icon: <TerminalSquare size={14} /> },
-];
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
-  const [tab, setTab] = useState<Tab>("console");
   const [now, setNow] = useState<Date | null>(null);
   const [fleet, setFleet] = useState<FleetSnapshot | null>(null);
   const [agentsLive, setAgentsLive] = useState<AgentsLiveSnapshot | null>(null);
@@ -68,7 +73,6 @@ export default function Page() {
   const [ramHistory, setRamHistory] = useState<number[]>([]);
   const [voiceState, setVoiceState] = useState<OrbState>("idle");
   const [chatPrefill, setChatPrefill] = useState<{ text: string; seq: number }>({ text: "", seq: 0 });
-  const progressRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -76,22 +80,6 @@ export default function Page() {
     const clock = window.setInterval(() => setNow(new Date()), 15_000);
     return () => window.clearInterval(clock);
   }, []);
-
-  /* scroll progress hairline under the nav — transform only, passive */
-  useEffect(() => {
-    if (!mounted) return;
-    const onScroll = () => {
-      const el = progressRef.current;
-      if (!el) return;
-      const doc = document.documentElement;
-      const max = doc.scrollHeight - doc.clientHeight;
-      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
-      el.style.transform = `scaleX(${p})`;
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [mounted, tab]);
 
   const refresh = useCallback(async () => {
     const [fleetResult, telemetryResult, autonomyResult, liveResult, timelineResult] = await Promise.allSettled([
@@ -195,7 +183,11 @@ export default function Page() {
 
   function askAgent(agent: Agent) {
     setChatPrefill({ text: `@${agent.name} `, seq: chatPrefill.seq + 1 });
-    setTab("console");
+    /* the composer is up-deck: glide to it (user-initiated tap, so this
+       is navigation, not the forbidden scroll-jump on voice start). */
+    requestAnimationFrame(() => {
+      document.getElementById("chat")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   }
 
   if (!mounted) {
@@ -209,29 +201,18 @@ export default function Page() {
     );
   }
 
+  const cpuOk = telemetry?.status === "ok" && typeof telemetry.cpu_percent === "number";
+  const ramOk = telemetry?.status === "ok" && typeof telemetry.ram_percent === "number";
+
   return (
     <>
-      <div className="ambient" aria-hidden="true">
-        <span className="aurora a1" />
-        <span className="aurora a2" />
-        <span className="aurora a3" />
-        <span className="grid-overlay" />
-      </div>
-
-      <nav className="nav" aria-label="Main navigation">
-        <a className="nav-logo" href="#top" aria-label="FRIDAY home">
-          <span className="logo-dot" aria-hidden="true" />
+      <header className="topbar">
+        <a className="wordmark" href="#top" aria-label="FRIDAY home">
+          <span className="wordmark-cell" aria-hidden="true" />
           FRIDAY
+          <span className="wordmark-edition">REACTOR DECK</span>
         </a>
-        <div className="tabs" role="tablist" aria-label="Sections">
-          {TABS.map(({ id, label, icon }) => (
-            <button key={id} role="tab" aria-selected={tab === id} className={`tab${tab === id ? " active" : ""}`} onClick={() => setTab(id)}>
-              {icon}
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-        <div className="nav-status">
+        <div className="topbar-status">
           <span
             title="Agents answering live health probes right now"
             className={`dot ${
@@ -240,155 +221,168 @@ export default function Page() {
           />
           {connected === "online" ? (
             onlineCount > 0 ? (
-              <span className="nav-count">{`${onlineCount}/${totalAgents} agents live`}</span>
+              <span className="topbar-count">{`${onlineCount}/${totalAgents} agents live`}</span>
             ) : (
-              <span className="nav-count nav-alert" role="status">
+              <span className="topbar-count alert" role="status">
                 dashboard online · agents unreachable
               </span>
             )
           ) : connected === "offline" ? (
-            <span className="nav-count">API offline</span>
+            <span className="topbar-count">API offline</span>
           ) : (
-            <span className="nav-count">Connecting…</span>
+            <span className="topbar-count">Connecting…</span>
           )}
-          <span className="nav-clock" title="Indian Standard Time">
+          <span className="topbar-clock" title="Indian Standard Time">
             <Clock3 size={12} />
             {now ? `${istTime(now)} IST` : "--:-- IST"}
           </span>
         </div>
-        <div className="scroll-progress" ref={progressRef} aria-hidden="true" />
-      </nav>
+      </header>
 
-      <main className="shell" id="top" style={{ paddingTop: "calc(var(--nav-h) + 20px)" }}>
-        {/* ============ CONSOLE — FRIDAY communication only ============ */}
-        <section className={`tabview${tab === "console" ? " on" : ""}`} hidden={tab !== "console"} aria-label="FRIDAY console">
-          <Reveal className="console-hero">
-            <p className="hero-eyebrow">Sovereign operating system</p>
-            <h1 className="hero-title">
-              <TextReveal text="One voice moves the whole universe." />
-            </h1>
-            <p className="hero-sub">
-              Ten specialist agents, one continuous line. Speak or type — FRIDAY listens, remembers and dispatches in real time.
-            </p>
-            {/* Live stat band — animated counters on REAL fleet/ledger data,
-                never decorative claims (values are omitted while loading). */}
-            <div className="stat-band" role="status" aria-label="Live universe statistics">
-              <div className="stat-cell">
-                <span className="stat-ico cyan">
-                  <Bot size={14} />
-                </span>
-                <span className="num">
-                  {fleet ? (
-                    <>
-                      <CountUp value={onlineCount} />
-                      <span style={{ fontSize: 15, opacity: 0.7 }}>/{totalAgents}</span>
-                    </>
-                  ) : (
-                    "··"
-                  )}
-                </span>
-                <span className="lbl">Agents live</span>
-              </div>
-              <div className="stat-cell">
-                <span className="stat-ico amber">
-                  <Zap size={14} />
-                </span>
-                <span className="num">{autonomy ? <CountUp value={autonomy.history_count ?? 0} /> : "··"}</span>
-                <span className="lbl">Auto actions</span>
-              </div>
-              <div className="stat-cell">
-                <span className="stat-ico violet">
-                  <Waypoints size={14} />
-                </span>
-                <span className="num">{timeline ? <CountUp value={timeline.total_records ?? 0} /> : "··"}</span>
-                <span className="lbl">Tasks delegated</span>
-              </div>
-              <div className="stat-cell">
-                <span className="stat-ico mint">
-                  <Radio size={14} />
-                </span>
-                <span className="num">{autonomy?.autonomous_mode ? "ON" : "STANDBY"}</span>
-                <span className="lbl">Autonomy mode</span>
-              </div>
-            </div>
-          </Reveal>
-          <div className="console">
-            <div className="console-left-wrap">
-              <div className="console-left">
-                <VoiceCall onStateChange={setVoiceState} orbitAgents={fleet?.agents} footer={<ConsoleStrip fleet={fleet} autonomy={autonomy} />} />
-              </div>
-            </div>
-            <div className="console-main-wrap">
-              <div className="console-main">
-                <ChatPanel prefill={chatPrefill} />
-              </div>
-            </div>
+      <main className="deck" id="top" data-voice={voiceState}>
+        {/* ============ THE STAGE — the reactor core ============ */}
+        <section className="stage" aria-label="FRIDAY voice">
+          <div className="stage-glow" aria-hidden="true" />
+          <p className="stage-eyebrow">Friday · Sovereign Operating System</p>
+          <VoiceCall onStateChange={setVoiceState} orbitAgents={fleet?.agents} />
+          <p className="stage-line">Ten specialist agents, one continuous line. Speak or type — FRIDAY listens, remembers and dispatches in real time.</p>
+
+          {/* Vitals ribbon — the old stat band, flattened to one mono
+              strip on REAL fleet/ledger data (values omitted while
+              loading, never invented). */}
+          <div className="vitals" role="status" aria-label="Live universe vitals">
+            <span className="vital">
+              <span className="vital-k">Agents</span>
+              <span className="vital-v">
+                {fleet ? (
+                  <>
+                    <CountUp value={onlineCount} />/{totalAgents}
+                  </>
+                ) : (
+                  "··"
+                )}
+              </span>
+            </span>
+            <span className="vital">
+              <span className="vital-k">Tasks delegated</span>
+              <span className="vital-v">{timeline ? <CountUp value={timeline.total_records ?? 0} /> : "··"}</span>
+            </span>
+            <span className="vital">
+              <span className="vital-k">Auto actions</span>
+              <span className="vital-v">{autonomy ? <CountUp value={autonomy.history_count ?? 0} /> : "··"}</span>
+            </span>
+            <span className="vital">
+              <span className="vital-k">Autonomy</span>
+              <span className="vital-v">{autonomy ? (autonomy.autonomous_mode ? "ON" : "STANDBY") : "··"}</span>
+            </span>
+            <span className="vital">
+              <span className="vital-k">CPU</span>
+              <span className="vital-v">{cpuOk ? `${Math.round(telemetry!.cpu_percent!)}%` : "—"}</span>
+            </span>
+            <span className="vital">
+              <span className="vital-k">Memory</span>
+              <span className="vital-v">{ramOk ? `${Math.round(telemetry!.ram_percent!)}%` : "—"}</span>
+            </span>
           </div>
-          <Reveal delay={80}>
-            <OnboardingHint id="console-welcome">
-              <strong>Welcome back, Boss.</strong> Talk or type — try <em>&quot;watch topic X&quot;</em> for briefings or{" "}
-              <em>&quot;alert me when BTC &gt; 100k&quot;</em> for price alerts.
-            </OnboardingHint>
-            <OwnerPreferences />
-          </Reveal>
         </section>
 
-        {/* ============ FLEET — the ten-agent universe ============ */}
-        <section className={`tabview${tab === "fleet" ? " on" : ""}`} hidden={tab !== "fleet"} aria-label="Agent fleet">
+        <Reveal delay={60}>
+          <OnboardingHint id="console-welcome">
+            <strong>Welcome back, Boss.</strong> Talk or type — try <em>&quot;watch topic X&quot;</em> for briefings or{" "}
+            <em>&quot;alert me when BTC &gt; 100k&quot;</em> for price alerts.
+          </OnboardingHint>
+        </Reveal>
+
+        {/* ============ THE STREAM — conversation ============ */}
+        <section className="deck-section" aria-label="FRIDAY conversation">
+          <ChatPanel prefill={chatPrefill} />
+        </section>
+
+        {/* ============ 01 · THE CONSTELLATION — fleet rail ============ */}
+        <section className="deck-section" aria-label="Agent fleet">
           <Reveal>
-            <div className="eyebrow">Live fleet · real health probes</div>
-            <h2 className="section-title">The ten-agent universe</h2>
-            <p className="section-sub">
-              FRIDAY coordinates; nine specialists report here. Every card answers a real health probe and shows its last piece of work and how
-              fresh it is — ask anything and FRIDAY dispatches it.
-            </p>
+            <div className="section-head">
+              <span className="section-no">01</span>
+              <div>
+                <h2 className="section-title">The constellation</h2>
+                <p className="section-sub">
+                  Nine specialists in orbit around FRIDAY. Every node answers a real health probe and shows its last piece of work — tap a
+                  node to assign or ask.
+                </p>
+              </div>
+            </div>
           </Reveal>
           <FleetGrid fleet={fleet} autonomy={autonomy} liveActivity={liveActivity} now={agentsLive} onAsk={askAgent} />
         </section>
 
-        {/* ============ ACTIVITY — live operations ============ */}
-        <section className={`tabview${tab === "activity" ? " on" : ""}`} hidden={tab !== "activity"} aria-label="Live activity">
+        {/* ============ 02 · OPERATIONS — live ledgers ============ */}
+        <section className="deck-section" aria-label="Live activity">
           <Reveal>
-            <div className="eyebrow">Live operations</div>
-            <h2 className="section-title">What the fleet is doing right now</h2>
+            <div className="section-head">
+              <span className="section-no">02</span>
+              <div>
+                <h2 className="section-title">Operations</h2>
+                <p className="section-sub">What the fleet is doing right now, and every delegation on record — newest first.</p>
+              </div>
+            </div>
           </Reveal>
           <Reveal delay={60}>
             <ActivityFeed autonomy={autonomy} liveActivity={liveActivity} />
           </Reveal>
           <Reveal delay={120}>
-            <div className="eyebrow" style={{ marginTop: 28 }}>
-              Task timeline · every delegation, newest first
-            </div>
+            <div className="subhead">Task timeline</div>
             <TaskTimeline timeline={timeline} />
           </Reveal>
         </section>
 
-        {/* ============ SYSTEM — server & autonomy ============ */}
-        <section className={`tabview${tab === "system" ? " on" : ""}`} hidden={tab !== "system"} aria-label="System telemetry">
+        {/* ============ 03 · MACHINE ROOM — servers & voice ============ */}
+        <section className="deck-section" aria-label="System telemetry">
           <Reveal>
-            <div className="eyebrow">System</div>
-            <h2 className="section-title">Your Oracle servers, live</h2>
+            <div className="section-head">
+              <span className="section-no">03</span>
+              <div>
+                <h2 className="section-title">Machine room</h2>
+                <p className="section-sub">Your Oracle servers, live — and the last voice session&apos;s vital signs.</p>
+              </div>
+            </div>
           </Reveal>
           <SystemPanel fleet={fleet} telemetry={telemetry} autonomy={autonomy} cpuHistory={cpuHistory} ramHistory={ramHistory} />
           <Reveal delay={100}>
-            <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+            <div className="machine-extra">
               <VoiceDiagnostics />
               {timeline && Array.isArray(timeline.events) && timeline.events.length === 0 && (
                 <EmptyState
                   icon={<Activity size={22} />}
                   title="No delegated tasks yet"
-                  hint={'Assign work from the Fleet tab (or say "assign IntelX: research X") — every delegation lands here with its live status.'}
+                  hint={'Assign work from the constellation (or say "assign IntelX: research X") — every delegation lands here with its live status.'}
                 />
               )}
             </div>
           </Reveal>
         </section>
 
+        {/* ============ 04 · CONTROL — owner preferences ============ */}
+        <section className="deck-section" aria-label="Owner control">
+          <Reveal>
+            <div className="section-head">
+              <span className="section-no">04</span>
+              <div>
+                <h2 className="section-title">Control</h2>
+                <p className="section-sub">How FRIDAY addresses you, briefs you and speaks.</p>
+              </div>
+            </div>
+          </Reveal>
+          <OwnerPreferences />
+        </section>
+
         <footer className="footer">
           <span>
             <strong>FRIDAY Universe</strong> — built for Surendra
           </span>
-          <span>Oracle Always Free · GitHub Actions · LiveKit · IST everywhere</span>
+          <span className="footer-build">{`${BUILD_NAME} · build ${BUILD_TAG}`}</span>
+          <span>
+            Oracle Always Free · GitHub Actions · LiveKit · IST everywhere · <a href="status.html">fleet status page</a>
+          </span>
         </footer>
       </main>
     </>

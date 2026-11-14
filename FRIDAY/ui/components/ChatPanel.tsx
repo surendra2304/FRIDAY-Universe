@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Eraser, Loader2, MessageSquareText, RotateCcw, Send } from "lucide-react";
+import { AlertTriangle, Eraser, Loader2, RotateCcw, Send } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessage, requestJson } from "@/lib/api";
 import { prefersReducedMotion } from "./effects";
@@ -16,18 +16,20 @@ import { prefersReducedMotion } from "./effects";
    history stays on the server (Memora) — only the rendered
    transcript is capped.
 
-   Sovereign Aurora edition (2026-11-14, frontend rebuild):
-   - Transport failures no longer render as a raw "502 …" chat
-     bubble. They render as a designed SYSTEM NOTICE: a plain-
-     language headline, the technical detail in mono, and a
-     Retry action that resends the failed message.
-   - A 75s client-side ceiling on /api/chat: a hung request used
-     to spin forever (round-1 live test: a coding task produced
-     no reply in >2 minutes and the console had to be reloaded).
-     The notice says honestly that FRIDAY may still finish it.
-   - Live replies reveal progressively (streaming feel, rAF,
-     tap-to-complete, full text always available to AT).
-   Backend contracts are unchanged: POST /api/chat {message},
+   Honesty upgrades (2026-11-14, rebuild #1 — kept verbatim):
+   - Transport failures render as a designed SYSTEM NOTICE: a
+     plain-language headline, the technical detail in mono, and
+     a Retry action that resends the failed message.
+   - A 75s client-side ceiling on /api/chat with honest copy.
+   - Live replies reveal progressively (rAF, tap-to-complete,
+     full text always available to AT).
+
+   Reactor Deck edition (2026-11-14, rebuild #2): the boxed
+   panel is gone. The conversation is a flowing stream under
+   the reactor stage — FRIDAY speaks in full-width transmissions
+   with a mono speaker line, the owner in compact ember chips,
+   and the composer sits at the foot of the stream. All data
+   wiring below is unchanged: POST /api/chat {message},
    GET /api/v1/conversation/history for the restore tail.
    ============================================================ */
 
@@ -222,16 +224,11 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
   }
 
   return (
-    <div className="panel chat-panel" id="chat">
-      <div className="panel-head">
-        <div className="panel-title">
-          <div className="title-icon cyan">
-            <MessageSquareText size={17} />
-          </div>
-          <div>
-            <h3>Console</h3>
-            <span className="subtitle">Commands, questions, fleet dispatch — same brain as the phone line</span>
-          </div>
+    <div className="stream" id="chat">
+      <div className="stream-head">
+        <div className="stream-title">
+          <span className="stream-kicker">Conversation</span>
+          <span className="stream-sub">Commands, questions, fleet dispatch — same brain as the voice line</span>
         </div>
         <button
           className="mini-btn chat-clear"
@@ -248,81 +245,91 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
         </button>
       </div>
 
-      <div className="chat-body">
-        {notice && (
-          <div className="onboarding-hint chat-notice" style={{ margin: "12px 18px 0" }} role="status">
-            <span style={{ lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{notice}</span>
-            <button className="onboarding-dismiss" onClick={() => setNotice(null)} aria-label="Dismiss notice">
-              dismiss
-            </button>
+      {notice && (
+        <div className="stream-notice" role="status">
+          <span className="stream-notice-text">{notice}</span>
+          <button className="stream-notice-x" onClick={() => setNotice(null)} aria-label="Dismiss notice">
+            dismiss
+          </button>
+        </div>
+      )}
+
+      <div className="stream-scroll" ref={scrollRef}>
+        {restoredCount > 0 && (
+          <div className="session-divider" aria-label="Restored conversation history">
+            last session · {restoredCount} messages
           </div>
         )}
-        <div className="chat-scroll" ref={scrollRef}>
-          {restoredCount > 0 && (
-            <div className="session-divider" aria-label="Restored conversation history">
-              last session · {restoredCount} messages
-            </div>
-          )}
-          {messages.length === 0 && (
-            <div className="chat-empty">
-              <div className="chat-empty-orb" aria-hidden="true" />
-              <h4 className="chat-empty-title">How can I help, Boss?</h4>
-              <p style={{ margin: 0, fontSize: 13.5, maxWidth: 380 }}>
-                Talk or type below — commands, questions, fleet dispatch.
-              </p>
-            </div>
-          )}
-          {messages.length > 0 &&
-            messages.map((m, i) =>
-              m.error ? (
-                <div className="sys-notice" role="alert" key={i}>
-                  <AlertTriangle size={15} className="sys-notice-icon" aria-hidden="true" />
-                  <div className="sys-notice-body">
-                    <strong>That request didn&apos;t complete</strong>
-                    <code>{m.text}</code>
-                  </div>
-                  {m.retryOf && (
-                    <button
-                      className="mini-btn sys-notice-retry"
-                      onClick={() => void send(m.retryOf!)}
-                      disabled={busy}
-                      aria-label="Retry the failed message"
-                    >
-                      <RotateCcw size={12} /> Retry
-                    </button>
-                  )}
+        {messages.length === 0 && (
+          <div className="stream-empty">
+            <div className="stream-empty-core" aria-hidden="true" />
+            <h4 className="stream-empty-title">How can I help, Boss?</h4>
+            <p>Talk or type below — commands, questions, fleet dispatch.</p>
+          </div>
+        )}
+        {messages.length > 0 &&
+          messages.map((m, i) =>
+            m.error ? (
+              <div className="sys-notice" role="alert" key={i}>
+                <AlertTriangle size={15} className="sys-notice-icon" aria-hidden="true" />
+                <div className="sys-notice-body">
+                  <strong>That request didn&apos;t complete</strong>
+                  <code>{m.text}</code>
                 </div>
-              ) : (
-                <div key={i} className={m.role === "user" ? "bubble user" : "bubble friday"}>
-                  {m.role === "friday" ? <RevealText text={m.text} live={m.live} /> : m.text}
-                  <div className="bubble-meta">
-                    {m.role === "user" ? "You" : "FRIDAY"} ·{" "}
+                {m.retryOf && (
+                  <button
+                    className="mini-btn sys-notice-retry"
+                    onClick={() => void send(m.retryOf!)}
+                    disabled={busy}
+                    aria-label="Retry the failed message"
+                  >
+                    <RotateCcw size={12} /> Retry
+                  </button>
+                )}
+              </div>
+            ) : m.role === "user" ? (
+              <div key={i} className="msg user">
+                <div className="msg-text">{m.text}</div>
+                <div className="msg-meta">
+                  You · {hydrated ? new Date(m.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""}
+                </div>
+              </div>
+            ) : (
+              <div key={i} className="msg friday">
+                <div className="msg-head">
+                  <span className="msg-who">FRIDAY</span>
+                  <span className="msg-time">
                     {hydrated ? new Date(m.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""}
-                  </div>
+                  </span>
                 </div>
-              ),
-            )}
-          {busy && (
-            <div className="typing-row" aria-live="polite">
-              <span className="typing-dot" />
-              <span className="typing-dot" />
-              <span className="typing-dot" />
-              <span className="typing-label">FRIDAY is thinking</span>
-            </div>
+                <div className="msg-text">
+                  <RevealText text={m.text} live={m.live} />
+                </div>
+              </div>
+            ),
           )}
-        </div>
+        {busy && (
+          <div className="typing-row" aria-live="polite">
+            <span className="typing-dot" />
+            <span className="typing-dot" />
+            <span className="typing-dot" />
+            <span className="typing-label">FRIDAY is thinking</span>
+          </div>
+        )}
+      </div>
 
-        <form className="chat-input-row" onSubmit={onSubmit}>
-          {messages.length === 0 && (
-            <div className="chat-chips chat-chips-anchor">
-              <span className="chips-label">Try:</span>
-              {CHIPS.map((chip) => (
-                <button type="button" key={chip} className="chip" onClick={() => void send(chip)}>
-                  {chip}
-                </button>
-              ))}
-            </div>
-          )}
+      <form className="composer" onSubmit={onSubmit}>
+        {messages.length === 0 && (
+          <div className="composer-chips">
+            <span className="chips-label">Try</span>
+            {CHIPS.map((chip) => (
+              <button type="button" key={chip} className="chip" onClick={() => void send(chip)}>
+                {chip}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="composer-row">
           <textarea
             ref={inputRef}
             className="chat-input"
@@ -337,8 +344,8 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
           <button className="send-btn" type="submit" disabled={busy || !input.trim()} aria-label="Send message">
             {busy ? <Loader2 size={17} className="spin" /> : <Send size={17} />}
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 }

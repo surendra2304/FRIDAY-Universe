@@ -7,19 +7,19 @@
   <meta name="description" content="Live fleet status for the FRIDAY Universe — every agent's reachability, updated every 60 seconds. Honest: degraded/unreachable is reported as such, never invented as green." />
   <style>
     :root {
-      --canvas: #05070c;
-      --panel-base: #0b0f16;
-      --line: rgba(148, 197, 255, 0.10);
-      --line-bright: rgba(148, 197, 255, 0.24);
-      --text: #e9eef7;
-      --muted: #93a1b5;
-      --faint: #5f7089;
-      --mint: #34d399;
-      --cyan: #22d3ee;
-      --violet: #a78bfa;
-      --amber: #fbbf24;
-      --red: #f87171;
-      --radius: 18px;
+      --canvas: #100d09;
+      --panel: #1c1712;
+      --panel-2: #231c15;
+      --line: rgba(236, 199, 132, 0.14);
+      --line-strong: rgba(236, 199, 132, 0.30);
+      --text: #f1e8d5;
+      --muted: #b6a888;
+      --faint: #7e7260;
+      --amber: #f5a83d;
+      --amber-soft: #f5c877;
+      --good: #a8c256;
+      --red: #e5534b;
+      --mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -29,43 +29,43 @@
     }
     body {
       background:
-        radial-gradient(ellipse 90% 52% at 50% -14%, rgba(34, 211, 238, 0.16) 0%, transparent 62%),
-        radial-gradient(ellipse 62% 46% at 108% 38%, rgba(167, 139, 250, 0.13) 0%, transparent 64%),
-        radial-gradient(ellipse 70% 42% at -8% 72%, rgba(167, 139, 250, 0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 88% 50% at 50% 112%, rgba(20, 184, 166, 0.14) 0%, transparent 62%),
+        radial-gradient(ellipse 90% 420px at 50% -120px, rgba(245, 150, 50, 0.14), transparent 70%),
+        radial-gradient(ellipse 60% 340px at 108% 60%, rgba(240, 127, 36, 0.05), transparent 65%),
         var(--canvas);
       background-attachment: fixed;
-      padding: 36px 16px 64px;
+      padding: 38px 16px 64px;
     }
-    .container { max-width: 760px; margin: 0 auto; }
+    .container { max-width: 720px; margin: 0 auto; }
 
     /* ---------- Header ---------- */
-    header { text-align: center; margin-bottom: 30px; }
+    header { text-align: center; margin-bottom: 28px; }
     .eyebrow {
       display: inline-block;
-      font-size: 10.5px; font-weight: 650; letter-spacing: 0.22em; text-transform: uppercase;
-      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 10.5px; letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--amber-soft);
       margin-bottom: 14px;
     }
     h1 {
-      font-size: clamp(26px, 5vw, 32px); font-weight: 650; line-height: 1.15;
-      margin: 0 0 10px; letter-spacing: -0.015em; color: var(--text);
+      font-family: var(--mono); font-weight: 500;
+      font-size: clamp(21px, 5vw, 27px); line-height: 1.2;
+      margin: 0 0 10px; letter-spacing: 0.06em; color: var(--text);
+      text-transform: uppercase;
     }
     .subtitle { color: var(--muted); font-size: 14px; line-height: 1.55; }
 
     /* ---------- Overall banner ---------- */
     .overall {
-      position: relative;
       display: inline-flex; align-items: center; gap: 11px;
       padding: 11px 22px 11px 18px; border-radius: 999px;
-      font-size: 15px; font-weight: 650; margin: 22px 0 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), var(--panel-base);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+      font-family: var(--mono);
+      font-size: 14px; letter-spacing: 0.04em; margin: 22px 0 0;
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line-strong);
     }
-    .overall.operational { color: var(--mint); border: 1px solid rgba(52, 211, 153, 0.32); }
-    .overall.degraded { color: var(--amber); border: 1px solid rgba(251, 191, 36, 0.32); }
-    .overall.major-outage { color: var(--red); border: 1px solid rgba(248, 113, 113, 0.32); }
+    .overall.operational { color: var(--good); border-color: rgba(168, 194, 86, 0.45); }
+    .overall.degraded { color: var(--amber-soft); border-color: rgba(245, 168, 61, 0.45); }
+    .overall.major-outage { color: #ff9d97; border-color: rgba(229, 83, 75, 0.5); }
     .dot-wrap { position: relative; width: 10px; height: 10px; flex: 0 0 10px; display: inline-flex; }
     .dot {
       position: relative; z-index: 1;
@@ -82,47 +82,40 @@
       70%, 100% { transform: scale(2.6); opacity: 0; }
     }
     .refresh-note {
-      color: var(--faint); font-size: 11px; margin-top: 12px;
-      letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;
+      color: var(--faint); font-family: var(--mono); font-size: 11px; margin-top: 13px;
+      letter-spacing: 0.14em; text-transform: uppercase;
       font-variant-numeric: tabular-nums;
     }
 
     /* ---------- Error ---------- */
     .error-banner {
-      padding: 13px 16px; border-radius: 14px;
-      background: linear-gradient(180deg, rgba(248,113,113,0.09), rgba(248,113,113,0.05)), var(--panel-base);
-      border: 1px solid rgba(248, 113, 113, 0.30); color: var(--red); font-size: 13px; line-height: 1.5;
+      padding: 13px 16px; border-radius: 13px;
+      background: rgba(229, 83, 75, 0.08);
+      border: 1px solid rgba(229, 83, 75, 0.4); color: #ff9d97; font-size: 13px; line-height: 1.5;
       margin: 18px 0 0; display: none; text-align: left;
     }
 
     /* ---------- Fleet label ---------- */
     .fleet-label {
-      font-size: 10.5px; font-weight: 650; letter-spacing: 0.22em; text-transform: uppercase;
+      font-family: var(--mono);
+      font-size: 10.5px; letter-spacing: 0.24em; text-transform: uppercase;
       color: var(--faint); margin: 4px 2px 12px; text-align: left;
     }
 
-    /* ---------- Agent cards ---------- */
-    .agents { display: grid; gap: 10px; }
+    /* ---------- Agent rows ---------- */
+    .agents { display: grid; gap: 9px; }
     .agent {
       display: flex; align-items: center; justify-content: space-between; gap: 14px;
-      padding: 15px 17px; border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)), var(--panel-base);
+      padding: 14px 16px; border-radius: 14px;
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
       border: 1px solid var(--line);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      border-left: 3px solid var(--line-strong);
       animation: rise 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-    }
-    .agent:hover {
-      transform: translateY(-2px);
-      border-color: var(--line-bright);
-      box-shadow: 0 14px 32px rgba(0,0,0,0.32);
     }
     @keyframes rise {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .agent:hover { animation: none; }
     .agents .agent:nth-child(1) { animation-delay: 0ms; }
     .agents .agent:nth-child(2) { animation-delay: 55ms; }
     .agents .agent:nth-child(3) { animation-delay: 110ms; }
@@ -137,58 +130,61 @@
 
     .agent-left { display: flex; align-items: center; gap: 13px; min-width: 0; }
     .agent-icon {
-      flex: 0 0 40px; width: 40px; height: 40px;
+      flex: 0 0 42px; width: 42px; height: 42px;
       display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 12px;
-      font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em;
-      color: var(--cyan);
-      background: linear-gradient(145deg, rgba(34,211,238,0.16), rgba(167,139,250,0.14));
-      border: 1px solid rgba(148, 197, 255, 0.16);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+      border-radius: 50%;
+      font-family: var(--mono);
+      font-size: 12.5px; letter-spacing: 0.06em;
+      color: var(--amber-soft);
+      background: radial-gradient(circle at 36% 30%, #38280f, #211809 72%);
+      border: 1px solid var(--line-strong);
     }
-    .agent-icon.tint-violet { color: var(--violet); background: linear-gradient(145deg, rgba(167,139,250,0.18), rgba(34,211,238,0.08)); }
-    .agent-icon.tint-mint { color: var(--mint); background: linear-gradient(145deg, rgba(52,211,153,0.16), rgba(34,211,238,0.08)); }
-    .agent-icon.tint-amber { color: var(--amber); background: linear-gradient(145deg, rgba(251,191,36,0.15), rgba(167,139,250,0.08)); }
+    .agent-icon.tint-violet { color: #e6d7ae; }
+    .agent-icon.tint-mint { color: #cfe39a; }
+    .agent-icon.tint-amber { color: var(--amber); }
     .agent-name { font-weight: 650; font-size: 14.5px; letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .agent-role {
-      color: var(--faint); font-size: 11px; margin-top: 2px;
-      letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+      color: var(--faint); font-family: var(--mono); font-size: 10px; margin-top: 3px;
+      letter-spacing: 0.14em; text-transform: uppercase;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .agent-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
     .agent-latency {
-      color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums;
+      color: var(--muted); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums;
       letter-spacing: 0.02em; white-space: nowrap;
     }
 
     /* ---------- Status pills (class names / semantics preserved) ---------- */
     .status-pill {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 650;
-      letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+      padding: 4px 11px; border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+      border: 1px solid var(--line); color: var(--muted);
     }
     .status-pill::before {
       content: ""; width: 6px; height: 6px; border-radius: 50%;
       background: currentColor; box-shadow: 0 0 8px currentColor; flex: 0 0 6px;
     }
-    .status-pill.online, .status-pill.reachable { color: var(--mint); background: rgba(52, 211, 153, 0.10); border: 1px solid rgba(52, 211, 153, 0.30); }
-    .status-pill.degraded { color: var(--amber); background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.30); }
-    .status-pill.unreachable, .status-pill.offline, .status-pill.unknown { color: var(--red); background: rgba(248, 113, 113, 0.10); border: 1px solid rgba(248, 113, 113, 0.30); }
+    .status-pill.online, .status-pill.reachable { color: var(--good); background: rgba(168, 194, 86, 0.09); border-color: rgba(168, 194, 86, 0.4); }
+    .status-pill.degraded { color: var(--amber-soft); background: rgba(245, 168, 61, 0.09); border-color: rgba(245, 168, 61, 0.4); }
+    .status-pill.unreachable, .status-pill.offline, .status-pill.unknown { color: #ff9d97; background: rgba(229, 83, 75, 0.09); border-color: rgba(229, 83, 75, 0.42); }
 
     /* ---------- Footer ---------- */
     footer { text-align: center; margin-top: 34px; color: var(--faint); font-size: 12px; line-height: 1.65; }
     footer p { margin: 4px 0; }
-    a { color: var(--cyan); text-decoration: none; }
+    footer .build { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #d9a441; }
+    a { color: var(--amber-soft); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
     /* ---------- Responsive ---------- */
     @media (max-width: 400px) {
       body { padding: 28px 12px 52px; }
-      .agent { flex-wrap: wrap; padding: 14px 15px; }
+      .agent { flex-wrap: wrap; padding: 13px 14px; }
       .agent-left { flex: 1 1 100%; }
       .agent-name, .agent-role { white-space: normal; }
-      .agent-right { flex: 1 1 100%; justify-content: space-between; padding-left: 53px; }
-      .overall { font-size: 14px; padding: 10px 18px 10px 15px; }
+      .agent-right { flex: 1 1 100%; justify-content: space-between; padding-left: 55px; }
+      .overall { font-size: 13px; padding: 10px 18px 10px 15px; }
     }
 
     /* ---------- Reduced motion ---------- */
@@ -200,14 +196,13 @@
       }
       .dot-wrap::after { animation: none; opacity: 0; }
       .agent { animation: none; }
-      .agent:hover { transform: none; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <span class="eyebrow">Sovereign Aurora · Live Fleet</span>
+      <span class="eyebrow">Reactor Deck · Live Fleet</span>
       <h1>FRIDAY Universe — Status</h1>
       <div class="subtitle">Live fleet reachability — every agent, every 60 seconds.</div>
       <div id="overall" class="overall operational">
@@ -226,6 +221,7 @@
     <footer>
       <p>Every status is the real probe result — never invented as "green".</p>
       <p>"degraded" = some agents unreachable; "major-outage" = none reachable.</p>
+      <p class="build">FRIDAY Console v2 · Reactor Deck</p>
       <p>Owner: <a href="https://github.com/surendra2304/FRIDAY-Universe">FRIDAY Universe</a></p>
     </footer>
   </div>
