@@ -4234,6 +4234,42 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "TESTS: FRIDAY/tests/test_rel031_memora_shared_sync.py (5) - all 5 fail on clean main, all 5 pass with the fix (lost-response retry, status normalisation, local_only re-sync convergence + supersede + recall, 600-decoy forget window, write-budget guard). Neighbour ring (REL-005/014/022 suites, memory commands/mutation/recall/lifecycle/search): failure set identical to clean main (6 pre-existing fixture ERRORs in test_memory_mutation_targets.py + 1 pre-existing FAILED in test_memory_search.py)."
     blockers: []
     next_action: "Merge PR #226 on green CI, let Fleet CD deploy FRIDAY, fingerprint-verify the deployed memora_client.py, then run the live acceptance (save -> shared-store inspection -> Memora restart -> chat recall -> forget -> absence in both stores) and flip this entry to VERIFIED with the evidence; clean up the crew's probe records (707d477f, 85ce0419, bdd353fa and the replica-probe records) from both stores."
+  - id: TASK-WEB-001
+    title: "Complete website redesign from scratch — voice-first Talk home, dark cinematic Jarvis style, home = talk + chat only (owner mandate 2026-11-15)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-web-001-redesign
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T02:45:00+05:30"
+    updated_at: "2026-11-15T02:45:00+05:30"
+    files:
+      - "FRIDAY/ui/app/page.tsx"
+      - "FRIDAY/ui/app/layout.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/components/Arc.tsx"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
+      - "FRIDAY/ui/components/Conversation.tsx"
+      - "FRIDAY/ui/components/Crew.tsx"
+      - "FRIDAY/ui/components/Record.tsx"
+      - "FRIDAY/ui/components/Machine.tsx"
+      - "FRIDAY/ui/components/fx.tsx"
+      - "FRIDAY/ui/lib/build-info.ts"
+      - "FRIDAY/ui/public/status.html"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6884271953"
+    defect: "Owner verdict 2026-11-15 ~02:38 IST on rebuild #2 (Reactor Deck, PR #126): rejected as the same site with a new theme — he ordered the website forgotten and rebuilt completely from scratch: new architecture, layout and copy, no recycled headings or paragraphs. Owner design answers 2026-11-15: (1) home screen = voice first, the talk orb IS the home screen; (2) style = dark and cinematic, Jarvis-style glow on black; (3) home carries ONLY talk + chat — fleet, Stratex, activity and delegations are tucked into separate reachable views."
+    acceptance:
+      - "New information architecture: Talk (voice + conversation) is the home view; Crew / Record / Machine are separate dock-switched views, all mounted so a live call and the conversation survive switching. No section, ordering, heading or paragraph is inherited from Aurora or Reactor Deck; every visible string is written fresh."
+      - "The production wire contract is preserved exactly: POST /api/chat with the 300s client ceiling, GET /api/v1/conversation/history restore (RESTORE_LIMIT 20 entries / MAX_RENDERED 40 bubbles), LiveKit voice via GET /api/livekit/token + worker heartbeat from GET /api/voice/diagnostics + POST /api/voice/diagnostics/report, GET /api/agents/status, /api/agents/live, /api/system_telemetry, /api/autonomous/status, /api/tasks/timeline, WS /api/ws/activity, GET/POST /api/owner/preferences. No backend, voice-worker or Stratex file is touched."
+      - "Voice connection behaviour is carried over unchanged (per-call room, intentional-end guard, bounded reconnect, idle/hard-cap self-rest); only its presentation and copy are new."
+      - "Shipped via PR on green CI, merged, deployed via Fleet CD; the served export is hash-compared against the merged build (new build tag ARC-20261115-0255) and live-probed: page loads, a chat round-trip answers, history restores, the voice UI mounts and requests the microphone (the sandbox browser has no microphone — recorded as an evidence limit, not a product verdict)."
+      - "Rollback point recorded: previous live build f6e2d06 (Reactor Deck, build tag RD-20261114-1504)."
+    evidence:
+      - "Claim: issue #35 comment 6884271953 (2026-11-15). Local gates before ship: tsc --noEmit clean; eslint 6 errors vs 27 on clean main (the remainder are the codebase's pre-existing effect-pattern class); next build (static export) succeeds; the built bundle contains the new build tag and new copy and zero Reactor Deck / Aurora strings (public/status.html restyled to match, its /api/status/public contract untouched)."
+    blockers: []
+    next_action: "Ship the redesign PR; on green CI merge, verify the Fleet CD deploy by hash comparison and live probes, then flip this entry to VERIFIED with the probe evidence."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

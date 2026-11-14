@@ -3,26 +3,32 @@
 import { AlertTriangle, Mic, PhoneOff, Radio } from "lucide-react";
 import { Room, RoomEvent, Track } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Orbital } from "./effects";
-import { OrbCore, OrbState } from "./OrbCore";
-import { Agent, apiBase, formatClock, requestJson } from "@/lib/api";
+import { Arc, ArcState } from "./Arc";
+import { apiBase, formatClock, requestJson } from "@/lib/api";
 
 /* ============================================================
-   Continuous LiveKit voice session with FRIDAY — voice dock.
-   One tap connects right here (nothing ever scrolls the page),
-   the mic stays open the whole call, and free-tier minutes are
-   protected by idle / hard-cap auto-disconnect.
+   The voice line — a continuous LiveKit call with FRIDAY.
 
-   Worker truth (2026-11-13 redesign): the /api/voice/diagnostics
-   endpoint now reports the cloud worker's heartbeat — which
-   speech provider it has, and if none, WHY. That reason is shown
-   in the dock instead of letting a dead line look like silence.
+   One tap opens a fresh private room (a new room per call, so
+   no stale agent session can linger from the last one), the
+   microphone stays open for the whole conversation, and the
+   line puts itself to rest when it goes quiet — the free
+   LiveKit minutes are finite and are treated that way.
+
+   The worker's own heartbeat (/api/voice/diagnostics) is read
+   before anything else: when the speech service cannot take
+   a call, the button says why instead of ringing into silence.
+
+   Connection behaviour is carried over unchanged from the
+   previous console — token fetch, per-call room, intentional-
+   end guard, bounded reconnect, session diagnostics report.
+   Everything the owner sees and reads here is new.
    ============================================================ */
 
 const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
 const HARD_CAP_MS = 30 * 60 * 1000;
 
-type VoiceStatus = "idle" | "connecting" | "connected" | "error";
+type LineStatus = "idle" | "connecting" | "connected" | "error";
 
 type WorkerStatus = {
   state?: string;
@@ -31,37 +37,26 @@ type WorkerStatus = {
   updated_at?: string;
 };
 
-export function VoiceCall({
-  onStateChange,
-  footer,
-  orbitAgents,
-}: {
-  onStateChange?: (state: OrbState) => void;
-  footer?: React.ReactNode;
-  /** Live fleet — rendered as the satellite ring around the orb (real data, real colors). */
-  orbitAgents?: Agent[];
-}) {
-  const [status, setStatus] = useState<VoiceStatus>("idle");
-  const [message, setMessage] = useState("Tap once — we talk like we're on the phone.");
+export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState) => void }) {
+  const [status, setStatus] = useState<LineStatus>("idle");
+  const [message, setMessage] = useState("Tap the ring and just talk — no menus, no wake word.");
   const [peerSpeaking, setPeerSpeaking] = useState(false);
   const [micSpeaking, setMicSpeaking] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [worker, setWorker] = useState<WorkerStatus | null>(null);
   const roomRef = useRef<Room | null>(null);
-  const lastActivityRef = useRef<number>(Date.now());
+  /* Both time refs are (re)stamped the moment a call connects; their
+     initial values are never read before that. */
+  const lastActivityRef = useRef<number>(0);
   const connectedAtRef = useRef<number>(0);
   const sessionIdRef = useRef<string>("");
-  const sessionStartRef = useRef<number>(Date.now());
-  /* Intentional-end guard (2026-11-13, ZAI Agent 1): the Disconnected
-     handler used to auto-reconnect even after the owner deliberately
-     ended the call — the line resurrected into a room whose agent
-     session had already closed (the worker now closes it when the last
-     owner leaves), i.e. a connected-but-silent line that also swallowed
-     the diagnostics POST (last_session stayed empty forever). */
+  const sessionStartRef = useRef<number>(0);
+  /* Intentional-end guard: a call the owner ended on purpose must
+     never resurrect itself through the drop-reconnect path. */
   const intentionalEndRef = useRef(false);
 
-  const orbState: OrbState =
+  const arcState: ArcState =
     status === "connected"
       ? peerSpeaking
         ? "speaking"
@@ -75,11 +70,12 @@ export function VoiceCall({
           : "idle";
 
   useEffect(() => {
-    onStateChange?.(orbState);
-  }, [orbState, onStateChange]);
+    onStateChange?.(arcState);
+  }, [arcState, onStateChange]);
 
-  /* worker heartbeat: fetch once + on reconnect-to-page; explains in plain
-     language when the line cannot open (e.g. no valid speech credential). */
+  /* Worker heartbeat: fetched once on mount. Only real failures
+     (no-provider / error) are surfaced — the resting "registered"
+     heartbeat is the service's normal state, not a warning. */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -87,7 +83,7 @@ export function VoiceCall({
         const res = await requestJson<{ worker?: WorkerStatus }>("/api/voice/diagnostics");
         if (!cancelled && res?.worker) setWorker(res.worker);
       } catch {
-        /* endpoint absent (older server) → dock behaves like before */
+        /* endpoint absent → the line behaves as it always has */
       }
     })();
     return () => {
@@ -95,11 +91,6 @@ export function VoiceCall({
     };
   }, []);
 
-  /* Worker truth states: ONLY real failures surface (no-provider / error).
-     The idle "registered — waiting for the first job" heartbeat is the
-     worker's NORMAL resting state, but showing it in the dock read as
-     "voice is broken" (owner feedback 2026-11-13) — informational states
-     stay internal now. */
   const workerFailed = worker?.state === "no-provider" || worker?.state === "error";
 
   const clearAudioElements = useCallback(() => {
@@ -122,22 +113,22 @@ export function VoiceCall({
     [clearAudioElements],
   );
 
-  /* session timers: clock, idle auto-disconnect, hard cap */
+  /* Call clock + the two self-rest rules (idle, hard cap). */
   useEffect(() => {
     if (status !== "connected") return;
     const timer = window.setInterval(() => {
       setSeconds(Math.floor((Date.now() - connectedAtRef.current) / 1000));
       const idleFor = Date.now() - lastActivityRef.current;
       if (idleFor > IDLE_TIMEOUT_MS) {
-        endCall("Line closed after 3 quiet minutes to protect your free LiveKit minutes. Tap to reopen.");
+        endCall("Closed after three quiet minutes — your free voice minutes matter more than an open line. Tap to talk again.");
       } else if (Date.now() - connectedAtRef.current > HARD_CAP_MS) {
-        endCall("30-minute cap reached (free minutes) — tap to call again.");
+        endCall("That's the 30-minute mark for one call. Tap whenever you're ready to continue.");
       }
     }, 1000);
     return () => window.clearInterval(timer);
   }, [status, endCall]);
 
-  /* teardown on unmount */
+  /* Teardown on unmount. */
   useEffect(() => {
     return () => {
       roomRef.current?.disconnect();
@@ -149,22 +140,21 @@ export function VoiceCall({
   async function startCall() {
     if (status === "connecting" || status === "connected") return;
     setStatus("connecting");
-    setMessage("Opening a private voice room…");
+    setMessage("Opening a private room for us…");
     setPeerSpeaking(false);
     setMicSpeaking(false);
     setAudioBlocked(false);
     intentionalEndRef.current = false;
 
-    // Per-call room (2026-11-13, ZAI Agent 1): the shared fixed room
-    // "friday" accumulated one agent per call — live probes found two
-    // agent participants in the room at once (one streaming a dead audio
-    // track), which is exactly the erratic-dead-air failure the owner
-    // heard. A fresh room per call gives every call exactly one agent and
-    // a clean job lifecycle: the room empties when the call ends, the
-    // agent's session closes, nothing lingers into the next call.
-    const roomName = `friday-${
-      typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)
-    }`;
+    /* A fresh room per call: the shared fixed room once accumulated
+       one agent per call, which is exactly the dead-air failure this
+       design replaced. A new room gives every call exactly one agent
+       and a clean lifecycle — the room empties when the call ends. */
+    const suffix =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID().slice(0, 8)
+        : Math.random().toString(36).slice(2, 10);
+    const roomName = `friday-${suffix}`;
 
     const room = new Room({ adaptiveStream: true, dynacast: true });
     let startupComplete = false;
@@ -177,7 +167,7 @@ export function VoiceCall({
     }
 
     try {
-      const identity = `owner-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)}`;
+      const identity = `owner-${suffix}`;
       const body = await requestJson<{ server_url: string; token: string }>(
         `/api/livekit/token?room=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(identity)}`,
       );
@@ -211,21 +201,24 @@ export function VoiceCall({
         const self = speakers.some((s) => s.identity?.startsWith("owner-"));
         setPeerSpeaking(peer);
         setMicSpeaking(self);
-        /* progressive honesty: once FRIDAY actually speaks, the dock stops
-           saying "waking up" — the owner sees the line came alive. */
+        /* Once FRIDAY actually speaks, the line stops saying "waking
+           up" — the owner can see the call came alive. */
         if (peer) {
-          setMessage((current) => (current.startsWith("Line open") ? "Live — speak naturally, interrupt anytime." : current));
+          setMessage((current) => (current.startsWith("Line's open") ? "We're live. Talk over me whenever you need to." : current));
         }
       });
 
       let lastRtt: number | null = null;
       let lastLoss: number | null = null;
-      room.on(RoomEvent.ConnectionQualityChanged, (quality: any, participant: any) => {
-        if (!participant?.isLocal) return;
-        const info = participant.connectionQuality;
+      room.on(RoomEvent.ConnectionQualityChanged, (_quality: unknown, participant: unknown) => {
+        const p = participant as
+          | { isLocal?: boolean; connectionQuality?: { rtt?: unknown; roundTripTime?: unknown; loss?: unknown; fractionLost?: unknown } }
+          | undefined;
+        if (!p?.isLocal) return;
+        const info = p.connectionQuality;
         if (info && typeof info === "object") {
-          const rtt = (info as any).rtt ?? (info as any).roundTripTime;
-          const loss = (info as any).loss ?? (info as any).fractionLost;
+          const rtt = info.rtt ?? info.roundTripTime;
+          const loss = info.loss ?? info.fractionLost;
           if (typeof rtt === "number" && rtt > 0) lastRtt = rtt;
           if (typeof loss === "number" && loss >= 0 && loss <= 1) lastLoss = loss * 100;
         }
@@ -255,33 +248,36 @@ export function VoiceCall({
         }
       };
 
+      const settleClosed = async (duration: number) => {
+        await postDiagnostics(duration > 0 ? (lastRtt != null && lastRtt < 250 ? "good" : "degraded") : "no-session-yet", duration);
+        roomRef.current = null;
+        clearAudioElements();
+        setPeerSpeaking(false);
+        setMicSpeaking(false);
+        setSeconds(0);
+        setStatus("idle");
+        setMessage("Line closed.");
+      };
+
       room.on(RoomEvent.Disconnected, async () => {
-        // A failed setup owns its cleanup/error state. It was never a live
-        // session: do not reconnect it or asynchronously overwrite its error.
+        /* A failed setup owns its cleanup and its error state — it was
+           never a live session, so no reconnect and no overwrite. */
         if (startupFailed) return;
         if (!startupComplete) {
           startupDisconnected = true;
           return;
         }
         const duration = (Date.now() - sessionStartRef.current) / 1000;
-        /* Intentional end (End-call button): never resurrect the line,
-           never burn a reconnect attempt — post the session report and
-           settle. The auto-reconnect below stays for GENUINE drops. */
+        /* Intentional end: report the session and settle. Never
+           resurrect a line the owner closed on purpose. */
         if (intentionalEndRef.current) {
-          await postDiagnostics(duration > 0 ? (lastRtt != null && lastRtt < 250 ? "good" : "degraded") : "no-session-yet", duration);
-          roomRef.current = null;
-          clearAudioElements();
-          setPeerSpeaking(false);
-          setMicSpeaking(false);
-          setSeconds(0);
-          setStatus("idle");
-          setMessage("Voice line closed.");
+          await settleClosed(duration);
           return;
         }
         if (reconnectAttempts < MAX_RECONNECT && Date.now() - lastActivityRef.current < IDLE_TIMEOUT_MS) {
           reconnectAttempts += 1;
           setStatus("connecting");
-          setMessage(`Line dropped — reconnecting (${reconnectAttempts}/${MAX_RECONNECT})…`);
+          setMessage(`The line dropped — bringing it back (${reconnectAttempts}/${MAX_RECONNECT})…`);
           try {
             await new Promise((r) => setTimeout(r, 1000 * reconnectAttempts));
             if (!roomRef.current) {
@@ -292,26 +288,19 @@ export function VoiceCall({
               connectedAtRef.current = Date.now();
               lastActivityRef.current = Date.now();
               setStatus("connected");
-              setMessage("Reconnected — speak naturally.");
+              setMessage("Back with you — go ahead.");
               return;
             }
           } catch {
-            /* fall through to the honest "line closed" path below */
+            /* fall through to the honest closed path */
           }
         }
-        await postDiagnostics(duration > 0 ? (lastRtt != null && lastRtt < 250 ? "good" : "degraded") : "no-session-yet", duration);
-        roomRef.current = null;
-        clearAudioElements();
-        setPeerSpeaking(false);
-        setMicSpeaking(false);
-        setSeconds(0);
-        setStatus("idle");
-        setMessage("Voice line closed.");
+        await settleClosed(duration);
       });
 
       await room.connect(body.server_url, body.token);
       await room.localParticipant.setMicrophoneEnabled(true);
-      if (startupDisconnected) throw new Error("Voice disconnected during startup. Tap to retry.");
+      if (startupDisconnected) throw new Error("The line dropped while it was opening. Tap to try again.");
 
       startupComplete = true;
       roomRef.current = room;
@@ -321,66 +310,74 @@ export function VoiceCall({
       sessionStartRef.current = Date.now();
       setSeconds(0);
       setStatus("connected");
-      setMessage("Line open — FRIDAY is waking up and will greet you in a few seconds.");
+      setMessage("Line's open. Give me a moment — I'll say hello first.");
     } catch (error) {
-      const reason = error instanceof Error ? error.message : "Voice connection failed.";
+      const reason = error instanceof Error ? error.message : "The voice line couldn't open.";
       startupFailed = true;
       intentionalEndRef.current = true;
-      // roomRef is assigned only after microphone publication succeeds. Clean
-      // the locally allocated room even when setup failed before that point.
-      try { await room.disconnect(); } catch { /* retain the original error */ }
+      /* roomRef is only assigned after the mic publishes; clean the
+         locally allocated room even when setup failed before that. */
+      try {
+        await room.disconnect();
+      } catch {
+        /* retain the original error */
+      }
       roomRef.current = null;
       clearAudioElements();
       setStatus("error");
       setMessage(
         reason.includes("permission") || reason.toLowerCase().includes("denied")
-          ? "Mic permission denied — allow it in the browser, then tap again."
+          ? "Mic permission denied — the browser blocked it. Allow mic access for this site, then tap again."
           : reason,
       );
     }
   }
 
   return (
-    <div className="voice-rail panel">
-      <div className="rail-orb">
-        <Orbital agents={orbitAgents} duration={46}>
-          <OrbCore state={orbState} showLabel={true} />
-        </Orbital>
-      </div>
-      <div className="rail-state" aria-live="polite">
-        <strong>{message}</strong>
+    <div className="voice-line">
+      <button
+        type="button"
+        className="arc-button"
+        onClick={() => {
+          /* The ring starts a call; it never ends one — an accidental
+             tap mid-conversation must not hang up. The End call
+             button below owns ending. */
+          if (status === "idle" || status === "error") void startCall();
+        }}
+        disabled={status === "connecting" || (workerFailed && status === "idle")}
+        aria-label={status === "connected" ? "Voice call in progress" : "Start a voice call with FRIDAY"}
+        title={workerFailed && status === "idle" ? `Voice service unavailable: ${worker?.detail || worker?.state}` : undefined}
+      >
+        <Arc state={arcState} />
+      </button>
+
+      <div className="line-readout" aria-live="polite">
+        <strong className="line-message">{message}</strong>
         {status === "connected" && (
-          <span className="voice-timer">
+          <span className="line-timer">
             <span className="rec-dot" aria-hidden="true" />
             {formatClock(seconds)}
           </span>
         )}
       </div>
-      {(workerFailed) && status === "idle" && (
-        <p
-          className="rail-note"
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 7,
-            textAlign: "left",
-            color: "var(--warn)",
-          }}
-        >
-          <AlertTriangle size={14} style={{ flex: "none", marginTop: 2 }} />
-          <span>Voice line unavailable: {worker?.detail || worker?.state}</span>
+
+      {workerFailed && status === "idle" && (
+        <p className="line-warning" role="alert">
+          <AlertTriangle size={14} aria-hidden="true" />
+          <span>The voice service can&apos;t take a call right now: {worker?.detail || worker?.state}</span>
         </p>
       )}
+
       <button
-        className={`btn ${status === "connected" ? "btn-danger" : "btn-primary"} btn-lg btn-voice`}
-        onClick={() => (status === "connected" ? endCall("Voice line closed.") : startCall())}
+        type="button"
+        className={`call-btn ${status === "connected" ? "is-live" : ""}`}
+        onClick={() => (status === "connected" ? endCall("Line closed.") : void startCall())}
         disabled={status === "connecting" || (workerFailed && status === "idle")}
-        title={workerFailed && status === "idle" ? `Voice backend unavailable: ${worker?.detail || worker?.state}` : undefined}
         aria-label={status === "connected" ? "End voice call" : "Start voice call"}
       >
         {status === "connecting" ? (
           <>
-            <Radio size={17} className="spin" /> Connecting…
+            <Radio size={17} className="spin" /> Connecting
           </>
         ) : status === "connected" ? (
           <>
@@ -388,15 +385,15 @@ export function VoiceCall({
           </>
         ) : (
           <>
-            <Mic size={17} /> Start voice
+            <Mic size={17} /> Talk to FRIDAY
           </>
         )}
       </button>
+
       {audioBlocked && (
-        <p className="rail-note rail-warn">Browser blocked playback — tap anywhere on the page, then press the button again.</p>
+        <p className="line-note warn">Your browser held back the sound — tap anywhere once, then press the button again.</p>
       )}
-      <p className="rail-note">English or Telugu · full-duplex · auto-closes when idle to protect free minutes</p>
-      {footer && <div className="rail-footer">{footer}</div>}
+      <p className="line-note">English or Telugu · I hear you through the whole call, not in turns</p>
     </div>
   );
 }
