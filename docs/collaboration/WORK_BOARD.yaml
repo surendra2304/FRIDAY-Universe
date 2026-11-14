@@ -4559,6 +4559,39 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-REL-032 crew). Residuals for the coordinator: (1) gemini-3.8-flash stays in the catalogue although free-tier demand makes Google 503/timeout often - the model exists and the route now substitutes WITH provenance or 503s honestly; removing it is an owner product call, not a correctness fix. (2) NVIDIA route unadvertised until the NIM key gains entitlement for the catalogue model (403 is credential-side). (3) Cerebras adapter exists but no keys are configured in production - catalogue removal reflects deployment truth. (4) Documented-not-fixed descriptive references: deliberation_engine MODEL_FAMILIES gpt/claude/llama rows, routers/multi_model_deliberation.py (canned/simulated module), mesh PEER_METADATA primary_model values (incl. deepseek/deepseek-r1, absent from OpenRouter's current list), gateway.py speculative path hardcodes gemini-3.8-flash (live model, demand-limited), gemini-2.5-flash-lite / 2.5-pro / pro-latest and gemini-3.7-flash / 3.5-flash are present in Google's model list but generation-unverified - none are advertised."
 
+  - id: TASK-REL-041
+    title: "REL-029 history write-through deadlocks under parallel load: serialise ConversationHistoryStore writes process-wide and retry transient Oracle lock errors (ORA-00060/ORA-00054) with bounded backoff"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-rel-041-history-deadlock
+    prs: [254]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T05:01:00+05:30"
+    updated_at: "2026-11-15T05:13:15+05:30"
+    files:
+      - "FRIDAY/src/friday/api/history_store.py"
+      - "FRIDAY/tests/test_rel041_history_write_concurrency.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6885716750"
+    defect: "Follow-up finding (2) from TASK-REL-039: during its live 19-turn production barrage (2026-11-15 04:29 IST), friday.api.history_store logged 16x ORA-00060 deadlock warnings and the victim writes returned False, so those turns stayed memory-only per REL-029's design and would have been lost on the next restart. Root cause: ConversationHistoryStore ran every Oracle write fully concurrently (server.py persists via asyncio.to_thread, one pooled connection per writer); each insert is INSERT + the 10000-row cap-trim DELETE in one transaction, and concurrent insert/trim transactions deadlock each other. The pending-sync retry loop in server.py amplifies the writer count under load."
+    acceptance:
+      - "Staged reproduction of the deadlock against the production store code path (fake Oracle engine modelling the observed victim-kill behaviour), then the same harness green with the fix."
+      - "Fix is narrow and inside ConversationHistoryStore: writes serialised and/or transient lock errors retried with bounded jittered backoff; no schema change, no new dependencies."
+      - "REL-029 semantics preserved exactly: commit-before-dispatch ordering, upsert-on-reply, boot hydration merge by entry id, the 10000-row cap trim on insert, read-failure-returns-None."
+      - "New tests fail on clean main and pass with the fix; REL-029/REL-007 neighbour suites unchanged and green."
+      - "Live acceptance on production: >=12 concurrent /api/chat turns with unique markers; every marker verified present in the durable store (direct conversation_history query); zero ORA-00060 in the FRIDAY journal for the window; one FRIDAY restart after which the barrage turns are still served (hydration)."
+    evidence:
+      - "REPRO (staged, production code path + fake engine modelling Oracle's deadlock-victim behaviour): 12 concurrent inserts on clean main -> 1 landed, 11 lost, each logging the identical 'Failed to insert conversation history to Oracle: ORA-00060' warning the production journal showed. With the fix: 12/12 and 19/19 landed, max concurrent write transactions = 1."
+      - "FIX (PR #254, merged 7d8ebd5f): history_store.py only. (1) All durable writes (insert/update/upsert/delete_all, both backends) serialised process-wide behind one threading.RLock; upsert holds it across its update+insert pair, which also closes a miss->insert unique-constraint race. (2) Oracle writes run through _oracle_write: up to 4 attempts, exponential backoff + jitter, retrying ONLY transient lock errors (ORA-00060 deadlock / ORA-00054 resource busy, detected through the SQLAlchemy exception chain); any other error keeps the prior contract (one warning, return False, caller retries from memory later). The retry covers writers outside this process, which the lock cannot serialise. Module docstring updated; no schema change; no new dependencies."
+      - "TESTS: new FRIDAY/tests/test_rel041_history_write_concurrency.py (8 tests). On clean main: 5 fail / 3 pass (guards) - concurrent-insert serialisation, async-wrapper barrage, insert retry and update retry fail behaviourally; the deadlock-detector test fails because the helper is new. With the fix: 8/8 pass. Neighbours unchanged and green in the same environment: test_rel029_history_store.py 8/8, test_rel029_durable_history.py 5/5, test_chat_persistence_timeout_rel007.py 4/4."
+      - "CI (PR #254): test, contracts and secrets checks SUCCESS. The two repo-policy jobs (Validate fleet layout / Validate monorepo-only policy) fail on this PR exactly as they do on main itself tonight (flagged by REL-031/032/038/039 crews; scripts/validate_fleet.py run locally passes with byte-identical output on pristine main and on this branch, and the change surface - one FRIDAY source file + one FRIDAY test file - does not intersect those validators)."
+      - "DEPLOY: Fleet CD carried Server 1 to merge 7d8ebd5f; deployed history_store.py sha256 b318ea4aecf448cdb8b97f9400b8473dd7e804f99029d595fe907888bbba79f2 == merged file; FRIDAY.service restarted by Fleet CD 2026-11-15 05:05:22 IST (MainPID 2530668), active, /health 200."
+      - "LIVE ACCEPTANCE (production, Server 1, 2026-11-15 05:07:28-05:08:33 IST): barrage of 14 concurrent /api/chat turns with unique markers REL041ACC0507-00..13 -> 14/14 HTTP 200, every reply non-empty. Direct conversation_history query (fleet venv + friday.core.oracle): 14/14 markers present, exactly 1 row each, finalized reply on every row. FRIDAY journal for the window: 0x ORA-00060, 0 failed history writes, 0 retries needed (serialisation prevented any deadlock from forming)."
+      - "RESTART SURVIVAL: FRIDAY restarted via the bridge at 05:11:05 IST (MainPID 2530900); journal 'Conversation history restored from durable store: 80 entries'; post-restart GET /api/v1/conversation/history contains all 14 barrage markers; post-restart store query still 14/14; ORA-00060 count for the whole period since 05:07 IST: 0."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-REL-041 crew): PR #254 merged, deploy fingerprint-verified on Server 1, live acceptance passed (turns sent 14 / HTTP 200 14 / markers durable 14, verified pre- and post-restart / ORA-00060 observed 0). Residuals (not this task): (1) turns written while Oracle is unreachable still stay memory-only until a later write retries them (REL-029's accepted trade-off, unchanged); (2) the two repo-policy CI jobs remain red on main itself - coordinator CI-hygiene follow-up already owed."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
