@@ -55,6 +55,16 @@ COOLDOWN_DURATIONS: dict[FailureCategory, float] = {
     FailureCategory.UNKNOWN: 60.0,
 }
 
+# Hard ceiling on any single cooldown (except AUTH_FAILED, where a dead key
+# should stay benched). Google 429 responses carry a retry delay that can
+# point at the daily-quota reset (~20h away); honouring it unboundedly meant
+# ONE transient 429 benched a key for a day, and a single high-demand burst
+# benched the whole pool while most keys were healthy again within minutes
+# (production incident 2026-11-14, TASK-REL-010). Capping turns recovery
+# into a cheap re-probe: a genuinely exhausted key costs one failed call per
+# cap window and re-benches itself; a recovered key returns to service.
+MAX_COOLDOWN_SECONDS = 1800.0
+
 
 @dataclass
 class Credential:
@@ -251,6 +261,13 @@ class GeminiCredentialPool:
                         try:
                             cooldown = datetime.fromisoformat(meta["cooldown_until"])
                             if cooldown > now:
+                                # Clamp long cooldowns persisted before the
+                                # cap existed (TASK-REL-010): a state file
+                                # must not pin a key out of service for ~20h.
+                                if meta.get("failure_category") != FailureCategory.AUTH_FAILED.value:
+                                    cap_until = now + timedelta(seconds=MAX_COOLDOWN_SECONDS)
+                                    if cooldown > cap_until:
+                                        cooldown = cap_until
                                 cred.cooldown_until = cooldown
                                 cred.failure_count = meta.get("failure_count", 1)
                                 cat_str = meta.get("failure_category", "unknown_error")
@@ -478,6 +495,11 @@ class GeminiCredentialPool:
                     except Exception:
                         pass
 
+            # Cap the cooldown (see MAX_COOLDOWN_SECONDS): a retry delay
+            # stated by Google is honoured up to the ceiling, never beyond.
+            if category != FailureCategory.AUTH_FAILED:
+                cooldown_dur = min(cooldown_dur, MAX_COOLDOWN_SECONDS)
+
             cred.failure_count += 1
             cred.last_failed_at = datetime.utcnow()
             cred.last_failure_category = category
@@ -591,6 +613,7 @@ mistral_credential_pool = OpenAICompatibleCredentialPool(
 
 __all__ = [
     "COOLDOWN_DURATIONS",
+    "MAX_COOLDOWN_SECONDS",
     "Credential",
     "FailureCategory",
     "GeminiCredentialPool",

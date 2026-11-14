@@ -100,3 +100,51 @@ class FallbackChainLLMProvider(BaseLLMProvider):
         raise LLMProviderError(
             "All providers in fallback chain failed. " + " | ".join(failures)
         )
+
+class ExhaustionFailoverProvider(BaseLLMProvider):
+    """Primary provider guarded by a single-purpose exhaustion safety net.
+
+    When the primary raises an `LLMProviderError` signalling credential-pool
+    exhaustion (`CREDENTIAL_EXHAUSTED` - every key in its pool is benched),
+    the call is delegated to the fallback provider (in production: Groq, the
+    owner's designated text fallback). Every other error propagates
+    unchanged: this wrapper exists for pool exhaustion only, not general
+    cross-provider failover (that is `FallbackChainLLMProvider`'s job, used
+    when the owner configures provider='chain').
+
+    Production background (TASK-REL-010, 2026-11-14): with
+    FRIDAY_LLM_PROVIDER=gemini the factory returned a bare Gemini provider,
+    so when the Gemini pool exhausted, chat died outright even though a
+    healthy Groq key was configured.
+    """
+
+    def __init__(self, primary: BaseLLMProvider, fallback: BaseLLMProvider):
+        super().__init__(
+            model=primary.model,
+            temperature=primary.temperature,
+            max_tokens=primary.max_tokens,
+        )
+        self.primary = primary
+        self.fallback = fallback
+
+    @property
+    def provider_name(self) -> str:
+        return self.primary.provider_name
+
+    def generate(
+        self,
+        messages: list[Message],
+        tools: list[dict[str, Any]] | None = None,
+    ) -> Message:
+        try:
+            return self.primary.generate(messages, tools)
+        except LLMProviderError as e:
+            if "CREDENTIAL_EXHAUSTED" not in str(e):
+                raise
+            logger.warning(
+                f"Primary provider '{self.primary.provider_name}' reports credential "
+                f"exhaustion ({e}); failing over to '{self.fallback.provider_name}' "
+                "(text fallback) for this call."
+            )
+            return self.fallback.generate(messages, tools)
+

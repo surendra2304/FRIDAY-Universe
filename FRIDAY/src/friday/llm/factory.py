@@ -14,7 +14,10 @@ from friday.core.exceptions import ConfigError
 from friday.core.logging import get_logger
 from friday.llm.ai_universe_provider import AIUniverseLLMProvider
 from friday.llm.base import BaseLLMProvider
-from friday.llm.fallback_chain_provider import FallbackChainLLMProvider
+from friday.llm.fallback_chain_provider import (
+    ExhaustionFailoverProvider,
+    FallbackChainLLMProvider,
+)
 from friday.llm.gemini_provider import GeminiLLMProvider
 from friday.llm.groq_provider import GROQ_DEFAULT_MODEL, GroqLLMProvider
 from friday.llm.mistral_provider import MISTRAL_DEFAULT_MODEL, MistralLLMProvider
@@ -92,7 +95,7 @@ def create_llm_provider(settings: Settings) -> BaseLLMProvider:
         temperature = settings.gemini_temperature if settings.gemini_temperature is not None else settings.llm_temperature
         max_tokens = settings.gemini_max_tokens if settings.gemini_max_tokens is not None else settings.llm_max_tokens
         logger.info(f"Initializing Google Gemini Provider (model: {model_name}, cost_mode: {settings.cost_mode})")
-        return GeminiLLMProvider(
+        gemini_provider = GeminiLLMProvider(
             api_key=api_key,
             credential_pool=credential_pool,
             model=model_name,
@@ -104,6 +107,37 @@ def create_llm_provider(settings: Settings) -> BaseLLMProvider:
             cost_mode=settings.cost_mode,
             thinking_level=getattr(settings, "llm_thinking_level", "medium"),
         )
+
+        # TASK-REL-010: pool-exhaustion failover. The owner's design makes
+        # Groq the text fallback, but this branch historically returned the
+        # bare Gemini provider, so a fully benched Gemini pool killed chat
+        # outright (production incident 2026-11-14). When a Groq credential
+        # is configured, wrap Gemini in a single-purpose exhaustion failover
+        # whose fallback is a Groq provider built by the groq branch itself
+        # (identical construction, no duplicated configuration).
+        groq_available = (
+            bool(getattr(settings, "groq_api_key", None))
+            or bool(os.getenv("FRIDAY_GROQ_API_KEY"))
+            or bool(getattr(groq_credential_pool, "credentials", None))
+        )
+        if groq_available:
+            try:
+                groq_provider = create_llm_provider(
+                    settings.model_copy(update={"llm_provider": "groq"})
+                )
+                logger.info(
+                    "Gemini pool-exhaustion failover armed: Groq text provider "
+                    "stands by if the Gemini credential pool is exhausted."
+                )
+                return ExhaustionFailoverProvider(
+                    primary=gemini_provider, fallback=groq_provider
+                )
+            except Exception as exc:
+                logger.warning(
+                    f"Groq exhaustion failover could not be constructed ({exc}); "
+                    "continuing with the Gemini provider only."
+                )
+        return gemini_provider
 
     if provider_type == "groq":
         # Ensure Groq never inherits Gemini model names
