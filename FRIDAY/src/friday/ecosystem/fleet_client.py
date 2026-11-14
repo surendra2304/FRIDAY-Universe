@@ -115,6 +115,72 @@ except (TypeError, ValueError):
     FLEET_PROBE_DEADLINE_SECONDS = 20.0
 
 
+# TASK-VYR-002: generic chat delegations to VyralX (FleetDispatchTool sends
+# action="execute" / capability="vyralx.task" with the owner's words in the
+# payload) used to be BLOCKED sight-unseen, because "execute" is not one of
+# VyralX's allowlisted task types — no HTTP call was ever made, while the
+# typed vyralx_* tools worked. The translation below maps the free-text task
+# onto the capability it actually asks for. Capabilities whose inputs cannot
+# be honestly inferred from free text (render/publish/project/voiceover need
+# ids and rights confirmations) stay blocked — with the specific reason, not
+# a blanket refusal.
+_VYRALX_STRUCTURED_ONLY = (
+    ("publish", "publish.request",
+     "publishing needs a completed render, verified rights confirmations and your explicit approval inside VyralX"),
+    ("upload", "publish.request",
+     "uploading is a publish action: it needs a completed render, verified rights confirmations and your explicit approval inside VyralX"),
+    ("render the video", "render.create",
+     "rendering needs the numeric asset_id of a rights-verified asset, which free text cannot supply"),
+    ("render my video", "render.create",
+     "rendering needs the numeric asset_id of a rights-verified asset, which free text cannot supply"),
+    ("render job", "render.create",
+     "rendering needs the numeric asset_id of a rights-verified asset, which free text cannot supply"),
+    ("add voiceover", "content.voiceover",
+     "a voiceover needs the numeric content_pack_id of an existing content pack, which free text cannot supply"),
+    ("voiceover for pack", "content.voiceover",
+     "a voiceover needs the numeric content_pack_id of an existing content pack, which free text cannot supply"),
+    ("voiceover for content", "content.voiceover",
+     "a voiceover needs the numeric content_pack_id of an existing content pack, which free text cannot supply"),
+    ("create a project", "project.create",
+     "creating a video project needs the explicit Pexels license confirmation (confirm_pexels_license), which must not be inferred from chat wording"),
+    ("new video project", "project.create",
+     "creating a video project needs the explicit Pexels license confirmation (confirm_pexels_license), which must not be inferred from chat wording"),
+    ("start a project", "project.create",
+     "creating a video project needs the explicit Pexels license confirmation (confirm_pexels_license), which must not be inferred from chat wording"),
+)
+
+
+def _translate_vyralx_generic_task(task_text: str) -> tuple[str, dict[str, Any]] | tuple[None, str]:
+    """Translate a free-text VyralX task into (task_type, input).
+
+    Returns (None, reason) when the named capability cannot be honestly
+    built from free text; the caller BLOCKs with that specific reason.
+    """
+    text = (task_text or "").strip()
+    low = text.lower()
+    for keyword, task_type, reason in _VYRALX_STRUCTURED_ONLY:
+        if keyword in low:
+            return None, (
+                f"VyralX {task_type} cannot be assigned from a free-text chat task: {reason}. "
+                "No task was submitted."
+            )
+    if len(text) < 3:
+        return None, (
+            "The task text is too short to brief VyralX with (its content brief needs at least 3 characters). "
+            "No task was submitted."
+        )
+    discover_verbs = ("discover", "find", "search", "look for", "trending", "stock footage", "b-roll")
+    if any(verb in low for verb in discover_verbs):
+        if "pexels" in low or "stock" in low:
+            return "discover.pexels", {"query": text[:200]}
+        if "youtube" in low or "trending" in low or "viral" in low:
+            return "discover.youtube", {"query": text[:200]}
+    # The default generic VyralX assignment is a content brief: VyralX
+    # generates a real content pack (hook, script, scene plan, titles) for
+    # the topic via its content.generate capability.
+    return "content.generate", {"topic": text[:500]}
+
+
 class FleetClient:
     """Unified client for live communication with all FRIDAY Universe specialist agents."""
 
@@ -1364,6 +1430,39 @@ class FleetClient:
                 "success": False,
             }
 
+    async def fetch_vyralx_task(self, task_id: str) -> dict[str, Any] | None:
+        """Read one VyralX agent task (status + result) by id.
+
+        TASK-VYR-002: VyralX tasks are asynchronous — POST /api/v1/tasks
+        returns 202/queued and the worker completes the task later. The
+        generic chat delegation path polls this endpoint so the owner gets
+        VyralX's real finished output, not a bare "pending". Returns None
+        when the task cannot be read (not configured, HTTP error, transport
+        failure); callers must treat None as "unknown", never as success.
+        """
+        if not self.vyralx_url or not self.vyralx_key or not task_id:
+            return None
+        headers = {
+            "X-API-Key": self.vyralx_key,
+            "Authorization": f"Bearer {self.vyralx_key}",
+        }
+        try:
+            resp = await self.get_shared_client().get(
+                f"{self.vyralx_url}/api/v1/tasks/{task_id}",
+                headers=headers,
+                timeout=8.0,
+                follow_redirects=False,
+            )
+        except Exception:
+            return None
+        if resp.status_code != 200:
+            return None
+        try:
+            data = resp.json()
+        except Exception:
+            return None
+        return data if isinstance(data, dict) else None
+
     async def get_fleet_summary(self) -> dict[str, Any]:
         """Generates a complete real-time status matrix across all 9 agents."""
         # TASK-REL-007D: respect the probe cache — a status question does
@@ -1549,7 +1648,52 @@ class FleetClient:
                 requested_type = str(
                     envelope.payload.get("task_type") or envelope.action or envelope.capability
                 ).strip().lower()
-                if requested_type not in supported_types:
+                # VyralX's manifest advertises vyralx-prefixed capability
+                # names (vyralx.content.generate); its task API takes the
+                # bare type. Normalize so both spellings hit one contract
+                # ("vyralx.task" normalizes to the generic "task").
+                if requested_type.startswith("vyralx."):
+                    requested_type = requested_type.removeprefix("vyralx.")
+
+                raw_input = envelope.payload.get("input")
+                task_input: dict[str, Any] | None = None
+                if requested_type in {"execute", "task", "generic", ""}:
+                    # TASK-VYR-002: generic delegation (the chat tool's
+                    # action="execute" / capability="vyralx.task") used to
+                    # fall into the BLOCKED below without any HTTP call.
+                    # Translate the free-text task into a real capability.
+                    if isinstance(raw_input, dict) and raw_input.get("topic"):
+                        requested_type = "content.generate"
+                        task_input = raw_input
+                    elif isinstance(raw_input, dict) and raw_input.get("query"):
+                        requested_type = "discover.youtube"
+                        task_input = raw_input
+                    else:
+                        task_text = str(
+                            envelope.payload.get("task")
+                            or envelope.payload.get("prompt")
+                            or envelope.objective
+                            or ""
+                        ).strip()
+                        translated_type, translated = _translate_vyralx_generic_task(task_text)
+                        if translated_type is None:
+                            return TaskResult(
+                                task_id=envelope.task_id,
+                                target_agent=envelope.target_agent,
+                                status=TaskStatus.BLOCKED,
+                                error=translated,
+                                execution_time_ms=int((time.time() - t0) * 1000),
+                            )
+                        requested_type = translated_type
+                        # Carry extra structured fields the caller supplied
+                        # (e.g. video_format) alongside the translated brief.
+                        task_input = {
+                            key: value
+                            for key, value in envelope.payload.items()
+                            if key not in {"task_type", "correlation_id", "task", "prompt"}
+                        }
+                        task_input.update(translated)
+                elif requested_type not in supported_types:
                     return TaskResult(
                         task_id=envelope.task_id,
                         target_agent=envelope.target_agent,
@@ -1570,23 +1714,23 @@ class FleetClient:
                         execution_time_ms=int((time.time() - t0) * 1000),
                     )
 
-                raw_input = envelope.payload.get("input")
-                if raw_input is not None:
-                    if not isinstance(raw_input, dict):
-                        return TaskResult(
-                            task_id=envelope.task_id,
-                            target_agent=envelope.target_agent,
-                            status=TaskStatus.BLOCKED,
-                            error="VyralX input must be a JSON object; no task was submitted.",
-                            execution_time_ms=int((time.time() - t0) * 1000),
-                        )
-                    task_input = raw_input
-                else:
-                    task_input = {
-                        key: value
-                        for key, value in envelope.payload.items()
-                        if key not in {"task_type", "correlation_id"}
-                    }
+                if task_input is None:
+                    if raw_input is not None:
+                        if not isinstance(raw_input, dict):
+                            return TaskResult(
+                                task_id=envelope.task_id,
+                                target_agent=envelope.target_agent,
+                                status=TaskStatus.BLOCKED,
+                                error="VyralX input must be a JSON object; no task was submitted.",
+                                execution_time_ms=int((time.time() - t0) * 1000),
+                            )
+                        task_input = raw_input
+                    else:
+                        task_input = {
+                            key: value
+                            for key, value in envelope.payload.items()
+                            if key not in {"task_type", "correlation_id"}
+                        }
 
                 correlation_id = str(
                     envelope.payload.get("correlation_id")

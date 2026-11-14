@@ -1,56 +1,88 @@
 """
 VyralX/app/services/analytics_predictor.py — VyralX Analytics Predictor.
 
-Extends VyralX's capabilities with:
-1. View Count Prediction: predict future view counts using growth models
-2. Audience Retention Forecasting: predict audience retention over time
-3. Video Performance Scoring: score videos before publishing
-4. Channel Growth Modeling: model channel growth trajectories
-5. Competitor Analysis: analyze competitor channels and content
-6. Trend Detection: detect emerging trends in the niche
+HONESTY CONTRACT (TASK-VYR-002, following the TASK-REL-020 fleet standard):
+
+This module is a **deterministic heuristic estimator over caller-supplied
+inputs**. It is not trained on, or calibrated against, any measured channel
+data — VyralX has no analytics feed wired into it, and nothing in the fleet
+calls it in production today. It therefore follows the same rules as the
+REL-020-remediated VyralX surfaces:
+
+- every result carries ``data_status`` and a ``basis`` naming the exact
+  assumptions/formula the number came from;
+- ``confidence`` is always ``None``: a confidence figure would claim
+  calibration against real outcomes, and no such data exists here;
+- NO randomness anywhere — the same inputs always produce the same outputs
+  (the previous retention forecaster added ``random.uniform`` jitter to a
+  reported curve, and estimated watch hours from a silent "100 viewers"
+  constant; both are removed);
+- a quantity that cannot be derived from the supplied inputs is ``None``
+  with ``data_status="no_data"``, never an invented constant.
+
+Capabilities:
+1. View Count Estimation: heuristic estimate of future view counts
+2. Audience Retention Modelling: deterministic retention-curve model
+3. Video Performance Scoring: heuristic pre-publish score over the above
+4. Channel Growth Projection: compound-growth scenario over stated rates
+5. Competitor Analysis: rule-based gap notes over caller-supplied figures
+6. Trend Detection: keyword frequencies measured from supplied results
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
+
+# The view-estimate model's stated assumptions. These are heuristic choices,
+# not measurements; they are surfaced verbatim in every prediction's basis.
+_BASE_VIEW_FRACTION = 0.10  # assumes 10% of subscribers watch a new upload
+_HIGH_DEMAND_NICHES = {"technology", "gaming", "finance", "education", "howto"}
+_LIFESTYLE_NICHES = {"lifestyle", "beauty", "fashion"}
 
 
 @dataclass
 class ViewPrediction:
-    """Predicted view count for a video."""
+    """Heuristic view-count estimate for a video (not a measured forecast)."""
     title: str
     predicted_views: int
     predicted_ctr: float
     growth_rate: float
-    confidence: float
+    confidence: float | None  # always None — no calibration data exists
     time_to_peak: float  # hours
+    data_status: str = "estimated_from_inputs"
+    basis: str = ""
 
 
 @dataclass
 class RetentionForecast:
-    """Retention forecast for a video."""
+    """Deterministic retention-curve model output."""
     title: str
     predicted_retention_curve: list[float]
-    estimated_watch_hours: float
+    estimated_watch_hours: float | None  # None unless a viewer estimate is supplied
     drop_off_points: list[float]  # timestamps where big drops happen
     engagement_score: float
+    data_status: str = "estimated_from_inputs"
+    basis: str = ""
 
 
 @dataclass
 class ChannelGrowthModel:
-    """Channel growth trajectory model."""
+    """Compound-growth scenario projection (stated rates, not a forecast)."""
     channel_name: str
     current_subscribers: int
     predicted_subscribers: int
     growth_rate: float
     projected_months: int
-    confidence: float
+    confidence: float | None  # always None — no calibration data exists
     risk_factors: list[str]
+    data_status: str = "estimated_from_inputs"
+    basis: str = ""
+    assumptions: list[str] = field(default_factory=list)
 
 
 @dataclass
 class CompetitorInsight:
-    """Insights from competitor analysis."""
+    """Rule-based gap notes over caller-supplied competitor figures."""
     competitor_name: str
     total_videos: int
     avg_views: int
@@ -59,10 +91,16 @@ class CompetitorInsight:
     engagement_rate: float
     subscriber_growth: float
     gap_analysis: str
+    data_status: str = "caller_supplied"
+    basis: str = "All figures are the caller's own inputs, echoed unchanged; gap notes are threshold rules over those inputs. No competitor data is fetched or measured by VyralX."
 
 
 class AnalyticsPredictor:
-    """Predictive analytics for YouTube channel optimization."""
+    """Heuristic predictive analytics for YouTube channel planning.
+
+    Every method is a pure function of its inputs (plus the module's stated
+    heuristic constants). See the module docstring for the honesty contract.
+    """
 
     def __init__(self):
         self._predictions: list[ViewPrediction] = []
@@ -70,7 +108,7 @@ class AnalyticsPredictor:
         self._growth_models: dict[str, ChannelGrowthModel] = {}
         self._competitor_insights: dict[str, CompetitorInsight] = {}
 
-    # ── View Count Prediction ──────────────────────────────────────────────
+    # ── View Count Estimation ──────────────────────────────────────────────
 
     def predict_views(
         self,
@@ -81,9 +119,16 @@ class AnalyticsPredictor:
         niche: str = "",
         competitor_avg_views: int = 10000,
     ) -> ViewPrediction:
-        """Predict view count for a video before publishing."""
+        """Estimate view count for a video before publishing.
+
+        Heuristic model: base = 10% of the channel's subscribers, scaled by
+        title/description/tag/niche rule factors listed in the result basis.
+        ``competitor_avg_views`` is accepted for signature compatibility and
+        is not used by the model (it never was); it is named in the basis so
+        no reader believes it influenced the estimate.
+        """
         # Base views from channel size
-        base_views = channel_subscribers * 0.1  # 10% of subscribers watch
+        base_views = channel_subscribers * _BASE_VIEW_FRACTION
 
         # Title quality factor
         title_factor = 1.0
@@ -114,50 +159,69 @@ class AnalyticsPredictor:
 
         # Niche factor
         niche_factor = 1.0
-        high_demand_niches = {"technology", "gaming", "finance", "education", "howto"}
-        if niche.lower() in high_demand_niches:
+        if niche.lower() in _HIGH_DEMAND_NICHES:
             niche_factor *= 1.3
-        elif niche.lower() in {"lifestyle", "beauty", "fashion"}:
+        elif niche.lower() in _LIFESTYLE_NICHES:
             niche_factor *= 1.1
 
-        # Calculate predicted views
+        # Calculate estimated views
         predicted = base_views * title_factor * desc_factor * tag_factor * niche_factor
 
-        # CTR prediction
+        # CTR estimate (same heuristic factors; not a measured click rate)
         predicted_ctr = min(0.15, 0.05 * title_factor * niche_factor)
 
-        # Growth rate (views per day in first week)
+        # Growth rate (views per day in first week, per the model's 30% rule)
         growth_rate = predicted * 0.3  # 30% of views in first week
 
-        # Time to peak
+        # Time to peak (model rule, not an observation)
         time_to_peak = 48.0 if niche_factor > 1.2 else 72.0
-
-        # Confidence
-        confidence = min(0.9, 0.5 + (len(title) / 100.0) + (len(tags) / 20.0))
 
         prediction = ViewPrediction(
             title=title,
             predicted_views=int(predicted),
             predicted_ctr=predicted_ctr,
             growth_rate=growth_rate,
-            confidence=confidence,
+            confidence=None,
             time_to_peak=time_to_peak,
+            data_status="estimated_from_inputs",
+            basis=(
+                "Heuristic estimate, not a measured forecast: base = "
+                f"{_BASE_VIEW_FRACTION:.0%} of channel_subscribers "
+                f"({channel_subscribers}) x title_factor {title_factor:.3f} "
+                f"x description_factor {desc_factor:.3f} x tag_factor "
+                f"{tag_factor:.3f} x niche_factor {niche_factor:.3f}. "
+                "CTR assumes a 5% base scaled by the title/niche factors. "
+                "competitor_avg_views is accepted but not used by the model. "
+                "confidence is null: the model is not calibrated against "
+                "measured channel outcomes."
+            ),
         )
 
         self._predictions.append(prediction)
         return prediction
 
-    # ── Retention Forecasting ───────────────────────────────────────────────
+    # ── Retention Modelling ────────────────────────────────────────────────
 
     def forecast_retention(
         self,
         title: str,
         video_length: float,  # seconds
-        estimated_quality: float = 0.5,  # 0-1
-        estimated_hook_strength: float = 0.5,  # 0-1
+        estimated_quality: float = 0.5,  # 0-1, caller-supplied
+        estimated_hook_strength: float = 0.5,  # 0-1, caller-supplied
+        estimated_viewers: int | None = None,
     ) -> RetentionForecast:
-        """Forecast retention curve for a video."""
-        # Generate predicted retention curve
+        """Model a retention curve for a video, deterministically.
+
+        The curve is a fixed decline model over the caller's quality/hook
+        estimates — identical inputs always give the identical curve (the
+        previous implementation added random jitter to a reported number).
+
+        Watch hours are only computed when the caller supplies
+        ``estimated_viewers``: watch_hours = mean retention x video hours x
+        viewers. Without a viewer estimate the value is None (no_data) —
+        the previous silent "x 100 viewers" constant is gone.
+        """
+        # Generate modelled retention curve
         segments = min(50, int(video_length / 5))  # 5-second segments
         curve = []
 
@@ -172,16 +236,25 @@ class AnalyticsPredictor:
             # Slower decline for high quality
             segment_decline = decline_rate * (0.5 + (1.0 - estimated_quality) * 0.5)
 
-            # Add some randomness
-            import random
-            noise = random.uniform(-0.01, 0.01)
-
-            retention = curve[-1] - segment_decline + noise
+            retention = curve[-1] - segment_decline
             retention = max(0.1, min(1.0, retention))
             curve.append(retention)
 
-        # Estimate watch hours
-        watch_hours = sum(curve) * (video_length / 3600.0) * 100  # 100 = estimated viewers
+        # Estimate watch hours — only from a caller-supplied viewer estimate
+        if estimated_viewers is None:
+            watch_hours = None
+            watch_note = (
+                "estimated_watch_hours is null: no viewer estimate was "
+                "supplied, and watch hours cannot be derived without one."
+            )
+        else:
+            mean_retention = sum(curve) / len(curve) if curve else 0.0
+            watch_hours = mean_retention * (video_length / 3600.0) * estimated_viewers
+            watch_note = (
+                f"estimated_watch_hours = mean retention {mean_retention:.3f} "
+                f"x video length {video_length / 3600.0:.3f}h x caller-supplied "
+                f"estimated_viewers {estimated_viewers}."
+            )
 
         # Find drop-off points (big declines)
         drop_offs = []
@@ -190,7 +263,7 @@ class AnalyticsPredictor:
                 drop_offs.append(i * 5)  # Convert to seconds
 
         # Engagement score
-        engagement_score = sum(curve) / len(curve) * estimated_quality
+        engagement_score = sum(curve) / len(curve) * estimated_quality if curve else 0.0
 
         forecast = RetentionForecast(
             title=title,
@@ -198,6 +271,14 @@ class AnalyticsPredictor:
             estimated_watch_hours=watch_hours,
             drop_off_points=drop_offs,
             engagement_score=engagement_score,
+            data_status="estimated_from_inputs" if estimated_viewers is not None else "no_data",
+            basis=(
+                "Deterministic decline model over caller-supplied quality "
+                f"({estimated_quality}) and hook strength ({estimated_hook_strength}): "
+                f"initial retention {initial_retention:.3f}, per-segment decline "
+                f"derived from decline_rate {decline_rate:.4f}. No randomness. "
+                + watch_note
+            ),
         )
 
         self._forecasts.append(forecast)
@@ -214,7 +295,12 @@ class AnalyticsPredictor:
         video_length: float,
         channel_subscribers: int,
     ) -> dict[str, Any]:
-        """Score a video's likely performance before publishing."""
+        """Score a video's likely performance before publishing.
+
+        The score is a weighted blend of simple input ratios and the two
+        heuristic models above; it is labelled as such and carries no
+        confidence claim.
+        """
         prediction = self.predict_views(
             title=title,
             description=description,
@@ -233,12 +319,14 @@ class AnalyticsPredictor:
         tag_score = min(1.0, len(tags) / 10.0)
         retention_score = forecast.engagement_score
 
+        # The previous blend included the fabricated confidence figure as a
+        # 10% term; that term is removed and the remaining weights are
+        # renormalized (they now sum to 1.0 over the four real inputs).
         overall_score = (
-            title_score * 0.25 +
-            desc_score * 0.15 +
-            tag_score * 0.15 +
-            retention_score * 0.35 +
-            prediction.confidence * 0.10
+            title_score * 0.28 +
+            desc_score * 0.17 +
+            tag_score * 0.17 +
+            retention_score * 0.38
         )
 
         return {
@@ -255,9 +343,16 @@ class AnalyticsPredictor:
                 "Optimize and republish" if overall_score > 0.4 else
                 "Significant improvements needed"
             ),
+            "data_status": "estimated_from_inputs",
+            "basis": (
+                "Heuristic score: title/description/tag length ratios and the "
+                "retention model's engagement score, weighted 0.28/0.17/0.17/0.38. "
+                "The recommendation is a threshold rule over that score, not "
+                "measured performance advice. " + prediction.basis
+            ),
         }
 
-    # ── Channel Growth Modeling ──────────────────────────────────────────────
+    # ── Channel Growth Projection ────────────────────────────────────────────
 
     def model_channel_growth(
         self,
@@ -268,9 +363,15 @@ class AnalyticsPredictor:
         engagement_rate: float,
         months: int = 6,
     ) -> ChannelGrowthModel:
-        """Model channel growth trajectory."""
+        """Project channel growth as a compound-growth scenario.
+
+        The monthly rate is assembled from the stated heuristic assumptions
+        in the result (5% base, engagement and upload terms, 30% cap) and
+        compounded over ``months``. It is a scenario, not a forecast:
+        confidence is null because nothing here is calibrated.
+        """
         # Growth rate based on engagement and upload frequency
-        base_growth = 0.05  # 5% monthly base growth
+        base_growth = 0.05  # 5% monthly base growth (assumption)
 
         # Engagement boost
         engagement_boost = engagement_rate * 2.0  # 0-2
@@ -281,7 +382,7 @@ class AnalyticsPredictor:
         # Cap growth
         monthly_growth = min(0.3, monthly_growth)
 
-        # Predict subscribers
+        # Project subscribers
         predicted = current_subscribers * (1.0 + monthly_growth) ** months
 
         # Risk factors
@@ -293,8 +394,12 @@ class AnalyticsPredictor:
         if avg_views < 1000:
             risk_factors.append("Low average views indicate content issues")
 
-        # Confidence based on data quality
-        confidence = min(0.85, 0.4 + engagement_rate * 5 + upload_frequency * 0.1)
+        assumptions = [
+            "Base monthly growth assumed at 5%.",
+            f"Engagement term: engagement_rate {engagement_rate} x 2 x 0.02 = {engagement_boost * 0.02:.4f}.",
+            f"Upload term: min(0.5, upload_frequency {upload_frequency} x 0.1) = {upload_boost:.4f}.",
+            "Monthly growth capped at 30%; compounded monthly over the projection window.",
+        ]
 
         model = ChannelGrowthModel(
             channel_name=channel_name,
@@ -302,8 +407,15 @@ class AnalyticsPredictor:
             predicted_subscribers=int(predicted),
             growth_rate=monthly_growth,
             projected_months=months,
-            confidence=confidence,
+            confidence=None,
             risk_factors=risk_factors,
+            data_status="estimated_from_inputs",
+            basis=(
+                "Compound-growth scenario over stated heuristic assumptions, "
+                "not a measured forecast; confidence is null (no calibration "
+                "against real channel outcomes)."
+            ),
+            assumptions=assumptions,
         )
 
         self._growth_models[channel_name] = model
@@ -322,7 +434,12 @@ class AnalyticsPredictor:
         subscriber_growth: float,
         your_channel_subscribers: int = 0,
     ) -> CompetitorInsight:
-        """Analyze a competitor channel and identify gaps."""
+        """Analyze a competitor channel and identify gaps.
+
+        All figures are the caller's own inputs, echoed unchanged — VyralX
+        fetches no competitor data here. The gap notes are threshold rules
+        over those inputs.
+        """
         # Gap analysis
         gaps = []
 
@@ -335,9 +452,6 @@ class AnalyticsPredictor:
         if avg_views > 10000:
             gaps.append(f"Competitor averages {avg_views} views. Analyze their content strategy.")
 
-        # Identify topic gaps
-        competitor_topics = set(top_topics)
-        # (In production, compare with your channel's topics)
         gap_analysis = "; ".join(gaps) if gaps else "No significant gaps detected"
 
         insight = CompetitorInsight(
@@ -361,35 +475,42 @@ class AnalyticsPredictor:
         search_results: list[dict],
         niche: str = "",
     ) -> list[dict]:
-        """Detect emerging trends in search results."""
+        """Detect frequent keywords in caller-supplied search results.
+
+        Frequencies are measured from the supplied titles — this is a count
+        over the caller's data, not a platform trend signal. (The previous
+        implementation reported ``trend_score = count * 0.2``, an arbitrary
+        scaling presented as a score; it is replaced by the raw frequency
+        and its share of the supplied results.)
+        """
         trends = []
 
-        # Analyze search results for patterns
-        topic_frequency: dict[str, int] = {}
         title_keywords: dict[str, int] = {}
 
         for result in search_results:
             title = result.get("title", "")
-            views = result.get("views", 0)
 
-            # Count topics
+            # Count keywords
             for word in title.split():
                 if len(word) > 3:
                     title_keywords[word.lower()] = title_keywords.get(word.lower(), 0) + 1
 
-        # Find trending keywords
+        # Find most frequent keywords
         sorted_keywords = sorted(
             title_keywords.items(),
             key=lambda x: -x[1]
         )
 
+        total = len(search_results)
         for keyword, count in sorted_keywords[:10]:
             if count >= 3:  # Must appear at least 3 times
                 trends.append({
                     "keyword": keyword,
                     "frequency": count,
-                    "trend_score": count * 0.2,
+                    "share_of_results": (count / total) if total else 0.0,
                     "suggestion": f"Consider creating content about '{keyword}'",
+                    "data_status": "measured_from_inputs",
+                    "basis": "Keyword frequency counted over the caller-supplied search result titles.",
                 })
 
         return trends
@@ -397,7 +518,7 @@ class AnalyticsPredictor:
     # ── Reporting ──────────────────────────────────────────────────────────
 
     def get_analytics_report(self) -> dict[str, Any]:
-        """Generate an analytics report."""
+        """Summarize this predictor instance's heuristic estimates."""
         return {
             "total_predictions": len(self._predictions),
             "total_forecasts": len(self._forecasts),
@@ -406,5 +527,11 @@ class AnalyticsPredictor:
             "avg_predicted_views": (
                 sum(p.predicted_views for p in self._predictions) / len(self._predictions)
                 if self._predictions else 0
+            ),
+            "data_status": "estimated_from_inputs",
+            "data_note": (
+                "Counts and averages describe this process's heuristic "
+                "estimates (see AnalyticsPredictor docstring); they are not "
+                "measured channel analytics."
             ),
         }

@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     default_long_width: int = 1920
     default_long_height: int = 1080
     worker_required: bool = False
+    # TASK-VYR-002: whether the always-on app process itself consumes the
+    # durable queues (app.worker.run_once). None = auto: run it when
+    # APP_ENV is production. Set QUEUE_WORKER_ENABLED explicitly to force
+    # on/off (off when a standalone worker process is used instead).
+    queue_worker_enabled: bool | None = None
     worker_poll_seconds: float = 2.0
     worker_heartbeat_timeout_seconds: int = 90
     worker_max_attempts: int = 3

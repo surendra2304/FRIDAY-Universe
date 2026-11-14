@@ -81,6 +81,55 @@ app = FastAPI(title="VyralX", version="0.2.0",
               description="Video discovery, editing, and YouTube publishing agent")
 
 
+def _queue_worker_should_start(cfg) -> bool:
+    """Decide whether this process consumes VyralX's durable queues.
+
+    TASK-VYR-002: the task APIs (POST /api/v1/tasks, POST /v1/task/execute)
+    persist AgentTask/VideoProject/RenderJob/PublishJob rows for
+    app.worker to execute, but no deployed unit runs app.worker — the only
+    consumer was the viral autopilot script's drain phase (every ~5h, and
+    only after it produced a video), so API-submitted tasks sat "queued"
+    indefinitely. The always-on app process is the one place the consumer
+    can live without new units. Auto mode (queue_worker_enabled=None)
+    starts it only in production, so test/dev imports never spawn it;
+    QUEUE_WORKER_ENABLED forces the decision either way.
+    """
+    if cfg.queue_worker_enabled is not None:
+        return bool(cfg.queue_worker_enabled)
+    return cfg.app_env.lower() in ("production", "prod")
+
+
+_queue_worker_started = False
+
+
+@app.on_event("startup")
+def _start_queue_worker() -> None:
+    global _queue_worker_started
+    if _queue_worker_started or not _queue_worker_should_start(settings):
+        return
+    _queue_worker_started = True
+    import threading
+    import time
+
+    def _loop() -> None:
+        try:
+            from app.worker import run_once
+        except Exception:
+            log.exception("Queue worker could not import app.worker; tasks will not be consumed by this process")
+            return
+        while True:
+            try:
+                worked = run_once()
+            except Exception:
+                log.exception("Queue worker iteration failed; continuing")
+                worked = False
+            if not worked:
+                time.sleep(max(0.5, settings.worker_poll_seconds))
+
+    threading.Thread(target=_loop, name="vyralx-queue-worker", daemon=True).start()
+    log.info("In-process queue worker started (durable task queues will be consumed)")
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "vyralx", "version": app.version}
