@@ -3406,28 +3406,28 @@ tasks:
     next_action: "Done. VERIFIED 2026-11-14 after live re-verification."
   - id: TASK-REL-012
     title: "Console history restore truncates the transcript: 12 fetched exchanges render as only 6"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-rel-012-history-restore
     pr: 142
     contributors: []
     priority: P1
     created_at: "2026-11-14T18:15:00+05:30"
-    updated_at: "2026-11-14T18:45:00+05:30"
+    updated_at: "2026-11-14T19:00:00+05:30"
     files:
       - "FRIDAY/ui/components/ChatPanel.tsx"
-      - "FRIDAY/ui/out/ (committed static export - rebuild pending)"
+      - "FRIDAY/ui/out/ (committed static export)"
     defect: "Live test round 2 (2026-11-14): after 23+ exchanges, a page reload restored LAST SESSION - 12 MESSAGES - only the last 6 exchanges; mid-session exchanges were missing. Server side is exonerated: FRIDAY conversation store held all 24 entries for the window (every round-2 exchange including error replies, persisted by the PR #125 persist-first flow) and the history API serves them. The loss is a units bug in ChatPanel: RESTORE_LIMIT (12) is the fetch limit in ENTRIES but was reused to slice the expanded MESSAGE list (restored.slice(-RESTORE_LIMIT)), so 12 fetched exchanges (up to 24 bubbles) were cut to the last 12 bubbles."
     acceptance:
       - "Restore caps the expanded bubble list at MAX_RENDERED (40), so all fetched exchanges render both sides; the divider count reflects rendered messages; comments state the entry/message units explicitly."
       - "Verified against the real round-2 history payload: the restore transform yields all 12 exchanges / 24 messages instead of 12 messages; production build ships the fixed logic (fleet CD build + bundle inspection); final in-browser reload check by the coordinator."
     evidence:
       - "Source fix merged as PR #142 (ea09674b): restore caps the expanded bubble list at MAX_RENDERED (40) in FRIDAY/ui/components/ChatPanel.tsx."
-      - "NOT YET SERVED: the committed static export FRIDAY/ui/out/ is still the pre-fix build - history chunk _next/static/chunks/0a_w4kr32xamz.js (613,703 bytes) contains the restore-path slice(-12) (1 occurrence; the 3 slice(-40) occurrences are the legitimate append caps), so the live console still truncates restores. The FRIDAY/ui source tree on main is blob-identical to the fixed branch tree, so a rebuild is the only remaining step."
-      - "Export rebuild attempted 2026-11-14 and blocked by an environment fault (see blockers); no built chunk was hand-edited."
-    blockers:
-      - "Finisher sandbox cannot write file content: writes fail EPERM (Operation not permitted) across /tmp, home and ~/workspace (creation succeeds, content writes refused; verified read-back probes 15/15 EPERM). npm ci fails verbatim with npm error syscall write / code EPERM in the source worktree, and with TAR_ENTRY_ERROR EPERM on every package file in a clean directory (node_modules materialised as 313 zero-byte entries). Neither Oracle server has node. Rebuild FRIDAY/ui (npm ci && npm run build) in any write-capable environment with node, commit the regenerated out/ via PR, merge, then grep the SERVED history chunk (must show the restore slice at MAX_RENDERED 40 and no restore-path slice(-12)) to flip this task VERIFIED."
-    next_action: "Rebuild the FRIDAY/ui static export in a write-capable environment, ship via PR, verify the served chunk, then mark VERIFIED."
+      - "Export rebuilt 2026-11-14 from the main-branch FRIDAY/ui tree (blob-identical verified; npm ci 380 packages; next build, Next 16.3.4 Turbopack) and shipped as PR #149 (a45c6407, merged 3d5c4945); Fleet CD run 43598292153 success. An earlier rebuild attempt was blocked by a finisher-sandbox fault that refused all file-content writes (EPERM; npm ci TAR_ENTRY_ERROR on every file); the fault cleared the same evening and the rebuild was completed then - no built chunk was ever hand-edited."
+      - "SERVED verification 2026-11-14: Server 1 checkout at 3d5c4945; the public index at friday-universe.duckdns.org references history chunk 3rpdl7ym17o5g.js, and the SERVED chunk contains 4x slice(-40) and ZERO slice(-12) (the pre-fix chunk 0a_w4kr32xamz.js had 1x restore-path slice(-12) alongside 3 legitimate append-cap slice(-40)); the history fetch remains limit=12 entries by design."
+      - "Transfer integrity: every rebuilt file was sha256/git-blob-hash verified between the build sandbox and the committed tree (history chunk blob 46f46921ab47e45092c7ad40e750a1d4615fcc0f); the committed change set is exactly the rebuild delta (16 files: new chunk + build-id manifests + referencing html/txt payloads)."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-14: rebuilt export shipped in PR #149 and the served chunk verified live."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
