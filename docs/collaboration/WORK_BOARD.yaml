@@ -3496,6 +3496,32 @@ tasks:
       - "Local tests: new test_rel015_reconciliation.py 2/2 + updated test_schema_init_migrations.py green; full Memora CI file set 35/35 green locally; ruff F821 clean on touched files."
     blockers: []
     next_action: "Open PR, CI green, merge, Fleet CD deploy, restart Memora, live-verify (journal lines + ORA-00904 stops + /v1/events 200 + schema probe clean), then mark VERIFIED."
+  - id: TASK-REL-014
+    title: "Fix REL-005b: forget-by-subject false ambiguity — duplicate records and dialogue echoes outrank the stored fact"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: "claude/task-rel-014-forget-echo"
+    pr: 159
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T19:05:00+05:30"
+    updated_at: "2026-11-14T19:05:00+05:30"
+    files:
+      - "FRIDAY/src/friday/memory/memora_client.py"
+      - "FRIDAY/tests/test_memory_forget_echo_rel014.py"
+      - "FRIDAY/tests/test_memory_mutation_targets.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    defect: "REL-005 residual, production-probed 2026-11-14: the probe fact 'my safe word is \"amber falcon 3\"' exists as TWO semantic records with identical text in the local Oracle store (created 14:29 and 14:47 during REL-005 live verification), and MemoraClient._mutation_target counted RECORDS, not facts — two ids for one fact, with the remember turn's archived dialogue rows ranking in the same recall, read as ambiguity: forget-by-subject returned needs_clarification and the fact could never be removed by subject (live _mutation_target probe on the deployed store reproduced needs_clarification). Fix in memora_client.py: resolution groups subject-matching candidates by normalized text (identical-text duplicates are ONE logical target; forget deletes and correct supersedes EVERY duplicate id, each in its own store, so no survivor resurfaces), classifies dialogue echoes (transcript-shaped text or dialogue-tagged provenance without a fact category) below stored facts (echoes resolve only when no stored fact matches), and widens mutation recall from limit 5 to 25 so duplicates are visible to the resolver. One existing assertion updated (test_correction_searches_stable_subject_not_replacement_value pins the widened limit=25). Two DISTINCT stored facts about one subject still return needs_clarification."
+    acceptance:
+      - "Live post-deploy: remember a new uniquely-worded fact, forget it by subject alone -> deleted without clarification, recall confirms it is gone."
+      - "Live post-deploy: two distinct stored facts about the same subject still return needs_clarification; both are then cleaned up."
+      - "The stale 'amber falcon 3' probe fact is removed via the fixed path and verified absent from recall."
+      - "Suites green: new test_memory_forget_echo_rel014.py (13 tests); test_memory_mutation_targets, test_memory_roundtrip_rel005, test_shared_memory_lifecycle and the wider memory suites pass (pre-existing fixture errors in the canonical-gate tests unchanged from main)."
+    evidence:
+      - "Claim: issue #35 comment 6877874066 (2026-11-14)."
+      - "PR #159 opened from branch claude/task-rel-014-forget-echo; CI green (8/8 check runs) on heads 879786e7 and 21ac0891; branch rebased over board-only drift from PRs #160/#155."
+    blockers: []
+    next_action: "Merge PR #159 on green CI (owner blanket authorization 2026-11-14); Fleet CD deploy; run the live acceptance probes; then mark VERIFIED with evidence."
   - id: TASK-REL-017
     title: "IntelX threat-intel routers fabricate findings: fabricators must admit no data source, simulations must be labelled, real engines must be mounted"
     status: CLAIMED
