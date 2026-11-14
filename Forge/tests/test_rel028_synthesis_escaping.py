@@ -13,12 +13,16 @@ defence at any layer: the write boundary persisted any .py content, the
 deterministic repair had no candidate for this shape, and the agent repair
 refuses unparseable files as targets.
 
-These tests pin the three defences added by TASK-REL-028:
+These tests pin the defences added by TASK-REL-028:
   1. the deterministic syntax repair can rescue the verbatim artifact;
   2. the filesystem write boundary normalizes escape-corrupted .py content
      and refuses still-invalid .py content instead of persisting it;
   3. the orchestrator's final syntax-rescue sweep rewrites unparseable
-     workspace files (however they got there) with compile-validated repairs.
+     workspace files (however they got there) with compile-validated repairs;
+  4. the recovery ladder's create route can create a project module that
+     verification proved missing (the manifest never listed string_utils.py,
+     so in the follow-up acceptance run nothing corrupt existed -- the file
+     was simply absent, and no existing route could create it).
 
 The artifact fixture below is the exact production file, base64-encoded so
 the test source itself cannot accidentally re-escape or normalize it.
@@ -29,8 +33,13 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from app.recovery.classifier import FailureDiagnosis
+    from app.recovery.engine import RecoveryEngine
 
 from app.core.config import Settings
 from app.core.orchestrator import OrchestratorCore
@@ -132,6 +141,148 @@ def test_create_file_non_python_untouched(fs_tool: FilesystemTool):
         content=PRODUCTION_ARTIFACT, role="developer",
     )
     assert fs_tool.read_file("rel028", "notes.txt", role="developer") == PRODUCTION_ARTIFACT
+
+
+class _FakeAIClient:
+    """Stands in for the Inference code channel the Developer role uses."""
+
+    def __init__(self, answer: str, confidence: float = 0.95):
+        self._answer = answer
+        self._confidence = confidence
+        self.calls = 0
+
+    async def generate_code(self, **kwargs):
+        self.calls += 1
+        return SimpleNamespace(
+            answer=self._answer, confidence=self._confidence, run_id="rel028-test"
+        )
+
+
+class _StubStore:
+    def __init__(self, goal: str):
+        self._goal = goal
+
+    async def get_task(self, task_id: str):
+        return SimpleNamespace(goal=self._goal, requirements=[])
+
+
+_GOOD_MODULE = (
+    "import re\n\n\n"
+    "def is_palindrome(s: str) -> bool:\n"
+    '    cleaned = re.sub(r"[^A-Za-z0-9]", "", s).lower()\n'
+    "    return cleaned == cleaned[::-1]\n"
+)
+
+_GOAL = (
+    "Create a small Python project: a module string_utils.py with a function "
+    "is_palindrome(s: str) -> bool, and a main.py that demonstrates it."
+)
+
+
+def _recovery_engine(fs_tool: FilesystemTool, goal: str) -> "RecoveryEngine":
+    from app.recovery.engine import RecoveryEngine
+    from app.recovery.repair import PatchApplicator
+
+    exec_engine = SimpleNamespace(fs=fs_tool)
+    return RecoveryEngine(
+        exec_engine=exec_engine,
+        applicator=PatchApplicator(engine=exec_engine),
+        store=_StubStore(goal),
+    )
+
+
+def _missing_module_diagnosis(module: str = "string_utils") -> "FailureDiagnosis":
+    from app.recovery.classifier import FailureClass, FailureDiagnosis
+
+    return FailureDiagnosis(
+        failure_class=FailureClass.DEPENDENCY_MISSING,
+        error_message=f"ModuleNotFoundError: No module named '{module}'",
+        suggested_strategy="Add missing module or correct import path in project source.",
+    )
+
+
+async def test_create_route_creates_missing_project_module(
+    fs_tool: FilesystemTool, monkeypatch: pytest.MonkeyPatch
+):
+    from app.recovery.classifier import FailureClass, FailureDiagnosis
+
+    task_id = "rel028create"
+    fs_tool.wm.create_workspace(task_id)
+    fs_tool.create_file(
+        task_id=task_id, relative_path="test_main.py",
+        content="import string_utils\n", role="developer",
+    )
+    fake = _FakeAIClient(_GOOD_MODULE)
+    monkeypatch.setattr(
+        "app.integrations.ai_universe_client.get_ai_universe_client", lambda: fake
+    )
+    engine = _recovery_engine(fs_tool, _GOAL)
+
+    patch = await engine._create_missing_module_patch(task_id, _missing_module_diagnosis())
+    assert patch is not None
+    assert patch.patch_type == "create"
+    assert patch.target_file == "string_utils.py"
+    assert fake.calls == 1
+
+    assert engine.applicator.apply_patch(task_id, patch, role="debugger") is True
+    written = fs_tool.read_file(task_id, "string_utils.py", role="debugger")
+    assert _exec_is_palindrome(written)("Racecar") is True
+
+    # Once the file exists, the route must not recreate it.
+    assert (
+        await engine._create_missing_module_patch(task_id, _missing_module_diagnosis())
+        is None
+    )
+    assert fake.calls == 1
+
+    # Other failure classes never reach the provider at all.
+    other = FailureDiagnosis(
+        failure_class=FailureClass.SYNTAX_ERROR,
+        error_message="SyntaxError: invalid syntax",
+        suggested_strategy="fix grammar",
+    )
+    assert await engine._create_missing_module_patch(task_id, other) is None
+    assert fake.calls == 1
+
+
+async def test_create_route_gates(
+    fs_tool: FilesystemTool, monkeypatch: pytest.MonkeyPatch
+):
+    task_id = "rel028gates"
+    fs_tool.wm.create_workspace(task_id)
+    fake = _FakeAIClient(_GOOD_MODULE)
+    monkeypatch.setattr(
+        "app.integrations.ai_universe_client.get_ai_universe_client", lambda: fake
+    )
+
+    # A stdlib name is an environment problem, never a project file -- even
+    # when the goal text happens to name it.
+    engine = _recovery_engine(fs_tool, "Build a tool around os.py and string_utils.py")
+    assert (
+        await engine._create_missing_module_patch(task_id, _missing_module_diagnosis("os"))
+        is None
+    )
+    assert fake.calls == 0
+
+    # Without project evidence (goal/spec never name the file), no creation.
+    engine = _recovery_engine(fs_tool, "Build a calculator CLI in main.py")
+    assert (
+        await engine._create_missing_module_patch(task_id, _missing_module_diagnosis())
+        is None
+    )
+    assert fake.calls == 0
+
+    # Below the fleet's 0.70 confidence bar, no creation either.
+    low = _FakeAIClient(_GOOD_MODULE, confidence=0.5)
+    monkeypatch.setattr(
+        "app.integrations.ai_universe_client.get_ai_universe_client", lambda: low
+    )
+    engine = _recovery_engine(fs_tool, _GOAL)
+    assert (
+        await engine._create_missing_module_patch(task_id, _missing_module_diagnosis())
+        is None
+    )
+    assert low.calls == 1
 
 
 def test_orchestrator_rescue_sweep_repairs_materialized_file(
