@@ -13,7 +13,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.api.tasks import get_orchestrator, get_state_store
+from app.api.tasks import _schedule_execution, get_orchestrator, get_state_store
 from app.core.logging import get_logger
 from app.core.orchestrator import OrchestratorCore
 from app.core.workspace import workspace_manager
@@ -335,18 +335,28 @@ async def delegate_task(
                 asyncio.create_task(_dispatch_webhook_callback(callback_url, res))
             return res
 
+        # TASK-REL-011: accepting a task must mean executing it. This path
+        # used to return SUCCESS at intake and park the task in READY
+        # forever — production accumulated 141 such zombies, callers were
+        # told work was done that never ran, and FRIDAY's receipt
+        # verification failed with "the peer returned no receipt". Schedule
+        # the same supervised background execution POST /tasks uses and
+        # report the honest RUNNING state; completion is observable via the
+        # status endpoint and the completion webhook when a callback_url
+        # was supplied.
+        _schedule_execution(task.id, callback_url)
         lat = int((time.time() - t0) * 1000)
         return TaskResultModel(
             task_id=envelope.task_id,
             target_agent="forge",
-            status="SUCCESS",
+            status="RUNNING",
             result={
                 "forge_task_id": task.id,
                 "goal": task.goal,
-                "state": task.state.value if hasattr(task.state, "value") else str(task.state),
+                "state": "RUNNING",
                 "plan_stages": len(plan.stages) if hasattr(plan, "stages") else 0,
             },
-            summary=f"Forge accepted engineering goal '{goal[:60]}...' (Task ID: {task.id})",
+            summary=f"Forge accepted engineering goal '{goal[:60]}...' (Task ID: {task.id}) and scheduled it for execution; status is RUNNING, not complete.",
             execution_time_ms=lat,
         )
 

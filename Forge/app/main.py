@@ -61,6 +61,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await performance_optimizer.optimize_sqlite_pragmas(db_manager)
     logger.info("Database schemas initialized and performance PRAGMAs tuned.")
 
+    # TASK-REL-011: expire tasks parked in PENDING/READY with no runner
+    # (legacy delegate-intake zombies and restart orphans), then keep
+    # reconciling periodically. Records transition to CANCELLED with an
+    # audit event; nothing is deleted.
+    reaper_task: asyncio.Task | None = None
+    try:
+        from app.api.tasks import reconcile_stale_tasks
+
+        await reconcile_stale_tasks()
+
+        async def _reaper_loop() -> None:
+            while True:
+                await asyncio.sleep(1800)
+                await reconcile_stale_tasks()
+
+        reaper_task = asyncio.create_task(_reaper_loop())
+    except Exception as exc:
+        logger.warning(f"Stale-task reconciliation not started: {exc}")
+
     # Signal trapping for graceful shutdown in Unix/Linux container environments
     if sys.platform != "win32":
         import signal
@@ -76,6 +95,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 pass
 
     yield
+
+    if reaper_task is not None:
+        reaper_task.cancel()
 
     logger.info(f"Shutting down {settings.app_name}...")
     # Safe cleanup of in-flight execution sandboxes within 5 seconds

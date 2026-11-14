@@ -7,7 +7,7 @@ import asyncio
 import json
 import mimetypes
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -200,6 +200,57 @@ def _schedule_execution(task_id: str, webhook_url: str | None = None) -> None:
         logger.warning(f"No running event loop; task {task_id} will not execute")
         return
     _running_tasks[task_id] = loop.create_task(_run_task_supervised(task_id, webhook_url))
+
+
+async def reconcile_stale_tasks(ttl_hours: float | None = None) -> int:
+    """Expire tasks parked in PENDING/READY that nothing will ever run.
+
+    TASK-REL-011: the delegate intake path used to accept tasks without
+    scheduling execution, so they sat in READY forever — production held 141
+    of them, all counted as "active" work. A task in PENDING/READY older
+    than the TTL with no live runner in ``_running_tasks`` can never
+    execute: background runners are in-process and die with the service,
+    and every legitimate submission registers its runner at intake. Such
+    tasks are transitioned to CANCELLED through the lifecycle machine
+    (which writes the audit event); records are never deleted. Anything
+    still relevant is re-filed by its caller — FRIDAY's reflex broker
+    re-detects faults that persist.
+    """
+    if ttl_hours is None:
+        try:
+            ttl_hours = float(os.environ.get("FORGE_STALE_TASK_TTL_HOURS", "24"))
+        except (TypeError, ValueError):
+            ttl_hours = 24.0
+    store = get_state_store()
+    lifecycle = TaskStateMachine(store)
+    cutoff = datetime.now(UTC) - timedelta(hours=ttl_hours)
+    expired = 0
+    for state in (TaskState.PENDING, TaskState.READY):
+        try:
+            tasks = await store.list_tasks(state=state, limit=1000)
+        except Exception as exc:
+            logger.warning(f"reconcile_stale_tasks: list_tasks({state.value}) failed: {exc}")
+            continue
+        for task in tasks:
+            if task.id in _running_tasks or task.created_at is None:
+                continue
+            if _as_utc(task.created_at) >= cutoff:
+                continue
+            try:
+                await lifecycle.transition(
+                    task_id=task.id,
+                    to_state=TaskState.CANCELLED,
+                    reason=(
+                        f"Expired by reconciliation: parked in {state.value} for over "
+                        f"{ttl_hours:g}h with no scheduled execution (TASK-REL-011)."
+                    ),
+                )
+                expired += 1
+            except Exception as exc:
+                logger.warning(f"reconcile_stale_tasks: could not expire {task.id}: {exc}")
+    if expired:
+        logger.info(f"reconcile_stale_tasks: expired {expired} stale task(s) to CANCELLED")
+    return expired
 
 
 def get_task_lifecycle(store: StateStore = Depends(get_state_store)) -> TaskStateMachine:
