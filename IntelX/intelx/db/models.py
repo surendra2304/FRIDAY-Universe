@@ -537,6 +537,29 @@ class ApiKey(Base):
     revoked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
+class TolerantJSON(JSON):
+    """JSON type whose result processor accepts pre-deserialized values.
+
+    Oracle 23ai's native JSON type makes python-oracledb return dict/list
+    objects directly, while SQLAlchemy's stock JSON result processor
+    unconditionally applies ``json.loads`` and raises ``TypeError`` on
+    them (observed live, TASK-REL-038: archive reads failed with
+    'the JSON object must be str, bytes or bytearray, not dict' while
+    writes succeeded). Values that arrive as text are decoded normally,
+    so SQLite and other backends behave exactly like stock JSON.
+    """
+
+    def result_processor(self, dialect, coltype):  # noqa: ANN001, ANN202
+        base_processor = super().result_processor(dialect, coltype)
+
+        def process(value):  # noqa: ANN001, ANN202
+            if value is None or isinstance(value, (dict, list)):
+                return value
+            return base_processor(value) if base_processor is not None else value
+
+        return process
+
+
 class LiveResearchRun(Base):
     """Durable record of one ``research_live`` pipeline run (TASK-REL-038).
 
@@ -557,8 +580,8 @@ class LiveResearchRun(Base):
     synthesis_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
     answer_kind: Mapped[str | None] = mapped_column(String(64), nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    payload_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
-    receipt_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    payload_json: Mapped[dict[str, Any]] = mapped_column(TolerantJSON, default=dict, nullable=False)
+    receipt_json: Mapped[dict[str, Any] | None] = mapped_column(TolerantJSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False, index=True
     )

@@ -172,6 +172,7 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
         try:
             record = await fetch_live_research(run_id)
         except Exception:
+            logger.exception("research_recall: archive read failed for run_id=%s", run_id)
             raise HTTPException(status_code=503, detail="Research archive unavailable")
         if record is None:
             raise HTTPException(status_code=404, detail="Stored research run not found")
@@ -465,6 +466,7 @@ async def list_live_research_runs(
     try:
         runs = await list_live_research(limit)
     except Exception:
+        logger.exception("live research archive list failed")
         raise HTTPException(status_code=503, detail="Research archive unavailable")
     return {"runs": runs, "count": len(runs)}
 
@@ -480,6 +482,7 @@ async def get_live_research_run(
     try:
         record = await fetch_live_research(run_id)
     except Exception:
+        logger.exception("live research archive fetch failed for run_id=%s", run_id)
         raise HTTPException(status_code=503, detail="Research archive unavailable")
     if record is None:
         raise HTTPException(status_code=404, detail="Stored research run not found")
