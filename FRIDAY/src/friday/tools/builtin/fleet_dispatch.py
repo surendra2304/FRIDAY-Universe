@@ -22,6 +22,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from typing import Any
 
 from friday.core.types import SafetyLevel, ToolResult
@@ -143,6 +144,52 @@ def normalize_agent(raw: str) -> str | None:
     return None
 
 
+# TASK-VYR-002: VyralX tasks are asynchronous (202/queued, worker completes
+# them seconds later). The generic dispatch waits — bounded, inside this
+# tool's 60s timeout — for VyralX's real finished output instead of handing
+# the owner a bare "pending".
+_VYRALX_SETTLE_BUDGET_SECONDS = 45.0
+_VYRALX_SETTLE_POLL_SECONDS = 2.0
+
+
+def _format_vyralx_result(task: str, data: dict[str, Any]) -> str | None:
+    """Render a finished VyralX task's real output; None -> generic format."""
+    pack = data.get("content_pack")
+    if isinstance(pack, dict):
+        lines = [f"VyralX (Video Production) — result for: {task}"]
+        titles = pack.get("title_options") or []
+        if isinstance(titles, list) and titles:
+            lines.append("Title options: " + " | ".join(str(t) for t in titles[:3]))
+        hook = str(pack.get("hook") or "").strip()
+        if hook:
+            lines.append(f"Hook: {hook}")
+        script = str(pack.get("script") or pack.get("voiceover") or "").strip()
+        if script:
+            lines.append("Script: " + (script if len(script) <= 700 else script[:700] + "…"))
+        scenes = pack.get("scene_plan") or []
+        if isinstance(scenes, list) and scenes:
+            lines.append(f"Scene plan: {len(scenes)} scenes.")
+        pack_id = data.get("content_pack_id")
+        if pack_id is not None:
+            lines.append(
+                f"(Content pack #{pack_id}, stored by VyralX. Nothing was rendered or published.)"
+            )
+        return "\n".join(lines)
+    items = data.get("items")
+    if isinstance(items, list):
+        lines = [f"VyralX (Video Production) — result for: {task}"]
+        lines.append(
+            f"Discovery query: {data.get('query', '')} — {data.get('count', len(items))} result(s)."
+        )
+        for item in items[:5]:
+            if isinstance(item, dict):
+                title = item.get("title") or item.get("name") or "untitled"
+                url = item.get("url") or item.get("video_url") or item.get("link") or ""
+                lines.append(f"- {title} {url}".strip())
+        return "\n".join(lines)
+    return None
+
+
 def _format_result(agent: str, role: str, task: str, data: Any) -> str:
     """Render the target agent's real response for the owner."""
     display = DISPLAY_NAMES.get(agent, agent.title())
@@ -231,7 +278,54 @@ class FleetDispatchTool(BaseTool):
             payload={"task": task, "prompt": task},
             priority=priority_map.get(priority, TaskPriority.NORMAL),
         )
-        return asyncio.run(self._client().dispatch_task(envelope))
+        return asyncio.run(self._dispatch_and_settle(agent, envelope))
+
+    async def _dispatch_and_settle(self, agent: str, envelope: Any) -> Any:
+        """Dispatch, and for VyralX wait (bounded) for its async task to finish.
+
+        TASK-VYR-002: a VyralX dispatch returns PENDING with a task id while
+        its worker runs the task. Poll the task record until it completes or
+        fails so the chat answer carries VyralX's real output. If the budget
+        ends first, the PENDING result stands untouched — reported as still
+        in progress, never upgraded to a success.
+        """
+        client = self._client()
+        result = await client.dispatch_task(envelope)
+        if agent != "vyralx":
+            return result
+        status = str(getattr(result, "status", "") or "").rsplit(".", 1)[-1].strip().lower()
+        task_id = str(getattr(result, "task_id", "") or "")
+        fetch = getattr(client, "fetch_vyralx_task", None)
+        if status != "pending" or not task_id or fetch is None:
+            return result
+        from friday.core.task_envelope import TaskResult, TaskStatus
+
+        deadline = time.monotonic() + _VYRALX_SETTLE_BUDGET_SECONDS
+        while time.monotonic() < deadline:
+            await asyncio.sleep(_VYRALX_SETTLE_POLL_SECONDS)
+            task_data = await fetch(task_id)
+            if not isinstance(task_data, dict):
+                continue
+            task_status = str(task_data.get("status") or "").strip().lower()
+            if task_status == "completed":
+                settled = task_data.get("result")
+                return TaskResult(
+                    task_id=task_id,
+                    target_agent="vyralx",
+                    status=TaskStatus.SUCCESS,
+                    result=settled if isinstance(settled, dict) else {},
+                    summary="VyralX completed the task.",
+                    execution_time_ms=getattr(result, "execution_time_ms", 0),
+                )
+            if task_status == "failed":
+                return TaskResult(
+                    task_id=task_id,
+                    target_agent="vyralx",
+                    status=TaskStatus.ERROR,
+                    error=str(task_data.get("error") or "VyralX reported the task failed."),
+                    execution_time_ms=getattr(result, "execution_time_ms", 0),
+                )
+        return result
 
     def execute(self, agent: str = "", task: str = "", priority: str = "normal", **kwargs: Any) -> ToolResult:
         task = (task or "").strip()
@@ -277,6 +371,25 @@ class FleetDispatchTool(BaseTool):
         execution_time_ms = getattr(result, "execution_time_ms", 0)
         receipt = f"[Task receipt: {task_id}]" if task_id else ""
 
+        if status == "pending":
+            # Accepted and still running is neither a success nor a failure;
+            # say exactly that (TASK-VYR-002 — VyralX dispatches that outlast
+            # the settle window land here, as do other agents' 202 accepts).
+            if task_id:
+                record_chat_dispatch(task_id, canonical, task, status, None, "still in progress")
+            content = (
+                f"{display} accepted that assignment and is still working on it — "
+                f"it has not finished, so there is no result to show yet. {receipt} "
+                "Ask me to check on it shortly."
+            ).strip()
+            return ToolResult(
+                name=self.name,
+                content=content,
+                is_error=True,
+                safety_level=self.safety_level,
+                metadata={"status": status, "agent": canonical, "task_id": task_id},
+            )
+
         if status not in {"success", "completed"}:
             error = getattr(result, "error", None) or f"status {status or 'unknown'}"
             if task_id:
@@ -298,7 +411,9 @@ class FleetDispatchTool(BaseTool):
             data = {"response": str(data)} if data is not None else {}
         if task_id:
             record_chat_dispatch(task_id, canonical, task, status, data)
-        body = _format_result(canonical, role, task, data)
+        body = _format_vyralx_result(task, data) if canonical == "vyralx" else None
+        if body is None:
+            body = _format_result(canonical, role, task, data)
         return ToolResult(
             name=self.name,
             content=(f"{body}\n{receipt}").strip(),
