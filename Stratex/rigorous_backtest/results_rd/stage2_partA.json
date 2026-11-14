@@ -1,0 +1,3634 @@
+{
+  "bt001_replica_match": true,
+  "configs": [
+    {
+      "config": "bare",
+      "long_only": false,
+      "btc_regime_gate": false,
+      "signals_raw": {
+        "BTCUSDT": 38,
+        "ETHUSDT": 44,
+        "SOLUSDT": 32
+      },
+      "signals_kept": {
+        "BTCUSDT": 38,
+        "ETHUSDT": 44,
+        "SOLUSDT": 32
+      },
+      "report": {
+        "per_fold": {
+          "W1": {
+            "oos_start": "2024-07-01",
+            "oos_end": "2025-01-01",
+            "trades": 18,
+            "wins": 10,
+            "win_rate": 0.5555555555555556,
+            "expectancy_net": 0.007886425338662411,
+            "profit_factor_net": 1.307943293546327,
+            "avg_win_net": 0.0602935515280834,
+            "avg_loss_net": -0.05762248239811382,
+            "total_return_net": 0.1145505490034755,
+            "max_drawdown_net": -0.1748872746226917
+          },
+          "W2": {
+            "oos_start": "2025-01-01",
+            "oos_end": "2025-07-01",
+            "trades": 15,
+            "wins": 9,
+            "win_rate": 0.6,
+            "expectancy_net": 0.018353048395472915,
+            "profit_factor_net": 1.7747182316288372,
+            "avg_win_net": 0.07007169029039745,
+            "avg_loss_net": -0.05922491444691388,
+            "total_return_net": 0.2651907747960518,
+            "max_drawdown_net": -0.3076143250964326
+          },
+          "W3": {
+            "oos_start": "2025-07-01",
+            "oos_end": "2026-01-01",
+            "trades": 16,
+            "wins": 11,
+            "win_rate": 0.6875,
+            "expectancy_net": 0.01751149211343073,
+            "profit_factor_net": 1.9812496294353168,
+            "avg_win_net": 0.051429244313235326,
+            "avg_loss_net": -0.05710756272613936,
+            "total_return_net": 0.2907615788564255,
+            "max_drawdown_net": -0.19141699716264815
+          },
+          "W4": {
+            "oos_start": "2026-01-01",
+            "oos_end": "2026-07-01",
+            "trades": 16,
+            "wins": 11,
+            "win_rate": 0.6875,
+            "expectancy_net": 0.012970628803009665,
+            "profit_factor_net": 1.6831892726943851,
+            "avg_win_net": 0.0464815117384005,
+            "avg_loss_net": -0.06075331365485016,
+            "total_return_net": 0.20237269604626107,
+            "max_drawdown_net": -0.20850719391924444
+          },
+          "W5": {
+            "oos_start": "2026-07-01",
+            "oos_end": "2026-11-01",
+            "trades": 12,
+            "wins": 5,
+            "win_rate": 0.4166666666666667,
+            "expectancy_net": 0.0009384818856524261,
+            "profit_factor_net": 1.055481690869942,
+            "avg_win_net": 0.042848749502227446,
+            "avg_loss_net": -0.0289974235547583,
+            "total_return_net": 0.003492203078968359,
+            "max_drawdown_net": -0.16141471383198935
+          }
+        },
+        "pooled_oos": {
+          "trades": 77,
+          "wins": 46,
+          "win_rate": 0.5974025974025974,
+          "expectancy_net": 0.011899053237907697,
+          "profit_factor_net": 1.5695748857248004,
+          "avg_win_net": 0.05488788678203353,
+          "avg_loss_net": -0.051890828795311275,
+          "total_return_net": 1.1961142214468974,
+          "max_drawdown_net": -0.3076143250964326
+        },
+        "per_symbol_oos": {
+          "BTCUSDT": {
+            "trades": 28,
+            "wins": 16,
+            "win_rate": 0.5714285714285714,
+            "expectancy_net": 0.006605830497192722,
+            "profit_factor_net": 1.4245115292938144,
+            "avg_win_net": 0.03879198053599359,
+            "avg_loss_net": -0.03630903622120842,
+            "total_return_net": 0.17732251077759664,
+            "max_drawdown_net": -0.1323952951443791
+          },
+          "ETHUSDT": {
+            "trades": 27,
+            "wins": 15,
+            "win_rate": 0.5555555555555556,
+            "expectancy_net": 0.001961365675528855,
+            "profit_factor_net": 1.0718234513791978,
+            "avg_win_net": 0.05268513051529052,
+            "avg_loss_net": -0.061443340374173226,
+            "total_return_net": 0.007464353006919389,
+            "max_drawdown_net": -0.22599529846397803
+          },
+          "SOLUSDT": {
+            "trades": 22,
+            "wins": 15,
+            "win_rate": 0.6818181818181818,
+            "expectancy_net": 0.030832135098100778,
+            "profit_factor_net": 2.557224393666717,
+            "avg_win_net": 0.07425960971121914,
+            "avg_loss_net": -0.0622267390728671,
+            "total_return_net": 0.8515258844294673,
+            "max_drawdown_net": -0.1517280810304743
+          }
+        }
+      },
+      "bar": {
+        "bar": {
+          "expectancy_net_gt": 0.0,
+          "profit_factor_net_gte": 1.2,
+          "min_oos_trades": 200,
+          "min_positive_folds": 4,
+          "folds_total": 5
+        },
+        "checks": {
+          "expectancy_net_gt_0": true,
+          "profit_factor_net_gte_1.2": true,
+          "min_oos_trades_200": false,
+          "positive_folds_gte_4_of_5": true
+        },
+        "passes_bar": false
+      },
+      "holdout": {
+        "symbols_positive_min20trades": [
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "max_symbol_profit_share": 0.7403262495318671,
+        "passes": true
+      },
+      "trades": [
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2023-12-14T08:00:00+00:00",
+          "exit_time": "2023-12-18T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 42910.2,
+          "exit_price": 40759.87763274755,
+          "net_return": -0.05163075540375528,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2023-12-19T12:00:00+00:00",
+          "exit_time": "2024-01-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 43004.0,
+          "exit_price": 44885.791295052266,
+          "net_return": 0.04208983901187646,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-01-02T04:00:00+00:00",
+          "exit_time": "2024-01-03T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 45434.9,
+          "exit_price": 43663.02308495121,
+          "net_return": -0.04053452099576225,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-01-13T12:00:00+00:00",
+          "exit_time": "2024-01-23T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 42631.8,
+          "exit_price": 39140.55713659416,
+          "net_return": 0.0804227790513688,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-03-25T20:00:00+00:00",
+          "exit_time": "2024-04-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 71019.6,
+          "exit_price": 66635.5246171723,
+          "net_return": -0.0632305306834157,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-04-07T08:00:00+00:00",
+          "exit_time": "2024-04-08T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 69367.3,
+          "exit_price": 72547.6763854207,
+          "net_return": 0.04417633221994167,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-04-25T12:00:00+00:00",
+          "exit_time": "2024-04-30T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 63827.0,
+          "exit_price": 60932.89749992337,
+          "net_return": 0.043814244873215356,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-05-09T08:00:00+00:00",
+          "exit_time": "2024-05-15T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 61222.5,
+          "exit_price": 64147.8186482224,
+          "net_return": -0.04945955054117978,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-07-02T20:00:00+00:00",
+          "exit_time": "2024-07-03T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 61944.0,
+          "exit_price": 59877.01832567524,
+          "net_return": 0.03182070484723404,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-08-12T04:00:00+00:00",
+          "exit_time": "2024-08-23T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 58488.6,
+          "exit_price": 61863.069176353165,
+          "net_return": -0.05938814290583757,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-08-28T16:00:00+00:00",
+          "exit_time": "2024-09-04T00:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 58963.4,
+          "exit_price": 55663.78203054768,
+          "net_return": 0.05444877011022264,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-10-07T20:00:00+00:00",
+          "exit_time": "2024-10-09T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 63349.4,
+          "exit_price": 61026.23996930773,
+          "net_return": -0.03821226347048141,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-10-13T00:00:00+00:00",
+          "exit_time": "2024-10-14T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 63176.0,
+          "exit_price": 65348.89131881163,
+          "net_return": 0.03274054502372172,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-11-06T04:00:00+00:00",
+          "exit_time": "2024-11-10T04:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 74367.1,
+          "exit_price": 78601.8195519499,
+          "net_return": 0.055253696467549164,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-01-03T04:00:00+00:00",
+          "exit_time": "2025-01-06T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 97019.1,
+          "exit_price": 100743.57014635723,
+          "net_return": 0.036728945978821516,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-01-09T00:00:00+00:00",
+          "exit_time": "2025-01-13T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 95014.0,
+          "exit_price": 90571.76415238704,
+          "net_return": 0.045227071803010985,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-03-29T08:00:00+00:00",
+          "exit_time": "2025-04-02T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 83696.1,
+          "exit_price": 86598.21417700913,
+          "net_return": -0.036331229939675025,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-06-17T00:00:00+00:00",
+          "exit_time": "2025-06-17T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 106750.1,
+          "exit_price": 103310.32703418327,
+          "net_return": -0.03376987335429218,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-06-25T08:00:00+00:00",
+          "exit_time": "2025-07-09T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 106547.5,
+          "exit_price": 110566.76361405003,
+          "net_return": 0.03606371059475918,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-08-08T04:00:00+00:00",
+          "exit_time": "2025-08-11T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 116692.2,
+          "exit_price": 119873.67838714024,
+          "net_return": 0.025621539549144257,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-09-22T08:00:00+00:00",
+          "exit_time": "2025-09-25T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 112454.5,
+          "exit_price": 109995.29776308875,
+          "net_return": 0.020302156461358332,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-10-11T00:00:00+00:00",
+          "exit_time": "2025-10-17T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 112715.0,
+          "exit_price": 104601.39735545953,
+          "net_return": 0.07049732876534207,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-10-30T16:00:00+00:00",
+          "exit_time": "2025-11-04T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 107670.5,
+          "exit_price": 102706.9030328939,
+          "net_return": 0.044572416327234674,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-12-01T12:00:00+00:00",
+          "exit_time": "2025-12-02T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 86100.0,
+          "exit_price": 89594.49559115303,
+          "net_return": -0.04225274746656722,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-12-07T04:00:00+00:00",
+          "exit_time": "2025-12-09T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 89675.7,
+          "exit_price": 92972.48338206456,
+          "net_return": -0.03842354679734464,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-01-20T08:00:00+00:00",
+          "exit_time": "2026-01-20T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 91136.1,
+          "exit_price": 88566.36431185938,
+          "net_return": 0.026640552421387083,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-03-08T12:00:00+00:00",
+          "exit_time": "2026-03-10T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 67490.1,
+          "exit_price": 70736.98112098603,
+          "net_return": -0.049787315570848,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-03-20T08:00:00+00:00",
+          "exit_time": "2026-03-22T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 70812.0,
+          "exit_price": 67421.63593358206,
+          "net_return": 0.04635376885464594,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-04-06T08:00:00+00:00",
+          "exit_time": "2026-04-07T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 69089.8,
+          "exit_price": 71254.61965712304,
+          "net_return": 0.029684604654788567,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-05-14T20:00:00+00:00",
+          "exit_time": "2026-05-15T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 81373.8,
+          "exit_price": 78626.01149946035,
+          "net_return": -0.035312220371823966,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-07-25T12:00:00+00:00",
+          "exit_time": "2026-07-27T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 64031.2,
+          "exit_price": 65617.80886887967,
+          "net_return": -0.026419642629087917,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-07-27T08:00:00+00:00",
+          "exit_time": "2026-07-27T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 65196.0,
+          "exit_price": 63794.038720138764,
+          "net_return": -0.02306813532604415,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-08-11T20:00:00+00:00",
+          "exit_time": "2026-08-18T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 63508.5,
+          "exit_price": 64872.78136937161,
+          "net_return": -0.02311754998473694,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-09-18T20:00:00+00:00",
+          "exit_time": "2026-09-21T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 81169.0,
+          "exit_price": 84202.82973452359,
+          "net_return": 0.03571822863920513,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-10-21T12:00:00+00:00",
+          "exit_time": "2026-10-22T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 83463.3,
+          "exit_price": 81120.32450287986,
+          "net_return": -0.029625766837762132,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-10-23T00:00:00+00:00",
+          "exit_time": "2026-10-29T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 81384.6,
+          "exit_price": 78898.29966013785,
+          "net_return": 0.02899764807747206,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-14T20:00:00+00:00",
+          "exit_time": "2023-12-18T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2293.19,
+          "exit_price": 2157.6148759780085,
+          "net_return": -0.0606249583698458,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-22T08:00:00+00:00",
+          "exit_time": "2023-12-28T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2275.27,
+          "exit_price": 2402.864858383434,
+          "net_return": 0.05439062081356178,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-29T04:00:00+00:00",
+          "exit_time": "2024-01-03T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2354.15,
+          "exit_price": 2223.127089705756,
+          "net_return": -0.057165885907763274,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-04T00:00:00+00:00",
+          "exit_time": "2024-01-09T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2210.39,
+          "exit_price": 2368.7896008175467,
+          "net_return": -0.07337741242818087,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-10T00:00:00+00:00",
+          "exit_time": "2024-01-10T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2344.33,
+          "exit_price": 2489.8623543321737,
+          "net_return": 0.060380475036140434,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-31T08:00:00+00:00",
+          "exit_time": "2024-02-01T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2339.72,
+          "exit_price": 2245.732896101689,
+          "net_return": -0.04170473573408727,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-03-26T12:00:00+00:00",
+          "exit_time": "2024-04-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3634.44,
+          "exit_price": 3397.7869024498364,
+          "net_return": -0.06660866898432789,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-04-02T04:00:00+00:00",
+          "exit_time": "2024-04-08T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3367.8,
+          "exit_price": 3582.5079346057173,
+          "net_return": -0.06545654034760605,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-04-08T12:00:00+00:00",
+          "exit_time": "2024-04-10T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3636.18,
+          "exit_price": 3439.205078215993,
+          "net_return": -0.05568295608181747,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-04-13T00:00:00+00:00",
+          "exit_time": "2024-04-13T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3238.31,
+          "exit_price": 2976.786481246141,
+          "net_return": 0.0792872970921559,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-05-07T12:00:00+00:00",
+          "exit_time": "2024-05-10T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3061.92,
+          "exit_price": 2888.3657240952753,
+          "net_return": 0.05517100077010219,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-05-17T16:00:00+00:00",
+          "exit_time": "2024-05-20T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3109.85,
+          "exit_price": 3259.2315012464137,
+          "net_return": 0.046359438341385006,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-07-25T08:00:00+00:00",
+          "exit_time": "2024-07-29T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3170.22,
+          "exit_price": 3380.438923999187,
+          "net_return": -0.06801797878498943,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-08-28T00:00:00+00:00",
+          "exit_time": "2024-09-06T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2455.98,
+          "exit_price": 2294.9030120874686,
+          "net_return": 0.06408936687818051,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-10-02T00:00:00+00:00",
+          "exit_time": "2024-10-14T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2446.85,
+          "exit_price": 2596.4329344951634,
+          "net_return": -0.0628320302778624,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-10-24T00:00:00+00:00",
+          "exit_time": "2024-10-25T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2523.85,
+          "exit_price": 2406.724215069111,
+          "net_return": 0.04488061616709579,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-10-29T16:00:00+00:00",
+          "exit_time": "2024-10-31T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2648.11,
+          "exit_price": 2525.5684369031014,
+          "net_return": -0.04779984307768903,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-11-01T16:00:00+00:00",
+          "exit_time": "2024-11-06T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2500.03,
+          "exit_price": 2648.1840860459,
+          "net_return": -0.06095709770407356,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-11-06T20:00:00+00:00",
+          "exit_time": "2024-11-07T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2687.74,
+          "exit_price": 2861.6825620903996,
+          "net_return": 0.06301484891273501,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-12-12T08:00:00+00:00",
+          "exit_time": "2024-12-18T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3904.58,
+          "exit_price": 3627.2667282513066,
+          "net_return": -0.07250773689457897,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-01-08T12:00:00+00:00",
+          "exit_time": "2025-01-13T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3348.5,
+          "exit_price": 3149.340059351567,
+          "net_return": 0.05797131914907818,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-03-28T12:00:00+00:00",
+          "exit_time": "2025-03-30T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 1899.41,
+          "exit_price": 1785.714539754761,
+          "net_return": 0.05835287243774907,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-06-03T20:00:00+00:00",
+          "exit_time": "2025-06-05T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2624.17,
+          "exit_price": 2482.1844296309437,
+          "net_return": -0.05561906842930177,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-06-06T00:00:00+00:00",
+          "exit_time": "2025-06-09T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2412.9,
+          "exit_price": 2581.9300812641713,
+          "net_return": -0.07176612247118029,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-08-22T20:00:00+00:00",
+          "exit_time": "2025-08-25T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4832.06,
+          "exit_price": 4457.883551251737,
+          "net_return": -0.0789111395348038,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-09-11T12:00:00+00:00",
+          "exit_time": "2025-09-12T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4428.06,
+          "exit_price": 4601.361244065262,
+          "net_return": 0.037475768419832446,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-10-01T16:00:00+00:00",
+          "exit_time": "2025-10-03T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4325.01,
+          "exit_price": 4535.782091886924,
+          "net_return": 0.0470566869672103,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-10-10T08:00:00+00:00",
+          "exit_time": "2025-10-10T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 4321.05,
+          "exit_price": 4083.017057331114,
+          "net_return": 0.05357375751980814,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-10-30T12:00:00+00:00",
+          "exit_time": "2025-11-03T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3879.52,
+          "exit_price": 3642.335259106963,
+          "net_return": 0.05963426881588371,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-12-01T08:00:00+00:00",
+          "exit_time": "2025-12-02T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2838.43,
+          "exit_price": 2998.22137412952,
+          "net_return": -0.05798711580843034,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-01-20T12:00:00+00:00",
+          "exit_time": "2026-01-20T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3108.15,
+          "exit_price": 2977.9676787281564,
+          "net_return": 0.04034996963961509,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-02-28T08:00:00+00:00",
+          "exit_time": "2026-03-01T00:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 1865.37,
+          "exit_price": 2019.0029706556284,
+          "net_return": -0.08409375180344611,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-03-22T00:00:00+00:00",
+          "exit_time": "2026-03-29T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2083.37,
+          "exit_price": 1963.7833043394483,
+          "net_return": 0.055891237139084636,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-04-01T16:00:00+00:00",
+          "exit_time": "2026-04-07T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2133.93,
+          "exit_price": 2258.4368582909833,
+          "net_return": 0.056654270667784744,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-05-08T08:00:00+00:00",
+          "exit_time": "2026-05-10T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2279.88,
+          "exit_price": 2376.4248049738644,
+          "net_return": -0.04401553104592337,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-06-19T20:00:00+00:00",
+          "exit_time": "2026-06-24T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 1700.44,
+          "exit_price": 1607.5372090599587,
+          "net_return": 0.053120764102515684,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-08-11T16:00:00+00:00",
+          "exit_time": "2026-08-12T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 1862.01,
+          "exit_price": 1920.0330047499756,
+          "net_return": -0.032812668657799596,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-09-03T16:00:00+00:00",
+          "exit_time": "2026-09-11T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2516.0,
+          "exit_price": 2641.0699146712163,
+          "net_return": 0.048031629839006065,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-09-18T20:00:00+00:00",
+          "exit_time": "2026-09-21T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2635.37,
+          "exit_price": 2772.043486773882,
+          "net_return": 0.05017958107377837,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-01-28T00:00:00+00:00",
+          "exit_time": "2024-01-29T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 94.237,
+          "exit_price": 101.26456501375873,
+          "net_return": 0.07285536705081773,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-02-08T04:00:00+00:00",
+          "exit_time": "2024-02-09T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 101.767,
+          "exit_price": 108.22105866282133,
+          "net_return": 0.061719844165457796,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-02-27T12:00:00+00:00",
+          "exit_time": "2024-02-28T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 111.657,
+          "exit_price": 119.40177450227176,
+          "net_return": 0.06765258223998329,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-03-25T04:00:00+00:00",
+          "exit_time": "2024-04-01T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 184.961,
+          "exit_price": 203.7409813284808,
+          "net_return": 0.0997737703534657,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-04-26T04:00:00+00:00",
+          "exit_time": "2024-04-30T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 143.213,
+          "exit_price": 129.5086157843112,
+          "net_return": 0.09424426921217162,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-06-08T08:00:00+00:00",
+          "exit_time": "2024-06-11T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 163.597,
+          "exit_price": 153.62615055698083,
+          "net_return": 0.0594439433682536,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-07-04T16:00:00+00:00",
+          "exit_time": "2024-07-05T00:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 135.296,
+          "exit_price": 122.72654741624117,
+          "net_return": 0.09145084032151386,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-08-29T00:00:00+00:00",
+          "exit_time": "2024-09-01T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 143.892,
+          "exit_price": 131.6176868873177,
+          "net_return": 0.08383757407040689,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-09-16T20:00:00+00:00",
+          "exit_time": "2024-09-19T00:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 131.064,
+          "exit_price": 137.562688776858,
+          "net_return": -0.051264766069398233,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-11-06T12:00:00+00:00",
+          "exit_time": "2024-11-08T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 186.78,
+          "exit_price": 202.30705417326521,
+          "net_return": 0.08139855248217437,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-01-08T20:00:00+00:00",
+          "exit_time": "2025-01-13T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 194.17,
+          "exit_price": 179.76108731323885,
+          "net_return": 0.07272526481251212,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-01-16T08:00:00+00:00",
+          "exit_time": "2025-01-16T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 203.06,
+          "exit_price": 217.1007128941249,
+          "net_return": 0.06743637063071707,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-03-04T00:00:00+00:00",
+          "exit_time": "2025-03-10T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 142.05,
+          "exit_price": 115.75589111501664,
+          "net_return": 0.1837997266668764,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-03-29T04:00:00+00:00",
+          "exit_time": "2025-04-02T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 128.76,
+          "exit_price": 119.25455049483205,
+          "net_return": 0.07233993054005236,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-06-10T20:00:00+00:00",
+          "exit_time": "2025-06-12T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 163.53,
+          "exit_price": 152.46066791574762,
+          "net_return": -0.06918042046876766,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-06-13T08:00:00+00:00",
+          "exit_time": "2025-06-16T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 144.92,
+          "exit_price": 157.5196740557858,
+          "net_return": -0.08868277201826628,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-08-08T12:00:00+00:00",
+          "exit_time": "2025-08-12T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 177.56,
+          "exit_price": 188.50456963796944,
+          "net_return": 0.05994144750801675,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-10-02T00:00:00+00:00",
+          "exit_time": "2025-10-03T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 221.92,
+          "exit_price": 235.10750073812056,
+          "net_return": 0.057730846404032664,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-12-06T08:00:00+00:00",
+          "exit_time": "2025-12-09T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 132.66,
+          "exit_price": 141.44950619512386,
+          "net_return": -0.0679632640235508,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-12-11T04:00:00+00:00",
+          "exit_time": "2025-12-18T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 129.29,
+          "exit_price": 117.55416553753443,
+          "net_return": 0.08931547070772516,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-01-19T08:00:00+00:00",
+          "exit_time": "2026-01-20T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 133.39,
+          "exit_price": 126.14590704674315,
+          "net_return": 0.052793297143295524,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-02-28T08:00:00+00:00",
+          "exit_time": "2026-02-28T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 78.64,
+          "exit_price": 85.62435276793119,
+          "net_return": -0.09055774948220933,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-03-22T04:00:00+00:00",
+          "exit_time": "2026-03-27T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 88.6,
+          "exit_price": 83.52751168608387,
+          "net_return": 0.05574195591876739,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-05-05T16:00:00+00:00",
+          "exit_time": "2026-05-06T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 85.46,
+          "exit_price": 88.42086380797423,
+          "net_return": 0.03299208418109726,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-06-24T04:00:00+00:00",
+          "exit_time": "2026-06-24T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 69.53,
+          "exit_price": 65.17914600080304,
+          "net_return": 0.06107412439942352,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-07-21T04:00:00+00:00",
+          "exit_time": "2026-07-24T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 78.15,
+          "exit_price": 75.05664038276122,
+          "net_return": -0.04111777666216351,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-08-17T00:00:00+00:00",
+          "exit_time": "2026-08-18T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 74.58,
+          "exit_price": 76.45783679725633,
+          "net_return": -0.026820424785713864,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-09-18T12:00:00+00:00",
+          "exit_time": "2026-09-18T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 105.72,
+          "exit_price": 111.32317197809937,
+          "net_return": 0.051316659881675594,
+          "exit_reason": "TP"
+        }
+      ]
+    },
+    {
+      "config": "long_only",
+      "long_only": true,
+      "btc_regime_gate": false,
+      "signals_raw": {
+        "BTCUSDT": 38,
+        "ETHUSDT": 44,
+        "SOLUSDT": 32
+      },
+      "signals_kept": {
+        "BTCUSDT": 19,
+        "ETHUSDT": 22,
+        "SOLUSDT": 14
+      },
+      "report": {
+        "per_fold": {
+          "W1": {
+            "oos_start": "2024-07-01",
+            "oos_end": "2025-01-01",
+            "trades": 7,
+            "wins": 4,
+            "win_rate": 0.5714285714285714,
+            "expectancy_net": 0.010555399920490123,
+            "profit_factor_net": 1.4661107268259195,
+            "avg_win_net": 0.058101910721545066,
+            "avg_loss_net": -0.0528399478142498,
+            "total_return_net": 0.06412097617691592,
+            "max_drawdown_net": -0.07250773689457901
+          },
+          "W2": {
+            "oos_start": "2025-01-01",
+            "oos_end": "2025-07-01",
+            "trades": 6,
+            "wins": 3,
+            "win_rate": 0.5,
+            "expectancy_net": -0.0030567225080106396,
+            "profit_factor_net": 0.8843387222629087,
+            "avg_win_net": 0.04674300906809925,
+            "avg_loss_net": -0.052856454084120534,
+            "total_return_net": -0.026161417221864713,
+            "max_drawdown_net": -0.1506370868260084
+          },
+          "W3": {
+            "oos_start": "2025-07-01",
+            "oos_end": "2026-01-01",
+            "trades": 6,
+            "wins": 5,
+            "win_rate": 0.8333333333333334,
+            "expectancy_net": 0.02481919155223877,
+            "profit_factor_net": 2.8871245579688214,
+            "avg_win_net": 0.04556525776964728,
+            "avg_loss_net": -0.0789111395348038,
+            "total_return_net": 0.1505191840322162,
+            "max_drawdown_net": -0.07891113953480378
+          },
+          "W4": {
+            "oos_start": "2026-01-01",
+            "oos_end": "2026-07-01",
+            "trades": 5,
+            "wins": 3,
+            "win_rate": 0.6,
+            "expectancy_net": 0.00338959952660733,
+            "profit_factor_net": 1.1655353324750588,
+            "avg_win_net": 0.03977698650122352,
+            "avg_loss_net": -0.05119148093531696,
+            "total_return_net": 0.011508685552539477,
+            "max_drawdown_net": -0.06707074149880998
+          },
+          "W5": {
+            "oos_start": "2026-07-01",
+            "oos_end": "2026-11-01",
+            "trades": 9,
+            "wins": 6,
+            "win_rate": 0.6666666666666666,
+            "expectancy_net": 0.01476431339649724,
+            "profit_factor_net": 2.4164421981508175,
+            "avg_win_net": 0.03778174989907416,
+            "avg_loss_net": -0.0312705596086566,
+            "total_return_net": 0.13498480262330737,
+            "max_drawdown_net": -0.06323740155185886
+          }
+        },
+        "pooled_oos": {
+          "trades": 33,
+          "wins": 21,
+          "win_rate": 0.6363636363636364,
+          "expectancy_net": 0.01073604339122156,
+          "profit_factor_net": 1.598264828865459,
+          "avg_win_net": 0.04507068656365858,
+          "avg_loss_net": -0.049349582160543214,
+          "total_return_net": 0.36877324768108277,
+          "max_drawdown_net": -0.15063708682600851
+        },
+        "per_symbol_oos": {
+          "BTCUSDT": {
+            "trades": 13,
+            "wins": 8,
+            "win_rate": 0.6153846153846154,
+            "expectancy_net": 0.008342111439289528,
+            "profit_factor_net": 1.6778462941237797,
+            "avg_win_net": 0.03355446350889596,
+            "avg_loss_net": -0.03199765187208077,
+            "total_return_net": 0.10622490483394342,
+            "max_drawdown_net": -0.05756576861966778
+          },
+          "ETHUSDT": {
+            "trades": 10,
+            "wins": 6,
+            "win_rate": 0.6,
+            "expectancy_net": 0.004757499794397337,
+            "profit_factor_net": 1.1866873760333048,
+            "avg_win_net": 0.05040213098005782,
+            "avg_loss_net": -0.06370944698409339,
+            "total_return_net": 0.03168150285213134,
+            "max_drawdown_net": -0.19321273371762948
+          },
+          "SOLUSDT": {
+            "trades": 10,
+            "wins": 7,
+            "win_rate": 0.7,
+            "expectancy_net": 0.019826698525557417,
+            "profit_factor_net": 2.1178224709877638,
+            "avg_win_net": 0.05366227484075934,
+            "avg_loss_net": -0.059122979543247044,
+            "total_return_net": 0.19934031568025334,
+            "max_drawdown_net": -0.0759170133468069
+          }
+        }
+      },
+      "bar": {
+        "bar": {
+          "expectancy_net_gt": 0.0,
+          "profit_factor_net_gte": 1.2,
+          "min_oos_trades": 200,
+          "min_positive_folds": 4,
+          "folds_total": 5
+        },
+        "checks": {
+          "expectancy_net_gt_0": true,
+          "profit_factor_net_gte_1.2": true,
+          "min_oos_trades_200": false,
+          "positive_folds_gte_4_of_5": true
+        },
+        "passes_bar": false
+      },
+      "holdout": {
+        "symbols_positive_min20trades": [],
+        "max_symbol_profit_share": 0.5596186829128044,
+        "passes": false
+      },
+      "trades": [
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2023-12-14T08:00:00+00:00",
+          "exit_time": "2023-12-18T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 42910.2,
+          "exit_price": 40759.87763274755,
+          "net_return": -0.05163075540375528,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2023-12-19T12:00:00+00:00",
+          "exit_time": "2024-01-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 43004.0,
+          "exit_price": 44885.791295052266,
+          "net_return": 0.04208983901187646,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-01-02T04:00:00+00:00",
+          "exit_time": "2024-01-03T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 45434.9,
+          "exit_price": 43663.02308495121,
+          "net_return": -0.04053452099576225,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-03-25T20:00:00+00:00",
+          "exit_time": "2024-04-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 71019.6,
+          "exit_price": 66635.5246171723,
+          "net_return": -0.0632305306834157,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-04-07T08:00:00+00:00",
+          "exit_time": "2024-04-08T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 69367.3,
+          "exit_price": 72547.6763854207,
+          "net_return": 0.04417633221994167,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-10-07T20:00:00+00:00",
+          "exit_time": "2024-10-09T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 63349.4,
+          "exit_price": 61026.23996930773,
+          "net_return": -0.03821226347048141,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-10-13T00:00:00+00:00",
+          "exit_time": "2024-10-14T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 63176.0,
+          "exit_price": 65348.89131881163,
+          "net_return": 0.03274054502372172,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-11-06T04:00:00+00:00",
+          "exit_time": "2024-11-10T04:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 74367.1,
+          "exit_price": 78601.8195519499,
+          "net_return": 0.055253696467549164,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-01-03T04:00:00+00:00",
+          "exit_time": "2025-01-06T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 97019.1,
+          "exit_price": 100743.57014635723,
+          "net_return": 0.036728945978821516,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-06-17T00:00:00+00:00",
+          "exit_time": "2025-06-17T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 106750.1,
+          "exit_price": 103310.32703418327,
+          "net_return": -0.03376987335429218,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-06-25T08:00:00+00:00",
+          "exit_time": "2025-07-09T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 106547.5,
+          "exit_price": 110566.76361405003,
+          "net_return": 0.03606371059475918,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-08-08T04:00:00+00:00",
+          "exit_time": "2025-08-11T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 116692.2,
+          "exit_price": 119873.67838714024,
+          "net_return": 0.025621539549144257,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-04-06T08:00:00+00:00",
+          "exit_time": "2026-04-07T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 69089.8,
+          "exit_price": 71254.61965712304,
+          "net_return": 0.029684604654788567,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-05-14T20:00:00+00:00",
+          "exit_time": "2026-05-15T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 81373.8,
+          "exit_price": 78626.01149946035,
+          "net_return": -0.035312220371823966,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-07-27T08:00:00+00:00",
+          "exit_time": "2026-07-27T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 65196.0,
+          "exit_price": 63794.038720138764,
+          "net_return": -0.02306813532604415,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-08-18T12:00:00+00:00",
+          "exit_time": "2026-08-19T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 64326.1,
+          "exit_price": 65500.20175697381,
+          "net_return": 0.01662443716317818,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-09-18T20:00:00+00:00",
+          "exit_time": "2026-09-21T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 81169.0,
+          "exit_price": 84202.82973452359,
+          "net_return": 0.03571822863920513,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-10-21T12:00:00+00:00",
+          "exit_time": "2026-10-22T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 83463.3,
+          "exit_price": 81120.32450287986,
+          "net_return": -0.029625766837762132,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-14T20:00:00+00:00",
+          "exit_time": "2023-12-18T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2293.19,
+          "exit_price": 2157.6148759780085,
+          "net_return": -0.0606249583698458,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-22T08:00:00+00:00",
+          "exit_time": "2023-12-28T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2275.27,
+          "exit_price": 2402.864858383434,
+          "net_return": 0.05439062081356178,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-29T04:00:00+00:00",
+          "exit_time": "2024-01-03T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2354.15,
+          "exit_price": 2223.127089705756,
+          "net_return": -0.057165885907763274,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-10T00:00:00+00:00",
+          "exit_time": "2024-01-10T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2344.33,
+          "exit_price": 2489.8623543321737,
+          "net_return": 0.060380475036140434,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-31T08:00:00+00:00",
+          "exit_time": "2024-02-01T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2339.72,
+          "exit_price": 2245.732896101689,
+          "net_return": -0.04170473573408727,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-03-26T12:00:00+00:00",
+          "exit_time": "2024-04-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3634.44,
+          "exit_price": 3397.7869024498364,
+          "net_return": -0.06660866898432789,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-04-08T12:00:00+00:00",
+          "exit_time": "2024-04-10T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3636.18,
+          "exit_price": 3439.205078215993,
+          "net_return": -0.05568295608181747,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-05-17T16:00:00+00:00",
+          "exit_time": "2024-05-20T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3109.85,
+          "exit_price": 3259.2315012464137,
+          "net_return": 0.046359438341385006,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-10-29T16:00:00+00:00",
+          "exit_time": "2024-10-31T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2648.11,
+          "exit_price": 2525.5684369031014,
+          "net_return": -0.04779984307768903,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-11-06T20:00:00+00:00",
+          "exit_time": "2024-11-07T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2687.74,
+          "exit_price": 2861.6825620903996,
+          "net_return": 0.06301484891273501,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-12-12T08:00:00+00:00",
+          "exit_time": "2024-12-18T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3904.58,
+          "exit_price": 3627.2667282513066,
+          "net_return": -0.07250773689457897,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-06-03T20:00:00+00:00",
+          "exit_time": "2025-06-05T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2624.17,
+          "exit_price": 2482.1844296309437,
+          "net_return": -0.05561906842930177,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-08-22T20:00:00+00:00",
+          "exit_time": "2025-08-25T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4832.06,
+          "exit_price": 4457.883551251737,
+          "net_return": -0.0789111395348038,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-09-11T12:00:00+00:00",
+          "exit_time": "2025-09-12T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4428.06,
+          "exit_price": 4601.361244065262,
+          "net_return": 0.037475768419832446,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-10-01T16:00:00+00:00",
+          "exit_time": "2025-10-03T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4325.01,
+          "exit_price": 4535.782091886924,
+          "net_return": 0.0470566869672103,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-04-01T16:00:00+00:00",
+          "exit_time": "2026-04-07T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2133.93,
+          "exit_price": 2258.4368582909833,
+          "net_return": 0.056654270667784744,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-09-03T16:00:00+00:00",
+          "exit_time": "2026-09-11T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2516.0,
+          "exit_price": 2641.0699146712163,
+          "net_return": 0.048031629839006065,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-09-18T20:00:00+00:00",
+          "exit_time": "2026-09-21T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2635.37,
+          "exit_price": 2772.043486773882,
+          "net_return": 0.05017958107377837,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-01-28T00:00:00+00:00",
+          "exit_time": "2024-01-29T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 94.237,
+          "exit_price": 101.26456501375873,
+          "net_return": 0.07285536705081773,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-02-08T04:00:00+00:00",
+          "exit_time": "2024-02-09T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 101.767,
+          "exit_price": 108.22105866282133,
+          "net_return": 0.061719844165457796,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-02-27T12:00:00+00:00",
+          "exit_time": "2024-02-28T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 111.657,
+          "exit_price": 119.40177450227176,
+          "net_return": 0.06765258223998329,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-03-25T04:00:00+00:00",
+          "exit_time": "2024-04-01T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 184.961,
+          "exit_price": 203.7409813284808,
+          "net_return": 0.0997737703534657,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-11-06T12:00:00+00:00",
+          "exit_time": "2024-11-08T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 186.78,
+          "exit_price": 202.30705417326521,
+          "net_return": 0.08139855248217437,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-01-16T08:00:00+00:00",
+          "exit_time": "2025-01-16T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 203.06,
+          "exit_price": 217.1007128941249,
+          "net_return": 0.06743637063071707,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-06-10T20:00:00+00:00",
+          "exit_time": "2025-06-12T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 163.53,
+          "exit_price": 152.46066791574762,
+          "net_return": -0.06918042046876766,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-08-08T12:00:00+00:00",
+          "exit_time": "2025-08-12T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 177.56,
+          "exit_price": 188.50456963796944,
+          "net_return": 0.05994144750801675,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-10-02T00:00:00+00:00",
+          "exit_time": "2025-10-03T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 221.92,
+          "exit_price": 235.10750073812056,
+          "net_return": 0.057730846404032664,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-03-24T12:00:00+00:00",
+          "exit_time": "2026-03-26T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 91.71,
+          "exit_price": 85.6959462079482,
+          "net_return": -0.06707074149880995,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-05-05T16:00:00+00:00",
+          "exit_time": "2026-05-06T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 85.46,
+          "exit_price": 88.42086380797423,
+          "net_return": 0.03299208418109726,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-07-21T04:00:00+00:00",
+          "exit_time": "2026-07-24T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 78.15,
+          "exit_price": 75.05664038276122,
+          "net_return": -0.04111777666216351,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-08-17T08:00:00+00:00",
+          "exit_time": "2026-08-19T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 75.74,
+          "exit_price": 77.74415519763429,
+          "net_return": 0.024819962797601628,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-09-18T12:00:00+00:00",
+          "exit_time": "2026-09-18T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 105.72,
+          "exit_price": 111.32317197809937,
+          "net_return": 0.051316659881675594,
+          "exit_reason": "TP"
+        }
+      ]
+    },
+    {
+      "config": "gate_only",
+      "long_only": false,
+      "btc_regime_gate": true,
+      "signals_raw": {
+        "BTCUSDT": 38,
+        "ETHUSDT": 44,
+        "SOLUSDT": 32
+      },
+      "signals_kept": {
+        "BTCUSDT": 38,
+        "ETHUSDT": 43,
+        "SOLUSDT": 30
+      },
+      "report": {
+        "per_fold": {
+          "W1": {
+            "oos_start": "2024-07-01",
+            "oos_end": "2025-01-01",
+            "trades": 18,
+            "wins": 10,
+            "win_rate": 0.5555555555555556,
+            "expectancy_net": 0.007886425338662411,
+            "profit_factor_net": 1.307943293546327,
+            "avg_win_net": 0.0602935515280834,
+            "avg_loss_net": -0.05762248239811382,
+            "total_return_net": 0.1145505490034755,
+            "max_drawdown_net": -0.1748872746226917
+          },
+          "W2": {
+            "oos_start": "2025-01-01",
+            "oos_end": "2025-07-01",
+            "trades": 15,
+            "wins": 9,
+            "win_rate": 0.6,
+            "expectancy_net": 0.018353048395472915,
+            "profit_factor_net": 1.7747182316288372,
+            "avg_win_net": 0.07007169029039745,
+            "avg_loss_net": -0.05922491444691388,
+            "total_return_net": 0.2651907747960518,
+            "max_drawdown_net": -0.3076143250964326
+          },
+          "W3": {
+            "oos_start": "2025-07-01",
+            "oos_end": "2026-01-01",
+            "trades": 16,
+            "wins": 11,
+            "win_rate": 0.6875,
+            "expectancy_net": 0.01751149211343073,
+            "profit_factor_net": 1.9812496294353168,
+            "avg_win_net": 0.051429244313235326,
+            "avg_loss_net": -0.05710756272613936,
+            "total_return_net": 0.2907615788564255,
+            "max_drawdown_net": -0.19141699716264815
+          },
+          "W4": {
+            "oos_start": "2026-01-01",
+            "oos_end": "2026-07-01",
+            "trades": 15,
+            "wins": 10,
+            "win_rate": 0.6666666666666666,
+            "expectancy_net": 0.010058386012024662,
+            "profit_factor_net": 1.496683328377842,
+            "avg_win_net": 0.04546423584546207,
+            "avg_loss_net": -0.06075331365485016,
+            "total_return_net": 0.1379054903988466,
+            "max_drawdown_net": -0.20850719391924444
+          },
+          "W5": {
+            "oos_start": "2026-07-01",
+            "oos_end": "2026-11-01",
+            "trades": 12,
+            "wins": 5,
+            "win_rate": 0.4166666666666667,
+            "expectancy_net": 0.0009384818856524261,
+            "profit_factor_net": 1.055481690869942,
+            "avg_win_net": 0.042848749502227446,
+            "avg_loss_net": -0.0289974235547583,
+            "total_return_net": 0.003492203078968359,
+            "max_drawdown_net": -0.16141471383198935
+          }
+        },
+        "pooled_oos": {
+          "trades": 76,
+          "wins": 45,
+          "win_rate": 0.5921052631578947,
+          "expectancy_net": 0.011310168798040891,
+          "profit_factor_net": 1.5343556155619624,
+          "avg_win_net": 0.054848633806794604,
+          "avg_loss_net": -0.051890828795311275,
+          "total_return_net": 1.0783659162793104,
+          "max_drawdown_net": -0.3076143250964326
+        },
+        "per_symbol_oos": {
+          "BTCUSDT": {
+            "trades": 28,
+            "wins": 16,
+            "win_rate": 0.5714285714285714,
+            "expectancy_net": 0.006605830497192722,
+            "profit_factor_net": 1.4245115292938144,
+            "avg_win_net": 0.03879198053599359,
+            "avg_loss_net": -0.03630903622120842,
+            "total_return_net": 0.17732251077759664,
+            "max_drawdown_net": -0.1323952951443791
+          },
+          "ETHUSDT": {
+            "trades": 26,
+            "wins": 14,
+            "win_rate": 0.5384615384615384,
+            "expectancy_net": -0.00014220759340406464,
+            "profit_factor_net": 0.9949853564194407,
+            "avg_win_net": 0.052401620504398075,
+            "avg_loss_net": -0.061443340374173226,
+            "total_return_net": -0.0465525186679826,
+            "max_drawdown_net": -0.22599529846397803
+          },
+          "SOLUSDT": {
+            "trades": 22,
+            "wins": 15,
+            "win_rate": 0.6818181818181818,
+            "expectancy_net": 0.030832135098100778,
+            "profit_factor_net": 2.557224393666717,
+            "avg_win_net": 0.07425960971121914,
+            "avg_loss_net": -0.0622267390728671,
+            "total_return_net": 0.8515258844294673,
+            "max_drawdown_net": -0.1517280810304743
+          }
+        }
+      },
+      "bar": {
+        "bar": {
+          "expectancy_net_gt": 0.0,
+          "profit_factor_net_gte": 1.2,
+          "min_oos_trades": 200,
+          "min_positive_folds": 4,
+          "folds_total": 5
+        },
+        "checks": {
+          "expectancy_net_gt_0": true,
+          "profit_factor_net_gte_1.2": true,
+          "min_oos_trades_200": false,
+          "positive_folds_gte_4_of_5": true
+        },
+        "passes_bar": false
+      },
+      "holdout": {
+        "symbols_positive_min20trades": [
+          "BTCUSDT",
+          "SOLUSDT"
+        ],
+        "max_symbol_profit_share": 0.7857411870193026,
+        "passes": true
+      },
+      "trades": [
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2023-12-14T08:00:00+00:00",
+          "exit_time": "2023-12-18T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 42910.2,
+          "exit_price": 40759.87763274755,
+          "net_return": -0.05163075540375528,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2023-12-19T12:00:00+00:00",
+          "exit_time": "2024-01-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 43004.0,
+          "exit_price": 44885.791295052266,
+          "net_return": 0.04208983901187646,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-01-02T04:00:00+00:00",
+          "exit_time": "2024-01-03T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 45434.9,
+          "exit_price": 43663.02308495121,
+          "net_return": -0.04053452099576225,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-01-13T12:00:00+00:00",
+          "exit_time": "2024-01-23T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 42631.8,
+          "exit_price": 39140.55713659416,
+          "net_return": 0.0804227790513688,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-03-25T20:00:00+00:00",
+          "exit_time": "2024-04-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 71019.6,
+          "exit_price": 66635.5246171723,
+          "net_return": -0.0632305306834157,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-04-07T08:00:00+00:00",
+          "exit_time": "2024-04-08T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 69367.3,
+          "exit_price": 72547.6763854207,
+          "net_return": 0.04417633221994167,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-04-25T12:00:00+00:00",
+          "exit_time": "2024-04-30T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 63827.0,
+          "exit_price": 60932.89749992337,
+          "net_return": 0.043814244873215356,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-05-09T08:00:00+00:00",
+          "exit_time": "2024-05-15T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 61222.5,
+          "exit_price": 64147.8186482224,
+          "net_return": -0.04945955054117978,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-07-02T20:00:00+00:00",
+          "exit_time": "2024-07-03T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 61944.0,
+          "exit_price": 59877.01832567524,
+          "net_return": 0.03182070484723404,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-08-12T04:00:00+00:00",
+          "exit_time": "2024-08-23T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 58488.6,
+          "exit_price": 61863.069176353165,
+          "net_return": -0.05938814290583757,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-08-28T16:00:00+00:00",
+          "exit_time": "2024-09-04T00:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 58963.4,
+          "exit_price": 55663.78203054768,
+          "net_return": 0.05444877011022264,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-10-07T20:00:00+00:00",
+          "exit_time": "2024-10-09T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 63349.4,
+          "exit_price": 61026.23996930773,
+          "net_return": -0.03821226347048141,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-10-13T00:00:00+00:00",
+          "exit_time": "2024-10-14T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 63176.0,
+          "exit_price": 65348.89131881163,
+          "net_return": 0.03274054502372172,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-11-06T04:00:00+00:00",
+          "exit_time": "2024-11-10T04:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 74367.1,
+          "exit_price": 78601.8195519499,
+          "net_return": 0.055253696467549164,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-01-03T04:00:00+00:00",
+          "exit_time": "2025-01-06T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 97019.1,
+          "exit_price": 100743.57014635723,
+          "net_return": 0.036728945978821516,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-01-09T00:00:00+00:00",
+          "exit_time": "2025-01-13T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 95014.0,
+          "exit_price": 90571.76415238704,
+          "net_return": 0.045227071803010985,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-03-29T08:00:00+00:00",
+          "exit_time": "2025-04-02T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 83696.1,
+          "exit_price": 86598.21417700913,
+          "net_return": -0.036331229939675025,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-06-17T00:00:00+00:00",
+          "exit_time": "2025-06-17T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 106750.1,
+          "exit_price": 103310.32703418327,
+          "net_return": -0.03376987335429218,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-06-25T08:00:00+00:00",
+          "exit_time": "2025-07-09T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 106547.5,
+          "exit_price": 110566.76361405003,
+          "net_return": 0.03606371059475918,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-08-08T04:00:00+00:00",
+          "exit_time": "2025-08-11T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 116692.2,
+          "exit_price": 119873.67838714024,
+          "net_return": 0.025621539549144257,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-09-22T08:00:00+00:00",
+          "exit_time": "2025-09-25T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 112454.5,
+          "exit_price": 109995.29776308875,
+          "net_return": 0.020302156461358332,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-10-11T00:00:00+00:00",
+          "exit_time": "2025-10-17T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 112715.0,
+          "exit_price": 104601.39735545953,
+          "net_return": 0.07049732876534207,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-10-30T16:00:00+00:00",
+          "exit_time": "2025-11-04T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 107670.5,
+          "exit_price": 102706.9030328939,
+          "net_return": 0.044572416327234674,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-12-01T12:00:00+00:00",
+          "exit_time": "2025-12-02T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 86100.0,
+          "exit_price": 89594.49559115303,
+          "net_return": -0.04225274746656722,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-12-07T04:00:00+00:00",
+          "exit_time": "2025-12-09T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 89675.7,
+          "exit_price": 92972.48338206456,
+          "net_return": -0.03842354679734464,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-01-20T08:00:00+00:00",
+          "exit_time": "2026-01-20T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 91136.1,
+          "exit_price": 88566.36431185938,
+          "net_return": 0.026640552421387083,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-03-08T12:00:00+00:00",
+          "exit_time": "2026-03-10T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 67490.1,
+          "exit_price": 70736.98112098603,
+          "net_return": -0.049787315570848,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-03-20T08:00:00+00:00",
+          "exit_time": "2026-03-22T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 70812.0,
+          "exit_price": 67421.63593358206,
+          "net_return": 0.04635376885464594,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-04-06T08:00:00+00:00",
+          "exit_time": "2026-04-07T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 69089.8,
+          "exit_price": 71254.61965712304,
+          "net_return": 0.029684604654788567,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-05-14T20:00:00+00:00",
+          "exit_time": "2026-05-15T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 81373.8,
+          "exit_price": 78626.01149946035,
+          "net_return": -0.035312220371823966,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-07-25T12:00:00+00:00",
+          "exit_time": "2026-07-27T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 64031.2,
+          "exit_price": 65617.80886887967,
+          "net_return": -0.026419642629087917,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-07-27T08:00:00+00:00",
+          "exit_time": "2026-07-27T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 65196.0,
+          "exit_price": 63794.038720138764,
+          "net_return": -0.02306813532604415,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-08-11T20:00:00+00:00",
+          "exit_time": "2026-08-18T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 63508.5,
+          "exit_price": 64872.78136937161,
+          "net_return": -0.02311754998473694,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-09-18T20:00:00+00:00",
+          "exit_time": "2026-09-21T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 81169.0,
+          "exit_price": 84202.82973452359,
+          "net_return": 0.03571822863920513,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-10-21T12:00:00+00:00",
+          "exit_time": "2026-10-22T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 83463.3,
+          "exit_price": 81120.32450287986,
+          "net_return": -0.029625766837762132,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-10-23T00:00:00+00:00",
+          "exit_time": "2026-10-29T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 81384.6,
+          "exit_price": 78898.29966013785,
+          "net_return": 0.02899764807747206,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-14T20:00:00+00:00",
+          "exit_time": "2023-12-18T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2293.19,
+          "exit_price": 2157.6148759780085,
+          "net_return": -0.0606249583698458,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-22T08:00:00+00:00",
+          "exit_time": "2023-12-28T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2275.27,
+          "exit_price": 2402.864858383434,
+          "net_return": 0.05439062081356178,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-29T04:00:00+00:00",
+          "exit_time": "2024-01-03T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2354.15,
+          "exit_price": 2223.127089705756,
+          "net_return": -0.057165885907763274,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-04T00:00:00+00:00",
+          "exit_time": "2024-01-09T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2210.39,
+          "exit_price": 2368.7896008175467,
+          "net_return": -0.07337741242818087,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-10T00:00:00+00:00",
+          "exit_time": "2024-01-10T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2344.33,
+          "exit_price": 2489.8623543321737,
+          "net_return": 0.060380475036140434,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-31T08:00:00+00:00",
+          "exit_time": "2024-02-01T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2339.72,
+          "exit_price": 2245.732896101689,
+          "net_return": -0.04170473573408727,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-03-26T12:00:00+00:00",
+          "exit_time": "2024-04-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3634.44,
+          "exit_price": 3397.7869024498364,
+          "net_return": -0.06660866898432789,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-04-02T04:00:00+00:00",
+          "exit_time": "2024-04-08T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3367.8,
+          "exit_price": 3582.5079346057173,
+          "net_return": -0.06545654034760605,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-04-08T12:00:00+00:00",
+          "exit_time": "2024-04-10T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3636.18,
+          "exit_price": 3439.205078215993,
+          "net_return": -0.05568295608181747,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-04-13T00:00:00+00:00",
+          "exit_time": "2024-04-13T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3238.31,
+          "exit_price": 2976.786481246141,
+          "net_return": 0.0792872970921559,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-05-07T12:00:00+00:00",
+          "exit_time": "2024-05-10T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3061.92,
+          "exit_price": 2888.3657240952753,
+          "net_return": 0.05517100077010219,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-05-17T16:00:00+00:00",
+          "exit_time": "2024-05-20T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3109.85,
+          "exit_price": 3259.2315012464137,
+          "net_return": 0.046359438341385006,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-07-25T08:00:00+00:00",
+          "exit_time": "2024-07-29T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3170.22,
+          "exit_price": 3380.438923999187,
+          "net_return": -0.06801797878498943,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-08-28T00:00:00+00:00",
+          "exit_time": "2024-09-06T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2455.98,
+          "exit_price": 2294.9030120874686,
+          "net_return": 0.06408936687818051,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-10-02T00:00:00+00:00",
+          "exit_time": "2024-10-14T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2446.85,
+          "exit_price": 2596.4329344951634,
+          "net_return": -0.0628320302778624,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-10-24T00:00:00+00:00",
+          "exit_time": "2024-10-25T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2523.85,
+          "exit_price": 2406.724215069111,
+          "net_return": 0.04488061616709579,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-10-29T16:00:00+00:00",
+          "exit_time": "2024-10-31T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2648.11,
+          "exit_price": 2525.5684369031014,
+          "net_return": -0.04779984307768903,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-11-01T16:00:00+00:00",
+          "exit_time": "2024-11-06T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2500.03,
+          "exit_price": 2648.1840860459,
+          "net_return": -0.06095709770407356,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-11-06T20:00:00+00:00",
+          "exit_time": "2024-11-07T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2687.74,
+          "exit_price": 2861.6825620903996,
+          "net_return": 0.06301484891273501,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-12-12T08:00:00+00:00",
+          "exit_time": "2024-12-18T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3904.58,
+          "exit_price": 3627.2667282513066,
+          "net_return": -0.07250773689457897,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-01-08T12:00:00+00:00",
+          "exit_time": "2025-01-13T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3348.5,
+          "exit_price": 3149.340059351567,
+          "net_return": 0.05797131914907818,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-03-28T12:00:00+00:00",
+          "exit_time": "2025-03-30T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 1899.41,
+          "exit_price": 1785.714539754761,
+          "net_return": 0.05835287243774907,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-06-03T20:00:00+00:00",
+          "exit_time": "2025-06-05T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2624.17,
+          "exit_price": 2482.1844296309437,
+          "net_return": -0.05561906842930177,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-06-06T00:00:00+00:00",
+          "exit_time": "2025-06-09T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2412.9,
+          "exit_price": 2581.9300812641713,
+          "net_return": -0.07176612247118029,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-08-22T20:00:00+00:00",
+          "exit_time": "2025-08-25T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4832.06,
+          "exit_price": 4457.883551251737,
+          "net_return": -0.0789111395348038,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-09-11T12:00:00+00:00",
+          "exit_time": "2025-09-12T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4428.06,
+          "exit_price": 4601.361244065262,
+          "net_return": 0.037475768419832446,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-10-01T16:00:00+00:00",
+          "exit_time": "2025-10-03T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4325.01,
+          "exit_price": 4535.782091886924,
+          "net_return": 0.0470566869672103,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-10-10T08:00:00+00:00",
+          "exit_time": "2025-10-10T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 4321.05,
+          "exit_price": 4083.017057331114,
+          "net_return": 0.05357375751980814,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-10-30T12:00:00+00:00",
+          "exit_time": "2025-11-03T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3879.52,
+          "exit_price": 3642.335259106963,
+          "net_return": 0.05963426881588371,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-12-01T08:00:00+00:00",
+          "exit_time": "2025-12-02T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2838.43,
+          "exit_price": 2998.22137412952,
+          "net_return": -0.05798711580843034,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-01-20T12:00:00+00:00",
+          "exit_time": "2026-01-20T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 3108.15,
+          "exit_price": 2977.9676787281564,
+          "net_return": 0.04034996963961509,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-02-28T08:00:00+00:00",
+          "exit_time": "2026-03-01T00:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 1865.37,
+          "exit_price": 2019.0029706556284,
+          "net_return": -0.08409375180344611,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-03-22T00:00:00+00:00",
+          "exit_time": "2026-03-29T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2083.37,
+          "exit_price": 1963.7833043394483,
+          "net_return": 0.055891237139084636,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-05-08T08:00:00+00:00",
+          "exit_time": "2026-05-10T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 2279.88,
+          "exit_price": 2376.4248049738644,
+          "net_return": -0.04401553104592337,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-06-19T20:00:00+00:00",
+          "exit_time": "2026-06-24T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 1700.44,
+          "exit_price": 1607.5372090599587,
+          "net_return": 0.053120764102515684,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-08-11T16:00:00+00:00",
+          "exit_time": "2026-08-12T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 1862.01,
+          "exit_price": 1920.0330047499756,
+          "net_return": -0.032812668657799596,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-09-03T16:00:00+00:00",
+          "exit_time": "2026-09-11T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2516.0,
+          "exit_price": 2641.0699146712163,
+          "net_return": 0.048031629839006065,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-09-18T20:00:00+00:00",
+          "exit_time": "2026-09-21T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2635.37,
+          "exit_price": 2772.043486773882,
+          "net_return": 0.05017958107377837,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-02-08T04:00:00+00:00",
+          "exit_time": "2024-02-09T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 101.767,
+          "exit_price": 108.22105866282133,
+          "net_return": 0.061719844165457796,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-02-27T12:00:00+00:00",
+          "exit_time": "2024-02-28T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 111.657,
+          "exit_price": 119.40177450227176,
+          "net_return": 0.06765258223998329,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-03-25T04:00:00+00:00",
+          "exit_time": "2024-04-01T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 184.961,
+          "exit_price": 203.7409813284808,
+          "net_return": 0.0997737703534657,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-04-26T04:00:00+00:00",
+          "exit_time": "2024-04-30T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 143.213,
+          "exit_price": 129.5086157843112,
+          "net_return": 0.09424426921217162,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-06-08T08:00:00+00:00",
+          "exit_time": "2024-06-11T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 163.597,
+          "exit_price": 153.62615055698083,
+          "net_return": 0.0594439433682536,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-07-04T16:00:00+00:00",
+          "exit_time": "2024-07-05T00:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 135.296,
+          "exit_price": 122.72654741624117,
+          "net_return": 0.09145084032151386,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-08-29T00:00:00+00:00",
+          "exit_time": "2024-09-01T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 143.892,
+          "exit_price": 131.6176868873177,
+          "net_return": 0.08383757407040689,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-09-16T20:00:00+00:00",
+          "exit_time": "2024-09-19T00:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 131.064,
+          "exit_price": 137.562688776858,
+          "net_return": -0.051264766069398233,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-11-06T12:00:00+00:00",
+          "exit_time": "2024-11-08T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 186.78,
+          "exit_price": 202.30705417326521,
+          "net_return": 0.08139855248217437,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-01-08T20:00:00+00:00",
+          "exit_time": "2025-01-13T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 194.17,
+          "exit_price": 179.76108731323885,
+          "net_return": 0.07272526481251212,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-01-16T08:00:00+00:00",
+          "exit_time": "2025-01-16T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 203.06,
+          "exit_price": 217.1007128941249,
+          "net_return": 0.06743637063071707,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-03-04T00:00:00+00:00",
+          "exit_time": "2025-03-10T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 142.05,
+          "exit_price": 115.75589111501664,
+          "net_return": 0.1837997266668764,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-03-29T04:00:00+00:00",
+          "exit_time": "2025-04-02T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 128.76,
+          "exit_price": 119.25455049483205,
+          "net_return": 0.07233993054005236,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-06-10T20:00:00+00:00",
+          "exit_time": "2025-06-12T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 163.53,
+          "exit_price": 152.46066791574762,
+          "net_return": -0.06918042046876766,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-06-13T08:00:00+00:00",
+          "exit_time": "2025-06-16T04:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 144.92,
+          "exit_price": 157.5196740557858,
+          "net_return": -0.08868277201826628,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-08-08T12:00:00+00:00",
+          "exit_time": "2025-08-12T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 177.56,
+          "exit_price": 188.50456963796944,
+          "net_return": 0.05994144750801675,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-10-02T00:00:00+00:00",
+          "exit_time": "2025-10-03T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 221.92,
+          "exit_price": 235.10750073812056,
+          "net_return": 0.057730846404032664,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-12-06T08:00:00+00:00",
+          "exit_time": "2025-12-09T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 132.66,
+          "exit_price": 141.44950619512386,
+          "net_return": -0.0679632640235508,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-12-11T04:00:00+00:00",
+          "exit_time": "2025-12-18T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 129.29,
+          "exit_price": 117.55416553753443,
+          "net_return": 0.08931547070772516,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-01-19T08:00:00+00:00",
+          "exit_time": "2026-01-20T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 133.39,
+          "exit_price": 126.14590704674315,
+          "net_return": 0.052793297143295524,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-02-28T08:00:00+00:00",
+          "exit_time": "2026-02-28T20:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 78.64,
+          "exit_price": 85.62435276793119,
+          "net_return": -0.09055774948220933,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-03-22T04:00:00+00:00",
+          "exit_time": "2026-03-27T08:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 88.6,
+          "exit_price": 83.52751168608387,
+          "net_return": 0.05574195591876739,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-05-05T16:00:00+00:00",
+          "exit_time": "2026-05-06T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 85.46,
+          "exit_price": 88.42086380797423,
+          "net_return": 0.03299208418109726,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-06-24T04:00:00+00:00",
+          "exit_time": "2026-06-24T16:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 69.53,
+          "exit_price": 65.17914600080304,
+          "net_return": 0.06107412439942352,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-07-21T04:00:00+00:00",
+          "exit_time": "2026-07-24T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 78.15,
+          "exit_price": 75.05664038276122,
+          "net_return": -0.04111777666216351,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-08-17T00:00:00+00:00",
+          "exit_time": "2026-08-18T12:00:00+00:00",
+          "side": "SHORT",
+          "entry_price": 74.58,
+          "exit_price": 76.45783679725633,
+          "net_return": -0.026820424785713864,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-09-18T12:00:00+00:00",
+          "exit_time": "2026-09-18T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 105.72,
+          "exit_price": 111.32317197809937,
+          "net_return": 0.051316659881675594,
+          "exit_reason": "TP"
+        }
+      ]
+    },
+    {
+      "config": "production",
+      "long_only": true,
+      "btc_regime_gate": true,
+      "signals_raw": {
+        "BTCUSDT": 38,
+        "ETHUSDT": 44,
+        "SOLUSDT": 32
+      },
+      "signals_kept": {
+        "BTCUSDT": 19,
+        "ETHUSDT": 21,
+        "SOLUSDT": 12
+      },
+      "report": {
+        "per_fold": {
+          "W1": {
+            "oos_start": "2024-07-01",
+            "oos_end": "2025-01-01",
+            "trades": 7,
+            "wins": 4,
+            "win_rate": 0.5714285714285714,
+            "expectancy_net": 0.010555399920490123,
+            "profit_factor_net": 1.4661107268259195,
+            "avg_win_net": 0.058101910721545066,
+            "avg_loss_net": -0.0528399478142498,
+            "total_return_net": 0.06412097617691592,
+            "max_drawdown_net": -0.07250773689457901
+          },
+          "W2": {
+            "oos_start": "2025-01-01",
+            "oos_end": "2025-07-01",
+            "trades": 6,
+            "wins": 3,
+            "win_rate": 0.5,
+            "expectancy_net": -0.0030567225080106396,
+            "profit_factor_net": 0.8843387222629087,
+            "avg_win_net": 0.04674300906809925,
+            "avg_loss_net": -0.052856454084120534,
+            "total_return_net": -0.026161417221864713,
+            "max_drawdown_net": -0.1506370868260084
+          },
+          "W3": {
+            "oos_start": "2025-07-01",
+            "oos_end": "2026-01-01",
+            "trades": 6,
+            "wins": 5,
+            "win_rate": 0.8333333333333334,
+            "expectancy_net": 0.02481919155223877,
+            "profit_factor_net": 2.8871245579688214,
+            "avg_win_net": 0.04556525776964728,
+            "avg_loss_net": -0.0789111395348038,
+            "total_return_net": 0.1505191840322162,
+            "max_drawdown_net": -0.07891113953480378
+          },
+          "W4": {
+            "oos_start": "2026-01-01",
+            "oos_end": "2026-07-01",
+            "trades": 4,
+            "wins": 2,
+            "win_rate": 0.5,
+            "expectancy_net": -0.009926568258687025,
+            "profit_factor_net": 0.6121788986245681,
+            "avg_win_net": 0.031338344417942914,
+            "avg_loss_net": -0.05119148093531696,
+            "total_return_net": -0.04272502971734937,
+            "max_drawdown_net": -0.06707074149880998
+          },
+          "W5": {
+            "oos_start": "2026-07-01",
+            "oos_end": "2026-11-01",
+            "trades": 8,
+            "wins": 5,
+            "win_rate": 0.625,
+            "expectancy_net": 0.013507357221359194,
+            "profit_factor_net": 2.1518699923421445,
+            "avg_win_net": 0.04037410731936867,
+            "avg_loss_net": -0.0312705596086566,
+            "total_return_net": 0.10749677389672696,
+            "max_drawdown_net": -0.06323740155185886
+          }
+        },
+        "pooled_oos": {
+          "trades": 31,
+          "wins": 19,
+          "win_rate": 0.6129032258064516,
+          "expectancy_net": 0.008800490272416936,
+          "profit_factor_net": 1.4606847489903891,
+          "avg_win_net": 0.045526851809023355,
+          "avg_loss_net": -0.049349582160543214,
+          "total_return_net": 0.2640114825899573,
+          "max_drawdown_net": -0.15063708682600851
+        },
+        "per_symbol_oos": {
+          "BTCUSDT": {
+            "trades": 13,
+            "wins": 8,
+            "win_rate": 0.6153846153846154,
+            "expectancy_net": 0.008342111439289528,
+            "profit_factor_net": 1.6778462941237797,
+            "avg_win_net": 0.03355446350889596,
+            "avg_loss_net": -0.03199765187208077,
+            "total_return_net": 0.10622490483394342,
+            "max_drawdown_net": -0.05756576861966778
+          },
+          "ETHUSDT": {
+            "trades": 9,
+            "wins": 5,
+            "win_rate": 0.5555555555555556,
+            "expectancy_net": -0.0010088080804234864,
+            "profit_factor_net": 0.9643723452580029,
+            "avg_win_net": 0.049151703042512436,
+            "avg_loss_net": -0.06370944698409339,
+            "total_return_net": -0.02363381146405752,
+            "max_drawdown_net": -0.19321273371762948
+          },
+          "SOLUSDT": {
+            "trades": 9,
+            "wins": 6,
+            "win_rate": 0.6666666666666666,
+            "expectancy_net": 0.019271891384219173,
+            "profit_factor_net": 1.977888370973705,
+            "avg_win_net": 0.05846932684795229,
+            "avg_loss_net": -0.059122979543247044,
+            "total_return_net": 0.1702936703206268,
+            "max_drawdown_net": -0.0759170133468069
+          }
+        }
+      },
+      "bar": {
+        "bar": {
+          "expectancy_net_gt": 0.0,
+          "profit_factor_net_gte": 1.2,
+          "min_oos_trades": 200,
+          "min_positive_folds": 4,
+          "folds_total": 5
+        },
+        "checks": {
+          "expectancy_net_gt_0": true,
+          "profit_factor_net_gte_1.2": true,
+          "min_oos_trades_200": false,
+          "positive_folds_gte_4_of_5": false
+        },
+        "passes_bar": false
+      },
+      "holdout": {
+        "symbols_positive_min20trades": [],
+        "max_symbol_profit_share": 0.615290614742673,
+        "passes": false
+      },
+      "trades": [
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2023-12-14T08:00:00+00:00",
+          "exit_time": "2023-12-18T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 42910.2,
+          "exit_price": 40759.87763274755,
+          "net_return": -0.05163075540375528,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2023-12-19T12:00:00+00:00",
+          "exit_time": "2024-01-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 43004.0,
+          "exit_price": 44885.791295052266,
+          "net_return": 0.04208983901187646,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-01-02T04:00:00+00:00",
+          "exit_time": "2024-01-03T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 45434.9,
+          "exit_price": 43663.02308495121,
+          "net_return": -0.04053452099576225,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-03-25T20:00:00+00:00",
+          "exit_time": "2024-04-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 71019.6,
+          "exit_price": 66635.5246171723,
+          "net_return": -0.0632305306834157,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-04-07T08:00:00+00:00",
+          "exit_time": "2024-04-08T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 69367.3,
+          "exit_price": 72547.6763854207,
+          "net_return": 0.04417633221994167,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-10-07T20:00:00+00:00",
+          "exit_time": "2024-10-09T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 63349.4,
+          "exit_price": 61026.23996930773,
+          "net_return": -0.03821226347048141,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-10-13T00:00:00+00:00",
+          "exit_time": "2024-10-14T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 63176.0,
+          "exit_price": 65348.89131881163,
+          "net_return": 0.03274054502372172,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2024-11-06T04:00:00+00:00",
+          "exit_time": "2024-11-10T04:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 74367.1,
+          "exit_price": 78601.8195519499,
+          "net_return": 0.055253696467549164,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-01-03T04:00:00+00:00",
+          "exit_time": "2025-01-06T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 97019.1,
+          "exit_price": 100743.57014635723,
+          "net_return": 0.036728945978821516,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-06-17T00:00:00+00:00",
+          "exit_time": "2025-06-17T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 106750.1,
+          "exit_price": 103310.32703418327,
+          "net_return": -0.03376987335429218,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-06-25T08:00:00+00:00",
+          "exit_time": "2025-07-09T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 106547.5,
+          "exit_price": 110566.76361405003,
+          "net_return": 0.03606371059475918,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2025-08-08T04:00:00+00:00",
+          "exit_time": "2025-08-11T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 116692.2,
+          "exit_price": 119873.67838714024,
+          "net_return": 0.025621539549144257,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-04-06T08:00:00+00:00",
+          "exit_time": "2026-04-07T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 69089.8,
+          "exit_price": 71254.61965712304,
+          "net_return": 0.029684604654788567,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-05-14T20:00:00+00:00",
+          "exit_time": "2026-05-15T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 81373.8,
+          "exit_price": 78626.01149946035,
+          "net_return": -0.035312220371823966,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-07-27T08:00:00+00:00",
+          "exit_time": "2026-07-27T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 65196.0,
+          "exit_price": 63794.038720138764,
+          "net_return": -0.02306813532604415,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-08-18T12:00:00+00:00",
+          "exit_time": "2026-08-19T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 64326.1,
+          "exit_price": 65500.20175697381,
+          "net_return": 0.01662443716317818,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-09-18T20:00:00+00:00",
+          "exit_time": "2026-09-21T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 81169.0,
+          "exit_price": 84202.82973452359,
+          "net_return": 0.03571822863920513,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "entry_time": "2026-10-21T12:00:00+00:00",
+          "exit_time": "2026-10-22T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 83463.3,
+          "exit_price": 81120.32450287986,
+          "net_return": -0.029625766837762132,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-14T20:00:00+00:00",
+          "exit_time": "2023-12-18T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2293.19,
+          "exit_price": 2157.6148759780085,
+          "net_return": -0.0606249583698458,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-22T08:00:00+00:00",
+          "exit_time": "2023-12-28T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2275.27,
+          "exit_price": 2402.864858383434,
+          "net_return": 0.05439062081356178,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2023-12-29T04:00:00+00:00",
+          "exit_time": "2024-01-03T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2354.15,
+          "exit_price": 2223.127089705756,
+          "net_return": -0.057165885907763274,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-10T00:00:00+00:00",
+          "exit_time": "2024-01-10T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2344.33,
+          "exit_price": 2489.8623543321737,
+          "net_return": 0.060380475036140434,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-01-31T08:00:00+00:00",
+          "exit_time": "2024-02-01T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2339.72,
+          "exit_price": 2245.732896101689,
+          "net_return": -0.04170473573408727,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-03-26T12:00:00+00:00",
+          "exit_time": "2024-04-02T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3634.44,
+          "exit_price": 3397.7869024498364,
+          "net_return": -0.06660866898432789,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-04-08T12:00:00+00:00",
+          "exit_time": "2024-04-10T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3636.18,
+          "exit_price": 3439.205078215993,
+          "net_return": -0.05568295608181747,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-05-17T16:00:00+00:00",
+          "exit_time": "2024-05-20T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3109.85,
+          "exit_price": 3259.2315012464137,
+          "net_return": 0.046359438341385006,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-10-29T16:00:00+00:00",
+          "exit_time": "2024-10-31T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2648.11,
+          "exit_price": 2525.5684369031014,
+          "net_return": -0.04779984307768903,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-11-06T20:00:00+00:00",
+          "exit_time": "2024-11-07T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2687.74,
+          "exit_price": 2861.6825620903996,
+          "net_return": 0.06301484891273501,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2024-12-12T08:00:00+00:00",
+          "exit_time": "2024-12-18T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 3904.58,
+          "exit_price": 3627.2667282513066,
+          "net_return": -0.07250773689457897,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-06-03T20:00:00+00:00",
+          "exit_time": "2025-06-05T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2624.17,
+          "exit_price": 2482.1844296309437,
+          "net_return": -0.05561906842930177,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-08-22T20:00:00+00:00",
+          "exit_time": "2025-08-25T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4832.06,
+          "exit_price": 4457.883551251737,
+          "net_return": -0.0789111395348038,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-09-11T12:00:00+00:00",
+          "exit_time": "2025-09-12T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4428.06,
+          "exit_price": 4601.361244065262,
+          "net_return": 0.037475768419832446,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2025-10-01T16:00:00+00:00",
+          "exit_time": "2025-10-03T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 4325.01,
+          "exit_price": 4535.782091886924,
+          "net_return": 0.0470566869672103,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-09-03T16:00:00+00:00",
+          "exit_time": "2026-09-11T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2516.0,
+          "exit_price": 2641.0699146712163,
+          "net_return": 0.048031629839006065,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "entry_time": "2026-09-18T20:00:00+00:00",
+          "exit_time": "2026-09-21T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 2635.37,
+          "exit_price": 2772.043486773882,
+          "net_return": 0.05017958107377837,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-02-08T04:00:00+00:00",
+          "exit_time": "2024-02-09T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 101.767,
+          "exit_price": 108.22105866282133,
+          "net_return": 0.061719844165457796,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-02-27T12:00:00+00:00",
+          "exit_time": "2024-02-28T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 111.657,
+          "exit_price": 119.40177450227176,
+          "net_return": 0.06765258223998329,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-03-25T04:00:00+00:00",
+          "exit_time": "2024-04-01T00:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 184.961,
+          "exit_price": 203.7409813284808,
+          "net_return": 0.0997737703534657,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2024-11-06T12:00:00+00:00",
+          "exit_time": "2024-11-08T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 186.78,
+          "exit_price": 202.30705417326521,
+          "net_return": 0.08139855248217437,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-01-16T08:00:00+00:00",
+          "exit_time": "2025-01-16T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 203.06,
+          "exit_price": 217.1007128941249,
+          "net_return": 0.06743637063071707,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-06-10T20:00:00+00:00",
+          "exit_time": "2025-06-12T20:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 163.53,
+          "exit_price": 152.46066791574762,
+          "net_return": -0.06918042046876766,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-08-08T12:00:00+00:00",
+          "exit_time": "2025-08-12T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 177.56,
+          "exit_price": 188.50456963796944,
+          "net_return": 0.05994144750801675,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2025-10-02T00:00:00+00:00",
+          "exit_time": "2025-10-03T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 221.92,
+          "exit_price": 235.10750073812056,
+          "net_return": 0.057730846404032664,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-03-24T12:00:00+00:00",
+          "exit_time": "2026-03-26T16:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 91.71,
+          "exit_price": 85.6959462079482,
+          "net_return": -0.06707074149880995,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-05-05T16:00:00+00:00",
+          "exit_time": "2026-05-06T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 85.46,
+          "exit_price": 88.42086380797423,
+          "net_return": 0.03299208418109726,
+          "exit_reason": "TP"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-07-21T04:00:00+00:00",
+          "exit_time": "2026-07-24T08:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 78.15,
+          "exit_price": 75.05664038276122,
+          "net_return": -0.04111777666216351,
+          "exit_reason": "SL"
+        },
+        {
+          "symbol": "SOLUSDT",
+          "entry_time": "2026-09-18T12:00:00+00:00",
+          "exit_time": "2026-09-18T12:00:00+00:00",
+          "side": "LONG",
+          "entry_price": 105.72,
+          "exit_price": 111.32317197809937,
+          "net_return": 0.051316659881675594,
+          "exit_reason": "TP"
+        }
+      ]
+    }
+  ]
+}
