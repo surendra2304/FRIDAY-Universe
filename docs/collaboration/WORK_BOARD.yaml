@@ -3215,6 +3215,38 @@ tasks:
     evidence: []
     blockers: []
     next_action: "Implement on claude/track-b-specialist-endpoints, PR via bridge, merge on green CI under owner autonomous authority, live-verify all three through the public chat API."
+  - id: TASK-REL-007
+    title: "Fix FRIDAY console chat-core defects from production test round 1 (tool markup leak, dispatch hang + lost transcript, delegation counter, status latency)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: "muse/task-rel-007a-v3 (+007b/007c/007d follow-ups)"
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T14:20:00+05:30"
+    updated_at: "2026-11-14T14:20:00+05:30"
+    files:
+      - "FRIDAY/src/friday/llm/tool_markup.py (NEW, 007a)"
+      - "FRIDAY/src/friday/llm/groq_provider.py / openai_provider.py (007a markup recovery)"
+      - "FRIDAY/src/friday/agent/agent.py execute_complex_task (007a)"
+      - "FRIDAY/src/friday/tools/builtin/time_date.py timezone support (007a)"
+      - "FRIDAY/src/friday/tools/builtin/fleet_dispatch.py normalize_agent pronoun guard (007a)"
+      - "FRIDAY/src/friday/devices/windows_friday.py anchored clock match (007a)"
+      - "FRIDAY/src/friday/api/server.py persist-first logging + chat timeout (007b)"
+      - "FRIDAY/src/friday/tools/builtin/{intelx_research,futuris_forecast,forge_code_task}.py ledger recording (007c)"
+      - "FRIDAY/src/friday/ecosystem/fleet_client.py shared client + probe deadline; core/resilience.py peer timeout (007d)"
+    defect: "Round 1 (2026-11-14 14:06-14:11 IST) production-proven: (1) joke+Tokyo prompt returned raw tool markup unexecuted; live re-probes also showed 'tell me' substring-matching Memora in normalize_agent ('me' in 'memora', ledger task_92035ba25301) and the Windows substring clock hijacking compound time questions. NOTE: this entry was first drafted as TASK-REL-006 in parallel with the voice track's TASK-REL-006 (PR #111) — renumbered to REL-007 to keep IDs unique; the claim comment on issue #35 says REL-006. (2) Coding task hung >2min with no reply and the user message vanished from the restored transcript: no timeout on the chat dispatch path (Forge upstream alone allows 210s; warm baseline 50.4s) and _log_conversation runs only after dispatch completes. (3) TASKS DELEGATED stayed 0: only fleet_dispatch writes the unified task ledger the counter reads — a successful Forge build (task14714112026084837) never entered it (live-verified). (4) Agent-status fast path took 30-35s under load and the console showed API offline throughout: status asks force-refresh 9 probes through a fresh FleetClient/pool every time, safe_peer_call has no timeout (30s shared reads), sync Memora urllib calls (15s recall budget) block the event loop in _dispatch_command."
+    acceptance:
+      - "007a: a model turn carrying tool/function markup is parsed (with the get_current_time -> get_time_date alias) and EXECUTED through the tool loop; no final reply ever contains raw tool markup; get_time_date honours an IANA timezone; 'tell me ...' never dispatches to Memora; compound/location clock questions decline the Windows substring path."
+      - "007b: the user message is persisted to conversation history BEFORE dispatch and completed in place afterwards; /api/chat is bounded by a timeout that returns an honest reply instead of hanging; a dispatch-timeout regression test proves persistence + reply."
+      - "007c: research/forecast/coding chat dispatches write unified-ledger records (success and failure), so /api/tasks/timeline total_records and the console counter reflect real delegations."
+      - "007d: fleet status uses a shared cached FleetClient, the probe gather has an overall deadline, safe_peer_call is time-bounded, and the hot sync Memora calls in _dispatch_command run off the event loop."
+      - "Live verification after each merge + Fleet CD: POST /friday/api/chat replays (joke+Tokyo, palindrome coding, agent status) with verbatim replies and timings."
+    evidence:
+      - "Claim posted on issue #35 (comment 6874785960) 2026-11-14 (as REL-006; renumbered here, see defect note)."
+      - "Baseline live probes 2026-11-14 ~14:17 IST: joke+Tokyo (lowercase) -> Windows clock hijack reply in 1.7s; capital variant -> Memora misroute HTTP 422 ledger task_92035ba25301; palindrome coding -> 200 in 50.4s (Forge task14714112026084837) but timeline total_records stayed 1 (only the accidental Memora record); fleet status -> 200 in 2.4s warm."
+    blockers: []
+    next_action: "Ship 007a (tool markup cluster) as the first PR (replacement for conflicted PR #113); 007b/007c/007d follow on fresh main after each merge."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
