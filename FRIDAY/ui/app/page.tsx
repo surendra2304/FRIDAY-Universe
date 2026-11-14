@@ -1,10 +1,10 @@
 "use client";
 
-import { Activity, Clock3, LayoutGrid, Radio, TerminalSquare, Waypoints } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Activity, Bot, Clock3, LayoutGrid, Radio, TerminalSquare, Waypoints, Zap } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { EmptyState, OnboardingHint, OwnerPreferences, VoiceDiagnostics } from "@/components/batch8";
-import { CountUp, Reveal } from "@/components/effects";
+import { CountUp, Reveal, TextReveal } from "@/components/effects";
 import { OrbState } from "@/components/OrbCore";
 import { ActivityFeed, ConsoleStrip, FleetGrid, SystemPanel, TaskTimeline } from "@/components/panels";
 import { VoiceCall } from "@/components/VoiceCall";
@@ -23,14 +23,19 @@ import {
 } from "@/lib/api";
 
 /* ============================================================
-   FRIDAY Universe — "Minimal Console" (2026-11-13, ZAI Agent 1).
+   FRIDAY Universe — "Sovereign Aurora" console (2026-11-14).
 
-   Owner directive after the Living Universe rounds: the site was
-   laggy and busy — make it MINIMALISTIC and dynamic instead.
-   This edition strips every decorative layer (aurora, canvas
-   particles, floating orbs, scramble/split hero text) and keeps
-   a single quiet motion budget: one-shot entrances, animated
-   counters, live status pulses. Every pixel carries information.
+   Full frontend rebuild on the owner's verdict that the site
+   was "worst of its kind": dynamic aurora stage, floating glass
+   stat cards, word-reveal hero, tilt fleet cards, streaming-feel
+   chat. The richness is delivered under the Living Universe
+   performance lessons — compositor-only motion, no canvas loops,
+   reduced-motion respected everywhere.
+
+   Data wiring is IDENTICAL to the Minimal Console edition:
+   30s snapshot polling (agents/status, system_telemetry,
+   autonomous/status, agents/live, tasks/timeline), the
+   /api/ws/activity live socket, and every panel contract.
 
    Kept owner directives:
    - no scroll-jump when starting voice (connects in place)
@@ -63,6 +68,7 @@ export default function Page() {
   const [ramHistory, setRamHistory] = useState<number[]>([]);
   const [voiceState, setVoiceState] = useState<OrbState>("idle");
   const [chatPrefill, setChatPrefill] = useState<{ text: string; seq: number }>({ text: "", seq: 0 });
+  const progressRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -70,6 +76,22 @@ export default function Page() {
     const clock = window.setInterval(() => setNow(new Date()), 15_000);
     return () => window.clearInterval(clock);
   }, []);
+
+  /* scroll progress hairline under the nav — transform only, passive */
+  useEffect(() => {
+    if (!mounted) return;
+    const onScroll = () => {
+      const el = progressRef.current;
+      if (!el) return;
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      el.style.transform = `scaleX(${p})`;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [mounted, tab]);
 
   const refresh = useCallback(async () => {
     const [fleetResult, telemetryResult, autonomyResult, liveResult, timelineResult] = await Promise.allSettled([
@@ -147,7 +169,11 @@ export default function Page() {
         }
       };
       socket.onerror = () => {
-        try { socket?.close(); } catch { /* ignore */ }
+        try {
+          socket?.close();
+        } catch {
+          /* ignore */
+        }
       };
     }
 
@@ -155,7 +181,11 @@ export default function Page() {
     return () => {
       cancelled = true;
       if (retry !== null) window.clearTimeout(retry);
-      try { socket?.close(); } catch { /* ignore */ }
+      try {
+        socket?.close();
+      } catch {
+        /* ignore */
+      }
     };
   }, [mounted]);
 
@@ -181,7 +211,12 @@ export default function Page() {
 
   return (
     <>
-      <div className="ambient" aria-hidden="true" />
+      <div className="ambient" aria-hidden="true">
+        <span className="aurora a1" />
+        <span className="aurora a2" />
+        <span className="aurora a3" />
+        <span className="grid-overlay" />
+      </div>
 
       <nav className="nav" aria-label="Main navigation">
         <a className="nav-logo" href="#top" aria-label="FRIDAY home">
@@ -190,13 +225,7 @@ export default function Page() {
         </a>
         <div className="tabs" role="tablist" aria-label="Sections">
           {TABS.map(({ id, label, icon }) => (
-            <button
-              key={id}
-              role="tab"
-              aria-selected={tab === id}
-              className={`tab${tab === id ? " active" : ""}`}
-              onClick={() => setTab(id)}
-            >
+            <button key={id} role="tab" aria-selected={tab === id} className={`tab${tab === id ? " active" : ""}`} onClick={() => setTab(id)}>
               {icon}
               <span>{label}</span>
             </button>
@@ -206,27 +235,28 @@ export default function Page() {
           <span
             title="Agents answering live health probes right now"
             className={`dot ${
-              connected === "online" && onlineCount > 0
-                ? "good"
-                : connected === "online"
-                  ? "warn"
-                  : connected === "offline"
-                    ? "bad"
-                    : "muted"
+              connected === "online" && onlineCount > 0 ? "good" : connected === "online" ? "warn" : connected === "offline" ? "bad" : "muted"
             } ${connected === "online" ? "pulse" : ""}`}
           />
-          {connected === "online"
-            ? onlineCount > 0
-              ? <span className="nav-count">{`${onlineCount}/${totalAgents} agents live`}</span>
-              : <span className="nav-count nav-alert" role="status">dashboard online · agents unreachable</span>
-            : connected === "offline"
-              ? <span className="nav-count">API offline</span>
-              : <span className="nav-count">Connecting…</span>}
+          {connected === "online" ? (
+            onlineCount > 0 ? (
+              <span className="nav-count">{`${onlineCount}/${totalAgents} agents live`}</span>
+            ) : (
+              <span className="nav-count nav-alert" role="status">
+                dashboard online · agents unreachable
+              </span>
+            )
+          ) : connected === "offline" ? (
+            <span className="nav-count">API offline</span>
+          ) : (
+            <span className="nav-count">Connecting…</span>
+          )}
           <span className="nav-clock" title="Indian Standard Time">
             <Clock3 size={12} />
             {now ? `${istTime(now)} IST` : "--:-- IST"}
           </span>
         </div>
+        <div className="scroll-progress" ref={progressRef} aria-hidden="true" />
       </nav>
 
       <main className="shell" id="top" style={{ paddingTop: "calc(var(--nav-h) + 20px)" }}>
@@ -234,7 +264,9 @@ export default function Page() {
         <section className={`tabview${tab === "console" ? " on" : ""}`} hidden={tab !== "console"} aria-label="FRIDAY console">
           <Reveal className="console-hero">
             <p className="hero-eyebrow">Sovereign operating system</p>
-            <h1 className="hero-title">One voice moves the whole universe.</h1>
+            <h1 className="hero-title">
+              <TextReveal text="One voice moves the whole universe." />
+            </h1>
             <p className="hero-sub">
               Ten specialist agents, one continuous line. Speak or type — FRIDAY listens, remembers and dispatches in real time.
             </p>
@@ -242,10 +274,14 @@ export default function Page() {
                 never decorative claims (values are omitted while loading). */}
             <div className="stat-band" role="status" aria-label="Live universe statistics">
               <div className="stat-cell">
+                <span className="stat-ico cyan">
+                  <Bot size={14} />
+                </span>
                 <span className="num">
                   {fleet ? (
                     <>
-                      <CountUp value={onlineCount} /><span style={{ fontSize: 15, opacity: 0.7 }}>/{totalAgents}</span>
+                      <CountUp value={onlineCount} />
+                      <span style={{ fontSize: 15, opacity: 0.7 }}>/{totalAgents}</span>
                     </>
                   ) : (
                     "··"
@@ -254,14 +290,23 @@ export default function Page() {
                 <span className="lbl">Agents live</span>
               </div>
               <div className="stat-cell">
+                <span className="stat-ico amber">
+                  <Zap size={14} />
+                </span>
                 <span className="num">{autonomy ? <CountUp value={autonomy.history_count ?? 0} /> : "··"}</span>
                 <span className="lbl">Auto actions</span>
               </div>
               <div className="stat-cell">
+                <span className="stat-ico violet">
+                  <Waypoints size={14} />
+                </span>
                 <span className="num">{timeline ? <CountUp value={timeline.total_records ?? 0} /> : "··"}</span>
                 <span className="lbl">Tasks delegated</span>
               </div>
               <div className="stat-cell">
+                <span className="stat-ico mint">
+                  <Radio size={14} />
+                </span>
                 <span className="num">{autonomy?.autonomous_mode ? "ON" : "STANDBY"}</span>
                 <span className="lbl">Autonomy mode</span>
               </div>
@@ -294,9 +339,8 @@ export default function Page() {
             <div className="eyebrow">Live fleet · real health probes</div>
             <h2 className="section-title">The ten-agent universe</h2>
             <p className="section-sub">
-              FRIDAY coordinates; nine specialists report here. Every card answers a real health
-              probe and shows its last piece of work and how fresh it is — ask anything and
-              FRIDAY dispatches it.
+              FRIDAY coordinates; nine specialists report here. Every card answers a real health probe and shows its last piece of work and how
+              fresh it is — ask anything and FRIDAY dispatches it.
             </p>
           </Reveal>
           <FleetGrid fleet={fleet} autonomy={autonomy} liveActivity={liveActivity} now={agentsLive} onAsk={askAgent} />
@@ -325,13 +369,7 @@ export default function Page() {
             <div className="eyebrow">System</div>
             <h2 className="section-title">Your Oracle servers, live</h2>
           </Reveal>
-          <SystemPanel
-            fleet={fleet}
-            telemetry={telemetry}
-            autonomy={autonomy}
-            cpuHistory={cpuHistory}
-            ramHistory={ramHistory}
-          />
+          <SystemPanel fleet={fleet} telemetry={telemetry} autonomy={autonomy} cpuHistory={cpuHistory} ramHistory={ramHistory} />
           <Reveal delay={100}>
             <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
               <VoiceDiagnostics />

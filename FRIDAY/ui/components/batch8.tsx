@@ -11,10 +11,17 @@
  *   packet loss, reconnect count, configured voice/accent.
  * D18 EmptyState: the shared "no data yet" surface — honest, never "loading..."
  *   forever; shows a hint + an action when there is one.
+ *
+ * Sovereign Aurora edition (2026-11-14, frontend rebuild): the
+ * diagnostics metrics now emit the .k/.v spans the stylesheet was
+ * written for (the old markup rendered bare text + <strong>, so the
+ * metric grid never styled as designed), and the preferences error
+ * state uses a Lucide icon instead of an emoji glyph. All data
+ * wiring below is unchanged.
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { Mic, Settings2, Activity, Inbox } from "lucide-react";
+import { AlertTriangle, Mic, Settings2, Activity, Inbox } from "lucide-react";
 import { apiBase, requestJson } from "@/lib/api";
 
 export interface OwnerPreferencesData {
@@ -92,7 +99,7 @@ export function OwnerPreferences() {
   if (error && !prefs) {
     return (
       <div className="empty-state">
-        <span className="empty-state-icon">⚠️</span>
+        <AlertTriangle size={28} className="empty-state-icon" />
         <span className="empty-state-title">Preferences unavailable</span>
         <span className="empty-state-hint">{error}</span>
       </div>
@@ -116,13 +123,7 @@ export function OwnerPreferences() {
       <form className="owner-prefs-form" onSubmit={onSubmit}>
         <label>
           Name (how FRIDAY addresses you)
-          <input
-            type="text"
-            value={prefs.name}
-            onChange={(e) => onField("name", e.target.value)}
-            aria-label="Owner name"
-            maxLength={32}
-          />
+          <input type="text" value={prefs.name} onChange={(e) => onField("name", e.target.value)} aria-label="Owner name" maxLength={32} />
         </label>
         <label>
           Timezone
@@ -136,12 +137,7 @@ export function OwnerPreferences() {
         </label>
         <label>
           Daily briefing time (IST)
-          <input
-            type="time"
-            value={prefs.briefing_time}
-            onChange={(e) => onField("briefing_time", e.target.value)}
-            aria-label="Briefing time"
-          />
+          <input type="time" value={prefs.briefing_time} onChange={(e) => onField("briefing_time", e.target.value)} aria-label="Briefing time" />
         </label>
         <label>
           Voice personality
@@ -164,28 +160,22 @@ export function OwnerPreferences() {
           />
         </label>
         <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={prefs.notify_telegram}
-            onChange={(e) => onField("notify_telegram", e.target.checked)}
-            aria-label="Notify on Telegram"
-          />
+          <input type="checkbox" checked={prefs.notify_telegram} onChange={(e) => onField("notify_telegram", e.target.checked)} aria-label="Notify on Telegram" />
           Notify on Telegram
         </label>
         <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={prefs.notify_voice}
-            onChange={(e) => onField("notify_voice", e.target.checked)}
-            aria-label="Notify by voice"
-          />
+          <input type="checkbox" checked={prefs.notify_voice} onChange={(e) => onField("notify_voice", e.target.checked)} aria-label="Notify by voice" />
           Notify by voice (limited minutes — see E8)
         </label>
         <button type="submit" className="owner-prefs-save" disabled={saving}>
           {saving ? "Saving…" : "Save preferences"}
         </button>
         {saved && <span className="owner-prefs-saved">✓ Saved.</span>}
-        {error && <span className="owner-prefs-saved" style={{ color: "var(--red)" }}>{error}</span>}
+        {error && (
+          <span className="owner-prefs-saved" style={{ color: "var(--red)" }}>
+            {error}
+          </span>
+        )}
       </form>
     </section>
   );
@@ -236,44 +226,41 @@ export function VoiceDiagnostics() {
   const hasSession = !!(s && s.session_id);
   const rtt = s?.rtt_ms;
   const loss = s?.packet_loss_pct;
-  const qualityLabel =
-    !hasSession || !s?.quality
-      ? "no session yet"
-      : s.quality.replace(/[-_]/g, " ");
+  const qualityLabel = !hasSession || !s?.quality ? "no session yet" : s.quality.replace(/[-_]/g, " ");
 
   return (
     <article className="voice-diag-card" aria-label="Voice session diagnostics">
       <div className="stat-label">
-        <Mic size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
-        Voice session (last)
-        <span className={`status-pill ${qualityLabel === "good" ? "good" : "muted"}`}>
-          {qualityLabel}
+        <span>
+          <Mic size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
+          Voice session (last)
         </span>
+        <span className={`status-pill ${qualityLabel === "good" ? "good" : "muted"}`}>{qualityLabel}</span>
       </div>
       <div className="voice-diag-grid">
         <div className="voice-diag-metric">
-          RTT
-          <strong className={rtt == null ? "muted" : ""}>{rtt == null ? "—" : `${Math.round(rtt)} ms`}</strong>
+          <span className="k">RTT</span>
+          <strong className={`v${rtt == null ? " muted" : ""}`}>{rtt == null ? "—" : `${Math.round(rtt)} ms`}</strong>
         </div>
         <div className="voice-diag-metric">
-          Packet loss
-          <strong className={loss == null ? "muted" : ""}>{loss == null ? "—" : `${loss.toFixed(1)}%`}</strong>
+          <span className="k">Packet loss</span>
+          <strong className={`v${loss == null ? " muted" : ""}`}>{loss == null ? "—" : `${loss.toFixed(1)}%`}</strong>
         </div>
         <div className="voice-diag-metric">
-          Reconnects
-          <strong className={!hasSession ? "muted" : ""}>{hasSession ? s!.reconnect_count : "—"}</strong>
+          <span className="k">Reconnects</span>
+          <strong className={`v${!hasSession ? " muted" : ""}`}>{hasSession ? s!.reconnect_count : "—"}</strong>
         </div>
         <div className="voice-diag-metric">
-          Duration
-          <strong className={!hasSession ? "muted" : ""}>{hasSession ? `${Math.round(s!.duration_sec)}s` : "—"}</strong>
+          <span className="k">Duration</span>
+          <strong className={`v${!hasSession ? " muted" : ""}`}>{hasSession ? `${Math.round(s!.duration_sec)}s` : "—"}</strong>
         </div>
         <div className="voice-diag-metric">
-          Personality
-          <strong className="muted">{diag?.configured.voice_personality ?? "—"}</strong>
+          <span className="k">Personality</span>
+          <strong className="v muted">{diag?.configured.voice_personality ?? "—"}</strong>
         </div>
         <div className="voice-diag-metric">
-          Accent
-          <strong className="muted">{diag?.configured.accent_locale ?? "—"}</strong>
+          <span className="k">Accent</span>
+          <strong className="v muted">{diag?.configured.accent_locale ?? "—"}</strong>
         </div>
       </div>
       {!hasSession && (

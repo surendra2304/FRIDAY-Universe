@@ -23,6 +23,7 @@ import {
   Wifi,
   Zap,
 } from "lucide-react";
+import { useId } from "react";
 import {
   Agent,
   AutonomySnapshot,
@@ -36,7 +37,7 @@ import {
   istTime,
   statusTone,
 } from "@/lib/api";
-import { CountUp, Reveal } from "./effects";
+import { CountUp, Reveal, Tilt } from "./effects";
 
 /* ============================================================
    Fleet grid, activity feed and system panel.
@@ -46,6 +47,12 @@ import { CountUp, Reveal } from "./effects";
    - every agent shows WHEN it last did something (freshness),
      so stale data can't masquerade as live work;
    - timestamps are IST, the single project clock.
+
+   Sovereign Aurora edition (2026-11-14, frontend rebuild):
+   pointer-tilt + glare on agent cards, gradient-filled
+   sparklines, and shimmer skeletons while the first probe is
+   in flight (instead of a misleading "not reported" panel).
+   All data wiring below is unchanged.
    ============================================================ */
 
 const AGENT_ORDER = ["stratex", "inference", "cortex", "forge", "intelx", "vyralx", "memora", "futuris", "sentinel"] as const;
@@ -75,18 +82,43 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export function Sparkline({ values, color, width = 130, height = 38 }: { values: number[]; color: string; width?: number; height?: number }) {
+  const gid = useId().replace(/[^a-zA-Z0-9]/g, "");
   if (values.length < 2) return <svg width={width} height={height} aria-hidden="true" />;
   const min = Math.min(...values);
   const max = Math.max(...values);
   const span = Math.max(max - min, 1);
   const pts = values.map((v, i) => `${(i / (values.length - 1)) * 100},${100 - ((v - min) / span) * 90}`);
   const d = `M${pts.join(" L")}`;
+  const area = `${d} L100,100 L0,100 Z`;
   const last = pts[pts.length - 1].split(",");
   return (
     <svg width={width} height={height} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id={`spark-${gid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#spark-${gid})`} stroke="none" />
       <path d={d} fill="none" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
       <circle cx={last[0]} cy={last[1]} r={3} fill={color} />
     </svg>
+  );
+}
+
+/** Shimmer placeholders while the first fleet probe is in flight. */
+function FleetSkeleton() {
+  return (
+    <div className="fleet-grid" aria-hidden="true">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div className="skel-card" key={i} style={{ animationDelay: `${i * 90}ms` }}>
+          <div className="skel-line w40" />
+          <div className="skel-line w70" />
+          <div className="skel-line w55" />
+          <div className="skel-line w80" />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -110,6 +142,10 @@ export function FleetGrid({
     const bi = AGENT_ORDER.indexOf(b.id as (typeof AGENT_ORDER)[number]);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
+
+  if (!fleet) {
+    return <FleetSkeleton />;
+  }
 
   if (sorted.length === 0) {
     return (
@@ -154,70 +190,80 @@ export function FleetGrid({
         const tone = statusTone(agent.status);
         return (
           <Reveal key={agent.id} delay={Math.min(index * 60, 360)} as="article">
-            <div className={`agent-card tone-${tone}${isActive ? " active" : ""}`}>
+            <Tilt className="agent-tilt">
+              <div className={`agent-card tone-${tone}${isActive ? " active" : ""}`}>
                 <span className="edge" aria-hidden="true" />
-              <div className="agent-head">
-                <div className="agent-icon">{AGENT_ICONS[agent.id] ?? <Database size={17} />}</div>
-                <div className="agent-identity">
-                  <div className="agent-name">
-                    {agent.name}
-                    {isActive && <span className="dot good pulse" aria-label="active" />}
+                <span className="glare" aria-hidden="true" />
+                <div className="agent-head">
+                  <div className="agent-icon">{AGENT_ICONS[agent.id] ?? <Database size={17} />}</div>
+                  <div className="agent-identity">
+                    <div className="agent-name">
+                      {agent.name}
+                      {isActive && <span className="dot good pulse" aria-label="active" />}
+                    </div>
+                    <span className="agent-id">{agent.id}</span>
+                    <div className="agent-role">{ROLE_LABELS[agent.id] ?? agent.role ?? "Specialist agent"}</div>
                   </div>
-                  <span className="agent-id">{agent.id}</span>
-                  <div className="agent-role">{ROLE_LABELS[agent.id] ?? agent.role ?? "Specialist agent"}</div>
+                  <span className={`status-pill ${tone}`}>{agent.status.toLowerCase()}</span>
                 </div>
-                <span className={`status-pill ${tone}`}>{agent.status.toLowerCase()}</span>
-              </div>
-              <div className="agent-meta">
-                <span className="agent-latency">
-                  {typeof agent.latency_ms === "number" ? `${Math.round(agent.latency_ms)} ms` : "latency n/a"}
-                </span>
-                <span className="agent-fresh">
-                  {working
-                    ? `working ${freshness(working.at) || working.status}`
-                    : record?.at
-                    ? freshness(record.at)
-                      ? `active ${freshness(record.at)}`
-                      : "active"
-                    : `probe ${freshness(agent.last_checked) || "pending"}`}
-                </span>
-              </div>
-              {working && (
-                <div className="agent-task working">
-                  <strong>Working now:</strong> {working.description}
+                <div className="agent-meta">
+                  <span className="agent-latency">
+                    {typeof agent.latency_ms === "number" ? `${Math.round(agent.latency_ms)} ms` : "latency n/a"}
+                  </span>
+                  <span className="agent-fresh">
+                    {working
+                      ? `working ${freshness(working.at) || working.status}`
+                      : record?.at
+                        ? freshness(record.at)
+                          ? `active ${freshness(record.at)}`
+                          : "active"
+                        : `probe ${freshness(agent.last_checked) || "pending"}`}
+                  </span>
                 </div>
-              )}
-              <div className="agent-task">
-                {record?.directive ? (
-                  <>
-                    <strong>Last work:</strong> {record.directive}
-                  </>
-                ) : working ? (
-                  <>{working.task_id} — {working.status}</>
-                ) : (
-                  <>Idle — awaiting your directive</>
+                {working && (
+                  <div className="agent-task working">
+                    <strong>Working now:</strong> {working.description}
+                    <span className="work-bar" aria-hidden="true" />
+                  </div>
                 )}
-              </div>
-              {record?.result && (
-                <div className={`agent-result ${record.success ? "good" : "bad"}`}>
-                  {record.success ? <CheckCircle2 size={13} style={{ flex: "none", marginTop: 2 }} /> : <Activity size={13} style={{ flex: "none", marginTop: 2 }} />}
-                  <span>{record.result}</span>
+                <div className="agent-task">
+                  {record?.directive ? (
+                    <>
+                      <strong>Last work:</strong> {record.directive}
+                    </>
+                  ) : working ? (
+                    <>
+                      {working.task_id} — {working.status}
+                    </>
+                  ) : (
+                    <>Idle — awaiting your directive</>
+                  )}
                 </div>
-              )}
-              <div className="agent-actions">
-                <button className="mini-btn" onClick={() => onAsk(agent)}>
-                  <MessageSquareText size={13} /> Assign / ask
-                </button>
-                <a
-                  className="mini-btn"
-                  href={`https://friday-universe.duckdns.org/${agent.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open site <ArrowUpRight size={12} />
-                </a>
+                {record?.result && (
+                  <div className={`agent-result ${record.success ? "good" : "bad"}`}>
+                    {record.success ? (
+                      <CheckCircle2 size={13} style={{ flex: "none", marginTop: 2 }} />
+                    ) : (
+                      <Activity size={13} style={{ flex: "none", marginTop: 2 }} />
+                    )}
+                    <span>{record.result}</span>
+                  </div>
+                )}
+                <div className="agent-actions">
+                  <button className="mini-btn" onClick={() => onAsk(agent)}>
+                    <MessageSquareText size={13} /> Assign / ask
+                  </button>
+                  <a
+                    className="mini-btn"
+                    href={`https://friday-universe.duckdns.org/${agent.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open site <ArrowUpRight size={12} />
+                  </a>
+                </div>
               </div>
-            </div>
+            </Tilt>
           </Reveal>
         );
       })}
@@ -227,7 +273,21 @@ export function FleetGrid({
 
 /** Checklist D13: delegation history with status chips — newest first. */
 export function TaskTimeline({ timeline }: { timeline: TaskTimelineSnapshot | null }) {
-  if (!timeline || timeline.events.length === 0) {
+  if (!timeline) {
+    return (
+      <div className="panel" aria-hidden="true">
+        <div className="feed-list">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div className="skel-row" key={i}>
+              <div className="skel-line w40" />
+              <div className="skel-line w80" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (timeline.events.length === 0) {
     return (
       <div className="panel feed-empty">
         <Waypoints size={20} style={{ marginBottom: 8 }} />
@@ -253,16 +313,21 @@ export function TaskTimeline({ timeline }: { timeline: TaskTimelineSnapshot | nu
             <div className="feed-body">
               <span className="feed-agent">{ev.owner_agent || "unassigned"}</span>
               <p className="feed-text" style={{ margin: "3px 0" }}>
-                <span className={`chip chip-${ev.chip}`}>{ev.chip}</span>{" "}
-                {cleanDirective(ev.description, 120)}
+                <span className={`chip chip-${ev.chip}`}>{ev.chip}</span> {cleanDirective(ev.description, 120)}
               </p>
               {ev.error ? (
-                <p className="feed-result" style={{ margin: 0, color: "#ff8080" }}>{cleanDirective(ev.error, 140)}</p>
+                <p className="feed-result" style={{ margin: 0, color: "#ff8080" }}>
+                  {cleanDirective(ev.error, 140)}
+                </p>
               ) : ev.result ? (
-                <p className="feed-result" style={{ margin: 0 }}>{cleanDirective(ev.result, 140)}</p>
+                <p className="feed-result" style={{ margin: 0 }}>
+                  {cleanDirective(ev.result, 140)}
+                </p>
               ) : null}
             </div>
-            <span className="feed-time" title="IST">{istTime(ev.updated_at)} IST</span>
+            <span className="feed-time" title="IST">
+              {istTime(ev.updated_at)} IST
+            </span>
           </div>
         ))}
       </div>
@@ -327,8 +392,14 @@ export function ActivityFeed({
             </div>
             <div className="feed-body">
               <span className="feed-agent">{row.agent}</span>
-              <p className="feed-text" style={{ margin: "3px 0" }}>{row.directive}</p>
-              {row.result && <p className="feed-result" style={{ margin: 0 }}>{row.result}</p>}
+              <p className="feed-text" style={{ margin: "3px 0" }}>
+                {row.directive}
+              </p>
+              {row.result && (
+                <p className="feed-result" style={{ margin: 0 }}>
+                  {row.result}
+                </p>
+              )}
             </div>
             <span className="feed-time" title="IST">
               {row.at ? `${istTime(row.at)} IST` : "live"}
@@ -368,9 +439,7 @@ export function SystemPanel({
             </span>
             <span className={`status-pill ${cpuOk ? "good" : "muted"}`}>{cpuOk ? "live" : "n/a"}</span>
           </div>
-          <div className="stat-value grad-text">
-            {cpuOk ? <CountUp value={Math.round(telemetry!.cpu_percent!)} suffix="%" /> : "—"}
-          </div>
+          <div className="stat-value grad-text">{cpuOk ? <CountUp value={Math.round(telemetry!.cpu_percent!)} suffix="%" /> : "—"}</div>
           <div className="stat-foot">
             <span>{telemetry?.cpu_cores ?? "—"} cores · Oracle Always Free</span>
             <Sparkline values={cpuHistory} color="#8de6cf" />
@@ -388,9 +457,7 @@ export function SystemPanel({
               {telemetry?.status === "ok" ? "live" : "n/a"}
             </span>
           </div>
-          <div className="stat-value grad-text">
-            {ramOk ? <CountUp value={Math.round(telemetry!.ram_percent!)} suffix="%" /> : "—"}
-          </div>
+          <div className="stat-value grad-text">{ramOk ? <CountUp value={Math.round(telemetry!.ram_percent!)} suffix="%" /> : "—"}</div>
           <div className="stat-foot">
             <span>
               {telemetry?.ram_used_gb ?? "—"} / {telemetry?.ram_total_gb ?? "—"} GB used
@@ -432,9 +499,7 @@ export function SystemPanel({
           <div className="stat-value grad-text">{autonomy?.history_count ?? 0}</div>
           <div className="stat-foot">
             <span>autonomous actions recorded</span>
-            <span style={{ color: "var(--cyan)" }}>
-              {autonomy?.active_agent ? `active: ${autonomy.active_agent}` : "· standby"}
-            </span>
+            <span style={{ color: "var(--cyan)" }}>{autonomy?.active_agent ? `active: ${autonomy.active_agent}` : "· standby"}</span>
           </div>
         </div>
       </Reveal>

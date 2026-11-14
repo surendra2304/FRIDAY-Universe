@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { DM_Mono, Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -14,6 +14,15 @@ const grotesk = Space_Grotesk({
   display: "swap",
 });
 
+/* DM Mono carries every numeral, clock and micro-label in the console
+   (design system: monospace for data — tabular, unambiguous). */
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-dm-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "FRIDAY — Your Personal Jarvis",
   description:
@@ -22,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#070a0e",
+  themeColor: "#05070c",
   width: "device-width",
   initialScale: 1,
 };
@@ -30,7 +39,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${grotesk.variable}`}>{children}</body>
+      <body className={`${inter.variable} ${grotesk.variable} ${dmMono.variable}`}>{children}</body>
     </html>
   );
 }
