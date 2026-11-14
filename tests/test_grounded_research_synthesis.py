@@ -64,7 +64,7 @@ def test_source_prompt_is_bounded_and_contains_no_owner_state():
     messages = gateway.complete.call_args.kwargs['messages']
     import json
     supplied = json.loads(messages[1]['content'])['source_documents']
-    assert sum(len(x['text']) for x in supplied) <= 36000
+    assert sum(len(x['text']) for x in supplied) <= 16000
     assert len(supplied) <= 5
     assert d['status'] == 'DEGRADED'
 
