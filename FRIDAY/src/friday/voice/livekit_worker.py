@@ -299,7 +299,7 @@ def _voice_model() -> str:
             "voice model config unavailable; using canonical fallback: %s",
             type(exc).__name__,
         )
-    return "gemini-3.1-flash-live-preview"
+    return "gemini-3.8-live"
 
 
 def _voice_name() -> str:
