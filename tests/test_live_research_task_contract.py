@@ -130,27 +130,81 @@ def test_official_document_heading_is_not_a_research_finding():
     assert "documentation" not in result["findings"][0]["quote"]
 
 
-def test_live_synthesis_failure_does_not_certify_extractive_fallback():
+def test_live_synthesis_failure_returns_labelled_unsynthesised_findings_without_certifying():
+    # TASK-REL-016: a synthesis exception must not discard the extractive
+    # findings already retrieved. They are returned labelled unsynthesised,
+    # the result stays DEGRADED and the task wrapper still issues no receipt.
     search = SimpleNamespace(fetch=AsyncMock(return_value=[SimpleNamespace(title='Fixture', url='https://example.org/doc')]))
     fetch = SimpleNamespace(fetch=AsyncMock(return_value=SimpleNamespace(status_code=200, content_type='text/plain', final_url='https://example.org/doc', content=b'Battery capacity is measured and reported in this synthetic source document.')))
     synthesis = AsyncMock(side_effect=RuntimeError('fixture outage'))
     result = asyncio.run(m.collect_live_brief('battery capacity', search, fetch, synthesize=synthesis))
     assert result['status'] == 'DEGRADED'
-    assert result['findings'] == []
+    assert result['findings'], 'extractive findings must survive a synthesis failure'
+    assert result['findings'][0]['status'] == 'source_excerpt'
+    assert 'Battery capacity is measured' in result['findings'][0]['quote']
+    assert result['answer_kind'] == 'unsynthesised_raw_findings'
+    assert result['synthesis_status'] == 'failed'
+    assert result['synthesis_error']['reason'] == 'synthesis_RuntimeError'
+    assert any(f.get('reason') == 'synthesis_RuntimeError' for f in result['source_failures'])
+    assert result['text_response'].startswith('Unsynthesised — raw findings')
+    assert 'synthesis_RuntimeError' in result['text_response']
+    # The raw exception message is a free-form string and still never leaks.
     assert 'outage' not in result['text_response']
+    assert 'Unsynthesised' in result['spoken_summary']
     wrapped = asyncio.run(m.run_live_research('fixture', 'battery capacity', AsyncMock(return_value=result)))
     assert wrapped['status'] == 'DEGRADED'
     assert 'receipt' not in wrapped
+    # ...but the returned payload now carries the raw findings to the caller.
+    assert wrapped['result']['findings'] == result['findings']
+    assert wrapped['result']['answer_kind'] == 'unsynthesised_raw_findings'
 
 
 def test_explicit_insufficient_synthesis_never_returns_excerpt_success():
+    # TASK-REL-016: a non-success draft (here: evidence judged insufficient)
+    # still never returns excerpt SUCCESS — but the retrieved excerpts are
+    # returned as labelled raw findings with the synthesis error noted,
+    # instead of being silently discarded.
     search = SimpleNamespace(fetch=AsyncMock(return_value=[SimpleNamespace(title='Fixture', url='https://example.org/doc')]))
     fetch = SimpleNamespace(fetch=AsyncMock(return_value=SimpleNamespace(status_code=200, content_type='text/plain', final_url='', content=b'Battery capacity is measured and reported in this synthetic source document.')))
     synthesis = AsyncMock(return_value={'status': 'DEGRADED', 'error': 'question_evidence_insufficient', 'findings': []})
     result = asyncio.run(m.collect_live_brief('battery capacity', search, fetch, synthesize=synthesis))
     assert result['status'] == 'DEGRADED'
-    assert result['findings'] == []
+    assert result['findings'], 'extractive findings must survive a refused draft'
+    assert result['findings'][0]['status'] == 'source_excerpt'
+    assert result['answer_kind'] == 'unsynthesised_raw_findings'
+    assert result['synthesis_status'] == 'failed'
+    assert result['synthesis_error']['reason'] == 'question_evidence_insufficient'
+    assert result['text_response'].startswith('Unsynthesised — raw findings')
     assert synthesis.await_count == 1
+
+
+def test_successful_synthesis_path_is_unchanged():
+    # The success path keeps its exact contract: draft findings replace the
+    # extractive ones, sources are pruned to cited ones, status is SUCCESS.
+    search = SimpleNamespace(fetch=AsyncMock(return_value=[SimpleNamespace(title='Fixture', url='https://example.org/doc')]))
+    fetch = SimpleNamespace(fetch=AsyncMock(return_value=SimpleNamespace(status_code=200, content_type='text/plain', final_url='https://example.org/doc', content=b'Battery capacity is measured and reported in this synthetic source document.')))
+
+    async def synthesis(query, documents):
+        sid = documents[0]['source_id']
+        return {'status': 'SUCCESS', 'answer_kind': 'source_attributed_model_draft',
+                'quotes_verified': True, 'semantic_entailment_verified': False, 'synthesis_provider': 'fixture',
+                'findings': [{'statement': 'Battery capacity is measured and reported by the fixture source.',
+                              'quote': 'Battery capacity is measured and reported in this synthetic source document.',
+                              'status': 'source_attributed_model_draft',
+                              'citations': [{'source_id': sid, 'source_title': 'Fixture', 'source_url': 'https://example.org/doc'}]}]}
+
+    result = asyncio.run(m.collect_live_brief('battery capacity', search, fetch, synthesize=synthesis))
+    assert result['status'] == 'SUCCESS'
+    assert result['answer_kind'] == 'source_attributed_model_draft'
+    assert result['synthesis_status'] == 'succeeded'
+    assert 'synthesis_error' not in result
+    assert result['quotes_verified'] is True
+    assert result['synthesis_provider'] == 'fixture'
+    assert len(result['findings']) == 1
+    assert result['findings'][0]['status'] == 'source_attributed_model_draft'
+    assert [s['url'] for s in result['sources']] == ['https://example.org/doc']
+    assert result['text_response'].startswith('Source-attributed model draft')
+    assert 'Supporting source quotation:' in result['text_response']
 
 
 def test_collector_passes_fetched_prose_not_hidden_script_or_search_snippets():

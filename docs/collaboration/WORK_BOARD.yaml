@@ -3428,6 +3428,29 @@ tasks:
       - "Transfer integrity: every rebuilt file was sha256/git-blob-hash verified between the build sandbox and the committed tree (history chunk blob 46f46921ab47e45092c7ad40e750a1d4615fcc0f); the committed change set is exactly the rebuild delta (16 files: new chunk + build-id manifests + referencing html/txt payloads)."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-14: rebuilt export shipped in PR #149 and the served chunk verified live."
+  - id: TASK-REL-016
+    title: "IntelX grounded research discards its extractive findings when synthesis fails"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-016-intelx-findings
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T18:52:00+05:30"
+    updated_at: "2026-11-14T18:52:00+05:30"
+    files:
+      - "IntelX/intelx/api/live_research_task.py"
+      - "tests/test_live_research_task_contract.py"
+    defect: "collect_live_brief (IntelX/intelx/api/live_research_task.py) builds extractive findings from retrieved source passages, then a configured synthesis callback runs. On BOTH failure branches — the callback raising, and the draft returning a non-SUCCESS status — the code assigned findings = [], silently discarding evidence already retrieved; callers received an empty DEGRADED result (the round-2 'sourced_findings_unverified' dead end) even though sourced excerpts existed. The contract tests asserted the discarding, encoding the defect."
+    acceptance:
+      - "On synthesis failure (exception or non-success draft), collect_live_brief returns the extractive findings labelled answer_kind 'unsynthesised_raw_findings' with synthesis_status 'failed' and the sanitised synthesis_error recorded (also in source_failures); the text response opens with an 'Unsynthesised — raw findings' header and the spoken summary carries the same label."
+      - "No certification change: result status stays DEGRADED on synthesis failure and run_live_research still issues no receipt; raw exception strings never leak into the response."
+      - "Success path byte-equivalent in contract: draft findings replace extractive ones, sources pruned to cited, status SUCCESS, synthesis metadata present; the no-callback extractive path is unchanged."
+      - "Contract tests updated to assert the new behaviour on both failure branches plus the unchanged success path; live production proof: a real research_live query returns sourced findings, and the failure path is shown by integration tests + code-path evidence (production synthesis is not sabotaged for a demo)."
+    evidence:
+      - "Claim: issue #35 comment 6877908941 (2026-11-14)."
+    blockers: []
+    next_action: "Implement fix + test updates, PR, merge, deploy, live-verify, then mark VERIFIED with evidence."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
