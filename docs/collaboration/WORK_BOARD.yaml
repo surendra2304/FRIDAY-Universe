@@ -3468,14 +3468,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Done. VERIFIED 2026-11-14: fix merged (PR #152), deployed (Fleet CD 43600585472), and the failure path production-verified live three times with findings surviving a genuine synthesis failure."
   - id: TASK-REL-013
     title: "Memora semantic search permanently empty in production: write/read vector paths split across Oracle and Qdrant, /health misreports vector state"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
-    branch: claude/task-rel-013-memora-semantic
-    pr: null
+    branch: claude/task-rel-013-memora-semantic-v2
+    pr: 172
     contributors: []
     priority: P1
     created_at: "2026-11-14T18:50:00+05:30"
-    updated_at: "2026-11-14T19:13:00+05:30"
+    updated_at: "2026-11-14T21:15:00+05:30"
     files:
       - "Memora/core/memory/search_service.py"
       - "Memora/apps/api/routers/health.py"
@@ -3494,23 +3494,32 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Code-verified at main 3d5c494: search_service.py was the only production search_similarity caller outside storage/; hybrid.py's coherent branch is referenced only by its test."
       - "Live probes 2026-11-14 (Server 1): /health returns the hardcoded oracle dict while /health/ready returns vector_store in_memory; embedding mode gemini; memora_vector_store row count 276."
       - "Tests: new tests/test_rel013_semantic_wiring.py (6 tests: Oracle-branch semantic hit with zero lexical overlap, no-hit control, Qdrant branch on non-Oracle backend, health/ready Oracle truth) green; repaired test_health_reflects_vector_store_availability and test_health_observation_metadata (both errored on main patching health.production_mode, a name that never existed in the module) green; CI-gated Memora regression list green (27 + 6); ruff clean."
-    blockers:
-      - "Live store-and-recall acceptance is additionally gated on a production schema drift owned by TASK-REL-015: the Oracle event_log table lacks the cloud_synced column the ORM/migration b1206b9e4a61 define, so POST /v1/memories currently 500s at pipeline step 10 (emitter flush ORA-00904 poisons the write transaction; verified in the Memora journal 2026-11-14 19:09 IST) and GET /v1/events polls 500. Semantic READ verification can proceed against pre-existing stored memories if the drift is not yet fixed when this deploys."
-    next_action: "Open PR, merge on green CI, verify deployed files after Fleet CD, run the live paraphrase acceptance (fresh fact if writes are restored, else a pre-existing memory), then mark VERIFIED."
+      - "Recovery + shipping: the original crew's commits were audited hunk-by-hunk by the REL-013 recovery crew and kept unchanged. Shipped as PR #172 (merge commit 3058b7182bd4df8d7c071c4138eb98f76ee681b8) after PR #157's updated head stopped registering CI runs despite a force update, a fast-forward update, a close/reopen and a fresh branch; the merged tree's code/test blobs are byte-identical to head 300ab80, which had full green CI (10 check runs: 8 success, 2 path-gated skips, 0 failures), and the board diff vs main was verified purely additive. On the merge commit itself, push CI ran green (test, contracts, secrets scan, fleet layout, monorepo policy, roster/board validator all success)."
+      - "Deployed: Server 1 checkout HEAD verified == 3058b718; Memora.service active, restarted by Fleet CD 2026-11-14 20:41:18 IST. Deployed fingerprints: search_service.py contains the is_oracle_backend hybrid branch; health.py contains _active_vector_readiness; service.py and pipeline/write_service.py reference oracle_vector_adapter."
+      - "LIVE /health (2026-11-14 20:58 IST): vector_store {status: available, available: true, backend: oracle_23ai_native_vector, dimension: 384, table: memora_vector_store} — now the Oracle adapter's real readiness served by _active_vector_readiness(), not the old hardcoded literal; /health/ready reports vector_store: available consistently (no more in_memory contradiction)."
+      - "LIVE semantic proof (2026-11-14 ~21:00 IST, Server 1): stored via POST /v1/memories the fact 'The lighthouse keeper in Kanyakumari polishes the brass lantern every monsoon evening before the fishing boats return.' (id 62e2b9bd-6eb7-4e38-b188-38e03399e186, storage_backend oracle, durable). Verbatim query returned it as semantic rank 1 (sim 0.82). Paraphrase query 'who tends the beacon at the southern tip during rainy season dusk' (zero content-token overlap) returned it as the Oracle adapter's SEMANTIC RANK 1 (sim 0.76, 'Semantic match' reason; keyword overlap 0.18 from function words only). Pre-fix, semantic_score was always 0 because reads queried only the unprovisioned Qdrant mock."
+      - "Delete path live-verified: DELETE of the probe fact returned lifecycle_state deleted and the identical paraphrase search (limit=100) no longer returns it; the probe fact is cleaned up, none left behind."
+      - "REMAINDER (ranking, not wiring): in the merged hybrid result list the fresh fact surfaces at position 53 (limit=100) because 36 legacy graph-connected records saturate final_score at 1.0 via graph boosts (+0.26..+0.69) and an unconnected fresh record cannot outrank them on broad queries. This is a pre-existing hybrid-merge ranking property, the same surface as TASK-REL-014's recall-window residual; follow-up proposed in the issue #35 completion comment. The REL-013 split-brain defect itself is closed."
+      - "Blocker resolved en route: the TASK-REL-015 event_log schema drift that 500'd POST /v1/memories was fixed by PR #160; the live store above ran the full pipeline successfully."
+      - "Tests on the final merged tree: REL-013 + health suites 13/13 (16/16 incl. REL-015's new Memora tests); full Memora suite failure lines 60 on the branch vs 62 on clean main — the 3 repaired health tests are the net improvement; one unrelated schema-stamp test failed in one full-suite branch run but passes standalone on the same tree (order-dependent, disclosed in the recovery report)."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-14 (REL-013 recovery crew): fix merged (PR #172, merge 3058b718), deployed to Server 1 by Fleet CD, semantic write/read unified on the Oracle vector store and truthful /health production-verified live (paraphrase semantic rank 1, sim 0.76). Hybrid-ranking graph-boost saturation split out as a follow-up (see evidence)."
+
   - id: TASK-REL-021
     title: "Production research synthesis never completes: routed Inference completion truncates (finish_reason length)"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
-    branch: claude/task-rel-021-synthesis-truncation
-    pr: null
+    branch: claude/task-rel-021-synthesis-truncation (+ follow-ups claude/task-rel-021-synthesis-prompt-budget, claude/task-rel-021-synthesis-model)
+    pr: 164
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:47:00+05:30"
-    updated_at: "2026-11-14T19:47:00+05:30"
+    updated_at: "2026-11-14T20:35:00+05:30"
     files:
       - "IntelX/intelx/api/grounded_live_research.py"
       - "Inference/app/api/v1_core_routes.py"
       - "tests/test_inference_explicit_model_contract.py"
+      - "tests/test_grounded_research_synthesis.py"
     defect: "synthesize_grounded (via GroundedInferenceGateway) asks Inference /v1/chat/completions for model llama-3.3-70b-versatile, which Groq has retired: production journal shows 404 model_not_found on every attempt. Every synthesis therefore drops to Inference's capability fallback ladder, whose OpenRouter get_best_free_model pick varies per call (observed nvidia/nemotron-3.5-super-vl:free); reasoning-heavy picks burn the 2400-token budget (the OpenAI-compatible adapter surfaces reasoning as content when content is empty), returning up to ~9K chars with finish_reason 'length', which IntelX correctly refuses as incomplete_completion — so no live research answer ever synthesises (REL-016 live probes: outputs 8607/9930/8721 chars, all truncated, attempt + retry). The natural replacement, openai/gpt-oss-120b (Groq-served, the Groq adapter's default model), is unreachable through this route: v1_core_routes' substring provider mapping sends any model containing 'openai' to the OpenAI provider, which has no credentials configured, silently dropping the request to the same fallback ladder. The TASK-REL-007 ~125-char truncation was the same root cause with a different daily fallback pick."
     acceptance:
       - "Root cause evidenced from production logs/probes, not inferred: Groq 404 model_not_found for the retired hint; fallback-served model field differs from the requested model on live probes."
@@ -3521,7 +3530,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 6878316081 (2026-11-14)."
       - "Diagnosis (live, 2026-11-14): Inference journal on Server 1 shows 'groq API error (404) model_not_found' for llama-3.3-70b-versatile at 19:13/19:14/19:24 and for llama-3.1-8b-instant at 19:27; direct probes of POST /v1/chat/completions with grounded-style payloads were served by nvidia/nemotron-3.5-super-vl:free (fallback) for every requested model tested (llama-3.3-70b-versatile, llama-3.1-8b-instant, openai/gpt-oss-120b, cerebras/llama-3.3-70b, gemini-2.5-flash, gemini-flash-latest, mistral-small-latest); direct Groq API check with a fleet pool key confirms openai/gpt-oss-120b, openai/gpt-oss-20b and qwen/qwen3.8-27b are served (content + stop) while llama models and groq/compound-mini return model_not_found."
     blockers: []
-    next_action: "Fix implemented on branch; PR, CI, merge, Fleet CD deploy and live research verification to follow."
+    next_action: "None — complete. Residuals (catalogue still advertises retired llama models; other retired-model references in non-synthesis paths; research ephemerality) are recorded in the issue #35 completion comment for separate scheduling."
+    verification: "VERIFIED 2026-11-14 (Muse, TASK-REL-021 crew). THREE production layers, each evidenced live before fixing: (1) retired model hint llama-3.3-70b-versatile -> Groq 404 -> OpenRouter free-model fallback lottery whose reasoning output truncated the draft (finish_reason length, ~9K chars) — fixed PR #164 (merge 23b6a02a): hint -> openai/gpt-oss-120b AND v1_core_routes routes openai/gpt-oss* to groq instead of the credential-less openai provider (both branches; regression test test_gpt_oss_models_route_to_groq_not_openai); the TASK-REL-007 ~125-char truncation was the same lottery with a different daily pick. (2) Prompt size vs Groq on-demand TPM: org cap 8,000 tokens/min (HTTP 413 rate_limit_exceeded observed with a 13,462-token request); synthesize_grounded supplied up to 36,000 chars (~9-10K tokens) — fixed PR #170 (merge 9461c1d4): budget 16,000 chars total / 6,000 per document (~3,812 prompt tokens measured through the production route; quote verification runs against exactly the supplied text, so grounding strength is unchanged). (3) Quote fidelity: gpt-oss-120b completes drafts but splices quotes (skips photo credits/clauses), failing the exact-substring grounding gate (synthesis_quote_unverified) — A/B on three real fetched document sets with the unchanged prompt: gpt-oss 0/3 quotes verified (1/2-3/3 with a strict prompt, still unreliable), qwen/qwen3.8-27b 9/9 — fixed PR #175 (merge 1ca50a49): synthesis hint -> qwen/qwen3.8-27b; the gate itself is unchanged and still fails closed to REL-016's labelled raw-findings path. All three PRs CI-green (contracts/test/roster/secrets/layout/policy success). Deploys: Fleet CD runs 43604086900 (23b6a02), 43605640901 (9461c1d), 43607756836 (1ca50a4) all success; Server 1 checkout and service restarts verified at each merge. PRODUCTION PROOF (IntelX POST /v1/task/execute, action research_live, deployed code at 1ca50a49, 2026-11-14 ~20:31 IST): 'What is the latest progress on solid-state batteries?' -> envelope SUCCESS, synthesis_status succeeded, answer_kind source_attributed_model_draft, 3 findings / 3 sources, receipt issued (pipeline friday.research), 56.0s; 'What is the current status of NASA's Artemis II mission?' -> SUCCESS, succeeded, 3 findings / 2 sources, receipt, 21.2s; 'What are the latest developments in fusion energy research?' -> SUCCESS, succeeded, 3 findings / 3 sources, receipt, 20.1s. REL-016 not regressed: 63 grounded/contract tests pass locally (incl. test_live_research_task_contract) and CI contracts/test green on all three PRs; the raw-findings fallback was itself observed live behaving exactly as designed during layers 2-3 diagnosis (DEGRADED, findings preserved and labelled, no receipt)."
   - id: TASK-REL-015
     title: "Memora production observability (alembic fileConfig) + schema drift residuals (PR #105/#107)"
     status: VERIFIED
