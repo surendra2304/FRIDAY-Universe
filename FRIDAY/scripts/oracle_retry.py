@@ -121,6 +121,15 @@ def notify_success(instance_id, ocpus, ram, public_ip):
             print(f"Could not write to GITHUB_STEP_SUMMARY: {e}")
 
     try:
+        existing = subprocess.run(
+            ["gh", "issue", "list", "--state", "open", "--search",
+             "Oracle Ampere ARM Server Claimed", "--json", "number", "--jq", "length"],
+            capture_output=True, text=True, check=False,
+        )
+        count = existing.stdout.strip()
+        if count.isdigit() and int(count) > 0:
+            print("🔔 A success notification issue is already open — skipping duplicate issue creation.")
+            return
         title = f"🎉 Oracle Ampere ARM Server Claimed ({public_ip})"
         body = (
             f"The 24/7 Capacity Sniper has successfully provisioned your Oracle Ampere A1 instance!\n\n"
@@ -184,9 +193,9 @@ def main():
 
     print("=" * 75)
     print("🚀 HARDENED 24/7 MULTI-TIER ORACLE AMPERE A1 CAPACITY SNIPER INITIALIZING")
-    print("   Region: ap-hyderabad-1 (AD-1) | Strict Always Free Limit: 2 OCPUs & 12 GB RAM")
-    print("   Targets: 2C/12G (Primary), 2C/8G, 1C/6G, 1C/4G")
-    print("   Cadence: 45s intervals + Cloud-Init embedded + In-Place Live Upgrade scaling")
+    print("   Region: ap-hyderabad-1 (AD-1) | Always Free A1 allowance: 4 OCPUs & 24 GB RAM total")
+    print("   Targets: 4C/24G (Primary), 2C/12G, 1C/6G, 2C/8G, 1C/4G")
+    print("   Cadence: jittered intervals + Cloud-Init embedded + In-Place Live Upgrade scaling")
     print("=" * 75)
 
     active_instance = check_active_arm_instance(compute_client, compartment_ocid)
@@ -197,7 +206,8 @@ def main():
 
     # High-density target hierarchy: 100% of attempts search across ALL fault domains simultaneously
     TARGET_CONFIGS = [
-        {"ocpus": 2, "ram": 12, "fd": None, "img": UBUNTU_24_IMAGE},  # Primary target (ALL 3 fault domains)
+        {"ocpus": 4, "ram": 24, "fd": None, "img": UBUNTU_24_IMAGE},  # Full Always Free A1 allowance (ALL 3 fault domains)
+        {"ocpus": 2, "ram": 12, "fd": None, "img": UBUNTU_24_IMAGE},  # Half-size fallback (ALL 3 fault domains)
         {"ocpus": 1, "ram": 6,  "fd": None, "img": UBUNTU_24_IMAGE},  # 1-core stepping stone (ALL 3 fault domains)
         {"ocpus": 2, "ram": 8,  "fd": None, "img": UBUNTU_24_IMAGE},  # 2-core memory fragmentation fit (ALL 3 fault domains)
         {"ocpus": 1, "ram": 4,  "fd": None, "img": UBUNTU_24_IMAGE},  # 1-core minimal RAM footprint (ALL 3 fault domains)
@@ -220,32 +230,39 @@ def main():
             current_ocpus = active_instance.shape_config.ocpus if active_instance.shape_config else 1
             current_ram = active_instance.shape_config.memory_in_gbs if active_instance.shape_config else 6
 
-            # If already 2 OCPU and 12 GB (or higher), we are fully done
-            if current_ocpus >= 2 and current_ram >= 12:
+            # If already 4 OCPU and 24 GB (the full Always Free allowance), we are fully done
+            if current_ocpus >= 4 and current_ram >= 24:
                 pub_ip = resolve_instance_public_ip(network_client, compute_client, compartment_ocid, active_instance.id)
                 notify_success(active_instance.id, current_ocpus, current_ram, pub_ip)
                 return 0
 
             # Instance is running on partial specs -> attempt live in-place upgrade
-            print(f"[Attempt #{attempt} | {elapsed_min}m] Instance active ({current_ocpus} OCPUs, {current_ram} GB). Upgrading to 2 OCPUs & 12 GB RAM...")
+            print(f"[Attempt #{attempt} | {elapsed_min}m] Instance active ({current_ocpus} OCPUs, {current_ram} GB). Upgrading to 4 OCPUs & 24 GB RAM...")
             try:
                 update_details = oci.core.models.UpdateInstanceDetails(
                     shape_config=oci.core.models.UpdateInstanceShapeConfigDetails(
-                        ocpus=2,
-                        memory_in_gbs=12
+                        ocpus=4,
+                        memory_in_gbs=24
                     )
                 )
                 updated = compute_client.update_instance(active_instance.id, update_details).data
                 pub_ip = resolve_instance_public_ip(network_client, compute_client, compartment_ocid, updated.id)
-                notify_success(updated.id, 2, 12, pub_ip)
+                notify_success(updated.id, 4, 24, pub_ip)
                 return 0
             except oci.exceptions.ServiceError as e:
                 if e.status == 429:
-                    print(f"⚠️ Rate limit (429). Sleeping 45s for full token bucket refill...")
-                    time.sleep(45)
+                    backoff = 90 + random.uniform(0, 20)
+                    print(f"⚠️ Rate limit (429). Sleeping {backoff:.0f}s for full token bucket refill...")
+                    time.sleep(backoff)
                     continue
                 elif "Out of host capacity" in str(e.message) or e.status in [500]:
-                    print(f"[Attempt #{attempt} | {elapsed_min}m] Full 2 OCPUs / 12 GB not yet released in Hyderabad. Active on {current_ocpus} OCPU / {current_ram} GB. Retrying in {cycle_delay}s...")
+                    print(f"[Attempt #{attempt} | {elapsed_min}m] Full 4 OCPUs / 24 GB not yet released in Hyderabad. Active on {current_ocpus} OCPU / {current_ram} GB. Retrying in {cycle_delay}s...")
+                elif "limit" in str(e.message).lower() and current_ocpus >= 2 and current_ram >= 12:
+                    # Tenancy limit below 4/24 but a usable instance (>=2/12) is secured: accept it.
+                    print(f"[Attempt #{attempt} | {elapsed_min}m] Tenancy limit prevents the 4/24 upgrade; secured instance ({current_ocpus} OCPU / {current_ram} GB) accepted as final.")
+                    pub_ip = resolve_instance_public_ip(network_client, compute_client, compartment_ocid, active_instance.id)
+                    notify_success(active_instance.id, current_ocpus, current_ram, pub_ip)
+                    return 0
                 else:
                     print(f"OCI Service Error ({e.status}): {e.message}")
             except Exception as e:
@@ -284,8 +301,9 @@ def main():
 
             except oci.exceptions.ServiceError as e:
                 if e.status == 429:
-                    print(f"\n⚠️ Rate limit (429). Backing off 45s to refill OCI token bucket...")
-                    time.sleep(45)
+                    backoff = 90 + random.uniform(0, 20)
+                    print(f"\n⚠️ Rate limit (429). Backing off {backoff:.0f}s to refill OCI token bucket...")
+                    time.sleep(backoff)
                     continue
                 elif "Out of host capacity" in str(e.message) or e.status in [500]:
                     print("Capacity full.")
