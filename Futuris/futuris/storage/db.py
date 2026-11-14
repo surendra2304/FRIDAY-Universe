@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from futuris import oracle_dialect_compat as _oracle_dialect_compat  # noqa: F401  (TASK-REL-006: installs the Oracle JSON dialect shim before any engine exists; without it every generic JSON() column read raises AttributeError '_json_deserializer' and /v1/friday/forecast 500s)
 from futuris.infra.config import settings
 from futuris.infra.logging import get_logger
 

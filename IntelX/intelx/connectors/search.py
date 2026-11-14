@@ -4,6 +4,7 @@ import json
 import logging
 import urllib.parse
 from dataclasses import dataclass
+from itertools import zip_longest
 from pathlib import Path
 from typing import Any
 
@@ -696,16 +697,44 @@ class WebSearchConnector(BaseConnector):
                 return []
 
         # 1. Tavily if key present
+        primary_results: list[SearchResult] = []
         if self.settings.TAVILY_API_KEY:
-            results = await fetch_provider("tavily", self._tavily)
-            if results:
-                return results
+            primary_results = await fetch_provider("tavily", self._tavily)
 
         # 2. SearXNG if instance URL configured
-        if self.settings.SEARXNG_URL:
-            results = await fetch_provider("searxng", self._searxng)
-            if results:
-                return results
+        if not primary_results and self.settings.SEARXNG_URL:
+            primary_results = await fetch_provider("searxng", self._searxng)
+
+        if primary_results:
+            # TASK-REL-006: a primary hit must no longer END the search.
+            # Tavily's top candidates for headline/news queries are section
+            # and listing pages (topic/tag/home pages), which the grounded
+            # research pipeline correctly refuses to certify as source
+            # documents — so research returned DEGRADED
+            # 'sourced_findings_unverified' even though search "worked".
+            # Google News RSS returns article-level URLs; merge them in
+            # (interleaved, deduped by URL, primary first, capped at the
+            # caller's max_results) so the candidate list carries fetchable
+            # article prose alongside the primary provider's results.
+            news_extra = await fetch_provider("google_news", self._google_news)
+            if not news_extra:
+                return primary_results
+            try:
+                cap = int(kwargs.get("max_results", 10) or 10)
+            except (TypeError, ValueError):
+                cap = 10
+            merged: list[SearchResult] = []
+            seen_urls: set[str] = set()
+            for pair in zip_longest(primary_results, news_extra):
+                for item in pair:
+                    if item is None:
+                        continue
+                    key = (item.url or "").strip().lower()
+                    if not key or key in seen_urls:
+                        continue
+                    seen_urls.add(key)
+                    merged.append(item)
+            return merged[:cap] if cap > 0 else merged
 
         # 3. Google News RSS + Wikipedia, then DuckDuckGo as a fallback.
         results: list[SearchResult] = []

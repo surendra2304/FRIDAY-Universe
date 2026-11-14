@@ -37,7 +37,9 @@ os.environ["RUNTIME_LEASES_FILE"] = os.path.join(test_dir, "runtime_leases.json"
 os.environ["EXECUTION_INTENTS_FILE"] = os.path.join(test_dir, "execution_intents.json")
 
 # Clear any secret keys for unauthenticated local test client assertions
-for k in ["BOT_API_KEY", "API_KEY_CONTROL", "API_KEY_READONLY", "API_KEY_FRIDAY"]:
+# (STRATEX_API_KEY added by TASK-REL-006: it is a configured key since the
+# FRIDAY auth-alignment fix, so it must be cleared for hermetic auth tests.)
+for k in ["BOT_API_KEY", "API_KEY_CONTROL", "API_KEY_READONLY", "API_KEY_FRIDAY", "STRATEX_API_KEY"]:
     os.environ[k] = ""
 
 
