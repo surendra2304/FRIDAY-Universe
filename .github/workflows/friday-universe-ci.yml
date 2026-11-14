@@ -81,6 +81,14 @@ jobs:
             tests/test_task_receipt_truthfulness.py \
             tests/test_cross_tenant_context_isolation.py \
             tests/test_schema_init_migrations.py
+          # TASK-REL-001: the viking durability suite runs as its own
+          # invocation in the same step. Its store-failure simulations fail
+          # when they share a pytest process with
+          # test_task_receipt_truthfulness.py or
+          # test_memory_write_share_authorization.py (verified locally:
+          # 2 failures in-process, 6/6 green standalone).
+          .venv-vector-ci/bin/python -m pytest -q \
+            tests/test_viking_context_durability.py
 
       - name: Start API server and run HTTP tests
         run: |
@@ -128,6 +136,8 @@ jobs:
               - 'FRIDAY/tests/test_livekit_token.py'
               - 'FRIDAY/requirements.txt'
               - 'FRIDAY/pyproject.toml'
+              - 'FRIDAY/.env.example'
+              - 'FRIDAY/src/friday/core/config.py'
 
   voice-regressions:
     runs-on: ubuntu-latest
