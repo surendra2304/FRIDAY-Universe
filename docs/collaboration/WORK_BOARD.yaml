@@ -3242,7 +3242,7 @@ tasks:
     next_action: "Replacement PR via bridge Git Data API (supersedes #115); merge on green CI under owner autonomous authority; confirm Fleet CD deploy + worker state."
   - id: TASK-STR-SAFETY-001
     title: "Close three Stratex safety holes: daemon governance bypass, ALLOW_LIVE_TRADING env unlock, unguarded OANDA place_order"
-    status: DONE
+    status: VERIFIED
     owner: muse_ai
     branch: "claude/stratex-safety-governance + claude/stratex-live-trading-env-lock"
     pr: "120 (HOLE 1 + denylist, merged d4759a4), 123 (HOLES 2+3, merged b513e34)"
@@ -3275,7 +3275,7 @@ tasks:
     next_action: "DONE 2026-11-14. Follow-ups (not blocking): portfolio_v2 remains an orphaned transplant (now practice-gated anyway); deployment/live_authorization.py's 6 gates are still not consulted by execution paths — defence now rests on the dual-gate + config invariant, which is sufficient; consider wiring it if live trading is ever contemplated (owner decree: it is not)."
   - id: TASK-REL-009
     title: "Fix Gemini-rejected tool schema (empty enum value) blocking all tool-bearing chat on the Gemini brain"
-    status: DONE
+    status: VERIFIED
     owner: muse_ai
     branch: claude/gemini-tool-schema-fix
     pr: 128
