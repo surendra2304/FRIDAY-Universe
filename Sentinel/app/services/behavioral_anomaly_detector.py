@@ -64,7 +64,7 @@ class UEBAModel:
     entity_type: str = "user"
     features: list[str] = field(default_factory=list)
     training_samples: int = 0
-    accuracy: float = 0.0
+    accuracy: float | None = None
     last_trained: float = 0.0
 
 
@@ -169,13 +169,21 @@ class BehavioralAnomalyDetector:
         return assessment
 
     def train_model(self, entity_type: str = "user") -> UEBAModel:
-        """Train a UEBA model."""
+        """Register a UEBA model over the profiles actually stored.
+
+        TASK-SEN-001: training_samples is the real count of stored profiles
+        for this entity type, and accuracy stays None — no measured accuracy
+        exists, and an md5-derived number must never be presented as one.
+        """
+        samples = sum(
+            1 for p in self._profiles.values() if p.entity_type == entity_type
+        )
         model = UEBAModel(
             model_id=hashlib.md5(f"ueba:{entity_type}:{time.time()}".encode()).hexdigest()[:12],
             entity_type=entity_type,
             features=["login_time", "location", "access_pattern", "api_calls", "file_access", "network_traffic"],
-            training_samples=1000 + (ord(hashlib.md5(entity_type.encode()).hexdigest()[:1]) % 9000),
-            accuracy=0.92 + (ord(hashlib.md5(f"acc:{entity_type}".encode()).hexdigest()[:1]) % 7) / 100,
+            training_samples=samples,
+            accuracy=None,
             last_trained=time.time(),
         )
         self._models[model.model_id] = model
@@ -191,7 +199,12 @@ class BehavioralAnomalyDetector:
             "critical_anomalies": sum(1 for a in self._anomalies if a.severity == "critical"),
             "high_anomalies": sum(1 for a in self._anomalies if a.severity == "high"),
             "high_risk_entities": sum(1 for p in self._profiles.values() if p.risk_level in ("high", "critical")),
-            "avg_model_accuracy": sum(m.accuracy for m in self._models.values()) / max(1, len(self._models)),
+            "avg_model_accuracy": (
+                sum(a for a in (m.accuracy for m in self._models.values()) if a is not None)
+                / len([m for m in self._models.values() if m.accuracy is not None])
+                if any(m.accuracy is not None for m in self._models.values())
+                else None
+            ),
             "recent_anomalies": [
                 {"entity": a.entity_id, "type": a.anomaly_type, "severity": a.severity, "deviation": a.deviation_score}
                 for a in self._anomalies[-10:]
