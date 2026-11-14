@@ -6,6 +6,8 @@ The production search mechanism is a persistent `systemd` service on the always-
 
 The former primary and fallback workflow schedules are removed to prevent duplicate allocation attempts. There is one persistent service rather than two staggered short-lived workers.
 
+> **Status note (audit, 2026-11-14):** the design above is NOT yet live. The IAM bootstrap below has not been completed — the host's instance-principal calls still return `404 NotAuthorizedOrNotFound`, the installer has not produced `/opt/friday-arm-sniper` on server 1, and `friday-oci-a1-allocator.service` is not running. Until a tenancy administrator completes the bootstrap, the GitHub Actions snipers (`.github/workflows/oracle-capacity-sniper.yml` and `oracle-capacity-sniper-worker2.yml`, running `FRIDAY/scripts/oracle_retry.py`) remain the active allocation mechanism — their schedules have NOT been removed, and they must not be disabled until this service is verified running.
+
 ## Authentication and safety
 
 - Use OCI Instance Principals from the running AMD VM; do not copy or store long-lived OCI API private keys on the host.
