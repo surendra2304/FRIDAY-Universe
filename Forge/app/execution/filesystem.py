@@ -3,6 +3,7 @@ Filesystem Tool for Project FORGE Execution Engine.
 Provides sandboxed file operations (list, read, create, edit, move, delete, search) within a task workspace.
 """
 
+import ast
 import fnmatch
 import re
 import shutil
@@ -127,6 +128,25 @@ class FilesystemTool:
             return None
         return repaired
 
+    @staticmethod
+    def _has_top_level_raise(content: str) -> bool:
+        """True when a module unconditionally raises at import time.
+
+        A ``raise`` that is a direct statement of the module body (not
+        nested in an if/try/function) fires on every import, so the module
+        can never be imported at all. TASK-REL-028 run 5: a repair patch
+        rewrote a working recovery-created module into exactly that shape
+        (``raise ImportError("Simulated import failure ...")``) to satisfy
+        an import-error test, permanently breaking the runtime check.
+        Version guards and the like nest their raise, so they are
+        unaffected.
+        """
+        try:
+            tree = ast.parse(content)
+        except (SyntaxError, ValueError):
+            return False
+        return any(isinstance(stmt, ast.Raise) for stmt in tree.body)
+
     def _guard_python_content(
         self, relative_path: str, content: str, task_id: str | None = None
     ) -> str:
@@ -149,9 +169,17 @@ class FilesystemTool:
         except (SyntaxError, ValueError) as exc:
             original_error = exc
         else:
-            # Parseable content is normally returned byte-identical; the one
-            # exception is the parent.parent sibling-path misconception,
-            # repaired only when the flat layout is provably the real one.
+            # Parseable content is normally returned byte-identical; the
+            # exceptions are the parent.parent sibling-path misconception
+            # (repaired only when the flat layout is provably the real one)
+            # and a module that unconditionally raises at import time,
+            # which no consumer can ever import -- refused, not persisted.
+            if self._has_top_level_raise(content):
+                raise ValueError(
+                    f"Refusing to write '{relative_path}': the module "
+                    "unconditionally raises at import time (top-level raise), "
+                    "so it could never be imported."
+                )
             repaired = self._repair_sibling_paths(content, task_id, relative_path)
             if repaired is not None:
                 logger.warning(
@@ -216,6 +244,19 @@ class FilesystemTool:
             raise ValueError(f"Target snippet not found in '{relative_path}'")
 
         modified = original.replace(target_content, replacement_content, 1)
+        if (
+            relative_path.endswith(".py")
+            and self._has_top_level_raise(modified)
+            and not self._has_top_level_raise(original)
+        ):
+            # Same write-boundary rule as create_file (TASK-REL-028): an
+            # edit must not turn an importable module into one that
+            # unconditionally raises at import time. Edits to a file that
+            # already has the defect stay allowed so it can be repaired.
+            raise ValueError(
+                f"Refusing edit to '{relative_path}': it would make the module "
+                "unconditionally raise at import time (top-level raise)."
+            )
         target.write_text(modified, encoding="utf-8")
         logger.debug(f"Edited file {relative_path} in task {task_id}")
         return target.relative_to(root).as_posix()
