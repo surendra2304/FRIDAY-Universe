@@ -3561,7 +3561,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Complete — production-verified 2026-11-14. RESIDUAL (disclosed, not part of this task): mutation resolution still depends on recall ranking — a forget phrased with a distinguishing value ('...city is Lisbon') returned not_found because the target fell outside the recall window for that phrasing; the two ambiguity-probe facts were then removed by id via the client's own _delete_record primitive. Recall ranking/semantic search is TASK-REL-013's surface."
   - id: TASK-REL-020
     title: "Cortex/VyralX md5-seeded analytics honesty — hash-derived pseudo-metrics replaced by real computation or honest no-data"
-    owner: Muse
+    owner: muse_ai
     status: VERIFIED
     priority: P1
     created: 2026-11-14
