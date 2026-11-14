@@ -19,7 +19,7 @@ jobs:
       server2: ${{ steps.filter.outputs.server2 }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Filter Changed Paths
         id: filter
         uses: dorny/paths-filter@v4
