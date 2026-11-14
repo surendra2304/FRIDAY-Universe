@@ -80,10 +80,12 @@ class UncertaintyAnalysis:
     """Uncertainty analysis for a decision."""
     analysis_id: str
     recommendation_id: str
-    uncertainty_level: float = 0.0
-    confidence_interval: tuple[float, float] = (0.0, 0.0)
+    uncertainty_level: float | None = None
+    confidence_interval: tuple[float | None, float | None] = (None, None)
     key_uncertainties: list[str] = field(default_factory=list)
-    risk_adjusted_score: float = 0.0
+    risk_adjusted_score: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     worst_case: str = ""
     best_case: str = ""
 
@@ -258,24 +260,64 @@ class DecisionRecommendationSystem:
         if not rec:
             raise HTTPException(404, f"Recommendation {recommendation_id} not found")
 
-        uncertainty = 0.2 + (ord(hashlib.md5(recommendation_id.encode()).hexdigest()[:1]) % 30) / 100
-
-        analysis = UncertaintyAnalysis(
-            analysis_id=hashlib.md5(
-                f"uncertainty:{recommendation_id}:{time.time()}".encode()
-            ).hexdigest()[:12],
-            recommendation_id=recommendation_id,
-            uncertainty_level=round(uncertainty, 4),
-            confidence_interval=(rec.confidence - uncertainty, rec.confidence + uncertainty),
-            key_uncertainties=[
-                "Market conditions may change",
-                "Stakeholder priorities may shift",
-                "Implementation may differ from plan",
-            ],
-            risk_adjusted_score=rec.expected_value * (1 - uncertainty),
-            worst_case=f"Worst case: {rec.best_alternative} yields minimal return",
-            best_case=f"Best case: {rec.best_alternative} yields optimal return",
-        )
+        # Uncertainty is computed from the recommendation's own sensitivity
+        # analysis: the mean per-criterion impact of a +/-20% weight change,
+        # clamped to [0, 1]. (TASK-REL-020: previously derived from an md5
+        # hash of the recommendation id.)
+        impacts = [
+            entry.get("impact", 0.0)
+            for entry in rec.sensitivity_analysis.values()
+            if isinstance(entry, dict)
+        ]
+        if impacts:
+            uncertainty = round(min(1.0, max(0.0, sum(impacts) / len(impacts))), 4)
+            analysis = UncertaintyAnalysis(
+                analysis_id=hashlib.md5(
+                    f"uncertainty:{recommendation_id}:{time.time()}".encode()
+                ).hexdigest()[:12],
+                recommendation_id=recommendation_id,
+                uncertainty_level=uncertainty,
+                confidence_interval=(
+                    max(0.0, rec.confidence - uncertainty),
+                    min(1.0, rec.confidence + uncertainty),
+                ),
+                key_uncertainties=[
+                    "Market conditions may change",
+                    "Stakeholder priorities may shift",
+                    "Implementation may differ from plan",
+                ],
+                risk_adjusted_score=rec.expected_value * (1 - uncertainty),
+                worst_case=f"Worst case: {rec.best_alternative} yields minimal return",
+                best_case=f"Best case: {rec.best_alternative} yields optimal return",
+                data_status="estimated_from_inputs",
+                data_note=(
+                    "Uncertainty is the mean per-criterion impact from the "
+                    "recommendation's sensitivity analysis (weight +/-20%), "
+                    "clamped to [0, 1]."
+                ),
+            )
+        else:
+            analysis = UncertaintyAnalysis(
+                analysis_id=hashlib.md5(
+                    f"uncertainty:{recommendation_id}:{time.time()}".encode()
+                ).hexdigest()[:12],
+                recommendation_id=recommendation_id,
+                uncertainty_level=None,
+                confidence_interval=(None, None),
+                key_uncertainties=[
+                    "Market conditions may change",
+                    "Stakeholder priorities may shift",
+                    "Implementation may differ from plan",
+                ],
+                risk_adjusted_score=None,
+                worst_case=f"Worst case: {rec.best_alternative} yields minimal return",
+                best_case=f"Best case: {rec.best_alternative} yields optimal return",
+                data_status="no_data",
+                data_note=(
+                    "No sensitivity analysis is stored for this "
+                    "recommendation, so uncertainty cannot be quantified."
+                ),
+            )
 
         self._uncertainty.append(analysis)
         return analysis
@@ -289,7 +331,13 @@ class DecisionRecommendationSystem:
             "total_stakeholders": len(self._stakeholders),
             "total_uncertainty_analyses": len(self._uncertainty),
             "avg_recommendation_confidence": sum(r.confidence for r in self._recommendations) / max(1, len(self._recommendations)),
-            "avg_risk_level": sum(r.risk_score for r in self._recommendations) / max(1, len(self._recommendations)),
+            # Ordinal mean of the stored risk_level (low=0, medium=1,
+            # high=2). Previously read a non-existent r.risk_score
+            # attribute and crashed once a recommendation existed.
+            "avg_risk_level": sum(
+                {"low": 0.0, "medium": 1.0, "high": 2.0}.get(r.risk_level, 1.0)
+                for r in self._recommendations
+            ) / max(1, len(self._recommendations)),
             "high_risk_recommendations": sum(1 for r in self._recommendations if r.risk_level == "high"),
             "recent_recommendations": [
                 {

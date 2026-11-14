@@ -68,6 +68,8 @@ class AttributionResult:
     journeys_analyzed: int = 0
     avg_touches_per_conversion: float = 0.0
     top_channel: str = ""
+    data_status: str = "measured"
+    data_note: str = ""
 
 
 @dataclass
@@ -77,7 +79,9 @@ class MarkovGraph:
     nodes: list[str] = field(default_factory=list)
     edges: dict = field(default_factory=dict)  # source → {target: probability}
     removal_effects: dict = field(default_factory=dict)  # channel → removal effect
-    conversion_rate: float = 0.0
+    conversion_rate: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -181,6 +185,19 @@ class MultiChannelAttributionModeler:
             if jid in self._journeys
         ]
 
+        # Real data-driven weights: Markov removal effects computed from the
+        # stored journeys (see build_markov_graph). Empty when no journey
+        # data exists — data-driven credit is then honestly zero/unavailable
+        # instead of a copy of the linear split. (TASK-REL-020)
+        markov = self.build_markov_graph()
+        removal_effects = markov.removal_effects
+        total_effect = sum(removal_effects.values())
+        removal_shares = (
+            {ch: eff / total_effect for ch, eff in removal_effects.items()}
+            if total_effect > 0
+            else {}
+        )
+
         # Aggregate channel contributions
         channel_stats: dict[str, dict] = {}
 
@@ -224,11 +241,23 @@ class MultiChannelAttributionModeler:
                 else:
                     channel_stats[channel]["position"] += journey.conversion_value * 0.2 / max(1, len(journey.touches) - 2)
 
-                # Data driven (simulated)
-                channel_stats[channel]["data_driven"] += journey.conversion_value / max(1, len(journey.touches))
                 channel_stats[channel]["assists"] += 1
 
                 channel_stats[channel]["touches"] += 1
+
+            # Data driven (Markov removal effects): distribute this
+            # journey's conversion value across its channels in proportion
+            # to their removal-effect shares.
+            if journey.conversion_value > 0 and removal_shares:
+                journey_channels = [
+                    ch for ch in journey.channels_touched if ch in removal_shares
+                ]
+                denom = sum(removal_shares[ch] for ch in journey_channels)
+                if denom > 0:
+                    for ch in journey_channels:
+                        channel_stats[ch]["data_driven"] += (
+                            journey.conversion_value * removal_shares[ch] / denom
+                        )
 
             # Mark conversions
             if journey.channels_touched:
@@ -266,6 +295,21 @@ class MultiChannelAttributionModeler:
         total_value = sum(c.avg_credit for c in contributions)
         avg_touches = sum(j.total_touches for j in journeys) / max(1, len(journeys))
 
+        if removal_shares:
+            dd_status = "estimated_from_inputs"
+            dd_note = (
+                "data_driven credit uses Markov removal effects computed "
+                "from the stored journeys."
+            )
+        else:
+            dd_status = "no_data"
+            dd_note = (
+                "data_driven (Markov removal-effect) credit unavailable: "
+                "no stored journeys with conversions, so data_driven "
+                "credits are 0. Other models are computed from the stored "
+                "journeys."
+            )
+
         result = AttributionResult(
             model_id=model.model_id,
             model_name=model.name,
@@ -276,41 +320,153 @@ class MultiChannelAttributionModeler:
             journeys_analyzed=len(journeys),
             avg_touches_per_conversion=avg_touches,
             top_channel=contributions[0].channel if contributions else "",
+            data_status=dd_status if model_type == "data_driven" else "measured",
+            data_note=dd_note if model_type == "data_driven" else (
+                "Credits computed from the stored journeys."
+            ),
         )
 
         self._results[result.model_id] = result
         return result
 
+    # ── Markov helpers (TASK-REL-020: real removal effects) ──────────────
+    _START = "__START__"
+    _CONV = "__CONVERSION__"
+    _NULL = "__NULL__"
+
+    @staticmethod
+    def _journey_path(journey: CustomerJourney, exclude_channel: str | None = None) -> list[str]:
+        """State path for a journey: START, channels..., terminal.
+
+        A journey counts as converted when it carries a conversion value
+        (the only conversion signal in the stored data model).
+
+        Removal-effect convention (the standard Markov attribution one):
+        when a channel is excluded, any journey that passed through it is
+        treated as lost — its path truncates just before the channel and
+        ends in NULL.
+        """
+        cls = MultiChannelAttributionModeler
+        channels: list[str] = []
+        for t in journey.touches:
+            channel = t.get("channel", "unknown")
+            if exclude_channel is not None and channel == exclude_channel:
+                return [cls._START, *channels, cls._NULL]
+            channels.append(channel)
+        terminal = cls._CONV if journey.conversion_value > 0 else cls._NULL
+        return [cls._START, *channels, terminal]
+
+    def _transition_probs(self, exclude_channel: str | None = None) -> dict[str, dict[str, float]]:
+        """Empirical transition probabilities over journey paths."""
+        counts: dict[str, dict[str, int]] = {}
+        for journey in self._journeys.values():
+            path = self._journey_path(journey, exclude_channel)
+            for src, dst in zip(path, path[1:]):
+                row = counts.setdefault(src, {})
+                row[dst] = row.get(dst, 0) + 1
+        probs: dict[str, dict[str, float]] = {}
+        for src, row in counts.items():
+            total = sum(row.values())
+            if total > 0:
+                probs[src] = {dst: c / total for dst, c in row.items()}
+        return probs
+
+    def _conversion_probability(self, probs: dict[str, dict[str, float]]) -> float:
+        """Probability that a path starting at START ends in CONVERSION.
+
+        Solved by value iteration over the transient states.
+        """
+        transient = [st for st in probs if st not in (self._CONV, self._NULL)]
+        values = {st: 0.0 for st in transient}
+        for _ in range(1000):
+            delta = 0.0
+            new_values = {}
+            for st in transient:
+                v = 0.0
+                for dst, prob in probs[st].items():
+                    if dst == self._CONV:
+                        v += prob
+                    elif dst == self._NULL:
+                        continue
+                    else:
+                        v += prob * values.get(dst, 0.0)
+                new_values[st] = v
+                delta = max(delta, abs(v - values[st]))
+            values = new_values
+            if delta < 1e-10:
+                break
+        start_row = probs.get(self._START, {})
+        total = 0.0
+        for dst, prob in start_row.items():
+            if dst == self._CONV:
+                total += prob
+            elif dst != self._NULL:
+                total += prob * values.get(dst, 0.0)
+        return total
+
     def build_markov_graph(self) -> MarkovGraph:
-        """Build a Markov chain graph for data-driven attribution."""
+        """Build a Markov chain graph for data-driven attribution.
+
+        Transition probabilities, the conversion rate and the removal
+        effects are all computed from the stored journeys. A channel's
+        removal effect is 1 - P(convert without the channel) /
+        P(convert with all channels), the standard Markov attribution
+        definition. (TASK-REL-020: removal effects were previously
+        derived from an md5 hash of the channel name and the conversion
+        rate was a hardcoded 0.05.)
+        """
         nodes = list(set(
             t.get("channel", "unknown")
             for j in self._journeys.values()
             for t in j.touches
         ))
 
-        # Build transition matrix
+        # Channel-to-channel transition probabilities (for display)
         edges = {n: {} for n in nodes}
         for journey in self._journeys.values():
             for i in range(len(journey.touches) - 1):
                 src = journey.touches[i].get("channel", "unknown")
                 dst = journey.touches[i + 1].get("channel", "unknown")
                 if src in edges:
-                    edge_key = dst
-                    edges[src][edge_key] = edges[src].get(edge_key, 0) + 1
-
-        # Normalize
+                    edges[src][dst] = edges[src].get(dst, 0) + 1
         for src in edges:
             total = sum(edges[src].values())
             if total > 0:
                 edges[src] = {k: v / total for k, v in edges[src].items()}
 
-        # Calculate removal effects
+        total_journeys = len(self._journeys)
+        if total_journeys == 0:
+            graph = MarkovGraph(
+                graph_id=hashlib.md5(f"markov:{time.time()}".encode()).hexdigest()[:12],
+                nodes=nodes,
+                edges=edges,
+                removal_effects={},
+                conversion_rate=None,
+                data_status="no_data",
+                data_note=(
+                    "No journeys are stored, so transition probabilities, "
+                    "removal effects and the conversion rate cannot be "
+                    "computed."
+                ),
+            )
+            self._markov_graphs[graph.graph_id] = graph
+            return graph
+
+        converted = sum(1 for j in self._journeys.values() if j.conversion_value > 0)
+        conversion_rate = converted / total_journeys
+
+        base_probs = self._transition_probs()
+        p_with = self._conversion_probability(base_probs)
+
         removal_effects = {}
         for channel in nodes:
-            # Simulate removal effect
-            effect = 0.1 + (ord(hashlib.md5(channel.encode()).hexdigest()[:1]) % 30) / 100
-            removal_effects[channel] = effect
+            if p_with <= 0:
+                removal_effects[channel] = 0.0
+            else:
+                p_without = self._conversion_probability(
+                    self._transition_probs(exclude_channel=channel)
+                )
+                removal_effects[channel] = max(0.0, 1.0 - p_without / p_with)
 
         graph = MarkovGraph(
             graph_id=hashlib.md5(
@@ -319,7 +475,14 @@ class MultiChannelAttributionModeler:
             nodes=nodes,
             edges=edges,
             removal_effects=removal_effects,
-            conversion_rate=0.05,
+            conversion_rate=conversion_rate,
+            data_status="estimated_from_inputs",
+            data_note=(
+                "Transition probabilities, conversion rate and removal "
+                "effects computed from the stored journeys; a journey "
+                "counts as converted when it carries a conversion value, "
+                "and journeys through a removed channel count as lost."
+            ),
         )
 
         self._markov_graphs[graph.graph_id] = graph
@@ -336,6 +499,17 @@ class MultiChannelAttributionModeler:
 
         model_comparison = {}
         all_channels = journey.channels_touched
+
+        # Markov removal-effect shares for the data_driven model, computed
+        # from all stored journeys (TASK-REL-020: the fallback previously
+        # duplicated the linear split under the data-driven name).
+        _effects = self.build_markov_graph().removal_effects
+        _total_effect = sum(_effects.values())
+        _removal_shares = (
+            {ch: e / _total_effect for ch, e in _effects.items()}
+            if _total_effect > 0
+            else {}
+        )
 
         for model in self._models.values():
             credits = {}
@@ -361,9 +535,23 @@ class MultiChannelAttributionModeler:
                     else:
                         credit = journey.conversion_value * 0.2 / max(1, len(journey.touches) - 2)
                 else:
-                    credit = journey.conversion_value / len(journey.touches)
+                    # data_driven is credited at journey level below.
+                    credit = 0.0
 
                 credits[channel] = credits.get(channel, 0) + credit
+
+            if model.model_type == "data_driven" and journey.conversion_value > 0 and _removal_shares:
+                denom = sum(
+                    _removal_shares[ch]
+                    for ch in journey.channels_touched
+                    if ch in _removal_shares
+                )
+                if denom > 0:
+                    for ch in journey.channels_touched:
+                        if ch in _removal_shares:
+                            credits[ch] = credits.get(ch, 0) + (
+                                journey.conversion_value * _removal_shares[ch] / denom
+                            )
 
             model_comparison[model.name] = credits
 
@@ -429,6 +617,8 @@ async def attribute(payload: dict | None = None):
     return {
         "model_name": result.model_name,
         "model_type": result.model_type,
+        "data_status": result.data_status,
+        "data_note": result.data_note,
         "total_attributed_value": result.total_attributed_value,
         "conversions_analyzed": result.conversions_analyzed,
         "top_channel": result.top_channel,
@@ -457,6 +647,8 @@ async def build_markov_graph():
         "nodes": graph.nodes,
         "removal_effects": graph.removal_effects,
         "conversion_rate": graph.conversion_rate,
+        "data_status": graph.data_status,
+        "data_note": graph.data_note,
     }
 
 

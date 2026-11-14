@@ -53,7 +53,9 @@ class PricingAnalysis:
     competitor_id: str
     product_name: str
     price: float = 0.0
-    price_change_pct: float = 0.0
+    price_change_pct: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     discount_available: bool = False
     price_position: str = ""  # premium, mid, budget
     value_score: float = 0.0
@@ -66,10 +68,12 @@ class MarketShareEstimate:
     estimate_id: str
     competitor_id: str
     market_size_usd: float = 0.0
-    estimated_share: float = 0.0
-    trend: str = "stable"  # growing, stable, declining
-    confidence: float = 0.0
+    estimated_share: float | None = None
+    trend: str = "unknown"  # growing, stable, declining, unknown
+    confidence: float | None = None
     methodology: str = ""
+    data_status: str = "no_data"
+    data_note: str = ""
     estimated_at: float = 0.0
 
 
@@ -94,8 +98,10 @@ class SWOTAnalysis:
     weaknesses: list[str] = field(default_factory=list)
     opportunities: list[str] = field(default_factory=list)
     threats: list[str] = field(default_factory=list)
-    overall_score: float = 0.0
+    overall_score: float | None = None
     competitive_position: str = ""
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -186,7 +192,15 @@ class CompetitiveIntelligenceEngine:
             competitor_id=competitor_id,
             product_name=product_name,
             price=price,
-            price_change_pct=(ord(hashlib.md5(f"price:{competitor_id}".encode()).hexdigest()[:1]) % 20) / 10 - 5,
+            # No price history is stored for any competitor, so a price
+            # change cannot be computed. Stays None (data_status="no_data").
+            # (TASK-REL-020: previously derived from an md5 hash.)
+            price_change_pct=None,
+            data_status="no_data",
+            data_note=(
+                "price_change_pct unavailable: no historical prices are "
+                "stored for this competitor."
+            ),
             discount_available=price < our_price,
             price_position="premium" if price > 100 else "mid" if price > 50 else "budget",
             value_score=price / max(1, our_price) * 100,
@@ -208,10 +222,19 @@ class CompetitiveIntelligenceEngine:
             ).hexdigest()[:12],
             competitor_id=competitor_id,
             market_size_usd=market_size_usd,
-            estimated_share=5 + (ord(hashlib.md5(competitor_id.encode()).hexdigest()[:1]) % 30) / 10,
-            trend="growing" if hashlib.md5(f"trend:{competitor_id}".encode()).hexdigest()[:1] < "7" else "stable",
-            confidence=0.6 + (ord(hashlib.md5(f"conf:{competitor_id}".encode()).hexdigest()[:1]) % 30) / 100,
-            methodology="revenue_estimation",
+            # No revenue, sales or panel data source exists for market
+            # share. Share/trend/confidence stay unset (data_status=
+            # "no_data"). (TASK-REL-020: previously derived from md5
+            # hashes of the competitor id.)
+            estimated_share=None,
+            trend="unknown",
+            confidence=None,
+            methodology="none_available",
+            data_status="no_data",
+            data_note=(
+                "Market share cannot be estimated: no revenue, sales or "
+                "panel data source is connected."
+            ),
             estimated_at=time.time(),
         )
 
@@ -272,7 +295,15 @@ class CompetitiveIntelligenceEngine:
                 "Price wars",
                 "Technological disruption",
             ],
-            overall_score=0.6 + (ord(hashlib.md5(competitor_id.encode()).hexdigest()[:1]) % 30) / 100,
+            # No scoring data source exists; the SWOT lists are template
+            # text and no numeric score is computed. (TASK-REL-020:
+            # previously derived from an md5 hash of the competitor id.)
+            overall_score=None,
+            data_status="no_data",
+            data_note=(
+                "overall_score unavailable: SWOT entries are template text "
+                "and no measured scoring inputs exist."
+            ),
             competitive_position="strong" if competitor.market_share > 15 else "moderate",
         )
 
@@ -381,6 +412,8 @@ async def generate_swot(competitor_id: str):
         "opportunities": swot.opportunities,
         "threats": swot.threats,
         "overall_score": swot.overall_score,
+        "data_status": swot.data_status,
+        "data_note": swot.data_note,
     }
 
 
