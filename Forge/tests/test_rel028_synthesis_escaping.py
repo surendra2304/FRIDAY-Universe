@@ -40,6 +40,7 @@ import pytest
 if TYPE_CHECKING:
     from app.recovery.classifier import FailureDiagnosis
     from app.recovery.engine import RecoveryEngine
+    from app.verification.evidence import VerificationEvidence
 
 from app.core.config import Settings
 from app.core.orchestrator import OrchestratorCore
@@ -283,6 +284,72 @@ async def test_create_route_gates(
         is None
     )
     assert low.calls == 1
+
+
+def _evidence(text: str) -> "VerificationEvidence":
+    from app.verification.evidence import CheckCategory, VerificationEvidence
+
+    return VerificationEvidence(
+        check_name="Runtime CLI / Service Smoke Check",
+        category=CheckCategory.RUNTIME,
+        passed=False,
+        exit_code=1,
+        stdout=text,
+        stderr="",
+    )
+
+
+def test_classifier_names_missing_module_in_fleet_phrasings():
+    """The classifier must recognize the missing-module phrasings the fleet
+    actually emits and name the module file as the repair target. On the
+    pre-fix classifier the runtime smoke phrasing fell through to UNKNOWN
+    (production task18814112026194737), so recovery never saw a
+    dependency_missing diagnosis to act on."""
+    from app.recovery.classifier import FailureClass, FailureClassifier
+
+    classifier = FailureClassifier()
+    phrasings = [
+        # Runtime smoke checker, verbatim from the production report.
+        "Critical error: Failed to import the required module 'string_utils'. "
+        "Ensure it is present in the PYTHONPATH.",
+        # Wrapper raised by this run's generated main.py.
+        "ImportError: Failed to import module 'string_utils'.",
+        # The other wrapper shape generated code uses.
+        "ImportError: Failed to import 'is_palindrome' from 'string_utils'.",
+        # The interpreter's own phrasing (test-collection failures).
+        "ModuleNotFoundError: No module named 'string_utils'",
+    ]
+    for text in phrasings:
+        diagnosis = classifier.classify(_evidence(text))
+        assert diagnosis.failure_class == FailureClass.DEPENDENCY_MISSING, text
+        assert diagnosis.failing_file == "string_utils.py", text
+
+
+async def test_create_route_accepts_classifier_named_module(
+    fs_tool: FilesystemTool, monkeypatch: pytest.MonkeyPatch
+):
+    """End to end at unit level: the runtime phrasing classifies to a
+    diagnosis whose failing_file alone drives the create route (the error
+    text contains no 'No module named')."""
+    from app.recovery.classifier import FailureClassifier
+
+    task_id = "rel028runtime"
+    fs_tool.wm.create_workspace(task_id)
+    fake = _FakeAIClient(_GOOD_MODULE)
+    monkeypatch.setattr(
+        "app.integrations.ai_universe_client.get_ai_universe_client", lambda: fake
+    )
+    engine = _recovery_engine(fs_tool, _GOAL)
+    diagnosis = FailureClassifier().classify(
+        _evidence(
+            "Critical error: Failed to import the required module 'string_utils'. "
+            "Ensure it is present in the PYTHONPATH."
+        )
+    )
+    patch = await engine._create_missing_module_patch(task_id, diagnosis)
+    assert patch is not None
+    assert patch.patch_type == "create"
+    assert patch.target_file == "string_utils.py"
 
 
 def test_orchestrator_rescue_sweep_repairs_materialized_file(
