@@ -3599,14 +3599,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Done. VERIFIED 2026-11-14: PR #155 merged, Fleet CD deployed, Server 1 at the merge commit, and every threat-intel endpoint probed live with its source or SIMULATED/no-source label in the payload."
   - id: TASK-REL-018
     title: "Futuris forecasts run on synthetic data and silent statsforecast fallbacks, presented as real"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-rel-018-futuris-provenance
-    pr: null
+    pr: 166
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:03:00+05:30"
-    updated_at: "2026-11-14T19:03:00+05:30"
+    updated_at: "2026-11-14T20:00:00+05:30"
     files:
       - "Futuris/futuris/connectors/provenance.py (new)"
       - "Futuris/futuris/models/adapters.py"
@@ -3630,10 +3630,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Default ingestion on ALL serving paths is the configured telemetry source via the connector factory; in this deployment no real telemetry source is configured as FUTURIS_TELEMETRY_SOURCE (Nexus unconfigured; VyralX is a peer data source, not the configured telemetry source), so synthetic remains the input and responses say SYNTHETIC plainly, FRIDAY chat reply included."
       - "A statsforecast failure surfaces as explicit degradation: adapters raise StatsForecastUnavailableError instead of mock flat-lines; the FRIDAY delegation answers BLOCKED with calibration error statsforecast_unavailable; engine API paths answer 503; the scheduler logs and skips per subscription."
       - "Live proof after deploy: delegation payload provenance matches the configured input; forced backend failure in the test environment returns the honest BLOCKED payload; the [REDACTED_SECRET] artifact is reproduced-and-fixed or reported with search evidence."
-    evidence: []
-    blockers:
-      - "statsforecast (declared dependency) is missing from the production fleet venv; after this fix Futuris will honestly report BLOCKED on forecast requests until the dependency is installed into the venv (ops follow-up for the coordinator -- install footprint/RAM on the 956MB host must be assessed deliberately, not bundled into this PR)."
-    next_action: "Implementing on branch claude/task-rel-018-futuris-provenance (claimed on issue #35, comment 6877888885); PR, CI, merge, Fleet CD, live verification, then board VERIFIED update."
+    evidence:
+      - "Fix merged as PR #166 (merge 85a52b97); CI green on the PR head (friday-universe-ci test, monorepo-validation incl. the new Futuris tests, owner-workflows contracts incl. the new scrubber tests, secret scan, fleet layout, roster validation). Branch content pushed via the Git Data API with the remote tree sha verified byte-identical to the locally tested tree (8bb64627)."
+      - "Local tests: new suites green in BOTH environments -- without statsforecast (10 passed + API BLOCKED test passed, happy paths skip) and with statsforecast 2.1.1 installed in a sandbox venv (14 passed, 1 conditional skip): provenance derivation (synthetic/real/fallback/mixed/fail-closed), adapter/pipeline/engine propagation of StatsForecastUnavailableError, engine + pipeline forecasts carrying derived provenance, delegation BLOCKED payload, delegation happy-path payload provenance. Neighbouring suites green: Futuris models/scheduler/pipeline/provenance-gate; FRIDAY futuris-dispatch + delegation-ledger (42); Futuris API integration suite passes except test_webhook_subscription_and_deletion, which fails identically on pristine HEAD (pre-existing 422, unrelated)."
+      - "DEPLOYED: Server 1 checkout at 85a52b97; Futuris.service restarted 2026-11-14 19:51:33 IST; journal 19:52:34 shows the new import-time warning 'statsforecast_unavailable: model adapters will refuse to fit ... ModuleNotFoundError: No module named statsforecast'."
+      - "PRODUCTION-VERIFIED live 2026-11-14 ~19:58 IST (server-side probes, key never printed): POST /v1/friday/forecast -> 201 with status BLOCKED, model_used 'none', calibration_metrics.error 'statsforecast_unavailable' (detail: ModuleNotFoundError), evidence_class 'synthetic', evidence_source 'telemetry:synthetic via SyntheticTelemetryConnector [SYNTHETIC data]' -- payload provenance matches the actual configured input, and no number is dressed as a forecast. POST /forecast -> 503 'statsforecast_unavailable: no forecast was computed ... refusing to substitute a mock forecast'."
+      - "Artifact fix verified against the DEPLOYED FRIDAY code on Server 1: redact_secrets leaves the Futuris sign-off sentence byte-identical (prose no longer eaten) while a real 'Authorization: Basic ...' header line is still redacted."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-14. FOLLOW-UP (coordinator/owner ops decision, not part of this task): install the declared statsforecast dependency into the production fleet venv so Futuris can compute real model forecasts again (still on synthetic-labelled data until a real telemetry source is configured). Sandbox measurement: ~83MB disk delta, ~200MB import RSS -- assess against the 956MB Server 1 deliberately, or land it with the ARM server. Until then production forecast requests answer the honest BLOCKED status above."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
