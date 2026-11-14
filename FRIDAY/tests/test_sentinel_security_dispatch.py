@@ -270,6 +270,23 @@ class TestAskSentinelFindings:
         assert result["success"] is False
         assert "connection refused" in result["reply"]
 
+    def test_timeout_error_carries_its_reason(self) -> None:
+        # TASK-REL-007: live failure 2026-11-14 — the chat reply was
+        # "Error connecting to Sentinel: " with an EMPTY suffix, because
+        # httpx timeout exceptions have an empty str(). An honest error
+        # must name the reason (the exception type at minimum).
+        import asyncio
+
+        import httpx
+
+        from friday.ecosystem.fleet_client import FleetClient
+
+        client = _FleetClientForFindings(error=httpx.ReadTimeout(""))
+        result = asyncio.run(FleetClient.ask_sentinel_findings(client))
+        assert result["success"] is False
+        assert "ReadTimeout" in result["reply"]
+        assert not result["reply"].rstrip().endswith("Sentinel:")
+
 
 # ---------------------------------------------------------------------------
 # fast-path behavior (real agent, patched tool client)

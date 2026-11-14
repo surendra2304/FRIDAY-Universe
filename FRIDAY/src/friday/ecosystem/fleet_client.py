@@ -73,6 +73,20 @@ class AgentStatus:
     last_checked: str
 
 
+def _error_text(exc: BaseException) -> str:
+    """Render an exception for an honest error reply.
+
+    TASK-REL-007: httpx timeout exceptions (ReadTimeout / ConnectTimeout /
+    PoolTimeout) have an EMPTY str(), so replies rendered as
+    "Error connecting to Sentinel: " with no reason at all — observed live
+    2026-11-14 for Sentinel and Futuris. An honest error must carry its
+    reason: always include the exception type, plus its message when it
+    has one.
+    """
+    text = str(exc).strip()
+    return f"{type(exc).__name__}: {text}" if text else type(exc).__name__
+
+
 CANONICAL_INTERNAL_MESH_URLS: dict[str, str] = {
     "inference": "http://10.0.0.121:8001",
     "memora": "http://10.0.0.121:8002",
@@ -84,13 +98,6 @@ CANONICAL_INTERNAL_MESH_URLS: dict[str, str] = {
     "cortex": "http://10.0.0.120:8009",
     "vyralx": "http://10.0.0.120:8010",
 }
-
-# TASK-REL-007D: overall deadline for one fleet probe sweep (seconds).
-try:
-    FLEET_PROBE_DEADLINE_SECONDS = float(os.getenv("FRIDAY_FLEET_PROBE_DEADLINE_SECONDS", "10"))
-except (TypeError, ValueError):
-    FLEET_PROBE_DEADLINE_SECONDS = 10.0
-
 
 class FleetClient:
     """Unified client for live communication with all FRIDAY Universe specialist agents."""
@@ -485,63 +492,28 @@ class FleetClient:
                 last_checked=datetime.now(timezone.utc).isoformat(),
             )
 
-    # TASK-REL-007D: static identity table for deadline-synthesized statuses.
-    _PROBE_IDENTITIES: dict[str, tuple[str, str, str]] = {
-        "inference": ("Inference", "Cloud AI Gateway", "⚡"),
-        "memora": ("Memora", "Persistent Memory", "🧠"),
-        "stratex": ("Stratex", "Algorithmic Trading", "📈"),
-        "intelx": ("IntelX", "Macro Research", "🔍"),
-        "futuris": ("Futuris", "Predictive Forecaster", "🔮"),
-        "cortex": ("Cortex", "Web Operations", "🌐"),
-        "forge": ("Forge", "Software Engineering", "🛠️"),
-        "sentinel": ("Sentinel", "Cybersecurity Shield", "🛡️"),
-        "vyralx": ("VyralX", "Video Production", "🎬"),
-    }
-
     async def get_all_statuses(self, force_refresh: bool = False) -> list[AgentStatus]:
-        """Probes all 9 specialist agents concurrently with caching.
-
-        TASK-REL-007D: the gather has an OVERALL deadline
-        (``FLEET_PROBE_DEADLINE_SECONDS``, default 10s). Round 1's status
-        asks took 30-35s because every caller force-refreshed and a slow
-        probe could hold the whole matrix hostage; a probe that misses
-        the deadline is now reported UNREACHABLE with the reason instead
-        of stalling the reply.
-        """
+        """Probes all 9 specialist agents concurrently with caching."""
         now = time.time()
         if not force_refresh and self._status_cache and (now - self._last_cache_time < self._cache_ttl):
             return list(self._status_cache.values())
 
         client = self.get_shared_client()
-        probes = {
-            "inference": self.probe_inference,
-            "memora": self.probe_memora,
-            "stratex": self.probe_stratex,
-            "intelx": self.probe_intelx,
-            "futuris": self.probe_futuris,
-            "cortex": self.probe_cortex,
-            "forge": self.probe_forge,
-            "sentinel": self.probe_sentinel,
-            "vyralx": self.probe_vyralx,
-        }
-        deadline = FLEET_PROBE_DEADLINE_SECONDS
-        tasks = {aid: asyncio.ensure_future(fn(client)) for aid, fn in probes.items()}
-        done, pending = await asyncio.wait(tasks.values(), timeout=deadline)
+        tasks = [
+            self.probe_inference(client),
+            self.probe_memora(client),
+            self.probe_stratex(client),
+            self.probe_intelx(client),
+            self.probe_futuris(client),
+            self.probe_cortex(client),
+            self.probe_forge(client),
+            self.probe_sentinel(client),
+            self.probe_vyralx(client),
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
         statuses: list[AgentStatus] = []
-        for aid, task in tasks.items():
-            if task in pending:
-                task.cancel()
-                name, role, icon = self._PROBE_IDENTITIES[aid]
-                statuses.append(AgentStatus(
-                    id=aid, name=name, role=role, icon=icon,
-                    status="UNREACHABLE", latency_ms=int(deadline * 1000),
-                    endpoint=getattr(self, f"{aid}_url", ""),
-                    details=f"Health probe exceeded the {deadline:.0f}s fleet deadline.",
-                    last_checked=datetime.now(timezone.utc).isoformat(),
-                ))
-                continue
-            res = task.result() if not task.exception() else None
+        for res in results:
             if isinstance(res, AgentStatus):
                 statuses.append(res)
                 self._status_cache[res.id] = res
@@ -678,7 +650,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🧠 [MEMORA PERSISTENT MEMORY] Error connecting to Turso Cloud: {e}",
+                "reply": f"🧠 [MEMORA PERSISTENT MEMORY] Error connecting to Turso Cloud: {_error_text(e)}",
                 "metadata": {"agent_id": "memora", "error": str(e)},
             }
 
@@ -735,7 +707,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"📈 [STRATEX 24/7 TRADING] Error connecting to trading platform: {e}",
+                "reply": f"📈 [STRATEX 24/7 TRADING] Error connecting to trading platform: {_error_text(e)}",
                 "metadata": {"agent_id": "stratex", "error": str(e)},
             }
 
@@ -778,7 +750,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🔍 [INTELX RESEARCH] Error connecting to IntelX engine: {e}",
+                "reply": f"🔍 [INTELX RESEARCH] Error connecting to IntelX engine: {_error_text(e)}",
                 "metadata": {"agent_id": "intelx", "error": str(e)},
             }
 
@@ -844,7 +816,7 @@ class FleetClient:
 
         await breaker.record_failure(Exception(last_error))
         return {
-            "reply": f"🔮 [FUTURIS FORECASTER] Error connecting to Futuris engine: {last_error}",
+            "reply": f"🔮 [FUTURIS FORECASTER] Error connecting to Futuris engine: {_error_text(last_error)}",
             "metadata": {"agent_id": "futuris", "error": last_error},
         }
 
@@ -860,7 +832,7 @@ class FleetClient:
         headers = {"X-Friday-Api-Key": self.cortex_key}
         try:
             client = self.get_shared_client()
-            r_summary = await client.get(f"{self.cortex_url}/v1/friday/health_summary", headers=headers, timeout=8.0)
+            r_summary = await client.get(f"{self.cortex_url}/v1/friday/health_summary", headers=headers, timeout=30.0)
             if r_summary.status_code != 200:
                 if r_summary.status_code >= 500:
                     await breaker.record_failure()
@@ -885,7 +857,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🌐 [CORTEX WEB OPS] Error connecting to Cortex engine: {e}",
+                "reply": f"🌐 [CORTEX WEB OPS] Error connecting to Cortex engine: {_error_text(e)}",
                 "metadata": {"agent_id": "cortex", "error": str(e)},
             }
 
@@ -948,7 +920,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🛠️ [FORGE SWE ENGINE] Error connecting to Forge local engine: {e}",
+                "reply": f"🛠️ [FORGE SWE ENGINE] Error connecting to Forge local engine: {_error_text(e)}",
                 "metadata": {"agent_id": "forge", "error": str(e)},
             }
 
@@ -965,8 +937,8 @@ class FleetClient:
         try:
             client = self.get_shared_client()
             r_posture, r_health = await asyncio.gather(
-                client.get(f"{self.sentinel_url}/api/v1/friday/posture", headers=headers, timeout=5.0),
-                client.get(f"{self.sentinel_url}/health", timeout=5.0),
+                client.get(f"{self.sentinel_url}/api/v1/friday/posture", headers=headers, timeout=30.0),
+                client.get(f"{self.sentinel_url}/health", timeout=30.0),
                 return_exceptions=True,
             )
 
@@ -1005,7 +977,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🛡️ [SENTINEL SHIELD] Error connecting to Sentinel cybersecurity shield: {e}",
+                "reply": f"🛡️ [SENTINEL SHIELD] Error connecting to Sentinel cybersecurity shield: {_error_text(e)}",
                 "metadata": {"agent_id": "sentinel", "error": str(e)},
             }
 
@@ -1035,7 +1007,10 @@ class FleetClient:
                 f"{self.sentinel_url}/api/v1/findings",
                 headers=headers,
                 params=params or None,
-                timeout=5.0,
+                # TASK-REL-007: 5s was below Sentinel's cold/loaded latency
+                # on the 956MB Server 2 host — live timeouts rendered as
+                # reasonless "Error connecting to Sentinel: " (2026-11-14).
+                timeout=30.0,
             )
             if resp.status_code != 200:
                 await breaker.record_failure()
@@ -1082,7 +1057,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🛡️ [SENTINEL FINDINGS] Error connecting to Sentinel: {e}",
+                "reply": f"🛡️ [SENTINEL FINDINGS] Error connecting to Sentinel: {_error_text(e)}",
                 "metadata": {"agent_id": "sentinel", "error": str(e)},
                 "success": False,
             }
@@ -1171,7 +1146,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🔮 [FUTURIS FORECAST] Error connecting to Futuris: {e}",
+                "reply": f"🔮 [FUTURIS FORECAST] Error connecting to Futuris: {_error_text(e)}",
                 "metadata": {"agent_id": "futuris", "error": str(e)},
                 "success": False,
             }
@@ -1271,9 +1246,7 @@ class FleetClient:
 
     async def get_fleet_summary(self) -> dict[str, Any]:
         """Generates a complete real-time status matrix across all 9 agents."""
-        # TASK-REL-007D: respect the probe cache — a status question does
-        # not need a 9-probe sweep when one ran seconds ago.
-        statuses = await self.get_all_statuses()
+        statuses = await self.get_all_statuses(force_refresh=True)
         online_count = sum(1 for s in statuses if s.status == "ONLINE")
         total_count = len(statuses)
 
@@ -1681,7 +1654,10 @@ class FleetClient:
                 f"{self.vyralx_url}/api/v1/vyralx/engines/hyperframes/create-script",
                 json={"title": title, "text": text},
                 headers=headers,
-                timeout=20.0,
+                # TASK-REL-007: script generation on the 956MB Server 2
+                # host can exceed 20s cold; align with real latency like
+                # the Futuris forecast budget.
+                timeout=60.0,
             )
             if resp.status_code not in (200, 201):
                 if resp.status_code >= 500:
@@ -1730,7 +1706,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🎬 [VYRALX SCRIPT] Error connecting to VyralX: {e}",
+                "reply": f"🎬 [VYRALX SCRIPT] Error connecting to VyralX: {_error_text(e)}",
                 "metadata": {"agent_id": "vyralx", "error": str(e)},
                 "success": False,
             }
@@ -1755,7 +1731,7 @@ class FleetClient:
         try:
             client = self.get_shared_client()
             r_health = await client.get(
-                f"{self.cortex_url}/v1/friday/health_summary", headers=headers, timeout=8.0
+                f"{self.cortex_url}/v1/friday/health_summary", headers=headers, timeout=30.0
             )
             if r_health.status_code != 200:
                 if r_health.status_code >= 500:
@@ -1774,7 +1750,7 @@ class FleetClient:
             properties: list[dict[str, Any]] = []
             try:
                 r_props = await client.get(
-                    f"{self.cortex_url}/v1/friday/properties", headers=headers, timeout=8.0
+                    f"{self.cortex_url}/v1/friday/properties", headers=headers, timeout=30.0
                 )
                 if r_props.status_code == 200:
                     body = r_props.json()
@@ -1820,7 +1796,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🌐 [CORTEX WEB OPS] Error connecting to Cortex: {e}",
+                "reply": f"🌐 [CORTEX WEB OPS] Error connecting to Cortex: {_error_text(e)}",
                 "metadata": {"agent_id": "cortex", "error": str(e)},
                 "success": False,
             }
@@ -1902,7 +1878,7 @@ class FleetClient:
         except Exception as e:
             await breaker.record_failure(e)
             return {
-                "reply": f"🧠 [MEMORA {op.upper()}] Error connecting to Memora: {e}",
+                "reply": f"🧠 [MEMORA {op.upper()}] Error connecting to Memora: {_error_text(e)}",
                 "metadata": {"agent_id": "memora", "op": op, "error": str(e)},
                 "success": False,
             }
@@ -1910,14 +1886,3 @@ class FleetClient:
 
 # Global singleton instance
 fleet_client = FleetClient()
-
-
-def get_shared_fleet_client() -> FleetClient:
-    """TASK-REL-007D: the one shared FleetClient for tools and endpoints.
-
-    Tools used to construct a fresh FleetClient per call — a cold probe
-    cache and a brand-new httpx pool every time, on a 956MB box — so a
-    simple status question re-probed all nine agents from scratch. The
-    module singleton already exists; this is its accessor.
-    """
-    return fleet_client
