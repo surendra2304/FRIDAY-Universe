@@ -3185,14 +3185,14 @@ tasks:
     next_action: "Open PR from branch claude/voice-latency-fixes; merge when CI green (owner blanket authorization 2026-11-14)."
   - id: TASK-REL-007
     title: "Track B specialist endpoints: Stratex 401 auth alignment, Futuris 500 Oracle-JSON crash, IntelX research returns no brief"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: "claude/track-b-specialist-endpoints"
-    pr: null
+    pr: 117
     contributors: []
     priority: P0
     created_at: "2026-11-14T14:30:00+05:30"
-    updated_at: "2026-11-14T14:30:00+05:30"
+    updated_at: "2026-11-14T17:45:00+05:30"
     files:
       - "Stratex/security_hardening.py"
       - "Stratex/tests/test_stratex_friday_key_alignment.py"
@@ -3212,9 +3212,14 @@ tasks:
       - "Futuris: Oracle JSON compat shim wired before engine creation (mirrors IntelX oracle_dialect_compat); contract test proves generic JSON bind/result processors work on the Oracle dialect; live forecast returns a real forecast/201 with no 500."
       - "IntelX: WebSearchConnector merges Google News article candidates with Tavily results (dedupe, Tavily first, capped) so headline queries reach article prose; merge contract tests green; live research returns headlines with sources."
       - "Small FRIDAY-side routing fixes OUTSIDE api/server.py (Track A coordination noted): 'give me a short forecast' reaches the Futuris fast path; a headlines+sources request reaches the IntelX research fast path."
-    evidence: []
+    evidence:
+      - "Stratex 401 root cause: Stratex/security_hardening.py get_configured_api_keys() never loaded STRATEX_API_KEY (the very var FRIDAY sends); PR #117 (merged 833965d) registers it with FRIDAY scopes [READ, FRIDAY] only. Live: 'How is my portfolio doing?' -> real snapshot (Balance 10,792.80, 7 active strategies) in 3.4s; direct POST /v1/task/execute AUTHORIZED."
+      - "Futuris 500 root causes (3 layers): missing Oracle JSON dialect shim (PR #117, new Futuris/futuris/oracle_dialect_compat.py); pyarrow used by evidence snapshots but declared nowhere (PR #124 + pyarrow 25.0.1 installed into Server 1 fleet venv, Futuris restarted); FRIDAY->Futuris budget 20s vs ~40s warm/~114s cold latency (PR #124: 120s client / 150s tool). Live: POST /v1/friday/forecast HTTP 201 warm 40.3s; chat forecast verified 2026-11-14 (point estimate 1926.24, status active, 15.3s)."
+      - "Research 502 root causes (4 layers): prompt never routed to IntelX (PR #117 routing fixes outside api/server.py); Tavily-only candidates were unusable listing pages (PR #117: Google News RSS merge); Tavily general topic + 250KB fetch cap rejected real articles (PR #131: topic='news' for headline intent + 1MB budget — DEPLOYED only after the Server-1 reconciliation, PR #133); synthesis truncated by one Inference route (finish_reason length @125 chars; route variance proven by direct re-tests) discarded the whole brief (PR #136: one retry on incomplete_completion). Live: chat research brief with 3 headlines, source URL and verbatim quotes (97.9s); single-source this run (ts2.tech roundup)."
+      - "Cross-track (Server 2): FRIDAY->Sentinel/Cortex/VyralX failures were cold/loaded latency vs 5-8s budgets during the 15:16-15:20 IST restart storm — mesh hop <60ms, auth verified (Sentinel findings 200 in 0.38s; Cortex 200 with key, 401 without); warm chat replays all succeed. Empty error suffix root cause: httpx timeout exceptions have empty str(); PR #132 added _error_text to all 12 FleetClient peer-error replies + timeout alignment (Sentinel/Cortex 30s, VyralX 60s). PR #134 hotfix restored REL-007D fleet_client content that #132's stale base had reverted (get_shared_fleet_client) — self-reported, diff-verified 58 lines."
+      - "Server-1 deploy divergence found and reconciled: PR #128's merge (5bbf34a) had been dropped from main's ancestry by a history rewrite, so Fleet CD refused every Server-1 deploy ('Checkout diverges from deployment revision'; runs for #130/#131 failed). PR #133 restored the REL-009 change set verbatim onto main (blob hashes match #128 post-images; recovered test fails on main's schema, passes after) and the checkout was reset to main; deploys unblocked."
     blockers: []
-    next_action: "Implement on claude/track-b-specialist-endpoints, PR via bridge, merge on green CI under owner autonomous authority, live-verify all three through the public chat API."
+    next_action: "Done — all three defects plus the cross-track extension are production-verified. Residuals for the board: Google News RSS links always 403 to the hardened fetcher; FRIDAY 120s chat ceiling vs Futuris cold latency (~114s); FleetClient.dispatch_task still uses a 20s default for most agents."
   - id: TASK-REL-008
     title: "Migrate Gemini Live voice model off gemini-3.1-flash-live-preview before Google retires it (2026-11-17)"
     status: IN_REVIEW
