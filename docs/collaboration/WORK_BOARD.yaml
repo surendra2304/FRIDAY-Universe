@@ -3792,6 +3792,33 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Reproduce the saturation live with a fresh fact at production recall limits, then implement the bounded graph term in SearchService.hybrid_search with regression tests, ship via PR, deploy, and re-run the probe for before/after positions."
 
+  - id: TASK-VOI-003
+    title: "FRIDAY voice: stop the mid-call session collapse (session pinning, context-carrying watchdog rebuild, bounded brain budget)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-voi-003-voice-session-pinning
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T21:05:00+05:30"
+    updated_at: "2026-11-14T21:05:00+05:30"
+    files:
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/src/friday/voice/brain_bridge.py"
+      - "FRIDAY/tests/test_voice_session_pinning.py"
+    defect: "Renumbered from the dispatch brief's TASK-VOI-002 (that id already exists on this board: the MERGED 2026-11-12 infra morning-brief task, owner zai). Evidence (machine E2E voice test, production, 2026-11-14 20:34-20:37 IST; FRIDAY-Voice journal PID 2508866): the test call (job AJ_9Cp5iEbG8bCw, room friday-991fa0a2) ran a healthy Gemini Live session (gemini-realtime:gemini-3.8-live) that answered the London-time question correctly, then WEDGED on its first function-calling turn: 'remember teal' was transcribed 20:35:29, AFC generation fired 20:35:37, FRIDAY's journal shows exactly one POST /api/chat 200 in the window, but no assistant item for the turn was ever logged and the session never returned to listening; the remaining four utterances were transcribed with 17-48 s lag and produced no /api/chat posts and no audible answers (~14 s intelligible speech in a 185 s call). The brief's abandonment theory is corrected by the journal: the 20:35:41 'no probe-valid gemini key found; falling back to the groq pipeline' line belongs to a SECOND job (AJ_MQdbdfp3EdJo, room friday-efc331e0 — the round-3 browser task's console voice click), whose own gather probes timed out and whose _try_gemini_realtime then ran a SECOND serial per-key probe round inline (escalating 3 s timeouts across 5 keys = up to ~95 s worst case) before falling back; that job greeted an empty room and logged 'job executor is unresponsive' (event-loop stalls 703-814 ms). Shared root causes: (1) no verified-key cache — every job re-probes serially, so concurrent jobs multiply Gemini probe traffic exactly when the free tier is strained (503s + timeouts all evening); (2) brain-bridge tool calls budget 230 s, so a slow brain call wedges a voice turn indefinitely; (3) host CPU saturation at the moment of the wedge (FRIDAY logged 'CPU is running hot at 93.2%. Top offender: kswapd0' at 20:36:03) with the worker's event loop stalling; (4) no recovery path exists at all once a session wedges — the session object is simply abandoned by the conversation."
+    acceptance:
+      - "Provider/key binding is pinned per session: after the session starts, no code path in the worker re-resolves a provider or re-probes a key; key verification is a process-level cache (TTL 240 s, single-flight, up to 3 candidates probed concurrently under one 10 s deadline, 30 s negative cache) shared by all jobs in the worker."
+      - "A wedged turn (owner utterance final, session stuck in thinking/speaking with no completed assistant reply for 75 s) while the owner is still in the room triggers at most one session rebuild on the PINNED provider/key, carrying the conversation transcript into the new session's instructions with an explicit do-not-greet-again instruction; rebuilt sessions never run the greeting."
+      - "Voice brain calls are bounded (FRIDAY_VOICE_BRAIN_TIMEOUT_S, default 60 s): on timeout the bridge returns 'unconfirmed' and the model speaks it, so a function-calling turn always completes audibly instead of wedging."
+      - "Cold-start costs move to worker boot: a background warm-up imports the heavy chains, seeds the verified-key cache, and warms the EdgeTTS path; per-job memory recall budget drops 12 s to 7 s (cold imports are warm by then). One standalone-TTS instance is built per job (was two)."
+      - "Production acceptance = the same machine E2E method as the evidence run (server-side LiveKit participant on Server 1, edge-tts utterances, frame-recorded replies): greeting, London time, remember teal, recall teal, forget teal, joke, one Stratex delegation. PASS requires every utterance answered audibly and intelligibly, memory write/recall/forget verifiably executed (FRIDAY journal /api/chat posts), the delegation dispatched (journal evidence), no mid-call re-greeting, no session abandonment. Timings and journal lines quoted per utterance."
+    evidence:
+      - "Claim + forensic correction: issue #35 comment 6879920837 (2026-11-14)."
+      - "Evidence run artifacts: ~/workspace/voice-test/logs/evidence_index.md (crew b364726b); journal pulls ~/workspace/voi002/journal_w1.txt, journal_w2.txt, friday_window.txt."
+    blockers: []
+    next_action: "Implement in worktree, PR, CI, merge, deploy, run the production acceptance call, then flip VERIFIED with the run's evidence (or report failures plainly)."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
