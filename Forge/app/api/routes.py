@@ -26,7 +26,7 @@ from app.api.schemas import (
     TimelineEvent,
     TimelineResponse,
 )
-from app.api.tasks import execute_task_cancellation
+from app.api.tasks import _schedule_execution, execute_task_cancellation
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
 from app.core.orchestrator import OrchestratorCore
@@ -161,6 +161,15 @@ async def create_task(
         local_path=request.local_path,
     )
 
+    # TASK-REL-019: this twin of POST /tasks (mounted bare and under
+    # /api/v1, where it shadows app.api.tasks' handler by registration
+    # order) never scheduled execution — tasks accepted here parked in
+    # READY until the stale-task reconciler cancelled them a day later.
+    # Match the canonical handler: schedule the supervised runner, except
+    # for plan_only submissions, whose plan intake already delivered.
+    if request.mode != TaskMode.PLAN_ONLY:
+        _schedule_execution(created_task.id)
+
     return TaskResponse(
         id=created_task.id,
         goal=created_task.goal,
@@ -241,6 +250,10 @@ async def generate_code_endpoint(
         mode=request.mode,
         max_budget=request.max_budget,
     )
+    # TASK-REL-019: same write-only trap as routes.py's POST /tasks — the
+    # task was left in READY forever. Schedule it (unless plan_only).
+    if request.mode != TaskMode.PLAN_ONLY:
+        _schedule_execution(created_task.id)
     return GenerateCodeResponse(
         task_id=created_task.id,
         goal=created_task.goal,

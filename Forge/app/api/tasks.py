@@ -35,7 +35,7 @@ from app.core.progress_tracker import ProgressTracker
 from app.core.workspace import canonical_path, workspace_manager
 from app.execution.dependency_manager import DependencyManager
 from app.memory.db import db_manager
-from app.memory.models import TaskState
+from app.memory.models import TaskMode, TaskState
 from app.memory.state_store import StateStore
 from app.memory.task_lifecycle import InvalidStateTransitionError, TaskStateMachine
 
@@ -234,6 +234,13 @@ async def reconcile_stale_tasks(ttl_hours: float | None = None) -> int:
         for task in tasks:
             if task.id in _running_tasks or task.created_at is None:
                 continue
+            # TASK-REL-019: a plan_only task resting in READY is a delivered
+            # plan, not a zombie — it is *supposed* to have no runner. The
+            # reconciler must never expire it to CANCELLED; that would
+            # falsify a completed planning record.
+            task_mode = str(getattr(getattr(task, "mode", None), "value", getattr(task, "mode", "")) or "")
+            if task_mode == TaskMode.PLAN_ONLY.value:
+                continue
             if _as_utc(task.created_at) >= cutoff:
                 continue
             try:
@@ -303,11 +310,18 @@ async def create_task(
     # every task submitted over HTTP sat in READY forever -- the API was a
     # write-only task board, not an autonomous engine. The execution loop now
     # runs as a supervised background task and the endpoint returns immediately.
-    _schedule_execution(task.id, task.metadata.get("webhook_url"))
+    # TASK-REL-019 exception: a plan_only submission is a request for the
+    # plan itself — intake already produced it, and scheduling the runner
+    # would execute work the caller explicitly did not ask for. (verify_only
+    # still schedules: the runner's verify-only path runs just the battery.)
+    plan_only = request.mode == TaskMode.PLAN_ONLY
+    if not plan_only:
+        _schedule_execution(task.id, task.metadata.get("webhook_url"))
 
-    # Optional webhook dispatch
+    # Optional webhook dispatch (a plan_only task never starts, so it must
+    # not emit a task_started event either)
     webhook_url = task.metadata.get("webhook_url")
-    if webhook_url:
+    if webhook_url and not plan_only:
         await webhook_dispatcher.dispatch_event(
             webhook_url=webhook_url,
             task_id=task.id,
