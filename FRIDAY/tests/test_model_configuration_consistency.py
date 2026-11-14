@@ -17,7 +17,7 @@ from friday.voice.gemini_live_session import GeminiLiveVoiceSession
 AUTHORITATIVE_MODELS = {
     "text_llm": "gemini-3.6-flash",
     "vision": "gemini-3.6-flash",
-    "voice_live": "gemini-3.1-flash-live-preview",
+    "voice_live": "gemini-3.8-live",
     "embeddings": "gemini-embedding-2",
 }
 

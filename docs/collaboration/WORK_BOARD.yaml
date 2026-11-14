@@ -3215,6 +3215,31 @@ tasks:
     evidence: []
     blockers: []
     next_action: "Implement on claude/track-b-specialist-endpoints, PR via bridge, merge on green CI under owner autonomous authority, live-verify all three through the public chat API."
+  - id: TASK-REL-008
+    title: "Migrate Gemini Live voice model off gemini-3.1-flash-live-preview before Google retires it (2026-11-17)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/gemini-live-model-migration-v2
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T14:31:00+05:30"
+    updated_at: "2026-11-14T14:55:00+05:30"
+    files:
+      - "FRIDAY/src/friday/core/config.py"
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/.env.example"
+      - "FRIDAY/tests/test_voice_live_features.py"
+      - "FRIDAY/tests/test_model_configuration_consistency.py"
+    defect: "The deployed LiveKit voice worker resolves its Gemini Live model via FRIDAY_VOICE_LIVE_MODEL env -> Settings.voice_live_model -> hardcoded worker fallback; the Settings default and the worker fallback were both gemini-3.1-flash-live-preview, which Google retires on 2026-11-17. After that date the Gemini voice path dies in any environment without the env pin, even with a healthy credential-pool key. Replacement: gemini-3.8-live (stable since 2026-09-15; the installed livekit-plugins-google already lists it as a Live API model, and the configured voice name 'Aoede' remains in the plugin's Voice catalogue). Server 1's FRIDAY .env already pins FRIDAY_VOICE_LIVE_MODEL=gemini-3.8-live (verified 2026-11-14 via bridge, model value only), so this change aligns the code defaults with the server pin. Originally claimed as TASK-REL-007 on PR #115; renumbered to TASK-REL-008 because TASK-REL-007 was claimed in parallel by the Track B specialist-endpoints task (PR #117), and shipped via replacement PR on a rebased branch (main had advanced past #115's base)."
+    acceptance:
+      - "Settings.voice_live_model default and the livekit_worker hardcoded fallback are gemini-3.8-live; the FRIDAY_VOICE_LIVE_MODEL env override still wins."
+      - "FRIDAY/.env.example documents the new default (the every-Settings-field-documented test stays green)."
+      - "Voice regression suite (the voice-regressions CI file set) green locally and in CI."
+      - "Server 1 FRIDAY .env checked for a FRIDAY_VOICE_LIVE_MODEL pin; if pinned to the retired model, the value is updated and FRIDAY-Voice.service restarted with re-registration confirmed. (Checked 2026-11-14: already pins gemini-3.8-live; service restarted 14:28 IST and re-registered — no server change needed.)"
+    evidence: []
+    blockers: []
+    next_action: "Replacement PR via bridge Git Data API (supersedes #115); merge on green CI under owner autonomous authority; confirm Fleet CD deploy + worker state."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
