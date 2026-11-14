@@ -210,9 +210,11 @@ class _FakeHTTPClient:
         self.response = response
         self.error = error
         self.posts: list[tuple[str, dict[str, Any]]] = []
+        self.timeouts: list[Any] = []
 
     async def post(self, url: str, json: dict[str, Any] | None = None, **kwargs: Any) -> _FakeResponse:
         self.posts.append((url, json or {}))
+        self.timeouts.append(kwargs.get("timeout"))
         if self.error:
             raise self.error
         assert self.response is not None
@@ -291,6 +293,20 @@ class TestRequestFuturisForecast:
         result = asyncio.run(FleetClient.request_futuris_forecast(client, target="x"))
         assert result["success"] is False
         assert "connection refused" in result["reply"]
+
+    def test_forecast_post_timeout_covers_real_pipeline_latency(self) -> None:
+        # TASK-REL-007: the POST timeout was 20s while Futuris' measured live
+        # latency is ~40s warm / ~114s cold on the fleet host — every chat
+        # forecast timed out as "Error connecting to Futuris". The budget
+        # must cover a real pipeline run.
+        import asyncio
+
+        from friday.ecosystem.fleet_client import FleetClient
+
+        client = _FleetClientForForecasts(response=_FakeResponse(201, _REAL_FORECAST))
+        asyncio.run(FleetClient.request_futuris_forecast(client, target="x", horizon="24h"))
+        assert client._http.timeouts, "the forecast POST must pass an explicit timeout"
+        assert client._http.timeouts[0] >= 60.0
 
 
 # ---------------------------------------------------------------------------

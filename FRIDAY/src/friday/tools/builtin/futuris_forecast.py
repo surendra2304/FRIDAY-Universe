@@ -103,7 +103,10 @@ class FuturisForecastTool(BaseTool):
         "hours', 'what does futuris predict for btc', 'predict fleet load'."
     )
     safety_level = SafetyLevel.SAFE
-    timeout = 45.0
+    # TASK-REL-007: must exceed FleetClient's forecast POST budget (120s) —
+    # Futuris needs ~40s warm / ~114s cold on the fleet host for a real
+    # pipeline run; a 45s tool budget killed every registry-path forecast.
+    timeout = 150.0
     parameters = {
         "type": "object",
         "properties": {
