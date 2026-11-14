@@ -458,3 +458,15 @@ Optional grounded draft synthesis now collects bounded public prose from existin
 - wf015-grounded-nonfast-candidate.json: an advertised explicit non-auto routing hint avoided that known fast-lane branch, but still failed strict completion gate (ValueError). Exact response metadata was not captured, so DO NOT invent its final cause or claim the output budget fixed the complete workflow. Unrelated control remains correctly DEGRADED on every candidate.
 
 No incomplete/invalid output was accepted or deployed. All real probes were public-only disposable processes; runtime tracked files unchanged. Current grounded integration is DRAFT pending precise Inference completion failure diagnosis, a real source-supported answer, exact-head CI and protected rollout. The original PR77 tiny typed passage-selection candidate succeeded, but that is not evidence this larger draft works. Do not merge/deploy this optional synthesis merely because its offline tests pass. TASK-WF-015 remains IN_PROGRESS; no whole-completion Telegram. Owner microphone/video/OAuth and sustained net exchange-reconciled profit remain distinct gates; actual ZAI2 unrealized snapshot was acknowledged/reviewed, not accepted as realized profit.
+
+## Handoff — 2026-11-15 — TASK-FUT-002 (Muse, Wave-3 Futuris crew) → lead coordinator
+
+**State:** IMPLEMENTED + TESTED, in PR #235 (branch `claude/task-fut-002-futuris-hardening`, head built on current main via bridge git-data API; all 9 code blobs sha-verified byte-identical to the tested local tree). NOT merged, NOT deployed, NOT production-verified.
+
+**Exact next actions**
+1. Review PR #235; merge on green CI (CI installs statsforecast — the sandbox suites that fail locally for its absence are green there; local failure sets were verified byte-identical to clean main).
+2. Deploy via Fleet CD; fingerprint-verify the 7 changed Futuris source files on Server 1 against the merged blobs.
+3. Production re-probes: `GET /trends?limit=2` → 200 with `evidence_class`/`evidence_source` per item (was 500); `POST /simulate` with a stored base forecast → 200 with provenance and `perturbed_probability: null` (was 500); `GET /v1/friday/calibration` (FRIDAY key) → unmeasured state until real pairs resolve; one scheduler cycle → exactly 8 skip warnings and zero `candidate_model_fit_failed` lines.
+4. Flip TASK-FUT-002 to VERIFIED via a follow-up board PR carrying that evidence (board hazard rules: fresh main, count + neighbours checked — this PR's board commit was built on the current board, 141 → 142 tasks, REL-038/REL-030 neighbours read back intact).
+
+**Residuals handed over:** (a) extra routers mounted under `/api/v1/futuris` (ensemble selector, explainability, drift detector, counterfactual, quantum, prediction-market, skill planner) still carry fixed/arbitrary confidence values and no provenance — retire-or-label decision for a follow-up task; (b) real forecast quality waits for ARM + statsforecast (owner decision; do not re-raise); (c) 3 Futuris storage test files fail collection on clean main too (stale imports from `futuris.storage.db`) — pre-existing, untouched here.

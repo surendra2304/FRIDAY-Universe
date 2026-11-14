@@ -4270,6 +4270,46 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Ship the redesign PR; on green CI merge, verify the Fleet CD deploy by hash comparison and live probes, then flip this entry to VERIFIED with the probe evidence."
 
+  - id: TASK-FUT-002
+    title: "Futuris honesty hardening under the statsforecast-unavailable constraint (Wave 3): fabricated drivers/probabilities/calibration removed, provenance carried end-to-end, /trends + /simulate live-500s repaired, scheduler skip de-spammed"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-fut-002-futuris-hardening
+    pr: 235
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T02:46:00+05:30"
+    updated_at: "2026-11-15T03:35:00+05:30"
+    files:
+      - "Futuris/futuris/core/pipeline.py"
+      - "Futuris/futuris/models/selection.py"
+      - "Futuris/futuris/api/routers/friday.py"
+      - "Futuris/futuris/api/routers/market.py"
+      - "Futuris/futuris/api/routers/scenarios.py"
+      - "Futuris/futuris/api/app.py"
+      - "Futuris/futuris/scenarios/engine.py"
+      - "Futuris/tests/test_fut002_hardening.py"
+      - "Futuris/tests/test_friday_delegation.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/HANDOFFS.md"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6884328122"
+    defect: "Audit of every Futuris path that can run while statsforecast is absent (owner decision: not installed until ARM; REL-018 honest-unavailable must hold). Found: (1) pipeline CalibrationDecisionStage invented a diurnal_traffic_cycle driver at fixed 0.85 strength when the analyzer found none, hardcoded the assumption 'traffic regime stable', and substituted 0.5 for a missing exceedance probability plus a Brier score derived from it. (2) Model selection attempted all five statsforecast candidate fits per run - five failure logs plus a fallback warning per subscription per scheduler cycle - before surfacing the unavailable error. (3) FRIDAY calibration endpoint computed ECE from invented probabilities (fixed ladder, or 0.2 + i*0.12), fabricated per-target ECE at x1.1/x1.2/x1.3, brier = ECE*2, fixed 0.90 coverage, permanent trend 'improving'. (4) FRIDAY forecast response substituted 0.5 probability and claimed a hardcoded '2h (lag-2 peak)' lead time for every leading driver; scenario probability was invented (0.85 above a delta threshold else base-or-0.5); the delegate scenario summary never interpolated its placeholders. (5) Market router: confidence from a fixed 0.84 base / 0.65 floor; filler driver intelx:market_liquidity_baseline appended exactly when no IntelX research existed; persisted driver strengths fixed 0.85; regime transition_probability = vol_prob*0.6 clamped to [0.15, 0.45]. (6) Quick surfaces /trends and /simulate called the nonexistent ForecastRepository.list_recent (LIVE 500 AttributeError on both, probed 2026-11-15), /trends also read the nonexistent Forecast.created_at, /simulate read ScenarioResult attributes that do not exist and passed *_multiplier overrides the dependency graph silently ignores; both dropped provenance. (7) ScenarioResult and the Monte Carlo fan-chart response carried no provenance labels."
+    acceptance:
+      - "Every Futuris output on the audited paths either computes from its stated inputs (derivation visible in code and, where a client sees a number, in the payload) or returns the honest unavailable/degraded/unmeasured state - no filler drivers, no substituted probabilities, no fixed confidence constants."
+      - "REL-018 intact: with statsforecast absent, model paths still refuse (BLOCKED / 503 statsforecast_unavailable); nothing in this task installs statsforecast or substitutes a mock."
+      - "Provenance (evidence_class / evidence_source, plus input_telemetry_verified on quick surfaces) present on: pipeline forecasts, FRIDAY forecast + scenario + forecast-list responses, market responses (already carried), /forecast, /simulate, /trends including cached payloads, ScenarioResult, and the fan-chart response (labelled SYNTHETIC, seed-42 simulation)."
+      - "Scheduler: forecast_refresh_job keeps logging one skip warning per subscription and completing every cycle when statsforecast is unavailable (journal evidence over a 24h window), and model selection refuses once up front instead of five futile fits per run."
+      - "/v1/events polling health: zero ORA-00904 occurrences in the current Futuris journal (REL-015 holds)."
+      - "New regression tests fail on clean main and pass with the fix; neighbouring suites' failure sets identical to clean main."
+    evidence:
+      - "LIVE JOURNALS (Server 1 via bridge run_shell, 24h window ending 2026-11-15 ~02:55 IST): Futuris.service active; ORA-00904 count = 0; forecast_refresh_job_started = 4; forecast_refresh_skipped_statsforecast_unavailable = 32 (4 cycles x 8 subscriptions, one warning each, cycle completes - no wedge); each skip preceded by 5 candidate_model_fit_failed warnings + 1 all_candidate_models_failed_using_fallback (the spam item (2) removes at the selection layer). Futuris /health 200 and Memora /health 200 in the same window."
+      - "LIVE SURFACES (Server 1 localhost:8004, pre-fix code): GET /trends -> 500 AttributeError; POST /simulate -> 500 AttributeError; GET /v1/events -> 403 without a viewer key (auth boundary as designed; the endpoint's error health is the journal evidence above)."
+      - "TESTS: Futuris/tests/test_fut002_hardening.py - 12 tests. On clean main 460703c6: 11 FAILED / 1 passed (the pass pins the scheduler's already-correct skip behaviour). With the fix: 12/12 PASS. Existing test_friday_delegation.py calibration assertions updated to the honest unmeasured state (they previously asserted the fabricated per-target ECE + trend)."
+      - "REGRESSION RING (local sandbox venv; statsforecast deliberately absent, mirroring production): targeted batch (test_calibration_sweep, test_drivers_and_decisions, test_prompt7_futuris, test_trading_bot_forecasting, test_trading_bot_no_fallback, test_intelx_and_enhancements, integrations/test_memora_forecast_publisher, api/test_api_integration, test_universe_predictions, test_universe_refresh_pacing) failure set byte-identical between clean main and the fixed branch (15 pre-existing statsforecast-dependent failures). Full Futuris suite on the branch: 926 passed; remaining failures/errors are the same pre-existing families (statsforecast-dependent suites, 3 storage test files with pre-existing collection ImportErrors against futuris.storage.db, live-fire httpx env errors). CI installs statsforecast and is the operative gate for those suites."
+      - "FIX SHAPE (PR #235): pipeline carries the model probability verbatim or omits it and reports no driver/assumption it did not measure; selection raises StatsForecastUnavailableError before any fit when the backend is unavailable; FRIDAY calibration rewritten over list_resolved_with_forecasts pairs (ECE/Brier/coverage/per-target/half-split trend, unmeasured state when no pairs); market confidence = 1 - ECE over resolved market forecasts or the declared 0.0 uncalibrated sentinel with confidence_status + confidence_derivation in the payload, transition_probability null + not_measured; /trends + /simulate repaired onto list_filtered + real ScenarioResult fields with *_multiplier override translation and deterministic linear propagation; ScenarioResult inherits base provenance; fan-chart labels itself SYNTHETIC."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #235 on green CI, deploy via Fleet CD, fingerprint-verify the 7 source files on Server 1, then production re-probes: GET /trends and POST /simulate return 200 with evidence_class/evidence_source (expect synthetic), FRIDAY calibration returns the unmeasured state until real pairs resolve, and one scheduler cycle logs exactly one skip warning per subscription with zero candidate_model_fit_failed lines. Flip this entry to VERIFIED via a follow-up board PR with that evidence. Residuals for future tasks (not this one): the extra routers mounted under /api/v1/futuris in app.py (ensemble_model_selector, forecast_explainability_engine, prediction_drift_detector, counterfactual_forecaster, quantum_forecast_engine, prediction_market_engine, skill_acquisition_planner) still carry fixed/arbitrary confidence values and no provenance labels - retire-or-label decision, same class as REL-020/REL-030; real forecast quality still waits for ARM + statsforecast (owner decision, do not re-raise)."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
