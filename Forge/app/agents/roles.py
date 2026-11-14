@@ -1284,7 +1284,9 @@ class TesterRole(BaseAgent):
 
         # If no tests exist or only dummy stub exists, synthesize tests via Inference
         synthesis_note = ""
+        synthesis_attempted = False
         if (not test_files and not embedded_targets) or existing_test_is_stub:
+            synthesis_attempted = True
             test_synthesized = False
             try:
                 from app.integrations.ai_universe_client import get_ai_universe_client
@@ -1365,7 +1367,7 @@ class TesterRole(BaseAgent):
             )
             if not test_files and not embedded_targets:
                 note = synthesis_note or "No test synthesis path produced a test file."
-                logger.warning(f"[Task {task_id}] Verification gate will fail: {note}")
+                logger.warning(f"[Task {task_id}] Verification gate cannot run: {note}")
 
         # Execute test runner. `pytest` was a bare PATH lookup and left
         # .pytest_cache plus rewritten __pycache__ files inside the project the
@@ -1384,18 +1386,55 @@ class TesterRole(BaseAgent):
             role=self.role_name,
         )
 
-        executed = test_framework != "unittest" or unittest_executed(cmd_res.stdout, cmd_res.stderr)
+        if test_framework == "unittest":
+            executed = unittest_executed(cmd_res.stdout, cmd_res.stderr)
+        else:
+            # pytest exit code 5 means "no tests collected": files may
+            # exist yet nothing ran, and nothing running is not a verdict.
+            # Exit 0, conversely, is only reachable with collected,
+            # passing tests, so it counts as executed on its own.
+            executed = cmd_res.exit_code == 0 or (
+                bool(test_files or embedded_files) and cmd_res.exit_code != 5
+            )
         exit_code = cmd_res.exit_code if executed else (cmd_res.exit_code or 1)
         stderr = cmd_res.stderr if executed else cmd_res.stderr + "\nNo unittest tests were executed."
         if exit_code != 0 and synthesis_note:
-            # The gate failure must name its true cause (TASK-REL-023).
+            # The gate outcome must name its true cause (TASK-REL-023).
             stderr = f"{synthesis_note}\n{stderr}"
+        status = "success" if exit_code == 0 else "failed"
+        failure_kind: str | None = None
+        retryable = False
+        if exit_code != 0 and not executed and synthesis_attempted:
+            # TASK-REL-026: the workspace had no usable tests, Forge tried
+            # to generate them (Inference ladder, then the role model),
+            # and still nothing ran — so the gate never judged the code.
+            # Failing the build here brands good code with an
+            # infrastructure outcome (TASK-REL-023: Inference returned no
+            # tests under provider strain and the build FAILED). Report a
+            # distinct, resumable outcome instead — the orchestrator parks
+            # the task in BLOCKED and a resume re-runs this gate. The
+            # TASK-REL-019 invariant is untouched: no tests, no pass; the
+            # build is neither passed nor failed, it is not yet verified.
+            # (Zero executed tests from a PRE-EXISTING suite stay a failed
+            # verdict — that suite is the deliverable's own, pinned by
+            # test_zero_unittest_exit_zero_is_not_passing_evidence.)
+            status = "blocked"
+            failure_kind = (
+                "test_generation_unavailable" if synthesis_note else "no_tests_executed"
+            )
+            retryable = True
+            logger.warning(
+                f"[Task {task_id}] Verification gate blocked ({failure_kind}); "
+                "no tests executed, so no verdict on the code."
+            )
         return {
-            "status": "success" if exit_code == 0 else "failed",
+            "status": status,
             "exit_code": exit_code,
             "stdout": cmd_res.stdout,
             "stderr": stderr,
             "agent": self.role_name,
+            "failure_kind": failure_kind,
+            "retryable": retryable,
         }
 
 

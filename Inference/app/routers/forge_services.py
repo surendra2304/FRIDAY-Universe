@@ -3,7 +3,7 @@
 import json
 
 from fastapi import APIRouter, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.services.architecture_planning import (
     ArchitecturePlanRequest,
@@ -62,8 +62,21 @@ async def debug_endpoint(req: DebugRequest):
 
 @forge_router.post("/generate-tests", response_model=TestGenerationResponse, status_code=status.HTTP_200_OK)
 async def generate_tests_endpoint(req: TestGenerationRequest):
-    """Generates automated test suites (pytest/jest/playwright) covering happy paths and edge cases."""
-    return await test_generation_service.generate_tests(req)
+    """Generates automated test suites (pytest/jest/playwright) covering happy paths and edge cases.
+
+    TASK-REL-026: a no-tests outcome (generation_status degraded or
+    invalid_output, empty test_code) is NOT a success and no longer
+    dresses as one. It returns the same body with HTTP 503 — a retryable
+    signal Forge can act on (defer the verification gate) instead of
+    parsing a 200 for emptiness.
+    """
+    result = await test_generation_service.generate_tests(req)
+    if result.generation_status != "generated":
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=result.model_dump(),
+        )
+    return result
 
 
 @forge_router.post("/stream-code")

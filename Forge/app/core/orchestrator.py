@@ -419,6 +419,8 @@ class OrchestratorCore:
 
         has_failed = False
         first_error = ""
+        has_blocked = False
+        blocked_reason = ""
 
         for nid, success, res, err, role in wave_results:
             node = dag.graph.nodes[nid]
@@ -435,7 +437,20 @@ class OrchestratorCore:
                 and res.get("status") == "failed"
                 and node.metadata.get("node_type") == "verification_gate"
             )
-            if success and not gate_failed:
+            # TASK-REL-026: a gate that could not RUN at all (status
+            # "blocked" — e.g. TesterRole could not obtain any tests
+            # because Inference test generation was unavailable under
+            # provider strain) is neither a pass nor a failure verdict on
+            # the code. It is handled after the wave: the node is reset
+            # to PENDING so a resume re-runs it, and the task parks in
+            # BLOCKED instead of FAILED.
+            gate_blocked = (
+                success
+                and isinstance(res, dict)
+                and res.get("status") == "blocked"
+                and node.metadata.get("node_type") == "verification_gate"
+            )
+            if success and not gate_failed and not gate_blocked:
                 dag.mark_completed(nid, result=res)
                 executed_nodes.append(nid)
                 if res and isinstance(res, dict):
@@ -461,6 +476,42 @@ class OrchestratorCore:
                         state_data={"completed_node": nid, "stage": node.metadata.get("stage")},
                         description=f"Checkpoint at gate: {node.title}",
                     )
+            elif gate_blocked:
+                # Record the evidence exactly like a gate failure (the
+                # Debugger / a human reviewer reads it from the context
+                # manager), but mark the node NEITHER completed NOR failed:
+                # it never ran its checks, so it has earned no verdict.
+                # The executor already marked it RUNNING; reset it to
+                # PENDING before the graph is saved, or a resumed run
+                # would never schedule it again.
+                dag.mark_pending(nid)
+                self.context_manager.record_step_result(task_id, nid, role, res)
+                if "stdout" in res or "exit_code" in res:
+                    self.context_manager.record_terminal_output(
+                        task_id=task_id,
+                        command=res.get("command", f"{role} execution"),
+                        exit_code=res.get("exit_code", 0),
+                        stdout=res.get("stdout", ""),
+                        stderr=res.get("stderr", ""),
+                        role=role,
+                    )
+                has_blocked = True
+                blocked_reason = blocked_reason or (
+                    f"Verification gate '{node.title}' could not run "
+                    f"({res.get('failure_kind') or 'blocked'}): "
+                    f"{(res.get('stderr') or '').strip()[:500]}"
+                )
+                await self.store.record_event(
+                    task_id=task_id,
+                    event_type="node.blocked",
+                    payload={
+                        "node_id": nid,
+                        "title": node.title,
+                        "agent": role,
+                        "failure_kind": res.get("failure_kind"),
+                        "retryable": bool(res.get("retryable")),
+                    },
+                )
             else:
                 if gate_failed:
                     err = (
@@ -527,6 +578,30 @@ class OrchestratorCore:
                 error_message=first_error,
             )
             production_monitor.record_task_event("failed")
+            await _finalize_tracker(task_id, success=False)
+            return task, executed_nodes
+
+        if has_blocked:
+            # TASK-REL-026: park, don't fail. BLOCKED is resumable
+            # (BLOCKED -> READY/RUNNING in the lifecycle matrix), so when
+            # the provider strain clears, a resume re-runs the gate node
+            # and the build is judged by real tests. A real failure in
+            # the same wave outranks this (handled above).
+            task = await self.lifecycle.transition(
+                task_id=task_id,
+                to_state=TaskState.BLOCKED,
+                error_message=blocked_reason,
+            )
+            await self.store.record_event(
+                task_id=task_id,
+                event_type="task.blocked",
+                payload={
+                    "reason": blocked_reason,
+                    "verification_gate": True,
+                    "retryable": True,
+                },
+            )
+            production_monitor.record_task_event("blocked")
             await _finalize_tracker(task_id, success=False)
             return task, executed_nodes
 
