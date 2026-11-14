@@ -7,6 +7,7 @@ Defines the explicit task states and validated state transitions:
 Completely provider-independent and zero-trust safe.
 """
 
+import contextvars
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -175,3 +176,30 @@ class ReasoningStateMachine:
             "failure_metadata": self._failure_metadata,
         }
         return recursive_sanitize(raw_dict)
+
+
+# TASK-REL-025: the live FridayAgent is a process-wide singleton whose
+# turns run concurrently on executor threads (chat via run_in_executor,
+# voice via asyncio.to_thread, plus the scheduler/CLI). A turn's state
+# machine is therefore bound to the execution context running the turn —
+# never to shared instance state. With a plain shared attribute, every
+# in-flight turn drove whichever machine was assigned most recently, and
+# the first turn to reach a terminal state made every other turn's next
+# transition raise InvalidStateTransitionError (Server 1 journal,
+# 2026-11-14: COMPLETED->UNDERSTANDING / ->PLANNING / ->VERIFYING; the
+# PLANNING one surfaced as an /api/chat HTTP 500). A turn abandoned by
+# the chat timeout kept corrupting later turns the same way. ContextVar
+# binding gives each turn — live or zombie — exactly its own machine.
+_turn_state_machine: contextvars.ContextVar[ReasoningStateMachine | None] = (
+    contextvars.ContextVar("friday_turn_state_machine", default=None)
+)
+
+
+def bind_turn_state_machine(machine: ReasoningStateMachine) -> None:
+    """Bind ``machine`` as the state machine of the current execution context."""
+    _turn_state_machine.set(machine)
+
+
+def current_turn_state_machine() -> ReasoningStateMachine | None:
+    """Return the machine bound to this execution context, or None outside a turn."""
+    return _turn_state_machine.get()

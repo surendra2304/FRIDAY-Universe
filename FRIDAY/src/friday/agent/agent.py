@@ -22,7 +22,12 @@ from friday.agent.checkpoint import TaskCheckpoint, TaskCheckpointStore
 from friday.agent.cognitive import CognitiveIntelligenceEngine, CognitivePhase
 
 from friday.agent.prompts import build_system_message
-from friday.agent.state import ReasoningStateMachine, TaskState
+from friday.agent.state import (
+    ReasoningStateMachine,
+    TaskState,
+    bind_turn_state_machine,
+    current_turn_state_machine,
+)
 from friday.planning.types import TaskGraph
 from friday.agents.base_agent import AgentTask, BaseAgent
 from friday.agents.registry import AgentRegistry
@@ -238,7 +243,10 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         self._processed_tool_ids: set = set()
         self._processed_tool_signatures: set[str] = set()
         self._tool_replay_lock = threading.Lock()
-        self.state_machine: ReasoningStateMachine = ReasoningStateMachine()
+        # TASK-REL-025: assigned through the state_machine property below,
+        # which binds the machine to the current execution context and
+        # records it as the diagnostic fallback for out-of-turn readers.
+        self.state_machine = ReasoningStateMachine()
         self._current_plan: TaskGraph | None = None
         self.task_context: ActiveTaskContext | None = None
         self.checkpoint_store: TaskCheckpointStore = TaskCheckpointStore()
@@ -1037,6 +1045,36 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
 
 
 
+
+    @property
+    def state_machine(self) -> ReasoningStateMachine:
+        """The reasoning state machine for the turn running in THIS context.
+
+        TASK-REL-025: this singleton serves chat, voice and scheduler
+        turns concurrently on executor threads, and ``process_message``
+        (re)binds a fresh machine at every turn start. The binding is
+        per execution context (ContextVar, see friday.agent.state), so a
+        turn only ever drives its own machine: one turn reaching a
+        terminal state can no longer make another in-flight turn's
+        transitions raise InvalidStateTransitionError, and a turn
+        abandoned by the chat timeout (whose executor thread keeps
+        running as a zombie) keeps driving only its own machine.
+        Reads outside a turn — status and diagnostics, e.g.
+        ``current_state`` — fall back to the most recently bound machine.
+        """
+        machine = current_turn_state_machine()
+        if machine is not None:
+            return machine
+        fallback = self.__dict__.get("_state_machine_fallback")
+        if fallback is None:
+            fallback = ReasoningStateMachine()
+            self.__dict__["_state_machine_fallback"] = fallback
+        return fallback
+
+    @state_machine.setter
+    def state_machine(self, machine: ReasoningStateMachine) -> None:
+        bind_turn_state_machine(machine)
+        self.__dict__["_state_machine_fallback"] = machine
 
     @property
     def current_state(self) -> TaskState:
