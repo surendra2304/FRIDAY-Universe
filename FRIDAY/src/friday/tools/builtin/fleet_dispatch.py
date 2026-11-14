@@ -99,15 +99,22 @@ def normalize_agent(raw: str) -> str | None:
     """Map free-form agent mentions onto the canonical fleet IDs."""
     name = (raw or "").lower().strip().removesuffix("agent").removesuffix("bot").strip()
     name = name.removeprefix("the ").strip()
-    if not name or name in {"friday", "you", "yourself"}:
+    if not name or name in {"friday", "you", "yourself", "me", "us", "him", "her", "them", "it", "myself"}:
         return None
     if name in FLEET_AGENTS:
         return name
     if name in _AGENT_ALIASES:
         return _AGENT_ALIASES[name]
-    # substring pass: "the IntelX agent", "FRIDAY's intelx", typos with spaces
+    # Substring pass: "the IntelX agent", "FRIDAY's intelx", typos with
+    # spaces. TASK-REL-006A: the reverse direction (name inside canonical)
+    # needs a length floor — bare "me" is a substring of "memora", so
+    # "tell me a joke" was dispatched to Memora as a task (live-verified
+    # 2026-11-14, ledger task_92035ba25301, HTTP 422). Pronouns and other
+    # short words must never resolve to an agent by containment.
     for canonical in FLEET_AGENTS:
-        if canonical in name or name in canonical:
+        if canonical in name:
+            return canonical
+        if len(name) >= 4 and name in canonical:
             return canonical
     for alias, canonical in _AGENT_ALIASES.items():
         if alias in name:

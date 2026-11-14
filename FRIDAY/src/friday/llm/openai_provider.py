@@ -146,6 +146,17 @@ class OpenAILLMProvider(BaseLLMProvider):
         tool_calls_raw = choice_msg.get("tool_calls")
         tool_calls: list[ToolCall] | None = None
 
+        if not tool_calls_raw and content:
+            # TASK-REL-006A: same markup recovery as the Groq provider —
+            # models that spell the call as <tool .../> text get it executed.
+            from friday.llm.tool_markup import extract_markup_tool_calls
+
+            markup_calls, remaining = extract_markup_tool_calls(content)
+            if markup_calls:
+                return Message(
+                    role=Role.ASSISTANT, content=remaining, tool_calls=markup_calls
+                )
+
         if tool_calls_raw:
             tool_calls = []
             for tc in tool_calls_raw:
