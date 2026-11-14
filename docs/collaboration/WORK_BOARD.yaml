@@ -3160,6 +3160,29 @@ tasks:
     evidence: []
     blockers: []
     next_action: "PR via bridge Git Data API; merge on green CI under owner autonomous authority; verify live through the public chat API."
+  - id: TASK-REL-006
+    title: "Voice latency/breakup fixes after the failed owner live test (TASK-VOI-001)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/voice-latency-fixes
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T14:05:00+05:30"
+    updated_at: "2026-11-14T14:05:00+05:30"
+    files:
+      - "FRIDAY/src/friday/voice/edge_tts_adapter.py"
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/tests/test_orpheus_terms_fallback.py"
+    defect: "Owner live voice test 2026-11-14 FAILED: breaking audio, high latency, commands execute nothing, no memory of the owner. Diagnosis: (1) EdgeTTS adapter buffered the full mp3 + full transcode before pushing any audio; (2) Groq-path max_endpointing_delay 4.0s of dead air per turn; (3) the loop-monitor suppression targeted a logger name livekit-agents 1.8.x never emits, so multi-KB stall reports kept formatting ON the audio loop (1,400ms block in the production journal during the test); (4) the orpheus probe made a live HTTP call on every job despite a 5-minute cache. 'Read my screen'/'open apps' are ABSENT actuators on the cloud topology (laptop-bridge/ADB not connected), not code bugs."
+    acceptance:
+      - "EdgeTTS pushes first PCM after the first decodable mp3 prefix, not after full download + transcode; failure contract (raise before emitter init when nothing decodable) unchanged."
+      - "Groq-path max_endpointing_delay 2.0s; orpheus probe honours its 5-minute cache; Gemini key probe budget 8s per key."
+      - "'event loop blocked' reports filtered at the real 'livekit.agents' logger; genuine framework errors still pass."
+      - "Voice regression suite green (test_orpheus_terms_fallback.py extended); capability gaps reported as gaps, not fixed by assertion."
+    evidence: []
+    blockers: []
+    next_action: "Open PR from branch claude/voice-latency-fixes; merge when CI green (owner blanket authorization 2026-11-14)."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
