@@ -467,7 +467,7 @@ def test_missing_env_vars_fall_back_to_safe_defaults(monkeypatch):
 
     s = Settings(_env_file=None)
     assert s.llm_provider == "gemini"  # field default (chain only in .env)
-    assert s.voice_live_model == "gemini-3.1-flash-live-preview"
+    assert s.voice_live_model == "gemini-3.8-live"
     assert s.voice_headphones_mode is False
     assert s.voice_enabled is False
     assert s.log_level == "INFO"
