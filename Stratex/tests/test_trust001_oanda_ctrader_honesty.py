@@ -17,6 +17,8 @@ No network: connection helpers are patched out.
 
 import pytest
 
+import config  # collection-time import (clean env): config validates the
+# environment at import, so tests must not first-import it mid-test.
 from exchanges.oanda_adapter import OandaExchangeAdapter
 
 
@@ -147,14 +149,31 @@ class TestCTraderFixFailClosed:
         with pytest.raises(PermissionError, match="ALLOW_LIVE_TRADING=true"):
             adapter._ensure_connection()
 
+    def test_live_endpoint_refused_with_env_optin_alone(self, monkeypatch):
+        """TASK-STR-SAFETY-001: ALLOW_LIVE_TRADING=true ALONE must NOT open
+        the live FIX gate — the code-level config.py invariant must also
+        be flipped by a human code edit."""
+        cls = self._patch_network(monkeypatch)
+        monkeypatch.setenv("CTRADER_FIX_HOST", "live.cfixapi.com")
+        monkeypatch.setenv("ALLOW_LIVE_TRADING", "true")
+        monkeypatch.setenv("CTRADER_FIX_SENDER_COMP_ID", "some-comp")
+        monkeypatch.setenv("CTRADER_FIX_ACCOUNT_ID", "some-acct")
+        monkeypatch.setenv("CTRADER_FIX_PASSWORD", "some-pass")
+        adapter = cls()
+        with pytest.raises(PermissionError, match="ALLOW_LIVE_TRADING=true"):
+            adapter._ensure_connection()
+
     def test_live_endpoint_allowed_with_explicit_optin(self, monkeypatch):
-        """With ALLOW_LIVE_TRADING=true the adapter may connect to live — but
-        credentials must still be explicit (network patched, no real dial)."""
+        """With BOTH gates open — ALLOW_LIVE_TRADING=true AND the code-level
+        LIVE_TRADING_ENABLED invariant in config.py flipped — the adapter
+        may connect to live; credentials must still be explicit (network
+        patched, no real dial)."""
         from exchanges.ctrader_fix_adapter import CTraderFixError
 
         cls = self._patch_network(monkeypatch)
         monkeypatch.setenv("CTRADER_FIX_HOST", "live.cfixapi.com")
         monkeypatch.setenv("ALLOW_LIVE_TRADING", "true")
+        monkeypatch.setattr(config, "LIVE_TRADING_ENABLED", True)
         monkeypatch.setenv("CTRADER_FIX_SENDER_COMP_ID", "some-comp")
         monkeypatch.setenv("CTRADER_FIX_ACCOUNT_ID", "some-acct")
         monkeypatch.setenv("CTRADER_FIX_PASSWORD", "some-pass")

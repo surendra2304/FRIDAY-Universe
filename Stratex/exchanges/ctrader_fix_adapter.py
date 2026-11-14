@@ -29,6 +29,28 @@ from exchanges.base_exchange import (
 logger = logging.getLogger(__name__)
 
 
+def _live_trading_authorized() -> bool:
+    """True only when BOTH live-trading gates are open (TASK-STR-SAFETY-001).
+
+    1. The env opt-in ALLOW_LIVE_TRADING=true, AND
+    2. the code-level PERMANENT SECURITY INVARIANT in config.py
+       (LIVE_TRADING_ENABLED) has been flipped by a human editing source.
+
+    Environment alone can NEVER authorize live trading: with the shipped
+    invariant (False) this always returns False. A failure to import
+    config fails closed. Mirrors the helper in binance_futures_adapter.py
+    and exchange_implementations.py.
+    """
+    if os.getenv("ALLOW_LIVE_TRADING", "").strip().lower() not in {"1", "true", "yes", "on"}:
+        return False
+    try:
+        import config as _stratex_config
+
+        return bool(getattr(_stratex_config, "LIVE_TRADING_ENABLED", False))
+    except Exception:
+        return False
+
+
 class CTraderFixError(RuntimeError):
     """Raised when cTrader FIX connection or execution fails."""
 
@@ -250,14 +272,16 @@ class CTraderFixAdapter(BaseExchange):
         if self._sock and self._is_logged_on:
             return
 
-        # TASK-TRUST-001: the LIVE FIX endpoint requires the owner's explicit
-        # opt-in, mirroring the fail-closed invariant on the other adapters.
-        if "live.cfixapi" in self.host and not os.getenv(
-            "ALLOW_LIVE_TRADING", ""
-        ).strip().lower() in {"1", "true", "yes", "on"}:
+        # TASK-TRUST-001 / TASK-STR-SAFETY-001: the LIVE FIX endpoint requires
+        # live authorization on BOTH gates, mirroring the other adapters —
+        # the env opt-in AND the code-level LIVE_TRADING_ENABLED invariant
+        # in config.py. Environment alone can never authorize it.
+        if "live.cfixapi" in self.host and not _live_trading_authorized():
             raise PermissionError(
                 "SECURITY CRITICAL: refusing to connect to the LIVE cTrader FIX "
-                f"endpoint ({self.host}) without explicit ALLOW_LIVE_TRADING=true."
+                f"endpoint ({self.host}) without explicit ALLOW_LIVE_TRADING=true "
+                "AND the code-level LIVE_TRADING_ENABLED invariant in config.py "
+                "flipped by a human code edit."
             )
 
         # Credentials are never defaulted: without them no logon is attempted.

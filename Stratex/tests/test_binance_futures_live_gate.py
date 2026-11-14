@@ -11,7 +11,9 @@ Contract now enforced:
 1. TRADING_MODE=LIVE / LIVE_TRADING_ENABLED=1 is permanently blocked
    (construction and every order/cancel path).
 2. A live-endpoint adapter (fapi.binance.com) cannot even be CONSTRUCTED
-   without explicit ALLOW_LIVE_TRADING=true — before any network activity.
+   without BOTH explicit ALLOW_LIVE_TRADING=true AND the code-level
+   LIVE_TRADING_ENABLED invariant in config.py (TASK-STR-SAFETY-001) —
+   environment alone never unlocks it — before any network activity.
 3. demo/testnet construction is unaffected.
 4. place_order / cancel_order / cancel_algo_order re-check the gate
    (defense in depth) so a post-construction live flip cannot trade.
@@ -21,6 +23,8 @@ No production exchange is contacted: network calls are patched out.
 
 import pytest
 
+import config  # imported at collection (clean env) — config validates the
+# environment at import time, so tests must not first-import it mid-test.
 from exchanges.binance_futures_adapter import BinanceFuturesAdapter
 
 _ENV_KEYS = (
@@ -80,12 +84,24 @@ def test_live_trading_enabled_flag_blocked(adapter_cls, monkeypatch):
         adapter_cls()
 
 
-def test_live_construction_allowed_only_with_explicit_optin(adapter_cls, monkeypatch):
-    """With the owner's explicit opt-in a live-endpoint adapter may exist
-    (construction only — orders still need the venue keys and the daemon's
-    own gates; the endpoint resolution is now auditable, never silent)."""
+def test_live_construction_refused_with_env_optin_alone(adapter_cls, monkeypatch):
+    """TASK-STR-SAFETY-001: ALLOW_LIVE_TRADING=true ALONE must NOT unlock
+    live construction. The environment can never authorize live trading by
+    itself — the code-level invariant in config.py must also be flipped."""
     monkeypatch.setenv("BINANCE_ENV", "live")
     monkeypatch.setenv("ALLOW_LIVE_TRADING", "true")
+    with pytest.raises(PermissionError, match="ALLOW_LIVE_TRADING=true"):
+        adapter_cls()
+
+
+def test_live_construction_allowed_only_with_both_gates(adapter_cls, monkeypatch):
+    """With BOTH gates open — the owner's env opt-in AND the code-level
+    LIVE_TRADING_ENABLED invariant in config.py flipped by a human code
+    edit — a live-endpoint adapter may exist (construction only; the
+    endpoint resolution is auditable, never silent)."""
+    monkeypatch.setenv("BINANCE_ENV", "live")
+    monkeypatch.setenv("ALLOW_LIVE_TRADING", "true")
+    monkeypatch.setattr(config, "LIVE_TRADING_ENABLED", True)
     adapter = adapter_cls()
     assert adapter.environment == "live"
     assert adapter.base_url == "https://fapi.binance.com"
