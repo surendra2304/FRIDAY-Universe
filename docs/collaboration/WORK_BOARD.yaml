@@ -3342,6 +3342,87 @@ tasks:
       - "Merged as PR #128 (5bbf34a) and production-verified on Server 1 — but a later main history rewrite dropped the merge from main's ancestry, leaving Server 1's checkout diverged (deploy guard: 'Checkout diverges from deployment revision'; Fleet CD failed for PRs #130/#131). Restored to main verbatim by the TASK-REL-007 reconciliation PR (2026-11-14); recovered test re-verified failing on main's schema (2 sentinel-enum failures) and passing after restoration."
     blockers: []
     next_action: "Done. Restored content is identical to PR #128; Server 1 checkout reconciled to main after this merge."
+  - id: TASK-REL-010
+    title: "Gemini pool exhaustion: cap cooldowns, Groq failover on pool exhaustion, offline timezone loss"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-010-pool-failover
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T17:45:00+05:30"
+    updated_at: "2026-11-14T17:45:00+05:30"
+    files:
+      - "FRIDAY/src/friday/auth/credential_pool.py"
+      - "FRIDAY/src/friday/llm/factory.py"
+      - "FRIDAY/src/friday/llm/fallback_chain_provider.py"
+      - "FRIDAY/src/friday/cognition/offline.py"
+      - "FRIDAY/tests/test_rel_010_pool_exhaustion.py"
+      - ".github/workflows/owner-workflows.yml"
+    defect: "Live test round 2 (2026-11-14 17:01-17:20 IST): chat died with CREDENTIAL_EXHAUSTED minutes after a 16:50 verification showed 5/5 keys HEALTHY. Forensics (journal + pool state + direct per-key Google probes): PRIMARY is genuinely at its free-tier daily cap (Google verbatim: quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit 20, value 20, retryDelay ~72200s), but FALLBACK 1-4 answer HTTP 200 on direct probe while the pool holds them benched until 2026-11-15 08:00 UTC. Cause chain: (1) one quota-classified 429 per key during a Google high-demand burst (a 503 model experiencing high demand opened the rotation) was enough to bench each key (max_failures=1), and report_failure honoured Google stated retry delay unboundedly (~20h to the daily reset); (2) with FRIDAY_LLM_PROVIDER=gemini the factory returns a bare GeminiLLMProvider - the FallbackChain exists only under provider=chain - so the owner designated text fallback (Groq) never engaged and every LLM-routed turn failed; (3) the offline no-model path (cognition/offline.py) runs tools whose schema declares no input property with empty arguments by design, so get_time_date lost the requested zone and answered IST for Tokyo/London/New York."
+    acceptance:
+      - "credential_pool: cooldowns capped at MAX_COOLDOWN_SECONDS=1800 for every failure category except AUTH_FAILED (report_failure, after honouring any Google-stated retry delay up to the cap); persisted cooldowns are clamped to the same ceiling on load, so a legacy state file cannot pin keys for ~20h across restarts."
+      - "factory (provider=gemini): when a Groq credential is configured, the Gemini provider is wrapped in ExhaustionFailoverProvider - CREDENTIAL_EXHAUSTED delegates the call to a Groq provider built by the existing groq branch; all other errors propagate unchanged; without a Groq credential the bare Gemini provider is returned as before."
+      - "offline path: when a tool declares a timezone property, _arguments_for extracts the zone the request names (explicit IANA token, else a curated place table, both ZoneInfo-validated) and passes it; no zone named, no argument."
+      - "New tests FRIDAY/tests/test_rel_010_pool_exhaustion.py (12) cover the cap, the auth exception, the persisted-state clamp, failover semantics, factory wiring (with and without Groq), and offline timezone extraction; wired into the Owner Workflow Contracts CI list."
+      - "Live acceptance after deploy: chat answers again on the recovered Gemini fallbacks, and with the pool state forced into the incident all-COOLDOWN shape, a plain chat question still returns a real answer via the Groq failover (journal-evidenced)."
+    evidence: []
+    blockers: []
+    next_action: "PR in flight; on merge + Fleet CD, run the live acceptance (natural recovery probe + forced-exhaustion failover probe), then mark VERIFIED."
+  - id: TASK-REL-011
+    title: "Forge round-2 defects: FRIDAY shared HTTP pool cross-loop failure + Forge delegate parking tasks in READY forever"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-rel-011-fleet-crossloop
+    pr: 139
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T18:15:00+05:30"
+    updated_at: "2026-11-14T18:45:00+05:30"
+    files:
+      - "FRIDAY/src/friday/ecosystem/fleet_client.py"
+      - "FRIDAY/src/friday/core/resilience.py"
+      - "FRIDAY/tests/test_fleet_client_crossloop.py"
+      - "Forge/app/api/delegate.py"
+      - "Forge/app/api/tasks.py"
+      - "Forge/app/main.py"
+      - "Forge/tests/unit/test_delegate_schedules_execution.py"
+    defect: "Live test round 2 (2026-11-14 17:07 IST): a Forge palindrome task failed in FRIDAY with RuntimeError: asyncio.locks.Event bound to a different event loop, while Forge journal proves it received and executed the task (task15014112026113728). Root cause 1: TASK-REL-007D made tools share ONE singleton FleetClient whose single httpx.AsyncClient pool binds to the first event loop that uses it - the server main loop (endpoint polling); tool wrappers dispatch from fresh asyncio.run() loops and die. Reproduced deterministically with repo code against a stub server (production error string matched). The shared circuit breakers carry the same hazard (one asyncio.Lock for both loop families). Root cause 2 (17:12 IST, the peer returned no receipt): Forge delegate accepted path returned SUCCESS at intake and NEVER scheduled execution - tasks parked in READY forever. Production census: 153 tasks = READY 141 / COMPLETED 10 / FAILED 2, zero RUNNING; most READY rows are FRIDAY reflex incident filings that expected execution + receipt. Nothing in Forge ever drains READY."
+    acceptance:
+      - "FleetClient caches one httpx.AsyncClient per event loop (closed loops pruned; aclose closes all); AsyncCircuitBreaker keeps one lock per running loop. New tests FRIDAY/tests/test_fleet_client_crossloop.py cover per-loop caching, second-loop dispatch, the live-main-loop + tool-loop production shape, and cross-loop breaker use; neighbouring fleet/mesh/lifecycle suites stay green."
+      - "Forge delegate accepted path schedules the supervised background execution (same runner as POST /tasks) and returns status RUNNING with result.state RUNNING and no receipt; receipts remain a completion-only artifact of the execute_now path."
+      - "New reconcile_stale_tasks (FORGE_STALE_TASK_TTL_HOURS, default 24h) runs at Forge startup and every 30 min: PENDING/READY tasks older than the TTL with no live runner transition to CANCELLED via the lifecycle machine (audit event written); records are never deleted; tasks with live runners and fresh tasks are untouched. Covered by Forge/tests/unit/test_delegate_schedules_execution.py."
+      - "Live re-verification after deploy: palindrome task via /api/chat returns a real Forge outcome (no RuntimeError); a delegate call without execute_now reaches a terminal state; Forge READY count drops as the Nov 12/13 backlog expires at startup."
+    evidence:
+      - "PR #139 (6594e71a) merged: per-event-loop FleetClient clients + per-loop AsyncCircuitBreaker locks, with cross-loop regression tests."
+      - "PR #140 (6ca043d7) merged: Forge delegate schedules execution and returns RUNNING honestly; reconcile_stale_tasks expires runner-less tasks older than 24h to CANCELLED (audit events written, records never deleted)."
+      - "PRODUCTION-VERIFIED live 2026-11-14: 71 stale tasks expired to CANCELLED at Forge startup (READY 141 to 72; the remainder are under 24h old and age out via the reconciler); end-to-end delegate probe returned SUCCESS in ~105s with a real Forge outcome and no cross-loop RuntimeError."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-14 after live re-verification."
+  - id: TASK-REL-012
+    title: "Console history restore truncates the transcript: 12 fetched exchanges render as only 6"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-012-history-restore
+    pr: 142
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T18:15:00+05:30"
+    updated_at: "2026-11-14T18:45:00+05:30"
+    files:
+      - "FRIDAY/ui/components/ChatPanel.tsx"
+      - "FRIDAY/ui/out/ (committed static export - rebuild pending)"
+    defect: "Live test round 2 (2026-11-14): after 23+ exchanges, a page reload restored LAST SESSION - 12 MESSAGES - only the last 6 exchanges; mid-session exchanges were missing. Server side is exonerated: FRIDAY conversation store held all 24 entries for the window (every round-2 exchange including error replies, persisted by the PR #125 persist-first flow) and the history API serves them. The loss is a units bug in ChatPanel: RESTORE_LIMIT (12) is the fetch limit in ENTRIES but was reused to slice the expanded MESSAGE list (restored.slice(-RESTORE_LIMIT)), so 12 fetched exchanges (up to 24 bubbles) were cut to the last 12 bubbles."
+    acceptance:
+      - "Restore caps the expanded bubble list at MAX_RENDERED (40), so all fetched exchanges render both sides; the divider count reflects rendered messages; comments state the entry/message units explicitly."
+      - "Verified against the real round-2 history payload: the restore transform yields all 12 exchanges / 24 messages instead of 12 messages; production build ships the fixed logic (fleet CD build + bundle inspection); final in-browser reload check by the coordinator."
+    evidence:
+      - "Source fix merged as PR #142 (ea09674b): restore caps the expanded bubble list at MAX_RENDERED (40) in FRIDAY/ui/components/ChatPanel.tsx."
+      - "NOT YET SERVED: the committed static export FRIDAY/ui/out/ is still the pre-fix build - history chunk _next/static/chunks/0a_w4kr32xamz.js (613,703 bytes) contains the restore-path slice(-12) (1 occurrence; the 3 slice(-40) occurrences are the legitimate append caps), so the live console still truncates restores. The FRIDAY/ui source tree on main is blob-identical to the fixed branch tree, so a rebuild is the only remaining step."
+      - "Export rebuild attempted 2026-11-14 and blocked by an environment fault (see blockers); no built chunk was hand-edited."
+    blockers:
+      - "Finisher sandbox cannot write file content: writes fail EPERM (Operation not permitted) across /tmp, home and ~/workspace (creation succeeds, content writes refused; verified read-back probes 15/15 EPERM). npm ci fails verbatim with npm error syscall write / code EPERM in the source worktree, and with TAR_ENTRY_ERROR EPERM on every package file in a clean directory (node_modules materialised as 313 zero-byte entries). Neither Oracle server has node. Rebuild FRIDAY/ui (npm ci && npm run build) in any write-capable environment with node, commit the regenerated out/ via PR, merge, then grep the SERVED history chunk (must show the restore slice at MAX_RENDERED 40 and no restore-path slice(-12)) to flip this task VERIFIED."
+    next_action: "Rebuild the FRIDAY/ui static export in a write-capable environment, ship via PR, verify the served chunk, then mark VERIFIED."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
