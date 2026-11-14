@@ -17,14 +17,18 @@ def test_graph_only_popularity_cannot_bury_direct_owner_observation(test_db, mon
                              confidence=1.0, importance=0.95, lifecycle_state=LifecycleState.ACTIVE)
     test_db.add_all([match, unrelated]);test_db.commit()
     monkeypatch.setattr(vector_adapter, "search_similarity", lambda **_: [])
-    # Real symptom: graph-only score0.42 outranks lexical0.14. The external
-    # graph boundary is a declared fixture, relational scope/scoring are real.
+    # Real symptom (pre-TASK-REL-024): the graph-only record's raw boost made
+    # its score 0.42 against the direct match's lexical 0.14, and tiering
+    # alone kept the order. TASK-REL-024 bounds the graph term to an
+    # RRF-commensurate secondary signal, so the direct match now also wins on
+    # score. The external graph boundary is a declared fixture, relational
+    # scope/scoring are real.
     monkeypatch.setattr(GraphService, "get_graph_neighbors", lambda *a, **k: {unrelated.id: 0.14})
     kwargs = dict(db=test_db, query_text="actual successful tasks invented completion percentages",
                   actor_name="friday", min_score=0.0)
     results = SearchService.hybrid_search(**kwargs, limit=2)
     assert [r.record.id for r in results] == [match.id, unrelated.id]
-    assert results[1].final_score > results[0].final_score
+    assert results[1].final_score < results[0].final_score
     assert results[0].keyword_score == 1.0
     assert results[1].keyword_score == results[1].semantic_score == 0
     assert SearchService.hybrid_search(**kwargs, limit=1)[0].record.id == match.id
