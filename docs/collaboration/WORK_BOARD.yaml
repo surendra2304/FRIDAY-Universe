@@ -3183,6 +3183,38 @@ tasks:
     evidence: []
     blockers: []
     next_action: "Open PR from branch claude/voice-latency-fixes; merge when CI green (owner blanket authorization 2026-11-14)."
+  - id: TASK-REL-007
+    title: "Track B specialist endpoints: Stratex 401 auth alignment, Futuris 500 Oracle-JSON crash, IntelX research returns no brief"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: "claude/track-b-specialist-endpoints"
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T14:30:00+05:30"
+    updated_at: "2026-11-14T14:30:00+05:30"
+    files:
+      - "Stratex/security_hardening.py"
+      - "Stratex/tests/test_stratex_friday_key_alignment.py"
+      - "Futuris/futuris/oracle_dialect_compat.py"
+      - "Futuris/futuris/storage/db.py"
+      - "tests/test_futuris_oracle_json_compat.py"
+      - "IntelX/intelx/connectors/search.py"
+      - "IntelX/tests/test_search_merge_trackb.py"
+      - "FRIDAY/src/friday/agent/mixins/fast_paths.py"
+      - "FRIDAY/src/friday/routing/capability_router.py"
+      - "FRIDAY/src/friday/tools/builtin/futuris_forecast.py"
+      - "FRIDAY/tests/test_futuris_forecast_dispatch.py"
+      - "FRIDAY/tests/test_intelx_research_dispatch.py"
+    defect: "Console test round 1 (2026-11-14 14:06-14:11 IST) production-verified: (1) Stratex portfolio query -> HTTP 401 INVALID_API_KEY: FRIDAY is provisioned with the fleet-standard STRATEX_API_KEY value (verified SAME-VALUE as Stratex/.env STRATEX_API_KEY via names/match-only host check) but Stratex/security_hardening.get_configured_api_keys() never accepts STRATEX_API_KEY, so SCOPE_FRIDAY task dispatch always fails. (2) Futuris forecast -> HTTP 500: Futuris.service log 14:10:10 IST shows AttributeError 'OracleDialectAsync_oracledb' object has no attribute '_json_deserializer' at ForecastRepository.get_by_idempotency_key (routers/friday.py delegate_forecast) — Futuris is the only Oracle agent without the JSON dialect compat shim IntelX/Memora/Cortex carry; its models use generic JSON() throughout. Futuris auth itself is aligned (FRIDAY key == FUTURIS_API_KEY master, accepted as admin fallback). (3) Research -> bare 502 / no brief: IntelX research_live runs (Tavily 200, fetches run) but returns DEGRADED sourced_findings_unverified; WebSearchConnector returns Tavily results alone when a Tavily key is configured, and Tavily's candidates for headline queries are section/listing pages that fail the retrieved-document passage gate, so no source documents reach synthesis (no Inference call in Inference.service log; IntelX INFERENCE_URL=http://127.0.0.1:8001 and INFERENCE_API_KEY verified SAME-VALUE as Inference's). Google News RSS article candidates are never consulted when Tavily returns anything."
+    acceptance:
+      - "Stratex: the provisioned STRATEX_API_KEY authenticates SCOPE_FRIDAY + SCOPE_READ (least privilege, no CONTROL/ADMIN) via a contract test; live chat portfolio query returns live Stratex data with no 401."
+      - "Futuris: Oracle JSON compat shim wired before engine creation (mirrors IntelX oracle_dialect_compat); contract test proves generic JSON bind/result processors work on the Oracle dialect; live forecast returns a real forecast/201 with no 500."
+      - "IntelX: WebSearchConnector merges Google News article candidates with Tavily results (dedupe, Tavily first, capped) so headline queries reach article prose; merge contract tests green; live research returns headlines with sources."
+      - "Small FRIDAY-side routing fixes OUTSIDE api/server.py (Track A coordination noted): 'give me a short forecast' reaches the Futuris fast path; a headlines+sources request reaches the IntelX research fast path."
+    evidence: []
+    blockers: []
+    next_action: "Implement on claude/track-b-specialist-endpoints, PR via bridge, merge on green CI under owner autonomous authority, live-verify all three through the public chat API."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

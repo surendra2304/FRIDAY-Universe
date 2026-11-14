@@ -175,6 +175,33 @@ class TestResearchFastPath:
         assert "Range-bound week." in response.content
         assert "2 citation(s)" in response.content
 
+    def test_headlines_with_sources_dispatches(self) -> None:
+        # TASK-REL-007: the exact console round-1 phrasing. Before the fix it
+        # matched no research action shape, fell into the LLM tool loop and
+        # surfaced as a bare "502"; a headlines request that asks for sources
+        # is a research action and must reach IntelX.
+        from unittest.mock import patch
+        from friday.agent.agent import FridayAgent
+        from friday.core.config import Settings
+
+        with patch.object(
+            IntelXResearchTool, "_client",
+            return_value=_FakeFleetClient(_FakeResult("SUCCESS", {
+                "query": "today's top three ai news headlines",
+                "citations_count": 3,
+                "sources": [{"name": "Reuters"}, {"name": "Bloomberg"}, {"name": "TechCrunch"}],
+                "spoken_summary": "Three sourced headlines.",
+                "text_response": "### Key Findings\n- headline one",
+            })),
+        ):
+            agent = FridayAgent(settings=Settings(env="testing"))
+            response = agent.process_message(
+                "What are today's top three AI news headlines? Include sources."
+            )
+        assert response.metadata.get("fast_path") is True
+        assert response.metadata.get("research_dispatch") is True
+        assert "Three sourced headlines." in response.content
+
     def test_incidental_research_word_takes_the_normal_path(self) -> None:
         """A sentence that merely contains 'research' must NOT fast-path."""
         from friday.agent.agent import FridayAgent

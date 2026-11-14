@@ -63,15 +63,26 @@ def _extract_target(text: str, default: str = "fleet:api:request_rate") -> str:
     cleaned = re.sub(
         r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
         r"(?:forecast|predict|project|what does futuris (?:predict|forecast|say)(?: about)?|"
-        r"give me (?:a |the )?forecast(?: for)?|get (?:me )?(?:a |the )?forecast(?: for)?)\s*"
+        # TASK-REL-007: allow a qualifier ("give me a SHORT forecast: ...") —
+        # without it the whole sentence became the forecast target.
+        r"give me (?:a |the )?(?:(?:short|quick|brief|latest) )?forecast(?: for)?|"
+        r"get (?:me )?(?:a |the )?forecast(?: for)?)\s*"
         r"(?:the\s+|for\s+|about\s+|of\s+)?",
         "", low,
+    )
+    cleaned = cleaned.lstrip(":,- ").strip()
+    # "give me a short forecast: what should I expect for my portfolio"
+    # -> target is what follows the expectation phrasing.
+    cleaned = re.sub(
+        r"^(?:what should i expect (?:for|from)|what to expect (?:for|from))\s+",
+        "", cleaned,
     )
     cleaned = re.sub(
         r"\s+(?:over|in|during|for|within)\s+(?:the\s+)?(?:next\s+)?"
         r"(?:\d+\s*)?(?:hour|hours|day|days|week|weeks|month|months|1h|24h|7d|30d)\b.*$",
         "", cleaned,
-    ).strip()
+    )
+    cleaned = re.sub(r"\s+(?:this|next)\s+(?:week|month)\b.*$", "", cleaned).strip()
     if 3 <= len(cleaned) <= 80:
         return cleaned
     return default

@@ -89,6 +89,14 @@ class TestExtraction:
     def test_default_target_is_explicit_not_fake(self) -> None:
         assert _extract_target("give me a forecast") == "fleet:api:request_rate"
 
+    def test_qualified_forecast_extracts_the_real_target(self) -> None:
+        # TASK-REL-007: the exact console round-1 phrasing. Before the fix the
+        # qualifier ("short") defeated extraction and the whole sentence (or
+        # the default) became the target.
+        phrase = "Give me a short forecast: what should I expect for my portfolio this week?"
+        assert _extract_target(phrase) == "my portfolio"
+        assert _extract_horizon(phrase) == "7d"
+
     @pytest.mark.parametrize(
         "text,horizon",
         [
@@ -343,3 +351,20 @@ class TestForecastFastPath:
         assert any(
             getattr(t, "name", "") == "futuris_forecast" for t in registered.values()
         ), "futuris_forecast must be registered in the default tool registry"
+
+    def test_qualified_forecast_phrasing_fires(self) -> None:
+        # TASK-REL-007: "give me a SHORT forecast" must dispatch to Futuris;
+        # before the fix it fell through to the LLM, which invented an
+        # outlook instead of asking Futuris (console round 1, 2026-11-14).
+        agent = _agent()
+        client = _FakeFuturisClient()
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(FuturisForecastTool, "_client", lambda self: client)
+            response = agent.process_message(
+                "Give me a short forecast: what should I expect for my portfolio this week?"
+            )
+        assert response is not None
+        assert response.metadata.get("forecast_dispatch") is True
+        assert client.calls, "the forecast tool must have run"
+        assert client.calls[0]["target"] == "my portfolio"
+        assert client.calls[0]["horizon"] == "7d"

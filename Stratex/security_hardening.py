@@ -230,6 +230,19 @@ def get_configured_api_keys() -> dict[str, dict[str, Any]]:
     add_keys("API_KEY_CONTROL", "CONTROL", [SCOPE_READ, SCOPE_CONTROL])
     add_keys("API_KEY_READONLY", "READONLY", [SCOPE_READ])
     add_keys("API_KEY_FRIDAY", "FRIDAY", [SCOPE_READ, SCOPE_CONTROL, SCOPE_FRIDAY])
+    # 2. Fleet-standard service key (TASK-REL-007). Every agent in the fleet is
+    # provisioned with a per-agent ``<AGENT>_API_KEY`` env var, and FRIDAY's
+    # Stratex credential is exactly that value (FRIDAY_STRATEX_API_KEY /
+    # STRATEX_API_KEY in FRIDAY's env — verified same-value as this service's
+    # STRATEX_API_KEY on the host, 2026-11-14). This map never accepted the
+    # name, so FRIDAY's Universal Task dispatch to /v1/task/execute failed
+    # with 401 INVALID_API_KEY on every portfolio query while the key itself
+    # was correctly provisioned on both sides. Accept it with LEAST
+    # privilege: FRIDAY + READ scopes only — the task endpoint requires
+    # SCOPE_FRIDAY, read surfaces require SCOPE_READ, and this key must not
+    # gain CONTROL/ADMIN authority (panic/config/order surfaces stay gated
+    # behind BOT_API_KEY / API_KEY_CONTROL / API_KEY_FRIDAY).
+    add_keys("STRATEX_API_KEY", "FRIDAY", [SCOPE_READ, SCOPE_FRIDAY])
 
     return keys_map
 
