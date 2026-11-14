@@ -870,3 +870,30 @@ style, trading or publication edits; export generated only. Full evidence:
 docs/verification/RUNTIME_AUDIT_002.md and sanitary JSON, no raw owner history.
 Candidate not reviewed/deployed. Owner voiceFAILED/OPEN; runtimeIN_PROGRESS;
 WF015researchPARTIAL/PR78DRAFTDONOTDEPLOY; videoOAuth/profit gates unresolved.
+## Arena Agent 1 — research dependency model/cache contract, isolated candidate
+
+While voicePR84b6a778bd exact-head CI reached8SUCCESS/2conditionalDockerSKIP,
+protectedpreflight foundS1clean3e402385 andS2cleanbd79fd6 on ZAI2PR83voicebranch.
+Seven+sixuntrackedfiles backedup/fingerprinted; no trackedcheckout/restart/deploy.
+DoNOTresetS2 or merge84alone into a predictably non-FFS2rollout. ActualPR83
+peerreview6848222165 identified blockingasyncffmpeg conversion (actualfunction
+80msfixture blocks scheduledloop tick) and reproducibledependency/adaptertest
+gaps. Teamcoordination6848222780 requests reviewedintegration; noACKinvented.
+
+ResearchPR78CI actualfailures discovered: undeclaredrespx and pollutedroot
+intelx.core namespace. Own test-isolationfix scoped6848156984/publishedbb9b54c9;
+baseline3FAIL/11PASS versus patched14PASS with explicitnamespacepoisoning;
+combined47PASS. Localfullroot cannotrunin sparsecheckout39collectionerrors;
+notrepresented asgreen. PR78DRAFTstillDO NOT MERGE/DEPLOY; no newmodelcall.
+
+Independentactual-source proof6848248304: advertisedexplicitllama models become
+identicalUnifiedExecutionRequests because requestedmodel isdropped; cachealso
+dropsfinishreason andOAIroute inventsstop forunknown/truncatedcachedresponses.
+Pre-editscope6848266494 -> isolatedTASK-WF-015-INFERENCE-001 branch: optional
+modelpass-through/cacheidentity, preservefinishmetadata/directlocalprovenance,
+noinventedstop. ExistingpolicyModelGateway/auth/auto60tokenfastlane untouched.
+Actualsourcebaseline12FAIL/3PASS ->15PASS after; nativeInferenceHTTPgateway/
+cache/nofabrication/localtier62PASS;ruffPASS. Notproventocausethepreviouslive
+synthesisValueError; no liveanswer acceptance. SeeWF015_INFERENCE_MODEL_CONTRACT
+verificationdoc. CandidateawaitsCI/peerreview/protectedjointrollout. WF015
+IN_PROGRESS; ownervoiceFAILED/OPEN; researchPARTIAL; OAuth/profitgates unchanged.
