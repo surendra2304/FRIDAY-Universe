@@ -3810,6 +3810,87 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "COMPLETE + PRODUCTION-VERIFIED 2026-11-14 (PR #183, merge 8b6712aa). Follow-ups for separate tasks/decisions: (1) durable conversation-history persistence across FRIDAY restarts; (2) Inference test-generation reliability under provider strain (empty test_code -> Forge gate failures on otherwise-good code); (3) InvalidStateTransitionError race causing occasional /api/chat 500s."
 
+  - id: TASK-REL-024
+    title: "Memora hybrid ranking: graph boosts saturate the merged result list and bury fresh semantic hits"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-rel-024-hybrid-ranking
+    pr: 185
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T21:15:00+05:30"
+    updated_at: "2026-11-14T22:20:00+05:30"
+    files:
+      - "Memora/core/memory/search_service.py"
+      - "Memora/tests/test_rel024_hybrid_ranking.py"
+      - "Memora/tests/test_direct_evidence_ranking.py"
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6879999545"
+    defect: "Follow-up split out of TASK-REL-013's verified remainder. REL-013 unified Memora's semantic write/read paths on the Oracle vector store, but in SearchService.hybrid_search's merged result list a fresh fact still surfaces at position 53 (limit=100) on a broad paraphrase query where it is the vector adapter's semantic rank 1 (sim 0.76): 36 legacy graph-connected records saturate final_score at 1.0 via graph boosts (+0.26..+0.69). Code-verified mechanism at main 4165fef: the merge adds the graph term RAW (graph_weight * g_boost) while the semantic/keyword legs are RRF terms damped by 1/(rrf_k + rank); the sum is then scaled by rrf_k/2 (=30) and capped at 1.0. With the shipped config (dense_vector 0.6, bm25 0.3, graph_walk 0.1, rrf_k 60), a rank-1 semantic + rank-1 keyword hit scores ~0.44, while g_boost >= ~0.19 alone pins a record at 1.0 — and GraphService.get_graph_neighbors accumulates weight*0.15 per incident edge with no bound, so hub records reach g_boost 0.26..0.69. FRIDAY's recall reads with small limits (5 for normal recall, 25 for mutation targeting in FRIDAY/src/friday/memory/memora_client.py), so a rank-53 fact is invisible in production recall. Same surface as TASK-REL-014's recall-window residual."
+    acceptance:
+      - "Scoring characterised with numbers from the live-shaped reproduction: per-leg contributions (semantic RRF, keyword RRF, graph term, entity boost) for the fresh fact vs the saturating legacy records, before the fix."
+      - "Merge fix: semantic/keyword relevance dominates — a maximally graph-boosted but weakly-relevant record can no longer saturate final_score above a strongly semantic/keyword-relevant one; the graph term is bounded and commensurate with the RRF legs, remaining a secondary/tie-breaking signal (graph-connected records still surface for graph-shaped queries; no leg is deleted)."
+      - "REL-005/REL-013/REL-014 semantics preserved: Oracle-branch semantic search, merged recall behaviour and FRIDAY's mutation-targeting assumptions unchanged; Memora suites compared against clean-main baselines with failure sets identical or better."
+      - "Live proof after deploy: fresh unique fact stored via the live service, zero-overlap paraphrase query at FRIDAY's production recall limits (5 and 25) returns the fact inside the window; merged position reported before vs after; verbatim control query still ranks the fact first; probe data deleted afterwards."
+    evidence:
+      - "Claim: issue #35 comment 6879999545 (2026-11-14)."
+      - "Code-verified at main 4165fef: search_service.py section 4 adds graph_weight * g_boost undamped, scales by (rrf_k / 2) and caps at 1.0; retrieval_config.json ships graph_walk weight 0.1 vs dense_vector 0.6 / bm25 0.3; get_graph_neighbors (graph_service.py) accumulates weight * 0.15 per edge, unbounded."
+      - "Inherited live evidence (TASK-REL-013, 2026-11-14 ~21:00 IST): paraphrase probe fact was the Oracle adapter's semantic rank 1 (sim 0.76) yet position 53 in the merged hybrid list (limit=100), behind 36 records at final_score 1.0 with graph boosts +0.26..+0.69."
+      - "Scoring characterisation (code + live, 2026-11-14): shipped config weights dense_vector 0.6 / bm25 0.3 / graph_walk 0.1, rrf_k 60, final = min(1.0, rrf * 30 + entity). A rank-1 semantic + rank-1 keyword hit scores 0.6/61*30 + 0.3/61*30 = 0.4426. The old graph term contributed graph_weight * g_boost * 30 after scaling, so g_boost >= 0.34 saturated a record at 1.0 unaided and one strong edge (g_boost 0.1425) contributed 0.4275 — as much as perfect relevance. get_graph_neighbors accumulates weight * 0.15 per incident edge, unbounded."
+      - "LIVE BEFORE (Server 1, 2026-11-14 ~21:20 IST, probe through the production /v1/memories API with FRIDAY's own payload shape): stored the lighthouse fact (id 73a8340b-e80a-4d10-a4cf-7e7b10550409, storage_backend oracle). Paraphrase query: 36 records at final_score 1.0, graph boosts up to 0.69; the fact (semantic rank 2, sim 0.7562, final 0.3744 = 0.2903 vector + 0.0841 keyword rank 47) sat at position 54 of 100 and was ABSENT at limits 25 and 5 — FRIDAY's production recall windows (memora_client recall limit 5, mutation recall limit 25). Verbatim control: position 1, final 0.4379."
+      - "FIX (PR #185, merge b9a33fb86e62058923774740e1f6c16ecadaeead): search_service.py merge only — graph_signal = g_boost / (1 + g_boost) squashes the accumulated weight into (0, 1) and the term becomes graph_weight * graph_signal / (rrf_k + 1), an RRF-commensurate leg whose maximum contribution at the shipped config is ~0.049 final-score points. Graph remains a tie-breaker and still surfaces graph-only companions after direct-evidence records (existing tiering); no leg deleted; explicit caller weights (e.g. ContextBuilder degraded fallback) keep their proportions."
+      - "Tests: new Memora/tests/test_rel024_hybrid_ranking.py (3 tests, real records + real graph edges, stubbed vector boundary) — the saturation and tie-break tests FAIL on clean main, the companion guard passes; all pass with the fix. One assertion in Memora/tests/test_direct_evidence_ranking.py updated, disclosed in PR #185: it pinned the defect's score symptom (graph-only 0.42 > direct lexical 0.14) from the earlier tiering fix; its ordering assertions are unchanged and the score relationship now asserts relevance dominance. Full Memora suite: branch 55 failed / 608 passed / 2 skipped vs clean-main baseline 55 failed / 605 passed / 2 skipped — failure sets IDENTICAL (all pre-existing), +3 new passes. Ruff clean."
+      - "CI on PR #185: all green on both heads (94b2ca0 initial; f6d77bd after re-push onto moved main 41b8e04 — the pushed tree differs from the local tree only by sibling-merge files; sibling merges #182/#183/#184/#186 did not touch the three changed files)."
+      - "Deploy (disclosed): the automatic Fleet CD run for merge b9a33fb (run 43614187929) was CANCELLED — superseded in the deploy concurrency group during the evening merge storm; the next successful run (fd5c780, PR #187) was docs-only and its path filter made it a server no-op, so the fix sat merged-but-undeployed. Deployed via the workflow's own workflow_dispatch (run 43616544913, completed success): Server 1 checkout d597bb42, Memora.service restarted 2026-11-14 22:07:41 IST, deployed search_service.py contains the graph_signal term (fingerprint x2)."
+      - "LIVE AFTER (same probe, deployed code): lighthouse fact — paraphrase position 4 at limit=100 (was 54), position 4 at limit=25 and 3 at limit=5 (was absent at both), saturated records 0 (was 36); verbatim control unchanged at position 1, final 0.4379. Second fresh fact (Dwaraka watchman, id 6fbd8206-a4d8-4adc-963e-b2f93a5b0cdf): paraphrase positions 3 / 3 / 4 at limits 100 / 25 / 5, verbatim position 1 (0.4426). Graph-boosted records still appear throughout the list as secondary nudges (boosts 0.12-0.26 on top-8 records) under genuinely more relevant results. Both probe facts deleted afterwards (DELETE 200, lifecycle_state deleted)."
+      - "TASK-REL-022 residuals: (a) is this defect — fresh facts crowded out of the merged recall window by ranking — fixed and evidenced above. (b) (FRIDAY chat-gate replies listing noise hits under a confident header) is FRIDAY-side reply composition, outside this task's Memora-merge scope; it remains open for a chat-hardening pass and is NOT claimed fixed here."
+      - "Board repair (disclosed): PR #190's board update was built on a stale base and silently dropped the TASK-REL-024, TASK-STR-BT-001 and TASK-VOI-003 entries (131 -> 128 tasks; verified by per-commit board comparison, drop point e7880b6). The board PR accompanying this verification restores all three entries verbatim from dd4ed9f and keeps TASK-REL-023's VERIFIED flip from PR #190 intact."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-14 (Muse, TASK-REL-024 crew): fix merged (PR #185, merge b9a33fb), deployed to Server 1 (workflow_dispatch run 43616544913 after the automatic run was cancelled by concurrency supersession — see evidence), production-verified live: paraphrase burial position 54 -> 4 and 36 saturated records -> 0 on the identical probe; fresh facts now land inside FRIDAY's limit-5/25 recall windows."
+
+  - id: TASK-VOI-003
+    title: "FRIDAY voice: stop the mid-call session collapse (session pinning, context-carrying watchdog rebuild, bounded brain budget)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-voi-003-voice-session-pinning
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T21:05:00+05:30"
+    updated_at: "2026-11-14T21:05:00+05:30"
+    files:
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/src/friday/voice/brain_bridge.py"
+      - "FRIDAY/tests/test_voice_session_pinning.py"
+    defect: "Renumbered from the dispatch brief's TASK-VOI-002 (that id already exists on this board: the MERGED 2026-11-12 infra morning-brief task, owner zai). Evidence (machine E2E voice test, production, 2026-11-14 20:34-20:37 IST; FRIDAY-Voice journal PID 2508866): the test call (job AJ_9Cp5iEbG8bCw, room friday-991fa0a2) ran a healthy Gemini Live session (gemini-realtime:gemini-3.8-live) that answered the London-time question correctly, then WEDGED on its first function-calling turn: 'remember teal' was transcribed 20:35:29, AFC generation fired 20:35:37, FRIDAY's journal shows exactly one POST /api/chat 200 in the window, but no assistant item for the turn was ever logged and the session never returned to listening; the remaining four utterances were transcribed with 17-48 s lag and produced no /api/chat posts and no audible answers (~14 s intelligible speech in a 185 s call). The brief's abandonment theory is corrected by the journal: the 20:35:41 'no probe-valid gemini key found; falling back to the groq pipeline' line belongs to a SECOND job (AJ_MQdbdfp3EdJo, room friday-efc331e0 — the round-3 browser task's console voice click), whose own gather probes timed out and whose _try_gemini_realtime then ran a SECOND serial per-key probe round inline (escalating 3 s timeouts across 5 keys = up to ~95 s worst case) before falling back; that job greeted an empty room and logged 'job executor is unresponsive' (event-loop stalls 703-814 ms). Shared root causes: (1) no verified-key cache — every job re-probes serially, so concurrent jobs multiply Gemini probe traffic exactly when the free tier is strained (503s + timeouts all evening); (2) brain-bridge tool calls budget 230 s, so a slow brain call wedges a voice turn indefinitely; (3) host CPU saturation at the moment of the wedge (FRIDAY logged 'CPU is running hot at 93.2%. Top offender: kswapd0' at 20:36:03) with the worker's event loop stalling; (4) no recovery path exists at all once a session wedges — the session object is simply abandoned by the conversation."
+    acceptance:
+      - "Provider/key binding is pinned per session: after the session starts, no code path in the worker re-resolves a provider or re-probes a key; key verification is a process-level cache (TTL 240 s, single-flight, up to 3 candidates probed concurrently under one 10 s deadline, 30 s negative cache) shared by all jobs in the worker."
+      - "A wedged turn (owner utterance final, session stuck in thinking/speaking with no completed assistant reply for 75 s) while the owner is still in the room triggers at most one session rebuild on the PINNED provider/key, carrying the conversation transcript into the new session's instructions with an explicit do-not-greet-again instruction; rebuilt sessions never run the greeting."
+      - "Voice brain calls are bounded (FRIDAY_VOICE_BRAIN_TIMEOUT_S, default 60 s): on timeout the bridge returns 'unconfirmed' and the model speaks it, so a function-calling turn always completes audibly instead of wedging."
+      - "Cold-start costs move to worker boot: a background warm-up imports the heavy chains, seeds the verified-key cache, and warms the EdgeTTS path; per-job memory recall budget drops 12 s to 7 s (cold imports are warm by then). One standalone-TTS instance is built per job (was two)."
+      - "Production acceptance = the same machine E2E method as the evidence run (server-side LiveKit participant on Server 1, edge-tts utterances, frame-recorded replies): greeting, London time, remember teal, recall teal, forget teal, joke, one Stratex delegation. PASS requires every utterance answered audibly and intelligibly, memory write/recall/forget verifiably executed (FRIDAY journal /api/chat posts), the delegation dispatched (journal evidence), no mid-call re-greeting, no session abandonment. Timings and journal lines quoted per utterance."
+    evidence:
+      - "Claim + forensic correction: issue #35 comment 6879920837 (2026-11-14)."
+      - "Evidence run artifacts: ~/workspace/voice-test/logs/evidence_index.md (crew b364726b); journal pulls ~/workspace/voi002/journal_w1.txt, journal_w2.txt, friday_window.txt."
+    blockers: []
+    next_action: "Implement in worktree, PR, CI, merge, deploy, run the production acceptance call, then flip VERIFIED with the run's evidence (or report failures plainly)."
+
+  - id: TASK-STR-BT-001
+    title: "Rigorous backtesting programme: provenance-checked walk-forward harness; factory winners re-tested out-of-sample"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-bt-001-rigorous-backtest
+    pr: 180
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T19:00:00+05:30"
+    updated_at: "2026-11-14T21:35:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/ (NEW: data_feed.py, simulator.py, walkforward.py, factory_eval.py, module_eval.py, run_all.py, tests/, results/)"
+    acceptance: "Factory verdict: five winners FAIL honest OOS testing on all three layers (procedure PF 0.81 pooled; original variants PF 0.27-0.62; deployed modules PF 0.54-0.73). bb_reversion (VALIDATED) PF 0.68 on 12,308 OOS trades. adx_ema sole positive (PF 1.57, +1.19%/trade) on only 77 trades - forward-protocol candidate. Harness validated by exact replication of the legacy backtester (max deviation 0.0) and bit-identical reruns."
+    next_action: "None - programme complete and verified (PRs #180 and #184 merged, CI green; harness and results on main). Follow-ups: adx_ema is the forward demo protocol's first entrant (evidence accumulation only, HIGH caveat at 77 OOS trades); the 51 UNTESTABLE discovery modules can be re-run with python3 -m rigorous_backtest.run_all discovery when compute allows."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
