@@ -281,6 +281,13 @@ class AdversaryEmulationEngine:
         detected = sum(1 for s in self._simulations if s.detected)
 
         return {
+            "simulated": True,
+            "data_source": "simulated_no_target_systems",
+            "detection_rate_basis": (
+                "Simulations never touch a monitored system, so no "
+                "detection can occur; detection_rate is 0 by construction, "
+                "not a measurement of any defensive tooling."
+            ),
             "total_profiles": len(self._profiles),
             "total_techniques_registered": len(self._techniques),
             "total_plans": len(self._plans),
@@ -351,9 +358,21 @@ async def create_plan(payload: dict):
 
 @router.post("/api/v1/intelex/emulation/phases/{phase_id}/execute")
 async def execute_phase(phase_id: str):
-    """Execute an emulation phase."""
+    """Execute an emulation phase.
+
+    TASK-REL-017: nothing is executed against any real system — the phase
+    run is a bookkeeping simulation, and every "detection gap" it records
+    is hypothetical (detection was never tested). The payload is labelled
+    simulated so the results cannot be read as an actual emulation.
+    """
     phase = emulation_engine.execute_phase(phase_id)
-    return {"phase_id": phase.phase_id, "phase_name": phase.phase_name, "status": phase.status}
+    return {
+        "phase_id": phase.phase_id,
+        "phase_name": phase.phase_name,
+        "status": phase.status,
+        "simulated": True,
+        "data_source": "simulated_no_target_systems",
+    }
 
 
 @router.get("/api/v1/intelex/emulation/plans/{plan_id}/gaps")
@@ -362,6 +381,13 @@ async def get_gap_analysis(plan_id: str):
     gaps = emulation_engine.get_gap_analysis(plan_id)
     return {
         "plan_id": plan_id,
+        "simulated": True,
+        "data_source": "simulated_no_target_systems",
+        "basis": (
+            "Gaps are hypothesised for every emulated technique because no "
+            "detection system was exercised; they are not observed "
+            "detection failures."
+        ),
         "total_gaps": len(gaps),
         "critical_gaps": sum(1 for g in gaps if g.severity == "critical"),
         "gaps": [

@@ -30,6 +30,7 @@ from intelx.core.auth import get_friday_api_key
 from intelx.db.models import ApiKey
 
 from routers.real_osint_routes import router as real_osint_router
+from intelx.api.real_threat_router import real_threat_router
 root_api_router = APIRouter()
 logger = logging.getLogger("intelx.api.router")
 
@@ -52,6 +53,8 @@ root_api_router.include_router(intel_exchange_router)
 root_api_router.include_router(intel_quality_router)
 root_api_router.include_router(campaign_predictor_router)
 root_api_router.include_router(real_osint_router)
+# TASK-REL-017: mount the real threat-intel engines (was never mounted).
+root_api_router.include_router(real_threat_router)
 
 
 

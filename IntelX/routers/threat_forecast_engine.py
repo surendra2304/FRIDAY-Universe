@@ -60,19 +60,17 @@ class ThreatForecastEngine:
         self._trends: dict[str, ForecastTrend] = {}
 
     def generate_forecast(self, threat_type: str, indicators: list[str] | None = None,
-                          timeframe_days: int = 30) -> ThreatForecast:
-        """Generate a threat forecast."""
-        forecast_id = f"tf_{uuid.uuid4().hex[:12]}"
-        severity = hash(threat_type + time.strftime("%Y%m")) % 100 / 100.0
-        intensity = severity * 0.8 + 0.1
-        forecast = ThreatForecast(
-            forecast_id=forecast_id, threat_type=threat_type,
-            predicted_severity=severity, predicted_intensity=intensity,
-            timeframe_days=timeframe_days, confidence=0.7,
-            indicators=indicators or [],
-        )
-        self._forecasts[forecast_id] = forecast
-        return forecast
+                          timeframe_days: int = 30) -> ThreatForecast | None:
+        """Generate a threat forecast.
+
+        TASK-REL-017: no forecasting model and no threat-telemetry feed is
+        connected to IntelX, so no honest forecast can be produced and this
+        returns None. The previous implementation derived "severity" from
+        ``hash(threat_type + current month)`` with a fixed 0.7 confidence —
+        a fabricated number dressed as a prediction. Registered vectors and
+        recorded trends (operator-supplied) are unaffected.
+        """
+        return None
 
     def register_emerging_vector(self, name: str, description: str,
                                  risk_level: str = "medium") -> EmergingVector:
@@ -134,6 +132,8 @@ class ThreatForecastEngine:
             "total_vectors": len(self._vectors),
             "total_trends": len(self._trends),
             "engine_status": "operational",
+            "forecast_generation": "unavailable_no_data_source",
+            "data_source": "operator_supplied_records_only",
         }
 
 
@@ -142,8 +142,27 @@ engine = ThreatForecastEngine()
 
 @router.post("/intelex/forecast/generate")
 async def generate_forecast(threat_type: str, indicators: list[str] | None = None, timeframe_days: int = 30):
-    """Generate a threat forecast."""
+    """Generate a threat forecast.
+
+    TASK-REL-017: no forecasting model or telemetry feed is connected, so
+    this returns an explicit no-data-source state instead of a
+    hash-derived pseudo-forecast.
+    """
     forecast = engine.generate_forecast(threat_type, indicators, timeframe_days)
+    if forecast is None:
+        return {
+            "status": "no_real_data_source",
+            "data_source": "none_connected",
+            "detail": (
+                "No threat-forecasting model or telemetry feed is connected "
+                "to IntelX, so no forecast can be generated. Registered "
+                "vectors and trends are operator-supplied records only."
+            ),
+            "forecast_id": None,
+            "threat_type": threat_type,
+            "predicted_severity": None,
+            "confidence": None,
+        }
     return {
         "forecast_id": forecast.forecast_id,
         "threat_type": forecast.threat_type,

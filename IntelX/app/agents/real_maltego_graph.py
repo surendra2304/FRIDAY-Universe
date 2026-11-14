@@ -657,6 +657,14 @@ class MalNetEngine:
             "domain_findings": [],
             "hash_findings": [],
             "correlated_signatures": [],
+            # TASK-REL-017: this dict is only returned on the offline
+            # fallback path (a successful live call returns its own dict
+            # above). The fallback invents findings deterministically
+            # from a hash of the indicator — including real malware
+            # family names — so it must carry the simulated label in the
+            # payload itself.
+            "simulated": True,
+            "data_source": "synthetic_fallback",
         }
 
         # If live API key is set, attempt live query to MalNet endpoint

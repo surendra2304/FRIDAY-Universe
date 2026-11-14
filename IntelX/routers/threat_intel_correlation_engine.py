@@ -62,7 +62,7 @@ class ActorProfile:
     name: str
     aliases: list[str] = field(default_factory=list)
     motivation: str = ""  # financial, espionage, disruption
-    sophistication: str = "advanced"
+    sophistication: str = "unknown"
     target_sectors: list[str] = field(default_factory=list)
     techniques: list[str] = field(default_factory=list)
     confidence: float = 0.0
@@ -244,7 +244,14 @@ class ThreatIntelCorrelationEngine:
         return link
 
     def create_actor(self, name: str, aliases: list[str] | None = None, motivation: str = "") -> ActorProfile:
-        """Create a threat actor profile."""
+        """Create a threat actor profile.
+
+        TASK-REL-017: a new profile records only what the operator
+        supplied. The previous implementation hardcoded sophistication
+        "advanced", target sectors [financial, technology], techniques
+        [T1595, T1078, T1027] and confidence 0.4 for EVERY actor —
+        invented attributes presented as profile data.
+        """
         actor = ActorProfile(
             actor_id=hashlib.md5(
                 f"actor:{name}:{time.time()}".encode()
@@ -252,10 +259,10 @@ class ThreatIntelCorrelationEngine:
             name=name,
             aliases=aliases or [],
             motivation=motivation,
-            sophistication="advanced",
-            target_sectors=["financial", "technology"],
-            techniques=["T1595", "T1078", "T1027"],
-            confidence=0.4,
+            sophistication="unknown",
+            target_sectors=[],
+            techniques=[],
+            confidence=0.0,
         )
         self._actors[actor.actor_id] = actor
         return actor
@@ -272,7 +279,9 @@ class ThreatIntelCorrelationEngine:
             pattern_name=pattern_name,
             matched_iocs=matched,
             match_score=len(matched) / max(1, len(iocs)),
-            confidence=0.7 + (ord(hashlib.md5(pattern_id.encode()).hexdigest()[:1]) % 20) / 100,
+            # TASK-REL-017: confidence IS the measured matched fraction.
+            # The previous formula added an md5-hash-derived 0.7-0.9 base.
+            confidence=len(matched) / max(1, len(iocs)),
             description=f"Matched pattern '{pattern_name}' against {len(matched)} IoCs",
             detected_at=time.time(),
         )
@@ -310,6 +319,7 @@ class ThreatIntelCorrelationEngine:
     def get_report(self) -> dict:
         """Get correlation engine report."""
         return {
+            "data_source": "operator_supplied_records_only",
             "total_iocs": len(self._iocs),
             "total_correlations": len(self._correlations),
             "total_campaign_links": len(self._campaign_links),
@@ -365,7 +375,13 @@ async def correlate(payload: dict):
         ioc_a_id=payload["ioc_a"],
         ioc_b_id=payload["ioc_b"],
     )
-    return {"correlation_id": result.correlation_id, "score": result.score, "type": result.correlation_type, "evidence": result.evidence}
+    return {
+        "correlation_id": result.correlation_id,
+        "score": result.score,
+        "type": result.correlation_type,
+        "evidence": result.evidence,
+        "basis": "heuristic_over_the_two_operator_supplied_ioc_records",
+    }
 
 
 @router.post("/api/v1/intelex/correlation/campaigns/links")

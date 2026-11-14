@@ -73,6 +73,8 @@ class SourceReliability:
     completeness: float
     error_rate: float
     recommendation: str = ""
+    # TASK-REL-017: states what the numbers are actually based on.
+    basis: str = ""
 
 
 @dataclass
@@ -192,12 +194,13 @@ class DynamicOSINTCollector:
                 task.errors.append(f"Source {source_id} not available")
                 continue
 
-            # Simulate collection
-            collected = self._collect_from_source(source, target, target_type)
-            findings.extend(collected)
-
-            source.collection_count += 1
-            source.last_collection = time.time()
+            # TASK-REL-017: no live collector is connected for ANY
+            # registered source (no API keys, no scrapers, no HTTP calls
+            # exist in this module), so nothing is queried, no findings
+            # are produced, and no collection counters move. The previous
+            # implementation fabricated findings deterministically from
+            # md5 hashes and attributed them to the named sources.
+            task.errors.append(f"Source {source.name}: no collector connected")
 
         task.completed_at = time.time()
         task.results_count = len(findings)
@@ -214,11 +217,20 @@ class DynamicOSINTCollector:
             "task_id": task.task_id,
             "target": task.target,
             "target_type": target_type,
-            "status": task.status,
+            "status": "no_real_data_source",
+            "task_status": task.status,
+            "data_source": "none_connected",
+            "detail": (
+                "No OSINT collectors are connected to IntelX: the registered "
+                "sources are a catalogue only, with no API keys or scrapers "
+                "wired. No source was queried and no findings exist."
+            ),
+            "errors": task.errors,
             "total_findings": len(findings),
             "unique_findings": len(set(f.value for f in findings)),
-            "sources_queried": len(task.sources),
-            "sources_successful": len(task.sources) - len(task.errors),
+            "sources_registered": len(task.sources),
+            "sources_queried": 0,
+            "sources_successful": 0,
             "collection_time_ms": (time.time() - start) * 1000,
             "fusion_id": fusion.fusion_id,
             "fusion_confidence": fusion.fusion_confidence,
@@ -230,44 +242,15 @@ class DynamicOSINTCollector:
         target: str,
         target_type: str,
     ) -> list[OSINTFinding]:
-        """Collect data from a single source (simulated)."""
-        findings = []
+        """Collect data from a single source.
 
-        # Simulate finding data based on source type and target
-        for i in range(2 + (ord(hashlib.md5(f"{source.source_id}:{target}".encode()).hexdigest()[:1]) % 5)):
-            if source.source_type == "social":
-                finding_type = "username"
-                value = f"{target}_profile_{i}"
-            elif source.source_type == "dark_web":
-                finding_type = "hash" if target_type == "hash" else "email"
-                value = f"{target}_dark_{i}@example.com"
-            elif source.source_type == "ct_log":
-                finding_type = "domain"
-                value = f"subdomain{i}.{target}.com"
-            elif source.source_type == "api":
-                finding_type = "ip"
-                value = f"192.168.{i}.{ord(hashlib.md5(target.encode()).hexdigest()[:2], 16) % 255}"
-            else:
-                finding_type = "domain"
-                value = f"{target}_related_{i}.com"
-
-            findings.append(OSINTFinding(
-                finding_id=hashlib.md5(
-                    f"finding:{source.source_id}:{target}:{i}:{time.time()}".encode()
-                ).hexdigest()[:12],
-                task_id="",  # Will be set by caller
-                source=source.name,
-                finding_type=finding_type,
-                value=value,
-                context=f"Found via {source.name}",
-                timestamp=time.time(),
-                confidence=source.reliability * (0.7 + (ord(hashlib.md5(f"{source.source_id}:{i}".encode()).hexdigest()[:1]) % 30) / 100),
-                reliability=source.reliability,
-                metadata={"source_type": source.source_type, "target_type": target_type},
-                related_to_target=True,
-            ))
-
-        return findings
+        TASK-REL-017: no collector is connected for any source, so this
+        always returns no findings. The previous implementation invented
+        findings deterministically from md5 hashes — fake emails,
+        subdomains, and 192.168.x.x addresses attributed to real services
+        (GitHub, Shodan, VirusTotal, crt.sh) that were never called.
+        """
+        return []
 
     def _fuse_data(
         self,
@@ -324,8 +307,11 @@ class DynamicOSINTCollector:
             raise HTTPException(404, f"Source {source_id} not found")
 
         accuracy = source.reliability
-        freshness = 1.0 if (time.time() - source.last_collection) < 86400 else 0.5
-        completeness = 0.8 + (ord(hashlib.md5(source.source_id.encode()).hexdigest()[:1]) % 20) / 100
+        freshness = 1.0 if source.last_collection and (time.time() - source.last_collection) < 86400 else 0.5
+        # TASK-REL-017: completeness reflects the source's declared data
+        # coverage only. The previous formula derived it from an md5 hash
+        # of the source id — an invented measurement.
+        completeness = 1.0 if source.supported_data else 0.0
         error_rate = 1.0 - accuracy
 
         overall = (accuracy * 0.4 + freshness * 0.3 + completeness * 0.3)
@@ -346,11 +332,19 @@ class DynamicOSINTCollector:
             completeness=completeness,
             error_rate=error_rate,
             recommendation=recommendation,
+            basis=(
+                "accuracy is the registry-declared reliability value "
+                "(unmeasured — no collector is connected and no collection "
+                "has ever run); completeness reflects declared supported "
+                "data types only"
+            ),
         )
 
     def get_report(self) -> dict:
         """Get OSINT collector report."""
         return {
+            "data_source": "no_live_collectors_connected",
+            "collectors_connected": 0,
             "total_sources": len(self._sources),
             "total_tasks": len(self._tasks),
             "total_findings": len(self._findings),
@@ -408,6 +402,7 @@ async def get_sources():
             "type": s.source_type,
             "reliability": s.reliability,
             "supported_data": s.supported_data,
+            "collector_connected": False,
         }
         for s in osint_collector._sources.values()
     ]
