@@ -57,6 +57,7 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as _FuturesTimeoutError
 from pathlib import Path
 
 # Ensure FRIDAY source is in path
@@ -269,7 +270,17 @@ def _groq_key() -> str:
 
 
 def _gemini_pool_keys() -> list[str]:
-    """Every Gemini key the credential pool knows (primary + fallbacks)."""
+    """Every Gemini key the credential pool knows (primary + fallbacks),
+    healthy ones first.
+
+    TASK-VOI-005: the pre-fix version returned ONLY the pool's healthy
+    subset whenever at least one key was healthy. The pool's health view
+    tracks chat generateContent quota (the REL-010 benching); a key
+    benched for chat can still hold a Gemini Live session, and the voice
+    probe counts quota/5xx answers as key-valid anyway — benching must
+    not shrink the voice candidate set. On 2026-11-15 the boot warm-up
+    saw 1 candidate and the owner's call saw 3, of FRIDAY's 5 keys.
+    """
     try:
         from friday.auth.credential_pool import credential_pool
 
@@ -278,19 +289,21 @@ def _gemini_pool_keys() -> list[str]:
         for cred in credential_pool.credentials:
             if cred.is_healthy(1, 60):
                 healthy.append(cred.api_key)
-        return healthy or keys
+        ordered = healthy + [k for k in keys if k not in healthy]
+        if ordered:
+            return ordered
     except Exception as exc:
         logger.warning("credential pool unavailable: %s", exc)
-        keys = []
-        for name in ("FRIDAY_GEMINI_API_KEY", "GEMINI_API_KEY"):
-            val = (os.getenv(name) or "").strip()
-            if val:
-                keys.extend([k.strip() for k in val.split(",") if k.strip()])
-        for i in range(1, 10):
-            val = (os.getenv(f"FRIDAY_GEMINI_FALLBACK_API_KEY_{i}") or "").strip()
-            if val:
-                keys.extend([k.strip() for k in val.split(",") if k.strip()])
-        return keys
+    keys = []
+    for name in ("FRIDAY_GEMINI_API_KEY", "GEMINI_API_KEY"):
+        val = (os.getenv(name) or "").strip()
+        if val:
+            keys.extend([k.strip() for k in val.split(",") if k.strip()])
+    for i in range(1, 10):
+        val = (os.getenv(f"FRIDAY_GEMINI_FALLBACK_API_KEY_{i}") or "").strip()
+        if val:
+            keys.extend([k.strip() for k in val.split(",") if k.strip()])
+    return keys
 
 
 def _owner_memory_lines() -> str:
@@ -430,6 +443,23 @@ def _build_session(**kwargs) -> AgentSession:
         return AgentSession(**kwargs)
 
 
+class _ProbeInconclusive(Exception):
+    """The probe could not judge the key at all (transport failure:
+    connection error, DNS, TLS, read timeout). Distinct from an auth
+    rejection (the key is bad) and from an API-level answer (the key
+    authenticated — Google responded). TASK-VOI-005."""
+
+
+# Transport-class failure markers: Google never got to judge the key.
+_PROBE_TRANSPORT_MARKERS = (
+    "connecterror", "connecttimeout", "readtimeout", "writetimeout",
+    "pooltimeout", "connection error", "connection reset", "connection aborted",
+    "name or service not known", "temporary failure in name resolution",
+    "network is unreachable", "server disconnected", "remoteprotocolerror",
+    "ssl error", "certificate verify failed", "timed out",
+)
+
+
 def _probe_gemini_key_sync(key: str) -> bool:
     """One tiny real request: does Google accept this key?
 
@@ -437,9 +467,14 @@ def _probe_gemini_key_sync(key: str) -> bool:
     connect time — the exact silent-mute failure the live probe caught
     (worker joins, publishes a track, zero frames). So the Gemini path is
     only chosen after a key proves itself with a cheap generateContent.
-    Any answer that is not an auth failure (API_KEY_INVALID / 401 / 403)
-    counts as a working key — a model-not-found with valid auth still
-    means the key is alive.
+    Any API-level answer that is not an auth failure (API_KEY_INVALID /
+    401 / 403) counts as a working key — a model-not-found or a 503 with
+    valid auth still means the key is alive.
+
+    TASK-VOI-005: a TRANSPORT failure (the request never reached Google —
+    the 2026-11-15 owner call's probes died this way under host load)
+    raises _ProbeInconclusive instead of being folded into either
+    verdict: the key is unjudged, not dead and not proven.
     """
     try:
         from google import genai
@@ -452,6 +487,9 @@ def _probe_gemini_key_sync(key: str) -> bool:
         if any(m in text for m in ("api_key_invalid", "api key not valid", "401", "403", "permission")):
             logger.info("gemini key probe rejected: %s", text[:180])
             return False
+        if any(m in text for m in _PROBE_TRANSPORT_MARKERS):
+            logger.info("gemini key probe inconclusive (transport): %s", text[:180])
+            raise _ProbeInconclusive(text[:180]) from None
         # quota or model errors mean the key itself is valid
         logger.info("gemini key probe non-auth result (key counts as valid): %s", text[:180])
         return True
@@ -466,10 +504,27 @@ def _probe_gemini_key_sync(key: str) -> bool:
 # probes and pipeline build starved the live call's audio loop. A
 # verified key is a process-level fact, not a per-job one: resolve it
 # once, cache it, and let concurrent jobs share the single resolution.
-_KEY_CACHE: dict = {"key": None, "ts": 0.0, "failed_ts": 0.0}
+_KEY_CACHE: dict = {
+    "key": None,
+    "ts": 0.0,
+    "failed_ts": 0.0,
+    # TASK-VOI-005: a candidate no probe could judge (transport failures
+    # all round) is kept separately as TENTATIVE — usable by a job so the
+    # Live session + the recovery ladder can judge it, never mistaken
+    # for a verified key.
+    "tentative_key": None,
+    "tentative_ts": 0.0,
+}
 _KEY_CACHE_TTL_S = 240.0  # trust a verified key for 4 minutes
 _KEY_NEGATIVE_TTL_S = 30.0  # after a failed round, wait 30 s before re-probing
-_KEY_PROBE_DEADLINE_S = 25.0  # one shared budget for the whole sequential round
+_KEY_PROBE_DEADLINE_S = 45.0  # one shared budget for the whole sequential round
+# TASK-VOI-005: one candidate gets at most this long. The pre-fix round
+# had only the shared deadline and BROKE on the first timeout, so one
+# slow probe (2026-11-15: the owner's call, and the boot warm-up three
+# hours earlier) silently cost the job every remaining candidate.
+_KEY_PROBE_PER_CANDIDATE_S = 10.0
+_KEY_TENTATIVE_TTL_S = 60.0  # an unjudged candidate is offered for 1 minute
+_KEY_KEEPER_INTERVAL_S = 30.0  # background re-resolution cadence
 _KEY_RESOLUTION_LOCK = threading.Lock()
 # Warm-up coordination (TASK-VOI-003 follow-up): the boot warm-up and a
 # job's provider selection must not race — the first production run had
@@ -485,6 +540,16 @@ _WARMUP_DONE = threading.Event()
 def _cached_gemini_key() -> "str | None":
     key = _KEY_CACHE.get("key")
     if key and (time.time() - float(_KEY_CACHE.get("ts") or 0.0)) <= _KEY_CACHE_TTL_S:
+        return key
+    return None
+
+
+def _cached_tentative_key() -> "str | None":
+    """TASK-VOI-005: the most recent candidate no probe could judge,
+    offered briefly so one bad probe window cannot condemn a job to the
+    fallback pipeline when the key may be perfectly good."""
+    key = _KEY_CACHE.get("tentative_key")
+    if key and (time.time() - float(_KEY_CACHE.get("tentative_ts") or 0.0)) <= _KEY_TENTATIVE_TTL_S:
         return key
     return None
 
@@ -505,48 +570,109 @@ def _resolve_gemini_key_sync() -> "str | None":
     saturated voice host, while sequential probes of the same keys
     minutes later returned 503-counts-as-valid in ~5-13 s each. On a
     ~1.5-CPU box, concurrency starved the probes it was meant to
-    speed up.) A probe that outlives the remaining budget is abandoned
-    through its future, never awaited.
+    speed up.)
+
+    TASK-VOI-005 rework, from the owner's failed live test of
+    2026-11-15 02:30 IST: the pre-fix round gave the FIRST candidate the
+    entire shared deadline and BROKE on a timeout — the journal shows
+    the round ending with "no valid key among 3 candidates" and not one
+    probe verdict ever logged, i.e. one slow/hung probe condemned the
+    job (and, three hours earlier, the boot warm-up) to the Groq
+    pipeline. Now each candidate gets its own bounded budget; a timeout
+    or a transport failure marks that candidate UNJUDGED and the round
+    moves on. If no candidate verifies but at least one was unjudged,
+    the first unjudged candidate is returned as a TENTATIVE key (cached
+    separately, briefly): the Live session either connects — the common
+    case, the probe was merely slow — or errors, and the TASK-VOI-004
+    recovery ladder fails the job over to the Groq pipeline. Only a
+    round where every candidate was auth-rejected (or no keys exist)
+    is a hard failure and earns the negative cache.
     """
     with _KEY_RESOLUTION_LOCK:
         cached = _cached_gemini_key()
         if cached:
             return cached
+        tentative = _cached_tentative_key()
+        if tentative:
+            return tentative
         if _key_resolution_cooling_down():
             return None
         keys = _gemini_pool_keys()
         if not keys:
             _KEY_CACHE["failed_ts"] = time.time()
             return None
-        # The pool orders healthy-first; three candidates are plenty and
-        # deduplication guards the comma-split fallback lists.
-        candidates = list(dict.fromkeys(keys))[:3]
+        # The pool orders healthy-first; deduplication guards the
+        # comma-split fallback lists. All of FRIDAY's keys are
+        # candidates (TASK-VOI-005: was capped at 3).
+        candidates = list(dict.fromkeys(keys))[:5]
         deadline = time.time() + _KEY_PROBE_DEADLINE_S
-        executor = ThreadPoolExecutor(max_workers=1)
+        first_unjudged: "str | None" = None
+        n_rejected = 0
+        # Two workers, still strictly sequential submission: candidates
+        # are submitted and awaited one at a time, in order — but an
+        # abandoned (timed-out) probe keeps its thread until it returns,
+        # and with a single worker it would block every later candidate
+        # in the queue and burn their budgets sight unseen. The spare
+        # slot lets the round judge the next candidate on its own
+        # merits. This is not the pre-VOI-003 concurrent probing (three
+        # probes racing under one shared deadline): at most one
+        # candidate is ever being judged at a time.
+        executor = ThreadPoolExecutor(max_workers=2)
         try:
             for key in candidates:
                 remaining = deadline - time.time()
                 if remaining <= 0:
                     break
+                budget = min(_KEY_PROBE_PER_CANDIDATE_S, remaining)
                 future = executor.submit(_probe_gemini_key_sync, key)
                 try:
-                    valid = future.result(timeout=remaining)
-                except Exception:
-                    # The probe thread outlived the budget (or died);
-                    # the round is over — do not stack more probes onto
-                    # a host that is already behind.
-                    break
+                    valid = future.result(timeout=budget)
+                except _ProbeInconclusive:
+                    if first_unjudged is None:
+                        first_unjudged = key
+                    continue
+                except _FuturesTimeoutError:
+                    # The probe thread outlived its per-candidate
+                    # budget; it is abandoned through its future, never
+                    # awaited — and the round CONTINUES (TASK-VOI-005:
+                    # the pre-fix code broke here, losing every
+                    # remaining candidate).
+                    logger.info(
+                        "gemini key probe timed out after %.0fs; candidate unjudged, trying next",
+                        budget,
+                    )
+                    if first_unjudged is None:
+                        first_unjudged = key
+                    continue
+                except Exception as exc:
+                    logger.info("gemini key probe errored (%s); candidate unjudged", exc)
+                    if first_unjudged is None:
+                        first_unjudged = key
+                    continue
                 if valid:
                     _KEY_CACHE["key"] = key
                     _KEY_CACHE["ts"] = time.time()
                     _KEY_CACHE["failed_ts"] = 0.0
+                    _KEY_CACHE["tentative_key"] = None
+                    _KEY_CACHE["tentative_ts"] = 0.0
                     logger.info(
                         "gemini key resolved once and cached process-wide for %ds",
                         int(_KEY_CACHE_TTL_S),
                     )
                     return key
+                n_rejected += 1
         finally:
             executor.shutdown(wait=False)
+        if first_unjudged is not None:
+            _KEY_CACHE["tentative_key"] = first_unjudged
+            _KEY_CACHE["tentative_ts"] = time.time()
+            logger.warning(
+                "gemini key resolution: no verified key among %d candidates "
+                "(%d auth-rejected); returning the first unjudged candidate "
+                "as a TENTATIVE key — the live session will judge it",
+                len(candidates), n_rejected,
+            )
+            return first_unjudged
         _KEY_CACHE["failed_ts"] = time.time()
         logger.info(
             "gemini key resolution: no valid key among %d candidates", len(candidates)
@@ -571,6 +697,9 @@ async def _gemini_best_key() -> "str | None":
     cached = _cached_gemini_key()
     if cached:
         return cached
+    tentative = _cached_tentative_key()
+    if tentative:
+        return tentative
     if _key_resolution_cooling_down():
         logger.info("gemini key resolution recently failed; not re-probing yet")
         return None
@@ -910,7 +1039,16 @@ async def _try_groq_pipeline():
     stt = _lk_groq.STT(
         api_key=key,
         model="whisper-large-v3-turbo",
-        detect_language=True,
+        # TASK-VOI-005: detect_language=True re-detected the language of
+        # every utterance on the owner's 2026-11-15 call and garbled it —
+        # his "Hello" was transcribed as Italian ("E' l'onno?") and his
+        # Telugu speech as Tamil-script text, so the pipeline answered
+        # nonsense with generic chit-chat. The pipeline is English-out by
+        # design (its instructions are built english_out=True), so STT is
+        # pinned to English — the plugin's own default. (Gemini Live,
+        # the primary path, hears languages natively; this pin governs
+        # only the fallback.)
+        language="en",
     )
     llm = _lk_groq.LLM(api_key=key, model=_llm_chat_model(), temperature=0.6)
     if _orpheus_ok():
@@ -1644,6 +1782,53 @@ async def entrypoint(ctx: JobContext):
 
 
 
+def _verified_key_remaining_s() -> float:
+    """Seconds of verified-cache TTL left (0 when no verified key)."""
+    if not _KEY_CACHE.get("key"):
+        return 0.0
+    return _KEY_CACHE_TTL_S - (time.time() - float(_KEY_CACHE.get("ts") or 0.0))
+
+
+def _key_keeper_step() -> str:
+    """One background key-keeping step (TASK-VOI-005). Returns what it
+    did: 'fresh' (a verified key was already cached), 'cooling' (a
+    failed round is inside its negative-cache window), 'resolved' (this
+    step's round cached a verified key), 'tentative' (only an unjudged
+    candidate is available so far), or 'failed'. All probing goes
+    through the shared single-flight resolver, so the keeper can never
+    multiply probe load against a job's own resolution."""
+    if _cached_gemini_key() is not None:
+        return "fresh"
+    if _key_resolution_cooling_down():
+        return "cooling"
+    key = _resolve_gemini_key_sync()
+    if key is None:
+        return "failed"
+    return "resolved" if _cached_gemini_key() is not None else "tentative"
+
+
+def _key_keeper_loop() -> None:
+    """TASK-VOI-005: keep a verified Gemini key cached, in the background.
+
+    The boot warm-up resolves ONCE. On 2026-11-14 23:43 IST that single
+    round failed under host load and the process stayed keyless for
+    three hours — the owner's 02:30 call inherited the failure and was
+    served by the Groq pipeline from the first second. The keeper
+    retries on a slow cadence until a verified key is cached, and
+    refreshes it before expiry, so a job normally finds the cache
+    already warm and never pays a probe round at all. Cost: at most one
+    bounded resolution round per interval, and only while keyless or
+    near expiry.
+    """
+    while True:
+        time.sleep(_KEY_KEEPER_INTERVAL_S)
+        try:
+            if _key_keeper_step() == "resolved":
+                logger.info("VOICE key keeper: verified gemini key now cached")
+        except Exception as exc:  # the keeper must never die loudly
+            logger.info("VOICE key keeper step failed (non-fatal): %s", exc)
+
+
 def _warm_up_background() -> None:
     """TASK-VOI-003: pay the cold-start costs at worker boot, not inside
     the first call. The 2026-11-14 evidence call spent its first ~20 s
@@ -1653,6 +1838,9 @@ def _warm_up_background() -> None:
     the verified-key cache with one probe, and constructs one EdgeTTS
     instance so the network/SSL paths are warm. Best-effort throughout:
     a warm-up failure only ever logs.
+
+    TASK-VOI-005: after the first pass, this thread becomes the key
+    keeper (see _key_keeper_loop) for the process's whole life.
     """
 
     def _run() -> None:
@@ -1679,6 +1867,8 @@ def _warm_up_background() -> None:
             logger.info("VOICE warm-up finished in %.1fs", time.time() - started)
         finally:
             _WARMUP_DONE.set()
+        # TASK-VOI-005: the warm-up thread becomes the key keeper.
+        _key_keeper_loop()
 
     _WARMUP_STARTED.set()
     threading.Thread(target=_run, name="friday-voice-warmup", daemon=True).start()
