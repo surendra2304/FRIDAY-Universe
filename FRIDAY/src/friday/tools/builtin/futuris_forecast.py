@@ -136,9 +136,10 @@ class FuturisForecastTool(BaseTool):
     def _client(self) -> Any:
         if self._fleet_client is not None:
             return self._fleet_client
-        from friday.ecosystem.fleet_client import FleetClient
+        # TASK-REL-007D: shared client (warm caches/pool), not a fresh one per call.
+        from friday.ecosystem.fleet_client import get_shared_fleet_client
 
-        return FleetClient()
+        return get_shared_fleet_client()
 
     def execute(
         self,

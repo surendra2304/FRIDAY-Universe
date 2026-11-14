@@ -68,9 +68,11 @@ class FleetStatusTool(BaseTool):
         if self._fleet_client is not None:
             return self._fleet_client
         # Lazy import: keeps the tool importable without the API host.
-        from friday.ecosystem.fleet_client import FleetClient
+        # TASK-REL-007D: shared client — a fresh FleetClient per call meant
+        # a cold probe cache + new httpx pool for every status question.
+        from friday.ecosystem.fleet_client import get_shared_fleet_client
 
-        return FleetClient()
+        return get_shared_fleet_client()
 
     @staticmethod
     def _format(statuses: list[Any], detail: str) -> str:
@@ -117,10 +119,10 @@ class FleetStatusTool(BaseTool):
 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
                     statuses = pool.submit(
-                        lambda: asyncio.run(client.get_all_statuses(force_refresh=True))
+                        lambda: asyncio.run(client.get_all_statuses())
                     ).result(timeout=self.timeout)
             else:
-                statuses = asyncio.run(client.get_all_statuses(force_refresh=True))
+                statuses = asyncio.run(client.get_all_statuses())
         except Exception as exc:
             # Truthful failure: say the probe failed, never invent a status.
             return ToolResult(

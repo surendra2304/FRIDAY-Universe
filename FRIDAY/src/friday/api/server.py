@@ -1474,7 +1474,11 @@ async def run_agent_task(
 @app.get("/api/agents/status")
 async def get_agents_status() -> dict[str, Any]:
     """Return a fresh peer endpoint reachability snapshot, not task-level verification."""
-    statuses = await fleet_client.get_all_statuses(force_refresh=True)
+    # TASK-REL-007D: respect the 4s probe cache (the background supervision
+    # loop force-refreshes it continuously) — force-refreshing here made
+    # every console poll re-probe all nine agents and flapped the UI's
+    # connectivity indicator whenever a sweep ran long.
+    statuses = await fleet_client.get_all_statuses()
     status_counts = {
         status: sum(1 for agent_status in statuses if agent_status.status == status)
         for status in ("ONLINE", "REACHABLE", "DEGRADED", "UNREACHABLE", "OFFLINE")
@@ -2650,7 +2654,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         try:
             from friday.memory.memora_client import memora_client as _memora
             from friday.memory.hygiene import is_memory_noise as _is_noise
-            _hits = _memora.recall_memories("friday", f"{_user} preferences boss", limit=3)
+            _hits = await asyncio.to_thread(_memora.recall_memories, "friday", f"{_user} preferences boss", limit=3)
             for _m in _hits or []:
                 _text = str(_m.get("content_text", "")).strip()
                 if _is_noise(_text):
@@ -2771,7 +2775,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _forget_res: dict[str, Any] = {}
         try:
             from friday.memory.memora_client import memora_client as _memora
-            _forget_res = _memora.forget_fact("friday", _FORGET_QUERY) or {}
+            _forget_res = await asyncio.to_thread(_memora.forget_fact, "friday", _FORGET_QUERY) or {}
         except Exception as _e:
             logger.warning(f"Memora forget failed in memory fast-path: {_e}")
             _forget_res = {"status": "error"}
@@ -2799,7 +2803,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _corr_res: dict[str, Any] = {}
         try:
             from friday.memory.memora_client import memora_client as _memora
-            _corr_res = _memora.correct_fact("friday", new_fact_text=_CORRECTION_TEXT, old_query=_CORRECTION_TEXT) or {}
+            _corr_res = await asyncio.to_thread(_memora.correct_fact, "friday", new_fact_text=_CORRECTION_TEXT, old_query=_CORRECTION_TEXT) or {}
         except Exception as _e:
             logger.warning(f"Memora correct failed in memory fast-path: {_e}")
             _corr_res = {"status": "error"}
@@ -3253,12 +3257,12 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             # Search with the owner's own words — appending generic terms
             # ("preferences facts…") buried the real subject (live lesson:
             # "do you remember my chai preference" returned research junk).
-            _hits = _memora.recall_memories("friday", raw_cmd[:200], limit=10) or []
+            _hits = await asyncio.to_thread(_memora.recall_memories, "friday", raw_cmd[:200], limit=10) or []
             if not _hits and _q_personal:
                 # Generic personal question ("what do you remember about me")
                 # has no subject words for search — probe owner facts directly.
                 _hits = (
-                    _memora.recall_memories("friday", "my favorite preference boss surendra", limit=10)
+                    await asyncio.to_thread(_memora.recall_memories, "friday", "my favorite preference boss surendra", limit=10)
                     or []
                 )
             # Memory-hygiene fix (2026-11-13): stored monitor-spam lines
@@ -3381,7 +3385,8 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             # which tier his fact landed in.
             _verdict = score_importance(_payload)
             _tier = _verdict.tier
-            _res = _memora.record_fact(
+            _res = await asyncio.to_thread(
+                _memora.record_fact,
                 agent_name="friday",
                 fact_text=_payload,
                 category="owner_fact",
@@ -3549,7 +3554,8 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         try:
             from friday.memory.memora_client import memora_client as _memora
             from friday.memory.hygiene import is_memory_noise as _is_noise
-            _hits = _memora.recall_memories(
+            _hits = await asyncio.to_thread(
+                _memora.recall_memories,
                 "friday", f"{_user} recent work preferences", limit=3,
             )
             _seen: set[str] = set()

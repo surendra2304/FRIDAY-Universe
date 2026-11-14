@@ -159,10 +159,18 @@ async def safe_peer_call(
     coro: Coroutine[Any, Any, T],
     fallback_data: Any = None,
     peer_name: str = "peer",
+    timeout: float = 20.0,
 ) -> Any:
-    """Execute a peer coroutine with graceful degradation on failure."""
+    """Execute a peer coroutine with graceful degradation on failure.
+
+    TASK-REL-007D: the call is time-bounded (default 20s). It previously
+    awaited the peer coroutine with NO timeout of its own, so a hung peer
+    could hold a chat turn hostage until the shared httpx read timeout
+    (30s) fired — one of the round-1 latency stacks. A timeout degrades
+    through the same fallback path as any other peer failure.
+    """
     try:
-        return await coro
+        return await asyncio.wait_for(coro, timeout=timeout)
     except Exception as exc:
         logger.warning("Graceful degradation: call to %s failed (%s)", peer_name, type(exc).__name__)
         if fallback_data is not None:
