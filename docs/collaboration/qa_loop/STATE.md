@@ -1,9 +1,12 @@
 # QA Loop State — shared by the scheduled runs (consolidated 2026-11-14)
 
-> This file is the handoff memory between runs. ONE daily run (09:00 IST, cron
-> job 530005) does SWEEP (fleet health/repair) then CHAOS (tests like a hostile
-> human: one surface, one fix, one upgrade). A run that ends without updating
-> this file is a FAILED run.
+> This file is the handoff memory between runs. Scheduled tasks reset per owner
+> ask (2026-11-14 ~17:45 IST): daily QA Loop cron 530005 DELETED; the single
+> scheduled task is now cron 530116 'FRIDAY DNS Guard — 30-min self-heal'
+> (fixed_rate 1800 s; runs scripts/dns_guard.py --auto-fix-domain
+> friday-universe; lean payload, 1-line replies). SWEEP+CHAOS is unarmed until
+> the owner re-arms it. A run that ends without updating this file is a FAILED
+> run.
 
 ## LAST_RUN
 - 2026-11-14 ~17:15 IST manual SWEEP-style session (ZAI Agent 1): dns_guard
@@ -66,6 +69,14 @@
   honest-reply contract. Zero regressions (129 related tests green).
 
 ## OPS NOTES (environment facts the next run must know)
+- 2026-11-14 ~17:45 IST (ZAI Agent 1): owner reset all scheduled tasks: cron 530005
+  (daily SWEEP+CHAOS) deleted; ONE job armed instead — 530116 'FRIDAY DNS Guard —
+  30-min self-heal' (fixed_rate 1800 s). Guard command validated live before
+  arming (OK -> 140.245.208.100, exit 0). QUOTA CAUTION: gateway warns 'estimated
+  48 daily executions exceeds limit 3, excess triggers will be ignored' — on the
+  current plan only ~3 runs/day actually fire (same failure mode as old 528192);
+  full 30-min cadence needs a plan upgrade (owner-side). OANDA portfolio cron
+  remains NOT re-armed (unchanged, needs explicit owner approval).
 - 2026-11-14 ~17:15 IST (ZAI Agent 1): (a) The afternoon "DNS re-drift" was a
   FALSE ALARM — watchdog typo-domain bug (see FINDINGS_QUEUE); the real record
   is healthy on all 8 authoritative nameservers and Google/Cloudflare DoH
