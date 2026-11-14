@@ -76,3 +76,51 @@ def is_memory_noise(text: str) -> bool:
     if "| assistant:" in low and "user:" in low:
         return True
     return False
+
+
+# Agent experience records — FRIDAY's own failure/success learnings, written
+# by MemoraClient._learn_locally and Memora's ExperienceService. They are
+# operational notes FOR the agent, never facts the owner told FRIDAY, so a
+# recall answer must never list one as something it "remembers" about the
+# owner. TASK-REL-027 (2026-11-14, REL-022 residual (b)): live gate replies
+# listed "[FAILURE WARNING ...]" records under the confident header "Here's
+# what I'm holding onto" when nothing genuine matched the question.
+_EXPERIENCE_MARKERS = (
+    "[failure warning",
+    "[proven success pattern",
+    "[learned best practice]",
+)
+
+
+def is_experience_record(text: str) -> bool:
+    """True when a stored line is an agent experience/learning record
+    (failure warnings, proven-pattern notes), identified by the bracketed
+    headers both writers stamp on the content."""
+    if not text:
+        return False
+    low = text.strip().lower()
+    return any(marker in low for marker in _EXPERIENCE_MARKERS)
+
+
+def is_experience_hit(hit: dict) -> bool:
+    """True when a recall hit is an experience record — by its stored
+    ``memory_type`` when the row carries one (local rows and Memora search
+    rows both do), or by the content markers when it does not."""
+    if not isinstance(hit, dict):
+        return False
+    if str(hit.get("memory_type") or "").strip().lower() == "experience":
+        return True
+    return is_experience_record(str(hit.get("content_text", "") or ""))
+
+
+def is_unpresentable_recall_hit(hit: dict) -> bool:
+    """True when a recall hit must never be presented to the owner as a
+    stored fact: monitor/log noise (``is_memory_noise``) or an agent
+    experience record (``is_experience_hit``). Presentation surfaces use
+    this one predicate; retrieval, ranking and mutation targeting keep
+    their own semantics and are deliberately NOT routed through it."""
+    if not isinstance(hit, dict):
+        return True
+    if is_experience_hit(hit):
+        return True
+    return is_memory_noise(str(hit.get("content_text", "") or ""))

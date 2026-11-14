@@ -159,6 +159,47 @@ def _is_unrequested_youtube_action(call: ToolCall, current_request: str) -> bool
 logger = get_logger("agent.core")
 
 
+def user_facing_tool_failure(tool_name: str, raw_error: str) -> str:
+    """Compose the user-visible reply for a request that ended on a tool
+    failure (TASK-REL-027, 2026-11-14).
+
+    The raw tool-error content is operator detail — provider bodies, HTTP
+    payloads, exception strings — and is never interpolated into the reply
+    (the defect class REL-022 closed for provider errors; the tool loop's
+    final fallback still did it for tool errors). The owner still learns
+    WHAT failed and what that means, in plain terms; the raw text goes to
+    the log and the response metadata instead.
+    """
+    low = (raw_error or "").lower()
+    if "action blocked" in low:
+        meaning = "a safety rule blocked that step"
+    elif "repeated tool operation" in low or "duplicate tool call" in low:
+        meaning = "the step repeated an earlier call and was stopped so it would not run twice"
+    elif "authorization block" in low or "authorization denied" in low:
+        meaning = "that step was not authorised to run"
+    elif any(m in low for m in ("401", "unauthorized", "authentication failed", "invalid api key", "missing api key")):
+        meaning = "the service rejected my access credentials"
+    elif any(m in low for m in ("403", "forbidden", "permission denied")):
+        meaning = "permission was denied for that step"
+    elif "timed out" in low or "timeout" in low:
+        meaning = "the service timed out before answering"
+    elif any(m in low for m in ("connection", "unreachable", "refused", "name resolution", "network")):
+        meaning = "the service could not be reached"
+    elif any(m in low for m in ("429", "rate limit", "too many requests")):
+        meaning = "the provider rate-limited the call"
+    elif "404" in low or "not found" in low:
+        meaning = "it could not find what it was looking for"
+    elif "not registered" in low or "not available" in low:
+        meaning = "that capability is not available right now"
+    else:
+        meaning = "the step returned an error"
+    step = f"the '{tool_name}' step" if tool_name else "a step"
+    return (
+        f"I couldn't complete that request, Boss — {step} failed: {meaning}. "
+        "Nothing was substituted or made up in its place; the technical details are in my logs."
+    )
+
+
 
 
 from friday.agent.mixins import MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
@@ -362,7 +403,10 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         mirror the chat recall gate: dialogue echoes and monitor noise are
         not facts (friday.memory.hygiene), a hit must share a subject word
         with the question before it counts as an answer, and a subjectless
-        question probes owner facts directly.
+        question probes owner facts directly. TASK-REL-027: agent
+        experience records (failure warnings, proven-pattern learnings)
+        are not facts either — a store holding only those for the
+        question is a store with no answer (REL-022 residual (b)).
         """
         text = " ".join((goal or "").strip().lower().split())
         if not text or len(text.split()) > 12:
@@ -376,7 +420,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         if not (text.endswith("?") or any(text.startswith(p) for p in matched)):
             return None
         try:
-            from friday.memory.hygiene import is_memory_noise
+            from friday.memory.hygiene import is_experience_hit, is_memory_noise
             from friday.memory.memora_client import memora_client
 
             hits = memora_client.recall_memories("friday", goal[:200], limit=10) or []
@@ -401,7 +445,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
             return None
         for hit in hits:
             line = str(hit.get("content_text", "") or "")
-            if is_memory_noise(line):
+            if is_memory_noise(line) or is_experience_hit(hit):
                 continue
             if not q_words or any(w in line.lower() for w in q_words):
                 return None  # the store holds an answer; the normal path serves it
@@ -479,6 +523,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         tool_results: list[ToolResult] = []
         tool_calls: list[ToolCall] = []
         last_error = ""
+        last_error_tool = ""
         tool_failure_counts: dict[str, int] = {}
         stop_after_failure = False
         duplicate_operation_blocked = False
@@ -726,6 +771,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                 if result.is_error:
                     if "Duplicate tool call ID" not in result.content:
                         last_error = result.content
+                        last_error_tool = call.name
                     tool_failure_counts[call.name] = tool_failure_counts.get(call.name, 0) + 1
                     normalized_error = result.content.lower()
                     if "repeated tool operation" in normalized_error:
@@ -780,8 +826,16 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
             except Exception as exc:
                 logger.warning("Text-only finalization after duplicate tool call failed: %s", exc)
 
+        if last_error:
+            # TASK-REL-027: the raw tool error is operator detail (provider
+            # bodies, HTTP payloads, exception text) — log it and keep it in
+            # metadata; the reply names the failed step and what the failure
+            # means, nothing rawer (see user_facing_tool_failure).
+            logger.warning(
+                f"Tool loop ended on a tool failure ({last_error_tool or 'unknown tool'}): {last_error}"
+            )
         content = (
-            f"I encountered persistent errors while completing the request: {last_error}"
+            user_facing_tool_failure(last_error_tool, last_error)
             if last_error
             else (
                 "I completed the requested tool operations within the action limit."
@@ -799,6 +853,8 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                 "duration_seconds": time.perf_counter() - start_time,
                 "is_successful": not bool(last_error),
                 "iterations": iterations,
+                "tool_error_detail": last_error or None,
+                "tool_error_tool": last_error_tool or None,
             },
         )
 
