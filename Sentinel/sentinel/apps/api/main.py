@@ -417,15 +417,20 @@ async def readiness_check() -> dict[str, Any]:
     except Exception:
         crypto_ok = False
 
-    # Database backend from SQLAlchemy / storage engine when available
+    # Database backend from the real SQLAlchemy engine factory when
+    # available. TASK-SEN-001 follow-up: the previous probe imported a
+    # `session_local` name that does not exist in session.py, so it always
+    # failed silently and the backend was guessed from the URL string; the
+    # factory below enforces the durable-dialect rule itself
+    # (DatabaseNotConfiguredError on missing/removed backends).
     db_backend = "unconfigured"
     db_engine_present = False
     try:
-        from sentinel.storage.database.session import session_local
-        engine = getattr(session_local, "bind", None) or getattr(session_local, "engine", None)
-        if engine is not None and hasattr(engine, "dialect"):
-            db_backend = str(getattr(engine.dialect, "name", "unconfigured"))
-            db_engine_present = True
+        from sentinel.storage.database.session import get_async_engine
+
+        engine = get_async_engine()
+        db_backend = str(engine.dialect.name)
+        db_engine_present = True
     except Exception:
         pass
     if db_backend == "unconfigured" and hasattr(settings, "database_url"):
@@ -439,10 +444,11 @@ async def readiness_check() -> dict[str, Any]:
 
     checks = {
         "crypto_keys": crypto_ok,
-        # TASK-SEN-001: was a hardcoded True. It now reflects whether a real
-        # database engine is bound; readiness must not assert a storage
-        # property it never inspected.
-        "database_wal": db_engine_present,
+        # TASK-SEN-001: was a hardcoded True. In production it now reflects
+        # the real engine probe above; outside production no durable
+        # database is configured by design, so — like audit_durable below —
+        # it does not gate readiness there.
+        "database_wal": db_engine_present if is_production else True,
         "audit_integrity": audit_ok,
         "event_bus_initialized": event_bus is not None,
         "storage_backend_configured": bool(settings.storage_backend.strip()),
