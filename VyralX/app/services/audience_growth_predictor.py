@@ -25,8 +25,10 @@ class CohortAnalysis:
     initial_size: int = 0
     current_size: int = 0
     retention_rates: list[float] = field(default_factory=list)
-    avg_lifetime_value: float = 0.0
-    churn_rate: float = 0.0
+    avg_lifetime_value: float | None = None
+    churn_rate: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -35,11 +37,13 @@ class GrowthForecast:
     forecast_id: str
     platform: str
     horizon_days: int = 30
-    projected_growth: float = 0.0
-    projected_total: int = 0
-    confidence_interval: tuple[float, float] = (0.0, 0.0)
-    viral_coefficient: float = 0.0
-    viral_loop_efficiency: float = 0.0
+    projected_growth: float | None = None
+    projected_total: int | None = None
+    confidence_interval: tuple[float | None, float | None] = (None, None)
+    viral_coefficient: float | None = None
+    viral_loop_efficiency: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     created_at: float = 0.0
 
 
@@ -58,11 +62,13 @@ class ContentPerformanceModel:
 class ViralCoefficient:
     """Viral coefficient calculation."""
     platform: str
-    coefficient: float = 0.0
-    loop_duration_hours: float = 0.0
-    sharing_rate: float = 0.0
-    effective_virality: float = 0.0
-    trend: str = "stable"
+    coefficient: float | None = None
+    loop_duration_hours: float | None = None
+    sharing_rate: float | None = None
+    effective_virality: float | None = None
+    trend: str = "unknown"
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -71,10 +77,12 @@ class ChurnPrediction:
     prediction_id: str
     platform: str
     cohort_id: str = ""
-    predicted_churn_rate: float = 0.0
-    high_risk_count: int = 0
-    moderate_risk_count: int = 0
-    low_risk_count: int = 0
+    predicted_churn_rate: float | None = None
+    high_risk_count: int | None = None
+    moderate_risk_count: int | None = None
+    low_risk_count: int | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     retention_strategies: list[str] = field(default_factory=list)
     created_at: float = 0.0
 
@@ -84,9 +92,11 @@ class ContentRecommendation:
     """Content strategy recommendation."""
     recommendation_id: str
     platform: str
-    content_type: str = ""
-    expected_growth_impact: float = 0.0
+    content_type: str | None = None
+    expected_growth_impact: float | None = None
     rationale: str = ""
+    data_status: str = "no_data"
+    data_note: str = ""
     implementation_difficulty: str = "medium"
     estimated_time: str = "1 week"
 
@@ -98,8 +108,10 @@ class GrowthStrategy:
     platform: str
     strategy_name: str = ""
     tactics: list[str] = field(default_factory=list)
-    expected_roi: float = 0.0
+    expected_roi: float | None = None
     risk_level: str = "medium"
+    data_status: str = "no_data"
+    data_note: str = ""
     timeline: str = ""
 
 
@@ -122,69 +134,95 @@ class AudienceGrowthPredictor:
         retention_rates: list[float] | None = None,
     ) -> CohortAnalysis:
         """Create a cohort analysis."""
-        cohort = CohortAnalysis(
-            cohort_id=hashlib.md5(
-                f"cohort:{cohort_label}:{time.time()}".encode()
-            ).hexdigest()[:12],
-            cohort_label=cohort_label,
-            start_date=time.time(),
-            initial_size=initial_size,
-            current_size=initial_size,
-            retention_rates=retention_rates or [1.0, 0.8, 0.6, 0.4, 0.3],
-            churn_rate=0.1,
-        )
-
-        # Calculate current size
-        for rate in cohort.retention_rates:
-            cohort.current_size = int(cohort.current_size * rate)
-
-        cohort.churn_rate = 1.0 - (cohort.current_size / max(1, initial_size))
-        cohort.avg_lifetime_value = sum(cohort.retention_rates) * 5.0
+        if retention_rates:
+            cohort = CohortAnalysis(
+                cohort_id=hashlib.md5(
+                    f"cohort:{cohort_label}:{time.time()}".encode()
+                ).hexdigest()[:12],
+                cohort_label=cohort_label,
+                start_date=time.time(),
+                initial_size=initial_size,
+                current_size=initial_size,
+                retention_rates=retention_rates,
+                data_status="estimated_from_inputs",
+                data_note=(
+                    "current_size applies the caller-supplied retention "
+                    "rates sequentially; churn_rate = 1 - current/initial; "
+                    "avg_lifetime_value = sum(retention_rates) * 5.0 "
+                    "(a stated modelling assumption, not a measurement)."
+                ),
+            )
+            for rate in cohort.retention_rates:
+                cohort.current_size = int(cohort.current_size * rate)
+            cohort.churn_rate = 1.0 - (cohort.current_size / max(1, initial_size))
+            cohort.avg_lifetime_value = sum(cohort.retention_rates) * 5.0
+        else:
+            # TASK-REL-020: a default retention curve [1.0, 0.8, 0.6, 0.4,
+            # 0.3] was previously invented when the caller supplied none,
+            # and churn/LTV were computed from it as if measured.
+            cohort = CohortAnalysis(
+                cohort_id=hashlib.md5(
+                    f"cohort:{cohort_label}:{time.time()}".encode()
+                ).hexdigest()[:12],
+                cohort_label=cohort_label,
+                start_date=time.time(),
+                initial_size=initial_size,
+                current_size=initial_size,
+                retention_rates=[],
+                churn_rate=None,
+                avg_lifetime_value=None,
+                data_status="no_data",
+                data_note=(
+                    "No retention rates were supplied, so current size, "
+                    "churn and lifetime value cannot be computed."
+                ),
+            )
 
         self._cohorts[cohort.cohort_id] = cohort
         return cohort
 
     def forecast_growth(self, platform: str, current_audience: int, horizon_days: int = 30) -> GrowthForecast:
-        """Forecast audience growth."""
-        # Calculate viral coefficient
-        sharing_rate = 0.1 + (ord(hashlib.md5(platform.encode()).hexdigest()[:1]) % 10) / 100
-        invite_acceptance = 0.15 + (ord(hashlib.md5(f"accept:{platform}".encode()).hexdigest()[:1]) % 15) / 100
-        viral_coefficient = sharing_rate * invite_acceptance
+        """Forecast audience growth (honest no-data state).
 
-        # Growth rate: K * (1 - K)^t model (simplified)
-        if viral_coefficient < 1:
-            growth_rate = viral_coefficient * (1 - viral_coefficient) ** (horizon_days / 7)
-        else:
-            growth_rate = 0.5  # Super-viral
-
-        projected = current_audience * (1 + growth_rate)
-        lower = projected * 0.7
-        upper = projected * 1.3
-
+        The only input is the current audience size: there is no growth
+        history, sharing-rate or invite data for any platform, so no
+        projection can be computed. (TASK-REL-020: sharing_rate and
+        invite_acceptance were previously derived from md5 hashes of the
+        platform name, and the projected growth/total/interval were
+        arithmetic on those invented inputs.)
+        """
+        note = (
+            "No growth history, sharing-rate or invite-acceptance data "
+            "exists for this platform, so projected growth, totals and "
+            "the viral coefficient are unavailable."
+        )
         forecast = GrowthForecast(
             forecast_id=hashlib.md5(
                 f"forecast:{platform}:{time.time()}".encode()
             ).hexdigest()[:12],
             platform=platform,
             horizon_days=horizon_days,
-            projected_growth=growth_rate,
-            projected_total=int(projected),
-            confidence_interval=(int(lower), int(upper)),
-            viral_coefficient=round(viral_coefficient, 4),
-            viral_loop_efficiency=round(sharing_rate * invite_acceptance, 4),
+            projected_growth=None,
+            projected_total=None,
+            confidence_interval=(None, None),
+            viral_coefficient=None,
+            viral_loop_efficiency=None,
+            data_status="no_data",
+            data_note=note,
             created_at=time.time(),
         )
 
         self._forecasts.append(forecast)
 
-        # Update viral coefficient
         self._viral[platform] = ViralCoefficient(
             platform=platform,
-            coefficient=viral_coefficient,
-            loop_duration_hours=24.0,
-            sharing_rate=sharing_rate,
-            effective_virality=viral_coefficient,
-            trend="growing" if viral_coefficient > 0.1 else "stable",
+            coefficient=None,
+            loop_duration_hours=None,
+            sharing_rate=None,
+            effective_virality=None,
+            trend="unknown",
+            data_status="no_data",
+            data_note=note,
         )
 
         return forecast
@@ -193,10 +231,29 @@ class AudienceGrowthPredictor:
         """Predict audience churn."""
         cohort = self._cohorts.get(cohort_id) if cohort_id else None
 
-        predicted_churn = 0.1 + (ord(hashlib.md5(f"churn:{platform}".encode()).hexdigest()[:1]) % 15) / 100
-
-        if cohort:
-            predicted_churn = cohort.churn_rate
+        # With a cohort whose retention rates were supplied, the churn
+        # rate is the cohort's own computed rate. Without one there is no
+        # churn data at all. (TASK-REL-020: previously an md5 hash of the
+        # platform name; the risk counts were the rate multiplied by
+        # arbitrary 1000/2000/5000 bases and stay None — no per-user
+        # risk data exists.)
+        if cohort and cohort.churn_rate is not None:
+            predicted_churn = round(cohort.churn_rate, 4)
+            churn_status = "estimated_from_inputs"
+            churn_note = (
+                "Churn rate is the named cohort's computed rate "
+                "(1 - current_size/initial_size from its supplied "
+                "retention rates). Risk-band counts are unavailable: "
+                "no per-user risk data exists."
+            )
+        else:
+            predicted_churn = None
+            churn_status = "no_data"
+            churn_note = (
+                "No cohort with supplied retention rates was given, so "
+                "no churn rate can be computed; risk-band counts are "
+                "unavailable (no per-user risk data exists)."
+            )
 
         prediction = ChurnPrediction(
             prediction_id=hashlib.md5(
@@ -204,10 +261,12 @@ class AudienceGrowthPredictor:
             ).hexdigest()[:12],
             platform=platform,
             cohort_id=cohort_id,
-            predicted_churn_rate=round(predicted_churn, 4),
-            high_risk_count=int(1000 * predicted_churn),
-            moderate_risk_count=int(2000 * predicted_churn),
-            low_risk_count=int(5000 * predicted_churn),
+            predicted_churn_rate=predicted_churn,
+            high_risk_count=None,
+            moderate_risk_count=None,
+            low_risk_count=None,
+            data_status=churn_status,
+            data_note=churn_note,
             retention_strategies=[
                 "Personalized content recommendations",
                 "Engagement incentives",
@@ -222,19 +281,30 @@ class AudienceGrowthPredictor:
 
     def generate_recommendation(self, platform: str) -> ContentRecommendation:
         """Generate a content strategy recommendation."""
-        content_types = ["short_form_video", "live_streaming", "interactive_content", "collaborative_content", "educational_content"]
-        content_type = content_types[ord(hashlib.md5(platform.encode()).hexdigest()[:1]) % len(content_types)]
-
+        # No per-content-type engagement data exists for any platform, so
+        # no evidence-based pick can be made. (TASK-REL-020: the content
+        # type was previously chosen by md5 hash and justified with a
+        # fabricated rationale claiming it "has shown highest engagement
+        # in recent data".)
         recommendation = ContentRecommendation(
             recommendation_id=hashlib.md5(
                 f"rec:{platform}:{time.time()}".encode()
             ).hexdigest()[:12],
             platform=platform,
-            content_type=content_type,
-            expected_growth_impact=0.2 + (ord(hashlib.md5(f"growth:{platform}{content_type}".encode()).hexdigest()[:1]) % 30) / 100,
-            rationale=f"{content_type} has shown highest engagement on {platform} in recent data",
-            implementation_difficulty="medium" if content_type in ("short_form_video", "educational_content") else "hard",
-            estimated_time="2 weeks",
+            content_type=None,
+            expected_growth_impact=None,
+            rationale=(
+                "No content-performance data is available for this "
+                "platform, so no content type can be recommended on "
+                "evidence."
+            ),
+            implementation_difficulty="unknown",
+            estimated_time="",
+            data_status="no_data",
+            data_note=(
+                "No measured engagement by content type exists; a "
+                "recommendation requires real performance data."
+            ),
         )
 
         self._recommendations.append(recommendation)
@@ -255,7 +325,14 @@ class AudienceGrowthPredictor:
                 "Optimize posting times using AI analysis",
                 "Create platform-exclusive content series",
             ],
-            expected_roi=0.25 + (ord(hashlib.md5(f"roi:{platform}".encode()).hexdigest()[:1]) % 20) / 100,
+            # Tactics are a static template; no ROI data exists.
+            # (TASK-REL-020: previously derived from an md5 hash.)
+            expected_roi=None,
+            data_status="no_data",
+            data_note=(
+                "Tactics are a static template; expected ROI cannot be "
+                "estimated without measured campaign data."
+            ),
             risk_level="medium",
             timeline="Q4 2024 (3 months)",
         )
@@ -273,8 +350,16 @@ class AudienceGrowthPredictor:
             "total_churn_predictions": len(self._churn),
             "total_recommendations": len(self._recommendations),
             "total_strategies": len(self._strategies),
-            "avg_viral_coefficient": sum(v.coefficient for v in self._viral.values()) / max(1, len(self._viral)),
-            "avg_forecast_growth": sum(f.projected_growth for f in self._forecasts) / max(1, len(self._forecasts)),
+            "avg_viral_coefficient": (
+                sum(v.coefficient for v in self._viral.values() if v.coefficient is not None)
+                / max(1, sum(1 for v in self._viral.values() if v.coefficient is not None))
+                if any(v.coefficient is not None for v in self._viral.values()) else None
+            ),
+            "avg_forecast_growth": (
+                sum(f.projected_growth for f in self._forecasts if f.projected_growth is not None)
+                / max(1, sum(1 for f in self._forecasts if f.projected_growth is not None))
+                if any(f.projected_growth is not None for f in self._forecasts) else None
+            ),
             "platforms_analyzed": list(self._viral.keys()),
             "recent_forecasts": [
                 {
@@ -332,6 +417,8 @@ async def forecast_growth(payload: dict):
         "projected_growth": forecast.projected_growth,
         "projected_total": forecast.projected_total,
         "viral_coefficient": forecast.viral_coefficient,
+        "data_status": forecast.data_status,
+        "data_note": forecast.data_note,
     }
 
 
@@ -347,6 +434,8 @@ async def predict_churn(payload: dict):
         "churn_rate": prediction.predicted_churn_rate,
         "high_risk": prediction.high_risk_count,
         "retention_strategies": prediction.retention_strategies,
+        "data_status": prediction.data_status,
+        "data_note": prediction.data_note,
     }
 
 
@@ -354,14 +443,14 @@ async def predict_churn(payload: dict):
 async def generate_recommendation(payload: dict):
     """Generate content recommendation."""
     rec = growth_predictor.generate_recommendation(payload["platform"])
-    return {"recommendation_id": rec.recommendation_id, "content_type": rec.content_type, "growth_impact": rec.expected_growth_impact}
+    return {"recommendation_id": rec.recommendation_id, "content_type": rec.content_type, "growth_impact": rec.expected_growth_impact, "rationale": rec.rationale, "data_status": rec.data_status, "data_note": rec.data_note}
 
 
 @router.post("/api/v1/vyralx/growth/strategy")
 async def create_strategy(payload: dict):
     """Create a growth strategy."""
     strategy = growth_predictor.create_strategy(payload["platform"])
-    return {"strategy_id": strategy.strategy_id, "name": strategy.strategy_name, "roi": strategy.expected_roi, "tactics": len(strategy.tactics)}
+    return {"strategy_id": strategy.strategy_id, "name": strategy.strategy_name, "roi": strategy.expected_roi, "tactics": len(strategy.tactics), "data_status": strategy.data_status, "data_note": strategy.data_note}
 
 
 @router.get("/api/v1/vyralx/growth/report")
