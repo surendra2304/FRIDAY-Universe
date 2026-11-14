@@ -1,20 +1,34 @@
 "use client";
 
-import { Eraser, Loader2, MessageSquareText, Send } from "lucide-react";
+import { AlertTriangle, Eraser, Loader2, MessageSquareText, RotateCcw, Send } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessage, requestJson } from "@/lib/api";
+import { prefersReducedMotion } from "./effects";
 
 /* ============================================================
    FRIDAY chat — talks to the friend-persona /api/chat pipeline
    (the same engine that routes to the 10-agent fleet).
 
    Chat-length fix (2026-11-13, owner directive "why is the chat
-   that much long"): the transcript used to grow without bound —
-   an hour of commands produced a wall of bubbles. Now the panel
-   keeps only the last MAX_RENDERED exchanges in view, restores
-   at most the last session tail, and has an explicit Clear
-   button. The full history stays on the server (Memora) — only
-   the rendered transcript is capped.
+   that much long"): the transcript keeps only the last
+   MAX_RENDERED exchanges in view, restores at most the last
+   session tail, and has an explicit Clear button. The full
+   history stays on the server (Memora) — only the rendered
+   transcript is capped.
+
+   Sovereign Aurora edition (2026-11-14, frontend rebuild):
+   - Transport failures no longer render as a raw "502 …" chat
+     bubble. They render as a designed SYSTEM NOTICE: a plain-
+     language headline, the technical detail in mono, and a
+     Retry action that resends the failed message.
+   - A 75s client-side ceiling on /api/chat: a hung request used
+     to spin forever (round-1 live test: a coding task produced
+     no reply in >2 minutes and the console had to be reloaded).
+     The notice says honestly that FRIDAY may still finish it.
+   - Live replies reveal progressively (streaming feel, rAF,
+     tap-to-complete, full text always available to AT).
+   Backend contracts are unchanged: POST /api/chat {message},
+   GET /api/v1/conversation/history for the restore tail.
    ============================================================ */
 
 const CHIPS = [
@@ -28,13 +42,57 @@ const CHIPS = [
 const MAX_RENDERED = 40;
 /** Restored-from-history tail — enough context, never a wall. */
 const RESTORE_LIMIT = 12;
+/** Client ceiling for one /api/chat round-trip before we say so. */
+const CHAT_TIMEOUT_MS = 75_000;
 
-function appendCapped(current: ChatMessage[], next: ChatMessage[]): ChatMessage[] {
+type LiveMessage = ChatMessage & {
+  /** Arrived during this session → eligible for the reveal effect. */
+  live?: boolean;
+  /** For error notices: the user text a Retry should resend. */
+  retryOf?: string;
+};
+
+function appendCapped(current: LiveMessage[], next: LiveMessage[]): LiveMessage[] {
   return [...current, ...next].slice(-MAX_RENDERED);
 }
 
+/** Progressive reveal for a live FRIDAY reply. One rAF, terminates. */
+function RevealText({ text, live }: { text: string; live?: boolean }) {
+  const [count, setCount] = useState(live ? 0 : text.length);
+  const done = count >= text.length;
+
+  useEffect(() => {
+    if (!live || prefersReducedMotion()) {
+      setCount(text.length);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const duration = Math.min(1400, 260 + text.length * 3.2);
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      setCount(Math.floor(text.length * (1 - Math.pow(1 - p, 2))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else setCount(text.length);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [text, live]);
+
+  if (done) return <>{text}</>;
+  return (
+    <span onClick={() => setCount(text.length)} title="Tap to show the full reply">
+      <span aria-hidden="true">
+        {text.slice(0, count)}
+        <span className="caret" />
+      </span>
+      <span className="sr-only">{text}</span>
+    </span>
+  );
+}
+
 export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number } }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<LiveMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -50,13 +108,9 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
      (/api/v1/conversation/history, logged by every command), but the panel
      started EMPTY on every page load — the owner reloaded to a blank chat and
      concluded FRIDAY has no memory. Hydrate the last session's exchanges on
-     mount. Round 2 (2026-11-13, owner directive): restore at most the last
-     20 messages — a full 60-message wall (mostly one-line failures) read as
-     a broken product on first paint. A divider marks it as restored context
-     so the fresh session reads clean. Failure is silent and normal: a fresh
-     install simply has nothing to restore. Round 3 (2026-11-13,
-     owner directive): restore only a short tail — chat must read
-     like a console, not an archive. */
+     mount. Round 2/3 (2026-11-13): restore only a short tail — chat must
+     read like a console, not an archive. Failure is silent and normal:
+     a fresh install simply has nothing to restore. */
   const [restoredCount, setRestoredCount] = useState(0);
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +124,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
           }>;
         }>("/api/v1/conversation/history?limit=" + RESTORE_LIMIT);
         if (cancelled || !res.entries?.length) return;
-        const restored: ChatMessage[] = [];
+        const restored: LiveMessage[] = [];
         for (const e of [...res.entries].reverse()) {
           const at = e.timestamp ? new Date(e.timestamp).getTime() : Date.now();
           if (e.user_input?.trim()) restored.push({ role: "user", text: e.user_input, at });
@@ -100,6 +154,14 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefill?.seq]);
 
+  /* composer auto-grow (caps at the CSS max-height) */
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 130)}px`;
+  }, [input]);
+
   const scrollToEnd = useCallback(() => {
     requestAnimationFrame(() => {
       const el = scrollRef.current;
@@ -117,21 +179,32 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
     setBusy(true);
     setInput("");
     setMessages((current) => appendCapped(current, [{ role: "user", text: clean, at: Date.now() }]));
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
     try {
       const result = await requestJson<{ reply?: string; mode?: string; metadata?: { proactive_notice?: string | null } }>("/api/chat", {
         method: "POST",
         body: JSON.stringify({ message: clean }),
+        signal: controller.signal,
       });
       const answer = result.reply || result.mode || "FRIDAY accepted the message.";
-      setMessages((current) => appendCapped(current, [{ role: "friday", text: answer, at: Date.now() }]));
+      setMessages((current) => appendCapped(current, [{ role: "friday", text: answer, at: Date.now(), live: true }]));
       /* Server pollution fix (2026-11-13): monitor alerts no longer arrive
          glued to the answer text — they ride in metadata and render here as
          a dismissible banner, so the answer itself stays clean. */
       setNotice(result.metadata?.proactive_notice ?? null);
     } catch (error) {
-      const reason = error instanceof Error ? error.message : "FRIDAY could not be reached.";
-      setMessages((current) => appendCapped(current, [{ role: "friday", text: reason, at: Date.now(), error: true }]));
+      const timedOut = error instanceof DOMException && error.name === "AbortError";
+      const reason = timedOut
+        ? "No answer within 75 seconds. FRIDAY may still be working on it — long tasks keep running server-side and the reply can still land in history."
+        : error instanceof Error
+          ? error.message
+          : "FRIDAY could not be reached.";
+      setMessages((current) =>
+        appendCapped(current, [{ role: "friday", text: reason, at: Date.now(), error: true, retryOf: clean }]),
+      );
     } finally {
+      window.clearTimeout(timer);
       setBusy(false);
     }
   }
@@ -149,7 +222,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
   }
 
   return (
-    <div className="panel" id="chat">
+    <div className="panel chat-panel" id="chat">
       <div className="panel-head">
         <div className="panel-title">
           <div className="title-icon cyan">
@@ -177,7 +250,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
 
       <div className="chat-body">
         {notice && (
-          <div className="onboarding-hint" style={{ margin: "12px 18px 0" }} role="status">
+          <div className="onboarding-hint chat-notice" style={{ margin: "12px 18px 0" }} role="status">
             <span style={{ lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{notice}</span>
             <button className="onboarding-dismiss" onClick={() => setNotice(null)} aria-label="Dismiss notice">
               dismiss
@@ -192,6 +265,7 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
           )}
           {messages.length === 0 && (
             <div className="chat-empty">
+              <div className="chat-empty-orb" aria-hidden="true" />
               <h4 className="chat-empty-title">How can I help, Boss?</h4>
               <p style={{ margin: 0, fontSize: 13.5, maxWidth: 380 }}>
                 Talk or type below — commands, questions, fleet dispatch.
@@ -199,30 +273,41 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
             </div>
           )}
           {messages.length > 0 &&
-            messages.map((m, i) => (
-              <div
-                key={i}
-                className={
-                  m.role === "user"
-                    ? "bubble user"
-                    : m.error
-                      ? "bubble friday error"
-                      : "bubble friday"
-                }
-              >
-                {m.text}
-                <div className="bubble-meta">
-                  {m.role === "user" ? "You" : "FRIDAY"} ·{" "}
-                  {hydrated ? new Date(m.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""}
+            messages.map((m, i) =>
+              m.error ? (
+                <div className="sys-notice" role="alert" key={i}>
+                  <AlertTriangle size={15} className="sys-notice-icon" aria-hidden="true" />
+                  <div className="sys-notice-body">
+                    <strong>That request didn&apos;t complete</strong>
+                    <code>{m.text}</code>
+                  </div>
+                  {m.retryOf && (
+                    <button
+                      className="mini-btn sys-notice-retry"
+                      onClick={() => void send(m.retryOf!)}
+                      disabled={busy}
+                      aria-label="Retry the failed message"
+                    >
+                      <RotateCcw size={12} /> Retry
+                    </button>
+                  )}
                 </div>
-              </div>
-            ))
-          }
+              ) : (
+                <div key={i} className={m.role === "user" ? "bubble user" : "bubble friday"}>
+                  {m.role === "friday" ? <RevealText text={m.text} live={m.live} /> : m.text}
+                  <div className="bubble-meta">
+                    {m.role === "user" ? "You" : "FRIDAY"} ·{" "}
+                    {hydrated ? new Date(m.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : ""}
+                  </div>
+                </div>
+              ),
+            )}
           {busy && (
-            <div className="typing-row panel" style={{ padding: "13px 18px" }}>
+            <div className="typing-row" aria-live="polite">
               <span className="typing-dot" />
               <span className="typing-dot" />
               <span className="typing-dot" />
+              <span className="typing-label">FRIDAY is thinking</span>
             </div>
           )}
         </div>
