@@ -316,6 +316,8 @@ class PredictiveThreatAnalyzer:
             overall_risk = "low"
 
         return {
+            "data_source": "operator_supplied_records_only",
+            "basis": "heuristic_scoring_over_operator_supplied_records",
             "risk_score": risk_score,
             "overall_risk": overall_risk,
             "total_indicators": total_indicators,
@@ -329,6 +331,7 @@ class PredictiveThreatAnalyzer:
     def get_report(self) -> dict:
         """Get threat analyzer report."""
         return {
+            "data_source": "operator_supplied_records_only",
             "total_indicators": len(self._indicators),
             "total_actors": len(self._actors),
             "total_patterns": len(self._patterns),
@@ -391,16 +394,28 @@ async def add_threat_actor(payload: dict):
 
 @router.get("/api/v1/intelex/threat/predict")
 async def predict_threats():
-    """Predict emerging threats."""
+    """Predict emerging threats.
+
+    TASK-REL-017: predictions are heuristics computed only over
+    operator-supplied indicator/actor records in this service — no
+    external feed or model is connected. Every prediction carries that
+    basis in its payload.
+    """
     predictions = threat_analyzer.predict_threats()
-    return [p.__dict__ for p in predictions]
+    return [
+        {**p.__dict__, "basis": "heuristic_over_operator_supplied_records_only"}
+        for p in predictions
+    ]
 
 
 @router.get("/api/v1/intelex/threat/correlate")
 async def correlate_threats():
     """Correlate related threats."""
     correlations = threat_analyzer.correlate_threats()
-    return [c.__dict__ for c in correlations]
+    return [
+        {**c.__dict__, "basis": "shared_tag_grouping_over_operator_supplied_records"}
+        for c in correlations
+    ]
 
 
 @router.post("/api/v1/intelex/threat/graph")

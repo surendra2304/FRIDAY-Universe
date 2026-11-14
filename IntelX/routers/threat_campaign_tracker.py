@@ -140,10 +140,16 @@ class ThreatCampaignTracker:
             threat_actor=threat_actor,
             start_time=time.time(),
             last_activity=time.time(),
-            target_sectors=target_sectors or ["financial", "technology"],
-            target_regions=target_regions or ["North America", "Europe"],
+            # TASK-REL-017: record only what the operator supplied. The
+            # previous defaults invented target sectors/regions, and the
+            # attribution confidence was derived from an md5 hash of the
+            # actor name — a fabricated measurement. Attribution confidence
+            # now starts at 0.0 and rises only via operator-added
+            # attribution indicators (see add_attribution_indicator).
+            target_sectors=list(target_sectors) if target_sectors else [],
+            target_regions=list(target_regions) if target_regions else [],
             techniques_used=[],
-            attribution_confidence=0.3 + (ord(hashlib.md5(threat_actor.encode()).hexdigest()[:1]) % 40) / 100 if threat_actor else 0.0,
+            attribution_confidence=0.0,
         )
         self._campaigns[campaign.campaign_id] = campaign
         return campaign
@@ -305,8 +311,15 @@ class ThreatCampaignTracker:
             campaign_id=campaign_id,
             prediction_type="next_target",
             prediction=f"Next likely target sector: {next_target}",
-            confidence=0.5 + (ord(hashlib.md5(campaign_id.encode()).hexdigest()[:1]) % 30) / 100,
-            reasoning=f"Based on campaign pattern and recent activity",
+            # TASK-REL-017: confidence is derived from the number of
+            # operator-recorded events (0.0 when none exist). The previous
+            # formula derived it from an md5 hash of the campaign id.
+            confidence=0.0 if not recent else min(0.6, 0.2 + 0.04 * len(recent)),
+            reasoning=(
+                f"Heuristic over {len(recent)} operator-recorded campaign "
+                "events; the named sector is the first operator-recorded "
+                "target sector. No external telemetry is connected."
+            ),
             predicted_at=time.time(),
         )
 
@@ -347,6 +360,7 @@ class ThreatCampaignTracker:
     def get_report(self) -> dict:
         """Get threat campaign tracker report."""
         return {
+            "data_source": "operator_recorded_campaign_data_only",
             "total_campaigns": len(self._campaigns),
             "total_events": len(self._events),
             "total_targets": len(self._targets),
@@ -422,7 +436,13 @@ async def add_target(campaign_id: str, payload: dict):
 async def predict(campaign_id: str):
     """Generate a prediction for a campaign."""
     prediction = campaign_tracker.predict(campaign_id)
-    return {"prediction_id": prediction.prediction_id, "type": prediction.prediction_type, "prediction": prediction.prediction, "confidence": prediction.confidence}
+    return {
+        "prediction_id": prediction.prediction_id,
+        "type": prediction.prediction_type,
+        "prediction": prediction.prediction,
+        "confidence": prediction.confidence,
+        "basis": "heuristic_over_operator_recorded_events_only",
+    }
 
 
 @router.get("/api/v1/intelex/campaigns/{campaign_id}/intelligence")
@@ -433,6 +453,7 @@ async def get_intelligence(campaign_id: str):
         "name": intel.name,
         "threat_actor": intel.threat_actor,
         "status": intel.status,
+        "data_source": "operator_recorded_campaign_data_only",
         "total_events": intel.total_events,
         "total_targets": intel.total_targets,
         "escalation_likelihood": intel.escalation_likelihood,

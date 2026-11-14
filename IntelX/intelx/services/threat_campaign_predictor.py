@@ -91,7 +91,13 @@ class ThreatCampaignPredictor:
                 "duration": phase.duration_estimate,
             })
 
-        forecast.confidence = min(0.9, len(forecast.predicted_phases) * 0.15)
+        # TASK-REL-017: confidence is derived ONLY from the probabilities
+        # the operator supplied when registering the phases (their mean;
+        # 0.0 when no phases exist or none carry a probability). The
+        # previous formula — 0.15 per registered phase, capped at 0.9 —
+        # invented a confidence from a mere count of records.
+        probs = [p.start_probability for p in self._phases.values()]
+        forecast.confidence = round(sum(probs) / len(probs), 3) if probs else 0.0
 
         self._forecasts.append(forecast)
         return forecast
@@ -152,6 +158,7 @@ class ThreatCampaignPredictor:
             "total_forecasts": len(self._forecasts),
             "total_assessments": len(self._assessments),
             "engine_status": "operational",
+            "data_source": "operator_registered_phases_and_declared_levels_only",
         }
 
 
@@ -175,6 +182,8 @@ async def forecast_campaign(actor: str, current_phase: str = ""):
         "current_phase": forecast.current_phase,
         "phase_count": len(forecast.predicted_phases),
         "confidence": forecast.confidence,
+        "data_source": "operator_registered_phases_only",
+        "confidence_basis": "mean_of_operator_supplied_phase_probabilities_no_telemetry",
     }
 
 
@@ -187,6 +196,7 @@ async def assess_strategic_threat(threat_level: str = "medium"):
         "risk_score": assessment.risk_score,
         "timeline": assessment.timeline,
         "recommendations": assessment.recommendations,
+        "basis": "static_playbook_keyed_by_caller_declared_threat_level_no_telemetry",
     }
 
 
