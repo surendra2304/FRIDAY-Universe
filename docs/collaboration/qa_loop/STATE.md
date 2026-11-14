@@ -1,10 +1,16 @@
-# QA Loop State — shared by the two hourly scheduled runs
+# QA Loop State — shared by the scheduled runs (consolidated 2026-11-14)
 
-> This file is the handoff memory between runs. SWEEP (hourly :00) repairs the fleet.
-> CHAOS (hourly :30) tests like a hostile human and ships one upgrade.
-> A run that ends without updating this file is a FAILED run.
+> This file is the handoff memory between runs. ONE daily run (09:00 IST, cron
+> job 530005) does SWEEP (fleet health/repair) then CHAOS (tests like a hostile
+> human: one surface, one fix, one upgrade). A run that ends without updating
+> this file is a FAILED run.
 
 ## LAST_RUN
+- 2026-11-14 ~17:15 IST manual SWEEP-style session (ZAI Agent 1): dns_guard
+  typo-domain false-alarm root-caused + fixed (commit 4a55148, suite 13/13);
+  OANDA demo calm (99,833.00 USD, 0 open trades); no chaos surface consumed
+  (rotation stays at 2 = voice). Cron consolidated: job 528192 deleted
+  (quota-stalled), job 530005 armed (daily 09:00 IST).
 - 2026-11-13 17:30 IST CHAOS run (surface 1: chat-brain), commit 20dbfc1
 - battery 11/11 green; regression suites: api-command/origin/fleet 64, persona/router 65
 
@@ -16,6 +22,14 @@
 - TASK-WF-015 — United owner-workflow acceptance and real shared-memory/research lifecycle.
 
 ## FINDINGS_QUEUE (severity | repro | discovered by | status)
+- CRITICAL | dns_guard --name default + both dns-fix.yml job FQDNs were
+  misspelled 'friday-universe.duckns.org' (missing 'd'); the typo-domain serves
+  a wildcard catch-all with the same Linode trio, so every default run
+  monitored the WRONG domain: false drift alerts to the owner + the workflow's
+  verify/TLS steps never checked the real record. Real record proven healthy
+  (all 8 authoritative NS + Google/Cloudflare DoH -> 140.245.208.100).
+  FIXED commit 4a55148 (DEFAULT_NAME/DEFAULT_EXPECTED constants, typo fixes,
+  2 regression pins, suite 13/13) | SWEEP | DONE
 - MEDIUM | 2026-11-13 16:57 IST: trades 57-77 flattened externally 2 min after open,
   -42.47 USD realized; not SL/TP, not this loop. Confirm = owner manual close. | SWEEP | OPEN
 - CRITICAL | datetime in command-result metadata crashed raw json.dumps on every
@@ -52,5 +66,25 @@
   honest-reply contract. Zero regressions (129 related tests green).
 
 ## OPS NOTES (environment facts the next run must know)
-- 2026-11-14 ~11:45 IST: agent-scheduler cron triggers are quota-stalled ("cron_trigger quota exceeded for plan free") — no SWEEP/CHAOS runs have fired since 2026-11-13 17:30 IST. Rotation resumes at surface 2 (voice) when triggers return. Owner informed; options: thinner schedule vs plan upgrade.
+- 2026-11-14 ~17:15 IST (ZAI Agent 1): (a) The afternoon "DNS re-drift" was a
+  FALSE ALARM — watchdog typo-domain bug (see FINDINGS_QUEUE); the real record
+  is healthy on all 8 authoritative nameservers and Google/Cloudflare DoH
+  (TTL 60s). The 12:10 IST "zone left the zone" narrative was very likely the
+  same artifact (dns_guard default mode could only ever report drift); the
+  Nov-13 outage itself was real (owner impact). Owner received a Telegram
+  correction. Website-surface runs: still recheck public DNS first, but with
+  the fixed guard the readings are now trustworthy. (b) Scheduled tasks reset
+  per owner ask: quota-stalled 30-min cron 528192 ("cron_trigger quota exceeded
+  for plan free" since 2026-11-13 17:30 IST) deleted; consolidated job 530005
+  runs daily 09:00 IST — SWEEP+CHAOS in one run, ~30 triggers/month to live
+  within the free-plan quota. If the plan is upgraded, split back into
+  SWEEP/CHAOS at higher cadence. (c) OANDA portfolio engine cron 528111 NOT
+  re-armed: open pricing defect (TASK-STRATEX-PORTFOLIO-002: batch fallback
+  returns one stale price for the basket, tp=0.00000) + open external-close
+  question (TASK-STRATEX-OANDA-001); needs explicit owner approval. (d) Repo
+  left on clean main (was checked out on zai/TASK-STRATEX-PORTFOLIO-002 with
+  local main 1 behind); collaborators shipped PRs #100-#136 during the stall —
+  always fetch+rebase before committing. Known untracked sandbox skeletons at
+  repo root (__init__.py, agents/) are ignored leftovers, not work in flight.
+- 2026-11-14 ~11:45 IST: agent-scheduler cron triggers are quota-stalled ("cron_trigger quota exceeded for plan free") — no SWEEP/CHAOS runs have fired since 2026-11-13 17:30 IST. Rotation resumes at surface 2 (voice) when triggers return. Owner informed; options: thinner schedule vs plan upgrade. [Superseded 17:15 IST: resolved via job consolidation, see above.]
 - 2026-11-14 ~12:10 IST: DuckDNS token secured (owner-supplied) — GitHub secret DUCKDNS_TOKEN set, vault copies updated, dns_guard section-parse bug fixed+pinned (suite 11/11). BUT friday-universe is currently OUT of the DuckDNS zone (wildcard catch-all served for it, identical to nonexistent names; update API returns OK but does not republish the zone entry). RECOVERED ~07:05 UTC / 12:35 IST: public DNS again serves a single A record 140.245.208.100 (zone entry back — owner dashboard action and/or the token-carrying dns-fix run republished it; exact trigger unconfirmed). dns-fix.yml (30-min) + dns_guard are armed to hold it there; dns-fix Server-1 job now pins the ingress IP (egress ipify report-only). If the catch-all returns: owner re-adds friday-universe in the duckdns.org dashboard (1 min) and the loop holds it from there. Website-surface testing: recheck public DNS first — one zone flap was observed today.
