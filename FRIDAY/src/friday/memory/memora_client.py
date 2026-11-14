@@ -602,6 +602,8 @@ class MemoraClient:
         agent_name: str,
         query: str,
         limit: int = 5,
+        *,
+        for_mutation: bool = False,
     ) -> List[Dict[str, Any]]:
         """Retrieve relevant persistent memories from Memora.
 
@@ -638,6 +640,17 @@ class MemoraClient:
         # shared-side leaves a local twin; if the shared copy is later
         # deleted the twin can resurface in recall — and forget then sees
         # two candidate ids and asks for clarification (safe direction).
+        # TASK-REL-022 (2026-11-14) closed the sharper form of that edge,
+        # proven live the same day: a local_only save (shared write failed)
+        # that later ALSO landed in the shared store left the local record
+        # text-shadowed by its shared twin in this merge, so forget's
+        # resolver never saw the local id, deleted only the shared copy,
+        # reported success — and the local twin resurfaced on the next
+        # recall as if never forgotten. Mutation resolution therefore
+        # recalls with ``for_mutation=True``: the text shadowing below is
+        # skipped so every twin id reaches the resolver (REL-014 groups
+        # identical-text twins into one target and deletes them all).
+        # Display recall keeps the dedupe, so chat surfaces are unchanged.
         remote_results: List[Dict[str, Any]] = []
         remote_answered = False
         if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
@@ -680,7 +693,12 @@ class MemoraClient:
         for row in local_results:
             rid = str(row.get("id") or row.get("memory_id") or "")
             rtext = " ".join(str(row.get("content_text", "")).lower().split())
-            if (rid and rid in seen_ids) or (rtext and rtext in seen_text):
+            if rid and rid in seen_ids:
+                continue
+            # TASK-REL-022: for mutation resolution a text-identical local
+            # twin of a shared record is a separate record that must be
+            # deleted too — never shadow it (see the note above).
+            if rtext and rtext in seen_text and not for_mutation:
                 continue
             merged.append(row)
         return merged
@@ -921,7 +939,10 @@ class MemoraClient:
             # TASK-REL-014: mutation resolution recalls wider than the chat
             # surface (limit 5) so every duplicate record of the target fact
             # is visible; a twin left behind resurfaces as if never forgotten.
-            hits = self.recall_memories(agent_name, subject_query, limit=25) if subject_query else []
+            # TASK-REL-022: for_mutation=True — the display merge text-shadows
+            # a local twin behind its shared copy, which hid exactly such a
+            # twin from this resolver in production.
+            hits = self.recall_memories(agent_name, subject_query, limit=25, for_mutation=True) if subject_query else []
             status, target_id, target_text, target_ids = self._mutation_targets(query, hits or [])
             if status != "matched":
                 return {"status": status, "reason": "no unique matching memory", "query": query}
@@ -1040,7 +1061,7 @@ class MemoraClient:
             subject_query = " ".join(sorted(self._mutation_subject(old_query, correction=True)))
             # TASK-REL-014: same widened recall as forget_fact, so duplicate
             # records of the old fact are all resolved (and superseded below).
-            hits = self.recall_memories(agent_name, subject_query, limit=25) if subject_query else []
+            hits = self.recall_memories(agent_name, subject_query, limit=25, for_mutation=True) if subject_query else []
             target_status, old_id, old_text, old_ids = self._mutation_targets(old_query, hits or [], correction=True)
             if target_status == "needs_clarification":
                 return {"status": "needs_clarification", "reason": "no unique correction subject"}

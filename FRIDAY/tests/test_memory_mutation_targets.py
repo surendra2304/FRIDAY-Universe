@@ -171,7 +171,9 @@ def test_correction_searches_stable_subject_not_replacement_value(monkeypatch):
     assert result["status"] == "corrected"
     # TASK-REL-014: mutation resolution recalls at limit=25 (not the chat
     # surface's 5) so duplicate records of the old fact are all visible.
-    c.recall_memories.assert_called_once_with("friday", "deployment marker", limit=25)
+    # TASK-REL-022: for_mutation=True so a text-shadowed local twin of the
+    # old fact is visible too (the display merge would hide it).
+    c.recall_memories.assert_called_once_with("friday", "deployment marker", limit=25, for_mutation=True)
 
 
 def test_unspecified_subject_does_not_even_search():

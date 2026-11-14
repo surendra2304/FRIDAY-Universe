@@ -30,6 +30,8 @@ the store has no answer.
 from __future__ import annotations
 
 import asyncio
+import io
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -367,3 +369,86 @@ def test_chat_gate_owns_what_is_my_roundtrip(tmp_path, monkeypatch):
         assert "don't have anything stored" in recalled_after["reply"]
     finally:
         client._executor.shutdown(wait=True)
+
+
+# ---------------------------------------------------------------------------
+# E. Forget completeness: a local twin text-shadowed by its shared copy
+# ---------------------------------------------------------------------------
+# First live proof of the PR #178 fixes (2026-11-14 ~21:21 IST) exposed a
+# fourth defect in the same integrity class: a fact saved local_only whose
+# text later also existed in the shared store was recalled merged (fine),
+# but forget deleted ONLY the shared copy — recall_memories' display
+# merge drops a local row whose text matches a shared row, so the
+# resolver never saw the local id. The local twin resurfaced on the next
+# recall as if never forgotten, despite the "deleted" confirmation.
+
+_TWIN_FACT = 'my rel022 verification codeword is "violet heron 4"'
+
+
+class _Resp(io.BytesIO):
+    status = 200
+
+
+def _twin_client(monkeypatch):
+    from friday.memory.memora_client import MemoraClient
+
+    client = MemoraClient.__new__(MemoraClient)
+    client.remote_enabled = True
+    client.base_url = "http://synthetic.invalid"
+    client.local_db_path = None
+    client.timeout = 3.5
+    client.recall_timeout = 3.5
+    client._remote_headers = lambda *a, **k: {}
+    shared = {"id": "shared-twin-id", "content_text": _TWIN_FACT, "memory_type": "episodic"}
+    local = {"id": "local-twin-id", "content_text": _TWIN_FACT, "memory_type": "semantic"}
+    client._recall_locally = lambda *a, **k: [dict(local)]
+    marked = []
+    client._local_record_exists = lambda rid: rid == "local-twin-id"
+    client._mark_record_state = lambda rid, state: marked.append((rid, state)) or True
+    requests = []
+
+    def transport(req, **kwargs):
+        requests.append(req)
+        if "/v1/memories/search" in req.full_url:
+            return _Resp(json.dumps([shared]).encode())
+        return _Resp(b"{}")
+
+    monkeypatch.setattr("urllib.request.urlopen", transport)
+    return client, requests, marked
+
+
+def test_display_recall_still_dedupes_shadowed_twin(monkeypatch):
+    client, _req, _marked = _twin_client(monkeypatch)
+    hits = client.recall_memories("friday", "rel022 verification codeword", limit=10)
+    assert [h["id"] for h in hits] == ["shared-twin-id"], "chat display keeps REL-005 dedupe"
+
+
+def test_mutation_recall_sees_the_shadowed_local_twin(monkeypatch):
+    client, _req, _marked = _twin_client(monkeypatch)
+    hits = client.recall_memories("friday", "rel022 verification codeword", limit=10, for_mutation=True)
+    assert {h["id"] for h in hits} == {"shared-twin-id", "local-twin-id"}
+
+
+def test_forget_deletes_both_twins_of_a_split_store_fact(monkeypatch):
+    client, requests, marked = _twin_client(monkeypatch)
+    result = client.forget_fact("friday", "my rel022 verification codeword")
+    assert result["status"] == "deleted", result
+    assert set(result["ids"]) == {"shared-twin-id", "local-twin-id"}
+    assert ("local-twin-id", "deleted") in marked, "the local twin must be deleted in its own store"
+    delete_urls = [r.full_url for r in requests if getattr(r, "method", "") == "DELETE"]
+    assert any("/v1/memories/shared-twin-id" in u for u in delete_urls)
+
+
+def test_forget_of_local_only_fact_still_works(monkeypatch):
+    client, requests, marked = _twin_client(monkeypatch)
+    # No shared copy at all: search returns nothing.
+    def transport(req, **kwargs):
+        requests.append(req)
+        if "/v1/memories/search" in req.full_url:
+            return _Resp(b"[]")
+        return _Resp(b"{}")
+    monkeypatch.setattr("urllib.request.urlopen", transport)
+    result = client.forget_fact("friday", "my rel022 verification codeword")
+    assert result["status"] == "deleted", result
+    assert result["cloud"] is False
+    assert ("local-twin-id", "deleted") in marked
