@@ -6,12 +6,28 @@ boss_verified=False. Transport uncertainty is never reported as non-execution.
 """
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import httpx
 
 BRAIN_URL = "http://127.0.0.1:10000/api/chat"
 BRAIN_ORIGIN = "http://127.0.0.1:10000"
+
+# TASK-VOI-003: a voice turn cannot wait out the old 230 s budget — while
+# the tool call is pending, the caller's turn never completes and every
+# later utterance queues behind it (the 2026-11-14 call wedged exactly
+# this way). 60 s covers the worst measured brain call that evening
+# (~26 s under swap load) with headroom; on timeout the bridge returns
+# "unconfirmed" and the model SPEAKS that, completing the turn honestly.
+def _brain_timeout_s() -> float:
+    try:
+        return float(os.getenv("FRIDAY_VOICE_BRAIN_TIMEOUT_S", "60") or 60)
+    except ValueError:
+        return 60.0
+
+
+BRAIN_TIMEOUT_S = _brain_timeout_s()
 
 
 class VoiceBrainBridge:
@@ -34,7 +50,7 @@ class VoiceBrainBridge:
         # The same endpoint used by chat performs memory retrieval, authorization,
         # task dispatch and conversation persistence. No control token is passed.
         async with client.stream("POST", BRAIN_URL, json={"message": text},
-                                 headers={"Origin": BRAIN_ORIGIN}, timeout=230.0) as response:
+                                 headers={"Origin": BRAIN_ORIGIN}, timeout=BRAIN_TIMEOUT_S) as response:
             content = bytearray()
             async for chunk in response.aiter_bytes():
                 content.extend(chunk)
