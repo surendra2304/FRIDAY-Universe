@@ -21,6 +21,63 @@ _COLON_KEYWORDS = (
 # Closing brackets, for balance repair.
 _PAIRS = {")": "(", "]": "[", "}": "{"}
 
+# Escape sequences a model leaves behind when it emits source in its
+# string-escaped form instead of as raw text (TASK-REL-028): the file lands
+# on disk with literal "\n" two-character sequences where newlines belong,
+# so it cannot even be parsed, let alone tested.
+_LITERAL_ESCAPES = {
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+    "\\": "\\",
+    '"': '"',
+    "'": "'",
+}
+
+# Corruption signature thresholds. A merely *broken* file can contain a few
+# escaped newlines inside string literals; escape corruption is wholesale --
+# the escaped newlines outnumber the real ones. The production artifact
+# (task18314112026184644) carried 16 literal "\n" sequences against 2 real
+# newlines.
+_ESCAPE_CORRUPTION_MIN = 3
+
+
+def _unescape_literal_escapes(source: str) -> str | None:
+    """Undo string-escape encoding applied to a whole source file.
+
+    Single left-to-right pass translating only the ASCII escapes in
+    ``_LITERAL_ESCAPES``; every other character -- including non-ASCII text,
+    which ``codecs``' ``unicode_escape`` would mangle into mojibake -- passes
+    through byte-identical. Because the pass consumes ``\\`` first, an
+    escaped backslash followed by ``n`` correctly stays literal text.
+
+    Returns None when the corruption signature is absent, so valid or
+    merely-broken source is never rewritten by this rescue. Callers must
+    still compile-gate the result: this function only proposes a candidate.
+    """
+    if not isinstance(source, str):
+        return None
+    if source.count("\\n") < _ESCAPE_CORRUPTION_MIN:
+        return None
+    if source.count("\\n") <= source.count("\n"):
+        return None
+    out: list[str] = []
+    i = 0
+    end = len(source)
+    changed = False
+    while i < end:
+        ch = source[i]
+        if ch == "\\" and i + 1 < end and source[i + 1] in _LITERAL_ESCAPES:
+            out.append(_LITERAL_ESCAPES[source[i + 1]])
+            i += 2
+            changed = True
+            continue
+        out.append(ch)
+        i += 1
+    if not changed:
+        return None
+    return "".join(out)
+
 
 def _line_bracket_deficit(line: str) -> str:
     """Return the closers needed to balance the brackets on this line."""
@@ -150,6 +207,14 @@ def _repair_python_source(source: str) -> str | None:
         source = source.replace("\x00", "")
 
     candidates: list[str] = []
+
+    # Escape corruption (TASK-REL-028): the whole file arrived in its
+    # string-escaped form. Decoding it is the only candidate that can be
+    # right; the compile gate below decides, exactly as for every other
+    # candidate, so a decode that does not parse is never returned.
+    unescaped = _unescape_literal_escapes(source)
+    if unescaped is not None and unescaped != source:
+        candidates.append(unescaped)
 
     lines = source.splitlines()
 
