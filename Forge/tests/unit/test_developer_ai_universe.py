@@ -128,8 +128,10 @@ def format_currency(val):
 @pytest.mark.asyncio
 async def test_developer_role_fallback_on_low_confidence(temp_engine):
     """
-    Validates that when AI Universe returns confidence < 0.70, DeveloperRole falls back
-    to local model reasoning.
+    Validates that when AI Universe returns confidence < 0.70, DeveloperRole
+    retries once with the rejection evidence (TASK-FORGE-002 GAP 1: the old
+    behavior accepted exactly one sub-threshold answer and never retried) and
+    only then falls back to local model reasoning.
     """
     engine, wm = temp_engine
     task_id = str(uuid4())
@@ -159,7 +161,8 @@ async def test_developer_role_fallback_on_low_confidence(temp_engine):
         assert result["status"] == "success"
         # Should not have ai_universe_run_id because it fell back
         assert "ai_universe_run_id" not in result
-        mock_ask.assert_called_once()
+        # One retry with the rejection evidence before the fallback.
+        assert mock_ask.await_count == 2
 
 
 @pytest.mark.asyncio

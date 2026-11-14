@@ -59,7 +59,12 @@ class TaskStateMachine:
             TaskState.RUNNING,
             TaskState.CANCELLED,
         },
-        TaskState.COMPLETED: set(),  # Terminal state
+        # TASK-FORGE-002 (GAP 5): FAILED is the one honest exit from COMPLETED.
+        # A task reported complete whose objective verification battery still
+        # fails must not stay COMPLETED -- the orchestrator's post-verification
+        # gate demotes it. This is the only allowed transition out of
+        # COMPLETED; it is never used for re-running a finished build.
+        TaskState.COMPLETED: {TaskState.FAILED},
         TaskState.CANCELLED: set(),  # Terminal state
     }
 

@@ -195,8 +195,13 @@ class CodeGenerationService:
         # 0.92 is a fixed prior for output that passed a real parser, and 0.55 for output that
         # could not be verified at all. Neither is a calibrated accuracy: the quality report says
         # calibration is not measured, and these constants do not claim otherwise.
+        # TASK-FORGE-002: the tier must describe what was measured, not which internal route
+        # served the answer. A template_fallback reply that the parser verified and the quality
+        # check passed is still parser-verified code, and reporting it at the unverified prior
+        # made Forge's 0.70 acceptance gate auto-reject every such answer. Genuinely degraded
+        # output keeps the low tiers (the invalid_output and degraded branches above).
         if verdict.verified:
-            confidence = PARSER_VERIFIED_CONFIDENCE if gen_path == "agent" else UNVERIFIED_MODEL_CONFIDENCE
+            confidence = PARSER_VERIFIED_CONFIDENCE
         else:
             confidence = UNVERIFIED_MODEL_CONFIDENCE
 
