@@ -1,5 +1,5 @@
 schema_version: 1
-updated_at: "2026-11-09T17:40:00Z"
+updated_at: "2026-11-14T06:45:00Z"
 repository: "surendra2304/FRIDAY-Universe"
 collaboration_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
 authority:
@@ -182,6 +182,25 @@ collaborators:
     - Owner authorized controlled GitHub merge and Oracle deployment; no unbounded real-money exposure or automatic publication. Exposed chat PAT never used or saved.
     - Session-bounded; contact before claim takeover.
 
+  - id: muse_ai
+    display_name: "Muse AI (owner-added 2026-11-14)"
+    contributor_type: "ai"
+    status: "active_contributor"
+    authority: "Equal engineering collaborator — merged 7 owner-approved PRs in its first day; onboarding guide at docs/collaboration/MUSE_AI_ONBOARDING.md"
+    verified_capabilities:
+      - "GitHub write access with owner-approved merges: PRs #83, #90, #91, #92, #93, #96, #97 merged 2026-11-13/14."
+      - "TASK-FORGE-002 Wave 2 (PR #91): Forge build reliability — retry-with-feedback, live repair, truthful completion, honest routing."
+      - "TASK-MEM-010 Wave 4 (PR #90): viking:// context fabric — durable across restarts."
+      - "TASK-INTENT-001 Wave 3 (PR #92, supersedes #89): LLM intent classification mid-tier."
+      - "TASK-RUNTIME-AUDIT-002 (PR #93, supersedes #84): voice mic-startup cleanup; plus the orpheus terms-400 silent dead-air fix with keyless edge-tts fallback under TASK-VOICE-E2E-003 (PR #83)."
+      - "TASK-WF-015 (PR #96, supersedes #94/#86): honor explicit models, preserve cached completion semantics."
+      - "TASK-VAL-003 (PR #97, supersedes #95/#55): honest read-only fleet runtime audit."
+    active_assignments: []
+    active_branches: []
+    last_verified_at: "2026-11-14"
+    access_limits:
+      - "Merges are owner-approved per merge-commit labels; production restarts/deployments beyond the standard Fleet CD flow still require owner authorization."
+
 onboarding_policy:
   required_before_task_claim:
     - "Read docs/MASTER_PLAN.md, docs/handoff.md and docs/ARCHITECTURE_AS_BUILT.md."
@@ -191,4 +210,6 @@ onboarding_policy:
     - "Post a claim to the shared GitHub issue before editing assigned files."
   zai_agent_2_additional:
     - "Read docs/collaboration/ZAI_AGENT_2_ONBOARDING.md in full (lane rules + Telegram protocol)."
+  muse_ai_additional:
+    - "Read docs/collaboration/MUSE_AI_ONBOARDING.md in full (united-work protocol + current open lanes)."
   capability_rule: "Never infer integrations or permissions from the contributor or product name."

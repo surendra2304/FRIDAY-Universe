@@ -50,3 +50,7 @@
 - 2026-11-13 17:30 IST CHAOS run 1 (chat-brain): commit 20dbfc1 — chat chaos battery
   (11 tests) + JSON-safe failure branches + trading-intent launcher guard + /api/chat
   honest-reply contract. Zero regressions (129 related tests green).
+
+## OPS NOTES (environment facts the next run must know)
+- 2026-11-14 ~11:45 IST: agent-scheduler cron triggers are quota-stalled ("cron_trigger quota exceeded for plan free") — no SWEEP/CHAOS runs have fired since 2026-11-13 17:30 IST. Rotation resumes at surface 2 (voice) when triggers return. Owner informed; options: thinner schedule vs plan upgrade.
+- 2026-11-14 ~12:10 IST: DuckDNS token secured (owner-supplied) — GitHub secret DUCKDNS_TOKEN set, vault copies updated, dns_guard section-parse bug fixed+pinned (suite 11/11). BUT friday-universe is currently OUT of the DuckDNS zone (wildcard catch-all served for it, identical to nonexistent names; update API returns OK but does not republish the zone entry). Owner dashboard action pending. dns-fix.yml (30-min) + dns_guard are armed and will hold the record at 140.245.208.100 the moment the zone entry exists; dns-fix Server-1 job now pins the ingress IP (egress ipify report-only). Website surface testing while the domain is on the catch-all will fail from the public internet — verify via direct IP or after the owner restores the zone entry.
