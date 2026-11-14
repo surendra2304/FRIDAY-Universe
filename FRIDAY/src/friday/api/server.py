@@ -3231,7 +3231,12 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         # "what was my test phrase?" matched NONE of the patterns above, so
         # the question bypassed this deterministic recall entirely and the
         # LLM answered from a store the fact was never written to.
-        "what was my", "what's my", "what did you store", "what did you save",
+        # TASK-REL-022 (2026-11-14): the present-tense sibling "what is my"
+        # was still missing — the round-3 question "What is my safe word?"
+        # bypassed this gate the same way, crashed on the Groq failover
+        # path, and after a confirmed forget was answered with an invented
+        # safe word. All three tenses belong to the store, not the model.
+        "what was my", "what is my", "what's my", "what did you store", "what did you save",
         "what have you stored", "what have you saved",
     )
     _remember_patterns = (
