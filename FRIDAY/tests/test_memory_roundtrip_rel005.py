@@ -158,6 +158,45 @@ def test_forgotten_local_only_fact_stays_forgotten(tmp_path, stub_memora):
         client._executor.shutdown(wait=True)
 
 
+def test_local_recall_not_hidden_by_importance_window(tmp_path):
+    """The local store's candidate window was 'top 100 rows by importance'
+    across the whole multi-agent table — once 100+ accumulated rows
+    outrank a fact, local recall can never see it again (the live
+    verification's third failure layer). Candidate selection must be
+    keyword-driven: a low-importance fact that matches the query is
+    returned even with 150 higher-importance decoys present."""
+    from friday.memory.memora_client import MemoraClient
+
+    client = MemoraClient(local_db_path=str(tmp_path / "window.db"), remote_enabled=False)
+    try:
+        for i in range(150):
+            res = client._record_fact_locally("friday", f"routine fleet note {i} about servers", "owner_fact", 0.95)
+            assert res["status"] == "success"
+        client._record_fact_locally("friday", 'my safe word is "amber falcon 3"', "owner_fact", 0.20)
+        hits = client.recall_memories("friday", "amber falcon", limit=5)
+        assert any("amber falcon 3" in str(h.get("content_text", "")) for h in hits), hits[:3]
+    finally:
+        client._executor.shutdown(wait=True)
+
+
+def test_forget_local_only_fact_under_remote_config(tmp_path, stub_memora):
+    """A local_only fact's id lives in the local store; forget used to fire
+    a shared DELETE for that id, watch it 404, and report 'unconfirmed'
+    without deleting anything. Forget must delete the record where it
+    lives and report the local scope honestly."""
+    client = _client(tmp_path, stub_memora)
+    try:
+        res = client.record_fact("friday", 'my safe word is "amber falcon 3"', "owner_fact", 0.55)
+        assert res["status"] == "local_only"
+        out = client.forget_fact("friday", "my safe word")
+        assert out["status"] == "deleted", out
+        assert out["cloud"] is False
+        hits = client.recall_memories("friday", "safe word", limit=5)
+        assert not any("amber falcon" in str(h.get("content_text", "")) for h in hits), hits
+    finally:
+        client._executor.shutdown(wait=True)
+
+
 # ---------------------------------------------------------------------------
 # Chat level: the exact production sequence through _dispatch_command
 # ---------------------------------------------------------------------------
@@ -185,6 +224,15 @@ def test_chat_roundtrip_mid_sentence_remember_then_natural_recall(tmp_path, stub
         assert recalled is not None
         assert recalled["metadata"].get("memory_recall") is True
         assert "crimson tiger 7" in recalled["reply"]
+
+        # The fact lives in the local store; forgetting it must delete it
+        # there (not fire a shared DELETE for a local id and give up).
+        forgotten = asyncio.run(_dispatch_command("forget my test phrase"))
+        assert forgotten["metadata"].get("forget_status") == "deleted", forgotten
+        assert "local memory backend" in forgotten["reply"]
+
+        recalled_after = asyncio.run(_dispatch_command("What was my test phrase?"))
+        assert "crimson tiger 7" not in recalled_after["reply"]
     finally:
         client._executor.shutdown(wait=True)
 
