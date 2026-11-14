@@ -338,11 +338,21 @@ class RecoveryEngine:
         """
         if diagnosis.failure_class != FailureClass.DEPENDENCY_MISSING:
             return None
-        text = f"{diagnosis.error_message}\n{diagnosis.stack_trace or ''}"
-        match = re.search(r"No module named '([A-Za-z_][A-Za-z0-9_]*)'", text)
-        if not match:
+        # The classifier names the missing module in failing_file; fall back
+        # to the interpreter's own phrasing in the evidence text.
+        module = None
+        named = re.fullmatch(
+            r"([A-Za-z_][A-Za-z0-9_]*)\.py", diagnosis.failing_file or ""
+        )
+        if named:
+            module = named.group(1)
+        else:
+            text = f"{diagnosis.error_message}\n{diagnosis.stack_trace or ''}"
+            match = re.search(r"No module named '([A-Za-z_][A-Za-z0-9_]*)'", text)
+            if match:
+                module = match.group(1)
+        if not module:
             return None
-        module = match.group(1)
         if module in sys.stdlib_module_names:
             return None
         target_file = f"{module}.py"

@@ -10,6 +10,18 @@ from pydantic import BaseModel
 
 from app.verification.evidence import VerificationEvidence
 
+# The phrasings with which this fleet actually reports a missing project
+# module (TASK-REL-028): the interpreter's own "No module named 'x'", the
+# runtime smoke checker's "Failed to import the required module 'x'", and
+# the wrappers generated code raises ("Failed to import module 'x'" /
+# "Failed to import 'name' from 'x'"). Only a bare top-level module name is
+# captured; group 1 covers the first three shapes, group 2 the last.
+_MISSING_MODULE_RE = re.compile(
+    r"(?:No module named|Failed to import the required module|Failed to import module)"
+    r" '([A-Za-z_][A-Za-z0-9_]*)'"
+    r"|Failed to import '[^']+' from '([A-Za-z_][A-Za-z0-9_]*)'"
+)
+
 
 class FailureClass(str, Enum):
     SYNTAX_ERROR = "syntax_error"
@@ -88,11 +100,29 @@ class FailureClassifier:
             )
 
         # 2. Dependency Missing / Import Error
-        if "ModuleNotFoundError:" in text or "ImportError:" in text or "No module named" in text:
+        module_match = _MISSING_MODULE_RE.search(text)
+        if (
+            "ModuleNotFoundError:" in text
+            or "ImportError:" in text
+            or "No module named" in text
+            or module_match
+        ):
             msg_match = re.search(r"(ModuleNotFoundError|ImportError): (.*)", text)
+            missing_module = (
+                (module_match.group(1) or module_match.group(2)) if module_match else None
+            )
             return FailureDiagnosis(
                 failure_class=FailureClass.DEPENDENCY_MISSING,
-                error_message=msg_match.group(0) if msg_match else "Missing dependency or module",
+                # Name the missing module's file: it is the repair target
+                # (TASK-REL-028's create route consumes exactly this).
+                failing_file=f"{missing_module}.py" if missing_module else None,
+                error_message=(
+                    msg_match.group(0)
+                    if msg_match
+                    else module_match.group(0)
+                    if module_match
+                    else "Missing dependency or module"
+                ),
                 stack_trace=text,
                 suggested_strategy="Add missing module or correct import path in project source.",
                 raw_evidence_summary=text[:300],
