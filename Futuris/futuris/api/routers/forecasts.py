@@ -25,6 +25,7 @@ from futuris.core.enums import (
 from futuris.core.schemas import Driver, EvidenceRef, ForecastEvent, Outcome
 from futuris.infra.audit import AuditLogger
 from futuris.infra.auth import AllowAnonymousRead, RequireAdmin, RequireAnalyst
+from futuris.models.adapters import StatsForecastUnavailableError
 from futuris.scenarios.spec import ScenarioSpec
 from futuris.storage.repositories import (
     EventRepository,
@@ -241,12 +242,24 @@ async def create_forecast(
     as_of = req.as_of or datetime.now(UTC)
     horizon_delta = parse_horizon(req.horizon)
 
-    forecasts = await engine.orchestrate(
-        target=req.target,
-        as_of=as_of,
-        horizon=horizon_delta,
-        evidence_scope=req.evidence_scope,
-    )
+    try:
+        forecasts = await engine.orchestrate(
+            target=req.target,
+            as_of=as_of,
+            horizon=horizon_delta,
+            evidence_scope=req.evidence_scope,
+        )
+    except StatsForecastUnavailableError as exc:
+        # TASK-REL-018: explicit degradation, never a mock flat-line.
+        raise FuturisAPIError(
+            code="statsforecast_unavailable",
+            message=(
+                "The statsforecast model backend is unavailable in this "
+                f"deployment, so no forecast was computed: {exc}"
+            ),
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details={"gate": "model_backend"},
+        ) from exc
     f = forecasts[0]
 
     # Validate through quality gate. A gate rejection is a caller-visible 422

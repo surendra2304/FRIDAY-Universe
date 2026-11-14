@@ -29,10 +29,17 @@ SECRET_REGEX_PATTERNS = [
     re.compile(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----[A-Za-z0-9+/=\s\n]+-----END [A-Z ]+ PRIVATE KEY-----"),
     # Database connection strings with inline credentials (e.g. postgresql://user:pass@host/db)
     re.compile(r"\b[a-zA-Z0-9]+://[^:\s]+:[^@\s]+@[^\s]+\b"),
-    # HTTP Authorization / Proxy-Authorization headers
-    re.compile(r"(Authorization|Proxy-Authorization|Auth)\s*[:=]\s*['\"]?([A-Za-z0-9\-_=\.\s\[\]]+)['\"]?", re.IGNORECASE),
-    # HTTP Cookie headers
-    re.compile(r"(Cookie)\s*[:=]\s*['\"]?([A-Za-z0-9\-_=\.\s;\[\]]+)['\"]?", re.IGNORECASE),
+    # HTTP Authorization / Proxy-Authorization headers. Anchored to a line
+    # start and a single line (TASK-REL-018): headers are line-oriented in
+    # logs and dumps. Unanchored, this pattern matched ordinary prose --
+    # Futuris's standard forecast sign-off "A prediction is not an
+    # authorization: forecasts inform, they never execute anything." had
+    # the words after "authorization:" replaced with [REDACTED_SECRET] in
+    # user-visible chat replies, because the phrase looks like a header to
+    # a pattern that does not care where on the line it starts.
+    re.compile(r"(?m)^([ \t]*(?:Authorization|Proxy-Authorization|Auth))\s*[:=]\s*['\"]?([A-Za-z0-9\-_=\. \t\[\]]+)['\"]?", re.IGNORECASE),
+    # HTTP Cookie headers (same line anchoring as Authorization, above).
+    re.compile(r"(?m)^([ \t]*Cookie)\s*[:=]\s*['\"]?([A-Za-z0-9\-_=\. \t;\[\]]+)['\"]?", re.IGNORECASE),
     # Key-value secret/password patterns (e.g. password=my_pass)
     re.compile(r"(password|passwd|pwd|passphrase)\s*[:=]\s*['\"]?([^'\"\s\n\[]+)['\"]?", re.IGNORECASE),
 ]

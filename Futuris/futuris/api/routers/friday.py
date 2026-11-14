@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from futuris.api.deps import get_db_session, get_event_repo, get_outcome_repo
+from futuris.connectors.provenance import DataProvenance, resolve_provenance
 from futuris.core.enums import (
     EvidenceClass,
     ForecastEventType,
@@ -33,6 +34,11 @@ from futuris.infra.auth import AuthUser
 from futuris.infra.config import settings
 from futuris.infra.logging import get_logger
 from futuris.infra.research_context import fetch_research_reports, finding_labels
+from futuris.models.adapters import (
+    STATSFORECAST_AVAILABLE,
+    STATSFORECAST_IMPORT_ERROR,
+    StatsForecastUnavailableError,
+)
 from futuris.scenarios.engine import ScenarioEngine
 from futuris.scenarios.spec import ScenarioSpec
 from futuris.storage.models import ForecastModel
@@ -367,6 +373,62 @@ def _friday_forecast_response(
         else "no_evidence_frozen",
         model_used=forecast.model_version,
         drivers_identified=drivers,
+        # TASK-REL-018: serve the forecast's REAL provenance. These fields
+        # previously never left the schema defaults (evidence_class stayed
+        # "synthetic" and evidence_source stayed null no matter what data
+        # actually fed the forecast), so the payload could neither prove a
+        # real source nor plainly admit a synthetic one.
+        evidence_class=getattr(forecast, "evidence_class", None) or EvidenceClass.SYNTHETIC,
+        evidence_source=getattr(forecast, "evidence_source", None),
+    )
+
+
+def _statsforecast_blocked_response(
+    req: FridayForecastRequest,
+    provenance: DataProvenance,
+    detail: str,
+) -> FridayForecastResponse:
+    """Explicit degraded answer when the model backend cannot run at all.
+
+    TASK-REL-018: a missing statsforecast backend must surface as BLOCKED
+    with the reason named -- never as a flat-line mock dressed as a forecast
+    (the pre-fix behaviour in production, where the declared dependency was
+    absent from the fleet environment). The response still carries the
+    provenance of the input the forecast WOULD have used.
+    """
+    return FridayForecastResponse(
+        futuris_forecast_id=uuid4(),
+        friday_request_id=req.friday_request_id,
+        prediction=PredictionPayload(
+            point_estimate=0.0,
+            lower_bound=0.0,
+            upper_bound=0.0,
+            probability_distribution={"exceedance_probability": 0.0},
+        ),
+        confidence="INSUFFICIENT_DATA",
+        status="BLOCKED",
+        calibration_score=0.0,
+        calibration_metrics={"error": "statsforecast_unavailable", "detail": detail},
+        predictive_distribution={},
+        intervals={},
+        model_metadata={
+            "blocked_reason": "statsforecast_unavailable",
+            "detail": detail,
+            "data_connector": provenance.connector,
+            "data_synthetic": provenance.synthetic,
+        },
+        prediction_is_not_authorization=True,
+        executable_commands=[],
+        assumptions=[
+            "BLOCKED: the statsforecast model backend is unavailable in this "
+            "deployment, so no forecast was computed. Any number here would "
+            "be fabricated; Futuris refuses to serve one."
+        ],
+        evidence_snapshot_id="statsforecast_unavailable_no_forecast",
+        model_used="none",
+        drivers_identified=[],
+        evidence_class=provenance.evidence_class,
+        evidence_source=provenance.describe(),
     )
 
 
@@ -449,6 +511,8 @@ async def delegate_forecast(
                 evidence_snapshot_id="stale_telemetry_refused",
                 model_used="none",
                 drivers_identified=[],
+                evidence_class=EvidenceClass.SYNTHETIC,
+                evidence_source="caller-supplied telemetry_data in the FRIDAY delegation payload",
             )
         except InsufficientDataError as e:
             return FridayForecastResponse(
@@ -473,6 +537,8 @@ async def delegate_forecast(
                 evidence_snapshot_id="insufficient_data_refused",
                 model_used="none",
                 drivers_identified=[],
+                evidence_class=EvidenceClass.SYNTHETIC,
+                evidence_source="caller-supplied telemetry_data in the FRIDAY delegation payload",
             )
 
     # 3. Research enrichment and pipeline run
@@ -486,12 +552,33 @@ async def delegate_forecast(
     pipeline = ForecastingPipeline()
     now = datetime.now(UTC)
 
-    result = await pipeline.run(
-        target=req.target,
-        as_of=now,
-        horizon=h_delta,
-        lookback_days=14,
-    )
+    # TASK-REL-018: if the statsforecast backend cannot run, say so plainly
+    # instead of spending a minute of CPU to arrive at the same refusal --
+    # and never substitute a mock forecast (see adapters.py).
+    input_provenance = resolve_provenance(pipeline.ingestion.connector, [])
+    if not STATSFORECAST_AVAILABLE:
+        logger.warning(
+            "friday_forecast_blocked_statsforecast_unavailable",
+            target=req.target,
+            detail=STATSFORECAST_IMPORT_ERROR,
+        )
+        return _statsforecast_blocked_response(
+            req, input_provenance, STATSFORECAST_IMPORT_ERROR or "import failed"
+        )
+    try:
+        result = await pipeline.run(
+            target=req.target,
+            as_of=now,
+            horizon=h_delta,
+            lookback_days=14,
+        )
+    except StatsForecastUnavailableError as exc:
+        logger.warning(
+            "friday_forecast_blocked_statsforecast_unavailable",
+            target=req.target,
+            detail=str(exc),
+        )
+        return _statsforecast_blocked_response(req, input_provenance, str(exc))
     f = result.forecast
     f.idempotency_key = effective_idempotency_key
 

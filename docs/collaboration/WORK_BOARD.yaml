@@ -2725,7 +2725,8 @@ tasks:
       - "docs/collaboration/TEAM_ROSTER.yaml"
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
-    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level 'task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
+    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
+task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
     acceptance:
       - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
       - "Inline repair note recorded at the ACTIVITY_LOG repair site."
@@ -3583,7 +3584,43 @@ tasks:
     evidence: []
     blockers: []
     next_action: "Implement on branch, PR, CI, merge, Fleet CD deploy, live-verify per endpoint, then mark VERIFIED with probe evidence."
-(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
+  - id: TASK-REL-018
+    title: "Futuris forecasts run on synthetic data and silent statsforecast fallbacks, presented as real"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-018-futuris-provenance
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T19:03:00+05:30"
+    updated_at: "2026-11-14T19:03:00+05:30"
+    files:
+      - "Futuris/futuris/connectors/provenance.py (new)"
+      - "Futuris/futuris/models/adapters.py"
+      - "Futuris/futuris/core/pipeline.py"
+      - "Futuris/futuris/core/engine.py"
+      - "Futuris/futuris/api/routers/friday.py"
+      - "Futuris/futuris/api/routers/forecasts.py"
+      - "Futuris/futuris/api/app.py"
+      - "Futuris/futuris/infra/scheduler.py"
+      - "FRIDAY/src/friday/ecosystem/fleet_client.py"
+      - "Futuris/tests/connectors/test_provenance.py (new)"
+      - "Futuris/tests/models/test_statsforecast_degradation.py (new)"
+      - "Futuris/tests/api/test_friday_provenance.py (new)"
+      - "FRIDAY/src/friday/security/scrubber.py"
+      - "FRIDAY/tests/test_rel018_scrubber_prose.py (new)"
+      - ".github/workflows/monorepo-validation.yml"
+      - ".github/workflows/owner-workflows.yml"
+    defect: "System map + live recon 2026-11-14: (1) Futuris's serving paths default to SyntheticTelemetryConnector(seed=42) -- the config-driven connector factory (FUTURIS_TELEMETRY_SOURCE) governed only the scheduler -- and forecast payloads did not carry derived provenance: the pipeline froze evidence under a hardcoded 'telemetry:synthetic' label, the engine never set evidence_class/evidence_source on its Forecast, and the FRIDAY delegation response never copied either field off the forecast (payload sat at schema defaults). (2) statsforecast is a DECLARED dependency (Futuris/requirements.txt, pyproject) but is NOT installed in the production fleet venv (verified live: ModuleNotFoundError, Server 1) -- so every production adapter silently used _SFMockModel, whose predict returns the last observed value repeated: flat-line mocks presented as model forecasts. (3) '[REDACTED_SECRET]' artifact REPRODUCED AND ROOT-CAUSED 2026-11-14: FRIDAY's SecretScrubber Authorization-header regex was unanchored, so it matched the ordinary phrase 'authorization: ' in Futuris's standard sign-off line ('A prediction is not an authorization: forecasts inform, they never execute anything.') and replaced the following words with '[REDACTED_SECRET]' in the user-visible reply (verified by running the real payload + fleet reply through redact_secrets/recursive_sanitize locally: present before the fix, absent after). The round-2 reply text itself is unrecoverable (FRIDAY history store is in-memory; zero occurrences of the string exist in friday.db, FRIDAY/data, or the deployment tree), but the mechanism is proven and regression-tested."
+    acceptance:
+      - "Every forecast response carries provenance derived from the actual connector + observation sources (connector named; synthetic vs real explicit): pipeline and engine set evidence_class/evidence_source from the derivation, the evidence snapshot freezes under the derived source/class, and the FRIDAY delegation payload serves the forecast's real fields."
+      - "Default ingestion on ALL serving paths is the configured telemetry source via the connector factory; in this deployment no real telemetry source is configured as FUTURIS_TELEMETRY_SOURCE (Nexus unconfigured; VyralX is a peer data source, not the configured telemetry source), so synthetic remains the input and responses say SYNTHETIC plainly, FRIDAY chat reply included."
+      - "A statsforecast failure surfaces as explicit degradation: adapters raise StatsForecastUnavailableError instead of mock flat-lines; the FRIDAY delegation answers BLOCKED with calibration error statsforecast_unavailable; engine API paths answer 503; the scheduler logs and skips per subscription."
+      - "Live proof after deploy: delegation payload provenance matches the configured input; forced backend failure in the test environment returns the honest BLOCKED payload; the [REDACTED_SECRET] artifact is reproduced-and-fixed or reported with search evidence."
+    evidence: []
+    blockers:
+      - "statsforecast (declared dependency) is missing from the production fleet venv; after this fix Futuris will honestly report BLOCKED on forecast requests until the dependency is installed into the venv (ops follow-up for the coordinator -- install footprint/RAM on the 956MB host must be assessed deliberately, not bundled into this PR)."
+    next_action: "Implementing on branch claude/task-rel-018-futuris-provenance (claimed on issue #35, comment 6877888885); PR, CI, merge, Fleet CD, live verification, then board VERIFIED update."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

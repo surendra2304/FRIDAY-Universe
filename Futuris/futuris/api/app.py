@@ -595,7 +595,16 @@ async def quick_forecast(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
     engine = ForecastEngine()
     as_of = datetime.now(UTC)
 
-    forecasts = await engine.orchestrate(target=target, as_of=as_of, horizon=h_delta)
+    from futuris.models.adapters import StatsForecastUnavailableError
+
+    try:
+        forecasts = await engine.orchestrate(target=target, as_of=as_of, horizon=h_delta)
+    except StatsForecastUnavailableError as exc:
+        # TASK-REL-018: explicit degradation, never a mock flat-line.
+        raise HTTPException(
+            status_code=503,
+            detail=f"statsforecast_unavailable: no forecast was computed. {exc}",
+        ) from exc
     f = forecasts[0]
     async with async_session_factory() as session:
         f_repo = ForecastRepository(session)
@@ -666,11 +675,20 @@ async def quick_simulate(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
             base = recent[0] if recent else None
         if not base:
             engine = ForecastEngine()
-            forecasts = await engine.orchestrate(
-                target=str(body.get("target") or "service:checkout:capacity_exceedance_24h"),
-                as_of=datetime.now(UTC),
-                horizon=timedelta(hours=24),
-            )
+            from futuris.models.adapters import StatsForecastUnavailableError
+
+            try:
+                forecasts = await engine.orchestrate(
+                    target=str(body.get("target") or "service:checkout:capacity_exceedance_24h"),
+                    as_of=datetime.now(UTC),
+                    horizon=timedelta(hours=24),
+                )
+            except StatsForecastUnavailableError as exc:
+                # TASK-REL-018: explicit degradation, never a mock flat-line.
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"statsforecast_unavailable: no forecast was computed. {exc}",
+                ) from exc
             base = forecasts[0]
             await f_repo.create(base)
             await session.commit()
