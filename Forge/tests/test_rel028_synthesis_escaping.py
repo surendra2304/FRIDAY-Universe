@@ -25,7 +25,10 @@ These tests pin the defences added by TASK-REL-028:
      was simply absent, and no existing route could create it);
   5. the write boundary repairs the generated tests' parent.parent
      sibling-path misconception when Forge's flat layout is provably the
-     real one (acceptance runs 3 and 4 died at test collection on it).
+     real one (acceptance runs 3 and 4 died at test collection on it);
+  6. the write boundary refuses a module that unconditionally raises at
+     import time (acceptance run 5: a repair patch rewrote the working
+     module into a simulated import failure).
 
 The artifact fixture below is the exact production file, base64-encoded so
 the test source itself cannot accidentally re-escape or normalize it.
@@ -202,6 +205,69 @@ def test_sibling_path_repair_only_when_flat_layout_is_provable(
         content=_PARENT_PARENT_TEST, role="tester",
     )
     assert fs_tool.read_file(task_id, "test_main.py", role="tester") == _PARENT_PARENT_TEST
+
+
+_SIMULATED_RAISE_MODULE = (
+    '"""Utility module."""\n\n'
+    'raise ImportError("Simulated import failure for string_utils")\n'
+)
+
+
+def test_create_file_refuses_top_level_raise_module(fs_tool: FilesystemTool):
+    """Verbatim shape from production task19314112026203137: a repair patch
+    rewrote the working recovery-created string_utils.py into a module that
+    raises ImportError at import time to satisfy an import-error test --
+    after which the runtime check could never pass. A module that
+    unconditionally raises at import can never be a valid deliverable, so
+    the write boundary refuses it like unparseable content."""
+    task_id = "rel028raise"
+    fs_tool.wm.create_workspace(task_id)
+    with pytest.raises(ValueError, match="unconditionally raises at import"):
+        fs_tool.create_file(
+            task_id=task_id, relative_path="string_utils.py",
+            content=_SIMULATED_RAISE_MODULE, role="debugger",
+        )
+    assert fs_tool.search_files(task_id, "*.py", role="debugger") == []
+
+    # A raise nested in a guard is legitimate and stays writable.
+    nested = (
+        "import sys\n\n"
+        "if sys.version_info < (3, 0):\n"
+        "    raise ImportError('Python 3 required')\n"
+    )
+    fs_tool.create_file(
+        task_id=task_id, relative_path="guarded.py", content=nested, role="developer"
+    )
+    assert fs_tool.read_file(task_id, "guarded.py", role="developer") == nested
+
+
+def test_edit_file_cannot_introduce_top_level_raise(fs_tool: FilesystemTool):
+    task_id = "rel028editraise"
+    fs_tool.wm.create_workspace(task_id)
+    fs_tool.create_file(
+        task_id=task_id, relative_path="mod.py",
+        content="VALUE = 1\n", role="developer",
+    )
+    with pytest.raises(ValueError, match="unconditionally raise at import"):
+        fs_tool.edit_file(
+            task_id=task_id, relative_path="mod.py",
+            target_content="VALUE = 1",
+            replacement_content='raise ImportError("Simulated import failure")',
+            role="debugger",
+        )
+    assert fs_tool.read_file(task_id, "mod.py", role="developer") == "VALUE = 1\n"
+
+    # Repairing an already-broken file stays allowed.
+    paths = fs_tool.wm.get_workspace_paths(task_id)
+    assert paths is not None
+    (paths.project / "broken.py").write_text(_SIMULATED_RAISE_MODULE)
+    fs_tool.edit_file(
+        task_id=task_id, relative_path="broken.py",
+        target_content='raise ImportError("Simulated import failure for string_utils")',
+        replacement_content="VALUE = 2",
+        role="debugger",
+    )
+    assert "VALUE = 2" in fs_tool.read_file(task_id, "broken.py", role="debugger")
 
 
 def test_create_file_non_python_untouched(fs_tool: FilesystemTool):
