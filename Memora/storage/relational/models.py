@@ -437,6 +437,12 @@ class DeletionTombstone(Base):
     vector_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     cache_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     graph_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Added by migration f35ecb0a7c12 (server_default TRUE) but never mirrored
+    # into the ORM model, so create_all databases lacked the column. Default
+    # True matches the migration's backfill semantics: a tombstone counts as
+    # replica-complete unless a Turso write-through replica is active and a
+    # delete path explicitly records otherwise.
+    turso_deleted: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     status: Mapped[str] = mapped_column(String(32), default="PENDING", nullable=False, index=True)  # PENDING, CONVERGED, FAILED
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=get_utc_now, nullable=False)
@@ -473,6 +479,10 @@ class EventLog(Base):
     tenant_id: Mapped[str] = mapped_column(String(64), nullable=False, default="default", index=True)
     target_agent: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
     payload: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    # Added by migration b1206b9e4a61 (with ix_event_log_cloud_synced) but never
+    # mirrored into the ORM model, so create_all databases lacked the column
+    # the signed-envelope publisher passes to this constructor.
+    cloud_synced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=get_utc_now, nullable=False, index=True)
 
     __table_args__ = (Index("ix_event_log_tenant_cursor", "tenant_id", "id"), Index("ix_event_log_target_cursor", "target_agent", "id"))
