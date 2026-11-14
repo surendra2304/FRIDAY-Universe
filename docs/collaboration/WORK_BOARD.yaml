@@ -3503,6 +3503,43 @@ tasks:
       - "LIVE schema probe re-run post-fix (read-only): columns {} , uniques {}, checks {} — event_log.cloud_synced and ix_event_log_cloud_synced diffs GONE. Remaining probe output is fully explained non-drift: tables_extra = memora_vector_store + 3 Oracle HNSW internals; indexes extra = 3 Oracle unique-constraint backing indexes (uq_agents_tenant_name, uq_namespaces_tenant_path, uq_memory_shared_agent); alembic_version still a1d4c7e9f2b3 = the named bookkeeping residual, deliberately not hand-stamped."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-14: fix merged (PR #160, d7625d6b), deployed (Fleet CD success), live event_log repaired at boot (19:30:04 IST repair lines), ORA-00904 flood stopped (last 19:29:20, old PID), /v1/events answering 200 to the Futuris consumer, boot/operational logging flowing, and the ORM-vs-live schema probe clean apart from explained artifacts and the deliberately untouched alembic_version bookkeeping lag."
+  - id: TASK-REL-017
+    title: "IntelX threat-intel routers fabricate findings: fabricators must admit no data source, simulations must be labelled, real engines must be mounted"
+    status: CLAIMED
+    owner: muse_ai
+    branch: claude/task-rel-017-intelx-threat-intel-honesty
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T19:05:00+05:30"
+    updated_at: "2026-11-14T19:05:00+05:30"
+    files:
+      - "IntelX/routers/dark_web_monitor.py"
+      - "IntelX/routers/dynamic_osint_collector.py"
+      - "IntelX/routers/threat_forecast_engine.py"
+      - "IntelX/routers/universal_crawler.py"
+      - "IntelX/routers/adversary_emulation_engine.py"
+      - "IntelX/routers/threat_hunting_query_optimizer.py"
+      - "IntelX/routers/threat_campaign_tracker.py"
+      - "IntelX/routers/threat_intel_correlation_engine.py"
+      - "IntelX/routers/predictive_threat_analyzer.py"
+      - "IntelX/routers/real_osint_routes.py"
+      - "IntelX/intelx/services/threat_campaign_predictor.py"
+      - "IntelX/intelx/api/real_threat_router.py"
+      - "IntelX/intelx/api/router.py (mount only)"
+      - "IntelX/app/agents/real_maltego_graph.py (MalNet fallback label only)"
+      - "IntelX/tests/test_threat_intel_honesty.py"
+    defect: "Full system map + code audit at main 3af7c326: dark_web_monitor.run_scan invented leak records by coin flip (random.random() > 0.5) with fabricated *.example.com source URLs stamped verified=True; dynamic_osint_collector fabricated findings deterministically from md5 hashes and attributed them to GitHub/Shodan/VirusTotal/crt.sh that are never called; threat_forecast_engine derived severity from hash(threat_type + month) with fixed 0.7 confidence. universal_crawler, adversary_emulation_engine and threat_hunting_query_optimizer present simulated output unlabelled (hunting optimizer fabricates performance_ms and an x0.6 'optimized' figure). threat_campaign_tracker and threat_intel_correlation_engine sprinkle md5-hash-derived confidence/attribution numbers and hardcoded actor attributes over operator records; threat_campaign_predictor invents forecast confidence as 0.15 x phase count. The real engines (intelx/api/real_threat_router.py) were never mounted, and three of its four handlers called the engines with wrong arguments (string for dict, positional list for (threat_type, historical), a non-existent analyze() guarded into a hollow ok); the graph engine import pointed at a non-existent module path (real module is app/agents/real_graph_analytics.py). Mounted real_osint_routes had three residual defects: /osint/phonebook called a non-existent IntelXPhonebook.search() (500) over deterministic synthetic enumerations, /malnet/correlate returned hash-seeded findings (incl. real malware family names) unlabelled when no MALNET_API_KEY, /maltego/graph silently substituted a built-in sample graph."
+    acceptance:
+      - "Fabricators return an explicit no_real_data_source state in the payload: POST /api/v1/intelex/darkweb/scan (0 leaks, sources_scanned []), POST /api/v1/intelex/osint/collect (0 findings, sources_queried 0, per-source errors), POST /intelex/forecast/generate (predicted_severity/confidence null). Operator-submitted dark-web leaks are no longer auto-verified and get no fabricated source_url/leaked_at."
+      - "Simulated implementations carry simulated:true + data_source in the payload itself: crawler start/results/stats/report, emulation execute/gaps/report, hunting run/optimize/queries/report, phonebook (status simulated, synthetic_fallback), MalNet fallback (engine-level simulated flag surfaced by the route), maltego graph sample (data_source built_in_sample vs caller_supplied)."
+      - "Hash-invented numbers removed: campaign attribution_confidence starts 0.0 (rises only via operator attribution indicators), campaign predict confidence derives from recorded event count (0.0 with none), correlation actor profiles record only operator-supplied attributes (sophistication unknown, no invented sectors/techniques), pattern-match confidence equals the measured matched fraction, campaign-predictor forecast confidence is the mean of operator-supplied phase probabilities (0.0 when none supplied) with a stated basis; heuristic surfaces (campaign tracker, correlation, predictive analyzer, campaign predictor assess) carry data_source/basis labels."
+      - "real_threat_router mounted at /v1/real-threat-intel with working adapters: /graph/pagerank builds the Graph from the caller payload and runs real PageRank (app/agents import path fixed), /advanced/darkweb passes a validated source_data dict and labels caller_supplied_source_data + live_feed_connected:false, /deep/forecast passes threat_type + historical properly, /engine/analyze runs real reads (get_stats/get_threat_feed/correlate_indicators) over the persistent store singleton instead of the hollow guarded response."
+      - "New tests IntelX/tests/test_threat_intel_honesty.py lock the contract; neighbouring IntelX suites stay green; live per-endpoint probes after Fleet CD deploy show each threat-intel endpoint either traceable to a named real source or carrying the SIMULATED/no-source label."
+    evidence: []
+    blockers: []
+    next_action: "Implement on branch, PR, CI, merge, Fleet CD deploy, live-verify per endpoint, then mark VERIFIED with probe evidence."
+(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
