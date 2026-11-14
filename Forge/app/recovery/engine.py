@@ -3,11 +3,15 @@ Recovery & Self-Healing Engine for Project FORGE.
 Coordinates diagnosis, anti-loop governance, surgical patch application, and re-verification.
 """
 
+import re
+import sys
+
 from app.core.logging import get_logger
 from app.execution.engine import ExecutionEngine, execution_engine
 from app.memory.db import db_manager
 from app.memory.state_store import StateStore
 from app.recovery.classifier import (
+    FailureClass,
     FailureClassifier,
     FailureDiagnosis,
     failure_classifier,
@@ -77,6 +81,13 @@ class RecoveryEngine:
 
         The repair ladder is, in order:
 
+          0. ``create``       -- create a project module that verification
+                                proved is missing (TASK-REL-028). Every other
+                                route patches files that already exist; the
+                                applicator has always supported
+                                patch_type='create', but no route produced
+                                one, so a module the manifest never listed
+                                could never be repaired into existence.
           1. ``synthesis``    -- LLM patch synthesis, then the hand-written
                                 syntactic heuristics that were already here.
           2. ``deterministic``-- compile-validated repair of well-understood
@@ -108,8 +119,10 @@ class RecoveryEngine:
         last_patch: RepairPatch | None = None
         routes_tried: list[str] = []
 
-        for route in ("synthesis", "deterministic", "agent"):
-            if route == "synthesis":
+        for route in ("create", "synthesis", "deterministic", "agent"):
+            if route == "create":
+                patch = await self._create_missing_module_patch(task_id, diagnosis)
+            elif route == "synthesis":
                 patch = await self._synthesize_patch_for_diagnosis(task_id, diagnosis)
             elif route == "deterministic":
                 patch = self._deterministic_syntax_repair(task_id, target_file, diagnosis)
@@ -300,6 +313,110 @@ class RecoveryEngine:
                 f"[Task {task_id}] Could not record audit event '{event_type}': "
                 f"{type(exc).__name__}: {exc}"
             )
+
+    async def _create_missing_module_patch(
+        self, task_id: str, diagnosis: FailureDiagnosis
+    ) -> RepairPatch | None:
+        """Create a project module that verification proved is missing.
+
+        TASK-REL-028: the palindrome builds' test suites import a module the
+        Architect's manifest never listed, so no role ever wrote it. The
+        failure classified correctly as dependency_missing, yet every route
+        produced no patch -- they all repair files that already exist (the
+        agent route's repair intake skips anything not already in the
+        project), and the Debugger escalation kept targeting main.py. This
+        route fires only when ALL of these hold: the diagnosis is
+        dependency_missing; the evidence names a bare top-level module; the
+        module is not a stdlib name (a missing stdlib module is an
+        environment problem, not a project file); ``<module>.py`` is absent
+        from the workspace; and the task goal or the architecture spec names
+        the file as part of the project. Content comes from the same
+        Inference code channel the Developer role uses, at the same 0.70
+        confidence bar, parsed through the same ast-validating extractor --
+        and the ladder's compile gate still applies before anything is
+        written, so a bad generation changes nothing.
+        """
+        if diagnosis.failure_class != FailureClass.DEPENDENCY_MISSING:
+            return None
+        text = f"{diagnosis.error_message}\n{diagnosis.stack_trace or ''}"
+        match = re.search(r"No module named '([A-Za-z_][A-Za-z0-9_]*)'", text)
+        if not match:
+            return None
+        module = match.group(1)
+        if module in sys.stdlib_module_names:
+            return None
+        target_file = f"{module}.py"
+        try:
+            existing = self.exec_engine.fs.search_files(
+                task_id, pattern="*.py", role="debugger"
+            )
+        except Exception:
+            return None
+        if any(p == target_file or p.endswith("/" + target_file) for p in existing):
+            return None
+
+        goal, requirements = await self._load_task_objective(task_id)
+        spec_text = ""
+        try:
+            spec_text = self.exec_engine.fs.read_file(
+                task_id, "docs/ARCHITECTURE_SPEC.md", role="debugger"
+            )
+        except Exception:
+            spec_text = ""
+        if target_file not in goal and target_file not in spec_text:
+            return None
+
+        try:
+            from app.agents.parser import LLMResponseParser
+            from app.integrations.ai_universe_client import get_ai_universe_client
+
+            client = get_ai_universe_client()
+            reply = await client.generate_code(
+                filename=target_file,
+                goal=goal or f"Create the missing project module {target_file}",
+                file_type="python",
+                requirements=[
+                    *requirements,
+                    f"The verification test suite imports '{module}' but {target_file} "
+                    "does not exist in the project. Create the complete module so "
+                    "the import succeeds and the documented behaviour works.",
+                ],
+                context={
+                    "project_goal": goal,
+                    "stage": "recovery_create_missing_module",
+                    "failure_evidence": diagnosis.error_message[:2000],
+                },
+            )
+        except Exception as exc:
+            logger.warning(
+                f"[Task {task_id}] Missing-module creation for '{target_file}' "
+                f"failed at the provider call: {type(exc).__name__}"
+            )
+            return None
+        if not reply or reply.confidence < 0.70 or not reply.answer:
+            return None
+        files = LLMResponseParser.extract_files(reply.answer, default_filename=target_file)
+        if len(files) != 1 or files[0].relative_path != target_file:
+            return None
+        content = files[0].content
+        try:
+            compile(content, target_file, "exec")
+        except (SyntaxError, ValueError):
+            return None
+        logger.info(
+            f"[Task {task_id}] Recovery creating missing project module '{target_file}'"
+        )
+        return RepairPatch(
+            target_file=target_file,
+            original_snippet=None,
+            replacement_snippet=content,
+            explanation=(
+                f"Created missing project module {target_file}: verification "
+                f"reported \"No module named '{module}'\" and the file was "
+                "absent from the workspace."
+            ),
+            patch_type="create",
+        )
 
     def _deterministic_syntax_repair(
         self, task_id: str, target_file: str, diagnosis: FailureDiagnosis
