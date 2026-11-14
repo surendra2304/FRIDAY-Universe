@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from pydantic import AliasChoices, Field, model_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import (
     BaseSettings,
     EnvSettingsSource,
@@ -221,6 +221,24 @@ class Settings(BaseSettings):
         default=None,
         description="API Key specifically for Google Gemini",
     )
+    @field_validator("gemini_api_key", mode="before")
+    @classmethod
+    def _gemini_api_key_first_of_pool(cls, value: Any) -> Any:
+        """Expose only the primary key when Gemini keys are stored pooled.
+
+        FRIDAY's own Gemini keys may be stored combined in a single
+        variable (``FRIDAY_GEMINI_API_KEY=k1,k2,k3,k4,k5`` — primary first,
+        then fallbacks in order, mirroring how Inference stores its
+        GEMINI_API_KEY pool). The credential pool
+        (friday.auth.credential_pool) parses the full comma-separated list
+        from the environment itself; Settings consumers (LLM factory,
+        embeddings, vision and voice fallbacks) each need exactly one key,
+        so they are given the first (primary) entry only.
+        """
+        if isinstance(value, str) and "," in value:
+            return value.split(",", 1)[0].strip() or None
+        return value
+
     gemini_fallback_api_key_1: str | None = Field(
         default=None,
         description="Fallback Gemini API Key 1",
