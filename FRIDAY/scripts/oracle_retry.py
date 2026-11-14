@@ -193,8 +193,8 @@ def main():
 
     print("=" * 75)
     print("🚀 HARDENED 24/7 MULTI-TIER ORACLE AMPERE A1 CAPACITY SNIPER INITIALIZING")
-    print("   Region: ap-hyderabad-1 (AD-1) | Always Free A1 allowance: 4 OCPUs & 24 GB RAM total")
-    print("   Targets: 4C/24G (Primary), 2C/12G, 1C/6G, 2C/8G, 1C/4G")
+    print("   Region: ap-hyderabad-1 (AD-1) | Tenancy A1 limit (verified via OCI Limits API 2026-11-14): 2 OCPUs & 12 GB RAM total")
+    print("   Targets: 2C/12G (Primary), 1C/6G, 2C/8G, 1C/4G")
     print("   Cadence: jittered intervals + Cloud-Init embedded + In-Place Live Upgrade scaling")
     print("=" * 75)
 
@@ -205,9 +205,12 @@ def main():
         print(f"🔍 Existing ARM instance detected: {active_instance.id} ({current_ocpus} OCPUs, {current_ram} GB RAM, State: {active_instance.lifecycle_state})")
 
     # High-density target hierarchy: 100% of attempts search across ALL fault domains simultaneously
+    # Ladder corrected 2026-11-14 to the tenancy's VERIFIED limits (OCI Limits
+    # API: standard-a1-core-count=2, standard-a1-memory-count=12). Oracle cut
+    # the Always Free A1 allowance from 4/24 to 2/12 on 2026-06-15 (enforced
+    # 2026-08-18); any rung above 2/12 would fail LimitExceeded forever.
     TARGET_CONFIGS = [
-        {"ocpus": 4, "ram": 24, "fd": None, "img": UBUNTU_24_IMAGE},  # Full Always Free A1 allowance (ALL 3 fault domains)
-        {"ocpus": 2, "ram": 12, "fd": None, "img": UBUNTU_24_IMAGE},  # Half-size fallback (ALL 3 fault domains)
+        {"ocpus": 2, "ram": 12, "fd": None, "img": UBUNTU_24_IMAGE},  # Full verified tenancy A1 limit (ALL 3 fault domains)
         {"ocpus": 1, "ram": 6,  "fd": None, "img": UBUNTU_24_IMAGE},  # 1-core stepping stone (ALL 3 fault domains)
         {"ocpus": 2, "ram": 8,  "fd": None, "img": UBUNTU_24_IMAGE},  # 2-core memory fragmentation fit (ALL 3 fault domains)
         {"ocpus": 1, "ram": 4,  "fd": None, "img": UBUNTU_24_IMAGE},  # 1-core minimal RAM footprint (ALL 3 fault domains)
@@ -230,24 +233,24 @@ def main():
             current_ocpus = active_instance.shape_config.ocpus if active_instance.shape_config else 1
             current_ram = active_instance.shape_config.memory_in_gbs if active_instance.shape_config else 6
 
-            # If already 4 OCPU and 24 GB (the full Always Free allowance), we are fully done
-            if current_ocpus >= 4 and current_ram >= 24:
+            # If already 2 OCPU and 12 GB (the full verified tenancy A1 limit), we are fully done
+            if current_ocpus >= 2 and current_ram >= 12:
                 pub_ip = resolve_instance_public_ip(network_client, compute_client, compartment_ocid, active_instance.id)
                 notify_success(active_instance.id, current_ocpus, current_ram, pub_ip)
                 return 0
 
             # Instance is running on partial specs -> attempt live in-place upgrade
-            print(f"[Attempt #{attempt} | {elapsed_min}m] Instance active ({current_ocpus} OCPUs, {current_ram} GB). Upgrading to 4 OCPUs & 24 GB RAM...")
+            print(f"[Attempt #{attempt} | {elapsed_min}m] Instance active ({current_ocpus} OCPUs, {current_ram} GB). Upgrading to 2 OCPUs & 12 GB RAM...")
             try:
                 update_details = oci.core.models.UpdateInstanceDetails(
                     shape_config=oci.core.models.UpdateInstanceShapeConfigDetails(
-                        ocpus=4,
-                        memory_in_gbs=24
+                        ocpus=2,
+                        memory_in_gbs=12
                     )
                 )
                 updated = compute_client.update_instance(active_instance.id, update_details).data
                 pub_ip = resolve_instance_public_ip(network_client, compute_client, compartment_ocid, updated.id)
-                notify_success(updated.id, 4, 24, pub_ip)
+                notify_success(updated.id, 2, 12, pub_ip)
                 return 0
             except oci.exceptions.ServiceError as e:
                 if e.status == 429:
@@ -256,10 +259,10 @@ def main():
                     time.sleep(backoff)
                     continue
                 elif "Out of host capacity" in str(e.message) or e.status in [500]:
-                    print(f"[Attempt #{attempt} | {elapsed_min}m] Full 4 OCPUs / 24 GB not yet released in Hyderabad. Active on {current_ocpus} OCPU / {current_ram} GB. Retrying in {cycle_delay}s...")
+                    print(f"[Attempt #{attempt} | {elapsed_min}m] Full 2 OCPUs / 12 GB not yet released in Hyderabad. Active on {current_ocpus} OCPU / {current_ram} GB. Retrying in {cycle_delay}s...")
                 elif "limit" in str(e.message).lower() and current_ocpus >= 2 and current_ram >= 12:
-                    # Tenancy limit below 4/24 but a usable instance (>=2/12) is secured: accept it.
-                    print(f"[Attempt #{attempt} | {elapsed_min}m] Tenancy limit prevents the 4/24 upgrade; secured instance ({current_ocpus} OCPU / {current_ram} GB) accepted as final.")
+                    # Defensive: target size is already secured but the upgrade call hit a limit error: accept it.
+                    print(f"[Attempt #{attempt} | {elapsed_min}m] Tenancy limit prevents the 2/12 upgrade; secured instance ({current_ocpus} OCPU / {current_ram} GB) accepted as final.")
                     pub_ip = resolve_instance_public_ip(network_client, compute_client, compartment_ocid, active_instance.id)
                     notify_success(active_instance.id, current_ocpus, current_ram, pub_ip)
                     return 0
@@ -292,7 +295,7 @@ def main():
                     notify_success(inst.id, ocpus, ram, pub_ip)
                     return 0
                 else:
-                    # Claimed stepping stone server (e.g. 2C/8G, 1C/6G, 4C/24G)!
+                    # Claimed stepping stone server (e.g. 2C/8G, 1C/6G, 1C/4G)!
                     print(f"\n🚀 Server secured ({ocpus} OCPUs, {ram} GB)! Transitioning to live in-place upgrade loop...")
                     notify_success(inst.id, ocpus, ram, pub_ip)
                     active_instance = inst
