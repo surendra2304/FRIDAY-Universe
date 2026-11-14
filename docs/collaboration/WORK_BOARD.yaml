@@ -3344,14 +3344,14 @@ tasks:
     next_action: "Done. Restored content is identical to PR #128; Server 1 checkout reconciled to main after this merge."
   - id: TASK-REL-010
     title: "Gemini pool exhaustion: cap cooldowns, Groq failover on pool exhaustion, offline timezone loss"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-rel-010-pool-failover
-    pr: null
+    pr: 141
     contributors: []
     priority: P0
     created_at: "2026-11-14T17:45:00+05:30"
-    updated_at: "2026-11-14T17:45:00+05:30"
+    updated_at: "2026-11-14T18:35:00+05:30"
     files:
       - "FRIDAY/src/friday/auth/credential_pool.py"
       - "FRIDAY/src/friday/llm/factory.py"
@@ -3366,9 +3366,14 @@ tasks:
       - "offline path: when a tool declares a timezone property, _arguments_for extracts the zone the request names (explicit IANA token, else a curated place table, both ZoneInfo-validated) and passes it; no zone named, no argument."
       - "New tests FRIDAY/tests/test_rel_010_pool_exhaustion.py (12) cover the cap, the auth exception, the persisted-state clamp, failover semantics, factory wiring (with and without Groq), and offline timezone extraction; wired into the Owner Workflow Contracts CI list."
       - "Live acceptance after deploy: chat answers again on the recovered Gemini fallbacks, and with the pool state forced into the incident all-COOLDOWN shape, a plain chat question still returns a real answer via the Groq failover (journal-evidenced)."
-    evidence: []
+    evidence:
+      - "Recovered by Muse after the original agent ended without a report: fix found uncommitted on the Server-2 checkout, reviewed line-by-line, committed 15a8c156, shipped as PR #141, merged 68777bd5, Fleet CD deployed (Server 1 checkout verified to contain MAX_COOLDOWN_SECONDS / ExhaustionFailoverProvider / _PLACE_TIMEZONES; FRIDAY restarted 17:58:20 IST)."
+      - "Tests: 12/12 new tests pass locally; 252 neighbouring FRIDAY tests pass (2 OpenAI-provider failures pre-existing on clean main); CI on PR #141 all green (contracts incl. the new test file, roster, fleet layout, monorepo policy, secrets; docker + voice-regressions path-gated skips)."
+      - "Live failover proof: with the pool in the incident all-COOLDOWN shape after restart, journal 17:59:50 and 18:00:49 IST shows friday.llm.chain failing over to groq on CREDENTIAL_EXHAUSTED, and a plain chat question (capital of Australia) returned a real answer instead of dying; at 17:44 IST pre-fix the same question returned CREDENTIAL_EXHAUSTED while all five keys answered Google HTTP 200."
+      - "Live recovery proof: persisted ~20h cooldowns were clamped to 1800s on load (state file: FALLBACK 2-4 cooldown_until = load+1800s, then DEGRADED/eligible); at 18:30 IST chat answered via provider=gemini (capital of France, success) with no restart and no failover line - the pool healed on schedule. PRIMARY and FALLBACK 1 re-benched for one capped 1800s window after failing at the expiry instant, as designed."
+      - "Offline timezone fix is covered by unit tests (Tokyo/London/New York + explicit IANA + unknown place yields no argument); a live offline-path exercise would require both Gemini and Groq down simultaneously and was not forced on production."
     blockers: []
-    next_action: "PR in flight; on merge + Fleet CD, run the live acceptance (natural recovery probe + forced-exhaustion failover probe), then mark VERIFIED."
+    next_action: "Done. Merged as PR #141 (68777bd5), deployed, and production-verified live (Groq failover journal-evidenced during the all-COOLDOWN window; Gemini pool self-recovered at the 1800s clamp expiry)."
   - id: TASK-REL-011
     title: "Forge round-2 defects: FRIDAY shared HTTP pool cross-loop failure + Forge delegate parking tasks in READY forever"
     status: VERIFIED
