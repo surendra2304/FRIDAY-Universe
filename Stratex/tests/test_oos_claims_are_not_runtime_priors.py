@@ -6,6 +6,8 @@ strategy_adx_ema_mtf reads the *raw* ADX_EMA_MTF_STRATEGY dict instead. That dic
 still held a 0.516 win-rate prior and 16 "validated" assets, so every signal the
 module emitted carried an unverified confidence that governance had explicitly
 withdrawn. Governance was correct; the bypass was the bug.
+(adx_ema_mtf itself was deleted by TASK-STR-CLEANUP-001, 2026-11-15; the rule
+below now guards the surviving adx_ema config dicts.)
 
 The rule, applied to every strategy config in the module:
 
@@ -27,7 +29,6 @@ import config_strategy as cfg  # noqa: E402
 RAW_STRATEGY_CONFIGS = [
     ("ADX_EMA_STRATEGY", cfg.ADX_EMA_STRATEGY, "adx_ema"),
     ("ADX_EMA_STRATEGY_V2", cfg.ADX_EMA_STRATEGY_V2, "adx_ema"),
-    ("ADX_EMA_MTF_STRATEGY", cfg.ADX_EMA_MTF_STRATEGY, "adx_ema_mtf"),
 ]
 
 PARAM_IDS = [name for name, _, _ in RAW_STRATEGY_CONFIGS]
@@ -71,20 +72,10 @@ def test_registry_null_out_block_covers_every_entry():
             assert entry.get("validated_assets") == [], f"{name} kept registry assets"
 
 
-def test_mtf_module_no_longer_bakes_in_a_default_prior():
-    """The .get() default was the bypass: a missing key silently became 0.516."""
-    import strategy_adx_ema_mtf as mtf
-
-    assert mtf._OOS_WIN_RATE_PRIOR is None
-    assert "OOS_WIN_RATE_PRIOR" in mtf._CFG
-    assert mtf._CFG["OOS_WIN_RATE_PRIOR"] is None
-
-
 def test_no_strategy_raises_its_persistence_gate_to_one():
     """The confidence=1.0 defect (commit 0d2bf30) must stay dead."""
     import strategy_adx_ema as adx
-    import strategy_adx_ema_mtf as mtf
 
-    for module in (adx, mtf):
+    for module in (adx,):
         for value in (module._OOS_WIN_RATE_PRIOR,):
             assert value is None or value < 1.0

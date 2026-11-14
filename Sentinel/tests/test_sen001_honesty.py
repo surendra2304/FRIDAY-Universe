@@ -86,6 +86,16 @@ def test_behavioral_train_reports_only_real_metrics():
     assert report["avg_model_accuracy"] is None
 
 
+# 4. Posture must disclose the basis for its score ---------------------------
+
+def test_friday_posture_discloses_basis():
+    resp = client.get("/api/v1/friday/posture")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "posture_basis" in body
+    assert "targets_scanned" in body
+
+
 # 5/6. Documented router paths work; missing fields are 422, not 500 ---------
 
 def test_vuln_scan_reachable_at_documented_path():

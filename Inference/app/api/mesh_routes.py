@@ -30,6 +30,11 @@ mesh_router = APIRouter(prefix="/v1/mesh", tags=["FRIDAY Universe Peer Mesh"])
 
 
 
+# TASK-REL-030: fallback_model labels refreshed to verified-live models
+# (llama-3.3-70b-versatile and gemini-2.5-flash are retired at their
+# providers — Groq/Google 404). These labels are descriptive peer metadata
+# for the mesh listing, not gateway dispatch routes; primary_model values
+# are the peers' own affinities and were not re-audited here.
 PEER_METADATA: dict[str, dict[str, str]] = {
 
     "friday": {
@@ -42,7 +47,7 @@ PEER_METADATA: dict[str, dict[str, str]] = {
 
         "primary_model": "openai/gpt-oss-120b",
 
-        "fallback_model": "llama-3.3-70b-versatile",
+        "fallback_model": "qwen/qwen3.8-27b",
 
     },
 
@@ -56,7 +61,7 @@ PEER_METADATA: dict[str, dict[str, str]] = {
 
         "primary_model": "meta-llama/llama-3.3-70b-instruct",
 
-        "fallback_model": "gemini-2.5-flash",
+        "fallback_model": "gemini-3.6-flash",
 
     },
 
@@ -70,7 +75,7 @@ PEER_METADATA: dict[str, dict[str, str]] = {
 
         "primary_model": "qwen/qwen-2.5-coder-32b-instruct",
 
-        "fallback_model": "llama-3.3-70b-versatile",
+        "fallback_model": "openai/gpt-oss-120b",
 
     },
 
@@ -98,7 +103,7 @@ PEER_METADATA: dict[str, dict[str, str]] = {
 
         "primary_model": "meta-llama/llama-3.3-70b-instruct",
 
-        "fallback_model": "gemini-2.5-flash",
+        "fallback_model": "gemini-3.6-flash",
 
     },
 
@@ -126,7 +131,7 @@ PEER_METADATA: dict[str, dict[str, str]] = {
 
         "primary_model": "meta-llama/llama-3.3-70b-instruct",
 
-        "fallback_model": "gemini-2.5-flash",
+        "fallback_model": "gemini-3.6-flash",
 
     },
 
@@ -154,7 +159,7 @@ PEER_METADATA: dict[str, dict[str, str]] = {
 
         "primary_model": "meta-llama/llama-3.3-70b-instruct",
 
-        "fallback_model": "gemini-2.5-flash",
+        "fallback_model": "gemini-3.6-flash",
 
     },
 

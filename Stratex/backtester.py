@@ -4,11 +4,7 @@ from datetime import datetime
 
 import pandas as pd
 
-import strategy_aggressor as aggressor
 import strategy_ml as ml
-import strategy_scalper as scalper
-import strategy_supertrend as supertrend
-import strategy_swing as swing
 from backtest_engine import BacktestEngine
 from config import (
     BACKTEST_FEE_RATE,
@@ -63,10 +59,7 @@ class MultiStrategyWrapper:
     
     def __init__(self):
         self.strats = [
-            ("SCALPER", scalper),
-            ("SWING", swing),
-            ("ML", ml),
-            ("AGGRESSOR", aggressor)
+            ("ML", ml)
         ]
         
     def get_signal(self, df):
@@ -78,11 +71,9 @@ class MultiStrategyWrapper:
         return None, None, None
 
 def get_strategy_by_name(name):
-    if name == "scalper": return [scalper]
-    if name == "swing": return [swing]
+    # TASK-STR-CLEANUP-001 (2026-11-15): scalper, swing, aggressor and
+    # supertrend were deleted (verified OOS PF < 1.2); only ml remains.
     if name == "ml": return [ml]
-    if name == "aggressor": return [aggressor]
-    if name == "supertrend": return [supertrend]
     if name == "multi": return [MultiStrategyWrapper()]
     return []
 
@@ -148,7 +139,7 @@ def run_rolling_walk_forward(df, strategy_name, num_windows=5):
 def generate_baseline(df):
     """Runs a baseline for all strategies and exports results."""
     print("\n[BASELINE] Generating Baseline Strategy Report...\n")
-    strats_to_test = ["supertrend"]
+    strats_to_test = ["ml"]
     
     results = {}
     table_data = []
@@ -195,7 +186,7 @@ def generate_baseline(df):
 def generate_stage5_reports(df):
     """Runs Stage 5 validation and exports comprehensive diagnostic reports with Cost Sensitivity."""
     print("\n[Stage 5] Generating Diagnostics & Reports...\n")
-    strats_to_test = ["supertrend"]
+    strats_to_test = ["ml"]
     
     os.makedirs('backtest_results/stage5', exist_ok=True)
     

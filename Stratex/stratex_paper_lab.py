@@ -24,12 +24,9 @@ from research_phase9.cost_engine import CostEngine
 
 STRATEGIES: dict[str, tuple[str, str]] = {
     "donchian20": ("strategy_donchian_observe_only", "get_signal"),
-    "swing": ("strategy_swing", "get_signal"),
     "adx_ema": ("strategy_adx_ema", "get_signal"),
-    "bb_reversion": ("strategy_bb_reversion", "get_signal"),
-    "rsi_burst": ("strategy_rsi_burst", "get_signal"),
-    "vwap_trend": ("strategy_vwap_trend", "get_signal"),
-    "supertrend": ("strategy_supertrend", "get_signal"),
+    # TASK-STR-CLEANUP-001 (2026-11-15): swing, bb_reversion, rsi_burst,
+    # vwap_trend and supertrend were deleted (verified OOS PF < 1.2).
 }
 REQUIRED_COLUMNS = {"open", "high", "low", "close", "volume"}
 DEFAULT_STARTING_CAPITAL = 10_000.0

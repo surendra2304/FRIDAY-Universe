@@ -72,17 +72,6 @@ def _parallel_registry_promote(args):
 # 1. STRATEGY REGISTRY & IMMUTABLE VERSIONING
 # ==============================================================================
 
-def test_factory_winner_5_registry_hash_matches_committed_source():
-    root = Path(__file__).resolve().parent.parent
-    registry_data = json.loads((root / "strategy_registry.json").read_text(encoding="utf-8"))
-    source = (root / "strategy_factory_winner_5.py").read_text(encoding="utf-8")
-    expected = StrategyRegistry.compute_source_hash(source)
-    record = registry_data["strategies"]["factory_winner_5"]["v1.0.0"]
-
-    assert len(record["source_hash"]) == 64
-    assert record["source_hash"] == expected
-    assert record["status"] == "RESEARCH"  # Hash correction is not validation.
-
 
 def test_strategy_registry_registration_and_hash(tmp_path):
     reg_file = str(tmp_path / "registry.json")

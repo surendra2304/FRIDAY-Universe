@@ -133,8 +133,15 @@ def _get_active_signal(df_feat):
             return mod.get_signal(df_feat), strat
     except Exception as e:
         logger.warning(f"Could not load active strategy {strat}: {e}")
-    from strategy_swing import get_signal as swing_signal
-    return swing_signal(df_feat), "strategy_swing_macd_200ema"
+    # TASK-STR-CLEANUP-001 (2026-11-15): strategy_swing was DELETED (verified
+    # OOS profit factor 0.94 < 1.2, TASK-STR-BT-001). The frozen experiment's
+    # subject no longer exists, so signal generation fails closed here; the
+    # rest of this module (health, reconciliation, candle fetching) is
+    # strategy-agnostic and remains for a future rebind decision.
+    raise RuntimeError(
+        "frozen strategy strategy_swing was deleted by TASK-STR-CLEANUP-001; "
+        "the forward paper experiment has no bound strategy"
+    )
 
 
 def evaluate_forward_paper_candidate(

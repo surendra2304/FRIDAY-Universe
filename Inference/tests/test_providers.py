@@ -14,7 +14,11 @@ def test_gemini_defaults():
     provider = GeminiProvider()
     assert provider.default_model == "gemini-flash-latest"
     assert "gemini-flash-latest" in provider.SUPPORTED_MODELS
-    assert "gemini-2.5-flash" in provider.SUPPORTED_MODELS
+    # TASK-REL-030: gemini-2.5-flash is retired for this deployment's keys
+    # (Google 404 "no longer available to new users"); it must not be
+    # advertised as supported. gemini-3.6-flash is the verified replacement.
+    assert "gemini-2.5-flash" not in provider.SUPPORTED_MODELS
+    assert "gemini-3.6-flash" in provider.SUPPORTED_MODELS
 
 
 def test_groq_defaults():
