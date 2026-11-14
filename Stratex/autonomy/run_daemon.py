@@ -8,6 +8,7 @@ Orchestrates:
 """
 from __future__ import annotations
 
+import datetime
 import os
 import time
 import signal
@@ -141,6 +142,8 @@ class StratexTradingEngine:
         # seeds daily_start_equity on first call, so the breaker below has a
         # baseline to measure against.
         risk = self.engine.get_risk_summary()
+        # Kept for the per-cycle daemon heartbeat (see _write_daemon_heartbeat).
+        self._last_risk_summary = risk
         # Belt and braces: re-evaluate the realized-PnL breach directly in
         # case bookings happened through a path that skipped the check.
         if not risk.get("daily_loss_limit_hit", False):
@@ -1075,20 +1078,90 @@ class StratexTradingEngine:
         except Exception as e:
             logger.debug(f"Denylist persist failed: {e}")
 
+    # ------------------------------------------------------------------
+    # Daemon heartbeat (consumed by dashboard /health)
+    # ------------------------------------------------------------------
+    def _daemon_heartbeat_path(self) -> str:
+        """Path of the daemon heartbeat file (Stratex/state/daemon_heartbeat.json).
+
+        Uses the same state-dir convention as MultiVenueEngine._state_path so
+        the writer here and the reader in dashboard.py always agree.
+        """
+        override = os.getenv("STRATEX_STATE_DIR")
+        base = override if override else os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "state"
+        )
+        return os.path.join(base, "daemon_heartbeat.json")
+
+    def _write_daemon_heartbeat(self, results=None, error=None, status="RUNNING"):
+        """Atomically rewrite the daemon heartbeat. Never raises.
+
+        The dashboard's /health used to infer this daemon's state from
+        state/cloud_portfolio_state.json, a file only the MT5 cTrader engine
+        writes (on trade events). This daemon never writes it, so a live,
+        evaluating daemon reported ``engine: offline`` for 12 days. The
+        heartbeat is written every scan cycle, so its freshness is direct
+        evidence that the loop is turning.
+        """
+        try:
+            now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+            if status == "RUNNING":
+                self._last_evaluation_iso = now_iso
+            risk = getattr(self, "_last_risk_summary", None) or {}
+            payload = {
+                "status": status,
+                "pid": os.getpid(),
+                "timestamp": now_iso,
+                "updated_at": time.time(),
+                "scan_count": self.scan_count,
+                "scan_interval_seconds": self.scan_interval,
+                "last_strategy_evaluation": getattr(self, "_last_evaluation_iso", None),
+                "last_cycle": results,
+                "total_balance": risk.get("total_balance"),
+                "total_equity": risk.get("total_equity"),
+                "unrealized_pnl": risk.get("unrealized_pnl"),
+                "realized_pnl": risk.get("realized_pnl"),
+                "open_positions": risk.get("positions"),
+                "daily_loss_limit_hit": risk.get("daily_loss_limit_hit"),
+                "venues": sorted(self.engine.venues.keys())
+                if getattr(self.engine, "venues", None)
+                else [],
+            }
+            if error is not None:
+                payload["last_error"] = str(error)[:500]
+            path = self._daemon_heartbeat_path()
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            tmp = path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as fh:
+                json.dump(payload, fh, indent=2)
+            os.replace(tmp, path)
+        except Exception as e:
+            logger.debug(f"Daemon heartbeat write failed: {e}")
+
     def run(self):
         """Main trading loop."""
         logger.info(f"[STRATEX] Trading engine started - scanning every {self.scan_interval}s")
-        
+
+        # Startup heartbeat: the daemon is alive from here on, even before
+        # the first (slowest) scan cycle completes.
+        try:
+            self._last_risk_summary = self.engine.get_risk_summary()
+        except Exception:
+            self._last_risk_summary = None
+        self._write_daemon_heartbeat()
+
         while self.running:
             try:
                 cycle_start = time.time()
-                
+
                 # Run scan and execute
                 results = self.scan_and_execute()
-                
+
                 if results["executed"] > 0:
                     logger.info(f"[STRATEX] Cycle {self.scan_count}: {results}")
-                
+
+                self._write_daemon_heartbeat(results=results)
+
                 # Sleep for remainder of interval
                 elapsed = time.time() - cycle_start
                 sleep_time = max(1, self.scan_interval - elapsed)
@@ -1099,7 +1172,10 @@ class StratexTradingEngine:
                 break
             except Exception as e:
                 logger.error(f"[STRATEX] Loop error: {e}", exc_info=True)
+                self._write_daemon_heartbeat(error=e, status="ERROR")
                 time.sleep(5)
+
+        self._write_daemon_heartbeat(status="STOPPED")
 
 
 def main() -> None:
