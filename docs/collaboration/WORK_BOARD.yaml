@@ -4274,6 +4274,46 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "None — complete and production-verified. Remaining gate is the owner's own verdict on the new design. Rollback point: f6e2d06 (Reactor Deck)."
 
+  - id: TASK-REL-032
+    title: "Inference gateway model catalogue honesty: /v1/models lists only provider-verified live models, /v1/chat/completions returns 503 when no model answers and discloses provenance when a fallback serves"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-rel-030-inference-models
+    pr: 229
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T02:55:19+05:30"
+    updated_at: "2026-11-15T03:55:00+05:30"
+    files:
+      - "Inference/app/api/v1_core_routes.py"
+      - "Inference/app/providers/unified_manager.py"
+      - "Inference/app/routers/operational.py"
+      - "Inference/app/api/mesh_routes.py"
+      - "Inference/app/core/astra_profile.py"
+      - "Inference/app/inference_runtime/sla_predictor.py"
+      - "Inference/app/providers/gemini.py"
+      - "Inference/app/providers/openrouter.py"
+      - "Inference/app/agents/deliberation_engine.py"
+      - "Inference/tests/test_providers.py"
+      - "Inference/tests/test_rel030_model_catalogue.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6884442886"
+    defect: "Live baseline 2026-11-14 ~21:17-21:24Z (Server 1): GET /v1/models advertised 9 models; only openai/gpt-oss-120b served under its own name - every other catalogue request was silently served by nvidia/nemotron-3.5-super-vl:free (OpenRouter fallback) behind HTTP 200, and chat_completions had no nvidia/openrouter routing branch (those ids fell through to groq). Provider-direct audit with the deployment's own key pools: llama-3.3-70b-versatile and llama-3.1-8b-instant return Groq 404 model_not_found (retired); gemini-2.5-flash returns Google 404 'no longer available to new users'; gemini-3.8-flash exists but generation 503s on free-tier demand while gemini-3.6-flash generates (HTTP 200); liquid/lfm-2.5-2.6b:free is absent from OpenRouter's live catalogue; Cerebras has NO keys configured in Inference; nvidia/nemotron-3-super-120b-a12b returns 403 with the configured NVIDIA key. ID NOTE: claimed as TASK-REL-030 (comment 6884442886) in parallel with four sibling wave-3 crews; the Cortex entry reached main first and keeps REL-030 (likewise REL-031, REL-038) - this task is renumbered TASK-REL-032 per comment 6885045993, no other entry touched."
+    acceptance:
+      - "Every model advertised by GET /v1/models and the operational GET /models is verified against its provider with live calls; dead entries are removed or replaced everywhere they are referenced in Inference routing paths."
+      - "Each declared chat route either serves under its own name or fails honestly: a fully degraded route returns HTTP 503 with per-route accounting, and a fallback substitution is disclosed in the response body - never a silent degraded-empty 200."
+      - "Retired-model references in non-synthesis paths are fixed or explicitly documented."
+      - "Regression tests fail on clean main where the defect is code and pass with the fix; neighbouring suites show zero new failures."
+      - "The REL-026 generate-tests ladder behaviour is undisturbed and regression-checked live after deploy (one call, real suite returned)."
+    evidence:
+      - "BASELINE PROBES (before): catalogue requests gemini-3.8-flash 44.2s, gemini-2.5-flash 2.7s, gemini-flash-latest 42.1s, llama-3.3-70b-versatile 1.5s, llama-3.1-8b-instant 12.3s, cerebras/llama-3.3-70b 1.8s, nvidia/nemotron-3-super-120b-a12b 1.8s, liquid/lfm-2.5-2.6b:free 2.0s - ALL silently served by nvidia/nemotron-3.5-super-vl:free; only openai/gpt-oss-120b (1.0s) and auto (0.4s) were truthful."
+      - "FIX (PR #229, merged c98037f7 2026-11-14T22:01:57Z): MODEL_CATALOG holds only verified-live models and drives both GET /v1/models and routing (_provider_for_model: catalogue ownership first, then gemini/openai/nvidia/:free/meta-llama branches); degraded unified results return HTTP 503 {code: provider_degraded, retryable: true, requested_model/provider}; substitutions add a provenance block (requested vs served provider/model/policy + fallback_reason plumbed through UnifiedExecutionResponse from the gateway's scrubbed fallback provenance). Operational /models pruned to the same verified set (8 entries). Sweep: mesh peer fallback labels, ASTRA profile routing, SLA-predictor seeds, Gemini SUPPORTED_MODELS (2.5-flash out, 3.6/3.8 in), OpenRouter static lists (liquid/lfm, z-ai/glm-5.2:free, poolside/laguna-s-2.1:free, deepseek/deepseek-r1 fallback targets - all absent from the live catalogue), deliberation engine gemini-1.5 family list."
+      - "TESTS: new Inference/tests/test_rel030_model_catalogue.py (6) - 5 fail / 1 passes (direct-hit guard) on clean main, all 6 pass with the fix. Neighbouring suites (openai gateway, providers, REL-026 test-generation, unified cache scope, SLA predictor, mesh): 108 passed on pristine main -> 114 passed with the fix, zero regressions. One existing assertion updated with disclosure: test_providers.py asserted gemini-2.5-flash in Gemini SUPPORTED_MODELS; it now asserts the opposite per the Google 404 evidence. CI on PR #229: test job success (the two repo-policy validation jobs fail in repo-root/Futuris/VyralX steps outside this change surface; scripts/validate_fleet.py passes identically on pristine and fixed trees). Ruff: no new findings."
+      - "DEPLOY: Fleet CD deployed the merge to Server 1; sha256 of deployed v1_core_routes.py / unified_manager.py / operational.py / mesh_routes.py / gemini.py / openrouter.py == merged blobs; Inference.service active; /health 200."
+      - "LIVE ACCEPTANCE (after, Server 1): GET /v1/models returns exactly the 7 verified ids; GET /models returns the pruned 8. Chat probes: gemini-3.6-flash 200 in 13.7s own name; openai/gpt-oss-120b 200 in 0.4s; qwen/qwen3.8-27b 200 in 0.2s; meta-llama/llama-3.3-70b-instruct 200 in 1.6s; nvidia/nemotron-3.5-lightning:free 200 in 1.2s (via OpenRouter); auto 200 in 0.9s (gpt-oss-20b); gemini-3.8-flash 200 in 47.8s via fallback WITH provenance {requested gemini/gemini-3.8-flash, served openrouter/nvidia/nemotron-3.5-super-vl:free, fallback_reason: 'Request deadline exceeded for provider gemini after 36.4s'} - an honest substitution, not a silent one."
+      - "REL-026 REGRESSION (live, one call): POST /v1/forge/generate-tests -> 200 in 78.5s, generation_status=generated, attempts=2 (ladder recovered on groq/openai/gpt-oss-120b), 2512 chars of real pytest code returned. Ladder undisturbed."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-REL-032 crew). Residuals for the coordinator: (1) gemini-3.8-flash stays in the catalogue although free-tier demand makes Google 503/timeout often - the model exists and the route now substitutes WITH provenance or 503s honestly; removing it is an owner product call, not a correctness fix. (2) NVIDIA route unadvertised until the NIM key gains entitlement for the catalogue model (403 is credential-side). (3) Cerebras adapter exists but no keys are configured in production - catalogue removal reflects deployment truth. (4) Documented-not-fixed descriptive references: deliberation_engine MODEL_FAMILIES gpt/claude/llama rows, routers/multi_model_deliberation.py (canned/simulated module), mesh PEER_METADATA primary_model values (incl. deepseek/deepseek-r1, absent from OpenRouter's current list), gateway.py speculative path hardcodes gemini-3.8-flash (live model, demand-limited), gemini-2.5-flash-lite / 2.5-pro / pro-latest and gemini-3.7-flash / 3.5-flash are present in Google's model list but generation-unverified - none are advertised."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
