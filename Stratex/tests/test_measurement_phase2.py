@@ -156,10 +156,32 @@ def test_scorecard_math_from_fills_only():
     assert card["totals"]["trades"] == 4
 
 
+def test_reset_boundary_marks_snapshot_stream_and_scorecard():
+    row = fill_ledger.append_reset_boundary(
+        actor="owner (account reset)",
+        venues_pre={"binance_futures": 10769.70},
+        venues_post={"binance_futures": 10583.43},
+        note="demo account reset by owner",
+    )
+    assert row is not None and row["record_type"] == "RESET_BOUNDARY"
+    boundaries = fill_ledger.read_boundaries()
+    assert len(boundaries) == 1
+    assert boundaries[0]["venues_post"]["binance_futures"] == 10583.43
+    # Snapshots and boundaries share one append-only stream; the regular
+    # snapshot reader still sees the boundary row distinctly typed.
+    card = scorecard.build_scorecard(fills=[])
+    assert len(card["reset_boundaries"]) == 1
+    lines = scorecard.render_lines(card)
+    assert any("RESET BOUNDARY" in line and "NOT profit" in line for line in lines)
+
+
 def test_scorecard_empty_is_honest_zero():
     card = scorecard.build_scorecard()
     assert card["total_fills"] == 0
-    assert card["strategies"] == {}
+    # Governed strategies render explicitly at 0 recorded forward trades.
+    for name in ("bb_reversion", "factory_winner_1", "factory_winner_5",
+                 "adx_ema", "supertrend"):
+        assert card["strategies"][name]["trades"] == 0, name
     lines = scorecard.render_lines(card)
     assert any("0 forward trades" in line or "No recorded fills" in line for line in lines)
 
