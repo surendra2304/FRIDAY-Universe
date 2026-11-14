@@ -183,7 +183,8 @@ def test_scorecard_empty_is_honest_zero():
                  "adx_ema", "supertrend"):
         assert card["strategies"][name]["trades"] == 0, name
     lines = scorecard.render_lines(card)
-    assert any("0 forward trades" in line or "No recorded fills" in line for line in lines)
+    assert any("bb_reversion: trades=0" in line for line in lines)
+    assert any("factory_winner_1: trades=0" in line for line in lines)
 
 
 # ---------------------------------------------------------------------------
