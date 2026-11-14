@@ -3911,6 +3911,21 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'LADDER LIVE-FIRE STATUS, stated plainly: the ladder did NOT fire in the acceptance run because no turn wedged and no session died — Gemini Live served the whole call cleanly in this window (all seven steps in ~3.5 minutes). The ladder logic is unit-tested and its per-rung journal lines are in the deployed build; its live-fire under provider strain remains UNPROVEN and is recorded as an opportunistic follow-up below, not claimed as exercised.'
     blockers: []
     next_action: 'None for the voice session chain. Follow-ups outside this task: (1) FRIDAY-brain Stratex voice replies should carry portfolio substance, not a bare completion claim (observed 2026-11-14 23:09 IST); a Memora 404 on the stratex outcome store (POST /api/v1/memora/context/store) was also logged in the FRIDAY journal at 23:09:14 IST. (2) Opportunistic: exercise the recovery ladder live in a future Gemini-strained window to prove rung transitions in production.'
+  - id: TASK-STR-BT-001
+    title: "Rigorous backtesting programme: provenance-checked walk-forward harness; factory winners re-tested out-of-sample"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-bt-001-rigorous-backtest
+    pr: 180
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T19:00:00+05:30"
+    updated_at: "2026-11-14T21:35:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/ (NEW: data_feed.py, simulator.py, walkforward.py, factory_eval.py, module_eval.py, run_all.py, tests/, results/)"
+    acceptance: "Factory verdict: five winners FAIL honest OOS testing on all three layers (procedure PF 0.81 pooled; original variants PF 0.27-0.62; deployed modules PF 0.54-0.73). bb_reversion (VALIDATED) PF 0.68 on 12,308 OOS trades. adx_ema sole positive (PF 1.57, +1.19%/trade) on only 77 trades - forward-protocol candidate. Harness validated by exact replication of the legacy backtester (max deviation 0.0) and bit-identical reruns."
+    next_action: "None - programme complete and verified (PRs #180 and #184 merged, CI green; harness and results on main). Follow-ups: adx_ema is the forward demo protocol's first entrant (evidence accumulation only, HIGH caveat at 77 OOS trades); the 51 UNTESTABLE discovery modules can be re-run with python3 -m rigorous_backtest.run_all discovery when compute allows."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
