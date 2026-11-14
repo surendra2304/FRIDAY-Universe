@@ -182,6 +182,8 @@ def user_facing_tool_failure(tool_name: str, raw_error: str) -> str:
         meaning = "the step repeated an earlier call and was stopped so it would not run twice"
     elif "authorization block" in low or "authorization denied" in low:
         meaning = "that step was not authorised to run"
+    elif "circuit breaker" in low:
+        meaning = "that step was temporarily paused after repeated failures"
     elif any(m in low for m in ("401", "unauthorized", "authentication failed", "invalid api key", "missing api key")):
         meaning = "the service rejected my access credentials"
     elif any(m in low for m in ("403", "forbidden", "permission denied")):
