@@ -75,7 +75,8 @@ jobs:
             FRIDAY/tests/test_api_origin_enforcement.py \
             FRIDAY/tests/test_batch3_delegations.py \
             FRIDAY/tests/test_batch3_part2.py \
-            FRIDAY/tests/test_memora_hardening.py
+            FRIDAY/tests/test_memora_hardening.py \
+            FRIDAY/tests/test_intent_classifier_tier.py
       - name: Generated-code ingestion and saved verification status
         env:
           PYTHONPATH: Forge
@@ -98,7 +99,12 @@ jobs:
             Forge/tests/unit/test_source_backed_repair.py \
             Forge/tests/unit/test_artifact_receipts.py \
             Forge/tests/unit/test_portable_fixture_repair.py \
-            Forge/tests/unit/test_source_bound_receipts.py
+            Forge/tests/unit/test_source_bound_receipts.py \
+            Forge/tests/unit/test_task_forge_002_developer_retry.py \
+            Forge/tests/unit/test_task_forge_002_recovery_escalation.py \
+            Forge/tests/unit/test_task_forge_002_routing.py \
+            Forge/tests/unit/test_task_forge_002_truthful_completion.py \
+            Forge/tests/unit/test_developer_ai_universe.py
       - name: Direct memory evidence outranks graph-only context
         env:
           PYTHONPATH: Memora
