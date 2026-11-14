@@ -60,7 +60,17 @@ class GroundedInferenceGateway:
                 # An advertised explicit provider-routing hint avoids Inference's
                 # model=auto fast_lane, which silently clamps output to 60 tokens.
                 # The actual served model remains the gateway's responsibility.
-                "model": "llama-3.3-70b-versatile", "messages": request_messages, "temperature": temperature,
+                # TASK-REL-021 (2026-11-14): the previous hint,
+                # llama-3.3-70b-versatile, is retired at Groq — production logs
+                # show 404 model_not_found on every attempt, so every synthesis
+                # fell through to Inference's capability fallback, whose
+                # free-model pick varies and whose reasoning-heavy picks burn
+                # this call's token budget before emitting the JSON draft
+                # (finish_reason "length"). openai/gpt-oss-120b is served by
+                # Groq (the Groq adapter's default model), and the unified
+                # manager pins reasoning_effort=low for groq+gpt-oss, so the
+                # budget goes to the draft rather than the reasoning trace.
+                "model": "openai/gpt-oss-120b", "messages": request_messages, "temperature": temperature,
                 "max_tokens": max_tokens, "stream": False,
             })
             response.raise_for_status()
