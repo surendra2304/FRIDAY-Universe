@@ -110,9 +110,9 @@ def test_local_only_write_is_recallable_when_shared_search_is_empty(tmp_path, st
         client._executor.shutdown(wait=True)
 
 
-def test_shared_nonempty_result_stays_authoritative(tmp_path, stub_memora):
-    """A non-empty shared result is NOT merged with local rows: a stale
-    local twin of a shared-deleted fact must not resurface alongside hits."""
+def test_shared_and_local_results_merge_shared_first(tmp_path, stub_memora):
+    """Shared rows stay primary (listed first), but a local_only fact is
+    still present in the merged result — callers rank by subject overlap."""
     _StubMemoraHandler.search_results = [
         {"id": "shared-1", "content_text": "shared fact about chai", "memory_type": "semantic"}
     ]
@@ -120,7 +120,26 @@ def test_shared_nonempty_result_stays_authoritative(tmp_path, stub_memora):
     try:
         client.record_fact("friday", 'my test phrase is "crimson tiger 7"', "owner_fact", 0.95)
         hits = client.recall_memories("friday", "test phrase", limit=5)
-        assert [h["id"] for h in hits] == ["shared-1"]
+        assert hits[0]["id"] == "shared-1"
+        assert any("crimson tiger 7" in str(h.get("content_text", "")) for h in hits), hits
+    finally:
+        client._executor.shutdown(wait=True)
+
+
+def test_local_fact_survives_unrelated_shared_junk(tmp_path, stub_memora):
+    """The exact live failure after the first fix iteration: the shared
+    semantic search (min_score=0) returns an unrelated episodic dialogue
+    row for almost any query, which used to crowd out the local fact
+    entirely. The merged recall must still carry the local fact."""
+    _StubMemoraHandler.search_results = [
+        {"id": "ep-1", "content_text": 'FRIDAY, remember this for me: my test phrase is "purple elephant 42". Confirm what you stored.',
+         "memory_type": "episodic"}
+    ]
+    client = _client(tmp_path, stub_memora)
+    try:
+        client.record_fact("friday", 'my test phrase is "crimson tiger 7"', "owner_fact", 0.95)
+        hits = client.recall_memories("friday", "What was my test phrase", limit=10)
+        assert any("crimson tiger 7" in str(h.get("content_text", "")) for h in hits), hits
     finally:
         client._executor.shutdown(wait=True)
 
