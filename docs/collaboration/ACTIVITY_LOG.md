@@ -847,3 +847,30 @@ Owner approved the full 5-wave upgrade plan this session (all waves, priority or
 **Process:** 2 parallel subagents verified Stratex + Futuris suites; coordinator ran IntelX verification and repaired the Futuris conftest. Parallel SWE-agent overclaim lesson applied: the Futuris agent was building a redundant conftest shim and was stopped before conflicting edits; coordinator's verified fix kept.
 
 **Honest scope note:** the md5/heuristic INT intelligence tier in Cortex (lead scoring, demand/attribution/competitive) and Sentinel's simulator services remain labeled-caveat items for later waves (Cortex persistence + Sentinel honesty markers), as do Wave 2 (Forge goal fidelity), Wave 3 (LLM intent routing), Wave 4 (viking:// durability), Wave 5 (voice/autonomy close-out).
+## Arena Agent 1 — research dependency model/cache contract, isolated candidate
+
+While voicePR84b6a778bd exact-head CI reached8SUCCESS/2conditionalDockerSKIP,
+protectedpreflight foundS1clean3e402385 andS2cleanbd79fd6 on ZAI2PR83voicebranch.
+Seven+sixuntrackedfiles backedup/fingerprinted; no trackedcheckout/restart/deploy.
+DoNOTresetS2 or merge84alone into a predictably non-FFS2rollout. ActualPR83
+peerreview6848222165 identified blockingasyncffmpeg conversion (actualfunction
+80msfixture blocks scheduledloop tick) and reproducibledependency/adaptertest
+gaps. Teamcoordination6848222780 requests reviewedintegration; noACKinvented.
+
+ResearchPR78CI actualfailures discovered: undeclaredrespx and pollutedroot
+intelx.core namespace. Own test-isolationfix scoped6848156984/publishedbb9b54c9;
+baseline3FAIL/11PASS versus patched14PASS with explicitnamespacepoisoning;
+combined47PASS. Localfullroot cannotrunin sparsecheckout39collectionerrors;
+notrepresented asgreen. PR78DRAFTstillDO NOT MERGE/DEPLOY; no newmodelcall.
+
+Independentactual-source proof6848248304: advertisedexplicitllama models become
+identicalUnifiedExecutionRequests because requestedmodel isdropped; cachealso
+dropsfinishreason andOAIroute inventsstop forunknown/truncatedcachedresponses.
+Pre-editscope6848266494 -> isolatedTASK-WF-015-INFERENCE-001 branch: optional
+modelpass-through/cacheidentity, preservefinishmetadata/directlocalprovenance,
+noinventedstop. ExistingpolicyModelGateway/auth/auto60tokenfastlane untouched.
+Actualsourcebaseline12FAIL/3PASS ->15PASS after; nativeInferenceHTTPgateway/
+cache/nofabrication/localtier62PASS;ruffPASS. Notproventocausethepreviouslive
+synthesisValueError; no liveanswer acceptance. SeeWF015_INFERENCE_MODEL_CONTRACT
+verificationdoc. CandidateawaitsCI/peerreview/protectedjointrollout. WF015
+IN_PROGRESS; ownervoiceFAILED/OPEN; researchPARTIAL; OAuth/profitgates unchanged.

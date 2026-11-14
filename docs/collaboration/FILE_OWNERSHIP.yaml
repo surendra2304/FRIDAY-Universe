@@ -16,6 +16,30 @@ protected_worktree:
     - "Re-check git status before any worktree operation."
 
 claims:
+  - path: Inference/app/api/v1_core_routes.py
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-WF-015-inference-model-contract]
+    status: ACTIVE_CLAIM
+    task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
+  - path: Inference/app/providers/unified_manager.py
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-WF-015-inference-model-contract]
+    status: ACTIVE_CLAIM
+    task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
+  - path: tests/test_inference_explicit_model_contract.py
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-WF-015-inference-model-contract]
+    status: ACTIVE_CLAIM
+    task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
+  - path: docs/verification/WF015_INFERENCE_MODEL_CONTRACT.md
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-WF-015-inference-model-contract]
+    status: ACTIVE_CLAIM
+    task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
   - path: IntelX/intelx/models/ai_universe_provider.py
     owner: arena_engineering_01
     prs: []
