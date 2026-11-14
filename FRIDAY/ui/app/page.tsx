@@ -7,7 +7,7 @@ import { Conversation } from "@/components/Conversation";
 import { Crew } from "@/components/Crew";
 import { DelegationLedger, LiveLedger } from "@/components/Record";
 import { Instruments, OwnerSettings, VoiceLineCard } from "@/components/Machine";
-import { VoiceLine } from "@/components/VoiceLine";
+import { VoiceCall } from "@/components/VoiceCall";
 import {
   Agent,
   AgentsLiveSnapshot,
@@ -223,7 +223,7 @@ export default function Page() {
         {/* ================= TALK — the home screen ================= */}
         <section className="view view-talk" hidden={view !== "talk"} aria-label="Talk to FRIDAY">
           <div className="talk-voice">
-            <VoiceLine onStateChange={setVoiceState} />
+            <VoiceCall onStateChange={setVoiceState} />
           </div>
           <Conversation prefill={chatPrefill} />
         </section>

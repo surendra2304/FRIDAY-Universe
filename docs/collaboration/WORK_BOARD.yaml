@@ -4104,7 +4104,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "FRIDAY/ui/app/layout.tsx"
       - "FRIDAY/ui/app/globals.css"
       - "FRIDAY/ui/components/Arc.tsx"
-      - "FRIDAY/ui/components/VoiceLine.tsx"
+      - "FRIDAY/ui/components/VoiceCall.tsx"
       - "FRIDAY/ui/components/Conversation.tsx"
       - "FRIDAY/ui/components/Crew.tsx"
       - "FRIDAY/ui/components/Record.tsx"

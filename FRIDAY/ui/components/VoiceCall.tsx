@@ -37,7 +37,7 @@ type WorkerStatus = {
   updated_at?: string;
 };
 
-export function VoiceLine({ onStateChange }: { onStateChange?: (state: ArcState) => void }) {
+export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState) => void }) {
   const [status, setStatus] = useState<LineStatus>("idle");
   const [message, setMessage] = useState("Tap the ring and just talk — no menus, no wake word.");
   const [peerSpeaking, setPeerSpeaking] = useState(false);
@@ -327,7 +327,7 @@ export function VoiceLine({ onStateChange }: { onStateChange?: (state: ArcState)
       setStatus("error");
       setMessage(
         reason.includes("permission") || reason.toLowerCase().includes("denied")
-          ? "The browser refused the microphone. Allow mic access for this site, then tap again."
+          ? "Mic permission denied — the browser blocked it. Allow mic access for this site, then tap again."
           : reason,
       );
     }
