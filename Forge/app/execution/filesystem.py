@@ -77,6 +77,46 @@ class FilesystemTool:
 
         return target.read_text(encoding="utf-8")
 
+    @staticmethod
+    def _guard_python_content(relative_path: str, content: str) -> str:
+        """Never persist Python source that does not parse (TASK-REL-028).
+
+        Content that already parses is returned byte-identical -- legitimate
+        code full of escaped newlines inside string literals is untouched.
+        Content in the escape-corrupted shape (a model emitted the file in
+        its string-escaped form, so the text cannot parse at all) is decoded
+        and returned when the decoded form parses. Anything else raises
+        ValueError: writing it would plant a broken file that the
+        verification battery can only indict after every repair budget has
+        been spent on other targets, and no repair route accepts an
+        unparseable file. Callers that can fall back (extraction, synthesis)
+        already catch per-file write exceptions; the rest fail the node
+        honestly instead of shipping garbage.
+        """
+        try:
+            compile(content, relative_path, "exec")
+            return content
+        except (SyntaxError, ValueError) as exc:
+            original_error = exc
+
+        from app.recovery.syntax_repair import _unescape_literal_escapes
+
+        decoded = _unescape_literal_escapes(content)
+        if decoded is not None:
+            try:
+                compile(decoded, relative_path, "exec")
+            except (SyntaxError, ValueError):
+                decoded = None
+        if decoded is not None:
+            logger.warning(
+                f"Normalized escape-corrupted Python source for '{relative_path}' at write time"
+            )
+            return decoded
+        raise ValueError(
+            f"Refusing to write syntactically invalid Python to '{relative_path}': "
+            f"{original_error}"
+        ) from original_error
+
     def create_file(
         self, task_id: str, relative_path: str, content: str, role: str = "developer"
     ) -> str:
@@ -84,6 +124,9 @@ class FilesystemTool:
         self.pm.check_permission(role, ToolPermission.FS_WRITE)
         root = self._get_project_root(task_id)
         target = self.pm.validate_sandbox_path(Path(relative_path), root)
+
+        if relative_path.lower().endswith(".py") and isinstance(content, str):
+            content = self._guard_python_content(relative_path, content)
 
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")

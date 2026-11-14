@@ -812,6 +812,67 @@ class OrchestratorCore:
             await _finalize_tracker(task_id, success=False)
         return task
 
+    def _rescue_unparseable_files(self, task_id: str) -> list[str]:
+        """Deterministically rescue workspace .py files that do not parse.
+
+        TASK-REL-028: a generated program can materialize new files while it
+        runs -- the palindrome build's main.py wrote its own string_utils.py
+        at import time, in escape-corrupted form (literal "\\n" sequences
+        instead of newlines). Those files bypass every write-time guard,
+        and by the time the verification battery indicts them the recovery
+        ladder has spent its attempts on other targets; worse, no repair
+        route accepts an unparseable file at all (the deterministic route
+        had no candidate for this shape and the agent route refuses
+        unparseable sources). This sweep runs the deterministic,
+        compile-gated repair over every project .py file; a file is only
+        rewritten when the repaired candidate itself compiles.
+        """
+        rescued: list[str] = []
+        try:
+            from app.recovery.syntax_repair import _repair_python_source
+
+            paths = self.engine.fs.search_files(task_id, pattern="*.py", role="debugger")
+        except Exception:
+            return rescued
+        for rel_path in paths[:20]:
+            try:
+                original = self.engine.fs.read_file(task_id, rel_path, role="debugger")
+            except Exception:
+                continue
+            if not isinstance(original, str) or not original.strip():
+                continue
+            try:
+                compile(original, rel_path, "exec")
+                continue
+            except (SyntaxError, ValueError):
+                pass
+            candidate = _repair_python_source(original)
+            if candidate is None or candidate == original:
+                continue
+            try:
+                compile(candidate, rel_path, "exec")
+            except (SyntaxError, ValueError):
+                continue
+            try:
+                self.engine.fs.create_file(
+                    task_id=task_id,
+                    relative_path=rel_path,
+                    content=candidate,
+                    role="debugger",
+                )
+            except Exception as exc:
+                logger.warning(
+                    f"Syntax rescue could not rewrite '{rel_path}' for '{task_id}': {exc}"
+                )
+                continue
+            rescued.append(rel_path)
+            logger.warning(
+                f"[Task {task_id}] Syntax rescue rewrote unparseable file "
+                f"'{rel_path}' with a compile-validated deterministic repair "
+                "(TASK-REL-028)"
+            )
+        return rescued
+
     async def _verify_and_repair(self, task_id: str) -> "Any | None":
         """Run the verification battery and attempt self-repair on failures.
 
@@ -885,6 +946,17 @@ class OrchestratorCore:
                     logger.info(f"Peer review cleared all findings for '{task_id}'")
             except Exception as exc:
                 logger.warning(f"Peer review failed for '{task_id}': {exc}")
+
+            # TASK-REL-028: files a generated program materialized while it
+            # ran can be syntactically invalid without any role ever writing
+            # them, and no repair route accepts an unparseable target. Give
+            # the deterministic, compile-gated syntax rescue a final pass
+            # over the workspace before this report settles the task's fate;
+            # if it rewrote anything, the re-verification decides.
+            if final_report is not None and not final_report.all_passed:
+                rescued = self._rescue_unparseable_files(task_id)
+                if rescued:
+                    final_report = await engine.verify_task(task_id)
         except Exception as exc:
             # Verification failing to *run* (infrastructure error) is still not
             # a reason to kill a finished task: log loudly and leave the task in
