@@ -35,6 +35,18 @@ wedged session once, on the pinned provider, carrying the conversation
 transcript into the new instructions and never re-greeting; cold-start
 costs (import chain, key probe, TTS) are paid by a worker-start warm-up
 instead of by the first caller.
+
+TASK-VOI-004 (2026-11-14): VOI-003's single rebuild was not enough —
+in its acceptance run 2 the watchdog's rebuilt session itself died at
+the Gemini Live opening handshake (TimeoutError, recoverable=False)
+after the watchdog had already returned, and nothing recovered further.
+The watchdog now runs a bounded rebuild-resilience ladder per wedged
+or provider-killed turn: pinned-provider rebuild, one more pinned
+rebuild, then one failover to the Groq pipeline carrying the same
+conversation context and the same no-greeting discipline. Failover
+happens only on an actual provider failure; a healthy live session is
+never torn down, and when the ladder is exhausted the user hears the
+honest "unconfirmed" outcome instead of silence.
 """
 import asyncio
 import json
@@ -656,6 +668,137 @@ def _context_block(transcript: list, limit: int = 12) -> str:
     )
 
 
+# ---- TASK-VOI-004: watchdog rebuild-resilience ladder (pure, unit-tested) ----
+# VOI-003's watchdog rebuilt a wedged session ONCE — and in acceptance
+# run 2 (2026-11-14 22:20-22:31 IST) the rebuilt session itself died at
+# its Gemini Live opening handshake: the session error event read
+# type='realtime_model_error', error=TimeoutError('timed out during
+# opening handshake'), recoverable=False (journal 22:27:13-15 IST),
+# after the watchdog had already returned. Nothing recovered further,
+# so the run's remaining utterances were never even transcribed. The
+# ladder below replaces the single rebuild: per wedged (or
+# provider-killed) turn — pinned rebuild, one more pinned rebuild,
+# then ONE failover to the Groq pipeline carrying the same context and
+# no-greeting discipline. Failover happens only on an actual provider
+# failure; a healthy live session is never torn down.
+
+
+def _env_float(name: str, default: float) -> float:
+    """Defensive env float, mirroring brain_bridge._brain_timeout_s."""
+    try:
+        return float(os.getenv(name, "") or default)
+    except (TypeError, ValueError):
+        return default
+
+
+# Total elapsed budget for ONE turn's recovery ladder (all rungs).
+_RECOVERY_BUDGET_S = _env_float("FRIDAY_VOICE_RECOVERY_BUDGET_S", 300.0)
+# How long one rung gets to prove itself: the rebuilt session must
+# complete the re-asked turn inside this window (or, with no turn
+# pending, survive a short grace window). Run 2's handshake death
+# surfaced ~11 s after the re-ask; VOI-003's worst strained AFC turn
+# took ~138 s, but a rung that needs longer than this is
+# indistinguishable from another wedge, and the ladder still owes the
+# user an honest outcome inside the total budget.
+_RUNG_PROVE_S = _env_float("FRIDAY_VOICE_RUNG_PROVE_S", 100.0)
+
+_PROVIDER_FAILURE_MARKERS = (
+    "timed out during opening handshake",
+    "opening handshake",
+    "recoverable=false",
+    "realtime_model_error",
+    "apiconnectionerror",
+    "failed to connect",
+    "connection error",
+    "connection reset",
+    "connection closed",
+    "connection refused",
+    "websocket",
+    "server disconnected",
+    "service unavailable",
+    "unavailable",
+    "resource has been exhausted",
+    "resource_exhausted",
+    "deadline exceeded",
+    "quota exceeded",
+    "too many requests",
+    "rate limit",
+    "internal error",
+)
+
+
+def _classify_provider_failure(text) -> bool:
+    """True when an error's text marks a PROVIDER-LEVEL failure
+    (transport / handshake / quota / availability) rather than a
+    content or local failure. Applied only to session error events and
+    to session build/start/re-ask exceptions inside the ladder.
+    Calibrated on the 2026-11-14 run-2 journal strings above."""
+    if not text:
+        return False
+    low = str(text).lower()
+    return any(marker in low for marker in _PROVIDER_FAILURE_MARKERS)
+
+
+def _error_event_details(ev) -> "tuple[str, bool | None]":
+    """(text, recoverable) for a session 'error' event, dug out
+    defensively. In livekit-agents 1.8.x the event's ``error`` is a
+    typed model (e.g. RealtimeModelError) carrying ``recoverable`` and
+    an inner ``error`` exception; other error types are bare
+    exceptions. recoverable is None when the event does not say."""
+    err = getattr(ev, "error", None)
+    recoverable = getattr(err, "recoverable", None)
+    if recoverable is None:
+        recoverable = getattr(ev, "recoverable", None)
+    parts = [repr(ev) if err is None else repr(err)]
+    inner = getattr(err, "error", None)
+    if inner is not None:
+        parts.append(f"{type(inner).__name__}: {inner}")
+    etype = getattr(err, "type", None)
+    if etype:
+        parts.append(str(etype))
+    return " | ".join(parts), recoverable
+
+
+def _ladder_plan(kind: "str | None") -> "list[str]":
+    """Rung sequence for one recovery, starting from the kind of
+    session currently in use. Gemini: pinned rebuild, one more pinned
+    rebuild, then ONE context-carrying Groq failover. Groq (already
+    the fallback): pinned rebuild + one retry — there is no rung
+    below it. The plan only ever moves DOWN the provider chain, never
+    back up: pinning survives recovery."""
+    if kind == "groq":
+        return ["groq", "groq"]
+    return ["gemini", "gemini", "groq"]
+
+
+async def _run_recovery_ladder(rungs, attempt, budget_s, rung_prove_s,
+                               now=time.time):
+    """Sequence the rungs under ONE total elapsed budget.
+
+    ``attempt(kind, prove_s)`` performs one rung and returns
+    ``(served, reason)``. Returns a report dict:
+    ``{"served": kind|None, "steps": [(kind, served, reason, elapsed)],
+    "elapsed": float}``. Pure sequencing — the actual session work
+    lives in the caller's ``attempt`` — so the budget and ordering
+    rules are unit-testable with a fake clock.
+    """
+    started = now()
+    steps = []
+    served = None
+    for kind in rungs:
+        remaining = budget_s - (now() - started)
+        if remaining <= 0:
+            steps.append((kind, False, "ladder budget exhausted before this rung", 0.0))
+            break
+        rung_started = now()
+        ok, reason = await attempt(kind, min(rung_prove_s, remaining))
+        steps.append((kind, bool(ok), str(reason), now() - rung_started))
+        if ok:
+            served = kind
+            break
+    return {"served": served, "steps": steps, "elapsed": now() - started}
+
+
 async def _probe_orpheus_tts() -> bool:
     """One live call to the orpheus TTS endpoint with the fleet key.
 
@@ -911,16 +1054,33 @@ async def entrypoint(ctx: JobContext):
         "pending_text": "",
         "transcript": [],
         "spoke": False,
+        # TASK-VOI-004: completion signal for a ladder rung's re-asked
+        # turn — set by the conversation_item_added handler whenever an
+        # assistant item lands, on ANY session (handlers write into
+        # this shared dict precisely so the signal survives rebuilds).
+        "last_assistant_ts": 0.0,
     }
     live: dict = {
         "session": None,
         "closing": False,
-        "rebuilt": False,
         "greeting_task": None,
         "watchdog_task": None,
+        # TASK-VOI-004 recovery-ladder state: the kind of session
+        # currently in use (rewritten only when a failover rung proves
+        # itself), the provider label for status lines, whether a
+        # ladder run is in flight, the latest session error record
+        # ({"ts", "text", "recoverable"} for the CURRENT session only),
+        # and how many ladder runs this job has needed.
+        "kind": pinned["kind"],
+        "provider_name": provider_name,
+        "recovering": False,
+        "session_error": None,
+        "recoveries": 0,
     }
 
-    async def _make_session(instr: str, artifacts: "dict | None" = None):
+    async def _make_session(
+        instr: str, artifacts: "dict | None" = None, kind: "str | None" = None
+    ):
         """Build (not start) an AgentSession on the pinned provider.
 
         Used for the first session AND for watchdog rebuilds, so a
@@ -928,10 +1088,16 @@ async def entrypoint(ctx: JobContext):
         instructions differ (they gain the conversation context block).
         Rebuilds construct fresh provider artifacts on the PINNED
         provider/key; they never re-run provider selection.
+
+        ``kind`` (TASK-VOI-004) overrides the branch for ONE build —
+        the recovery ladder's final rung builds a Groq session while
+        the job's pin still says gemini. The pin itself is only
+        rewritten after that rung has PROVEN itself live.
         """
         artifacts = artifacts or {}
+        kind = kind or pinned["kind"]
         agent = Agent(instructions=instr, tools=_voice_tools())
-        if pinned["kind"] == "gemini":
+        if kind == "gemini":
             model = artifacts.get("model")
             if model is None:
                 model = _build_realtime_model(pinned["key"], instr)
@@ -1014,6 +1180,7 @@ async def entrypoint(ctx: JobContext):
                         del turn["transcript"][: len(turn["transcript"]) - 40]
             if role == "assistant" and text:
                 turn["pending_since"] = None
+                turn["last_assistant_ts"] = time.time()
 
         @sess.on("agent_state_changed")
         def _on_state(ev):
@@ -1028,6 +1195,18 @@ async def entrypoint(ctx: JobContext):
         @sess.on("error")
         def _on_error(ev):
             logger.error("VOICE session error: %s", getattr(ev, "error", ev))
+            # TASK-VOI-004: record the error against the CURRENT
+            # session only (a stale session's late error must not
+            # poison a rebuilt one). The watchdog's session-death
+            # trigger and the ladder's per-rung prove window both read
+            # this record.
+            if live.get("session") is sess:
+                text, recoverable = _error_event_details(ev)
+                live["session_error"] = {
+                    "ts": time.time(),
+                    "text": text,
+                    "recoverable": recoverable,
+                }
 
     async def _start(sess, ag) -> None:
         _wire_session(sess)
@@ -1136,23 +1315,245 @@ async def entrypoint(ctx: JobContext):
         except Exception as exc:
             logger.error("VOICE warm greeting generation failed: %s", exc)
 
-    async def _watch_turns() -> None:
-        """TASK-VOI-003 stuck-turn watchdog.
+    async def _close_quietly(sess, why: str) -> None:
+        """Best-effort session close (TASK-VOI-004: shared by every
+        ladder rung; VOI-003's watchdog inlined the same logic)."""
+        if sess is None:
+            return
+        try:
+            closer = getattr(sess, "aclose", None) or getattr(sess, "close", None)
+            if closer is not None:
+                result = closer()
+                if asyncio.iscoroutine(result):
+                    await asyncio.wait_for(result, timeout=15.0)
+        except Exception as exc:
+            logger.warning("VOICE %s: session close failed: %s", why, exc)
 
-        If a turn wedges — owner spoke, the session sits in
-        thinking/speaking, and no assistant reply completes within
-        _TURN_WEDGE_THRESHOLD_S — while the owner is still in the room,
-        rebuild the session ONCE on the pinned provider, carrying the
-        conversation transcript into the new session's instructions.
-        The rebuilt session never greets: the owner is mid-conversation,
+    async def _attempt_rung(kind: str, pending_text: str, prove_s: float):
+        """One recovery-ladder rung (TASK-VOI-004): close the current
+        session, build a fresh one on ``kind`` carrying the
+        conversation context, start it, re-ask the pending turn, and
+        prove the turn completes. Returns ``(served, reason)``.
+
+        A rung fails on: session build failure (provider setup),
+        session start failure, a re-ask failure, a provider-classified
+        (or explicitly unrecoverable) session error during the prove
+        window, or the prove window expiring with no completed reply.
+        """
+        old = live.get("session")
+        await _close_quietly(old, "recovery ladder")
+        if live.get("session") is old:
+            live["session"] = None
+        base_instr = pinned["instructions"]
+        if kind != pinned["kind"]:
+            # Cross-provider failover (gemini -> groq): the pipeline
+            # speaks English out, so its instructions are rebuilt for
+            # it — with the same memory block, the same context block
+            # and the same do-not-greet rule as a pinned rebuild.
+            base_instr = _instructions(
+                with_memory=True, english_out=True, memory_block=_memory_block
+            )
+        instr = base_instr + _context_block(turn["transcript"])
+        live["session_error"] = None
+        sess, ag = await _make_session(instr, kind=kind)
+        if sess is None:
+            return False, f"{kind} session build failed (provider setup failure)"
+        try:
+            await asyncio.wait_for(_start(sess, ag), timeout=min(60.0, prove_s))
+        except Exception as exc:
+            text = f"{type(exc).__name__}: {exc}"
+            cls = "provider" if _classify_provider_failure(text) else "setup"
+            return False, f"{kind} session start failed ({cls}): {text[:200]}"
+        reask_ts = time.time()
+        if pending_text:
+            try:
+                sess.generate_reply(user_input=pending_text)
+                logger.info(
+                    "VOICE recovery ladder: re-asked the pending turn %r on the %s session",
+                    pending_text[:80], kind,
+                )
+            except Exception as exc:
+                text = f"{type(exc).__name__}: {exc}"
+                return False, f"{kind} re-ask failed: {text[:200]}"
+            deadline = time.time() + prove_s
+        else:
+            # No turn pending (the session died between turns): the
+            # rung proves itself by surviving a short grace window —
+            # the provider handshake only happens at the first
+            # generation, so a death that is coming will either surface
+            # here or on the owner's next utterance, where the
+            # watchdog's death trigger runs the ladder again.
+            deadline = time.time() + min(prove_s, 20.0)
+        while time.time() < deadline:
+            err = live.get("session_error")
+            if err and live.get("session") is sess:
+                if err.get("recoverable") is False or _classify_provider_failure(
+                    err.get("text")
+                ):
+                    return False, (
+                        f"{kind} died on a provider failure: "
+                        f"{str(err.get('text'))[:240]}"
+                    )
+            if pending_text and float(turn.get("last_assistant_ts") or 0.0) > reask_ts:
+                return True, f"{kind} completed the re-asked turn"
+            await asyncio.sleep(1.0)
+        if pending_text:
+            return False, (
+                f"{kind} did not complete the re-asked turn within "
+                f"{prove_s:.0f}s (prove window expired)"
+            )
+        return True, f"{kind} session started cleanly and survived the grace window"
+
+    async def _speak_unconfirmed(pending_text: str) -> None:
+        """Ladder exhausted: the owner hears the truth, not silence —
+        the same 'unconfirmed' contract the brain bridge uses when a
+        brain call times out (TASK-VOI-003). Best-effort: if no session
+        can speak, the journal + status file carry the outcome."""
+        if pending_text:
+            line = (
+                "I have lost my voice connection, and I could not restore it. "
+                "The outcome of that request is unconfirmed — please check "
+                "the task history before repeating it."
+            )
+        else:
+            line = (
+                "I have lost my voice connection, and I could not restore it. "
+                "Please try me again in a moment."
+            )
+        sess = live.get("session")
+        if sess is None:
+            logger.error(
+                "VOICE recovery ladder: no live session can speak the unconfirmed outcome"
+            )
+            return
+        try:
+            sess.say(line, allow_interruptions=True)
+            logger.error(
+                "VOICE recovery ladder: spoke the unconfirmed outcome via the surviving session"
+            )
+            await asyncio.sleep(3.0)
+        except TypeError:
+            try:
+                sess.say(line)
+                await asyncio.sleep(3.0)
+            except Exception as exc:
+                logger.error("VOICE recovery ladder: unconfirmed say() failed: %s", exc)
+        except Exception as exc:
+            logger.error("VOICE recovery ladder: unconfirmed say() failed: %s", exc)
+
+    async def _recover(pending_text: str) -> None:
+        """Run the TASK-VOI-004 ladder once for one wedged/dead turn."""
+        live["recovering"] = True
+        live["recoveries"] = int(live.get("recoveries") or 0) + 1
+        try:
+            _write_status(
+                "recovering", live["provider_name"],
+                "wedged or provider-killed turn; recovery ladder running "
+                "with context, no re-greeting",
+                room=_room_name, job_id=_job_id,
+            )
+            plan = _ladder_plan(live.get("kind"))
+            rung_no = {"n": 0}
+
+            async def _attempt(kind, prove_s):
+                rung_no["n"] += 1
+                logger.warning(
+                    "VOICE recovery ladder: rung %d/%d — %s session "
+                    "(context carried, no greeting); prove window %.0fs",
+                    rung_no["n"], len(plan), kind, prove_s,
+                )
+                return await _attempt_rung(kind, pending_text, prove_s)
+
+            report = await _run_recovery_ladder(
+                plan, _attempt, _RECOVERY_BUDGET_S, _RUNG_PROVE_S
+            )
+            for i, (kind, ok, reason, elapsed) in enumerate(report["steps"], 1):
+                if ok:
+                    logger.info(
+                        "VOICE recovery ladder: rung %d/%d (%s) SUCCEEDED in %.0fs — %s",
+                        i, len(plan), kind, elapsed, reason,
+                    )
+                else:
+                    logger.error(
+                        "VOICE recovery ladder: rung %d/%d (%s) FAILED in %.0fs — %s",
+                        i, len(plan), kind, elapsed, reason,
+                    )
+            served = report["served"]
+            if served:
+                if served != live.get("kind"):
+                    # The failover rung proved itself: the job's pin
+                    # moves down the chain for the rest of the call.
+                    live["kind"] = served
+                    pinned["kind"] = served
+                    live["provider_name"] = f"groq:{_llm_chat_model()}"
+                    logger.warning(
+                        "VOICE recovery ladder: job failed over to the groq "
+                        "pipeline WITH context; pin updated for the rest of the call"
+                    )
+                _write_status(
+                    "ready", live["provider_name"],
+                    f"recovered via the ladder on {served}",
+                    room=_room_name, job_id=_job_id,
+                )
+                logger.info(
+                    "VOICE recovery ladder: turn recovered on %s after %.0fs; listening again",
+                    served, report["elapsed"],
+                )
+            else:
+                logger.error(
+                    "VOICE recovery ladder: EXHAUSTED after %.0fs (%d rungs); "
+                    "speaking the honest unconfirmed outcome",
+                    report["elapsed"], len(report["steps"]),
+                )
+                _write_status(
+                    "degraded", live["provider_name"],
+                    "recovery ladder exhausted; unconfirmed outcome spoken",
+                    room=_room_name, job_id=_job_id,
+                )
+                await _speak_unconfirmed(pending_text)
+        finally:
+            live["recovering"] = False
+
+    async def _watch_turns() -> None:
+        """Stuck-turn watchdog: TASK-VOI-003 origin, TASK-VOI-004 ladder.
+
+        Two triggers, polled every 5 s while the owner is in the room:
+
+        (a) a WEDGED turn — owner spoke, the session sits in
+            thinking/speaking, and no assistant reply completes within
+            _TURN_WEDGE_THRESHOLD_S (TASK-VOI-003);
+        (b) a PROVIDER-DEAD session — the live session reported an
+            unrecoverable or provider-classified error. VOI-003's
+            watchdog rebuilt once and RETURNED, so when its rebuilt
+            session died at the Gemini opening handshake (2026-11-14
+            22:27 IST) nothing noticed and the call's remaining
+            utterances were never even transcribed.
+
+        Either trigger runs the recovery ladder ONCE for that turn
+        (_recover): pinned rebuild, one pinned retry, then one
+        context-carrying Groq failover, bounded by
+        _RECOVERY_BUDGET_S, after which the owner hears the honest
+        unconfirmed outcome. The watchdog stays alive for the job's
+        whole life — a later wedge or death runs the ladder again.
+        Rebuilt sessions never greet: the owner is mid-conversation,
         and a fresh greeting is precisely the failure this prevents.
         """
         while not live["closing"]:
             await asyncio.sleep(5.0)
             try:
-                if live["closing"] or live["rebuilt"]:
-                    return
-                if not _turn_wedged(turn, time.time()):
+                if live["closing"] or live.get("recovering"):
+                    continue
+                wedged = _turn_wedged(turn, time.time())
+                err = live.get("session_error")
+                session_dead = bool(
+                    err
+                    and live.get("session") is not None
+                    and (
+                        err.get("recoverable") is False
+                        or _classify_provider_failure(err.get("text"))
+                    )
+                )
+                if not wedged and not session_dead:
                     continue
                 humans = [
                     p for p in ctx.room.remote_participants.values()
@@ -1160,63 +1561,32 @@ async def entrypoint(ctx: JobContext):
                 ]
                 if not humans:
                     continue
-                live["rebuilt"] = True
-                logger.error(
-                    "VOICE turn watchdog: no completed reply for %.0fs in state %s "
-                    "(pending %r); rebuilding the session on pinned provider %s "
-                    "with conversation context, no re-greeting",
-                    time.time() - float(turn.get("pending_since") or time.time()),
-                    turn.get("state"),
-                    (turn.get("pending_text") or "")[:80],
-                    provider_name,
-                )
-                _write_status(
-                    "recovering", provider_name,
-                    "wedged turn; session rebuilt with context, no re-greeting",
-                    room=_room_name, job_id=_job_id,
-                )
-                old = live.get("session")
-                if old is not None:
-                    try:
-                        closer = getattr(old, "aclose", None) or getattr(old, "close", None)
-                        if closer is not None:
-                            result = closer()
-                            if asyncio.iscoroutine(result):
-                                await asyncio.wait_for(result, timeout=10.0)
-                    except Exception as exc:
-                        logger.warning("VOICE turn watchdog: old session close failed: %s", exc)
                 pending_text = (turn.get("pending_text") or "").strip()
+                if wedged:
+                    logger.error(
+                        "VOICE turn watchdog: no completed reply for %.0fs in state %s "
+                        "(pending %r); running the recovery ladder on pinned provider %s "
+                        "with conversation context, no re-greeting",
+                        time.time() - float(turn.get("pending_since") or time.time()),
+                        turn.get("state"),
+                        pending_text[:80],
+                        live["provider_name"],
+                    )
+                else:
+                    logger.error(
+                        "VOICE session watchdog: the live session died on a provider "
+                        "failure (%s); running the recovery ladder with conversation "
+                        "context, no re-greeting",
+                        str((err or {}).get("text"))[:200],
+                    )
+                # Consume the trigger before the ladder runs: the old
+                # wedge must not re-fire while rungs are in flight, and
+                # the death record belongs to a session the first rung
+                # is about to replace.
+                live["session_error"] = None
                 turn["pending_since"] = None
                 turn["state"] = "initializing"
-                rebuilt_session, rebuilt_agent = await _make_session(
-                    pinned["instructions"] + _context_block(turn["transcript"])
-                )
-                if rebuilt_session is None:
-                    logger.error("VOICE turn watchdog: rebuild failed; no live session remains")
-                    _write_status(
-                        "degraded", provider_name, "wedged turn; session rebuild failed",
-                        room=_room_name, job_id=_job_id,
-                    )
-                    return
-                await _start(rebuilt_session, rebuilt_agent)
-                logger.info("VOICE turn watchdog: session rebuilt; listening again")
-                if pending_text:
-                    # The rebuilt session has the transcript in its
-                    # instructions, but nothing makes it ANSWER the
-                    # wedged question — left alone, the owner's question
-                    # is silently dropped (observed live 2026-11-14
-                    # 21:53 IST: session recovered, recall answer lost).
-                    # Re-ask it explicitly; this is a continuation, not
-                    # a greeting.
-                    try:
-                        rebuilt_session.generate_reply(user_input=pending_text)
-                        logger.info(
-                            "VOICE turn watchdog: re-asked the wedged turn %r on the rebuilt session",
-                            pending_text[:80],
-                        )
-                    except Exception as exc:
-                        logger.warning("VOICE turn watchdog: re-ask failed: %s", exc)
-                return
+                await _recover(pending_text)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
