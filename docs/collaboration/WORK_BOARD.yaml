@@ -3141,7 +3141,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_ai
     branch: "claude/friday-memory-roundtrip-fix"
-    pr: null
+    pr: 108
     contributors: []
     priority: P0
     created_at: "2026-11-14T13:45:00+05:30"
