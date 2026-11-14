@@ -17,6 +17,8 @@ from friday.agent.cognitive import CognitiveIntelligenceEngine, CognitivePhase
 from friday.agent.prompts import build_system_message
 from friday.agent.state import ReasoningStateMachine, TaskState
 from friday.agents.base_agent import AgentTask, BaseAgent
+from friday.routing.intent_classifier import CLARITY_CONFIDENCE as CLARITY_MIN
+from friday.routing.intent_classifier import STEER_CONFIDENCE as STEER_MIN
 
 from friday.agents.registry import AgentRegistry
 
@@ -356,8 +358,49 @@ class CognitiveMixin:
             # 1. State: UNDERSTANDING (evaluating cognitive confidence, information sufficiency & capability routing)
             self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Interpreting user turn and retrieving memories")
 
+            # TASK-INTENT-001: optional LLM intent mid-tier. Fires ONLY when
+            # the deterministic keyword tables give a weak signal (no table
+            # matched, or >=2 matched — score-arithmetic ambiguity), so a
+            # single clear table hit never pays for a model call. Fail-open:
+            # any timeout/error/low-confidence yields None and everything
+            # below proceeds byte-identical to the pre-tier behaviour.
+            intent_result = None
+            try:
+                from friday.routing.intent_classifier import get_intent_classifier
+
+                classifier = get_intent_classifier()
+                if (
+                    classifier is not None
+                    and classifier.signal_is_weak(clean_input, self.capability_router)
+                ):
+                    intent_result = classifier.classify(
+                        clean_input, recent_messages=recent_messages
+                    )
+            except Exception as e:  # never let the mid-tier break a turn
+                logger.debug(f"Intent mid-tier skipped: {type(e).__name__}: {e}")
+                intent_result = None
+
             # Evaluate cognitive loop & confidence (CLARIFY prompt bypassed if this is a confirmed action turn)
             cognitive_decision = self.cognitive_engine.evaluate_request(clean_input)
+
+            # TASK-INTENT-001 (continued): fold a strong classifier verdict
+            # into understanding confidence. Upgrade-only — the classifier can
+            # add certainty (rescuing the deterministic 0.3 ambiguous-pattern
+            # score with real understanding) but never downgrade it.
+            if intent_result is not None and not is_confirmation_turn:
+                try:
+                    det_confidence = cognitive_decision.confidence.understanding_confidence
+                    if (
+                        intent_result.confidence >= CLARITY_MIN
+                        and intent_result.confidence > det_confidence
+                    ):
+                        cognitive_decision.confidence.understanding_confidence = intent_result.confidence
+                        cognitive_decision.confidence.reasons.append(
+                            f"LLM intent tier classified this as '{intent_result.intent}' "
+                            f"(confidence {intent_result.confidence:.2f})"
+                        )
+                except Exception:
+                    pass
             if not is_confirmation_turn:
                 if cognitive_decision.current_phase == CognitivePhase.CLARIFY and cognitive_decision.clarification_prompt:
                     logger.info(
@@ -418,8 +461,25 @@ class CognitiveMixin:
                 ] if recalled else [],
                 "routed_capability": routing_decision.selected_capability.value,
             }
-            
-            exec_res = self.execute_complex_task(goal=effective_goal, context=context)
+
+            # TASK-INTENT-001: when the mid-tier is highly confident about the
+            # intent, steer the generic tool loop toward the expected tools —
+            # this is the actual misroute fix (required_tools on the
+            # deterministic router is telemetry-only; the loop never saw it).
+            # The hint rides on the execution goal only: effective_goal stays
+            # clean for memory recall, and Memora records clean_input, so the
+            # steering text never pollutes long-term memory.
+            exec_goal = effective_goal
+            if intent_result is not None and intent_result.required_tools and intent_result.confidence >= STEER_MIN:
+                exec_goal = (
+                    f"{effective_goal}\n\n"
+                    f"[intent routing hint: this request looks like '{intent_result.intent}' — "
+                    f"prefer the tool(s) {', '.join(intent_result.required_tools)} when executing]"
+                )
+            if intent_result is not None:
+                context["intent_classification"] = intent_result.to_dict()
+
+            exec_res = self.execute_complex_task(goal=exec_goal, context=context)
             
             if exec_res.tool_calls or exec_res.tool_results:
                 self.state_machine.transition_to(TaskState.EXECUTING, reason="Executing authorized tools")

@@ -15,6 +15,14 @@ os.environ.setdefault(
     "FRIDAY_MEMORY_DB_PATH",
     str(Path(tempfile.mkdtemp(prefix="friday_tests_")) / "conftest_memory.db"),
 )
+# TASK-INTENT-001 hermeticity: the intent mid-tier hook must never lazily
+# construct a REAL provider inside the suite (a developer .env with real
+# Gemini keys would otherwise leak into this process and turn the hook into
+# network calls for every weak-signal turn). The kill switch prevents lazy
+# creation process-wide; tests that exercise the hook inject their own
+# classifier singleton (returned before the env check) or set this var to
+# something else explicitly.
+os.environ.setdefault("FRIDAY_INTENT_CLASSIFIER", "off")
 
 import pytest
 
