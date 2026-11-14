@@ -16,7 +16,7 @@ jobs:
     name: Public gateway validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Probe all ten agents + bridge + TLS
         run: |
           python3 scripts/validate_fleet_live.py --out "$GITHUB_WORKSPACE/validation"

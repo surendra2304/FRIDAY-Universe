@@ -36,7 +36,7 @@ jobs:
     timeout-minutes: 35
     steps:
       - name: Check out monorepo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Verify Docker Compose is available
         run: docker compose version

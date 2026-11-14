@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 360 # Run up to 6 hours per job
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Skip scheduled run if a sniper is already active
         id: guard
