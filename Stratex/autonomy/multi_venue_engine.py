@@ -282,27 +282,46 @@ class MultiVenueEngine:
     def equity_snapshot(self, trigger: str = "manual") -> Dict[str, Any]:
         """Per-venue equity snapshot for the measurement store.
 
-        Binance demo equity is the USDT futures margin balance only —
-        non-USDT faucet assets are excluded (see measurement.fill_ledger
-        FAUCET_EXCLUSION_RULE). Unhealthy venues appear as None and are
-        listed in excluded_venues; they never contribute a cached figure.
+        Binance demo equity in the snapshot is the USDT margin figure
+        only — the demo account runs multi-asset margin, so the venue's
+        reported total values the faucet-granted BTC/USDC too; that
+        reported total is kept separately in venues_reported and never
+        used as the snapshot's trading equity (see
+        measurement.fill_ledger FAUCET_EXCLUSION_RULE). Unhealthy venues
+        appear as None and are listed in excluded_venues; they never
+        contribute a cached figure.
         """
         venues: Dict[str, Optional[float]] = {}
+        reported: Dict[str, Optional[float]] = {}
         excluded: List[str] = []
         total = 0.0
         for venue_name, venue in self.venues.items():
-            _summary, equity, healthy = self._venue_account(venue_name, venue)
-            if healthy:
-                venues[venue_name] = round(equity, 2)
-                total += equity
-            else:
+            summary, equity, healthy = self._venue_account(venue_name, venue)
+            if not healthy:
                 venues[venue_name] = None
+                reported[venue_name] = None
                 excluded.append(venue_name)
+                continue
+            reported[venue_name] = round(equity, 2)
+            if venue_name == "binance_futures":
+                # USDT-only trading equity: USDT wallet + unrealized PnL.
+                try:
+                    balances = venue.get_balance() or {}
+                    usdt = balances.get("USDT")
+                    if usdt is not None:
+                        equity = float(usdt.total or 0.0) + float(
+                            summary.get("unrealized_pnl", 0) or 0
+                        )
+                except Exception:
+                    pass
+            venues[venue_name] = round(equity, 2)
+            total += equity
         return {
             "engine": "daemon",
             "trigger": trigger,
             "total_equity": round(total, 2),
             "venues": venues,
+            "venues_reported": reported,
             "excluded_venues": excluded,
             "faucet_exclusion": (
                 "binance demo/testnet equity = USDT futures margin balance only; "
