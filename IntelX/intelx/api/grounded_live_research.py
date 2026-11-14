@@ -106,7 +106,7 @@ async def synthesize_grounded(query: str, documents: list[dict], gateway: Any = 
             break
     if not supplied:
         return {"status": "DEGRADED", "error": "no_source_material", "findings": []}
-    response = await gateway.complete(
+    complete_kwargs = dict(
         messages=[
             {"role": "system", "content": (
                 "Answer the research question using ONLY the supplied source documents. "
@@ -122,6 +122,18 @@ async def synthesize_grounded(query: str, documents: list[dict], gateway: Any = 
         ],
         role="analyst", schema_model=GroundedDraft, temperature=0, max_tokens=2400,
     )
+    try:
+        response = await gateway.complete(**complete_kwargs)
+    except GroundedCompletionError as exc:
+        # TASK-REL-007 (2026-11-14): Inference routes completions across
+        # providers/models per call; a route can truncate the draft
+        # (finish_reason 'length' after ~125 chars observed live) while the
+        # next route serves it fully. One retry on incomplete_completion
+        # only — every other refusal (mock, invalid schema) stays final,
+        # and all grounding gates below apply unchanged to the retried draft.
+        if (getattr(exc, "public_details", {}) or {}).get("reason_code") != "incomplete_completion":
+            raise
+        response = await gateway.complete(**complete_kwargs)
     # Defense in depth: no mock output qualifies even with a misconfigured caller.
     if response.provider == "mock":
         return {"status": "DEGRADED", "error": "mock_synthesis_refused", "findings": []}
