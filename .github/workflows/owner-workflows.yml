@@ -88,6 +88,8 @@ jobs:
           python -m pytest -q Forge/tests/unit/test_response_parser.py \
             Forge/tests/unit/test_parser_and_webstudio_regressions.py \
             Forge/tests/unit/test_generated_test_ingestion.py \
+            Forge/tests/unit/test_gate_blocked_rel026.py \
+            Forge/tests/unit/test_tester_synthesis_note_rel023.py \
             Forge/tests/unit/test_delegate_verification_status.py \
             Forge/tests/unit/test_missing_test_truthfulness.py \
             Forge/tests/unit/test_verification.py \
@@ -127,6 +129,7 @@ jobs:
         run: |
           python -m pip install -r Inference/requirements.txt
           python -m pytest -q Inference/tests/test_forge_goal_and_test_generation.py \
+            Inference/tests/test_test_generation_reliability_rel026.py \
             Inference/tests/test_unified_manager_cache_scope.py \
             Inference/tests/test_forge_code_review_is_evidence_based.py \
             Inference/tests/test_python_fence_boundaries.py \

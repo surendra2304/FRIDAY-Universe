@@ -92,6 +92,17 @@ class ExecutableTaskDAG:
             self.graph.nodes[node_id].error = error
             self.graph.status = TaskState.FAILED
 
+    def mark_pending(self, node_id: str) -> None:
+        """Return a node to PENDING so a later run schedules it again.
+
+        TASK-REL-026: a verification gate that could not run (its checks
+        never executed) earned no verdict; the executor had already
+        marked it RUNNING, which get_ready_nodes would never select
+        again. Resetting it is what makes a resumed task re-run the gate.
+        """
+        if node_id in self.graph.nodes:
+            self.graph.nodes[node_id].status = TaskState.PENDING
+
     def is_completed(self) -> bool:
         """Check if all nodes in graph are COMPLETED."""
         if not self.graph.nodes:

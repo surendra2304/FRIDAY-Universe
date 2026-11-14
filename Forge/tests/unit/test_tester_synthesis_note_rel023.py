@@ -76,9 +76,18 @@ async def test_degraded_generation_is_named_in_gate_result(monkeypatch, tmp_path
         engine=engine,
     )
 
-    assert result["status"] == "failed"
+    # TASK-REL-026 semantics update (disclosed): this exact scenario —
+    # generation degraded, no tests from any path, nothing executed — is
+    # no longer a "failed" verdict on the code. It is the distinct,
+    # retryable "blocked" outcome (failure_kind
+    # test_generation_unavailable). The REL-023 pins below are unchanged:
+    # the outcome still names the generation status, and test files are
+    # still re-scanned after synthesis.
+    assert result["status"] == "blocked"
+    assert result["failure_kind"] == "test_generation_unavailable"
+    assert result["retryable"] is True
     assert "generation_status='degraded'" in result["stderr"], (
-        "the gate failure must name the test-generation outcome, not just "
+        "the gate outcome must name the test-generation outcome, not just "
         "pytest's empty-discovery message"
     )
     assert fs.search_calls >= 2, "test files must be re-scanned after synthesis"

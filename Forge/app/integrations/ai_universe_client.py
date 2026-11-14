@@ -306,17 +306,47 @@ class AIUniverseClient:
             f"Querying Inference test generation service for {file_type} code ({len(code)} bytes)"
         )
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            # TASK-REL-026: generation is a bounded multi-attempt job on the
+            # Inference side (up to 3 attempts x 75s), so this endpoint gets
+            # a longer read budget than the client's chat-scale default —
+            # otherwise the client would abandon attempts it asked for.
+            timeout = httpx.Timeout(300.0, connect=30.0)
+            async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(url, json=payload, headers=headers)
                 response.raise_for_status()
                 return response.json()
-        except (httpx.RequestError, httpx.HTTPStatusError) as exc:
+        except httpx.HTTPStatusError as exc:
+            # TASK-REL-026: Inference answers a no-tests outcome with 503
+            # and the SAME structured body (generation_status / error /
+            # retryable). Surface those fields so the caller can tell
+            # "generation unavailable, retry later" from a code verdict.
+            detail: dict[str, Any] = {}
+            try:
+                parsed = exc.response.json()
+                if isinstance(parsed, dict):
+                    detail = parsed
+            except Exception:
+                detail = {}
+            logger.warning(
+                f"Inference test generation unavailable (HTTP {exc.response.status_code}); no tests generated."
+            )
+            return {
+                "test_code": "",
+                "confidence": 0.0,
+                "generation_status": detail.get("generation_status") or "degraded",
+                "retryable": bool(detail.get("retryable", True)),
+                "error": detail.get("error")
+                or f"Test generation unavailable (HTTP {exc.response.status_code}); no tests generated.",
+            }
+        except httpx.RequestError as exc:
             logger.warning(
                 f"Inference test generation remote call failed ({type(exc).__name__}); no tests generated."
             )
             return {
                 "test_code": "",
                 "confidence": 0.0,
+                "generation_status": "degraded",
+                "retryable": True,
                 "error": f"Test generation unavailable ({type(exc).__name__}); no tests generated.",
             }
 
