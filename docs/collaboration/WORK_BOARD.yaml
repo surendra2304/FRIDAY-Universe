@@ -4126,6 +4126,39 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-REL-029 crew): durable conversation history shipped in PR #216 (merge 460703c6), deployed and fingerprint-verified on Server 1, and proven live across two production restarts with the marked-turn acceptance above. Residuals (not this task): (1) turns written while Oracle is unreachable stay memory-only until a later write retries them -- if FRIDAY restarts inside that window they are lost (accepted trade-off: chat availability over strict durability, same precedent as ExecutionTraceStore); (2) history written before this deploy was memory-only and is unrecoverable -- durability starts at the 2026-11-15 02:45 IST deploy; (3) the 10000-row trim runs on every insert (one indexed DELETE) -- revisit only if write latency ever becomes a measured problem."
 
+  - id: TASK-REL-038
+    title: "IntelX honesty + research persistence: sharing/exchange records stop claiming transmissions that never happen, and research_live results become durably retrievable"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-038-intelx-honesty-persistence
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T02:50:00+05:30"
+    updated_at: "2026-11-15T02:50:00+05:30"
+    files:
+      - "IntelX/routers/intel_sharing_manager.py"
+      - "IntelX/intelx/services/threat_intel_exchange_protocol.py"
+      - "IntelX/intelx/db/models.py"
+      - "IntelX/intelx/api/live_research_store.py"
+      - "IntelX/intelx/api/router.py"
+      - "IntelX/intelx/api/live_research_task.py"
+      - "IntelX/tests/test_rel038_intelx_honesty_persistence.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6884453573"
+    defect: "Three REL-016/017/021 residuals. (1) routers/intel_sharing_manager.py marks exchanges 'sent' (with a sent_at timestamp) and 'acknowledged', and intelx/services/threat_intel_exchange_protocol.py defaults exchange records to 'completed' and counts 'completed_exchanges' — yet no STIX/TAXII or any other outbound transport exists in IntelX; nothing ever leaves the box (REL-017 residual). (2) The research_live pipeline (collect_live_brief + synthesize_grounded, the REL-016/021 path FRIDAY chat actually uses) is explicitly ephemeral — run_live_research stamps durable_run=False and the result exists only in the HTTP response, so no past research result can ever be retrieved. (3) Google News RSS article links (news.google.com redirector URLs) refuse the hardened fetcher (typically 403), and the brief pipeline recorded only the bare exception class name, not the reason."
+    acceptance:
+      - "Sharing/exchange record states tell the truth: local-only states with the reason attached (transmitted=false, delivery_note); stored legacy statuses ('sent'/'completed') are presented honestly with the legacy value preserved; reports carry no false transmission counts."
+      - "The real threat-intel router (/v1/real-threat-intel) is regression-probed live after deploy and behaves exactly as before."
+      - "Each completed research_live run (SUCCESS or DEGRADED) is persisted with query, findings, synthesis status, receipts and timestamp into storage that exists on the fleet today (IntelX's own database; no Redis/Qdrant); retention bounded; write cost measured and logged."
+      - "A past result can be fetched verbatim by run id after an IntelX restart — via GET /v1/research/live/{run_id}, the list endpoint, and the research_recall task action."
+      - "Fetch refusals in the brief pipeline record precise reasons (HTTP status; google_news_redirect_http_<code> for the known redirector case); fetch safety (SSRF/robots/byte guards) unchanged."
+      - "New tests fail on clean main and pass with the fix; neighbouring suites' failure sets identical to clean main."
+    evidence:
+      - "Claim + renumber: claimed as TASK-REL-030 (issue #35 comment 6884453573), renumbered to TASK-REL-038 (comment 6884529679) after four sibling wave-3 crews claimed REL-030 in the same minutes."
+      - "Tests (local venv, IntelX suite): tests/test_rel038_intelx_honesty_persistence.py — 14 tests. On clean main 8014c8c: 14/14 FAIL (defect assertions; the persistence section additionally cannot import the new store module). With the fix: 14/14 PASS. Regression ring with the fix: test_threat_intel_honesty.py + test_mesh_receipt_contract.py + test_search_merge_trackb.py + test_search_provenance.py = 35 passed, 0 failed."
+    blockers: []
+    next_action: "Ship the fix PR, merge on green CI, deploy via Fleet CD, fingerprint-verify on Server 1, then live-proof: sharing/exchange honest states on the production endpoints, a production research_live run persisted and fetched verbatim after an IntelX restart, and the /v1/real-threat-intel regression probe. Flip to VERIFIED via a follow-up board PR with that evidence."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

@@ -143,7 +143,8 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             # the brief pipeline from imposing a second, smaller cap.
             document = await fetch.fetch(url, max_bytes=1_000_000)
             if document.status_code != 200:
-                failures.append({"url": url, "reason": "http_non_200"})
+                failures.append({"url": url, "reason": f"http_{document.status_code}",
+                                 "status_code": document.status_code})
                 continue
             content_type = str(document.content_type).lower()
             if not any(t in content_type for t in ("text/html", "text/plain", "text/markdown")):
@@ -191,7 +192,23 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
         except asyncio.CancelledError:
             raise
         except Exception as exc:
-            failures.append({"url": url, "reason": type(exc).__name__})
+            # TASK-REL-038: record the precise skip reason, not just the
+            # exception class. The hardened fetcher raises on HTTP errors;
+            # surface the status code, and name the known Google News case:
+            # news.google.com RSS article links are redirector URLs that
+            # refuse automated fetches (typically 403) — an honest skip
+            # with that reason, never a silent drop or a weakened guard.
+            status_code = getattr(getattr(exc, "response", None), "status_code", None)
+            if isinstance(status_code, int):
+                host = urlsplit(url).hostname or ""
+                reason = (
+                    f"google_news_redirect_http_{status_code}"
+                    if host == "news.google.com" or host.endswith(".news.google.com")
+                    else f"http_{status_code}"
+                )
+                failures.append({"url": url, "reason": reason, "status_code": status_code})
+            else:
+                failures.append({"url": url, "reason": type(exc).__name__})
     answer_kind = "source_excerpts"
     synthesis_metadata = {}
     synthesis_failure = None

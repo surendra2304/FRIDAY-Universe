@@ -40,14 +40,41 @@ class ExchangePartner:
     active: bool = True
 
 
+#: Honest delivery note attached to every exchange record. No TAXII client
+#: or any other outbound transport exists in IntelX: an "exchange" validates
+#: packages against local policy and records the outcome in this process
+#: only. Statuses must never claim the packages were delivered.
+LOCAL_ONLY_NOTE = (
+    "local_only: no TAXII/STIX transport is configured; packages were "
+    "validated and recorded in this IntelX process only and were NOT "
+    "delivered to the target partner"
+)
+
+#: Presentation mapping for records written before the honesty fix.
+_LEGACY_STATUS_PRESENTATION = {
+    "completed": "recorded_local_only",
+    "pending": "recorded_local_only",
+}
+
+
+def present_status(status: str) -> tuple[str, str | None]:
+    """Return (honest_status, legacy_status_or_None) for a stored status."""
+    if status in _LEGACY_STATUS_PRESENTATION:
+        return _LEGACY_STATUS_PRESENTATION[status], status
+    return status, None
+
+
 @dataclass
 class ExchangeRecord:
-    """A record of an intelligence exchange."""
+    """A record of a local intelligence-exchange validation (no delivery)."""
     exchange_id: str
     source_partner: str
     target_partner: str
     package_count: int = 0
-    status: str = "completed"  # pending, completed, failed
+    # recorded_local_only, validation_failed
+    status: str = "recorded_local_only"
+    transmitted: bool = False
+    delivery_note: str = LOCAL_ONLY_NOTE
     errors: list[str] = field(default_factory=list)
     exchanged_at: float = field(default_factory=time.time)
 
@@ -88,7 +115,12 @@ class ThreatIntelExchangeProtocol:
 
     def exchange(self, source_partner_id: str, target_partner_id: str,
                  package_ids: list[str]) -> ExchangeRecord:
-        """Exchange intelligence packages."""
+        """Validate packages for exchange and record the outcome locally.
+
+        No TAXII/STIX transport exists, so nothing is delivered: a clean
+        validation is recorded as ``recorded_local_only`` and any package
+        problem makes the record ``validation_failed``.
+        """
         source = self._partners.get(source_partner_id)
         target = self._partners.get(target_partner_id)
         if not source or not target:
@@ -104,13 +136,14 @@ class ThreatIntelExchangeProtocol:
         for pid in package_ids:
             pkg = self._packages.get(pid)
             if not pkg:
-                exchange.status = "failed"
                 exchange.errors.append(f"Package {pid} not found")
                 continue
 
             # Check sharing level compatibility
             if pkg.sharing_level == "TLP:Red" and target.trust_level < 0.8:
                 exchange.errors.append(f"Package {pid} too sensitive for partner")
+
+        exchange.status = "validation_failed" if exchange.errors else "recorded_local_only"
 
         self._exchanges.append(exchange)
         return exchange
@@ -146,7 +179,17 @@ class ThreatIntelExchangeProtocol:
             "total_packages": len(self._packages),
             "total_partners": len(self._partners),
             "total_exchanges": len(self._exchanges),
-            "completed_exchanges": sum(1 for e in self._exchanges if e.status == "completed"),
+            "recorded_local_only_exchanges": sum(
+                1 for e in self._exchanges
+                if present_status(e.status)[0] == "recorded_local_only"
+            ),
+            "validation_failed_exchanges": sum(
+                1 for e in self._exchanges if e.status == "validation_failed"
+            ),
+            "transmitted_exchanges": sum(
+                1 for e in self._exchanges if getattr(e, "transmitted", False)
+            ),
+            "delivery_note": LOCAL_ONLY_NOTE,
             "engine_status": "operational",
         }
 
@@ -173,12 +216,15 @@ async def register_partner(name: str, stix_version: str = "2.1",
 
 @router.post("/intelx/exchange/exchange")
 async def exchange(source_partner_id: str, target_partner_id: str, package_ids: list[str]):
-    """Exchange intelligence packages."""
+    """Validate packages for exchange; record locally (nothing is delivered)."""
     exchange = engine.exchange(source_partner_id, target_partner_id, package_ids)
     return {
         "exchange_id": exchange.exchange_id,
         "package_count": exchange.package_count,
         "status": exchange.status,
+        "transmitted": False,
+        "delivery_note": LOCAL_ONLY_NOTE,
+        "errors": exchange.errors,
     }
 
 

@@ -535,3 +535,30 @@ class ApiKey(Base):
         DateTime(timezone=True), default=None, nullable=True
     )
     revoked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class LiveResearchRun(Base):
+    """Durable record of one ``research_live`` pipeline run (TASK-REL-038).
+
+    The live brief pipeline (plan -> search -> retrieve -> quote-align ->
+    synthesize) is synchronous and previously ephemeral: its result existed
+    only in the HTTP response. Each completed run — SUCCESS or DEGRADED —
+    is stored here verbatim (full result payload + receipt) so FRIDAY or a
+    user can retrieve a past result by run id after an IntelX restart.
+    Retention is bounded by the store helper (newest N runs kept).
+    """
+
+    __tablename__ = "live_research_runs"
+
+    id: Mapped[str] = mapped_column(String(48), primary_key=True)
+    task_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    query: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    synthesis_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    answer_kind: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payload_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    receipt_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
