@@ -1071,6 +1071,97 @@ def _daemon_engine_snapshot(max_age_seconds: int = 180):
     return None
 
 
+def _pid_alive(pid):
+    """Best-effort liveness check for a recorded pid (no signal side effects)."""
+    if not pid:
+        return False
+    try:
+        if os.name == 'nt':
+            import ctypes
+            PROCESS_QUERY_INFORMATION = 0x0400
+            handle = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_INFORMATION, False, pid)
+            if handle:
+                ctypes.windll.kernel32.CloseHandle(handle)
+                return True
+            return False
+        os.kill(pid, 0)
+        return True
+    except Exception:
+        return False
+
+
+def _multi_venue_daemon_snapshot(max_age_seconds: int = 600):
+    """Observed state of the deployed multi-venue Stratex daemon, if alive.
+
+    Stratex-Daemon.service (autonomy/run_daemon.py) is the component that
+    actually evaluates strategies and executes in FUTURES mode: Binance
+    Futures testnet + OANDA practice. It rewrites state/daemon_heartbeat.json
+    every scan cycle, so a fresh heartbeat with status RUNNING and a live pid
+    is direct evidence of a working engine. The legacy snapshot above reads
+    cloud_portfolio_state.json, which only the MT5 cTrader engine writes, on
+    trade events — this daemon never writes it, so reading it alone reported
+    a live daemon as ``engine: offline`` for 12 days (TASK-REL-003).
+
+    The 600s threshold is generous on purpose: a scan cycle is candle-fetch
+    bound across every symbol/timeframe, and the pid check means a daemon
+    killed moments ago is not resurrected by a merely-recent file.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = []
+    env_hb = os.getenv("STRATEX_DAEMON_HEARTBEAT_FILE")
+    if env_hb:
+        candidates.append(env_hb)
+    candidates += [
+        os.path.join(os.getcwd(), "state", "daemon_heartbeat.json"),
+        os.path.join(here, "state", "daemon_heartbeat.json"),
+    ]
+    for path in candidates:
+        if not os.path.exists(path):
+            continue
+        try:
+            age = time.time() - os.path.getmtime(path)
+            if age > max_age_seconds:
+                continue
+            with open(path, "r", encoding="utf-8") as fh:
+                hb = json.load(fh)
+        except Exception:
+            continue
+        if hb.get("status") != "RUNNING":
+            continue
+        pid = hb.get("pid")
+        if pid is not None and not _pid_alive(pid):
+            continue
+        unrealized = hb.get("unrealized_pnl")
+        try:
+            unrealized = round(float(unrealized), 2)
+        except (TypeError, ValueError):
+            unrealized = None
+        return {
+            "engine_source": "multi_venue_daemon",
+            "daemon_state_age_seconds": round(age, 1),
+            "daemon_balance": hb.get("total_balance"),
+            "daemon_updated_at": hb.get("timestamp"),
+            "open_positions": hb.get("open_positions"),
+            "unrealized_pnl": unrealized,
+            "environment": "multi_venue_testnet_practice",
+            "daemon_last_evaluation": hb.get("last_strategy_evaluation"),
+            "daemon_scan_count": hb.get("scan_count"),
+        }
+    return None
+
+
+def _daemon_capability_warnings(snapshot):
+    """Honest venue labelling for whichever daemon snapshot spoke."""
+    if not snapshot:
+        return []
+    if snapshot.get("engine_source") == "multi_venue_daemon":
+        return [
+            "DEMO_ENVIRONMENT: execution venues are Binance Futures testnet "
+            "and OANDA practice"
+        ]
+    return ["DEMO_ENVIRONMENT: execution venue is ctrader demo"]
+
+
 def get_engine_health_data():
     """Reads engine heartbeat and verifies live process state."""
     env_hb = os.getenv("TESTNET_HEARTBEAT_FILE")
@@ -1083,20 +1174,19 @@ def get_engine_health_data():
     else:
         hb_file = "testnet_heartbeat.json"
         
-    if not os.path.exists(hb_file):
-        return {
-            "engine_status": "OFFLINE",
-            "healthy": False,
-            "worker_alive": False,
-            "heartbeat_age_seconds": None,
-            "reason": "HEARTBEAT_FILE_MISSING",
-            "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
-        }
-        
+    # A missing testnet heartbeat is not the whole story: in FUTURES mode the
+    # multi-venue daemon (consulted below) may be the live engine. Fall
+    # through with an empty heartbeat so the daemon snapshot still gets its
+    # say instead of declaring OFFLINE from one absent file.
+    hb_missing = not os.path.exists(hb_file)
+
     try:
-        with open(hb_file, "r") as f:
-            hb = json.load(f)
-            
+        if hb_missing:
+            hb = {}
+        else:
+            with open(hb_file, "r") as f:
+                hb = json.load(f)
+
         hb_ts_str = hb.get("timestamp", "")
         now = datetime.datetime.utcnow()
         if hb_ts_str:
@@ -1176,7 +1266,10 @@ def get_engine_health_data():
         # that earns is the only one that always reports "not ready".
         _daemon_snapshot = None
         if not trading_capable and getattr(config, "TRADING_MODE", "").upper() == "FUTURES":
-            _daemon_snapshot = _daemon_engine_snapshot()
+            # The deployed multi-venue daemon is the primary witness; the
+            # MT5 cloud-state snapshot remains as a fallback for the process
+            # that actually writes it.
+            _daemon_snapshot = _multi_venue_daemon_snapshot() or _daemon_engine_snapshot()
             if _daemon_snapshot:
                 is_healthy = True
                 engine_status = "ONLINE"
@@ -1188,11 +1281,8 @@ def get_engine_health_data():
             "healthy": is_healthy,
             "trading_capable": trading_capable,
             "capability_reasons": capability_reasons,
-            "capability_warnings": (
-                ["DEMO_ENVIRONMENT: execution venue is ctrader demo"]
-                if _daemon_snapshot
-                else []
-            ),
+            "capability_warnings": _daemon_capability_warnings(_daemon_snapshot),
+            **({"reason": "HEARTBEAT_FILE_MISSING"} if hb_missing and not _daemon_snapshot else {}),
             **(_daemon_snapshot or {}),
             "worker_alive": worker_alive,
             "heartbeat_age_seconds": round(age, 2),

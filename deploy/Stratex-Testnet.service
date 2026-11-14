@@ -1,0 +1,18 @@
+[Unit]
+Description=FRIDAY Universe - Stratex Testnet Engine (TestnetService via bot.py)
+After=network.target Stratex.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/friday_universe/Stratex
+Environment="PYTHONPATH=/opt/friday_universe/Stratex:/opt/friday_universe"
+EnvironmentFile=/opt/friday_universe/Stratex/.env
+ExecStart=/opt/friday_universe/venv/bin/python -u bot.py
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+MemoryMax=250M
+
+[Install]
+WantedBy=multi-user.target
