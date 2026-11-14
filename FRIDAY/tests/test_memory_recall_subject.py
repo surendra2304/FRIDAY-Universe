@@ -60,10 +60,10 @@ def test_shared_empty_falls_back_to_local_store_rel005(client, monkeypatch):
     caused the production round-trip failure: record_fact writes to the
     local fallback whenever the shared write fails (status "local_only"),
     so the local store is not a mirror of shared records — it is the ONLY
-    home of facts FRIDAY just told the owner it saved. A shared empty
-    therefore falls back to the local store (whose rows are
-    lifecycle-filtered, so locally forgotten facts stay forgotten); only a
-    NON-empty shared result remains authoritative (see memora_client)."""
+    home of facts FRIDAY just told the owner it saved. Recall therefore
+    MERGES both stores (shared rows first; local rows are
+    lifecycle-filtered, so locally forgotten facts stay forgotten) — see
+    memora_client.recall_memories and TASK-REL-005."""
     monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: Response(b"[]"))
     hits = client.recall_memories("friday", "local only synthetic marker")
     assert hits[0]["id"] == "stale"

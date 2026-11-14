@@ -621,6 +621,25 @@ class MemoraClient:
         if not query:
             return []
 
+        # TASK-REL-005 (2026-11-14): recall now consults BOTH stores and
+        # merges. record_fact falls back to the local store whenever the
+        # shared write fails (status "local_only"), so a fact FRIDAY just
+        # told the owner is "saved on the local memory backend" lives ONLY
+        # locally. The old contract — any shared answer, empty or not, is
+        # authoritative — hid every such fact: the shared semantic search
+        # (min_score=0) almost always returns SOMETHING (loosely related
+        # episodic/dialogue rows), so the local store was effectively never
+        # read and save/recall contradicted each other in production.
+        # Merge order keeps the shared store primary (its rows come first);
+        # local rows are lifecycle-filtered (active only), so facts
+        # forgotten locally stay forgotten. Callers rank the merged list
+        # themselves (the chat recall gate ranks by subject overlap).
+        # Residual edge: a write that timed out client-side but committed
+        # shared-side leaves a local twin; if the shared copy is later
+        # deleted the twin can resurface in recall — and forget then sees
+        # two candidate ids and asks for clarification (safe direction).
+        remote_results: List[Dict[str, Any]] = []
+        remote_answered = False
         if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
             try:
                 encoded_q = urllib.parse.quote(query)
@@ -635,26 +654,8 @@ class MemoraClient:
                         results = json.loads(resp.read().decode("utf-8"))
                         if not isinstance(results, list) or not all(isinstance(row, dict) for row in results):
                             raise ValueError("invalid memory search response")
-                        if results:
-                            # A non-empty shared result stays authoritative:
-                            # a stale local twin of a shared-deleted fact must
-                            # not resurface alongside real shared hits.
-                            return results
-                        # TASK-REL-005 (2026-11-14): a shared EMPTY is NOT
-                        # authoritative. record_fact falls back to the local
-                        # store whenever the shared write fails (status
-                        # "local_only"), so a fact the owner was just told is
-                        # "saved on the local memory backend" lives ONLY
-                        # locally — returning the shared empty here made the
-                        # save and the recall contradict each other live.
-                        # Fall through to the local fallback below; its rows
-                        # are lifecycle-filtered (active only), so facts
-                        # forgotten locally stay forgotten. Residual edge: a
-                        # write that timed out client-side but committed
-                        # shared-side leaves a local twin; if the shared
-                        # copy is later deleted, the twin can resurface on
-                        # an otherwise-empty shared result. Accepted: the
-                        # alternative (this bug) hid EVERY local_only save.
+                        remote_results = results
+                        remote_answered = True
             except Exception as e:
                 logger.debug(f"Memora remote recall error: {type(e).__name__}")
 
@@ -664,12 +665,25 @@ class MemoraClient:
         # Memora search timed out. The guard is now: oracle backend always
         # tries (it has its own error handling); sqlite only when the file
         # exists.
+        local_results: List[Dict[str, Any]] = []
         if self.local_db_path is None or os.path.exists(self.local_db_path):
             try:
-                return self._recall_locally(agent_name, query, limit)
+                local_results = self._recall_locally(agent_name, query, limit)
             except Exception as e:
                 logger.debug(f"Memora local recall error: {type(e).__name__}")
-        return []
+
+        if not remote_answered:
+            return local_results
+        merged = list(remote_results)
+        seen_ids = {str(r.get("id") or r.get("memory_id") or "") for r in merged}
+        seen_text = {" ".join(str(r.get("content_text", "")).lower().split()) for r in merged}
+        for row in local_results:
+            rid = str(row.get("id") or row.get("memory_id") or "")
+            rtext = " ".join(str(row.get("content_text", "")).lower().split())
+            if (rid and rid in seen_ids) or (rtext and rtext in seen_text):
+                continue
+            merged.append(row)
+        return merged
 
     def recent_memories(
         self,
