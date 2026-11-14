@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
+from futuris.core.enums import EvidenceClass
 from futuris.core.schemas import Forecast, Scenario
 from futuris.scenarios.graph import DependencyGraph
 from futuris.scenarios.spec import ScenarioSpec
@@ -31,6 +32,11 @@ class ScenarioResult(BaseModel):
     distributions: dict[str, dict[str, float]] = Field(default_factory=dict)
     sensitivity_ranking: list[AssumptionSensitivity] = Field(default_factory=list)
     input_row_count: int | None = None  # rows in the frozen feature table, if supplied
+    # TASK-FUT-002: a scenario is a transform of its base forecast, so the
+    # result inherits the base forecast's provenance. Without these fields
+    # a scenario built on synthetic inputs surfaced with no label at all.
+    evidence_class: EvidenceClass = EvidenceClass.SYNTHETIC
+    evidence_source: str | None = None
 
 
 class ScenarioComparison(BaseModel):
@@ -103,6 +109,10 @@ class ScenarioEngine:
             perturbed_values=perturbed_vals,
             distributions=dist_results,
             sensitivity_ranking=sensitivities[:10],
+            evidence_class=(
+                getattr(base_forecast, "evidence_class", None) or EvidenceClass.SYNTHETIC
+            ),
+            evidence_source=getattr(base_forecast, "evidence_source", None),
         )
 
         # 3. Persist Scenario Domain Record if repository is provided
@@ -183,6 +193,10 @@ class ScenarioEngine:
                 spec=spec,
                 parent_forecast_id=base_forecast.forecast_id,
                 perturbed_values=perturbed,
+                evidence_class=(
+                    getattr(base_forecast, "evidence_class", None) or EvidenceClass.SYNTHETIC
+                ),
+                evidence_source=getattr(base_forecast, "evidence_source", None),
             )
             if features_df is not None:
                 res.input_row_count = int(len(features_df))

@@ -107,8 +107,15 @@ async def test_friday_forecast_delegation_authorized(friday_test_db: AsyncSessio
         assert cal_resp.status_code == 200
         cal_data = cal_resp.json()
         assert "overall_ece" in cal_data
-        assert "service:checkout:capacity_exceedance_24h" in cal_data["per_target_type_calibration"]
-        assert cal_data["trend"] in ["improving", "degrading", "stable"]
+        # TASK-FUT-002: no forecast in this test has been resolved, so the
+        # honest report is the unmeasured state -- no per-target breakdown
+        # and no trend. (The previous assertions expected a fabricated
+        # per-target ECE and an "improving" trend computed from invented
+        # probabilities.)
+        assert cal_data["per_target_type_calibration"] == {}
+        assert cal_data["trend"] == "unmeasured"
+        assert cal_data["recent_accuracy_summary"]["resolved_samples"] == 0
+        assert cal_data["recent_accuracy_summary"]["calibration_status"] == "unmeasured"
 
     app.dependency_overrides.clear()
 

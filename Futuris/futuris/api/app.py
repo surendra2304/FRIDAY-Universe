@@ -671,7 +671,10 @@ async def quick_simulate(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
             except Exception:
                 base = None
         if not base:
-            recent = await f_repo.list_recent(limit=1)
+            # TASK-FUT-002: ForecastRepository has no list_recent method --
+            # this fallback (and /trends below) 500'd on AttributeError.
+            # list_filtered is the repository's paginated listing.
+            recent = await f_repo.list_filtered(limit=1)
             base = recent[0] if recent else None
         if not base:
             engine = ForecastEngine()
@@ -694,9 +697,17 @@ async def quick_simulate(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
             await session.commit()
 
         name = str(body.get("name") or "Operational Stress Simulation")
-        overrides = body.get("assumption_overrides") or {
+        overrides_raw = body.get("assumption_overrides") or {
             "demand_multiplier": 1.4,
             "capacity_multiplier": 0.8,
+        }
+        # The dependency graph keys overrides by node name ("demand",
+        # "capacity"); accept the "*_multiplier" spellings by translating
+        # them -- passed through raw, they matched no node and the default
+        # stress simulation silently perturbed nothing.
+        overrides = {
+            (key[: -len("_multiplier")] if key.endswith("_multiplier") else key): float(value)
+            for key, value in overrides_raw.items()
         }
         spec = ScenarioSpec(
             spec_id=uuid4(),
@@ -708,15 +719,46 @@ async def quick_simulate(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
             rationale=str(body.get("rationale") or "Counterfactual simulation request"),
         )
         scenario_engine = ScenarioEngine(scenario_repo=s_repo)
-        res = await scenario_engine.run_scenario(base_forecast=base, spec=spec)
+        # Deterministic linear propagation for the quick surface: the
+        # result is hand-checkable against the graph arithmetic, unlike a
+        # seeded Monte Carlo mean.
+        res = await scenario_engine.run_scenario(
+            base_forecast=base, spec=spec, use_monte_carlo=False
+        )
+        comparison = scenario_engine.compare(base, [res])
+        # TASK-FUT-002: ScenarioResult carries perturbed_values, not the
+        # perturbed_prediction / perturbed_probability / divergence
+        # attributes this surface used to read -- every call with a base
+        # forecast 500'd on AttributeError. The perturbed prediction is the
+        # demand node of the ops graph (the base forecast's prediction IS
+        # the graph's base demand). The scenario engine does not recompute
+        # a probability, so none is reported.
+        perturbed_prediction = float(res.perturbed_values.get("demand", base.prediction))
+        delta_absolute = perturbed_prediction - base.prediction
+        delta_percentage = (
+            (delta_absolute / base.prediction) * 100.0 if base.prediction else 0.0
+        )
+        ev_class = getattr(base, "evidence_class", None)
+        ev_val = ev_class.value if hasattr(ev_class, "value") else str(ev_class or "synthetic")
         return {
-            "scenario_id": str(res.spec.spec_id),
+            "scenario_id": str(res.scenario_id),
             "base_forecast_id": str(base.forecast_id),
             "name": res.spec.name,
-            "perturbed_prediction": round(float(res.perturbed_prediction), 4),
-            "perturbed_probability": res.perturbed_probability,
-            "divergence": res.divergence,
+            "perturbed_prediction": round(perturbed_prediction, 4),
+            "perturbed_probability": None,
+            "probability_status": "not_recomputed_by_scenario_engine",
+            "divergence": {
+                "delta_absolute": round(delta_absolute, 4),
+                "delta_percentage": round(delta_percentage, 4),
+                "variable_matrix": comparison.variable_matrix,
+                "divergence_ranking": comparison.divergence_ranking,
+            },
             "perturbed_values": res.perturbed_values,
+            # A scenario is a transform of its base forecast: the base
+            # forecast's provenance travels with the result.
+            "evidence_class": ev_val,
+            "evidence_source": getattr(base, "evidence_source", None),
+            "input_telemetry_verified": ev_val == "live",
             "prediction_is_not_authorization": True,
             "executable_commands": [],
         }
@@ -738,21 +780,39 @@ async def quick_trends(limit: int = 10) -> dict[str, Any]:
 
     async with async_session_factory() as session:
         f_repo = ForecastRepository(session)
-        recent = await f_repo.list_recent(limit=limit)
-        trends = [
-            {
-                "forecast_id": str(f.forecast_id),
-                "target": f.target,
-                "prediction": round(float(f.prediction), 4),
-                "range_lower": round(float(f.range_lower), 4),
-                "range_upper": round(float(f.range_upper), 4),
-                "probability": f.probability,
-                "confidence": f.confidence.value,
-                "created_at": f.created_at.isoformat() if f.created_at else None,
-                "status": f.status.value,
-            }
-            for f in recent
-        ]
+        # TASK-FUT-002: list_filtered replaces the nonexistent list_recent
+        # (see quick_simulate); the surface 500'd on every call.
+        recent = await f_repo.list_filtered(limit=limit)
+        trends = []
+        for f in recent:
+            ev_class = getattr(f, "evidence_class", None)
+            ev_val = (
+                ev_class.value
+                if hasattr(ev_class, "value")
+                else str(ev_class or "synthetic")
+            )
+            trends.append(
+                {
+                    "forecast_id": str(f.forecast_id),
+                    "target": f.target,
+                    "prediction": round(float(f.prediction), 4),
+                    "range_lower": round(float(f.range_lower), 4),
+                    "range_upper": round(float(f.range_upper), 4),
+                    "probability": f.probability,
+                    "confidence": f.confidence.value,
+                    # TASK-FUT-002: the domain Forecast has no created_at
+                    # attribute (this line raised AttributeError on any
+                    # non-empty result); as_of is the generation timestamp.
+                    "created_at": f.as_of.isoformat() if f.as_of else None,
+                    "status": f.status.value,
+                    # TASK-FUT-002: this surface dropped the stored
+                    # provenance entirely, so a synthetic-backed forecast
+                    # was indistinguishable from a live one here.
+                    "evidence_class": ev_val,
+                    "evidence_source": getattr(f, "evidence_source", None),
+                    "input_telemetry_verified": ev_val == "live",
+                }
+            )
         result = {
             "status": "ok",
             "count": len(trends),

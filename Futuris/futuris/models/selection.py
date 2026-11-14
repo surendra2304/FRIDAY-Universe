@@ -30,6 +30,7 @@ import pandas as pd
 
 from futuris.infra.logging import get_logger
 from futuris.infra.metrics import MODEL_SELECTION_DEGRADED_TOTAL
+from futuris.models.adapters import STATSFORECAST_AVAILABLE, StatsForecastUnavailableError
 from futuris.models.base import ModelAdapter
 from futuris.models.registry import model_registry
 
@@ -92,6 +93,18 @@ def select_best_adapter(
     Never returns ``None``: when every candidate fails, the naive baseline is
     used and the outcome says so.
     """
+    if not STATSFORECAST_AVAILABLE:
+        # TASK-FUT-002: every candidate is a statsforecast adapter, so when
+        # the backend is not importable each fit is guaranteed to fail the
+        # same way. Refuse once, up front, instead of burning a fit (and a
+        # failure log line) per candidate per request -- in production that
+        # was five candidate failures plus a fallback warning for every
+        # subscription of every scheduler cycle, all to arrive at the error
+        # that was knowable before the first fit.
+        raise StatsForecastUnavailableError(
+            "statsforecast is not importable in this deployment; "
+            "refusing to attempt candidate fits that cannot succeed"
+        )
     started = time.monotonic()
     deadline = None if budget_seconds is None else started + max(0.0, budget_seconds)
     # When the request cannot afford the full search, evaluate the cheap

@@ -20,7 +20,7 @@ from futuris.core.decision import (
     decision_support,
 )
 from futuris.core.enums import ForecastStatus, SignalClass
-from futuris.core.schemas import Driver, EvidenceRef, Forecast
+from futuris.core.schemas import EvidenceRef, Forecast
 from futuris.evaluation.confidence import ConfidenceAssessor, confidence_assessor
 from futuris.evidence.snapshots import EvidenceSnapshotter
 from futuris.features.contextualize import ContextLayer
@@ -338,22 +338,15 @@ class CalibrationDecisionStage:
             target_column="value",
             evidence_id=inp.evidence_ref.evidence_id,
         )
-        if not drivers:
-            drivers = [
-                Driver(
-                    name="diurnal_traffic_cycle",
-                    direction="positive",
-                    strength=0.85,
-                    leading_or_lagging="leading",
-                    evidence_refs=[inp.evidence_ref.evidence_id],
-                )
-            ]
+        # TASK-FUT-002: no fallback driver. When the analyzer finds no
+        # driver in the features, the forecast carries none -- the previous
+        # behaviour invented a "diurnal_traffic_cycle" driver at a fixed
+        # 0.85 strength and presented it as measured analysis.
 
-        prob = (
-            inp.prediction.exceedance_probability
-            if inp.prediction.exceedance_probability is not None
-            else 0.5
-        )
+        # TASK-FUT-002: the model's exceedance probability is carried
+        # through exactly as produced. When the model produced none, the
+        # distribution omits the key instead of substituting 0.5.
+        prob = inp.prediction.exceedance_probability
         pred_val = inp.prediction.central_estimate
         r_lower = inp.prediction.range_lower
         r_upper = inp.prediction.range_upper
@@ -364,8 +357,9 @@ class CalibrationDecisionStage:
             "p50": pred_val,
             "p75": round(r_lower + 0.75 * (r_upper - r_lower), 2),
             "p90": r_upper,
-            "exceedance_probability": prob,
         }
+        if prob is not None:
+            pred_dist["exceedance_probability"] = prob
         intervals_data = [
             {"step": i + 1, "lower": inter.lower, "central": inter.central, "upper": inter.upper}
             for i, inter in enumerate(inp.prediction.intervals[:10])
@@ -373,12 +367,15 @@ class CalibrationDecisionStage:
         # Only the forecast's own implied Brier score can be computed here:
         # ECE and empirical coverage require resolved outcomes, which this
         # pipeline run has none of. The calibration analyzer adds real scores
-        # once outcomes exist.
-        cal_metrics = {
-            "brier_score": round(prob * (1.0 - prob), 4),
+        # once outcomes exist. TASK-FUT-002: with no exceedance probability
+        # there is nothing to derive even the implied score from, so the key
+        # is omitted rather than computed from a substituted 0.5.
+        cal_metrics: dict[str, float | int | bool | str] = {
             "n_resolved_outcomes": 0,
             "calibration_status": "uncalibrated",
         }
+        if prob is not None:
+            cal_metrics["brier_score"] = round(prob * (1.0 - prob), 4)
         mod_meta = {
             "model_version": inp.model_version,
             "best_validation_score": round(inp.best_score, 4),
@@ -393,6 +390,8 @@ class CalibrationDecisionStage:
             mod_meta["data_connector"] = inp.provenance.connector
             mod_meta["data_synthetic"] = inp.provenance.synthetic
             mod_meta["data_sources"] = inp.provenance.source_id
+        if not drivers:
+            mod_meta["driver_analysis"] = "no_driver_found_in_features"
 
         forecast = Forecast(
             forecast_id=uuid4(),
@@ -408,7 +407,9 @@ class CalibrationDecisionStage:
             drivers=drivers,
             evidence=[inp.evidence_ref],
             model_version=inp.model_version,
-            assumptions=["traffic regime stable"],
+            # TASK-FUT-002: no hardcoded assumption. Nothing in this stage
+            # measures regime stability, so the forecast asserts none.
+            assumptions=[],
             review_at=inp.as_of + (inp.horizon / 4),
             status=ForecastStatus.ACTIVE,
             predictive_distribution=pred_dist,
