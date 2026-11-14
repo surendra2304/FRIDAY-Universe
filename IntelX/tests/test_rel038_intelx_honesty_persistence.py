@@ -231,6 +231,21 @@ async def test_live_research_unknown_run_returns_none():
     assert await store.fetch_live_research("lr_does_not_exist") is None
 
 
+def test_tolerant_json_accepts_predeserialized_oracle_values():
+    """Oracle 23ai returns dict/list for native JSON columns; the result
+    processor must accept them (production reads failed with TypeError
+    while writes succeeded) and still decode text backends normally."""
+    from sqlalchemy.dialects import sqlite
+
+    from intelx.db.models import TolerantJSON
+
+    processor = TolerantJSON().result_processor(sqlite.dialect(), None)
+    assert processor({"a": 1}) == {"a": 1}
+    assert processor([1, 2]) == [1, 2]
+    assert processor('{"a": 1}') == {"a": 1}
+    assert processor(None) is None
+
+
 @pytest.fixture
 async def friday_client():
     """ASGI client with a seeded FRIDAY key (same pattern as the mesh
