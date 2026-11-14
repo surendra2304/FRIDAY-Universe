@@ -37,14 +37,20 @@ class SlaPredictor:
         self._seed_default_profiles()
 
     def _seed_default_profiles(self) -> None:
-        """Seed empirical baseline profiles for known providers."""
+        """Seed empirical baseline profiles for known providers.
+
+        TASK-REL-030: seeds name only verified-live models (the retired
+        llama-3.3-70b-versatile / google/gemini-2.5-flash seeds and the
+        unservable NVIDIA-route seed were replaced with the models that
+        actually carry this traffic).
+        """
         defaults = [
             ("groq", "openai/gpt-oss-120b", 60.0, 8.5, 300.0),
-            ("groq", "llama-3.3-70b-versatile", 50.0, 7.0, 250.0),
+            ("groq", "qwen/qwen3.8-27b", 50.0, 7.0, 250.0),
             ("openrouter", "meta-llama/llama-3.3-70b-instruct", 180.0, 16.0, 650.0),
-            ("openrouter", "google/gemini-2.5-flash", 160.0, 14.0, 550.0),
+            ("openrouter", "nvidia/nemotron-3.5-super-vl:free", 160.0, 14.0, 550.0),
             ("gemini", "gemini-flash-latest", 140.0, 12.0, 480.0),
-            ("nvidia", "meta/llama-3.1-70b-instruct", 200.0, 18.0, 750.0),
+            ("groq", "openai/gpt-oss-20b", 45.0, 6.0, 220.0),
         ]
         for prov, model, base, per_tok, p95 in defaults:
             self._profiles[(prov, model)] = SlaProfile(

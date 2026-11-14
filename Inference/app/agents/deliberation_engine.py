@@ -71,7 +71,7 @@ class DeliberationEngine:
 
     MODEL_FAMILIES = {
         "gpt": {"models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"], "cost": 1.0},
-        "gemini": {"models": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-flash-lite"], "cost": 0.8},
+        "gemini": {"models": ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest"], "cost": 0.8},
         "claude": {"models": ["claude-3-5-sonnet", "claude-3-5-haiku", "claude-3-opus"], "cost": 1.2},
         "llama": {"models": ["llama-3-70b", "llama-3-8b"], "cost": 0.5},
     }

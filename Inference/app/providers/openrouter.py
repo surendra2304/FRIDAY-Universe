@@ -18,11 +18,16 @@ CAPABILITY_KEYWORDS: dict[str, list[str]] = {
     "general": ["nemotron-3.5-lightning:free", "llama", "mistral"],
 }
 
+# TASK-REL-030: deepseek/deepseek-r1 (reasoning/analysis) and the
+# z-ai/glm-5.2:free / poolside/laguna-s-2.1:free static entries were
+# removed — all three are absent from OpenRouter's live catalogue
+# (verified 2026-11-14). google/gemini-2.5-flash stays: it is retired at
+# Google direct, but the OpenRouter listing of that name is live.
 FALLBACK_FREE_MODELS: dict[str, str] = {
     "coding": "qwen/qwen-2.5-coder-32b-instruct",
-    "reasoning": "deepseek/deepseek-r1",
+    "reasoning": "meta-llama/llama-3.3-70b-instruct",
     "research": "google/gemini-2.5-flash",
-    "analysis": "deepseek/deepseek-r1",
+    "analysis": "meta-llama/llama-3.3-70b-instruct",
     "security": "meta-llama/llama-3.3-70b-instruct",
     "general": "meta-llama/llama-3.3-70b-instruct",
 }
@@ -33,12 +38,12 @@ class OpenRouterProvider(OpenAICompatibleProvider):
 
     BASE_URL = "https://openrouter.ai/api/v1"
     DEFAULT_MODEL = "meta-llama/llama-3.3-70b-instruct"
+    # TASK-REL-030: liquid/lfm-2.5-2.6b:free removed — it is absent from
+    # OpenRouter's live catalogue. This static list is only the no-key
+    # fallback; live discovery (fetch_available_free_models) is authoritative.
     SUPPORTED_MODELS = [
-        "liquid/lfm-2.5-2.6b:free",
         "qwen/qwen3.8-27b:free",
         "nvidia/nemotron-3.5-lightning:free",
-        "z-ai/glm-5.2:free",
-        "poolside/laguna-s-2.1:free",
         "meta-llama/llama-3.3-70b-instruct",
         "deepseek/deepseek-r1",
         "qwen/qwen-2.5-coder-32b-instruct",
