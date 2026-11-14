@@ -1632,6 +1632,24 @@ class FleetClient:
                         execution_time_ms=lat,
                     )
 
+                if state == "planned":
+                    # TASK-REL-019: Forge plan_only mode delivers a plan and
+                    # deliberately executes nothing. Surface exactly that —
+                    # never as a completed build (no receipt exists, by
+                    # design) and never as a mysterious unverified response.
+                    return TaskResult(
+                        task_id=returned_task_id,
+                        target_agent=envelope.target_agent,
+                        status=TaskStatus.DEGRADED,
+                        result=result_data,
+                        summary=(
+                            f"{target} produced a plan only (plan_only mode); "
+                            "nothing was executed or verified."
+                        ),
+                        error="plan_only_no_execution",
+                        execution_time_ms=lat,
+                    )
+
                 raw_receipt = result_data.get("receipt")
                 receipt: ActionReceipt | None = None
                 if isinstance(raw_receipt, dict):

@@ -589,6 +589,41 @@ class OrchestratorCore:
         being verified: no verification_report.json, no record_verification()
         telemetry, and no recovery attempt.
         """
+        task = await self.store.get_task(task_id)
+        if task is not None:
+            # TASK-REL-019: the execution modes were accepted at intake and
+            # then never read anywhere — a plan_only task executed the full
+            # autonomous pipeline (and could be reported SUCCESS with a
+            # completion receipt), and a verify_only task built code it was
+            # only asked to check. Honour the mode here, at the one choke
+            # point every caller (API runner, delegate execute_now, CLI)
+            # passes through.
+            _mode = getattr(task, "mode", None)
+            mode_value = str(getattr(_mode, "value", _mode) or "")
+            if mode_value == TaskMode.PLAN_ONLY.value:
+                if task.state in (
+                    TaskState.COMPLETED,
+                    TaskState.FAILED,
+                    TaskState.CANCELLED,
+                    TaskState.BLOCKED,
+                ):
+                    return task
+                await self.store.record_event(
+                    task_id=task_id,
+                    event_type="task.plan_only",
+                    payload={
+                        "mode": mode_value,
+                        "state": task.state.value,
+                        "note": "plan_only: plan delivered at intake; execution intentionally not run",
+                    },
+                )
+                logger.info(
+                    f"Task {task_id} is plan_only; leaving it in {task.state.value} without executing"
+                )
+                return task
+            if mode_value == TaskMode.VERIFY_ONLY.value:
+                return await self._run_verify_only(task)
+
         iterations = 0
         while iterations < max_iterations:
             iterations += 1
@@ -635,6 +670,68 @@ class OrchestratorCore:
                     "verification_gate": True,
                     "failed_checks": final_report.failure_reasons[:10],
                 },
+            )
+            production_monitor.record_task_event("failed")
+            await _finalize_tracker(task_id, success=False)
+        return task
+
+    async def _run_verify_only(self, task: TaskEntity) -> TaskEntity:
+        """TASK-REL-019: verify_only execution — run ONLY the verification
+        battery against the task's existing workspace (provisioned at intake,
+        optionally from a repo or local path) and land in the terminal state
+        the battery earns. No synthesis steps run and no self-repair is
+        attempted: repairing would modify the very code the caller asked to
+        have checked. The manifest is generated so the delegate status
+        endpoint can certify (or refuse to certify) the outcome from saved
+        evidence, exactly as it does for executed builds.
+        """
+        if task.state in (
+            TaskState.COMPLETED,
+            TaskState.FAILED,
+            TaskState.CANCELLED,
+            TaskState.BLOCKED,
+        ):
+            return task
+        task_id = task.id
+        if task.state != TaskState.RUNNING:
+            task = await self.lifecycle.transition(
+                task_id, TaskState.RUNNING, reason="verify_only: starting verification battery"
+            )
+        task = await self.lifecycle.transition(
+            task_id, TaskState.VERIFYING, reason="verify_only: running verification battery"
+        )
+        from app.verification.engine import VerificationEngine
+
+        engine = VerificationEngine(engine=self.engine, wm=self.wm)
+        report = await engine.verify_task(task_id)
+        manifest = engine.generate_manifest(task_id, report)
+        if report.all_passed:
+            task = await self.lifecycle.transition(
+                task_id,
+                TaskState.COMPLETED,
+                reason="verify_only: verification battery passed",
+                progress_percentage=100,
+            )
+            await self.store.record_event(
+                task_id=task_id,
+                event_type="task.completed",
+                payload={"mode": "verify_only", "stages": manifest.total_stages},
+            )
+            production_monitor.record_task_event("completed")
+            await _finalize_tracker(task_id, success=True)
+        else:
+            reason = manifest.failure_summary or "Verification battery failed"
+            task = await self.lifecycle.transition(
+                task_id,
+                TaskState.FAILED,
+                reason=reason,
+                error_message=reason,
+                progress_percentage=100,
+            )
+            await self.store.record_event(
+                task_id=task_id,
+                event_type="task.failed",
+                payload={"mode": "verify_only", "reason": reason},
             )
             production_monitor.record_task_event("failed")
             await _finalize_tracker(task_id, success=False)

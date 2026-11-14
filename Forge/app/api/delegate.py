@@ -13,13 +13,19 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.api.tasks import _schedule_execution, get_orchestrator, get_state_store
+from app.api.tasks import (
+    _schedule_execution,
+    execute_task_cancellation,
+    get_orchestrator,
+    get_state_store,
+)
 from app.core.logging import get_logger
 from app.core.orchestrator import OrchestratorCore
 from app.core.workspace import workspace_manager
 from app.integrations.memora_client import get_memora_client
 from app.memory.models import TaskMode, TaskState
 from app.memory.state_store import StateStore
+from app.memory.task_lifecycle import TaskStateMachine
 from app.verification.engine import verification_engine
 from app.verification.evidence import VerificationManifest, VerificationReport
 from app.verification.source_integrity import snapshot_matches
@@ -42,7 +48,9 @@ class TaskEnvelopeModel(BaseModel):
 class TaskResultModel(BaseModel):
     task_id: str
     target_agent: str = "forge"
-    status: str = "SUCCESS"  # SUCCESS, FAILED, PARTIAL_FAILURE, RUNNING, CANCELLED
+    # SUCCESS, FAILED, PARTIAL_FAILURE, RUNNING, PENDING, PLANNED, VERIFYING,
+    # BLOCKED, CANCELLED, DEGRADED, ERROR
+    status: str = "SUCCESS"
     result: dict[str, Any] = Field(default_factory=dict)
     summary: str = ""
     error: str | None = None
@@ -68,6 +76,12 @@ def _forge_receipt(
         "verification_evidence": verification_evidence,
         "failure_reason": None,
     }
+
+
+def _task_mode_value(task: Any) -> str:
+    """The task's mode as a plain string ('' when the record predates modes)."""
+    mode = getattr(task, "mode", None)
+    return str(getattr(mode, "value", mode) or "")
 
 
 def _task_artifact_paths(task_id: str) -> list[str]:
@@ -157,7 +171,30 @@ async def delegate_task(
 
         if action == "cancel":
             target_id = envelope.payload.get("task_id") or envelope.task_id
-            await store.update_task_state(target_id, state=TaskState.CANCELLED)
+            # TASK-REL-019: this used to write CANCELLED straight through
+            # update_task_state — no existence check, no transition
+            # validation — so it reported CANCELLED for tasks that do not
+            # exist and could flip a COMPLETED, verification-certified task
+            # to CANCELLED, falsifying its record. Route through the same
+            # canonical lifecycle cancellation the /tasks endpoints use and
+            # report its verdict honestly.
+            try:
+                await execute_task_cancellation(
+                    target_id,
+                    "Cancelled via FRIDAY delegate",
+                    TaskStateMachine(store),
+                    store,
+                )
+            except HTTPException as http_exc:
+                lat = int((time.time() - t0) * 1000)
+                return TaskResultModel(
+                    task_id=target_id,
+                    target_agent="forge",
+                    status="ERROR",
+                    summary=f"Task '{target_id}' was not cancelled: {http_exc.detail}",
+                    error=str(http_exc.detail),
+                    execution_time_ms=lat,
+                )
             lat = int((time.time() - t0) * 1000)
             return TaskResultModel(
                 task_id=target_id,
@@ -235,12 +272,90 @@ async def delegate_task(
             local_path=local_path,
         )
 
+        # TASK-REL-019: plan_only means plan ONLY. The mode used to be
+        # accepted and then ignored everywhere — the task executed in full
+        # (background path) or even returned SUCCESS with a completion
+        # receipt (execute_now path) for work the caller explicitly asked
+        # not to run. Return the plan as PLANNED: never scheduled, never
+        # executed, no receipt (receipts certify executed work only).
+        if mode == TaskMode.PLAN_ONLY:
+            lat = int((time.time() - t0) * 1000)
+            return TaskResultModel(
+                task_id=envelope.task_id,
+                target_agent="forge",
+                status="PLANNED",
+                result={
+                    "forge_task_id": task.id,
+                    "goal": task.goal,
+                    "state": "PLANNED",
+                    "mode": mode.value,
+                    "plan_stages": len(plan.stages) if hasattr(plan, "stages") else 0,
+                },
+                summary=(
+                    f"Forge planned engineering goal '{goal[:60]}...' (Task ID: {task.id}); "
+                    "plan_only mode — nothing was executed."
+                ),
+                execution_time_ms=lat,
+            )
+
         # Execute synchronously if requested
         if execute_now:
             completed_task = await orchestrator.run_task(task.id)
             report = await verification_engine.verify_task(task.id)
             manifest = verification_engine.generate_manifest(task.id, report)
             manifest_dict = manifest.model_dump(mode="json")
+
+            # TASK-REL-019: the task's own terminal state gates this report.
+            # Only the re-run manifest used to be consulted, so a task that
+            # ended FAILED in execution could still be reported SUCCESS —
+            # with a completion receipt — whenever its leftover artifacts
+            # happened to verify. Mirror any non-COMPLETED terminal state
+            # honestly instead; SUCCESS below now genuinely means the task
+            # completed AND the manifest passed.
+            if completed_task.state != TaskState.COMPLETED:
+                lat = int((time.time() - t0) * 1000)
+                state_name = (
+                    completed_task.state.value
+                    if hasattr(completed_task.state, "value")
+                    else str(completed_task.state)
+                )
+                if completed_task.state == TaskState.FAILED:
+                    mirror_status = "PARTIAL_FAILURE" if manifest.partial_failure else "FAILED"
+                    mirror_error = completed_task.error_message or manifest.failure_summary
+                elif completed_task.state == TaskState.CANCELLED:
+                    mirror_status = "CANCELLED"
+                    mirror_error = completed_task.error_message
+                elif completed_task.state == TaskState.BLOCKED:
+                    mirror_status = "BLOCKED"
+                    mirror_error = completed_task.error_message
+                else:
+                    mirror_status = "DEGRADED"
+                    mirror_error = (
+                        f"Execution ended in non-terminal state {state_name}; "
+                        "completion is not certified."
+                    )
+                res = TaskResultModel(
+                    task_id=task.id,
+                    target_agent="forge",
+                    status=mirror_status,
+                    result={
+                        "forge_task_id": task.id,
+                        "goal": task.goal,
+                        "state": state_name,
+                        "manifest": manifest_dict,
+                        "artifacts": _task_artifact_paths(task.id),
+                    },
+                    summary=(
+                        f"Forge task '{task.id}' ended in state {state_name}; "
+                        "it is not reported as a successful build."
+                    ),
+                    error=mirror_error,
+                    verification_manifest=manifest_dict,
+                    execution_time_ms=lat,
+                )
+                if callback_url:
+                    asyncio.create_task(_dispatch_webhook_callback(callback_url, res))
+                return res
 
             # Check pre-delivery Sentinel gate if required
             if require_sentinel:
@@ -400,7 +515,17 @@ async def get_task_status(
 
     status_str = "RUNNING"
     verification_error = None
-    if task.state == TaskState.COMPLETED:
+    if task.state == TaskState.VERIFYING:
+        # TASK-REL-019: every non-terminal state used to fall through to the
+        # RUNNING default, so a task still queued (PENDING/READY) — or a
+        # plan_only task resting in READY as a delivered plan — polled as
+        # "RUNNING" forever. Report the state the task is actually in.
+        status_str = "VERIFYING"
+    elif task.state == TaskState.RUNNING:
+        status_str = "RUNNING"
+    elif task.state in (TaskState.PENDING, TaskState.READY):
+        status_str = "PLANNED" if _task_mode_value(task) == TaskMode.PLAN_ONLY.value else "PENDING"
+    elif task.state == TaskState.COMPLETED:
         stages = manifest_data.get("stages") if isinstance(manifest_data, dict) else None
         verified = (
             manifest_data is not None
@@ -438,6 +563,7 @@ async def get_task_status(
         result={
             "goal": task.goal,
             "state": task_state_str,
+            "mode": _task_mode_value(task),
             "progress_percentage": task.progress_percentage,
             "artifacts": _task_artifact_paths(task_id),
             "created_at": task.created_at.isoformat() if hasattr(task.created_at, "isoformat") else str(task.created_at),
