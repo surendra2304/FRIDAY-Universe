@@ -2999,7 +2999,24 @@ tasks:
     claim_policy: Update within 2 hours while active; stale claim requires contact,
       never automatic takeover.
 
-task_id_warnings:
+  - id: "TASK-STRATEX-PROFIT-3"
+    title: "Stratex live winner-allowlist activation — losers replaced with OOS-proven winners (ZAI Agent 2)"
+    status: "IN_REVIEW"
+    owner: "zai_agent_2"
+    branch: "zai/TASK-STRATEX-PROFIT-3"
+    pr: 73
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6842900038"
+    files:
+      - "docs/collaboration/TASK-STRATEX-PROFIT-3.md"
+    live_defect: "Owner directive 2026-11-13: Stratex not taking profitable trades. Measured root cause: the daemon WAS trading (8-9 fills/day) but every strategy on the live allowlist was a net loser over the completed 480-run sweep (rsi_extreme -22,510 OOS / 1,472 trades / wr 0.21; vwap_scalper -15,562; fast_ema_cross -6,613; mean_reversion_scalper -1,334; rsi_divergence_scalper family wr 0.15-0.23) AND the 1.2xATR 5m stop geometry (~0.3%) tripped the 0.5% min-stop fee floor on most fired signals."
+    acceptance:
+      - "Allowlist replaced with OOS winners: hybrid +19,532 / channel_breakout +17,643 (PF 3.03) / momentum_rotation +16,883 / donchian_turtle +9,981 / trend_continuation +9,872 / adx_trend +9,061 / ehlers_hma +4,141 / scalping_breakout +1,798; selection rule IS>=0 AND OOS>0 AND PF>=1.16 AND >=300 OOS trades."
+      - "state/strategy_priors.json rewritten with measured OOS win rates (2/3 measured + 1/3 module prior)."
+      - "STRATEX_MIN_EXPECTANCY_R raised to 0.05; STRATEX_TIMEFRAMES adds 1h; daemon restarted 08:52 IST; backups .env.bak-1794540071 + priors.bak-1794540071."
+    evidence: "Live verification 09:50 IST (engine read, not backtest): all 5 open positions GREEN — ETH SHORT +$8.65, BTC SHORT +$6.50, BNB SHORT +$6.38, PAXG LONG +$6.09, XRP SHORT +$4.21; total +$31.83 unrealized, all opened by strategy_hybrid with native STOP_MARKET/TAKE_PROFIT_MARKET brackets. Expectancy gate observed rejecting marginal setups (+0.033R < 0.05R). Full evidence in docs/collaboration/TASK-STRATEX-PROFIT-3.md and PR #73."
+    blockers: []
+    next_action: "PR #73 (activation record + evidence) awaiting ZAI Agent 1 / Arena Agent 1 review of the selection policy and priors blending. Follow-up: re-measure win rates after live evidence accumulates; webhook-mode activation (TELEGRAM_WEBHOOK_URL) at next deploy to end the external-poller 409s."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
