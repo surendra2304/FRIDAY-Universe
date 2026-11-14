@@ -265,6 +265,35 @@ async def test_delegate_cancel_ready_task_cancels():
     assert task.state == TaskState.CANCELLED
 
 
+@pytest.mark.asyncio
+async def test_rest_cancel_route_uses_lifecycle():
+    from fastapi import HTTPException
+
+    # Missing task: 404 (unchanged contract).
+    with pytest.raises(HTTPException) as missing:
+        await delegate.cancel_task("task_ghost", store=_CancelStore(None))
+    assert missing.value.status_code == 404
+
+    # COMPLETED task: the lifecycle machine refuses (409) and the verified
+    # record is untouched — the raw update_task_state write this route used
+    # to do would have flipped it to CANCELLED.
+    done = SimpleNamespace(
+        id="task_done_rest", state=TaskState.COMPLETED, metadata={}, error_message=None
+    )
+    with pytest.raises(HTTPException) as refused:
+        await delegate.cancel_task("task_done_rest", store=_CancelStore(done))
+    assert refused.value.status_code == 409
+    assert done.state == TaskState.COMPLETED
+
+    # READY task: cancels cleanly through the lifecycle.
+    ready = SimpleNamespace(
+        id="task_ready_rest", state=TaskState.READY, metadata={}, error_message=None
+    )
+    result = await delegate.cancel_task("task_ready_rest", store=_CancelStore(ready))
+    assert result.status == "CANCELLED"
+    assert ready.state == TaskState.CANCELLED
+
+
 # --------------------------------------------------------------------------
 # Delegate: status endpoint state mapping
 # --------------------------------------------------------------------------

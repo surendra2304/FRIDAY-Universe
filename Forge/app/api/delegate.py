@@ -598,11 +598,17 @@ async def cancel_task(
     if not task:
         raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
 
-    await store.update_task_state(task_id, state=TaskState.CANCELLED)
-    await store.record_event(
-        task_id=task_id,
-        event_type="task.cancelled",
-        payload={"reason": "User or peer agent requested cancellation."},
+    # TASK-REL-019: this route used to write CANCELLED straight through
+    # update_task_state, so a COMPLETED, verification-certified task could
+    # be flipped to CANCELLED, falsifying its record. Route through the
+    # canonical lifecycle cancellation like every other cancel path; its
+    # HTTP 409 for illegal transitions propagates as this endpoint's
+    # verdict, and the record stays untouched.
+    await execute_task_cancellation(
+        task_id,
+        "Cancelled via delegate REST route",
+        TaskStateMachine(store),
+        store,
     )
 
     return TaskResultModel(
