@@ -3496,6 +3496,45 @@ tasks:
       - "Local tests: new test_rel015_reconciliation.py 2/2 + updated test_schema_init_migrations.py green; full Memora CI file set 35/35 green locally; ruff F821 clean on touched files."
     blockers: []
     next_action: "Open PR, CI green, merge, Fleet CD deploy, restart Memora, live-verify (journal lines + ORA-00904 stops + /v1/events 200 + schema probe clean), then mark VERIFIED."
+  - id: TASK-REL-020
+    title: "Cortex/VyralX analytics derive metrics from md5 hash seeds - deterministic pseudo-data presented as analytics"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/rel020-cortex-vyralx-honesty
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T18:44:00+05:30"
+    updated_at: "2026-11-14T19:39:00+05:30"
+    files:
+      - "Cortex/apps/api/src/cortex_api/competitive_intelligence.py"
+      - "Cortex/apps/api/src/cortex_api/decision_recommendation_system.py"
+      - "Cortex/apps/api/src/cortex_api/marketing_platform_integrator.py"
+      - "Cortex/apps/api/src/cortex_api/multi_channel_attribution.py"
+      - "Cortex/apps/api/src/cortex_api/predictive_demand_forecaster.py"
+      - "Cortex/tests/unit/test_rel020_analytics_honesty.py"
+      - "VyralX/app/services/audience_growth_predictor.py"
+      - "VyralX/app/services/content_calendar_manager.py"
+      - "VyralX/app/services/creator_collaboration_manager.py"
+      - "VyralX/app/services/creator_monetization_engine.py"
+      - "VyralX/app/services/full_pipeline_engine.py"
+      - "VyralX/app/services/multilingual_content_translator.py"
+      - "VyralX/app/services/thumbnail_optimizer.py"
+      - "VyralX/app/services/video_analytics_dashboard.py"
+      - "VyralX/tests/test_rel020_analytics_honesty.py"
+    defect: "System-map audit (2026-11-14): Cortex and VyralX analytics derive their numbers from hashlib.md5 seeds of entity ids (plus hardcoded constants) and present them as measured analytics. Examples: email open/click/bounce rates, social likes/reach, ad impressions/ctr/roas, market share + trend + confidence, SWOT score, Markov removal effects (conversion rate hardcoded 0.05), demand-forecast rmse/mape fabricated from trend magnitude, a fake 4-model ensemble forecast, audience viral coefficients, churn risk counts, sponsorship match scores, localization quality scores, A/B significance hardcoded 0.95, retention curves (invented decay + md5 jitter), hardcoded demographics distributions, benchmark group averages (100000/4.0/0.50), and a fabricated youtube.com/watch?v= published URL from the pipeline engine. Full-tree grep by the recovery crew: these 13 service files hold 100% of the ord(hashlib.md5...) metric derivations in Cortex/VyralX; the only other non-ID md5 uses are experiment variant bucketing (legitimate) and ID generation."
+    acceptance:
+      - "Every formerly md5-seeded or constant metric is either computed from real stored/caller-supplied inputs and labelled estimated_from_inputs/measured, or returned as None with data_status='no_data' and an explanatory data_note in the payload; route responses expose data_status/data_note."
+      - "Real computations where data genuinely exists: Markov removal effects + conversion rate from stored journeys; decision uncertainty from the recommendation's own sensitivity analysis; thumbnail A/B significance via a two-proportion z-test over recorded impressions; content pipeline stage counts from stored posts; demand forecast is a pure (jitter-free) trend extrapolation of the supplied series, labelled as such."
+      - "New honesty suites (Cortex/tests/unit/test_rel020_analytics_honesty.py, VyralX/tests/test_rel020_analytics_honesty.py) pass; full Cortex and VyralX suites show failure sets identical to clean main (no regressions)."
+      - "Production-verified live on Server 2 after Fleet CD: every changed Cortex/VyralX endpoint probed and enumerated (endpoint -> returned data_status/value evidence)."
+    evidence:
+      - "Recovery claim: issue #35 comment 6878195780 (2026-11-14). The original Wave-1 crew ended without a report leaving this work uncommitted in a local worktree; the recovery crew audited the diff line-by-line (2734-line diff, byte-identical when re-based), verified API-shape consumers (channels_touched is deduplicated at add_journey; sensitivity_analysis shape; no external arithmetic consumers of the None-typed fields) and re-ran all tests before shipping."
+      - "Local tests (ti-venv, fastapi 0.162.7 / pytest 8.4.2): new honesty suites Cortex 9/9 passed, VyralX 10/10 passed. Full Cortex/tests: 600 passed / 36 failed vs clean-main baseline 591 passed / 36 failed - failure sets byte-identical (all pre-existing). Full VyralX/tests: 367 tests / 4 failures vs baseline 357 tests / 4 failures - failure sets identical (all pre-existing); tests/test_transformative_commentator.py cannot collect in the sandbox (missing edge_tts) on baseline either."
+      - "Incidental genuine fix included: DecisionRecommendationSystem.get_report avg_risk_level read a non-existent r.risk_score attribute and crashed once any recommendation existed; now an ordinal mean over the stored risk_level."
+      - "Audited but NOT changed (out of the md5-measurement pattern): Cortex/packages/analytics experiments.py md5 variant bucketing (standard deterministic assignment, significance is a real z-test); customer_journey_optimizer and risk_assessment_framework compute over caller-supplied inputs; VyralX analytics_predictor.py is a caller-input heuristic forecaster with an arbitrary x100-viewer assumption and random jitter - flagged to the coordinator as low-grade modelling, not md5-seeded measurement."
+    blockers: []
+    next_action: "PR open -> CI green -> merge -> Fleet CD -> live per-endpoint probes on Server 2 -> flip to VERIFIED with probe evidence."
   - id: TASK-REL-017
     title: "IntelX threat-intel routers fabricate findings: fabricators must admit no data source, simulations must be labelled, real engines must be mounted"
     status: CLAIMED
