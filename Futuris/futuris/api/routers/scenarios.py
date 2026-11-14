@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from futuris.api.deps import get_db_session, get_forecast_repo, get_scenario_repo
 from futuris.api.routers.streaming import stream_hub
+from futuris.core.enums import EvidenceClass
 from futuris.infra.audit import AuditLogger
 from futuris.infra.auth import AllowAnonymousRead, RequireAnalyst
 from futuris.infra.logging import get_logger
@@ -72,6 +73,12 @@ class FanChartResponse(BaseModel):
     trajectories_sample: list[list[float]]
     driver_names: list[str]
     sample_correlations: dict[str, dict[str, float]]
+    # TASK-FUT-002: a seeded Monte Carlo over caller-supplied drift /
+    # volatility parameters is a simulation, not measured data. The
+    # response now labels itself SYNTHETIC instead of presenting the
+    # quantiles as if they were computed from observed market history.
+    evidence_class: EvidenceClass = EvidenceClass.SYNTHETIC
+    evidence_source: str | None = None
     prediction_is_not_authorization: bool = True
     timestamp: datetime
 
@@ -233,6 +240,8 @@ def _execute_fan_chart_simulation(req: FanChartRequest) -> FanChartResponse:
         trajectories_sample=[[round(v, 4) for v in path] for path in sim_res.trajectories_sample],
         driver_names=sim_res.driver_names,
         sample_correlations=sim_res.sample_correlations,
+        evidence_class=EvidenceClass.SYNTHETIC,
+        evidence_source="caller_supplied_parameters; monte_carlo_seed_42_simulation",
         prediction_is_not_authorization=True,
         timestamp=datetime.now(UTC),
     )

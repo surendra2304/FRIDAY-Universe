@@ -22,6 +22,7 @@ from futuris.core.enums import (
 from futuris.core.hashing import content_hash_of
 from futuris.core.schemas import Driver, EvidenceRef, Forecast
 from futuris.ecosystem.adapters import ecosystem_adapter
+from futuris.evaluation.calibration import CalibrationAnalyzer
 from futuris.infra.audit import AuditLogger
 from futuris.infra.auth import AllowAnonymousHeavyRead, AllowAnonymousRead, RequireAnalyst
 from futuris.infra.config import settings
@@ -79,8 +80,16 @@ class RegimeOutlookPayload(BaseModel):
         description="Current detected market regime: TRENDING_BULL | TRENDING_BEAR | RANGING | "
             "HIGH_VOLATILITY",
     )
-    transition_probability: float = Field(
-        ..., description="Likelihood of regime shift over horizon"
+    # TASK-FUT-002: no regime history is measured by this path, so no
+    # transition probability is reported. It previously carried an
+    # arbitrary transform of the volatility probability (vol_prob * 0.6
+    # clamped to [0.15, 0.45]) dressed as a measured likelihood.
+    transition_probability: float | None = Field(
+        default=None, description="Likelihood of regime shift over horizon (not measured)"
+    )
+    transition_probability_status: str = Field(
+        default="not_measured",
+        description="Why transition_probability is absent: no regime transition history is tracked",
     )
     predicted_direction: str = Field(..., description="UPWARD | DOWNWARD | SIDEWAYS | VOLATILE")
     rationale: str = Field(
@@ -102,6 +111,12 @@ class MarketForecastResponse(BaseModel):
     memora_event_id: str | None = None
     evidence_class: EvidenceClass = EvidenceClass.SYNTHETIC
     evidence_source: str | None = None
+    # TASK-FUT-002: the confidence in VolatilityForecastPayload is either
+    # derived from resolved market outcomes (status "measured", derivation
+    # stated) or the declared 0.0 uncalibrated sentinel -- never a fixed
+    # plausible-looking constant.
+    confidence_status: str = "uncalibrated"
+    confidence_derivation: str | None = None
 
 
 class MarketAccuracyResponse(BaseModel):
@@ -112,6 +127,59 @@ class MarketAccuracyResponse(BaseModel):
     recent_records: list[dict[str, Any]] = []
     evidence_class: EvidenceClass | None = None
     sample_note: str | None = None
+
+
+async def _market_confidence(
+    forecast_repo: ForecastRepository | None,
+) -> tuple[float, str, str]:
+    """Meta-confidence for a market forecast, derived or declared absent.
+
+    Returns ``(score, status, derivation)``. The score is ``1 - ECE`` over
+    the resolved market forecasts stored in this database when such pairs
+    exist; otherwise it is the declared uncalibrated sentinel ``0.0`` with
+    the reason stated. TASK-FUT-002 replaces the previous fixed formula
+    (base 0.84, floor 0.65, minus an IntelX penalty), which produced a
+    confident-looking number from no measurement at all.
+    """
+    if forecast_repo is None:
+        return (
+            0.0,
+            "uncalibrated",
+            "no forecast store attached, so no resolved market outcomes "
+            "were available to calibrate against",
+        )
+    try:
+        pairs = await OutcomeRepository(forecast_repo.session).list_resolved_with_forecasts(
+            target_prefix="market:"
+        )
+    except Exception as exc:
+        logger.warning("market_calibration_lookup_failed", error=type(exc).__name__)
+        return (
+            0.0,
+            "uncalibrated",
+            "resolved market outcomes could not be read, so no calibration was measured",
+        )
+    usable = [
+        (forecast, outcome)
+        for forecast, outcome in pairs
+        if forecast.probability is not None and outcome.event_occurred is not None
+    ]
+    if not usable:
+        return (
+            0.0,
+            "uncalibrated",
+            "no resolved market forecasts with probabilities yet, so no "
+            "calibration has been measured",
+        )
+    ece = CalibrationAnalyzer().compute_expected_calibration_error(
+        [float(forecast.probability) for forecast, _ in usable],
+        [bool(outcome.event_occurred) for _, outcome in usable],
+    )
+    return (
+        round(1.0 - ece, 4),
+        "measured",
+        f"1 - ECE over {len(usable)} resolved market forecasts (ECE={ece})",
+    )
 
 
 async def _generate_market_prediction(
@@ -222,20 +290,31 @@ async def _generate_market_prediction(
     vol_mult = float(exogenous_adj.get("volatility_multiplier", 1.0))
     base_prob = min(0.92, max(0.12, (volatility_metric * 0.70) * vol_mult))
     vol_prob = round(base_prob, 3)
-    confidence_score = round(
-        max(0.65, min(0.95, 0.84 - exogenous_adj.get("confidence_penalty", 0.0))), 2
+    # TASK-FUT-002: confidence is derived from resolved market outcomes or
+    # declared uncalibrated (see _market_confidence) -- not a fixed base.
+    confidence_score, confidence_status, confidence_derivation = await _market_confidence(
+        forecast_repo
     )
 
     lower_pct = round(-2.5 * vol_mult, 2)
     upper_pct = round((3.5 if sentiment >= 1.0 else 1.8) * vol_mult, 2)
 
+    # TASK-FUT-002: drivers name only inputs that actually fed the
+    # computation. The equity level is context (it sits in the evidence
+    # hash below), not a driver; and when IntelX returned no findings there
+    # is no IntelX driver -- the previous code appended a filler
+    # "intelx:market_liquidity_baseline" in exactly that case.
     drivers_list = [f"stratex_volatility_idx:{volatility_metric:.2f}"]
-    if equity_val is not None:
-        drivers_list.append(f"telemetry_equity_level:${equity_val:.0f}")
+    # Strength carried into the persisted forecast, per driver: for the
+    # volatility driver it is the computed spike probability itself; for
+    # the IntelX driver it is the magnitude of the exogenous adjustment
+    # the research actually applied.
+    driver_strengths: dict[str, float] = {drivers_list[0]: vol_prob}
     if top_findings:
         drivers_list.append(f"intelx:{top_findings[0][:40]}")
-    else:
-        drivers_list.append("intelx:market_liquidity_baseline")
+        driver_strengths[drivers_list[1]] = round(
+            min(1.0, max(abs(sentiment - 1.0), abs(vol_mult - 1.0))), 2
+        )
 
     # 4. Compute Drawdown Risk
     base_dd_prob = min(
@@ -344,7 +423,7 @@ async def _generate_market_prediction(
                     Driver(
                         name=d[:32],
                         direction="positive" if sentiment >= 1.0 else "negative",
-                        strength=0.85,
+                        strength=driver_strengths.get(d, 0.0),
                         leading_or_lagging="leading",
                         evidence_refs=[ev_id],
                     )
@@ -448,7 +527,8 @@ async def _generate_market_prediction(
         ),
         regime_outlook=RegimeOutlookPayload(
             current=regime,
-            transition_probability=round(min(0.45, max(0.15, vol_prob * 0.6)), 3),
+            # Not measured by this path; see the payload model.
+            transition_probability=None,
             predicted_direction=predicted_dir,
             rationale=rationale,
         ),
@@ -457,6 +537,8 @@ async def _generate_market_prediction(
         forecast_id=str(persisted_forecast.forecast_id if persisted_forecast else forecast_id),
         timestamp=now.isoformat(),
         memora_event_id=memora_event_id,
+        confidence_status=confidence_status,
+        confidence_derivation=confidence_derivation,
         evidence_class=(
             persisted_forecast.evidence_class if persisted_forecast else EvidenceClass.LIVE
         ),

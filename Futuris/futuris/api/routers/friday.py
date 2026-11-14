@@ -289,11 +289,19 @@ class FridayScenarioRequest(BaseModel):
 class FridayScenarioResponse(BaseModel):
     scenario_id: UUID
     divergent_prediction: float
-    probability_outcome: float
+    # TASK-FUT-002: the scenario engine does not recompute a probability, so
+    # this carries the BASE forecast's probability verbatim -- or None when
+    # the base forecast has none. It previously substituted 0.5 (or a flat
+    # 0.85 above a delta threshold), neither of which was ever computed.
+    probability_outcome: float | None
     risk_assessment: str
     comparison_to_baseline: dict[str, Any]
     assumptions: list[str] = Field(default_factory=list)
     scenario_spec: dict[str, Any] = Field(default_factory=dict)
+    # TASK-FUT-002: a scenario is a transform of its base forecast, so it
+    # inherits the base forecast's provenance; the label must travel.
+    evidence_class: EvidenceClass = EvidenceClass.SYNTHETIC
+    evidence_source: str | None = None
     prediction_is_not_authorization: bool = True
     executable_commands: list[str] = Field(default_factory=list)
 
@@ -317,7 +325,10 @@ class FridayScenarioResponse(BaseModel):
 class FridayCalibrationReport(BaseModel):
     overall_ece: float
     per_target_type_calibration: dict[str, float]
-    trend: Literal["improving", "degrading", "stable"]
+    # "unmeasured" covers both no resolved pairs at all and samples too
+    # thin to split into older/recent halves; a trend is a claim about
+    # measured history and is not asserted without one.
+    trend: Literal["improving", "degrading", "stable", "unmeasured"]
     recent_accuracy_summary: dict[str, Any]
 
 
@@ -333,18 +344,33 @@ def _friday_forecast_response(
     req: FridayForecastRequest, forecast: Any
 ) -> FridayForecastResponse:
     """Build the delegation response for a forecast (fresh or replayed)."""
-    prob = forecast.probability or 0.5
+    # TASK-FUT-002: carry the forecast's probability exactly as stored.
+    # When it is None the distribution simply has no exceedance key -- the
+    # previous code substituted 0.5, an invented coin-flip presented as a
+    # model output.
+    prob = forecast.probability
     prob_dist = forecast.predictive_distribution or {
-        "exceedance_probability": prob,
         "p10": forecast.range_lower,
         "p50": forecast.prediction,
         "p90": forecast.range_upper,
     }
+    if prob is not None and "exceedance_probability" not in prob_dist:
+        prob_dist = {**prob_dist, "exceedance_probability": prob}
     drivers = [
         DriverItem(
             metric=d.name,
             correlation=d.strength if d.direction == "increases_risk" else -d.strength,
-            lead_time="2h (lag-2 peak)" if d.leading_or_lagging == "leading" else "0h (concurrent)",
+            # TASK-FUT-002: the Driver record carries no measured lag, so a
+            # leading driver is labelled leading WITHOUT a specific hour
+            # figure -- the previous "2h (lag-2 peak)" was hardcoded for
+            # every leading driver regardless of the data.
+            lead_time=(
+                "leading (lag not measured)"
+                if d.leading_or_lagging == "leading"
+                else "lagging (lag not measured)"
+                if d.leading_or_lagging == "lagging"
+                else "0h (concurrent)"
+            ),
         )
         for d in forecast.drivers
     ]
@@ -785,8 +811,10 @@ async def delegate_task(
             action=envelope.action,
             status="SUCCESS",
             result=s_resp.model_dump(mode="json"),
-            summary="Scenario evaluated for base forecast '{base_id}'. Risk: "
-                "{s_resp.risk_assessment}.",
+            summary=(
+                f"Scenario evaluated for base forecast '{base_id}'. "
+                f"Risk: {s_resp.risk_assessment}."
+            ),
             prediction_is_not_authorization=True,
             executable_commands=[],
             execution_time_ms=lat,
@@ -930,16 +958,21 @@ async def evaluate_scenario(
     return FridayScenarioResponse(
         scenario_id=s_res.spec.spec_id,
         divergent_prediction=round(div_pred, 2),
-        probability_outcome=0.85 if delta_pct > 20.0 else (base.probability or 0.5),
+        # TASK-FUT-002: the base forecast's probability, verbatim (or None).
+        # The scenario engine perturbs values, not probabilities.
+        probability_outcome=base.probability,
         risk_assessment=risk,
         comparison_to_baseline={
             "delta_absolute": round(div_pred - base.prediction, 2),
             "delta_percentage": round(delta_pct, 2),
             "baseline_prediction": base.prediction,
             "variable_matrix": comparison.variable_matrix,
+            "probability_basis": "base_forecast_probability_not_recomputed_by_scenario_engine",
         },
         assumptions=req.scenario_spec.assumptions,
         scenario_spec=req.scenario_spec.model_dump(mode="json"),
+        evidence_class=getattr(base, "evidence_class", None) or EvidenceClass.SYNTHETIC,
+        evidence_source=getattr(base, "evidence_source", None),
         prediction_is_not_authorization=True,
         executable_commands=[],
     )
@@ -1169,6 +1202,10 @@ async def list_friday_forecasts(
                 "confidence": m.confidence,
                 "status": m.status,
                 "model_version": m.model_version,
+                # TASK-FUT-002: the list surface dropped provenance entirely;
+                # a stored row's class defaults to synthetic when unlabelled.
+                "evidence_class": m.evidence_class or EvidenceClass.SYNTHETIC.value,
+                "evidence_source": m.evidence_source,
             }
         )
     return out
@@ -1182,35 +1219,87 @@ async def list_friday_forecasts(
 async def get_friday_calibration(
     outcome_repo: OutcomeRepository = Depends(get_outcome_repo),
 ) -> FridayCalibrationReport:
-    """Return FRIDAY-consumable calibration report with target breakdown and trends."""
+    """Return FRIDAY-consumable calibration report with target breakdown and trends.
+
+    TASK-FUT-002 rewrite: every number here is computed from the resolved
+    (forecast, outcome) pairs stored in this database -- the same pairing
+    rule the resolve path already uses. The previous implementation
+    computed its curve from invented probabilities (a fixed
+    ``[0.1, 0.2, 0.3, 0.6, 0.75, 0.9]`` ladder, or ``0.2 + i*0.12`` when
+    outcomes existed), multiplied the resulting ECE by 1.1/1.2/1.3 to
+    fabricate per-target values, reported ``brier = ECE * 2``, a fixed
+    0.90 coverage, and a permanent ``trend="improving"``. None of those
+    numbers described any forecast Futuris ever made.
+    """
     analyzer = CalibrationAnalyzer()
-    outcomes = await outcome_repo.list_all(limit=500)
+    pairs = await outcome_repo.list_resolved_with_forecasts(limit=2000)
+    usable = [
+        (forecast, outcome)
+        for forecast, outcome in pairs
+        if forecast.probability is not None and outcome.event_occurred is not None
+    ]
 
-    probs = [0.1, 0.2, 0.3, 0.6, 0.75, 0.9]
-    actuals = [False, False, False, True, True, True]
-    if outcomes:
-        dyn_actuals = [bool(o.event_occurred) for o in outcomes if o.event_occurred is not None]
-        if len(dyn_actuals) >= 4:
-            actuals = dyn_actuals[:6]
-            probs = [0.2 + (i * 0.12) for i in range(len(actuals))]
+    if not usable:
+        return FridayCalibrationReport(
+            overall_ece=0.0,
+            per_target_type_calibration={},
+            trend="unmeasured",
+            recent_accuracy_summary={
+                "calibration_status": "unmeasured",
+                "brier_score": None,
+                "coverage_90_pct": None,
+                "resolved_samples": 0,
+            },
+        )
 
-    curve = analyzer.compute_reliability_curve(
-        predicted_probs=probs,
-        actual_outcomes=actuals,
+    probs = [float(forecast.probability) for forecast, _ in usable]
+    actuals = [bool(outcome.event_occurred) for _, outcome in usable]
+    overall_ece = analyzer.compute_expected_calibration_error(probs, actuals)
+    brier = analyzer.compute_brier_score(probs, actuals)
+
+    per_target: dict[str, float] = {}
+    grouped: dict[str, tuple[list[float], list[bool]]] = {}
+    for (forecast, _outcome), prob, actual in zip(usable, probs, actuals, strict=True):
+        group_probs, group_actuals = grouped.setdefault(forecast.target, ([], []))
+        group_probs.append(prob)
+        group_actuals.append(actual)
+    for target, (group_probs, group_actuals) in grouped.items():
+        per_target[target] = analyzer.compute_expected_calibration_error(
+            group_probs, group_actuals
+        )
+
+    coverage_terms = [
+        1.0 if forecast.range_lower <= outcome.observed_value <= forecast.range_upper else 0.0
+        for forecast, outcome in usable
+        if outcome.observed_value is not None
+    ]
+    coverage = (
+        round(sum(coverage_terms) / len(coverage_terms), 4) if coverage_terms else None
     )
 
+    # Trend: ECE of the older half of resolved pairs vs the recent half
+    # (pairs arrive oldest-first). Fewer than four pairs cannot support a
+    # split, so the trend stays unmeasured rather than asserted.
+    trend: Literal["improving", "degrading", "stable", "unmeasured"] = "unmeasured"
+    if len(usable) >= 4:
+        half = len(usable) // 2
+        older_ece = analyzer.compute_expected_calibration_error(probs[:half], actuals[:half])
+        recent_ece = analyzer.compute_expected_calibration_error(probs[half:], actuals[half:])
+        if recent_ece < older_ece - 0.02:
+            trend = "improving"
+        elif recent_ece > older_ece + 0.02:
+            trend = "degrading"
+        else:
+            trend = "stable"
+
     return FridayCalibrationReport(
-        overall_ece=curve.expected_calibration_error,
-        per_target_type_calibration={
-            "service:checkout:capacity_exceedance_24h": curve.expected_calibration_error,
-            "business:leads:next_7d": round(curve.expected_calibration_error * 1.1, 4),
-            "risk:security:threat_escalation_48h": round(curve.expected_calibration_error * 1.2, 4),
-            "trading:btc:volatility_spike_24h": round(curve.expected_calibration_error * 1.3, 4),
-        },
-        trend="improving",
+        overall_ece=overall_ece,
+        per_target_type_calibration=per_target,
+        trend=trend,
         recent_accuracy_summary={
-            "brier_score": round(curve.expected_calibration_error * 2, 4),
-            "coverage_90_pct": 0.90,
-            "resolved_samples": max(len(outcomes), len(actuals)),
+            "calibration_status": "measured",
+            "brier_score": round(brier, 4),
+            "coverage_90_pct": coverage,
+            "resolved_samples": len(usable),
         },
     )
