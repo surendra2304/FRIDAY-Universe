@@ -52,16 +52,22 @@ class TavilySearchConnector(BaseConnector):
             return []
 
         max_results = kwargs.get("max_results", 10)
+        # TASK-REL-007: optional Tavily topic ("news" for headline-intent
+        # queries — set by WebSearchConnector); omitted = general search.
+        topic = kwargs.get("topic")
+        payload: dict[str, Any] = {
+            "api_key": self.api_key,
+            "query": target,
+            "max_results": max_results,
+            "search_depth": "basic",
+        }
+        if topic in {"news", "general", "finance"}:
+            payload["topic"] = topic
         try:
             async with httpx.AsyncClient(transport=self._transport, timeout=10.0) as client:
                 resp = await client.post(
                     "https://api.tavily.com/search",
-                    json={
-                        "api_key": self.api_key,
-                        "query": target,
-                        "max_results": max_results,
-                        "search_depth": "basic",
-                    },
+                    json=payload,
                 )
                 if resp.status_code != 200:
                     raise ProviderError(
@@ -679,9 +685,9 @@ class WebSearchConnector(BaseConnector):
 
         failed_providers: list[dict[str, Any]] = []
 
-        async def fetch_provider(name: str, connector: Any) -> list[SearchResult]:
+        async def fetch_provider(name: str, connector: Any, call_kwargs: dict | None = None) -> list[SearchResult]:
             try:
-                return await connector.fetch(target, **kwargs)
+                return await connector.fetch(target, **(call_kwargs if call_kwargs is not None else kwargs))
             except Exception as exc:
                 failure = {"provider": name, "error_class": type(exc).__name__}
                 if isinstance(exc, ProviderError):
@@ -699,7 +705,21 @@ class WebSearchConnector(BaseConnector):
         # 1. Tavily if key present
         primary_results: list[SearchResult] = []
         if self.settings.TAVILY_API_KEY:
-            primary_results = await fetch_provider("tavily", self._tavily)
+            # TASK-REL-007: headline/news-intent queries must use Tavily's
+            # news topic. With the default general topic, Tavily's top hits
+            # for "today's top AI news headlines" are section/listing pages
+            # (observed live 2026-11-14: /tag/..., /topic/..., homepages)
+            # that the grounded pipeline correctly refuses as sources; the
+            # news topic returns article-level results instead.
+            lowered = target.lower()
+            news_intent = any(
+                marker in lowered
+                for marker in ("news", "headline", "breaking", "latest headlines")
+            )
+            tavily_kwargs = dict(kwargs)
+            if news_intent and "topic" not in tavily_kwargs:
+                tavily_kwargs["topic"] = "news"
+            primary_results = await fetch_provider("tavily", self._tavily, tavily_kwargs)
 
         # 2. SearXNG if instance URL configured
         if not primary_results and self.settings.SEARXNG_URL:

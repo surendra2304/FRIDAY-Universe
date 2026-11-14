@@ -70,7 +70,9 @@ def test_document_fetch_not_search_snippet_is_the_evidence():
     assert "fabricate" not in result["text_response"]
     assert result["sources"][0]["independently_verified"] is False
     assert result["findings"][0]["citations"][0]["source_url"] == result["sources"][0]["url"]
-    fetch.fetch.assert_awaited_once_with("https://example.org/doc", max_bytes=250_000)
+    # TASK-REL-007: budget raised from 250_000 — modern article pages exceed
+    # 250KB before prose; the connector still caps at MAX_PAGE_BYTES (2MB).
+    fetch.fetch.assert_awaited_once_with("https://example.org/doc", max_bytes=1_000_000)
 
 
 def test_source_fetch_failure_never_uses_snippet_as_document():
@@ -100,7 +102,9 @@ def test_explicit_url_uses_guarded_document_fetch_not_search():
     result = asyncio.run(m.collect_live_brief("research https://example.org/doc", search, fetch))
     assert result["status"] == "SUCCESS"
     search.fetch.assert_not_awaited()
-    fetch.fetch.assert_awaited_once_with("https://example.org/doc", max_bytes=250_000)
+    # TASK-REL-007: budget raised from 250_000 — modern article pages exceed
+    # 250KB before prose; the connector still caps at MAX_PAGE_BYTES (2MB).
+    fetch.fetch.assert_awaited_once_with("https://example.org/doc", max_bytes=1_000_000)
 
 
 @pytest.mark.parametrize("finding", [{}, {"statement": "uncited"},
