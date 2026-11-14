@@ -42,7 +42,13 @@ const CHIPS = [
 
 /** Hard cap on rendered bubbles (most recent win). */
 const MAX_RENDERED = 40;
-/** Restored-from-history tail — enough context, never a wall. */
+/**
+ * Restored-from-history tail, in ENTRIES (one entry = one exchange =
+ * up to two bubbles). Enough context, never a wall. TASK-REL-012: this
+ * number must never be used to slice the expanded bubble list — that
+ * unit mix-up silently halved the restored transcript (12 entries
+ * fetched, only the last 12 BUBBLES rendered = 6 exchanges shown).
+ */
 const RESTORE_LIMIT = 12;
 /** Client ceiling for one /api/chat round-trip before we say so. */
 const CHAT_TIMEOUT_MS = 75_000;
@@ -132,7 +138,9 @@ export function ChatPanel({ prefill }: { prefill?: { text: string; seq: number }
           if (e.user_input?.trim()) restored.push({ role: "user", text: e.user_input, at });
           if (e.friday_reply?.trim()) restored.push({ role: "friday", text: e.friday_reply, at });
         }
-        const capped = restored.slice(-RESTORE_LIMIT);
+        /* Cap in BUBBLES (MAX_RENDERED), not entries: every fetched
+           exchange renders both its sides (TASK-REL-012). */
+        const capped = restored.slice(-MAX_RENDERED);
         if (capped.length) {
           setMessages(capped);
           setRestoredCount(capped.length);
