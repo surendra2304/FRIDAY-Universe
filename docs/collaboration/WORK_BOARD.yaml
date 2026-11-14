@@ -3557,14 +3557,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Merge PR #159 on green CI (owner blanket authorization 2026-11-14); Fleet CD deploy; run the live acceptance probes; then mark VERIFIED with evidence."
   - id: TASK-REL-017
     title: "IntelX threat-intel routers fabricate findings: fabricators must admit no data source, simulations must be labelled, real engines must be mounted"
-    status: CLAIMED
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-rel-017-intelx-threat-intel-honesty
-    pr: null
+    pr: 155
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:05:00+05:30"
-    updated_at: "2026-11-14T19:05:00+05:30"
+    updated_at: "2026-11-14T20:05:00+05:30"
     files:
       - "IntelX/routers/dark_web_monitor.py"
       - "IntelX/routers/dynamic_osint_collector.py"
@@ -3588,9 +3588,15 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Hash-invented numbers removed: campaign attribution_confidence starts 0.0 (rises only via operator attribution indicators), campaign predict confidence derives from recorded event count (0.0 with none), correlation actor profiles record only operator-supplied attributes (sophistication unknown, no invented sectors/techniques), pattern-match confidence equals the measured matched fraction, campaign-predictor forecast confidence is the mean of operator-supplied phase probabilities (0.0 when none supplied) with a stated basis; heuristic surfaces (campaign tracker, correlation, predictive analyzer, campaign predictor assess) carry data_source/basis labels."
       - "real_threat_router mounted at /v1/real-threat-intel with working adapters: /graph/pagerank builds the Graph from the caller payload and runs real PageRank (app/agents import path fixed), /advanced/darkweb passes a validated source_data dict and labels caller_supplied_source_data + live_feed_connected:false, /deep/forecast passes threat_type + historical properly, /engine/analyze runs real reads (get_stats/get_threat_feed/correlate_indicators) over the persistent store singleton instead of the hollow guarded response."
       - "New tests IntelX/tests/test_threat_intel_honesty.py lock the contract; neighbouring IntelX suites stay green; live per-endpoint probes after Fleet CD deploy show each threat-intel endpoint either traceable to a named real source or carrying the SIMULATED/no-source label."
-    evidence: []
+    evidence:
+      - "PR #155 merged as 63aa2371 (commits 53ce2b03 + CI-fix 8220ae76, rebased 639bacaa; code blobs byte-identical to the CI-validated tree). Fleet CD run for the merge completed success; Server 1 checkout verified at 63aa2371, IntelX service active, /health 200, deployed real_threat_router.py carries the new adapters."
+      - "CI: FRIDAY Universe CI/CD, Owner Workflow Contracts, Secret Scanning, Collaboration Registry green on the change. Monorepo Structure first failed on 2 root tests (test_deep_all_agents + test_e2e_real_work) asserting campaign-predictor confidence > 0 — a real regression in the first commit's flat 0.0; fixed by deriving confidence as the mean of operator-supplied phase probabilities (PR comment 6878307052) and both Monorepo workflows re-dispatched green on the fixed head (full 3,631-test root suite). Local: IntelX/tests/test_threat_intel_honesty.py 22/22 green (pre- and post-rebase), test_search_provenance 4/4, test_api_router_coverage 5/5, root MalNet/Horizon suites 13/13, ruff F821/F401 clean."
+      - "LIVE probes 2026-11-14 ~19:50 IST against the running service on Server 1 (HTTP unless noted): darkweb/scan -> status no_real_data_source, sources_scanned [], all counts 0; darkweb/leaks POST -> verified:false, data_source operator_submitted; osint/collect -> no_real_data_source, total_findings 0, sources_queried 0; osint/sources -> all 8 collector_connected:false; forecast/generate -> status no_real_data_source, predicted_severity/confidence null; crawl start/results/stats/report -> simulated:true; hunting run -> simulated:true + simulated_no_query_executed, optimize -> simulated_projection; phonebook -> 200 status simulated / synthetic_fallback (previously HTTP 500); malnet/correlate -> simulated:true at route and engine level; maltego/graph (no body) -> data_source built_in_sample; campaigns predict -> confidence 0.0 + basis heuristic_over_operator_recorded_events_only; correlation patterns -> score 0.5 = measured matched fraction (1 of 2); threat/predict items carry basis; campaign forecast -> confidence 0.0 with confidence_basis mean_of_operator_supplied_phase_probabilities_no_telemetry. Emulation execute + gaps verified simulated:true via an in-process ASGI probe on the deployed tree (the public API does not expose phase ids, so those two cannot be driven over HTTP alone); emulation/report verified over HTTP."
+      - "Real engines live: GET /v1/real-threat-intel/status -> engines [graph, advanced_threat, deep_threat, threat_engine]; POST /graph/pagerank over a caller 3-node cycle -> ranks sum 1.0, data_source caller_supplied_graph; POST /advanced/darkweb {} -> result [] + live_feed_connected:false, with caller-asserted has_credentials -> exactly 1 formatted finding (content_type credentials); POST /deep/forecast with empty history -> the engine's explicit baseline probability 0.3 / confidence 0.2, data_source caller_supplied_history; POST /engine/analyze -> stats + threat_feed from the persistent store."
+      - "Deliberate non-action, documented in PR #155: intelx/api/real_osint_router.py was NOT mounted — it duplicates the already-mounted routers/real_osint_routes.py surface over the same engines without the TASK-TRUST-001 provenance labelling, and its GET /maltego/alerts seeds fabricated alerts (hash-derived match_counts, hardcoded 2024-01-01 timestamps) as a side effect. Residual (pre-existing, unchanged): intel_sharing_manager and threat_intel_exchange_protocol mark local records 'sent'/'completed' although nothing is transmitted externally — local-ledger semantics, no findings invented; flagged for a future labelling pass."
+      - "Housekeeping: a debris line left in this file by the REL-017 rebase conflict resolution (a conflict-marker parenthetical suffix after this entry) briefly formed a duplicate top-level key with task_id_warnings; it has been removed from main, and the registry-repair entry in this file quotes it as evidence — this update leaves that quote intact (verified in the diff)."
     blockers: []
-    next_action: "Implement on branch, PR, CI, merge, Fleet CD deploy, live-verify per endpoint, then mark VERIFIED with probe evidence."
+    next_action: "Done. VERIFIED 2026-11-14: PR #155 merged, Fleet CD deployed, Server 1 at the merge commit, and every threat-intel endpoint probed live with its source or SIMULATED/no-source label in the payload."
   - id: TASK-REL-018
     title: "Futuris forecasts run on synthetic data and silent statsforecast fallbacks, presented as real"
     status: IN_PROGRESS
