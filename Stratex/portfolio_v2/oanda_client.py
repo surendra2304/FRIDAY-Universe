@@ -4,8 +4,11 @@ Uses only the Python standard library so it drops into the FRIDAY Universe
 repo with zero pip dependencies.
 """
 import json
+import logging
 import urllib.error
 import urllib.request
+
+logger = logging.getLogger(__name__)
 
 API_HOSTS = {
     "practice": "https://api-fxpractice.oanda.com/v3",
@@ -23,7 +26,31 @@ class OandaClient:
             raise ValueError(f"unknown environment: {environment}")
         self.token = token
         self.timeout = timeout
+        self.environment = environment
         self.base = API_HOSTS[environment]
+        if self.environment != "practice":
+            logger.warning(
+                "[OANDA-V2] Client resolved to environment=%r (%s); order "
+                "creation will be refused (practice-only).",
+                self.environment, self.base,
+            )
+
+    def _enforce_practice_only(self, action: str) -> None:
+        """Fail-closed order gate (TASK-STR-SAFETY-001), mirroring
+        exchanges/oanda_adapter.py: order creation requires the
+        environment to be UNAMBIGUOUSLY practice — environment flag AND
+        practice host. Live order placement is prohibited by design."""
+        if self.environment != "practice" or "api-fxpractice.oanda.com" not in self.base:
+            logger.error(
+                "[OANDA-V2] SECURITY CRITICAL: %s refused — client is not on the "
+                "practice environment (environment=%s, base=%s).",
+                action, self.environment, self.base,
+            )
+            raise PermissionError(
+                "SECURITY CRITICAL: OANDA order creation refused: client is "
+                f"not on the practice environment (environment={self.environment}, "
+                f"base={self.base}). Live trading is prohibited by design."
+            )
 
     # ------------------------------------------------------------------ core
     def _request(self, method, path, body=None, query=""):
@@ -79,6 +106,7 @@ class OandaClient:
 
     # ----------------------------------------------------- orders / trades
     def create_order(self, account_id, order):
+        self._enforce_practice_only("create_order")
         return self._request("POST", f"/accounts/{account_id}/orders", body=order)
 
     def open_trades(self, account_id):
@@ -88,6 +116,7 @@ class OandaClient:
         return self._request("GET", f"/accounts/{account_id}/trades/{trade_id}")
 
     def modify_trade_protective_orders(self, account_id, trade_id, stop_loss=None, take_profit=None):
+        self._enforce_practice_only("modify_trade_protective_orders")
         body = {}
         if stop_loss is not None:
             body["stopLoss"] = {"price": str(stop_loss), "timeInForce": "GTC"}

@@ -39,13 +39,28 @@ def _env_flag(name: str, default: str = "false") -> bool:
 
 
 def _live_trading_authorized() -> bool:
-    """True only when the owner explicitly sets ALLOW_LIVE_TRADING=true (TASK-STR-001).
+    """True only when BOTH live-trading gates are open (TASK-STR-SAFETY-001).
 
-    Default false: this adapter refuses to construct against live endpoints
-    (and refuses live order paths) unless this explicit opt-in exists —
+    1. The env opt-in ALLOW_LIVE_TRADING=true, AND
+    2. the code-level PERMANENT SECURITY INVARIANT in config.py
+       (LIVE_TRADING_ENABLED) has been flipped by a human editing source.
+
+    Environment alone can NEVER authorize live trading: with the shipped
+    invariant (False) this always returns False, so no env change, .env
+    edit, or deployment variable can unlock live endpoints — only a
+    deliberate, reviewable code change can. A failure to import config
+    fails closed. Default false: this adapter refuses to construct against
+    live endpoints (and refuses live order paths) unless both gates hold —
     the same invariant exchange_implementations.py enforces for its adapters.
     """
-    return _env_flag("ALLOW_LIVE_TRADING", "false")
+    if not _env_flag("ALLOW_LIVE_TRADING", "false"):
+        return False
+    try:
+        import config as _stratex_config
+
+        return bool(getattr(_stratex_config, "LIVE_TRADING_ENABLED", False))
+    except Exception:
+        return False
 
 
 class BinanceFuturesAdapter(BaseExchange):
@@ -119,8 +134,10 @@ class BinanceFuturesAdapter(BaseExchange):
             raise PermissionError(
                 "SECURITY CRITICAL: refusing to construct a live-endpoint "
                 "BinanceFuturesAdapter without explicit ALLOW_LIVE_TRADING=true "
-                f"(resolved environment={self.environment}, base_url={self.base_url}). "
-                "Set BINANCE_ENV=demo/testnet, or provide ALLOW_LIVE_TRADING=true."
+                "AND the code-level LIVE_TRADING_ENABLED invariant in config.py "
+                f"flipped by a human code edit (resolved environment={self.environment}, "
+                f"base_url={self.base_url}). Environment alone can never authorize "
+                "live trading. Set BINANCE_ENV=demo/testnet."
             )
 
         logger.info(f"[BINANCE_FUTURES] Environment: {self.environment} ({self.base_url})")
@@ -170,7 +187,8 @@ class BinanceFuturesAdapter(BaseExchange):
         if self.environment == "live" and not _live_trading_authorized():
             raise PermissionError(
                 "SECURITY CRITICAL: live-endpoint order refused without explicit "
-                "ALLOW_LIVE_TRADING=true (venue=binance_futures)."
+                "ALLOW_LIVE_TRADING=true AND the code-level LIVE_TRADING_ENABLED "
+                "invariant in config.py (venue=binance_futures)."
             )
 
     def _ensure_position_mode(self) -> None:

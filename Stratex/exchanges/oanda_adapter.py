@@ -63,6 +63,13 @@ class OandaExchangeAdapter(BaseExchange):
         else:
             self.base_url = "https://api-fxtrade.oanda.com/v3"
             self.stream_url = "https://stream-fxtrade.oanda.com/v3"
+            # Order placement on this adapter is practice-only
+            # (_enforce_practice_only); a live-resolved adapter may exist
+            # for read paths but can never place an order.
+            logger.warning(
+                "[OANDA] Adapter resolved to the LIVE environment "
+                f"({self.base_url}); order placement will be refused."
+            )
 
         self.session = requests.Session()
         self.session.headers.update({
@@ -205,6 +212,31 @@ class OandaExchangeAdapter(BaseExchange):
         """
         return f"{price:.{self._instrument_precision(oanda_symbol)}f}"
 
+    def _enforce_practice_only(self, action: str) -> None:
+        """Fail-closed order gate (TASK-STR-SAFETY-001).
+
+        Mirrors the BinanceFuturesAdapter gate: order placement is
+        practice-only, and the resolved environment must be UNAMBIGUOUSLY
+        the OANDA practice environment — the practice flag set AND the
+        practice host in the base URL. Anything else (live flag, live
+        host, or a post-construction flip of either) is refused and
+        logged. No environment variable can unlock live order placement
+        on this adapter; live trading stays prohibited by owner decree.
+        """
+        if not self.practice or "api-fxpractice.oanda.com" not in self.base_url:
+            logger.error(
+                "[OANDA] SECURITY CRITICAL: %s refused — adapter is not on the "
+                "practice environment (practice=%s, base_url=%s, venue=oanda). "
+                "Live order placement is prohibited.",
+                action, self.practice, self.base_url,
+            )
+            raise PermissionError(
+                "SECURITY CRITICAL: OANDA order placement refused: adapter is "
+                f"not unambiguously on the practice environment "
+                f"(practice={self.practice}, base_url={self.base_url}, venue=oanda). "
+                "Live trading is prohibited by design."
+            )
+
     # ------------------------------------------------------------------------
     # BaseExchange implementation
     # ------------------------------------------------------------------------
@@ -333,7 +365,9 @@ class OandaExchangeAdapter(BaseExchange):
         stop_loss: Optional[float] = None,
         take_profit: Optional[float] = None,
     ) -> UnifiedOrderResult:
-        """Place order with native SL/TP."""
+        """Place order with native SL/TP. Practice environment only —
+        _enforce_practice_only refuses (logged) on any live resolution."""
+        self._enforce_practice_only("place_order")
         u_sym = self.normalize_symbol(symbol)
         oanda_sym = self.denormalize_symbol(u_sym)
 
@@ -443,7 +477,9 @@ class OandaExchangeAdapter(BaseExchange):
 
     def update_trade_stop_loss(self, symbol: str, trade_id: str, price: float) -> bool:
         """Move a trade's stop loss (e.g. to breakeven) via a trade-dependent
-        STOP_LOSS order bound to the trade."""
+        STOP_LOSS order bound to the trade. This creates an order, so the
+        practice-only gate applies exactly as for place_order."""
+        self._enforce_practice_only("update_trade_stop_loss")
         oanda_sym = self.denormalize_symbol(self.normalize_symbol(symbol))
         body = {"order": {
             "type": "STOP_LOSS",

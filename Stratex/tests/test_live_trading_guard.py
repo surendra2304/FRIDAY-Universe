@@ -22,6 +22,8 @@ import types
 
 import pytest
 
+import config  # collection-time import (clean env): config validates the
+# environment at import, so tests must not first-import it mid-test.
 from exchanges.exchange_implementations import (
     BinanceExchangeAdapter,
     BybitExchangeAdapter,
@@ -184,15 +186,31 @@ def test_binance_live_endpoints_refused_without_opt_in(monkeypatch, fake_binance
         adapter.place_order("BTC/USDT", "BUY", "MARKET", 0.01)
 
 
-def test_binance_live_endpoints_require_explicit_opt_in(monkeypatch, fake_binance_module):
+def test_binance_live_endpoints_refused_with_env_optin_alone(monkeypatch, fake_binance_module):
+    """TASK-STR-SAFETY-001: ALLOW_LIVE_TRADING=true ALONE must NOT enable
+    live routing while TRADING_MODE is still TESTNET. Environment alone
+    can never authorize live trading."""
     _clear_env(monkeypatch)
     monkeypatch.setenv("TRADING_MODE", "TESTNET")
     monkeypatch.setenv("BINANCE_TESTNET", "false")
     monkeypatch.setenv("ALLOW_LIVE_TRADING", "true")
     adapter = BinanceExchangeAdapter(api_key="test-key", secret_key="test-secret")
+    assert adapter._get_client() is None
+
+
+def test_binance_live_endpoints_require_explicit_opt_in(monkeypatch, fake_binance_module):
+    """Live routing opens only with BOTH gates: the env opt-in AND the
+    code-level LIVE_TRADING_ENABLED invariant in config.py flipped by a
+    human code edit."""
+    _clear_env(monkeypatch)
+    monkeypatch.setenv("TRADING_MODE", "TESTNET")
+    monkeypatch.setenv("BINANCE_TESTNET", "false")
+    monkeypatch.setenv("ALLOW_LIVE_TRADING", "true")
+    monkeypatch.setattr(config, "LIVE_TRADING_ENABLED", True)
+    adapter = BinanceExchangeAdapter(api_key="test-key", secret_key="test-secret")
     client = adapter._get_client()
     assert client is not None
-    assert client.testnet is False  # explicit owner opt-in enables live routing
+    assert client.testnet is False  # both gates open enables live routing
 
 
 def test_binance_order_routes_through_client(monkeypatch, fake_binance_module):

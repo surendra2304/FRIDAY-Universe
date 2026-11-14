@@ -48,12 +48,28 @@ def _enforce_no_live_trading(venue: str) -> None:
 
 
 def _live_trading_authorized() -> bool:
-    """True only when the owner explicitly sets ALLOW_LIVE_TRADING=true (TASK-STR-001).
+    """True only when BOTH live-trading gates are open (TASK-STR-SAFETY-001).
 
-    Default false: every adapter in this module refuses live-endpoint orders
-    and live-endpoint client construction unless this explicit opt-in exists.
+    1. The env opt-in ALLOW_LIVE_TRADING=true, AND
+    2. the code-level PERMANENT SECURITY INVARIANT in config.py
+       (LIVE_TRADING_ENABLED) has been flipped by a human editing source.
+
+    Environment alone can NEVER authorize live trading: with the shipped
+    invariant (False) this always returns False, so no env change, .env
+    edit, or deployment variable can unlock live endpoints — only a
+    deliberate, reviewable code change can. A failure to import config
+    fails closed. Default false: every adapter in this module refuses
+    live-endpoint orders and live-endpoint client construction unless
+    both gates hold.
     """
-    return _env_flag("ALLOW_LIVE_TRADING", "false")
+    if not _env_flag("ALLOW_LIVE_TRADING", "false"):
+        return False
+    try:
+        import config as _stratex_config
+
+        return bool(getattr(_stratex_config, "LIVE_TRADING_ENABLED", False))
+    except Exception:
+        return False
 
 # Import new adapters
 try:
@@ -94,9 +110,10 @@ class BinanceExchangeAdapter(BaseExchange):
         """Builds the python-binance client, fail-closed on live endpoints.
 
         BINANCE_TESTNET (default true) routes futures endpoints to the testnet.
-        A live-endpoint client is only built when the owner has explicitly set
-        ALLOW_LIVE_TRADING=true; otherwise this adapter returns None so read
-        paths report empty data and order paths refuse to fabricate fills.
+        A live-endpoint client is only built when live trading is authorized
+        by BOTH the env opt-in and the code-level config.py invariant
+        (_live_trading_authorized); otherwise this adapter returns None so
+        read paths report empty data and order paths refuse to fabricate fills.
         """
         if self._client is None and self.api_key and self.secret_key:
             try:
@@ -104,8 +121,9 @@ class BinanceExchangeAdapter(BaseExchange):
                 testnet = _env_flag("BINANCE_TESTNET", "true")
                 if not testnet and not _live_trading_authorized():
                     logger.warning(
-                        "[BINANCE_ADAPTER] BINANCE_TESTNET disabled without ALLOW_LIVE_TRADING=true; "
-                        "refusing to build a live-endpoint client."
+                        "[BINANCE_ADAPTER] BINANCE_TESTNET disabled without live authorization "
+                        "(ALLOW_LIVE_TRADING=true AND the config.py LIVE_TRADING_ENABLED "
+                        "invariant); refusing to build a live-endpoint client."
                     )
                     return None
                 self._client = Client(self.api_key, self.secret_key, testnet=testnet)
@@ -821,13 +839,16 @@ class CoinbaseExchangeAdapter(BaseExchange):
         """Places a real order through ccxt coinbase; gated fail-closed.
 
         Coinbase has no testnet venue, so any real order is a live order and
-        requires the explicit owner opt-in ALLOW_LIVE_TRADING=true.
+        requires live authorization: the env opt-in ALLOW_LIVE_TRADING=true
+        AND the code-level LIVE_TRADING_ENABLED invariant in config.py
+        (TASK-STR-SAFETY-001) — environment alone can never unlock it.
         """
         _enforce_no_live_trading("coinbase")
         if not _live_trading_authorized():
             raise PermissionError(
                 "STRATEX_ORDER_BLOCKED: coinbase has no testnet venue; a real order requires "
-                "explicit ALLOW_LIVE_TRADING=true (venue=coinbase)."
+                "explicit ALLOW_LIVE_TRADING=true AND the code-level LIVE_TRADING_ENABLED "
+                "invariant in config.py flipped by a human code edit (venue=coinbase)."
             )
         client = self._get_client()
         if not client:
@@ -857,7 +878,8 @@ class CoinbaseExchangeAdapter(BaseExchange):
         if not _live_trading_authorized():
             raise PermissionError(
                 "STRATEX_ORDER_BLOCKED: coinbase has no testnet venue; cancelling a real order "
-                "requires explicit ALLOW_LIVE_TRADING=true (venue=coinbase)."
+                "requires explicit ALLOW_LIVE_TRADING=true AND the code-level "
+                "LIVE_TRADING_ENABLED invariant in config.py (venue=coinbase)."
             )
         client = self._get_client()
         if not client:
