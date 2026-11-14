@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 
 from fastapi import APIRouter, Header, HTTPException, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.agents.base import Agent
@@ -845,20 +845,76 @@ class ChatCompletionRequest(BaseModel):
     stream: bool = False
 
 
+#: TASK-REL-030 — the /v1/models catalogue is the gateway's public contract:
+#: every entry below was verified against its provider before being listed
+#: (provider-direct audit on Server 1, 2026-11-14; the TASK-REL-030 board
+#: entry carries the full evidence table). Removed as retired or unservable
+#: in this deployment: llama-3.3-70b-versatile and llama-3.1-8b-instant
+#: (Groq 404 model_not_found), gemini-2.5-flash (Google 404, "no longer
+#: available to new users"), liquid/lfm-2.5-2.6b:free (absent from
+#: OpenRouter's live catalogue), cerebras/llama-3.3-70b (no Cerebras keys
+#: configured here) and nvidia/nemotron-3-super-120b-a12b (403 with the
+#: configured NVIDIA key). Routing resolves the provider from this table
+#: FIRST: the previous substring ladder had no nvidia/openrouter branch at
+#: all, so those models fell through to groq, failed there, and were
+#: silently replaced by the fallback ladder behind an HTTP 200.
+MODEL_CATALOG: list[dict[str, str]] = [
+    {"id": "gemini-3.8-flash", "owned_by": "google", "provider": "gemini"},
+    {"id": "gemini-3.6-flash", "owned_by": "google", "provider": "gemini"},
+    {"id": "openai/gpt-oss-120b", "owned_by": "groq", "provider": "groq"},
+    {"id": "qwen/qwen3.8-27b", "owned_by": "groq", "provider": "groq"},
+    {"id": "meta-llama/llama-3.3-70b-instruct", "owned_by": "openrouter", "provider": "openrouter"},
+    # The nvidia/ prefix usually means NVIDIA NIM, but the ":free" id below
+    # is an OpenRouter listing (verified present in its live catalogue) —
+    # catalogue ownership, checked first, keeps it off the 403-broken
+    # NVIDIA route.
+    {"id": "nvidia/nemotron-3.5-lightning:free", "owned_by": "openrouter", "provider": "openrouter"},
+]
+
+_CATALOG_PROVIDERS: dict[str, str] = {entry["id"].lower(): entry["provider"] for entry in MODEL_CATALOG}
+
+
+def _provider_for_model(model: str) -> str:
+    """Resolve which provider serves an explicitly requested model.
+
+    Catalogue ownership wins. The substring fallbacks below preserve the
+    historical behaviour for non-catalogue ids, with the two branches the
+    old ladder lacked (nvidia-prefixed ids, OpenRouter-style free ids)
+    added ahead of the generic "openai" match.
+    """
+    norm_model = (model or "").lower().strip()
+    if norm_model in _CATALOG_PROVIDERS:
+        return _CATALOG_PROVIDERS[norm_model]
+    if "gemini" in norm_model:
+        return "gemini"
+    if norm_model.startswith("openai/gpt-oss"):
+        # Groq hosts the gpt-oss family under the "openai/" prefix (see the
+        # /models catalog: owned_by "groq"). The generic "openai" substring
+        # match below would misroute it to the OpenAI provider, which has no
+        # credentials here, silently dropping the request to the fallback
+        # ladder instead of serving the explicitly requested model.
+        return "groq"
+    if norm_model.startswith("nvidia/"):
+        return "nvidia"
+    if norm_model.endswith(":free") or norm_model.startswith("meta-llama/"):
+        return "openrouter"
+    if any(k in norm_model for k in ("gpt-4", "gpt-3", "o1", "o3", "openai")):
+        return "openai"
+    if "mistral" in norm_model or "codestral" in norm_model:
+        return "mistral"
+    if "cerebras" in norm_model:
+        return "cerebras"
+    return "groq"
+
+
 @v1_router.get("/models", status_code=status.HTTP_200_OK)
 async def list_models() -> dict[str, Any]:
     """OpenAI-compatible models catalog listing available gateway models."""
     configured_models = [
-        {"id": "gemini-3.8-flash", "object": "model", "owned_by": "google", "permission": []},
-        {"id": "gemini-2.5-flash", "object": "model", "owned_by": "google", "permission": []},
-        {"id": "openai/gpt-oss-120b", "object": "model", "owned_by": "groq", "permission": []},
-        {"id": "llama-3.3-70b-versatile", "object": "model", "owned_by": "groq", "permission": []},
-        {"id": "llama-3.1-8b-instant", "object": "model", "owned_by": "groq", "permission": []},
-        {"id": "cerebras/llama-3.3-70b", "object": "model", "owned_by": "cerebras", "permission": []},
-        {"id": "nvidia/nemotron-3-super-120b-a12b", "object": "model", "owned_by": "nvidia", "permission": []},
-        {"id": "liquid/lfm-2.5-2.6b:free", "object": "model", "owned_by": "openrouter", "permission": []},
-        {"id": "auto", "object": "model", "owned_by": "inference", "permission": []},
+        {"id": entry["id"], "object": "model", "owned_by": entry["owned_by"], "permission": []}
+        for entry in MODEL_CATALOG
     ]
+    configured_models.append({"id": "auto", "object": "model", "owned_by": "inference", "permission": []})
     return {"object": "list", "data": configured_models}
 
 
@@ -884,22 +940,7 @@ async def chat_completions(req: ChatCompletionRequest):
             temperature=req.temperature,
             max_tokens=tokens,
         )
-        norm_model = req.model.lower()
-        if "gemini" in norm_model:
-            provider = "gemini"
-        elif norm_model.startswith("openai/gpt-oss"):
-            # Groq hosts the gpt-oss family under the "openai/" prefix (see the
-            # /models catalog: owned_by "groq"). The generic "openai" substring
-            # match below would misroute it to the OpenAI provider.
-            provider = "groq"
-        elif any(k in norm_model for k in ("gpt-4", "gpt-3", "o1", "o3", "openai")):
-            provider = "openai"
-        elif "mistral" in norm_model or "codestral" in norm_model:
-            provider = "mistral"
-        elif "cerebras" in norm_model:
-            provider = "cerebras"
-        else:
-            provider = "groq"
+        provider = _provider_for_model(prov_req.model or req.model)
 
         async def _stream_generator():
             cmpl_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
@@ -939,27 +980,11 @@ async def chat_completions(req: ChatCompletionRequest):
 
     exec_tokens = max(50, min(tokens, 8192))
     exec_temp = max(0.0, min(float(req.temperature if req.temperature is not None else 0.7), 2.0))
-    norm_model = req.model.lower()
     exec_provider: Literal["auto", "gemini", "groq", "cerebras", "mistral", "openai", "openrouter", "nvidia", "cohere", "huggingface"]
     if req.model == "auto":
         exec_provider = "auto"
-    elif "gemini" in norm_model:
-        exec_provider = "gemini"
-    elif norm_model.startswith("openai/gpt-oss"):
-        # Groq hosts the gpt-oss family under the "openai/" prefix (see the
-        # /models catalog: owned_by "groq"). The generic "openai" substring
-        # match below would misroute it to the OpenAI provider, which has no
-        # credentials here, silently dropping the request to the fallback
-        # ladder instead of serving the explicitly requested model.
-        exec_provider = "groq"
-    elif any(k in norm_model for k in ("gpt-4", "gpt-3", "o1", "o3", "openai")):
-        exec_provider = "openai"
-    elif "mistral" in norm_model or "codestral" in norm_model:
-        exec_provider = "mistral"
-    elif "cerebras" in norm_model:
-        exec_provider = "cerebras"
     else:
-        exec_provider = "groq"
+        exec_provider = _provider_for_model(req.model)
 
     exec_req = UnifiedExecutionRequest(
         provider=exec_provider,
@@ -971,10 +996,29 @@ async def chat_completions(req: ChatCompletionRequest):
         fast_lane=True if req.model == "auto" else False,
     )
     res = await unified_provider_manager.execute(exec_req)
+    if res.degraded:
+        # TASK-REL-030: a degraded unified result means NO model answered.
+        # The pre-fix handler returned it as HTTP 200 with an empty
+        # completion, presenting an infrastructure failure as a successful
+        # answer. Fail honestly instead, in the REL-026 shape: a retryable
+        # error naming the requested route and the public failure reason.
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "error": {
+                    "message": res.error or "No provider could answer this request.",
+                    "type": "gateway_error",
+                    "code": "provider_degraded",
+                },
+                "requested_model": req.model,
+                "requested_provider": exec_provider,
+                "retryable": True,
+            },
+        )
     created = int(time.time())
     cmpl_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
     usage = res.token_usage or {}
-    return {
+    body: dict[str, Any] = {
         "id": cmpl_id,
         "object": "chat.completion",
         "created": created,
@@ -996,6 +1040,25 @@ async def chat_completions(req: ChatCompletionRequest):
             "total_tokens": usage.get("total_tokens", 0),
         },
     }
+    # TASK-REL-030: fallback substitution is legitimate gateway behaviour,
+    # but it must never be silent. When a different provider or model than
+    # the one requested produced the answer, say so in the body (the
+    # OpenAI-shaped fields above stay intact for compatible clients).
+    served_model = res.model_used or req.model
+    substituted = bool(
+        (res.served_by_provider and res.served_by_provider != exec_provider)
+        or (req.model != "auto" and served_model != req.model)
+    )
+    if substituted:
+        body["provenance"] = {
+            "requested_model": req.model,
+            "requested_provider": exec_provider,
+            "served_by_provider": res.provider_used,
+            "served_by_model": served_model,
+            "served_by_policy": bool(res.served_by_policy),
+            "fallback_reason": res.fallback_reason,
+        }
+    return body
 
 
 

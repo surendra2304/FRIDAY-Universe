@@ -26,10 +26,15 @@ class GeminiProvider(BaseLLMProvider):
 
     BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
     DEFAULT_MODEL = "gemini-flash-latest"
+    # TASK-REL-030: gemini-2.5-flash removed — Google returns 404 for it
+    # ("no longer available to new users") with this deployment's keys.
+    # gemini-3.6-flash (verified generating) and gemini-3.8-flash (verified
+    # listed; demand-limited on the free tier) added.
     SUPPORTED_MODELS = [
         "gemini-flash-latest",
+        "gemini-3.8-flash",
+        "gemini-3.6-flash",
         "gemini-2.5-flash-lite",
-        "gemini-2.5-flash",
         "gemini-2.5-pro",
         "gemini-pro-latest",
     ]

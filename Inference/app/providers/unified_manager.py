@@ -61,6 +61,11 @@ class UnifiedExecutionResponse(BaseModel):
     # under LOCAL_PREFERRED the self-hosted tier is the intended primary, so serving
     # from it is not a degradation and must not be priced like one.
     served_by_policy: bool = False
+    # TASK-REL-030: the gateway's (credential-scrubbed) reason for leaving the
+    # requested provider — e.g. the primary's failure — carried through so API
+    # surfaces can show per-rung accounting instead of a silent substitution.
+    # Capped at 300 chars when populated; the full text stays in the journal.
+    fallback_reason: str | None = None
 
 
 class UnifiedProviderManager:
@@ -134,6 +139,7 @@ class UnifiedProviderManager:
                     finish_reason=cached_meta.get("finish_reason"),
                     served_by_provider=cached_meta.get("served_by_provider"),
                     served_by_policy=bool(cached_meta.get("served_by_policy", False)),
+                    fallback_reason=cached_meta.get("fallback_reason"),
                 )
 
         if req.agent_role:
@@ -295,6 +301,7 @@ class UnifiedProviderManager:
                             "finish_reason": resp.finish_reason,
                             "served_by_provider": actual_provider if actual_provider != target_provider else None,
                             "served_by_policy": provenance.get("fallback_reason") == "local_preferred",
+                            "fallback_reason": str(provenance["fallback_reason"])[:300] if provenance.get("fallback_reason") else None,
                         },
                     ),
                     caller_id=req.agent_role or "unified",
@@ -319,6 +326,9 @@ class UnifiedProviderManager:
                 served_by_provider=actual_provider if actual_provider != target_provider else None,
                 served_by_policy=bool(
                     provenance.get("fallback_reason") == "local_preferred"
+                ),
+                fallback_reason=(
+                    str(provenance["fallback_reason"])[:300] if provenance.get("fallback_reason") else None
                 ),
             )
         except Exception as exc:

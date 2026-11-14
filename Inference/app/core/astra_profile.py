@@ -27,9 +27,9 @@ class AstraProfile(BaseModel):
     )
     model_routing: dict[str, str] = Field(
         default_factory=lambda: {
-            "fast": "gemini-2.0-flash",
-            "reasoning": "llama-3.3-70b-versatile",
-            "synthesis": "gemini-2.0-flash",
+            "fast": "gemini-3.6-flash",
+            "reasoning": "openai/gpt-oss-120b",
+            "synthesis": "gemini-3.6-flash",
             "coding": "mistral-large-latest",
             "fallback": "openrouter/free",
         }

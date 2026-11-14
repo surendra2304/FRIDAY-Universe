@@ -42,23 +42,24 @@ async def get_providers_health() -> dict[str, Any]:
 @operational_router.get("/models")
 async def list_models() -> dict[str, Any]:
     """Returns available model registry capabilities and supported configurations."""
+    # TASK-REL-030: only models verified live against their provider are
+    # listed (provider-direct audit, Server 1, 2026-11-14). Removed:
+    # gemini-3.7-flash / gemini-3.5-flash (present in Google's list but
+    # generation never verified), the whole NVIDIA-provider block (the
+    # route answers 403 with the configured key; z-ai/glm-5.3 is also
+    # absent from NVIDIA's model list), liquid/lfm-2.5-2.6b:free and
+    # qwen/qwen3.8-27b:free on OpenRouter (absent from its live
+    # catalogue), and the vllm/sglang/llamacpp placeholder rows (the local
+    # tier is not enabled in this deployment).
     all_models = [
         {"provider": "gemini", "model": "gemini-3.8-flash", "capabilities": ["chat", "stream", "json", "tools", "vision", "thinking"], "context_window": 2097152},
-        {"provider": "gemini", "model": "gemini-3.7-flash", "capabilities": ["chat", "stream", "json", "tools", "vision", "thinking"], "context_window": 2097152},
         {"provider": "gemini", "model": "gemini-3.6-flash", "capabilities": ["chat", "stream", "json", "tools", "vision"], "context_window": 2097152},
-        {"provider": "gemini", "model": "gemini-3.5-flash", "capabilities": ["chat", "stream", "json", "tools", "vision"], "context_window": 1048576},
         {"provider": "groq", "model": "openai/gpt-oss-120b", "capabilities": ["chat", "stream", "json", "tools"], "context_window": 131072},
         {"provider": "groq", "model": "qwen/qwen3.8-27b", "capabilities": ["chat", "stream", "json", "tools"], "context_window": 131072},
         {"provider": "groq", "model": "openai/gpt-oss-20b", "capabilities": ["chat", "stream", "json", "tools"], "context_window": 131072},
-        {"provider": "nvidia", "model": "nvidia/nemotron-3-super-120b-a12b", "capabilities": ["chat", "stream", "json"], "context_window": 131072},
-        {"provider": "nvidia", "model": "nvidia/nemotron-3-ultra-550b-a55b", "capabilities": ["chat", "stream", "json"], "context_window": 131072},
-        {"provider": "nvidia", "model": "z-ai/glm-5.3", "capabilities": ["chat", "stream", "json"], "context_window": 131072},
-        {"provider": "openrouter", "model": "liquid/lfm-2.5-2.6b:free", "capabilities": ["chat", "stream"], "context_window": 32768},
-        {"provider": "openrouter", "model": "qwen/qwen3.8-27b:free", "capabilities": ["chat", "stream", "json"], "context_window": 131072},
+        {"provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct", "capabilities": ["chat", "stream", "json", "tools"], "context_window": 131072},
+        {"provider": "openrouter", "model": "nvidia/nemotron-3.5-super-vl:free", "capabilities": ["chat", "stream", "json"], "context_window": 131072},
         {"provider": "openrouter", "model": "nvidia/nemotron-3.5-lightning:free", "capabilities": ["chat", "stream", "json", "tools"], "context_window": 131072},
-        {"provider": "vllm", "model": "local-model", "capabilities": ["chat", "stream", "json", "tools"], "context_window": 32768},
-        {"provider": "sglang", "model": "local-sglang-model", "capabilities": ["chat", "stream", "json"], "context_window": 32768},
-        {"provider": "llamacpp", "model": "local-llama", "capabilities": ["chat", "stream", "json"], "context_window": 8192},
     ]
     return {
         "models": all_models,
