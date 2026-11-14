@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: SSH and snapshot
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SERVER1_HOST }}
           username: ubuntu

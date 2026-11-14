@@ -45,7 +45,7 @@ jobs:
             exit 1
           fi
       - name: Roll back ${{ matrix.server }}
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets[matrix.host] }}
           username: ubuntu

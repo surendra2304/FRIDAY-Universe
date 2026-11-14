@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Find token, update DuckDNS, verify, nudge Caddy
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         env:
           GH_DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
           # 2026-11-14 hardening: the record must point at Server 1's public
@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Find token, update DuckDNS, verify, nudge Caddy
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.5
         env:
           GH_DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
           TARGET_IP: ${{ secrets.SERVER1_HOST }}
