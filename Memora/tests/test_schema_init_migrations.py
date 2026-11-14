@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from alembic import command
 from alembic.config import Config
@@ -8,6 +9,11 @@ _ALEMBIC_INI = str(Path(__file__).resolve().parent.parent / "alembic.ini")
 from storage.relational import session as relational_session
 
 
+def _normalized_check(sqltext):
+    normalized = (sqltext or "").upper().replace('"', "").replace("'", "")
+    return re.sub(r"\s+", "", normalized)
+
+
 def _schema_shape(engine):
     inspector = inspect(engine)
     table_names = set(inspector.get_table_names()) - {"alembic_version"}
@@ -16,6 +22,7 @@ def _schema_shape(engine):
         for table in table_names
     }
     unique_keys = {}
+    check_keys = {}
     for table in table_names:
         keys = {
             tuple(sorted(constraint["column_names"]))
@@ -27,7 +34,15 @@ def _schema_shape(engine):
             if index.get("unique")
         )
         unique_keys[table] = keys
-    return table_names, columns, unique_keys
+        # TASK-REL-015: PR #105 compared tables/columns/uniqueness only,
+        # which is exactly why ck_memory_scope (ORM-only until revision
+        # 08e9adb56879) drifted invisibly. Compare check constraints too.
+        check_keys[table] = {
+            constraint["name"]: _normalized_check(constraint.get("sqltext"))
+            for constraint in inspector.get_check_constraints(table)
+            if constraint.get("name")
+        }
+    return table_names, columns, unique_keys, check_keys
 
 
 def test_fresh_create_all_database_is_stamped_before_future_upgrades(tmp_path, monkeypatch):
@@ -43,7 +58,7 @@ def test_fresh_create_all_database_is_stamped_before_future_upgrades(tmp_path, m
             stamped_revision = connection.execute(
                 text("SELECT version_num FROM alembic_version")
             ).scalar_one()
-        assert stamped_revision == "f8a2d6c14b93"
+        assert stamped_revision == "08e9adb56879"
 
         # The same schema can now pass through the deployment migration command
         # without replaying historical CREATE TABLE/ADD COLUMN operations.
@@ -59,7 +74,8 @@ def test_fresh_create_all_database_is_stamped_before_future_upgrades(tmp_path, m
         migration_config.attributes["connection"] = migration_only_engine
         command.upgrade(migration_config, "head")
         # The current ORM metadata and a clean migration-only install have the
-        # same tables, columns, and uniqueness invariants at the stamped head.
+        # same tables, columns, uniqueness invariants, and check constraints
+        # at the stamped head.
         assert _schema_shape(engine) == _schema_shape(migration_only_engine)
     finally:
         engine.dispose()
