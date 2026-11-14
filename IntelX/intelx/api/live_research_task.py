@@ -128,7 +128,14 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             continue
         seen.add(url)
         try:
-            document = await fetch.fetch(url, max_bytes=250_000)
+            # TASK-REL-007: 250KB was below the real size of modern article
+            # pages — live evidence (2026-11-14) showed CNET/NBC/YouTube
+            # candidates dying on ContentSizeExceededError before any prose
+            # was captured, leaving too few source documents to synthesize
+            # from. The connector still hard-caps at MAX_PAGE_BYTES (2MB)
+            # and streams with abort, so the guard remains; this only stops
+            # the brief pipeline from imposing a second, smaller cap.
+            document = await fetch.fetch(url, max_bytes=1_000_000)
             if document.status_code != 200:
                 failures.append({"url": url, "reason": "http_non_200"})
                 continue

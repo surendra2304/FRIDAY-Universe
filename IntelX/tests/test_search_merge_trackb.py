@@ -97,3 +97,43 @@ async def test_google_news_empty_falls_back_to_tavily_alone(monkeypatch):
     results = await searcher.fetch("headlines", max_results=10)
 
     assert [r.url for r in results] == ["https://example.com/tag/ai"]
+
+
+class _RecordingProvider:
+    def __init__(self, results):
+        self._results = results
+        self.calls = []
+
+    async def fetch(self, target, **kwargs):
+        self.calls.append((target, kwargs))
+        return list(self._results)
+
+
+@pytest.mark.asyncio
+async def test_headline_query_uses_tavily_news_topic(monkeypatch):
+    # TASK-REL-007: general-topic Tavily returns section pages for headline
+    # queries; the news topic returns article-level results.
+    searcher = WebSearchConnector(
+        settings=Settings(MOCK_MODE=False, TAVILY_API_KEY="<redacted>", SEARXNG_URL=None)
+    )
+    tavily = _RecordingProvider([_result("https://publisher.example/story")])
+    monkeypatch.setattr(searcher, "_tavily", tavily)
+    monkeypatch.setattr(searcher, "_google_news", _StaticProvider([]))
+
+    await searcher.fetch("what are today's top three ai news headlines? include sources")
+
+    assert tavily.calls[0][1].get("topic") == "news"
+
+
+@pytest.mark.asyncio
+async def test_general_query_does_not_force_news_topic(monkeypatch):
+    searcher = WebSearchConnector(
+        settings=Settings(MOCK_MODE=False, TAVILY_API_KEY="<redacted>", SEARXNG_URL=None)
+    )
+    tavily = _RecordingProvider([_result("https://example.org/doc")])
+    monkeypatch.setattr(searcher, "_tavily", tavily)
+    monkeypatch.setattr(searcher, "_google_news", _StaticProvider([]))
+
+    await searcher.fetch("how does photosynthesis work in plants")
+
+    assert "topic" not in tavily.calls[0][1]
