@@ -34,13 +34,20 @@ from app.core.orchestrator import OrchestratorCore
 from app.memory.models import TaskMode, TaskState
 
 
+def test_plan_stage_count_reads_taskgraph_nodes():
+    assert delegate._plan_stage_count(SimpleNamespace(nodes={"a": 1, "b": 2})) == 2
+    assert delegate._plan_stage_count(SimpleNamespace(stages=[1, 2, 3])) == 3
+    assert delegate._plan_stage_count(SimpleNamespace()) == 0
+
+
 # --------------------------------------------------------------------------
 # Delegate: plan_only
 # --------------------------------------------------------------------------
 
 def _intake(task_id="task_mode_1", goal="Build a palindrome checker"):
     task = SimpleNamespace(id=task_id, goal=goal, state=TaskState.READY)
-    plan = SimpleNamespace(stages=["plan", "build", "test"])
+    # TaskGraph's real shape: stages live in a `nodes` dict.
+    plan = SimpleNamespace(nodes={"n1": object(), "n2": object(), "n3": object()})
     return task, plan
 
 
@@ -64,6 +71,7 @@ async def test_delegate_plan_only_returns_planned_and_schedules_nothing(monkeypa
     assert result.status == "PLANNED"  # never SUCCESS for a plan
     assert result.result["state"] == "PLANNED"
     assert result.result["mode"] == "plan_only"
+    assert result.result["plan_stages"] == 3  # counted from TaskGraph.nodes
     assert result.result["forge_task_id"] == "task_mode_1"
     assert result.receipt is None  # receipts certify executed work only
     assert scheduled == []

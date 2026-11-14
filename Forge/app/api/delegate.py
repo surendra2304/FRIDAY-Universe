@@ -78,6 +78,20 @@ def _forge_receipt(
     }
 
 
+def _plan_stage_count(plan: Any) -> int:
+    """Stage count of an intake plan.
+
+    TaskGraph carries its stages as ``nodes`` (a dict); the delegate used to
+    read a nonexistent ``stages`` attribute and therefore always reported
+    plan_stages 0 — including for plans that were actually produced.
+    """
+    nodes = getattr(plan, "nodes", None)
+    if nodes is not None:
+        return len(nodes)
+    stages = getattr(plan, "stages", None)
+    return len(stages) if stages is not None else 0
+
+
 def _task_mode_value(task: Any) -> str:
     """The task's mode as a plain string ('' when the record predates modes)."""
     mode = getattr(task, "mode", None)
@@ -289,7 +303,7 @@ async def delegate_task(
                     "goal": task.goal,
                     "state": "PLANNED",
                     "mode": mode.value,
-                    "plan_stages": len(plan.stages) if hasattr(plan, "stages") else 0,
+                    "plan_stages": _plan_stage_count(plan),
                 },
                 summary=(
                     f"Forge planned engineering goal '{goal[:60]}...' (Task ID: {task.id}); "
@@ -469,7 +483,7 @@ async def delegate_task(
                 "forge_task_id": task.id,
                 "goal": task.goal,
                 "state": "RUNNING",
-                "plan_stages": len(plan.stages) if hasattr(plan, "stages") else 0,
+                "plan_stages": _plan_stage_count(plan),
             },
             summary=f"Forge accepted engineering goal '{goal[:60]}...' (Task ID: {task.id}) and scheduled it for execution; status is RUNNING, not complete.",
             execution_time_ms=lat,
