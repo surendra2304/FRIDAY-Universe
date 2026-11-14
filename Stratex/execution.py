@@ -338,6 +338,75 @@ def _append_ledger_record(path, entry):
     append_jsonl(path, clean, fsync=True)
 
 
+def _mirror_fill_to_measurement(ledger_entry):
+    """TASK-STR-PHASE2-001: mirror a closed trade into the shared
+    measurement fill ledger (state/fill_ledger.jsonl), normalized and
+    strategy-tagged. Best-effort: a bookkeeping failure must never block
+    the close path, but it is logged loudly — and append_fill itself
+    latches a reconciliation alert when a record is rejected.
+
+    Fee honesty: the entry fee comes from real fills, but the exit fee
+    on these paths is modelled (flat rate x notional), so the mirrored
+    row is labelled fees_source="estimate", never "broker".
+    """
+    try:
+        from measurement import fill_ledger as _fl
+
+        def _ts(value):
+            try:
+                return datetime.datetime.fromisoformat(
+                    str(value).replace("Z", "+00:00")
+                ).timestamp()
+            except Exception:
+                return 0.0
+
+        side = str(ledger_entry.get("side") or "").upper()
+        _fl.append_fill({
+            "strategy": ledger_entry.get("strategy") or "UNATTRIBUTED",
+            "engine": "testnet_engine",
+            "venue": "binance_futures" if ledger_entry.get("is_futures") else "binance_spot_testnet",
+            "symbol": ledger_entry.get("symbol"),
+            "side": "LONG" if side == "BUY" else "SHORT" if side == "SELL" else side,
+            "qty": ledger_entry.get("quantity"),
+            "entry_price": ledger_entry.get("entry_price"),
+            "exit_price": ledger_entry.get("exit_price"),
+            "entry_time": _ts(ledger_entry.get("entry_timestamp")),
+            "exit_time": _ts(ledger_entry.get("exit_timestamp")) or time.time(),
+            "gross_pnl": ledger_entry.get("gross_pnl"),
+            "fees": ledger_entry.get("fees"),
+            "fees_source": "estimate",
+            "net_pnl": ledger_entry.get("net_pnl"),
+            "exit_reason": ledger_entry.get("exit_reason"),
+            "order_id": str(ledger_entry.get("exit_order_id") or ""),
+            "entry_order_id": str(ledger_entry.get("entry_order_id") or ""),
+            "signal_id": str(ledger_entry.get("signal_id") or ""),
+        })
+    except Exception as e:
+        sys_logger.warning(f"[MEASUREMENT] fill mirror failed: {e}")
+
+
+def _tag_open_position(trade):
+    """TASK-STR-PHASE2-001: ownership tag (engine + strategy) for a
+    newly opened position, so exchange positions can be reconciled to
+    their owner. Best-effort; never blocks order flow."""
+    try:
+        from measurement import fill_ledger as _fl
+
+        _fl.append_position_tag({
+            "engine": "testnet_engine",
+            "venue": "binance_futures" if trade.get("is_futures") else "binance_spot_testnet",
+            "symbol": trade.get("symbol"),
+            "strategy": trade.get("strategy") or "UNATTRIBUTED",
+            "side": "LONG" if str(trade.get("side", "")).upper() == "BUY" else "SHORT",
+            "qty": trade.get("quantity"),
+            "entry_price": trade.get("entry_price"),
+            "order_id": str(trade.get("entry_order_id") or ""),
+            "client_order_id": str(trade.get("entry_client_id") or ""),
+        })
+    except Exception as e:
+        sys_logger.warning(f"[MEASUREMENT] position tag failed: {e}")
+
+
 def _save_active_trades(trades):
     # Serialize first: a record with NaN/inf (or an unserializable value) must
     # fail loudly here instead of becoming a restart state that cannot load.
@@ -599,6 +668,7 @@ def place_market_order(strategy_name, side, symbol, quantity=TRADE_QTY, sl=None,
                     "entry_order_id":    order_id
                 })
                 _save_active_trades(active)
+                _tag_open_position(active[-1])
 
             except Exception as e:
                 state = OrderState.PROTECTION_FAILED
@@ -1031,6 +1101,7 @@ def place_futures_market_order(strategy_name, side, symbol, quantity=TRADE_QTY, 
                     "leverage":          leverage,
                 })
                 _save_active_trades(active)
+                _tag_open_position(active[-1])
 
             except Exception as e:
                 state = OrderState.PROTECTION_FAILED
@@ -1156,6 +1227,7 @@ def monitor_open_trades():
                     }
                     with LEDGER_WRITE_LOCK:
                         _append_ledger_record(ledger_file, ledger_entry)
+                    _mirror_fill_to_measurement(ledger_entry)
                     log_trade(
                         t["strategy"], t["symbol"],
                         f"{t['side']}_FUTURES_CLOSE_{outcome}",
@@ -1236,6 +1308,7 @@ def monitor_open_trades():
                 # Atomic append to ledger
                 with LEDGER_WRITE_LOCK:
                     _append_ledger_record(ledger_file, ledger_entry)
+                    _mirror_fill_to_measurement(ledger_entry)
                     if t.get("strategy") == "adx_ema":
                         try:
                             fwd_entry = dict(ledger_entry)
@@ -1315,6 +1388,7 @@ def monitor_open_trades():
                     }
                     with LEDGER_WRITE_LOCK:
                         _append_ledger_record(ledger_file, ledger_entry)
+                    _mirror_fill_to_measurement(ledger_entry)
 
                 except Exception as ec_err:
                     sys_logger.critical(

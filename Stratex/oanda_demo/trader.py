@@ -79,6 +79,26 @@ DATA_DIR = Path(os.getenv("STRATEX_OANDA_DATA_DIR", "data"))
 STATE_FILE = DATA_DIR / "oanda_demo_state.json"
 TRADES_CSV = DATA_DIR / "oanda_demo_trades.csv"
 KILL_SWITCH = DATA_DIR / "oanda_demo_kill_switch"
+ENTRIES_PAUSED_FILE = DATA_DIR / "oanda_demo_entries_paused"
+
+
+def entries_paused() -> bool:
+    """Entries pause (TASK-STR-PHASE2-001, Stratex profitability phase 2).
+
+    This engine's verified record is 19 trades, -$167, negative on every
+    instrument it touched. While the measurement programme runs, it must
+    not open new trades — but unlike the kill switch (which halts the
+    whole scan), the entries pause keeps the engine scanning, managing
+    open trades and maintaining state; it only skips new entries.
+
+    Set via the STRATEX_OANDA_ENTRIES_PAUSED env flag ("1"/"true"/"yes")
+    or by creating the pause file in the data dir. Removing either
+    resumes entries — the pause is reversible by design and changes no
+    code, strategy, or sizing.
+    """
+    if os.getenv("STRATEX_OANDA_ENTRIES_PAUSED", "").lower() in ("1", "true", "yes"):
+        return True
+    return ENTRIES_PAUSED_FILE.exists()
 
 
 def _utc_day() -> str:
@@ -247,6 +267,18 @@ class OandaDemoTrader:
             self._save_state(state)
             return summary
         summary["spreads"] = {s: round(p["spread"], 6) for s, p in pricing.items()}
+
+        if entries_paused():
+            # Entries pause (TASK-STR-PHASE2-001): account read, trade
+            # management and state upkeep above still ran; only the
+            # new-entry scan below is skipped.
+            summary["entries_paused"] = True
+            logger.warning(
+                "[OANDA-DEMO] entries paused (TASK-STR-PHASE2-001 measurement "
+                "programme) — managing open trades only, no new entries"
+            )
+            self._save_state(state)
+            return summary
 
         blockers: List[str] = []
         if len(trades) >= MAX_OPEN_TRADES:
@@ -499,6 +531,7 @@ class OandaDemoTrader:
         state = self._load_state()
         return {
             "account": acct,
+            "entries_paused": entries_paused(),
             "open_trades": trades,
             "daily_day": state.get("day"),
             "day_start_nav": state.get("day_start_nav"),

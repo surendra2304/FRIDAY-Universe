@@ -1208,6 +1208,22 @@ class TestnetService:
                     append_jsonl(hist_file, snap)
                 except (OSError, TypeError, ValueError) as e:
                     logger.error(f"[SERVICE] Failed to append equity history: {e}")
+                # TASK-STR-PHASE2-001: mirror into the shared measurement
+                # snapshot store (the cross-engine equity curve). Equity
+                # here is the USDT futures margin balance; non-USDT
+                # faucet assets never enter it.
+                try:
+                    from measurement import fill_ledger as _fl
+
+                    _fl.append_equity_snapshot({
+                        "engine": "testnet_engine",
+                        "trigger": "periodic",
+                        "total_equity": equity,
+                        "venues": {"binance_futures": equity},
+                        "faucet_exclusion": _fl.FAUCET_EXCLUSION_RULE,
+                    })
+                except Exception as _merr:
+                    logger.warning(f"[MEASUREMENT] equity snapshot mirror failed: {_merr}")
 
     def on_candle_closed(self, symbol, tf, df, data_health_status="OK"):
         """Callback invoked by MarketScanner when a new candle closes."""
@@ -2713,6 +2729,21 @@ class TestnetService:
                     for sym in list(self.active_positions.keys()):
                         if sym not in new_active_positions:
                             logger.info(f"[SERVICE] Position for {sym} closed. Risk bounds will update on next PnL parse.")
+                            # TASK-STR-PHASE2-001: a position that closed at
+                            # the exchange MUST have a fill-ledger row; if
+                            # neither the monitor nor the rebuild recorded
+                            # it, latch a reconciliation alert — a close
+                            # must never pass silently again.
+                            try:
+                                from measurement import fill_ledger as _fl
+
+                                if not _fl.fill_recorded_since("testnet_engine", sym, time.time() - 300):
+                                    _fl.raise_alert(
+                                        "unrecorded_close",
+                                        f"testnet position {sym} closed at exchange with no fill-ledger row",
+                                    )
+                            except Exception:
+                                pass
                             self._restore_daily_risk_state()
                             self.stats["CLOSED_TRADES"] += 1
                             self._alert_closed_trade(sym)
@@ -2945,6 +2976,14 @@ class TestnetService:
             from testnet_engine.protection import LEDGER_WRITE_LOCK
             with LEDGER_WRITE_LOCK:
                 with locked_path(ledger_file):
+                    def _iso_ts(v):
+                        try:
+                            return datetime.datetime.fromisoformat(
+                                str(v).replace("Z", "+00:00")
+                            ).timestamp()
+                        except Exception:
+                            return 0.0
+
                     existing_order_ids = set()
                     for record in read_jsonl(ledger_file).records:
                         for fid in ("exit_order_id", "exit_client_id", "entry_order_id", "order_id"):
@@ -2959,6 +2998,45 @@ class TestnetService:
                         append_jsonl(ledger_file, ct, fsync=True)
                         if ex_id: existing_order_ids.add(ex_id)
                         if en_id: existing_order_ids.add(en_id)
+                        # TASK-STR-PHASE2-001: mirror the close into the
+                        # shared measurement fill ledger. Fees here come
+                        # from exchange fill records (commissions), so the
+                        # row is fees_source=broker. Strategy stays
+                        # "RECOVERED": the rebuild cannot know which
+                        # strategy owned a historical order, and says so.
+                        try:
+                            from measurement import fill_ledger as _fl
+
+                            _side = str(ct.get("side") or "").upper()
+                            _fl.append_fill({
+                                "strategy": ct.get("strategy") or "RECOVERED",
+                                "engine": "testnet_engine",
+                                "venue": "binance_futures",
+                                "symbol": ct.get("symbol"),
+                                "side": "LONG" if _side == "BUY" else "SHORT" if _side == "SELL" else _side,
+                                "qty": ct.get("quantity"),
+                                "entry_price": ct.get("entry_price"),
+                                "exit_price": ct.get("exit_price"),
+                                "entry_time": _iso_ts(ct.get("entry_timestamp")),
+                                "exit_time": _iso_ts(ct.get("exit_timestamp")),
+                                "gross_pnl": ct.get("gross_pnl"),
+                                "fees": ct.get("fees"),
+                                "fees_source": "broker",
+                                "net_pnl": ct.get("net_pnl"),
+                                "exit_reason": ct.get("exit_reason") or "RECOVERED",
+                                "order_id": str(ct.get("exit_order_id") or ""),
+                                "entry_order_id": str(ct.get("entry_order_id") or ""),
+                                "signal_id": str(ct.get("signal_id") or ""),
+                            })
+                            _fl.append_equity_snapshot({
+                                "engine": "testnet_engine",
+                                "trigger": "fill",
+                                "total_equity": self.current_equity,
+                                "venues": {"binance_futures": self.current_equity},
+                                "faucet_exclusion": _fl.FAUCET_EXCLUSION_RULE,
+                            })
+                        except Exception as _merr:
+                            logger.warning(f"[MEASUREMENT] rebuild fill mirror failed: {_merr}")
                         if hasattr(self, "protection_manager") and self.protection_manager:
                             try:
                                 self.protection_manager.on_trade_closed(ct)
