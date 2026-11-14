@@ -19,6 +19,7 @@ import datetime
 import json
 import os
 import re
+import threading
 import time
 from dataclasses import asdict, is_dataclass
 from typing import Any
@@ -85,6 +86,10 @@ def _is_kill_switch_locked() -> bool:
 _LAST_MARKET_ANALYSIS: dict[str, Any] | None = None
 _LAST_MARKET_ANALYSIS_TS: float = 0.0
 _MARKET_ANALYSIS_INTERVAL_SEC: float = 60.0
+# TASK-VOI-006: single-flight guard for the background analysis refresh —
+# at most one refresh thread runs at a time; status reads never wait on it.
+_ANALYSIS_REFRESH_LOCK = threading.Lock()
+_ANALYSIS_REFRESH_RUNNING = False
 
 
 def _safe_engine():
@@ -427,20 +432,73 @@ def _run_market_analysis(payload: Any = None) -> dict[str, Any]:
     return result
 
 
+def _refresh_market_analysis(engine=None) -> None:
+    """Run one market-analysis refresh cycle (the pre-VOI-006 inline body).
+
+    Executed on a background thread (see ``_ensure_market_analysis``); on
+    completion ``_run_market_analysis`` republishes ``_LAST_MARKET_ANALYSIS``
+    and its timestamp, which is what status reads serve.
+    """
+    global _ANALYSIS_REFRESH_RUNNING
+    try:
+        engine = _safe_engine() if engine is None else engine
+        symbols = None
+        timeframes = None
+        if engine is not None:
+            symbols = list(getattr(engine, "symbols", []) or [])[:5]
+            timeframes = list(getattr(engine, "timeframes", []) or [])[:1]
+        _run_market_analysis({"symbols": symbols, "timeframes": timeframes})
+    except Exception as exc:
+        logger.debug(f"[FRIDAY_SUPERVISION] Market analysis refresh failed: {exc}")
+    finally:
+        with _ANALYSIS_REFRESH_LOCK:
+            _ANALYSIS_REFRESH_RUNNING = False
+
+
 def _ensure_market_analysis(engine=None) -> None:
-    global _LAST_MARKET_ANALYSIS_TS
+    """Make sure a market-analysis refresh is under way if the snapshot is stale.
+
+    TASK-VOI-006: this used to run the refresh SYNCHRONOUSLY inside the
+    read-only status path (``_get_engine_status_summary`` backs both the
+    supervision GET and the mesh ``status`` task FRIDAY's voice brain
+    waits on). A refresh evaluates up to 5 symbols through the strategy
+    engine with market-data fetches and measured 24.5 s cold on Server 1
+    (69 s under multi-crew load, 2026-11-15 03:19 IST) — paid inline by
+    whichever status call arrived first after the 60 s TTL, which for
+    sporadic voice delegations was effectively every call, and it is
+    what pushed spoken Stratex answers past the 60 s voice brain budget
+    (TASK-VOI-005 attempts: 63.28 s timeout, 46.99 s). The balance,
+    positions and ledger figures a status answer actually reports come
+    from ``_real_trading_data`` / the fill ledger, not from the analysis;
+    the analysis only feeds the ``last_market_analysis`` /
+    ``market_conditions`` fields, which carry their own timestamp.
+
+    Now: if the snapshot is stale and no refresh is running, start ONE
+    background refresh and return immediately. The caller serves the
+    last computed snapshot (or none, on a cold process) with its
+    ``analysis_timestamp`` visible, so staleness is disclosed in the
+    payload rather than hidden behind a blocked request.
+    """
+    global _ANALYSIS_REFRESH_RUNNING
     now = time.time()
-    if _LAST_MARKET_ANALYSIS is None or (now - _LAST_MARKET_ANALYSIS_TS) >= _MARKET_ANALYSIS_INTERVAL_SEC:
-        try:
-            engine = _safe_engine() if engine is None else engine
-            symbols = None
-            timeframes = None
-            if engine is not None:
-                symbols = list(getattr(engine, "symbols", []) or [])[:5]
-                timeframes = list(getattr(engine, "timeframes", []) or [])[:1]
-            _run_market_analysis({"symbols": symbols, "timeframes": timeframes})
-        except Exception as exc:
-            logger.debug(f"[FRIDAY_SUPERVISION] Market analysis refresh failed: {exc}")
+    if _LAST_MARKET_ANALYSIS is not None and (now - _LAST_MARKET_ANALYSIS_TS) < _MARKET_ANALYSIS_INTERVAL_SEC:
+        return
+    with _ANALYSIS_REFRESH_LOCK:
+        if _ANALYSIS_REFRESH_RUNNING:
+            return
+        _ANALYSIS_REFRESH_RUNNING = True
+    thread = threading.Thread(
+        target=_refresh_market_analysis,
+        args=(engine,),
+        daemon=True,
+        name="stratex-market-analysis-refresh",
+    )
+    try:
+        thread.start()
+    except Exception as exc:
+        with _ANALYSIS_REFRESH_LOCK:
+            _ANALYSIS_REFRESH_RUNNING = False
+        logger.debug(f"[FRIDAY_SUPERVISION] Market analysis refresh could not start: {exc}")
 
 
 def _ledger_scorecard_block() -> dict[str, Any] | None:
@@ -500,7 +558,9 @@ def _get_engine_status_summary() -> dict[str, Any]:
 
     mode = str(getattr(config, "TRADING_MODE", "PAPER")).upper()
 
-    # Refresh market analysis periodically so status reports real conditions.
+    # Keep the market analysis fresh (TASK-VOI-006: ensured in the
+    # background — a status read never waits on the refresh; it serves
+    # the last computed snapshot with its timestamp).
     engine = _safe_engine()
     try:
         _ensure_market_analysis(engine)
