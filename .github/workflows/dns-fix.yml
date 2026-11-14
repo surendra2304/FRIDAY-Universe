@@ -1,7 +1,7 @@
 name: DNS Fix — repoint DuckDNS at Server 1
 
 # Owner directive (2026-11-13): the DuckDNS record for
-# friday-universe.duckns.org drifted to the DuckDNS catch-all, killing every
+# friday-universe.duckdns.org drifted to the DuckDNS catch-all, killing every
 # domain-facing surface (dashboard, chat, voice wss, agent endpoints, bridge)
 # while server-local health stayed green. This workflow is the remote hands:
 # it finds the DuckDNS token ON THE SERVER (the repo is public so the token
@@ -42,7 +42,7 @@ jobs:
           script: |
             set -u
             DOMAIN_LABEL="friday-universe"
-            FQDN="friday-universe.duckns.org"
+            FQDN="friday-universe.duckdns.org"
             UUID_RE="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"
 
             # 1. Locate the token. Every assignment is || true guarded — a
@@ -163,7 +163,7 @@ jobs:
           script: |
             set -u
             DOMAIN_LABEL="friday-universe"
-            FQDN="friday-universe.duckns.org"
+            FQDN="friday-universe.duckdns.org"
             UUID_RE="[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"
 
             # 1. Locate the token. Every assignment is || true guarded — a

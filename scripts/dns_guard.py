@@ -2,7 +2,7 @@
 """dns_guard — never let a silent DNS drift kill the FRIDAY Universe front door again.
 
 Root cause this guards (found 2026-11-13): the DuckDNS record for
-friday-universe.duckns.org silently stopped pointing at the Oracle servers
+friday-universe.duckdns.org silently stopped pointing at the Oracle servers
 (public DNS answered with the DuckDNS catch-all on Linode IPs; openresty,
 bot-challenge pages, a bare "OK"). Every domain-facing surface — dashboard,
 chat, voice wss, agent endpoints, bridge — died for the OWNER while every
@@ -10,7 +10,7 @@ server-local health check stayed green, because nothing ever resolved the
 public domain from outside and compared it with reality.
 
 What this does every run:
-  1. Resolve friday-universe.duckns.org via TWO public DoH resolvers
+  1. Resolve friday-universe.duckdns.org via TWO public DoH resolvers
      (Google + Cloudflare) — never the local resolver, which can be honest
      and still wrong about what the world sees.
   2. Compare with the expected public IP list (argument or state file).
@@ -43,6 +43,15 @@ DOH_URLS = (
     "https://dns.google/resolve?name={name}&type=A",
     "https://cloudflare-dns.com/dns-query?name={name}&type=A",
 )
+
+# 2026-11-14 lesson: the --name default was misspelled 'duckns.org' (missing
+# 'd'). duckns.org serves a wildcard catch-all with the same Linode trio as
+# the real duckdns.org catch-all, so every default run monitored the TYPO
+# domain, reported false drift, and fired owner alerts while the real record
+# was healthy on all 8 authoritative nameservers. Defaults live here as
+# constants so tests can pin them exactly.
+DEFAULT_NAME = "friday-universe.duckdns.org"
+DEFAULT_EXPECTED = "140.245.208.100"  # Oracle Server 1 public ingress
 
 
 # --------------------------------------------------------------- resolution
@@ -144,7 +153,7 @@ class GuardState:
 
 # --------------------------------------------------------------- actions
 def duckdns_update(domain: str, token: str, ip: str, timeout: float = 15.0) -> tuple[bool, str]:
-    """Point <domain> (no .duckns.org suffix) at <ip>. Never logs the token."""
+    """Point <domain> (no .duckdns.org suffix) at <ip>. Never logs the token."""
     url = (
         f"https://www.duckdns.org/update?domains={urllib.parse.quote(domain)}"
         f"&token={urllib.parse.quote(token)}&ip={urllib.parse.quote(ip)}"
@@ -224,8 +233,8 @@ def run(name: str, expected: list[str], auto_fix_domain: str | None,
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="FRIDAY Universe public-DNS watchdog")
-    ap.add_argument("--name", default="friday-universe.duckns.org")
-    ap.add_argument("--expected", default="140.245.208.100",
+    ap.add_argument("--name", default=DEFAULT_NAME)
+    ap.add_argument("--expected", default=DEFAULT_EXPECTED,
                     help="comma-separated expected public A-record IPs")
     ap.add_argument("--auto-fix-domain", default=None,
                     help="duckdns domain label (e.g. 'friday-universe') to auto-correct on drift")

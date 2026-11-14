@@ -72,7 +72,7 @@ def test_run_detects_drift_and_alerts(tmp_path, capsys):
     ) as alert, mock.patch.object(
         dns_guard, "_credential", side_effect=lambda kind: {"telegram_token": "t", "telegram_chat": "c"}.get(kind, "")
     ):
-        rc = dns_guard.run("friday-universe.duckns.org", ["140.245.208.100"], None, 1800, False)
+        rc = dns_guard.run("friday-universe.duckdns.org", ["140.245.208.100"], None, 1800, False)
     assert rc == 0
     out = capsys.readouterr().out
     assert "DRIFT" in out and "192.155.84.236" in out and "140.245.208.100" in out
@@ -155,7 +155,7 @@ def test_duckdns_token_reads_from_credentials_section(tmp_path):
         "# FRIDAY Universe — Credentials\n\n"
         "## Telegram bots\n\n- token: 123456789:AAExampleTelegramShapeNotDuckDns\n\n"
         "## DuckDNS (owner-supplied 2026-11-14)\n\n"
-        "- Service: DuckDNS dynamic DNS — friday-universe.duckns.org -> 140.245.208.100\n"
+        "- Service: DuckDNS dynamic DNS — friday-universe.duckdns.org -> 140.245.208.100\n"
         "- token: aaaa0000-bbbb-11cc-22dd-eeeeeeeeeeee\n"
         "- Verified live: 2026-11-14 ~11:45 IST\n"
     )
@@ -179,3 +179,27 @@ def test_duckdns_token_empty_when_no_section(tmp_path):
     creds.write_text("## OANDA Demo\n\n- API token: abcdefabcdefabcdef\n")
     with mock.patch.object(dns_guard, "REPO", tmp_path):
         assert dns_guard._credential("duckdns_token") == ""
+
+
+def test_default_name_is_the_real_domain():
+    # 2026-11-14 regression pin: the --name default was misspelled
+    # 'friday-universe.duckns.org' (missing 'd'). duckns.org serves a wildcard
+    # catch-all with the same Linode trio as the real catch-all, so every
+    # default run monitored the TYPO domain and reported false drift while
+    # the real record was healthy on all authoritative nameservers. Exact
+    # match + typo-absence pins any recurrence.
+    assert dns_guard.DEFAULT_NAME == "friday-universe.duckdns.org"
+    assert "duckns.org" not in dns_guard.DEFAULT_NAME
+    assert dns_guard.DEFAULT_EXPECTED == "140.245.208.100"
+
+
+def test_dns_fix_workflow_queries_the_real_domain():
+    # Same bug class lived in dns-fix.yml: the update call used the right
+    # label, but verification probed FQDN='friday-universe.duckns.org' (typo),
+    # so the workflow "verified" a wildcard typo-domain instead of the real
+    # record. Pin: the typo appears nowhere in the workflow, and both jobs
+    # probe the real FQDN.
+    wf = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "dns-fix.yml"
+    text = wf.read_text()
+    assert "duckns.org" not in text  # typo-domain must appear nowhere
+    assert text.count('FQDN="friday-universe.duckdns.org"') == 2  # both jobs
