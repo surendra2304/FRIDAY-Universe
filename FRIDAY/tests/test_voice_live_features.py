@@ -503,7 +503,7 @@ def test_cli_voice_override_message_is_omitted_from_startup(monkeypatch, capsys)
     _saved = (_fri_logger.level, _fri_logger.propagate, list(_fri_logger.handlers))
 
     with _mock.patch(
-        "friday.auth.credential_pool.GeminiCredentialPool.preflight_check",
+        "friday.auth.GeminiCredentialPool.preflight_check",
         return_value={"status": "HEALTHY", "active_project": "PRIMARY"},
     ), _mock.patch("friday.voice.gemini_live_session.GeminiLiveVoiceSession", mock_cls):
         try:

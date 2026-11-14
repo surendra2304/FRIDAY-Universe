@@ -87,6 +87,15 @@ except Exception as _exc:
     _lk_groq = None
     print(f"[friday.voice] groq plugin unavailable at import: {_exc}")
 
+try:
+    from friday.voice.edge_tts_adapter import EdgeTTS
+
+    EDGE_TTS_AVAILABLE = True
+except Exception as _exc:
+    EDGE_TTS_AVAILABLE = False
+    EdgeTTS = None
+    print(f"[friday.voice] edge-tts adapter unavailable at import: {_exc}")
+
 logger = logging.getLogger("friday.voice")
 if not logger.handlers:
     logging.basicConfig(
@@ -252,7 +261,21 @@ def _owner_memory_lines() -> str:
 
 
 def _voice_model() -> str:
-    return (os.getenv("FRIDAY_VOICE_LIVE_MODEL") or "gemini-2.0-flash-live-001").strip()
+    explicit = (os.getenv("FRIDAY_VOICE_LIVE_MODEL") or "").strip()
+    if explicit:
+        return explicit
+    try:
+        from friday.core.config import get_settings
+
+        configured = (getattr(get_settings(), "voice_live_model", None) or "").strip()
+        if configured:
+            return configured
+    except Exception as exc:
+        logger.warning(
+            "voice model config unavailable; using canonical fallback: %s",
+            type(exc).__name__,
+        )
+    return "gemini-3.1-flash-live-preview"
 
 
 def _voice_name() -> str:
@@ -356,7 +379,7 @@ def _probe_gemini_key_sync(key: str) -> bool:
         from google import genai
 
         client = genai.Client(api_key=key)
-        client.models.generate_content(model="gemini-2.0-flash", contents="ping")
+        client.models.generate_content(model="gemini-3.8-flash", contents="ping")
         return True
     except Exception as exc:
         text = f"{type(exc).__name__}: {exc}".lower()
@@ -440,20 +463,93 @@ async def _try_gemini_realtime(instructions: str, verified_key: "str | None" = N
         return None
 
 
-def _fallback_tts():
-    """A working standalone TTS for fixed lines (greeting fallback), built on
-    the same proven Groq key the chat brain uses. None if unavailable — the
-    realtime session then simply has no say() fallback."""
+async def _probe_orpheus_tts() -> bool:
+    """One live call to the orpheus TTS endpoint with the fleet key.
+
+    Live E2E 2026-11-13 (TASK-VOICE-E2E-003): every fixed-line greeting and
+    groq-pipeline reply died with 400 'model_terms_required' — the org admin
+    has not accepted the canopylabs/orpheus model terms in the Groq console,
+    so EVERY voice call was silent dead air (dispatch fine, agent_state
+    'speaking', zero audible frames). Probing once per job before relying on
+    orpheus turns that silent failure into a logged, degraded choice.
+    """
     key = _groq_key()
     if not key or not GROQ_PLUGIN_AVAILABLE:
-        return None
+        return False
     try:
-        return _lk_groq.TTS(
-            api_key=key, model="canopylabs/orpheus-v1-english", voice="autumn",
+        async with httpx.AsyncClient(
+            base_url="https://api.groq.com", timeout=15, verify=_SSL_CONTEXT
+        ) as client:
+            resp = await client.post(
+                "/openai/v1/audio/speech",
+                headers={"Authorization": f"Bearer {key}"},
+                json={
+                    "model": "canopylabs/orpheus-v1-english",
+                    "voice": "autumn",
+                    "input": "ok",
+                    "response_format": "wav",
+                },
+            )
+        if resp.status_code == 200:
+            _ORPHEUS_CACHE["ok"] = True
+            _ORPHEUS_CACHE["ts"] = time.time()
+            logger.info("VOICE orpheus TTS probe: OK (terms accepted)")
+            return True
+        logger.error(
+            "VOICE orpheus TTS probe failed http=%s body=%s",
+            resp.status_code, resp.text[:200],
         )
+        _ORPHEUS_CACHE["ok"] = False
+        _ORPHEUS_CACHE["ts"] = time.time()
+        return False
     except Exception as exc:
-        logger.warning("fallback groq TTS unavailable: %s", exc)
-        return None
+        logger.error("VOICE orpheus TTS probe error: %s", exc)
+        _ORPHEUS_CACHE["ok"] = False
+        _ORPHEUS_CACHE["ts"] = time.time()
+        return False
+
+
+def _fallback_tts():
+    """A working standalone TTS for fixed lines (greeting fallback).
+
+    Ordering (2026-11-13, ZAI Agent 2): orpheus FIRST only when a live probe
+    proves it works; otherwise EdgeTTS — keyless, en-IN native, verified
+    reachable from this host (28,800-byte probe). None if both are dead.
+    """
+    if GROQ_PLUGIN_AVAILABLE and _orpheus_ok():
+        key = _groq_key()
+        if key:
+            try:
+                return _lk_groq.TTS(
+                    api_key=key, model="canopylabs/orpheus-v1-english",
+                    voice="autumn",
+                )
+            except Exception as exc:
+                logger.warning("fallback groq TTS unavailable: %s", exc)
+    if EDGE_TTS_AVAILABLE:
+        try:
+            tts = EdgeTTS(voice=_edge_voice())
+            logger.info("VOICE fallback TTS: edge-tts %s (orpheus dead/unprobed)", _edge_voice())
+            return tts
+        except Exception as exc:
+            logger.warning("fallback edge TTS unavailable: %s", exc)
+    return None
+
+
+def _edge_voice() -> str:
+    return (os.getenv("FRIDAY_EDGE_TTS_VOICE") or "en-IN-NeerjaNeural").strip()
+
+
+_ORPHEUS_CACHE = {"ok": None, "ts": 0.0}
+
+
+def _orpheus_ok() -> bool:
+    """Cached probe result (5 min) — _fallback_tts is sync, so the probe
+    itself runs in the job entrypoint before any session is built."""
+    now = time.time()
+    if _ORPHEUS_CACHE["ok"] is None or now - _ORPHEUS_CACHE["ts"] > 300:
+        return False  # unprobed counts as dead until the entrypoint proves it
+    return _ORPHEUS_CACHE["ok"]
 
 
 async def _try_groq_pipeline():
@@ -473,8 +569,19 @@ async def _try_groq_pipeline():
         detect_language=True,
     )
     llm = _lk_groq.LLM(api_key=key, model=_llm_chat_model(), temperature=0.6)
-    tts = _lk_groq.TTS(api_key=key, model="canopylabs/orpheus-v1-english", voice="autumn")
-    logger.info("groq pipeline ready: whisper-large-v3-turbo + %s + orpheus", _llm_chat_model())
+    if _orpheus_ok():
+        tts = _lk_groq.TTS(api_key=key, model="canopylabs/orpheus-v1-english", voice="autumn")
+        logger.info("groq pipeline ready: whisper-large-v3-turbo + %s + orpheus", _llm_chat_model())
+    elif EDGE_TTS_AVAILABLE:
+        tts = EdgeTTS(voice=_edge_voice())
+        logger.info(
+            "groq pipeline ready: whisper-large-v3-turbo + %s + edge-tts %s "
+            "(orpheus terms unaccepted — degraded, not silent)",
+            _llm_chat_model(), _edge_voice(),
+        )
+    else:
+        _write_status("no-provider", "none", "orpheus 400 model_terms_required and edge-tts unavailable")
+        return None, "orpheus_terms_required"
     return (stt, llm, tts), None
 
 
@@ -516,6 +623,8 @@ async def entrypoint(ctx: JobContext):
     agent: Agent
     provider_name = "none"
 
+    # Try the preferred realtime provider first. Do not spend up to 15 seconds
+    # probing a Groq TTS model on a path that never uses Groq.
     realtime_model = await _try_gemini_realtime(instructions, verified_key=_verified_key)
     if realtime_model is not None:
         provider_name = f"gemini-realtime:{_voice_model()}"
@@ -541,11 +650,16 @@ async def entrypoint(ctx: JobContext):
             logger.info("gemini session carries a groq fallback TTS for fixed lines")
         _write_status("ready", provider_name, model=_voice_model())
     else:
+        # Only probe Orpheus when Gemini realtime is unavailable and the
+        # modular Groq pipeline is actually needed.
+        await _probe_orpheus_tts()
         groq_parts, reason = await _try_groq_pipeline()
         if groq_parts is None:
             detail = {
                 "no_groq_key": "no Groq key in the service environment",
                 "no_plugin": "livekit-plugins-groq not installed on the voice host",
+                "orpheus_terms_required": "Groq orpheus TTS requires model terms acceptance "
+                "(org admin, console.groq.com) and edge-tts is unavailable on this host",
             }.get(reason or "", "no speech provider available")
             _write_status("no-provider", "none", detail)
             logger.error("VOICE job refused: %s", detail)
@@ -626,6 +740,9 @@ async def entrypoint(ctx: JobContext):
     # the Gemini path it is the orpheus fallback attached to the session)
     _fixed_voice = _fallback_tts()
 
+    session_closing = False
+    greeting_task: asyncio.Task | None = None
+
     async def _greet_when_ready() -> None:
         """Speak a greeting the owner can actually HEAR, in this order:
 
@@ -686,12 +803,15 @@ async def entrypoint(ctx: JobContext):
             "then invite them to speak." + _telugu_line
         )
         try:
+            if session_closing:
+                logger.info("VOICE warm greeting skipped: session is already closing")
+                return
             session.generate_reply(user_input=_greeting_prompt)
             logger.info("VOICE warm greeting requested")
         except Exception as exc:
             logger.error("VOICE warm greeting generation failed: %s", exc)
 
-    asyncio.create_task(_greet_when_ready())
+    greeting_task = asyncio.create_task(_greet_when_ready())
 
     # ---- Clean exit when the owner leaves (2026-11-13, ZAI Agent 1) ----
     # Live probes proved agent pileup in the shared room: every call
@@ -701,9 +821,13 @@ async def entrypoint(ctx: JobContext):
     # its session promptly when the last human leaves, instead of lingering
     # until the room timeout.
     async def _close_session_when_empty() -> None:
+        nonlocal session_closing
         try:
             if session is None:
                 return
+            session_closing = True
+            if greeting_task is not None and not greeting_task.done():
+                greeting_task.cancel()
             closer = getattr(session, "aclose", None) or getattr(session, "close", None)
             if closer is not None:
                 result = closer()

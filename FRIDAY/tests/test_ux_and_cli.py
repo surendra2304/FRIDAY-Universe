@@ -196,7 +196,7 @@ def test_cli_voice_mode_flag_triggers_live_session(monkeypatch, capsys, restore_
     voice_session_inst.run_live_loop = mock.AsyncMock(return_value=None)
     mock_live_session_cls = mock.MagicMock(return_value=voice_session_inst)
 
-    with mock.patch("friday.auth.credential_pool.GeminiCredentialPool.preflight_check", return_value={"status": "HEALTHY", "active_project": "PRIMARY"}):
+    with mock.patch("friday.auth.GeminiCredentialPool.preflight_check", return_value={"status": "HEALTHY", "active_project": "PRIMARY"}):
         with mock.patch("friday.voice.gemini_live_session.GeminiLiveVoiceSession", mock_live_session_cls):
             main()
             assert mock_live_session_cls.called
@@ -219,7 +219,7 @@ def test_cli_text_mode_override_suppresses_voice_mode(monkeypatch, restore_frida
     monkeypatch.setattr(sys, "argv", ["friday", "--text"])
     monkeypatch.setenv("FRIDAY_VOICE_ENABLED", "true")
 
-    with mock.patch("friday.auth.credential_pool.GeminiCredentialPool.preflight_check", return_value={"status": "HEALTHY", "active_project": "PRIMARY"}):
+    with mock.patch("friday.auth.GeminiCredentialPool.preflight_check", return_value={"status": "HEALTHY", "active_project": "PRIMARY"}):
         with mock.patch("builtins.input", side_effect=["/exit"]):
             with mock.patch("friday.voice.gemini_live_session.GeminiLiveVoiceSession") as mock_voice:
                 main()
