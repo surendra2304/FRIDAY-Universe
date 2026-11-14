@@ -8,6 +8,7 @@ optimization with Bayesian and frequentist approaches.
 from __future__ import annotations
 
 import hashlib
+import math
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -101,6 +102,48 @@ class ExperimentTimeline:
     experiment_id: str
     events: list[dict] = field(default_factory=list)
     milestones: list[dict] = field(default_factory=list)
+
+
+def _two_proportion_p_value(conv_a: int, n_a: int, conv_b: int, n_b: int) -> float:
+    """Two-sided p-value of the pooled two-proportion z-test.
+
+    Returns 1.0 (no evidence of a difference) when either side has no
+    observations or the pooled standard error is zero.
+    """
+    if n_a <= 0 or n_b <= 0:
+        return 1.0
+    p_pool = (conv_a + conv_b) / (n_a + n_b)
+    se = math.sqrt(p_pool * (1 - p_pool) * (1 / n_a + 1 / n_b))
+    if se <= 0:
+        return 1.0
+    z = (conv_b / n_b - conv_a / n_a) / se
+    return max(0.0, min(1.0, 1.0 - math.erf(abs(z) / math.sqrt(2))))
+
+
+def _beta_posterior(conversions: int, samples: int) -> tuple[float, float, float, float]:
+    """Beta(conversions+1, samples-conversions+1) posterior.
+
+    Returns (alpha, beta, mean, variance) of the posterior.
+    """
+    alpha = conversions + 1
+    beta = samples - conversions + 1
+    total = alpha + beta
+    mean = alpha / total
+    variance = alpha * beta / (total * total * (total + 1))
+    return alpha, beta, mean, variance
+
+
+def _normal_cdf(x: float) -> float:
+    return 0.5 * (1.0 + math.erf(x / math.sqrt(2)))
+
+
+def _expected_loss_normal(mu: float, sd: float) -> float:
+    """E[max(X, 0)] for X ~ N(mu, sd^2) — the Bayesian expected loss of
+    choosing the other variant when the true difference is X."""
+    if sd <= 0:
+        return max(0.0, mu)
+    phi = math.exp(-0.5 * (mu / sd) ** 2) / math.sqrt(2 * math.pi)
+    return sd * phi + mu * _normal_cdf(mu / sd)
 
 
 class ABExperimentFramework:
@@ -218,21 +261,25 @@ class ABExperimentFramework:
         sorted_variants = sorted(variants, key=lambda v: v.conversion_rate, reverse=True)
         winning_variant = sorted_variants[0].name if sorted_variants else ""
 
-        # Calculate lift
+        # Calculate lift and a real p-value (pooled two-proportion z-test
+        # between the control and the best-performing variant).
+        # TASK-REL-030: the previous body fabricated the p-value from the
+        # participant count alone — p = clamp(0.05 / (N / 1000)) — without
+        # ever looking at the conversion difference, so any experiment
+        # with N >= 50,000 and lift > 0 was declared significant.
         if len(variants) >= 2:
             control = next((v for v in variants if v.name == "control"), variants[0])
             treatment = sorted_variants[0]
             lift = (treatment.conversion_rate - control.conversion_rate) / max(0.01, control.conversion_rate) * 100
-
-            # P-value (simulated)
-            if total_participants > 0:
-                p_value = 0.05 / (total_participants / 1000)  # Simple simulation
-                p_value = max(0.001, min(0.05, p_value))
-            else:
-                p_value = 0.05
+            p_value = _two_proportion_p_value(
+                control.conversion_count,
+                control.sample_count,
+                treatment.conversion_count,
+                treatment.sample_count,
+            )
         else:
             lift = 0.0
-            p_value = 0.05
+            p_value = 1.0
 
         significant = p_value < experiment.significance_level
 
@@ -260,7 +307,7 @@ class ABExperimentFramework:
             p_value=p_value,
             statistical_significance=significant,
             lift_pct=lift,
-            confidence_level=1 - p_value,
+            confidence_level=1 - experiment.significance_level,
             recommended_action=action,
             analysis_method=method,
         )
@@ -289,12 +336,29 @@ class ABExperimentFramework:
             variant_a = variants[0]
             variant_b = variants[0]
 
-        # Probability A wins (simulated)
-        prob_a_wins = 0.5 + (variant_a.conversion_rate - variant_b.conversion_rate) * 10
-        prob_a_wins = max(0.01, min(0.99, prob_a_wins))
+        # Probability A wins: normal approximation to the Beta posteriors
+        # (the same approximation ab_test_framework.bayesian_test uses).
+        # TASK-REL-030: this was a linear formula in the raw rate gap —
+        # 0.5 + 10 * (rate_a - rate_b), clamped — labelled "simulated"
+        # only in a code comment while the API presented it as a measured
+        # probability.
+        alpha_a, beta_a, mean_a, var_a = _beta_posterior(
+            variant_a.conversion_count, variant_a.sample_count
+        )
+        alpha_b, beta_b, mean_b, var_b = _beta_posterior(
+            variant_b.conversion_count, variant_b.sample_count
+        )
+        diff_sd = math.sqrt(var_a + var_b)
+        if diff_sd > 0:
+            prob_a_wins = _normal_cdf((mean_a - mean_b) / diff_sd)
+        else:
+            prob_a_wins = 0.5
+        prob_a_wins = max(0.0, min(1.0, prob_a_wins))
 
-        expected_loss_a = (1 - prob_a_wins) * variant_a.conversion_rate
-        expected_loss_b = prob_a_wins * variant_b.conversion_rate
+        # Expected loss of shipping a variant = E[max(other - own, 0)]
+        # under the normal approximation to the posterior difference.
+        expected_loss_a = _expected_loss_normal(mean_b - mean_a, diff_sd)
+        expected_loss_b = _expected_loss_normal(mean_a - mean_b, diff_sd)
 
         bayesian = BayesianAnalysis(
             experiment_id=experiment_id,
@@ -303,6 +367,8 @@ class ABExperimentFramework:
             probability_a_wins=prob_a_wins,
             expected_loss_a=expected_loss_a,
             expected_loss_b=expected_loss_b,
+            posterior_a=[float(alpha_a), float(beta_a)],
+            posterior_b=[float(alpha_b), float(beta_b)],
             map_estimate=variant_a.name if prob_a_wins > 0.5 else variant_b.name,
             confidence=abs(prob_a_wins - 0.5) * 2,
         )

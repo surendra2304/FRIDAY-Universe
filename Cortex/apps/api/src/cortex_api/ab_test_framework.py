@@ -115,12 +115,34 @@ class ABTestFramework:
         variant_a_data: dict,
         variant_b_data: dict,
     ) -> TestResult:
-        """Calculate statistical significance between two variants."""
+        """Calculate statistical significance between two variants.
+
+        Pooled two-proportion z-test. TASK-REL-030: the previous body set
+        ``p_value = erf(|z| / sqrt(2))`` — that quantity is the confidence
+        (2*Phi(|z|) - 1), not the p-value — and then declared significance
+        when it fell below 0.05, inverting the test: identical variants
+        (z = 0) were declared significant with a winner, and a large real
+        effect was declared not significant (and crashed on the unbound
+        ``winner``). The p-value is 2 * (1 - Phi(|z|)) = 1 - erf(|z|/sqrt(2)).
+        """
         # Conversion rate for binary metrics
         conv_a = variant_a_data.get("conversions", 0)
         visitors_a = variant_a_data.get("visitors", 1000)
         conv_b = variant_b_data.get("conversions", 0)
         visitors_b = variant_b_data.get("visitors", 1000)
+
+        # No observations on either side: no evidence, never significance.
+        if visitors_a <= 0 or visitors_b <= 0:
+            return TestResult(
+                test_id=f"test_{int(time.time())}",
+                status="not_significant",
+                p_value=1.0,
+                confidence=0.0,
+                lift=0.0,
+                winner="",
+                recommendation="No data: both variants need visitors before significance can be assessed",
+                sample_size=max(0, visitors_a) + max(0, visitors_b),
+            )
 
         rate_a = conv_a / visitors_a
         rate_b = conv_b / visitors_b
@@ -136,16 +158,17 @@ class ABTestFramework:
         # Z-score
         z = (rate_b - rate_a) / se if se > 0 else 0.0
 
-        # P-value
-        p_value = math.erf(abs(z) / math.sqrt(2))
+        # Two-sided p-value: 2 * (1 - Phi(|z|)); Phi via erf.
+        p_value = 1.0 - math.erf(abs(z) / math.sqrt(2))
 
         # Confidence
-        confidence = p_value
+        confidence = 1.0 - p_value
 
         # Lift
         lift = (rate_b - rate_a) / rate_a if rate_a > 0 else 0.0
 
         # Determine winner
+        winner = ""
         if p_value < 0.05:
             winner = "B" if rate_b > rate_a else "A"
             status = "significant"
