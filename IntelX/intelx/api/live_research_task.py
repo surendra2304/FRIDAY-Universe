@@ -70,6 +70,12 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
     callback may produce a source-attributed model draft, never independent fact
     verification. A search snippet alone is never promoted to a
     retrieved-document finding. Existing SSRF/robots/byte guards belong to fetch.
+
+    TASK-REL-016: if the synthesis callback fails or returns a non-success
+    draft, the extractive findings already retrieved are returned labelled
+    unsynthesised (answer_kind "unsynthesised_raw_findings", status DEGRADED,
+    synthesis error recorded) — retrieved evidence is never silently discarded,
+    and it is never certified as a synthesised brief either.
     """
     import hashlib
     import re
@@ -188,12 +194,17 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             failures.append({"url": url, "reason": type(exc).__name__})
     answer_kind = "source_excerpts"
     synthesis_metadata = {}
+    synthesis_failure = None
     if synthesize is not None and source_documents:
         try:
             draft = await synthesize(query, source_documents)
             if draft.get("status") != "SUCCESS":
-                findings = []
-                failures.append({"reason": str(draft.get("error") or "synthesis_unverified")})
+                # TASK-REL-016: a refused/unverified draft is a synthesis
+                # failure, not a reason to destroy evidence already retrieved.
+                # Keep the extractive findings; they are labelled
+                # unsynthesised below and the result stays DEGRADED.
+                synthesis_failure = {"reason": str(draft.get("error") or "synthesis_unverified")}
+                failures.append(dict(synthesis_failure))
             else:
                 findings = draft["findings"]
                 answer_kind = draft["answer_kind"]
@@ -203,28 +214,53 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
         except asyncio.CancelledError:
             raise
         except Exception as exc:
-            findings = []
+            # Same rule on the exception path: record the failure, keep the
+            # extractive findings, never certify them as a synthesised brief.
             failure = {"reason": "synthesis_" + type(exc).__name__}
             # Explicit diagnostic codes only, never arbitrary exception strings,
             # model deliberation, prompts, credentials or response bodies.
             details = getattr(exc, "public_details", {})
             if isinstance(details, dict):
                 failure.update({k: details[k] for k in ["reason_code", "finish_reason", "output_characters"] if k in details})
+            synthesis_failure = failure
             failures.append(failure)
-    spoken = " ".join(f"According to {f['citations'][0]['source_title']}, {f['statement']}" for f in findings[:3])
-    if not spoken:
+    if synthesis_failure is not None:
+        answer_kind = "unsynthesised_raw_findings"
+    spoken_body = " ".join(f"According to {f['citations'][0]['source_title']}, {f['statement']}" for f in findings[:3])
+    if synthesis_failure is not None:
+        spoken = (f"Unsynthesised raw findings — synthesis failed ({synthesis_failure['reason']}). {spoken_body}"
+                  if spoken_body else
+                  "Synthesis failed and no source excerpts could be extracted. No completed brief is being claimed.")
+    elif spoken_body:
+        spoken = spoken_body
+    else:
         spoken = ("I retrieved sources but could not produce a source-grounded answer. No completed brief is being claimed."
                   if sources else "I could not retrieve topical readable sources for that query. I will not invent a research brief.")
-    lines = ["Source-attributed model draft — quotations checked, claims not independently verified." if answer_kind != "source_excerpts" else
-             "Retrieved-source excerpts — not independently verified facts or a verified answer to every part of the question."]
+    if synthesis_failure is not None:
+        header = (f"Unsynthesised — raw findings: synthesis failed ({synthesis_failure['reason']}); "
+                  "the excerpts below are verbatim retrieved source passages, NOT a synthesised answer.")
+    elif answer_kind != "source_excerpts":
+        header = "Source-attributed model draft — quotations checked, claims not independently verified."
+    else:
+        header = "Retrieved-source excerpts — not independently verified facts or a verified answer to every part of the question."
+    lines = [header]
     for finding in findings:
         citation = finding["citations"][0]
         lines.extend([f"\n{citation['source_title']}: {finding['statement']}", citation["source_url"]])
-        if answer_kind != "source_excerpts":
+        if synthesis_failure is None and answer_kind != "source_excerpts":
             lines.append(f"Supporting source quotation: {finding['quote']}")
-    return {"status": "SUCCESS" if findings else "DEGRADED", "query": query,
+    if findings and synthesis_failure is not None:
+        summary = (f"Retrieved {len(sources)} source document(s); synthesis failed ({synthesis_failure['reason']}) — "
+                   f"returning {len(findings)} unsynthesised raw finding(s) (verbatim source excerpts), not a synthesised brief.")
+    elif findings:
+        summary = f"Retrieved {len(sources)} source document(s); findings are source-attributed, not independent verification."
+    else:
+        summary = f"Retrieved {len(sources)} source document(s), but no grounded answer was verified."
+    return {"status": "SUCCESS" if findings and synthesis_failure is None else "DEGRADED", "query": query,
             "answer_kind": answer_kind, "question_answered": False, **synthesis_metadata,
+            "synthesis_status": ("failed" if synthesis_failure is not None else
+                                 "succeeded" if synthesize is not None and source_documents else "not_attempted"),
+            **({"synthesis_error": synthesis_failure} if synthesis_failure is not None else {}),
             "findings": findings, "sources": sources, "spoken_summary": spoken,
             "text_response": "\n".join(lines), "source_failures": failures,
-            "summary": (f"Retrieved {len(sources)} source document(s); findings are source-attributed, not independent verification."
-                        if findings else f"Retrieved {len(sources)} source document(s), but no grounded answer was verified.")}
+            "summary": summary}
