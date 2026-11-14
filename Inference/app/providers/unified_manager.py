@@ -19,6 +19,7 @@ class UnifiedExecutionRequest(BaseModel):
     provider: Literal["auto", "gemini", "groq", "cerebras", "mistral", "openai", "openrouter", "nvidia", "cohere", "huggingface"] = Field(
         default="auto", description="Target provider name or 'auto' for intelligent capability matching"
     )
+    model: str | None = Field(default=None, min_length=1, max_length=200, description="Optional requested model; policy gateway may substitute and reports the served model")
     agent_role: str | None = Field(
         default="system_architect",
         description="Specialist agent role or ID (e.g. trading_analyst, system_architect, code_generator, etc.)",
@@ -90,6 +91,7 @@ class UnifiedProviderManager:
         """
         return {
             "provider": req.provider,
+            "model": req.model,
             "agent_role": req.agent_role,
             "context": req.context,
             "max_tokens": req.max_tokens,
@@ -129,6 +131,9 @@ class UnifiedProviderManager:
                     timestamp=time.time(),
                     token_usage={"total_tokens": cached_meta.get("tokens", 0)},
                     status="cache_hit",
+                    finish_reason=cached_meta.get("finish_reason"),
+                    served_by_provider=cached_meta.get("served_by_provider"),
+                    served_by_policy=bool(cached_meta.get("served_by_policy", False)),
                 )
 
         if req.agent_role:
@@ -136,7 +141,7 @@ class UnifiedProviderManager:
 
         # Determine target provider and model
         target_provider: str = req.provider
-        target_model = None
+        target_model = req.model
         system_prompt = "You are a helpful AI specialist in Inference."
 
         if agent:
@@ -144,19 +149,19 @@ class UnifiedProviderManager:
             primary_config = agent.get_primary_model()
             if target_provider == "auto":
                 target_provider = primary_config.provider
-                target_model = primary_config.model
+                target_model = req.model or primary_config.model
         elif req.agent_role and req.agent_role.lower() in self.ROLE_PROVIDER_MAPPING:
             default_prov, default_mod = self.ROLE_PROVIDER_MAPPING[req.agent_role.lower()]
             if target_provider == "auto":
                 target_provider = default_prov
-            target_model = default_mod
+            target_model = req.model or default_mod
         elif target_provider == "auto":
             target_provider = "groq"
-            target_model = "openai/gpt-oss-120b"
+            target_model = req.model or "openai/gpt-oss-120b"
 
         # Fast-lane override for auto routing
         extra_params: dict[str, Any] = {}
-        if req.fast_lane and req.provider == "auto":
+        if req.fast_lane and req.provider == "auto" and req.model is None:
             target_provider = "groq"
             target_model = "openai/gpt-oss-20b"
             req.max_tokens = min(req.max_tokens, 60)
@@ -217,6 +222,7 @@ class UnifiedProviderManager:
                                 "provider": spec_winner,
                                 "model": spec_resp.model,
                                 "tokens": spec_resp.total_tokens or 0,
+                                "finish_reason": spec_resp.finish_reason,
                             },
                         ),
                         caller_id=req.agent_role or "unified",
@@ -236,6 +242,7 @@ class UnifiedProviderManager:
                         "total_tokens": spec_resp.total_tokens or 0,
                     },
                     status="success",
+                    finish_reason=spec_resp.finish_reason,
                 )
             except Exception as spec_exc:
                 logger.warning("Speculative race in unified manager failed, falling back: %s", spec_exc)
@@ -285,6 +292,9 @@ class UnifiedProviderManager:
                             "provider": actual_provider,
                             "model": resp.model or (target_model or "default"),
                             "tokens": resp.total_tokens or 0,
+                            "finish_reason": resp.finish_reason,
+                            "served_by_provider": actual_provider if actual_provider != target_provider else None,
+                            "served_by_policy": provenance.get("fallback_reason") == "local_preferred",
                         },
                     ),
                     caller_id=req.agent_role or "unified",
