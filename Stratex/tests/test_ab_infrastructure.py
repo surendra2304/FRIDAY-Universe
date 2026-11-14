@@ -20,7 +20,6 @@ import numpy as np
 import pandas as pd
 
 from config_ab import ABExperimentConfig
-from paper_ab_runner import PaperABEngine
 from scripts.compare_ab_performance import (
     compute_ab_comparison,
     generate_markdown_report,
@@ -61,87 +60,6 @@ def test_ab_experiment_config_lifecycle():
         assert loaded.arm_a_name == "CONTROL_BASELINE"
         assert loaded.arm_b_name == "TREATMENT_AI_ADVISED"
         assert loaded.max_drawdown_limit_pct == 0.10
-
-
-def test_paper_ab_engine_parallel_execution_and_isolation():
-    """Verify dual paper engines execute in lockstep with separate state files."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        cfg = ABExperimentConfig(
-            experiment_id="ab_exec_test",
-            state_file_control=os.path.join(tmpdir, "paper_state_ctrl.json"),
-            ledger_file_control=os.path.join(tmpdir, "paper_ledger_ctrl.jsonl"),
-            equity_file_control=os.path.join(tmpdir, "paper_equity_ctrl.jsonl"),
-            signals_file_control=os.path.join(tmpdir, "paper_signals_ctrl.jsonl"),
-            state_file_treatment=os.path.join(tmpdir, "paper_state_treat.json"),
-            ledger_file_treatment=os.path.join(tmpdir, "paper_ledger_treat.jsonl"),
-            equity_file_treatment=os.path.join(tmpdir, "paper_equity_treat.jsonl"),
-            signals_file_treatment=os.path.join(tmpdir, "paper_signals_treat.jsonl"),
-            params_state_treatment=os.path.join(tmpdir, "params_treat.json"),
-            advisory_log_treatment=os.path.join(tmpdir, "adv_log_treat.jsonl"),
-            symbols=["BTCUSDT"]
-        )
-
-        engine = PaperABEngine(experiment_cfg=cfg)
-
-        # Mock AI consultation for treatment arm
-        mock_ai_resp = {
-            "decision_id": "DEC_AB_001",
-            "status": "APPROVED",
-            "confidence": 0.90,
-            "parameter_changes": [
-                {"strategy": "strategy_swing", "parameter": "tp_atr_multiplier", "current_value": 3.0, "new_value": 3.5}
-            ],
-            "debate_summary": "Expand TP multiplier in trending wave"
-        }
-        engine.ai_client.consult = MagicMock(return_value=mock_ai_resp)
-
-        # Feed 60 synthetic candle steps
-        candles = create_mock_candles(100)
-        for i in range(55, 80):
-            step_candles = candles.iloc[:i]
-            engine.run_step({"BTCUSDT": step_candles})
-
-        # 1. Verify separate equity curve files exist and have records
-        assert os.path.exists(cfg.equity_file_control)
-        assert os.path.exists(cfg.equity_file_treatment)
-
-        with open(cfg.equity_file_control, "r") as f:
-            lines_a = f.readlines()
-        with open(cfg.equity_file_treatment, "r") as f:
-            lines_b = f.readlines()
-
-        assert len(lines_a) > 0
-        assert len(lines_b) > 0
-        assert len(lines_a) == len(lines_b)
-
-        # 2. Verify Treatment arm overlay received AI parameters while Control did not
-        assert engine.overlay_treatment.get_param("strategy_swing", "tp_atr_multiplier") == 3.5
-
-
-def test_drawdown_safety_halts_breaching_arm():
-    """Verify that breaching the 10% drawdown threshold halts that arm."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        cfg = ABExperimentConfig(
-            experiment_id="ab_dd_test",
-            state_file_control=os.path.join(tmpdir, "ctrl.json"),
-            ledger_file_control=os.path.join(tmpdir, "ctrl.jsonl"),
-            equity_file_control=os.path.join(tmpdir, "ctrl_eq.jsonl"),
-            state_file_treatment=os.path.join(tmpdir, "treat.json"),
-            ledger_file_treatment=os.path.join(tmpdir, "treat.jsonl"),
-            equity_file_treatment=os.path.join(tmpdir, "treat_eq.jsonl"),
-            params_state_treatment=os.path.join(tmpdir, "treat_params.json"),
-            advisory_log_treatment=os.path.join(tmpdir, "treat_adv.jsonl"),
-            max_drawdown_limit_pct=0.10
-        )
-        engine = PaperABEngine(experiment_cfg=cfg)
-
-        # Simulate Arm A suffering 15% drawdown
-        engine.portfolio_control.peak_equity = 10000.0
-        engine.portfolio_control.cash = 8400.0  # 16% loss
-
-        halt_a, halt_b = engine.check_drawdown_safeties({"BTCUSDT": 50000.0})
-        assert halt_a is True
-        assert halt_b is False
 
 
 def test_statistical_comparison_engine():

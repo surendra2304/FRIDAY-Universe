@@ -199,10 +199,6 @@ def compute_metrics(trades):
 
 def main():
     import strategy_adx_ema
-    import strategy_aggressor
-    import strategy_scalper
-    import strategy_supertrend
-    import strategy_swing
     
     cost_engine = CostEngine.get_binance_taker_config()
     
@@ -210,12 +206,6 @@ def main():
     candidates = [
         ("adx_ema", "4h", strategy_adx_ema),
         ("adx_ema", "1h", strategy_adx_ema),
-        ("supertrend", "15m", strategy_supertrend),
-        ("supertrend", "1h", strategy_supertrend),
-        ("swing", "1d", strategy_swing),
-        ("swing", "4h", strategy_swing),
-        ("scalper", "1m", strategy_scalper),
-        ("aggressor", "1m", strategy_aggressor),
     ]
     
     report_rows = []

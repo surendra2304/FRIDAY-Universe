@@ -11,6 +11,16 @@ not classify at all (a never-register Donchian, a placeholder hybrid) all
 reached order placement in the daemon, while the testnet engine — which
 honours PRODUCTION_STRATEGY_REGISTRY — ran only the governed set.
 
+TASK-STR-CLEANUP-001 update (2026-11-15): the owner ordered every strategy
+with verified OOS profit factor < 1.2 deleted (TASK-STR-BT-001 evidence).
+bb_reversion, factory_winner_1..5, supertrend and the DISABLED scalper
+family are gone — code and registry entries. The real-registry assertions
+below now pin the post-cleanup state: NO strategy is VALIDATED, adx_ema
+alone is OBSERVE_ONLY, ml alone remains governed (DISABLED), and every
+deleted name is UNREGISTERED and can neither execute nor evaluate. The
+daemon-scan section still exercises a VALIDATED path through a fake
+registry, since no real VALIDATED strategy exists anymore.
+
 These tests pin the fix:
 1. Registry statuses come from config_strategy governance, never discovery.
 2. A DISABLED strategy's signal function is never even invoked for
@@ -65,11 +75,15 @@ def _df(rows: int = 60) -> pd.DataFrame:
 class TestRegistryGovernanceStatuses:
     def test_validated_set_is_exactly_the_governed_set(self, registry):
         validated = {s.name for s in registry.snapshot() if s.status == "VALIDATED"}
-        # factory winners are governed VALIDATED but are loaded by the
-        # testnet engine's own path, not discovered by this registry.
-        assert validated == {"strategy_bb_reversion"}
+        # TASK-STR-CLEANUP-001: bb_reversion and factory_winner_1..5 were
+        # deleted (verified OOS PF < 1.2). No VALIDATED strategy remains;
+        # the daemon's executable set is intentionally empty until forward
+        # entrants are chosen from TASK-STR-RD-002 evidence.
+        assert validated == set()
 
-    def test_disabled_strategies_are_disabled(self, registry):
+    def test_deleted_strategies_are_gone_and_unregistered(self, registry):
+        # TASK-STR-CLEANUP-001: these modules were deleted outright, so
+        # discovery must not find them and governance must fail closed.
         for name in (
             "strategy_scalper",
             "strategy_aggressive_scalper",
@@ -78,14 +92,19 @@ class TestRegistryGovernanceStatuses:
             "strategy_rsi_burst",
             "strategy_vwap_trend",
             "strategy_swing",
-            "strategy_ml",
+            "strategy_bb_reversion",
+            "strategy_supertrend",
+            "strategy_factory_winner_1",
         ):
-            spec = registry.get(name)
-            assert spec is not None, f"{name} not discovered"
-            assert spec.status == "DISABLED", f"{name} status={spec.status}"
+            assert registry.get(name) is None, f"{name} still discovered"
+            assert registry.governance_status(name) == "UNREGISTERED", name
+        # ml was never honestly backtested, so it was NOT removed; it
+        # remains in governance as DISABLED (it has no module-level
+        # get_signal, so discovery skips it — governance still governs).
+        assert governance_status_for("strategy_ml") == "DISABLED"
 
     def test_observe_only_strategies_are_observe_only(self, registry):
-        for name in ("strategy_supertrend", "strategy_adx_ema"):
+        for name in ("strategy_adx_ema",):
             spec = registry.get(name)
             assert spec is not None, f"{name} not discovered"
             assert spec.status == "OBSERVE_ONLY", f"{name} status={spec.status}"
@@ -101,10 +120,12 @@ class TestRegistryGovernanceStatuses:
     def test_mapping_functions(self):
         assert governance_key_for("strategy_supertrend") == "supertrend"
         assert governance_key_for("ema_crossover") == "ema_crossover"
-        assert governance_status_for("strategy_supertrend") == "OBSERVE_ONLY"
-        assert governance_status_for("strategy_scalper") == "DISABLED"
-        assert governance_status_for("strategy_bb_reversion") == "VALIDATED"
-        assert governance_status_for("factory_winner_1") == "VALIDATED"
+        assert governance_status_for("strategy_supertrend") == "UNREGISTERED"
+        assert governance_status_for("strategy_scalper") == "UNREGISTERED"
+        assert governance_status_for("strategy_bb_reversion") == "UNREGISTERED"
+        assert governance_status_for("factory_winner_1") == "UNREGISTERED"
+        assert governance_status_for("strategy_adx_ema") == "OBSERVE_ONLY"
+        assert governance_status_for("strategy_ml") == "DISABLED"
         assert governance_status_for("no_such_strategy") == "UNREGISTERED"
 
 
@@ -114,7 +135,9 @@ class TestRegistryGovernanceStatuses:
 
 
 class TestRegistryExecutionSemantics:
-    def test_disabled_signal_function_never_invoked(self, registry, monkeypatch):
+    def test_deleted_strategy_signal_function_never_invoked(self, registry, monkeypatch):
+        # Even if a signal function were somehow present for a deleted
+        # strategy, the UNREGISTERED spec check blocks before invocation.
         called = []
         monkeypatch.setitem(
             registry._get_signal_fns,
@@ -123,9 +146,8 @@ class TestRegistryExecutionSemantics:
         )
         result = registry.execute_strategy("strategy_scalper", _df(), "1m", "BTCUSDT")
         assert result["status"] == "BLOCKED"
-        assert result["reason"] == "STATUS_DISABLED"
+        assert result["reason"] == "UNREGISTERED"
         assert called == []
-        # Not evaluable either: DISABLED means off, not observe.
         result_obs = registry.execute_strategy(
             "strategy_scalper", _df(), "1m", "BTCUSDT", allow_observe=True
         )
@@ -135,7 +157,7 @@ class TestRegistryExecutionSemantics:
     def test_observe_only_blocked_for_execution_but_evaluable(self, registry, monkeypatch):
         monkeypatch.setitem(
             registry._get_signal_fns,
-            "strategy_supertrend",
+            "strategy_adx_ema",
             lambda df: {
                 "side": "BUY",
                 "sl": 95.0,
@@ -145,17 +167,20 @@ class TestRegistryExecutionSemantics:
                 "strategy_type": "RULE_BASED",
             },
         )
-        blocked = registry.execute_strategy("strategy_supertrend", _df(), "15m", "BTCUSDT")
+        blocked = registry.execute_strategy("strategy_adx_ema", _df(), "4h", "BTCUSDT")
         assert blocked["status"] == "BLOCKED"
         assert blocked["reason"] == "STATUS_OBSERVE_ONLY"
 
         observed = registry.execute_strategy(
-            "strategy_supertrend", _df(), "15m", "BTCUSDT", allow_observe=True
+            "strategy_adx_ema", _df(), "4h", "BTCUSDT", allow_observe=True
         )
         assert observed["status"] == "SIGNAL"
         assert observed["observe_only"] is True
 
-    def test_validated_strategy_executes_untagged(self, registry, monkeypatch):
+    def test_formerly_validated_strategy_is_blocked_after_deletion(self, registry, monkeypatch):
+        # bb_reversion was the daemon's only VALIDATED strategy; after
+        # TASK-STR-CLEANUP-001 it is deleted and must be BLOCKED as
+        # UNREGISTERED even if a signal function were present.
         monkeypatch.setitem(
             registry._get_signal_fns,
             "strategy_bb_reversion",
@@ -169,8 +194,8 @@ class TestRegistryExecutionSemantics:
             },
         )
         result = registry.execute_strategy("strategy_bb_reversion", _df(), "15m", "BTCUSDT")
-        assert result["status"] == "SIGNAL"
-        assert result["observe_only"] is False
+        assert result["status"] == "BLOCKED"
+        assert result["reason"] == "UNREGISTERED"
 
 
 # ---------------------------------------------------------------------------

@@ -178,13 +178,13 @@ def test_reset_boundary_marks_snapshot_stream_and_scorecard():
 def test_scorecard_empty_is_honest_zero():
     card = scorecard.build_scorecard()
     assert card["total_fills"] == 0
-    # Governed strategies render explicitly at 0 recorded forward trades.
-    for name in ("bb_reversion", "factory_winner_1", "factory_winner_5",
-                 "adx_ema", "supertrend"):
+    # Governed VALIDATED/OBSERVE_ONLY strategies render explicitly at 0
+    # recorded forward trades. After TASK-STR-CLEANUP-001 only adx_ema
+    # qualifies (ml is DISABLED and renders only if it ever records fills).
+    for name in ("adx_ema",):
         assert card["strategies"][name]["trades"] == 0, name
     lines = scorecard.render_lines(card)
-    assert any("bb_reversion: trades=0" in line for line in lines)
-    assert any("factory_winner_1: trades=0" in line for line in lines)
+    assert any("adx_ema: trades=0" in line for line in lines)
 
 
 # ---------------------------------------------------------------------------

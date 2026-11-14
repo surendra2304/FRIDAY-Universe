@@ -229,14 +229,12 @@ class AdvisoryParameterOverlay:
         """
         Constructs a snapshot of all active parameters (defaults + active overrides).
         """
-        strat_key = (strategy or "aggressive_scalper").strip().lower()
+        strat_key = (strategy or "adx_ema").strip().lower()
         params: dict[str, Any] = {}
 
         # Load from config_strategy
         if strat_key == "adx_ema":
             params.update({k.lower(): v for k, v in config_strategy.ADX_EMA_STRATEGY.items()})
-        elif strat_key == "adx_ema_mtf":
-            params.update({k.lower(): v for k, v in config_strategy.ADX_EMA_MTF_STRATEGY.items()})
         elif strat_key in config_strategy.PRODUCTION_STRATEGY_REGISTRY:
             reg = config_strategy.PRODUCTION_STRATEGY_REGISTRY[strat_key]
             params.update({k.lower(): v for k, v in reg.items()})
