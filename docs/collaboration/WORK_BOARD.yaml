@@ -3735,6 +3735,34 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "None. Residual noted: Forge synthesis quality itself (probe builds failed the no-tests-discovered stage) is a Forge capability matter, not status truthfulness — the surface now reports it honestly."
 
+  - id: TASK-REL-024
+    title: "Memora hybrid ranking: graph boosts saturate the merged result list and bury fresh semantic hits"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-024-hybrid-ranking
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T21:15:00+05:30"
+    updated_at: "2026-11-14T21:15:00+05:30"
+    files:
+      - "Memora/core/memory/search_service.py"
+      - "Memora/tests/test_rel024_hybrid_ranking.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6879999545"
+    defect: "Follow-up split out of TASK-REL-013's verified remainder. REL-013 unified Memora's semantic write/read paths on the Oracle vector store, but in SearchService.hybrid_search's merged result list a fresh fact still surfaces at position 53 (limit=100) on a broad paraphrase query where it is the vector adapter's semantic rank 1 (sim 0.76): 36 legacy graph-connected records saturate final_score at 1.0 via graph boosts (+0.26..+0.69). Code-verified mechanism at main 4165fef: the merge adds the graph term RAW (graph_weight * g_boost) while the semantic/keyword legs are RRF terms damped by 1/(rrf_k + rank); the sum is then scaled by rrf_k/2 (=30) and capped at 1.0. With the shipped config (dense_vector 0.6, bm25 0.3, graph_walk 0.1, rrf_k 60), a rank-1 semantic + rank-1 keyword hit scores ~0.44, while g_boost >= ~0.19 alone pins a record at 1.0 — and GraphService.get_graph_neighbors accumulates weight*0.15 per incident edge with no bound, so hub records reach g_boost 0.26..0.69. FRIDAY's recall reads with small limits (5 for normal recall, 25 for mutation targeting in FRIDAY/src/friday/memory/memora_client.py), so a rank-53 fact is invisible in production recall. Same surface as TASK-REL-014's recall-window residual."
+    acceptance:
+      - "Scoring characterised with numbers from the live-shaped reproduction: per-leg contributions (semantic RRF, keyword RRF, graph term, entity boost) for the fresh fact vs the saturating legacy records, before the fix."
+      - "Merge fix: semantic/keyword relevance dominates — a maximally graph-boosted but weakly-relevant record can no longer saturate final_score above a strongly semantic/keyword-relevant one; the graph term is bounded and commensurate with the RRF legs, remaining a secondary/tie-breaking signal (graph-connected records still surface for graph-shaped queries; no leg is deleted)."
+      - "REL-005/REL-013/REL-014 semantics preserved: Oracle-branch semantic search, merged recall behaviour and FRIDAY's mutation-targeting assumptions unchanged; Memora suites compared against clean-main baselines with failure sets identical or better."
+      - "Live proof after deploy: fresh unique fact stored via the live service, zero-overlap paraphrase query at FRIDAY's production recall limits (5 and 25) returns the fact inside the window; merged position reported before vs after; verbatim control query still ranks the fact first; probe data deleted afterwards."
+    evidence:
+      - "Claim: issue #35 comment 6879999545 (2026-11-14)."
+      - "Code-verified at main 4165fef: search_service.py section 4 adds graph_weight * g_boost undamped, scales by (rrf_k / 2) and caps at 1.0; retrieval_config.json ships graph_walk weight 0.1 vs dense_vector 0.6 / bm25 0.3; get_graph_neighbors (graph_service.py) accumulates weight * 0.15 per edge, unbounded."
+      - "Inherited live evidence (TASK-REL-013, 2026-11-14 ~21:00 IST): paraphrase probe fact was the Oracle adapter's semantic rank 1 (sim 0.76) yet position 53 in the merged hybrid list (limit=100), behind 36 records at final_score 1.0 with graph boosts +0.26..+0.69."
+    blockers: []
+    next_action: "Reproduce the saturation live with a fresh fact at production recall limits, then implement the bounded graph term in SearchService.hybrid_search with regression tests, ship via PR, deploy, and re-run the probe for before/after positions."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
