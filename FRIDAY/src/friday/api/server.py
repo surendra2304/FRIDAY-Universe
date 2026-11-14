@@ -2413,13 +2413,64 @@ def _which(name: str) -> str | None:
     return shutil.which(name)
 
 
+def _chat_timeout_seconds() -> float:
+    """Overall budget for one console chat turn (TASK-REL-007B).
+
+    Round 1 (2026-11-14) proved the chat path had NO overall bound: a
+    coding turn ran past 2 minutes with no reply (the Forge upstream alone
+    allows 210s) and the console spinner never resolved. The default 120s
+    is generous for legitimate work (a warm Forge build measured 50.4s)
+    while guaranteeing the user always gets an answer. Override with the
+    FRIDAY_CHAT_TIMEOUT_SECONDS env var (clamped to 5..600).
+    """
+    try:
+        value = float(os.getenv("FRIDAY_CHAT_TIMEOUT_SECONDS", "120"))
+    except (TypeError, ValueError):
+        value = 120.0
+    return min(max(value, 5.0), 600.0)
+
+
 @app.post("/api/command")
 async def execute_command(req: CommandRequest, _: None = Depends(_require_control_access), *, boss_verified: bool = True) -> Any:
     """Execute a text command with PC, Android, and live 8-Agent execution."""
     # The console is origin-gated + control-token protected: a valid token
     # IS the owner key (A14). Voice/remote surfaces call _dispatch_command
     # with boss_verified=False and must authorize separately.
-    result = await _dispatch_command(req.command, boss_verified=boss_verified)
+    #
+    # TASK-REL-007B persist-first: the user message enters conversation
+    # history BEFORE dispatch and is completed in place afterwards.
+    # Round 1 lost the user's coding message from the restored transcript
+    # because logging happened only after a (never-returning) dispatch.
+    entry = await _begin_conversation_entry(req.command)
+    timeout_s = _chat_timeout_seconds()
+    try:
+        result = await asyncio.wait_for(
+            _dispatch_command(req.command, boss_verified=boss_verified),
+            timeout=timeout_s,
+        )
+    except asyncio.TimeoutError:
+        logger.warning(
+            "chat dispatch exceeded %.0fs budget; returning timeout reply (message already persisted)", timeout_s
+        )
+        result = {
+            "reply": (
+                f"That request is still running after {int(timeout_s)} seconds, Boss — "
+                "I have saved your message and stopped waiting on it here. The work may "
+                "still finish in the background; ask me again shortly and I will report "
+                "what came back."
+            ),
+            "metadata": {
+                "success": False,
+                "timeout": True,
+                "error": "chat_timeout",
+                "timeout_seconds": timeout_s,
+            },
+        }
+    except Exception:
+        await _finalize_conversation_entry(
+            entry, friday_reply="", status="failed", agents_involved=[], metadata={"dispatch_exception": True}
+        )
+        raise
     meta = result.get("metadata") or {}
 
     # Checklist A13 (batch 3): response formatting policy — free-form LLM
@@ -2471,11 +2522,10 @@ async def execute_command(req: CommandRequest, _: None = Depends(_require_contro
     elif meta.get("peer_name"):
         agents_involved.append(meta["peer_name"])
     
-    # Log conversation
-    await _log_conversation(
-        user_input=req.command,
+    # Complete the persist-first conversation entry in place (TASK-REL-007B).
+    await _finalize_conversation_entry(
+        entry,
         friday_reply=result.get("reply", ""),
-        input_type="text",
         status=status,
         agents_involved=agents_involved,
         metadata=meta,
@@ -4449,6 +4499,46 @@ async def clear_conversation_history(_: None = Depends(_require_control_access))
 
 
 # Helper function to log conversations from the command endpoint
+async def _begin_conversation_entry(
+    user_input: str, input_type: str = "text"
+) -> "ConversationEntry":
+    """Persist the user side of a turn BEFORE any work happens (TASK-REL-007B).
+
+    The returned entry lives in ``_conversation_history`` (what the console
+    restores the transcript from) with status "pending"; complete it with
+    :func:`_finalize_conversation_entry`. A turn that hangs, times out, or
+    crashes the process can no longer take the user's message with it.
+    """
+    entry = ConversationEntry(
+        id=str(_uuid.uuid4()),
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        user_input=user_input,
+        friday_reply="",
+        input_type=input_type,
+        status="pending",
+        agents_involved=[],
+        metadata={},
+    )
+    async with _conversation_lock:
+        _conversation_history.appendleft(entry)
+    return entry
+
+
+async def _finalize_conversation_entry(
+    entry: "ConversationEntry",
+    *,
+    friday_reply: str,
+    status: str,
+    agents_involved: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    """Complete a persist-first entry in place (same object, same position)."""
+    entry.friday_reply = friday_reply
+    entry.status = status
+    entry.agents_involved = agents_involved or []
+    entry.metadata = metadata or {}
+
+
 async def _log_conversation(
     user_input: str,
     friday_reply: str,
@@ -4457,19 +4547,15 @@ async def _log_conversation(
     agents_involved: list[str] | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> None:
-    """Internal helper to log a conversation entry."""
-    entry = ConversationEntry(
-        id=str(_uuid.uuid4()),
-        timestamp=datetime.now(timezone.utc).isoformat(),
-        user_input=user_input,
+    """Internal helper to log a conversation entry (begin + finalize)."""
+    entry = await _begin_conversation_entry(user_input, input_type=input_type)
+    await _finalize_conversation_entry(
+        entry,
         friday_reply=friday_reply,
-        input_type=input_type,
         status=status,
-        agents_involved=agents_involved or [],
-        metadata=metadata or {},
+        agents_involved=agents_involved,
+        metadata=metadata,
     )
-    async with _conversation_lock:
-        _conversation_history.appendleft(entry)
 
 
 @app.post("/v1/events")
