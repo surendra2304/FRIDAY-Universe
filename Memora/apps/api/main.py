@@ -67,6 +67,26 @@ async def lifespan(app: FastAPI):
         from storage.convergence.horizon_sweeper import horizon_sweeper
         horizon_sweeper.start_background_worker()
 
+    # TASK-MEM-010: rebuild the viking:// context database from its durable
+    # snapshot before the first request can touch it. The construction path is
+    # fail-soft — a snapshot that cannot be read leaves an empty context and an
+    # honest log, never a crash and never fabricated content — and stats() says
+    # which state the service actually restored.
+    try:
+        from apps.api.routers.context_db import get_service
+        context_stats = get_service().stats()
+        logger.info(
+            "viking context ready: %s file(s), %s memory file(s), durability=%s",
+            context_stats.get("files"),
+            context_stats.get("memories"),
+            (context_stats.get("durability") or {}).get("state", "in-memory"),
+        )
+    except Exception as exc:
+        logger.warning(
+            "viking context startup restore skipped (%s); serving an empty context",
+            exc,
+        )
+
     vyralx_key = os.getenv("VYRALX_API_KEY", "").strip()
     if len(vyralx_key) >= 32 and storage_ready():
         try:

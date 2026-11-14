@@ -24,13 +24,19 @@ Real working implementations:
 - CommitResult / ContextDatabase: session commit (archive + extract + supersede)
 - WikiCompiler: wiki page compilation, explicit and tag links, orphan/hub
   detection and connected-component counting
+- state_payload / restore_state / PersistentContextDatabase (TASK-MEM-010):
+  whole-state serialization plus a subclass that mirrors every mutation into
+  an injected snapshot store so the context survives a restart; the durable
+  backend itself lives in core/memory/context_durability.py
 
 Standard library only.
 """
 from __future__ import annotations
 
+import logging
 import math
 import re
+import threading
 import time
 from collections import Counter
 from dataclasses import dataclass, field
@@ -1210,6 +1216,334 @@ class WikiCompiler:
                 stack.extend(neighbour for neighbour in adjacency.get(current, ())
                              if neighbour not in seen)
         return components
+
+
+# ── Durable snapshots (TASK-MEM-010) ──────────────────────────────────────
+#
+# The in-memory VikingFS is lost on process restart. This section defines the
+# serialization contract between the in-memory context database and a durable
+# backend without importing anything non-stdlib: the backend (relational
+# snapshot store over Oracle / test SQLite) lives in
+# ``core/memory/context_durability.py`` and is injected here as an object with
+# ``save(payload: dict) -> dict`` and ``load() -> dict | None`` methods.
+#
+# Honesty rules carried over from the relational layer:
+# - restore never fabricates content — a payload that fails validation leaves
+#   the database empty (fail-soft startup, honest log), never a synthesized
+#   tree;
+# - a mutating operation that cannot be made durable surfaces the backend
+#   error instead of pretending the write will survive a restart.
+
+SNAPSHOT_SCHEMA_VERSION = 1
+
+_snapshot_logger = logging.getLogger(__name__)
+
+
+def _serialize_node(node: VfsNode) -> dict[str, Any]:
+    return {
+        "uri": node.path.uri,
+        "is_dir": node.is_dir,
+        "content": node.content,
+        "tags": list(node.tags),
+        "created": node.created,
+        "modified": node.modified,
+    }
+
+
+def state_payload(db: ContextDatabase) -> dict[str, Any]:
+    """Serialize a whole context database into a JSON-ready payload.
+
+    Nodes are emitted parent-before-child in name-sorted order so restore is
+    deterministic and byte-stable for an unchanged tree. Includes the FS tree,
+    open (uncommitted) sessions, the commit history and the session-id
+    sequence — everything ``stats()`` and ``open_session()`` reason about.
+    """
+    nodes: list[dict[str, Any]] = []
+    files = 0
+    dirs = 0
+
+    def visit(node: VfsNode) -> None:
+        nonlocal files, dirs
+        for name in sorted(node.children):
+            child = node.children[name]
+            nodes.append(_serialize_node(child))
+            if child.is_dir:
+                dirs += 1
+                visit(child)
+            else:
+                files += 1
+
+    visit(db.fs.root)
+
+    sessions = []
+    for session_id in sorted(db.sessions):
+        session = db.sessions[session_id]
+        sessions.append({
+            "session_id": session.session_id,
+            "user_id": session.user_id,
+            "started": session.started,
+            "turns": [
+                {"role": turn.role, "content": turn.content, "timestamp": turn.timestamp}
+                for turn in session.turns
+            ],
+        })
+
+    return {
+        "schema_version": SNAPSHOT_SCHEMA_VERSION,
+        "user": db.user,
+        "sequence": db._sequence,
+        "nodes": nodes,
+        "sessions": sessions,
+        "commits": [commit.as_dict() for commit in db.commits],
+        "node_count": len(nodes),
+        "files": files,
+        "dirs": dirs,
+    }
+
+
+def _fs_from_payload(nodes: Any) -> VikingFS:
+    """Build a fresh VikingFS from a serialized node list (raises on malformed)."""
+    if not isinstance(nodes, list):
+        raise ValueError("snapshot 'nodes' must be a list")
+    fs = VikingFS()
+    for raw in nodes:
+        if not isinstance(raw, dict):
+            raise ValueError("snapshot node entries must be objects")
+        path = VikingPath.parse(str(raw.get("uri", "")))
+        if path.is_root:
+            raise ValueError("snapshot node cannot be the viking root")
+        parent = fs._ensure_dir(path.parent or VikingPath())
+        created = float(raw.get("created", time.time()))
+        modified = float(raw.get("modified", time.time()))
+        tags = tuple(str(tag) for tag in raw.get("tags", ()))
+        if raw.get("is_dir"):
+            existing = parent.children.get(path.name)
+            if existing is not None and not existing.is_dir:
+                raise ValueError(f"snapshot node {path.uri} collides with a file")
+            if existing is None:
+                node = VfsNode(path, is_dir=True, created=created, modified=modified)
+                parent.children[path.name] = node
+            else:
+                node = existing
+                node.created = created
+                node.modified = modified
+        else:
+            parent.children[path.name] = VfsNode(
+                path, is_dir=False, content=str(raw.get("content", "")),
+                tags=tags, created=created, modified=modified)
+    fs._invalidate()
+    return fs
+
+
+def restore_state(db: ContextDatabase, payload: Any) -> dict[str, Any]:
+    """Atomically apply a snapshot payload to ``db``.
+
+    Everything is built into fresh objects first and swapped in only when the
+    whole payload parses, so a malformed snapshot cannot leave a half-restored
+    tree behind. Raises on unsupported schema versions or malformed payloads;
+    callers decide the fail-soft policy.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError("snapshot payload must be a JSON object")
+    version = payload.get("schema_version")
+    if version != SNAPSHOT_SCHEMA_VERSION:
+        raise ValueError(f"unsupported snapshot schema version {version!r}")
+
+    fs = _fs_from_payload(payload.get("nodes", []))
+    # Re-assert the directories every ContextDatabase constructor guarantees;
+    # mkdir is a no-op when the snapshot already carries them.
+    fs.mkdir(f"{SCHEME}resources")
+    fs.mkdir(f"{SCHEME}user/{db.user}/memories")
+    fs.mkdir(f"{SCHEME}user/{db.user}/sessions")
+
+    sessions: dict[str, Session] = {}
+    raw_sessions = payload.get("sessions", [])
+    if not isinstance(raw_sessions, list):
+        raise ValueError("snapshot 'sessions' must be a list")
+    for raw in raw_sessions:
+        if not isinstance(raw, dict):
+            raise ValueError("snapshot session entries must be objects")
+        session = Session(
+            session_id=str(raw.get("session_id", "")),
+            user_id=str(raw.get("user_id", db.user)),
+            started=float(raw.get("started", time.time())),
+        )
+        raw_turns = raw.get("turns", [])
+        if not isinstance(raw_turns, list):
+            raise ValueError("snapshot 'turns' must be a list")
+        for turn in raw_turns:
+            if not isinstance(turn, dict):
+                raise ValueError("snapshot turn entries must be objects")
+            session.turns.append(SessionTurn(
+                role=str(turn.get("role", "user")),
+                content=str(turn.get("content", "")),
+                timestamp=float(turn.get("timestamp", time.time())),
+            ))
+        sessions[session.session_id] = session
+
+    commits: list[CommitResult] = []
+    raw_commits = payload.get("commits", [])
+    if not isinstance(raw_commits, list):
+        raise ValueError("snapshot 'commits' must be a list")
+    for raw in raw_commits:
+        if not isinstance(raw, dict):
+            raise ValueError("snapshot commit entries must be objects")
+        commits.append(CommitResult(
+            session_id=str(raw.get("session_id", "")),
+            archive_uri=str(raw.get("archive_uri", "")),
+            memories=[str(item) for item in raw.get("memories", [])],
+            superseded=[str(item) for item in raw.get("superseded", [])],
+            skipped=[str(item) for item in raw.get("skipped", [])],
+            turns=int(raw.get("turns", 0)),
+        ))
+
+    sequence = int(payload.get("sequence", 0))
+    db.fs = fs
+    db.sessions = sessions
+    db.commits = commits
+    db._sequence = sequence
+    return {
+        "files": int(payload.get("files", 0)),
+        "dirs": int(payload.get("dirs", 0)),
+        "sessions": len(sessions),
+        "commits": len(commits),
+        "sequence": sequence,
+    }
+
+
+class PersistentContextDatabase(ContextDatabase):
+    """A ``ContextDatabase`` that mirrors every mutation into a snapshot store.
+
+    The snapshot is written after each mutating operation completes, so the
+    durable state always matches the in-memory state of the last successful
+    operation. If the store raises, the error propagates to the caller: the
+    in-memory write succeeded but was *not* made durable, and silently
+    reporting success would be the kind of dishonesty the storage layer
+    refuses (``storage/relational/session.py`` fail-closed rule).
+    """
+
+    def __init__(self, fs: VikingFS | None = None, user: str = "default",
+                 extractor: MemoryExtractor | None = None,
+                 store: Any | None = None, snapshot: Any | None = None) -> None:
+        super().__init__(fs=fs, user=user, extractor=extractor)
+        self.store = store
+        self._persist_lock = threading.RLock()
+        #: Last snapshot receipt (or restore summary) surfaced via ``stats()``.
+        self.last_snapshot: dict[str, Any] | None = None
+        if store is not None:
+            self.last_snapshot = {
+                "enabled": True,
+                "tenant_id": getattr(store, "tenant_id", ""),
+                "scope_key": getattr(store, "scope_key", user),
+                "state": "empty",
+            }
+        if snapshot is not None:
+            try:
+                receipt = restore_state(self, snapshot)
+                self.last_snapshot = dict(self.last_snapshot or {"enabled": True})
+                self.last_snapshot.update({"state": "restored", **receipt})
+                _snapshot_logger.info(
+                    "viking context restored from durable snapshot: %s file(s), "
+                    "%s folder(s), %s session(s)", receipt["files"],
+                    receipt["dirs"], receipt["sessions"])
+            except Exception as exc:
+                # Fail-soft startup: keep the fresh (empty) database rather
+                # than crashing the service or fabricating restored content.
+                self.last_snapshot = dict(self.last_snapshot or {"enabled": True})
+                self.last_snapshot.update({"state": "empty", "error": str(exc)})
+                _snapshot_logger.warning(
+                    "viking context snapshot could not be applied (%s); "
+                    "starting with an empty context database", exc)
+
+    # -- persistence ------------------------------------------------------
+    def _persist(self) -> dict[str, Any] | None:
+        if self.store is None:
+            return None
+        with self._persist_lock:
+            payload = state_payload(self)
+            receipt = self.store.save(payload)
+            self.last_snapshot = dict(self.last_snapshot or {"enabled": True})
+            self.last_snapshot.update({"state": "saved", "node_count": payload["node_count"]})
+            if isinstance(receipt, dict):
+                self.last_snapshot.update(receipt)
+            return receipt
+
+    def restore_or_reload(self) -> dict[str, Any]:
+        """Re-apply the store's current snapshot (used after manual repairs)."""
+        if self.store is None:
+            raise ValueError("this context database has no snapshot store")
+        payload = self.store.load()
+        if payload is None:
+            raise FileNotFoundError("the snapshot store has no payload for this scope")
+        receipt = restore_state(self, payload)
+        self.last_snapshot = dict(self.last_snapshot or {"enabled": True})
+        self.last_snapshot.update({"state": "restored", **receipt})
+        return receipt
+
+    @classmethod
+    def restore_or_empty(cls, store: Any, user: str = "default",
+                         extractor: MemoryExtractor | None = None
+                         ) -> "PersistentContextDatabase":
+        """Build a database from the store's snapshot, or empty if unavailable.
+
+        Startup must never crash because the durable backend is unreachable:
+        load errors are logged honestly and the database starts empty. The
+        store itself remembers that its existing snapshot was never read, so
+        later writes refuse to overwrite unread durable content (fail-closed)
+        instead of quietly wiping it.
+        """
+        try:
+            payload = store.load()
+        except Exception as exc:
+            _snapshot_logger.warning(
+                "viking context snapshot is unavailable (%s); starting with an "
+                "empty context database", exc)
+            payload = None
+        return cls(user=user, extractor=extractor, store=store, snapshot=payload)
+
+    # -- guarded mutations ------------------------------------------------
+    def write(self, uri: str, content: str, tags: Iterable[str] = ()) -> VfsNode:
+        node = super().write(uri, content, tags)
+        self._persist()
+        return node
+
+    def mkdir(self, uri: str) -> VfsNode:
+        node = super().mkdir(uri)
+        self._persist()
+        return node
+
+    def rm(self, uri: str) -> bool:
+        removed = super().rm(uri)
+        if removed:
+            self._persist()
+        return removed
+
+    def move(self, source: str, target: str) -> VfsNode:
+        node = super().move(source, target)
+        self._persist()
+        return node
+
+    def remember(self, kind: str, key: str, title: str, body: str,
+                 confidence: float = 0.8) -> str:
+        uri = super().remember(kind, key, title, body, confidence)
+        self._persist()
+        return uri
+
+    def open_session(self, user_id: str | None = None) -> Session:
+        session = super().open_session(user_id)
+        self._persist()
+        return session
+
+    def commit_session(self, session: Session | str) -> CommitResult:
+        result = super().commit_session(session)
+        self._persist()
+        return result
+
+    def compile(self, root: str | None = None, persist: bool = False) -> "WikiReport":
+        report = super().compile(root, persist=persist)
+        if persist:
+            self._persist()
+        return report
 
 
 # ── Convenience ───────────────────────────────────────────────────────────

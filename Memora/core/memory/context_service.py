@@ -22,6 +22,7 @@ This module is the piece that makes it usable by the running agent:
 from __future__ import annotations
 
 import importlib.util
+import logging
 import os
 import sys
 import threading
@@ -59,6 +60,8 @@ except Exception:  # pragma: no cover
 
 LAYERS = ("L0", "L1", "L2")
 SCHEME = "viking://"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -182,6 +185,11 @@ class MemoraContextService:
     def stats(self) -> dict[str, Any]:
         payload = self.db.stats()
         payload["root"] = self.root
+        # TASK-MEM-010: say what the durability layer actually did, so callers
+        # can tell a snapshot-backed context from a process-local one.
+        receipt = getattr(self.db, "last_snapshot", None)
+        if isinstance(receipt, dict):
+            payload["durability"] = dict(receipt)
         return payload
 
     def bootstrap(self, documents: Iterable[dict[str, Any]]) -> int:
@@ -211,17 +219,68 @@ class MemoraContextService:
 _default: MemoraContextService | None = None
 
 
+def _durability_store(user: str) -> Any | None:
+    """Build the relational snapshot store for the shared service.
+
+    Returns None when the relational layer cannot be reached from this process
+    (e.g. a bare-file import without the package root on ``sys.path``); the
+    caller then keeps the context database in memory and says so. Never
+    raises past this helper.
+    """
+    try:
+        from core.memory.context_durability import RelationalContextSnapshotStore
+
+        return RelationalContextSnapshotStore(
+            tenant_id=os.environ.get("MEMORA_CONTEXT_TENANT", "default"),
+            scope_key=user,
+        )
+    except Exception as exc:
+        logger.warning(
+            "viking context snapshot store unavailable (%s); the context "
+            "database will run in-memory and lose content on restart", exc)
+        return None
+
+
+def _build_default_service() -> MemoraContextService:
+    """Shared service construction with durable context (TASK-MEM-010).
+
+    Restores the ``viking://`` state from the relational snapshot store before
+    the first request can touch it. Startup fails soft: an unavailable store
+    yields an empty, honestly-logged context (``PersistentContextDatabase
+    .restore_or_empty``), never a crash and never fabricated content. If even
+    the store cannot be constructed, the fallback is the historical in-memory
+    behaviour with a warning — the API keeps working, ``stats()`` shows the
+    context is not durable.
+    """
+    user = os.environ.get("MEMORA_CONTEXT_USER", "memora")
+    store = _durability_store(user)
+    if store is None:
+        return MemoraContextService(user=user)
+    try:
+        database = vk.PersistentContextDatabase.restore_or_empty(store, user=user)
+        return MemoraContextService(user=user, database=database)
+    except Exception as exc:  # pragma: no cover - defensive fail-soft shell
+        logger.warning(
+            "viking context restore failed (%s); falling back to an in-memory "
+            "context database", exc)
+        return MemoraContextService(user=user)
+
+
 def get_service() -> MemoraContextService:
     global _default
     if _default is None:
-        _default = MemoraContextService(user=os.environ.get("MEMORA_CONTEXT_USER", "memora"))
+        _default = _build_default_service()
     return _default
 
 
 def reset_service(service: MemoraContextService | None = None) -> MemoraContextService:
-    """Test/helper hook: replace the process-wide service."""
+    """Test/helper hook: replace the process-wide service.
+
+    Passing no argument restores the durable default construction (TASK-MEM-010);
+    a plain ``MemoraContextService()`` would drop snapshot persistence.
+    """
     global _default
-    _default = service or MemoraContextService()
+    _default = service or _build_default_service()
     return _default
 
 
