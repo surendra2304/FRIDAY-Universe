@@ -108,6 +108,27 @@ def build_scorecard(fills: Optional[List[Dict[str, Any]]] = None) -> Dict[str, A
     for row in fills:
         by_strategy.setdefault(str(row.get("strategy") or "UNATTRIBUTED"), []).append(row)
         by_engine.setdefault(str(row.get("engine") or "unknown"), []).append(row)
+    # The governed set renders explicitly even with zero recorded fills, so
+    # "0 recorded forward trades" is stated by the scorecard itself rather
+    # than implied by an absent row.
+    try:
+        import os
+        import sys
+
+        _stratex_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if _stratex_dir not in sys.path:
+            sys.path.insert(0, _stratex_dir)
+        from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+        for _name, _spec in PRODUCTION_STRATEGY_REGISTRY.items():
+            if _spec.get("status") in ("VALIDATED", "OBSERVE_ONLY"):
+                by_strategy.setdefault(_name, [])
+    except Exception:
+        pass
+    try:
+        boundaries = fill_ledger.read_boundaries()
+    except Exception:
+        boundaries = []
     return {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "source": "state/fill_ledger.jsonl ONLY",
@@ -115,6 +136,7 @@ def build_scorecard(fills: Optional[List[Dict[str, Any]]] = None) -> Dict[str, A
         "strategies": {k: _stats(v) for k, v in sorted(by_strategy.items())},
         "engines": {k: _stats(v) for k, v in sorted(by_engine.items())},
         "totals": _stats(fills),
+        "reset_boundaries": boundaries,
     }
 
 
@@ -123,6 +145,13 @@ def render_lines(card: Dict[str, Any]) -> List[str]:
         f"[SCORECARD] generated {card['generated_at']} from {card['source']} "
         f"— {card['total_fills']} recorded fill(s)"
     ]
+    for b in card.get("reset_boundaries") or []:
+        lines.append(
+            f"[SCORECARD] RESET BOUNDARY {b.get('timestamp')} actor={b.get('actor')} "
+            "— account reset: balance changes across this line are NOT profit; "
+            "pre-boundary records are history, forward measurement re-baselines "
+            f"at the post-reset equity. {b.get('note') or ''}".rstrip()
+        )
     if not card["strategies"]:
         lines.append("[SCORECARD] No recorded fills yet: every strategy scores 0 forward trades.")
     for name, s in card["strategies"].items():

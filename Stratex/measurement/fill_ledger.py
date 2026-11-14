@@ -257,6 +257,57 @@ def append_equity_snapshot(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return row
 
 
+def append_reset_boundary(
+    *,
+    actor: str,
+    venues_pre: Dict[str, Any],
+    venues_post: Dict[str, Any],
+    note: str = "",
+) -> Optional[Dict[str, Any]]:
+    """Append a RESET_BOUNDARY marker to the equity snapshot stream.
+
+    An account reset (owner action on a demo/testnet account) changes
+    balances without any trading. Without an explicit boundary, the jump
+    between the last pre-reset snapshot and the first post-reset snapshot
+    is indistinguishable from profit. The boundary row keeps pre-reset
+    records as history and marks where forward measurement re-baselines.
+    Never raises (alert on failure).
+    """
+    now = time.time()
+    row = {
+        "record_type": "RESET_BOUNDARY",
+        "ts": now,
+        "timestamp": _iso(now),
+        "actor": str(actor or "unknown"),
+        "venues_pre": venues_pre or {},
+        "venues_post": venues_post or {},
+        "note": str(note or ""),
+    }
+    try:
+        _append(equity_snapshot_path(), row)
+        logger.warning(
+            "[MEASUREMENT] RESET BOUNDARY recorded by %s — forward "
+            "measurement re-baselines at the post-reset equity; pre-boundary "
+            "records are history only. %s",
+            row["actor"],
+            row["note"],
+        )
+    except Exception as e:
+        logger.error(f"[MEASUREMENT] Reset boundary append FAILED: {e}")
+        raise_alert("snapshot_failed", f"reset boundary append failed: {e}")
+        return None
+    return row
+
+
+def read_boundaries() -> List[Dict[str, Any]]:
+    """All RESET_BOUNDARY markers from the snapshot stream, oldest first."""
+    return [
+        row
+        for row in read_jsonl(equity_snapshot_path())
+        if row.get("record_type") == "RESET_BOUNDARY"
+    ]
+
+
 def read_equity_snapshots() -> List[Dict[str, Any]]:
     return read_jsonl(equity_snapshot_path())
 
