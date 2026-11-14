@@ -4041,6 +4041,15 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Stratex/rigorous_backtest/ (NEW: data_feed.py, simulator.py, walkforward.py, factory_eval.py, module_eval.py, run_all.py, tests/, results/)"
     acceptance: "Factory verdict: five winners FAIL honest OOS testing on all three layers (procedure PF 0.81 pooled; original variants PF 0.27-0.62; deployed modules PF 0.54-0.73). bb_reversion (VALIDATED) PF 0.68 on 12,308 OOS trades. adx_ema sole positive (PF 1.57, +1.19%/trade) on only 77 trades - forward-protocol candidate. Harness validated by exact replication of the legacy backtester (max deviation 0.0) and bit-identical reruns."
     next_action: "None - programme complete and verified (PRs #180 and #184 merged, CI green; harness and results on main). Follow-ups: adx_ema is the forward demo protocol's first entrant (evidence accumulation only, HIGH caveat at 77 OOS trades); the 51 UNTESTABLE discovery modules can be re-run with python3 -m rigorous_backtest.run_all discovery when compute allows."
+  - id: TASK-STR-RD-001
+    title: "Stratex strategy R&D programme — create/backtest new strategies, test everything (exits/sizing/instruments/gates/timeframes/costs) under the Anti-Overfit Law"
+    status: VERIFIED
+    owner: muse_ai
+    branch: "claude/task-str-rd-001-stage1..5 (per-stage checkpoint branches)"
+    prs: [191, 193, 205, 206, 207]
+    issue_35_comments: [6880675784, 6882791778]
+    result: "COMPLETE. Zero promotion candidates across 116 ranked configurations (58 discovery modules fully resolved: 34 EVALUATED/9 NOT_EVALUABLE/9 UNTESTABLE/4 NO_TRADES/2 BROKEN; adx_ema production-faithful 31 trades +0.880% PF 1.46 — watchlist only; 28 new Stage-3 variants, best families ts_momentum wf-select PF 1.04; Stage-4: costs not the constraint, positives are single-symbol, positive-expectancy roc42_4h compounds -61% at w=1.0, only 4h timeframe region non-negative). Recommendation: no graduation; forward protocol needs wider instrument universe or a years-scale bar for 4h strategies; judge compounded equity. Artifacts: Stratex/rigorous_backtest/RESULTS_RD.md + results_rd/ on main (PR #207 merge 18d13394)."
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-001 crew): programme complete — zero promotion candidates; adx_ema production-faithful remains watchlist-only. Follow-up is the owner forward-protocol decision (widen the instrument universe or restate the bar in years for 4h strategies; judge the forward window on compounded equity). Full results: Stratex/rigorous_backtest/RESULTS_RD.md."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
