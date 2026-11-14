@@ -1,0 +1,16 @@
+{
+  "families2_vs_rd001_stage3": {
+    "config": "ts_momentum/roc42_4h on BTCUSDT,ETHUSDT,SOLUSDT (RD-001 cache, 1h 2023-10..2026-10 resampled to 4h)",
+    "rd001_published": {
+      "trades": 303,
+      "expectancy_net": 0.0024275740638451445,
+      "profit_factor_net": 1.0969220482985518
+    },
+    "rd002_replica": {
+      "trades": 303,
+      "expectancy_net": 0.0024275740638451445,
+      "profit_factor_net": 1.0969220482985518
+    },
+    "verdict": "BIT-IDENTICAL \u2014 families2 signal logic is faithful to rd/stage3"
+  }
+}
