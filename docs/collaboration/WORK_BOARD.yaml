@@ -1,9 +1,9 @@
 schema_version: 1
-snapshot_at: "2026-11-13T12:30:00+05:30"  # IST — project clock is IST per owner decision D-026 (2026-11-10 IST); refreshed by ZAI Agent 1 after the owner's Minimal-Console directive (Living Universe superseded)
+snapshot_at: "2026-11-14T12:45:00+05:30"  # IST — refreshed by Muse (lead coordinator) with the Master Plan v3 revision: TASK-REL-001..004 and TASK-PLAN-V3 claimed; main_head updated to the post-merge-all head
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
-main_head_at_snapshot: "6368173"  # Merge PR #80 (TASK-DEPLOY-GAP-001 evidence). NOTE: live Server 2 workspace was found on claude/TASK-CI-004 @ 64b1df8 (BEHIND main) — deployment gap root-caused and closed, see TASK-DEPLOY-GAP-001.
+main_head_at_snapshot: "573da9c"  # Merge PR #51 — final head of the owner-directed merge-all batch (16 PRs merged 2026-11-14, 0 open PRs, Fleet CD success run 43569163501).
 warning: "Snapshot only. Refresh GitHub branches, PRs, workflows and runtime state before acting. NOTE (2026-11-10): the repository history was rewritten to purge leaked credentials; all pre-rewrite commit SHAs recorded anywhere in this registry are historical references only. The pre-rewrite bundle is preserved offline by ZAI. All collaborator branches were deleted after merge (single-branch main)."
 
 status_definitions:
@@ -3027,6 +3027,114 @@ tasks:
     blockers: []
     next_action: "PR #73 (activation record + evidence) awaiting ZAI Agent 1 / Arena Agent 1 review of the selection policy and priors blending. Follow-up: re-measure win rates after live evidence accumulates; webhook-mode activation (TELEGRAM_WEBHOOK_URL) at next deploy to end the external-poller 409s."
 
+  - id: TASK-PLAN-V3
+    title: "Master Plan v3 — complete revision (owner-directed 2026-11-14): chronicle moved to ACTIVITY_LOG, fresh live-probed snapshot, milestones re-stated under the 7-day re-verification rule, M5 reliability milestone, resource budget"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/master-plan-v3
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T12:45:00+05:30"
+    updated_at: "2026-11-14T12:45:00+05:30"
+    files:
+      - "docs/MASTER_PLAN.md"
+      - "docs/collaboration/ACTIVITY_LOG.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    defect: "Master Plan v2 broke its own rules: ~180 lines of dated work chronicle appended to the plan file, a reality snapshot dated 2026-11-10 silently aging, and milestone checkboxes ticked on merge-day evidence that no longer passes re-verification (Stratex engine offline ~12 days, Forge /v1/task/execute still absent)."
+    acceptance:
+      - "docs/MASTER_PLAN.md replaced by v3: sections 1-2 kept (plus owner 2026-11-14 coordination + re-verification rules), section 3 snapshot from live probes dated 2026-11-14, M1-M4 checkboxes re-stated from evidence, M5 + resource budget added, owner decisions pruned to genuinely open items."
+      - "v2 chronicle moved verbatim to docs/collaboration/ACTIVITY_LOG.md (line-count verified: 181 lines moved, 0 altered)."
+      - "TASK-REL-001..004 registered on this board, claimed by Muse."
+      - "PR opened for team review; merge is the owner's decision — not merged by the author."
+    evidence:
+      - "Live probes 2026-11-14 07:06-07:07 UTC (Muse): all 10 /health HTTP 200 (0.82-1.38s); POST /friday/api/chat HTTP 200 in 3.10s (fleet-status fast path, task_state COMPLETED); Stratex engine offline, STALE_STRATEGY_EVALUATION 1039907s, daemon_balance null."
+      - "Git/code checks on main 573da9c: 0 open PRs; Fleet CD run 43569163501 success; CI/CD run 43569163089 failure (voice-regressions job); no /v1/task/execute in Forge; wave test files named in no workflow."
+    blockers: []
+    next_action: "Owner review and merge decision on the v3 PR; team review via issue #35 announcement."
+
+  - id: TASK-REL-001
+    title: "Wire all merged waves' tests into CI (Forge reliability, Memora durability, intent-tier test files currently run by no workflow)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T12:45:00+05:30"
+    updated_at: "2026-11-14T12:45:00+05:30"
+    files:
+      - ".github/workflows/friday-universe-ci.yml"
+      - ".github/workflows/owner-workflows.yml"
+    defect: "Verified 2026-11-14 by grep of .github/workflows: no workflow names Forge/tests/unit/test_task_forge_002_*.py (PR #91), Memora/tests/test_viking_context_durability.py (PR #90) or FRIDAY/tests/test_intent_classifier_tier.py (PR #92). Every CI job runs an explicit file list, so these merged tests execute nowhere."
+    acceptance:
+      - "Each named test file is executed by a CI job on PRs and on main pushes."
+      - "CI output shows the files collected and passing (or a recorded, root-caused failure tracked separately — never silently skipped)."
+    evidence: []
+    blockers: []
+    next_action: "Add the files to the appropriate jobs' explicit test lists; verify in the PR's own CI run."
+
+  - id: TASK-REL-002
+    title: "Root-cause and fix the failing voice-regressions CI job (failing on main since push 37db125)"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T12:45:00+05:30"
+    updated_at: "2026-11-14T12:45:00+05:30"
+    files:
+      - ".github/workflows/friday-universe-ci.yml"
+    defect: "FRIDAY Universe CI/CD run 43569163089 on main 573da9c concluded failure; the voice-regressions job (ruff on voice surfaces + pytest over 14 named voice/LiveKit/Gemini/CLI test files) is the failing component, first seen on the 37db125 push (numpy PR #51 merge chain). Root cause not yet established."
+    acceptance:
+      - "Failing test(s)/lint identified from CI logs and reproduced locally."
+      - "Root cause fixed (code or test defect fixed at the cause; no assertion weakened, no test skipped to force green)."
+      - "voice-regressions job green on main."
+    evidence: []
+    blockers: []
+    next_action: "Pull the failing job's logs from run 43569163089 (and successors), identify the failing file, reproduce locally."
+
+  - id: TASK-REL-003
+    title: "Diagnose and repair Stratex engine offline (strategy evaluation stale ~12 days) — diagnosis first, no trading changes"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T12:45:00+05:30"
+    updated_at: "2026-11-14T12:45:00+05:30"
+    files: []
+    defect: "Live probe 2026-11-14 07:07 UTC: /stratex/health reports engine offline, engine_healthy false, STALE_STRATEGY_EVALUATION last evaluation 1039907s ago (>900s threshold), daemon_balance null — while the process answers /health 200 (process_liveness only)."
+    acceptance:
+      - "Root cause identified and recorded with evidence (logs/state) before any change is made."
+      - "Repair restores strategy evaluation freshness (<900s) on the demo configuration, verified by live probe."
+      - "No trading-behaviour changes in this task; the demo-only fail-closed guard (D-015 / ALLOW_LIVE_TRADING) is untouched."
+    evidence:
+      - "Stratex /health body captured 2026-11-14T07:06-07:07Z (two probe sets, concordant)."
+    blockers: []
+    next_action: "Read-only diagnosis: Stratex service state, engine/daemon logs and evaluation loop code path on Server 1."
+
+  - id: TASK-REL-004
+    title: "Health-endpoint honesty (design): agents report capability state, not just process liveness"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: null
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T12:45:00+05:30"
+    updated_at: "2026-11-14T12:45:00+05:30"
+    files: []
+    defect: "Every agent /health reports evidence_class process_liveness; a degraded agent (e.g. Stratex with engine offline) still presents status ok / HTTP 200 at the top level, and FRIDAY's fleet-status answer can only cite reachability. Design task only in this step."
+    acceptance:
+      - "A written contract (fields, semantics, degradation states) for capability reporting across all 10 agents, building on Stratex's existing engine/engine_healthy fields."
+      - "Contract states how FRIDAY's fleet-status answer must cite capability vs reachability."
+      - "Design reviewed on issue #35 before any implementation task is opened."
+    evidence: []
+    blockers: []
+    next_action: "Draft the contract from the existing per-agent health payloads (survey all 10 response bodies first)."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
