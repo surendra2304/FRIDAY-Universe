@@ -4192,14 +4192,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-REL-038
     title: "IntelX honesty + research persistence: sharing/exchange records stop claiming transmissions that never happen, and research_live results become durably retrievable"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-rel-038-intelx-honesty-persistence
     pr: 227
     contributors: []
     priority: P1
     created_at: "2026-11-15T02:50:00+05:30"
-    updated_at: "2026-11-15T02:50:00+05:30"
+    updated_at: "2026-11-15T04:20:00+05:30"
     files:
       - "IntelX/routers/intel_sharing_manager.py"
       - "IntelX/intelx/services/threat_intel_exchange_protocol.py"
@@ -4220,9 +4220,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "New tests fail on clean main and pass with the fix; neighbouring suites' failure sets identical to clean main."
     evidence:
       - "Claim + renumber: claimed as TASK-REL-030 (issue #35 comment 6884453573), renumbered to TASK-REL-038 (comment 6884529679) after four sibling wave-3 crews claimed REL-030 in the same minutes."
+      - "SHIP + DEPLOY (PR #227): branch rebuilt from fresh main e75c7c14, board entry insertion-only (validator VALID, 139 tasks, neighbours REL-028/REL-029 intact, read back post-merge at lines 4092/4155/4189 with TASK-REL-030). CI fully green; merged 4cfa424144f874a2adfb9f48c630fac96fcf0d7b; Fleet CD run 43645696953 success. Server 1 deployed sha256 == shipped blobs for all six files; IntelX.service active."
+      - "LIVE PROOF — LABELLING (production Server 1): POST /intelex/sharing/exchanges returned status=queued_local_only, transmitted=false, with the local-only delivery_note; sharing report transmitted=0. Exchange protocol end-to-end (2 partners, 1 package): record status=recorded_local_only, transmitted=false, errors=[]; report recorded_local_only_exchanges=1, transmitted_exchanges=0, no completed_exchanges key. Regression probe: GET /v1/real-threat-intel/status returned the normal engines payload; /healthz 200."
+      - "LIVE ACCEPTANCE CAUGHT A REAL DEFECT IN THE NEW CODE: the first production research_live run persisted correctly (run lr_82249cc2a27a4483ac539a9f, synthesis succeeded, durable_run=true) but archive READS returned 503 — Oracle 23ai native JSON columns come back from python-oracledb already deserialized and SQLAlchemy's stock JSON result processor applies json.loads unconditionally (TypeError reproduced directly in the fleet venv). Fixed in PR #238 (TolerantJSON result processor on LiveResearchRun's payload/receipt columns only; DDL still native JSON; archive endpoints now log exceptions before the 503): tests 15/15, fleet CI 'test' success (the two red layout/policy checks were already failing on main itself from other crews' merges — coordinator-flagged CI hygiene, unrelated to this change), merged 0f1cba5ed5eba9533df788d5bc7719b530c5d511, Fleet CD run 43649445536 success, deployed sha256 verified."
+      - "LIVE PROOF — PERSISTENCE ACROSS RESTART: run lr_82249cc2a27a4483ac539a9f, stored by the ORIGINAL build and carried through a production IntelX restart (manual restart during probing) plus the PR #238 redeploy, was fetched via GET /v1/research/live/{run_id} and compared programmatically: result payload byte-identical to the original research_live response (fetched==original_result: True); research_recall returned SUCCESS with the identical result; the list endpoint returns the run with its summary. A second run on the fixed build (lr_5e94778fa32740a8ab0550d8, synthesis succeeded) fetched verbatim immediately; journal records the measured write cost: 'live research persisted ... write_ms=40.2' (bounded retention: newest 200 runs, INTELX_LIVE_RESEARCH_MAX_RUNS)."
+      - "RESIDUALS: FRIDAY chat itself was not rewired — the retrieval seam FRIDAY can already call is the research_recall task action + the two GET endpoints (coordinator follow-up if in-chat recall is wanted). Legacy-status presentation matters only for in-memory records (both sharing engines are process-memory only). Google News skip reasons (http_<code> / google_news_redirect_http_<code>) are implemented and unit-tested; the two live probe runs fetched their sources successfully, so a live 403 instance was not observed. Fleet venv lacks pytest-asyncio, so the async suite runs in CI/local venv, not on the host."
       - "Tests (local venv, IntelX suite): tests/test_rel038_intelx_honesty_persistence.py — 14 tests. On clean main 8014c8c: 14/14 FAIL (defect assertions; the persistence section additionally cannot import the new store module). With the fix: 14/14 PASS. Regression ring with the fix: test_threat_intel_honesty.py + test_mesh_receipt_contract.py + test_search_merge_trackb.py + test_search_provenance.py = 35 passed, 0 failed."
     blockers: []
-    next_action: "Ship the fix PR, merge on green CI, deploy via Fleet CD, fingerprint-verify on Server 1, then live-proof: sharing/exchange honest states on the production endpoints, a production research_live run persisted and fetched verbatim after an IntelX restart, and the /v1/real-threat-intel regression probe. Flip to VERIFIED via a follow-up board PR with that evidence."
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-REL-038 crew): PRs #227 + #238 merged and deployed, all acceptance items production-proven including verbatim research retrieval after an IntelX restart. Follow-ups for the coordinator (not this task): optionally wire FRIDAY chat to the research_recall seam for in-chat recall of past research; fleet CI hygiene for the monorepo layout/policy checks failing on main itself."
 
   - id: TASK-REL-030
     title: "Cortex A/B statistics honesty — fabricated p-value in ab_experiment_framework, inverted z-test in ab_test_framework (REL-020 residual audit)"
