@@ -887,6 +887,11 @@ async def chat_completions(req: ChatCompletionRequest):
         norm_model = req.model.lower()
         if "gemini" in norm_model:
             provider = "gemini"
+        elif norm_model.startswith("openai/gpt-oss"):
+            # Groq hosts the gpt-oss family under the "openai/" prefix (see the
+            # /models catalog: owned_by "groq"). The generic "openai" substring
+            # match below would misroute it to the OpenAI provider.
+            provider = "groq"
         elif any(k in norm_model for k in ("gpt-4", "gpt-3", "o1", "o3", "openai")):
             provider = "openai"
         elif "mistral" in norm_model or "codestral" in norm_model:
@@ -940,6 +945,13 @@ async def chat_completions(req: ChatCompletionRequest):
         exec_provider = "auto"
     elif "gemini" in norm_model:
         exec_provider = "gemini"
+    elif norm_model.startswith("openai/gpt-oss"):
+        # Groq hosts the gpt-oss family under the "openai/" prefix (see the
+        # /models catalog: owned_by "groq"). The generic "openai" substring
+        # match below would misroute it to the OpenAI provider, which has no
+        # credentials here, silently dropping the request to the fallback
+        # ladder instead of serving the explicitly requested model.
+        exec_provider = "groq"
     elif any(k in norm_model for k in ("gpt-4", "gpt-3", "o1", "o3", "openai")):
         exec_provider = "openai"
     elif "mistral" in norm_model or "codestral" in norm_model:
