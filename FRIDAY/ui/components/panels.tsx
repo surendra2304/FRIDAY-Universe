@@ -37,10 +37,10 @@ import {
   istTime,
   statusTone,
 } from "@/lib/api";
-import { CountUp, Reveal, Tilt } from "./effects";
+import { CountUp, Reveal } from "./effects";
 
 /* ============================================================
-   Fleet grid, activity feed and system panel.
+   Fleet constellation, activity feed and system instruments.
    Owner directives honored here (2026-11-11 IST):
    - no raw "owner-approved FRIDAY Universe task" boilerplate —
      cards show the human intent, cleaned;
@@ -48,11 +48,11 @@ import { CountUp, Reveal, Tilt } from "./effects";
      so stale data can't masquerade as live work;
    - timestamps are IST, the single project clock.
 
-   Sovereign Aurora edition (2026-11-14, frontend rebuild):
-   pointer-tilt + glare on agent cards, gradient-filled
-   sparklines, and shimmer skeletons while the first probe is
-   in flight (instead of a misleading "not reported" panel).
-   All data wiring below is unchanged.
+   Reactor Deck edition (2026-11-14, rebuild #2): the fleet is
+   a horizontal CONSTELLATION RAIL of agent nodes (orb + status
+   ring) the owner flicks through and taps to ask/assign; the
+   system readouts are machine-room instruments. All data
+   wiring below is unchanged from the Aurora edition.
    ============================================================ */
 
 const AGENT_ORDER = ["stratex", "inference", "cortex", "forge", "intelx", "vyralx", "memora", "futuris", "sentinel"] as const;
@@ -109,9 +109,9 @@ export function Sparkline({ values, color, width = 130, height = 38 }: { values:
 /** Shimmer placeholders while the first fleet probe is in flight. */
 function FleetSkeleton() {
   return (
-    <div className="fleet-grid" aria-hidden="true">
+    <div className="constellation" aria-hidden="true">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div className="skel-card" key={i} style={{ animationDelay: `${i * 90}ms` }}>
+        <div className="skel-node" key={i} style={{ animationDelay: `${i * 90}ms` }}>
           <div className="skel-line w40" />
           <div className="skel-line w70" />
           <div className="skel-line w55" />
@@ -149,7 +149,7 @@ export function FleetGrid({
 
   if (sorted.length === 0) {
     return (
-      <div className="panel feed-empty">
+      <div className="deck-empty">
         <Globe2 size={22} style={{ marginBottom: 8 }} />
         The fleet has not reported yet. The status probe refreshes every 30 seconds.
       </div>
@@ -157,7 +157,7 @@ export function FleetGrid({
   }
 
   return (
-    <div className="fleet-grid">
+    <div className="constellation">
       {sorted.map((agent, index) => {
         const live = liveActivity[agent.id];
         const ledger = nowById.get(agent.id);
@@ -189,81 +189,72 @@ export function FleetGrid({
         const isActive = autonomy?.active_agent?.toLowerCase() === agent.id || Boolean(working);
         const tone = statusTone(agent.status);
         return (
-          <Reveal key={agent.id} delay={Math.min(index * 60, 360)} as="article">
-            <Tilt className="agent-tilt">
-              <div className={`agent-card tone-${tone}${isActive ? " active" : ""}`}>
-                <span className="edge" aria-hidden="true" />
-                <span className="glare" aria-hidden="true" />
-                <div className="agent-head">
-                  <div className="agent-icon">{AGENT_ICONS[agent.id] ?? <Database size={17} />}</div>
-                  <div className="agent-identity">
-                    <div className="agent-name">
-                      {agent.name}
-                      {isActive && <span className="dot good pulse" aria-label="active" />}
-                    </div>
-                    <span className="agent-id">{agent.id}</span>
-                    <div className="agent-role">{ROLE_LABELS[agent.id] ?? agent.role ?? "Specialist agent"}</div>
-                  </div>
-                  <span className={`status-pill ${tone}`}>{agent.status.toLowerCase()}</span>
-                </div>
-                <div className="agent-meta">
-                  <span className="agent-latency">
-                    {typeof agent.latency_ms === "number" ? `${Math.round(agent.latency_ms)} ms` : "latency n/a"}
-                  </span>
-                  <span className="agent-fresh">
-                    {working
-                      ? `working ${freshness(working.at) || working.status}`
-                      : record?.at
-                        ? freshness(record.at)
-                          ? `active ${freshness(record.at)}`
-                          : "active"
-                        : `probe ${freshness(agent.last_checked) || "pending"}`}
-                  </span>
-                </div>
-                {working && (
-                  <div className="agent-task working">
-                    <strong>Working now:</strong> {working.description}
-                    <span className="work-bar" aria-hidden="true" />
-                  </div>
-                )}
-                <div className="agent-task">
-                  {record?.directive ? (
-                    <>
-                      <strong>Last work:</strong> {record.directive}
-                    </>
-                  ) : working ? (
-                    <>
-                      {working.task_id} — {working.status}
-                    </>
-                  ) : (
-                    <>Idle — awaiting your directive</>
-                  )}
-                </div>
-                {record?.result && (
-                  <div className={`agent-result ${record.success ? "good" : "bad"}`}>
-                    {record.success ? (
-                      <CheckCircle2 size={13} style={{ flex: "none", marginTop: 2 }} />
-                    ) : (
-                      <Activity size={13} style={{ flex: "none", marginTop: 2 }} />
-                    )}
-                    <span>{record.result}</span>
-                  </div>
-                )}
-                <div className="agent-actions">
-                  <button className="mini-btn" onClick={() => onAsk(agent)}>
-                    <MessageSquareText size={13} /> Assign / ask
-                  </button>
-                  <a
-                    className="mini-btn"
-                    href={`https://friday-universe.duckdns.org/${agent.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open site <ArrowUpRight size={12} />
-                  </a>
-                </div>
+          <Reveal key={agent.id} delay={Math.min(index * 60, 360)} as="article" className="node-cell">
+            <div className={`agent-node tone-${tone}${isActive ? " active" : ""}`}>
+              <div className="node-top">
+                <div className={`node-orb tone-${tone}`}>{AGENT_ICONS[agent.id] ?? <Database size={17} />}</div>
+                <span className={`status-pill ${tone}`}>{agent.status.toLowerCase()}</span>
               </div>
-            </Tilt>
+              <div className="node-name">
+                {agent.name}
+                {isActive && <span className="dot good pulse" aria-label="active" />}
+              </div>
+              <div className="node-role">{ROLE_LABELS[agent.id] ?? agent.role ?? "Specialist agent"}</div>
+              <div className="node-meta">
+                <span>{typeof agent.latency_ms === "number" ? `${Math.round(agent.latency_ms)} ms` : "latency n/a"}</span>
+                <span>
+                  {working
+                    ? `working ${freshness(working.at) || working.status}`
+                    : record?.at
+                      ? freshness(record.at)
+                        ? `active ${freshness(record.at)}`
+                        : "active"
+                      : `probe ${freshness(agent.last_checked) || "pending"}`}
+                </span>
+              </div>
+              {working && (
+                <div className="node-work working">
+                  <strong>Working now:</strong> {working.description}
+                  <span className="work-bar" aria-hidden="true" />
+                </div>
+              )}
+              <div className="node-work">
+                {record?.directive ? (
+                  <>
+                    <strong>Last work:</strong> {record.directive}
+                  </>
+                ) : working ? (
+                  <>
+                    {working.task_id} — {working.status}
+                  </>
+                ) : (
+                  <>Idle — awaiting your directive</>
+                )}
+              </div>
+              {record?.result && (
+                <div className={`agent-result ${record.success ? "good" : "bad"}`}>
+                  {record.success ? (
+                    <CheckCircle2 size={13} style={{ flex: "none", marginTop: 2 }} />
+                  ) : (
+                    <Activity size={13} style={{ flex: "none", marginTop: 2 }} />
+                  )}
+                  <span>{record.result}</span>
+                </div>
+              )}
+              <div className="node-actions">
+                <button className="mini-btn" onClick={() => onAsk(agent)}>
+                  <MessageSquareText size={13} /> Assign / ask
+                </button>
+                <a
+                  className="mini-btn"
+                  href={`https://friday-universe.duckdns.org/${agent.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open site <ArrowUpRight size={12} />
+                </a>
+              </div>
+            </div>
           </Reveal>
         );
       })}
@@ -275,7 +266,7 @@ export function FleetGrid({
 export function TaskTimeline({ timeline }: { timeline: TaskTimelineSnapshot | null }) {
   if (!timeline) {
     return (
-      <div className="panel" aria-hidden="true">
+      <div className="ledger" aria-hidden="true">
         <div className="feed-list">
           {Array.from({ length: 3 }).map((_, i) => (
             <div className="skel-row" key={i}>
@@ -289,17 +280,17 @@ export function TaskTimeline({ timeline }: { timeline: TaskTimelineSnapshot | nu
   }
   if (timeline.events.length === 0) {
     return (
-      <div className="panel feed-empty">
+      <div className="deck-empty">
         <Waypoints size={20} style={{ marginBottom: 8 }} />
-        No delegated tasks yet. Assign work from the Console — every dispatch lands here with its status.
+        No delegated tasks yet. Assign work from the conversation — every dispatch lands here with its status.
       </div>
     );
   }
   const counts = timeline.chip_counts ?? {};
   return (
-    <div className="panel">
+    <div className="ledger">
       <div className="feed-list">
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+        <div className="tl-chips">
           <span className="chip chip-queued">queued {counts.queued ?? 0}</span>
           <span className="chip chip-running">running {counts.running ?? 0}</span>
           <span className="chip chip-done">done {counts.done ?? 0}</span>
@@ -316,7 +307,7 @@ export function TaskTimeline({ timeline }: { timeline: TaskTimelineSnapshot | nu
                 <span className={`chip chip-${ev.chip}`}>{ev.chip}</span> {cleanDirective(ev.description, 120)}
               </p>
               {ev.error ? (
-                <p className="feed-result" style={{ margin: 0, color: "#ff8080" }}>
+                <p className="feed-result" style={{ margin: 0, color: "var(--bad)" }}>
                   {cleanDirective(ev.error, 140)}
                 </p>
               ) : ev.result ? (
@@ -375,7 +366,7 @@ export function ActivityFeed({
 
   if (unique.length === 0) {
     return (
-      <div className="panel feed-empty">
+      <div className="deck-empty">
         <Zap size={20} style={{ marginBottom: 8 }} />
         All agents standing by. The moment one acts — yours to see here, live.
       </div>
@@ -383,7 +374,7 @@ export function ActivityFeed({
   }
 
   return (
-    <div className="panel">
+    <div className="ledger">
       <div className="feed-list">
         {unique.map((row, i) => (
           <div className="feed-row" key={`${row.agent}-${row.at}-${i}`} style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}>
@@ -430,25 +421,25 @@ export function SystemPanel({
   const ramOk = telemetry?.status === "ok" && typeof telemetry.ram_percent === "number";
 
   return (
-    <div className="telemetry-grid">
+    <div className="instruments">
       <Reveal as="article">
-        <div className="panel stat-card">
+        <div className="instrument">
           <div className="stat-head">
             <span className="stat-label">
               <Cpu size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Server 1 CPU
             </span>
             <span className={`status-pill ${cpuOk ? "good" : "muted"}`}>{cpuOk ? "live" : "n/a"}</span>
           </div>
-          <div className="stat-value grad-text">{cpuOk ? <CountUp value={Math.round(telemetry!.cpu_percent!)} suffix="%" /> : "—"}</div>
+          <div className="stat-value">{cpuOk ? <CountUp value={Math.round(telemetry!.cpu_percent!)} suffix="%" /> : "—"}</div>
           <div className="stat-foot">
             <span>{telemetry?.cpu_cores ?? "—"} cores · Oracle Always Free</span>
-            <Sparkline values={cpuHistory} color="#8de6cf" />
+            <Sparkline values={cpuHistory} color="#f2a33c" />
           </div>
         </div>
       </Reveal>
 
       <Reveal as="article" delay={70}>
-        <div className="panel stat-card">
+        <div className="instrument">
           <div className="stat-head">
             <span className="stat-label">
               <Gauge size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Server 1 memory
@@ -457,37 +448,37 @@ export function SystemPanel({
               {telemetry?.status === "ok" ? "live" : "n/a"}
             </span>
           </div>
-          <div className="stat-value grad-text">{ramOk ? <CountUp value={Math.round(telemetry!.ram_percent!)} suffix="%" /> : "—"}</div>
+          <div className="stat-value">{ramOk ? <CountUp value={Math.round(telemetry!.ram_percent!)} suffix="%" /> : "—"}</div>
           <div className="stat-foot">
             <span>
               {telemetry?.ram_used_gb ?? "—"} / {telemetry?.ram_total_gb ?? "—"} GB used
             </span>
-            <Sparkline values={ramHistory} color="#b9a6ff" />
+            <Sparkline values={ramHistory} color="#d8c9a3" />
           </div>
         </div>
       </Reveal>
 
       <Reveal as="article" delay={140}>
-        <div className="panel stat-card">
+        <div className="instrument">
           <div className="stat-head">
             <span className="stat-label">
               <Globe2 size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Fleet online
             </span>
             <span className={`status-pill ${statusTone(fleet?.status)}`}>{fleet?.status ?? "unknown"}</span>
           </div>
-          <div className="stat-value grad-text">
+          <div className="stat-value">
             <CountUp value={online} />
             <small> / {total}</small>
           </div>
           <div className="stat-foot">
             <span>agents reachable right now</span>
-            <Wifi size={15} style={{ color: "var(--mint)" }} />
+            <Wifi size={15} style={{ color: "var(--good)" }} />
           </div>
         </div>
       </Reveal>
 
       <Reveal as="article" delay={210}>
-        <div className="panel stat-card">
+        <div className="instrument">
           <div className="stat-head">
             <span className="stat-label">
               <Zap size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} /> Autonomy
@@ -496,10 +487,10 @@ export function SystemPanel({
               {autonomy?.autonomous_mode ? "running" : "manual"}
             </span>
           </div>
-          <div className="stat-value grad-text">{autonomy?.history_count ?? 0}</div>
+          <div className="stat-value">{autonomy?.history_count ?? 0}</div>
           <div className="stat-foot">
             <span>autonomous actions recorded</span>
-            <span style={{ color: "var(--cyan)" }}>{autonomy?.active_agent ? `active: ${autonomy.active_agent}` : "· standby"}</span>
+            <span style={{ color: "var(--amber)" }}>{autonomy?.active_agent ? `active: ${autonomy.active_agent}` : "· standby"}</span>
           </div>
         </div>
       </Reveal>
@@ -507,7 +498,9 @@ export function SystemPanel({
   );
 }
 
-/* Compact strip used on the Console tab: fleet + autonomy at a glance. */
+/* Compact strip: fleet + autonomy at a glance. (The Reactor Deck's
+   vitals ribbon in page.tsx supersedes this on the console; kept for
+   any other surface that wants the dock footer.) */
 export function ConsoleStrip({
   fleet,
   autonomy,
@@ -519,17 +512,13 @@ export function ConsoleStrip({
   const total = fleet?.agent_count ?? fleet?.agents?.length ?? 10;
   return (
     <div className="console-strip">
-      {/* Redundancy fix (VLM review 2026-11-13): the nav already shows the
-          live fleet count — repeating "N/9 agents" here made the dock read
-          as a status dashboard instead of a voice dock. The dock now shows
-          what the nav does NOT: autonomy mode and the delegation ledger. */}
       <span className="strip-pill">
         <Zap size={12} style={{ color: "var(--amber)" }} />
         {autonomy?.autonomous_mode ? "autonomy running" : "autonomy manual"}
       </span>
       {(autonomy?.history_count ?? 0) > 0 && (
         <span className="strip-pill" title="Autonomous actions logged by the fleet">
-          <BarChart2 size={12} style={{ color: "var(--cyan)" }} />
+          <BarChart2 size={12} style={{ color: "var(--amber)" }} />
           {autonomy?.history_count} actions logged
         </span>
       )}

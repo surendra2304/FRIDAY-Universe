@@ -595,6 +595,13 @@ async def _dashboard_cache_headers(request: Request, call_next):
     path = request.url.path
     if "/_next/static/" in path:
         response.headers.setdefault("Cache-Control", "public, max-age=31536000, immutable")
+    elif path.endswith(".txt"):
+        # Next.js RSC payload files (index.txt, __next.*.txt) pair with the
+        # HTML shell: left headerless they are heuristically cacheable, so a
+        # browser could pair a fresh shell with a stale payload after a
+        # deploy and keep rendering the old UI on client-side navigation.
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
     elif response.headers.get("content-type", "").startswith("text/html"):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"

@@ -3,31 +3,25 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 
 /* ============================================================
-   FRIDAY effects kit — "Sovereign Aurora" edition (2026-11-14).
+   FRIDAY effects kit — "Reactor Deck" edition (2026-11-14,
+   rebuild #2).
 
-   The owner's verdict on the stripped-down Minimal Console was
-   "worst of its kind — rebuild it with dynamic effects, floating
-   elements, React-Bits-style components." This kit delivers that
-   richness under the performance lessons of the Living Universe
-   era (which WAS laggy): every effect here is transform/opacity
-   only, one-shot or a single compositor loop, with NO canvas,
-   NO per-letter timers on live data, and a hard reduced-motion
-   opt-out everywhere.
-
-   Kit: Reveal (entrance) · CountUp (numbers) · TextReveal (hero
-   word stagger) · Tilt (pointer-tracked card tilt + glare) ·
-   Magnetic (primary-action pull) · Orbital (live agent ring
-   around the voice orb — informative, one rotation).
+   Deliberately smaller than the Aurora kit: the deck's richness
+   comes from composition and light, not effect density. What
+   remains is load-bearing:
+   - Reveal   — one-shot entrance rise (sections of the deck)
+   - CountUp  — vitals ribbon numerals tween on real data
+   - Orbital  — the live agent satellite ring around the reactor
+                core (rendered by VoiceCall; informative, one
+                slow compositor rotation)
+   Every motion is transform/opacity only, terminates or runs
+   as a single compositor loop, and collapses under
+   prefers-reduced-motion.
    ============================================================ */
 
 export function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-function finePointer(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia("(pointer: fine)").matches;
 }
 
 /* ---------------- entrance ---------------- */
@@ -83,132 +77,6 @@ export function CountUp({ value, duration = 700, suffix }: { value: number; dura
       {display.toLocaleString()}
       {suffix}
     </>
-  );
-}
-
-/* ---------------- hero text ---------------- */
-
-/**
- * React-Bits-style split reveal for the hero line: each word rises
- * out of an overflow mask with a spring stagger, once, on mount.
- * Words are real spans (screen readers read the intact line via
- * aria-label on the parent — callers pass plain text only).
- */
-export function TextReveal({
-  text,
-  className,
-  delay = 0,
-  stagger = 55,
-}: {
-  text: string;
-  className?: string;
-  delay?: number;
-  stagger?: number;
-}) {
-  const words = text.split(/\s+/).filter(Boolean);
-  return (
-    <span className={`wrev${className ? ` ${className}` : ""}`} role="text" aria-label={text}>
-      {words.map((word, i) => (
-        <span className="wrev-mask" key={i} aria-hidden="true">
-          <span className="wrev-word" style={{ animationDelay: `${delay + i * stagger}ms` }}>
-            {word}
-          </span>
-        </span>
-      ))}
-    </span>
-  );
-}
-
-/* ---------------- tilt cards ---------------- */
-
-/**
- * Pointer-tracked 3D tilt + glare for fleet cards. rAF-throttled,
- * max ~4.5°, transform-only. Inert on touch pointers and under
- * reduced motion (renders a plain wrapper).
- */
-export function Tilt({
-  children,
-  className,
-  max = 4.5,
-}: {
-  children: ReactNode;
-  className?: string;
-  max?: number;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const rafRef = useRef(0);
-
-  function onMove(event: React.PointerEvent<HTMLDivElement>) {
-    const el = ref.current;
-    if (!el || prefersReducedMotion() || !finePointer()) return;
-    const rect = el.getBoundingClientRect();
-    const px = (event.clientX - rect.left) / Math.max(rect.width, 1);
-    const py = (event.clientY - rect.top) / Math.max(rect.height, 1);
-    cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      el.style.setProperty("--tilt-x", `${((0.5 - py) * max).toFixed(2)}deg`);
-      el.style.setProperty("--tilt-y", `${((px - 0.5) * max).toFixed(2)}deg`);
-      el.style.setProperty("--glare-x", `${(px * 100).toFixed(1)}%`);
-      el.style.setProperty("--glare-y", `${(py * 100).toFixed(1)}%`);
-      el.classList.add("tilting");
-    });
-  }
-
-  function onLeave() {
-    const el = ref.current;
-    if (!el) return;
-    cancelAnimationFrame(rafRef.current);
-    el.classList.remove("tilting");
-    el.style.setProperty("--tilt-x", "0deg");
-    el.style.setProperty("--tilt-y", "0deg");
-  }
-
-  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
-
-  return (
-    <div ref={ref} className={`tilt${className ? ` ${className}` : ""}`} onPointerMove={onMove} onPointerLeave={onLeave}>
-      {children}
-    </div>
-  );
-}
-
-/* ---------------- magnetic actions ---------------- */
-
-/**
- * Subtle magnetic pull for the primary action in a panel (the
- * voice button, the send button). The element leans a few px
- * toward the pointer; springs back on leave via CSS transition.
- * Inert on touch / reduced motion.
- */
-export function Magnetic({
-  children,
-  className,
-  strength = 5,
-}: {
-  children: ReactNode;
-  className?: string;
-  strength?: number;
-}) {
-  const ref = useRef<HTMLSpanElement | null>(null);
-
-  function onMove(event: React.PointerEvent<HTMLSpanElement>) {
-    const el = ref.current;
-    if (!el || prefersReducedMotion() || !finePointer()) return;
-    const rect = el.getBoundingClientRect();
-    const dx = event.clientX - (rect.left + rect.width / 2);
-    const dy = event.clientY - (rect.top + rect.height / 2);
-    el.style.transform = `translate(${(dx / Math.max(rect.width, 1)) * strength}px, ${(dy / Math.max(rect.height, 1)) * strength}px)`;
-  }
-
-  function onLeave() {
-    const el = ref.current;
-    if (el) el.style.transform = "";
-  }
-
-  return (
-    <span ref={ref} className={`magnetic${className ? ` ${className}` : ""}`} onPointerMove={onMove} onPointerLeave={onLeave}>
-      {children}
-    </span>
   );
 }
 

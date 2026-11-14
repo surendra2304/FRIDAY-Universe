@@ -18,6 +18,10 @@
  * metric grid never styled as designed), and the preferences error
  * state uses a Lucide icon instead of an emoji glyph. All data
  * wiring below is unchanged.
+ *
+ * Reactor Deck edition (2026-11-14, rebuild #2): markup and data
+ * wiring unchanged again — the deck stylesheet restyles these
+ * surfaces as machine-room instruments and the Control section.
  */
 
 import { useCallback, useEffect, useState } from "react";
