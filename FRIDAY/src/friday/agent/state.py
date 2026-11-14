@@ -203,3 +203,57 @@ def bind_turn_state_machine(machine: ReasoningStateMachine) -> None:
 def current_turn_state_machine() -> ReasoningStateMachine | None:
     """Return the machine bound to this execution context, or None outside a turn."""
     return _turn_state_machine.get()
+
+
+# TASK-REL-031: the same per-turn scoping for the rest of the turn's
+# working state, which TASK-REL-025's report flagged as following the
+# identical shared-attribute pattern on the singleton: the tool replay
+# guards (_processed_tool_ids / _processed_tool_signatures) and the
+# active task context. process_message cleared the guard sets at every
+# turn start, so a turn starting mid-flight wiped an in-flight turn's
+# guards (its already-executed tools could execute again); two turns in
+# flight at once shared one signature set, so a turn's first legitimate
+# call could be refused as another turn's repeat; and task_context was
+# overwritten by whichever turn planned last, so observations and the
+# finalize step landed on the wrong turn's context. Bound per execution
+# context exactly like the state machine above; the FridayAgent
+# properties keep the most recent binding as a diagnostic fallback.
+_turn_processed_tool_ids: contextvars.ContextVar[set | None] = (
+    contextvars.ContextVar("friday_turn_processed_tool_ids", default=None)
+)
+_turn_processed_tool_signatures: contextvars.ContextVar[set | None] = (
+    contextvars.ContextVar("friday_turn_processed_tool_signatures", default=None)
+)
+_turn_task_context: contextvars.ContextVar[Any | None] = (
+    contextvars.ContextVar("friday_turn_task_context", default=None)
+)
+
+
+def bind_turn_processed_tool_ids(ids: set) -> None:
+    """Bind ``ids`` as the tool-id replay guard of the current execution context."""
+    _turn_processed_tool_ids.set(ids)
+
+
+def current_turn_processed_tool_ids() -> set | None:
+    """Return the tool-id replay guard bound to this context, or None."""
+    return _turn_processed_tool_ids.get()
+
+
+def bind_turn_processed_tool_signatures(signatures: set) -> None:
+    """Bind ``signatures`` as the operation-signature replay guard of this context."""
+    _turn_processed_tool_signatures.set(signatures)
+
+
+def current_turn_processed_tool_signatures() -> set | None:
+    """Return the operation-signature replay guard bound to this context, or None."""
+    return _turn_processed_tool_signatures.get()
+
+
+def bind_turn_task_context(context: Any | None) -> None:
+    """Bind ``context`` as the active task context of the current execution context."""
+    _turn_task_context.set(context)
+
+
+def current_turn_task_context() -> Any | None:
+    """Return the task context bound to this execution context, or None."""
+    return _turn_task_context.get()

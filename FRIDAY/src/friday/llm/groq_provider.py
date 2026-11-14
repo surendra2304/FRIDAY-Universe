@@ -28,6 +28,30 @@ GROQ_DEFAULT_MODEL = "openai/gpt-oss-120b"
 GROQ_FALLBACK_MODEL = "openai/gpt-oss-20b"
 GROQ_UNIVERSAL_FALLBACK_MODEL = "openai/gpt-oss-120b"
 
+# TASK-REL-031: appended to the last-resort text-only TPM retry. When a
+# request is too large to carry its tools, the model must not improvise
+# the facts a tool would have checked — the TASK-REL-010 live proof of
+# the failover quality gap was exactly that: a hedged, invented answer
+# to "time in Tokyo" because the clock tool had been stripped.
+_TOOLS_UNAVAILABLE_NOTICE = (
+    "Tools are unavailable for this single response because the request "
+    "exceeded the provider's size limit. Do not guess or invent facts that "
+    "a tool would normally check (such as the current time, stored "
+    "memories, or system state). If the user's request needs a tool, say "
+    "plainly that you cannot check it right now; otherwise answer only "
+    "from what the conversation already establishes."
+)
+
+
+def _is_tpm_sized_error(err_text: str) -> bool:
+    """Detect TPM / request-too-large rejections in an error's lowered text."""
+    return (
+        "tpm" in err_text
+        or "too large" in err_text
+        or "token" in err_text
+        or "413" in err_text
+    )
+
 
 class _RateLimitedError(Exception):
     """Internal signal that the current model hit a 429 and a fallback may help."""
@@ -333,19 +357,16 @@ class GroqLLMProvider(BaseLLMProvider):
             response = client.chat.completions.create(**kwargs)
         except Exception as e:
             err_text = str(e).lower()
-            # If rate limit is due to TPM / Request too large, retry immediately with compacted text-only prompt
-            if ("tpm" in err_text or "too large" in err_text or "token" in err_text or "413" in err_text) and active_tools:
-                logger.warning("Groq TPM limit reached with tools. Retrying with compact messages and tools stripped...")
-                compact_msg_dicts, _ = compact_messages_and_tools(messages, None, include_tools=False)
-                kwargs["messages"] = compact_msg_dicts
-                kwargs.pop("tools", None)
-                kwargs.pop("tool_choice", None)
-                kwargs["max_tokens"] = min(self.max_tokens, 1024)
-                try:
-                    response = client.chat.completions.create(**kwargs)
-                    return self._parse_response(response)
-                except Exception as inner_e:
-                    e = inner_e
+            # If rate limit is due to TPM / Request too large, climb the
+            # TASK-REL-031 retry ladder (compact with tools retained first;
+            # text-only only as the last resort) instead of disarming the
+            # request on the first failure, which is what made failover-mode
+            # answers guess at tool-shaped questions (TASK-REL-010 residual).
+            if _is_tpm_sized_error(err_text) and active_tools:
+                outcome = self._tpm_retry_ladder(client, model, messages, tools, kwargs)
+                if isinstance(outcome, Message):
+                    return outcome
+                e = outcome
 
             if _is_tool_use_failed(e):
                 return self._handle_tool_use_failed(
@@ -367,6 +388,72 @@ class GroqLLMProvider(BaseLLMProvider):
             raise LLMProviderError(f"Groq API request failed: {err_msg}") from e
 
         return self._parse_response(response)
+
+    def _tpm_retry_ladder(
+        self,
+        client: Any,
+        model: str,
+        messages: list[Message],
+        tools: list[dict[str, Any]] | None,
+        kwargs: dict[str, Any],
+    ) -> Message | Exception:
+        """Retry a TPM / request-too-large failure without disarming the turn.
+
+        TASK-REL-031 (the TASK-REL-010 failover quality gap): the old
+        behaviour stripped the tools on the FIRST TPM failure, so when
+        Groq served as the exhaustion fallback, tool-shaped questions
+        (current time, memory, actions) were answered from text alone —
+        hedged guesses instead of tool calls. The ladder:
+
+        - Rung 1: compact the conversation (``compact_messages_and_tools``)
+          but KEEP the tools attached, so the turn's tool discipline
+          survives TPM pressure.
+        - Rung 2 (last resort): the old text-only retry, now carrying
+          ``_TOOLS_UNAVAILABLE_NOTICE`` so the model states plainly that
+          it cannot check, instead of inventing an answer.
+
+        Returns the parsed Message on success; on failure returns the
+        exception so the caller's shared handlers (tool_use_failed
+        recovery, rate-limit rotation, model fallback) can judge it —
+        the same contract the inline strip-retry had.
+        """
+        logger.warning(
+            "Groq TPM limit reached with tools. Retrying with compacted "
+            "messages and tools retained..."
+        )
+        compact_msgs, kept_tools = compact_messages_and_tools(
+            messages, tools, include_tools=True
+        )
+        retry_kwargs = dict(kwargs)
+        retry_kwargs["messages"] = compact_msgs
+        retry_kwargs["max_tokens"] = min(self.max_tokens, 1024)
+        if kept_tools:
+            retry_kwargs["tools"] = kept_tools
+            retry_kwargs["tool_choice"] = "auto"
+        try:
+            return self._parse_response(client.chat.completions.create(**retry_kwargs))
+        except Exception as compact_error:
+            if _is_tool_use_failed(compact_error) or not _is_tpm_sized_error(
+                str(compact_error).lower()
+            ):
+                return compact_error
+
+        logger.warning(
+            "Groq TPM limit persisted after compaction. Retrying text-only "
+            "with an explicit no-tools notice..."
+        )
+        strip_msgs, _ = compact_messages_and_tools(messages, None, include_tools=False)
+        strip_kwargs = dict(kwargs)
+        strip_kwargs["messages"] = strip_msgs + [
+            {"role": "system", "content": _TOOLS_UNAVAILABLE_NOTICE}
+        ]
+        strip_kwargs.pop("tools", None)
+        strip_kwargs.pop("tool_choice", None)
+        strip_kwargs["max_tokens"] = min(self.max_tokens, 1024)
+        try:
+            return self._parse_response(client.chat.completions.create(**strip_kwargs))
+        except Exception as strip_error:
+            return strip_error
 
     def _handle_tool_use_failed(
         self,
