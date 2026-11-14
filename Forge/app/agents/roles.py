@@ -1307,7 +1307,17 @@ class TesterRole(BaseAgent):
                         test_framework=test_framework,
                         coverage_targets=["happy_path", "boundary_conditions", "error_handling"],
                         project_goal=goal,
-                        requirements=list(context.get("requirements", [])),
+                        requirements=[
+                            *list(context.get("requirements", [])),
+                            # TASK-REL-028: generated suites kept loading the
+                            # code under test via Path(__file__).parent.parent,
+                            # assuming a tests/ subdirectory Forge does not
+                            # use -- the layout here is flat.
+                            "Layout: the test file is saved in the SAME flat "
+                            "directory as the code under test. Reference "
+                            "sibling files as Path(__file__).parent / '<file>' "
+                            "-- never parent.parent.",
+                        ],
                     )
                     if test_res and test_res.get("test_code"):
                         test_code = test_res["test_code"]

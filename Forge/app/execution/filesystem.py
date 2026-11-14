@@ -4,6 +4,7 @@ Provides sandboxed file operations (list, read, create, edit, move, delete, sear
 """
 
 import fnmatch
+import re
 import shutil
 from pathlib import Path
 
@@ -77,8 +78,58 @@ class FilesystemTool:
 
         return target.read_text(encoding="utf-8")
 
-    @staticmethod
-    def _guard_python_content(relative_path: str, content: str) -> str:
+    # Generated test suites keep assuming the test file lives one directory
+    # BELOW the code under test -- Path(__file__).parent.parent / "main.py"
+    # -- while Forge's layout is flat: tests and code share the project
+    # directory (production tasks task18914112026200449 and
+    # task19014112026201012 both died at collection on exactly this). The
+    # lookahead-free pattern captures the two consecutive .parent hops and
+    # the referenced python file name.
+    _PARENT_PARENT_RE = re.compile(
+        r"(?P<head>\.parent)\.parent(?P<slash>\s*/\s*['\"])"
+        r"(?P<name>[A-Za-z0-9_.\-]+\.py)(?P<quote>['\"])"
+    )
+
+    def _repair_sibling_paths(
+        self, content: str, task_id: str | None, relative_path: str
+    ) -> str | None:
+        """Drop a spurious ``.parent`` hop when the referenced file is a
+        sibling of the file being written and does NOT exist one level up.
+
+        Conservative by construction: the rewrite happens only when the
+        flat-layout reading is provably the real one (sibling present,
+        parent-level file absent) and the result still compiles.
+        """
+        if not task_id or "/" in relative_path or "\\" in relative_path:
+            return None
+        try:
+            paths = self.wm.get_workspace_paths(task_id)
+        except Exception:
+            return None
+        if paths is None:
+            return None
+
+        def _sub(match: re.Match[str]) -> str:
+            name = match.group("name")
+            if (paths.project / name).exists() and not (paths.root / name).exists():
+                return (
+                    f"{match.group('head')}{match.group('slash')}"
+                    f"{name}{match.group('quote')}"
+                )
+            return match.group(0)
+
+        repaired = self._PARENT_PARENT_RE.sub(_sub, content)
+        if repaired == content:
+            return None
+        try:
+            compile(repaired, relative_path, "exec")
+        except (SyntaxError, ValueError):
+            return None
+        return repaired
+
+    def _guard_python_content(
+        self, relative_path: str, content: str, task_id: str | None = None
+    ) -> str:
         """Never persist Python source that does not parse (TASK-REL-028).
 
         Content that already parses is returned byte-identical -- legitimate
@@ -95,9 +146,20 @@ class FilesystemTool:
         """
         try:
             compile(content, relative_path, "exec")
-            return content
         except (SyntaxError, ValueError) as exc:
             original_error = exc
+        else:
+            # Parseable content is normally returned byte-identical; the one
+            # exception is the parent.parent sibling-path misconception,
+            # repaired only when the flat layout is provably the real one.
+            repaired = self._repair_sibling_paths(content, task_id, relative_path)
+            if repaired is not None:
+                logger.warning(
+                    f"Repaired parent.parent sibling path in '{relative_path}' "
+                    "at write time (flat project layout)"
+                )
+                return repaired
+            return content
 
         from app.recovery.syntax_repair import _unescape_literal_escapes
 
@@ -126,7 +188,7 @@ class FilesystemTool:
         target = self.pm.validate_sandbox_path(Path(relative_path), root)
 
         if relative_path.lower().endswith(".py") and isinstance(content, str):
-            content = self._guard_python_content(relative_path, content)
+            content = self._guard_python_content(relative_path, content, task_id=task_id)
 
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
