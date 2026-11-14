@@ -12,6 +12,7 @@ import hmac
 import logging
 import os
 import re
+import threading
 import time
 from typing import Any, Dict, List, Optional
 import urllib.error
@@ -157,6 +158,7 @@ class MemoraClient:
         timeout: Optional[float] = None,
         remote_enabled: Optional[bool] = None,
         recall_timeout: Optional[float] = None,
+        write_timeout: Optional[float] = None,
     ):
         if remote_enabled is not None:
             self.remote_enabled = remote_enabled
@@ -175,6 +177,26 @@ class MemoraClient:
         self.recall_timeout = recall_timeout if recall_timeout is not None else (
             15.0 if timeout is None else timeout
         )
+        # TASK-REL-031: writes get their own, larger budget for the same
+        # reason recall did — the shared write pipeline embeds via an
+        # external API call inside the request, and on the loaded
+        # production host a write measured ~2-3s server-side while the
+        # generic 3.5s budget expired mid-response. Memora had usually
+        # COMMITTED by then, so the save landed in BOTH stores while the
+        # owner was told "local only" — and a write whose latency was
+        # worse never landed shared-side at all, with no re-sync, ever.
+        if write_timeout is not None:
+            self.write_timeout = write_timeout
+        else:
+            try:
+                self.write_timeout = float(os.getenv("FRIDAY_MEMORA_WRITE_TIMEOUT", "20"))
+            except (TypeError, ValueError):
+                self.write_timeout = 20.0
+        # Delays (seconds) between background re-sync attempts for a fact
+        # that landed local_only. Bounded: after the last delay the fact
+        # stays local and recall keeps serving it (REL-005 merge), but the
+        # failure is on the record at WARNING level, not silent.
+        self.resync_delays: tuple = (5.0, 25.0, 90.0)
         self._executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="friday-memory")
 
         # Local fallback storage. Production uses the FRIDAY Oracle schema; an
@@ -545,14 +567,93 @@ class MemoraClient:
                 url = f"{self.base_url}/v1/memories/record-interaction"
                 headers = self._remote_headers(agent_name, json_body=True)
                 req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
-                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                # TASK-REL-031: interaction recording is a write; it gets the
+                # write budget, not the 3.5s generic one, and its failure is
+                # logged at WARNING (was DEBUG — invisible in production).
+                with urllib.request.urlopen(req, timeout=self.write_timeout) as resp:
                     if resp.status in (200, 201):
                         return json.loads(resp.read().decode("utf-8"))
+                    logger.warning(f"Memora remote interaction write returned HTTP {resp.status}; recording locally.")
             except Exception as e:
-                logger.debug(f"Memora remote write error: {type(e).__name__}")
+                logger.warning(f"Memora remote interaction write error: {type(e).__name__}; recording locally.")
 
         local_result = self._record_locally(agent_name, user_clean, agent_clean)
         return {**local_result, "status": "local_only" if local_result.get("status") == "success" else local_result.get("status"), "cloud": False}
+
+    def _post_fact_remote(
+        self, agent_name: str, payload: Dict[str, Any]
+    ) -> tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """One shared-store write attempt for a fact payload.
+
+        Returns ``(body, None)`` on a 200/201, ``(None, reason)`` otherwise.
+        TASK-REL-031: the reason is a short machine-readable string (the
+        HTTP status or the exception type) — the pre-fix code swallowed it
+        at DEBUG level or, for non-201 responses, never recorded it at
+        all, which is why "shared sync unconfirmed" was undiagnosable in
+        production for a full day of live failures.
+        """
+        try:
+            url = f"{self.base_url}/v1/memories"
+            headers = self._remote_headers(agent_name, json_body=True)
+            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=self.write_timeout) as resp:
+                if resp.status in (200, 201):
+                    return json.loads(resp.read().decode("utf-8")), None
+                return None, f"HTTP {resp.status}"
+        except urllib.error.HTTPError as e:
+            return None, f"HTTP {e.code}"
+        except Exception as e:
+            return None, type(e).__name__
+
+    def _queue_fact_resync(
+        self,
+        agent_name: str,
+        payload: Dict[str, Any],
+        local_id: str,
+        attempt: int = 0,
+    ) -> None:
+        """Best-effort background re-sync of a local_only fact (TASK-REL-031).
+
+        The retry carries the SAME idempotency key as the original write,
+        so if Memora committed the first attempt after all, the pipeline's
+        idempotency pre-check returns that very record instead of minting
+        a twin. On a confirmed shared landing the local placeholder is
+        marked ``superseded``: local recall is lifecycle-filtered to
+        active rows, so the twin stops shadowing the shared record, while
+        the row itself stays in the audit trail. Attempts are bounded by
+        ``self.resync_delays``; on exhaustion the fact simply remains
+        local (recall still serves it) and the failure stays logged.
+        """
+        delays = self.resync_delays
+        if attempt >= len(delays):
+            logger.warning(
+                "Memora re-sync exhausted for local fact %s; it remains local-only.",
+                local_id,
+            )
+            return
+
+        def _attempt() -> None:
+            result, error = self._post_fact_remote(agent_name, payload)
+            if result is not None:
+                try:
+                    self._mark_record_state(local_id, "superseded")
+                except Exception as e:
+                    logger.warning(
+                        "Memora re-sync landed fact %s shared-side but could not "
+                        "supersede the local placeholder: %s",
+                        local_id, type(e).__name__,
+                    )
+                logger.info(
+                    "Memora re-sync confirmed local fact %s in the shared store as %s.",
+                    local_id, result.get("id"),
+                )
+                return
+            logger.debug("Memora re-sync attempt %d for fact %s failed: %s", attempt + 1, local_id, error)
+            self._queue_fact_resync(agent_name, payload, local_id, attempt + 1)
+
+        timer = threading.Timer(delays[attempt], _attempt)
+        timer.daemon = True
+        timer.start()
 
     def record_fact(
         self,
@@ -584,15 +685,44 @@ class MemoraClient:
             # retain Memora's duplicate suppression.
             if allow_duplicates:
                 payload["allow_duplicates"] = True
-            try:
-                url = f"{self.base_url}/v1/memories"
-                headers = self._remote_headers(agent_name, json_body=True)
-                req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
-                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                    if resp.status in (200, 201):
-                        return json.loads(resp.read().decode("utf-8"))
-            except Exception as e:
-                logger.debug(f"Memora remote record_fact error: {type(e).__name__}")
+            # TASK-REL-031: one idempotency key per logical save, generated
+            # BEFORE the first attempt. Memora's pipeline pre-checks the key
+            # and its unique index is the final arbiter, so retrying a write
+            # whose response was lost (the production failure: the 3.5s
+            # generic timeout expired while Memora was still embedding, and
+            # the record committed shared-side anyway) returns the SAME
+            # record instead of minting a twin in each store.
+            payload["idempotency_key"] = uuid.uuid4().hex
+            result, error = self._post_fact_remote(agent_name, payload)
+            if result is None:
+                # A single immediate retry: the dominant failure is a lost
+                # or late response, not a rejected write, and the key makes
+                # the retry free of duplicate risk.
+                result, error = self._post_fact_remote(agent_name, payload)
+            if result is not None:
+                # Memora's write response carries no "status" field; callers
+                # (chat fast-path, voice memory) key stored-detection off it,
+                # so normalise here instead of making every caller guess.
+                return {
+                    **result,
+                    "status": result.get("status") or "success",
+                    "cloud": True,
+                }
+            logger.warning(
+                "Memora shared write failed (%s); saving locally and queueing re-sync.",
+                error,
+            )
+            local_result = self._record_fact_locally(agent_name, fact_clean, category, importance)
+            local_id = local_result.get("id")
+            if local_result.get("status") == "success" and local_id:
+                self._queue_fact_resync(agent_name, payload, str(local_id))
+            return {
+                **local_result,
+                "status": "local_only" if local_result.get("status") == "success" else local_result.get("status"),
+                "cloud": False,
+                "sync_error": error,
+                "sync_pending": bool(local_id),
+            }
 
         local_result = self._record_fact_locally(agent_name, fact_clean, category, importance)
         return {**local_result, "status": "local_only" if local_result.get("status") == "success" else local_result.get("status"), "cloud": False}
@@ -1654,13 +1784,25 @@ class MemoraClient:
                     f"LOWER(m.content_text) LIKE :kw{i} ESCAPE '\\'" for i in range(len(like_words))
                 )
                 params = {f"kw{i}": _like_pattern(w) for i, w in enumerate(like_words)}
+                # TASK-REL-031 (REL-014 residual): the candidate window was
+                # ordered by importance alone, so once 500+ rows matching ANY
+                # ONE keyword outranked a fact, the fact never entered the
+                # window — a forget phrased with a distinguishing value then
+                # returned not_found for a fact that matched MORE of the
+                # subject than every decoy. Order candidates by keyword
+                # match-count first: a full-subject match can now be evicted
+                # only by 500 rows matching the same number of keywords.
+                match_expr = " + ".join(
+                    f"CASE WHEN LOWER(m.content_text) LIKE :kw{i} ESCAPE '\\' THEN 1 ELSE 0 END"
+                    for i in range(len(like_words))
+                )
                 rows = oracle.query_all(
                     "SELECT m.id, m.content_text, m.memory_type, m.importance, m.created_at, "
                     "a.name AS owner_name FROM memora_records m "
                     "JOIN memora_agents a ON m.owner_id = a.id "
                     "WHERE m.lifecycle_state = 'active' "
                     f"AND ({clauses}) "
-                    "ORDER BY m.importance DESC, m.created_at DESC "
+                    f"ORDER BY ({match_expr}) DESC, m.importance DESC, m.created_at DESC "
                     "FETCH FIRST 500 ROWS ONLY",
                     params,
                 )
@@ -1683,6 +1825,13 @@ class MemoraClient:
                 clauses = " OR ".join(
                     "LOWER(m.content_text) LIKE ? ESCAPE '\\'" for _ in like_words
                 )
+                # TASK-REL-031: match-count-first candidate ordering, same
+                # rationale as the Oracle branch above.
+                match_expr = " + ".join(
+                    "CASE WHEN LOWER(m.content_text) LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END"
+                    for _ in like_words
+                )
+                patterns = [_like_pattern(w) for w in like_words]
                 with connect_sqlite(self.local_db_path, timeout=5.0) as conn:
                     c = conn.cursor()
                     c.execute(f"""
@@ -1691,9 +1840,9 @@ class MemoraClient:
                         JOIN agents a ON m.owner_id = a.id
                         WHERE m.lifecycle_state = 'active'
                         AND ({clauses})
-                        ORDER BY m.importance DESC, m.created_at DESC
+                        ORDER BY ({match_expr}) DESC, m.importance DESC, m.created_at DESC
                         LIMIT 500
-                    """, [_like_pattern(w) for w in like_words])
+                    """, patterns + patterns)
                     for row in c.fetchall():
                         content = row[1].lower()
                         matches = sum(1 for w in words if w in content)
