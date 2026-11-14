@@ -1,0 +1,9 @@
+{
+  "strategy": "vwap_volume_profile",
+  "label": "BACKTEST-OOS",
+  "status": "BROKEN",
+  "reason": "harness-level failure: AttributeError: 'float' object has no attribute 'iloc'",
+  "scope": "discovery",
+  "governance_status": "UNREGISTERED",
+  "elapsed_seconds": 3.1
+}

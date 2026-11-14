@@ -1,0 +1,10 @@
+{
+  "strategy": "ml_ensemble",
+  "label": "BACKTEST-OOS",
+  "status": "UNTESTABLE",
+  "reason": "compute-bound: projected 1436s/symbol > budget 900s",
+  "feature_pipeline": "features.add_features (shared)",
+  "scope": "discovery",
+  "governance_status": "UNREGISTERED",
+  "elapsed_seconds": 110.4
+}

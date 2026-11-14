@@ -1,0 +1,9 @@
+{
+  "strategy": "strategy_ml",
+  "label": "BACKTEST-OOS",
+  "status": "BROKEN",
+  "reason": "import failed: ModuleNotFoundError: No module named 'xgboost'",
+  "scope": "discovery",
+  "governance_status": "DISABLED",
+  "elapsed_seconds": 0.0
+}
