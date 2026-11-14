@@ -22,6 +22,7 @@ from typing import Any
 
 from friday.tools.base import BaseTool
 from friday.core.types import SafetyLevel, ToolResult
+from friday.tools.builtin.fleet_dispatch import record_specialist_dispatch
 
 _HORIZONS = ("1h", "24h", "7d", "30d")
 
@@ -155,6 +156,7 @@ class FuturisForecastTool(BaseTool):
         try:
             result = asyncio.run(self._client().request_futuris_forecast(target=target, horizon=horizon))
         except Exception as exc:
+            record_specialist_dispatch("", "futuris", question or target, "failed", error=f"{type(exc).__name__}: {exc}")
             return ToolResult(
                 name=self.name,
                 content=(
@@ -168,6 +170,7 @@ class FuturisForecastTool(BaseTool):
 
         reply = str((result or {}).get("reply", "") or "")
         if not reply:
+            record_specialist_dispatch("", "futuris", question or target, "failed", error="empty_reply")
             return ToolResult(
                 name=self.name,
                 content=(
@@ -178,6 +181,7 @@ class FuturisForecastTool(BaseTool):
                 safety_level=self.safety_level,
                 metadata={"error": "empty_reply"},
             )
+        record_specialist_dispatch("", "futuris", question or target, "success")
         return ToolResult(
             name=self.name,
             content=reply,

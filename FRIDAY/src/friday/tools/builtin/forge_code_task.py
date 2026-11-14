@@ -24,6 +24,7 @@ from typing import Any
 
 from friday.core.types import SafetyLevel, ToolResult
 from friday.tools.base import BaseTool
+from friday.tools.builtin.fleet_dispatch import record_specialist_dispatch
 
 logger = logging.getLogger(__name__)
 
@@ -142,6 +143,7 @@ class ForgeCodeTool(BaseTool):
         try:
             result = self._dispatch(goal, requirements)
         except Exception as exc:
+            record_specialist_dispatch("", "forge", goal, "failed", error=f"{type(exc).__name__}: {exc}")
             return ToolResult(
                 name=self.name,
                 content=(
@@ -157,6 +159,7 @@ class ForgeCodeTool(BaseTool):
         status = str(getattr(status_value, "value", status_value)).upper()
         if status not in {"SUCCESS", "COMPLETED"}:
             error = getattr(result, "error", None) or f"status {status or 'unknown'}"
+            record_specialist_dispatch(getattr(result, "task_id", "") or "", "forge", goal, status.lower(), error=str(error))
             summary = getattr(result, "summary", "") or ""
             return ToolResult(
                 name=self.name,
@@ -183,6 +186,7 @@ class ForgeCodeTool(BaseTool):
                 data.setdefault("verification_manifest", outer["verification_manifest"])
         manifest = data.get("verification_manifest") or data.get("manifest") or {}
         if isinstance(manifest, dict) and (manifest.get("all_passed") is False or manifest.get("failed_stages", 0)):
+            record_specialist_dispatch(getattr(result, "task_id", "") or "", "forge", goal, "failed", error="verification stages failed")
             return ToolResult(name=self.name, content="Forge returned failing verification evidence. The build is not verified.",
                               is_error=True, safety_level=self.safety_level, metadata={"verification_manifest": manifest})
         stages = manifest.get("stages") if isinstance(manifest, dict) else None
@@ -194,11 +198,13 @@ class ForgeCodeTool(BaseTool):
             and ("exit_code" not in stage or type(stage["exit_code"]) is int and stage["exit_code"] == 0)
             for stage in stages)
         if not verified_stages:
+            record_specialist_dispatch(getattr(result, "task_id", "") or "", "forge", goal, "failed", error="verification stages unverified")
             return ToolResult(name=self.name,
                               content="Forge did not provide nonempty passing verification stages. Execution and test completion are unverified.",
                               is_error=True, safety_level=self.safety_level,
                               metadata={"verification_manifest": manifest, "completion_verified": False})
         summary = str(getattr(result, "summary", "") or data.get("summary", ""))
+        record_specialist_dispatch(getattr(result, "task_id", "") or "", "forge", goal, "success")
         content = _format_build(data, summary)
         return ToolResult(
             name=self.name,

@@ -24,6 +24,7 @@ from urllib.parse import urlsplit
 
 from friday.core.types import SafetyLevel, ToolResult
 from friday.tools.base import BaseTool
+from friday.tools.builtin.fleet_dispatch import record_specialist_dispatch
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,7 @@ class IntelXResearchTool(BaseTool):
         try:
             result = self._dispatch(query, scope.strip())
         except Exception as exc:
+            record_specialist_dispatch("", "intelx", query, "failed", error=f"{type(exc).__name__}: {exc}")
             return ToolResult(
                 name=self.name,
                 content=(
@@ -142,6 +144,13 @@ class IntelXResearchTool(BaseTool):
 
         status_value = getattr(result, "status", "")
         status = str(getattr(status_value, "value", status_value)).lower()
+        record_specialist_dispatch(
+            getattr(result, "task_id", "") or "",
+            "intelx",
+            query,
+            status,
+            error="" if status in {"success", "completed"} else str(getattr(result, "error", None) or f"status {status or 'unknown'}"),
+        )
         if status not in {"success", "completed"}:
             error = getattr(result, "error", None) or f"status {status or 'unknown'}"
             return ToolResult(
