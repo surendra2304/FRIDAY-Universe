@@ -1,0 +1,10 @@
+{
+  "strategy": "strategy_hybrid",
+  "label": "BACKTEST-OOS",
+  "status": "UNTESTABLE",
+  "reason": "compute-bound: projected 1626s/symbol > budget 900s",
+  "feature_pipeline": "features.add_features (shared)",
+  "scope": "discovery",
+  "governance_status": "UNREGISTERED",
+  "elapsed_seconds": 123.0
+}

@@ -1,0 +1,10 @@
+{
+  "strategy": "ensemble_strategy",
+  "label": "BACKTEST-OOS",
+  "status": "UNTESTABLE",
+  "reason": "compute-bound: projected 3177s/symbol > budget 900s",
+  "feature_pipeline": "features.add_features (shared)",
+  "scope": "discovery",
+  "governance_status": "UNREGISTERED",
+  "elapsed_seconds": 60.9
+}

@@ -1,0 +1,10 @@
+{
+  "strategy": "strategy_mean_reversion_scalper",
+  "label": "BACKTEST-OOS",
+  "status": "UNTESTABLE",
+  "reason": "compute-bound: projected 4251s/symbol > budget 900s",
+  "feature_pipeline": "features.add_features (shared)",
+  "scope": "discovery",
+  "governance_status": "UNREGISTERED",
+  "elapsed_seconds": 48.5
+}

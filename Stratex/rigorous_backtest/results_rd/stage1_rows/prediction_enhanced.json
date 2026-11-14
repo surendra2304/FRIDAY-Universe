@@ -1,0 +1,9 @@
+{
+  "strategy": "prediction_enhanced",
+  "label": "BACKTEST-OOS",
+  "status": "NOT_EVALUABLE",
+  "reason": "module exposes no callable get_signal(df)",
+  "scope": "discovery",
+  "governance_status": "UNREGISTERED",
+  "elapsed_seconds": 0.9
+}
