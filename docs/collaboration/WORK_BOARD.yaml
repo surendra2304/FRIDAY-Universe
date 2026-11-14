@@ -3531,14 +3531,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Done. VERIFIED 2026-11-14: fix merged (PR #160, d7625d6b), deployed (Fleet CD success), live event_log repaired at boot (19:30:04 IST repair lines), ORA-00904 flood stopped (last 19:29:20, old PID), /v1/events answering 200 to the Futuris consumer, boot/operational logging flowing, and the ORM-vs-live schema probe clean apart from explained artifacts and the deliberately untouched alembic_version bookkeeping lag."
   - id: TASK-REL-014
     title: "Fix REL-005b: forget-by-subject false ambiguity — duplicate records and dialogue echoes outrank the stored fact"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: "claude/task-rel-014-forget-echo"
     pr: 159
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:05:00+05:30"
-    updated_at: "2026-11-14T19:05:00+05:30"
+    updated_at: "2026-11-14T20:12:00+05:30"
     files:
       - "FRIDAY/src/friday/memory/memora_client.py"
       - "FRIDAY/tests/test_memory_forget_echo_rel014.py"
@@ -3552,9 +3552,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Suites green: new test_memory_forget_echo_rel014.py (13 tests); test_memory_mutation_targets, test_memory_roundtrip_rel005, test_shared_memory_lifecycle and the wider memory suites pass (pre-existing fixture errors in the canonical-gate tests unchanged from main)."
     evidence:
       - "Claim: issue #35 comment 6877874066 (2026-11-14)."
-      - "PR #159 opened from branch claude/task-rel-014-forget-echo; CI green (8/8 check runs) on heads 879786e7 and 21ac0891; branch rebased over board-only drift from PRs #160/#155."
+      - "PR #159 MERGED 2026-11-14 (merge commit d6467cdb; final head e9ea8af2, tree hash verified identical to the reviewed local commit at every publish step); CI green 8/8 check runs on heads 21ac0891 and e9ea8af2-lineage (7 success, 1 skipped, 0 failures); branch rebased three times over board-only drift (PRs #160/#155) — code files never drifted."
+      - "Deployed: Fleet CD advanced Server 1 checkout past the merge (HEAD cd7eb43c at verification time, includes d6467cdb); deployed memora_client.py contains _mutation_targets/_delete_record (5 hits); FRIDAY.service active."
+      - "PRODUCTION-VERIFIED live 2026-11-14 ~20:00 IST (FRIDAY's own MemoraClient against production stores): remember 'my rel014 verification codeword is \"quartz badger 9\"' -> forget by subject 'quartz badger' = deleted (cloud) -> recall 0 remaining. Two DISTINCT harbour-city facts -> forget by subject = needs_clarification (guard intact); both probe facts removed afterwards (see residual note). 'amber falcon 3' twins BOTH deleted by the fixed forget path in one call (ids 9f356242-3763-4197-bdbf-e745a48de065 + 63761f04-dd0c-41cd-aabc-9f09cd63ec54, aggregate status deleted) -> recall 0 remaining."
+      - "PRODUCTION-VERIFIED via the running FRIDAY chat (localhost:10000/api/chat): remember 'my rel014 chat token is silver otter 5' (memory_store:true) -> 'forget silver otter' = forget_status deleted, success:true (id 64891728-773e-4e8f-ae3e-dd278e89ca63) -> repeat forget = not_found. No clarification demanded at any point."
+      - "Tests: new test_memory_forget_echo_rel014.py 13/13; test_memory_mutation_targets + test_memory_roundtrip_rel005 + test_shared_memory_lifecycle green; wider memory suites green except failures proven identical on clean main (3 env perf/vector + 6 canonical-gate fixture errors). One mid-build regression (correct_fact winner/loser receipt reporting) was caught by test_shared_memory_lifecycle and fixed before publish."
     blockers: []
-    next_action: "Merge PR #159 on green CI (owner blanket authorization 2026-11-14); Fleet CD deploy; run the live acceptance probes; then mark VERIFIED with evidence."
+    next_action: "Complete — production-verified 2026-11-14. RESIDUAL (disclosed, not part of this task): mutation resolution still depends on recall ranking — a forget phrased with a distinguishing value ('...city is Lisbon') returned not_found because the target fell outside the recall window for that phrasing; the two ambiguity-probe facts were then removed by id via the client's own _delete_record primitive. Recall ranking/semantic search is TASK-REL-013's surface."
   - id: TASK-REL-017
     title: "IntelX threat-intel routers fabricate findings: fabricators must admit no data source, simulations must be labelled, real engines must be mounted"
     status: VERIFIED
