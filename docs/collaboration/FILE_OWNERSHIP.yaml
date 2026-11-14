@@ -16,6 +16,48 @@ protected_worktree:
     - "Re-check git status before any worktree operation."
 
 claims:
+  - path: FRIDAY/ui/components/VoiceCall.tsx
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-RUNTIME-AUDIT-002]
+    status: ACTIVE_CLAIM
+    task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
+  - path: FRIDAY/ui/out/
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-RUNTIME-AUDIT-002]
+    status: ACTIVE_CLAIM
+    task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
+  - path: scripts/verification/runtime_audit/
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-RUNTIME-AUDIT-002]
+    status: ACTIVE_CLAIM
+    task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
+  - path: .github/workflows/voice-startup-regressions.yml
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-RUNTIME-AUDIT-002]
+    status: ACTIVE_CLAIM
+    task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
+  - path: tests/test_runtime_audit_contract.py
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-RUNTIME-AUDIT-002]
+    status: ACTIVE_CLAIM
+    task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
+  - path: docs/verification/RUNTIME_AUDIT_002.md
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-RUNTIME-AUDIT-002]
+    status: ACTIVE_CLAIM
+    task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
+  - path: docs/verification/RUNTIME_AUDIT_002.evidence.json
+    owner: arena_engineering_01
+    prs: []
+    branches: [arena/TASK-RUNTIME-AUDIT-002]
+    status: ACTIVE_CLAIM
+    task: "TASK-RUNTIME-AUDIT-002; issue35 claims6847793425/6847932557/6847960656"
   - path: IntelX/intelx/models/ai_universe_provider.py
     owner: arena_engineering_01
     prs: []

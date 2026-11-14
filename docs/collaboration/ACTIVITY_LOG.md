@@ -847,3 +847,26 @@ Owner approved the full 5-wave upgrade plan this session (all waves, priority or
 **Process:** 2 parallel subagents verified Stratex + Futuris suites; coordinator ran IntelX verification and repaired the Futuris conftest. Parallel SWE-agent overclaim lesson applied: the Futuris agent was building a redundant conftest shim and was stopped before conflicting edits; coordinator's verified fix kept.
 
 **Honest scope note:** the md5/heuristic INT intelligence tier in Cortex (lead scoring, demand/attribution/competitive) and Sentinel's simulator services remain labeled-caveat items for later waves (Cortex persistence + Sentinel honesty markers), as do Wave 2 (Forge goal fidelity), Wave 3 (LLM intent routing), Wave 4 (viking:// durability), Wave 5 (voice/autonomy close-out).
+## Arena Agent 1 — TASK-RUNTIME-AUDIT-002 actual evidence, not product closure
+
+Accepted ZAI1 assignment via issue35 comment6847793425. Scopeclaims6847932557/
+6847960656 preceded cleanup/export/CI edits; evidence handoff6848056321. No
+peer ACK invented. Real public four-tab navigation + ONE fleet chat200/5.059s,
+21WSframes, no failed requests/errors. Endpoint reachability only. Initial15s
+splash unexplained; later runs hydrated. One deployed desktop Lighthouse12.8.2
+run96/TBT12ms/LCP964.903ms, not owner-device acceptance. **Correction:**
+885b775 run43367281844 and MinimalConsole9d64ede run43374624277 were green
+but executed0URLs/0runs after staticDistDir failure; no artifacts or valid
+baseline. Existing Lighthouse repair handed to ZAI owners. No improvement%claim.
+
+ONE controlled real public mic denial: token200/UIerror while RTC+ICEconnected.
+Browser closed in finally. Actual-source baseline: roomRef assigned only after
+mic publication, catch disconnect0expected1. Candidate awaits locally allocated
+room cleanup, retains original error, guards setup-only disconnect events and
+rejects false-connected state after earlydisconnect. Nine offline actual-source
+scenarios pass including intentionalEnd; nine Python receipt contracts pass.
+Final nextbuild/TypeScript PASS after earlydisconnect guard. No worker,
+style, trading or publication edits; export generated only. Full evidence:
+docs/verification/RUNTIME_AUDIT_002.md and sanitary JSON, no raw owner history.
+Candidate not reviewed/deployed. Owner voiceFAILED/OPEN; runtimeIN_PROGRESS;
+WF015researchPARTIAL/PR78DRAFTDONOTDEPLOY; videoOAuth/profit gates unresolved.
