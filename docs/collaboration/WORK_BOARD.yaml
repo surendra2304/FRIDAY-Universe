@@ -3468,18 +3468,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Done. VERIFIED 2026-11-14: fix merged (PR #152), deployed (Fleet CD 43600585472), and the failure path production-verified live three times with findings surviving a genuine synthesis failure."
   - id: TASK-REL-021
     title: "Production research synthesis never completes: routed Inference completion truncates (finish_reason length)"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
-    branch: claude/task-rel-021-synthesis-truncation
-    pr: null
+    branch: claude/task-rel-021-synthesis-truncation (+ follow-ups claude/task-rel-021-synthesis-prompt-budget, claude/task-rel-021-synthesis-model)
+    pr: 164
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:47:00+05:30"
-    updated_at: "2026-11-14T19:47:00+05:30"
+    updated_at: "2026-11-14T20:35:00+05:30"
     files:
       - "IntelX/intelx/api/grounded_live_research.py"
       - "Inference/app/api/v1_core_routes.py"
       - "tests/test_inference_explicit_model_contract.py"
+      - "tests/test_grounded_research_synthesis.py"
     defect: "synthesize_grounded (via GroundedInferenceGateway) asks Inference /v1/chat/completions for model llama-3.3-70b-versatile, which Groq has retired: production journal shows 404 model_not_found on every attempt. Every synthesis therefore drops to Inference's capability fallback ladder, whose OpenRouter get_best_free_model pick varies per call (observed nvidia/nemotron-3.5-super-vl:free); reasoning-heavy picks burn the 2400-token budget (the OpenAI-compatible adapter surfaces reasoning as content when content is empty), returning up to ~9K chars with finish_reason 'length', which IntelX correctly refuses as incomplete_completion — so no live research answer ever synthesises (REL-016 live probes: outputs 8607/9930/8721 chars, all truncated, attempt + retry). The natural replacement, openai/gpt-oss-120b (Groq-served, the Groq adapter's default model), is unreachable through this route: v1_core_routes' substring provider mapping sends any model containing 'openai' to the OpenAI provider, which has no credentials configured, silently dropping the request to the same fallback ladder. The TASK-REL-007 ~125-char truncation was the same root cause with a different daily fallback pick."
     acceptance:
       - "Root cause evidenced from production logs/probes, not inferred: Groq 404 model_not_found for the retired hint; fallback-served model field differs from the requested model on live probes."
@@ -3490,7 +3491,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 6878316081 (2026-11-14)."
       - "Diagnosis (live, 2026-11-14): Inference journal on Server 1 shows 'groq API error (404) model_not_found' for llama-3.3-70b-versatile at 19:13/19:14/19:24 and for llama-3.1-8b-instant at 19:27; direct probes of POST /v1/chat/completions with grounded-style payloads were served by nvidia/nemotron-3.5-super-vl:free (fallback) for every requested model tested (llama-3.3-70b-versatile, llama-3.1-8b-instant, openai/gpt-oss-120b, cerebras/llama-3.3-70b, gemini-2.5-flash, gemini-flash-latest, mistral-small-latest); direct Groq API check with a fleet pool key confirms openai/gpt-oss-120b, openai/gpt-oss-20b and qwen/qwen3.8-27b are served (content + stop) while llama models and groq/compound-mini return model_not_found."
     blockers: []
-    next_action: "Fix implemented on branch; PR, CI, merge, Fleet CD deploy and live research verification to follow."
+    next_action: "None — complete. Residuals (catalogue still advertises retired llama models; other retired-model references in non-synthesis paths; research ephemerality) are recorded in the issue #35 completion comment for separate scheduling."
+    verification: "VERIFIED 2026-11-14 (Muse, TASK-REL-021 crew). THREE production layers, each evidenced live before fixing: (1) retired model hint llama-3.3-70b-versatile -> Groq 404 -> OpenRouter free-model fallback lottery whose reasoning output truncated the draft (finish_reason length, ~9K chars) — fixed PR #164 (merge 23b6a02a): hint -> openai/gpt-oss-120b AND v1_core_routes routes openai/gpt-oss* to groq instead of the credential-less openai provider (both branches; regression test test_gpt_oss_models_route_to_groq_not_openai); the TASK-REL-007 ~125-char truncation was the same lottery with a different daily pick. (2) Prompt size vs Groq on-demand TPM: org cap 8,000 tokens/min (HTTP 413 rate_limit_exceeded observed with a 13,462-token request); synthesize_grounded supplied up to 36,000 chars (~9-10K tokens) — fixed PR #170 (merge 9461c1d4): budget 16,000 chars total / 6,000 per document (~3,812 prompt tokens measured through the production route; quote verification runs against exactly the supplied text, so grounding strength is unchanged). (3) Quote fidelity: gpt-oss-120b completes drafts but splices quotes (skips photo credits/clauses), failing the exact-substring grounding gate (synthesis_quote_unverified) — A/B on three real fetched document sets with the unchanged prompt: gpt-oss 0/3 quotes verified (1/2-3/3 with a strict prompt, still unreliable), qwen/qwen3.8-27b 9/9 — fixed PR #175 (merge 1ca50a49): synthesis hint -> qwen/qwen3.8-27b; the gate itself is unchanged and still fails closed to REL-016's labelled raw-findings path. All three PRs CI-green (contracts/test/roster/secrets/layout/policy success). Deploys: Fleet CD runs 43604086900 (23b6a02), 43605640901 (9461c1d), 43607756836 (1ca50a4) all success; Server 1 checkout and service restarts verified at each merge. PRODUCTION PROOF (IntelX POST /v1/task/execute, action research_live, deployed code at 1ca50a49, 2026-11-14 ~20:31 IST): 'What is the latest progress on solid-state batteries?' -> envelope SUCCESS, synthesis_status succeeded, answer_kind source_attributed_model_draft, 3 findings / 3 sources, receipt issued (pipeline friday.research), 56.0s; 'What is the current status of NASA's Artemis II mission?' -> SUCCESS, succeeded, 3 findings / 2 sources, receipt, 21.2s; 'What are the latest developments in fusion energy research?' -> SUCCESS, succeeded, 3 findings / 3 sources, receipt, 20.1s. REL-016 not regressed: 63 grounded/contract tests pass locally (incl. test_live_research_task_contract) and CI contracts/test green on all three PRs; the raw-findings fallback was itself observed live behaving exactly as designed during layers 2-3 diagnosis (DEGRADED, findings preserved and labelled, no receipt)."
   - id: TASK-REL-015
     title: "Memora production observability (alembic fileConfig) + schema drift residuals (PR #105/#107)"
     status: VERIFIED
