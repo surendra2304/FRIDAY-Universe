@@ -20,6 +20,22 @@ from app.memory.models import TaskState
 from app.memory.sqlite_test_backend import SQLiteTestDatabase
 from app.memory.state_store import StateStore
 
+# Import app.recovery.engine NOW, while the real VerificationEngine class is
+# still installed. app/recovery/engine.py binds VerificationEngine with a
+# from-import and evaluates the annotation `VerificationEngine | None` in
+# RecoveryEngine.__init__ when the class body executes. Tests below patch
+# app.verification.engine.VerificationEngine with a lambda double; if the
+# recovery module is first imported while that double is in place (which is
+# what monkeypatch's dotted-path setattr on app.recovery.engine.RecoveryEngine
+# triggers), class creation raises
+# "TypeError: unsupported operand type(s) for |: 'function' and 'NoneType'".
+# Importing it at collection time makes this file pass standalone as well as
+# in the CI step's file order, where test_task_forge_002_recovery_escalation
+# happens to import it first. The orchestrator resolves both classes through
+# the modules at call time, so the doubles installed by the tests are still
+# the objects exercised.
+import app.recovery.engine  # noqa: F401
+
 
 class StubRegistry:
     """Labelled test double for the agent registry.
