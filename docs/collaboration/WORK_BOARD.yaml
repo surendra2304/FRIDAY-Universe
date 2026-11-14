@@ -3159,7 +3159,7 @@ tasks:
       - "Live verification after deploy: POST /friday/api/chat remember -> recall with a fresh test phrase returns the phrase."
     evidence: []
     blockers: []
-    next_action: "PR via bridge Git Data API; merge on green CI under owner autonomous authority; verify live through the public chat API."
+    next_action: "PR #108 (extraction + recall phrasing + shared-empty) and PR #110 (recall merges both stores) merged and deployed; live verification then exposed the final layer — the local store's top-100 importance window hid the facts and forget fired a shared DELETE for local ids. Final fix on branch claude/task-rel-005-recall-window (keyword-driven local recall + local-id forget); merge on green CI, then re-verify live."
   - id: TASK-REL-006
     title: "Voice latency/breakup fixes after the failed owner live test (TASK-VOI-001)"
     status: IN_PROGRESS

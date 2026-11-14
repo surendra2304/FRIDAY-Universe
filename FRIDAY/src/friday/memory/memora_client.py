@@ -810,6 +810,25 @@ class MemoraClient:
         mid, text = next(iter(targets.items()))
         return "matched", mid, text
 
+    def _local_record_exists(self, record_id: str) -> bool:
+        """True when ``record_id`` is a row of the local fallback store."""
+        try:
+            if self._backend == "oracle":
+                row = oracle.query_one(
+                    "SELECT id FROM memora_records WHERE id = :rid", {"rid": record_id}
+                )
+                return bool(row)
+            if not self.local_db_path or not os.path.exists(self.local_db_path):
+                return False
+            from friday.core.database import connect_sqlite
+
+            with connect_sqlite(self.local_db_path, timeout=5.0) as conn:
+                cur = conn.execute("SELECT id FROM memory_records WHERE id = ?", (record_id,))
+                return cur.fetchone() is not None
+        except Exception as e:
+            logger.debug(f"Memora local existence check failed: {type(e).__name__}")
+            return False
+
     def forget_fact(
         self,
         agent_name: str,
@@ -835,6 +854,21 @@ class MemoraClient:
             status, target_id, target_text = self._mutation_target(query, hits or [])
             if status != "matched":
                 return {"status": status, "reason": "no unique matching memory", "query": query}
+
+        # TASK-REL-005 (2026-11-14): a target whose id lives in the LOCAL
+        # fallback store is a local_only fact — the shared store never held
+        # it, so a shared DELETE of that id can only 404 and the old flow
+        # then refused ("unconfirmed") without deleting anything: FRIDAY
+        # could neither recall nor forget its local facts. Ids are UUIDs,
+        # so a local id match identifies the record's home store; delete
+        # it where it lives and report the scope honestly (cloud: False).
+        if target_id and self._local_record_exists(target_id):
+            try:
+                if self._mark_record_state(target_id, "deleted"):
+                    return {"status": "deleted", "id": target_id, "content_text": target_text, "cloud": False}
+            except Exception as e:
+                logger.debug(f"Memora local forget_fact error: {type(e).__name__}: {e}")
+            return {"status": "error", "error": "local delete failed for a locally held fact"}
 
         if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
             try:
@@ -1427,16 +1461,40 @@ class MemoraClient:
         if not words:
             return []
 
+        # TASK-REL-005 (2026-11-14): candidate selection is KEYWORD-DRIVEN,
+        # not a fixed importance window. The old query fetched the top 100
+        # rows of the whole multi-agent table by importance and keyword-
+        # matched those in Python — once 100+ accumulated rows (dialogue
+        # fallbacks at 0.7, extracted facts at 0.95, every agent sharing the
+        # table) outranked a fact, the fact was invisible to local recall
+        # no matter how fresh or exact the match. That is precisely what
+        # the live verification hit after the store-merge fix: the write
+        # succeeded, the merge consulted the local store, and the local
+        # store's window never contained the fact. SQL LIKE pre-filters on
+        # the same keywords the Python scorer uses (it re-checks with
+        # ``w in content``, so LIKE over-matching is harmless); the 500-row
+        # cap only bounds pathological keyword sets.
+        like_words = words[:8]
+
+        def _like_pattern(w: str) -> str:
+            return "%" + w.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
         results = []
         try:
             if self._backend == "oracle":
+                clauses = " OR ".join(
+                    f"LOWER(m.content_text) LIKE :kw{i} ESCAPE '\\'" for i in range(len(like_words))
+                )
+                params = {f"kw{i}": _like_pattern(w) for i, w in enumerate(like_words)}
                 rows = oracle.query_all(
                     "SELECT m.id, m.content_text, m.memory_type, m.importance, m.created_at, "
                     "a.name AS owner_name FROM memora_records m "
                     "JOIN memora_agents a ON m.owner_id = a.id "
                     "WHERE m.lifecycle_state = 'active' "
+                    f"AND ({clauses}) "
                     "ORDER BY m.importance DESC, m.created_at DESC "
-                    "FETCH FIRST 100 ROWS ONLY"
+                    "FETCH FIRST 500 ROWS ONLY",
+                    params,
                 )
                 for row in rows:
                     content = (row["content_text"] or "").lower()
@@ -1454,16 +1512,20 @@ class MemoraClient:
             else:
                 from friday.core.database import connect_sqlite
 
+                clauses = " OR ".join(
+                    "LOWER(m.content_text) LIKE ? ESCAPE '\\'" for _ in like_words
+                )
                 with connect_sqlite(self.local_db_path, timeout=5.0) as conn:
                     c = conn.cursor()
-                    c.execute("""
+                    c.execute(f"""
                         SELECT m.id, m.content_text, m.memory_type, m.importance, m.created_at, a.name
                         FROM memory_records m
                         JOIN agents a ON m.owner_id = a.id
                         WHERE m.lifecycle_state = 'active'
+                        AND ({clauses})
                         ORDER BY m.importance DESC, m.created_at DESC
-                        LIMIT 100
-                    """)
+                        LIMIT 500
+                    """, [_like_pattern(w) for w in like_words])
                     for row in c.fetchall():
                         content = row[1].lower()
                         matches = sum(1 for w in words if w in content)
