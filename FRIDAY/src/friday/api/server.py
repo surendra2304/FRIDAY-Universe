@@ -2752,10 +2752,13 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         try:
             from friday.memory.memora_client import memora_client as _memora
             from friday.memory.hygiene import is_memory_noise as _is_noise
+            from friday.memory.hygiene import is_experience_hit as _is_experience
             _hits = await asyncio.to_thread(_memora.recall_memories, "friday", f"{_user} preferences boss", limit=3)
             for _m in _hits or []:
                 _text = str(_m.get("content_text", "")).strip()
-                if _is_noise(_text):
+                # TASK-REL-027: an experience record is not a memory of the
+                # owner — never volunteer one as the remembered line.
+                if _is_noise(_text) or _is_experience(_m):
                     continue
                 if _text and len(_text) > 8:
                     _memory_line = _text.rstrip(".!? ")
@@ -3356,7 +3359,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _q_personal = any(p in cmd for p in (" me", "my ", "myself", "i "))
         try:
             from friday.memory.memora_client import memora_client as _memora
-            from friday.memory.hygiene import is_memory_noise as _is_noise
+            from friday.memory.hygiene import is_unpresentable_recall_hit as _is_unpresentable
             # Search with the owner's own words — appending generic terms
             # ("preferences facts…") buried the real subject (live lesson:
             # "do you remember my chai preference" returned research junk).
@@ -3371,7 +3374,15 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             # Memory-hygiene fix (2026-11-13): stored monitor-spam lines
             # ("RAM usage is at 9%…", dialogue dumps) never reach a recall
             # answer — they are not memories of the owner.
-            _hits = [h for h in _hits if not _is_noise(str(h.get("content_text", "")))]
+            # TASK-REL-027 (2026-11-14, REL-022 residual (b)): agent
+            # experience records ("[FAILURE WARNING ...]" learnings) are
+            # not memories of the owner either — when they were the only
+            # hits, this gate listed them under the confident header below
+            # as if they were stored facts. The presentation predicate
+            # excludes noise AND experience records before ranking, so a
+            # store with nothing genuine for the question reaches the
+            # honest not-found reply, never a dressed-up list.
+            _hits = [h for h in _hits if not _is_unpresentable(h)]
         except Exception as _e:
             _mem_error = f"{type(_e).__name__}"
             logger.debug(f"Memora recall skipped in memory fast-path: {_e}")
@@ -3657,6 +3668,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         try:
             from friday.memory.memora_client import memora_client as _memora
             from friday.memory.hygiene import is_memory_noise as _is_noise
+            from friday.memory.hygiene import is_experience_hit as _is_experience
             _hits = await asyncio.to_thread(
                 _memora.recall_memories,
                 "friday", f"{_user} recent work preferences", limit=3,
@@ -3664,7 +3676,9 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             _seen: set[str] = set()
             for _m in _hits or []:
                 _text = str(_m.get("content_text", "")).strip()
-                if _is_noise(_text):
+                # TASK-REL-027: an experience record is not a memory of the
+                # owner — never volunteer one as the remembered line.
+                if _is_noise(_text) or _is_experience(_m):
                     continue
                 if _text and _text not in _seen and len(_text) > 8:
                     _seen.add(_text)
@@ -4047,7 +4061,17 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             res = agent.tools.execute(name="get_time_date", arguments={})
             return {"reply": res.content, "metadata": {"fast_path": True, "device": "windows"}}
     except Exception as e:
-        return {"reply": f"Fast-path error: {e}", "metadata": {"error": True}}
+        # TASK-REL-027: the raw exception is operator detail, never a user
+        # reply (same defect class REL-022 closed in agent.py) — log it,
+        # name only its type in metadata, and answer with a clean line.
+        logger.warning(f"Device/screen fast-path failed: {type(e).__name__}: {e}")
+        return {
+            "reply": (
+                "That quick action hit a snag, Boss — I couldn't complete it just now. "
+                "The details are in my logs; give it another try in a moment."
+            ),
+            "metadata": {"error": True, "fast_path_error": type(e).__name__},
+        }
 
     # 2.5 TASK-REL-023: simple factual-question lane. A one-fact general
     # knowledge question ("What is the capital of Australia?") otherwise
