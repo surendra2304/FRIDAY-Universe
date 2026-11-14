@@ -458,8 +458,35 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                         "iterations": max(iterations, 1),
                     },
                 )
+            if not response.tool_calls and response.content:
+                # TASK-REL-006A: providers that do not parse text tool markup
+                # themselves (Gemini, fallback chains, mocks) can still hand
+                # back a turn whose content IS a tool call spelled as
+                # <tool name="get_current_time" params='...'/> markup. Recover
+                # it into real tool calls so it executes; round 1 production
+                # evidence showed the raw markup returned as the whole reply.
+                try:
+                    from friday.llm.tool_markup import extract_markup_tool_calls
+
+                    _markup_calls, _remaining = extract_markup_tool_calls(response.content)
+                    if _markup_calls:
+                        response = Message(
+                            role=Role.ASSISTANT,
+                            content=_remaining,
+                            tool_calls=_markup_calls,
+                        )
+                except Exception as _markup_exc:  # never break a turn on recovery
+                    logger.debug(f"tool markup recovery skipped: {_markup_exc}")
             if not response.tool_calls:
                 content = strip_thought_tags(response.content)
+                # Defense in depth: unrecoverable tool markup must never be
+                # the user-visible answer (TASK-REL-006A).
+                try:
+                    from friday.llm.tool_markup import strip_tool_markup
+
+                    content = strip_tool_markup(content)
+                except Exception:
+                    pass
                 if content:
                     if (
                         phantom_redirects == 0
@@ -614,6 +641,12 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                 final_response = self.llm.generate(messages, tools=[])
                 if not final_response.tool_calls and final_response.content.strip():
                     content = strip_thought_tags(final_response.content)
+                    try:
+                        from friday.llm.tool_markup import strip_tool_markup
+
+                        content = strip_tool_markup(content) or content
+                    except Exception:
+                        pass
                     return AgentResponse(
                         content=content,
                         tool_calls=tool_calls or None,

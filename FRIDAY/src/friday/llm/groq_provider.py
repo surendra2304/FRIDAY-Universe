@@ -290,6 +290,19 @@ class GroqLLMProvider(BaseLLMProvider):
         tool_calls_raw = getattr(choice_msg, "tool_calls", None)
         tool_calls: list[ToolCall] | None = None
 
+        if not tool_calls_raw and content:
+            # TASK-REL-006A: gpt-oss models on Groq sometimes spell the tool
+            # call as text markup (<tool name="..." params='...'/>) instead of
+            # using the structured channel. Recover it here so the call is
+            # executed, never shown to the user as the reply.
+            from friday.llm.tool_markup import extract_markup_tool_calls
+
+            markup_calls, remaining = extract_markup_tool_calls(content)
+            if markup_calls:
+                return Message(
+                    role=Role.ASSISTANT, content=remaining, tool_calls=markup_calls
+                )
+
         if tool_calls_raw:
             tool_calls = []
             for tc in tool_calls_raw:
