@@ -53,6 +53,7 @@ class IncidentResponse:
     assigned_team: str = ""
     playbooks_triggered: list[str] = field(default_factory=list)
     actions_executed: int = 0
+    actions_simulated: int = 0
     containment_achieved: bool = False
     started_at: float = 0.0
     resolved_at: float = 0.0
@@ -187,13 +188,19 @@ class AutomatedResponseOrchestrator:
                         executed_at=time.time(),
                     )
 
-                    # Simulate action execution
-                    action.status = "completed"
-                    action.result = f"Successfully executed: {action_desc}"
-                    action.duration_ms = 100.0 + (ord(hashlib.md5(action_desc.encode()).hexdigest()[:1]) % 500)
+                    # TASK-SEN-001: no response executor is wired to this
+                    # service, so the action is recorded as SIMULATED. It
+                    # must never be reported as executed/completed, and its
+                    # duration must never be an md5-derived invention.
+                    action.status = "simulated"
+                    action.result = (
+                        "Simulated only — no response action was executed "
+                        f"against any system: {action_desc}"
+                    )
+                    action.duration_ms = 0.0
 
                     self._actions.append(action)
-                    response.actions_executed += 1
+                    response.actions_simulated += 1
 
         # Update metrics
         self._metrics.total_incidents += 1
@@ -374,6 +381,12 @@ async def trigger_response(payload: dict):
         "incident_id": response.incident_id,
         "playbooks_triggered": len(response.playbooks_triggered),
         "actions_executed": response.actions_executed,
+        "actions_simulated": response.actions_simulated,
+        "simulated": True,
+        "data_note": (
+            "No response executor is wired to this service; playbook actions "
+            "are simulated and nothing was executed against any system."
+        ),
         "status": response.status,
     }
 
