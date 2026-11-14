@@ -34,13 +34,22 @@ Semantics:
 * One row per history entry, keyed by the entry's UUID (``entry_id``).
   Ordering is the identity column ``id`` (insertion order), which mirrors
   the deque's appendleft order exactly; timestamps are payload, not keys.
+* Writes are serialised process-wide and transient Oracle lock errors are
+  retried (TASK-REL-041): under a parallel chat barrage the unserialised
+  insert-plus-trim transactions deadlocked each other (ORA-00060, 16
+  warnings in one 19-turn barrage) and the victim turns silently stayed
+  memory-only. One writer at a time removes the intra-process deadlock;
+  the bounded retry covers any writer outside this process.
 """
 
 from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any
+import random
+import threading
+import time
+from typing import Any, Callable
 
 from sqlalchemy import delete, insert, select, text, update
 
@@ -52,6 +61,40 @@ logger = get_logger("api.history_store")
 
 #: Durable cap, mirroring ``deque(maxlen=10000)`` in friday.api.server.
 MAX_HISTORY_ENTRIES = 10000
+
+#: Serialises every durable write in this process (TASK-REL-041). History
+#: writes are one-per-turn and tens of milliseconds, so a single lock costs
+#: nothing measurable and removes the insert/trim deadlock class entirely
+#: for the writers this process controls. Re-entrant because ``upsert``
+#: composes ``update`` + ``insert`` under one hold.
+_WRITE_LOCK = threading.RLock()
+
+#: Total attempts for one Oracle write (1 initial + bounded retries) and the
+#: base of the exponential backoff between them (plus jitter).
+_WRITE_MAX_ATTEMPTS = 4
+_WRITE_RETRY_BASE_SECONDS = 0.05
+
+#: Oracle errors that are transient by definition — Oracle has already
+#: rolled the victim back, so re-running the whole unit of work is safe.
+#: ORA-00060: deadlock detected. ORA-00054: resource busy (NOWAIT class).
+_TRANSIENT_ORA_CODES = ("ORA-00060", "ORA-00054")
+
+
+def _is_transient_lock_error(exc: BaseException) -> bool:
+    """True when ``exc`` wraps an ORA-00060 / ORA-00054 lock failure."""
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        text = str(current)
+        if any(code in text for code in _TRANSIENT_ORA_CODES):
+            return True
+        current = (
+            getattr(current, "orig", None)
+            or current.__cause__
+            or current.__context__
+        )
+    return False
 
 
 def _row_from_entry(entry: dict[str, Any]) -> dict[str, Any]:
@@ -190,28 +233,37 @@ class ConversationHistoryStore:
     def insert_entry(self, entry: dict[str, Any]) -> bool:
         """Insert one entry and enforce the growth cap. True on success."""
         row = _row_from_entry(entry)
-        if self._backend == "sqlite":
-            return self._sqlite_insert(row)
-        return self._oracle_insert(row)
+        with _WRITE_LOCK:
+            if self._backend == "sqlite":
+                return self._sqlite_insert(row)
+            return self._oracle_insert(row)
 
     def update_entry(self, entry: dict[str, Any]) -> bool:
         """Update the row for ``entry['id']``. False if absent or failed."""
         row = _row_from_entry(entry)
-        if self._backend == "sqlite":
-            return self._sqlite_update(row)
-        return self._oracle_update(row)
+        with _WRITE_LOCK:
+            if self._backend == "sqlite":
+                return self._sqlite_update(row)
+            return self._oracle_update(row)
 
     def upsert_entry(self, entry: dict[str, Any]) -> bool:
-        """Update if present, insert otherwise (finalize/retry path)."""
-        if self.update_entry(entry):
-            return True
-        return self.insert_entry(entry)
+        """Update if present, insert otherwise (finalize/retry path).
+
+        The update+insert pair runs under one hold of the write lock so a
+        concurrent writer cannot interleave between the miss and the
+        insert (which would surface as a unique-constraint failure).
+        """
+        with _WRITE_LOCK:
+            if self.update_entry(entry):
+                return True
+            return self.insert_entry(entry)
 
     def delete_all(self) -> bool:
         """Remove every stored entry (the DELETE history endpoint)."""
-        if self._backend == "sqlite":
-            return self._sqlite_delete_all()
-        return self._oracle_delete_all()
+        with _WRITE_LOCK:
+            if self._backend == "sqlite":
+                return self._sqlite_delete_all()
+            return self._oracle_delete_all()
 
     def load_recent(self, limit: int = MAX_HISTORY_ENTRIES) -> list[dict[str, Any]] | None:
         """Return up to ``limit`` entries, newest first.
@@ -251,12 +303,47 @@ class ConversationHistoryStore:
     # ------------------------------------------------------------------
     # Oracle backend
     # ------------------------------------------------------------------
+    def _oracle_write(self, verb: str, operation: Callable[[], bool]) -> bool:
+        """Run one Oracle write transaction with bounded deadlock retry.
+
+        A transient lock error (ORA-00060/ORA-00054) means Oracle already
+        rolled this transaction back, so re-running the whole unit of work
+        is safe and — under a parallel barrage — usually lands on the next
+        attempt once the competing writer has committed. Any other failure
+        keeps the store's fail-safe contract: one warning, ``False``, and
+        the caller keeps the entry in memory for a later retry.
+        """
+        for attempt in range(1, _WRITE_MAX_ATTEMPTS + 1):
+            try:
+                return operation()
+            except Exception as exc:
+                if attempt < _WRITE_MAX_ATTEMPTS and _is_transient_lock_error(exc):
+                    delay = _WRITE_RETRY_BASE_SECONDS * (2 ** (attempt - 1))
+                    delay += random.uniform(0, _WRITE_RETRY_BASE_SECONDS)
+                    logger.info(
+                        "Conversation history %s hit a transient Oracle lock "
+                        "error (attempt %d/%d); retrying in %.0f ms: %s",
+                        verb,
+                        attempt,
+                        _WRITE_MAX_ATTEMPTS,
+                        delay * 1000,
+                        exc,
+                    )
+                    time.sleep(delay)
+                    continue
+                logger.warning(
+                    "Failed to %s conversation history in Oracle: %s", verb, exc
+                )
+                return False
+        return False  # pragma: no cover - the loop always returns
+
     def _oracle_insert(self, row: dict[str, Any]) -> bool:
         engine = self._ensure_oracle()
         if engine is None:
             return False
         table = oracle.conversation_history_table
-        try:
+
+        def _txn() -> bool:
             with engine.begin() as conn:
                 conn.execute(
                     insert(table).values(
@@ -272,16 +359,16 @@ class ConversationHistoryStore:
                 )
                 self._trim_oracle(conn)
             return True
-        except Exception as exc:
-            logger.warning("Failed to insert conversation history to Oracle: %s", exc)
-            return False
+
+        return self._oracle_write("insert", _txn)
 
     def _oracle_update(self, row: dict[str, Any]) -> bool:
         engine = self._ensure_oracle()
         if engine is None:
             return False
         table = oracle.conversation_history_table
-        try:
+
+        def _txn() -> bool:
             with engine.begin() as conn:
                 result = conn.execute(
                     update(table)
@@ -297,22 +384,21 @@ class ConversationHistoryStore:
                     )
                 )
                 return int(result.rowcount or 0) > 0
-        except Exception as exc:
-            logger.warning("Failed to update conversation history in Oracle: %s", exc)
-            return False
+
+        return self._oracle_write("update", _txn)
 
     def _oracle_delete_all(self) -> bool:
         engine = self._ensure_oracle()
         if engine is None:
             return False
         table = oracle.conversation_history_table
-        try:
+
+        def _txn() -> bool:
             with engine.begin() as conn:
                 conn.execute(delete(table))
             return True
-        except Exception as exc:
-            logger.warning("Failed to clear conversation history in Oracle: %s", exc)
-            return False
+
+        return self._oracle_write("clear", _txn)
 
     def _oracle_load(self, limit: int) -> list[dict[str, Any]] | None:
         engine = self._ensure_oracle()
