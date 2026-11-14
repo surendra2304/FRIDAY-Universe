@@ -3242,7 +3242,7 @@ tasks:
     next_action: "Replacement PR via bridge Git Data API (supersedes #115); merge on green CI under owner autonomous authority; confirm Fleet CD deploy + worker state."
   - id: TASK-STR-SAFETY-001
     title: "Close three Stratex safety holes: daemon governance bypass, ALLOW_LIVE_TRADING env unlock, unguarded OANDA place_order"
-    status: DONE
+    status: VERIFIED
     owner: muse_ai
     branch: "claude/stratex-safety-governance + claude/stratex-live-trading-env-lock"
     pr: "120 (HOLE 1 + denylist, merged d4759a4), 123 (HOLES 2+3, merged b513e34)"
@@ -3273,6 +3273,30 @@ tasks:
       - "PRODUCTION-VERIFIED 2026-11-14 15:18 IST: Stratex-Daemon restarted (pid 2496453) logging 'Governance (config_strategy): executable=[strategy_bb_reversion] observe_only=[strategy_adx_ema, strategy_supertrend] excluded=[49 entries: 8 DISABLED + 41 UNREGISTERED incl. strategy_donchian_observe_only and strategy_hybrid]'; daemon adopted its 3 existing demo positions (heartbeat fresh, balance 110410.25); /stratex/health 200 engine online; testnet heartbeat RUNNING/fresh with exactly the 6 governed strategies."
     blockers: []
     next_action: "DONE 2026-11-14. Follow-ups (not blocking): portfolio_v2 remains an orphaned transplant (now practice-gated anyway); deployment/live_authorization.py's 6 gates are still not consulted by execution paths — defence now rests on the dual-gate + config invariant, which is sufficient; consider wiring it if live trading is ever contemplated (owner decree: it is not)."
+  - id: TASK-REL-009
+    title: "Fix Gemini-rejected tool schema (empty enum value) blocking all tool-bearing chat on the Gemini brain"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/gemini-tool-schema-fix
+    pr: 128
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T15:20:00+05:30"
+    updated_at: "2026-11-14T16:20:00+05:30"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/sentinel_security.py"
+      - "FRIDAY/tests/test_gemini_tool_schema_validity.py"
+      - ".github/workflows/owner-workflows.yml"
+    defect: "Production 2026-11-14 (after the Gemini key pool was loaded and FRIDAY_LLM_PROVIDER flipped to gemini): every LLM-routed POST /friday/api/chat failed with Google 400 INVALID_ARGUMENT — GenerateContentRequest.tools[0].function_declarations[7].parameters.properties[severity].enum[0] cannot be empty. SentinelSecurityTool declared severity enum [\"\", \"critical\", \"high\", \"medium\", \"low\"] (the empty string meant 'any severity'); Groq tolerated it, Google rejects empty enum values, so one schema poisoned the entire tool list for every tool-bearing generation. Full audit of all 95 builtin tool classes (plus the property-defined browser/memory-search schemas and the vision-exported ScreenPredictionTool) found this was the ONLY Gemini-subset violation: no other empty or wrong-type enum values, no missing property types, no required naming undeclared properties, no unsupported keywords, no defaults outside their enums."
+    acceptance:
+      - "sentinel_security severity enum is [critical, high, medium, low] with no empty entry and no out-of-enum default; the parameter stays optional and the handler still treats an omitted severity as 'any' (execute() defaults severity to \"\" internally), so Groq/OpenRouter behaviour is unchanged."
+      - "New regression test FRIDAY/tests/test_gemini_tool_schema_validity.py loads ALL builtin tool schemas and asserts Gemini-subset validity (every property typed, enums non-empty and type-consistent, required subset of properties, no unsupported keywords); it fails on the pre-fix tree (exactly the sentinel enum, 2 tests) and passes after the fix (98 tests)."
+      - "Test wired into the Owner Workflow Contracts CI list (owner-workflows.yml triggers on FRIDAY/src/** and FRIDAY/tests/**)."
+      - "Live-verified after Fleet CD: POST /friday/api/chat pure-generation question answered by Gemini (metadata provider=gemini) and a security-flavoured question no longer returns the enum 400."
+    evidence:
+      - "Merged as PR #128 (5bbf34a) and production-verified on Server 1 — but a later main history rewrite dropped the merge from main's ancestry, leaving Server 1's checkout diverged (deploy guard: 'Checkout diverges from deployment revision'; Fleet CD failed for PRs #130/#131). Restored to main verbatim by the TASK-REL-007 reconciliation PR (2026-11-14); recovered test re-verified failing on main's schema (2 sentinel-enum failures) and passing after restoration."
+    blockers: []
+    next_action: "Done. Restored content is identical to PR #128; Server 1 checkout reconciled to main after this merge."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
