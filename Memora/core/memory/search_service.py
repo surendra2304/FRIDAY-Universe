@@ -136,13 +136,31 @@ class SearchService:
         vector_hits = []
         try:
             query_vector = EmbeddingGenerator.generate_embedding(query_text)
-            vector_hits = vector_adapter.search_similarity(
-                query_vector=query_vector,
-                tenant_id=resolved_tenant,
-                limit=limit * 3,
-                score_threshold=0.30,
-                fail_soft=True
-            )
+            # The vector leg must query the same store the write pipeline
+            # upserts into (TASK-REL-013). On the Oracle backend the write
+            # path stores embeddings in the native 23ai vector table via the
+            # Oracle adapter, so the search leg must read from that adapter;
+            # querying the Qdrant adapter unconditionally searched an empty
+            # in-memory mock in production and silently reduced all recall
+            # to lexical matching. The branch mirrors write_service.py and
+            # storage/vector/hybrid.py.
+            from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+            if oracle_vector_adapter.is_oracle_backend():
+                vector_hits = oracle_vector_adapter.search_similarity(
+                    query_vector=query_vector,
+                    limit=limit * 3,
+                    tenant_id=resolved_tenant,
+                    score_threshold=0.30,
+                    db=db
+                )
+            else:
+                vector_hits = vector_adapter.search_similarity(
+                    query_vector=query_vector,
+                    tenant_id=resolved_tenant,
+                    limit=limit * 3,
+                    score_threshold=0.30,
+                    fail_soft=True
+                )
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning("Vector search unavailable (%s); failing soft to relational search.", exc)

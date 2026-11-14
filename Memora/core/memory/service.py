@@ -764,10 +764,22 @@ class MemoryService:
             db.add(tombstone)
             db.flush()
 
-            # 1. Vector deletion
+            # 1. Vector deletion — against the store the write path upserts
+            # into (TASK-REL-013). On the Oracle backend the embedding lives
+            # in the native vector table; deleting only from the Qdrant
+            # adapter would mark the tombstone vector_deleted while the real
+            # vector survives. The Oracle delete joins this transaction via
+            # the caller's session, so it converges atomically with the
+            # relational delete below.
             vec_ok = False
             try:
-                vec_ok = vector_adapter.delete_embedding(memory_id, tenant_id=tenant_id)
+                from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+                if oracle_vector_adapter.is_oracle_backend():
+                    vec_ok = oracle_vector_adapter.delete_embedding(
+                        memory_id, tenant_id=tenant_id, db=db
+                    )
+                else:
+                    vec_ok = vector_adapter.delete_embedding(memory_id, tenant_id=tenant_id)
             except Exception:
                 vec_ok = False
             tombstone.vector_deleted = bool(vec_ok)
@@ -955,20 +967,34 @@ class MemoryService:
         try:
             from storage.vector.embedding import EmbeddingGenerator
             dense_embedding = EmbeddingGenerator.generate_embedding(record.content_text)
-            vector_adapter.upsert_embedding(
-                memory_id=record.id,
-                vector=dense_embedding,
-                tenant_id=record.tenant_id,
-                payload={
-                    "namespace_path": record.namespace.path if record.namespace else "",
-                    "memory_type": MemoryType.SEMANTIC.value,
-                    "owner": record.owner.name if record.owner else actor.name,
-                    "trust_level": "verified",
-                    "user_id": getattr(record, "user_id", "default_user"),
-                    "agent_id": getattr(record, "agent_id", actor.name),
-                    "task_id": getattr(record, "task_id", None),
-                },
-            )
+            vec_payload = {
+                "namespace_path": record.namespace.path if record.namespace else "",
+                "memory_type": MemoryType.SEMANTIC.value,
+                "owner": record.owner.name if record.owner else actor.name,
+                "trust_level": "verified",
+                "user_id": getattr(record, "user_id", "default_user"),
+                "agent_id": getattr(record, "agent_id", actor.name),
+                "task_id": getattr(record, "task_id", None),
+            }
+            # Sync into the same store the write pipeline uses (TASK-REL-013):
+            # on the Oracle backend that is the native vector table. The
+            # relational commit already happened above, so the Oracle upsert
+            # runs in its own session and commits independently.
+            from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+            if oracle_vector_adapter.is_oracle_backend():
+                oracle_vector_adapter.upsert_embedding(
+                    memory_id=record.id,
+                    vector=dense_embedding,
+                    tenant_id=record.tenant_id,
+                    payload=vec_payload,
+                )
+            else:
+                vector_adapter.upsert_embedding(
+                    memory_id=record.id,
+                    vector=dense_embedding,
+                    tenant_id=record.tenant_id,
+                    payload=vec_payload,
+                )
         except Exception:
             pass
         return record

@@ -54,20 +54,31 @@ def test_render_environment_prevents_ephemeral_vector_writes(monkeypatch):
 @pytest.mark.parametrize(
     ("vector_status", "expected_status", "expected_http"),
     [
-        ({"status": "connected", "available": True, "backend": "qdrant"}, "healthy", 200),
-        ({"status": "unavailable", "available": False, "backend": "qdrant"}, "degraded", 503),
+        ({"status": "available", "available": True, "backend": "oracle_23ai_native_vector"}, "healthy", 200),
+        ({"status": "not_initialized", "available": False, "backend": "oracle_23ai_native_vector"}, "degraded", 503),
     ],
 )
 def test_health_reflects_vector_store_availability(
     monkeypatch, vector_status, expected_status, expected_http
 ):
-    monkeypatch.setattr(health, "production_mode", lambda: False)
-    monkeypatch.setattr(health.vector_adapter, "readiness", lambda: vector_status)
+    # TASK-REL-013 repair: this test previously patched health.production_mode
+    # — a name that has never existed in the health module — so it errored on
+    # main before reaching its assertions, and it left the storage receipt at
+    # the test harness's sqlite default, whose event-store leg forces a 503
+    # regardless of vector state. Patch the receipt to the production (Oracle)
+    # shape and the ACTIVE vector adapter's readiness: on the Oracle backend
+    # /health reports the Oracle adapter's readiness, not the Qdrant mock's.
+    monkeypatch.setattr(
+        health,
+        "storage_receipt",
+        lambda: {"backend": "oracle", "durable": True, "durability": "shared_durable"},
+    )
+    monkeypatch.setattr(health.oracle_vector_adapter, "readiness", lambda: vector_status)
 
     response = health.health_check(db=DatabaseProbe())
     body = json.loads(response.body)
 
     assert response.status_code == expected_http
-    assert body["status"] in ["ok", "healthy", expected_status]
+    assert body["status"] == expected_status
     assert body["vector_store"] == vector_status
 

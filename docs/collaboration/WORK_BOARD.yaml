@@ -3466,6 +3466,37 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "LIVE success path not observed in the 3 probes: production synthesis currently truncates on the routed Inference completion for every attempt (pre-existing upstream condition, the same one TASK-REL-007's retry mitigates), so no live SUCCESS envelope could be produced during verification; the success path is unchanged code, pinned by the new contract test and green CI. Flagged for the coordinator: while synthesis keeps truncating upstream, every live research answer takes the (now honest) raw-findings path."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-14: fix merged (PR #152), deployed (Fleet CD 43600585472), and the failure path production-verified live three times with findings surviving a genuine synthesis failure."
+  - id: TASK-REL-013
+    title: "Memora semantic search permanently empty in production: write/read vector paths split across Oracle and Qdrant, /health misreports vector state"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-013-memora-semantic
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T18:50:00+05:30"
+    updated_at: "2026-11-14T19:13:00+05:30"
+    files:
+      - "Memora/core/memory/search_service.py"
+      - "Memora/apps/api/routers/health.py"
+      - "Memora/core/memory/pipeline/write_service.py"
+      - "Memora/core/memory/service.py"
+      - "Memora/tests/test_rel013_semantic_wiring.py"
+      - "Memora/tests/test_health_readiness_truth.py"
+      - "Memora/tests/test_health_observation_metadata.py"
+    defect: "Write path stores embeddings in the Oracle native vector table (write_service branches on oracle_vector_adapter.is_oracle_backend()), but SearchService.hybrid_search — the live path behind GET /v1/memories/search and POST /v1/task — queried ONLY the Qdrant adapter, which is unprovisioned (owner-gated until the ARM server) and falls back to an empty in-memory mock: vector hits always [], semantic_score always 0, all recall lexical. The coherent branch existed only in storage/vector/hybrid.py, called solely by tests. /health hardcoded {available: true, backend: oracle_23ai_native_vector} for the Oracle backend while /health/ready reported the Qdrant adapter's state (in_memory) — contradictory, neither measures the real path. The same split affected deletes (write rollback compensation, hard-delete tombstone) and promote-to-semantic sync, which touched only Qdrant. Verified live 2026-11-14: memora_vector_store holds 276 rows; embeddings are genuine Gemini (paraphrase cosine 0.816 vs unrelated 0.589)."
+    acceptance:
+      - "SearchService.hybrid_search queries the Oracle vector adapter when the backend is Oracle (same branch as write_service/hybrid.py, tenant + 0.30 threshold semantics preserved); the Qdrant branch is unchanged for non-Oracle backends."
+      - "Rollback compensation, hard-delete tombstone vector step, and promote-to-semantic sync target the same store the write path upserts into."
+      - "/health and /health/ready report the ACTIVE backend's real readiness (Oracle adapter readiness on the Oracle backend; no hardcoded available:true)."
+      - "Live proof after deploy: store a fact via the live service and recall it with a paraphrase sharing no keywords (semantic_score > 0 with a 'Semantic match' reason), and /health vector status matches the real state."
+    evidence:
+      - "Code-verified at main 3d5c494: search_service.py was the only production search_similarity caller outside storage/; hybrid.py's coherent branch is referenced only by its test."
+      - "Live probes 2026-11-14 (Server 1): /health returns the hardcoded oracle dict while /health/ready returns vector_store in_memory; embedding mode gemini; memora_vector_store row count 276."
+      - "Tests: new tests/test_rel013_semantic_wiring.py (6 tests: Oracle-branch semantic hit with zero lexical overlap, no-hit control, Qdrant branch on non-Oracle backend, health/ready Oracle truth) green; repaired test_health_reflects_vector_store_availability and test_health_observation_metadata (both errored on main patching health.production_mode, a name that never existed in the module) green; CI-gated Memora regression list green (27 + 6); ruff clean."
+    blockers:
+      - "Live store-and-recall acceptance is additionally gated on a production schema drift owned by TASK-REL-015: the Oracle event_log table lacks the cloud_synced column the ORM/migration b1206b9e4a61 define, so POST /v1/memories currently 500s at pipeline step 10 (emitter flush ORA-00904 poisons the write transaction; verified in the Memora journal 2026-11-14 19:09 IST) and GET /v1/events polls 500. Semantic READ verification can proceed against pre-existing stored memories if the drift is not yet fixed when this deploys."
+    next_action: "Open PR, merge on green CI, verify deployed files after Fleet CD, run the live paraphrase acceptance (fresh fact if writes are restored, else a pre-existing memory), then mark VERIFIED."
   - id: TASK-REL-021
     title: "Production research synthesis never completes: routed Inference completion truncates (finish_reason length)"
     status: IN_PROGRESS

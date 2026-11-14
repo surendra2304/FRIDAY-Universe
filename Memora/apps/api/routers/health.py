@@ -8,9 +8,28 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from storage.relational.session import get_db, storage_receipt
+from storage.vector.oracle_vector_adapter import oracle_vector_adapter
 from storage.vector.qdrant_adapter import vector_adapter
 
 router = APIRouter(prefix="/health", tags=["Health"])
+
+
+def _active_vector_readiness():
+    """Readiness of the vector backend the write/read paths actually use.
+
+    On the Oracle backend, embeddings live in the native 23ai vector table
+    (write_service/search_service branch on ``is_oracle_backend()``), so the
+    truthful signal is the Oracle adapter's readiness — which reports
+    ``not_initialized`` until its schema bootstrap has actually run in this
+    process. Reporting a hardcoded ``available: True`` here (the previous
+    behaviour) claimed semantic search was healthy even when the vector
+    table had never been initialised, and the Qdrant adapter's state —
+    an unprovisioned in-memory mock — said nothing about the real path
+    (TASK-REL-013).
+    """
+    if storage_receipt().get("backend") == "oracle":
+        return oracle_vector_adapter.readiness()
+    return vector_adapter.readiness()
 
 @router.get("")
 @router.head("")
@@ -26,10 +45,7 @@ def health_check(db: Session = Depends(get_db)):
     event_store = "oracle_database" if database.get("backend") == "oracle" else "unavailable"
     event_store_ok = event_store == "oracle_database"
 
-    if database.get("backend") == "oracle":
-        vector_store = {"status": "available", "available": True, "backend": "oracle_23ai_native_vector"}
-    else:
-        vector_store = vector_adapter.readiness()
+    vector_store = _active_vector_readiness()
 
     status_ok = db_status == "healthy" and event_store_ok and vector_store["available"]
     return JSONResponse(status_code=200 if status_ok else 503, content={
@@ -60,7 +76,7 @@ def readiness_check(db: Session = Depends(get_db)):
     except Exception as e:
         db_status = f"degraded ({type(e).__name__})"
 
-    vector_store = vector_adapter.readiness()
+    vector_store = _active_vector_readiness()
     from core.resilience.circuit_breaker import circuit_registry
     circuits_ok = circuit_registry.healthy()
 
