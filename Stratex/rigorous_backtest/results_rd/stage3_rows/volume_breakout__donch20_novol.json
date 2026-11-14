@@ -1,0 +1,147 @@
+{
+  "family": "volume_breakout",
+  "variant": "donch20_novol",
+  "timeframe": "1h",
+  "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 4.0
+  },
+  "report": {
+    "per_fold": {
+      "W1": {
+        "oos_start": "2024-07-01",
+        "oos_end": "2025-01-01",
+        "trades": 462,
+        "wins": 164,
+        "win_rate": 0.354978354978355,
+        "expectancy_net": -0.0015519220096820625,
+        "profit_factor_net": 0.9009182436534815,
+        "avg_win_net": 0.039752066023232106,
+        "avg_loss_net": -0.02428297582645362,
+        "total_return_net": -0.6215844964922088,
+        "max_drawdown_net": -0.7713545923760499
+      },
+      "W2": {
+        "oos_start": "2025-01-01",
+        "oos_end": "2025-07-01",
+        "trades": 451,
+        "wins": 162,
+        "win_rate": 0.35920177383592017,
+        "expectancy_net": -0.0022187127553387133,
+        "profit_factor_net": 0.8718159777677937,
+        "avg_win_net": 0.04201008270458872,
+        "avg_loss_net": -0.027011324743256515,
+        "total_return_net": -0.7288512223925343,
+        "max_drawdown_net": -0.8518085200097645
+      },
+      "W3": {
+        "oos_start": "2025-07-01",
+        "oos_end": "2026-01-01",
+        "trades": 435,
+        "wins": 151,
+        "win_rate": 0.3471264367816092,
+        "expectancy_net": -0.0007067546330100146,
+        "profit_factor_net": 0.94874892642114,
+        "avg_win_net": 0.037690274813715896,
+        "avg_loss_net": -0.02112207662757203,
+        "total_return_net": -0.39656358364915745,
+        "max_drawdown_net": -0.5368932818941821
+      },
+      "W4": {
+        "oos_start": "2026-01-01",
+        "oos_end": "2026-07-01",
+        "trades": 424,
+        "wins": 158,
+        "win_rate": 0.37264150943396224,
+        "expectancy_net": 0.0008437422656630563,
+        "profit_factor_net": 1.0661039945079986,
+        "avg_win_net": 0.03651660900127806,
+        "avg_loss_net": -0.020345404141206003,
+        "total_return_net": 0.18062411241877574,
+        "max_drawdown_net": -0.5377807191371784
+      },
+      "W5": {
+        "oos_start": "2026-07-01",
+        "oos_end": "2026-11-01",
+        "trades": 292,
+        "wins": 94,
+        "win_rate": 0.3219178082191781,
+        "expectancy_net": -0.0019287339394750387,
+        "profit_factor_net": 0.821093109304932,
+        "avg_win_net": 0.02749746513752557,
+        "avg_loss_net": -0.01589874764269755,
+        "total_return_net": -0.4686325066602389,
+        "max_drawdown_net": -0.5649963863350045
+      }
+    },
+    "pooled_oos": {
+      "trades": 2064,
+      "wins": 729,
+      "win_rate": 0.35319767441860467,
+      "expectancy_net": -0.0010806730989223858,
+      "profit_factor_net": 0.9246477544504088,
+      "avg_win_net": 0.0375453904910204,
+      "avg_loss_net": -0.02217310782331811,
+      "total_return_net": -0.9611568252318365,
+      "max_drawdown_net": -0.9765688797311267
+    },
+    "per_symbol_oos": {
+      "BTCUSDT": {
+        "trades": 669,
+        "wins": 245,
+        "win_rate": 0.3662182361733931,
+        "expectancy_net": -0.00047276936250216517,
+        "profit_factor_net": 0.9530777851657057,
+        "avg_win_net": 0.026221600797590783,
+        "avg_loss_net": -0.01589758230878229,
+        "total_return_net": -0.37960744093036825,
+        "max_drawdown_net": -0.6176391915259526
+      },
+      "ETHUSDT": {
+        "trades": 689,
+        "wins": 235,
+        "win_rate": 0.34107402031930334,
+        "expectancy_net": -0.0013059567945120942,
+        "profit_factor_net": 0.9136170779424276,
+        "avg_win_net": 0.04049640649745347,
+        "avg_loss_net": -0.022943743961058142,
+        "total_return_net": -0.7158052059580634,
+        "max_drawdown_net": -0.7559027642526397
+      },
+      "SOLUSDT": {
+        "trades": 706,
+        "wins": 249,
+        "win_rate": 0.3526912181303116,
+        "expectancy_net": -0.001436858840287568,
+        "profit_factor_net": 0.9184814287473514,
+        "avg_win_net": 0.04590217648852436,
+        "avg_loss_net": -0.027229899971303262,
+        "total_return_net": -0.7796911109650614,
+        "max_drawdown_net": -0.8610889856341579
+      }
+    }
+  },
+  "bar": {
+    "bar": {
+      "expectancy_net_gt": 0.0,
+      "profit_factor_net_gte": 1.2,
+      "min_oos_trades": 200,
+      "min_positive_folds": 4,
+      "folds_total": 5
+    },
+    "checks": {
+      "expectancy_net_gt_0": false,
+      "profit_factor_net_gte_1.2": false,
+      "min_oos_trades_200": true,
+      "positive_folds_gte_4_of_5": false
+    },
+    "passes_bar": false
+  },
+  "holdout": {
+    "symbols_positive_min20trades": [],
+    "max_symbol_profit_share": 1.0,
+    "passes": false
+  },
+  "trades_note": "trade list omitted from repo copy; regenerable deterministically via rigorous_backtest.rd.stage3 (same data hashes, same code)"
+}

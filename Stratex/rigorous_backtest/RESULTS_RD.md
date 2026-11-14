@@ -93,10 +93,46 @@ Trailing stops and wider targets roughly double expectancy **on the same
 hypotheses for the forward demo protocol (test trailing exits there), not
 as findings.
 
+## Stage 3 — NEW strategy creation, batch 1 (28 variants, all disclosed)
+
+Seven new families with pre-declared grids (grid declared in
+`rd/stage3.py` before the run). Family headline = honest walk-forward
+selection (top-1 in-sample pick per fold, judged OOS). Full per-variant
+rows: `results_rd/stage3_rows/` (metrics + per-fold + per-symbol; trade
+lists regenerable deterministically by re-running `rd/stage3.py`).
+
+| family | variants | wf-select OOS trades | wf-select expectancy | wf-select PF |
+|---|---|---|---|---|
+| donchian_turtle | 6 | 1540 | −0.182% | 0.88 |
+| zscore_reversion | 7 | 1815 | −0.169% | 0.84 |
+| vol_adaptive_trend | 4 | 504 | −0.063% | 0.96 |
+| mtf_confluence | 3 | 302 | −0.171% | 0.90 |
+| volume_breakout | 2 | 1965 | −0.091% | 0.94 |
+| ts_momentum | 4 | 597 | **+0.054%** | **1.04** |
+| session_effects | 2 | 1859 | −0.216% | 0.63 |
+
+Only three individual variants finished positive, and the law exists
+precisely for them — none survives scrutiny:
+
+| variant | trades | expectancy | PF | folds + | holdout |
+|---|---|---|---|---|---|
+| mtf_confluence h4_native_ema200 | 146 | +0.404% | 1.18 | 2/5 | FAIL (BTC = 88% of profit) |
+| ts_momentum roc42_4h | 303 | +0.243% | 1.10 | 2/5 | FAIL (SOL = 97% of profit; W3–W5 negative) |
+| ts_momentum roc168_1h | 678 | +0.082% | 1.07 | 3/5 | FAIL (SOL = 84% of profit) |
+
+**Stage 3 verdict: zero promotion candidates.** Session effects are
+strongly negative (PF 0.60–0.70 — the hour-of-day patterns tested do not
+exist in this data at these costs); 1h mean reversion, breakouts and
+EMA-cross trend all lose the usual ~0.1–0.2%/trade to costs on ~zero
+gross edge, replicating BT-001's central finding on new code. The only
+region with any pulse is slow trend/momentum at 4h (the same region as
+adx_ema) — and even there the positives are one-symbol, two-fold
+artefacts at this sample size.
+
 ## Stage 1 — discovery completion
 
 In progress — see `results_rd/phase_rd_discovery.json` when complete.
 
-## Stages 3–5
+## Stages 4–5
 
 Pending; this file is updated per stage, one PR per stage.
