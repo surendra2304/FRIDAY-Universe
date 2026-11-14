@@ -8,6 +8,7 @@ that would accept writes and lose them on restart.
 SQLite remains available only as an explicitly-passed test backend, and only
 inside a pytest run (``MEMORA_ENV=testing`` or an active pytest process).
 """
+import contextlib
 import os
 import logging
 import sys
@@ -440,6 +441,104 @@ def _ensure_scope_constraint(engine, tables: set[str]) -> None:
         connection.execute(text(ddl))
 
 
+@contextlib.contextmanager
+def _preserve_logging_state():
+    """Restore the process logging configuration after an Alembic stamp.
+
+    Stamping loads migrations/env.py, whose ``fileConfig`` call reconfigures
+    the root logger (level and handlers) to the migration CLI's preferences
+    from alembic.ini — root drops to WARN with the alembic format — muting
+    the host application's own logging for the rest of the process lifetime
+    (TASK-REL-015). env.py now passes ``disable_existing_loggers=False`` so
+    no logger is disabled, and this guard snapshots the root logger plus
+    every existing logger's disabled flag before the stamp and restores
+    them afterwards, so running migrations in-process can never change what
+    the application logs.
+    """
+    root = logging.getLogger()
+    saved_handlers = root.handlers[:]
+    saved_level = root.level
+    saved_disabled = [
+        (registered, registered.disabled)
+        for registered in logging.Logger.manager.loggerDict.values()
+        if isinstance(registered, logging.Logger)
+    ]
+    try:
+        yield
+    finally:
+        root.handlers[:] = saved_handlers
+        root.setLevel(saved_level)
+        for registered, was_disabled in saved_disabled:
+            registered.disabled = was_disabled
+
+
+def _ensure_event_log_shape(engine, tables: set[str]) -> None:
+    """Converge a pre-existing event_log with the ORM shape (TASK-REL-015).
+
+    Migration b1206b9e4a61 adds ``cloud_synced`` (and its index) to
+    event_log, but production never runs ``alembic upgrade``: the live
+    schema's version row sits past that revision while ``create_all`` —
+    which never alters an existing table — had built event_log from a model
+    without the column. Every event read then failed with ORA-00904 and the
+    /v1/events endpoints returned 500 in a retry loop. Add what is missing,
+    idempotently and additively, mirroring _ensure_scope_indexes /
+    _ensure_scope_constraint; existing rows are backfilled by the column
+    default and never otherwise touched. Dropping the column again is the
+    (manual, never automatic) reverse operation.
+    """
+    if "event_log" not in tables:
+        return
+    columns = {
+        column["name"].lower()
+        for column in inspect(engine).get_columns("event_log")
+    }
+    dialect = engine.dialect.name
+    if "cloud_synced" not in columns:
+        if dialect == "oracle":
+            ddl = (
+                "ALTER TABLE event_log ADD "
+                "(cloud_synced NUMBER(1) DEFAULT 0 NOT NULL)"
+            )
+        else:
+            ddl = (
+                "ALTER TABLE event_log ADD COLUMN cloud_synced "
+                "BOOLEAN NOT NULL DEFAULT 0"
+            )
+        with engine.begin() as connection:
+            connection.execute(text(ddl))
+        logger.info(
+            "Repaired event_log: added the cloud_synced column (TASK-REL-015)."
+        )
+
+    indexes = {
+        (index["name"] or "").lower()
+        for index in inspect(engine).get_indexes("event_log")
+    }
+    if "ix_event_log_cloud_synced" in indexes:
+        return
+    if dialect == "oracle":
+        ddl = """
+        BEGIN
+            EXECUTE IMMEDIATE 'CREATE INDEX ix_event_log_cloud_synced ON event_log (cloud_synced)';
+        EXCEPTION
+            WHEN OTHERS THEN
+                IF SQLCODE != -955 THEN RAISE; END IF;
+        END;
+        """
+        with engine.begin() as connection:
+            connection.execute(text(ddl))
+    else:
+        with engine.begin() as connection:
+            connection.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_event_log_cloud_synced "
+                "ON event_log (cloud_synced)"
+            ))
+    logger.info(
+        "Repaired event_log: added the ix_event_log_cloud_synced index "
+        "(TASK-REL-015)."
+    )
+
+
 def init_db():
     """Initialize a fresh ORM schema without leaving it untracked by Alembic."""
     if not storage_ready():
@@ -472,6 +571,10 @@ def init_db():
         _ensure_scope_indexes(engine, existing_tables)
         _ensure_scope_constraint(engine, existing_tables)
 
+    # A pre-existing event_log can predate the cloud_synced column for the
+    # same create_all reason as the scope columns above (TASK-REL-015).
+    _ensure_event_log_shape(engine, existing_tables)
+
     if not has_memora_tables and not has_alembic_version:
         # A brand-new database has no data migrations to replay. `create_all`
         # built its schema from the current ORM metadata, so record that exact
@@ -485,7 +588,8 @@ def init_db():
             raise RuntimeError("Packaged Alembic configuration is missing")
         config = Config(str(config_path))
         config.attributes["connection"] = engine
-        command.stamp(config, "head")
+        with _preserve_logging_state():
+            command.stamp(config, "head")
     elif has_memora_tables and not has_alembic_version:
         # Existing unversioned schemas may need historical data transforms;
         # never auto-stamp them based on table names alone.

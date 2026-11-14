@@ -14,7 +14,13 @@ import storage.relational.models
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # TASK-REL-015: disable_existing_loggers=False is load-bearing. This
+    # module is not only run by the alembic CLI: storage.relational.session
+    # loads it in-process when init_db() stamps a fresh schema. fileConfig's
+    # default (True) disables EVERY logger that already exists and is not
+    # named in alembic.ini, silently blinding the host application (and, per
+    # PR #107, the test suite) for the rest of the process lifetime.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 
