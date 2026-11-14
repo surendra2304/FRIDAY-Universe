@@ -49,11 +49,29 @@ class AsyncCircuitBreaker:
         self.consecutive_failures = 0
         self.consecutive_successes = 0
         self.last_failure_time: float = 0.0
-        self._lock = asyncio.Lock()
+        # TASK-REL-011: breakers live on the shared FleetClient singleton and
+        # are awaited from both the server main loop and per-call asyncio.run()
+        # tool loops. A single asyncio.Lock binds to the first loop that
+        # contends it and then raises "bound to a different event loop" in the
+        # other family — the same failure that hit the shared httpx pool.
+        # Keep one lock per running loop; the guarded state is plain data and
+        # carries across safely.
+        self._lock: asyncio.Lock | None = None
+        self._lock_loop: asyncio.AbstractEventLoop | None = None
+
+    def _get_lock(self) -> asyncio.Lock:
+        try:
+            loop: asyncio.AbstractEventLoop | None = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if self._lock is None or self._lock_loop is not loop:
+            self._lock = asyncio.Lock()
+            self._lock_loop = loop
+        return self._lock
 
     async def can_execute(self) -> bool:
         """Evaluate whether a request can be dispatched under current circuit state."""
-        async with self._lock:
+        async with self._get_lock():
             if self.state == CircuitState.CLOSED:
                 return True
             if self.state == CircuitState.OPEN:
@@ -69,7 +87,7 @@ class AsyncCircuitBreaker:
 
     async def record_success(self) -> None:
         """Record successful execution."""
-        async with self._lock:
+        async with self._get_lock():
             self.consecutive_failures = 0
             if self.state == CircuitState.HALF_OPEN:
                 self.consecutive_successes += 1
@@ -80,7 +98,7 @@ class AsyncCircuitBreaker:
 
     async def record_failure(self, exc: Exception | None = None) -> None:
         """Record failed execution."""
-        async with self._lock:
+        async with self._get_lock():
             self.last_failure_time = time.monotonic()
             self.consecutive_failures += 1
             if self.state == CircuitState.HALF_OPEN:

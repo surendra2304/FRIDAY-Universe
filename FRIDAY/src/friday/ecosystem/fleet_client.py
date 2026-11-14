@@ -159,6 +159,14 @@ class FleetClient:
         self.vyralx_url = configured_url("vyralx_url", "http://vyralx:8000")
         self.vyralx_key = configured_key("vyralx_api_key") or os.getenv("FRIDAY_VYRALX_API_KEY") or os.getenv("VYRALX_API_KEY") or ""
         self._shared_client: httpx.AsyncClient | None = None
+        # TASK-REL-011: an httpx.AsyncClient binds its connection pool to the
+        # event loop that first uses it. This singleton is used from the
+        # server's main loop (endpoint probes) AND from per-call asyncio.run()
+        # loops (sync tool wrappers), so one cached client guarantees
+        # "bound to a different event loop" failures in whichever family runs
+        # second. Cache one client per running loop instead; the key None is
+        # the no-running-loop bucket (construction/inspection only).
+        self._clients_by_loop: dict[asyncio.AbstractEventLoop | None, httpx.AsyncClient] = {}
         self._breakers: dict[str, AsyncCircuitBreaker] = {}
 
     def get_circuit_breaker(self, peer: str) -> AsyncCircuitBreaker:
@@ -172,21 +180,59 @@ class FleetClient:
         return self._breakers[name]
 
     def get_shared_client(self) -> httpx.AsyncClient:
-        if self._shared_client is None or self._shared_client.is_closed:
-            limits = httpx.Limits(max_connections=100, max_keepalive_connections=20, keepalive_expiry=30.0)
-            timeout = httpx.Timeout(30.0, connect=5.0, read=30.0, write=10.0)
-            self._shared_client = httpx.AsyncClient(limits=limits, timeout=timeout, follow_redirects=True)
-        return self._shared_client
+        """Return the shared HTTP client for the CALLER'S event loop.
+
+        TASK-REL-011: the pool inside an httpx.AsyncClient belongs to the
+        loop that first drives it (live round-2 evidence: the palindrome
+        dispatch died with "RuntimeError: <asyncio.locks.Event ...> is bound
+        to a different event loop" because endpoint polling had already bound
+        the one shared pool to the main loop, while tools dispatch from a
+        fresh asyncio.run() loop). Each loop therefore gets its own client;
+        within one loop the client is still shared, preserving the warm
+        pool/cache behaviour TASK-REL-007D introduced.
+        """
+        try:
+            loop: asyncio.AbstractEventLoop | None = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        client = self._clients_by_loop.get(loop)
+        if client is not None and not client.is_closed:
+            self._shared_client = client
+            return client
+        # Prune pools owned by loops that have closed (ephemeral tool loops)
+        # so they cannot accumulate on a memory-tight host. Their transports
+        # died with the loop; dropping the reference is sufficient.
+        for stale_loop, stale_client in list(self._clients_by_loop.items()):
+            if stale_loop is not None and stale_loop.is_closed():
+                self._clients_by_loop.pop(stale_loop, None)
+                if self._shared_client is stale_client:
+                    self._shared_client = None
+        limits = httpx.Limits(max_connections=100, max_keepalive_connections=20, keepalive_expiry=30.0)
+        timeout = httpx.Timeout(30.0, connect=5.0, read=30.0, write=10.0)
+        client = httpx.AsyncClient(limits=limits, timeout=timeout, follow_redirects=True)
+        self._clients_by_loop[loop] = client
+        self._shared_client = client
+        return client
 
     async def aclose(self) -> None:
-        """Close and release the shared HTTP pool during owner shutdown.
+        """Close and release the shared HTTP pools during owner shutdown.
 
         Callers must stop request/background tasks before shutdown so a late
         request cannot create a replacement pool while this one is closing.
         """
-        client, self._shared_client = self._shared_client, None
-        if client is not None and not client.is_closed:
-            await client.aclose()
+        clients = list(self._clients_by_loop.values())
+        if self._shared_client is not None and self._shared_client not in clients:
+            clients.append(self._shared_client)
+        self._clients_by_loop.clear()
+        self._shared_client = None
+        for client in clients:
+            if not client.is_closed:
+                try:
+                    await client.aclose()
+                except Exception:
+                    # A pool whose loop already closed cannot be drained;
+                    # its transports are dead with the loop.
+                    pass
 
     # =========================================================================
     # 1. LIVE HEALTH & TELEMETRY PROBES
