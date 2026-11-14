@@ -3135,6 +3135,31 @@ tasks:
     evidence: []
     blockers: []
     next_action: "Draft the contract from the existing per-agent health payloads (survey all 10 response bodies first)."
+
+  - id: TASK-REL-005
+    title: "Fix FRIDAY memory round-trip: remember-write (local_only fallback) is invisible to recall"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: "claude/friday-memory-roundtrip-fix"
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T13:45:00+05:30"
+    updated_at: "2026-11-14T14:05:00+05:30"
+    files:
+      - "FRIDAY/src/friday/memory/memora_client.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_memory_roundtrip_rel005.py"
+      - "FRIDAY/tests/test_memory_recall_subject.py"
+    defect: "Production-verified 2026-11-14 ~13:43 IST through the real console: 'remember my test phrase purple elephant 42' -> 'Saved on the local memory backend' (shared sync unconfirmed, entire raw instruction stored as the fact); 'What was my test phrase?' 15s later -> 'not seeing a record'. Root cause: (1) MemoraClient.record_fact falls back to the local store on shared-write failure (status local_only) but recall_memories treated a shared EMPTY result as authoritative and never read the local store — writer/reader store split; (2) 'what was my X' matched no chat recall fast-path pattern, so the question fell to the LLM whose context is the shared store; (3) payload extraction only stripped the command phrase at message start, storing the whole raw instruction."
+    acceptance:
+      - "A remember-write that lands local_only is recallable in the same conversation through the chat handler's own code paths (round-trip test against a stub shared service: writes fail, searches return empty)."
+      - "Stored payload is the fact, not the raw instruction (mid-sentence/vocative forms covered by extraction tests)."
+      - "A non-empty shared search result stays authoritative; locally forgotten facts stay forgotten (lifecycle-filtered local rows)."
+      - "Live verification after deploy: POST /friday/api/chat remember -> recall with a fresh test phrase returns the phrase."
+    evidence: []
+    blockers: []
+    next_action: "PR via bridge Git Data API; merge on green CI under owner autonomous authority; verify live through the public chat API."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

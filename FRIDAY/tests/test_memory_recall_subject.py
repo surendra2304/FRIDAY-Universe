@@ -54,10 +54,20 @@ def test_query_preserves_subject_not_common_question_wrapper(client, monkeypatch
     assert client.timeout == 3.5  # mutation budget remains unchanged
 
 
-def test_confirmed_shared_empty_does_not_resurrect_local_mirror(client, monkeypatch):
+def test_shared_empty_falls_back_to_local_store_rel005(client, monkeypatch):
+    """TASK-REL-005 (2026-11-14) reverses the contract this test used to pin
+    ("confirmed shared empty does not resurrect local mirror"). That rule
+    caused the production round-trip failure: record_fact writes to the
+    local fallback whenever the shared write fails (status "local_only"),
+    so the local store is not a mirror of shared records — it is the ONLY
+    home of facts FRIDAY just told the owner it saved. A shared empty
+    therefore falls back to the local store (whose rows are
+    lifecycle-filtered, so locally forgotten facts stay forgotten); only a
+    NON-empty shared result remains authoritative (see memora_client)."""
     monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: Response(b"[]"))
-    assert client.recall_memories("friday", "deleted synthetic marker") == []
-    client._recall_locally.assert_not_called()
+    hits = client.recall_memories("friday", "local only synthetic marker")
+    assert hits[0]["id"] == "stale"
+    client._recall_locally.assert_called_once()
 
 
 def test_unavailable_shared_store_still_has_local_fallback(client, monkeypatch):

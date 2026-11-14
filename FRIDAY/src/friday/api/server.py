@@ -3159,6 +3159,12 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         "do you have memory", "do you have any memory", "your memory",
         "what did i say", "what did i tell you", "what have i told you",
         "my preferences", "recall my", "recall what",
+        # TASK-REL-005 (2026-11-14): the natural attribute-recall shapes —
+        # "what was my test phrase?" matched NONE of the patterns above, so
+        # the question bypassed this deterministic recall entirely and the
+        # LLM answered from a store the fact was never written to.
+        "what was my", "what's my", "what did you store", "what did you save",
+        "what have you stored", "what have you saved",
     )
     _remember_patterns = (
         "remember this", "remember that", "remember:", "remember ,",
@@ -3256,18 +3262,43 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         }
 
     if _is_remember:
-        # Extract the payload after the command phrase.
+        # Extract the payload after the command phrase — wherever the phrase
+        # sits in the message. TASK-REL-005 (2026-11-14): the old code only
+        # stripped the phrase when the message STARTED with it, so "FRIDAY,
+        # remember this for me: my test phrase is…" stored the ENTIRE raw
+        # instruction (vocative, command wording and the trailing "Confirm
+        # what you stored.") as the fact.
         _payload = raw_cmd
+        _voc = re.match(r"^\s*(?:hey\s+|ok\s+|okay\s+)?friday[\s,:\-]+", raw_cmd, flags=re.IGNORECASE)
+        if _voc:
+            _payload = raw_cmd[_voc.end():]
+        _low_payload = _payload.lower()
+        _cut, _cut_len = -1, 0
         for _pfx in (
-            "remember this boss:", "remember this:", "remember that:", "remember this", "remember that",
-            "remember:", "remember", "note that", "don't forget that", "dont forget that",
-            "don't forget", "dont forget", "keep in mind that", "keep in mind", "memorize this",
-            "memorise this", "store this",
+            "remember this", "remember that", "remember it", "remember",
+            "note that", "don't forget that", "dont forget that",
+            "don't forget", "dont forget", "keep in mind that", "keep in mind",
+            "memorize this", "memorise this", "store this",
         ):
-            if _payload.lower().startswith(_pfx):
-                _payload = _payload[len(_pfx):]
-                break
+            _idx = _low_payload.find(_pfx)
+            if _idx >= 0 and (_cut < 0 or _idx < _cut or (_idx == _cut and len(_pfx) > _cut_len)):
+                _cut, _cut_len = _idx, len(_pfx)
+        if _cut >= 0:
+            _payload = _payload[_cut + _cut_len:]
         _payload = _payload.strip().lstrip(":, -–").strip()
+        # Command residue that is not part of the fact: "remember this boss:
+        # X" / "remember this for me: X".
+        _residue = re.match(r"^(?:boss|for me)[\s,:\-]+", _payload, flags=re.IGNORECASE)
+        if _residue:
+            _payload = _payload[_residue.end():]
+        # A trailing meta-instruction ("Confirm what you stored.") is part of
+        # the command TO FRIDAY, not part of the fact — drop that sentence.
+        _sentences = re.split(r"(?<=[.!?])\s+", _payload)
+        if len(_sentences) > 1 and re.match(
+            r"^(?:please\s+)?(?:confirm|acknowledge|let me know|tell me when|verify)\b",
+            _sentences[-1].strip(), flags=re.IGNORECASE,
+        ):
+            _payload = " ".join(_sentences[:-1]).strip()
         _payload = _clean_memory_line(_payload)
         if not _payload:
             _payload = raw_cmd.strip()
