@@ -1,0 +1,1285 @@
+{
+  "stage": "A",
+  "series": [
+    {
+      "series": "AAVEUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "8006dccc9529a4e9"
+    },
+    {
+      "series": "ADAUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "dd9a638d74414ca6"
+    },
+    {
+      "series": "ADAUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "e9f86743794153e9"
+    },
+    {
+      "series": "ALGOUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "698a4a1301b1ff7a"
+    },
+    {
+      "series": "APTUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 35374,
+      "first_bar_utc": "2022-10-19T02:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "28f47387be9d13a4"
+    },
+    {
+      "series": "ARBUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 31641,
+      "first_bar_utc": "2023-03-23T15:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "6c996f7db357da16"
+    },
+    {
+      "series": "ATOMUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "02647f951a701f38"
+    },
+    {
+      "series": "AVAXUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "0497e118c25a4612"
+    },
+    {
+      "series": "AVAXUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "25829e11742061e8"
+    },
+    {
+      "series": "BCHUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "79032f033e7e322a"
+    },
+    {
+      "series": "BNBUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "56bc4a73a9183b8a"
+    },
+    {
+      "series": "BNBUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "5461c517e9a18ffd"
+    },
+    {
+      "series": "BNBUSDT",
+      "timeframe": "5m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 298080,
+      "first_bar_utc": "2024-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:55:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "9f67a98b62eb6f32"
+    },
+    {
+      "series": "BTCUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "7b1c3d1c3fbf6e90"
+    },
+    {
+      "series": "BTCUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "cbd726f60c714420"
+    },
+    {
+      "series": "BTCUSDT",
+      "timeframe": "5m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 298080,
+      "first_bar_utc": "2024-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:55:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "b03fcdb9c271269c"
+    },
+    {
+      "series": "DOGEUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "04319780e3f0eb87"
+    },
+    {
+      "series": "DOGEUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "93440fef2d17b39f"
+    },
+    {
+      "series": "DOGEUSDT",
+      "timeframe": "5m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 298080,
+      "first_bar_utc": "2024-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:55:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "5940709edeadfc1a"
+    },
+    {
+      "series": "DOTUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "54b4430f7b1c5ca6"
+    },
+    {
+      "series": "DOTUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "709d6972a2d824ae"
+    },
+    {
+      "series": "ETCUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "4d6ebdac663b38d0"
+    },
+    {
+      "series": "ETHUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "4461a568e00a0f68"
+    },
+    {
+      "series": "ETHUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "5d861191ad4d68e9"
+    },
+    {
+      "series": "ETHUSDT",
+      "timeframe": "5m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 298080,
+      "first_bar_utc": "2024-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:55:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "5414f91ee6a991b5"
+    },
+    {
+      "series": "FILUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "74b366b900e29eba"
+    },
+    {
+      "series": "HBARUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "15ce1359e3461692"
+    },
+    {
+      "series": "INJUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 36886,
+      "first_bar_utc": "2022-08-17T02:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "ce9e5b4b1b27513b"
+    },
+    {
+      "series": "LINKUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "ec6e81a16ee62d14"
+    },
+    {
+      "series": "LINKUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "77cf80e11ea30344"
+    },
+    {
+      "series": "LTCUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "57e8aa199a4122ce"
+    },
+    {
+      "series": "LTCUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "01fabe2a1073a281"
+    },
+    {
+      "series": "MANAUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "8987750a61900bf1"
+    },
+    {
+      "series": "NEARUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "5f15954e87b27a4e"
+    },
+    {
+      "series": "NEARUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "8ac4a60254eeb4d1"
+    },
+    {
+      "series": "OPUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 38722,
+      "first_bar_utc": "2022-06-01T14:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "51943ddff7e40ff5"
+    },
+    {
+      "series": "SANDUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "90836c9b3b223b96"
+    },
+    {
+      "series": "SOLUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "b12ccb6984b2cf2b"
+    },
+    {
+      "series": "SOLUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "281fbff59b203575"
+    },
+    {
+      "series": "SOLUSDT",
+      "timeframe": "5m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 298080,
+      "first_bar_utc": "2024-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:55:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "c03fd259513174df"
+    },
+    {
+      "series": "SUIUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 30656,
+      "first_bar_utc": "2023-05-03T16:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "c8f66029b51b9a72"
+    },
+    {
+      "series": "TRXUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "415f5af9d20cdcd2"
+    },
+    {
+      "series": "UNIUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42360,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "8f93f98c4c94a734"
+    },
+    {
+      "series": "VETUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "9362f14c1f56db3c"
+    },
+    {
+      "series": "XLMUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "50ff0a2e104a1921"
+    },
+    {
+      "series": "XRPUSDT",
+      "timeframe": "15m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:45:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "c6260fe2cb1d6509"
+    },
+    {
+      "series": "XRPUSDT",
+      "timeframe": "1h",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 42240,
+      "first_bar_utc": "2022-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:00:00+00:00",
+      "missing_bars": 120,
+      "csv_sha256": "dbcf008ce1a37f1b"
+    },
+    {
+      "series": "XRPUSDT",
+      "timeframe": "5m",
+      "source": "binance_vision_futures_um_monthly_klines",
+      "rows": 298080,
+      "first_bar_utc": "2024-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-10-31T23:55:00+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "9c791f00ca503ab8"
+    },
+    {
+      "series": "AUDJPY",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "4d028350a1a3deb3"
+    },
+    {
+      "series": "AUDJPY",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12304,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5189,
+      "csv_sha256": "37fc93984502ea2a"
+    },
+    {
+      "series": "AUDNZD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2311,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T10:27:48+00:00",
+      "missing_bars": 4,
+      "csv_sha256": "1f3fe25e6e82c830"
+    },
+    {
+      "series": "AUDNZD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12355,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5136,
+      "csv_sha256": "f68c3ee300ed51f9"
+    },
+    {
+      "series": "AUDUSD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T10:27:48+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "396b4b05bf2d5940"
+    },
+    {
+      "series": "AUDUSD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12356,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5137,
+      "csv_sha256": "83b3998cd416e8a9"
+    },
+    {
+      "series": "BRENT",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2233,
+      "first_bar_utc": "2018-01-02T05:00:00+00:00",
+      "last_bar_utc": "2026-11-13T05:00:00+00:00",
+      "missing_bars": 81,
+      "csv_sha256": "15f1b2a9cdf934b7"
+    },
+    {
+      "series": "BRENT",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 11397,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5704,
+      "csv_sha256": "2d6ca2cb48690f51"
+    },
+    {
+      "series": "CADJPY",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "ad1aaeb3c6249255"
+    },
+    {
+      "series": "CADJPY",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12303,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5190,
+      "csv_sha256": "72c623aa9f17625b"
+    },
+    {
+      "series": "CHFJPY",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "6efda7128cecba06"
+    },
+    {
+      "series": "CHFJPY",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12295,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5199,
+      "csv_sha256": "a4092a3e31cf45ff"
+    },
+    {
+      "series": "COPPER",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2232,
+      "first_bar_utc": "2018-01-02T05:00:00+00:00",
+      "last_bar_utc": "2026-11-13T05:00:00+00:00",
+      "missing_bars": 82,
+      "csv_sha256": "d2e8a30b76cd80de"
+    },
+    {
+      "series": "COPPER",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 11427,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5673,
+      "csv_sha256": "d28fe4b90ef6860c"
+    },
+    {
+      "series": "DAX",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2253,
+      "first_bar_utc": "2018-01-02T08:00:00+00:00",
+      "last_bar_utc": "2026-11-13T08:00:00+00:00",
+      "missing_bars": 61,
+      "csv_sha256": "fd3aad8dea59ae29"
+    },
+    {
+      "series": "DJI",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2230,
+      "first_bar_utc": "2018-01-02T14:30:00+00:00",
+      "last_bar_utc": "2026-11-13T14:30:00+00:00",
+      "missing_bars": 84,
+      "csv_sha256": "2bef4cd04af1116d"
+    },
+    {
+      "series": "DJI",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 3477,
+      "first_bar_utc": "2024-11-15T14:30:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 13998,
+      "csv_sha256": "e4ea561dc81d0dab"
+    },
+    {
+      "series": "EURAUD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2311,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T09:59:44+00:00",
+      "missing_bars": 4,
+      "csv_sha256": "6150ac0874551fcd"
+    },
+    {
+      "series": "EURAUD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12308,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5186,
+      "csv_sha256": "15bd3d7ed3cde51d"
+    },
+    {
+      "series": "EURCHF",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "340e807d1f4cf20e"
+    },
+    {
+      "series": "EURCHF",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12300,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5193,
+      "csv_sha256": "861c5bfce29cb477"
+    },
+    {
+      "series": "EURGBP",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "743500e59d05a78d"
+    },
+    {
+      "series": "EURGBP",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12315,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5179,
+      "csv_sha256": "7b125b34be84306f"
+    },
+    {
+      "series": "EURJPY",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "81c11a89479c7ccc"
+    },
+    {
+      "series": "EURJPY",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12301,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5191,
+      "csv_sha256": "7514fe91302ec1e8"
+    },
+    {
+      "series": "EURNZD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2311,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T09:59:44+00:00",
+      "missing_bars": 4,
+      "csv_sha256": "117a5c5b571ab401"
+    },
+    {
+      "series": "EURNZD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12311,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5182,
+      "csv_sha256": "11c736eed01e99b7"
+    },
+    {
+      "series": "EURPLN",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "608001b4ece4867e"
+    },
+    {
+      "series": "EURPLN",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12318,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5175,
+      "csv_sha256": "3fd615cf7d0bc2d1"
+    },
+    {
+      "series": "EURUSD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2309,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 6,
+      "csv_sha256": "f520e7202b530bcf"
+    },
+    {
+      "series": "EURUSD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12291,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5203,
+      "csv_sha256": "ecec62573d576c52"
+    },
+    {
+      "series": "FTSE",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2241,
+      "first_bar_utc": "2018-01-02T08:00:00+00:00",
+      "last_bar_utc": "2026-11-13T08:00:00+00:00",
+      "missing_bars": 73,
+      "csv_sha256": "649f35c67ae2da44"
+    },
+    {
+      "series": "GBPAUD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2311,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T10:27:48+00:00",
+      "missing_bars": 4,
+      "csv_sha256": "f1028fa6a6d245dc"
+    },
+    {
+      "series": "GBPAUD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12349,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5143,
+      "csv_sha256": "83def58bd25a3d93"
+    },
+    {
+      "series": "GBPJPY",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "75335d7a3e5ea1f3"
+    },
+    {
+      "series": "GBPJPY",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12298,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5197,
+      "csv_sha256": "1fd468c00068f52f"
+    },
+    {
+      "series": "GBPUSD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2309,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 6,
+      "csv_sha256": "9578c3168b888f66"
+    },
+    {
+      "series": "GBPUSD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12294,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5199,
+      "csv_sha256": "949a212d2280f2fa"
+    },
+    {
+      "series": "GOLD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2232,
+      "first_bar_utc": "2018-01-02T05:00:00+00:00",
+      "last_bar_utc": "2026-11-13T05:00:00+00:00",
+      "missing_bars": 82,
+      "csv_sha256": "4933b83b06725516"
+    },
+    {
+      "series": "GOLD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 11438,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5669,
+      "csv_sha256": "244f8e08a06f774a"
+    },
+    {
+      "series": "NATGAS",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2233,
+      "first_bar_utc": "2018-01-02T05:00:00+00:00",
+      "last_bar_utc": "2026-11-13T05:00:00+00:00",
+      "missing_bars": 81,
+      "csv_sha256": "eb29fbcb511ff90b"
+    },
+    {
+      "series": "NATGAS",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 11309,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5804,
+      "csv_sha256": "f9989d42e4f74663"
+    },
+    {
+      "series": "NDX",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2230,
+      "first_bar_utc": "2018-01-02T14:30:00+00:00",
+      "last_bar_utc": "2026-11-13T14:30:00+00:00",
+      "missing_bars": 84,
+      "csv_sha256": "4dd2893217154491"
+    },
+    {
+      "series": "NDX",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 3477,
+      "first_bar_utc": "2024-11-15T14:30:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 13998,
+      "csv_sha256": "a31e8b58983d043b"
+    },
+    {
+      "series": "NIKKEI",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2162,
+      "first_bar_utc": "2018-01-04T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 150,
+      "csv_sha256": "fb6ab303e4955f82"
+    },
+    {
+      "series": "NZDJPY",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2309,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 6,
+      "csv_sha256": "428c892d30b64d0c"
+    },
+    {
+      "series": "NZDJPY",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12302,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5191,
+      "csv_sha256": "b023f231f491d3cb"
+    },
+    {
+      "series": "NZDUSD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T19:29:47+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "5b8788ef64c2713a"
+    },
+    {
+      "series": "NZDUSD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12358,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5133,
+      "csv_sha256": "5e50e16bf5f04a28"
+    },
+    {
+      "series": "PLATINUM",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2231,
+      "first_bar_utc": "2018-01-02T05:00:00+00:00",
+      "last_bar_utc": "2026-11-13T05:00:00+00:00",
+      "missing_bars": 83,
+      "csv_sha256": "96ce3cdbbd38a1c4"
+    },
+    {
+      "series": "PLATINUM",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 11425,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5676,
+      "csv_sha256": "469d8a2937f80a82"
+    },
+    {
+      "series": "RUT",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2230,
+      "first_bar_utc": "2018-01-02T14:30:00+00:00",
+      "last_bar_utc": "2026-11-13T14:30:00+00:00",
+      "missing_bars": 84,
+      "csv_sha256": "e40fb6b7b7e62cdc"
+    },
+    {
+      "series": "SILVER",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2231,
+      "first_bar_utc": "2018-01-02T05:00:00+00:00",
+      "last_bar_utc": "2026-11-13T05:00:00+00:00",
+      "missing_bars": 83,
+      "csv_sha256": "7198140f5bb2e324"
+    },
+    {
+      "series": "SILVER",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 11434,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5673,
+      "csv_sha256": "acd3ec02a33c45db"
+    },
+    {
+      "series": "SPX",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2230,
+      "first_bar_utc": "2018-01-02T14:30:00+00:00",
+      "last_bar_utc": "2026-11-13T14:30:00+00:00",
+      "missing_bars": 84,
+      "csv_sha256": "ab1482ee3b03fa53"
+    },
+    {
+      "series": "SPX",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 3477,
+      "first_bar_utc": "2024-11-15T14:30:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 13998,
+      "csv_sha256": "b6bbcb0163727295"
+    },
+    {
+      "series": "USDCAD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T09:59:38+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "9f28c23532ac2856"
+    },
+    {
+      "series": "USDCAD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12358,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5135,
+      "csv_sha256": "06041be2ed9ee309"
+    },
+    {
+      "series": "USDCHF",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T20:15:17+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "d5f7a562b3342e5b"
+    },
+    {
+      "series": "USDCHF",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12237,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5256,
+      "csv_sha256": "bcb40f90c24f0170"
+    },
+    {
+      "series": "USDCNH",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 1,
+      "first_bar_utc": "2026-11-13T21:59:42+00:00",
+      "last_bar_utc": "2026-11-13T21:59:42+00:00",
+      "missing_bars": 0,
+      "csv_sha256": "6135d6ffba8340e5"
+    },
+    {
+      "series": "USDCNH",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12194,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5297,
+      "csv_sha256": "cf551307c8003fff"
+    },
+    {
+      "series": "USDHKD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T09:59:33+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "a03c25a5f38731eb"
+    },
+    {
+      "series": "USDHKD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12400,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T23:00:00+00:00",
+      "missing_bars": 5094,
+      "csv_sha256": "40c35b74cd3a4713"
+    },
+    {
+      "series": "USDJPY",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2309,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 6,
+      "csv_sha256": "55d344c116456487"
+    },
+    {
+      "series": "USDJPY",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12223,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5269,
+      "csv_sha256": "06fd908ca80a2d13"
+    },
+    {
+      "series": "USDMXN",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2309,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 6,
+      "csv_sha256": "ae1ea69feac3770a"
+    },
+    {
+      "series": "USDMXN",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12301,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5186,
+      "csv_sha256": "cddff699ae916ee1"
+    },
+    {
+      "series": "USDNOK",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T09:59:38+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "e61ba248fe9ed3a7"
+    },
+    {
+      "series": "USDNOK",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12230,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T21:00:00+00:00",
+      "missing_bars": 5254,
+      "csv_sha256": "9f18dc3637e11189"
+    },
+    {
+      "series": "USDSEK",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T09:59:38+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "d7ac0943c3721889"
+    },
+    {
+      "series": "USDSEK",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12119,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5323,
+      "csv_sha256": "40119da274033a1c"
+    },
+    {
+      "series": "USDSGD",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T09:59:51+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "16a8cc86a4999761"
+    },
+    {
+      "series": "USDSGD",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12295,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5197,
+      "csv_sha256": "84bf916141ac0890"
+    },
+    {
+      "series": "USDTRY",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2309,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T00:00:00+00:00",
+      "missing_bars": 6,
+      "csv_sha256": "f14c94ca1e3a3a90"
+    },
+    {
+      "series": "USDTRY",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12307,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5185,
+      "csv_sha256": "0b15d1662fe3f850"
+    },
+    {
+      "series": "USDZAR",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2310,
+      "first_bar_utc": "2018-01-01T00:00:00+00:00",
+      "last_bar_utc": "2026-11-14T09:59:45+00:00",
+      "missing_bars": 5,
+      "csv_sha256": "33eae9b4a0e95b4b"
+    },
+    {
+      "series": "USDZAR",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 12346,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5143,
+      "csv_sha256": "4dd800d8280ea218"
+    },
+    {
+      "series": "WTI",
+      "timeframe": "1d",
+      "source": "yahoo_finance_chart_api",
+      "rows": 2232,
+      "first_bar_utc": "2018-01-02T05:00:00+00:00",
+      "last_bar_utc": "2026-11-13T05:00:00+00:00",
+      "missing_bars": 82,
+      "csv_sha256": "5a821c4e0696a617"
+    },
+    {
+      "series": "WTI",
+      "timeframe": "1h",
+      "source": "yahoo_finance_chart_api",
+      "rows": 11311,
+      "first_bar_utc": "2024-11-15T00:00:00+00:00",
+      "last_bar_utc": "2026-11-13T22:00:00+00:00",
+      "missing_bars": 5796,
+      "csv_sha256": "9a2a600a7a5d81dc"
+    }
+  ]
+}

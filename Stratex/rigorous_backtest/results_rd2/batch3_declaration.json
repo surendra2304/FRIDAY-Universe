@@ -1,0 +1,194 @@
+{
+ "programme": "TASK-STR-RD-002 Stage B batch-3 (owner expansion order 2026-11-15 ~02:43 IST)",
+ "declared_at_utc": "2026-11-14T21:15:18Z",
+ "declared_before_first_run": true,
+ "trial_accounting": "Every batch-3 (config x panel x timeframe) cell and every batch-3 wf-select procedure counts in the GLOBAL trial counter (RD-001: 116 + all RD-002 trials). Judged OOS-only under the extended Anti-Overfit Law: expectancy>0, PF>=1.2, >=200 OOS trades, >=80% folds positive, per-class untouched-holdout pass, DSR>=0.95 AND Bonferroni p<0.05/N_global at the final N, breadth rule, 2x-cost sensitivity near the bar.",
+ "compute_priority": "4h/1d first across all classes (RD-001/RD-002's only non-negative region); 1h second; batch-3 runs NO 15m/5m cells (declared deferral, compute-bound).",
+ "execution_conventions": "Identical to batch-2: signals causal at bar close, entries execute next bar open (harness simulators), ATR(14) brackets unless stated, per-class costs from rd2/costs2.py, walk-forward folds STANDARD W1-W5 or LATE W2-W5 for Yahoo-1h-derived panels.",
+ "families": [
+  {
+   "family": "keltner_breakout",
+   "kind": "single",
+   "logic": "Close crosses the Keltner channel boundary (EMA midline +/- mult x ATR14): cross above upper -> long, below lower -> short. Trend-breakout, distinct from Donchian (EMA-centred, vol-scaled). Bracket 2/4 ATR.",
+   "variants": [
+    "ema20_m1.5",
+    "ema20_m2.0",
+    "ema50_m2.0"
+   ]
+  },
+  {
+   "family": "bollinger_trend",
+   "kind": "single",
+   "logic": "Trend-following Bollinger breakout (NOT reversion): close crosses above upper band -> long, below lower band -> short. Bracket 2/4 ATR.",
+   "variants": [
+    "p20_sd2.0",
+    "p50_sd2.0"
+   ]
+  },
+  {
+   "family": "macd_trend",
+   "kind": "single",
+   "logic": "MACD(12,26,9) histogram sign change: up-cross -> long, down-cross -> short. Variant ema200 requires price on the trend side of EMA200; variant raw is unfiltered. Bracket 2.5/5 ATR.",
+   "variants": [
+    "hist_ema200",
+    "hist_raw"
+   ]
+  },
+  {
+   "family": "psar_trend",
+   "kind": "single",
+   "logic": "Parabolic SAR (Wilder) flip: SAR crosses below price -> long, above -> short. Bracket 2/4 ATR.",
+   "variants": [
+    "af0.02_max0.20",
+    "af0.01_max0.10"
+   ]
+  },
+  {
+   "family": "rsi_momentum",
+   "kind": "single",
+   "logic": "RSI momentum regime (NOT reversion): RSI crosses up through the long threshold -> long; down through the short threshold -> short. Bracket 2/4 ATR.",
+   "variants": [
+    "rsi14_55_45",
+    "rsi7_60_40"
+   ]
+  },
+  {
+   "family": "stoch_reversion",
+   "kind": "single",
+   "logic": "Stochastic(14,3) %K crosses back up from below 20 -> long; back down from above 80 -> short. Variant filt requires EMA200 trend alignment (longs only above, shorts only below); variant raw unfiltered. Bracket 2/4 ATR.",
+   "variants": [
+    "k14_filt",
+    "k14_raw"
+   ]
+  },
+  {
+   "family": "ichimoku_trend",
+   "kind": "single",
+   "logic": "Tenkan(9)/Kijun(26) cross. Variant cloud requires price above cloud for longs / below for shorts (Senkou spans, causal +26 shift); variant raw ignores the cloud. Bracket 2/4 ATR.",
+   "variants": [
+    "tk_cloud",
+    "tk_raw"
+   ]
+  },
+  {
+   "family": "ha_trend",
+   "kind": "single",
+   "logic": "Heikin-Ashi momentum: variant two requires two consecutive HA bull candles with HA-open == HA-low (no lower wick) -> long, mirror -> short; variant one uses a single such candle. Bracket 2/4 ATR.",
+   "variants": [
+    "two_candle",
+    "one_candle"
+   ]
+  },
+  {
+   "family": "linreg_trend",
+   "kind": "single",
+   "logic": "Rolling OLS of log-close: enter on slope sign change when R^2 > 0.3 (trend-quality filter). Bracket 2.5/5 ATR.",
+   "variants": [
+    "s50_r0.3",
+    "s100_r0.3"
+   ]
+  },
+  {
+   "family": "shock_breakout",
+   "kind": "single",
+   "logic": "Single-bar shock: close exceeds prior close by > k x ATR14 upward -> long; downward -> short (news/impulse continuation). Bracket 2/4 ATR.",
+   "variants": [
+    "k1.0",
+    "k1.5"
+   ]
+  },
+  {
+   "family": "bar_patterns",
+   "kind": "single",
+   "logic": "Variant inside_bar: an inside bar followed by a close beyond the mother bar's high/low -> entry in breakout direction. Variant engulfing: bullish/bearish engulfing close -> entry in engulfing direction. Bracket 2/4 ATR.",
+   "variants": [
+    "inside_bar",
+    "engulfing"
+   ]
+  },
+  {
+   "family": "gap_daily",
+   "kind": "single",
+   "logic": "DAILY ONLY. Gap = open/prev_close - 1 observed at bar i. Variant follow: |gap| > 0.4% -> signal in gap direction at bar i close, entry executes bar i+1 open (next-day continuation, exactly as the harness executes; the gap itself is never traded retroactively). Variant fade: opposite direction. Bracket 2/4 ATR.",
+   "variants": [
+    "follow_0.4",
+    "fade_0.4"
+   ],
+   "cells": "1d only, all classes"
+  },
+  {
+   "family": "turn_of_month",
+   "kind": "single",
+   "logic": "DAILY ONLY, long-only calendar effect: enter long on the first bar of the month-turn window, where the window is defined CAUSALLY as the first 3 trading bars of the month or calendar day-of-month >= 28; exit via bracket_time cap of 6 bars, wide bracket 3/6 ATR. (The textbook 'last 3 trading days' variant was rejected pre-run: a truncation causality test proved it look-ahead, since month length is unknown mid-month.)",
+   "variants": [
+    "window3"
+   ],
+   "cells": "1d only, all classes incl. crypto"
+  },
+  {
+   "family": "xs_reversal",
+   "kind": "xs",
+   "logic": "Cross-sectional short-term REVERSAL (opposite of xs_momentum): rank trailing L-bar returns, long bottom quintile / short top quintile, rebalance every 5 bars, hold 5. Exits bracket_time 2/4 ATR, max_bars = hold.",
+   "variants": [
+    "rev5_r5",
+    "rev10_r5"
+   ]
+  },
+  {
+   "family": "xs_lowvol",
+   "kind": "xs",
+   "logic": "Low-volatility anomaly: rank trailing 20-bar realized volatility, long lowest quintile / short highest, rebalance every 10 bars, hold 10. Exits bracket_time 2/4 ATR, max_bars = hold.",
+   "variants": [
+    "lv20_r10"
+   ]
+  },
+  {
+   "family": "pairs3",
+   "kind": "pairs",
+   "logic": "Identical construction to batch-2 pairs_statarb: log-spread S = logA - beta*logB, beta from causal trailing OLS (window 240); z-score window 48; entries on |z| crossing 2.0; exits bracket_time 3/3 ATR, 96-bar cap, on the synthetic spread series; doubled two-leg costs; returns are log-spread units (disclosed approximation). Three additional liquid crypto pairs.",
+   "variants": [
+    "BTC_LTC",
+    "ETH_BNB",
+    "SOL_AVAX"
+   ],
+   "pairs": [
+    [
+     "BTCUSDT",
+     "LTCUSDT"
+    ],
+    [
+     "ETHUSDT",
+     "BNBUSDT"
+    ],
+    [
+     "SOLUSDT",
+     "AVAXUSDT"
+    ]
+   ]
+  },
+  {
+   "family": "session_breakout",
+   "kind": "single",
+   "logic": "1H ONLY. Variant london (forex12): range = 07:00 UTC bar high/low; entries 08:00-11:00 UTC on close beyond range, one per day, 6-bar bracket_time cap, bracket 1.5/3 ATR. Variant newyork (idx3): range = 14:00 UTC bar; entries 15:00-18:00 UTC, same exits.",
+   "variants": [
+    "london",
+    "newyork"
+   ],
+   "cells": "1h only: london on forex12, newyork on idx3"
+  },
+  {
+   "family": "vol_compression",
+   "kind": "single",
+   "logic": "Volatility-compression breakout: ATR7 at its 50-bar minimum (NR-style squeeze) AND close beyond prior 10-bar high/low -> entry in breakout direction. Variant ema200 adds trend alignment. Bracket 2/4 ATR.",
+   "variants": [
+    "squeeze_raw",
+    "squeeze_ema200"
+   ]
+  }
+ ],
+ "cells_default": "All families except where restricted above: panels per class {crypto30, forex28(1d/1wk) + forex12(4h/1h), comm7, idx7(1d/1wk) + idx3(4h/1h)} x timeframes {1d, 1wk, 4h, 1h}. xs families: crypto30/forex28/comm7 at {1d, 4h}. pairs3: {1d, 4h, 1h}.",
+ "total_configs": 36,
+ "families_count": 18,
+ "amended_at_utc": "2026-11-14T21:24:00Z",
+ "amendment": "Pre-run correction (no batch-3 cell had run): the pairs3 mechanics and xs/session/turn-of-month exit specs were aligned to the harness's actual machinery before first execution. pairs3 uses the identical construction as batch-2 pairs_statarb: causal trailing-OLS beta (window 240), log-spread z-score window 48, entries on |z|>2.0 crossings, exits via bracket_time (3 ATR stop / 3 ATR target / 96-bar cap) on the synthetic spread series, doubled two-leg costs. xs families exit via bracket_time 2/4 ATR with max_bars = declared hold. turn_of_month and session_breakout exits are bracket_time with max_bars = 6 (the declared 6-bar cap). turn_of_month window redefined causally after a failed truncation test (see family logic)."
+}
