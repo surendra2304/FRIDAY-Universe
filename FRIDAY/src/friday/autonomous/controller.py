@@ -529,6 +529,36 @@ class AutonomousController:
             elif outcome.state is not OutcomeState.COMPLETED and outcome.state is not OutcomeState.PENDING:
                 metadata["error"] = outcome.detail
 
+            # TASK-REL-007C (follow-up): mesh delegations are real chat
+            # delegations — record them in the unified ledger the console
+            # counter reads. Verified completions record success; a
+            # PENDING outcome is registered as dispatched-only (neither
+            # completed nor failed yet); anything else records failure.
+            try:
+                from friday.tools.builtin.fleet_dispatch import record_specialist_dispatch
+
+                if outcome.state is OutcomeState.PENDING:
+                    from friday_core.task_records import get_shared_task_records
+
+                    _store = get_shared_task_records()
+                    _tid = outcome.task_id or record_specialist_dispatch(
+                        "", agent_id, directive, "failed", error="pending without task id"
+                    )
+                    if _store.get(_tid) is None:
+                        _store.create(_tid, description=directive, owner_agent=agent_id)
+                        _store.record_assignment(_tid, agent_id, rationale="chat delegation (autonomous controller)")
+                        _store.record_dispatch(_tid)
+                else:
+                    record_specialist_dispatch(
+                        outcome.task_id or "",
+                        agent_id,
+                        directive,
+                        "success" if verified else "failed",
+                        error="" if verified else str(outcome.detail or task_state),
+                    )
+            except Exception as ledger_exc:  # noqa: BLE001 — ledger must never sink a reply
+                logger.debug(f"controller dispatch not recorded ({type(ledger_exc).__name__}: {ledger_exc})")
+
             self.active_agent = None
             self.active_directive = None
             return {"reply": reply, "metadata": metadata}
@@ -536,6 +566,12 @@ class AutonomousController:
         except Exception as exc:
             duration_ms = int((time.time() - start_time) * 1000)
             logger.error("[AUTONOMOUS CONTROL ERROR] Failed task dispatch to %s: %s", agent_name, exc)
+            try:
+                from friday.tools.builtin.fleet_dispatch import record_specialist_dispatch
+
+                record_specialist_dispatch("", agent_id, directive, "failed", error=str(exc))
+            except Exception:  # noqa: BLE001 — ledger must never sink a reply
+                pass
             self._log_action(
                 action_type="AGENT_CONTROL",
                 target=agent_name,
