@@ -3220,7 +3220,7 @@ tasks:
     status: IN_REVIEW
     owner: muse_ai
     branch: claude/gemini-live-model-migration-v2
-    pr: null
+    pr: 119
     contributors: []
     priority: P0
     created_at: "2026-11-14T14:31:00+05:30"
