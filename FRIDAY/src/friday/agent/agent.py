@@ -327,6 +327,90 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
             logger.warning("offline fallback failed: %s", exc)
             return None
 
+    # TASK-REL-022 (2026-11-14): the stored-fact recall shapes the chat
+    # recall gate answers deterministically — mirrored from
+    # ``_recall_patterns`` in friday/api/server.py (keep the two in step)
+    # so the store stays authoritative for callers that reach the cognitive
+    # loop directly, not only for the HTTP chat surface.
+    _RECALL_INTENT_PATTERNS = (
+        "what do you remember", "do you remember", "you remember",
+        "what do you know about me", "what do you know about my",
+        "do you have memory", "do you have any memory", "your memory",
+        "what did i say", "what did i tell you", "what have i told you",
+        "my preferences", "recall my", "recall what",
+        "what was my", "what is my", "what's my",
+        "what did you store", "what did you save",
+        "what have you stored", "what have you saved",
+    )
+
+    def _memory_recall_not_found(self, goal: str) -> str | None:
+        """The store's honest not-found for a stored-fact recall question.
+
+        Returns the not-found reply when `goal` is a recall question AND
+        the memory store holds no matching fact; returns None in every
+        other case (not a recall question, the store does hold a matching
+        fact, or the store is unreachable — the normal paths own those
+        answers, including their own honest error reporting).
+
+        Why this exists (TASK-REL-022, production 2026-11-14): a recall
+        question that reached the LLM loop while the Groq failover had its
+        memory tool stripped by the TPM retry was answered from
+        imagination — after a confirmed forget, FRIDAY invented a safe
+        word ('blue-sky') that never existed in the store. For stored-fact
+        questions the store is the only authority: an empty store means
+        'not found', whatever the model would prefer to say. Semantics
+        mirror the chat recall gate: dialogue echoes and monitor noise are
+        not facts (friday.memory.hygiene), a hit must share a subject word
+        with the question before it counts as an answer, and a subjectless
+        question probes owner facts directly.
+        """
+        text = " ".join((goal or "").strip().lower().split())
+        if not text or len(text.split()) > 12:
+            return None
+        matched = [p for p in self._RECALL_INTENT_PATTERNS if p in text]
+        if not matched:
+            return None
+        # Question-shaped only: the pattern opens the message or the
+        # message is phrased as a question. A task goal that merely
+        # mentions a stored fact mid-sentence is never hijacked.
+        if not (text.endswith("?") or any(text.startswith(p) for p in matched)):
+            return None
+        try:
+            from friday.memory.hygiene import is_memory_noise
+            from friday.memory.memora_client import memora_client
+
+            hits = memora_client.recall_memories("friday", goal[:200], limit=10) or []
+            stop = {
+                "remember", "about", "what", "have", "tell", "does", "your",
+                "you", "when", "where", "which", "that", "with",
+            }
+            q_words = {
+                w.strip("?.!,") for w in text.split() if len(w.strip("?.!,")) > 3
+            } - stop
+            if not q_words:
+                # No subject words ("what do you remember about me"): probe
+                # owner facts directly, like the chat gate does.
+                hits = (
+                    memora_client.recall_memories(
+                        "friday", "my favorite preference boss surendra", limit=10
+                    )
+                    or []
+                )
+        except Exception as exc:  # store unreachable: not this guard's call
+            logger.debug(f"Memory recall guard skipped (store unreachable): {exc}")
+            return None
+        for hit in hits:
+            line = str(hit.get("content_text", "") or "")
+            if is_memory_noise(line):
+                continue
+            if not q_words or any(w in line.lower() for w in q_words):
+                return None  # the store holds an answer; the normal path serves it
+        return (
+            "I checked my memory store, Boss, and I don't have anything stored on that. "
+            "I won't guess at a fact I was supposed to remember — tell me with "
+            "'remember that…' and I'll keep it."
+        )
+
     def execute_complex_task(self, goal: str, context: dict | None = None) -> AgentResponse:
         """Execute a goal through FRIDAY's bounded, authorized tool loop."""
         import time
@@ -400,6 +484,26 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         duplicate_operation_blocked = False
         current_user_request = str((context or {}).get("current_user_request", goal))
 
+        # TASK-REL-022: for a stored-fact recall question, the store's
+        # answer is authoritative — including when that answer is 'nothing
+        # stored'. Short-circuit BEFORE the LLM loop so a model (above all
+        # a failover model whose memory tool was stripped for TPM headroom)
+        # can never improvise a fact the store does not hold.
+        _not_found_reply = self._memory_recall_not_found(goal)
+        if _not_found_reply is not None:
+            return AgentResponse(
+                content=_not_found_reply,
+                is_done=True,
+                metadata={
+                    "goal_orchestration": False,
+                    "memory_recall": True,
+                    "memory_not_found": True,
+                    "duration_seconds": time.perf_counter() - start_time,
+                    "is_successful": True,
+                    "iterations": 0,
+                },
+            )
+
         iterations = 0
         # TASK-ORCH-005 (2026-11-11 IST): reasoning models served via Groq
         # (gpt-oss-120b) sometimes emit a turn whose visible content is empty —
@@ -444,8 +548,21 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                             "iterations": max(iterations, 1),
                         },
                     )
+                # TASK-REL-022: the provider exception is operator detail,
+                # not a user reply — production 2026-11-14 showed the owner
+                # Groq's raw 400 body ('Tool choice is none, but model
+                # called a tool...') as the chat answer. The detail is
+                # logged and kept in metadata; the user gets a clean,
+                # honest failure line.
+                logger.warning(
+                    f"LLM generation failed in the tool loop: {type(exc).__name__}: {exc}"
+                )
                 return AgentResponse(
-                    content=f"LLM generation failed. I'm having trouble connecting to my intelligence core: {exc}",
+                    content=(
+                        "LLM generation failed. I'm having trouble connecting to my "
+                        "intelligence core right now, Boss — no answer was generated "
+                        "for that one. Please try again in a moment."
+                    ),
                     tool_results=tool_results or None,
                     tool_calls=tool_calls or None,
                     is_done=True,
@@ -453,6 +570,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                         "goal_orchestration": False,
                         "offline_fallback": False,
                         "offline_detail": offline.as_dict() if offline is not None else None,
+                        "llm_error": f"{type(exc).__name__}: {exc}",
                         "duration_seconds": time.perf_counter() - start_time,
                         "is_successful": False,
                         "iterations": max(iterations, 1),

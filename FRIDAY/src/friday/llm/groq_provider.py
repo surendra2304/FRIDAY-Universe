@@ -6,7 +6,9 @@ model (`llama-3.3-70b-versatile`), the exact same prompt is retried once with
 `llama-3.1-8b-instant`.
 """
 
+import ast
 import json
+import uuid
 from typing import Any
 
 from friday.core.exceptions import LLMProviderError
@@ -60,6 +62,86 @@ def _is_model_not_found(error: Exception) -> bool:
         return True
     err = str(error).lower()
     return "404" in err or "model_not_found" in err or "model not found" in err or "decommissioned" in err
+
+
+def _error_body_dict(error: Exception) -> dict[str, Any] | None:
+    """Best-effort access to the provider's structured error body.
+
+    The OpenAI SDK stores the parsed body on the exception (``error.body``);
+    when only the string form survives, it embeds the body as a Python dict
+    repr after the ``"Error code: NNN - "`` prefix, which ``ast.literal_eval``
+    can still read. Returns None when no structured body is available.
+    """
+    body = getattr(error, "body", None)
+    if isinstance(body, dict):
+        return body
+    text = str(error)
+    idx = text.find(" - ")
+    if idx >= 0:
+        try:
+            parsed = ast.literal_eval(text[idx + 3 :].strip())
+        except (ValueError, SyntaxError):
+            return None
+        if isinstance(parsed, dict):
+            return parsed
+    return None
+
+
+def _is_tool_use_failed(error: Exception) -> bool:
+    """Detect Groq's 400 tool_use_failed rejection.
+
+    Groq answers 'Tool choice is none, but model called a tool' when the
+    model emits a tool call for a request that carried no usable tools —
+    which is exactly the shape of this provider's own TPM retry (tools
+    stripped) and of any caller that disables tools for a turn. The
+    conversation still solicits tool use, so the model is not at fault;
+    the request shape is. (TASK-REL-022, production 2026-11-14.)
+    """
+    body = _error_body_dict(error)
+    if body is not None:
+        err = body.get("error") or {}
+        if isinstance(err, dict) and err.get("code") == "tool_use_failed":
+            return True
+    text = str(error).lower()
+    return "tool_use_failed" in text or "tool choice is none" in text
+
+
+def _extract_failed_tool_call(error: Exception) -> tuple[str, dict[str, Any]] | None:
+    """Recover the attempted tool call Groq preserves in the error body.
+
+    A tool_use_failed body carries ``failed_generation`` — the generation
+    Groq refused — as a JSON string like
+    ``{"name": "memora_memory", "arguments": {"query": "safe word"}}``.
+    Returns (name, arguments) when it parses into that shape, else None
+    (some models emit raw non-JSON generations, e.g. source code as
+    arguments, which cannot be executed safely sight-unseen).
+    """
+    body = _error_body_dict(error)
+    if body is None:
+        return None
+    err = body.get("error") or {}
+    if not isinstance(err, dict):
+        return None
+    generation = err.get("failed_generation")
+    if isinstance(generation, str):
+        try:
+            generation = json.loads(generation)
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(generation, dict):
+        return None
+    name = generation.get("name")
+    arguments = generation.get("arguments")
+    if not isinstance(name, str) or not name:
+        return None
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments)
+        except json.JSONDecodeError:
+            arguments = {"raw_arguments": arguments}
+    if not isinstance(arguments, dict):
+        return None
+    return name, arguments
 
 
 def compact_messages_and_tools(
@@ -265,6 +347,15 @@ class GroqLLMProvider(BaseLLMProvider):
                 except Exception as inner_e:
                     e = inner_e
 
+            if _is_tool_use_failed(e):
+                return self._handle_tool_use_failed(
+                    e,
+                    client=client,
+                    model=model,
+                    msg_dicts=msg_dicts,
+                    had_tools=bool(active_tools),
+                )
+
             if _is_rate_limit(e):
                 raise _RateLimitedError(str(e)) from e
             if _is_model_not_found(e):
@@ -275,6 +366,81 @@ class GroqLLMProvider(BaseLLMProvider):
             logger.error(f"Groq API request failed: {err_msg}")
             raise LLMProviderError(f"Groq API request failed: {err_msg}") from e
 
+        return self._parse_response(response)
+
+    def _handle_tool_use_failed(
+        self,
+        error: Exception,
+        *,
+        client: Any,
+        model: str,
+        msg_dicts: list[dict[str, Any]],
+        had_tools: bool,
+    ) -> Message:
+        """Resolve a Groq tool_use_failed 400 without leaking it upstream.
+
+        TASK-REL-022 (production 2026-11-14): the TPM retry strips tools
+        from the request, but the conversation still solicits tool calls —
+        gpt-oss-120b called memora_memory anyway and Groq's 400 became the
+        user-visible chat reply. Two honest resolutions, never a raw 400:
+
+        - Tools WERE attached for this turn (the strip was this provider's
+          own TPM fallback): recover the attempted call Groq preserved in
+          ``failed_generation`` and return it as a real ToolCall, so the
+          agent loop executes exactly what the model intended — the same
+          recovery philosophy as TASK-REL-006A's markup recovery.
+        - Tools were genuinely disabled by the caller (or the attempted
+          generation is not safely parseable): retry ONCE with an explicit
+          plain-text instruction appended. A second failure raises a
+          sanitised LLMProviderError — the raw provider body (which embeds
+          the model's generation) never travels upstream.
+        """
+        recovered = _extract_failed_tool_call(error) if had_tools else None
+        if recovered is not None:
+            name, arguments = recovered
+            logger.warning(
+                f"Groq rejected a '{name}' tool call made while tools were stripped "
+                "for TPM headroom; recovering the attempted call for the agent loop."
+            )
+            return Message(
+                role=Role.ASSISTANT,
+                content="",
+                tool_calls=[
+                    ToolCall(
+                        id=f"groq-recovered-{uuid.uuid4().hex[:12]}",
+                        name=name,
+                        arguments=arguments,
+                    )
+                ],
+            )
+
+        logger.warning(
+            "Groq tool_use_failed with tools disabled for this call; "
+            "retrying once with an explicit plain-text instruction."
+        )
+        retry_messages = list(msg_dicts) + [
+            {
+                "role": "system",
+                "content": (
+                    "Tool calls are disabled for this response. Do not call any "
+                    "tool and do not emit tool markup. Answer the user in plain "
+                    "text only."
+                ),
+            }
+        ]
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=retry_messages,
+                temperature=self.temperature,
+                max_tokens=min(self.max_tokens, 1024),
+            )
+        except Exception as retry_error:
+            raise LLMProviderError(
+                "Groq model attempted a tool call while tools were disabled "
+                "for this request (tool_use_failed), and the plain-text "
+                "retry failed as well."
+            ) from retry_error
         return self._parse_response(response)
 
     @staticmethod
