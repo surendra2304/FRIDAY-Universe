@@ -61,9 +61,8 @@ class SentinelSecurityTool(BaseTool):
             },
             "severity": {
                 "type": "string",
-                "enum": ["", "critical", "high", "medium", "low"],
-                "description": "Optional severity filter for findings (default: all).",
-                "default": "",
+                "enum": ["critical", "high", "medium", "low"],
+                "description": "Optional severity filter for findings; omit to include all severities (default: all).",
             },
         },
         "required": [],
