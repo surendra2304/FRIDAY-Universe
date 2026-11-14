@@ -1,0 +1,70 @@
+{
+  "phase": "validate",
+  "checks": [
+    {
+      "variant_id": 182,
+      "legacy_trades": 6726,
+      "harness_trades": 6726,
+      "compared": 6726,
+      "max_abs_deviation": 0.0,
+      "match": true
+    },
+    {
+      "variant_id": 181,
+      "legacy_trades": 7577,
+      "harness_trades": 7577,
+      "compared": 7577,
+      "max_abs_deviation": 0.0,
+      "match": true
+    },
+    {
+      "variant_id": 183,
+      "legacy_trades": 7863,
+      "harness_trades": 7863,
+      "compared": 7863,
+      "max_abs_deviation": 0.0,
+      "match": true
+    },
+    {
+      "variant_id": 184,
+      "legacy_trades": 5376,
+      "harness_trades": 5376,
+      "compared": 5376,
+      "max_abs_deviation": 0.0,
+      "match": true
+    },
+    {
+      "variant_id": 187,
+      "legacy_trades": 2757,
+      "harness_trades": 2757,
+      "compared": 2757,
+      "max_abs_deviation": 0.0,
+      "match": true
+    },
+    {
+      "variant_id": 139,
+      "legacy_trades": 16580,
+      "harness_trades": 16580,
+      "compared": 16580,
+      "max_abs_deviation": 0.0,
+      "match": true
+    },
+    {
+      "variant_id": 60,
+      "legacy_trades": 563,
+      "harness_trades": 563,
+      "compared": 563,
+      "max_abs_deviation": 0.0,
+      "match": true
+    },
+    {
+      "variant_id": 12,
+      "legacy_trades": 549,
+      "harness_trades": 550,
+      "compared": 549,
+      "max_abs_deviation": 0.0,
+      "match": true
+    }
+  ],
+  "all_match": true
+}
