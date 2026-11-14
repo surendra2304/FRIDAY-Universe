@@ -397,6 +397,28 @@ _index("ix_traces_target", execution_traces_table, "target_agent")
 _index("ix_traces_status", execution_traces_table, "status")
 _index("ix_traces_created", execution_traces_table, "created_at")
 
+# ---------------------------------------------------------------------------
+# Console conversation history (friday/api/history_store.py, TASK-REL-029)
+# ---------------------------------------------------------------------------
+# The console transcript entries served by GET /api/v1/conversation/history.
+# ``id`` is an insertion-order identity (newest = largest), which is the
+# durable equivalent of the in-memory deque's appendleft ordering; the
+# entry's own UUID lives in ``entry_id`` and is unique per turn.
+conversation_history_table = Table(
+    "conversation_history",
+    metadata,
+    Column("id", Integer, Identity(start=1, increment=1, always=False), primary_key=True),
+    Column("entry_id", UUID, nullable=False, unique=True),
+    Column("entry_ts", ISO, nullable=False),
+    Column("user_input", BODY),
+    Column("friday_reply", BODY),
+    Column("input_type", SHORT),
+    Column("entry_status", SHORT),
+    Column("agents_json", BODY),
+    Column("metadata_json", BODY),
+)
+_index("ix_conv_hist_ts", conversation_history_table, "entry_ts")
+
 
 # ---------------------------------------------------------------------------
 # DSN resolution

@@ -452,12 +452,16 @@ async def lifespan(_: FastAPI):
     # Checklists F8/F9/F14/F15/F20 (batch 6, ZAI Agent 2): scheduled
     # agent-depth passes — watchlist briefings, site health, Sentinel digest.
     agent_watch_task = asyncio.create_task(_agent_watch_loop(), name="friday-agent-watch")
+    # TASK-REL-029: warm the conversation-history cache from the durable
+    # store at boot (first-touch lazy hydration covers every other path;
+    # this just means the transcript is whole before the first request).
+    history_task = asyncio.create_task(_ensure_history_hydrated(), name="friday-history-hydration")
     try:
         yield
     finally:
         logger.info("Graceful shutdown initiated: stopping background tasks and listener loops...")
-        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task]
-        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task):
+        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task]
+        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task):
             task.cancel()
         try:
             await asyncio.wait_for(
@@ -4496,6 +4500,112 @@ import uuid as _uuid
 _conversation_history: deque = deque(maxlen=10000)
 _conversation_lock = asyncio.Lock()
 
+# --- Durable history persistence (TASK-REL-029) ---------------------------
+# The deque above is the hot cache the endpoints serve from; the durable
+# record lives in friday.api.history_store.ConversationHistoryStore (Oracle
+# Autonomous Database in production — the schema every FRIDAY store uses;
+# SQLite only inside test runs). Entries are written through on begin /
+# finalize / POST, and the deque is rehydrated from the store on first
+# touch after a restart, so the owner's history survives deploys and
+# crashes instead of dying with the process (TASK-REL-023 finding).
+_history_store: Any = None
+_history_store_failed = False
+_history_hydrated = False
+_history_hydrate_retry_after = 0.0
+_history_pending_sync: dict[str, "ConversationEntry"] = {}
+
+
+def _get_history_store() -> Any:
+    """Return the durable history store singleton, or None if unavailable.
+
+    Lazy and fail-soft: a store that cannot be constructed degrades history
+    to the pre-REL-029 in-memory behaviour (with an error log) instead of
+    breaking chat.
+    """
+    global _history_store, _history_store_failed
+    if _history_store is not None or _history_store_failed:
+        return _history_store
+    try:
+        from friday.api.history_store import ConversationHistoryStore
+
+        db_path = os.getenv("FRIDAY_CONVERSATION_HISTORY_DB_PATH") or None
+        _history_store = ConversationHistoryStore(db_path=db_path)
+    except Exception as exc:
+        _history_store_failed = True
+        logger.error(
+            "Conversation history persistence unavailable (%s); history is "
+            "in-memory only for this process.",
+            exc,
+        )
+    return _history_store
+
+
+async def _persist_history_entry(
+    entry: "ConversationEntry", *, update: bool = False
+) -> None:
+    """Write one entry through to the durable store (best effort).
+
+    A failed write never propagates: the entry is queued in
+    ``_history_pending_sync`` and retried (as an upsert) on the next write,
+    so a transient database blip costs a delayed sync at most — chat, the
+    thing this history serves, is never taken down by its own log.
+    """
+    store = _get_history_store()
+    if store is None:
+        return
+    if _history_pending_sync:
+        for pending in list(_history_pending_sync.values())[:20]:
+            if pending.id == entry.id:
+                continue
+            if await store.upsert_entry_async(pending.model_dump()):
+                _history_pending_sync.pop(pending.id, None)
+    if update:
+        ok = await store.upsert_entry_async(entry.model_dump())
+    else:
+        ok = await store.insert_entry_async(entry.model_dump())
+    if ok:
+        _history_pending_sync.pop(entry.id, None)
+    elif entry.id:
+        if len(_history_pending_sync) >= 1000:
+            _history_pending_sync.pop(next(iter(_history_pending_sync)))
+        _history_pending_sync[entry.id] = entry
+
+
+async def _ensure_history_hydrated() -> None:
+    """Load durable history into the deque once per process (idempotent).
+
+    Entries already in memory win; store rows only fill the gaps, in the
+    store's newest-first order. A failed store read retries after a
+    cooldown instead of concluding the history is gone.
+    """
+    global _history_hydrated, _history_hydrate_retry_after
+    if _history_hydrated:
+        return
+    now = time.monotonic()
+    if now < _history_hydrate_retry_after:
+        return
+    store = _get_history_store()
+    if store is None:
+        _history_hydrated = True
+        return
+    rows = await store.load_recent_async()
+    if rows is None:
+        _history_hydrate_retry_after = now + 30.0
+        logger.warning("Conversation history hydration deferred (store read failed).")
+        return
+    async with _conversation_lock:
+        known = {e.id for e in _conversation_history}
+        restored = 0
+        for row in rows:  # newest first
+            if row.get("id") and row["id"] not in known:
+                _conversation_history.append(ConversationEntry(**row))
+                restored += 1
+    _history_hydrated = True
+    if restored:
+        logger.info(
+            "Conversation history restored from durable store: %d entries.", restored
+        )
+
 
 class ConversationEntry(BaseModel):
     """Conversation history entry model."""
@@ -4520,6 +4630,7 @@ async def get_conversation_history(
     search: str | None = None,
 ) -> dict[str, Any]:
     """Get conversation history with pagination and filtering."""
+    await _ensure_history_hydrated()
     async with _conversation_lock:
         entries = list(_conversation_history)
 
@@ -4573,6 +4684,7 @@ async def export_conversation_history(
     search: str | None = None,
 ) -> Any:
     """Export conversation history as JSON or Markdown."""
+    await _ensure_history_hydrated()
     async with _conversation_lock:
         entries = list(_conversation_history)
 
@@ -4665,8 +4777,10 @@ async def add_conversation_entry(entry: ConversationEntry, _: None = Depends(_re
         metadata=entry.metadata,
     )
 
+    await _ensure_history_hydrated()
     async with _conversation_lock:
         _conversation_history.appendleft(new_entry)
+    await _persist_history_entry(new_entry, update=True)
 
     # Broadcast to activity stream if available
     try:
@@ -4688,8 +4802,15 @@ async def add_conversation_entry(entry: ConversationEntry, _: None = Depends(_re
 @app.delete("/api/v1/conversation/history")
 async def clear_conversation_history(_: None = Depends(_require_control_access)) -> dict[str, Any]:
     """Clear all conversation history."""
+    global _history_hydrated
     async with _conversation_lock:
         _conversation_history.clear()
+    _history_pending_sync.clear()
+    store = _get_history_store()
+    if store is not None:
+        await store.delete_all_async()
+    # The durable store is now empty too; nothing remains to rehydrate.
+    _history_hydrated = True
     return {"status": "ok", "cleared": True}
 
 
@@ -4704,6 +4825,7 @@ async def _begin_conversation_entry(
     :func:`_finalize_conversation_entry`. A turn that hangs, times out, or
     crashes the process can no longer take the user's message with it.
     """
+    await _ensure_history_hydrated()
     entry = ConversationEntry(
         id=str(_uuid.uuid4()),
         timestamp=datetime.now(timezone.utc).isoformat(),
@@ -4716,6 +4838,10 @@ async def _begin_conversation_entry(
     )
     async with _conversation_lock:
         _conversation_history.appendleft(entry)
+    # Write-through (TASK-REL-029): the pending turn is durable BEFORE any
+    # work happens, so even a hard kill mid-turn cannot take the user's
+    # message with it — and this time it survives the restart too.
+    await _persist_history_entry(entry)
     return entry
 
 
@@ -4732,6 +4858,7 @@ async def _finalize_conversation_entry(
     entry.status = status
     entry.agents_involved = agents_involved or []
     entry.metadata = metadata or {}
+    await _persist_history_entry(entry, update=True)
 
 
 async def _log_conversation(
