@@ -120,3 +120,43 @@ def test_completion_gateway_mock_mode_refused_before_network(monkeypatch):
     monkeypatch.setitem(sys.modules, 'intelx.core.settings', settings_module)
     with pytest.raises(ValueError, match='MOCK_MODE'):
         asyncio.run(m.GroundedInferenceGateway().complete([], schema_model=m.GroundedDraft, max_tokens=2400, temperature=0))
+
+
+# TASK-REL-007: a truncated route (finish_reason 'length') must not be the
+# final word — Inference rotates providers per call, so one retry is made.
+# Every other refusal stays final, and the success path still calls once.
+
+def _flaky_gateway(failures_before_success, error_details=None):
+    calls = {"n": 0}
+
+    async def complete(**kwargs):
+        calls["n"] += 1
+        if calls["n"] <= failures_before_success:
+            raise m.GroundedCompletionError(
+                "Incomplete inference completion refused",
+                error_details or {"reason_code": "incomplete_completion", "finish_reason": "length", "output_characters": 125},
+            )
+        return SimpleNamespace(provider="inference", parsed=result())
+
+    return SimpleNamespace(complete=complete), calls
+
+
+def test_incomplete_completion_is_retried_once_and_can_succeed():
+    gateway, calls = _flaky_gateway(1)
+    d = asyncio.run(m.synthesize_grounded("How are quoted commas handled?", DOCS, gateway))
+    assert d["status"] == "SUCCESS"
+    assert calls["n"] == 2
+
+
+def test_incomplete_completion_retry_is_bounded():
+    gateway, calls = _flaky_gateway(99)
+    with pytest.raises(m.GroundedCompletionError):
+        asyncio.run(m.synthesize_grounded("How are quoted commas handled?", DOCS, gateway))
+    assert calls["n"] == 2
+
+
+def test_other_completion_refusals_are_not_retried():
+    gateway, calls = _flaky_gateway(99, {"reason_code": "invalid_schema", "finish_reason": "stop", "output_characters": 40})
+    with pytest.raises(m.GroundedCompletionError):
+        asyncio.run(m.synthesize_grounded("How are quoted commas handled?", DOCS, gateway))
+    assert calls["n"] == 1
