@@ -1834,6 +1834,34 @@ app.include_router(slade_engine_router, prefix="/api/v1/sentinel")
 app.include_router(threat_hunt_router, prefix="/api/v1/sentinel")
 app.include_router(intel_correlation_router, prefix="/api/v1/sentinel")
 app.include_router(incident_timeline_router, prefix="/api/v1/sentinel")
+# TASK-SEN-001: the mounts above double every route path. The app/services
+# routers declare absolute paths ("/api/v1/sentinel/vuln/scan", ...) and the
+# sentinel_api routers declare "/sentinel/..." paths, so prefixing them with
+# "/api/v1/sentinel" again made the documented paths 404 — the services
+# answered only at /api/v1/sentinel/api/v1/sentinel/... (proven live
+# 2026-11-14). Mount each router a second time at its declared path so the
+# documented surface works; the legacy double-prefixed mounts stay for
+# backward compatibility.
+for _absolute_router in (
+    vuln_scanner_router,
+    threat_matcher_router,
+    zero_trust_router,
+    compliance_router,
+    behavioral_router,
+    posture_router,
+    response_router,
+):
+    app.include_router(_absolute_router)
+for _sentinel_path_router in (
+    vuln_mgmt_router,
+    siem_bridge_router,
+    incident_playbook_router,
+    slade_engine_router,
+    threat_hunt_router,
+    intel_correlation_router,
+    incident_timeline_router,
+):
+    app.include_router(_sentinel_path_router, prefix="/api/v1")
 
 
 class SentinelInferenceRequest(BaseModel):
