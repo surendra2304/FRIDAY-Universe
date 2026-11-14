@@ -86,7 +86,13 @@ def _credential(kind: str) -> str:
         return ""
     text = path.read_text(errors="ignore")
     if kind == "duckdns_token":
-        m = re.search(r"(?im)^#{1,3}\s*duckdns.*$(.*?)(?=^#{1,3}\s|\Z)", text)
+        # 2026-11-14 fix: the original (?im)^#{1,3}\s*duckdns.*$(.*?)... could
+        # NEVER match — without re.S the lazy capture cannot cross the header
+        # newline, so the section was always empty. Latent bug (unexercised
+        # while no token existed) caught by the vault self-test the moment the
+        # owner supplied the first real token. Header line is now consumed
+        # explicitly, the capture is DOTALL, bounded by the next header or EOF.
+        m = re.search(r"(?ims)^#{1,3}[ \t]*duckdns[^\n]*\n(.*?)(?=^#{1,3}[ \t]|\Z)", text)
         section = m.group(1) if m else ""
         m2 = re.search(r"(?im)(?:token|key)\s*[:=]\s*`?([a-f0-9\-]{16,})`?", section)
         return m2.group(1) if m2 else ""

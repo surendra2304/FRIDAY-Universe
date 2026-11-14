@@ -30,11 +30,15 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           GH_DUCKDNS_TOKEN: ${{ secrets.DUCKDNS_TOKEN }}
+          # 2026-11-14 hardening: the record must point at Server 1's public
+          # INGRESS IP (what the world must reach). The egress IP (ipify) is
+          # report-only evidence — never written, in case egress != ingress.
+          INGRESS_IP: "140.245.208.100"  # Oracle Server 1 (matches dns_guard --expected default)
         with:
           host: ${{ secrets.SERVER1_HOST }}
           username: ubuntu
           key: ${{ secrets.ORACLE_SSH_KEY }}
-          envs: GH_DUCKDNS_TOKEN
+          envs: GH_DUCKDNS_TOKEN,INGRESS_IP
           script: |
             set -u
             DOMAIN_LABEL="friday-universe"
@@ -94,13 +98,21 @@ jobs:
               exit 0
             fi
 
-            # 2. This server's real public IP
-            MY_IP=$(curl -s --max-time 15 https://api.ipify.org || true)
+            # 2. Target IP: pinned public ingress of this server. Egress IP
+            #    (ipify) is fetched only as evidence and to sanity-check.
+            MY_IP="${INGRESS_IP:-}"
+            EGRESS_IP=$(curl -s --max-time 15 https://api.ipify.org || true)
             if [ -z "$MY_IP" ]; then
-              echo "ipify failed; cannot verify real IP — aborting honestly"
+              MY_IP="$EGRESS_IP"  # honest fallback only if the pinned env is missing
+            fi
+            if [ -z "$MY_IP" ]; then
+              echo "no target IP (pinned ingress empty AND ipify failed) — aborting honestly"
               exit 3
             fi
-            echo "server public IP: $MY_IP"
+            echo "record will point at Server 1 ingress: $MY_IP"
+            if [ -n "$EGRESS_IP" ] && [ "$EGRESS_IP" != "$MY_IP" ]; then
+              echo "NOTE: egress IP ($EGRESS_IP) != pinned ingress ($MY_IP) — keeping ingress (world reaches ingress)"
+            fi
 
             # 3. Repoint (idempotent). Response is OK / KO — printed, token never.
             RESP=$(curl -s --max-time 20 "https://www.duckdns.org/update?domains=${DOMAIN_LABEL}&token=${TOKEN}&ip=${MY_IP}" || true)

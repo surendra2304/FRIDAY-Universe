@@ -144,3 +144,38 @@ def test_duckdns_update_url_shape():
     assert ok and resp == "OK"
     assert "domains=friday-universe" in captured["url"] and "ip=1.2.3.4" in captured["url"]
     assert "SECRET-TOKEN" in captured["url"]  # token goes to duckdns.org only, never to logs
+
+
+def test_duckdns_token_reads_from_credentials_section(tmp_path):
+    # 2026-11-14 regression pin: house vault format (DuckDNS section at EOF).
+    # The pre-fix section regex could never cross the header newline, so the
+    # token was unreachable — found the moment the owner supplied a real token.
+    creds = tmp_path / "credentials.md"
+    creds.write_text(
+        "# FRIDAY Universe — Credentials\n\n"
+        "## Telegram bots\n\n- token: 123456789:AAExampleTelegramShapeNotDuckDns\n\n"
+        "## DuckDNS (owner-supplied 2026-11-14)\n\n"
+        "- Service: DuckDNS dynamic DNS — friday-universe.duckns.org -> 140.245.208.100\n"
+        "- token: aaaa0000-bbbb-11cc-22dd-eeeeeeeeeeee\n"
+        "- Verified live: 2026-11-14 ~11:45 IST\n"
+    )
+    with mock.patch.object(dns_guard, "REPO", tmp_path):
+        assert dns_guard._credential("duckdns_token") == "aaaa0000-bbbb-11cc-22dd-eeeeeeeeeeee"
+
+
+def test_duckdns_token_section_boundary_stops_at_next_header(tmp_path):
+    # DuckDNS section mid-file: a LATER section's hex token must not leak in.
+    creds = tmp_path / "credentials.md"
+    creds.write_text(
+        "## DuckDNS (owner-supplied)\n\n- token: 11110000-2222-33cc-44dd-555555555555\n\n"
+        "## OANDA Demo\n\n- API token: 9999aaaa8888bbbb\n"
+    )
+    with mock.patch.object(dns_guard, "REPO", tmp_path):
+        assert dns_guard._credential("duckdns_token") == "11110000-2222-33cc-44dd-555555555555"
+
+
+def test_duckdns_token_empty_when_no_section(tmp_path):
+    creds = tmp_path / "credentials.md"
+    creds.write_text("## OANDA Demo\n\n- API token: abcdefabcdefabcdef\n")
+    with mock.patch.object(dns_guard, "REPO", tmp_path):
+        assert dns_guard._credential("duckdns_token") == ""
