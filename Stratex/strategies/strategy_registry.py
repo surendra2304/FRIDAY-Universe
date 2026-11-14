@@ -25,6 +25,45 @@ from logger import get_logger
 
 logger = get_logger("strategies.registry")
 
+# ---------------------------------------------------------------------------
+# Governance (TASK-STR-SAFETY-001): config_strategy.PRODUCTION_STRATEGY_REGISTRY
+# is the single source of truth for which strategies may trade — the same
+# source the testnet engine honours via governance_filter_strategies().
+# Discovery below must NEVER invent a status: a module that governance marks
+# DISABLED or OBSERVE_ONLY, or does not list at all, is not executable.
+# Fail-closed: if the governance source cannot be imported, nothing is
+# VALIDATED and nothing executes.
+# ---------------------------------------------------------------------------
+try:
+    from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+except Exception as _gov_exc:  # pragma: no cover - defensive fail-closed
+    logger.error(
+        "Governance registry unavailable (%s); all strategies will be "
+        "treated as UNREGISTERED and nothing will execute.",
+        _gov_exc,
+    )
+    PRODUCTION_STRATEGY_REGISTRY = {}
+
+
+def governance_key_for(module_name: str) -> str:
+    """Map a discovered module name to its governance registry key.
+
+    Standalone modules are named ``strategy_<key>`` (strategy_supertrend ->
+    supertrend); strategies/ package modules already use the bare key.
+    """
+    if module_name.startswith("strategy_"):
+        return module_name[len("strategy_"):]
+    return module_name
+
+
+def governance_status_for(module_name: str) -> str:
+    """Governance status for a module: VALIDATED / OBSERVE_ONLY / DISABLED,
+    or UNREGISTERED when governance has never classified it."""
+    entry = PRODUCTION_STRATEGY_REGISTRY.get(governance_key_for(module_name))
+    if not entry:
+        return "UNREGISTERED"
+    return str(entry.get("status") or "UNREGISTERED").upper()
+
 
 @dataclass(frozen=True, slots=True)
 class StrategySpec:
@@ -174,14 +213,39 @@ class UnifiedStrategyRegistry:
             # Determine timeframes and symbols from docstring or defaults
             timeframes = self._infer_timeframes(module)
             symbols = self.SUPPORTED_SYMBOLS
+            version = "1.0.0"
+
+            # Governance decides the status — discovery never does
+            # (TASK-STR-SAFETY-001: this hardcoded "VALIDATED" for every
+            # glob-discovered module, so DISABLED scalpers, the OBSERVE_ONLY
+            # post-incident supertrend, a never-register Donchian and a
+            # placeholder all executed in the daemon). Governance is also
+            # authoritative for priors and validated geometry: config_strategy
+            # nulls priors/edges/assets for non-VALIDATED entries, so a
+            # module-level constant can never smuggle an unverified prior
+            # into a live gate.
+            gov_entry = PRODUCTION_STRATEGY_REGISTRY.get(
+                governance_key_for(module_name)
+            )
+            status = governance_status_for(module_name)
+            if gov_entry is not None:
+                version = str(gov_entry.get("version") or version)
+                win_rate_prior = gov_entry.get("oos_win_rate_prior")
+                gov_tfs = gov_entry.get("timeframes") or (
+                    [gov_entry["timeframe"]] if gov_entry.get("timeframe") else None
+                )
+                if gov_tfs:
+                    timeframes = tuple(gov_tfs)
+                if status == "VALIDATED" and gov_entry.get("validated_assets"):
+                    symbols = tuple(gov_entry["validated_assets"])
 
             spec = StrategySpec(
                 name=module_name,
                 module=module.__name__,
-                version="1.0.0",
+                version=version,
                 timeframes=timeframes,
                 symbols=symbols,
-                status="VALIDATED",
+                status=status,
                 source_hash=source_hash,
                 win_rate_prior=win_rate_prior,
                 rr_ratio=rr_ratio,
@@ -212,11 +276,28 @@ class UnifiedStrategyRegistry:
         with self._lock:
             return self._items.get(name)
 
-    def executable(self, name: str, timeframe: str, symbol: str) -> tuple[bool, str]:
+    def governance_status(self, name: str) -> str:
+        """The strategy's governance status (from config_strategy).
+
+        VALIDATED strategies may execute; OBSERVE_ONLY strategies may be
+        evaluated for logging/evidence only; DISABLED and UNREGISTERED
+        strategies must never reach order placement.
+        """
+        spec = self.get(name)
+        if spec is not None:
+            return spec.status
+        return governance_status_for(name)
+
+    def _check(
+        self, name: str, timeframe: str, symbol: str, *, for_execution: bool
+    ) -> tuple[bool, str]:
         spec = self.get(name)
         if spec is None:
             return False, "UNREGISTERED"
-        if spec.status != "VALIDATED":
+        if for_execution:
+            if spec.status != "VALIDATED":
+                return False, f"STATUS_{spec.status}"
+        elif spec.status not in ("VALIDATED", "OBSERVE_ONLY"):
             return False, f"STATUS_{spec.status}"
         if timeframe not in spec.timeframes:
             return False, "TIMEFRAME_NOT_VALIDATED"
@@ -226,6 +307,19 @@ class UnifiedStrategyRegistry:
         if health and health.status == "UNHEALTHY":
             return False, "STRATEGY_UNHEALTHY"
         return True, "OK"
+
+    def executable(self, name: str, timeframe: str, symbol: str) -> tuple[bool, str]:
+        """True only when the strategy may place orders for tf/symbol."""
+        return self._check(name, timeframe, symbol, for_execution=True)
+
+    def evaluable(self, name: str, timeframe: str, symbol: str) -> tuple[bool, str]:
+        """True when the strategy may be evaluated (signal generation only).
+
+        OBSERVE_ONLY strategies pass here but never pass executable(); any
+        signal produced through this path is for logging/evidence and must
+        never reach order placement.
+        """
+        return self._check(name, timeframe, symbol, for_execution=False)
 
     def snapshot(self) -> list[StrategySpec]:
         with self._lock:
@@ -251,11 +345,23 @@ class UnifiedStrategyRegistry:
         df: pd.DataFrame,
         timeframe: str = "5m",
         symbol: str = "EURUSD",
+        allow_observe: bool = False,
     ) -> dict[str, Any]:
-        """Execute a strategy on market data and return a signal."""
-        ok, reason = self.executable(name, timeframe, symbol)
+        """Execute a strategy on market data and return a signal.
+
+        With allow_observe=True an OBSERVE_ONLY strategy may be evaluated
+        (its result is tagged ``observe_only``); callers must never route
+        such a result to order placement. DISABLED and UNREGISTERED
+        strategies are blocked on every path.
+        """
+        if allow_observe:
+            ok, reason = self.evaluable(name, timeframe, symbol)
+        else:
+            ok, reason = self.executable(name, timeframe, symbol)
         if not ok:
             return {"status": "BLOCKED", "reason": reason, "strategy": name}
+        spec = self.get(name)
+        observe_only = bool(spec is not None and spec.status == "OBSERVE_ONLY")
 
         get_signal = self._get_signal_fns.get(name)
         if get_signal is None:
@@ -307,8 +413,9 @@ class UnifiedStrategyRegistry:
                     "strategy_type": stype,
                     "sl_dist": sl_dist,
                     "tp_dist": tp_dist,
+                    "observe_only": observe_only,
                 }
-            return {"status": "NO_SIGNAL", "strategy": name}
+            return {"status": "NO_SIGNAL", "strategy": name, "observe_only": observe_only}
         except Exception as e:
             health = self._health.get(name)
             if health:

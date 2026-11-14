@@ -74,8 +74,12 @@ class StratexTradingEngine:
             if s.strip()
         }
 
-        # No denylist - all strategies allowed
-        self.strategy_denylist = set()
+        # Auto-pruned strategies stay pruned across restarts: _maybe_prune_
+        # strategies() persists this set via _persist_denylist(), and it is
+        # read back here (TASK-STR-SAFETY-001: previously the file was
+        # written but never loaded, so pruned strategies returned on every
+        # restart).
+        self.strategy_denylist = self._load_denylist()
         self.strategy_allowlist = {
             s.strip()
             for s in os.getenv("STRATEX_STRATEGY_ALLOWLIST", "").split(",")
@@ -122,6 +126,31 @@ class StratexTradingEngine:
         self.scan_count = 0
         self._last_trend_manage = 0.0
         self._last_summary_date = ""
+        self._log_governance_summary()
+
+    def _log_governance_summary(self) -> None:
+        """Log the governed strategy sets once at startup (audit evidence).
+
+        The daemon's executable set is whatever config_strategy governance
+        marks VALIDATED — nothing else may place orders (TASK-STR-SAFETY-001).
+        """
+        try:
+            executable, observe_only, excluded = [], [], []
+            for spec in strategy_registry.snapshot():
+                if spec.status == "VALIDATED":
+                    executable.append(spec.name)
+                elif spec.status == "OBSERVE_ONLY":
+                    observe_only.append(spec.name)
+                else:
+                    excluded.append(f"{spec.name}({spec.status})")
+            logger.info(
+                "[STRATEX] Governance (config_strategy): "
+                f"executable={sorted(executable)} "
+                f"observe_only={sorted(observe_only)} "
+                f"excluded={sorted(excluded)}"
+            )
+        except Exception as e:
+            logger.warning(f"[STRATEX] Governance summary failed: {e}")
 
     def scan_and_execute(self) -> dict:
         """Run one scan cycle across all symbols and timeframes."""
@@ -202,6 +231,34 @@ class StratexTradingEngine:
                                 if strat_name not in self.strategy_allowlist:
                                     continue
                             elif strat_name in self.strategy_denylist:
+                                continue
+
+                            # Governance gate (TASK-STR-SAFETY-001): the
+                            # registry's status comes from config_strategy's
+                            # PRODUCTION_STRATEGY_REGISTRY — the same source
+                            # the testnet engine honours. Only VALIDATED
+                            # strategies may reach order placement.
+                            gov_status = strategy_registry.governance_status(strat_name)
+                            if gov_status == "OBSERVE_ONLY":
+                                # Parked strategies (post-incident supertrend,
+                                # adx_ema) still evaluate so they accumulate
+                                # forward evidence — but a signal from this
+                                # branch is logged only and NEVER enters the
+                                # confluence/execution path below.
+                                obs = strategy_registry.execute_strategy(
+                                    strat_name, df, tf, symbol, allow_observe=True
+                                )
+                                results["scanned"] += 1
+                                if obs.get("status") == "SIGNAL" and obs.get("side", "HOLD") != "HOLD":
+                                    logger.info(
+                                        f"[STRATEX] [OBSERVE_ONLY] {strat_name} signal "
+                                        f"{obs.get('side')} {venue}:{symbol} {tf} — "
+                                        f"logged for evidence, never executed"
+                                    )
+                                continue
+                            if gov_status != "VALIDATED":
+                                # DISABLED / UNREGISTERED: not evaluated for
+                                # execution at all.
                                 continue
 
                             ok, reason = strategy_registry.executable(strat_name, tf, symbol)
@@ -358,6 +415,15 @@ class StratexTradingEngine:
 
             executed = False
             for strat_name, result, tf in ranked:
+                if result.get("observe_only"):
+                    # Defence in depth (TASK-STR-SAFETY-001): an OBSERVE_ONLY
+                    # signal must never reach order placement, even if a
+                    # future code path lets one into the confluence set.
+                    logger.warning(
+                        f"[STRATEX] Blocked OBSERVE_ONLY candidate {strat_name} "
+                        f"from execution on {c_venue}:{c_symbol}"
+                    )
+                    continue
                 # Copy so per-candidate stamping cannot leak between attempts.
                 payload = dict(result)
                 payload["strategy"] = strat_name
@@ -1065,13 +1131,41 @@ class StratexTradingEngine:
         except Exception as e:
             logger.debug(f"Strategy pruning failed: {e}")
 
+    def _denylist_path(self) -> str:
+        """Path of the persisted strategy denylist (single source for the
+        writer in _persist_denylist and the reader in _load_denylist)."""
+        return os.getenv(
+            "STRATEX_STRATEGY_DENYLIST_FILE",
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "state", "strategy_denylist.json"),
+        )
+
+    def _load_denylist(self) -> set:
+        """Read back the persisted denylist so pruned strategies stay pruned.
+
+        Never raises: a missing file means nothing was ever pruned; a
+        corrupt file degrades to an empty set with a loud warning (the
+        governance gate in the scan loop still applies independently).
+        """
+        path = self._denylist_path()
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                raw = json.load(fh)
+        except FileNotFoundError:
+            return set()
+        except Exception as e:
+            logger.warning(f"[STRATEX] Could not load strategy denylist {path}: {e}")
+            return set()
+        names = {str(x) for x in raw if isinstance(x, str)} if isinstance(raw, list) else set()
+        if names:
+            logger.warning(
+                f"[STRATEX] Strategy denylist loaded from {path}: {sorted(names)}"
+            )
+        return names
+
     def _persist_denylist(self) -> None:
         """Write current denylist to STRATEX_STRATEGY_DENYLIST_FILE."""
         try:
-            path = os.getenv(
-                "STRATEX_STRATEGY_DENYLIST_FILE",
-                os.path.join(os.path.dirname(os.path.dirname(__file__)), "state", "strategy_denylist.json"),
-            )
+            path = self._denylist_path()
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w", encoding="utf-8") as fh:
                 json.dump(sorted(self.strategy_denylist), fh, indent=2)
