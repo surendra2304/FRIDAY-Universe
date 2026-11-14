@@ -138,7 +138,54 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
             raise HTTPException(status_code=503, detail="Live research refuses MOCK_MODE; no fixture evidence will be returned")
         async def run_pipeline():
             return await collect_live_brief(query, WebSearchConnector(settings=cfg), HttpFetchConnector(settings=cfg), synthesize=synthesize_grounded)
-        return await run_live_research(task_id, query, run_pipeline)
+        envelope = await run_live_research(task_id, query, run_pipeline)
+        # TASK-REL-038: persist the completed run durably so it can be
+        # retrieved verbatim later (action "research_recall" / the
+        # /v1/research/live endpoints). Best-effort: on failure the
+        # envelope keeps reporting durable_run=False, honestly.
+        from intelx.api.live_research_store import persist_live_research
+
+        persisted = await persist_live_research(task_id, query, envelope)
+        if persisted is not None:
+            run_id, _write_ms = persisted
+            result_payload = envelope.get("result")
+            if isinstance(result_payload, dict):
+                result_payload["run_id"] = run_id
+                result_payload["durable_run"] = True
+            receipt = envelope.get("receipt")
+            if isinstance(receipt, dict):
+                evidence = receipt.get("verification_evidence")
+                if isinstance(evidence, dict):
+                    evidence["durable_run"] = True
+                receipt_result = receipt.get("result")
+                if isinstance(receipt_result, dict):
+                    receipt_result["run_id"] = run_id
+        return envelope
+
+    # TASK-REL-038: retrieve a previously persisted live-research run.
+    if action == "research_recall":
+        from intelx.api.live_research_store import fetch_live_research
+
+        run_id = str(payload.get("run_id") or "").strip()
+        if not run_id:
+            raise HTTPException(status_code=422, detail="research_recall requires payload.run_id")
+        try:
+            record = await fetch_live_research(run_id)
+        except Exception:
+            raise HTTPException(status_code=503, detail="Research archive unavailable")
+        if record is None:
+            raise HTTPException(status_code=404, detail="Stored research run not found")
+        return {
+            "task_id": task_id,
+            "target_agent": "intelx",
+            "status": record["status"],
+            "result": record["result"],
+            "summary": record["summary"] or "",
+            "receipt": record["receipt"],
+            "durable_run": True,
+            "run_id": record["run_id"],
+            "created_at": record["created_at"],
+        }
 
     # 1. Action = Cancel
     if action == "cancel":
@@ -404,6 +451,39 @@ class SummarizePayload(BaseModel):
     text: str | None = Field(default=None, max_length=250_000)
     query: str | None = Field(default=None, min_length=1, max_length=1_000)
     max_length: int = Field(default=500, ge=1, le=10_000)
+
+
+# TASK-REL-038: durable archive of live-research runs (see live_research_store).
+@root_api_router.get("/v1/research/live", tags=["Live Research Archive"])
+async def list_live_research_runs(
+    limit: int = Query(default=20, ge=1, le=100),
+    api_key: ApiKey = Depends(get_friday_api_key),
+):
+    """List metadata of stored live-research runs, newest first."""
+    from intelx.api.live_research_store import list_live_research
+
+    try:
+        runs = await list_live_research(limit)
+    except Exception:
+        raise HTTPException(status_code=503, detail="Research archive unavailable")
+    return {"runs": runs, "count": len(runs)}
+
+
+@root_api_router.get("/v1/research/live/{run_id}", tags=["Live Research Archive"])
+async def get_live_research_run(
+    run_id: str,
+    api_key: ApiKey = Depends(get_friday_api_key),
+):
+    """Fetch one stored live-research run verbatim by its run id."""
+    from intelx.api.live_research_store import fetch_live_research
+
+    try:
+        record = await fetch_live_research(run_id)
+    except Exception:
+        raise HTTPException(status_code=503, detail="Research archive unavailable")
+    if record is None:
+        raise HTTPException(status_code=404, detail="Stored research run not found")
+    return record
 
 
 @root_api_router.post(
