@@ -163,6 +163,12 @@ class FridaySecurityPostureResponse(BaseModel):
     most_critical_finding: dict[str, Any] | None = None
     last_scan_times: dict[str, str] = Field(default_factory=dict)
     trend: str = "stable"  # improving | stable | degrading
+    # TASK-SEN-001: a score of 100 derived from an EMPTY findings store is
+    # absence of evidence, not evidence of security. Disclose the basis so
+    # consumers (FRIDAY's answers included) cannot present it as a measured
+    # posture.
+    posture_basis: str = "no_findings_recorded"  # recorded_findings | no_findings_recorded
+    targets_scanned: int = 0
 
 
 class FridayAssetInventoryItem(BaseModel):
