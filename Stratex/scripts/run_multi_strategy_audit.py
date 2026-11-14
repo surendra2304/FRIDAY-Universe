@@ -8,11 +8,7 @@ import json
 import numpy as np
 
 import strategy_adx_ema
-import strategy_aggressor
 import strategy_ml
-import strategy_scalper
-import strategy_supertrend
-import strategy_swing
 from data import add_indicators, get_candles
 from testnet_engine.profitability_gate import CostEngine, ProfitabilityGate
 from testnet_engine.risk_gate import RiskGate
@@ -24,11 +20,7 @@ def run_multi_strategy_audit():
     print("==================================================")
 
     strategies = {
-        "aggressor": strategy_aggressor,
-        "scalper": strategy_scalper,
-        "supertrend": strategy_supertrend,
         "ml": strategy_ml,
-        "swing": strategy_swing,
         "adx_ema": strategy_adx_ema
     }
 

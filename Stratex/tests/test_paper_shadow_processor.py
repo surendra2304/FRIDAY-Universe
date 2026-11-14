@@ -95,10 +95,8 @@ def test_rejects_synthetic_or_malformed_inputs_and_unsafe_risk():
 
 
 def test_candidate_set_is_observe_only_and_default_matrix_is_bounded():
-    assert set(shadow.SHADOW_CANDIDATES) == {
-        "donchian20", "adx_ema", "bb_reversion", "rsi_burst", "vwap_trend", "supertrend"
-    }
-    assert len(shadow.DEFAULT_SHADOW_STREAMS) == 24
+    assert set(shadow.SHADOW_CANDIDATES) == {"donchian20", "adx_ema"}
+    assert len(shadow.DEFAULT_SHADOW_STREAMS) == 9
     assert {symbol for _, symbol, _ in shadow.DEFAULT_SHADOW_STREAMS} == {
         "BTCUSDT", "ETHUSDT", "SOLUSDT"
     }

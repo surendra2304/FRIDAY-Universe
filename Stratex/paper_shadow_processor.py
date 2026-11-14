@@ -26,10 +26,6 @@ REQUIRED_COLUMNS = {"timestamp", "open", "high", "low", "close", "volume"}
 SHADOW_CANDIDATES: dict[str, tuple[str, str]] = {
     "donchian20": ("strategy_donchian_observe_only", "get_signal"),
     "adx_ema": ("strategy_adx_ema", "get_signal"),
-    "bb_reversion": ("strategy_bb_reversion", "get_signal"),
-    "rsi_burst": ("strategy_rsi_burst", "get_signal"),
-    "vwap_trend": ("strategy_vwap_trend", "get_signal"),
-    "supertrend": ("strategy_supertrend", "get_signal"),
 }
 
 # A bounded starting observation matrix. It is a recommendation for a future
@@ -39,10 +35,6 @@ DEFAULT_SHADOW_STREAMS = tuple(
     for candidate, timeframes in {
         "donchian20": ("1h", "4h"),
         "adx_ema": ("4h",),
-        "bb_reversion": ("15m",),
-        "rsi_burst": ("15m",),
-        "vwap_trend": ("15m",),
-        "supertrend": ("15m", "1h"),
     }.items()
     for symbol in ("BTCUSDT", "ETHUSDT", "SOLUSDT")
     for timeframe in timeframes
@@ -317,7 +309,7 @@ def _add_strategy_features(strategy: str, frame: pd.DataFrame) -> pd.DataFrame:
     module = importlib.import_module(module_name)
     if strategy == "donchian20":
         return module.add_candidate_features(frame)
-    if strategy in {"adx_ema", "bb_reversion", "rsi_burst", "vwap_trend"}:
+    if strategy in {"adx_ema"}:
         return module.add_features(frame)
     from features import add_features
     return add_features(frame)

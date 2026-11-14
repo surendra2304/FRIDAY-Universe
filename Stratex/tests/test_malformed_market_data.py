@@ -400,33 +400,7 @@ def test_signal_levels_valid(side, entry, sl, tp, expected):
     assert signal_levels_valid(side, entry, sl, tp) is expected
 
 
-def test_scalper_keeps_levels_for_sub_cent_assets():
-    import strategy_aggressive_scalper as scalper
-
-    df = pd.DataFrame({"open": [0.00001200, 0.00001210], "close": [0.00001210, 0.00001234],
-                       "high": [0.0000124, 0.0000124], "low": [0.0000119, 0.0000120]})
-    res = scalper.get_signal(df)
-    assert res.side == "BUY"
-    assert signal_levels_valid(res.side, 0.00001234, res.sl, res.tp), (res.sl, res.tp)
-
-
-def test_scalper_rejects_non_finite_candles():
-    import strategy_aggressive_scalper as scalper
-
-    df = pd.DataFrame({"open": [1.0, 1.0], "close": [1.0, float("nan")]})
-    assert scalper.get_signal(df).side is None
-
-
-def test_mtf_strategy_accepts_add_indicators_frames():
-    import strategy_adx_ema_mtf as mtf
-    from data import add_indicators
-
-    df = add_indicators(_frame(n=260, seed=11))
-    res = mtf.get_signal(df, df_1h=add_indicators(_frame(n=260, freq="1h", seed=12)))
-    assert res.side in (None, "BUY", "SELL")
-
-
-@pytest.mark.parametrize("module_name", ["strategy_hybrid", "strategy_scalper"])
+@pytest.mark.parametrize("module_name", ["strategy_hybrid"])
 def test_strategies_never_emit_nan_levels_on_inf_highs(module_name):
     import importlib
 

@@ -87,7 +87,7 @@ def test_lab_output_path_is_isolated_and_forward_paths_are_rejected(tmp_path):
 
 
 def test_all_research_candidates_dispatch_without_promising_trades():
-    expected = {"donchian20", "swing", "adx_ema", "bb_reversion", "rsi_burst", "vwap_trend", "supertrend"}
+    expected = {"donchian20", "adx_ema"}
     assert set(STRATEGIES) == expected
     for strategy in sorted(expected):
         result = evaluate_candidate(candles(), strategy)

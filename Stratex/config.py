@@ -100,24 +100,15 @@ TESTNET_BASELINE_RESET_ISO = os.getenv("TESTNET_BASELINE_RESET_ISO", "2026-09-01
 # Entries here are requests, not execution authorization. The strategy registry
 # must mark an entry VALIDATED before the testnet engine loads it. At present
 # adx_ema remains OBSERVE_ONLY, so the executable set is intentionally empty.
-ACTIVE_STRATEGIES = {
-    # 2026-11-11: supertrend parked OBSERVE_ONLY in PRODUCTION_STRATEGY_REGISTRY
-    # (realized 17/64 = 0.266 win rate, fabricated 0.80 prior removed) — governance
-    # drops it from scanning. It stays listed so /resume can re-admit it once it
-    # accumulates fresh forward evidence under the new anti-churn brackets.
-    "supertrend": ["15m", "1h", "4h"],
-    "bb_reversion": ["15m", "1h"],
-    # factory winners: native 5m restored (mass-backtester evidence is 5m/15m;
-    # the old 15m/1h/4h-only listing starved them of their backtested signals)
-    "factory_winner_1": ["5m", "15m", "1h"],
-    "factory_winner_2": ["5m", "15m", "1h"],
-    "factory_winner_3": ["5m", "15m"],
-    "factory_winner_4": ["5m", "15m", "1h"],
-    "factory_winner_5": ["15m", "1h"],
-}
+# TASK-STR-CLEANUP-001 (2026-11-15): supertrend, bb_reversion and
+# factory_winner_1..5 were DELETED under the owner's strict evidence rule
+# (verified OOS profit factor < 1.2, TASK-STR-BT-001) — code, registry
+# entries and this candidate list. No candidates remain until forward
+# entrants are chosen from TASK-STR-RD-002 evidence.
+ACTIVE_STRATEGIES = {}
 
 # Legacy single-strategy preference; it does not override registry governance.
-ACTIVE_STRATEGY = "supertrend"
+ACTIVE_STRATEGY = "adx_ema"
 TIMEFRAME = "15m"
 ALL_ACTIVE_TIMEFRAMES = ["15m", "30m", "1h", "4h"]
 BYPASS_PROFITABILITY_GATE = os.getenv("BYPASS_PROFITABILITY_GATE", "False").lower() == "true"  # Enforces positive mathematical edge calculation by default
@@ -255,7 +246,7 @@ OOS_TRAIN_PCT = 0.60               # Walk-forward train %
 OOS_VAL_PCT = 0.20                 # Walk-forward validation %
 INTRABAR_RESOLUTION = "conservative" # "conservative" or "optimistic"
 
-SUPPORTED_STRATEGIES = ["scalper", "swing", "ml", "aggressor", "supertrend", "multi", "adx_ema", "adx_ema_mtf", "aggressive_scalper", "bb_reversion", "rsi_burst", "vwap_trend", "factory_winner_1", "factory_winner_2", "factory_winner_3", "factory_winner_4", "factory_winner_5", "fast1m", "fast5m", "hybrid", "bollinger", "breakout_vol"]
+SUPPORTED_STRATEGIES = ["ml", "multi", "adx_ema", "fast1m", "fast5m", "hybrid"]
 SUPPORTED_TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "2h", "4h", "6h", "8h", "12h", "1d"]
 VALID_MODES = ["PAPER", "TESTNET", "FUTURES"]
 
