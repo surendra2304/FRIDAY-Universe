@@ -51,11 +51,13 @@ class ContentIdea:
     idea_id: str
     topic: str
     angle: str = ""
-    confidence: float = 0.5
+    confidence: float | None = None
     source: str = "manual"  # manual, trend, audience, competitor
-    estimated_views: int = 0
-    estimated_engagement: float = 0.0
-    viral_potential: float = 0.0
+    estimated_views: int | None = None
+    estimated_engagement: float | None = None
+    viral_potential: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     tags: list[str] = field(default_factory=list)
 
 
@@ -77,11 +79,13 @@ class QualityReport:
     """Quality assessment of a produced video."""
     video_id: str
     score: float  # 0-100
-    factors: dict[str, float]
+    factors: dict
     issues: list[str]
     recommendations: list[str]
-    estimated_views: int
-    estimated_engagement: float
+    estimated_views: int | None
+    estimated_engagement: float | None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 class FullPipelineEngine:
@@ -116,12 +120,21 @@ class FullPipelineEngine:
                 ).hexdigest()[:12],
                 topic=topic,
                 angle="informative",
-                confidence=0.6 + (ord(hashlib.md5(topic.encode()).hexdigest()[:1]) % 30) / 100,
-                source="trend",
-                estimated_views=5000 + (ord(hashlib.md5(topic.encode()).hexdigest()[:1]) % 50000),
-                estimated_engagement=0.03 + (ord(hashlib.md5(topic.encode()).hexdigest()[:1]) % 50) / 1000,
-                viral_potential=0.3 + (ord(hashlib.md5(topic.encode()).hexdigest()[:1]) % 40) / 100,
-                tags=[niche, "trending", "2026"],
+                # Topics are static templates and no trend/performance
+                # data source is connected. (TASK-REL-020: confidence,
+                # estimated views/engagement and viral potential were
+                # previously derived from md5 hashes of the topic.)
+                confidence=None,
+                source="template",
+                estimated_views=None,
+                estimated_engagement=None,
+                viral_potential=None,
+                data_status="no_data",
+                data_note=(
+                    "Topic generated from a static template; no trend or "
+                    "performance data is connected, so no estimates exist."
+                ),
+                tags=[niche, "template", "2026"],
             )
             ideas.append(idea)
 
@@ -129,20 +142,27 @@ class FullPipelineEngine:
         return ideas
 
     def select_idea(self, criteria: str = "viral_potential") -> ContentIdea | None:
-        """Select the best idea based on criteria."""
+        """Select an idea by criteria.
+
+        Ideas whose criterion metric is unavailable (None — no data
+        source exists) cannot be ranked; when no idea carries the
+        requested metric, the first idea is returned unranked.
+        """
         if not self._ideas:
             self.discover_topics()
 
-        if criteria == "viral_potential":
-            return max(self._ideas, key=lambda i: i.viral_potential)
-        elif criteria == "views":
-            return max(self._ideas, key=lambda i: i.estimated_views)
-        elif criteria == "engagement":
-            return max(self._ideas, key=lambda i: i.estimated_engagement)
-        elif criteria == "confidence":
-            return max(self._ideas, key=lambda i: i.confidence)
-        else:
-            return self._ideas[0]
+        field_by_criteria = {
+            "viral_potential": "viral_potential",
+            "views": "estimated_views",
+            "engagement": "estimated_engagement",
+            "confidence": "confidence",
+        }
+        field_name = field_by_criteria.get(criteria)
+        if field_name:
+            ranked = [i for i in self._ideas if getattr(i, field_name) is not None]
+            if ranked:
+                return max(ranked, key=lambda i: getattr(i, field_name))
+        return self._ideas[0] if self._ideas else None
 
     # ── Pipeline Creation ──────────────────────────────────────────────────
 
@@ -216,7 +236,10 @@ class FullPipelineEngine:
         task.status = "completed"
         task.completed_at = time.time()
         task.video_id = hashlib.md5(f"video:{task_id}:{time.time()}".encode()).hexdigest()[:12]
-        task.published_url = f"https://youtube.com/watch?v={task.video_id}"
+        # This engine does not render or upload any video, so no
+        # published URL exists. (TASK-REL-020: a youtube.com/watch?v=
+        # URL was previously fabricated from the internal id.)
+        task.published_url = ""
 
         # Generate quality report
         self._quality_reports[task.video_id] = self._generate_quality_report(task)
@@ -227,69 +250,94 @@ class FullPipelineEngine:
             "status": task.status,
             "video_id": task.video_id,
             "published_url": task.published_url,
+            "publication_status": "not_published",
             "quality_score": task.quality_score,
             "stages": results,
             "duration_seconds": task.completed_at - task.created_at,
+            "data_status": "no_data",
+            "data_note": (
+                "Stages are executed as in-process stubs by this engine: "
+                "no video is rendered and nothing is uploaded, so "
+                "published_url is empty and stage metrics that would "
+                "require a real render/upload or platform analytics are "
+                "null."
+            ),
         }
 
     def _execute_stage(self, stage: str, task: PipelineTask) -> dict:
         """Execute a single pipeline stage."""
+        # TASK-REL-020: these stages are stubs in this engine — no script
+        # is written, no assets are generated, nothing is rendered or
+        # uploaded. Metrics that would require those artifacts (or
+        # platform analytics) are null, not constants.
+        no_data = {
+            "data_status": "no_data",
+            "data_note": "Stage is an in-process stub in this engine; the named artifact was not produced.",
+        }
         if stage == "discovery":
             return {
-                "output": f"Researched topic: {task.topic}",
+                "output": f"Topic recorded: {task.topic}",
                 "keywords": [task.topic.lower().replace(" ", "_")],
-                "competitor_analysis": "3 similar videos found",
+                "competitor_analysis": None,
+                **no_data,
             }
 
         elif stage == "script":
             return {
-                "output": f"Script for: {task.topic} ({task.angle})",
-                "word_count": 500,
-                "hook_strength": 0.8,
+                "output": f"Script stage stub for: {task.topic} ({task.angle})",
+                "word_count": None,
+                "hook_strength": None,
+                **no_data,
             }
 
         elif stage == "visuals":
             return {
-                "output": "Visual assets generated",
-                "assets_count": 15,
+                "output": "Visuals stage stub (no assets generated)",
+                "assets_count": None,
                 "style": "dynamic",
+                **no_data,
             }
 
         elif stage == "voiceover":
             return {
-                "output": "Voiceover synthesized",
-                "duration_seconds": 300,
-                "voice_quality": 0.9,
+                "output": "Voiceover stage stub (no audio synthesized)",
+                "duration_seconds": None,
+                "voice_quality": None,
+                **no_data,
             }
 
         elif stage == "editing":
             return {
-                "output": "Video edited",
-                "edits_count": 25,
-                "pacing_score": 0.85,
+                "output": "Editing stage stub (no edit performed)",
+                "edits_count": None,
+                "pacing_score": None,
+                **no_data,
             }
 
         elif stage == "rendering":
             return {
-                "output": "Video rendered",
+                "output": "Rendering stage stub (no file rendered)",
                 "resolution": "1080p",
-                "file_size_mb": 50,
+                "file_size_mb": None,
+                **no_data,
             }
 
         elif stage == "publishing":
             return {
-                "output": "Published to YouTube",
-                "url": f"https://youtube.com/watch?v={task.video_id}",
-                "visibility": "public",
+                "output": "Not published: this engine has no upload integration",
+                "url": "",
+                "visibility": "not_published",
+                **no_data,
             }
 
         elif stage == "analytics":
             return {
-                "output": "Analytics initialized",
+                "output": "No analytics available for an unpublished video",
                 "initial_predictions": {
-                    "views": 10000,
-                    "engagement": 0.05,
+                    "views": None,
+                    "engagement": None,
                 },
+                **no_data,
             }
 
         else:
@@ -297,32 +345,39 @@ class FullPipelineEngine:
 
     def _generate_quality_report(self, task: PipelineTask) -> QualityReport:
         """Generate a quality report for a completed video."""
-        # Score based on stage completion
+        # The only measurable signal is stage completion. Idea-level
+        # metrics are unavailable (None), so they contribute nothing and
+        # the report's estimates stay None. (TASK-REL-020: previously an
+        # unrelated pool idea's md5-derived metrics adjusted the score,
+        # and hardcoded 5000/0.05 defaults were served as estimates.)
         completed = sum(1 for s in task.stages if s.status == "completed")
-        base_score = (completed / len(task.stages)) * 80
+        completeness = completed / len(task.stages) if task.stages else 0.0
+        score = min(100, completeness * 100)
 
-        # Adjust for topic viral potential
         idea = self.select_idea()
-        if idea:
-            base_score += idea.viral_potential * 20
-
-        score = min(100, base_score)
 
         return QualityReport(
             video_id=task.video_id,
             score=score,
             factors={
-                "completeness": completed / len(task.stages),
-                "viral_potential": idea.viral_potential if idea else 0.0,
-                "engagement_prediction": idea.estimated_engagement if idea else 0.0,
+                "completeness": completeness,
+                "viral_potential": idea.viral_potential if idea else None,
+                "engagement_prediction": idea.estimated_engagement if idea else None,
             },
             issues=[],
             recommendations=[
                 "Consider adding more B-roll footage" if score < 70 else "",
                 "Optimize title and thumbnail" if score < 80 else "",
             ],
-            estimated_views=idea.estimated_views if idea else 5000,
-            estimated_engagement=idea.estimated_engagement if idea else 0.05,
+            estimated_views=idea.estimated_views if idea else None,
+            estimated_engagement=idea.estimated_engagement if idea else None,
+            data_status="estimated_from_inputs",
+            data_note=(
+                "score is the pipeline stage-completion fraction x 100 — "
+                "a completeness measure, not a quality measurement. "
+                "estimated_views/estimated_engagement are unavailable "
+                "(no performance data source)."
+            ),
         )
 
     # ── Batch Production ───────────────────────────────────────────────────

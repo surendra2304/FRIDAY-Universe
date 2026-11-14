@@ -60,7 +60,17 @@ class GroundedInferenceGateway:
                 # An advertised explicit provider-routing hint avoids Inference's
                 # model=auto fast_lane, which silently clamps output to 60 tokens.
                 # The actual served model remains the gateway's responsibility.
-                "model": "llama-3.3-70b-versatile", "messages": request_messages, "temperature": temperature,
+                # TASK-REL-021 (2026-11-14): the previous hint,
+                # llama-3.3-70b-versatile, is retired at Groq — production logs
+                # show 404 model_not_found on every attempt, so every synthesis
+                # fell through to Inference's capability fallback, whose
+                # free-model pick varies and whose reasoning-heavy picks burn
+                # this call's token budget before emitting the JSON draft
+                # (finish_reason "length"). openai/gpt-oss-120b is served by
+                # Groq (the Groq adapter's default model), and the unified
+                # manager pins reasoning_effort=low for groq+gpt-oss, so the
+                # budget goes to the draft rather than the reasoning trace.
+                "model": "openai/gpt-oss-120b", "messages": request_messages, "temperature": temperature,
                 "max_tokens": max_tokens, "stream": False,
             })
             response.raise_for_status()
@@ -95,9 +105,20 @@ async def synthesize_grounded(query: str, documents: list[dict], gateway: Any = 
     """
     if gateway is None:
         gateway = GroundedInferenceGateway()
-    supplied, remaining = {}, 36_000
+    # TASK-REL-021 (2026-11-14): the supplied-material budget is sized to the
+    # serving route's proven per-minute token ceiling. Groq's on-demand tier
+    # caps openai/gpt-oss-120b at 8,000 tokens/minute for the fleet org; the
+    # previous 36,000-char budget (~9-10K tokens with the schema/system
+    # overhead) exceeded it, so multi-source synthesis calls were rejected
+    # (HTTP 413 rate_limit_exceeded) and fell back to Inference's free-model
+    # lottery, which truncates the draft. 16,000 chars total / 6,000 per
+    # document keeps the whole request at roughly 5-6K tokens — comfortably
+    # under the ceiling — while leaving ample material for the draft
+    # contract (at most 3 findings, quotes capped at 500 chars, and quote
+    # verification runs against exactly this supplied text).
+    supplied, remaining = {}, 16_000
     for document in documents[:5]:
-        text = str(document.get("text") or "")[:min(18_000, remaining)]
+        text = str(document.get("text") or "")[:min(6_000, remaining)]
         source_id = str(document["source_id"])
         if text and source_id not in supplied:
             supplied[source_id] = {**document, "text": text}

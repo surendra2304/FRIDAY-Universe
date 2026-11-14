@@ -40,12 +40,14 @@ class DemandForecast:
     confidence_lower: list[float] = field(default_factory=list)
     confidence_upper: list[float] = field(default_factory=list)
     confidence_level: float = 0.95
-    rmse: float = 0.0
-    mape: float = 0.0
-    trend: str = "stable"  # growing, declining, stable, seasonal
-    seasonality: str = "none"  # none, daily, weekly, monthly, yearly
+    rmse: float | None = None
+    mape: float | None = None
+    trend: str = "stable"  # growing, declining, stable, unknown
+    seasonality: str = "not_modelled"
     drivers: list[str] = field(default_factory=list)
-    model: str = "ensemble"
+    model: str = "naive_trend_extrapolation"
+    data_status: str = "estimated_from_inputs"
+    data_note: str = ""
 
 
 @dataclass
@@ -95,9 +97,11 @@ class EnsemblePrediction:
     target: str
     models: list[str] = field(default_factory=list)
     predictions: dict = field(default_factory=dict)
-    consensus: float = 0.0
-    agreement: float = 0.0
-    confidence: float = 0.0
+    consensus: float | None = None
+    agreement: float | None = None
+    confidence: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 class PredictiveDemandForecaster:
@@ -148,8 +152,25 @@ class PredictiveDemandForecaster:
             raise HTTPException(404, f"Series {series_id} not found")
 
         if not series.values:
-            base_value = 100.0
-            trend = 0.05
+            # Nothing to extrapolate: return an explicit no-data forecast
+            # instead of inventing a base value and trend.
+            empty = DemandForecast(
+                series_id=series_id,
+                forecast_id=hashlib.md5(
+                    f"demand_forecast:{series_id}:{horizon}:{time.time()}".encode()
+                ).hexdigest()[:12],
+                horizon=horizon,
+                horizon_periods=horizon_periods,
+                confidence_level=confidence_level,
+                trend="unknown",
+                data_status="no_data",
+                data_note=(
+                    "The stored series has no data points, so no forecast "
+                    "can be computed."
+                ),
+            )
+            self._forecasts[empty.forecast_id] = empty
+            return empty
         else:
             base_value = series.values[-1]
             if len(series.values) > 1:
@@ -166,8 +187,10 @@ class PredictiveDemandForecaster:
         confidence_upper = []
 
         for i in range(horizon_periods):
+            # Pure trend extrapolation of the supplied series. (TASK-REL-020:
+            # an md5-hash jitter term was previously added to each point,
+            # making the series look measured; it is removed.)
             value = base_value * (1 + adjusted_trend) ** (i + 1)
-            value += (ord(hashlib.md5(f"{series_id}:{i}:{horizon}".encode()).hexdigest()[:1]) % 100) / 100 - 0.5
             predictions.append(value)
 
             interval = abs(value) * (0.05 * (i + 1) / horizon_periods) * confidence_level
@@ -193,12 +216,27 @@ class PredictiveDemandForecaster:
             confidence_lower=confidence_lower,
             confidence_upper=confidence_upper,
             confidence_level=confidence_level,
-            rmse=abs(adjusted_trend) * 10,
-            mape=abs(adjusted_trend) * 100,
+            # No holdout/backtest is run, so accuracy metrics do not exist.
+            # (TASK-REL-020: rmse/mape were previously fabricated from the
+            # trend magnitude.)
+            rmse=None,
+            mape=None,
             trend=trend_str,
-            seasonality=series.frequency,
-            drivers=[f"Price elasticity", f"Market growth rate", f"Competitor activity", f"Seasonality ({series.frequency})"],
-            model=f"ensemble_{horizon}",
+            seasonality="not_modelled",
+            drivers=[
+                f"Trend of the supplied series over its last "
+                f"{min(7, len(series.values))} points "
+                f"({adjusted_trend:+.4f} per period, horizon-adjusted)"
+            ],
+            model="naive_trend_extrapolation",
+            data_status="estimated_from_inputs",
+            data_note=(
+                "Naive trend extrapolation of the caller-supplied series "
+                "only; no ML ensemble is integrated. The confidence band is "
+                "a heuristic widening interval, not a fitted statistical "
+                "confidence interval. rmse/mape are unavailable because no "
+                "holdout evaluation is performed."
+            ),
         )
 
         self._forecasts[forecast.forecast_id] = forecast
@@ -334,38 +372,32 @@ class PredictiveDemandForecaster:
         return scenario
 
     def ensemble_forecast(self, series_id: str, horizon_periods: int = 30) -> EnsemblePrediction:
-        """Run ensemble forecast from multiple models."""
+        """Ensemble forecast endpoint (honest no-data state).
+
+        No forecasting models (ARIMA/Prophet/LSTM/gradient boosting) are
+        integrated in this service. TASK-REL-020: this method previously
+        fabricated per-model prediction series from md5 hashes of the
+        series id and presented them as an ensemble. It now returns an
+        explicit no-data payload; use forecast_demand for the naive trend
+        extrapolation that is actually implemented.
+        """
         series = self._series.get(series_id)
         if not series:
             raise HTTPException(404, f"Series {series_id} not found")
 
-        models = ["arima", "prophet", "lstm", "gradient_boost"]
-        base = series.values[-1] if series.values else 100.0
-
-        predictions_by_model = {}
-        all_predictions = []
-
-        for model in models:
-            trend = 0.02 + (ord(hashlib.md5(f"{series_id}:{model}".encode()).hexdigest()[:1]) % 50) / 1000
-            predictions = [base * (1 + trend) ** (i + 1) for i in range(horizon_periods)]
-            predictions_by_model[model] = predictions
-            all_predictions.append(predictions)
-
-        consensus = sum(p[0] for p in all_predictions) / len(all_predictions)
-
-        variances = [
-            sum((p[0] - consensus) ** 2 for p in all_predictions) / len(all_predictions)
-        ]
-        avg_var = sum(variances) / max(1, len(variances))
-        agreement = max(0, 1 - avg_var / (base ** 2))
-
         return EnsemblePrediction(
             target=series_id,
-            models=models,
-            predictions=predictions_by_model,
-            consensus=consensus,
-            agreement=agreement,
-            confidence=agreement * 0.8 + 0.2,
+            models=[],
+            predictions={},
+            consensus=None,
+            agreement=None,
+            confidence=None,
+            data_status="no_data",
+            data_note=(
+                "No ensemble forecasting models are integrated in this "
+                "service; per-model predictions, consensus, agreement and "
+                "confidence are unavailable."
+            ),
         )
 
     def get_report(self) -> dict:
@@ -425,6 +457,11 @@ async def forecast_demand(series_id: str, payload: dict):
         "trend": forecast.trend,
         "seasonality": forecast.seasonality,
         "drivers": forecast.drivers,
+        "rmse": forecast.rmse,
+        "mape": forecast.mape,
+        "model": forecast.model,
+        "data_status": forecast.data_status,
+        "data_note": forecast.data_note,
     }
 
 
@@ -485,6 +522,8 @@ async def ensemble_forecast(series_id: str, horizon_periods: int = 30):
         "consensus": result.consensus,
         "agreement": result.agreement,
         "confidence": result.confidence,
+        "data_status": result.data_status,
+        "data_note": result.data_note,
     }
 
 

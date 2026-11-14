@@ -40,8 +40,10 @@ class ScheduledPost:
     description: str = ""
     tags: list[str] = field(default_factory=list)
     target_audience: str = ""
-    estimated_reach: int = 0
-    estimated_engagement: float = 0.0
+    estimated_reach: int | None = None
+    estimated_engagement: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     created_at: float = 0.0
 
 
@@ -54,7 +56,9 @@ class ContentPipeline:
     total_items: int = 0
     in_progress: int = 0
     completed: int = 0
-    average_cycle_time_hours: float = 0.0
+    average_cycle_time_hours: float | None = None
+    data_status: str = "measured"
+    data_note: str = ""
 
 
 @dataclass
@@ -73,9 +77,11 @@ class ScheduleOptimization:
     """Schedule optimization result."""
     calendar_id: str
     optimized_schedule: list[dict] = field(default_factory=list)
-    estimated_reach_increase: float = 0.0
-    estimated_engagement_increase: float = 0.0
-    confidence: float = 0.0
+    estimated_reach_increase: float | None = None
+    estimated_engagement_increase: float | None = None
+    confidence: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -83,12 +89,14 @@ class PerformanceForecast:
     """Performance forecast for a post."""
     post_id: str
     platform: str
-    estimated_views: int = 0
-    estimated_likes: int = 0
-    estimated_shares: int = 0
-    estimated_comments: int = 0
-    estimated_watch_time_hours: float = 0.0
-    forecast_confidence: float = 0.0
+    estimated_views: int | None = None
+    estimated_likes: int | None = None
+    estimated_shares: int | None = None
+    estimated_comments: int | None = None
+    estimated_watch_time_hours: float | None = None
+    forecast_confidence: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -98,8 +106,10 @@ class DistributionPlan:
     post_id: str
     target_platforms: list[str] = field(default_factory=list)
     distribution_schedule: list[dict] = field(default_factory=list)
-    estimated_total_reach: int = 0
-    estimated_total_engagement: float = 0.0
+    estimated_total_reach: int | None = None
+    estimated_total_engagement: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 class ContentCalendarManager:
@@ -194,8 +204,16 @@ class ContentCalendarManager:
             status="scheduled",
             description=description,
             tags=tags or [],
-            estimated_reach=1000 + (ord(hashlib.md5(title.encode()).hexdigest()[:1]) % 9000),
-            estimated_engagement=0.05 + (ord(hashlib.md5(f"{title}{platform}".encode()).hexdigest()[:1]) % 30) / 100,
+            # No audience/reach data source exists for a scheduled post.
+            # (TASK-REL-020: previously derived from md5 hashes of the
+            # title/platform.)
+            estimated_reach=None,
+            estimated_engagement=None,
+            data_status="no_data",
+            data_note=(
+                "Reach/engagement cannot be estimated: no channel "
+                "analytics data is connected."
+            ),
             created_at=time.time(),
         )
 
@@ -203,25 +221,41 @@ class ContentCalendarManager:
         return post
 
     def create_pipeline(self, calendar_id: str) -> ContentPipeline:
-        """Create a content pipeline."""
+        """Create a content pipeline snapshot from the calendar's posts.
+
+        Stage counts are computed from the posts actually stored for this
+        calendar. (TASK-REL-020: stages were previously hardcoded counts
+        presented as live pipeline tracking, and average_cycle_time_hours
+        was a constant 48.0; no stage-transition timestamps exist, so
+        cycle time stays None.)
+        """
+        posts = [p for p in self._posts.values() if p.calendar_id == calendar_id]
+        by_status: dict[str, int] = {}
+        for post in posts:
+            by_status[post.status] = by_status.get(post.status, 0) + 1
+
         pipeline = ContentPipeline(
             pipeline_id=hashlib.md5(
                 f"pipeline:{calendar_id}:{time.time()}".encode()
             ).hexdigest()[:12],
             calendar_id=calendar_id,
             stages={
-                "ideation": 5,
-                "scripting": 3,
-                "production": 4,
-                "editing": 3,
-                "review": 2,
-                "scheduled": 3,
-                "published": 2,
+                "draft": by_status.get("draft", 0),
+                "scheduled": by_status.get("scheduled", 0),
+                "published": by_status.get("published", 0),
+                "archived": by_status.get("archived", 0),
             },
-            total_items=sum([5, 3, 4, 3, 2, 3, 2]),
-            in_progress=5 + 3 + 4,  # ideation + scripting + production
-            completed=2 + 3,  # review + scheduled
-            average_cycle_time_hours=48.0,
+            total_items=len(posts),
+            in_progress=by_status.get("draft", 0) + by_status.get("scheduled", 0),
+            completed=by_status.get("published", 0),
+            average_cycle_time_hours=None,
+            data_status="measured",
+            data_note=(
+                "Stage counts are the calendar's stored posts grouped by "
+                "status; production stages (ideation/scripting/production/"
+                "editing/review) are not tracked, and cycle time is "
+                "unavailable (no stage-transition timestamps)."
+            ),
         )
 
         self._pipelines[pipeline.pipeline_id] = pipeline
@@ -244,9 +278,19 @@ class ContentCalendarManager:
                     "frequency": config.optimal_frequency,
                 })
 
-        optimized.estimated_reach_increase = 15.0 + (ord(hashlib.md5(calendar_id.encode()).hexdigest()[:1]) % 20)
-        optimized.estimated_engagement_increase = 10.0 + (ord(hashlib.md5(f"eng:{calendar_id}".encode()).hexdigest()[:1]) % 15)
-        optimized.confidence = 0.7 + (ord(hashlib.md5(f"conf:{calendar_id}".encode()).hexdigest()[:1]) % 20) / 100
+        # The optimized times come from the static platform configs, but
+        # no performance data exists to quantify their effect.
+        # (TASK-REL-020: increases/confidence were previously derived
+        # from md5 hashes of the calendar id.)
+        optimized.estimated_reach_increase = None
+        optimized.estimated_engagement_increase = None
+        optimized.confidence = None
+        optimized.data_status = "no_data"
+        optimized.data_note = (
+            "Suggested times come from static platform configuration; "
+            "their reach/engagement effect cannot be quantified without "
+            "measured posting history."
+        )
 
         self._optimizations.append(optimized)
         return optimized
@@ -257,18 +301,24 @@ class ContentCalendarManager:
         if not post:
             raise HTTPException(404, f"Post {post_id} not found")
 
-        config = self._platform_configs.get(post.platform)
-        base_views = 1000 + (ord(hashlib.md5(post.title.encode()).hexdigest()[:1]) % 9000)
-
+        # No measured performance history exists for this channel, so no
+        # honest forecast can be produced. (TASK-REL-020: previously the
+        # base view count was derived from an md5 hash of the post title
+        # and likes/shares/comments were fixed ratios of it.)
         forecast = PerformanceForecast(
             post_id=post_id,
             platform=post.platform,
-            estimated_views=base_views,
-            estimated_likes=int(base_views * 0.1),
-            estimated_shares=int(base_views * 0.03),
-            estimated_comments=int(base_views * 0.02),
-            estimated_watch_time_hours=base_views * config.content_length_seconds / 3600 if config else 100,
-            forecast_confidence=0.6 + (ord(hashlib.md5(f"forecast:{post_id}".encode()).hexdigest()[:1]) % 30) / 100,
+            estimated_views=None,
+            estimated_likes=None,
+            estimated_shares=None,
+            estimated_comments=None,
+            estimated_watch_time_hours=None,
+            forecast_confidence=None,
+            data_status="no_data",
+            data_note=(
+                "Performance cannot be forecast: no measured channel "
+                "history is connected for this post."
+            ),
         )
 
         self._forecasts.append(forecast)
@@ -300,8 +350,16 @@ class ContentCalendarManager:
                 }
                 for i, p in enumerate(platforms)
             ],
-            estimated_total_reach=sum(1000 + (ord(hashlib.md5(f"{post_id}{p}".encode()).hexdigest()[:1]) % 9000) for p in platforms),
-            estimated_total_engagement=0.05 * len(platforms) * 100,
+            # No reach data source exists per platform. (TASK-REL-020:
+            # previously summed md5-hash figures per platform, and the
+            # engagement figure was a constant formula.)
+            estimated_total_reach=None,
+            estimated_total_engagement=None,
+            data_status="no_data",
+            data_note=(
+                "Total reach/engagement cannot be estimated: no platform "
+                "analytics data is connected."
+            ),
         )
 
         self._distribution_plans[plan.plan_id] = plan
@@ -383,6 +441,9 @@ async def optimize_schedule(calendar_id: str):
         "reach_increase": result.estimated_reach_increase,
         "engagement_increase": result.estimated_engagement_increase,
         "confidence": result.confidence,
+        "optimized_schedule": result.optimized_schedule,
+        "data_status": result.data_status,
+        "data_note": result.data_note,
     }
 
 
@@ -395,6 +456,8 @@ async def forecast_performance(post_id: str):
         "estimated_likes": forecast.estimated_likes,
         "estimated_shares": forecast.estimated_shares,
         "confidence": forecast.forecast_confidence,
+        "data_status": forecast.data_status,
+        "data_note": forecast.data_note,
     }
 
 
@@ -409,6 +472,8 @@ async def create_distribution_plan(post_id: str, payload: dict):
         "plan_id": plan.plan_id,
         "platforms": plan.target_platforms,
         "estimated_reach": plan.estimated_total_reach,
+        "data_status": plan.data_status,
+        "data_note": plan.data_note,
     }
 
 

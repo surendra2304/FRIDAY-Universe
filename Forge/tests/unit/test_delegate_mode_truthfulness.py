@@ -34,13 +34,20 @@ from app.core.orchestrator import OrchestratorCore
 from app.memory.models import TaskMode, TaskState
 
 
+def test_plan_stage_count_reads_taskgraph_nodes():
+    assert delegate._plan_stage_count(SimpleNamespace(nodes={"a": 1, "b": 2})) == 2
+    assert delegate._plan_stage_count(SimpleNamespace(stages=[1, 2, 3])) == 3
+    assert delegate._plan_stage_count(SimpleNamespace()) == 0
+
+
 # --------------------------------------------------------------------------
 # Delegate: plan_only
 # --------------------------------------------------------------------------
 
 def _intake(task_id="task_mode_1", goal="Build a palindrome checker"):
     task = SimpleNamespace(id=task_id, goal=goal, state=TaskState.READY)
-    plan = SimpleNamespace(stages=["plan", "build", "test"])
+    # TaskGraph's real shape: stages live in a `nodes` dict.
+    plan = SimpleNamespace(nodes={"n1": object(), "n2": object(), "n3": object()})
     return task, plan
 
 
@@ -64,6 +71,7 @@ async def test_delegate_plan_only_returns_planned_and_schedules_nothing(monkeypa
     assert result.status == "PLANNED"  # never SUCCESS for a plan
     assert result.result["state"] == "PLANNED"
     assert result.result["mode"] == "plan_only"
+    assert result.result["plan_stages"] == 3  # counted from TaskGraph.nodes
     assert result.result["forge_task_id"] == "task_mode_1"
     assert result.receipt is None  # receipts certify executed work only
     assert scheduled == []
@@ -255,6 +263,35 @@ async def test_delegate_cancel_ready_task_cancels():
     )
     assert result.status == "CANCELLED"
     assert task.state == TaskState.CANCELLED
+
+
+@pytest.mark.asyncio
+async def test_rest_cancel_route_uses_lifecycle():
+    from fastapi import HTTPException
+
+    # Missing task: 404 (unchanged contract).
+    with pytest.raises(HTTPException) as missing:
+        await delegate.cancel_task("task_ghost", store=_CancelStore(None))
+    assert missing.value.status_code == 404
+
+    # COMPLETED task: the lifecycle machine refuses (409) and the verified
+    # record is untouched — the raw update_task_state write this route used
+    # to do would have flipped it to CANCELLED.
+    done = SimpleNamespace(
+        id="task_done_rest", state=TaskState.COMPLETED, metadata={}, error_message=None
+    )
+    with pytest.raises(HTTPException) as refused:
+        await delegate.cancel_task("task_done_rest", store=_CancelStore(done))
+    assert refused.value.status_code == 409
+    assert done.state == TaskState.COMPLETED
+
+    # READY task: cancels cleanly through the lifecycle.
+    ready = SimpleNamespace(
+        id="task_ready_rest", state=TaskState.READY, metadata={}, error_message=None
+    )
+    result = await delegate.cancel_task("task_ready_rest", store=_CancelStore(ready))
+    assert result.status == "CANCELLED"
+    assert ready.state == TaskState.CANCELLED
 
 
 # --------------------------------------------------------------------------

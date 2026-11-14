@@ -11,7 +11,8 @@ from uuid import uuid4
 import pandas as pd
 
 from futuris.connectors.base import BaseConnector, Observation
-from futuris.connectors.synthetic_telemetry import SyntheticTelemetryConnector
+from futuris.connectors.factory import build_scheduler_connector
+from futuris.connectors.provenance import DataProvenance, resolve_provenance
 from futuris.core.decision import (
     ActionSuggestion,
     DecisionImplication,
@@ -94,6 +95,7 @@ class ModelingOutput:
     as_of: datetime
     target: str
     selection_metadata: dict[str, object] = field(default_factory=dict)
+    provenance: DataProvenance | None = None
 
 
 @dataclass
@@ -108,7 +110,13 @@ class IngestionStage:
     name = "ingestion"
 
     def __init__(self, connector: BaseConnector | None = None) -> None:
-        self.connector = connector or SyntheticTelemetryConnector(seed=42)
+        # TASK-REL-018: the default is the CONFIGURED telemetry source
+        # (FUTURIS_TELEMETRY_SOURCE via the connector factory -- the same
+        # source the unattended scheduler uses), not a hardcoded synthetic
+        # generator. With nothing configured the factory still returns the
+        # synthetic connector, but the forecast then LABELS itself synthetic
+        # via the derived provenance instead of passing as measured data.
+        self.connector = connector or build_scheduler_connector()
 
     async def execute(self, inp: IngestionInput) -> list[Observation]:
         return await self.connector.fetch(inp.start_time, inp.end_time)
@@ -135,14 +143,23 @@ class ContextualizationStage:
         self.context_layer = context_layer or ContextLayer()
         self.snapshotter = snapshotter or EvidenceSnapshotter()
 
-    async def execute(self, inp: ContextualizationInput) -> tuple[pd.DataFrame, EvidenceRef]:
+    async def execute(
+        self,
+        inp: ContextualizationInput,
+        provenance: DataProvenance | None = None,
+    ) -> tuple[pd.DataFrame, EvidenceRef]:
         df = self.context_layer.build_feature_table(inp.signal_set, as_of=inp.as_of)
+        if provenance is None:
+            # No caller-resolved provenance (stage composed standalone): fail
+            # closed to the synthetic label rather than claiming measurement.
+            provenance = resolve_provenance(None, [])
         ev_ref = self.snapshotter.freeze_snapshot(
             signal_set=inp.signal_set,
             as_of=inp.as_of,
             forecast_id=uuid4(),
-            source_id="telemetry:synthetic",
+            source_id=provenance.source_id,
             signal_class=SignalClass.TELEMETRY,
+            evidence_class=provenance.evidence_class,
         )
         return df, ev_ref
 
@@ -369,6 +386,13 @@ class CalibrationDecisionStage:
             "prediction_is_not_authorization": True,
             **inp.selection_metadata,
         }
+        if inp.provenance is not None:
+            # TASK-REL-018: the payload names the connector that fed the
+            # forecast and whether its data was synthetic, in machine- and
+            # human-readable form.
+            mod_meta["data_connector"] = inp.provenance.connector
+            mod_meta["data_synthetic"] = inp.provenance.synthetic
+            mod_meta["data_sources"] = inp.provenance.source_id
 
         forecast = Forecast(
             forecast_id=uuid4(),
@@ -394,7 +418,11 @@ class CalibrationDecisionStage:
             prediction_is_not_authorization=True,
             executable_commands=[],
             evidence_class=inp.evidence_ref.evidence_class,
-            evidence_source=inp.evidence_ref.source,
+            evidence_source=(
+                inp.provenance.describe()
+                if inp.provenance is not None
+                else inp.evidence_ref.source
+            ),
         )
 
         implications = self.decision_tool.implications(forecast)
@@ -446,6 +474,11 @@ class ForecastingPipeline:
         )
         durations["ingestion"] = round((time.perf_counter() - t0) * 1000, 2)
 
+        # TASK-REL-018: provenance is derived from the connector that
+        # actually fed this run and the sources its observations carry --
+        # never from a hardcoded label or a caller-supplied string.
+        provenance = resolve_provenance(self.ingestion.connector, raw)
+
         # 2. Normalization
         t0 = time.perf_counter()
         signal_set = await self.normalization.execute(NormalizationInput(observations=raw))
@@ -454,7 +487,8 @@ class ForecastingPipeline:
         # 3. Contextualization & Snapshotting
         t0 = time.perf_counter()
         features_df, ev_ref = await self.contextualization.execute(
-            ContextualizationInput(signal_set=signal_set, as_of=as_of)
+            ContextualizationInput(signal_set=signal_set, as_of=as_of),
+            provenance=provenance,
         )
         durations["contextualization"] = round((time.perf_counter() - t0) * 1000, 2)
 
@@ -472,6 +506,7 @@ class ForecastingPipeline:
             ),
             evidence_ref=ev_ref,
         )
+        modeling_out.provenance = provenance
         durations["modeling"] = round((time.perf_counter() - t0) * 1000, 2)
 
         # 5. Calibration & Decision

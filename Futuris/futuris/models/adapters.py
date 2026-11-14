@@ -1,37 +1,11 @@
 """StatsForecast model adapters: Naive, SeasonalNaive, Drift, AutoETS, AutoARIMA, MeanEnsemble."""
 
+import logging
 from datetime import datetime
 from typing import Any
 
 import numpy as np
 import pandas as pd
-
-try:
-    from statsforecast.models import AutoARIMA as _SF_AutoARIMA
-    from statsforecast.models import AutoETS as _SF_AutoETS
-    from statsforecast.models import Naive as _SF_Naive
-    from statsforecast.models import RandomWalkWithDrift as _SF_RandomWalkWithDrift
-    from statsforecast.models import SeasonalNaive as _SF_SeasonalNaive
-except (ImportError, OSError):
-
-    class _SFMockModel:  # Fallback for restricted OS environments
-        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-            self.last_val = 100.0
-
-        def fit(self, y: Any = None, *_args: Any, **_kwargs: Any) -> Any:
-            try:
-                if y is not None and hasattr(y, "__len__") and len(y) > 0:
-                    self.last_val = float(y[-1])
-            except Exception:
-                pass
-            return self
-
-        def predict(self, h: int = 1, *_args: Any, **_kwargs: Any) -> Any:
-            return {"mean": np.full(h, self.last_val)}
-
-    _SF_AutoARIMA = _SF_AutoETS = _SF_Naive = _SF_RandomWalkWithDrift = _SF_SeasonalNaive = (
-        _SFMockModel
-    )
 
 from futuris.models.base import (
     ModelPrediction,
@@ -39,6 +13,69 @@ from futuris.models.base import (
     calculate_exceedance_probability,
     compute_config_hash,
 )
+
+logger = logging.getLogger(__name__)
+
+
+class StatsForecastUnavailableError(RuntimeError):
+    """The statsforecast model backend is not importable in this deployment.
+
+    Raised instead of ever serving a substitute forecast: a flat line at the
+    last observed value is not a forecast, and presenting it as one is how
+    Futuris silently served mock numbers while the declared ``statsforecast``
+    dependency was missing from the production environment (TASK-REL-018).
+    """
+
+
+try:
+    from statsforecast.models import AutoARIMA as _SF_AutoARIMA
+    from statsforecast.models import AutoETS as _SF_AutoETS
+    from statsforecast.models import Naive as _SF_Naive
+    from statsforecast.models import RandomWalkWithDrift as _SF_RandomWalkWithDrift
+    from statsforecast.models import SeasonalNaive as _SF_SeasonalNaive
+
+    STATSFORECAST_AVAILABLE = True
+    STATSFORECAST_IMPORT_ERROR: str | None = None
+except (ImportError, OSError) as exc:
+    STATSFORECAST_AVAILABLE = False
+    STATSFORECAST_IMPORT_ERROR = f"{type(exc).__name__}: {exc}"
+
+    class _SFMockModel:
+        """Import placeholder ONLY -- it must never produce a forecast.
+
+        Kept so this module (and everything importing the adapters) still
+        imports on machines without statsforecast. ``fit``/``predict`` raise
+        :class:`StatsForecastUnavailableError`, which the pipeline/engine let
+        propagate and the API layer translates into an explicit degraded /
+        BLOCKED status. The previous behaviour -- silently returning the last
+        observed value repeated across the horizon -- presented a flat line
+        as a model forecast; that is the defect TASK-REL-018 removes.
+        """
+
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+        def fit(self, y: Any = None, *_args: Any, **_kwargs: Any) -> Any:  # noqa: ARG002 -- signature mirrors the real model; the refusal needs no data
+            raise StatsForecastUnavailableError(
+                "statsforecast is not importable in this deployment "
+                f"({STATSFORECAST_IMPORT_ERROR}); refusing to substitute a mock forecast"
+            )
+
+        def predict(self, h: int = 1, *_args: Any, **_kwargs: Any) -> Any:  # noqa: ARG002 -- signature mirrors the real model; the refusal needs no horizon
+            raise StatsForecastUnavailableError(
+                "statsforecast is not importable in this deployment "
+                f"({STATSFORECAST_IMPORT_ERROR}); refusing to substitute a mock forecast"
+            )
+
+    _SF_AutoARIMA = _SF_AutoETS = _SF_Naive = _SF_RandomWalkWithDrift = _SF_SeasonalNaive = (
+        _SFMockModel
+    )
+
+    logger.warning(
+        "statsforecast_unavailable: model adapters will refuse to fit "
+        "(forecasts must surface as degraded/BLOCKED, never as mock flat-lines): %s",
+        STATSFORECAST_IMPORT_ERROR,
+    )
 
 
 class BaseStatsForecastAdapter:

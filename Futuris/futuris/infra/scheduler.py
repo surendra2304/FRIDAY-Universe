@@ -19,6 +19,7 @@ from futuris.evaluation.backtest import BacktestEngine
 from futuris.evaluation.drift import DriftMonitor
 from futuris.infra.events import EventEmitter, event_emitter
 from futuris.infra.logging import get_logger
+from futuris.models.adapters import StatsForecastUnavailableError
 from futuris.storage.repositories import (
     EvaluationRepository,
     EventRepository,
@@ -163,7 +164,18 @@ class ForecastScheduler:
                 if active_list:
                     prev_forecast = active_list[-1]
 
-            res = await self.pipeline.run(target=sub.target, as_of=now, horizon=sub.horizon)
+            try:
+                res = await self.pipeline.run(target=sub.target, as_of=now, horizon=sub.horizon)
+            except StatsForecastUnavailableError as exc:
+                # TASK-REL-018: explicit degradation per subscription -- log
+                # and skip; never let a missing model backend abort the
+                # whole refresh cycle or, worse, substitute a mock forecast.
+                logger.warning(
+                    "forecast_refresh_skipped_statsforecast_unavailable",
+                    target=sub.target,
+                    error=str(exc),
+                )
+                continue
             new_f = res.forecast
 
             if self.forecast_repo:

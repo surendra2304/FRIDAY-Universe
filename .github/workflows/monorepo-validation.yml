@@ -52,7 +52,7 @@ jobs:
           ENVIRONMENT: development
           PYTHONPATH: ${{ github.workspace }}/Futuris:${{ github.workspace }}/VyralX
         run: |
-          python -m pytest -q tests Futuris/tests/infra/test_cpu_process.py --confcutdir=Futuris/tests/infra
+          python -m pytest -q tests Futuris/tests/infra/test_cpu_process.py Futuris/tests/connectors/test_provenance.py Futuris/tests/models/test_statsforecast_degradation.py --confcutdir=Futuris/tests/infra
           (cd VyralX && python -m pytest -q tests/test_autonomous_orchestrator.py)
 
       - name: Validate repository and workflow safety

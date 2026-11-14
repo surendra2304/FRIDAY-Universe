@@ -2725,7 +2725,8 @@ tasks:
       - "docs/collaboration/TEAM_ROSTER.yaml"
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
-    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level 'task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
+    defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
+task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
     acceptance:
       - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
       - "Inline repair note recorded at the ACTIVITY_LOG repair site."
@@ -3496,16 +3497,41 @@ tasks:
     blockers:
       - "Live store-and-recall acceptance is additionally gated on a production schema drift owned by TASK-REL-015: the Oracle event_log table lacks the cloud_synced column the ORM/migration b1206b9e4a61 define, so POST /v1/memories currently 500s at pipeline step 10 (emitter flush ORA-00904 poisons the write transaction; verified in the Memora journal 2026-11-14 19:09 IST) and GET /v1/events polls 500. Semantic READ verification can proceed against pre-existing stored memories if the drift is not yet fixed when this deploys."
     next_action: "Open PR, merge on green CI, verify deployed files after Fleet CD, run the live paraphrase acceptance (fresh fact if writes are restored, else a pre-existing memory), then mark VERIFIED."
-  - id: TASK-REL-015
-    title: "Memora production observability (alembic fileConfig) + schema drift residuals (PR #105/#107)"
+  - id: TASK-REL-021
+    title: "Production research synthesis never completes: routed Inference completion truncates (finish_reason length)"
     status: IN_PROGRESS
     owner: muse_ai
-    branch: claude/task-rel-015-memora-observability-v2
+    branch: claude/task-rel-021-synthesis-truncation
     pr: null
     contributors: []
     priority: P1
+    created_at: "2026-11-14T19:47:00+05:30"
+    updated_at: "2026-11-14T19:47:00+05:30"
+    files:
+      - "IntelX/intelx/api/grounded_live_research.py"
+      - "Inference/app/api/v1_core_routes.py"
+      - "tests/test_inference_explicit_model_contract.py"
+    defect: "synthesize_grounded (via GroundedInferenceGateway) asks Inference /v1/chat/completions for model llama-3.3-70b-versatile, which Groq has retired: production journal shows 404 model_not_found on every attempt. Every synthesis therefore drops to Inference's capability fallback ladder, whose OpenRouter get_best_free_model pick varies per call (observed nvidia/nemotron-3.5-super-vl:free); reasoning-heavy picks burn the 2400-token budget (the OpenAI-compatible adapter surfaces reasoning as content when content is empty), returning up to ~9K chars with finish_reason 'length', which IntelX correctly refuses as incomplete_completion — so no live research answer ever synthesises (REL-016 live probes: outputs 8607/9930/8721 chars, all truncated, attempt + retry). The natural replacement, openai/gpt-oss-120b (Groq-served, the Groq adapter's default model), is unreachable through this route: v1_core_routes' substring provider mapping sends any model containing 'openai' to the OpenAI provider, which has no credentials configured, silently dropping the request to the same fallback ladder. The TASK-REL-007 ~125-char truncation was the same root cause with a different daily fallback pick."
+    acceptance:
+      - "Root cause evidenced from production logs/probes, not inferred: Groq 404 model_not_found for the retired hint; fallback-served model field differs from the requested model on live probes."
+      - "Fix: IntelX synthesis hint names a model its provider actually serves (openai/gpt-oss-120b on Groq), and the /v1/chat/completions provider mapping routes Groq-hosted openai/gpt-oss* models to groq instead of the unconfigured OpenAI provider (non-stream and stream branches)."
+      - "REL-016 behaviour not regressed: tests/test_live_research_task_contract.py and the grounded synthesis suites stay green; the raw-findings fallback remains the honest failure path."
+      - "Production-verified live: at least 2 real research queries through the production research path return SUCCESS synthesised briefs (synthesis_status 'succeeded', receipt issued by run_live_research), not the raw-findings path."
+    evidence:
+      - "Claim: issue #35 comment 6878316081 (2026-11-14)."
+      - "Diagnosis (live, 2026-11-14): Inference journal on Server 1 shows 'groq API error (404) model_not_found' for llama-3.3-70b-versatile at 19:13/19:14/19:24 and for llama-3.1-8b-instant at 19:27; direct probes of POST /v1/chat/completions with grounded-style payloads were served by nvidia/nemotron-3.5-super-vl:free (fallback) for every requested model tested (llama-3.3-70b-versatile, llama-3.1-8b-instant, openai/gpt-oss-120b, cerebras/llama-3.3-70b, gemini-2.5-flash, gemini-flash-latest, mistral-small-latest); direct Groq API check with a fleet pool key confirms openai/gpt-oss-120b, openai/gpt-oss-20b and qwen/qwen3.8-27b are served (content + stop) while llama models and groq/compound-mini return model_not_found."
+    blockers: []
+    next_action: "Fix implemented on branch; PR, CI, merge, Fleet CD deploy and live research verification to follow."
+  - id: TASK-REL-015
+    title: "Memora production observability (alembic fileConfig) + schema drift residuals (PR #105/#107)"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-rel-015-memora-observability-v2
+    pr: 160
+    contributors: []
+    priority: P1
     created_at: "2026-11-14T19:00:00+05:30"
-    updated_at: "2026-11-14T19:00:00+05:30"
+    updated_at: "2026-11-14T19:50:00+05:30"
     files:
       - "Memora/migrations/env.py"
       - "Memora/storage/relational/session.py"
@@ -3525,18 +3551,25 @@ tasks:
       - "Live probe 2026-11-14 ~18:48-19:05 IST (read-only, Server 1): Memora journal since boot 174,417 lines incl. 2,552 ORA-00904 tracebacks on EVENT_LOG.CLOUD_SYNCED; logging census 336 app-format lines (252 INFO / 84 ERROR / 0 WARNING), consolidation INFO pairs every ~5 min."
       - "Live schema probe 2026-11-14 (read-only SQLAlchemy inspection, deployed code): only unexplained diffs = event_log.cloud_synced + ix_event_log_cloud_synced missing; ck_memory_scope present live with ORM-matching text; alembic_version=a1d4c7e9f2b3 vs head f8a2d6c14b93 (context_snapshots exists despite the lag — built by create_all)."
       - "Local tests: new test_rel015_reconciliation.py 2/2 + updated test_schema_init_migrations.py green; full Memora CI file set 35/35 green locally; ruff F821 clean on touched files."
+      - "Fix merged as PR #160 (merge d7625d6b; original PR #154 closed as its rebased replacement after PR #156's board update conflicted the shared board region — verified with git merge-tree, replacement protocol per AGENTS.md). CI on #160: 8/8 check runs (6 success incl. test + roster/board validation + secrets, 2 path-gated skipped)."
+      - "Deployed: Fleet CD run for d7625d6b completed success; Server 1 checkout at d7625d6b; deployed env.py line 23 carries disable_existing_loggers=False and session.py carries _ensure_event_log_shape/_preserve_logging_state; migration 08e9adb56879 present in the deployed versions/ directory."
+      - "LIVE schema repair at the deploy boot (journal, Server 1): '[2026-11-14 19:30:04] [INFO] [memora]: Repaired event_log: added the cloud_synced column (TASK-REL-015).' and 'Repaired event_log: added the ix_event_log_cloud_synced index (TASK-REL-015).' — init_db's boot convergence repaired the live table additively, exactly the designed path."
+      - "LIVE error stop: last ORA-00904 in the journal is 2026-11-14T19:29:20+0530 from the old PID 2492453; since the fixed boot there are ZERO ORA errors, ZERO ASGI exceptions and ZERO ERROR lines (post-restart window from 19:33:28 IST, PID 2507390, 122 lines). The pre-fix rate was ~9 tracebacks/min (2,552 since the 13:57 boot)."
+      - "LIVE events flow: 93 GET /v1/events polls in a 10-minute post-fix window, latest 'GET /v1/events?after_id=584&limit=100 HTTP/1.1 200 OK' plus cursor endpoint 200 — the Futuris consumer (futuris-cloud-v1) is consuming the feed again; an unauthenticated probe gets a clean 401 (auth layer), not the old 500."
+      - "LIVE logging flow on the new process: '[2026-11-14 19:33:44] [INFO] [memora]: Successfully connected to Oracle Autonomous Database 23ai.' / '[2026-11-14 19:33:46] [INFO] [memora]: viking context ready: 1 file(s), 0 memory file(s), durability=restored' / 'Application startup complete.' / consolidation pair at 19:38:48 ('Running Memora background consolidation and wiki compile pass...' -> '...completed.')."
+      - "LIVE schema probe re-run post-fix (read-only): columns {} , uniques {}, checks {} — event_log.cloud_synced and ix_event_log_cloud_synced diffs GONE. Remaining probe output is fully explained non-drift: tables_extra = memora_vector_store + 3 Oracle HNSW internals; indexes extra = 3 Oracle unique-constraint backing indexes (uq_agents_tenant_name, uq_namespaces_tenant_path, uq_memory_shared_agent); alembic_version still a1d4c7e9f2b3 = the named bookkeeping residual, deliberately not hand-stamped."
     blockers: []
-    next_action: "Open PR, CI green, merge, Fleet CD deploy, restart Memora, live-verify (journal lines + ORA-00904 stops + /v1/events 200 + schema probe clean), then mark VERIFIED."
+    next_action: "Done. VERIFIED 2026-11-14: fix merged (PR #160, d7625d6b), deployed (Fleet CD success), live event_log repaired at boot (19:30:04 IST repair lines), ORA-00904 flood stopped (last 19:29:20, old PID), /v1/events answering 200 to the Futuris consumer, boot/operational logging flowing, and the ORM-vs-live schema probe clean apart from explained artifacts and the deliberately untouched alembic_version bookkeeping lag."
   - id: TASK-REL-014
     title: "Fix REL-005b: forget-by-subject false ambiguity — duplicate records and dialogue echoes outrank the stored fact"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: "claude/task-rel-014-forget-echo"
     pr: 159
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:05:00+05:30"
-    updated_at: "2026-11-14T19:05:00+05:30"
+    updated_at: "2026-11-14T20:12:00+05:30"
     files:
       - "FRIDAY/src/friday/memory/memora_client.py"
       - "FRIDAY/tests/test_memory_forget_echo_rel014.py"
@@ -3550,19 +3583,23 @@ tasks:
       - "Suites green: new test_memory_forget_echo_rel014.py (13 tests); test_memory_mutation_targets, test_memory_roundtrip_rel005, test_shared_memory_lifecycle and the wider memory suites pass (pre-existing fixture errors in the canonical-gate tests unchanged from main)."
     evidence:
       - "Claim: issue #35 comment 6877874066 (2026-11-14)."
-      - "PR #159 opened from branch claude/task-rel-014-forget-echo; CI green (8/8 check runs) on heads 879786e7 and 21ac0891; branch rebased over board-only drift from PRs #160/#155."
+      - "PR #159 MERGED 2026-11-14 (merge commit d6467cdb; final head e9ea8af2, tree hash verified identical to the reviewed local commit at every publish step); CI green 8/8 check runs on heads 21ac0891 and e9ea8af2-lineage (7 success, 1 skipped, 0 failures); branch rebased three times over board-only drift (PRs #160/#155) — code files never drifted."
+      - "Deployed: Fleet CD advanced Server 1 checkout past the merge (HEAD cd7eb43c at verification time, includes d6467cdb); deployed memora_client.py contains _mutation_targets/_delete_record (5 hits); FRIDAY.service active."
+      - "PRODUCTION-VERIFIED live 2026-11-14 ~20:00 IST (FRIDAY's own MemoraClient against production stores): remember 'my rel014 verification codeword is \"quartz badger 9\"' -> forget by subject 'quartz badger' = deleted (cloud) -> recall 0 remaining. Two DISTINCT harbour-city facts -> forget by subject = needs_clarification (guard intact); both probe facts removed afterwards (see residual note). 'amber falcon 3' twins BOTH deleted by the fixed forget path in one call (ids 9f356242-3763-4197-bdbf-e745a48de065 + 63761f04-dd0c-41cd-aabc-9f09cd63ec54, aggregate status deleted) -> recall 0 remaining."
+      - "PRODUCTION-VERIFIED via the running FRIDAY chat (localhost:10000/api/chat): remember 'my rel014 chat token is silver otter 5' (memory_store:true) -> 'forget silver otter' = forget_status deleted, success:true (id 64891728-773e-4e8f-ae3e-dd278e89ca63) -> repeat forget = not_found. No clarification demanded at any point."
+      - "Tests: new test_memory_forget_echo_rel014.py 13/13; test_memory_mutation_targets + test_memory_roundtrip_rel005 + test_shared_memory_lifecycle green; wider memory suites green except failures proven identical on clean main (3 env perf/vector + 6 canonical-gate fixture errors). One mid-build regression (correct_fact winner/loser receipt reporting) was caught by test_shared_memory_lifecycle and fixed before publish."
     blockers: []
-    next_action: "Merge PR #159 on green CI (owner blanket authorization 2026-11-14); Fleet CD deploy; run the live acceptance probes; then mark VERIFIED with evidence."
+    next_action: "Complete — production-verified 2026-11-14. RESIDUAL (disclosed, not part of this task): mutation resolution still depends on recall ranking — a forget phrased with a distinguishing value ('...city is Lisbon') returned not_found because the target fell outside the recall window for that phrasing; the two ambiguity-probe facts were then removed by id via the client's own _delete_record primitive. Recall ranking/semantic search is TASK-REL-013's surface."
   - id: TASK-REL-017
     title: "IntelX threat-intel routers fabricate findings: fabricators must admit no data source, simulations must be labelled, real engines must be mounted"
-    status: CLAIMED
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-rel-017-intelx-threat-intel-honesty
-    pr: null
+    pr: 155
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:05:00+05:30"
-    updated_at: "2026-11-14T19:05:00+05:30"
+    updated_at: "2026-11-14T20:05:00+05:30"
     files:
       - "IntelX/routers/dark_web_monitor.py"
       - "IntelX/routers/dynamic_osint_collector.py"
@@ -3586,10 +3623,90 @@ tasks:
       - "Hash-invented numbers removed: campaign attribution_confidence starts 0.0 (rises only via operator attribution indicators), campaign predict confidence derives from recorded event count (0.0 with none), correlation actor profiles record only operator-supplied attributes (sophistication unknown, no invented sectors/techniques), pattern-match confidence equals the measured matched fraction, campaign-predictor forecast confidence is the mean of operator-supplied phase probabilities (0.0 when none supplied) with a stated basis; heuristic surfaces (campaign tracker, correlation, predictive analyzer, campaign predictor assess) carry data_source/basis labels."
       - "real_threat_router mounted at /v1/real-threat-intel with working adapters: /graph/pagerank builds the Graph from the caller payload and runs real PageRank (app/agents import path fixed), /advanced/darkweb passes a validated source_data dict and labels caller_supplied_source_data + live_feed_connected:false, /deep/forecast passes threat_type + historical properly, /engine/analyze runs real reads (get_stats/get_threat_feed/correlate_indicators) over the persistent store singleton instead of the hollow guarded response."
       - "New tests IntelX/tests/test_threat_intel_honesty.py lock the contract; neighbouring IntelX suites stay green; live per-endpoint probes after Fleet CD deploy show each threat-intel endpoint either traceable to a named real source or carrying the SIMULATED/no-source label."
-    evidence: []
+    evidence:
+      - "PR #155 merged as 63aa2371 (commits 53ce2b03 + CI-fix 8220ae76, rebased 639bacaa; code blobs byte-identical to the CI-validated tree). Fleet CD run for the merge completed success; Server 1 checkout verified at 63aa2371, IntelX service active, /health 200, deployed real_threat_router.py carries the new adapters."
+      - "CI: FRIDAY Universe CI/CD, Owner Workflow Contracts, Secret Scanning, Collaboration Registry green on the change. Monorepo Structure first failed on 2 root tests (test_deep_all_agents + test_e2e_real_work) asserting campaign-predictor confidence > 0 — a real regression in the first commit's flat 0.0; fixed by deriving confidence as the mean of operator-supplied phase probabilities (PR comment 6878307052) and both Monorepo workflows re-dispatched green on the fixed head (full 3,631-test root suite). Local: IntelX/tests/test_threat_intel_honesty.py 22/22 green (pre- and post-rebase), test_search_provenance 4/4, test_api_router_coverage 5/5, root MalNet/Horizon suites 13/13, ruff F821/F401 clean."
+      - "LIVE probes 2026-11-14 ~19:50 IST against the running service on Server 1 (HTTP unless noted): darkweb/scan -> status no_real_data_source, sources_scanned [], all counts 0; darkweb/leaks POST -> verified:false, data_source operator_submitted; osint/collect -> no_real_data_source, total_findings 0, sources_queried 0; osint/sources -> all 8 collector_connected:false; forecast/generate -> status no_real_data_source, predicted_severity/confidence null; crawl start/results/stats/report -> simulated:true; hunting run -> simulated:true + simulated_no_query_executed, optimize -> simulated_projection; phonebook -> 200 status simulated / synthetic_fallback (previously HTTP 500); malnet/correlate -> simulated:true at route and engine level; maltego/graph (no body) -> data_source built_in_sample; campaigns predict -> confidence 0.0 + basis heuristic_over_operator_recorded_events_only; correlation patterns -> score 0.5 = measured matched fraction (1 of 2); threat/predict items carry basis; campaign forecast -> confidence 0.0 with confidence_basis mean_of_operator_supplied_phase_probabilities_no_telemetry. Emulation execute + gaps verified simulated:true via an in-process ASGI probe on the deployed tree (the public API does not expose phase ids, so those two cannot be driven over HTTP alone); emulation/report verified over HTTP."
+      - "Real engines live: GET /v1/real-threat-intel/status -> engines [graph, advanced_threat, deep_threat, threat_engine]; POST /graph/pagerank over a caller 3-node cycle -> ranks sum 1.0, data_source caller_supplied_graph; POST /advanced/darkweb {} -> result [] + live_feed_connected:false, with caller-asserted has_credentials -> exactly 1 formatted finding (content_type credentials); POST /deep/forecast with empty history -> the engine's explicit baseline probability 0.3 / confidence 0.2, data_source caller_supplied_history; POST /engine/analyze -> stats + threat_feed from the persistent store."
+      - "Deliberate non-action, documented in PR #155: intelx/api/real_osint_router.py was NOT mounted — it duplicates the already-mounted routers/real_osint_routes.py surface over the same engines without the TASK-TRUST-001 provenance labelling, and its GET /maltego/alerts seeds fabricated alerts (hash-derived match_counts, hardcoded 2024-01-01 timestamps) as a side effect. Residual (pre-existing, unchanged): intel_sharing_manager and threat_intel_exchange_protocol mark local records 'sent'/'completed' although nothing is transmitted externally — local-ledger semantics, no findings invented; flagged for a future labelling pass."
+      - "Housekeeping: a debris line left in this file by the REL-017 rebase conflict resolution (a conflict-marker parenthetical suffix after this entry) briefly formed a duplicate top-level key with task_id_warnings; it has been removed from main, and the registry-repair entry in this file quotes it as evidence — this update leaves that quote intact (verified in the diff)."
     blockers: []
-    next_action: "Implement on branch, PR, CI, merge, Fleet CD deploy, live-verify per endpoint, then mark VERIFIED with probe evidence."
-(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
+    next_action: "Done. VERIFIED 2026-11-14: PR #155 merged, Fleet CD deployed, Server 1 at the merge commit, and every threat-intel endpoint probed live with its source or SIMULATED/no-source label in the payload."
+  - id: TASK-REL-018
+    title: "Futuris forecasts run on synthetic data and silent statsforecast fallbacks, presented as real"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-rel-018-futuris-provenance
+    pr: 166
+    contributors: []
+    priority: P1
+    created_at: "2026-11-14T19:03:00+05:30"
+    updated_at: "2026-11-14T20:00:00+05:30"
+    files:
+      - "Futuris/futuris/connectors/provenance.py (new)"
+      - "Futuris/futuris/models/adapters.py"
+      - "Futuris/futuris/core/pipeline.py"
+      - "Futuris/futuris/core/engine.py"
+      - "Futuris/futuris/api/routers/friday.py"
+      - "Futuris/futuris/api/routers/forecasts.py"
+      - "Futuris/futuris/api/app.py"
+      - "Futuris/futuris/infra/scheduler.py"
+      - "FRIDAY/src/friday/ecosystem/fleet_client.py"
+      - "Futuris/tests/connectors/test_provenance.py (new)"
+      - "Futuris/tests/models/test_statsforecast_degradation.py (new)"
+      - "Futuris/tests/api/test_friday_provenance.py (new)"
+      - "FRIDAY/src/friday/security/scrubber.py"
+      - "FRIDAY/tests/test_rel018_scrubber_prose.py (new)"
+      - ".github/workflows/monorepo-validation.yml"
+      - ".github/workflows/owner-workflows.yml"
+    defect: "System map + live recon 2026-11-14: (1) Futuris's serving paths default to SyntheticTelemetryConnector(seed=42) -- the config-driven connector factory (FUTURIS_TELEMETRY_SOURCE) governed only the scheduler -- and forecast payloads did not carry derived provenance: the pipeline froze evidence under a hardcoded 'telemetry:synthetic' label, the engine never set evidence_class/evidence_source on its Forecast, and the FRIDAY delegation response never copied either field off the forecast (payload sat at schema defaults). (2) statsforecast is a DECLARED dependency (Futuris/requirements.txt, pyproject) but is NOT installed in the production fleet venv (verified live: ModuleNotFoundError, Server 1) -- so every production adapter silently used _SFMockModel, whose predict returns the last observed value repeated: flat-line mocks presented as model forecasts. (3) '[REDACTED_SECRET]' artifact REPRODUCED AND ROOT-CAUSED 2026-11-14: FRIDAY's SecretScrubber Authorization-header regex was unanchored, so it matched the ordinary phrase 'authorization: ' in Futuris's standard sign-off line ('A prediction is not an authorization: forecasts inform, they never execute anything.') and replaced the following words with '[REDACTED_SECRET]' in the user-visible reply (verified by running the real payload + fleet reply through redact_secrets/recursive_sanitize locally: present before the fix, absent after). The round-2 reply text itself is unrecoverable (FRIDAY history store is in-memory; zero occurrences of the string exist in friday.db, FRIDAY/data, or the deployment tree), but the mechanism is proven and regression-tested."
+    acceptance:
+      - "Every forecast response carries provenance derived from the actual connector + observation sources (connector named; synthetic vs real explicit): pipeline and engine set evidence_class/evidence_source from the derivation, the evidence snapshot freezes under the derived source/class, and the FRIDAY delegation payload serves the forecast's real fields."
+      - "Default ingestion on ALL serving paths is the configured telemetry source via the connector factory; in this deployment no real telemetry source is configured as FUTURIS_TELEMETRY_SOURCE (Nexus unconfigured; VyralX is a peer data source, not the configured telemetry source), so synthetic remains the input and responses say SYNTHETIC plainly, FRIDAY chat reply included."
+      - "A statsforecast failure surfaces as explicit degradation: adapters raise StatsForecastUnavailableError instead of mock flat-lines; the FRIDAY delegation answers BLOCKED with calibration error statsforecast_unavailable; engine API paths answer 503; the scheduler logs and skips per subscription."
+      - "Live proof after deploy: delegation payload provenance matches the configured input; forced backend failure in the test environment returns the honest BLOCKED payload; the [REDACTED_SECRET] artifact is reproduced-and-fixed or reported with search evidence."
+    evidence:
+      - "Fix merged as PR #166 (merge 85a52b97); CI green on the PR head (friday-universe-ci test, monorepo-validation incl. the new Futuris tests, owner-workflows contracts incl. the new scrubber tests, secret scan, fleet layout, roster validation). Branch content pushed via the Git Data API with the remote tree sha verified byte-identical to the locally tested tree (8bb64627)."
+      - "Local tests: new suites green in BOTH environments -- without statsforecast (10 passed + API BLOCKED test passed, happy paths skip) and with statsforecast 2.1.1 installed in a sandbox venv (14 passed, 1 conditional skip): provenance derivation (synthetic/real/fallback/mixed/fail-closed), adapter/pipeline/engine propagation of StatsForecastUnavailableError, engine + pipeline forecasts carrying derived provenance, delegation BLOCKED payload, delegation happy-path payload provenance. Neighbouring suites green: Futuris models/scheduler/pipeline/provenance-gate; FRIDAY futuris-dispatch + delegation-ledger (42); Futuris API integration suite passes except test_webhook_subscription_and_deletion, which fails identically on pristine HEAD (pre-existing 422, unrelated)."
+      - "DEPLOYED: Server 1 checkout at 85a52b97; Futuris.service restarted 2026-11-14 19:51:33 IST; journal 19:52:34 shows the new import-time warning 'statsforecast_unavailable: model adapters will refuse to fit ... ModuleNotFoundError: No module named statsforecast'."
+      - "PRODUCTION-VERIFIED live 2026-11-14 ~19:58 IST (server-side probes, key never printed): POST /v1/friday/forecast -> 201 with status BLOCKED, model_used 'none', calibration_metrics.error 'statsforecast_unavailable' (detail: ModuleNotFoundError), evidence_class 'synthetic', evidence_source 'telemetry:synthetic via SyntheticTelemetryConnector [SYNTHETIC data]' -- payload provenance matches the actual configured input, and no number is dressed as a forecast. POST /forecast -> 503 'statsforecast_unavailable: no forecast was computed ... refusing to substitute a mock forecast'."
+      - "Artifact fix verified against the DEPLOYED FRIDAY code on Server 1: redact_secrets leaves the Futuris sign-off sentence byte-identical (prose no longer eaten) while a real 'Authorization: Basic ...' header line is still redacted."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-14. FOLLOW-UP (coordinator/owner ops decision, not part of this task): install the declared statsforecast dependency into the production fleet venv so Futuris can compute real model forecasts again (still on synthetic-labelled data until a real telemetry source is configured). Sandbox measurement: ~83MB disk delta, ~200MB import RSS -- assess against the 956MB Server 1 deliberately, or land it with the ARM server. Until then production forecast requests answer the honest BLOCKED status above."
+  - id: TASK-REL-019
+    title: "Forge task-status truthfulness across ALL modes (plan_only / verify_only / status polling / cancel)"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-rel-019-forge-status-truth
+    pr: 158
+    contributors: [muse_ai]
+    priority: P1
+    created_at: "2026-11-14T18:50:00+05:30"
+    updated_at: "2026-11-14T20:10:00+05:30"
+    files:
+      - Forge/app/api/delegate.py
+      - Forge/app/api/tasks.py
+      - Forge/app/api/routes.py
+      - Forge/app/core/orchestrator.py
+      - Forge/tests/unit/test_delegate_mode_truthfulness.py
+      - FRIDAY/src/friday/ecosystem/fleet_client.py
+      - FRIDAY/tests/test_fleet_client_planned_state.py
+    defect: "Modes accepted at intake were read nowhere: plan_only tasks executed in full and could return SUCCESS with a completion receipt; verify_only tasks built code they were only asked to check. routes.py POST /tasks (+/generate) never scheduled execution (write-only pile, by router precedence the live /api/v1 path). Delegate status endpoint reported PENDING/READY/VERIFYING as RUNNING. Delegate execute_now gated SUCCESS on the re-run manifest only, ignoring the task terminal state. Delegate cancel bypassed the lifecycle machine (phantom cancels; COMPLETED records flippable to CANCELLED). Stale-task reconciler would have expired delivered plans. FRIDAY fleet client had no planned state."
+    acceptance:
+      - "plan_only never executes and never reports SUCCESS: delegate returns PLANNED with no receipt, with or without execute_now; task rests in READY and polls as PLANNED"
+      - "verify_only runs only the verification battery (no synthesis, no repair) and lands COMPLETED/FAILED per the battery with a persisted manifest"
+      - "autonomous with/without execute_now: status trail matches the task state and verification verdict at every step"
+      - "POST /tasks on every mount schedules execution unless plan_only; reconciler never expires a delivered plan"
+      - "delegate execute_now SUCCESS requires task COMPLETED and manifest pass; other terminal states mirrored honestly"
+      - "delegate cancel goes through the lifecycle machine: nonexistent -> ERROR, COMPLETED -> ERROR with record untouched, READY -> CANCELLED"
+      - "FRIDAY surfaces PLANNED as plan-only (DEGRADED, plan_only_no_execution), never as an unverified completion"
+    evidence:
+      - "PR #158 merged 52d4a995 (CI: test/contracts/validators all success); follow-up PR #163 (plan_stages counted from TaskGraph.nodes — live probes showed it reporting 0)"
+      - "Unit: 29 new Forge tests + 1 FRIDAY test; neighbouring REL-011 delegate suites and FRIDAY crossloop green; full Forge unit suite shows only pre-existing failures identical on pristine main (test_verification_engine_battery, test_webhooks x5)"
+      - "LIVE 2026-11-14 ~19:30-19:50 IST (Server 1, deployed HEAD 52d4a995): plan_only -> PLANNED/no receipt, polled PLANNED with raw state READY and 0 artifacts after 15 min; plan_only+execute_now -> PLANNED in 204ms; autonomous bg -> RUNNING 57% -> FAILED/PARTIAL_FAILURE consistent; autonomous execute_now -> PARTIAL_FAILURE with state FAILED + manifest (10/11 stages); verify_only on an existing project -> COMPLETED/SUCCESS certified, project files byte-untouched; POST /api/v1/tasks autonomous -> RUNNING 57% -> FAILED (executes; pre-fix parked in READY); POST /api/tasks plan_only -> resting READY plan; cancel nonexistent -> ERROR not found; cancel COMPLETED task15814112026123354 -> ERROR, record still COMPLETED; cancel READY plan -> CANCELLED; FRIDAY FleetClient dispatch of plan_only -> DEGRADED plan_only_no_execution with plan-only summary"
+    blockers: []
+    next_action: "None. Residual noted: Forge synthesis quality itself (probe builds failed the no-tests-discovered stage) is a Forge capability matter, not status truthfulness — the surface now reports it honestly."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

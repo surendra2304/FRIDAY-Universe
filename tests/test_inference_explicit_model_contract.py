@@ -101,6 +101,17 @@ def test_nonstream_route_forwards_the_explicit_model_to_policy_gateway(boundary)
     assert boundary.calls[0]['request'].max_tokens == 2400
 
 
+def test_gpt_oss_models_route_to_groq_not_openai(boundary):
+    # TASK-REL-021: the /models catalog advertises openai/gpt-oss-120b as
+    # Groq-owned, but the route's substring mapping sent any model containing
+    # "openai" to the OpenAI provider (no credentials configured), silently
+    # dropping explicit gpt-oss requests to the fallback ladder.
+    completion(boundary, 'openai/gpt-oss-120b')
+    assert boundary.calls[0]['request'].model == 'openai/gpt-oss-120b'
+    assert boundary.calls[0]['provider_name'] == 'groq'
+    assert boundary.calls[0]['stage_name'] == 'unified_direct'
+
+
 def test_two_advertised_groq_models_do_not_share_cache_or_provider_request(boundary):
     first = completion(boundary, 'llama-3.3-70b-versatile')
     second = completion(boundary, 'llama-3.1-8b-instant')

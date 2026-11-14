@@ -1215,9 +1215,32 @@ class FleetClient:
                 + (f" | Calibration: {cal}" if cal is not None else " | Calibration: unmeasured"),
                 f"• Model: {model_used}" + (f" | Drivers: {drivers}" if drivers else ""),
             ]
+            # TASK-REL-018: name the data the forecast was computed from --
+            # synthetic data must read as synthetic in the chat reply, not
+            # only in a JSON field nobody opens.
+            ev_class = str(data.get("evidence_class") or "unlabelled")
+            ev_source = str(data.get("evidence_source") or "")
+            lines.append(
+                f"• Data provenance: {ev_class.upper()}"
+                + (f" — {ev_source}" if ev_source else " — source not labelled by Futuris")
+            )
             if status_value.upper() in {"BLOCKED", "INSUFFICIENT_DATA"}:
-                lines.append("Futuris refused to dress a weak data picture as a forecast — the honest status is above.")
-            lines.append("A prediction is not an authorization: forecasts inform, they never execute anything.")
+                reason = ""
+                cal_m = data.get("calibration_metrics") or {}
+                meta = data.get("model_metadata") or {}
+                if cal_m.get("error"):
+                    reason = f" Reason: {cal_m['error']}"
+                    if cal_m.get("detail"):
+                        reason += f" — {str(cal_m['detail'])[:200]}"
+                elif meta.get("blocked_reason"):
+                    reason = f" Reason: {meta['blocked_reason']}"
+                lines.append("Futuris refused to dress a weak data picture as a forecast — the honest status is above." + reason)
+            # TASK-REL-018: no colon after "authorization" -- FRIDAY's secret
+            # scrubber used to mistake this sentence for an Authorization
+            # header and replace its tail with [REDACTED_SECRET] in the
+            # user-visible reply. The scrubber is fixed too; this wording
+            # keeps the invariant sentence safe under any scrubber copy.
+            lines.append("A prediction is not an authorization — forecasts inform, they never execute anything.")
             return {
                 "reply": "\n".join(lines),
                 "metadata": {

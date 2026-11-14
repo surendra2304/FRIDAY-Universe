@@ -52,7 +52,7 @@ class SubtitleSegment:
     translated_text: str = ""
     language: str = ""
     speaker: str = ""
-    confidence: float = 0.5
+    confidence: float | None = None
 
 
 @dataclass
@@ -71,12 +71,14 @@ class DubbingConfig:
 class LocalizationReport:
     """A localization quality report."""
     video_id: str
-    translation_accuracy: float = 0.0
-    cultural_relevance: float = 0.0
-    subtitle_sync: float = 0.0
-    voice_quality: float = 0.0
-    overall_score: float = 0.0
+    translation_accuracy: float | None = None
+    cultural_relevance: float | None = None
+    subtitle_sync: float | None = None
+    voice_quality: float | None = None
+    overall_score: float | None = None
     issues: list[str] = field(default_factory=list)
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -205,7 +207,9 @@ class MultilingualContentTranslator:
                 translated_text=translated_text,
                 language=source_language,
                 speaker=seg.get("speaker", ""),
-                confidence=0.7,
+                # No translation-confidence measurement exists.
+                # (TASK-REL-020: previously a constant 0.7.)
+                confidence=None,
             )
             translated_segments.append(subtitle)
 
@@ -231,27 +235,28 @@ class MultilingualContentTranslator:
         return dubbing
 
     def generate_localization_report(self, video_id: str) -> LocalizationReport:
-        """Generate localization quality report."""
-        report = LocalizationReport(video_id=video_id)
+        """Generate localization quality report (honest no-data state).
 
-        report.translation_accuracy = 0.75 + (ord(hashlib.md5(video_id.encode()).hexdigest()[:1]) % 25) / 100
-        report.cultural_relevance = 0.65 + (ord(hashlib.md5(f"cultural:{video_id}".encode()).hexdigest()[:1]) % 30) / 100
-        report.subtitle_sync = 0.85 + (ord(hashlib.md5(f"sync:{video_id}".encode()).hexdigest()[:1]) % 15) / 100
-        report.voice_quality = 0.70 + (ord(hashlib.md5(f"voice:{video_id}".encode()).hexdigest()[:1]) % 30) / 100
-
-        report.overall_score = (
-            report.translation_accuracy * 0.3 +
-            report.cultural_relevance * 0.25 +
-            report.subtitle_sync * 0.25 +
-            report.voice_quality * 0.2
+        No translation-QA, subtitle-timing or voice-QA measurement exists
+        in this service, so no quality scores can be reported.
+        (TASK-REL-020: all four scores were previously derived from md5
+        hashes of the video id, and the issue list was thresholded off
+        those invented scores.)
+        """
+        report = LocalizationReport(
+            video_id=video_id,
+            translation_accuracy=None,
+            cultural_relevance=None,
+            subtitle_sync=None,
+            voice_quality=None,
+            overall_score=None,
+            issues=[],
+            data_status="no_data",
+            data_note=(
+                "Localization quality is not measured: no translation-QA, "
+                "subtitle-timing or voice-QA data exists for this video."
+            ),
         )
-
-        if report.subtitle_sync < 0.8:
-            report.issues.append("Subtitle timing may need adjustment")
-        if report.cultural_relevance < 0.6:
-            report.issues.append("Cultural adaptation needed")
-        if report.voice_quality < 0.7:
-            report.issues.append("Voice quality could be improved")
 
         self._reports[video_id] = report
         return report
@@ -372,6 +377,8 @@ async def generate_localization_report(video_id: str):
         "translation_accuracy": report.translation_accuracy,
         "cultural_relevance": report.cultural_relevance,
         "issues": report.issues,
+        "data_status": report.data_status,
+        "data_note": report.data_note,
     }
 
 
