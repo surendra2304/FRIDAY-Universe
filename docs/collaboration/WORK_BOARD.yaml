@@ -4152,6 +4152,44 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RETIRE-001 crew). Stratex trading venues are now demo-fapi futures (daemon) + OANDA practice only. Reversal, if the owner ever orders it, on Server 1: systemctl unmask Stratex-Testnet.service; mv /etc/systemd/system/Stratex-Testnet.service.retired-20261115 back to Stratex-Testnet.service; systemctl daemon-reload; systemctl enable --now Stratex-Testnet.service. The repo template deploy/Stratex-Testnet.service is unchanged (Fleet CD never installs it); a fresh manual install from that template plus removing the mask would also resurrect the engine - the mask + this board record are the standing controls."
 
+  - id: TASK-STR-CLEANUP-001
+    title: "Delete every strategy with verified OOS profit factor < 1.2 (owner directive 2026-11-15: remove strategies not generating profits after backtesting)"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-cleanup-001
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T02:59:00+05:30"
+    updated_at: "2026-11-15T03:54:00+05:30"
+    files:
+      - "Stratex/config_strategy.py"
+      - "Stratex/config.py"
+      - "Stratex/strategy_registry.json"
+      - "Stratex/paper_shadow_processor.py"
+      - "Stratex/stratex_paper_lab.py"
+      - "Stratex/advisory_params.py"
+      - "Stratex/backtester.py"
+      - "Stratex/paper_forward_runner.py"
+      - "Stratex/scripts/run_multi_strategy_audit.py"
+      - "Stratex/scripts/validate_strategies_oos.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6884824562"
+    defect: "Owner directive 2026-11-15 ~02:59 IST: 'Remove the strategies which are not generating profits after every backtesting, as it will keep the record clear.' Owner answers: threshold STRICT (any strategy with verified out-of-sample profit factor below 1.2, net of costs, from TASK-STR-BT-001 + TASK-STR-RD-001 evidence, is removed); fate DELETE COMPLETELY (code + config from the live tree/registry/deployment; git history NOT rewritten); SMT-v2 EXCLUDED (retest in TASK-STR-RD-002 first, stays entries-paused; marked RE-TEST PENDING, neither PASS nor FAIL). NO-EVIDENCE strategies (never honestly backtested) are NOT removals under the rule."
+    acceptance:
+      - "Phase 1 definitive list built from verified BT-001/RD-001 evidence only: every governed registry entry and evaluated discovery module graded PASS / FAIL / NO-EVIDENCE with OOS expectancy, profit factor, trade count."
+      - "Every FAIL strategy (OOS PF < 1.2) deleted completely: module files, PRODUCTION_STRATEGY_REGISTRY entries, config.py candidate/SUPPORTED lists, strategy_registry.json records, paper shadow/lab candidate maps, advisory defaults, legacy backtester/audit-script references."
+      - "NO-EVIDENCE strategies untouched (24 discovery modules + registry ml); SMT-v2 and the OANDA module untouched; RD-002 research files untouched; fill ledger and measurement code untouched (removal is prospective, history never rewritten)."
+      - "Post-removal production verification: registry validates, Stratex + daemon + OANDA services healthy, daemon governance shows exactly the survivor set, fill ledger intact."
+    evidence:
+      - "PHASE 1 VERDICTS (BT-001 walk-forward W1-W5, OOS 2024-07-01..2026-11-01, pooled BTC/ETH/SOL, 16bps RT; RD-001 stage 1/2): FAIL = bb_reversion PF 0.68 (12,308 trades, 0/5 folds), factory_winner_1..5 PF 0.54/0.54/0.58/0.62/0.73, supertrend 0.82, adx_ema_mtf 0.74, aggressive_scalper 0.34, aggressor 0.93, rsi_burst 0.59, scalper 0.86, swing 0.94, vwap_trend 0.71 + 26 evaluated discovery modules PF 0.72-1.067 (incl. sub-1.2 positives atr_breakout 1.008, choppiness_breakout 1.055, vol_regime 1.043, volatility_breakout 1.067). PASS = adx_ema (bare 1.57 / production-faithful 1.46) and strategy_volume_breakout (1.276, unregistered). NO-EVIDENCE = 24 discovery modules (9 NOT_EVALUABLE, 9 UNTESTABLE, 4 NO_TRADES, 2 BROKEN incl. strategy_ml/xgboost) - none removed."
+      - "EXECUTION: PR #232 merged 9d949665 (65 files, +100/-6030; all 7 CI check runs success/skipped). 41 strategy modules deleted (incl. strategy_factory_winners.py, the combined module of the five evidenced-FAIL factory winners), registry reduced to adx_ema (OBSERVE_ONLY) + ml (DISABLED, NO-EVIDENCE), ADX_EMA_MTF_STRATEGY dict removed, config.py ACTIVE_STRATEGIES emptied, swing's dedicated A/B runner and 5 dedicated test files of deleted strategies removed, governance/measurement/shadow/lab/oos-claims tests updated to the post-cleanup state."
+      - "LOCAL TESTS: targeted suites 44/44 pass; full Stratex suite diffed against pristine main - no net-new failures beyond the deleted strategies' own tests (removed); one pre-existing governance failure (ml discovery) fixed by the rewrite."
+      - "PRODUCTION (Server 1, deployed checkout 802e5b3 contains merge 9d94966): Stratex/Stratex-Daemon/Stratex-OANDA-Demo all active, Stratex /health 200; daemon journal governance line at 03:35 and 03:42 IST boots: executable=[] observe_only=['strategy_adx_ema'], excluded = the 16 surviving NO-EVIDENCE modules (UNREGISTERED) + strategy_ml (DISABLED); fill_ledger.jsonl intact at 9 lines incl. 3 LEGACY rows; exactly 11 strategy_*.py modules remain in the deployed tree."
+      - "SERVER-SIDE PYTEST (fleet venv, deployed code): malformed-market-data 57/57, opportunity-decision-funnel 20/20, daemon-governance + measurement + shadow + paper-lab + oos-claims all pass, ab-infrastructure pass, quantdinger 28 pass + 1 pre-existing stale-test failure (execution.PAPER_SAFE_MODE monkeypatch; proven identical on pre-merge main c98037f), daemon-heartbeat-health 4 failures from live-production-state interaction in code this task did not touch."
+      - "CONSEQUENCE (stated to the owner before execution): no VALIDATED strategy remains, so nothing trades on the Binance demo account until forward entrants are chosen from TASK-STR-RD-002 evidence; adx_ema continues OBSERVE_ONLY evidence accumulation; the loss-streak breaker and all safety gates remain armed; live trading remains prohibited."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-CLEANUP-001 crew). Follow-ups owned elsewhere: SMT-v2 fate is decided by its TASK-STR-RD-002 retest row under the same PF < 1.2 rule; forward entrants (if any) come from RD-002; strategy_factory_winners' research artifacts under Stratex/research/ and Stratex/rigorous_backtest/ remain as the evidence record (not production code). paper_forward_runner.py is retained as strategy-agnostic forward-experiment machinery; its frozen swing signal path now fails closed with an explicit TASK-STR-CLEANUP-001 RuntimeError."
+
   - id: TASK-REL-038
     title: "IntelX honesty + research persistence: sharing/exchange records stop claiming transmissions that never happen, and research_live results become durably retrievable"
     status: IN_PROGRESS
