@@ -100,10 +100,19 @@ CANONICAL_INTERNAL_MESH_URLS: dict[str, str] = {
 }
 
 # TASK-REL-007D: overall deadline for one fleet probe sweep (seconds).
+# TASK-REL-023: default 10 -> 20s. Round 3 (2026-11-14) flapping forensics:
+# the peers' /health endpoints answer in <=0.25s when curled directly from
+# Server 1 (15 samples each), but FRIDAY's in-process probes intermittently
+# took 3.6s (Cortex) and 5.0s (Sentinel) — the delay is FRIDAY's own
+# event-loop stalls on the 956MB swap-loaded host, not peer slowness.
+# Budgets must distinguish "peer dead" from "FRIDAY was busy": per-probe
+# budgets below rise to 8s (10s for the Server-2 pair Forge/Sentinel path
+# lengths, 2.5s/5s for Futuris local/public), and the sweep deadline must
+# exceed the largest per-probe budget.
 try:
-    FLEET_PROBE_DEADLINE_SECONDS = float(os.getenv("FRIDAY_FLEET_PROBE_DEADLINE_SECONDS", "10"))
+    FLEET_PROBE_DEADLINE_SECONDS = float(os.getenv("FRIDAY_FLEET_PROBE_DEADLINE_SECONDS", "20"))
 except (TypeError, ValueError):
-    FLEET_PROBE_DEADLINE_SECONDS = 10.0
+    FLEET_PROBE_DEADLINE_SECONDS = 20.0
 
 
 class FleetClient:
@@ -242,7 +251,7 @@ class FleetClient:
         t0 = time.time()
         try:
             headers = {"Authorization": f"Bearer {self.inference_key}"} if self.inference_key else {}
-            r = await client.get(f"{self.inference_url}/health", headers=headers, timeout=3.5)
+            r = await client.get(f"{self.inference_url}/health", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -272,7 +281,7 @@ class FleetClient:
             headers = {"X-Agent-Name": "friday"}
             if self.memora_key:
                 headers["Authorization"] = f"Bearer {self.memora_key}"
-            r = await client.get(f"{self.memora_url}/health", headers=headers, timeout=3.5)
+            r = await client.get(f"{self.memora_url}/health", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -304,7 +313,7 @@ class FleetClient:
             if self.stratex_key:
                 headers = {"X-API-Key": self.stratex_key, "Authorization": f"Bearer {self.stratex_key}"}
             health_path = os.getenv("FRIDAY_STRATEX_HEALTH_PATH", "/health")
-            r = await client.get(f"{self.stratex_url}{health_path}", headers=headers, timeout=3.5)
+            r = await client.get(f"{self.stratex_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -334,7 +343,7 @@ class FleetClient:
         try:
             headers = {"Authorization": f"Bearer {self.intelx_key}"} if self.intelx_key else {}
             health_path = os.getenv("FRIDAY_INTELX_HEALTH_PATH", "/api/v1/healthz")
-            r = await client.get(f"{self.intelx_url}{health_path}", headers=headers, timeout=3.5)
+            r = await client.get(f"{self.intelx_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -363,7 +372,7 @@ class FleetClient:
         t0 = time.time()
         # 1. Local daemon first (:8004)
         try:
-            r_loc = await client.get(f"{self.futuris_local_url}/health", timeout=0.8) if self.futuris_local_url else None
+            r_loc = await client.get(f"{self.futuris_local_url}/health", timeout=2.5) if self.futuris_local_url else None
             lat_loc = int((time.time() - t0) * 1000)
             if r_loc is not None and _classify_health_response(r_loc) in {"ONLINE", "REACHABLE"}:
                 local_status = _classify_health_response(r_loc)
@@ -380,7 +389,7 @@ class FleetClient:
         try:
             headers = {"Authorization": f"Bearer {self.futuris_key}"} if self.futuris_key else {}
             health_path = os.getenv("FRIDAY_FUTURIS_HEALTH_PATH", "/health")
-            r = await client.get(f"{self.futuris_url}{health_path}", headers=headers, timeout=1.5)
+            r = await client.get(f"{self.futuris_url}{health_path}", headers=headers, timeout=5.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -410,7 +419,7 @@ class FleetClient:
         try:
             headers = {"X-Friday-Api-Key": self.cortex_key} if self.cortex_key else {}
             health_path = os.getenv("FRIDAY_CORTEX_HEALTH_PATH", "/health")
-            r = await client.get(f"{self.cortex_url}{health_path}", headers=headers, timeout=3.5)
+            r = await client.get(f"{self.cortex_url}{health_path}", headers=headers, timeout=8.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -440,7 +449,7 @@ class FleetClient:
         try:
             headers = {"Authorization": f"Bearer {self.forge_key}"} if self.forge_key else {}
             health_path = os.getenv("FRIDAY_FORGE_HEALTH_PATH", "/health")
-            r = await client.get(f"{self.forge_url}{health_path}", headers=headers, timeout=5.0)
+            r = await client.get(f"{self.forge_url}{health_path}", headers=headers, timeout=10.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -470,7 +479,7 @@ class FleetClient:
         try:
             headers = {"X-API-Key": self.sentinel_key} if self.sentinel_key else {}
             health_path = os.getenv("FRIDAY_SENTINEL_HEALTH_PATH", "/health")
-            r = await client.get(f"{self.sentinel_url}{health_path}", headers=headers, timeout=5.0)
+            r = await client.get(f"{self.sentinel_url}{health_path}", headers=headers, timeout=10.0)
             lat = int((time.time() - t0) * 1000)
             status = _classify_health_response(r)
             if status in {"ONLINE", "REACHABLE"}:
@@ -515,7 +524,7 @@ class FleetClient:
             response = await client.get(
                 f"{self.vyralx_url}/health",
                 headers=headers,
-                timeout=3.5,
+                timeout=8.0,
                 follow_redirects=False,
             )
             latency = int((time.time() - t0) * 1000)
@@ -562,7 +571,7 @@ class FleetClient:
         """Probes all 9 specialist agents concurrently with caching.
 
         TASK-REL-007D: the gather has an OVERALL deadline
-        (``FLEET_PROBE_DEADLINE_SECONDS``, default 10s). Round 1's status
+        (``FLEET_PROBE_DEADLINE_SECONDS``, default 20s since TASK-REL-023). Round 1's status
         asks took 30-35s because every caller force-refreshed and a slow
         probe could hold the whole matrix hostage; a probe that misses
         the deadline is now reported UNREACHABLE with the reason instead
@@ -1289,7 +1298,7 @@ class FleetClient:
             health = await client.get(
                 f"{self.vyralx_url}/health",
                 headers=headers,
-                timeout=3.5,
+                timeout=8.0,
                 follow_redirects=False,
             )
             if health.status_code != 200:

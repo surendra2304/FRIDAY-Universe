@@ -138,6 +138,50 @@ def _task_artifact_paths(task_id: str) -> list[str]:
     return found
 
 
+def _task_primary_source(task_id: str) -> dict[str, Any] | None:
+    """TASK-REL-023: the primary generated source file, content included.
+
+    The delegate result otherwise carries only artifact PATHS, so a caller
+    asking "show me the code" could never be shown any — FRIDAY's chat
+    reply could name files but not display them (round 3, 2026-11-14:
+    the palindrome build's working main.py never reached the user).
+    Returns the project's entry source file (main.py preferred, else the
+    largest top-level source file; tests/docs excluded) with its content
+    bounded to 8000 chars, or None when no source file exists. Content is
+    the file's real bytes — on failure paths this is the code Forge
+    produced BEFORE the failure, and callers must present it as such.
+    """
+    paths = workspace_manager.get_workspace_paths(task_id)
+    if not paths or not getattr(paths, "project", None):
+        return None
+    project = paths.project
+    try:
+        candidates = [
+            p for p in project.iterdir()
+            if p.is_file()
+            and p.suffix in {".py", ".js", ".ts", ".go", ".rs", ".java", ".c", ".cpp", ".sh"}
+            and not p.name.startswith("test_")
+            and p.name != "conftest.py"
+        ]
+    except OSError:
+        return None
+    if not candidates:
+        return None
+    candidates.sort(key=lambda p: (p.name != "main.py", -p.stat().st_size))
+    chosen = candidates[0]
+    try:
+        content = chosen.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    truncated = len(content) > 8000
+    return {
+        "path": str(chosen),
+        "name": chosen.name,
+        "content": content[:8000],
+        "truncated": truncated,
+    }
+
+
 async def _dispatch_webhook_callback(callback_url: str, result: TaskResultModel) -> None:
     """Send asynchronous webhook callback notification upon task outcome."""
     try:
@@ -358,6 +402,7 @@ async def delegate_task(
                         "state": state_name,
                         "manifest": manifest_dict,
                         "artifacts": _task_artifact_paths(task.id),
+                        "primary_source": _task_primary_source(task.id),
                     },
                     summary=(
                         f"Forge task '{task.id}' ended in state {state_name}; "
@@ -425,6 +470,7 @@ async def delegate_task(
                         "state": completed_task.state.value if hasattr(completed_task.state, "value") else str(completed_task.state),
                         "manifest": manifest_dict,
                         "artifacts": _task_artifact_paths(task.id),
+                        "primary_source": _task_primary_source(task.id),
                     },
                     summary=f"Code generation finished, but verification failed: {manifest.failure_summary}",
                     error=manifest.failure_summary,
@@ -445,6 +491,7 @@ async def delegate_task(
                     "state": completed_task.state.value if hasattr(completed_task.state, "value") else str(completed_task.state),
                     "manifest": manifest_dict,
                     "artifacts": _task_artifact_paths(task.id),
+                    "primary_source": _task_primary_source(task.id),
                 },
                 summary=f"Forge successfully synthesized and verified goal (Task ID: {task.id})",
                 verification_manifest=manifest_dict,

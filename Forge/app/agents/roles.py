@@ -1283,6 +1283,7 @@ class TesterRole(BaseAgent):
                 pass
 
         # If no tests exist or only dummy stub exists, synthesize tests via Inference
+        synthesis_note = ""
         if (not test_files and not embedded_targets) or existing_test_is_stub:
             test_synthesized = False
             try:
@@ -1311,8 +1312,30 @@ class TesterRole(BaseAgent):
                         test_synthesized = bool(self.apply_extracted_files(
                             task_id, test_code, engine, default_filename="test_main.py"
                         ))
-            except Exception:
-                pass
+                    elif test_res is not None:
+                        # TASK-REL-023: the service answers 200 with an
+                        # EMPTY test_code when its routed model degrades
+                        # or returns unusable output (generation_status
+                        # degraded/invalid_output). That outcome used to
+                        # vanish silently — the gate then failed with a
+                        # bare "no test files discovered" that named the
+                        # wrong cause (round 3, task17414112026145722:
+                        # the call took ~60s and returned no tests).
+                        # Record the real status so the failure surface
+                        # names it.
+                        synthesis_note = (
+                            "Inference test generation returned no tests "
+                            f"(generation_status={test_res.get('generation_status')!r}, "
+                            f"error={test_res.get('error')!r})."
+                        )
+                        logger.warning(
+                            f"[Task {task_id}] {synthesis_note}"
+                        )
+            except Exception as gen_exc:
+                synthesis_note = (
+                    f"Inference test generation raised {type(gen_exc).__name__}: {gen_exc}."
+                )
+                logger.warning(f"[Task {task_id}] {synthesis_note}")
 
             if not test_synthesized:
                 prompt = (
@@ -1323,9 +1346,26 @@ class TesterRole(BaseAgent):
                     f"Format tests as:\n### File: test_main.py\n```python\n...\n```"
                 )
                 response = await self.prompt_model(prompt)
-                self.apply_extracted_files(
+                written = self.apply_extracted_files(
                     task_id, response.content, engine, default_filename="test_main.py"
                 )
+                if written:
+                    test_synthesized = True
+                elif not synthesis_note:
+                    synthesis_note = (
+                        "Fallback test authoring via the role model produced "
+                        "no writable test file."
+                    )
+
+            # TASK-REL-023: re-scan AFTER synthesis — the runner command
+            # below was built from the pre-synthesis scan, so a test file
+            # written here was invisible to it.
+            test_files = engine.fs.search_files(
+                task_id=task_id, pattern="test_*.py", role=self.role_name
+            )
+            if not test_files and not embedded_targets:
+                note = synthesis_note or "No test synthesis path produced a test file."
+                logger.warning(f"[Task {task_id}] Verification gate will fail: {note}")
 
         # Execute test runner. `pytest` was a bare PATH lookup and left
         # .pytest_cache plus rewritten __pycache__ files inside the project the
@@ -1346,11 +1386,15 @@ class TesterRole(BaseAgent):
 
         executed = test_framework != "unittest" or unittest_executed(cmd_res.stdout, cmd_res.stderr)
         exit_code = cmd_res.exit_code if executed else (cmd_res.exit_code or 1)
+        stderr = cmd_res.stderr if executed else cmd_res.stderr + "\nNo unittest tests were executed."
+        if exit_code != 0 and synthesis_note:
+            # The gate failure must name its true cause (TASK-REL-023).
+            stderr = f"{synthesis_note}\n{stderr}"
         return {
             "status": "success" if exit_code == 0 else "failed",
             "exit_code": exit_code,
             "stdout": cmd_res.stdout,
-            "stderr": cmd_res.stderr if executed else cmd_res.stderr + "\nNo unittest tests were executed.",
+            "stderr": stderr,
             "agent": self.role_name,
         }
 
