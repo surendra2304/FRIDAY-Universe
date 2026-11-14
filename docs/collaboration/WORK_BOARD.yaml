@@ -3242,14 +3242,14 @@ tasks:
     next_action: "Replacement PR via bridge Git Data API (supersedes #115); merge on green CI under owner autonomous authority; confirm Fleet CD deploy + worker state."
   - id: TASK-STR-SAFETY-001
     title: "Close three Stratex safety holes: daemon governance bypass, ALLOW_LIVE_TRADING env unlock, unguarded OANDA place_order"
-    status: IN_PROGRESS
+    status: DONE
     owner: muse_ai
-    branch: "claude/stratex-safety-governance"
-    pr: null
+    branch: "claude/stratex-safety-governance + claude/stratex-live-trading-env-lock"
+    pr: "120 (HOLE 1 + denylist, merged d4759a4), 123 (HOLES 2+3, merged b513e34)"
     contributors: []
     priority: P0
     created_at: "2026-11-14T14:45:00+05:30"
-    updated_at: "2026-11-14T14:45:00+05:30"
+    updated_at: "2026-11-14T15:35:00+05:30"
     files:
       - "Stratex/strategies/strategy_registry.py"
       - "Stratex/autonomy/run_daemon.py"
@@ -3268,8 +3268,11 @@ tasks:
       - "Live verification after deploy: Stratex /health 200 and honest; daemon logs show the governed executable/observe-only/excluded sets; testnet engine heartbeat fresh with its 6 governed strategies."
     evidence:
       - "System map 2026-11-14 (hidden_files/system_map_2026-11-14.md) safety findings, re-verified in code at main 5c07212 by Muse."
+      - "PR #120 merged d4759a4 + PR #123 merged b513e34 (2026-11-14), CI all green on both; Fleet CD success for both merge commits."
+      - "Tests: test_daemon_governance.py 14 passed; test_oanda_practice_guard.py 9 passed; updated both-gates tests in test_binance_futures_live_gate/test_live_trading_guard/test_trust001_oanda_ctrader_honesty green; only pre-existing main failures remain (test_critical_remediation storage probes, test_quantdinger_integration safety invariants)."
+      - "PRODUCTION-VERIFIED 2026-11-14 15:18 IST: Stratex-Daemon restarted (pid 2496453) logging 'Governance (config_strategy): executable=[strategy_bb_reversion] observe_only=[strategy_adx_ema, strategy_supertrend] excluded=[49 entries: 8 DISABLED + 41 UNREGISTERED incl. strategy_donchian_observe_only and strategy_hybrid]'; daemon adopted its 3 existing demo positions (heartbeat fresh, balance 110410.25); /stratex/health 200 engine online; testnet heartbeat RUNNING/fresh with exactly the 6 governed strategies."
     blockers: []
-    next_action: "Implement on branch claude/stratex-safety-governance (PR per hole cluster); merge when CI green under owner blanket authorization; verify live post-CD."
+    next_action: "DONE 2026-11-14. Follow-ups (not blocking): portfolio_v2 remains an orphaned transplant (now practice-gated anyway); deployment/live_authorization.py's 6 gates are still not consulted by execution paths — defence now rests on the dual-gate + config invariant, which is sufficient; consider wiring it if live trading is ever contemplated (owner decree: it is not)."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
