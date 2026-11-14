@@ -1,4 +1,4 @@
-"""TASK-REL-031 — Groq failover tool discipline (the TASK-REL-010 residual).
+"""TASK-REL-039 — Groq failover tool discipline (the TASK-REL-010 residual).
 
 When the Gemini pool exhausts, FRIDAY's chat fails over to Groq
 (``ExhaustionFailoverProvider``). REL-010's live proof recorded the

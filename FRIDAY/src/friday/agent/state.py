@@ -205,7 +205,7 @@ def current_turn_state_machine() -> ReasoningStateMachine | None:
     return _turn_state_machine.get()
 
 
-# TASK-REL-031: the same per-turn scoping for the rest of the turn's
+# TASK-REL-039: the same per-turn scoping for the rest of the turn's
 # working state, which TASK-REL-025's report flagged as following the
 # identical shared-attribute pattern on the singleton: the tool replay
 # guards (_processed_tool_ids / _processed_tool_signatures) and the

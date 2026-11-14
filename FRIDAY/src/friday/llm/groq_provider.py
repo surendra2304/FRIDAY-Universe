@@ -28,7 +28,7 @@ GROQ_DEFAULT_MODEL = "openai/gpt-oss-120b"
 GROQ_FALLBACK_MODEL = "openai/gpt-oss-20b"
 GROQ_UNIVERSAL_FALLBACK_MODEL = "openai/gpt-oss-120b"
 
-# TASK-REL-031: appended to the last-resort text-only TPM retry. When a
+# TASK-REL-039: appended to the last-resort text-only TPM retry. When a
 # request is too large to carry its tools, the model must not improvise
 # the facts a tool would have checked — the TASK-REL-010 live proof of
 # the failover quality gap was exactly that: a hedged, invented answer
@@ -358,7 +358,7 @@ class GroqLLMProvider(BaseLLMProvider):
         except Exception as e:
             err_text = str(e).lower()
             # If rate limit is due to TPM / Request too large, climb the
-            # TASK-REL-031 retry ladder (compact with tools retained first;
+            # TASK-REL-039 retry ladder (compact with tools retained first;
             # text-only only as the last resort) instead of disarming the
             # request on the first failure, which is what made failover-mode
             # answers guess at tool-shaped questions (TASK-REL-010 residual).
@@ -399,7 +399,7 @@ class GroqLLMProvider(BaseLLMProvider):
     ) -> Message | Exception:
         """Retry a TPM / request-too-large failure without disarming the turn.
 
-        TASK-REL-031 (the TASK-REL-010 failover quality gap): the old
+        TASK-REL-039 (the TASK-REL-010 failover quality gap): the old
         behaviour stripped the tools on the FIRST TPM failure, so when
         Groq served as the exhaustion fallback, tool-shaped questions
         (current time, memory, actions) were answered from text alone —

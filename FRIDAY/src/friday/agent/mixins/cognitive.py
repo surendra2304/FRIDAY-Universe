@@ -133,7 +133,7 @@ class CognitiveMixin:
 
             # Initialize fresh state machine for this turn/request
             self.state_machine = ReasoningStateMachine()
-            # TASK-REL-031: fresh replay guards for this turn. The property
+            # TASK-REL-039: fresh replay guards for this turn. The property
             # setters bind the new sets to this turn's execution context —
             # the previous code CLEARED the singleton's shared sets here,
             # which wiped the replay guards of any turn still in flight

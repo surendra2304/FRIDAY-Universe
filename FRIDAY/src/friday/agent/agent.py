@@ -753,18 +753,21 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                 # Mixed-safety batches execute sequentially in model order so
                 # authorization checks and any approval UI cannot race. Purely
                 # safe batches can overlap without changing tool-trace order.
-                # TASK-REL-031: worker threads do not inherit contextvars, so
+                # TASK-REL-039: worker threads do not inherit contextvars, so
                 # the turn's context is propagated explicitly — the batch
                 # shares the turn's replay guards and task context (the same
                 # objects, still serialised by _tool_replay_lock) instead of
                 # each worker lazily falling back to another turn's state.
-                turn_context = contextvars.copy_context()
+                # Each future gets its OWN copy_context(): a Context object
+                # cannot be entered by two threads at once ("cannot enter
+                # context: ... is already entered"), while separate copies
+                # of the same snapshot share the bound guard objects.
                 with ThreadPoolExecutor(
                     max_workers=min(8, len(safe_indices)),
                     thread_name_prefix="friday-safe-tool",
                 ) as tool_executor:
                     futures = {
-                        index: tool_executor.submit(turn_context.run, self._execute_single_tool_call, calls[index])
+                        index: tool_executor.submit(contextvars.copy_context().run, self._execute_single_tool_call, calls[index])
                         for index in safe_indices
                     }
                     for index, future in futures.items():
@@ -1091,7 +1094,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         bind_turn_state_machine(machine)
         self.__dict__["_state_machine_fallback"] = machine
 
-    # TASK-REL-031: the replay guards and the active task context get the
+    # TASK-REL-039: the replay guards and the active task context get the
     # same per-execution-context binding as the state machine above
     # (TASK-REL-025 follow-up). As plain shared attributes they raced
     # identically: process_message cleared the guard sets at every turn

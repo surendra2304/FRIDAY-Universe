@@ -1,4 +1,4 @@
-"""TASK-REL-031 — the REL-025 follow-up: per-turn state beyond the state machine.
+"""TASK-REL-039 — the REL-025 follow-up: per-turn state beyond the state machine.
 
 TASK-REL-025 scoped the turn's ReasoningStateMachine per execution
 context, and its own report flagged the remaining shared attributes that
@@ -27,7 +27,9 @@ the parallel-safe tool batch propagates the turn's context into its
 worker threads (``copy_context``) so within-turn dedup still sees one
 shared guard set per turn.
 
-These tests fail on clean main and pass with the fix.
+The four isolation tests fail on clean main and pass with the fix; the
+two guards (within-turn dedup, parallel-batch context propagation)
+pass on both and pin behaviour the fix must not break.
 """
 
 import threading
@@ -162,8 +164,8 @@ def test_concurrent_turns_do_not_block_each_others_identical_tool_call(
             ToolCall(id="b-call-1", name="get_system_info", arguments=dict(TOOL_ARGS))
         )
 
-    ta = threading.Thread(target=turn_a, name="rel030-turn-a")
-    tb = threading.Thread(target=turn_b, name="rel030-turn-b")
+    ta = threading.Thread(target=turn_a, name="rel039-turn-a")
+    tb = threading.Thread(target=turn_b, name="rel039-turn-b")
     ta.start()
     tb.start()
     ta.join(timeout=60)
@@ -226,7 +228,7 @@ def test_turn_start_does_not_wipe_inflight_turns_replay_guards(
         except Exception as exc:  # captured for assertion
             outcome["error"] = exc
 
-    thread_a = threading.Thread(target=run_turn_a, name="rel030-turn-a")
+    thread_a = threading.Thread(target=run_turn_a, name="rel039-turn-a")
     thread_a.start()
     assert blocking.entered.wait(timeout=30), "turn A never reached execution"
     assert blocking.first_result is not None and not blocking.first_result.is_error, (
@@ -264,3 +266,75 @@ def test_sequential_dedup_still_applies_within_one_turn(
     second = agent._execute_single_tool_call_internal(call)
     assert not first.is_error
     assert second.is_error and "Duplicate tool call ID" in second.content
+
+
+def test_parallel_safe_batch_shares_turn_context_without_context_clash():
+    """No-regression guard for the batch context propagation itself.
+
+    A turn whose model returns TWO safe tool calls in one block runs them
+    through the ThreadPoolExecutor batch. Every worker must run under the
+    turn's context snapshot — but a single Context object cannot be
+    entered by two threads at once, so each future needs its OWN copy.
+    (The first shipped version of this fix shared one copy across the
+    batch and every parallel call failed with 'cannot enter context:
+    ... is already entered' — caught by tests/test_multi_tool.py in the
+    full-suite regression sweep.) Passes on clean main (no propagation
+    exists there); fails on the shared-copy variant; passes with
+    per-future copies.
+    """
+    from friday.core.auth import AutoApproveAuthorizer
+    from friday.core.config import Settings
+    from friday.core.types import Message, Role, SafetyLevel, ToolResult
+    from friday.llm.mock_provider import MockLLMProvider
+    from friday.tools.base import BaseTool
+    from friday.tools.registry import ToolRegistry
+
+    class _SafeEcho(BaseTool):
+        parameters = {"type": "object", "properties": {"val": {"type": "string"}}}
+        safety_level = SafetyLevel.SAFE
+
+        def execute(self, val="x", **kwargs):
+            return ToolResult(
+                name=self.name,
+                content=f"echo {self.name}:{val}",
+                is_error=False,
+                safety_level=self.safety_level,
+            )
+
+    class _SafeA(_SafeEcho):
+        name = "rel039_safe_a"
+        description = "Safe echo A"
+
+    class _SafeB(_SafeEcho):
+        name = "rel039_safe_b"
+        description = "Safe echo B"
+
+    registry = ToolRegistry()
+    registry.register(_SafeA())
+    registry.register(_SafeB())
+
+    calls = {"n": 0}
+
+    def responder(messages, tools):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return Message(
+                role=Role.ASSISTANT,
+                content="Calling two tools",
+                tool_calls=[
+                    ToolCall(id="b1", name="rel039_safe_a", arguments={"val": "1"}),
+                    ToolCall(id="b2", name="rel039_safe_b", arguments={"val": "2"}),
+                ],
+            )
+        return Message(role=Role.ASSISTANT, content="batch done")
+
+    agent = FridayAgent(
+        settings=Settings(env="testing", embedding_provider="none"),
+        llm_provider=MockLLMProvider(custom_responder=responder),
+        tool_registry=registry,
+        authorizer=AutoApproveAuthorizer.create_for_testing(),
+    )
+    response = agent.process_message("Run both safe tools")
+    assert response.tool_results is not None and len(response.tool_results) == 2
+    contents = sorted(r.content for r in response.tool_results)
+    assert contents == ["echo rel039_safe_a:1", "echo rel039_safe_b:2"], contents
