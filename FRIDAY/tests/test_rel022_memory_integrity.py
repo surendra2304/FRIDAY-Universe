@@ -118,17 +118,28 @@ _MEMORA_TOOL = [
 ]
 
 
-def test_groq_tpm_strip_retry_recovers_attempted_tool_call():
-    """The production probe-4 shape: TPM strip-retry -> the model calls
+def test_groq_tpm_retry_recovers_attempted_tool_call():
+    """The production probe-4 shape: TPM retry -> the model calls
     memora_memory anyway -> Groq 400s. The provider must hand the agent
-    loop the attempted call, not the 400."""
+    loop the attempted call, not the 400.
+
+    TASK-REL-039 DISCLOSURE: this test was renamed from
+    test_groq_tpm_strip_retry_recovers_attempted_tool_call and its
+    request-shape assertion flipped. REL-022 pinned the TPM retry
+    stripping the tools ("tools" not in the retry); that strip is the
+    REL-010 failover quality gap TASK-REL-039 removes — the retry now
+    compacts the messages but KEEPS the tools (rung 1 of the TPM
+    ladder), and only the last-resort rung goes text-only. The REL-022
+    guarantee itself is unchanged and still asserted below: the
+    attempted tool call is recovered, not lost.
+    """
     failed_generation = '{"name": "memora_memory", "arguments": {"query": "safe word"}}'
     provider, completions = _groq([_tpm_error(), _tool_use_failed(failed_generation)])
 
     out = provider.generate([_user("What is my safe word?")], tools=_MEMORA_TOOL)
 
     assert len(completions.calls) == 2
-    assert "tools" not in completions.calls[1]  # the TPM retry really stripped them
+    assert completions.calls[1].get("tools")  # REL-039: retry keeps the tools
     assert out.tool_calls, "the attempted tool call must be recovered, not lost"
     assert out.tool_calls[0].name == "memora_memory"
     assert out.tool_calls[0].arguments == {"query": "safe word"}
