@@ -10,7 +10,8 @@ class DatabaseProbe:
 
 
 def test_health_reports_server_observation_timestamp_and_evidence_class(monkeypatch):
-    monkeypatch.setattr(health, "production_mode", lambda: False)
+    # TASK-REL-013 repair: dropped a patch of health.production_mode, a name
+    # that has never existed in the health module (the patch errored on main).
     monkeypatch.setattr(
         health.vector_adapter,
         "readiness",

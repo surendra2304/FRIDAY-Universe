@@ -957,10 +957,22 @@ class MemoryWriteService:
                 and not write_transaction_committed
             ):
                 try:
-                    deleted = vector_adapter.delete_embedding(
-                        vector_write_memory_id,
-                        tenant_id=resolved_tenant,
-                    )
+                    # Compensate against the same store the upsert wrote to
+                    # (TASK-REL-013): on the Oracle backend the vector lives
+                    # in the native vector table, so a Qdrant delete would
+                    # report failure for a row it never held (or, worse,
+                    # report success while the real row survives).
+                    from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+                    if oracle_vector_adapter.is_oracle_backend():
+                        deleted = oracle_vector_adapter.delete_embedding(
+                            vector_write_memory_id,
+                            tenant_id=resolved_tenant,
+                        )
+                    else:
+                        deleted = vector_adapter.delete_embedding(
+                            vector_write_memory_id,
+                            tenant_id=resolved_tenant,
+                        )
                     if not deleted:
                         logger.error(
                             "Could not compensate vector upsert for rolled-back memory '%s' (tenant '%s').",
