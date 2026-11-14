@@ -1073,7 +1073,13 @@ class FleetClient:
                 f"{self.futuris_url}/v1/friday/forecast",
                 json=payload,
                 headers=headers,
-                timeout=20.0,
+                # TASK-REL-007: 20s could never succeed — Futuris' measured
+                # live latency for this endpoint is ~40s warm and ~114s cold
+                # on the 956MB fleet host (full pipeline + evidence snapshot
+                # per request), so every chat forecast timed out and surfaced
+                # as "Error connecting to Futuris". Budget must cover the
+                # real pipeline, not a health check.
+                timeout=120.0,
             )
             if resp.status_code not in (200, 201):
                 await breaker.record_failure()

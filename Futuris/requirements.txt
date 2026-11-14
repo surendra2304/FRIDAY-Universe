@@ -11,6 +11,10 @@ httpx>=0.27.0,<1.0.0
 redis>=5.0,<7.0
 statsforecast>=1.7.0
 pandas>=2.2.0
+# TASK-REL-007: hard dependency — futuris/evidence/snapshots.py writes every
+# forecast evidence snapshot with engine="pyarrow". It was declared nowhere,
+# so POST /v1/friday/forecast 500'd with ImportError on any clean install.
+pyarrow>=14.0.0
 numpy>=1.26.0
 python-dotenv>=1.0.0
 prometheus-client>=0.20.0
