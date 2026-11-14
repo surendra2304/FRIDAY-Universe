@@ -14,8 +14,10 @@ owner. These tests pin the fallback contract:
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
+import time
 from pathlib import Path
 from unittest import mock
 
@@ -136,6 +138,64 @@ async def test_probe_rejects_400_terms_response():
         ok = await worker._probe_orpheus_tts()
     assert ok is False
     assert worker._ORPHEUS_CACHE["ok"] is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("verdict", [True, False])
+async def test_probe_uses_fresh_cache_without_http(verdict):
+    """A fresh cached verdict is returned with NO live Groq call.
+
+    Regression (2026-11-14): the probe made a live HTTP call (15 s
+    timeout) on every job's critical path even though consumers only
+    trust a 5-minute cache — pure added dead air before the greeting.
+    """
+    class _Client:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def post(self, *args, **kwargs):
+            raise AssertionError("probe must not call Groq with a fresh cache")
+
+    with mock.patch.object(worker, "_ORPHEUS_CACHE", {"ok": verdict, "ts": time.time()}), \
+         mock.patch.object(worker, "GROQ_PLUGIN_AVAILABLE", True), \
+         mock.patch.object(worker, "_groq_key", return_value="gsk_test"), \
+         mock.patch.object(worker.httpx, "AsyncClient", _Client):
+        ok = await worker._probe_orpheus_tts()
+    assert ok is verdict
+
+
+def test_loop_block_reports_are_filtered():
+    """'event loop blocked' reports are dropped at the real 1.8.x logger.
+
+    Regression (2026-11-14): livekit-agents 1.8.x emits every framework
+    record through the single 'livekit.agents' logger, so the worker's
+    setLevel on 'livekit.agents.telemetry.loop_monitor' never matched and
+    the multi-KB stall reports kept blocking the audio loop (1,400 ms in
+    the production journal) with their own formatting.
+    """
+    filters = [
+        f for f in logging.getLogger("livekit.agents").filters
+        if isinstance(f, worker._LoopBlockReportFilter)
+    ]
+    assert filters, "loop-block filter not installed on the livekit.agents logger"
+    flt = filters[0]
+
+    def _record(level, msg):
+        return logging.LogRecord(
+            "livekit.agents", level, __file__, 1, msg, (), None,
+        )
+
+    assert flt.filter(_record(
+        logging.WARNING, "event loop blocked for 250ms at \"/x.py\", line 1",
+    )) is False
+    assert flt.filter(_record(logging.ERROR, "session error: boom")) is True
+    assert flt.filter(_record(logging.WARNING, "worker registered")) is True
 
 
 @pytest.mark.asyncio
@@ -272,6 +332,66 @@ async def test_edge_tts_emits_pcm_after_threaded_conversion(monkeypatch):
     assert emitter.initialized
     assert emitter.data == b"pcm-data"
     assert emitter.flushed
+
+
+@pytest.mark.asyncio
+async def test_edge_tts_pushes_first_audio_before_stream_ends(monkeypatch):
+    """Progressive decode: PCM is pushed while mp3 is still arriving.
+
+    Regression (2026-11-14): the adapter buffered the whole mp3 and ran
+    one whole-buffer transcode before pushing anything, so the first
+    audible frame waited for the full synthesis download + transcode.
+    PCM here is a prefix-consistent function of the mp3 length, exactly
+    the property real mp3 frame decoding has.
+    """
+    events: list = []
+
+    class _Communicate:
+        def __init__(self, text, voice):
+            pass
+
+        async def stream(self):
+            for i in range(3):
+                events.append(("chunk", i))
+                yield {"type": "audio", "data": b"m" * 9000}
+
+    class _Emitter:
+        def __init__(self):
+            self.initialized = False
+            self.pushes: list[int] = []
+            self.flushed = False
+
+        def initialize(self, **kwargs):
+            self.initialized = True
+
+        def push(self, data):
+            events.append(("push", len(data)))
+            self.pushes.append(len(data))
+
+        def flush(self):
+            self.flushed = True
+
+    def _fake_pcm(data: bytes) -> bytes:
+        return b"P" * (len(data) // 9000 * 4800)
+
+    monkeypatch.setattr(edge_adapter.edge_tts, "Communicate", _Communicate)
+    monkeypatch.setattr(edge_adapter, "_mp3_prefix_to_pcm", _fake_pcm)
+    monkeypatch.setattr(edge_adapter, "_mp3_to_pcm", _fake_pcm)
+    stream = edge_adapter._EdgeChunkedStream(
+        tts=object(), input_text="hello", conn_options=object(),
+        voice="en-IN-NeerjaNeural",
+    )
+    emitter = _Emitter()
+
+    await stream._run(emitter)
+
+    assert emitter.initialized
+    assert emitter.flushed
+    assert len(emitter.pushes) >= 2, "audio must arrive in more than one push"
+    assert sum(emitter.pushes) == 14400
+    first_push = next(i for i, e in enumerate(events) if e[0] == "push")
+    last_chunk = max(i for i, e in enumerate(events) if e[0] == "chunk")
+    assert first_push < last_chunk, "first audio must be pushed before the mp3 stream ends"
 
 
 def test_edge_voice_env_override():

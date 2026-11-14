@@ -105,6 +105,30 @@ if not logger.handlers:
 
 # The loop monitor emits multi-kilobyte JSON warnings that themselves block
 # the audio loop. Keep genuine errors, drop the repetitive stall reports.
+#
+# LATENCY FIX (2026-11-14): the setLevel below this filter never matched
+# anything — in livekit-agents 1.8.x every framework record, the loop
+# monitor included, is emitted through the single "livekit.agents" logger
+# (livekit/agents/log.py builds it; telemetry/loop_monitor.py imports it).
+# The production journal for the owner's failed live voice test shows the
+# reports still flowing at WARNING, and one report's own JSON formatting
+# blocked the audio loop for 1,400 ms (loop_monitor._emit_log -> logging
+# -> cli/log.py format): each stall report amplifies the next stall, and
+# the owner hears it as breaking audio. A message filter on the real
+# logger drops ONLY these reports; every other framework log passes.
+
+
+class _LoopBlockReportFilter(logging.Filter):
+    """Drop 'event loop blocked' stall reports from the livekit logger."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            return not record.getMessage().startswith("event loop blocked")
+        except Exception:
+            return True
+
+
+logging.getLogger("livekit.agents").addFilter(_LoopBlockReportFilter())
 logging.getLogger("livekit.agents.telemetry.loop_monitor").setLevel(logging.ERROR)
 
 # Warm the URL/regex/httpx code paths that otherwise stall the job loop for
@@ -412,10 +436,16 @@ async def _gemini_best_key() -> "str | None":
         return None
 
     # Probe at most the first two keys; the pool orders healthy-first.
+    # LATENCY FIX (2026-11-14): the per-key budget was 15 s, so two hung
+    # probes gated the session build for up to 30 s (the gather in the
+    # entrypoint waits for this). A generateContent ping answers in ~1 s
+    # on a healthy key; 8 s is generous headroom on the capped host, and
+    # a falsely rejected key degrades to the working Groq pipeline, never
+    # to silence.
     for key in keys[:2]:
         try:
             valid = await asyncio.wait_for(
-                asyncio.to_thread(_probe_gemini_key_sync, key), timeout=15.0
+                asyncio.to_thread(_probe_gemini_key_sync, key), timeout=8.0
             )
         except asyncio.TimeoutError:
             logger.info("gemini key probe timed out")
@@ -476,6 +506,14 @@ async def _probe_orpheus_tts() -> bool:
     key = _groq_key()
     if not key or not GROQ_PLUGIN_AVAILABLE:
         return False
+    # LATENCY FIX (2026-11-14): the probe used to make a live Groq call on
+    # EVERY job's critical path (15 s timeout) even though _orpheus_ok()
+    # only ever trusts a 5-minute cache — the entrypoint paid the round
+    # trip (or the full timeout, when Groq is slow) before the session was
+    # even built, for zero information gain. A fresh cached verdict is the
+    # same verdict the consumers would have used anyway.
+    if _ORPHEUS_CACHE["ok"] is not None and time.time() - _ORPHEUS_CACHE["ts"] <= 300:
+        return bool(_ORPHEUS_CACHE["ok"])
     try:
         async with httpx.AsyncClient(
             base_url="https://api.groq.com", timeout=15, verify=_SSL_CONTEXT
@@ -676,7 +714,13 @@ async def entrypoint(ctx: JobContext):
             tts=tts,
             turn_detection="stt",
             min_endpointing_delay=0.5,
-            max_endpointing_delay=4.0,
+            # LATENCY FIX (2026-11-14): 4.0 s of tolerated silence before
+            # the STT turn was allowed to close was the single largest
+            # dead-air term in every reply — the owner stopped talking and
+            # FRIDAY waited up to four full seconds before even starting
+            # to think. 2.0 s still protects mid-sentence pauses (the
+            # 0.5 s minimum is unchanged) while halving the worst case.
+            max_endpointing_delay=2.0,
             allow_interruptions=True,
             min_interruption_duration=0.9,
         )
