@@ -90,7 +90,7 @@ class TestExtraction:
         assert _extract_target("give me a forecast") == "fleet:api:request_rate"
 
     def test_qualified_forecast_extracts_the_real_target(self) -> None:
-        # TASK-REL-006: the exact console round-1 phrasing. Before the fix the
+        # TASK-REL-007: the exact console round-1 phrasing. Before the fix the
         # qualifier ("short") defeated extraction and the whole sentence (or
         # the default) became the target.
         phrase = "Give me a short forecast: what should I expect for my portfolio this week?"
@@ -353,7 +353,7 @@ class TestForecastFastPath:
         ), "futuris_forecast must be registered in the default tool registry"
 
     def test_qualified_forecast_phrasing_fires(self) -> None:
-        # TASK-REL-006: "give me a SHORT forecast" must dispatch to Futuris;
+        # TASK-REL-007: "give me a SHORT forecast" must dispatch to Futuris;
         # before the fix it fell through to the LLM, which invented an
         # outlook instead of asking Futuris (console round 1, 2026-11-14).
         agent = _agent()

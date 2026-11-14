@@ -1,4 +1,4 @@
-"""TASK-REL-006: FRIDAY <-> Stratex auth alignment contract.
+"""TASK-REL-007: FRIDAY <-> Stratex auth alignment contract.
 
 Production failure (console round 1, 2026-11-14): FRIDAY's portfolio query
 dispatched to Stratex /v1/task/execute and got

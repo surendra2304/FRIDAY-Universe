@@ -176,7 +176,7 @@ class TestResearchFastPath:
         assert "2 citation(s)" in response.content
 
     def test_headlines_with_sources_dispatches(self) -> None:
-        # TASK-REL-006: the exact console round-1 phrasing. Before the fix it
+        # TASK-REL-007: the exact console round-1 phrasing. Before the fix it
         # matched no research action shape, fell into the LLM tool loop and
         # surfaced as a bare "502"; a headlines request that asks for sources
         # is a research action and must reach IntelX.

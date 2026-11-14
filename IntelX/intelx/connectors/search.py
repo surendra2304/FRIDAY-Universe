@@ -706,7 +706,7 @@ class WebSearchConnector(BaseConnector):
             primary_results = await fetch_provider("searxng", self._searxng)
 
         if primary_results:
-            # TASK-REL-006: a primary hit must no longer END the search.
+            # TASK-REL-007: a primary hit must no longer END the search.
             # Tavily's top candidates for headline/news queries are section
             # and listing pages (topic/tag/home pages), which the grounded
             # research pipeline correctly refuses to certify as source

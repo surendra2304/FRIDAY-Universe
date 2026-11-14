@@ -780,7 +780,7 @@ class FastPathMixin:
             r"(?:research|investigate|look into|dig into|find out about|brief me on|do some research)\b",
             low,
         )) or CapabilityRouter._matches(low, {"give me the highlights", "get the highlights"})
-        # TASK-REL-006 (Track B; flagged for Track A): a headlines request that
+        # TASK-REL-007 (Track B; flagged for Track A): a headlines request that
         # explicitly asks for sources IS a research action — "What are today's
         # top three AI news headlines? Include sources." previously matched no
         # action shape, fell into the LLM tool loop and surfaced as a bare
@@ -956,7 +956,7 @@ class FastPathMixin:
         # An explicit forecast ACTION: leading verb or an explicit futuris ask.
         action_shaped = bool(re.match(
             r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
-            # TASK-REL-006: optional qualifier ("give me a SHORT forecast")
+            # TASK-REL-007: optional qualifier ("give me a SHORT forecast")
             # must still dispatch to Futuris instead of the LLM path.
             r"(?:forecast|predict|project|give me (?:a|the)(?: \w+)? forecast|get (?:me )?(?:a|the) forecast)\b",
             low,

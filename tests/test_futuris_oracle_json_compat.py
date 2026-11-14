@@ -1,4 +1,4 @@
-"""Futuris Oracle JSON dialect compatibility contract (TASK-REL-006).
+"""Futuris Oracle JSON dialect compatibility contract (TASK-REL-007).
 
 Production failure (2026-11-14): every ``POST /v1/friday/forecast`` returned
 HTTP 500. The service traceback ended with::

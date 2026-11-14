@@ -230,7 +230,7 @@ def get_configured_api_keys() -> dict[str, dict[str, Any]]:
     add_keys("API_KEY_CONTROL", "CONTROL", [SCOPE_READ, SCOPE_CONTROL])
     add_keys("API_KEY_READONLY", "READONLY", [SCOPE_READ])
     add_keys("API_KEY_FRIDAY", "FRIDAY", [SCOPE_READ, SCOPE_CONTROL, SCOPE_FRIDAY])
-    # 2. Fleet-standard service key (TASK-REL-006). Every agent in the fleet is
+    # 2. Fleet-standard service key (TASK-REL-007). Every agent in the fleet is
     # provisioned with a per-agent ``<AGENT>_API_KEY`` env var, and FRIDAY's
     # Stratex credential is exactly that value (FRIDAY_STRATEX_API_KEY /
     # STRATEX_API_KEY in FRIDAY's env — verified same-value as this service's

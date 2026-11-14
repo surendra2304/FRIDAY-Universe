@@ -1,4 +1,4 @@
-"""Oracle dialect JSON processing compatibility shim (TASK-REL-006).
+"""Oracle dialect JSON processing compatibility shim (TASK-REL-007).
 
 Production failure (2026-11-14): ``POST /v1/friday/forecast`` returned
 HTTP 500 for every request. The Futuris.service traceback ended in

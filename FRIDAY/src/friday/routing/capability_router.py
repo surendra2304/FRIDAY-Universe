@@ -150,7 +150,7 @@ class CapabilityRouter:
         "look into", "investigate", "get the highlights", "give me the highlights",
         "brief me on", "what are the findings", "sourced summary",
         "evidence on", "dig into",
-        # TASK-REL-006: headline requests are research requests; the fast
+        # TASK-REL-007: headline requests are research requests; the fast
         # path additionally requires an action shape (sources/news ask).
         "headlines",
     }

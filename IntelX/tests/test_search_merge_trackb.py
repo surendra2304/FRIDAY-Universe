@@ -1,4 +1,4 @@
-"""TASK-REL-006: WebSearchConnector must merge Google News article
+"""TASK-REL-007: WebSearchConnector must merge Google News article
 candidates with Tavily results instead of returning Tavily alone.
 
 Production failure: IntelX research_live for headline queries returned

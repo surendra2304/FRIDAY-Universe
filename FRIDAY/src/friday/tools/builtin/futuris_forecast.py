@@ -63,7 +63,7 @@ def _extract_target(text: str, default: str = "fleet:api:request_rate") -> str:
     cleaned = re.sub(
         r"^(?:please\s+|can you\s+|could you\s+|friday[, ]+)?"
         r"(?:forecast|predict|project|what does futuris (?:predict|forecast|say)(?: about)?|"
-        # TASK-REL-006: allow a qualifier ("give me a SHORT forecast: ...") —
+        # TASK-REL-007: allow a qualifier ("give me a SHORT forecast: ...") —
         # without it the whole sentence became the forecast target.
         r"give me (?:a |the )?(?:(?:short|quick|brief|latest) )?forecast(?: for)?|"
         r"get (?:me )?(?:a |the )?forecast(?: for)?)\s*"
