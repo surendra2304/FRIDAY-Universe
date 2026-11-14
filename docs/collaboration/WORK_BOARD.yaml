@@ -4236,13 +4236,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Merge PR #226 on green CI, let Fleet CD deploy FRIDAY, fingerprint-verify the deployed memora_client.py, then run the live acceptance (save -> shared-store inspection -> Memora restart -> chat recall -> forget -> absence in both stores) and flip this entry to VERIFIED with the evidence; clean up the crew's probe records (707d477f, 85ce0419, bdd353fa and the replica-probe records) from both stores."
   - id: TASK-WEB-001
     title: "Complete website redesign from scratch — voice-first Talk home, dark cinematic Jarvis style, home = talk + chat only (owner mandate 2026-11-15)"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-web-001-redesign
     contributors: []
     priority: P1
     created_at: "2026-11-15T02:45:00+05:30"
-    updated_at: "2026-11-15T02:45:00+05:30"
+    updated_at: "2026-11-15T03:55:00+05:30"
     files:
       - "FRIDAY/ui/app/page.tsx"
       - "FRIDAY/ui/app/layout.tsx"
@@ -4267,8 +4267,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Rollback point recorded: previous live build f6e2d06 (Reactor Deck, build tag RD-20261114-1504)."
     evidence:
       - "Claim: issue #35 comment 6884271953 (2026-11-15). Local gates before ship: tsc --noEmit clean; eslint 6 errors vs 27 on clean main (the remainder are the codebase's pre-existing effect-pattern class); next build (static export) succeeds; the built bundle contains the new build tag and new copy and zero Reactor Deck / Aurora strings (public/status.html restyled to match, its /api/status/public contract untouched)."
+      - "SHIPPED: PR #218 merged 2026-11-15 (merge commit 802e5b3cee099fd8f287d92ff04d07e0ae60f30d). CI: at head eb5dd55 every triggered workflow was green (friday-universe-ci, collaboration-registry, voice-startup-regressions, lighthouse-ci, monorepo-validation, validate-monorepo, secret-scan — listed per-workflow via the bridge). DISCLOSURE: GitHub registered ZERO check runs for the final three heads (board-only and merge commits); the board bytes were validated locally with the repo validator (the script CI runs) and the code content was byte-identical to the green head."
+      - "CI FINDING FIXED IN-PR: the first head failed voice-startup-regressions — the runtime-audit harness executes the ACTUAL startCall from FRIDAY/ui/components/VoiceCall.tsx, so the redesigned voice component keeps that file path (content/copy are the new design) and the mic-denied line carries the harness-pinned phrase inside fresh wording. Harness passes all 9 scenarios locally and in CI after the fix."
+      - "DEPLOYED: Fleet CD deploy-monorepo run for 802e5b3 completed SUCCESS 2026-11-14T22:08Z."
+      - "PRODUCTION-VERIFIED 2026-11-15 ~03:45 IST (16/16 probes): served /friday/ index byte-identical to the merged build (sha256 58a3c66cb35ec2e8); main chunk and tag chunk byte-identical (tag chunk carries ARC-20261115-0255 + FRIDAY \u00b7 Arc; zero Reactor Deck strings); status.html byte-identical (restyled); GET agents/status, agents/live, system_telemetry, autonomous/status, tasks/timeline, voice/diagnostics, owner/preferences all 200; GET livekit/token 200 with token; POST /api/chat round-trip 200 (reply acknowledged, 13.8s); GET conversation/history contains the probe turn (REL-029 durability works through the new UI contract). Voice-call UI is present in the shipped bundle (component copy incl. the pinned mic phrase); a live mic call from the sandbox is an evidence limit (no microphone), not a product verdict."
     blockers: []
-    next_action: "Ship the redesign PR; on green CI merge, verify the Fleet CD deploy by hash comparison and live probes, then flip this entry to VERIFIED with the probe evidence."
+    next_action: "None — complete and production-verified. Remaining gate is the owner's own verdict on the new design. Rollback point: f6e2d06 (Reactor Deck)."
 
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
