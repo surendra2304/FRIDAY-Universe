@@ -257,6 +257,7 @@ async def test_campaign_predictor_confidence_not_invented(client):
     forecast = (
         await client.post("/intelx/campaign/forecast", params={"actor": "REL017 actor"})
     ).json()
+    # Registered phases carry no probabilities -> no basis for confidence.
     assert forecast["confidence"] == 0.0
     assert forecast["data_source"] == "operator_registered_phases_only"
 
@@ -264,6 +265,18 @@ async def test_campaign_predictor_confidence_not_invented(client):
         await client.post("/intelx/campaign/assess", params={"threat_level": "high"})
     ).json()
     assert "static_playbook" in assessment["basis"]
+
+
+def test_campaign_predictor_confidence_is_mean_of_supplied_probabilities():
+    """Confidence must be a transparent function of operator input."""
+    from intelx.services.threat_campaign_predictor import ThreatCampaignPredictor
+
+    engine = ThreatCampaignPredictor()
+    assert engine.forecast_campaign("APT-TEST").confidence == 0.0
+    engine.add_phase("Reconnaissance", "scanning", start_probability=0.8, duration_estimate=7200)
+    engine.add_phase("Exploitation", "access", start_probability=0.5, duration_estimate=3600)
+    forecast = engine.forecast_campaign("APT-TEST", "Reconnaissance")
+    assert forecast.confidence == 0.65  # mean(0.8, 0.5), not 0.15 * 2 phases
 
 
 # ── Real engines mounted: /v1/real-threat-intel/* ──────────────────────────

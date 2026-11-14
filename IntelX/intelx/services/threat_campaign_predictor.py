@@ -91,11 +91,13 @@ class ThreatCampaignPredictor:
                 "duration": phase.duration_estimate,
             })
 
-        # TASK-REL-017: no measured confidence exists — the forecast only
-        # echoes operator-registered phases, and no campaign telemetry is
-        # connected. The previous formula (0.15 per registered phase,
-        # capped at 0.9) invented a confidence from a count of records.
-        forecast.confidence = 0.0
+        # TASK-REL-017: confidence is derived ONLY from the probabilities
+        # the operator supplied when registering the phases (their mean;
+        # 0.0 when no phases exist or none carry a probability). The
+        # previous formula — 0.15 per registered phase, capped at 0.9 —
+        # invented a confidence from a mere count of records.
+        probs = [p.start_probability for p in self._phases.values()]
+        forecast.confidence = round(sum(probs) / len(probs), 3) if probs else 0.0
 
         self._forecasts.append(forecast)
         return forecast
@@ -181,7 +183,7 @@ async def forecast_campaign(actor: str, current_phase: str = ""):
         "phase_count": len(forecast.predicted_phases),
         "confidence": forecast.confidence,
         "data_source": "operator_registered_phases_only",
-        "confidence_basis": "no_measured_confidence_no_campaign_telemetry_connected",
+        "confidence_basis": "mean_of_operator_supplied_phase_probabilities_no_telemetry",
     }
 
 
