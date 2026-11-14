@@ -3240,6 +3240,36 @@ tasks:
     evidence: []
     blockers: []
     next_action: "Replacement PR via bridge Git Data API (supersedes #115); merge on green CI under owner autonomous authority; confirm Fleet CD deploy + worker state."
+  - id: TASK-STR-SAFETY-001
+    title: "Close three Stratex safety holes: daemon governance bypass, ALLOW_LIVE_TRADING env unlock, unguarded OANDA place_order"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: "claude/stratex-safety-governance"
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T14:45:00+05:30"
+    updated_at: "2026-11-14T14:45:00+05:30"
+    files:
+      - "Stratex/strategies/strategy_registry.py"
+      - "Stratex/autonomy/run_daemon.py"
+      - "Stratex/exchanges/binance_futures_adapter.py"
+      - "Stratex/exchanges/exchange_implementations.py"
+      - "Stratex/exchanges/ctrader_fix_adapter.py"
+      - "Stratex/exchanges/oanda_adapter.py"
+      - "Stratex/tests/test_daemon_governance.py"
+      - "Stratex/tests/test_oanda_practice_guard.py"
+    defect: "Complete system audit 2026-11-14: (1) the multi-venue daemon executes strategies via strategies/strategy_registry.py, which glob-discovers every strategy module and hardcodes status=VALIDATED — DISABLED scalpers, the OBSERVE_ONLY post-incident supertrend, a never-register Donchian and a placeholder all reach order placement, bypassing config_strategy.py governance that the testnet engine honours; (2) env ALLOW_LIVE_TRADING=true alone unlocks live-endpoint order paths (Binance futures/spot, Coinbase which has no testnet, cTrader live FIX host) while TRADING_MODE is still TESTNET; (3) exchanges/oanda_adapter.py place_order() has no environment guard beyond a practice flag. Also: strategy_denylist.json is written by the daemon but never read back, so pruned strategies return on restart."
+    acceptance:
+      - "Daemon honours config_strategy.py governance: DISABLED/UNREGISTERED strategies never reach order placement (not even evaluated for execution); OBSERVE_ONLY strategies may evaluate/log signals but never place orders; tests prove both through the daemon's own scan path."
+      - "Order placement on any live endpoint is impossible via environment alone: the env opt-in additionally requires the code-level LIVE_TRADING_ENABLED invariant in Stratex/config.py to be flipped by a human editing source."
+      - "OANDA place_order refuses (logged) unless the resolved environment is unambiguously the practice host."
+      - "Daemon loads strategy_denylist.json at startup so auto-pruned strategies stay pruned across restarts."
+      - "Live verification after deploy: Stratex /health 200 and honest; daemon logs show the governed executable/observe-only/excluded sets; testnet engine heartbeat fresh with its 6 governed strategies."
+    evidence:
+      - "System map 2026-11-14 (hidden_files/system_map_2026-11-14.md) safety findings, re-verified in code at main 5c07212 by Muse."
+    blockers: []
+    next_action: "Implement on branch claude/stratex-safety-governance (PR per hole cluster); merge when CI green under owner blanket authorization; verify live post-CD."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
