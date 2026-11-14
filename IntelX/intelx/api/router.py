@@ -122,6 +122,7 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
     # for research_live and uses the existing real scout/retrieve/synthesis path.
     if action == "research_live":
         from intelx.api.live_research_task import collect_live_brief, run_live_research
+        from intelx.api.grounded_live_research import synthesize_grounded
         from intelx.connectors.search import WebSearchConnector
         from intelx.connectors.web import HttpFetchConnector
         from intelx.core.settings import get_settings
@@ -133,7 +134,7 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
         if cfg.MOCK_MODE:
             raise HTTPException(status_code=503, detail="Live research refuses MOCK_MODE; no fixture evidence will be returned")
         async def run_pipeline():
-            return await collect_live_brief(query, WebSearchConnector(settings=cfg), HttpFetchConnector(settings=cfg))
+            return await collect_live_brief(query, WebSearchConnector(settings=cfg), HttpFetchConnector(settings=cfg), synthesize=synthesize_grounded)
         return await run_live_research(task_id, query, run_pipeline)
 
     # 1. Action = Cancel

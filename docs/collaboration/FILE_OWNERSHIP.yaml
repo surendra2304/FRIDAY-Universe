@@ -82,6 +82,20 @@ claims:
     branches: [arena/TASK-WF-015-inference-model-contract]
     status: ACTIVE_CLAIM
     task: "TASK-WF-015-INFERENCE-001; issue35 claim6848266494"
+  - path: IntelX/intelx/api/grounded_live_research.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-015-grounded-research
+    status: ACTIVE_CLAIM
+    task: TASK-WF-015 grounded draft; claim6844448930, NOT accepted for deploy
+  - path: tests/test_grounded_research_synthesis.py
+    owner: arena_engineering_01
+    prs: []
+    branches:
+    - arena/TASK-WF-015-grounded-research
+    status: ACTIVE_CLAIM
+    task: TASK-WF-015 grounded draft; claim6844448930, NOT accepted for deploy
   - path: IntelX/intelx/models/ai_universe_provider.py
     owner: arena_engineering_01
     prs: []

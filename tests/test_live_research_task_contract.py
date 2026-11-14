@@ -124,3 +124,38 @@ def test_official_document_heading_is_not_a_research_finding():
     assert result["status"] == "SUCCESS"
     assert "Serialize obj" in result["findings"][0]["quote"]
     assert "documentation" not in result["findings"][0]["quote"]
+
+
+def test_live_synthesis_failure_does_not_certify_extractive_fallback():
+    search = SimpleNamespace(fetch=AsyncMock(return_value=[SimpleNamespace(title='Fixture', url='https://example.org/doc')]))
+    fetch = SimpleNamespace(fetch=AsyncMock(return_value=SimpleNamespace(status_code=200, content_type='text/plain', final_url='https://example.org/doc', content=b'Battery capacity is measured and reported in this synthetic source document.')))
+    synthesis = AsyncMock(side_effect=RuntimeError('fixture outage'))
+    result = asyncio.run(m.collect_live_brief('battery capacity', search, fetch, synthesize=synthesis))
+    assert result['status'] == 'DEGRADED'
+    assert result['findings'] == []
+    assert 'outage' not in result['text_response']
+    wrapped = asyncio.run(m.run_live_research('fixture', 'battery capacity', AsyncMock(return_value=result)))
+    assert wrapped['status'] == 'DEGRADED'
+    assert 'receipt' not in wrapped
+
+
+def test_explicit_insufficient_synthesis_never_returns_excerpt_success():
+    search = SimpleNamespace(fetch=AsyncMock(return_value=[SimpleNamespace(title='Fixture', url='https://example.org/doc')]))
+    fetch = SimpleNamespace(fetch=AsyncMock(return_value=SimpleNamespace(status_code=200, content_type='text/plain', final_url='', content=b'Battery capacity is measured and reported in this synthetic source document.')))
+    synthesis = AsyncMock(return_value={'status': 'DEGRADED', 'error': 'question_evidence_insufficient', 'findings': []})
+    result = asyncio.run(m.collect_live_brief('battery capacity', search, fetch, synthesize=synthesis))
+    assert result['status'] == 'DEGRADED'
+    assert result['findings'] == []
+    assert synthesis.await_count == 1
+
+
+def test_collector_passes_fetched_prose_not_hidden_script_or_search_snippets():
+    search = SimpleNamespace(fetch=AsyncMock(return_value=[SimpleNamespace(title='Fixture', url='https://example.org/doc', snippet='INVENTED SNIPPET')]))
+    fetch = SimpleNamespace(fetch=AsyncMock(return_value=SimpleNamespace(status_code=200, content_type='text/html', final_url='', content=b'<script>HIDDEN INSTRUCTIONS</script><p>Battery capacity is measured and reported in this synthetic source document.</p>')))
+    synthesis = AsyncMock(return_value={'status': 'DEGRADED', 'error': 'question_evidence_insufficient', 'findings': []})
+    asyncio.run(m.collect_live_brief('battery capacity', search, fetch, synthesize=synthesis))
+    documents = synthesis.call_args.args[1]
+    assert len(documents) == 1
+    assert 'HIDDEN' not in documents[0]['text']
+    assert 'INVENTED' not in documents[0]['text']
+    assert 'Battery capacity' in documents[0]['text']

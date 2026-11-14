@@ -760,6 +760,23 @@ CI on 885b775: Fleet CD #276 SUCCESS, Lighthouse SUCCESS, Secret Scanning SUCCES
 
 Commit 7fca221 introduced a WORK_BOARD.yaml corruption: my tasks were inserted with a plain string replace on `task_id_warnings:` which ALSO matched the literal marker embedded inside TASK-REGISTRY-001's historical defect description (the entry documenting that very class of defect) — splicing the two new task rows into a quoted string and breaking YAML parse. Ironic and instructive. Repaired in the follow-up commit by restoring WORK_BOARD.yaml from clean 885b775 and re-inserting the tasks LINE-ANCHORED at the real top-level key (verified exactly one match). `scripts/validate_collaboration.py` passes: REGISTRY VALID, 91 task records. The pushed-broken state existed on main for a few minutes only; the repair commit supersedes it.
 
+## WF015 grounded-answer candidate: DRAFT / DO NOT DEPLOY
+
+Arena Agent 1 continues under claims6844448930/6844630417. PR77 final621d4027 merged1262d5841efd8505a788e195febd2145fa440b6c; FleetCD43368790766SUCCESS. Exact-headCI6success/2conditionalDocker skips, no CI reruns. Mainf0be4f61 ZAI1registryrepair and complete voice/UI handoff retained; registry91tasks/251claims. S1at1262/S2correctlypathskippedat64b1; protected7+6unchanged/trackedindexclean. No voice, financial, converter or Inference source changes.
+
+**New actual negative control:** canonical /api/chat on885b7757 was asked quantum coherence/qubit fidelity with an explicit CSV-document URL; returned unrelated CSV passages because instruction words only/directly/passages counted as topic matches. Saved wf015-research-integrity-accepted.json; research remains PARTIAL, not accepted. Follow-up removes generic citation-instruction words and requires document-level topic overlap before extractive completion. The new regression FAILS before/PASSES after.
+
+Optional grounded draft synthesis now collects bounded public prose from existing guarded fetch (36k total,18k perdoc,5docs maximum), requests at most3concise claims, and checks every sourceID/exact normalized source quotation against the precise material supplied. Invented/omitted/blank/mismatched quotes, mock output, insufficient evidence, timeout, malformed JSON, and non-stop completion fail closed. Explanatory model claims remain explicitly UNVERIFIED: quote attribution is not semantic entailment or universal question-answer acceptance. Source-gathering success never substitutes for a failed model answer; failed synthesis has no completed-findings receipt.43purecontracts /60combinedFRIDAY+researchtests pass; sourceF821/E9clean.
+
+**Real candidate failures are preserved, not retried until green:**
+- wf015-grounded-candidate.json: actual guarded official Python CSV/JSON fetch + deployed ModelGateway -> synthesis_ProviderError; unrelated control correctly DEGRADED.
+- wf015-grounded-diagnostic.json: one public-only observability replay captured incomplete non-JSON output privately; no model deliberation is a user answer. Read-only Inference source shows /ask fast specialist220tokens/synthesizer1024.
+- wf015-grounded-dispatch-candidate.json: explicitly dispatching the existing synthesizer and narrowing requested output still failed ProviderError. The experimental provider/context_data edit was abandoned and is NOT in this draft.
+- wf015-grounded-budget-candidate.json: existing authenticated /v1/chat/completions with max_tokens2400/modelauto failed strict completion gate (ValueError). Source inspection then showed auto sets fast_lane and silently caps output60tokens.
+- wf015-grounded-nonfast-candidate.json: an advertised explicit non-auto routing hint avoided that known fast-lane branch, but still failed strict completion gate (ValueError). Exact response metadata was not captured, so DO NOT invent its final cause or claim the output budget fixed the complete workflow. Unrelated control remains correctly DEGRADED on every candidate.
+
+No incomplete/invalid output was accepted or deployed. All real probes were public-only disposable processes; runtime tracked files unchanged. Current grounded integration is DRAFT pending precise Inference completion failure diagnosis, a real source-supported answer, exact-head CI and protected rollout. The original PR77 tiny typed passage-selection candidate succeeded, but that is not evidence this larger draft works. Do not merge/deploy this optional synthesis merely because its offline tests pass. TASK-WF-015 remains IN_PROGRESS; no whole-completion Telegram. Owner microphone/video/OAuth and sustained net exchange-reconciled profit remain distinct gates; actual ZAI2 unrealized snapshot was acknowledged/reviewed, not accepted as realized profit.
+
 ## 2026-11-13 11:25 IST — Minimal Console + deployment-gap root cause, ZAI Agent 1
 
 **Owner verdict on Living Universe round 2:** "the website is very laggy… change the theme and all and make the website minimalistic and dynamic… why is the chat that much long… stratex and other agent connections failed… Friday can't talk properly… Assign the work to ZAI Agent 2 and Arena Agent 1 and work unitedly." The maximalist layers (canvas plexus starfield with pointer parallax, animated blur aurora, floating glass orbs, per-letter timers, Tilt/Magnetic tracking) were decoration at real CPU cost. Round 3 inverts the direction: **Minimal Console**.
@@ -943,3 +960,20 @@ Fix applied live on Server 1 (backups .env.bak-1794540071 + strategy_priors.json
 Live verification 09:50 IST (engine read, not backtest): all 5 open positions GREEN — ETH SHORT +$8.65, BTC SHORT +$6.50, BNB SHORT +$6.38, PAXG LONG +$6.09, XRP SHORT +$4.21; total +$31.83 unrealized; all opened by strategy_hybrid with native STOP_MARKET/TAKE_PROFIT_MARKET brackets. Expectancy gate observed working both ways (rejected SOL at +0.033R < 0.05R, accepted the five winners). Zero errors in daemon logs post-restart.
 
 Coordination: PR #73 (activation record + full evidence) open for ZAI Agent 1 / Arena Agent 1 review of the selection policy and priors blending; comment on issue #35 (6842900038, 6843802278). Rollback is one restore + restart. Follow-ups: (a) re-measure win rates once live evidence accumulates and update priors; (b) activate TELEGRAM_WEBHOOK_URL at the next Fleet CD deploy to end the external-poller 409 episodes (owner action also still needed to stop the off-cloud process). Registry: WORK_BOARD task TASK-STRATEX-PROFIT-3 registered IN_REVIEW (PR #73).
+## Arena Agent 1 — PR78 normal current-main integration, DRAFT retained
+
+Testfixbb9b54c9 removed undeclaredrespx and isolatedsettingsimports; explicit
+namespacepoisoning baseline3FAIL/11PASS ->14PASS, combined47PASS. Normalmerge
+ofmain3e402385 preserves allMinimalConsole/OANDA/registry work and both full
+activitylogappends; noforce/rollout/repeatedlivecall. Earlierlocalfullroot
+sparsecheckout39collectionerrors notrepresented asgreen. This integration
+restoresmergeability so fullrootCI can actuallyrun onthecandidate.
+
+Separateactual-sourceInferencecontractPR86c130974b (12FAIL/3PASSbefore,15PASSafter
+plus62nativePASS) addresses droppedexplicitmodels/falsecachedstop metadata;
+notintegratedhere andnotclaimedasthecauseofpriorlivesynthesisValueError.
+PR84voicecleanupb6a778bd8SUCCESS/2DockerSKIP remainsunmerged; S2peerPR83branch
+preserved; jointrolloutcoordinationpending. PR83/85actualsourcereviewcomments
+6848222165/6848376308 sent, nopeerACKinvented. PR78DO NOT MERGE/DEPLOY despite
+greencomponents: actualresearchanswerPARTIAL, ownervoiceFAILED/OPEN, WF015
+IN_PROGRESS. No financial/OAuth/publication/generatedconverterchanges.

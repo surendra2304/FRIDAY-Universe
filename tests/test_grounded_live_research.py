@@ -71,3 +71,13 @@ def test_duplicate_paragraphs_do_not_consume_all_three_evidence_slots():
     second = 'Battery temperature is measured separately according to this fixture source.'
     result = collect('battery capacity temperature', [first, first, first, second])
     assert len(result['findings']) == 2
+
+
+def test_generic_citation_instructions_do_not_make_csv_relevant_to_qubits():
+    paragraphs = [
+        'Instructs writer objects to only quote those fields which contain special characters such as delimiter or quotechar.',
+        'A read-only description of the dialect in use by the parser.',
+    ]
+    result = collect('Explain quantum coherence time and superconducting qubit fidelity. Cite only directly relevant passages.', paragraphs)
+    assert result['status'] == 'DEGRADED'
+    assert result['findings'] == []
