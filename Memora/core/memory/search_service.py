@@ -369,7 +369,20 @@ class SearchService:
                 rrf_score += keyword_weight * (1.0 / (rrf_k + k_rank))
                 reasons.append(f"Keyword match (rank {k_rank}, overlap {k_score:.2f})")
             if g_boost > 0:
-                rrf_score += graph_weight * g_boost
+                # Graph connectivity is a secondary signal, not query
+                # evidence. get_graph_neighbors accumulates weight * 0.15 per
+                # incident edge with no bound, so adding the raw value here
+                # let hub records saturate the scaled score at the 1.0 cap and
+                # bury direct semantic/keyword matches (TASK-REL-024: 36
+                # legacy records at final_score 1.0, a semantic rank-1 fact at
+                # position 54). Squash the accumulated weight into (0, 1) and
+                # damp it like an RRF leg: the graph term's maximum
+                # contribution is then proportional to graph_weight exactly
+                # as the vector/keyword legs are to theirs, so it breaks ties
+                # between relevant records but can never outrank direct query
+                # evidence on its own.
+                graph_signal = g_boost / (1.0 + g_boost)
+                rrf_score += graph_weight * graph_signal * (1.0 / (rrf_k + 1))
                 reasons.append(f"Graph connection boost (+{g_boost:.2f})")
 
             # Entity boost
