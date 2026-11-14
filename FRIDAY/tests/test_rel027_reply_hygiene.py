@@ -277,6 +277,7 @@ def test_user_facing_tool_failure_categories_hide_raw_text():
         ("Error: connection refused by 10.0.0.121", "could not be reached"),
         ("Error: HTTP 429 too many requests", "rate-limited"),
         ("Error: position 8841 not found", "could not find"),
+        ("Circuit breaker open for tool 'send_email'. Execution blocked.", "temporarily paused after repeated failures"),
         ("Error: something entirely unexpected happened", "returned an error"),
     ]
     for raw, meaning in cases:
