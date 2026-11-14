@@ -3493,14 +3493,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Fix implemented on branch; PR, CI, merge, Fleet CD deploy and live research verification to follow."
   - id: TASK-REL-015
     title: "Memora production observability (alembic fileConfig) + schema drift residuals (PR #105/#107)"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-rel-015-memora-observability-v2
-    pr: null
+    pr: 160
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:00:00+05:30"
-    updated_at: "2026-11-14T19:00:00+05:30"
+    updated_at: "2026-11-14T19:50:00+05:30"
     files:
       - "Memora/migrations/env.py"
       - "Memora/storage/relational/session.py"
@@ -3520,8 +3520,15 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Live probe 2026-11-14 ~18:48-19:05 IST (read-only, Server 1): Memora journal since boot 174,417 lines incl. 2,552 ORA-00904 tracebacks on EVENT_LOG.CLOUD_SYNCED; logging census 336 app-format lines (252 INFO / 84 ERROR / 0 WARNING), consolidation INFO pairs every ~5 min."
       - "Live schema probe 2026-11-14 (read-only SQLAlchemy inspection, deployed code): only unexplained diffs = event_log.cloud_synced + ix_event_log_cloud_synced missing; ck_memory_scope present live with ORM-matching text; alembic_version=a1d4c7e9f2b3 vs head f8a2d6c14b93 (context_snapshots exists despite the lag — built by create_all)."
       - "Local tests: new test_rel015_reconciliation.py 2/2 + updated test_schema_init_migrations.py green; full Memora CI file set 35/35 green locally; ruff F821 clean on touched files."
+      - "Fix merged as PR #160 (merge d7625d6b; original PR #154 closed as its rebased replacement after PR #156's board update conflicted the shared board region — verified with git merge-tree, replacement protocol per AGENTS.md). CI on #160: 8/8 check runs (6 success incl. test + roster/board validation + secrets, 2 path-gated skipped)."
+      - "Deployed: Fleet CD run for d7625d6b completed success; Server 1 checkout at d7625d6b; deployed env.py line 23 carries disable_existing_loggers=False and session.py carries _ensure_event_log_shape/_preserve_logging_state; migration 08e9adb56879 present in the deployed versions/ directory."
+      - "LIVE schema repair at the deploy boot (journal, Server 1): '[2026-11-14 19:30:04] [INFO] [memora]: Repaired event_log: added the cloud_synced column (TASK-REL-015).' and 'Repaired event_log: added the ix_event_log_cloud_synced index (TASK-REL-015).' — init_db's boot convergence repaired the live table additively, exactly the designed path."
+      - "LIVE error stop: last ORA-00904 in the journal is 2026-11-14T19:29:20+0530 from the old PID 2492453; since the fixed boot there are ZERO ORA errors, ZERO ASGI exceptions and ZERO ERROR lines (post-restart window from 19:33:28 IST, PID 2507390, 122 lines). The pre-fix rate was ~9 tracebacks/min (2,552 since the 13:57 boot)."
+      - "LIVE events flow: 93 GET /v1/events polls in a 10-minute post-fix window, latest 'GET /v1/events?after_id=584&limit=100 HTTP/1.1 200 OK' plus cursor endpoint 200 — the Futuris consumer (futuris-cloud-v1) is consuming the feed again; an unauthenticated probe gets a clean 401 (auth layer), not the old 500."
+      - "LIVE logging flow on the new process: '[2026-11-14 19:33:44] [INFO] [memora]: Successfully connected to Oracle Autonomous Database 23ai.' / '[2026-11-14 19:33:46] [INFO] [memora]: viking context ready: 1 file(s), 0 memory file(s), durability=restored' / 'Application startup complete.' / consolidation pair at 19:38:48 ('Running Memora background consolidation and wiki compile pass...' -> '...completed.')."
+      - "LIVE schema probe re-run post-fix (read-only): columns {} , uniques {}, checks {} — event_log.cloud_synced and ix_event_log_cloud_synced diffs GONE. Remaining probe output is fully explained non-drift: tables_extra = memora_vector_store + 3 Oracle HNSW internals; indexes extra = 3 Oracle unique-constraint backing indexes (uq_agents_tenant_name, uq_namespaces_tenant_path, uq_memory_shared_agent); alembic_version still a1d4c7e9f2b3 = the named bookkeeping residual, deliberately not hand-stamped."
     blockers: []
-    next_action: "Open PR, CI green, merge, Fleet CD deploy, restart Memora, live-verify (journal lines + ORA-00904 stops + /v1/events 200 + schema probe clean), then mark VERIFIED."
+    next_action: "Done. VERIFIED 2026-11-14: fix merged (PR #160, d7625d6b), deployed (Fleet CD success), live event_log repaired at boot (19:30:04 IST repair lines), ORA-00904 flood stopped (last 19:29:20, old PID), /v1/events answering 200 to the Futuris consumer, boot/operational logging flowing, and the ORM-vs-live schema probe clean apart from explained artifacts and the deliberately untouched alembic_version bookkeeping lag."
   - id: TASK-REL-014
     title: "Fix REL-005b: forget-by-subject false ambiguity — duplicate records and dialogue echoes outrank the stored fact"
     status: IN_PROGRESS
