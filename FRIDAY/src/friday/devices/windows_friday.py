@@ -2713,11 +2713,23 @@ class WindowsFridayController:
             return True, reply, {"action": "hotkey", "keys": keys, "success": ok}
 
         # N. Real-time Clock & Date
-        if any(k in cmd for k in ["what time is it", "what is the time", "current time", "tell me the time", "what's the time"]):
+        # TASK-REL-006A: bare substring matching hijacked compound/location
+        # questions — "tell me a joke and what time is it in Tokyo right now"
+        # was answered with the host clock alone, dropping the joke and the
+        # city (live-verified 2026-11-14). This layer may only claim a turn
+        # that is SOLELY a local clock/date ask; a place qualifier belongs
+        # to the cognitive loop's get_time_date tool, which takes a timezone.
+        if re.fullmatch(
+            r"(?:please\s+)?(?:what time is it|what is the time|what's the time|current time|tell me the time)(?:\s+now)?[\s?.!]*",
+            cmd,
+        ):
             from datetime import datetime
             now_str = datetime.now().strftime("%I:%M %p")
             return True, f"The current time is {now_str}.", {"action": "time"}
-        if any(k in cmd for k in ["what is today's date", "today's date", "what's the date", "what is the date", "current date"]):
+        if re.fullmatch(
+            r"(?:please\s+)?(?:what is today's date|today's date|what's the date|what is the date|current date)[\s?.!]*",
+            cmd,
+        ):
             from datetime import datetime
             date_str = datetime.now().strftime("%A, %B %d, %Y")
             return True, f"Today is {date_str}.", {"action": "date"}
