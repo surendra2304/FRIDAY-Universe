@@ -76,6 +76,21 @@ def test_resolution_probes_and_caches_first_valid_key(monkeypatch):
     assert calls == []
 
 
+def test_resolution_stops_at_first_valid_key(monkeypatch):
+    """Sequential probing (TASK-VOI-003 follow-up): once a candidate
+    verifies, later candidates are never probed — the concurrent round
+    this replaced starved all three probes on the saturated voice host
+    (live evidence 2026-11-14 21:42/21:45 IST)."""
+    monkeypatch.setattr(worker, "GOOGLE_PLUGIN_AVAILABLE", True)
+    monkeypatch.setattr(worker, "_gemini_pool_keys", lambda: ["good-key", "untouched-key"])
+    calls = []
+    monkeypatch.setattr(
+        worker, "_probe_gemini_key_sync", lambda k: calls.append(k) or True
+    )
+    assert _run(worker._gemini_best_key()) == "good-key"
+    assert calls == ["good-key"]
+
+
 def test_failed_resolution_is_negatively_cached(monkeypatch):
     monkeypatch.setattr(worker, "GOOGLE_PLUGIN_AVAILABLE", True)
     monkeypatch.setattr(worker, "_gemini_pool_keys", lambda: ["k1", "k2"])

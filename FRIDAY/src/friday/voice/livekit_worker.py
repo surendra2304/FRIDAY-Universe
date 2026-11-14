@@ -30,7 +30,7 @@ SECOND job in the same process (a different room) re-ran the full
 serial key-probe chain and a full Groq pipeline build and starved the
 live call's audio loop on the swap-thrashing host. Fixes below: the
 verified Gemini key is resolved once per process (cached, single-flight,
-concurrent probes) and pinned per job; a stuck-turn watchdog rebuilds a
+sequential probes) and pinned per job; a stuck-turn watchdog rebuilds a
 wedged session once, on the pinned provider, carrying the conversation
 transcript into the new instructions and never re-greeting; cold-start
 costs (import chain, key probe, TTS) are paid by a worker-start warm-up
@@ -44,7 +44,7 @@ import ssl
 import sys
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, wait as _futures_wait
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # Ensure FRIDAY source is in path
@@ -457,8 +457,17 @@ def _probe_gemini_key_sync(key: str) -> bool:
 _KEY_CACHE: dict = {"key": None, "ts": 0.0, "failed_ts": 0.0}
 _KEY_CACHE_TTL_S = 240.0  # trust a verified key for 4 minutes
 _KEY_NEGATIVE_TTL_S = 30.0  # after a failed round, wait 30 s before re-probing
-_KEY_PROBE_DEADLINE_S = 10.0  # one deadline for the whole concurrent round
+_KEY_PROBE_DEADLINE_S = 25.0  # one shared budget for the whole sequential round
 _KEY_RESOLUTION_LOCK = threading.Lock()
+# Warm-up coordination (TASK-VOI-003 follow-up): the boot warm-up and a
+# job's provider selection must not race — the first production run had
+# the entrypoint resolve (and fail) while the warm-up's own seed probe
+# was still in flight in the same process. When a warm-up is running,
+# the entrypoint waits for it, bounded, before resolving itself; the
+# single-flight lock means the wait can only ever share work, never
+# duplicate it.
+_WARMUP_STARTED = threading.Event()
+_WARMUP_DONE = threading.Event()
 
 
 def _cached_gemini_key() -> "str | None":
@@ -475,10 +484,17 @@ def _key_resolution_cooling_down() -> bool:
 
 def _resolve_gemini_key_sync() -> "str | None":
     """One blocking resolution round. Runs in a worker thread under the
-    single-flight lock — never on a job's event loop. All candidate keys
-    are probed CONCURRENTLY under one deadline; a probe thread that
-    outlives the deadline is abandoned (its genai call dies with its own
-    HTTP timeout), never awaited.
+    single-flight lock — never on a job's event loop.
+
+    Candidates are probed SEQUENTIALLY under one shared deadline
+    (TASK-VOI-003 follow-up, live evidence 2026-11-14 21:42/21:45 IST:
+    the first production version probed 3 candidates concurrently under
+    a 10 s deadline and ALL of them timed out — twice — on the
+    saturated voice host, while sequential probes of the same keys
+    minutes later returned 503-counts-as-valid in ~5-13 s each. On a
+    ~1.5-CPU box, concurrency starved the probes it was meant to
+    speed up.) A probe that outlives the remaining budget is abandoned
+    through its future, never awaited.
     """
     with _KEY_RESOLUTION_LOCK:
         cached = _cached_gemini_key()
@@ -493,29 +509,32 @@ def _resolve_gemini_key_sync() -> "str | None":
         # The pool orders healthy-first; three candidates are plenty and
         # deduplication guards the comma-split fallback lists.
         candidates = list(dict.fromkeys(keys))[:3]
-        found: "str | None" = None
-        executor = ThreadPoolExecutor(max_workers=len(candidates))
+        deadline = time.time() + _KEY_PROBE_DEADLINE_S
+        executor = ThreadPoolExecutor(max_workers=1)
         try:
-            futures = {executor.submit(_probe_gemini_key_sync, k): k for k in candidates}
-            done, _pending = _futures_wait(futures, timeout=_KEY_PROBE_DEADLINE_S)
-            for fut in done:
+            for key in candidates:
+                remaining = deadline - time.time()
+                if remaining <= 0:
+                    break
+                future = executor.submit(_probe_gemini_key_sync, key)
                 try:
-                    if fut.result():
-                        found = futures[fut]
-                        break
+                    valid = future.result(timeout=remaining)
                 except Exception:
-                    continue
+                    # The probe thread outlived the budget (or died);
+                    # the round is over — do not stack more probes onto
+                    # a host that is already behind.
+                    break
+                if valid:
+                    _KEY_CACHE["key"] = key
+                    _KEY_CACHE["ts"] = time.time()
+                    _KEY_CACHE["failed_ts"] = 0.0
+                    logger.info(
+                        "gemini key resolved once and cached process-wide for %ds",
+                        int(_KEY_CACHE_TTL_S),
+                    )
+                    return key
         finally:
             executor.shutdown(wait=False)
-        if found:
-            _KEY_CACHE["key"] = found
-            _KEY_CACHE["ts"] = time.time()
-            _KEY_CACHE["failed_ts"] = 0.0
-            logger.info(
-                "gemini key resolved once and cached process-wide for %ds",
-                int(_KEY_CACHE_TTL_S),
-            )
-            return found
         _KEY_CACHE["failed_ts"] = time.time()
         logger.info(
             "gemini key resolution: no valid key among %d candidates", len(candidates)
@@ -529,9 +548,9 @@ async def _gemini_best_key() -> "str | None":
     Split out of _try_gemini_realtime (2026-11-13, ZAI Agent 1) so the
     entrypoint can run key resolution and the owner-memory recall AT THE
     SAME TIME. Since TASK-VOI-003 the resolution itself is cached +
-    single-flight + concurrent (see _resolve_gemini_key_sync above), so
-    the common path here is a dict read and concurrent jobs can no
-    longer multiply the probe load.
+    single-flight (see _resolve_gemini_key_sync above), so the common
+    path here is a dict read and concurrent jobs can no longer multiply
+    the probe load.
     """
     if not GOOGLE_PLUGIN_AVAILABLE:
         logger.info("gemini realtime unavailable: plugin not importable on this host")
@@ -799,8 +818,19 @@ async def entrypoint(ctx: JobContext):
     # read the line as broken. Key resolution itself is now cached +
     # single-flight (see _resolve_gemini_key_sync), so on a warm worker
     # this leg is a dict read.
+    async def _key_after_warmup() -> "str | None":
+        # TASK-VOI-003 follow-up: if this process's boot warm-up is
+        # still resolving, let its round land first (bounded 20 s) —
+        # the first production acceptance run lost Gemini because the
+        # entrypoint's own round raced the warm-up's probe on a
+        # saturated host and both starved. The resolver is
+        # single-flight, so waiting can only share work.
+        if _WARMUP_STARTED.is_set() and not _WARMUP_DONE.is_set():
+            await asyncio.to_thread(_WARMUP_DONE.wait, 20.0)
+        return await _gemini_best_key()
+
     _memory_task = asyncio.ensure_future(_owner_memory_lines_async())
-    _key_task = asyncio.ensure_future(_gemini_best_key())
+    _key_task = asyncio.ensure_future(_key_after_warmup())
 
     ctx.room.on("track_subscribed", _on_track_subscribed)
     ctx.room.on("participant_connected", _on_participant_connected)
@@ -1155,6 +1185,7 @@ async def entrypoint(ctx: JobContext):
                                 await asyncio.wait_for(result, timeout=10.0)
                     except Exception as exc:
                         logger.warning("VOICE turn watchdog: old session close failed: %s", exc)
+                pending_text = (turn.get("pending_text") or "").strip()
                 turn["pending_since"] = None
                 turn["state"] = "initializing"
                 rebuilt_session, rebuilt_agent = await _make_session(
@@ -1169,6 +1200,22 @@ async def entrypoint(ctx: JobContext):
                     return
                 await _start(rebuilt_session, rebuilt_agent)
                 logger.info("VOICE turn watchdog: session rebuilt; listening again")
+                if pending_text:
+                    # The rebuilt session has the transcript in its
+                    # instructions, but nothing makes it ANSWER the
+                    # wedged question — left alone, the owner's question
+                    # is silently dropped (observed live 2026-11-14
+                    # 21:53 IST: session recovered, recall answer lost).
+                    # Re-ask it explicitly; this is a continuation, not
+                    # a greeting.
+                    try:
+                        rebuilt_session.generate_reply(user_input=pending_text)
+                        logger.info(
+                            "VOICE turn watchdog: re-asked the wedged turn %r on the rebuilt session",
+                            pending_text[:80],
+                        )
+                    except Exception as exc:
+                        logger.warning("VOICE turn watchdog: re-ask failed: %s", exc)
                 return
             except asyncio.CancelledError:
                 raise
@@ -1241,26 +1288,29 @@ def _warm_up_background() -> None:
     def _run() -> None:
         started = time.time()
         try:
-            import friday.auth.credential_pool  # noqa: F401
-            import friday.memory.memora_client  # noqa: F401
-            import friday.voice.brain_bridge  # noqa: F401
-        except Exception as exc:
-            logger.info("VOICE warm-up import failed (non-fatal): %s", exc)
-        try:
-            keys = _gemini_pool_keys()
-            if keys and _probe_gemini_key_sync(keys[0]):
-                _KEY_CACHE["key"] = keys[0]
-                _KEY_CACHE["ts"] = time.time()
-                logger.info("VOICE warm-up seeded the verified-key cache")
-        except Exception as exc:
-            logger.info("VOICE warm-up key probe failed (non-fatal): %s", exc)
-        try:
-            if EDGE_TTS_AVAILABLE:
-                EdgeTTS(voice=_edge_voice())
-        except Exception:
-            pass
-        logger.info("VOICE warm-up finished in %.1fs", time.time() - started)
+            try:
+                import friday.auth.credential_pool  # noqa: F401
+                import friday.memory.memora_client  # noqa: F401
+                import friday.voice.brain_bridge  # noqa: F401
+            except Exception as exc:
+                logger.info("VOICE warm-up import failed (non-fatal): %s", exc)
+            try:
+                # Through the single-flight resolver, not a private probe:
+                # a job arriving during warm-up shares this one round.
+                if _resolve_gemini_key_sync():
+                    logger.info("VOICE warm-up seeded the verified-key cache")
+            except Exception as exc:
+                logger.info("VOICE warm-up key resolution failed (non-fatal): %s", exc)
+            try:
+                if EDGE_TTS_AVAILABLE:
+                    EdgeTTS(voice=_edge_voice())
+            except Exception:
+                pass
+            logger.info("VOICE warm-up finished in %.1fs", time.time() - started)
+        finally:
+            _WARMUP_DONE.set()
 
+    _WARMUP_STARTED.set()
     threading.Thread(target=_run, name="friday-voice-warmup", daemon=True).start()
 
 
