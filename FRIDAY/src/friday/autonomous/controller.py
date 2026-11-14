@@ -46,6 +46,37 @@ def _plain_reply(text: Any) -> str:
     cleaned = re.sub(r"\s+", " ", cleaned).strip(" -–—:;\t\r\n")
     return cleaned
 
+
+def _stratex_snapshot_detail(peer_result: dict[str, Any]) -> str:
+    """Render a verified Stratex status payload's figures for the reply.
+
+    TASK-STR-ANS-001: the mesh outcome carried the full engine snapshot in
+    ``result`` the whole time (balance, positions, strategies, ledger
+    scorecard), but the reply was composed from the peer's one-line
+    ``summary`` alone — "Stratex supervision status retrieved for
+    friday." — so the owner's answer contained no figures at all
+    (VOI-004 acceptance, 2026-11-14 23:09 IST; reproduced live
+    2026-11-15). Render the same snapshot the stratex_portfolio tool
+    renders, straight from the payload: every figure traces to what
+    Stratex just returned. Returns "" when the payload carries no
+    snapshot, so the caller falls back to the summary line and invents
+    nothing.
+    """
+    data = peer_result.get("result") if isinstance(peer_result, dict) else None
+    if not isinstance(data, dict) or not data:
+        return ""
+    if not any(
+        key in data
+        for key in ("balance", "current_positions", "open_positions", "portfolio", "active_strategies")
+    ):
+        return ""
+    try:
+        from friday.tools.builtin.stratex_portfolio import _format_portfolio
+
+        return _format_portfolio(data).strip()
+    except Exception:
+        return ""
+
 FLEET_AGENTS = {
     "inference": {
         "name": "INFERENCE",
@@ -444,7 +475,15 @@ class AutonomousController:
             task_state = outcome.state.value
 
             if verified:
-                detail = _plain_reply(summary or outcome.detail)
+                detail = ""
+                if agent_id == "stratex":
+                    # TASK-STR-ANS-001: a verified Stratex status outcome
+                    # carries the full engine snapshot in its result —
+                    # render those figures, not the peer's boilerplate
+                    # one-line summary.
+                    detail = _stratex_snapshot_detail(peer_result)
+                if not detail:
+                    detail = _plain_reply(summary or outcome.detail)
                 reply = f"{agent_name} finished that."
                 if detail:
                     reply += f" {detail}"

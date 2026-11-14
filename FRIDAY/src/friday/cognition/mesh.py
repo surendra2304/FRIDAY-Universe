@@ -108,7 +108,7 @@ class InferenceRouter:
 
 
 class MemoraFabric:
-    """Route all memory operations through Memora (/api/v1/memora/context)."""
+    """Route all memory operations through Memora's viking context DB (/v1/context)."""
     
     def __init__(self, base_url: str, api_key: str, agent_name: str = "friday"):
         self.base_url = base_url.rstrip("/")
@@ -130,19 +130,40 @@ class MemoraFabric:
         provenance: dict[str, Any] | None = None,
         namespace_path: str | None = None,
     ) -> dict[str, Any]:
-        """Store memory via Memora write endpoint."""
+        """Store memory via Memora's viking context DB (POST /v1/context/remember).
+
+        TASK-STR-ANS-001: this used to POST to /api/v1/memora/context/store —
+        a route Memora has never mounted — so EVERY mesh outcome store
+        404'd (FRIDAY journal, 2026-11-14 23:09:14: "Memora store failed
+        for stratex outcome: Client error '404 Not Found' for url
+        'http://127.0.0.1:8002/api/v1/memora/context/store'"). Memora's real
+        write surface is the viking context DB's remember endpoint
+        (kind/key/title/body/confidence), verified live 2026-11-15 with a
+        store + search round-trip. ``namespace_path`` is accepted for
+        call compatibility; the viking store organises by kind instead of
+        by namespace path.
+        """
+        import hashlib
         import httpx
-        url = f"{self.base_url}/api/v1/memora/context/store"
+        provenance = provenance or {}
+        key = str(provenance.get("task_id") or "").strip()
+        if not key:
+            digest = hashlib.sha1(content_text.encode("utf-8", "replace")).hexdigest()[:12]
+            key = f"{self.agent_name}-{digest}"
+        stripped = content_text.strip()
+        title = stripped.splitlines()[0][:120] if stripped else "agent outcome"
+        try:
+            confidence = max(0.0, min(1.0, float(importance)))
+        except (TypeError, ValueError):
+            confidence = 0.8
+        url = f"{self.base_url}/v1/context/remember"
         payload = {
-            "content_text": content_text,
-            "memory_type": memory_type,
-            "importance": importance,
-            "provenance": provenance or {},
-            "source": f"agent:{self.agent_name}",
-            "confidence": 1.0,
+            "kind": memory_type or "episodic",
+            "key": key,
+            "title": title,
+            "body": content_text,
+            "confidence": confidence,
         }
-        if namespace_path:
-            payload["target_namespace_path"] = namespace_path
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(url, json=payload, headers=self._headers())
             resp.raise_for_status()
@@ -155,16 +176,24 @@ class MemoraFabric:
         namespace_path: str | None = None,
         min_score: float = 0.0,
     ) -> list[dict[str, Any]]:
-        """Search memories via Memora hybrid search."""
+        """Search memories via Memora's viking context search.
+
+        TASK-STR-ANS-001: the old URL (/api/v1/memora/context/search) was
+        another never-mounted route. The real surface is
+        GET /v1/context/search?query=...&limit=..., which answers
+        {"query": ..., "hits": [...]}; this method's contract returns the
+        hits list. ``min_score``/``namespace_path`` are accepted for call
+        compatibility (the viking search has no equivalent knobs).
+        """
         import httpx
-        url = f"{self.base_url}/api/v1/memora/context/search"
-        params = {"q": query, "limit": limit, "min_score": min_score}
-        if namespace_path:
-            params["namespace_path"] = namespace_path
+        url = f"{self.base_url}/v1/context/search"
+        params = {"query": query, "limit": limit}
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(url, params=params, headers=self._headers())
             resp.raise_for_status()
-            return resp.json()
+            data = resp.json()
+            hits = data.get("hits") if isinstance(data, dict) else None
+            return hits if isinstance(hits, list) else []
     
     async def build_context(
         self,
@@ -172,13 +201,21 @@ class MemoraFabric:
         token_budget: int = 4000,
         agent_id: str | None = None,
     ) -> dict[str, Any]:
-        """Build curated context bundle via Memora context pipeline."""
+        """Build curated context bundle via Memora context pipeline.
+
+        TASK-STR-ANS-001: the old URL (/api/v1/memora/context) 404'd like
+        the store route. The real endpoint is POST /v1/context, and it
+        builds bundles for the AUTHENTICATED agent only — naming the peer
+        as the target is refused 403 (verified live 2026-11-15). The
+        bundle is context for THIS agent's dispatch, so it always targets
+        self.agent_name; ``agent_id`` is accepted for call compatibility.
+        """
         import httpx
-        url = f"{self.base_url}/api/v1/memora/context"
+        url = f"{self.base_url}/v1/context"
         payload = {
             "task_query": task_query,
             "token_budget": token_budget,
-            "agent_id": agent_id or self.agent_name,
+            "agent_id": self.agent_name,
             "user_id": "default_user",
             "workspace_id": "default_workspace",
         }
