@@ -274,6 +274,17 @@ class CognitiveMixin:
             if deterministic_response is not None:
                 return deterministic_response
 
+            # TASK-REL-040: clock/date questions are answered by the real
+            # clock (get_time_date), never by the model — the router calls
+            # them LOCAL_COMPUTATION but that route had no deterministic
+            # executor, so the LLM loop returned "not able to look up"
+            # non-answers that were then recalled as context. Placed after
+            # every dispatch/status path above: a pure clock ask is none
+            # of theirs, and this gate claims nothing else.
+            time_response = self._time_fast_path(clean_input, start_time)
+            if time_response is not None:
+                return time_response
+
             # Multi-turn context resolution: Handle affirmative or negative responses to previous turn
             low_input = clean_input.lower().strip().rstrip(".!? ")
             affirmative_words = {

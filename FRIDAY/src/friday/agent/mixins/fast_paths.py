@@ -559,6 +559,186 @@ class FastPathMixin:
             },
         )
 
+    # TASK-REL-040: heads of a turn that is SOLELY a current-time ask.
+    _TIME_ASK_HEADS = {
+        "what time is it",
+        "what's the time",
+        "what is the time",
+        "what's the current time",
+        "what is the current time",
+        "current time",
+        "tell me the time",
+        "tell me the current time",
+    }
+    # TASK-REL-040: heads of a turn that is SOLELY a current-date ask.
+    _DATE_ASK_HEADS = {
+        "what's today's date",
+        "what is today's date",
+        "what's the date",
+        "what is the date",
+        "today's date",
+        "current date",
+        "what is the current date",
+        "what day is it",
+        "what's the day",
+        "what is the day",
+    }
+
+    @staticmethod
+    def _match_clock_question(low: str) -> tuple[str, str | None] | None:
+        """TASK-REL-040: match a turn that is SOLELY a clock/date question.
+
+        Returns ``(kind, place)`` — kind "time" or "date", place the raw
+        place text the owner named (None when no place, or "here") — or
+        None when the turn is anything else. The full-turn discipline is
+        the REL-006A lesson: a compound turn ("tell me a joke and what
+        time is it in Tokyo") belongs to the cognitive loop, never to a
+        deterministic gate, so every segment of the turn must be part of
+        the clock ask itself.
+        """
+        s = low.replace("’", "'")
+        # Politeness / wake-word prefixes are not content.
+        for _ in range(2):
+            stripped = re.sub(r"^(?:please\s+|hey\s+friday[,\s]+|friday[,\s]+)", "", s)
+            if stripped == s:
+                break
+            s = stripped
+        # Trailing qualifiers that never change the ask.
+        for _ in range(2):
+            stripped = re.sub(r"\s+(?:right\s+now|now|today)$", "", s)
+            if stripped == s:
+                break
+            s = stripped
+        place: str | None = None
+        if s.endswith(" here"):
+            place = "here"
+            s = s[: -len(" here")]
+        else:
+            m = re.match(r"^(?P<head>.+?)\s+in\s+(?P<place>[a-z][a-z\s.',/_-]+)$", s)
+            if m:
+                place = m.group("place").strip()
+                s = m.group("head")
+        if s in FastPathMixin._TIME_ASK_HEADS:
+            return ("time", place)
+        if s in FastPathMixin._DATE_ASK_HEADS:
+            return ("date", place)
+        return None
+
+    def _time_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
+        """TASK-REL-040: clock/date questions are answered by the real clock.
+
+        The capability router classifies "what time is it in Tokyo?" as
+        LOCAL_COMPUTATION — "instant local deterministic calculation or
+        system time/info" — but no deterministic executor existed for that
+        route: the decision is telemetry-only, so the turn fell into the
+        generic LLM loop, where the model (which has no clock) answered
+        in one no-tool iteration "I don't have a way to look up the exact
+        current time" (production 2026-11-15 04:41 IST, iterations=1,
+        routed_capability=LOCAL_COMPUTATION; the REL-039 barrage hit the
+        same wall, and under Groq failover the text-only TPM rung makes a
+        tool call impossible by construction). The non-answers were then
+        recorded as dialogue and recalled as context for the next ask —
+        the failure fed itself.
+
+        This path wires the registered ``get_time_date`` tool (real
+        server clock + zoneinfo conversion, REL-006A timezone-aware)
+        directly into the route for turns that are SOLELY a clock/date
+        ask. Place resolution reuses the offline layer's validated
+        resolver (explicit IANA name or a well-known place; anything
+        else is NOT claimed — never guess a zone and answer for the
+        wrong city). Math and every other LOCAL_COMPUTATION turn keep
+        their existing route untouched. Bare local asks ("what time is
+        it?") never reach this path: the deterministic action path's
+        _TIME_PATTERN handler already serves them with the real IST
+        clock (owner_now_str) and keeps doing so — this path covers
+        what that handler cannot: a named place, "here", and dates.
+        """
+        low = clean_input.lower().strip().rstrip(".!? ")
+        matched = self._match_clock_question(low)
+        if matched is None:
+            return None
+        kind, place = matched
+
+        zone: str | None = None
+        if place and place != "here":
+            if " and " in place:
+                # Two places ("Tokyo and London") is a comparison ask,
+                # not one clock read — the cognitive loop owns it.
+                return None
+            from friday.cognition.offline import _timezone_named_in
+
+            zone = _timezone_named_in(place)
+            if zone is None:
+                # A place was named that we cannot resolve to a zone.
+                # Claiming the turn and answering with the owner's clock
+                # would be the REL-006A wrong-city bug; decline and let
+                # the normal loop handle it exactly as before.
+                return None
+
+        result = TimeDateTool().execute(timezone=zone) if zone else TimeDateTool().execute()
+        if result.is_error:
+            return None
+        content = result.content
+
+        m_time = re.search(r"Current Time \((?P<label>.+?)\): (?P<hms>\d{2}):(?P<min>\d{2}):\d{2}", content)
+        m_date = re.search(r"Current Date \(.+?\): (?P<ymd>\d{4}-\d{2}-\d{2})", content)
+        m_day = re.search(r"Day of the Week: (?P<day>\w+)", content)
+        label = m_time.group("label") if m_time else (zone or "IST")
+        if m_time and m_date and m_day:
+            hour12 = datetime.strptime(
+                f"{m_time.group('hms')}:{m_time.group('min')}", "%H:%M"
+            ).strftime("%I:%M %p").lstrip("0")
+            long_date = datetime.strptime(m_date.group("ymd"), "%Y-%m-%d").strftime("%d %B %Y")
+            day = m_day.group("day")
+            place_label = place.title() if place and place != "here" else None
+            if kind == "time":
+                if place_label:
+                    reply = f"The current time in {place_label} is {hour12} on {day}, {long_date} ({label})."
+                else:
+                    reply = f"The current time here is {hour12} {label} on {day}, {long_date}."
+            else:
+                if place_label:
+                    reply = f"Today's date in {place_label} is {day}, {long_date} ({label})."
+                else:
+                    reply = f"Today is {day}, {long_date} ({label})."
+        else:
+            # The tool's own multi-line report is still a real-clock
+            # answer; never fall back to the model's guess.
+            reply = content
+
+        logger.info(f"Time fast-path matched locally: '{low}' (zone={label})")
+        self.state_machine.transition_to(TaskState.UNDERSTANDING, reason="Clock question recognized")
+        self.state_machine.transition_to(TaskState.PLANNING, reason="Reading the real clock")
+        self.state_machine.transition_to(TaskState.EXECUTING, reason="get_time_date lookup")
+        self.state_machine.transition_to(TaskState.VERIFYING, reason="Answering from the real clock only")
+        self.state_machine.transition_to(TaskState.COMPLETED, reason="Clock lookup served")
+        self.memory.add_message(Message(role=Role.USER, content=clean_input))
+        self.memory.add_message(Message(role=Role.ASSISTANT, content=reply))
+        try:
+            from friday.memory.memora_client import memora_client
+            memora_client.record_interaction_async(
+                user_input=clean_input,
+                agent_output=reply,
+                agent_name="friday",
+                event_type="dialogue",
+                tags=["time_query", "fast_path"],
+            )
+        except Exception as e:
+            logger.debug(f"Memora record skipped in time lookup: {e}")
+        return AgentResponse(
+            content=reply,
+            is_done=True,
+            metadata={
+                "fast_path": True,
+                "time_query": True,
+                "time_query_kind": kind,
+                "timezone": label,
+                "duration_seconds": time.perf_counter() - start_time,
+                "task_state": self.state_machine.current_state.value,
+                "success": True,
+            },
+        )
+
     def _task_status_fast_path(self, clean_input: str, start_time: float) -> AgentResponse | None:
         """TASK-ORCH-008 (checklist C13): task-status questions read the real ledger.
 
