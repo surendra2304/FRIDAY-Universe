@@ -1,0 +1,583 @@
+{
+  "phase": "discovery",
+  "costs": {
+    "venue_model": "Binance USDT-M futures, taker",
+    "fee_bps_per_side": 5.0,
+    "spread_slippage_bps_per_side": 3.0,
+    "round_trip_bps": 16.0
+  },
+  "rows": [
+    {
+      "strategy": "strategy_adx_ema_mtf",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "EVALUATED",
+      "metrics_level": "pooled_summary_only",
+      "note": "pooled OOS metrics from the discovery run's summary line; full per-fold row regenerable via run_all discovery",
+      "pooled_oos": {
+        "trades": 1721,
+        "expectancy_net": -0.0014347605329776956,
+        "profit_factor_net": 0.7445012727394462
+      },
+      "timeframe": "5m",
+      "governance_status": "DISABLED"
+    },
+    {
+      "strategy": "strategy_adx_trend",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "EVALUATED",
+      "metrics_level": "pooled_summary_only",
+      "note": "pooled OOS metrics from the discovery run's summary line; full per-fold row regenerable via run_all discovery",
+      "pooled_oos": {
+        "trades": 1058,
+        "expectancy_net": -3.554923563924874e-05,
+        "profit_factor_net": 0.9981053817630688
+      },
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED"
+    },
+    {
+      "strategy": "strategy_aggressive_scalper",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "EVALUATED",
+      "metrics_level": "pooled_summary_only",
+      "note": "pooled OOS metrics from the discovery run's summary line; full per-fold row regenerable via run_all discovery",
+      "pooled_oos": {
+        "trades": 128541,
+        "expectancy_net": -0.0016861817245741085,
+        "profit_factor_net": 0.33778731619765356
+      },
+      "timeframe": "5m",
+      "governance_status": "DISABLED"
+    },
+    {
+      "strategy": "strategy_aggressor",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "EVALUATED",
+      "metrics_level": "pooled_summary_only",
+      "note": "pooled OOS metrics from the discovery run's summary line; full per-fold row regenerable via run_all discovery",
+      "pooled_oos": {
+        "trades": 3391,
+        "expectancy_net": -0.0008268474343188458,
+        "profit_factor_net": 0.9290859723103084
+      },
+      "timeframe": "1h",
+      "governance_status": "DISABLED"
+    },
+    {
+      "strategy": "strategy_atr_breakout",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "EVALUATED",
+      "metrics_level": "pooled_summary_only",
+      "note": "pooled OOS metrics from the discovery run's summary line; full per-fold row regenerable via run_all discovery",
+      "pooled_oos": {
+        "trades": 870,
+        "expectancy_net": 0.00011162249229671934,
+        "profit_factor_net": 1.0077315984707504
+      },
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED"
+    },
+    {
+      "strategy": "strategy_bbi_blend",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "EVALUATED",
+      "metrics_level": "pooled_summary_only",
+      "note": "pooled OOS metrics from the discovery run's summary line; full per-fold row regenerable via run_all discovery",
+      "pooled_oos": {
+        "trades": 2703,
+        "expectancy_net": -0.0014082669815227457,
+        "profit_factor_net": 0.9001577896910666
+      },
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED"
+    },
+    {
+      "strategy": "strategy_bollinger",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "EVALUATED",
+      "metrics_level": "pooled_summary_only",
+      "note": "pooled OOS metrics from the discovery run's summary line; full per-fold row regenerable via run_all discovery",
+      "pooled_oos": {
+        "trades": 2838,
+        "expectancy_net": -0.0020300162526658474,
+        "profit_factor_net": 0.8137821146214567
+      },
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED"
+    },
+    {
+      "strategy": "strategy_breakout_retest",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_breakout_vol",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_channel_breakout",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_choppiness_breakout",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_donchian_observe_only",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_donchian_turtle",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_ehlers_hma",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_ema_crossover",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_fast_ema_cross",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_higher_highs",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1d",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_hybrid",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_kama_adaptive",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_kaufman_efficiency",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_mean_reversion_scalper",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "5m",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_ml",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "DISABLED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_momentum",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_momentum_rotation",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_multi_month",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_pullback_ema",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_rsi_burst",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "DISABLED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_rsi_divergence_scalper",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "5m",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_rsi_extreme",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_scalper",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "DISABLED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_scalping_breakout",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "5m",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_supertrend_atr",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_swing",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "DISABLED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_trend_continuation",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_trend_daily",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1d",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_trend_pullback",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_vol_regime",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_volatility_breakout",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_volume_breakout",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1d",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_vwap_scalper",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "5m",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "strategy_vwap_trend",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "DISABLED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "adx_ema_trend",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "arb_scanner",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "bollinger_rsi_reversion",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "breakout_momentum",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "ema_crossover",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "ensemble_strategy",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "5m",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "grid_trading",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "ml_ensemble",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "options_pricing",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "pair_trading",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "prediction_enhanced",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "quantitative_engine",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "regime_detector",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "scalping_microstructure",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "sentiment_strategy",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "statistical_arbitrage",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    },
+    {
+      "strategy": "vwap_volume_profile",
+      "label": "BACKTEST-OOS",
+      "scope": "discovery",
+      "status": "UNTESTABLE",
+      "timeframe": "1h",
+      "governance_status": "UNREGISTERED",
+      "reason": "not evaluated \u2014 the discovery run completed 7 of 58 modules before the session's compute budget ended (shared ~1.5-CPU sandbox under multi-crew contention; individual modules needed 5\u201328 min each, so full coverage was a multi-hour prospect) and the run was then terminated by a sandbox service restart. No number is reported for this module. Re-run: python3 -m rigorous_backtest.run_all discovery"
+    }
+  ],
+  "coverage": {
+    "candidates": 58,
+    "evaluated": 7,
+    "other_statuses": {
+      "UNTESTABLE": 51,
+      "EVALUATED": 7
+    }
+  }
+}
