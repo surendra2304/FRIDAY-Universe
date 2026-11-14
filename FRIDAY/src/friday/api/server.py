@@ -3353,6 +3353,14 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
     # command); both match at start or mid-sentence, but recall is checked
     # first so "do you remember when I told you to remember X" recalls.
     _is_recall = any(p in cmd for p in _recall_patterns)
+    # TASK-STR-ANS-001: a recall-shaped question about the TRADING ACCOUNT
+    # ("what is my Stratex balance?") is not a memory question — this gate
+    # answered it from the memory store ("I don't have anything stored on
+    # that yet", live 2026-11-15) and Stratex was never asked. Questions
+    # naming Stratex or the portfolio fall through to the portfolio fast
+    # path, which answers from Stratex's live snapshot.
+    if _is_recall and ("stratex" in cmd or "portfolio" in cmd):
+        _is_recall = False
     _is_remember = cmd.startswith("remember ") or any(
         cmd.startswith(p) or f" {p} " in f" {cmd} " or f" {p}:" in f" {cmd}" for p in _remember_patterns
     )

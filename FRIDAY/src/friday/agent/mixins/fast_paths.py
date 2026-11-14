@@ -886,7 +886,7 @@ class FastPathMixin:
             "my portfolio", "the portfolio", "my balance", "my positions",
             "open positions", "any positions", "any open positions",
             "my trading", "how is my trading", "market signals",
-            "trading signals", "what strategies", "active strategies",
+            "trading signals", "what strategies", "which strategies", "active strategies",
             "stratex", "binance", "pnl", "profit and loss", "current positions",
         }
         if not CapabilityRouter._matches(low, possessive):

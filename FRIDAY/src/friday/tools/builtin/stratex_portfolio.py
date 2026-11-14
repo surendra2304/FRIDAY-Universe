@@ -51,8 +51,43 @@ def _format_portfolio(data: dict[str, Any]) -> str:
             lines.append(f"    {side.upper()} {sym} @ {entry}{pnl_s}")
     else:
         lines.append("- Open positions: none")
+    # TASK-STR-ANS-001: the snapshot also carries unrealized P&L, the
+    # halt state and (since the same task) the fill-ledger scorecard —
+    # render them when present; absent fields stay absent, never guessed.
+    unrealized = data.get("unrealized_pnl")
+    if isinstance(unrealized, (int, float)) and (positions or unrealized != 0):
+        lines.append(f"- Unrealized P&L: {unrealized:+,.2f}")
+    if data.get("panic_active") or data.get("kill_switch_active"):
+        lines.append("- Trading HALTED: Stratex's panic/kill switch is active.")
     if strategies:
         lines.append(f"- Active strategies ({len(strategies)}): {', '.join(str(s) for s in strategies[:8])}")
+    card = data.get("ledger_scorecard")
+    if isinstance(card, dict):
+        totals = card.get("totals") if isinstance(card.get("totals"), dict) else {}
+        trades = totals.get("trades")
+        if isinstance(trades, int) and trades > 0:
+            parts = [f"{trades} closed trade(s)"]
+            net = totals.get("net_pnl")
+            if isinstance(net, (int, float)):
+                parts.append(f"net P&L {net:+,.2f}")
+            win_rate = totals.get("win_rate")
+            if isinstance(win_rate, (int, float)):
+                parts.append(f"win rate {win_rate:.0%}")
+            pf = totals.get("profit_factor")
+            if isinstance(pf, (int, float)):
+                parts.append(f"profit factor {pf:.2f}")
+            lines.append(f"- Ledger P&L (recorded fills): {', '.join(parts)}")
+            per_strategy = card.get("strategies") if isinstance(card.get("strategies"), dict) else {}
+            for name, stats in list(per_strategy.items())[:6]:
+                if (
+                    isinstance(stats, dict)
+                    and isinstance(stats.get("trades"), int)
+                    and stats["trades"] > 0
+                    and isinstance(stats.get("net_pnl"), (int, float))
+                ):
+                    lines.append(f"    {name}: {stats['trades']} trade(s), net {stats['net_pnl']:+,.2f}")
+        elif isinstance(trades, int):
+            lines.append("- Ledger P&L (recorded fills): no closed trades recorded yet")
     lines.append("")
     lines.append("Live trading remains blocked by your fail-closed guard (D-015) — this is the demo account only.")
     return "\n".join(lines)

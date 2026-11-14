@@ -443,6 +443,57 @@ def _ensure_market_analysis(engine=None) -> None:
             logger.debug(f"[FRIDAY_SUPERVISION] Market analysis refresh failed: {exc}")
 
 
+def _ledger_scorecard_block() -> dict[str, Any] | None:
+    """Compact fill-ledger scorecard for FRIDAY's portfolio answers.
+
+    TASK-STR-ANS-001: the supervision payload carried balances and
+    positions but no recorded P&L, so even a FRIDAY answer that rendered
+    the snapshot could not say what the ledger shows. The block is
+    computed from the phase-2 fill ledger ONLY
+    (measurement.scorecard.build_scorecard — the same generator behind
+    state/scorecard.json) and fails soft: any error omits the block
+    rather than breaking the status answer.
+    """
+    try:
+        from measurement import scorecard as _scorecard
+
+        card = _scorecard.build_scorecard()
+    except Exception as exc:
+        logger.debug(f"[FRIDAY_SUPERVISION] scorecard unavailable: {exc}")
+        return None
+    try:
+        totals = card.get("totals") or {}
+        strategies: dict[str, Any] = {}
+        for name, stats in (card.get("strategies") or {}).items():
+            if not isinstance(stats, dict):
+                continue
+            strategies[str(name)] = {
+                "trades": stats.get("trades"),
+                "net_pnl": stats.get("net_pnl"),
+                "profit_factor": stats.get("profit_factor"),
+                "win_rate": stats.get("win_rate"),
+            }
+        return {
+            "generated_at": card.get("generated_at"),
+            "source": card.get("source"),
+            "total_fills": card.get("total_fills"),
+            "totals": {
+                "trades": totals.get("trades"),
+                "net_pnl": totals.get("net_pnl"),
+                "win_rate": totals.get("win_rate"),
+                "profit_factor": totals.get("profit_factor"),
+                "expectancy_net_per_trade": totals.get("expectancy_net_per_trade"),
+                "max_drawdown": totals.get("max_drawdown"),
+                "fees": totals.get("fees"),
+            },
+            "strategies": strategies,
+            "reset_boundaries": len(card.get("reset_boundaries") or []),
+        }
+    except Exception as exc:
+        logger.debug(f"[FRIDAY_SUPERVISION] scorecard shaping failed: {exc}")
+        return None
+
+
 def _get_engine_status_summary() -> dict[str, Any]:
     overlay = get_advisory_overlay()
     pending = overlay.get_pending_recommendations()
@@ -502,6 +553,7 @@ def _get_engine_status_summary() -> dict[str, Any]:
         "market_conditions": trading.get("market_conditions", {}),
         "last_market_analysis": _LAST_MARKET_ANALYSIS,
         "active_strategies": list(getattr(config, "ACTIVE_STRATEGIES", {}).keys()),
+        "ledger_scorecard": _ledger_scorecard_block(),
         "pending_advisories_count": len(pending)
     }
 
