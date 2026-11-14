@@ -2721,6 +2721,20 @@ class TestnetService:
                 try:
                     active = _load_active_trades()
                     new_active_positions = {t['symbol']: t for t in active}
+                    # TASK-STR-PHASE2-001 watchdog bookkeeping: remember
+                    # when each tracked symbol was first seen this process
+                    # lifetime. A symbol that "vanishes" within seconds of
+                    # appearing is a file-sync race on a just-opened trade
+                    # (observed live 2026-11-14: DOTUSDT opened 12:45:50Z,
+                    # false unrecorded_close alert 12:45:56Z while the
+                    # position was in fact open) — only positions older
+                    # than the grace window can raise the alert below.
+                    _now = time.time()
+                    _seen = getattr(self, "_watchdog_first_seen", None)
+                    if _seen is None:
+                        _seen = self._watchdog_first_seen = {}
+                    for _sym in new_active_positions:
+                        _seen.setdefault(_sym, _now)
                     
                     # Call exact authoritative reconstruction
                     self._rebuild_testnet_state()
@@ -2737,7 +2751,9 @@ class TestnetService:
                             try:
                                 from measurement import fill_ledger as _fl
 
-                                if not _fl.fill_recorded_since("testnet_engine", sym, time.time() - 300):
+                                _age = _now - _seen.get(sym, 0.0)
+                                _seen.pop(sym, None)
+                                if _age > 600 and not _fl.fill_recorded_since("testnet_engine", sym, time.time() - 300):
                                     _fl.raise_alert(
                                         "unrecorded_close",
                                         f"testnet position {sym} closed at exchange with no fill-ledger row",
