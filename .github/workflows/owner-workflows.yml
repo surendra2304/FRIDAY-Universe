@@ -77,7 +77,8 @@ jobs:
             FRIDAY/tests/test_batch3_part2.py \
             FRIDAY/tests/test_memora_hardening.py \
             FRIDAY/tests/test_intent_classifier_tier.py \
-            FRIDAY/tests/test_gemini_tool_schema_validity.py
+            FRIDAY/tests/test_gemini_tool_schema_validity.py \
+            FRIDAY/tests/test_rel_010_pool_exhaustion.py
       - name: Generated-code ingestion and saved verification status
         env:
           PYTHONPATH: Forge

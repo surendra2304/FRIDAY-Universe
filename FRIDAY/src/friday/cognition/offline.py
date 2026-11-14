@@ -194,6 +194,90 @@ def payload_from(goal: str, limit: int = 20_000) -> str:
     return text[:limit]
 
 
+# Well-known places an owner names when asking for the time elsewhere, mapped
+# to the IANA zone the time tool expects. Deliberately small and explicit: a
+# place not in this table (and not written as an IANA name) yields no argument
+# rather than a guessed zone.
+_PLACE_TIMEZONES: dict[str, str] = {
+    "tokyo": "Asia/Tokyo",
+    "london": "Europe/London",
+    "new york": "America/New_York",
+    "nyc": "America/New_York",
+    "los angeles": "America/Los_Angeles",
+    "san francisco": "America/Los_Angeles",
+    "seattle": "America/Los_Angeles",
+    "las vegas": "America/Los_Angeles",
+    "phoenix": "America/Phoenix",
+    "denver": "America/Denver",
+    "chicago": "America/Chicago",
+    "dallas": "America/Chicago",
+    "houston": "America/Chicago",
+    "miami": "America/New_York",
+    "boston": "America/New_York",
+    "toronto": "America/Toronto",
+    "vancouver": "America/Vancouver",
+    "mexico city": "America/Mexico_City",
+    "sao paulo": "America/Sao_Paulo",
+    "paris": "Europe/Paris",
+    "berlin": "Europe/Berlin",
+    "moscow": "Europe/Moscow",
+    "istanbul": "Europe/Istanbul",
+    "dubai": "Asia/Dubai",
+    "mumbai": "Asia/Kolkata",
+    "delhi": "Asia/Kolkata",
+    "kolkata": "Asia/Kolkata",
+    "bangalore": "Asia/Kolkata",
+    "chennai": "Asia/Kolkata",
+    "hyderabad": "Asia/Kolkata",
+    "india": "Asia/Kolkata",
+    "bangkok": "Asia/Bangkok",
+    "jakarta": "Asia/Jakarta",
+    "kuala lumpur": "Asia/Kuala_Lumpur",
+    "singapore": "Asia/Singapore",
+    "hong kong": "Asia/Hong_Kong",
+    "beijing": "Asia/Shanghai",
+    "shanghai": "Asia/Shanghai",
+    "seoul": "Asia/Seoul",
+    "sydney": "Australia/Sydney",
+    "melbourne": "Australia/Melbourne",
+    "perth": "Australia/Perth",
+    "auckland": "Pacific/Auckland",
+    "cairo": "Africa/Cairo",
+    "johannesburg": "Africa/Johannesburg",
+    "cape town": "Africa/Johannesburg",
+    "honolulu": "Pacific/Honolulu",
+    "anchorage": "America/Anchorage",
+}
+
+
+def _timezone_named_in(text: str) -> str | None:
+    """The IANA zone a request names, or None if it names none we know.
+
+    An explicit IANA name ("Asia/Tokyo") wins; otherwise a well-known place
+    name from _PLACE_TIMEZONES. Every candidate is validated against the
+    local tz database before it is trusted.
+    """
+    if not text:
+        return None
+    from zoneinfo import ZoneInfo
+
+    for token in re.findall(r"[A-Za-z]+/[A-Za-z_]+(?:/[A-Za-z_]+)?", text):
+        try:
+            ZoneInfo(token)
+            return token
+        except Exception:
+            continue
+    lowered = text.lower()
+    for place, zone in sorted(_PLACE_TIMEZONES.items(), key=lambda kv: -len(kv[0])):
+        if re.search(rf"\b{re.escape(place)}\b", lowered):
+            try:
+                ZoneInfo(zone)
+                return zone
+            except Exception:
+                continue
+    return None
+
+
 def _arguments_for(tool: Any, step: Any, payload: str) -> dict[str, Any]:
     """The arguments a plan step should be run with.
 
@@ -209,6 +293,17 @@ def _arguments_for(tool: Any, step: Any, payload: str) -> dict[str, Any]:
     properties = schema.get("properties") if isinstance(schema, dict) else None
     if isinstance(properties, dict) and "input" in properties:
         return {"input": payload}
+    if isinstance(properties, dict) and "timezone" in properties:
+        # A tool that takes a timezone (get_time_date) declares no "input",
+        # so without this branch it would be run with no arguments at all
+        # and would answer with the owner's IST clock even when the owner
+        # asked for Tokyo (round-2 live failure, TASK-REL-010). The zone is
+        # part of the request's own words, so take it from them; no zone
+        # named, no argument, and the tool's own default applies.
+        zone = _timezone_named_in(payload)
+        if zone:
+            return {"timezone": zone}
+        return {}
     if isinstance(properties, dict) and properties:
         # It declares parameters and none of them is the text: this planner has no
         # business guessing which one the owner's words belong in.

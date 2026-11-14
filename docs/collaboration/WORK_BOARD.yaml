@@ -3302,6 +3302,33 @@ tasks:
       - "Merged as PR #128 (5bbf34a) and production-verified on Server 1 — but a later main history rewrite dropped the merge from main's ancestry, leaving Server 1's checkout diverged (deploy guard: 'Checkout diverges from deployment revision'; Fleet CD failed for PRs #130/#131). Restored to main verbatim by the TASK-REL-007 reconciliation PR (2026-11-14); recovered test re-verified failing on main's schema (2 sentinel-enum failures) and passing after restoration."
     blockers: []
     next_action: "Done. Restored content is identical to PR #128; Server 1 checkout reconciled to main after this merge."
+  - id: TASK-REL-010
+    title: "Gemini pool exhaustion: cap cooldowns, Groq failover on pool exhaustion, offline timezone loss"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-rel-010-pool-failover
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T17:45:00+05:30"
+    updated_at: "2026-11-14T17:45:00+05:30"
+    files:
+      - "FRIDAY/src/friday/auth/credential_pool.py"
+      - "FRIDAY/src/friday/llm/factory.py"
+      - "FRIDAY/src/friday/llm/fallback_chain_provider.py"
+      - "FRIDAY/src/friday/cognition/offline.py"
+      - "FRIDAY/tests/test_rel_010_pool_exhaustion.py"
+      - ".github/workflows/owner-workflows.yml"
+    defect: "Live test round 2 (2026-11-14 17:01-17:20 IST): chat died with CREDENTIAL_EXHAUSTED minutes after a 16:50 verification showed 5/5 keys HEALTHY. Forensics (journal + pool state + direct per-key Google probes): PRIMARY is genuinely at its free-tier daily cap (Google verbatim: quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit 20, value 20, retryDelay ~72200s), but FALLBACK 1-4 answer HTTP 200 on direct probe while the pool holds them benched until 2026-11-15 08:00 UTC. Cause chain: (1) one quota-classified 429 per key during a Google high-demand burst (a 503 'model experiencing high demand' opened the rotation) was enough to bench each key (max_failures=1), and report_failure honoured Google's stated retry delay unboundedly (~20h to the daily reset); (2) with FRIDAY_LLM_PROVIDER=gemini the factory returns a bare GeminiLLMProvider - the FallbackChain exists only under provider=chain - so the owner's designated text fallback (Groq) never engaged and every LLM-routed turn failed; (3) the offline no-model path (cognition/offline.py) runs tools whose schema declares no 'input' property with empty arguments by design, so get_time_date lost the requested zone and answered IST for Tokyo/London/New York."
+    acceptance:
+      - "credential_pool: cooldowns capped at MAX_COOLDOWN_SECONDS=1800 for every failure category except AUTH_FAILED (report_failure, after honouring any Google-stated retry delay up to the cap); persisted cooldowns are clamped to the same ceiling on load, so a legacy state file cannot pin keys for ~20h across restarts."
+      - "factory (provider=gemini): when a Groq credential is configured, the Gemini provider is wrapped in ExhaustionFailoverProvider - CREDENTIAL_EXHAUSTED delegates the call to a Groq provider built by the existing groq branch; all other errors propagate unchanged; without a Groq credential the bare Gemini provider is returned as before."
+      - "offline path: when a tool declares a 'timezone' property, _arguments_for extracts the zone the request names (explicit IANA token, else a curated place table, both ZoneInfo-validated) and passes it; no zone named, no argument."
+      - "New tests FRIDAY/tests/test_rel_010_pool_exhaustion.py (12) cover the cap, the auth exception, the persisted-state clamp, failover semantics, factory wiring (with and without Groq), and offline timezone extraction; wired into the Owner Workflow Contracts CI list."
+      - "Live acceptance after deploy: chat answers again on the recovered Gemini fallbacks, and with the pool state forced into the incident's all-COOLDOWN shape, a plain chat question still returns a real answer via the Groq failover (journal-evidenced)."
+    evidence: []
+    blockers: []
+    next_action: "PR in flight; on merge + Fleet CD, run the live acceptance (natural recovery probe + forced-exhaustion failover probe), then mark VERIFIED."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
