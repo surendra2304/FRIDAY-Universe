@@ -126,6 +126,18 @@ class StratexTradingEngine:
         self.scan_count = 0
         self._last_trend_manage = 0.0
         self._last_summary_date = ""
+        # TASK-STR-PHASE2-001 measurement hooks (best-effort, never fatal):
+        # shadow-trade tracker for OBSERVE_ONLY strategies, the hourly
+        # equity-snapshot throttle, and the untracked-position sweep cadence.
+        self._shadow = None
+        try:
+            from measurement.shadow import ShadowTracker
+
+            self._shadow = ShadowTracker()
+        except Exception as e:
+            logger.warning(f"[STRATEX] Shadow tracker unavailable: {e}")
+        self._last_equity_snapshot = 0.0
+        self._reconcile_pass = 0
         self._log_governance_summary()
 
     def _log_governance_summary(self) -> None:
@@ -255,6 +267,34 @@ class StratexTradingEngine:
                                         f"{obs.get('side')} {venue}:{symbol} {tf} — "
                                         f"logged for evidence, never executed"
                                     )
+                                # Shadow-trade logging (TASK-STR-PHASE2-001):
+                                # the signal now also opens/updates a paper
+                                # lifecycle with ESTIMATED fees, so observe-
+                                # only strategies accumulate forward evidence
+                                # instead of evaporating into log lines.
+                                if getattr(self, "_shadow", None) is not None:
+                                    try:
+                                        bar = df.iloc[-2] if len(df) > 1 else df.iloc[-1]
+                                        self._shadow.update(
+                                            venue,
+                                            symbol,
+                                            float(bar["high"]),
+                                            float(bar["low"]),
+                                            float(bar["close"]),
+                                        )
+                                        if obs.get("status") == "SIGNAL" and obs.get("side", "HOLD") != "HOLD":
+                                            self._shadow.on_signal(
+                                                strat_name,
+                                                venue,
+                                                symbol,
+                                                obs.get("side"),
+                                                float(bar["close"]),
+                                                stop_loss=obs.get("stop_loss"),
+                                                take_profit=obs.get("take_profit"),
+                                                timeframe=tf,
+                                            )
+                                    except Exception:
+                                        pass
                                 continue
                             if gov_status != "VALIDATED":
                                 # DISABLED / UNREGISTERED: not evaluated for
@@ -455,8 +495,27 @@ class StratexTradingEngine:
             if self._last_prune_date != today:
                 self._maybe_prune_strategies()
                 self._last_prune_date = today
+                # Weekly scorecard (TASK-STR-PHASE2-001): regenerated from
+                # the fill ledger only, at most once a week.
+                try:
+                    from measurement import scorecard as _scorecard
+
+                    _scorecard.maybe_regenerate_weekly()
+                except Exception:
+                    pass
         else:
             self._last_prune_date = today
+
+        # Hourly equity snapshot (TASK-STR-PHASE2-001): the append-only
+        # equity curve phase 1 found missing. Venue-gated totals only.
+        try:
+            if time.time() - getattr(self, "_last_equity_snapshot", 0.0) >= 3600:
+                self._last_equity_snapshot = time.time()
+                from measurement import fill_ledger as _fl
+
+                _fl.append_equity_snapshot(self.engine.equity_snapshot(trigger="hourly"))
+        except Exception:
+            pass
 
         self.scan_count += 1
         return results
@@ -598,11 +657,13 @@ class StratexTradingEngine:
                     self.engine._check_daily_loss_limit()
                     self.engine.save_state()
 
-                    # Write per-strategy ledger entry for analytics and auto-pruning
+                    # Write per-strategy ledger entry for analytics and auto-pruning.
+                    # Attribution is popped first so both ledger writes below
+                    # see it even if one of them fails.
+                    strat = self.engine.position_strategy.pop(key, "unknown")
+                    tf = self.engine.position_timeframe.pop(key, "n/a")
+                    entry_price = pos.entry_price
                     try:
-                        strat = self.engine.position_strategy.pop(key, "unknown")
-                        tf = self.engine.position_timeframe.pop(key, "n/a")
-                        entry_price = pos.entry_price
                         risk_per_unit = abs(entry_price - pos.mark_price) if pos.mark_price else 0.0
                         r_multiple = round(net / risk_per_unit, 2) if risk_per_unit > 0 else 0.0
                         ledger_entry = {
@@ -620,7 +681,11 @@ class StratexTradingEngine:
                             "trades": trades,
                             "exit_reason": "SL_TP_BROKER",
                             "source": "MULTI_VENUE_RECONCILIATION",
-                            "entry_timestamp": self.engine.position_opened_at.get(key, 0) / 1000.0,
+                            # BUGFIX (TASK-STR-PHASE2-001): this used to read
+                            # position_opened_at AFTER it was popped above,
+                            # so entry_timestamp was always 0. Use the value
+                            # captured before the pop.
+                            "entry_timestamp": (opened_at or 0) / 1000.0,
                             "exit_timestamp": time.time(),
                             "timestamp": time.time(),
                         }
@@ -630,7 +695,40 @@ class StratexTradingEngine:
                         with open(ledger_path, "a", encoding="utf-8") as fh:
                             fh.write(json.dumps(ledger_entry) + "\n")
                     except Exception as e:
-                        logger.debug(f"Ledger write failed for {key}: {e}")
+                        logger.warning(f"Ledger write failed for {key}: {e}")
+
+                    # TASK-STR-PHASE2-001: the measurement fill ledger is
+                    # the source of truth for performance (the legacy write
+                    # above is kept for the auto-pruner). Broker figures
+                    # when the adapter reported realized PnL; otherwise the
+                    # row is labelled fees_source=estimate. append_fill
+                    # itself latches a reconciliation alert on failure.
+                    try:
+                        from measurement import fill_ledger as _fl
+
+                        _fl.append_fill({
+                            "strategy": strat,
+                            "engine": "daemon",
+                            "venue": venue,
+                            "symbol": symbol,
+                            "side": pos.side,
+                            "qty": pos.quantity,
+                            "entry_price": entry_price,
+                            "exit_price": exit_price,
+                            "entry_time": (opened_at or 0) / 1000.0,
+                            "exit_time": time.time(),
+                            "gross_pnl": gross,
+                            "fees": fees,
+                            "fees_source": "broker" if pnl_info else "estimate",
+                            "net_pnl": net,
+                            "exit_reason": "SL_TP_BROKER",
+                            "order_id": str(getattr(pos, "position_id", "") or ""),
+                        })
+                        _fl.append_equity_snapshot(
+                            self.engine.equity_snapshot(trigger="fill")
+                        )
+                    except Exception as e:
+                        logger.warning(f"Fill ledger write failed for {key}: {e}")
 
                     # Protective orders outlive a broker-side SL/TP hit; clear them.
                     if hasattr(adapter, "cancel_protective_orders"):
@@ -675,6 +773,46 @@ class StratexTradingEngine:
                     logger.debug(f"Reconciliation error for {key}: {e}")
         except Exception as e:
             logger.debug(f"Reconciliation error: {e}")
+
+        # Untracked-position sweep (TASK-STR-PHASE2-001): every ~20th pass,
+        # compare broker positions against tracked ones. A position the
+        # daemon does not track — opened by another process sharing the
+        # account, or left by a crashed run that adoption missed — is
+        # tagged UNATTRIBUTED and alerted, never silently folded into PnL.
+        self._reconcile_pass = getattr(self, "_reconcile_pass", 0) + 1
+        if self._reconcile_pass % 20 == 0:
+            try:
+                from measurement import fill_ledger as _fl
+
+                for venue, adapter in self.engine.venues.items():
+                    try:
+                        getter = getattr(adapter, "get_positions_or_none", None)
+                        live = getter() if callable(getter) else adapter.get_positions()
+                    except Exception:
+                        live = None
+                    if not live:
+                        continue
+                    for p in live:
+                        k = f"{venue}:{p.symbol}"
+                        if k in self.engine.positions:
+                            continue
+                        _fl.raise_alert(
+                            "untracked_position",
+                            f"{k} open at broker but not tracked by the daemon",
+                        )
+                        _fl.append_position_tag({
+                            "engine": "daemon",
+                            "venue": venue,
+                            "venue_env": getattr(adapter, "base_url", ""),
+                            "symbol": p.symbol,
+                            "strategy": "UNATTRIBUTED",
+                            "side": p.side,
+                            "qty": p.quantity,
+                            "entry_price": p.entry_price,
+                            "note": "untracked_detected",
+                        })
+            except Exception as e:
+                logger.debug(f"Untracked-position sweep failed: {e}")
 
     def _manage_trend_positions(self) -> None:
         """Exit a trend position when the completed daily close crosses EMA(20).
@@ -1202,6 +1340,16 @@ class StratexTradingEngine:
             if status == "RUNNING":
                 self._last_evaluation_iso = now_iso
             risk = getattr(self, "_last_risk_summary", None) or {}
+            # TASK-STR-PHASE2-001: surface the breaker baseline, venue
+            # alerts and active measurement alerts so health checks can
+            # prove the breaker is armed and totals are venue-gated.
+            measurement_alerts = []
+            try:
+                from measurement import fill_ledger as _fl
+
+                measurement_alerts = sorted(_fl.active_alerts().keys())
+            except Exception:
+                measurement_alerts = []
             payload = {
                 "status": status,
                 "pid": os.getpid(),
@@ -1217,6 +1365,9 @@ class StratexTradingEngine:
                 "realized_pnl": risk.get("realized_pnl"),
                 "open_positions": risk.get("positions"),
                 "daily_loss_limit_hit": risk.get("daily_loss_limit_hit"),
+                "daily_start_equity": risk.get("daily_start_equity"),
+                "venue_alerts": risk.get("venue_alerts"),
+                "measurement_alerts": measurement_alerts,
                 "venues": sorted(self.engine.venues.keys())
                 if getattr(self.engine, "venues", None)
                 else [],

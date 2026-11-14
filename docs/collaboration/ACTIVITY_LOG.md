@@ -1177,3 +1177,7 @@ Proof /var/tmp/friday-workflow-acceptance/wf014-live-acceptance.json and newtask
 - TASK-VAL-003 supplements TASK-VAL-001 with read-only on-host checkout-drift and systemd/semantic-health evidence. Acceptance and current status live in WORK_BOARD.yaml; implementation is branch-only pending review, not merged/deployed.
 - Fresh expected GitHub SHA must be compared separately from a cached origin/main; successful docs-only CD is not evidence that both checkouts advanced. Health and unit liveness do not establish functional integration, loaded process revision or production readiness.
 - Discovery/test/runtime evidence and remaining gaps are appended to handoff.md and ARCHITECTURE_AS_BUILT.md on the same branch. Existing validator defects were referred to its owner on issue #35, not silently modified.
+
+## 2026-11-14 — TASK-STR-PHASE2-001 claimed (Muse, lead coordinator)
+
+- Stratex profitability programme phase 2 (build): strategy-tagged fill ledger for both engines incl. the 3 staged LEGACY-UNATTRIBUTED / OWNER_DIRECTED_CLOSE rows, append-only equity snapshots (faucet-excluded), venue-health gating, daemon daily-loss breaker baseline fix (root cause: `_load_state` never restored `daily_start_equity`), position ownership tagging, OBSERVE_ONLY shadow-trade logging, weekly scorecard from the fill ledger only, and a reversible entries pause for the OANDA demo (SMT-v2) engine. Claimed on issue #35 (comment 6877163266) before editing. Demo/testnet only; live-trading gates untouched; no strategy parameters, sizes, governed set, or positions changed.

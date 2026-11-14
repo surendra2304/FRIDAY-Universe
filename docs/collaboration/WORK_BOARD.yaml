@@ -3278,6 +3278,46 @@ tasks:
       - "PRODUCTION-VERIFIED 2026-11-14 15:18 IST: Stratex-Daemon restarted (pid 2496453) logging 'Governance (config_strategy): executable=[strategy_bb_reversion] observe_only=[strategy_adx_ema, strategy_supertrend] excluded=[49 entries: 8 DISABLED + 41 UNREGISTERED incl. strategy_donchian_observe_only and strategy_hybrid]'; daemon adopted its 3 existing demo positions (heartbeat fresh, balance 110410.25); /stratex/health 200 engine online; testnet heartbeat RUNNING/fresh with exactly the 6 governed strategies."
     blockers: []
     next_action: "DONE 2026-11-14. Follow-ups (not blocking): portfolio_v2 remains an orphaned transplant (now practice-gated anyway); deployment/live_authorization.py's 6 gates are still not consulted by execution paths — defence now rests on the dual-gate + config invariant, which is sufficient; consider wiring it if live trading is ever contemplated (owner decree: it is not)."
+  - id: TASK-STR-PHASE2-001
+    title: "Stratex profitability phase 2: measurement infrastructure (fill ledger, equity snapshots, venue gating, breaker baseline, shadow trades, scorecard) + SMT-v2 entries pause"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: "claude/stratex-phase2-measurement + claude/stratex-phase2-engines"
+    pr: "pending"
+    contributors: []
+    priority: P0
+    created_at: "2026-11-14T17:50:00+05:30"
+    updated_at: "2026-11-14T17:50:00+05:30"
+    files:
+      - "Stratex/measurement/__init__.py"
+      - "Stratex/measurement/fill_ledger.py"
+      - "Stratex/measurement/shadow.py"
+      - "Stratex/measurement/scorecard.py"
+      - "Stratex/measurement/import_legacy_closes.py"
+      - "Stratex/autonomy/multi_venue_engine.py"
+      - "Stratex/autonomy/run_daemon.py"
+      - "Stratex/testnet_engine/service.py"
+      - "Stratex/execution.py"
+      - "Stratex/oanda_demo/trader.py"
+      - "Stratex/tests/test_measurement_phase2.py"
+    defect: "Phase-1 truth audit (2026-11-14): Stratex's demo results cannot be stated honestly. (1) Closes go unrecorded — the shared ledger's last row is 2026-09-26 while trading continued; a bb_reversion position opened and closed 2026-11-14 was recorded nowhere; daemon reconcile writes entry_timestamp AFTER popping it (always 0) and swallows write failures at debug level. (2) Daemon daily-loss breaker is disarmed: save_state writes daily_start_equity but _load_state never restores it, and the persisted value is 0.0, so _check_daily_loss_limit can never fire. (3) Daemon totals fold in venues whose reads fail (OANDA 401s observed in phase 1) with no health gating or alert. (4) No equity curve, no per-strategy fill attribution, daemon bookings partly fee-blind estimates. (5) OBSERVE_ONLY strategies (adx_ema, supertrend) produce only log lines — no forward evidence. (6) The OANDA demo engine (SMT-v2 record: 19 trades, -$167, negative on every instrument) is dormant but still armed to open trades. (7) The 3 owner-directed legacy closes (SOL -$33.64, UNI +$229.63, PAXG -$0.29; net +$195.71, exchange-verified) are staged at state/legacy_close_records.json but not in any ledger."
+    acceptance:
+      - "Fill ledger (state/fill_ledger.jsonl) records every close from BOTH engines with strategy/engine/venue/symbol/side/prices/qty/gross/fees/net/exit_reason/order ids; fees labelled broker vs estimate; the 3 legacy closes imported as LEGACY-UNATTRIBUTED / OWNER_DIRECTED_CLOSE; a close that cannot be recorded latches a reconciliation alert (never silent)."
+      - "Append-only equity snapshots (state/equity_snapshots.jsonl) hourly and on every fill for both engines; Binance demo equity = USDT futures margin balance only (non-USDT faucet assets excluded, rule documented in code)."
+      - "Venue-health gating: a venue whose account reads come back empty contributes 0 to daemon totals, appears in venue_alerts + heartbeat, and latches a measurement alert; OANDA 401 diagnosed (credentials identical to the working standalone loader and currently authenticating — gating covers recurrence)."
+      - "Daemon breaker baseline: _load_state restores daily_start_equity; a zero same-day baseline is re-seeded from live equity and persisted; tests prove restore + reseed + breaker latch. Testnet engine baseline verified equivalently (DailyLossBreaker persists per-IST-day baseline and is checked every monitor cycle)."
+      - "Position ownership tags (state/position_tags.jsonl): engine + strategy recorded for every position opened from now on (daemon place_order + adopted/untracked positions tagged too; testnet opens carry strategy via client_order_id + active_trades)."
+      - "Shadow-trade logging for OBSERVE_ONLY strategies: would-be entries/exits in state/shadow_trades.jsonl with fees labelled ESTIMATE, persisted across restarts."
+      - "Weekly scorecard generator (python3 -m measurement.scorecard) computed ONLY from the fill ledger; writes state/scorecard.json; honestly renders governed strategies at 0 recorded forward trades until fills exist."
+      - "SMT-v2 pause: OANDA demo engine opens NO new trades (entries-paused flag, service/config level, code and service intact, reversible); scan cycle still runs and manages state; verified live over a scan cycle."
+      - "Demo/testnet only: live-trading dual gate, config.py LIVE_TRADING_ENABLED invariant and live_authorization untouched; no strategy parameters, sizes, governed set, or positions changed."
+    evidence:
+      - "Claimed on issue #35 (comment 6877163266) before editing."
+      - "Recon 2026-11-14 (live, Server 1): realized_pnl.json shows daily_start_equity=0.0 with daily_start_date=today; testnet_trade_ledger.jsonl has 64 rows, last 2026-09-26; legacy_close_records.json holds the 3 staged closes (close_order_ids 4245510187/496125334/614125393, nets -33.63538196/+229.6280136/-0.28601933); daemon heartbeat shows 0 open positions (account flat after the owner-directed close)."
+      - "OANDA diagnosis probe 2026-11-14: daemon env credentials fingerprint-identical to oanda_demo.credentials loader (env-first, credentials.md fallback); both return account summary OK (NAV 99,833.0033) — the phase-1 401s do not reproduce with the current env; venue-health gating ships regardless so a recurrence cannot silently corrupt totals."
+      - "Binance venue finding: daemon adapter (demo-fapi.binance.com) and testnet engine client report DIFFERENT demo wallets (USDT 5,187.13/BTC 0.01 vs USDT 4,978.69/BTC 0.02, both with the 5,000 USDC faucet grant) — the engines trade separate Binance demo environments, so position interference is not occurring; tags record venue_env per engine."
+    blockers: []
+    next_action: "PR 1 (measurement core + daemon) then PR 2 (testnet engine mirrors + OANDA pause); merge on green CI under blanket autonomy; Fleet CD deploy; restart Stratex services; run legacy import + scorecard on Server 1; live acceptance probes (a)-(f)."
   - id: TASK-REL-009
     title: "Fix Gemini-rejected tool schema (empty enum value) blocking all tool-bearing chat on the Gemini brain"
     status: VERIFIED
@@ -3302,33 +3342,6 @@ tasks:
       - "Merged as PR #128 (5bbf34a) and production-verified on Server 1 — but a later main history rewrite dropped the merge from main's ancestry, leaving Server 1's checkout diverged (deploy guard: 'Checkout diverges from deployment revision'; Fleet CD failed for PRs #130/#131). Restored to main verbatim by the TASK-REL-007 reconciliation PR (2026-11-14); recovered test re-verified failing on main's schema (2 sentinel-enum failures) and passing after restoration."
     blockers: []
     next_action: "Done. Restored content is identical to PR #128; Server 1 checkout reconciled to main after this merge."
-  - id: TASK-REL-010
-    title: "Gemini pool exhaustion: cap cooldowns, Groq failover on pool exhaustion, offline timezone loss"
-    status: IN_PROGRESS
-    owner: muse_ai
-    branch: claude/task-rel-010-pool-failover
-    pr: null
-    contributors: []
-    priority: P0
-    created_at: "2026-11-14T17:45:00+05:30"
-    updated_at: "2026-11-14T17:45:00+05:30"
-    files:
-      - "FRIDAY/src/friday/auth/credential_pool.py"
-      - "FRIDAY/src/friday/llm/factory.py"
-      - "FRIDAY/src/friday/llm/fallback_chain_provider.py"
-      - "FRIDAY/src/friday/cognition/offline.py"
-      - "FRIDAY/tests/test_rel_010_pool_exhaustion.py"
-      - ".github/workflows/owner-workflows.yml"
-    defect: "Live test round 2 (2026-11-14 17:01-17:20 IST): chat died with CREDENTIAL_EXHAUSTED minutes after a 16:50 verification showed 5/5 keys HEALTHY. Forensics (journal + pool state + direct per-key Google probes): PRIMARY is genuinely at its free-tier daily cap (Google verbatim: quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit 20, value 20, retryDelay ~72200s), but FALLBACK 1-4 answer HTTP 200 on direct probe while the pool holds them benched until 2026-11-15 08:00 UTC. Cause chain: (1) one quota-classified 429 per key during a Google high-demand burst (a 503 'model experiencing high demand' opened the rotation) was enough to bench each key (max_failures=1), and report_failure honoured Google's stated retry delay unboundedly (~20h to the daily reset); (2) with FRIDAY_LLM_PROVIDER=gemini the factory returns a bare GeminiLLMProvider - the FallbackChain exists only under provider=chain - so the owner's designated text fallback (Groq) never engaged and every LLM-routed turn failed; (3) the offline no-model path (cognition/offline.py) runs tools whose schema declares no 'input' property with empty arguments by design, so get_time_date lost the requested zone and answered IST for Tokyo/London/New York."
-    acceptance:
-      - "credential_pool: cooldowns capped at MAX_COOLDOWN_SECONDS=1800 for every failure category except AUTH_FAILED (report_failure, after honouring any Google-stated retry delay up to the cap); persisted cooldowns are clamped to the same ceiling on load, so a legacy state file cannot pin keys for ~20h across restarts."
-      - "factory (provider=gemini): when a Groq credential is configured, the Gemini provider is wrapped in ExhaustionFailoverProvider - CREDENTIAL_EXHAUSTED delegates the call to a Groq provider built by the existing groq branch; all other errors propagate unchanged; without a Groq credential the bare Gemini provider is returned as before."
-      - "offline path: when a tool declares a 'timezone' property, _arguments_for extracts the zone the request names (explicit IANA token, else a curated place table, both ZoneInfo-validated) and passes it; no zone named, no argument."
-      - "New tests FRIDAY/tests/test_rel_010_pool_exhaustion.py (12) cover the cap, the auth exception, the persisted-state clamp, failover semantics, factory wiring (with and without Groq), and offline timezone extraction; wired into the Owner Workflow Contracts CI list."
-      - "Live acceptance after deploy: chat answers again on the recovered Gemini fallbacks, and with the pool state forced into the incident's all-COOLDOWN shape, a plain chat question still returns a real answer via the Groq failover (journal-evidenced)."
-    evidence: []
-    blockers: []
-    next_action: "PR in flight; on merge + Fleet CD, run the live acceptance (natural recovery probe + forced-exhaustion failover probe), then mark VERIFIED."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

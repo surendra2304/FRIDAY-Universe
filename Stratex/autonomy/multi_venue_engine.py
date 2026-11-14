@@ -98,6 +98,12 @@ class MultiVenueEngine:
         else:
             logger.info("[MULTI_VENUE] OANDA skipped (credentials not configured)")
 
+        # Venue health (TASK-STR-PHASE2-001): venue name ->
+        # {"ok": bool, "checked_at": epoch}. A venue whose account reads
+        # come back empty (auth failure / unreachable) is excluded from
+        # every total and flagged, never represented by a cached figure.
+        self.venue_health: Dict[str, Dict[str, Any]] = {}
+
         # State tracking
         self.realized_pnl: float = 0.0
         self.daily_realized_pnl: float = 0.0
@@ -143,6 +149,25 @@ class MultiVenueEngine:
                     self.positions[key] = pos
                     self.position_opened_at[key] = now_ms
                     adopted += 1
+                    # Ownership tag (TASK-STR-PHASE2-001): adopted positions
+                    # predate attribution, so they are tagged UNATTRIBUTED —
+                    # visibly, not silently — for later reconciliation.
+                    try:
+                        from measurement import fill_ledger as _fl
+
+                        _fl.append_position_tag({
+                            "engine": "daemon",
+                            "venue": venue,
+                            "venue_env": getattr(adapter, "base_url", ""),
+                            "symbol": pos.symbol,
+                            "strategy": "UNATTRIBUTED",
+                            "side": pos.side,
+                            "qty": pos.quantity,
+                            "entry_price": pos.entry_price,
+                            "note": "adopted_at_startup",
+                        })
+                    except Exception:
+                        pass
             except Exception as e:
                 logger.warning(f"[MULTI_VENUE] Adoption failed for {venue}: {e}")
 
@@ -154,9 +179,11 @@ class MultiVenueEngine:
     # Balance & Equity
     # ------------------------------------------------------------------------
     def get_total_balance(self) -> Dict[str, UnifiedBalance]:
-        """Get combined balance across all venues."""
+        """Get combined balance across all venues (last-known-unhealthy excluded)."""
         combined: Dict[str, UnifiedBalance] = {}
         for venue_name, venue in self.venues.items():
+            if self.venue_health.get(venue_name, {}).get("ok") is False:
+                continue
             try:
                 balances = venue.get_balance()
                 for currency, bal in balances.items():
@@ -175,27 +202,136 @@ class MultiVenueEngine:
                 logger.warning(f"[MULTI_VENUE] Balance fetch failed for {venue_name}: {e}")
         return combined
 
+    def _venue_account(self, venue_name: str, venue) -> Tuple[Dict[str, Any], float, bool]:
+        """Probe one venue: (account_summary, equity_usd, healthy).
+
+        Healthy means the venue actually answered: a non-empty account
+        summary or a non-zero wallet. A venue failing auth returns empty
+        reads from its adapter (e.g. the OANDA adapter returns {} on a
+        401); such a venue is UNHEALTHY — it contributes 0 to totals, is
+        recorded in self.venue_health, and latches a measurement alert —
+        instead of silently folding a stale/cached NAV into the totals
+        (phase-1 finding: the daemon's OANDA venue 401'd while its NAV
+        still appeared in headline equity).
+        """
+        summary: Dict[str, Any] = {}
+        equity = 0.0
+        healthy = False
+        try:
+            if hasattr(venue, "get_account_summary"):
+                summary = venue.get_account_summary() or {}
+                equity = float(summary.get("equity", 0) or 0)
+                if equity <= 0:
+                    equity = float(summary.get("balance", 0) or 0)
+                healthy = equity > 0
+            if not healthy:
+                balances = venue.get_balance() or {}
+                wallet = sum(
+                    self._to_usd(venue, asset, bal.total)
+                    for asset, bal in balances.items()
+                )
+                if wallet > 0:
+                    equity = wallet
+                    healthy = True
+        except Exception as e:
+            logger.debug(f"Venue account probe failed for {venue_name}: {e}")
+            healthy = False
+            equity = 0.0
+
+        previous = self.venue_health.get(venue_name, {}).get("ok")
+        self.venue_health[venue_name] = {"ok": healthy, "checked_at": time.time()}
+        if previous is not None and previous != healthy:
+            if healthy:
+                logger.info(f"[MULTI_VENUE] Venue {venue_name} healthy again")
+            else:
+                logger.warning(
+                    f"[MULTI_VENUE] Venue {venue_name} UNHEALTHY: account reads "
+                    f"empty (auth/unreachable); excluded from totals"
+                )
+        if not healthy and previous is not False:
+            try:
+                from measurement import fill_ledger as _fl
+
+                _fl.raise_alert(
+                    "venue_unhealthy",
+                    f"venue {venue_name} account reads empty (auth/unreachable); "
+                    f"excluded from daemon totals",
+                )
+            except Exception:
+                pass
+        if healthy and previous is False:
+            # Clear the shared alert only when every venue is healthy.
+            if all(h.get("ok") for h in self.venue_health.values()):
+                try:
+                    from measurement import fill_ledger as _fl
+
+                    _fl.clear_alert("venue_unhealthy")
+                except Exception:
+                    pass
+        return summary, equity, healthy
+
     def get_total_equity(self) -> float:
-        """Total equity across all venues (balance + unrealized PnL), in USD."""
+        """Total equity across HEALTHY venues (balance + unrealized PnL), USD."""
         total = 0.0
         for venue_name, venue in self.venues.items():
-            try:
-                equity = 0.0
-                if hasattr(venue, "get_account_summary"):
-                    summary = venue.get_account_summary() or {}
-                    equity = float(summary.get("equity", 0) or 0)
-                    if equity <= 0:
-                        equity = float(summary.get("balance", 0) or 0)
-                if equity <= 0:
-                    balances = venue.get_balance() or {}
-                    equity = sum(
-                        self._to_usd(venue, asset, bal.total)
-                        for asset, bal in balances.items()
-                    )
+            _summary, equity, healthy = self._venue_account(venue_name, venue)
+            if healthy:
                 total += equity
-            except Exception as e:
-                logger.debug(f"Equity calc failed for {venue_name}: {e}")
         return total
+
+    def equity_snapshot(self, trigger: str = "manual") -> Dict[str, Any]:
+        """Per-venue equity snapshot for the measurement store.
+
+        Binance demo equity in the snapshot is the USDT margin figure
+        only — the demo account runs multi-asset margin, so the venue's
+        reported total values the faucet-granted BTC/USDC too; that
+        reported total is kept separately in venues_reported and never
+        used as the snapshot's trading equity (see
+        measurement.fill_ledger FAUCET_EXCLUSION_RULE). Unhealthy venues
+        appear as None and are listed in excluded_venues; they never
+        contribute a cached figure.
+        """
+        venues: Dict[str, Optional[float]] = {}
+        reported: Dict[str, Optional[float]] = {}
+        excluded: List[str] = []
+        total = 0.0
+        for venue_name, venue in self.venues.items():
+            summary, equity, healthy = self._venue_account(venue_name, venue)
+            if not healthy:
+                venues[venue_name] = None
+                reported[venue_name] = None
+                excluded.append(venue_name)
+                continue
+            reported[venue_name] = round(equity, 2)
+            if venue_name == "binance_futures":
+                # USDT-only trading equity: USDT wallet + unrealized PnL.
+                try:
+                    balances = venue.get_balance() or {}
+                    usdt = balances.get("USDT")
+                    if usdt is not None:
+                        equity = float(usdt.total or 0.0) + float(
+                            summary.get("unrealized_pnl", 0) or 0
+                        )
+                except Exception:
+                    pass
+            venues[venue_name] = round(equity, 2)
+            total += equity
+        return {
+            "engine": "daemon",
+            "trigger": trigger,
+            "total_equity": round(total, 2),
+            "venues": venues,
+            "venues_reported": reported,
+            "excluded_venues": excluded,
+            "faucet_exclusion": (
+                "binance demo/testnet equity = USDT futures margin balance only; "
+                "non-USDT faucet assets (e.g. BTC/USDC grants) excluded"
+                if any("binance" in v for v in self.venues)
+                else ""
+            ),
+            "realized_pnl": self.realized_pnl,
+            "daily_realized_pnl": self.daily_realized_pnl,
+        }
 
     @staticmethod
     def _to_usd(venue, asset: str, qty: float) -> float:
@@ -226,6 +362,21 @@ class MultiVenueEngine:
             self.daily_start_equity = self.get_total_equity()
             self.daily_loss_limit_hit = False
             self.save_state()
+        elif self.daily_start_equity <= 0:
+            # Same-day restart with a zero baseline: the persisted state
+            # carried daily_start_equity=0.0 (a reset that ran while venue
+            # reads were failing, or a state file from before the field
+            # was restored on load). A zero baseline DISARMS the
+            # daily-loss breaker, so seed it from live equity now; if
+            # venues are unreadable this retries on the next call.
+            equity = self.get_total_equity()
+            if equity > 0:
+                self.daily_start_equity = equity
+                logger.warning(
+                    f"[MULTI_VENUE] Seeded daily-loss breaker baseline from "
+                    f"live equity: ${equity:,.2f} (persisted baseline was 0.0)"
+                )
+                self.save_state()
 
     # ------------------------------------------------------------------------
     # State Persistence
@@ -248,6 +399,13 @@ class MultiVenueEngine:
             self.realized_pnl = float(data.get("realized_pnl", 0.0) or 0.0)
             self.daily_realized_pnl = float(data.get("daily_realized_pnl", 0.0) or 0.0)
             self.daily_start_date = str(data.get("daily_start_date", "") or "")
+            # TASK-STR-PHASE2-001: save_state() has always WRITTEN
+            # daily_start_equity, but _load_state never read it back — so
+            # every restart zeroed the daily-loss breaker's baseline and
+            # _check_daily_loss_limit() silently never fired (it returns
+            # early on a non-positive baseline). Restore it here; the
+            # daily reset overwrites it when the date rolls over.
+            self.daily_start_equity = float(data.get("daily_start_equity", 0.0) or 0.0)
             # Restore the breaker latch: a restart used to clear it, so a
             # limit-hit day resumed trading the moment the daemon recycled.
             if self.daily_start_date == time.strftime("%Y-%m-%d"):
@@ -528,6 +686,25 @@ class MultiVenueEngine:
                     self.position_opened_at[key] = int(time.time() * 1000)
                     self.position_strategy[key] = strategy_name
                     self.position_timeframe[key] = timeframe
+                    # Ownership tag (TASK-STR-PHASE2-001): every position
+                    # opened from now on is attributable to engine+strategy.
+                    try:
+                        from measurement import fill_ledger as _fl
+
+                        _fl.append_position_tag({
+                            "engine": "daemon",
+                            "venue": venue,
+                            "venue_env": getattr(venue_obj, "base_url", ""),
+                            "symbol": symbol,
+                            "strategy": strategy_name or "UNATTRIBUTED",
+                            "timeframe": timeframe,
+                            "side": "LONG" if side in ("BUY", "LONG") else "SHORT",
+                            "qty": filled_qty,
+                            "entry_price": entry_price,
+                            "order_id": result.order_id,
+                        })
+                    except Exception:
+                        pass
 
                 # Send Telegram notification
                 if result.status == "FILLED" and self.telegram_bot and self.telegram_bot.is_configured:
@@ -596,6 +773,45 @@ class MultiVenueEngine:
                     self.position_opened_at.pop(key, None)
                     self.positions.pop(key, None)
                     self.mark_exit(venue, symbol)
+
+                    # TASK-STR-PHASE2-001: an engine-initiated close is a
+                    # fill like any other — book it through the reconciler's
+                    # path (breaker check included) and record it in the
+                    # fill ledger, so it can never happen silently. Fees
+                    # are unknown on this path: the row is labelled
+                    # fees_source=estimate with fees=0 rather than
+                    # inventing a broker figure.
+                    try:
+                        strat = self.position_strategy.pop(key, "UNATTRIBUTED")
+                        self.position_timeframe.pop(key, None)
+                        exit_price = float(getattr(result, "avg_price", 0.0) or 0.0) or float(pos.mark_price or 0.0)
+                        qty = float(pos.quantity or 0.0)
+                        gross = (exit_price - float(pos.entry_price or 0.0)) * qty
+                        if str(pos.side).upper() in ("SHORT", "SELL"):
+                            gross = -gross
+                        self.book_reconciled_pnl(venue, symbol, gross)
+                        from measurement import fill_ledger as _fl
+
+                        _fl.append_fill({
+                            "strategy": strat,
+                            "engine": "daemon",
+                            "venue": venue,
+                            "symbol": symbol,
+                            "side": pos.side,
+                            "qty": qty,
+                            "entry_price": float(pos.entry_price or 0.0),
+                            "exit_price": exit_price,
+                            "entry_time": 0.0,
+                            "exit_time": time.time(),
+                            "gross_pnl": gross,
+                            "fees": 0.0,
+                            "fees_source": "estimate",
+                            "net_pnl": gross,
+                            "exit_reason": "ENGINE_CLOSE",
+                            "order_id": str(getattr(result, "order_id", "") or ""),
+                        })
+                    except Exception as e:
+                        logger.warning(f"[MULTI_VENUE] Close booking failed for {venue}:{symbol}: {e}")
 
                     if self.telegram_bot and self.telegram_bot.is_configured:
                         try:
@@ -672,19 +888,18 @@ class MultiVenueEngine:
         total_equity = 0.0
         total_balance = 0.0
         unrealized = 0.0
+        venue_alerts: List[str] = []
         for venue_name, venue in self.venues.items():
             try:
-                summary = {}
-                if hasattr(venue, "get_account_summary"):
-                    summary = venue.get_account_summary() or {}
-                equity = float(summary.get("equity", 0) or 0)
+                summary, equity, healthy = self._venue_account(venue_name, venue)
+                if not healthy:
+                    # Unauthenticated/unreachable venue: contributes 0 and
+                    # is flagged — never represented by a cached figure.
+                    venue_alerts.append(venue_name)
+                    continue
                 balance = float(summary.get("balance", 0) or 0)
-
-                if equity <= 0 and balance <= 0:
-                    # Venue without an account summary: value wallets in USD.
-                    for asset, bal in (venue.get_balance() or {}).items():
-                        balance += self._to_usd(venue, asset, bal.total)
-                    equity = balance
+                if balance <= 0:
+                    balance = equity
 
                 total_equity += equity
                 total_balance += balance if balance > 0 else equity
@@ -701,11 +916,14 @@ class MultiVenueEngine:
             "unrealized_pnl": unrealized,
             "realized_pnl": self.realized_pnl,
             "daily_realized_pnl": self.daily_realized_pnl,
+            "daily_start_equity": self.daily_start_equity,
             "daily_loss_pct": (self.daily_start_equity - total_equity) / self.daily_start_equity if self.daily_start_equity > 0 else 0,
             "positions": self.get_position_count(),
             "max_positions": self.max_total_positions,
             "daily_loss_limit_hit": self.daily_loss_limit_hit,
             "venues": {v: self.get_position_count(v) for v in self.venues},
+            "venue_health": {v: bool(h.get("ok")) for v, h in self.venue_health.items()},
+            "venue_alerts": venue_alerts,
         }
 
     # ------------------------------------------------------------------------
