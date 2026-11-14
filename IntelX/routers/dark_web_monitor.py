@@ -118,22 +118,33 @@ class DarkWebMonitor:
         affected_entities: list[str] | None = None,
         severity: str = "high",
         credential_count: int = 0,
+        verified: bool = False,
+        source_url: str = "",
     ) -> LeakRecord:
-        """Add a leak record."""
+        """Add an operator-submitted leak record.
+
+        TASK-REL-017: records enter this store only when an operator submits
+        them via the API. Nothing here may invent provenance: the source URL
+        is whatever the submitter provided (empty when unknown), ``leaked_at``
+        stays 0.0 (unknown) unless the submitter supplies one, and a record
+        is ``verified`` only when the submitter explicitly asserts it.
+        Previously this fabricated an ``*.example.com`` source URL, backdated
+        ``leaked_at`` by a day, and stamped every record ``verified=True``.
+        """
         leak = LeakRecord(
             leak_id=hashlib.md5(
                 f"leak:{source}:{description[:30]}:{time.time()}".encode()
             ).hexdigest()[:12],
             source=source,
-            source_url=f"https://{source}.example.com/leak/{hashlib.md5(description.encode()).hexdigest()[:8]}",
+            source_url=source_url,
             breach_type=breach_type,
             description=description,
             affected_entities=affected_entities or [],
-            leaked_at=time.time() - 86400,
+            leaked_at=0.0,
             discovered_at=time.time(),
             severity=severity,
             credential_count=credential_count,
-            verified=True,
+            verified=verified,
         )
         self._leaks[leak.leak_id] = leak
 
@@ -148,7 +159,7 @@ class DarkWebMonitor:
                 affected_emails=leak.affected_entities[:10],
                 alert_type="new_breach",
                 severity=leak.severity,
-                message=f"New breach detected from {source}: {description[:100]}",
+                message=f"New leak record submitted from {source}: {description[:100]}",
                 action_required=True,
                 created_at=time.time(),
             )
@@ -169,7 +180,8 @@ class DarkWebMonitor:
             ).hexdigest()[:12],
             username=username,
             email=email,
-            password_hash=hashlib.sha256(f"pwd:{username}".encode()).hexdigest()[:32],
+            # TASK-REL-017: unknown — never fabricate a password hash.
+            password_hash="",
             origin=origin,
             leak_count=1,
             first_seen=time.time(),
@@ -216,7 +228,16 @@ class DarkWebMonitor:
         return config
 
     def run_scan(self) -> ScanResult:
-        """Run a dark web scan."""
+        """Record a dark web scan attempt.
+
+        TASK-REL-017: no dark-web data source is connected to IntelX — no
+        Tor crawler, no leak-feed API, no marketplace monitor. A scan
+        therefore checks zero sources and finds nothing. The previous
+        implementation invented leak records with a coin flip
+        (``random.random() > 0.5``) and presented them as findings; that
+        fabrication is removed. This result is honest bookkeeping: a scan
+        was requested, no source exists to scan.
+        """
         start = time.time()
 
         result = ScanResult(
@@ -224,49 +245,10 @@ class DarkWebMonitor:
                 f"scan:{time.time()}".encode()
             ).hexdigest()[:12],
             started_at=start,
-            sources_scanned=[
-                "darkweb_forum",
-                "pastebin_mirror",
-                "marketplace",
-                "ransomware_site",
-                "telegram_channel",
-            ],
+            sources_scanned=[],
         )
 
-        # Simulate scanning
-        import random
-
-        sources = [
-            ("darkweb_forum", "credentials", "Database dump with user credentials"),
-            ("pastebin_mirror", "api_key", "Leaked API keys for payment service"),
-            ("marketplace", "personal_data", "Personal data bundle from healthcare provider"),
-            ("ransomware_site", "financial", "Financial records from banking system"),
-        ]
-
-        for source, btype, desc in sources:
-            if random.random() > 0.5:  # 50% chance of finding a leak
-                leak = self.add_leak(
-                    source=source,
-                    description=desc,
-                    breach_type=btype,
-                    affected_entities=["company.com", "example.com"],
-                    severity="critical" if btype == "api_key" else "high",
-                    credential_count=100 + random.randint(0, 1000),
-                )
-                result.leaks_found += 1
-
-                # Track credentials
-                self.track_credential(
-                    username=f"user_{hashlib.md5(desc.encode()).hexdigest()[:8]}",
-                    email=f"user_{hashlib.md5(desc.encode()).hexdigest()[:8]}@example.com",
-                    origin=source,
-                )
-                if btype == "credentials":
-                    result.credentials_found += 1
-                if btype == "api_key":
-                    result.api_keys_found += 1
-
-        result.new_leaks = result.leaks_found
+        result.new_leaks = 0
         result.completed_at = time.time()
         result.scan_duration_ms = (time.time() - start) * 1000
 
@@ -306,6 +288,8 @@ class DarkWebMonitor:
         completed_remediations = sum(1 for r in self._remediations.values() if r.status == "completed")
 
         return {
+            "data_source": "operator_submitted_records_only",
+            "live_feed_connected": False,
             "total_leaks": len(self._leaks),
             "total_alerts": len(self._alerts),
             "total_credential_exposures": len(self._exposures),
@@ -345,7 +329,7 @@ dark_web_monitor = DarkWebMonitor()
 
 @router.post("/api/v1/intelex/darkweb/leaks")
 async def add_leak(payload: dict):
-    """Add a leak record."""
+    """Add an operator-submitted leak record."""
     leak = dark_web_monitor.add_leak(
         source=payload["source"],
         description=payload["description"],
@@ -353,16 +337,37 @@ async def add_leak(payload: dict):
         affected_entities=payload.get("affected_entities", []),
         severity=payload.get("severity", "high"),
         credential_count=payload.get("credential_count", 0),
+        verified=bool(payload.get("verified", False)),
+        source_url=payload.get("source_url", ""),
     )
-    return {"leak_id": leak.leak_id, "source": leak.source, "severity": leak.severity}
+    return {
+        "leak_id": leak.leak_id,
+        "source": leak.source,
+        "severity": leak.severity,
+        "verified": leak.verified,
+        "data_source": "operator_submitted",
+    }
 
 
 @router.post("/api/v1/intelex/darkweb/scan")
 async def run_scan():
-    """Run a dark web scan."""
+    """Run a dark web scan.
+
+    TASK-REL-017: no dark-web data source is connected, so the scan checks
+    no sources and finds nothing — the payload says so explicitly instead
+    of returning invented leaks.
+    """
     result = dark_web_monitor.run_scan()
     return {
+        "status": "no_real_data_source",
+        "data_source": "none_connected",
+        "detail": (
+            "No dark-web data source is connected to IntelX (no Tor crawler "
+            "or leak-feed API), so this scan checked no sources. Records in "
+            "this API are limited to operator-submitted leak reports."
+        ),
         "scan_id": result.scan_id,
+        "sources_scanned": result.sources_scanned,
         "leaks_found": result.leaks_found,
         "new_leaks": result.new_leaks,
         "credentials_found": result.credentials_found,

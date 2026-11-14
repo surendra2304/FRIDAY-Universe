@@ -145,6 +145,11 @@ class UniversalCrawler:
         return {
             "crawl_id": config.crawl_id,
             "status": "completed",
+            # TASK-REL-017: this crawler performs no network fetches; every
+            # page is generated locally by _simulate_crawl. The payload
+            # must say so unmistakably.
+            "simulated": True,
+            "data_source": "simulated",
             "pages_crawled": stats.pages_crawled,
             "total_links": stats.total_links,
             "total_words": stats.total_words,
@@ -245,6 +250,8 @@ class UniversalCrawler:
         return {
             "crawl_id": crawl_id,
             "status": result.stats.status,
+            "simulated": True,
+            "data_source": "simulated",
             "pages_crawled": result.stats.pages_crawled,
             "total_links": result.stats.total_links,
             "total_words": result.stats.total_words,
@@ -266,11 +273,16 @@ class UniversalCrawler:
         if not result or not result.stats:
             raise HTTPException(404, f"Crawl {crawl_id} not found")
 
-        return result.stats.__dict__
+        stats = dict(result.stats.__dict__)
+        stats["simulated"] = True
+        stats["data_source"] = "simulated"
+        return stats
 
     def get_report(self) -> dict:
         """Get crawler report."""
         return {
+            "simulated": True,
+            "data_source": "simulated",
             "total_crawls": len(self._crawls),
             "total_pages": sum(r.stats.pages_crawled for r in self._crawls.values() if r.stats),
             "total_links": sum(r.stats.total_links for r in self._crawls.values() if r.stats),

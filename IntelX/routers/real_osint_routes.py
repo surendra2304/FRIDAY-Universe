@@ -100,18 +100,37 @@ async def search_intelx(body: dict[str, Any] = Body(...)):
 
 @router.post("/osint/phonebook")
 async def search_phonebook(body: dict[str, Any] = Body(...)):
-    """Search Intelligence X phonebook for target domain, emails, or subdomains."""
+    """Search Intelligence X phonebook for target domain, emails, or subdomains.
+
+    TASK-REL-017: the phonebook enumeration methods are deterministic
+    offline generators — they never query the live Intelligence X
+    phonebook API — so the response is labelled simulated. (This route
+    previously called a ``search()`` method that does not exist on
+    IntelXPhonebook and returned 500.)
+    """
     target = body.get("target", "")
     if not target:
         raise HTTPException(status_code=400, detail="Missing target parameter")
     pb_type = body.get("type", "domain")
 
     pb = IntelXPhonebook()
-    records = pb.search(target, target_type=pb_type)
+    lookup_type = {
+        "domain": "domains", "domains": "domains",
+        "email": "emails", "emails": "emails",
+        "url": "urls", "urls": "urls",
+    }.get(str(pb_type).lower(), "all")
+    records_by_type = pb.lookup(target, lookup_type=lookup_type)
+    records = [rec for group in records_by_type.values() for rec in group]
 
     return {
-        "status": "success",
+        "status": "simulated",
         "engine": "IntelXPhonebook",
+        "data_source": "synthetic_fallback",
+        "simulated": True,
+        "detail": (
+            "Phonebook records are generated deterministically offline; "
+            "no live Intelligence X phonebook query was performed."
+        ),
         "target": target,
         "type": pb_type,
         "record_count": len(records),
@@ -204,6 +223,9 @@ async def generate_maltego_graph(body: dict[str, Any] = Body(...)):
     return {
         "status": "success",
         "engine": "MaltegoGraph",
+        # TASK-REL-017: when the caller supplies no entities, the graph
+        # above is built from a built-in sample — say so in the payload.
+        "data_source": "caller_supplied" if body.get("entities") else "built_in_sample",
         "graph_name": body.get("name", "Investigation-01"),
         "entity_count": len(graph.entities),
         "relationship_count": len(graph.relationships),
@@ -214,14 +236,22 @@ async def generate_maltego_graph(body: dict[str, Any] = Body(...)):
 
 @router.post("/malnet/correlate")
 async def correlate_malnet(body: dict[str, Any] = Body(...)):
-    """Query MalNet malicious infrastructure engine for IP/domain/hash intelligence."""
+    """Query MalNet malicious infrastructure engine for IP/domain/hash intelligence.
+
+    TASK-REL-017: without a live MalNet result the engine falls back to
+    deterministic synthetic findings; the engine flags those in its
+    result dict and this route surfaces the flag at the top level.
+    """
     indicator = body.get("indicator", "194.26.29.112")
     engine = MalNetEngine()
     result = engine.correlate(indicator)
+    simulated = bool(result.get("simulated", False))
 
     return {
-        "status": "success",
+        "status": "simulated" if simulated else "success",
         "engine": "MalNet",
+        "data_source": "synthetic_fallback" if simulated else "live_malnet",
+        "simulated": simulated,
         "indicator": indicator,
         "intelligence": result,
     }

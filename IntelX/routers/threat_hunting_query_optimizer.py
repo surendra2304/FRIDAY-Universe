@@ -156,6 +156,8 @@ class ThreatHuntingQueryOptimizer:
             "total_gaps": len(self._gaps),
             "total_optimizations": len(self._optimizations),
             "engine_status": "operational",
+            "simulated": True,
+            "data_source": "no_siem_connected_performance_figures_synthetic",
         }
 
 
@@ -171,11 +173,19 @@ async def register_query(name: str, description: str = "", query_text: str = "",
 
 @router.post("/intelex/hunting-optimize/queries/{query_id}/run")
 async def run_query(query_id: str, results_count: int = 0):
-    """Run a hunting query."""
+    """Run a hunting query.
+
+    TASK-REL-017: no SIEM or telemetry source is connected, so no query is
+    actually executed; the run is recorded as a simulation and the payload
+    says so. ``performance_ms`` is a synthetic placeholder, not a
+    measurement.
+    """
     query = engine.run_query(query_id, results_count)
     return {
         "query_id": query.query_id,
         "status": query.status,
+        "simulated": True,
+        "data_source": "simulated_no_query_executed",
         "results_count": query.results_count,
         "performance_ms": query.performance_ms,
     }
@@ -193,9 +203,16 @@ async def get_gaps():
 
 @router.post("/intelex/hunting-optimize/queries/{query_id}/optimize")
 async def optimize_query(query_id: str):
-    """Optimize a hunting query."""
+    """Optimize a hunting query.
+
+    TASK-REL-017: the "optimized" figure is a simulated projection
+    (original x 0.6 with canned improvement notes) — no query plan is
+    analysed and nothing is executed. The payload is labelled simulated.
+    """
     result = engine.optimize_query(query_id)
     return {
+        "simulated": True,
+        "data_source": "simulated_projection",
         "original_ms": result.original_performance_ms,
         "optimized_ms": result.optimized_performance_ms,
         "improvements": result.improvements,
@@ -205,7 +222,13 @@ async def optimize_query(query_id: str):
 @router.get("/intelex/hunting-optimize/queries")
 async def get_queries():
     """Get all hunting queries."""
-    return {"queries": engine.get_queries()}
+    return {
+        "queries": engine.get_queries(),
+        # performance_ms values in this list are synthetic placeholders
+        # (see the run endpoint); no query has been executed anywhere.
+        "simulated": True,
+        "data_source": "registered_queries_with_synthetic_performance",
+    }
 
 
 @router.get("/intelex/hunting-optimize/report")
