@@ -333,6 +333,45 @@ class CapabilityRouter:
         self.default_vision_cost_usd = default_vision_cost_usd
         self.default_llm_cost_usd = default_llm_cost_usd
 
+    # TASK-INTENT-001: the intent mid-tier gates on this count — weak signal
+    # (0 or >=2 matched tables) may consult the LLM classifier; a single
+    # table hit stays a deterministic win that never pays for a model call.
+    _INTENT_TABLES: tuple[str, ...] = (
+        "SCREEN_KEYWORDS",
+        "MEMORY_KEYWORDS",
+        "LOCAL_CALC_KEYWORDS",
+        "FLEET_KEYWORDS",
+        "RESEARCH_KEYWORDS",
+        "PORTFOLIO_KEYWORDS",
+        "CODE_TASK_KEYWORDS",
+        "SECURITY_SCAN_KEYWORDS",
+        "FORECAST_KEYWORDS",
+        "SCRIPT_KEYWORDS",
+        "WEB_OPS_KEYWORDS",
+        "MEMORA_OP_KEYWORDS",
+        "FETCH_SUMMARIZE_KEYWORDS",
+        "RENDER_KEYWORDS",
+        "PROJECT_KEYWORDS",
+        "PUBLISH_KEYWORDS",
+        "ALERT_KEYWORDS",
+        "DICTIONARY_KEYWORDS",
+        "GMAIL_DRAFT_KEYWORDS",
+        "WHATSAPP_OPEN_KEYWORDS",
+    )
+
+    def deterministic_match_count(self, text: str) -> int:
+        """How many intent keyword tables match ``text`` (public, read-only).
+
+        Pure function of ``(text)`` like route_request; used by the intent
+        mid-tier to decide whether the deterministic signal is weak.
+        """
+        clean = (text or "").lower().strip()
+        return sum(
+            1
+            for table in self._INTENT_TABLES
+            if self._matches(clean, getattr(self, table, frozenset()))
+        )
+
     def route_request(
         self,
         user_input: str,
