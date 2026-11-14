@@ -3642,6 +3642,40 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Artifact fix verified against the DEPLOYED FRIDAY code on Server 1: redact_secrets leaves the Futuris sign-off sentence byte-identical (prose no longer eaten) while a real 'Authorization: Basic ...' header line is still redacted."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-14. FOLLOW-UP (coordinator/owner ops decision, not part of this task): install the declared statsforecast dependency into the production fleet venv so Futuris can compute real model forecasts again (still on synthetic-labelled data until a real telemetry source is configured). Sandbox measurement: ~83MB disk delta, ~200MB import RSS -- assess against the 956MB Server 1 deliberately, or land it with the ARM server. Until then production forecast requests answer the honest BLOCKED status above."
+  - id: TASK-REL-019
+    title: "Forge task-status truthfulness across ALL modes (plan_only / verify_only / status polling / cancel)"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-rel-019-forge-status-truth
+    pr: 158
+    contributors: [muse_ai]
+    priority: P1
+    created_at: "2026-11-14T18:50:00+05:30"
+    updated_at: "2026-11-14T20:10:00+05:30"
+    files:
+      - Forge/app/api/delegate.py
+      - Forge/app/api/tasks.py
+      - Forge/app/api/routes.py
+      - Forge/app/core/orchestrator.py
+      - Forge/tests/unit/test_delegate_mode_truthfulness.py
+      - FRIDAY/src/friday/ecosystem/fleet_client.py
+      - FRIDAY/tests/test_fleet_client_planned_state.py
+    defect: "Modes accepted at intake were read nowhere: plan_only tasks executed in full and could return SUCCESS with a completion receipt; verify_only tasks built code they were only asked to check. routes.py POST /tasks (+/generate) never scheduled execution (write-only pile, by router precedence the live /api/v1 path). Delegate status endpoint reported PENDING/READY/VERIFYING as RUNNING. Delegate execute_now gated SUCCESS on the re-run manifest only, ignoring the task terminal state. Delegate cancel bypassed the lifecycle machine (phantom cancels; COMPLETED records flippable to CANCELLED). Stale-task reconciler would have expired delivered plans. FRIDAY fleet client had no planned state."
+    acceptance:
+      - "plan_only never executes and never reports SUCCESS: delegate returns PLANNED with no receipt, with or without execute_now; task rests in READY and polls as PLANNED"
+      - "verify_only runs only the verification battery (no synthesis, no repair) and lands COMPLETED/FAILED per the battery with a persisted manifest"
+      - "autonomous with/without execute_now: status trail matches the task state and verification verdict at every step"
+      - "POST /tasks on every mount schedules execution unless plan_only; reconciler never expires a delivered plan"
+      - "delegate execute_now SUCCESS requires task COMPLETED and manifest pass; other terminal states mirrored honestly"
+      - "delegate cancel goes through the lifecycle machine: nonexistent -> ERROR, COMPLETED -> ERROR with record untouched, READY -> CANCELLED"
+      - "FRIDAY surfaces PLANNED as plan-only (DEGRADED, plan_only_no_execution), never as an unverified completion"
+    evidence:
+      - "PR #158 merged 52d4a995 (CI: test/contracts/validators all success); follow-up PR #163 (plan_stages counted from TaskGraph.nodes — live probes showed it reporting 0)"
+      - "Unit: 29 new Forge tests + 1 FRIDAY test; neighbouring REL-011 delegate suites and FRIDAY crossloop green; full Forge unit suite shows only pre-existing failures identical on pristine main (test_verification_engine_battery, test_webhooks x5)"
+      - "LIVE 2026-11-14 ~19:30-19:50 IST (Server 1, deployed HEAD 52d4a995): plan_only -> PLANNED/no receipt, polled PLANNED with raw state READY and 0 artifacts after 15 min; plan_only+execute_now -> PLANNED in 204ms; autonomous bg -> RUNNING 57% -> FAILED/PARTIAL_FAILURE consistent; autonomous execute_now -> PARTIAL_FAILURE with state FAILED + manifest (10/11 stages); verify_only on an existing project -> COMPLETED/SUCCESS certified, project files byte-untouched; POST /api/v1/tasks autonomous -> RUNNING 57% -> FAILED (executes; pre-fix parked in READY); POST /api/tasks plan_only -> resting READY plan; cancel nonexistent -> ERROR not found; cancel COMPLETED task15814112026123354 -> ERROR, record still COMPLETED; cancel READY plan -> CANCELLED; FRIDAY FleetClient dispatch of plan_only -> DEGRADED plan_only_no_execution with plan-only summary"
+    blockers: []
+    next_action: "None. Residual noted: Forge synthesis quality itself (probe builds failed the no-tests-discovered stage) is a Forge capability matter, not status truthfulness — the surface now reports it honestly."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
