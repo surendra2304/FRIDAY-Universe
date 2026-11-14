@@ -7,6 +7,7 @@ thumbnail performance analysis.
 from __future__ import annotations
 
 import hashlib
+import math
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -38,7 +39,7 @@ class ABTestResult:
     video_id: str
     variants: list[ThumbnailVariant] = field(default_factory=list)
     winner_id: str = ""
-    significance: float = 0.0
+    significance: float | None = None
     total_impressions: int = 0
     started_at: float = field(default_factory=time.time)
     ended_at: float = 0.0
@@ -50,8 +51,10 @@ class ThumbnailPrediction:
     prediction_id: str
     video_id: str
     predicted_ctr: float = 0.0
-    confidence: float = 0.0
+    confidence: float | None = None
     factors: list[str] = field(default_factory=list)
+    data_status: str = "estimated_from_inputs"
+    data_note: str = ""
 
 
 class ThumbnailOptimizer:
@@ -93,19 +96,55 @@ class ThumbnailOptimizer:
             variant.views += 1
             variant.click_through_rate = variant.views / max(1, variant.impressions)
 
+    @staticmethod
+    def _two_proportion_significance(best: ThumbnailVariant, others: list[ThumbnailVariant]) -> float | None:
+        """Confidence (1 - p) of a two-proportion z-test, best vs the rest.
+
+        Uses the impressions/clicks actually recorded via
+        record_impression (a variant's `views` field counts clicks).
+        Returns None when there is nothing to test.
+        """
+        n1, c1 = best.impressions, best.views
+        n2 = sum(v.impressions for v in others)
+        c2 = sum(v.views for v in others)
+        if n1 == 0 or n2 == 0:
+            return None
+        pooled = (c1 + c2) / (n1 + n2)
+        se = math.sqrt(pooled * (1 - pooled) * (1 / n1 + 1 / n2))
+        if se == 0:
+            return None
+        z = abs(c1 / n1 - c2 / n2) / se
+        # Two-sided p-value from the standard normal CDF via erf.
+        p_value = 1 - math.erf(z / math.sqrt(2))
+        return max(0.0, min(1.0, 1 - p_value))
+
     def conclude_test(self, test_id: str) -> ABTestResult:
-        """Conclude an A/B test and pick a winner."""
+        """Conclude an A/B test and pick a winner.
+
+        Significance is computed from the recorded impressions with a
+        two-proportion z-test. (TASK-REL-020: previously a constant 0.95
+        regardless of the data.) With no recorded impressions there is
+        no winner and no significance.
+        """
         test = self._tests.get(test_id)
         if not test:
             raise HTTPException(status_code=404, detail="Test not found")
         if not test.variants:
             return test
+        test.total_impressions = sum(v.impressions for v in test.variants)
+        test.ended_at = time.time()
+        if test.total_impressions == 0:
+            test.winner_id = ""
+            test.significance = None
+            return test
         best_variant = max(test.variants, key=lambda v: v.click_through_rate)
         best_variant.is_winner = True
         test.winner_id = best_variant.variant_id
-        test.significance = 0.95
-        test.total_impressions = sum(v.impressions for v in test.variants)
-        test.ended_at = time.time()
+        others = [v for v in test.variants if v is not best_variant]
+        test.significance = (
+            self._two_proportion_significance(best_variant, others)
+            if others else None
+        )
         return test
 
     def predict_ctr(self, video_id: str, title: str, description: str = "") -> ThumbnailPrediction:
@@ -123,11 +162,19 @@ class ThumbnailOptimizer:
         if video_id:
             base_ctr += 0.01
             factors.append("established_channel")
-        confidence = hashlib.md5(f"{video_id}{title}".encode()).hexdigest()
-        conf_score = (int(confidence[:4], 16) / 65535.0) * 0.3
+        # predicted_ctr is a simple heuristic over the supplied title /
+        # description features. No measured CTR data exists to attach a
+        # confidence to it. (TASK-REL-020: confidence was previously
+        # derived from an md5 hash of video_id+title.)
         return ThumbnailPrediction(
             prediction_id=prediction_id, video_id=video_id,
-            predicted_ctr=min(0.5, base_ctr), confidence=conf_score, factors=factors,
+            predicted_ctr=min(0.5, base_ctr), confidence=None, factors=factors,
+            data_status="estimated_from_inputs",
+            data_note=(
+                "predicted_ctr is a heuristic from title/description "
+                "features only; confidence is unavailable (no measured "
+                "CTR model exists)."
+            ),
         )
 
     def get_report(self) -> dict[str, Any]:
@@ -166,6 +213,7 @@ async def conclude_test(test_id: str):
         "winner_id": test.winner_id,
         "significance": test.significance,
         "total_impressions": test.total_impressions,
+        "data_status": "measured" if test.significance is not None else "no_data",
     }
 
 
@@ -177,6 +225,8 @@ async def predict_ctr(video_id: str, title: str, description: str = ""):
         "predicted_ctr": pred.predicted_ctr,
         "confidence": pred.confidence,
         "factors": pred.factors,
+        "data_status": pred.data_status,
+        "data_note": pred.data_note,
     }
 
 

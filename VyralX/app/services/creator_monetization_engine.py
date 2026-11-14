@@ -26,7 +26,9 @@ class RevenueStream:
     earnings_today: float = 0.0
     earnings_week: float = 0.0
     earnings_month: float = 0.0
-    growth_rate: float = 0.0
+    growth_rate: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     active: bool = True
 
 
@@ -37,9 +39,11 @@ class SponsorshipMatch:
     creator_id: str
     sponsor_name: str = ""
     sponsor_industry: str = ""
-    estimated_value: float = 0.0
-    match_score: float = 0.0
+    estimated_value: float | None = None
+    match_score: float | None = None
     reason: str = ""
+    data_status: str = "no_data"
+    data_note: str = ""
     status: str = "pending"  # pending, contacted, agreed, completed
 
 
@@ -68,7 +72,7 @@ class SubscriptionTier:
     benefits: list[str] = field(default_factory=list)
     subscribers: int = 0
     monthly_revenue: float = 0.0
-    churn_rate: float = 0.0
+    churn_rate: float | None = None
 
 
 @dataclass
@@ -80,8 +84,10 @@ class PricingStrategy:
     recommended_price: float = 0.0
     current_price: float = 0.0
     competitive_range: tuple[float, float] = (0.0, 0.0)
-    confidence: float = 0.0
+    confidence: float | None = None
     reasoning: str = ""
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -92,7 +98,9 @@ class EarningsForecast:
     horizon_days: int = 30
     projected_earnings: float = 0.0
     confidence_interval: tuple[float, float] = (0.0, 0.0)
-    growth_projection: float = 0.0
+    growth_projection: float | None = None
+    data_status: str = "estimated_from_inputs"
+    data_note: str = ""
     risk_factors: list[str] = field(default_factory=list)
     created_at: float = 0.0
 
@@ -104,7 +112,7 @@ class OptimizationRecommendation:
     creator_id: str
     area: str = ""  # revenue, audience, content, sponsorship, pricing
     description: str = ""
-    potential_impact: float = 0.0
+    potential_impact: float | None = None
     implementation_difficulty: str = "medium"  # easy, medium, hard
     estimated_time: str = "1 week"
 
@@ -139,7 +147,17 @@ class CreatorMonetizationEngine:
             earnings_today=earnings_today,
             earnings_week=earnings_today * 7,
             earnings_month=earnings_today * 30,
-            growth_rate=0.05 + (ord(hashlib.md5(f"{creator_id}{stream_type}".encode()).hexdigest()[:1]) % 15) / 100,
+            # Week/month are flat extrapolations of the supplied daily
+            # figure (x7 / x30). No earnings history exists, so no growth
+            # rate can be computed. (TASK-REL-020: previously derived
+            # from an md5 hash.)
+            growth_rate=None,
+            data_status="no_data",
+            data_note=(
+                "growth_rate unavailable: only a single daily earnings "
+                "figure was supplied; week/month are flat x7/x30 "
+                "extrapolations of it."
+            ),
         )
         self._streams[stream.stream_id] = stream
         return stream
@@ -158,9 +176,22 @@ class CreatorMonetizationEngine:
             creator_id=creator_id,
             sponsor_name=sponsor_name,
             sponsor_industry=sponsor_industry,
-            estimated_value=500 + (ord(hashlib.md5(f"{creator_id}{sponsor_name}".encode()).hexdigest()[:1]) % 2000),
-            match_score=0.7 + (ord(hashlib.md5(f"match:{creator_id}{sponsor_name}".encode()).hexdigest()[:1]) % 25) / 100,
-            reason=f"Creator's audience overlaps with {sponsor_industry} market",
+            # No audience-overlap or rate-card data exists for either
+            # party. (TASK-REL-020: value/score were previously derived
+            # from md5 hashes, and the reason asserted an audience
+            # overlap that was never measured.)
+            estimated_value=None,
+            match_score=None,
+            reason=(
+                "Match recorded for manual review; audience overlap with "
+                f"the {sponsor_industry or 'sponsor'} market has not been "
+                "measured."
+            ),
+            data_status="no_data",
+            data_note=(
+                "estimated_value and match_score unavailable: no audience "
+                "or sponsorship rate data is connected."
+            ),
         )
 
         self._matches.append(match)
@@ -204,7 +235,9 @@ class CreatorMonetizationEngine:
             benefits=benefits or ["Exclusive content", "Ad-free experience", "Community access"],
             subscribers=0,
             monthly_revenue=0.0,
-            churn_rate=0.05,
+            # No subscribers exist yet, so no churn rate exists.
+            # (TASK-REL-020: previously a constant 0.05.)
+            churn_rate=None,
         )
         self._tiers[tier.tier_id] = tier
         return tier
@@ -224,8 +257,20 @@ class CreatorMonetizationEngine:
             recommended_price=recommended,
             current_price=current_price,
             competitive_range=(competitive_low, competitive_high),
-            confidence=0.6 + (ord(hashlib.md5(f"pricing:{creator_id}".encode()).hexdigest()[:1]) % 30) / 100,
-            reasoning=f"Recommended price based on competitive analysis and audience willingness to pay",
+            # (TASK-REL-020: confidence was previously derived from an
+            # md5 hash, and the reasoning claimed a competitive analysis
+            # and willingness-to-pay study that do not exist. The range
+            # below is plain arithmetic on the supplied current price.)
+            confidence=None,
+            reasoning=(
+                "Range is arithmetic on the current price only "
+                "(0.5x to 2.0x; midpoint recommended). No competitor "
+                "pricing or willingness-to-pay data is available."
+            ),
+            data_status="no_data",
+            data_note=(
+                "confidence unavailable: no market data is connected."
+            ),
         )
 
         self._strategies.append(strategy)
@@ -244,7 +289,17 @@ class CreatorMonetizationEngine:
             horizon_days=horizon_days,
             projected_earnings=projected,
             confidence_interval=(projected * 0.7, projected * 1.3),
-            growth_projection=10.0 + (ord(hashlib.md5(f"growth:{creator_id}".encode()).hexdigest()[:1]) % 20),
+            # (TASK-REL-020: growth_projection was previously derived
+            # from an md5 hash of the creator id.)
+            growth_projection=None,
+            data_status="estimated_from_inputs",
+            data_note=(
+                "Projection = (sum of the creator's stored streams' "
+                "daily earnings) x horizon_days x fixed 1.1-per-month "
+                "compounding assumption; interval is a flat +/-30% band. "
+                "These are stated assumptions over supplied figures, not "
+                "measured growth; growth_projection is unavailable."
+            ),
             risk_factors=["Market competition", "Audience engagement changes", "Platform policy changes"],
             created_at=time.time(),
         )
@@ -261,7 +316,7 @@ class CreatorMonetizationEngine:
             creator_id=creator_id,
             area="revenue",
             description="Diversify revenue streams to reduce platform dependency",
-            potential_impact=0.3,
+            potential_impact=None,
             implementation_difficulty="medium",
             estimated_time="2 weeks",
         ))
@@ -271,7 +326,7 @@ class CreatorMonetizationEngine:
             creator_id=creator_id,
             area="sponsorship",
             description="Pursue premium sponsorship deals in your niche",
-            potential_impact=0.4,
+            potential_impact=None,
             implementation_difficulty="hard",
             estimated_time="1 month",
         ))
@@ -281,7 +336,7 @@ class CreatorMonetizationEngine:
             creator_id=creator_id,
             area="pricing",
             description="Test subscription tiers at different price points",
-            potential_impact=0.2,
+            potential_impact=None,
             implementation_difficulty="easy",
             estimated_time="1 week",
         ))
@@ -305,7 +360,11 @@ class CreatorMonetizationEngine:
             "total_recommendations": len(self._recommendations),
             "total_earnings_today": total_earnings_today,
             "total_earnings_month": total_earnings_month,
-            "avg_growth_rate": sum(s.growth_rate for s in self._streams.values()) / max(1, len(self._streams)),
+            "avg_growth_rate": (
+                sum(s.growth_rate for s in self._streams.values() if s.growth_rate is not None)
+                / max(1, sum(1 for s in self._streams.values() if s.growth_rate is not None))
+                if any(s.growth_rate is not None for s in self._streams.values()) else None
+            ),
             "revenue_by_type": {
                 stream_type: sum(s.earnings_month for s in self._streams.values() if s.stream_type == stream_type)
                 for stream_type in set(s.stream_type for s in self._streams.values())
@@ -349,7 +408,7 @@ async def match_sponsor(payload: dict):
         sponsor_name=payload["sponsor_name"],
         sponsor_industry=payload.get("sponsor_industry", ""),
     )
-    return {"match_id": match.match_id, "sponsor": match.sponsor_name, "score": match.match_score}
+    return {"match_id": match.match_id, "sponsor": match.sponsor_name, "score": match.match_score, "estimated_value": match.estimated_value, "reason": match.reason, "data_status": match.data_status, "data_note": match.data_note}
 
 
 @router.post("/api/v1/vyralx/creator/monetization/campaigns")
@@ -373,6 +432,8 @@ async def forecast_earnings(creator_id: str, horizon_days: int = 30):
         "confidence_low": forecast.confidence_interval[0],
         "confidence_high": forecast.confidence_interval[1],
         "growth": forecast.growth_projection,
+        "data_status": forecast.data_status,
+        "data_note": forecast.data_note,
     }
 
 

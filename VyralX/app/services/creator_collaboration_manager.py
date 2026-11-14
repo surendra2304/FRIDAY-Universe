@@ -27,7 +27,9 @@ class CreatorProfile:
     engagement_rate: float = 0.0
     avg_views: int = 0
     collaboration_count: int = 0
-    rating: float = 0.0
+    rating: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     created_at: float = 0.0
 
 
@@ -53,7 +55,7 @@ class Collaboration:
     type: str = ""
     content_url: str = ""
     views: int = 0
-    engagement: float = 0.0
+    engagement: float | None = None
     revenue: float = 0.0
     revenue_split_a: float = 0.0
     revenue_split_b: float = 0.0
@@ -131,7 +133,15 @@ class CreatorCollaborationManager:
             audience_size=audience_size,
             engagement_rate=engagement_rate,
             avg_views=avg_views,
-            rating=4.0 + (ord(hashlib.md5(name.encode()).hexdigest()[:1]) % 10) / 10,
+            # No ratings/reviews data exists for any creator.
+            # (TASK-REL-020: previously derived from an md5 hash of the
+            # creator's name.)
+            rating=None,
+            data_status="no_data",
+            data_note=(
+                "rating unavailable: no reviews or ratings data is "
+                "connected for creators."
+            ),
             created_at=time.time(),
         )
         self._creators[creator.creator_id] = creator
@@ -265,7 +275,9 @@ class CreatorCollaborationManager:
             raise HTTPException(404, f"Collaboration {collaboration_id} not found")
 
         collab.views = views
-        collab.engagement = views * 0.05
+        # Engagement is not reported by any platform integration here.
+        # (TASK-REL-020: previously assumed to be 5% of views.)
+        collab.engagement = None
         collab.revenue = revenue
         collab.revenue_split_a = revenue * collab.revenue_split_a
         collab.revenue_split_b = revenue * collab.revenue_split_b

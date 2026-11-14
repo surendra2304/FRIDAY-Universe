@@ -41,9 +41,11 @@ class EmailCampaign:
     send_time: str = ""  # ISO datetime
     status: str = "draft"  # draft, scheduled, sending, sent, failed
     sent_at: float = 0.0
-    open_rate: float = 0.0
-    click_rate: float = 0.0
-    bounce_rate: float = 0.0
+    open_rate: float | None = None
+    click_rate: float | None = None
+    bounce_rate: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -56,10 +58,12 @@ class SocialPost:
     scheduled_at: float = 0.0
     status: str = "draft"  # draft, scheduled, posted, failed
     posted_at: float = 0.0
-    likes: int = 0
-    shares: int = 0
-    comments: int = 0
-    reach: int = 0
+    likes: int | None = None
+    shares: int | None = None
+    comments: int | None = None
+    reach: int | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -71,13 +75,15 @@ class AdCampaign:
     budget: float = 0.0
     daily_budget: float = 0.0
     status: str = "draft"  # draft, active, paused, ended
-    impressions: int = 0
-    clicks: int = 0
-    conversions: int = 0
-    spend: float = 0.0
-    ctr: float = 0.0
-    cpa: float = 0.0
-    roas: float = 0.0
+    impressions: int | None = None
+    clicks: int | None = None
+    conversions: int | None = None
+    spend: float | None = None
+    ctr: float | None = None
+    cpa: float | None = None
+    roas: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -190,10 +196,15 @@ class MarketingPlatformIntegrator:
         campaign.status = "sent"
         campaign.sent_at = time.time()
 
-        # Simulate metrics
-        campaign.open_rate = 0.25 + (ord(hashlib.md5(campaign_id.encode()).hexdigest()[:1]) % 30) / 100
-        campaign.click_rate = 0.05 + (ord(hashlib.md5(campaign_id.encode()).hexdigest()[:1]) % 15) / 100
-        campaign.bounce_rate = 0.02 + (ord(hashlib.md5(campaign_id.encode()).hexdigest()[:1]) % 5) / 100
+        # No email service provider is connected, so no delivery metrics
+        # exist. Rates stay None (data_status="no_data") rather than being
+        # simulated. (TASK-REL-020: previously derived from an md5 hash of
+        # the campaign id — deterministic pseudo-data presented as metrics.)
+        campaign.data_status = "no_data"
+        campaign.data_note = (
+            "Campaign marked sent locally; no ESP (SendGrid/Mailchimp) is "
+            "connected, so open/click/bounce rates are unavailable."
+        )
 
         return campaign
 
@@ -240,11 +251,15 @@ class MarketingPlatformIntegrator:
         post.status = "posted"
         post.posted_at = time.time()
 
-        # Simulate metrics
-        post.likes = 50 + (ord(hashlib.md5(post_id.encode()).hexdigest()[:1]) % 500)
-        post.shares = 10 + (ord(hashlib.md5(post_id.encode()).hexdigest()[:1]) % 100)
-        post.comments = 5 + (ord(hashlib.md5(post_id.encode()).hexdigest()[:1]) % 50)
-        post.reach = 1000 + (ord(hashlib.md5(post_id.encode()).hexdigest()[:1]) % 10000)
+        # No social platform API is connected, so no engagement metrics
+        # exist. Counts stay None (data_status="no_data") rather than being
+        # simulated. (TASK-REL-020: previously derived from an md5 hash of
+        # the post id.)
+        post.data_status = "no_data"
+        post.data_note = (
+            "Post marked posted locally; no platform API is connected, so "
+            "likes/shares/comments/reach are unavailable."
+        )
 
         return post
 
@@ -279,14 +294,16 @@ class MarketingPlatformIntegrator:
 
         campaign.status = "active"
 
-        # Simulate campaign performance
-        campaign.impressions = 10000 + (ord(hashlib.md5(campaign_id.encode()).hexdigest()[:1]) % 50000)
-        campaign.clicks = campaign.impressions * 0.02
-        campaign.conversions = campaign.clicks * 0.1
-        campaign.spend = campaign.daily_budget * 30
-        campaign.ctr = campaign.clicks / max(1, campaign.impressions)
-        campaign.cpa = campaign.spend / max(1, campaign.conversions)
-        campaign.roas = 3.0 + (ord(hashlib.md5(campaign_id.encode()).hexdigest()[:1]) % 40) / 10
+        # No ad platform is connected, so no performance data exists.
+        # Impressions/clicks/conversions/spend/ctr/cpa/roas stay None
+        # (data_status="no_data") rather than being simulated.
+        # (TASK-REL-020: previously derived from an md5 hash of the
+        # campaign id plus fixed ratios.)
+        campaign.data_status = "no_data"
+        campaign.data_note = (
+            "Campaign marked active locally; no ad platform (Google Ads / "
+            "Meta Ads) is connected, so performance metrics are unavailable."
+        )
 
         return campaign
 

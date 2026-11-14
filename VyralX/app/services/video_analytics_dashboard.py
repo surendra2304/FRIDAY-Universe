@@ -26,14 +26,16 @@ class VideoMetrics:
     dislikes: int = 0
     shares: int = 0
     comments: int = 0
-    watch_time_hours: float = 0.0
-    avg_view_duration: float = 0.0  # seconds
+    watch_time_hours: float | None = None
+    avg_view_duration: float | None = None  # seconds
     engagement_rate: float = 0.0
-    retention_rate: float = 0.0
-    ctr: float = 0.0  # click-through rate
-    virality_score: float = 0.0
+    retention_rate: float | None = None
+    ctr: float | None = None  # click-through rate
+    virality_score: float | None = None
     revenue: float = 0.0
     timestamp: float = 0.0
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -45,8 +47,10 @@ class AudienceDemographics:
     location_distribution: dict = field(default_factory=dict)
     device_distribution: dict = field(default_factory=dict)
     traffic_sources: dict = field(default_factory=dict)
-    unique_viewers: int = 0
-    returning_viewers_pct: float = 0.0
+    unique_viewers: int | None = None
+    returning_viewers_pct: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -54,23 +58,27 @@ class RetentionCurve:
     """Viewer retention curve."""
     video_id: str
     segments: list[dict] = field(default_factory=list)  # [{timestamp_pct, retention_pct}]
-    avg_retention: float = 0.0
+    avg_retention: float | None = None
     drop_off_points: list[float] = field(default_factory=list)
-    peak_retention: float = 0.0
-    last_segment_retention: float = 0.0
+    peak_retention: float | None = None
+    last_segment_retention: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
 class ViralityAnalysis:
     """Virality analysis for a video."""
     video_id: str
-    virality_score: float = 0.0
+    virality_score: float | None = None
     sharing_rate: float = 0.0
-    velocity_score: float = 0.0
-    compound_score: float = 0.0
-    predicted_views: int = 0
-    days_to_viral: float = 0.0
+    velocity_score: float | None = None
+    compound_score: float | None = None
+    predicted_views: int | None = None
+    days_to_viral: float | None = None
     factors: list[str] = field(default_factory=list)
+    data_status: str = "no_data"
+    data_note: str = ""
 
 
 @dataclass
@@ -78,11 +86,13 @@ class CompetitiveBenchmark:
     """Competitive benchmarking."""
     video_id: str
     benchmark_group: str = ""
-    avg_views_in_group: int = 0
-    avg_engagement_in_group: float = 0.0
-    avg_retention_in_group: float = 0.0
-    percentile_rank: float = 0.0
-    competitive_score: float = 0.0
+    avg_views_in_group: int | None = None
+    avg_engagement_in_group: float | None = None
+    avg_retention_in_group: float | None = None
+    percentile_rank: float | None = None
+    competitive_score: float | None = None
+    data_status: str = "no_data"
+    data_note: str = ""
     strengths: list[str] = field(default_factory=list)
     weaknesses: list[str] = field(default_factory=list)
 
@@ -133,6 +143,14 @@ class VideoAnalyticsDashboard:
         comments: int = 0,
     ) -> VideoMetrics:
         """Track video metrics."""
+        # views/likes/shares/comments are caller-supplied counts and
+        # engagement_rate is computed from them. Everything that would
+        # require platform analytics (average view duration, retention,
+        # CTR, watch time) stays None, and virality_score — whose formula
+        # depended on the invented retention constant — is not computed.
+        # (TASK-REL-020: avg_view_duration=180.0, retention_rate=0.55 and
+        # ctr=0.15 were previously hardcoded constants presented as this
+        # video's measured metrics.)
         metrics = VideoMetrics(
             video_id=video_id,
             title=title,
@@ -140,77 +158,69 @@ class VideoAnalyticsDashboard:
             likes=likes,
             shares=shares,
             comments=comments,
-            avg_view_duration=180.0,
+            avg_view_duration=None,
             engagement_rate=(likes + shares + comments) / max(1, views) * 100,
-            retention_rate=0.55,
-            ctr=0.15,
-            virality_score=0.0,
+            retention_rate=None,
+            ctr=None,
+            virality_score=None,
+            watch_time_hours=None,
             timestamp=time.time(),
+            data_status="no_data",
+            data_note=(
+                "views/likes/shares/comments are caller-supplied and "
+                "engagement_rate is computed from them; avg_view_duration, "
+                "retention_rate, ctr, watch_time and virality_score "
+                "require platform analytics and are unavailable."
+            ),
         )
-
-        # Calculate virality
-        metrics.virality_score = (
-            shares / max(1, views) * 50 +
-            metrics.engagement_rate * 0.5 +
-            metrics.retention_rate * 30
-        )
-
-        # Update watch time
-        metrics.watch_time_hours = views * metrics.avg_view_duration / 3600
 
         self._metrics[video_id] = metrics
         return metrics
 
     def analyze_demographics(self, video_id: str) -> AudienceDemographics:
         """Analyze audience demographics."""
+        # No demographics data source exists. (TASK-REL-020: all five
+        # distributions were previously hardcoded constants served for
+        # every video, unique_viewers was views x 0.85, and
+        # returning_viewers_pct was a constant 0.25.)
         demographics = AudienceDemographics(
             video_id=video_id,
-            age_distribution={
-                "13-17": 0.15, "18-24": 0.35, "25-34": 0.30, "35-44": 0.12, "45+": 0.08
-            },
-            gender_distribution={"male": 0.55, "female": 0.45},
-            location_distribution={
-                "NA": 0.40, "EU": 0.25, "APAC": 0.20, "LATAM": 0.10, "other": 0.05
-            },
-            device_distribution={"mobile": 0.65, "desktop": 0.25, "tablet": 0.10},
-            traffic_sources={
-                "algorithm": 0.45, "search": 0.20, "direct": 0.15,
-                "external": 0.10, "notifications": 0.10
-            },
-            unique_viewers=int(self._metrics.get(video_id, VideoMetrics(video_id, "")).views * 0.85),
-            returning_viewers_pct=0.25,
+            age_distribution={},
+            gender_distribution={},
+            location_distribution={},
+            device_distribution={},
+            traffic_sources={},
+            unique_viewers=None,
+            returning_viewers_pct=None,
+            data_status="no_data",
+            data_note=(
+                "Audience demographics are unavailable: no platform "
+                "analytics data is connected for this video."
+            ),
         )
 
         self._demographics[video_id] = demographics
         return demographics
 
     def generate_retention_curve(self, video_id: str) -> RetentionCurve:
-        """Generate viewer retention curve."""
-        segments = []
-        for i in range(10):
-            timestamp_pct = (i + 1) * 10
-            retention_pct = 100 - (i * 8) - (ord(hashlib.md5(f"{video_id}:{i}".encode()).hexdigest()[:1]) % 5)
-            segments.append({
-                "timestamp_pct": timestamp_pct,
-                "retention_pct": retention_pct,
-            })
+        """Retention curve (honest no-data state).
 
-        avg_retention = sum(s["retention_pct"] for s in segments) / len(segments)
-
-        # Find drop-off points
-        drop_offs = []
-        for i in range(1, len(segments)):
-            drop = segments[i - 1]["retention_pct"] - segments[i]["retention_pct"]
-            if drop > 10:
-                drop_offs.append(segments[i]["timestamp_pct"])
-
+        No per-segment watch data exists for any video. (TASK-REL-020:
+        the curve was previously an invented linear decay with md5-hash
+        jitter, presented as the video's measured retention.)
+        """
         curve = RetentionCurve(
             video_id=video_id,
-            segments=segments,
-            avg_retention=avg_retention,
-            drop_off_points=drop_offs,
-            peak_retention=100,
-            last_segment_retention=segments[-1]["retention_pct"],
+            segments=[],
+            avg_retention=None,
+            drop_off_points=[],
+            peak_retention=None,
+            last_segment_retention=None,
+            data_status="no_data",
+            data_note=(
+                "Retention is unavailable: no per-segment watch data is "
+                "connected for this video."
+            ),
         )
 
         self._retention[video_id] = curve
@@ -222,67 +232,64 @@ class VideoAnalyticsDashboard:
         if not metrics:
             raise HTTPException(404, f"Video {video_id} not found")
 
+        # sharing_rate is computed from the tracked (caller-supplied)
+        # counts. Everything derived from virality_score is unavailable
+        # because virality_score itself cannot be computed without
+        # retention data. (TASK-REL-020)
         sharing_rate = metrics.shares / max(1, metrics.views)
-        velocity = min(1.0, metrics.virality_score / 50)
 
         virality = ViralityAnalysis(
             video_id=video_id,
-            virality_score=metrics.virality_score,
+            virality_score=None,
             sharing_rate=sharing_rate,
-            velocity_score=velocity,
-            compound_score=metrics.virality_score * velocity,
-            predicted_views=metrics.views * (1 + metrics.virality_score / 20),
-            days_to_viral=30 / max(0.1, velocity),
+            velocity_score=None,
+            compound_score=None,
+            predicted_views=None,
+            days_to_viral=None,
             factors=[
                 f"Sharing rate: {sharing_rate:.2%}",
                 f"Engagement rate: {metrics.engagement_rate:.1f}%",
-                f"Retention: {metrics.retention_rate:.0%}",
+                "Retention: unavailable (no platform analytics)",
             ],
+            data_status="no_data",
+            data_note=(
+                "virality_score and its derivatives are unavailable: the "
+                "score requires retention data, which is not connected. "
+                "sharing_rate is computed from the tracked counts."
+            ),
         )
 
         self._virality[video_id] = virality
         return virality
 
     def benchmark_competitively(self, video_id: str, benchmark_group: str = "") -> CompetitiveBenchmark:
-        """Benchmark video against competitors."""
+        """Benchmark video against competitors (honest no-data state).
+
+        No competitor/benchmark-group dataset exists. (TASK-REL-020: the
+        group averages were previously hardcoded constants — 100000
+        views, 4.0 engagement, 0.50 retention — and the percentile and
+        competitive score were arithmetic on those constants, presented
+        as benchmarking.)
+        """
         metrics = self._metrics.get(video_id)
         if not metrics:
             raise HTTPException(404, f"Video {video_id} not found")
 
-        avg_views = 100000
-        avg_engagement = 4.0
-        avg_retention = 0.50
-
-        percentile = min(99, max(1, metrics.views / avg_views * 50 + 25))
-
-        strengths = []
-        weaknesses = []
-
-        if metrics.engagement_rate > avg_engagement:
-            strengths.append("High engagement rate")
-        else:
-            weaknesses.append("Below-average engagement")
-
-        if metrics.retention_rate > avg_retention:
-            strengths.append("Strong viewer retention")
-        else:
-            weaknesses.append("Viewer retention needs improvement")
-
-        if metrics.virality_score > 30:
-            strengths.append("High virality potential")
-        else:
-            weaknesses.append("Low virality score")
-
         benchmark = CompetitiveBenchmark(
             video_id=video_id,
             benchmark_group=benchmark_group or "general",
-            avg_views_in_group=avg_views,
-            avg_engagement_in_group=avg_engagement,
-            avg_retention_in_group=avg_retention,
-            percentile_rank=percentile,
-            competitive_score=percentile * 0.4 + (metrics.engagement_rate / avg_engagement) * 0.3 + (metrics.retention_rate / avg_retention) * 0.3,
-            strengths=strengths,
-            weaknesses=weaknesses,
+            avg_views_in_group=None,
+            avg_engagement_in_group=None,
+            avg_retention_in_group=None,
+            percentile_rank=None,
+            competitive_score=None,
+            strengths=[],
+            weaknesses=[],
+            data_status="no_data",
+            data_note=(
+                "Benchmarking is unavailable: no competitor or "
+                "benchmark-group dataset is connected."
+            ),
         )
 
         self._benchmarks[video_id] = benchmark
@@ -320,7 +327,7 @@ class VideoAnalyticsDashboard:
                 triggered_at=time.time(),
             ))
 
-        if metrics.virality_score > 40:
+        if metrics.virality_score is not None and metrics.virality_score > 40:
             alerts.append(PerformanceAlert(
                 alert_id=hashlib.md5(f"alert:viral:{video_id}:{time.time()}".encode()).hexdigest()[:12],
                 video_id=video_id,
@@ -388,7 +395,11 @@ class VideoAnalyticsDashboard:
             "total_widgets": len(self._widgets),
             "total_views": sum(m.views for m in self._metrics.values()),
             "avg_engagement": sum(m.engagement_rate for m in self._metrics.values()) / max(1, len(self._metrics)),
-            "avg_retention": sum(r.avg_retention for r in self._retention.values()) / max(1, len(self._retention)),
+            "avg_retention": (
+                sum(r.avg_retention for r in self._retention.values() if r.avg_retention is not None)
+                / max(1, sum(1 for r in self._retention.values() if r.avg_retention is not None))
+                if any(r.avg_retention is not None for r in self._retention.values()) else None
+            ),
             "recent_alerts": [
                 {
                     "video": a.video_id,
@@ -424,6 +435,8 @@ async def track_video(payload: dict):
         "views": metrics.views,
         "engagement_rate": metrics.engagement_rate,
         "virality_score": metrics.virality_score,
+        "data_status": metrics.data_status,
+        "data_note": metrics.data_note,
     }
 
 
@@ -439,6 +452,8 @@ async def analyze_demographics(video_id: str):
         "device_distribution": demographics.device_distribution,
         "traffic_sources": demographics.traffic_sources,
         "unique_viewers": demographics.unique_viewers,
+        "data_status": demographics.data_status,
+        "data_note": demographics.data_note,
     }
 
 
@@ -453,6 +468,8 @@ async def generate_retention_curve(video_id: str):
         "last_segment_retention": curve.last_segment_retention,
         "drop_off_points": curve.drop_off_points,
         "segments": curve.segments,
+        "data_status": curve.data_status,
+        "data_note": curve.data_note,
     }
 
 
@@ -469,6 +486,8 @@ async def analyze_virality(video_id: str):
         "predicted_views": virality.predicted_views,
         "days_to_viral": virality.days_to_viral,
         "factors": virality.factors,
+        "data_status": virality.data_status,
+        "data_note": virality.data_note,
     }
 
 
@@ -482,6 +501,8 @@ async def benchmark_competitively(video_id: str, benchmark_group: str = ""):
         "competitive_score": benchmark.competitive_score,
         "strengths": benchmark.strengths,
         "weaknesses": benchmark.weaknesses,
+        "data_status": benchmark.data_status,
+        "data_note": benchmark.data_note,
     }
 
 
