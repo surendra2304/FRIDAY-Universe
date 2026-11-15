@@ -283,6 +283,10 @@ class ToolExecutionMixin:
                     PhoneTapTool,
                     PhoneTypeTextTool,
                 )
+                from friday.tools.builtin.phone_ui_control import (
+                    PhoneUiDumpTool,
+                    PhoneUiTaskTool,
+                )
                 registry.register(PhoneStatusTool())
                 registry.register(PhoneOpenAppTool())
                 registry.register(PhoneCloseAppTool())
@@ -300,6 +304,9 @@ class ToolExecutionMixin:
                 registry.register(PhoneTypeTextTool())
                 registry.register(PhonePressKeyTool())
                 registry.register(PhoneScreenshotTool())
+                # TASK-IG-LAP-01: natural-language UI automation surfaces.
+                registry.register(PhoneUiDumpTool())
+                registry.register(PhoneUiTaskTool())
             except ImportError:
                 pass
             # The skill layer (24 registered skills) had no caller in the running
