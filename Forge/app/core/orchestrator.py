@@ -1243,19 +1243,64 @@ class OrchestratorCore:
 
             recovery = RecoveryEngine(exec_engine=self.engine, verifier=engine, store=self.store)
             recovered_any = False
-            for evidence in report.evidence:
-                if evidence.passed:
-                    continue
-                recovered, message, _patch = await recovery.attempt_recovery(task_id, evidence)
-                if recovered:
-                    recovered_any = True
-                    logger.info(f"Self-repair succeeded for '{task_id}': {message}")
-                else:
+            # TASK-FRG-005: the evidence list used to be frozen at the first
+            # battery. Two measured consequences: (1) when the first failed
+            # check's repair turned the whole battery green, the loop kept
+            # spending recovery attempts -- including Inference calls -- on
+            # the remaining STALE evidence for checks that already passed;
+            # (2) a defect only exposed BY an earlier fix (a logic bug masked
+            # behind a syntax error: the tests could not even run) never
+            # received a recovery attempt, because its evidence did not exist
+            # in the frozen list, and the partial fix was recorded as no
+            # recovery at all. Refresh the evidence after any attempt that
+            # changed files: attempts are keyed by an evidence signature so
+            # the same failure is never re-attempted, a changed failure (new
+            # class, new target) is attempted fresh, and the loop stops as
+            # soon as a fresh battery is green or a full pass makes no
+            # progress. Passes are capped; the anti-loop guard remains the
+            # hard budget inside every attempt.
+            attempted_signatures: set[tuple[str, int, str, str]] = set()
+            current_report = report
+            for _pass in range(3):
+                pending = [e for e in current_report.evidence if not e.passed]
+                if not pending:
+                    break
+                progressed = False
+                for evidence in pending:
+                    signature = (
+                        evidence.check_name,
+                        evidence.exit_code,
+                        (evidence.stderr or "")[:400],
+                        (evidence.stdout or "")[:400],
+                    )
+                    if signature in attempted_signatures:
+                        continue
+                    attempted_signatures.add(signature)
+                    recovered, message, _patch = await recovery.attempt_recovery(task_id, evidence)
+                    if recovered:
+                        recovered_any = True
+                        progressed = True
+                        logger.info(f"Self-repair succeeded for '{task_id}': {message}")
+                        break  # the battery was green at that moment; refresh below
+                    if _patch is not None:
+                        # A patch was applied even though the battery is not
+                        # green yet: partial progress. Refresh before
+                        # spending more attempts on stale evidence.
+                        progressed = True
+                        logger.info(
+                            f"Self-repair made progress for '{task_id}': {message}"
+                        )
+                        break
                     logger.warning(f"Self-repair did not fix '{task_id}': {message}")
-            if recovered_any:
+                if not progressed:
+                    break
                 # The re-verification after repairs decides the task's fate:
                 # capture it as the final report instead of discarding it.
-                final_report = await engine.verify_task(task_id)
+                current_report = await engine.verify_task(task_id)
+                final_report = current_report
+                if current_report.all_passed:
+                    recovered_any = True
+                    break
 
             if final_report is not None and final_report.all_passed:
                 # TASK-FRG-007 (early exit): the objective battery is green

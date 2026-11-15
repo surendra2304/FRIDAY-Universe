@@ -190,6 +190,62 @@ def _fix_unterminated_string(source: str) -> str | None:
     return "\n".join(lines) + "\n" if changed else None
 
 
+def _indent_width(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
+def _fix_expected_indented_block(lines: list[str]) -> list[str] | None:
+    """Re-indent the body a compound header is missing (TASK-FRG-005).
+
+    The classic generated-code shape::
+
+        if score >= 90:
+        return "A"            <- body written at the header's own level
+
+    raises IndentationError ("expected an indented block"), and no other
+    candidate in this module -- and no LLM route either, since the repair
+    intake refuses unparseable sources -- could fix it: the class was a
+    dead end measured by the FRG-005 stress battery. For every compound
+    header whose next non-blank line is not indented deeper than the
+    header, generate the minimal candidate that re-indents just that line
+    and its deeper-indented continuation lines to header level + 4. The
+    caller's compile gate remains the arbiter, and the verification
+    battery still has to pass before the repair counts.
+    """
+    out = list(lines)
+    changed = False
+    for i, raw in enumerate(lines):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#") or not stripped.endswith(":"):
+            continue
+        first = stripped.split()[0].rstrip(":")
+        if first not in _COLON_KEYWORDS:
+            continue
+        base = _indent_width(raw)
+        # Find the next non-blank line: the would-be body.
+        j = i + 1
+        while j < len(lines) and not lines[j].strip():
+            j += 1
+        if j >= len(lines):
+            continue
+        body_indent = _indent_width(lines[j])
+        if body_indent > base:
+            continue  # properly indented already
+        shift = base + 4 - body_indent
+        k = j
+        while k < len(lines):
+            line = lines[k]
+            if not line.strip():
+                k += 1
+                continue
+            if k > j and _indent_width(line) <= body_indent:
+                break  # the block's continuation lines are deeper than its head
+            out[k] = " " * shift + line
+            k += 1
+        changed = True
+    return out if changed else None
+
+
 def _repair_python_source(source: str) -> str | None:
     """Return a repaired copy of ``source``, or None if nothing safe applies.
 
@@ -221,6 +277,10 @@ def _repair_python_source(source: str) -> str | None:
     colon_fixed = _missing_colon_fix(lines)
     if colon_fixed is not None:
         candidates.append("\n".join(colon_fixed) + "\n")
+
+    indented = _fix_expected_indented_block(lines)
+    if indented is not None:
+        candidates.append("\n".join(indented) + "\n")
 
     balanced = _balance_brackets(source)
     if balanced is not None:
