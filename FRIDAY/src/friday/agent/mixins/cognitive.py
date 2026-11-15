@@ -384,6 +384,9 @@ class CognitiveMixin:
             # any timeout/error/low-confidence yields None and everything
             # below proceeds byte-identical to the pre-tier behaviour.
             intent_result = None
+            # TASK-FRD-003: per-stage timings for the chat latency breakdown
+            # (forwarded in the final response metadata below).
+            intent_classify_seconds = 0.0
             try:
                 from friday.routing.intent_classifier import get_intent_classifier
 
@@ -392,9 +395,11 @@ class CognitiveMixin:
                     classifier is not None
                     and classifier.signal_is_weak(clean_input, self.capability_router)
                 ):
+                    _intent_t0 = time.perf_counter()
                     intent_result = classifier.classify(
                         clean_input, recent_messages=recent_messages
                     )
+                    intent_classify_seconds = round(time.perf_counter() - _intent_t0, 3)
             except Exception as e:  # never let the mid-tier break a turn
                 logger.debug(f"Intent mid-tier skipped: {type(e).__name__}: {e}")
                 intent_result = None
@@ -464,10 +469,12 @@ class CognitiveMixin:
             self.task_context.set_state(TaskState.PLANNING)
             
             recalled = []
+            _recall_t0 = time.perf_counter()
             if hasattr(self, "_retrieve_relevant_memories"):
                 recalled = self._retrieve_relevant_memories(effective_goal)
             elif should_retrieve_memory(effective_goal):
                 recalled = self.memory.search(effective_goal, limit=5)
+            local_recall_seconds = round(time.perf_counter() - _recall_t0, 3)
             
             context = {
                 "has_working_context": bool(self.task_context) or is_confirmation_turn,
@@ -623,6 +630,13 @@ class CognitiveMixin:
                     "iterations": exec_res.metadata.get("iterations", exec_res.metadata.get("total_tasks", 1) or 1),
                     "request_count": exec_res.metadata.get("iterations", exec_res.metadata.get("total_tasks", 1) or 1),
                     "duration_seconds": duration,
+                    # TASK-FRD-003: stage timings (seconds) for this turn —
+                    # intent mid-tier, local recall, and the Memora context
+                    # legs inside execute_complex_task (parallel since
+                    # FRD-003; "latency" carries wall + per-leg seconds).
+                    "intent_classify_seconds": intent_classify_seconds,
+                    "local_recall_seconds": local_recall_seconds,
+                    "latency": exec_res.metadata.get("latency"),
                     "success": task_succeeded,
                     "authorization_denied": authorization_denied,
                     "provider": self.llm.provider_name,
