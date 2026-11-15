@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any
 
 import httpx
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 from jwt.exceptions import PyJWTError as JWTError
@@ -231,7 +231,10 @@ def require_role(required_role: Role):
     return role_checker
 
 
-async def verify_friday_token(x_friday_api_key: str | None = Header(None, alias="X-Friday-Api-Key")) -> dict[str, Any]:
+async def verify_friday_token(
+    x_friday_api_key: str | None = Header(None, alias="X-Friday-Api-Key"),
+    request: Request = None,
+) -> dict[str, Any]:
     """
     Validates that the request originates from the FRIDAY general OS by checking
     the X-Friday-Api-Key header against the FRIDAY_API_KEY env var.
@@ -277,7 +280,15 @@ async def verify_friday_token(x_friday_api_key: str | None = Header(None, alias=
     provided = x_friday_api_key.encode("utf-8")
     valid_keys = [k for k in (configured_key, os.getenv("FRIDAY_API_KEY"), os.getenv("FRIDAY_UNIVERSE_API_KEY")) if k]
     if not any(hmac.compare_digest(provided, vk.encode("utf-8")) for vk in valid_keys):
-        logger.warning("FRIDAY authentication attempt with invalid API key rejected.")
+        # TASK-COR-009: name the caller endpoint-side so an auth-layer 403 is
+        # attributable from the log alone (client + path), not just "rejected".
+        client_host = request.client.host if request is not None and request.client else "unknown"
+        request_path = request.url.path if request is not None else "unknown"
+        logger.warning(
+            "FRIDAY authentication attempt with invalid API key rejected (client=%s path=%s).",
+            client_host,
+            request_path,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid FRIDAY service token.",
