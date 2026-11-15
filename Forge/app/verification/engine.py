@@ -39,6 +39,13 @@ from app.verification.expanded_battery import (
 
 logger = get_logger("verification.engine")
 
+# TASK-FRG-007: checkers that execute or import the generated project.
+# Running the generated code can materialise files in the workspace (the
+# TASK-REL-028 shape: a program writing its own module at import time), so
+# these stay serialised -- in their original relative order -- while every
+# read-only checker runs concurrently. See _run_checkers().
+_EXECUTING_CHECKERS = frozenset({"TestChecker", "RuntimeChecker", "BrowserChecker"})
+
 
 class VerificationEngine:
     """Coordinates objective verification batteries across task workspaces."""
@@ -70,6 +77,70 @@ class VerificationEngine:
             AccessibilityChecker(),
         ]
 
+    async def _run_checkers(self, task_id: str) -> list[VerificationEvidence]:
+        """Run every checker and return evidence in the original checker order.
+
+        TASK-FRG-007 (build-time optimisation): the battery used to run its
+        checkers strictly serially, so a battery cost the SUM of all checker
+        durations and a build pays that sum once per verify_task() call
+        (initial pass, post-repair re-verify, post-peer-review re-verify).
+
+        The checkers split into two phases with identical verdicts:
+
+        * Phase A -- read-only checkers (AST/build integrity, lint, static
+          security scans, feature/quality/performance/a11y analysis) run
+          CONCURRENTLY. None of them executes the project or writes to it,
+          so none can observe another's side effects.
+        * Phase B -- checkers that execute or import the generated code
+          (TestChecker, RuntimeChecker; see _EXECUTING_CHECKERS) run
+          SERIALLY, in their original relative order, after Phase A.
+          Executing a generated program can materialise files in the
+          workspace, and two executors racing the same import could
+          interleave those writes; serialising them preserves the exact
+          pre-change execution semantics for the only checkers whose
+          behaviour can mutate the tree (the Project Source Integrity
+          evidence appended by the caller still catches any mutation,
+          exactly as it did when everything was serial).
+
+        Per-checker exception isolation is unchanged: a checker that raises
+        produces the same failed evidence it produced in the serial loop.
+        """
+        results: list[VerificationEvidence | None] = [None] * len(self.checkers)
+
+        async def run_one(index: int, checker: Any) -> None:
+            try:
+                ev = await checker.run_check(task_id=task_id, engine=self.engine)
+                results[index] = ev
+                status_str = "PASS" if ev.passed else f"FAIL (exit={ev.exit_code})"
+                logger.info(
+                    f"Check [{checker.category.value}] '{checker.name}': {status_str}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Checker '{checker.name}' failed with unexpected exception: {e}"
+                )
+                results[index] = VerificationEvidence(
+                    check_name=checker.name,
+                    category=checker.category,
+                    exit_code=1,
+                    passed=False,
+                    stderr=str(e),
+                )
+
+        static_idx = [
+            i
+            for i, c in enumerate(self.checkers)
+            if type(c).__name__ not in _EXECUTING_CHECKERS
+        ]
+        exec_idx = [
+            i
+            for i, c in enumerate(self.checkers)
+            if type(c).__name__ in _EXECUTING_CHECKERS
+        ]
+        await asyncio.gather(*(run_one(i, self.checkers[i]) for i in static_idx))
+        for i in exec_idx:
+            await run_one(i, self.checkers[i])
+        return [r for r in results if r is not None]
 
     async def _run_with_heavy_lease(
         self,
@@ -126,21 +197,7 @@ class VerificationEngine:
         logger.info(f"Capturing baseline verification metrics for task '{task_id}'...")
         evidence_list: list[VerificationEvidence] = []
 
-        for checker in self.checkers:
-            try:
-                ev = await checker.run_check(task_id=task_id, engine=self.engine)
-                evidence_list.append(ev)
-            except Exception as e:
-                logger.error(f"Checker '{checker.name}' failed during baseline capture: {e}")
-                evidence_list.append(
-                    VerificationEvidence(
-                        check_name=checker.name,
-                        category=checker.category,
-                        exit_code=1,
-                        passed=False,
-                        stderr=str(e),
-                    )
-                )
+        evidence_list = await self._run_checkers(task_id)
 
         passed_count = sum(1 for e in evidence_list if e.passed)
         failed_count = len(evidence_list) - passed_count
@@ -205,23 +262,7 @@ class VerificationEngine:
                     except Exception as e:
                         logger.debug(f"Could not load baseline report: {e}")
 
-        for checker in self.checkers:
-            try:
-                ev = await checker.run_check(task_id=task_id, engine=self.engine)
-                evidence_list.append(ev)
-                status_str = "PASS" if ev.passed else f"FAIL (exit={ev.exit_code})"
-                logger.info(f"Check [{checker.category.value}] '{checker.name}': {status_str}")
-            except Exception as e:
-                logger.error(f"Checker '{checker.name}' failed with unexpected exception: {e}")
-                evidence_list.append(
-                    VerificationEvidence(
-                        check_name=checker.name,
-                        category=checker.category,
-                        exit_code=1,
-                        passed=False,
-                        stderr=str(e),
-                    )
-                )
+        evidence_list = await self._run_checkers(task_id)
 
         from app.verification.evidence import CheckCategory
         snapshot_stable = False
