@@ -235,7 +235,11 @@ def test_metadata_carries_attribution_block():
 
 def test_compliance_checklist_pass_and_exclusions():
     checklist = rf.compliance_checklist(
-        _record(), lane="finance_explainer", source_has_speech=False
+        _record(),
+        lane="space_science",
+        source_has_speech=False,
+        render_seconds=45.0,
+        format_name="one_fact_escalation",
     )
     assert rf.checklist_passed(checklist)
     anime = rf.compliance_checklist(
@@ -247,9 +251,45 @@ def test_compliance_checklist_pass_and_exclusions():
         for item in anime
     )
     narrated = rf.compliance_checklist(
-        _record(), lane="finance_explainer", source_has_speech=True
+        _record(),
+        lane="space_science",
+        source_has_speech=True,
+        render_seconds=45.0,
+        format_name="one_fact_escalation",
     )
     assert not rf.checklist_passed(narrated)
+
+
+def test_compliance_checklist_hard_rules():
+    base = dict(
+        lane="space_science",
+        source_has_speech=False,
+        format_name="one_fact_escalation",
+    )
+    # claimed Shorts over 1 minute are BLOCKED, not just claimed
+    long_render = rf.compliance_checklist(_record(), render_seconds=75.0, **base)
+    assert not rf.checklist_passed(long_render)
+    assert any(
+        item["status"] == "FAIL" and "60 seconds" in item["item"]
+        for item in long_render
+    )
+    # unmeasured runtime cannot pass either
+    unmeasured = rf.compliance_checklist(_record(), render_seconds=None, **base)
+    assert not rf.checklist_passed(unmeasured)
+    # finance advice and sports compilations are excluded lanes
+    for lane in ("finance_advice", "sports_compilation", "bollywood_compilation"):
+        items = rf.compliance_checklist(
+            _record(), render_seconds=45.0, **{**base, "lane": lane}
+        )
+        assert not rf.checklist_passed(items), lane
+    # money STORIES are a lawful lane; no declared format is not
+    story = rf.compliance_checklist(
+        _record(), render_seconds=45.0, **{**base, "lane": "money_story"}
+    )
+    assert rf.checklist_passed(story)
+    no_format = rf.compliance_checklist(_record(), render_seconds=45.0,
+                                        **{**base, "format_name": ""})
+    assert not rf.checklist_passed(no_format)
 
 
 def test_produce_refuses_rejected_record_and_excluded_lane():

@@ -8,16 +8,17 @@ review queue. This script never uploads anything.
     # see what reusable sources exist for a topic (provenance recorded)
     python scripts/run_remix_flow.py discover --query "stock market"
 
-    # produce one remix from the first matching candidate in the registry
+    # produce one remix from a recorded candidate
     python scripts/run_remix_flow.py produce --record-id <id> \
-        --script-file scripts/remix_scripts/leverage.txt \
-        --title "Money in 40 Seconds: Leverage" --lane finance_explainer
+        --script-file scripts/remix_scripts/space_sun_facts.txt \
+        --title "The Sun Is Disappearing" --lane space_science
 
     # inspect the review queue
     python scripts/run_remix_flow.py queue
 
-Policy: VyralX/docs/REMIX_POLICY.md. Lanes: finance_explainer (priority 1),
-space_science (priority 2). Anime/gameplay compilations are excluded.
+Policy: VyralX/docs/REMIX_POLICY.md. Lanes in priority order: space_science,
+history_facts, tech_explainer, money_story (stories only — never advice).
+Anime/gameplay/sports/Bollywood/movie compilations are excluded.
 """
 from __future__ import annotations
 
@@ -58,7 +59,8 @@ def main() -> int:
     produce.add_argument("--script-file", type=Path, required=True)
     produce.add_argument("--title", required=True)
     produce.add_argument("--hook", default="")
-    produce.add_argument("--lane", default="finance_explainer")
+    produce.add_argument("--lane", default="space_science")
+    produce.add_argument("--format", default="one_fact_escalation")
     produce.add_argument("--category", default="VIRAL")
     produce.add_argument(
         "--with-db",
@@ -102,6 +104,7 @@ def main() -> int:
                 title=args.title,
                 hook=args.hook,
                 lane=args.lane,
+                format_name=args.format,
                 category=args.category,
                 db=db,
             )

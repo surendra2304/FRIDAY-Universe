@@ -56,24 +56,55 @@ has stopped issuing API keys) and is not a source for this flow.
   ranking commentary, and even then it is claim-prone (revenue may go to
   the rights holder). That format is **out of scope for this flow** and
   needs a separate coordinator decision before anyone builds it.
+- **Sports, Bollywood and movie compilations** — same claim/strike profile
+  as anime: rights holders police them aggressively and compilations are
+  the reused-content policy's named example.
+- **Financial advice** — YouTube policy makes AI-persona financial
+  guidance / investment tips non-monetisable, and SEBI bars unregistered
+  specific advice in India. Money content exists in this flow only as
+  storytelling (Lane 4 below), never as advice.
 - **Straight re-uploads of anything**, however licensed, without the full
   transformative edit below.
 
-## 3. Content lanes (coordinator steering, 2026-11-15)
+## 3. Content lanes (researched ranking, coordinator 2026-11-15)
 
-1. **Priority 1 — money/finance explainers** with original commentary (the
-   *Money in 40 seconds* scripts): PD/CC business, market, city and
-   technology footage. The flagship lane.
-2. **Priority 2 — space & science spectacle** with narration: NASA/ESA and
-   other public-domain footage. Zero copyright risk, evergreen, shareable.
+Ranked from a sourced research pass (YouTube's own policy pages +
+creator-economy data: AIR / vidIQ / upGrowth):
+
+1. **Lane 1 — space & science facts/mysteries** over NASA/NOAA and other
+   public-domain footage. Narration IS the format; evergreen; English /
+   global audience. Recipe: 40–60s, 1–2/day, extreme-fact hook in the
+   first 0–3s, 3 escalating narrated facts, payoff + loop ending; mix
+   one-fact, Top-5 and mission-story formats. (Education/science also
+   carries the highest measured long-form median RPM, $10.22.)
+2. **Lane 2 — history & 'did you know' facts**, including Indian history /
+   GK, over archive / Wikimedia / public-domain footage. Recipe: 45–70s,
+   1/day, rotating Top-5 countdown / story / one-fact formats. Per-file
+   licence checks are mandatory, and the script must be original synthesis
+   — reading Wikipedia aloud is a named YPP ban.
+3. **Lane 3 — tech & AI explainers** over the channel's OWN screen
+   recordings plus short launch/demo clips used for critical review.
+   Recipe: 40–60s, weekdays, result-first hook, demo + verdict.
+4. **Lane 4 — money content as STORIES only** (rise/fall, scams —
+   storytelling), never advice (see §2). The five *Money in 40 seconds*
+   scripts may be used only where they are pure education/story, and each
+   must be re-checked against the advice line before any use — prescriptive
+   trading guidance ("keep leverage low", "practise on demo first") does
+   not pass. (Finance Shorts also had the lowest median views — 32K — in
+   an 869-Short Indian sample, which is why this lane is last.)
+
+**Audience rule:** publish in English for a global audience. Shorts
+revenue is allocated per viewer country — AIR 2025 measured US Shorts RPM
+at $0.328/1k vs India at $0.008/1k (~41×), so India-only traffic cannot
+carry the channel's income target.
 
 ## 4. Transformative edit spec — every remix, no exceptions
 
 A remix stays inside YouTube's reused-content policy only if it adds
 significant original value. Every video from this flow must have **all** of:
 
-1. **An original script** written for this video (the *Money in 40 seconds*
-   scripts are the first five), not the source's own words.
+1. **An original script** written for this video, not the source's own
+   words — and never a reading of a Wikipedia article (a named YPP ban).
 2. **Original voice-over commentary** as the primary audio (channel voice,
    per-beat synthesis). A source that already has narration is skipped —
    two voices never overlap.
@@ -97,8 +128,11 @@ stores the result in the review-queue entry:
 - [ ] Original script + original voice-over commentary is the primary audio (source audition passed: no source narration)
 - [ ] Source re-cut into scene beats retimed to the commentary (not a straight re-upload)
 - [ ] Captions aligned to the finished audio (Whisper word timestamps)
+- [ ] Runtime under 60 seconds — a claimed Short over 1 minute is BLOCKED, not just claimed
 - [ ] Attribution in the description: author, licence, source URL
-- [ ] Format is not an excluded lane (no anime/gameplay compilations or straight re-uploads)
+- [ ] Format is not an excluded lane (no anime/gameplay/sports/Bollywood/movie compilations, no finance advice, no straight re-uploads)
+- [ ] Language and targeting: English, global audience (India-only Shorts traffic pays ~41× less)
+- [ ] Declared format recorded — structure varies across the declared formats (one-fact / Top-5 / story / countdown); template-identical mass volume risks 'inauthentic content' demonetisation
 - [ ] Held for owner review — this flow never uploads
 
 ## 6. Review queue — nothing uploads from this flow

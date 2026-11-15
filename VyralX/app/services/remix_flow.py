@@ -61,8 +61,25 @@ ALLOWED_LICENSE_CLASSES = {"cc0", "public_domain", "cc_by", "cc_by_sa", "owner"}
 #: Content lanes that must never be sourced (YouTube reused-content policy +
 #: Content ID reality; see docs/REMIX_POLICY.md). Anime compilations are
 #: named in the reused-content policy as monetisation-ineligible, and raw
-#: gameplay re-uploads are the same category.
-EXCLUDED_LANES = {"anime_compilation", "gameplay_reupload", "compilation", "reupload"}
+#: gameplay re-uploads are the same category. Compilation lanes for sports,
+#: Bollywood and movies carry the same claim/strike profile. Financial
+#: ADVICE is excluded as a lane of its own: YouTube policy makes AI-persona
+#: financial guidance non-monetisable (money content is stories only).
+EXCLUDED_LANES = {
+    "anime_compilation",
+    "gameplay_reupload",
+    "sports_compilation",
+    "bollywood_compilation",
+    "movie_compilation",
+    "compilation",
+    "reupload",
+    "finance_advice",
+}
+
+#: Declared content lanes, in the researched priority order (2026-11-15):
+#: space & science over PD footage first, history facts second, tech
+#: explainers third, money STORIES (never advice) fourth.
+CONTENT_LANES = ("space_science", "history_facts", "tech_explainer", "money_story")
 
 
 def _now_iso() -> str:
@@ -560,6 +577,9 @@ def compliance_checklist(
     lane: str,
     source_has_speech: bool,
     attribution_included: bool = True,
+    render_seconds: float | None = None,
+    language: str = "en",
+    format_name: str = "",
 ) -> list[dict[str, Any]]:
     """The per-video compliance checklist for one remix, evaluated."""
     items: list[dict[str, Any]] = []
@@ -594,15 +614,32 @@ def compliance_checklist(
         "TASK-VYR-003 caption path (viral_remix.build_commentary_cues)",
     )
     add(
+        "Runtime under 60 seconds (a claimed Short over 1 minute is BLOCKED, not just claimed)",
+        render_seconds is not None and render_seconds < 60.0,
+        f"render {render_seconds}s" if render_seconds is not None else "runtime not measured",
+    )
+    add(
         "Attribution in the description: author, licence, source URL",
         attribution_included,
         "build_remix_metadata attribution block",
     )
     add(
-        "Format is not an excluded lane (no anime/gameplay compilations or straight re-uploads)",
+        "Format is not an excluded lane (no anime/gameplay/sports/Bollywood/movie compilations, no finance advice, no straight re-uploads)",
         lane not in EXCLUDED_LANES,
         f"lane {lane!r}"
         + (" is EXCLUDED — reused-content policy / Content ID" if lane in EXCLUDED_LANES else ""),
+    )
+    add(
+        "Language and targeting: English, global audience",
+        language == "en",
+        "English script; publish targeting is global (India-only Shorts traffic "
+        "pays ~41x less per AIR 2025 data) — set at upload, an owner step",
+    )
+    add(
+        "Declared format recorded (structure varies across formats — no template-identical mass volume)",
+        bool(format_name),
+        f"format {format_name!r}; template-identical volume risks "
+        "'inauthentic content' demonetisation",
     )
     add(
         "Held for owner review — this flow never uploads",
@@ -651,7 +688,8 @@ def produce_remix_short(
     *,
     title: str,
     hook: str = "",
-    lane: str = "finance_explainer",
+    lane: str = "space_science",
+    format_name: str = "one_fact_escalation",
     category: str = "VIRAL",
     db: Any = None,
     queue_path: Path | None = None,
@@ -709,7 +747,12 @@ def produce_remix_short(
 
     meta = build_remix_metadata(record, title=title, hook=hook)
     checklist = compliance_checklist(
-        record, lane=lane, source_has_speech=False, attribution_included=True
+        record,
+        lane=lane,
+        source_has_speech=False,
+        attribution_included=True,
+        render_seconds=tracks["total_seconds"],
+        format_name=format_name,
     )
     beats = [
         {
@@ -726,6 +769,7 @@ def produce_remix_short(
         "record_id": record.record_id,
         "title": title,
         "lane": lane,
+        "format": format_name,
         "render": str(render_path),
         "ass": str(render_path.with_suffix(".ass")),
         "narration_seconds": tracks["total_seconds"],
