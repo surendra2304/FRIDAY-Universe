@@ -1013,6 +1013,47 @@ MODEL_SUITABILITY: dict[str, list[str]] = {
     ],
 }
 
+#: TASK-IG-INF-01 — declared context windows (tokens) for every
+#: verified-catalogue model, matching the provider-verified catalogue
+#: in app/routers/operational.py. REL-043's long_context ranking orders
+#: candidates, but ranking alone cannot promise a fit: a 500k-token
+#: request ranked onto a 131k-window model fails at the provider, or
+#: worse, is silently truncated by it. Selection therefore also
+#: FILTERS by fit (see _ranked_suitable_models) and discloses overflow
+#: when no catalogue window can hold the request (see
+#: _select_best_suitable). A catalogue id missing here is treated as
+#: window 0 — unknown capacity is never assumed to fit.
+MODEL_CONTEXT_WINDOWS: dict[str, int] = {
+    "gemini-3.8-flash": 2097152,
+    "gemini-3.6-flash": 2097152,
+    "openai/gpt-oss-120b": 131072,
+    "qwen/qwen3.8-27b": 131072,
+    "meta-llama/llama-3.3-70b-instruct": 131072,
+    "nvidia/nemotron-3.5-lightning:free": 131072,
+}
+
+#: Characters-per-token divisor for request-size estimation — the same
+#: coarse heuristic the local provider's usage estimate uses
+#: (app/providers/local.py). It drives routing fit only, never billing.
+_CHARS_PER_TOKEN = 4
+
+#: Fit-filter floor: the context window shared by the catalogue's whole
+#: standard tier. A request estimated at or below this fits every
+#: catalogue model, so fit filtering cannot change the pick and stays
+#: off; above it, only the long-window models can hold the request.
+_CONTEXT_FIT_FLOOR_TOKENS = 131072
+
+
+def _estimate_context_tokens(req: ChatCompletionRequest) -> int:
+    """Estimated total context a request needs: prompt plus reserved output.
+
+    The reserved output counts against the window because providers
+    enforce the window over prompt + completion together.
+    """
+    chars = sum(len(msg.content or "") for msg in req.messages)
+    return chars // _CHARS_PER_TOKEN + max(0, int(req.max_tokens or 0))
+
+
 #: Task-type inference hints. Deliberately small and deterministic: the
 #: inference reads only the request's shape (model-id hints, prompt text,
 #: prompt size) — no model call and no heuristics beyond these tables.
@@ -1101,7 +1142,11 @@ def _provider_available(provider: str) -> bool:
     return bool(getattr(report, "is_healthy", True))
 
 
-def _ranked_suitable_models(task_type: str, exclude: set[str] | None = None) -> list[str]:
+def _ranked_suitable_models(
+    task_type: str,
+    exclude: set[str] | None = None,
+    required_tokens: int = 0,
+) -> list[str]:
     """Ranked verified-catalogue candidates for a task type, best first.
 
     Exclusions (already-tried models) are dropped first; models whose
@@ -1110,6 +1155,13 @@ def _ranked_suitable_models(task_type: str, exclude: set[str] | None = None) -> 
     health is advisory, the gateway's own ladder remains the backstop,
     and a half-open probe may still succeed. Selection never returns a
     model outside the verified catalogue.
+
+    TASK-IG-INF-01: when ``required_tokens`` is positive, candidates
+    whose declared context window cannot hold the request are dropped
+    next. If NO candidate can hold it, the pool is
+    returned ordered by window size, largest first — the caller gets
+    the best possible holder, and _select_best_suitable discloses the
+    overflow instead of letting the provider truncate in silence.
     """
     ranked = MODEL_SUITABILITY.get(task_type) or MODEL_SUITABILITY["chat"]
     excluded = {(item or "").lower() for item in (exclude or set())}
@@ -1123,7 +1175,21 @@ def _ranked_suitable_models(task_type: str, exclude: set[str] | None = None) -> 
         for model_id in pool
         if _provider_available(_CATALOG_PROVIDERS[model_id.lower()])
     ]
-    return healthy or pool
+    pool = healthy or pool
+    if required_tokens > 0 and pool:
+        fitting = [
+            model_id
+            for model_id in pool
+            if MODEL_CONTEXT_WINDOWS.get(model_id.lower(), 0) >= required_tokens
+        ]
+        if fitting:
+            return fitting
+        return sorted(
+            pool,
+            key=lambda model_id: MODEL_CONTEXT_WINDOWS.get(model_id.lower(), 0),
+            reverse=True,
+        )
+    return pool
 
 
 def _select_best_suitable(
@@ -1137,14 +1203,26 @@ def _select_best_suitable(
     excluded (nothing suitable remains to try).
     """
     task_type = _infer_task_type(req)
-    candidates = _ranked_suitable_models(task_type, exclude=exclude)
+    # TASK-IG-INF-01: fit-check the selection against declared context
+    # windows whenever the estimated request size exceeds the window of
+    # the catalogue's standard tier (131,072 — every non-Gemini model).
+    # Below that floor every catalogue model can hold the request, so
+    # fit cannot change the pick and REL-043 behaviour is untouched.
+    # The check applies across task types on purpose: a 500k-token
+    # codebase request classifies as "code", and it needs a window
+    # that fits exactly as much as a long document does.
+    required_tokens = _estimate_context_tokens(req)
+    fit_applied = required_tokens > _CONTEXT_FIT_FLOOR_TOKENS
+    candidates = _ranked_suitable_models(
+        task_type, exclude=exclude, required_tokens=required_tokens if fit_applied else 0
+    )
     if not candidates:
         return None
     chosen = candidates[0]
     requested_class = _requested_class(req.model)
     served_class = MODEL_CLASSES.get(chosen.lower(), "standard")
     downgrade = MODEL_CLASS_TIERS[served_class] < MODEL_CLASS_TIERS[requested_class]
-    return {
+    record: dict[str, Any] = {
         "model": chosen,
         "provider": _provider_for_model(chosen),
         "task_type": task_type,
@@ -1159,6 +1237,17 @@ def _select_best_suitable(
             else None
         ),
     }
+    if fit_applied:
+        window = MODEL_CONTEXT_WINDOWS.get(chosen.lower(), 0)
+        record["estimated_context_tokens"] = required_tokens
+        record["context_window"] = window
+        # Honest disclosure: the request is larger than every window in
+        # the catalogue. The largest holder was still chosen (see
+        # _ranked_suitable_models), but the caller must be told the
+        # context may not fit — never serve a truncated read as a
+        # whole-document answer in silence.
+        record["context_overflow"] = required_tokens > window
+    return record
 
 
 @v1_router.get("/models", status_code=status.HTTP_200_OK)
@@ -1368,6 +1457,16 @@ async def chat_completions(req: ChatCompletionRequest):
             body["provenance"]["selected_model"] = selection["model"]
             body["provenance"]["downgrade"] = selection["downgrade"]
             body["provenance"]["downgrade_reason"] = selection["downgrade_reason"]
+            if "context_overflow" in selection:
+                # TASK-IG-INF-01: surface the fit accounting — the
+                # estimated request size, the chosen model's declared
+                # window, and whether the request overflows every
+                # window in the catalogue.
+                body["provenance"]["estimated_context_tokens"] = selection[
+                    "estimated_context_tokens"
+                ]
+                body["provenance"]["context_window"] = selection["context_window"]
+                body["provenance"]["context_overflow"] = selection["context_overflow"]
     return body
 
 
