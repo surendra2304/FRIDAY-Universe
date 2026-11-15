@@ -965,6 +965,25 @@ def _atempo_chain(tempo: float) -> str:
     return ",".join(parts)
 
 
+def _head_trim_window_start(beat: dict[str, Any]) -> float:
+    """Source-window start for a head-trimmed beat.
+
+    A head trim keeps the END of the beat's retimed segment. Selecting the
+    tail of the SOURCE window before retiming — the last
+    ``target_seconds / factor`` source-seconds — yields exactly the target
+    length after retiming. Trimming the already-retimed stream by
+    timestamp instead silently misbehaves in ffmpeg (TASK-VYR-004,
+    isolated per-beat repro): the retimed audio chain produced an EMPTY
+    segment and the render truncated at the previous beat while the
+    captions ran on to the full narration length.
+    """
+    timing = beat["timing"]
+    if not timing["trim_head_seconds"] or not timing["factor"]:
+        return beat["start"]
+    span = beat["target_seconds"] / timing["factor"]
+    return max(beat["start"], beat["end"] - span)
+
+
 def render_scene_timed(
     source_path: Path,
     output_path: Path,
@@ -990,12 +1009,10 @@ def render_scene_timed(
     for beat in beats:
         timing = beat["timing"]
         chain = (
-            f"[0:v]trim=start={beat['start']:.3f}:end={beat['end']:.3f},"
+            f"[0:v]trim=start={_head_trim_window_start(beat):.3f}:end={beat['end']:.3f},"
             f"setpts=PTS-STARTPTS,setpts={timing['factor']:.4f}*PTS"
         )
-        if timing["trim_head_seconds"]:
-            chain += f",trim=start={timing['trim_head_seconds']:.3f}:duration={beat['target_seconds']:.3f}"
-        elif timing["trim_tail_seconds"]:
+        if timing["trim_head_seconds"] or timing["trim_tail_seconds"]:
             chain += f",trim=duration={beat['target_seconds']:.3f}"
         if timing["pad_seconds"]:
             chain += f",tpad=stop_mode=clone:stop_duration={timing['pad_seconds']:.3f}"
@@ -1009,11 +1026,9 @@ def render_scene_timed(
             timing = beat["timing"]
             tempo = 1.0 / timing["factor"] if timing["factor"] else 1.0
             chain = (
-                f"[0:a]atrim=start={beat['start']:.3f}:end={beat['end']:.3f},"
+                f"[0:a]atrim=start={_head_trim_window_start(beat):.3f}:end={beat['end']:.3f},"
                 f"asetpts=PTS-STARTPTS,{_atempo_chain(tempo)}"
             )
-            if timing["trim_head_seconds"]:
-                chain += f",atrim=start={timing['trim_head_seconds']:.3f}:duration={beat['target_seconds']:.3f}"
             chain += f",apad=whole_dur={beat['target_seconds']:.3f},atrim=0:{beat['target_seconds']:.3f}"
             filters.append(chain + f"[ab{beat['index']}]")
         filters.append(

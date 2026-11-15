@@ -50,8 +50,10 @@ CASES = [
     ("docs/notes.bak", True),
     # --- checklist D12: UI TypeScript source under ui/lib/ MUST be committable ---
     # (the Python-template `lib/` rule in FRIDAY/.gitignore silently hid it,
-    #  which is why lib/api.ts was never committed and the UI could not rebuild)
-    ("FRIDAY/ui/lib/api.ts", False),
+    #  which is why the UI lib module was never committed and the UI could not
+    #  rebuild. TASK-WEB-002 replaced lib/api.ts with lib/wire.ts; the probe
+    #  now names the module the app actually imports — same rule, same check.)
+    ("FRIDAY/ui/lib/wire.ts", False),
     ("FRIDAY/ui/lib/hooks/use-fleet.ts", False),
     ("FRIDAY/ui/lib/utils/format.ts", False),
     # --- but Python-style lib/ build dirs stay ignored outside the UI ---
@@ -122,13 +124,18 @@ def test_tracked_bridge_files_are_listed_source() -> None:
 def test_ui_lib_source_is_committable_and_committed() -> None:
     """Checklist D12: FRIDAY/ui/lib is UI source, not a Python build artifact.
 
-    The Python-template `lib/` rule hid it, lib/api.ts was never committed, and
-    `next build` failed from a fresh clone while the committed prebuilt bundle
-    kept production looking healthy. Lock both halves: the path is addable, and
-    the file the app imports is actually tracked.
+    The Python-template `lib/` rule hid it, the UI lib module was never
+    committed, and `next build` failed from a fresh clone while the committed
+    prebuilt bundle kept production looking healthy. Lock both halves: the
+    path is addable, and the file the app imports is actually tracked.
+
+    TASK-WEB-002 disclosure: the from-scratch Halo rebuild replaced
+    lib/api.ts with lib/wire.ts (the wire-contract module every stage
+    component imports). The tracked-file assertion follows the module the
+    app actually imports; the D12 contract itself is unchanged.
     """
-    ignored = _git_check_ignore(["FRIDAY/ui/lib/api.ts"])
-    assert "FRIDAY/ui/lib/api.ts" not in ignored, (
+    ignored = _git_check_ignore(["FRIDAY/ui/lib/wire.ts"])
+    assert "FRIDAY/ui/lib/wire.ts" not in ignored, (
         "FRIDAY/ui/lib must be committable (Python lib/ rule must not hide UI source)"
     )
     proc = subprocess.run(
@@ -139,9 +146,9 @@ def test_ui_lib_source_is_committable_and_committed() -> None:
     )
     assert proc.returncode == 0, f"git ls-files failed: {proc.stderr.strip()}"
     tracked = [p for p in proc.stdout.splitlines() if p.strip()]
-    assert "FRIDAY/ui/lib/api.ts" in tracked, (
-        "lib/api.ts must be tracked — app/page.tsx imports @/lib/api; a fresh "
-        "clone must be able to rebuild the dashboard"
+    assert "FRIDAY/ui/lib/wire.ts" in tracked, (
+        "lib/wire.ts must be tracked — the stage components import @/lib/wire; "
+        "a fresh clone must be able to rebuild the dashboard"
     )
 
 

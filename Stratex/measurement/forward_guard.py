@@ -89,6 +89,64 @@ def strategy_stats(rows: Iterable[Dict[str, Any]], strategy: str) -> Dict[str, A
     }
 
 
+def evaluate_sleeves(
+    rows: List[Dict[str, Any]],
+    equity_usd: float,
+    sleeves: Dict[str, List[str]],
+    dd_limit_pct: float = DD_LIMIT_PCT,
+) -> List[Dict[str, Any]]:
+    """Sleeve-level kill rule (TASK-STR-FWD-002 sleeve extension).
+
+    A portfolio sleeve is judged on compounded equity + max drawdown
+    ONLY (the claim its backtest supports) — there is deliberately no
+    per-trade expectancy/PF kill for sleeve components. The sleeve's
+    book is the COMBINED cumulative net-PnL curve of all its component
+    strategies' fills; the sleeve breaches when that curve's
+    peak-to-trough drawdown exceeds ``dd_limit_pct`` of account equity.
+    A breach pauses the WHOLE sleeve (the daemon denylists its own
+    sleeve components and writes the OANDA sleeve runner's pause
+    file).
+    """
+    dd_limit_usd = max(0.0, float(equity_usd)) * dd_limit_pct
+    decisions: List[Dict[str, Any]] = []
+    for sleeve, components in sleeves.items():
+        fills = [
+            r
+            for r in rows
+            if r.get("strategy") in components and r.get("net_pnl") is not None
+        ]
+        fills.sort(key=lambda r: float(r.get("exit_time") or 0.0))
+        pnls = [float(r["net_pnl"]) for r in fills]
+        cumulative = 0.0
+        peak = 0.0
+        max_dd = 0.0
+        for p in pnls:
+            cumulative += p
+            peak = max(peak, cumulative)
+            max_dd = max(max_dd, peak - cumulative)
+        breached = dd_limit_usd > 0 and max_dd > dd_limit_usd
+        decisions.append(
+            {
+                "sleeve": sleeve,
+                "components": list(components),
+                "trades": len(fills),
+                "net_pnl": sum(pnls),
+                "max_drawdown_usd": max_dd,
+                "drawdown_limit_usd": dd_limit_usd,
+                "breached": breached,
+                "reasons": (
+                    [
+                        f"sleeve drawdown ${max_dd:.2f} exceeds 5% of equity "
+                        f"(${dd_limit_usd:.2f})"
+                    ]
+                    if breached
+                    else []
+                ),
+            }
+        )
+    return decisions
+
+
 def evaluate(
     rows: List[Dict[str, Any]],
     equity_usd: float,
