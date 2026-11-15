@@ -4190,6 +4190,45 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-CLEANUP-001 crew). Follow-ups owned elsewhere: SMT-v2 fate is decided by its TASK-STR-RD-002 retest row under the same PF < 1.2 rule; forward entrants (if any) come from RD-002; strategy_factory_winners' research artifacts under Stratex/research/ and Stratex/rigorous_backtest/ remain as the evidence record (not production code). paper_forward_runner.py is retained as strategy-agnostic forward-experiment machinery; its frozen swing signal path now fails closed with an explicit TASK-STR-CLEANUP-001 RuntimeError."
 
+  - id: TASK-STR-CLEANUP-002
+    title: "Delete SMT-v2 completely under the owner's PF < 1.2 removal rule (RD-002 retest: PF 0.655)"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-cleanup-002
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T06:44:00+05:30"
+    updated_at: "2026-11-15T07:10:00+05:30"
+    files:
+      - "Stratex/oanda_demo/strategy.py"
+      - "Stratex/oanda_demo/trader.py"
+      - "Stratex/oanda_demo/backtest.py"
+      - "Stratex/oanda_demo/selftest.py"
+      - "Stratex/oanda_demo/__init__.py"
+      - "Stratex/oanda_demo/README.md"
+      - "Stratex/config_strategy.py"
+      - "Stratex/tests/test_oanda_demo.py"
+      - "Stratex/tests/test_oanda_entries_pause.py"
+      - "Stratex/rigorous_backtest/rd2/smt2.py (deleted)"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6887144907"
+    defect: "Owner directive 2026-11-15: strategies with verified out-of-sample profit factor below 1.2 are DELETED COMPLETELY (code + config; git history NOT rewritten). TASK-STR-CLEANUP-001 excluded SMT-v2 pending its TASK-STR-RD-002 mega-grid retest. The retest (module-faithful, deployed oanda_demo code, default config, native 4h, 8-pair watchlist) measured 627 OOS trades, expectancy -0.081%/trade, PF 0.655, -30.0R (panel-12 PF 0.651) — below the bar, so the rule executes. SMT-v2's live record agrees (OANDA practice lifetime -$167, WR 21.1%)."
+    acceptance:
+      - "SMT-v2 mapped before cutting: it is exactly StratexTrendStrategy + StrategyConfig in Stratex/oanda_demo/strategy.py plus its wiring — NOT the whole oanda_demo package. Donchian-v3 and FX-MR-v4 are separate engines in the same package (FX-MR-v4 is the deployed default, STRATEX_OANDA_STRATEGY=mr) and are not in scope."
+      - "SMT-v2 deleted completely: engine + config classes, trader 'smt' selection + _DEFAULT_TF['smt'] + the SMT breakeven-at-+1R live exit path, backtester 'smt' mode + SMT-only CLI overrides (--extension/--strength), 8 dedicated tests, and the RD-002 retest harness rd2/smt2.py (SMT-v2-dedicated; its results remain the evidence record)."
+      - "Untouched: Donchian-v3, FX-MR-v4, entries-pause mechanism, kill switch, exchanges/oanda_adapter.py, credentials.py, deployment unit (runs mr), fill ledger (9 lines incl. LEGACY), equity snapshots, measurement code, RESULTS_RD2.md / synthesis.json / smt_rows evidence."
+      - "Post-removal production verification: deployed fingerprints match the merge (incl. absence of deleted files), Stratex-OANDA-Demo healthy on the new code, OANDA account flat, entries pause still in force, Stratex /health 200, daemon governance unchanged."
+    evidence:
+      - "EXECUTION: PR #264 merged deff256e (10 files, +80/-487). Deleted outright: StratexTrendStrategy + StrategyConfig (~137 lines, strategy.py), rd2/smt2.py (189 lines), the trader's SMT breakeven exit branch + 'smt' wiring (~31 lines), backtester 'smt' mode, 8 SMT-v2-dedicated tests (TestStrategy x6, test_breakeven_move, SMT backtest test). Fallout rewritten to post-removal state: strategy/trader/backtest docstrings, __init__.py, README (two surviving engines; the 2026-11-13 validation table kept as the historical record with a removal note), config_strategy.py cleanup comment (SMT-v2 was never in the governed registry — comment only), test_oanda_entries_pause.py header (pause is engine-wide, unchanged)."
+      - "BEHAVIOUR: STRATEX_OANDA_STRATEGY=smt (or any unknown value) now falls through to FX-MR-v4 — the same fall-through the code always had for unrecognised names; the production unit sets mr explicitly and is unaffected. Verified by direct import probes (default -> MeanReversionStrategy, donchian -> DonchianTrendStrategy, smt -> MeanReversionStrategy)."
+      - "LOCAL TESTS (sandbox venv, before/after on identical rings): OANDA suites 34 -> 26 passed (exactly the 8 removed SMT tests gone, 0 failures); OOS-claims + validation-claims 16/16; governance ring failure set byte-identical to clean main (1 pre-existing failure — stale supertrend registry assertion left by CLEANUP-001 — + 1 pre-existing heartbeat error, neither in this task's surface)."
+      - "PRODUCTION (Server 1): Fleet CD run 43663080166 for deff256e = success; checkout at deff256e; all 9 modified files sha256-match the merged blobs byte-for-byte; smt2.py absent; StratexTrendStrategy absent from deployed trader/backtest/selftest. Stratex-OANDA-Demo restarted 2026-11-15 06:58:03 IST (Fleet CD does not restart this unit; new MainPID 2533662); first scan on new code 06:58:10 IST: equity 10000.0, free_margin 10000.0, open_trades 0, entries_paused true, actions [] — identical to the pre-change baseline; zero tracebacks since restart. Stratex /health 200; Stratex + Stratex-Daemon + Stratex-OANDA-Demo all active; daemon governance executable=[] observe_only=['strategy_adx_ema'] unchanged."
+      - "SERVER-SIDE PYTEST (fleet venv, deployed tree): OANDA suites 26/26 under pause-file isolation (in the raw production environment one Donchian order-placement test fails because the live pause file Stratex/data/oanda_demo_entries_paused leaks in via the import-time ENTRIES_PAUSED_FILE path — pre-existing live-state interaction, pause file present since 2026-11-14 18:10, mechanism untouched by this task; isolation re-run proves 26/26); governance ring 29 passed + the same 1 pre-existing failure + 1 pre-existing error as clean main."
+      - "CI on PR #264: test SUCCESS, secrets SUCCESS; the two repo-policy jobs (fleet layout, monorepo policy) fail identically on main head f3a71bdd itself (verified directly) — pre-existing, outside this change's surface, owned by the CI-hygiene crew."
+      - "PRE-EXISTING OBSERVATION (not caused, not fixed): the OANDA engine journal shows intermittent OANDA API 401 'Insufficient authorization' warnings a few times a day (e.g. 2026-11-15 00:16 IST, one scan reported account summary unavailable, then recovered) — present before this change, scans recover on the next cycle."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-CLEANUP-002 crew). SMT-v2 is gone from code, config and deployment; the OANDA demo engine now ships exactly two engines (FX-MR-v4 live default, Donchian-v3 available), still entries-paused under the phase-2 measurement programme. No strategy trades the OANDA account until forward entrants are chosen from TASK-STR-RD-002 evidence (ichimoku 4h + dow_reversal 1d are crypto candidates for the Binance demo venue, not OANDA). The RD-002 evidence record (RESULTS_RD2.md, synthesis.json, smt_rows) remains as the permanent justification."
+
   - id: TASK-REL-038
     title: "IntelX honesty + research persistence: sharing/exchange records stop claiming transmissions that never happen, and research_live results become durably retrievable"
     status: VERIFIED
