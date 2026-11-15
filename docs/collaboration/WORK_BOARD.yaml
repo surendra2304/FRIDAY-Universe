@@ -4954,13 +4954,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-WEB-002
     title: "Website rebuilt genuinely from scratch — empty scaffold, React Bits foundation, summoned-layer navigation (Arc dock banned), settings surface deleted (owner mandate 2026-11-15)"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-web-002-halo
+    pr: 282
     contributors: []
     priority: P1
     created_at: "2026-11-15T12:05:00+05:30"
-    updated_at: "2026-11-15T12:45:00+05:30"
+    updated_at: "2026-11-15T15:10:00+05:30"
     files:
       - "FRIDAY/ui/app/page.tsx"
       - "FRIDAY/ui/app/layout.tsx"
@@ -4989,8 +4990,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Shipped via PR on green CI, merged, deployed via Fleet CD; production verification = served bytes hash-equal to the merged build, chat round-trip 200, history restores through the new UI contract, fleet endpoints 200 and rendering, status page contract intact. Rollback point: 802e5b3 (FRIDAY - Arc, tag ARC-20261115-0255)."
     evidence:
       - "Claim: issue #35 comment 6890028406 (2026-11-15) - includes the design-vs-plumbing distinction and the navigation-model paragraph, posted before building."
+      - "Shipped: PR #282 merged 2026-11-15 (merge commit 56e28e63); all 10 check-runs green on head 2ee58bd8, including the two monorepo/fleet pytest jobs that the lib/api.ts deletion initially broke - fixed by repointing tests/test_gitignore_bridge_source.py D12 to lib/wire.ts (disclosed in the test) and rebuilding the branch head as a true merge of current main."
+      - "Deployed: Fleet CD Deploy Core Fleet (Server 1) completed SUCCESS on merge commit 56e28e63."
+      - "Production-verified 2026-11-15 ~15:00 IST via bridge run_shell on Server 1: GET / on port 10000 -> 200, sha256 58c0ab6009807438e82973fa4207c37482a201bf54ae3efe2145a2a81cba694f == merged build index.html (BUILD_TAG HALO-20261115-1245); POST /api/chat -> 200 (provider gemini, model gemini-3.6-flash, reply confirmed probe HALO-VERIFY-ZX43); GET /api/v1/conversation/history -> 200 with probe marker HALO-VERIFY-ZX42 present; GET /api/livekit/token -> 200 (LiveKit Cloud wss URL + JWT issued); GET /api/agents/status -> 200; GET /api/voice/diagnostics -> 200 (worker registered)."
+      - "Local gates before shipping: tsc --noEmit clean, eslint 0 errors, next build OK, runtime-audit harness 9/9 scenarios passed; bundle: first-load JS 239,198 B gzip, CSS 37,640 B raw, index.html 10,495 B."
     blockers: []
-    next_action: "Crew: finish local gates (tsc, eslint, production build, harness), ship the PR, merge, Fleet CD deploy, run the production probes, then flip this entry VERIFIED via a fresh-main board PR with the full task-id set diffed."
+    next_action: "Complete and production-verified 2026-11-15. Halo is the live site. Remaining human check is the owner verdict on the new design in his own hands; rollback point remains 802e5b3 (Arc, tag ARC-20261115-0255)."
   - id: TASK-REL-044
     title: "FRIDAY routing policy (owner decision 2026-11-15): chat/talk on FRIDAY's own env keys; complex tasks escalate to Inference for more usage"
     owner: muse_ai
