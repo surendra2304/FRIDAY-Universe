@@ -6232,6 +6232,47 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       counts honestly (or drift_check_skipped_no_scored_forecasts if a target has no observations), (b) run the coordinator-owned DB audit counting outcomes rows with
       resolution_rule_version ''backtest:v1.0'' AND observed_value == linked forecast prediction, and decide their correction/annotation — do not delete silently, (c)
       board -> VERIFIED with that evidence.'
+  - id: TASK-MEM-011
+    title: 'Memora graph companion edges: production write-path investigation (MEM-002 graph_companion_guard premise refuted live; silent auto-link failure swallow
+      fixed)'
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-mem-011-graph-companion-write-path
+    pr: null
+    milestone: M5 reliability (memory integrity)
+    files:
+    - Memora/core/memory/pipeline/write_service.py
+    - Memora/tests/test_mem011_graph_write_path.py
+    acceptance:
+    - Minimal production reproduction of the alleged missing companion edge, with probe records deleted by exact id only and each deletion verified by direct GET.
+    - 'Root cause established from production evidence, not theory: where the edge is created on write and why the benchmark observed graph_boost 0.0.'
+    - Smallest fix for any genuine write-path defect, with fail-on-main/pass-on-fix tests and the MEM-002 guard case as an offline acceptance twin.
+    - Read-only blast-radius count of production records lacking edges they should have; no backfill in this task.
+    evidence:
+    - 'PREMISE REFUTED live 2026-11-15 (probe token mem011-adb8b0c67c, agent friday): explicit relates_to edges (0.95, both directions) persisted and were read back
+      via GET /v1/memories/{id}/graph; the write path''s auto-link created a shares_entity edge (weight 0.8) between two probe records sharing the canonical entity
+      redis with no explicit relationship call; a spy inside the deployed hybrid_search showed the graph leg producing boosts for 6 records in one traced query. Deployed
+      Memora code is byte-identical to git main (sha256-verified for graph_service.py, search_service.py, write_service.py, v1_memories.py).'
+    - 'Why the benchmark saw 0.0: MEM-002''s reported target_position 6 and graph_boost 0.0 are the SNACK record''s values (a record with no edges by design; 0.0 correct).
+      For the guard query the hub ranked 77th and the first companion 67th lexically (182 keyword matches; 33 legacy records at 3/7 token overlap vs the benchmark web''s
+      2/7), so no top-5 vector/keyword seed ever touched the web; graph expansion is seed-local by design and seeds are excluded from boosts. The snack''s position
+      6 is keyword-RRF arithmetic (MEM-002''s ranking scope), not a missing edge.'
+    - 'Blast radius (read-only, 2026-11-15): 419 active records; 1,984 relationship rows (shares_entity 1,602, verified 380, relates_to 2); 133 records hold at least
+      one edge; of 131 records sharing a canonical entity with another record, 129 are linked to at least one such partner; only 2 records have no edges at all. No
+      systemic missing-edge problem; no backfill warranted.'
+    - 'Genuine defect found and fixed: write_service''s auto-link block swallowed ALL exceptions at logger.debug (''Graph auto-linking skipped'') and step_9_persistence
+      recorded only graph_links_created: 0, so a real auto-link failure was indistinguishable from ''nothing to link'' — the silent-swallow hazard behind the misdiagnosis.
+      Fix keeps the fail-soft contract (the write still succeeds) but logs at WARNING and records graph_link_error in step_9_persistence.'
+    - 'Tests (server-side, copies of the deployed tree): pristine main = 4 failed / 22 passed (the 2 MEM-011 surfacing tests fail as designed, plus 2 pre-existing failures);
+      fix tree = 2 failed / 24 passed (only the same 2 pre-existing failures remain: test_graph_and_adapter_fixes.py::test_agent_cannot_link_memories_it_may_not_read
+      and ::test_graph_traversal_does_not_leak_other_agents_memory_ids — identical on clean main, outside this task''s scope). Neighbour ring included: test_rel024_hybrid_ranking.py,
+      test_hybrid_search.py all pass in both trees.'
+    - 'Probe cleanup COMPLETE: all 6 surviving probe records hard-deleted by exact id and verified absent by direct GET (deletes intermittently hit the SEN-003 ORA-12860
+      deadlock / PendingRollbackError 500s; retries succeeded). 3 further probe writes never landed when the bridge cut the probe run and never existed in the store.'
+    blockers: []
+    next_action: 'Coordinator: review and merge this PR. After deploy, MEM-002''s AFTER benchmark re-run proceeds in MEM-002''s scope (its remaining graph_companion_guard
+      deficit is search-ranking arithmetic, per this task''s evidence). The 2 pre-existing test_graph_and_adapter_fixes failures predate this task and need their own
+      triage.'
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
