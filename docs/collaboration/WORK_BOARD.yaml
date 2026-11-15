@@ -5896,6 +5896,41 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Server-2 bridge MCP hung fleet-wide at delivery time — PR/board/comments packaged in ~/workspace/sen-009/deliver.py (check-then-act, idempotent) for the merge-runner."
       - "BACKUP_ARTIFACT_PASSPHRASE GitHub secret does not exist yet (owner/coordinator to create + record in CREDENTIALS.md) — offsite upload warns + skips until then."
     next_action: "Merge-runner: run python3 ~/workspace/sen-009/deliver.py (claim -> branch -> PR -> completion comment, all check-then-act). After merge + Fleet CD deploys BOTH servers: coordinator executes BACKUP_REPAIR_SEN009.md section 4 supervised dispatch (read every [AGENT] FAILED line, fix each credential gap at its source, re-dispatch until manifest complete=true with all 10 schemas + media), then RESTORE_DRILL_RUNBOOK.md Phase A; create BACKUP_ARTIFACT_PASSPHRASE; watch the Wed 2026-11-18 03:30 UTC scheduled slot + Thu 2026-11-19 watchdog and record the first event=schedule success here — flip to VERIFIED only with that evidence."
+  - id: TASK-REL-045
+    title: Universe-wide parameter inventory + evidence-based tuning table (KEEP/TUNE/UNKNOWN)
+      for all 10 agents + voice worker + website
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-rel-045-parameter-tuning
+    pr: 328
+    contributors: []
+    priority: P1
+    created_at: '2026-11-15T09:40:00Z'
+    updated_at: '2026-11-15T10:40:19Z'
+    files:
+    - docs/verification/PARAMETER_TUNING_REL045.md
+    - docs/collaboration/WORK_BOARD.yaml
+    dependencies: []
+    acceptance:
+    - 'Per-agent tuning table published: parameter, current value (live-read 2026-11-15),
+      verdict KEEP/TUNE/UNKNOWN, decided value or named measurement, evidence citation'
+    - No live setting changed by this task; trading parameters out of scope (FWD-006/RISK-001);
+      voice internals evidence-only until VOI-009 merges
+    evidence:
+    - 'CLAIM: GitHub issue #35 comment 6892549916 (2026-11-15) before editing.'
+    - 'INVENTORY: live read-only reads via the bridge on both servers 2026-11-15 — every
+      agent''s .env (secret-named vars recorded by name only), systemd unit files, deployed
+      code.'
+    - 'RESULT: 53 parameters — KEEP 20, TUNE 7, UNKNOWN 26 (each UNKNOWN names its settling
+      measurement). Doc: docs/verification/PARAMETER_TUNING_REL045.md (PR #328).'
+    risk_flags: []
+    blockers: []
+    next_action: Coordinator (Muse) reviews and approves the tuning table, then dispatches
+      the five follow-up batches named in the doc (Inference batch; Memora env-flag
+      flip + auth-matrix re-verification; IntelX timeout 45->60s; Cortex 422-on-incomplete-matrix;
+      voice recall decoupling after VOI-009 merges) as per-agent implementation crews.
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6892549916
+    last_update_comment_url: null
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
