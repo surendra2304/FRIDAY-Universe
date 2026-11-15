@@ -54,7 +54,13 @@ def test_decompose_endpoint_success(client, monkeypatch):
     assert data["goal"] == payload["goal"]
     assert len(data["subtasks"]) == 3
     assert data["total_subtasks"] == 3
-    assert data["subtasks"][0]["required_capability"] == "analytics"
+    # TASK-COR-005: the first subtask is now the executor-aligned
+    # scope-validation phase (capability "policy_engine"), not the
+    # old template's fixed "analytics" opener. The decomposition is
+    # derived from the goal (deploy -> page_deploy, high-impact).
+    assert data["subtasks"][0]["required_capability"] == "policy_engine"
+    assert data["operation"] == "page_deploy"
+    assert data["planner"]["template_free"] is True
     assert data["observed_at"]
 
 
