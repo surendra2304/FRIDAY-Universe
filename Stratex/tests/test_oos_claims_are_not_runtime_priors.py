@@ -67,9 +67,16 @@ def test_validation_status_is_not_validated_while_unpromoted(name, raw, registry
 def test_registry_null_out_block_covers_every_entry():
     """The block that withdraws registry priors must actually run for each entry."""
     for name, entry in cfg.PRODUCTION_STRATEGY_REGISTRY.items():
-        if entry.get("status") != "VALIDATED":
-            assert entry.get("oos_win_rate_prior") is None, f"{name} kept a registry prior"
-            assert entry.get("validated_assets") == [], f"{name} kept registry assets"
+        if entry.get("status") == "VALIDATED":
+            continue
+        assert entry.get("validated_assets") == [], f"{name} kept registry assets"
+        if entry.get("status") == "FORWARD_TEST":
+            # TASK-STR-FWD-003: the null-out block deliberately exempts
+            # the FORWARD_TEST lane — its entries keep their judged
+            # TASK-STR-RD-002 pooled priors because the daemon's
+            # expectancy gate reads them (same reason VALIDATED does).
+            continue
+        assert entry.get("oos_win_rate_prior") is None, f"{name} kept a registry prior"
 
 
 def test_no_strategy_raises_its_persistence_gate_to_one():
