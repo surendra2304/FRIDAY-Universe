@@ -4981,6 +4981,39 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "SURFACE PROBES (Server 1, live, 2026-11-15): /v1/friday/ask complex prompt -> 200, 6.5s, 35 words, confidence 0.55. /v1/chat/completions model=auto -> same 21-word stub twice, served by non-catalogue openai/gpt-oss-20b (~0s, fast-lane) — NOT a complex-work target. Named catalogue models: openai/gpt-oss-120b -> 200, 1.3s, 187-word correct code answer; gemini-3.8-flash -> 200, 15.0s, 336-word structured answer, served by gemini-3.6-flash WITH the REL-043 provenance block (requested/served/selected_as). Inference chat completions has NO tool-calling surface (messages-only schema, prompt flattening) — escalated tool turns bridge via FRIDAY's existing text tool-markup protocol (TASK-REL-006A recovery)."
     blockers: []
     next_action: "Implement the escalation layer (friday/llm/escalation.py: per-turn route context + deterministic complexity classifier + InferenceChatProvider + EscalatingLLMProvider; factory wiring in the gemini branch; REL-010 exhaustion fallback becomes Inference-first with Groq behind it when an Inference endpoint is configured), tests, PR, deploy, live acceptance (own-pool chat proof / escalated complex task with provenance / isolated exhaustion drill / chat latency spot-check), then board VERIFIED."
+
+  - id: "TASK-INF-006"
+    title: "Inference safe response cache: exact + template match, per-class TTLs, context-fingerprint binding"
+    status: "DONE"
+    owner: "claude"
+    branch: "claude/task-inf-006"
+    pr: null
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891395622"
+    files:
+      - "Inference/app/inference_runtime/response_cache.py"
+      - "Inference/app/inference_runtime/contracts.py"
+      - "Inference/app/inference_runtime/config.py"
+      - "Inference/app/inference_runtime/gateway.py"
+      - "Inference/app/providers/unified_manager.py"
+      - "Inference/tests/test_inf006_response_cache.py"
+      - "Inference/tests/test_unified_manager_cache_scope.py"
+      - "Inference/scripts/replay_response_cache.py"
+      - "Inference/scripts/replay_sample_log.jsonl"
+      - "Inference/docs/RESPONSE_CACHE.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    defect: "Inference's caches did not enforce the rule that a personalised/contextual answer must never be served to the wrong context: TenantCache keyed by tenant only with one flat TTL; MultiLevelCache (performance_cache) stores every answer under shared (any mode/caller) and punctuation-stripped keys, so within a namespace an answer produced under one caller's context can be served to another whose recorded extra matches, and distinct questions can collide after punctuation stripping. No template matching with declared semantics, no per-class TTLs, no generation invalidation, no latency-saved measurement existed."
+    acceptance:
+      - "SafeResponseCache: context classes public/contextual/personalised; personalised answers never stored by default and, if storage is enabled, bound to the principal fingerprint with the shortest TTL; contextual entries keyed by the exact context fingerprint."
+      - "Exact match over the full request fingerprint; task-template match only for pre-registered templates with declared invariant slots; stochastic requests exact-match only with a capped TTL and never template-match."
+      - "Per-class TTLs and generation-based invalidation (namespace/template), context/principal invalidation, policy_version keying; LRU-bounded store; stats with hit-rate and latency saved."
+      - "HardenedGateway completions and the UnifiedProviderManager path run on the safe cache; existing gateway/unified/namespace suites stay green."
+      - "Replay harness measures hit-rate and latency saving on a request log, with a safety audit (personalised hits and cross-principal violations must be zero)."
+    evidence:
+      - "New suite Inference/tests/test_inf006_response_cache.py: 24 tests green locally (classification floors, cross-context refusal, principal scoping + erasure, per-class TTL expiry, stochastic cap, LRU bound, template invariant/semantic slots, namespace/template/context invalidation, stats, gateway integration incl. template match across request ids, unified personalised-context never cached, replay arithmetic + safety)."
+      - "Regression batch green locally: test_inf006 + test_unified_manager_cache_scope + test_hardened_gateway + test_cache_namespaces_and_shapes = 56 passed; wider batch (rel043, universal task, declared modes, hardened runtime resources, gateway fallback/streaming/openai, bounded stores) green except ONE pre-existing environment failure: test_module_importability flags app/cli.py (missing 'typer' in the sandbox venv) — untouched by this PR."
+      - "Replay measurement on the committed synthetic sample log (240 requests, caller shapes from friday/unified call sites; scripts/replay_response_cache.py): hit rate 52.1% (125 hits = 90 exact + 35 template), latency saved 524,116 ms of 853,595 ms provider latency (61.4%), personalised 40 requests with 0 hits and 0 cross-principal violations. Sample log is synthetic and labelled as such; the harness replays any real exported JSONL for production figures."
+    blockers: []
+    next_action: "PR open from branch claude/task-inf-006; coordinator merges and flips VERIFIED. Follow-up recommended: migrate friday/agent/instant perf_cache call sites onto SafeResponseCache classes."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
