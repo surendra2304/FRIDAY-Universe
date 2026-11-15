@@ -4981,6 +4981,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "SURFACE PROBES (Server 1, live, 2026-11-15): /v1/friday/ask complex prompt -> 200, 6.5s, 35 words, confidence 0.55. /v1/chat/completions model=auto -> same 21-word stub twice, served by non-catalogue openai/gpt-oss-20b (~0s, fast-lane) — NOT a complex-work target. Named catalogue models: openai/gpt-oss-120b -> 200, 1.3s, 187-word correct code answer; gemini-3.8-flash -> 200, 15.0s, 336-word structured answer, served by gemini-3.6-flash WITH the REL-043 provenance block (requested/served/selected_as). Inference chat completions has NO tool-calling surface (messages-only schema, prompt flattening) — escalated tool turns bridge via FRIDAY's existing text tool-markup protocol (TASK-REL-006A recovery)."
     blockers: []
     next_action: "Implement the escalation layer (friday/llm/escalation.py: per-turn route context + deterministic complexity classifier + InferenceChatProvider + EscalatingLLMProvider; factory wiring in the gemini branch; REL-010 exhaustion fallback becomes Inference-first with Groq behind it when an Inference endpoint is configured), tests, PR, deploy, live acceptance (own-pool chat proof / escalated complex task with provenance / isolated exhaustion drill / chat latency spot-check), then board VERIFIED."
+  - id: TASK-INT-003
+    title: "IntelX research depth: fixed-set rubric scoring (source diversity, primary-source ratio, contradiction handling, citation verifiability), fix the weakest proven link, re-score"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-int-003-intelx-depth"
+    pr: 322
+    defect: "Candidate supply was the depth ceiling of the live research pipeline (IntelX/intelx/api/live_research_task.py collect_live_brief): the pool was capped at 15 candidates (min(15, max_sources*3) requested, loop sliced results[:15]) against a measured 59/~74 fetch-failure rate (45x HTTP 403, IP-level bot management — identical under the production and a plain Chrome user-agent, so not a UA problem). Baseline on the fixed six-question set: Q1 (Artemis II) exhausted all 15 candidates (7 of them documented-dead news.google.com redirectors) and returned ZERO sources while nasa.gov answered HTTP 200 from the same host but never entered the pool. No final-URL dedupe existed either: the widened-pool probe held the same document twice among five sources via a tracking-parameter variant."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6891008025 (2026-11-15) before editing; no prior TASK-INT-003 claim existed (board + issue scanned)."
+      - "RUBRIC PRE-DECLARED before measurement; full score sheet in PR #322 at IntelX/evals/INT003_DEPTH_RUBRIC_AND_SCORES.md. Baseline = production service, envelopes persisted via TASK-REL-038 (run_ids lr_d0601f5a5b494ac4b8f229d9, lr_6205335738fb4b6cba960733, lr_5cd766e6f64b4947aeb6ae12, lr_948f7587aae74c2188a5c845, lr_f21218f875f34354ba4d0a19, lr_6e43c4106e8e46a19b7af72a; verbatim copies Server 1 /tmp/int003/before/)."
+      - "SCORES before: D1 mean 2.17, D2 mean 1.83, D3 mean 3.0 (Q3 4 / Q4 2), D4 mean 2.8 (17/27 = 63% independently verified). Envelope SUCCESS 3/6."
+      - "FIX (PR #322, live_research_task.py only): pool widened to min(30, max_sources*6) and fully iterated; news.google.com redirectors demoted to last-resort (never dropped); final-URL dedupe recorded as duplicate_final_url. Tests: 5 new + 22 contract + 8 grounded = 35 passed locally."
+      - "AFTER = candidate probe on Server 1 with the exact PR file (fingerprint chain: deployed blob 52d81b1d == pre-fix HEAD; candidate blob 3de00dce == PR file byte-identical; production code untouched, service never restarted; envelopes /tmp/int003/after/). SCORES after: D1 mean 2.17 (distribution improved — Q1 0->4 domains incl. nasa.gov reached, no zero-source question; Q2/Q4/Q5 fell on this run set), D2 mean 0.17 (REGRESSED on the probe run set — the fix widens but does not prefer primary sources; named follow-up, not hidden), D3 mean 4.0, D4 mean 2.8 with verified fraction 63% -> 77% (30/39; Q5-after not scoreable, refetch refused). Envelope SUCCESS 4/6; fetch failures absorbed 45 vs 59 baseline."
+    blockers: []
+    next_action: "Coordinator: merge PR #322, deploy via Fleet CD, then re-run the fixed six-question set against the deployed service and flip this entry VERIFIED via a fresh-main board PR (production-verified state is still owed). Follow-ups named in the score doc: primary-source preference in candidate ordering (the D2 lever), synthesis quote-gate flakiness (now the weakest link), passage-level near-duplicate dedupe, wiring intelx/core/contradiction.py into the live path."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
