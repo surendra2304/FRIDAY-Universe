@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Counter from "../reactbits/Counter";
 import SpotlightCard from "../reactbits/SpotlightCard";
+import { Reveal } from "./motion";
 import {
   ageLabel,
   fetchFleet,
@@ -79,11 +80,12 @@ export function FleetSheet() {
       </p>
 
       <div className="fleet-grid">
-        {(fleet?.agents ?? []).map((agent) => {
+        {(fleet?.agents ?? []).map((agent, idx) => {
           const tone = toneFor(agent.status);
           const now = liveById.get(agent.id);
           return (
-            <SpotlightCard key={agent.id} className="fleet-card" spotlightColor={SPOTLIGHT_BY_TONE[tone]}>
+            <Reveal key={agent.id} delay={Math.min(idx, 8) * 60} className="fleet-reveal">
+            <SpotlightCard className="fleet-card" spotlightColor={SPOTLIGHT_BY_TONE[tone]}>
               <div className="fleet-card-top">
                 <div>
                   <h3 className="fleet-name">{agent.name}</h3>
@@ -109,6 +111,7 @@ export function FleetSheet() {
                     : "Idle — nothing in flight."}
               </p>
             </SpotlightCard>
+            </Reveal>
           );
         })}
       </div>

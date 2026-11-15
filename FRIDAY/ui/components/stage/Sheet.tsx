@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
+import { ScrollProgress } from "./motion";
 
 /* ================================================================
    The sheet — the one way anything beyond the stage appears.
@@ -23,6 +24,7 @@ export function Sheet({
   children: ReactNode;
 }) {
   const touchStartY = useRef<number | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -60,7 +62,10 @@ export function Sheet({
             <X size={18} aria-hidden="true" />
           </button>
         </header>
-        <div className="sheet-body">{children}</div>
+        <ScrollProgress scrollerRef={bodyRef} />
+        <div className="sheet-body" ref={bodyRef}>
+          {children}
+        </div>
       </section>
     </div>
   );
