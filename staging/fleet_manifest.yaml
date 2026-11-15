@@ -11,6 +11,21 @@
 # watchdog polls (2s apart) is killed and reported as OOM — a change that
 # would OOM in production fails here first.
 #
+# REL-048 AMENDMENT (2026-11-15, staging/RESULTS_REL048.md): the two
+# semantics are NOT the same number. Production's systemd MemoryMax
+# constrains cgroup current usage on a host with 8 GB of swap: cold pages
+# are swapped out, so a process whose TOTAL footprint exceeds MemoryMax
+# survives while its hot resident set fits. The staging sandbox has no
+# swap pressure, so staging RSS == total footprint. For agents whose
+# measured production total footprint (VmRSS + VmSwap) exceeds the
+# production MemoryMax, mem_cap_mb below is therefore the FOOTPRINT cap:
+# the measured production total, rounded up — "no footprint growth beyond
+# what production carries today" — while the production MemoryMax is
+# recorded per-agent as production_memory_max_mb and is NOT changed
+# anywhere by staging. Only Stratex and Futuris are in that class today
+# (measured, REL-048); the other agents' staging RSS sits inside their
+# production MemoryMax, so their two numbers still coincide.
+#
 # health_path / probe_path: probe_path is one representative READ-ONLY
 # request per agent. Where a domain route needs a key, the gate sends the
 # staging dummy key (staging credentials are ours, they are not secrets).
@@ -107,7 +122,15 @@ agents:
     # separate supervisor concern and is NEVER started in staging).
     argv: ["dashboard.py"]
     port: 8003
-    mem_cap_mb: 180
+    # REL-048 footprint cap (see header): production MemoryMax stays
+    # 180 MB (production_memory_max_mb) and production survives only
+    # because ~189 MB of the dashboard sits in swap (measured 2026-11-15:
+    # VmRSS 43 MB + VmSwap 189 MB = 232 MB total footprint; boot peaks
+    # 233 MB on Python 3.12 staging libs, 236 MB on Python 3.10 with
+    # production-pinned libraries — the overage is real footprint, NOT
+    # a Python-version artifact). Cap = max measured footprint + ~4%.
+    mem_cap_mb: 245
+    production_memory_max_mb: 180
     health_path: /api/v1/health
     probe_path: /
     env:
@@ -125,7 +148,14 @@ agents:
     pythonpath: Futuris
     argv: ["-m", "uvicorn", "futuris.api.app:app", "--host", "127.0.0.1", "--port", "8004", "--workers", "1"]
     port: 8004
-    mem_cap_mb: 180
+    # REL-048 footprint cap (see header): production MemoryMax stays
+    # 180 MB (production_memory_max_mb); measured production footprint
+    # 2026-11-15 is VmRSS 35 MB + VmSwap 151 MB = 186 MB; boot peaks
+    # 187 MB on Python 3.12 staging libs, 200 MB on Python 3.10 with
+    # production-pinned libraries — real footprint, NOT a version
+    # artifact. Cap = max measured footprint + ~3%.
+    mem_cap_mb: 205
+    production_memory_max_mb: 180
     health_path: /health
     probe_path: /openapi.json
 

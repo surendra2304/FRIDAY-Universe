@@ -126,11 +126,18 @@ the gate's evidence never depends on a log file having survived.
 
 - Python 3.12 (sandbox) vs 3.10 (production venv); library builds differ
   (sandbox uses `--system-site-packages`). Absolute RSS numbers are
-  staging-environment measurements: on 2026-11-15 Stratex measured
-  ~199 MB steady / 234 MB peak and Futuris ~194 MB against their 180 MB
-  caps, while both run within caps in production. Treat an over-cap
-  staging result as "footprint risk — investigate", with the version
-  delta as the first suspect, not as proof of a production breach.
+  staging-environment measurements. **Updated by TASK-REL-048
+  (2026-11-15, `RESULTS_REL048.md`): the version-delta suspicion was
+  tested and REFUTED — on production's own 3.10 interpreter with
+  production-pinned libraries, Stratex and Futuris footprints are equal
+  or larger than on 3.12. The overage is real footprint; production
+  stays alive because its memory-starved host swaps ~150–190 MB of
+  each process out (production total footprints: Stratex ~232 MB,
+  Futuris ~186 MB vs their 180 MB MemoryMax). The manifest therefore
+  carries evidence-based footprint caps for these two agents
+  (245 / 205 MB) with the production MemoryMax recorded alongside —
+  see the REL-048 amendment in `fleet_manifest.yaml`. Treat an over-cap
+  staging result as real footprint growth until measured otherwise.
 - The sandbox exports a `NO_PROXY` containing bracketed IPv6 literals
   that crash httpx's proxy-pattern parser at client construction
   (`httpx.InvalidURL: Invalid port ':1]'`). The manifest sanitises
@@ -147,3 +154,4 @@ the gate's evidence never depends on a log file having survived.
 - `smoke_gate.py` — the pre-merge gate (see `docs/collaboration/LOCAL_FIRST_PIPELINE.md`)
 - `requirements-staging.txt` — the staging venv package set (mirrors the production shared venv)
 - `RESULTS_REL046.md` — the first full gate run, with the real output table
+- `RESULTS_REL048.md` — Stratex/Futuris footprint investigation: production measurements, the 3.10-vs-3.12 controlled experiment, import attribution, and the footprint-cap derivation
