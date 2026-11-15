@@ -340,8 +340,8 @@ class RecoveryEngine:
         dependency_missing; the evidence names a bare top-level module; the
         module is not a stdlib name (a missing stdlib module is an
         environment problem, not a project file); ``<module>.py`` is absent
-        from the workspace; and the task goal or the architecture spec names
-        the file as part of the project. Content comes from the same
+        from the workspace; and the task goal, the architecture spec or
+        the file manifest names the file as part of the project. Content comes from the same
         Inference code channel the Developer role uses, at the same 0.70
         confidence bar, parsed through the same ast-validating extractor --
         and the ladder's compile gate still applies before anything is
@@ -384,7 +384,23 @@ class RecoveryEngine:
             )
         except Exception:
             spec_text = ""
-        if target_file not in goal and target_file not in spec_text:
+        # TASK-FRG-010: the architect's manifest is a third naming
+        # source. A module the manifest declares was asked for by the
+        # project's own plan even when the goal text does not repeat
+        # its name, and the completeness gate exists precisely for
+        # manifest-declared modules.
+        manifest_text = ""
+        try:
+            manifest_text = self.exec_engine.fs.read_file(
+                task_id, "docs/FILE_MANIFEST.json", role="debugger"
+            )
+        except Exception:
+            manifest_text = ""
+        if (
+            target_file not in goal
+            and target_file not in spec_text
+            and target_file not in manifest_text
+        ):
             return None
 
         try:
@@ -438,6 +454,63 @@ class RecoveryEngine:
             ),
             patch_type="create",
         )
+
+    async def create_missing_module(
+        self, task_id: str, target_file: str
+    ) -> tuple[bool, str]:
+        """Create one named project module through the create route.
+
+        TASK-FRG-010: the module completeness gate knows exactly which
+        goal/manifest modules are absent -- it does not need a failed
+        verification battery to learn it, and waiting for one is how
+        missing modules used to surface only as test-collection errors
+        (or, before TASK-FRG-003, were masked by fabricated stand-ins).
+        This entry point drives the same machinery the ladder's create
+        route uses -- same Inference code channel, same 0.70 confidence
+        bar, same ast-validating extractor, same compile gate, same
+        guarded write through the applicator -- fed with a synthetic
+        dependency_missing diagnosis naming the file. Returns
+        (created, message); the caller re-checks the workspace, so a
+        route that produced nothing leaves the file missing and the
+        gate's verdict honest.
+        """
+        diagnosis = FailureDiagnosis(
+            failure_class=FailureClass.DEPENDENCY_MISSING,
+            failing_file=target_file,
+            error_message=(
+                f"Module completeness gate: '{target_file}' is named by "
+                "the goal or the file manifest but does not exist in "
+                "the project."
+            ),
+            suggested_strategy=(
+                "Create the missing module via the recovery create route."
+            ),
+        )
+        patch = await self._create_missing_module_patch(task_id, diagnosis)
+        if not patch:
+            return False, (
+                f"Create route produced no module for '{target_file}' "
+                "(provider unavailable, below the confidence bar, or "
+                "the file is not named by the goal, spec or manifest)."
+            )
+        if not self._patch_is_sound(task_id, patch):
+            return False, (
+                f"Create route's candidate for '{target_file}' did not compile."
+            )
+        if not self.applicator.apply_patch(task_id, patch, role="debugger"):
+            return False, (
+                f"Create route could not write '{target_file}' to the workspace."
+            )
+        await self._audit(
+            task_id,
+            "module_completeness.created",
+            {"target_file": target_file, "route": "create"},
+        )
+        logger.info(
+            f"[Task {task_id}] Module completeness gate created "
+            f"'{target_file}' via the recovery create route"
+        )
+        return True, patch.explanation
 
     async def _regenerate_unparseable_module_patch(
         self, task_id: str, diagnosis: FailureDiagnosis, target_file: str | None
