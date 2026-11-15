@@ -205,6 +205,44 @@ class PlannerRole(BaseAgent):
         }
 
 
+def explicit_layout_from_goal(
+    goal: str, requirements: list[str] | None = None
+) -> list[str]:
+    """File paths a goal states explicitly, in the order stated.
+
+    The architect's model-produced FILE_MANIFEST.json is the preferred
+    manifest source, but when it is unavailable -- the production reality
+    today, where roles run on the deterministic DirectProvider whose
+    response carries no manifest -- the goal text itself is the only
+    place the requested layout exists. TASK-FRG-004's multi-file battery
+    (and TASK-REL-028's residual before it) showed the keyword-template
+    fallback silently replacing explicitly requested multi-file layouts
+    -- packages, tests/ directories -- with ["main.py", "README.md"],
+    after which nothing downstream could ever produce the project the
+    caller asked for. Extracting the stated paths keeps the manifest
+    pointed at the requested project. Returns an empty list when fewer
+    than three paths are stated, so incidental file mentions in prose
+    keep the historical template behaviour.
+    """
+    texts = [goal or ""] + [str(r) for r in (requirements or [])]
+    path_re = re.compile(
+        r"(?<![\w/.-])((?:[A-Za-z0-9_\-]+/)+[A-Za-z0-9_\-]+\.[A-Za-z0-9]+"
+        r"|[A-Za-z0-9_\-]+\.(?:py|md|txt|json|toml|yaml|yml|html|css|js|ts|sh))"
+        r"(?![\w/-])"
+    )
+    found: list[str] = []
+    for text in texts:
+        for match in path_re.finditer(text):
+            path = match.group(1)
+            if path in ("docs/FILE_MANIFEST.json", "docs/ARCHITECTURE_SPEC.md"):
+                continue
+            if path not in found:
+                found.append(path)
+    if len(found) < 3:
+        return []
+    return found[:48]
+
+
 class ArchitectRole(BaseAgent):
     """Specialist responsible for system architecture, schemas, and API design."""
 
@@ -434,6 +472,26 @@ class ArchitectRole(BaseAgent):
                     manifest_files = [str(x) for x in parsed["files"] if x]
             except Exception:
                 pass
+
+        if not manifest_files:
+            # TASK-FRG-004: with no model-produced manifest, honour the
+            # layout the goal itself states before falling back to the
+            # keyword templates, which discard requested packages and
+            # test directories wholesale.
+            manifest_files = explicit_layout_from_goal(
+                goal, list(context.get("requirements", []))
+            )
+            if manifest_files:
+                import json
+
+                engine.fs.create_file(
+                    task_id=task_id,
+                    relative_path="docs/FILE_MANIFEST.json",
+                    content=json.dumps(manifest_files, indent=2),
+                    role=self.role_name,
+                )
+                if "docs/FILE_MANIFEST.json" not in written:
+                    written.append("docs/FILE_MANIFEST.json")
 
         if not manifest_files:
             goal_lower = goal.lower()
