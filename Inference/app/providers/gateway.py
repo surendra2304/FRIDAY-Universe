@@ -30,6 +30,7 @@ from app.providers.errors import (
 )
 from app.providers.errors import TimeoutError as ProviderTimeoutError
 from app.providers.health import provider_health_tracker
+from app.providers.quota_ledger import quota_ledger
 from app.security.prompt_isolation import scrub_credentials
 from app.utils.logger import logger
 
@@ -68,6 +69,39 @@ def _request_timeout_budget(request: ProviderRequest) -> float:
     if not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("request timeout must be a finite positive number")
     return timeout
+
+
+def _quota_outcome(err: BaseException | None) -> str:
+    """Map a typed gateway error to a quota-ledger outcome label."""
+    if isinstance(err, RateLimitError):
+        return "rate_limited"
+    if isinstance(err, ProviderTimeoutError):
+        return "timeout"
+    if isinstance(err, TemporaryUnavailableError):
+        return "unavailable"
+    return "error"
+
+
+def _quota_record(
+    provider: str,
+    model: str | None,
+    api_key: str | None,
+    outcome: str,
+    response: ProviderResponse | None = None,
+) -> None:
+    """Best-effort free-tier quota accounting (TASK-INF-007).
+
+    Every provider attempt the gateway makes is recorded against the
+    declared free-tier limits (see app.providers.quota_ledger). Accounting
+    must never break serving, so any failure here is swallowed; the ledger
+    itself also swallows its own errors.
+    """
+    try:
+        quota_ledger.record_response(
+            provider=provider, model=model, api_key=api_key, outcome=outcome, response=response
+        )
+    except Exception:  # noqa: BLE001 - accounting must never break serving
+        pass
 
 
 class KeyPool:
@@ -295,11 +329,13 @@ class ModelGateway:
                 resp = await asyncio.wait_for(execute_via_litellm(request), timeout=remaining)
                 latency = time.perf_counter() - start_time
                 self.health_tracker.record_success("litellm", latency)
+                _quota_record("litellm", request.model, None, "success", resp)
                 return resp
             except Exception as exc:
                 latency = time.perf_counter() - start_time
                 typed_err = normalize_provider_exception(exc, provider="litellm", model=request.model)
                 self.health_tracker.record_failure("litellm", str(exc), latency_seconds=latency)
+                _quota_record("litellm", request.model, None, _quota_outcome(typed_err))
                 raise typed_err from exc
 
         # Air-gapped / offline mode. When LOCAL_PREFERRED is set, the self-hosted tier
@@ -426,6 +462,7 @@ class ModelGateway:
 
                 latency = time.perf_counter() - start_time
                 self.health_tracker.record_success(prov_name, latency)
+                _quota_record(prov_name, request.model, current_key, "success", resp)
                 return resp
 
             except (asyncio.TimeoutError, TimeoutError) as exc:
@@ -442,6 +479,7 @@ class ModelGateway:
                     is_503=True,
                     latency_seconds=latency,
                 )
+                _quota_record(prov_name, request.model, current_key, "timeout")
                 last_error = TimeoutError(
                     f"Request deadline exceeded for provider '{prov_name}' after {latency:.1f}s"
                 )
@@ -465,6 +503,7 @@ class ModelGateway:
                 self.health_tracker.record_failure(
                     prov_name, err_str, is_429=is_429, is_503=is_503, latency_seconds=latency
                 )
+                _quota_record(prov_name, request.model, current_key, _quota_outcome(typed_err))
 
                 if pool and current_key and typed_err.is_retryable():
                     pool.quarantine(current_key, duration_seconds=60.0)
@@ -570,6 +609,7 @@ class ModelGateway:
                 "fallback_reason": scrub_credentials(str(last_error)) if last_error else "local_preferred",
             }
             self.health_tracker.record_success("local", resp.latency_seconds)
+            _quota_record("local", local_req.model, None, "success", resp)
             logger.info(
                 "GATEWAY: Served capability '%s' from the self-hosted tier (model=%s, %.2fs).",
                 capability,
@@ -579,6 +619,7 @@ class ModelGateway:
             return resp
         except Exception as local_exc:  # noqa: BLE001 - the tier must never abort the request
             self.health_tracker.record_failure("local", str(local_exc))
+            _quota_record("local", request.model, None, "error")
             logger.error("GATEWAY: Self-hosted tier failed: %s", str(local_exc))
             return None
 
@@ -620,6 +661,7 @@ class ModelGateway:
         )
         if failed_provider != "openrouter" and openrouter_has_credentials:
             openrouter_key: str | None = None
+            dynamic_model: str | None = None
             openrouter_pool = self.key_pools.get("openrouter")
             try:
                 import app.providers
@@ -697,6 +739,7 @@ class ModelGateway:
                 }
 
                 self.health_tracker.record_success("openrouter", resp.latency_seconds)
+                _quota_record("openrouter", dynamic_model, openrouter_key, "success", resp)
                 return resp
 
             except Exception as fb_exc:
@@ -708,6 +751,9 @@ class ModelGateway:
                     type(typed_error).__name__,
                     is_429=isinstance(typed_error, RateLimitError),
                     is_503=isinstance(typed_error, TemporaryUnavailableError),
+                )
+                _quota_record(
+                    "openrouter", dynamic_model or request.model, openrouter_key, _quota_outcome(typed_error)
                 )
                 if openrouter_key and typed_error.is_retryable() and openrouter_pool:
                     openrouter_pool.quarantine(openrouter_key, duration_seconds=60.0)
@@ -780,8 +826,15 @@ class ModelGateway:
                         "fallback_reason": clean_reason,
                     }
                     self.health_tracker.record_success(sec_name, resp.latency_seconds)
+                    _quota_record(sec_name, sec_model, None, "success", resp)
                     return resp
                 except Exception as sec_exc:
+                    _quota_record(
+                        sec_name,
+                        sec_model,
+                        None,
+                        _quota_outcome(normalize_provider_exception(sec_exc, provider=sec_name, model=sec_model)),
+                    )
                     scrubbed_exc = scrub_credentials(str(sec_exc))
                     logger.warning(
                         "Waterfall fallback provider '%s' failed: %s", sec_name, scrubbed_exc
@@ -825,8 +878,10 @@ class ModelGateway:
                     "fallback_reason": scrub_credentials(str(last_error)) if last_error else "primary_exhausted",
                 }
                 self.health_tracker.record_success("litellm", litellm_resp.latency_seconds)
+                _quota_record("litellm", litellm_resp.model, None, "success", litellm_resp)
                 return litellm_resp
             except Exception as litellm_exc:
+                _quota_record("litellm", request.model, None, "error")
                 logger.error("LiteLLM fallback failed: %s", str(litellm_exc))
 
         # If all fallbacks failed, raise the original error
@@ -977,6 +1032,7 @@ class ModelGateway:
                     chunk = await asyncio.wait_for(iterator.__anext__(), timeout=remaining)
                 except StopAsyncIteration:
                     self.health_tracker.record_success(prov_name, time.perf_counter() - started)
+                    _quota_record(prov_name, request.model, current_key, "success")
                     return
                 yield chunk
         except asyncio.CancelledError:
@@ -996,6 +1052,7 @@ class ModelGateway:
                 is_503=True,
                 latency_seconds=time.perf_counter() - started,
             )
+            _quota_record(prov_name, request.model, current_key, "timeout")
             raise typed_error from exc
         except Exception as exc:
             typed_error = normalize_provider_exception(exc, provider=prov_name, model=request.model)
@@ -1006,6 +1063,7 @@ class ModelGateway:
                 is_503=isinstance(typed_error, TemporaryUnavailableError),
                 latency_seconds=time.perf_counter() - started,
             )
+            _quota_record(prov_name, request.model, current_key, _quota_outcome(typed_error))
             raise typed_error from exc
         finally:
             try:
