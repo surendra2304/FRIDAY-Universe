@@ -1,5 +1,6 @@
 """OpenRouter LLM Provider Adapter with Dynamic Capability-Based Model Discovery."""
 
+import asyncio
 import time
 
 from app.core.config import settings
@@ -31,6 +32,23 @@ FALLBACK_FREE_MODELS: dict[str, str] = {
     "security": "meta-llama/llama-3.3-70b-instruct",
     "general": "meta-llama/llama-3.3-70b-instruct",
 }
+
+# TASK-INF-004: the free-model discovery cache lives at MODULE level, not on
+# the provider instance. The gateway constructs a fresh OpenRouterProvider
+# for every fallback attempt (``get_provider(name, api_key=...)`` is never
+# memoised — see app/providers/__init__.py), so an instance-level cache can
+# never survive to a second fallback. Measured in production (2026-11-15,
+# Server 1): every fallback re-downloaded the ~851KB /api/v1/models
+# catalogue (0.59–1.10s per fetch) before its completion call, on the
+# critical path of the slowest requests in the fleet (23 fallback-ladder
+# entries in the hour observed). Keyed by base_url so providers pointed at
+# different endpoints never share entries. Only successful non-empty
+# fetches are cached; a failed fetch keeps the previous semantics (static
+# SUPPORTED_MODELS, retried on the next call). The single-flight lock keeps
+# concurrent fallbacks from stampeding the catalogue endpoint.
+_DISCOVERY_CACHE_TTL_SECONDS: float = 300.0  # 5 minutes — the instance cache's designed TTL
+_DISCOVERY_CACHE: dict[str, tuple[list[str], float]] = {}
+_DISCOVERY_LOCK = asyncio.Lock()
 
 
 class OpenRouterProvider(OpenAICompatibleProvider):
@@ -68,20 +86,38 @@ class OpenRouterProvider(OpenAICompatibleProvider):
         self._cache_ttl_seconds: float = 300.0  # 5 minutes
 
     async def fetch_available_free_models(self) -> list[str]:
-        """Fetch all currently available :free models directly from OpenRouter API."""
+        """Fetch all currently available :free models directly from OpenRouter API.
+
+        TASK-INF-004: successful fetches are cached at module level (see
+        ``_DISCOVERY_CACHE``) because the gateway builds a fresh provider
+        instance per fallback attempt, which made the previous
+        instance-level cache unreachable in production. The instance-level
+        check is kept as a fast path for long-lived instances.
+        """
         now = time.time()
+        shared = _DISCOVERY_CACHE.get(self.base_url)
+        if shared and shared[0] and (now - shared[1]) < _DISCOVERY_CACHE_TTL_SECONDS:
+            return list(shared[0])
         if self._cached_free_models and (now - self._cache_timestamp) < self._cache_ttl_seconds:
             return self._cached_free_models
 
         if not self.api_key:
             return list(self.SUPPORTED_MODELS)
 
-        url = f"{self.base_url}/models"
-        headers = self._get_headers()
-        try:
-            client = await get_shared_client()
-            resp = await client.get(url, headers=headers, timeout=10.0)
-            if resp.status_code == 200:
+        async with _DISCOVERY_LOCK:
+            # Re-check inside the lock: a concurrent fallback may have
+            # completed the fetch while this call was waiting for it.
+            now = time.time()
+            shared = _DISCOVERY_CACHE.get(self.base_url)
+            if shared and shared[0] and (now - shared[1]) < _DISCOVERY_CACHE_TTL_SECONDS:
+                return list(shared[0])
+
+            url = f"{self.base_url}/models"
+            headers = self._get_headers()
+            try:
+                client = await get_shared_client()
+                resp = await client.get(url, headers=headers, timeout=10.0)
+                if resp.status_code == 200:
                     data = resp.json().get("data", [])
                     free_models = [
                         m["id"]
@@ -90,12 +126,13 @@ class OpenRouterProvider(OpenAICompatibleProvider):
                         or (m.get("pricing", {}).get("prompt") == "0" and m.get("pricing", {}).get("completion") == "0")
                     ]
                     if free_models:
+                        _DISCOVERY_CACHE[self.base_url] = (list(free_models), now)
                         self._cached_free_models = free_models
                         self._cache_timestamp = now
                         logger.info("Discovered %d active free models on OpenRouter", len(free_models))
                         return free_models
-        except Exception as exc:
-            logger.debug("Failed to query live OpenRouter models: %s", str(exc))
+            except Exception as exc:
+                logger.debug("Failed to query live OpenRouter models: %s", str(exc))
 
         return list(self.SUPPORTED_MODELS)
 
