@@ -1,0 +1,1532 @@
+[
+ {
+  "item": "sum1",
+  "task_type": "summarise",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 39.655,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 281,
+   "completion_tokens": 111,
+   "total_tokens": 392
+  },
+  "score": 1.0,
+  "content_excerpt": "Meridian City\u2019s new electric bus rapid transit line, a 14\u2011kilometre route linking the northern suburbs to the harbour district, is slated to begin operations in"
+ },
+ {
+  "item": "sum2",
+  "task_type": "summarise",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 20.138,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 190,
+   "completion_tokens": 7,
+   "total_tokens": 386
+  },
+  "score": 0.333,
+  "content_excerpt": "In a six-week study of"
+ },
+ {
+  "item": "sum3",
+  "task_type": "summarise",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 40.0,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 260,
+   "completion_tokens": 65,
+   "total_tokens": 325
+  },
+  "score": 1.0,
+  "content_excerpt": "Helios Robotics deployed its autonomous pallet\u2011moving robots in fourteen distribution warehouses, achieving a 40% reduction in manual\u2011handling injuries. The rob"
+ },
+ {
+  "item": "rsn1",
+  "task_type": "reason",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 39.712,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 178,
+   "completion_tokens": 36,
+   "total_tokens": 214
+  },
+  "score": 1.0,
+  "content_excerpt": "22"
+ },
+ {
+  "item": "rsn2",
+  "task_type": "reason",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 39.166,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 178,
+   "completion_tokens": 42,
+   "total_tokens": 220
+  },
+  "score": 1.0,
+  "content_excerpt": "Yes. Since all zorks are blue and Fenn is a zork, Fenn must be blue."
+ },
+ {
+  "item": "rsn3",
+  "task_type": "reason",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 41.376,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 169,
+   "completion_tokens": 42,
+   "total_tokens": 211
+  },
+  "score": 1.0,
+  "content_excerpt": "38"
+ },
+ {
+  "item": "cod1",
+  "task_type": "code",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 75.5,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 193,
+   "completion_tokens": 99,
+   "total_tokens": 292
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef is_palindrome(s):\n    \"\"\"\n    Return True if the string `s` is a palindrome, ignoring case and all non-alphanumeric characters.\n    \"\"\"\n    # Filt"
+ },
+ {
+  "item": "cod2",
+  "task_type": "code",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 43.204,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 190,
+   "completion_tokens": 82,
+   "total_tokens": 272
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef count_vowels(s):\n    \"\"\"Return the number of vowels (a, e, i, o, u) in the string `s`, case\u2011insensitive.\"\"\"\n    vowels = set(\"aeiouAEIOU\")\n    ret"
+ },
+ {
+  "item": "cod3",
+  "task_type": "code",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 41.892,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 190,
+   "completion_tokens": 110,
+   "total_tokens": 300
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef second_largest(nums):\n    \"\"\"Return the second largest distinct value in the list `nums`.\n\n    Assumes that `nums` contains at least two distinct "
+ },
+ {
+  "item": "ext1",
+  "task_type": "extract",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 42.812,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 209,
+   "completion_tokens": 93,
+   "total_tokens": 302
+  },
+  "score": 1.0,
+  "content_excerpt": "{\n  \"invoice_id\": \"INV-2041\",\n  \"vendor\": \"Northwind Traders\",\n  \"date\": \"2026-03-14\",\n  \"total\": 1250.75\n}"
+ },
+ {
+  "item": "ext2",
+  "task_type": "extract",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 40.699,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 203,
+   "completion_tokens": 100,
+   "total_tokens": 303
+  },
+  "score": 1.0,
+  "content_excerpt": "{\n  \"person\": \"Dr. Priya Nair\",\n  \"time\": \"14:30\",\n  \"date\": \"2026-12-02\",\n  \"room\": \"Room 9\"\n}"
+ },
+ {
+  "item": "ext3",
+  "task_type": "extract",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 46.91,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 202,
+   "completion_tokens": 51,
+   "total_tokens": 253
+  },
+  "score": 1.0,
+  "content_excerpt": "{\n  \"model\": \"X200\",\n  \"weight_grams\": 240,\n  \"battery_hours\": 40,\n  \"price_usd\": 89\n}"
+ },
+ {
+  "item": "cht1",
+  "task_type": "chat",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 60.099,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 154,
+   "completion_tokens": 19,
+   "total_tokens": 173
+  },
+  "score": 1.0,
+  "content_excerpt": "Canberra"
+ },
+ {
+  "item": "cht2",
+  "task_type": "chat",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 10.61,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 78,
+   "completion_tokens": 0,
+   "total_tokens": 123
+  },
+  "score": 1.0,
+  "content_excerpt": "Au"
+ },
+ {
+  "item": "cht3",
+  "task_type": "chat",
+  "requested_model": "gemini-3.8-flash",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": true,
+  "http": 200,
+  "latency_s": 40.606,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 155,
+   "completion_tokens": 23,
+   "total_tokens": 178
+  },
+  "score": 1.0,
+  "content_excerpt": "6"
+ },
+ {
+  "item": "sum1",
+  "task_type": "summarise",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 9.115,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 215,
+   "completion_tokens": 4,
+   "total_tokens": 411
+  },
+  "score": 0.333,
+  "content_excerpt": "Meridian has approved"
+ },
+ {
+  "item": "sum2",
+  "task_type": "summarise",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 9.101,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 190,
+   "completion_tokens": 6,
+   "total_tokens": 386
+  },
+  "score": 0.333,
+  "content_excerpt": "A six-week study of"
+ },
+ {
+  "item": "sum3",
+  "task_type": "summarise",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 8.284,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 189,
+   "completion_tokens": 7,
+   "total_tokens": 385
+  },
+  "score": 0.333,
+  "content_excerpt": "Helios Robotics announced that its autonomous"
+ },
+ {
+  "item": "rsn1",
+  "task_type": "reason",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 7.702,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 105,
+   "completion_tokens": 2,
+   "total_tokens": 200
+  },
+  "score": 1.0,
+  "content_excerpt": "22"
+ },
+ {
+  "item": "rsn2",
+  "task_type": "reason",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 8.408,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 102,
+   "completion_tokens": 2,
+   "total_tokens": 248
+  },
+  "score": 1.0,
+  "content_excerpt": "Yes."
+ },
+ {
+  "item": "rsn3",
+  "task_type": "reason",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 8.71,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 98,
+   "completion_tokens": 2,
+   "total_tokens": 193
+  },
+  "score": 1.0,
+  "content_excerpt": "38"
+ },
+ {
+  "item": "cod1",
+  "task_type": "code",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 9.09,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 122,
+   "completion_tokens": 15,
+   "total_tokens": 518
+  },
+  "score": 0.0,
+  "content_excerpt": "```python\ndef is_palindrome(s):\n    cleaned = ["
+ },
+ {
+  "item": "cod2",
+  "task_type": "code",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 6.204,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 118,
+   "completion_tokens": 33,
+   "total_tokens": 462
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef count_vowels(s):\n    return sum(1 for char in s if char.lower() in \"aeiou\")\n```"
+ },
+ {
+  "item": "cod3",
+  "task_type": "code",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 2.707,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 117,
+   "completion_tokens": 15,
+   "total_tokens": 513
+  },
+  "score": 0.0,
+  "content_excerpt": "sorted(set(nums))[-2]` is standard, clean, readable"
+ },
+ {
+  "item": "ext1",
+  "task_type": "extract",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.889,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 147,
+   "completion_tokens": 5,
+   "total_tokens": 343
+  },
+  "score": 0.0,
+  "content_excerpt": " Constraints Check**:\n    "
+ },
+ {
+  "item": "ext2",
+  "task_type": "extract",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.798,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 134,
+   "completion_tokens": 5,
+   "total_tokens": 330
+  },
+  "score": 0.0,
+  "content_excerpt": "{\"person\": \"Dr"
+ },
+ {
+  "item": "ext3",
+  "task_type": "extract",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.795,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 136,
+   "completion_tokens": 7,
+   "total_tokens": 332
+  },
+  "score": 0.0,
+  "content_excerpt": " Execution**:\n    *   Model"
+ },
+ {
+  "item": "cht1",
+  "task_type": "chat",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.899,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 80,
+   "completion_tokens": 0,
+   "total_tokens": 127
+  },
+  "score": 0.0,
+  "content_excerpt": ""
+ },
+ {
+  "item": "cht2",
+  "task_type": "chat",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 3.615,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 78,
+   "completion_tokens": 0,
+   "total_tokens": 123
+  },
+  "score": 1.0,
+  "content_excerpt": "Au"
+ },
+ {
+  "item": "cht3",
+  "task_type": "chat",
+  "requested_model": "gemini-3.6-flash",
+  "served_model": "gemini-3.6-flash",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 2.481,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 80,
+   "completion_tokens": 0,
+   "total_tokens": 125
+  },
+  "score": 1.0,
+  "content_excerpt": "6"
+ },
+ {
+  "item": "sum1",
+  "task_type": "summarise",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.611,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 281,
+   "completion_tokens": 111,
+   "total_tokens": 392
+  },
+  "score": 1.0,
+  "content_excerpt": "Meridian City\u2019s new electric bus rapid transit line, a 14\u2011kilometre route linking the northern suburbs to the harbour district, is slated to begin operations in"
+ },
+ {
+  "item": "sum2",
+  "task_type": "summarise",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.589,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 260,
+   "completion_tokens": 59,
+   "total_tokens": 319
+  },
+  "score": 0.667,
+  "content_excerpt": "The six\u2011week study tracked 312 participants; those who switched to decaffeinated coffee after noon fell asleep faster and showed a 23% average increase in deep\u2011"
+ },
+ {
+  "item": "sum3",
+  "task_type": "summarise",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.695,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 260,
+   "completion_tokens": 57,
+   "total_tokens": 317
+  },
+  "score": 1.0,
+  "content_excerpt": "Helios Robotics deployed its autonomous pallet\u2011moving robots in fourteen distribution warehouses, where they operate alongside human staff, achieving a 40% redu"
+ },
+ {
+  "item": "rsn1",
+  "task_type": "reason",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.008,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 214
+  },
+  "score": 1.0,
+  "content_excerpt": "22"
+ },
+ {
+  "item": "rsn2",
+  "task_type": "reason",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.007,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 220
+  },
+  "score": 1.0,
+  "content_excerpt": "Yes. Since all zorks are blue and Fenn is a zork, Fenn must be blue."
+ },
+ {
+  "item": "rsn3",
+  "task_type": "reason",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.083,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 211
+  },
+  "score": 1.0,
+  "content_excerpt": "38"
+ },
+ {
+  "item": "cod1",
+  "task_type": "code",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.01,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 292
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef is_palindrome(s):\n    \"\"\"\n    Return True if the string `s` is a palindrome, ignoring case and all non-alphanumeric characters.\n    \"\"\"\n    # Filt"
+ },
+ {
+  "item": "cod2",
+  "task_type": "code",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.097,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 272
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef count_vowels(s):\n    \"\"\"Return the number of vowels (a, e, i, o, u) in the string `s`, case\u2011insensitive.\"\"\"\n    vowels = set(\"aeiouAEIOU\")\n    ret"
+ },
+ {
+  "item": "cod3",
+  "task_type": "code",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.085,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 300
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef second_largest(nums):\n    \"\"\"Return the second largest distinct value in the list `nums`.\n\n    Assumes that `nums` contains at least two distinct "
+ },
+ {
+  "item": "ext1",
+  "task_type": "extract",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.104,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 302
+  },
+  "score": 1.0,
+  "content_excerpt": "{\n  \"invoice_id\": \"INV-2041\",\n  \"vendor\": \"Northwind Traders\",\n  \"date\": \"2026-03-14\",\n  \"total\": 1250.75\n}"
+ },
+ {
+  "item": "ext2",
+  "task_type": "extract",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.015,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 303
+  },
+  "score": 1.0,
+  "content_excerpt": "{\n  \"person\": \"Dr. Priya Nair\",\n  \"time\": \"14:30\",\n  \"date\": \"2026-12-02\",\n  \"room\": \"Room 9\"\n}"
+ },
+ {
+  "item": "ext3",
+  "task_type": "extract",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.013,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 253
+  },
+  "score": 1.0,
+  "content_excerpt": "{\n  \"model\": \"X200\",\n  \"weight_grams\": 240,\n  \"battery_hours\": 40,\n  \"price_usd\": 89\n}"
+ },
+ {
+  "item": "cht1",
+  "task_type": "chat",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.093,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 173
+  },
+  "score": 1.0,
+  "content_excerpt": "Canberra"
+ },
+ {
+  "item": "cht2",
+  "task_type": "chat",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.496,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 152,
+   "completion_tokens": 29,
+   "total_tokens": 181
+  },
+  "score": 1.0,
+  "content_excerpt": "Au"
+ },
+ {
+  "item": "cht3",
+  "task_type": "chat",
+  "requested_model": "openai/gpt-oss-120b",
+  "served_model": "openai/gpt-oss-120b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.096,
+  "cache_suspect": true,
+  "usage": {
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "total_tokens": 178
+  },
+  "score": 1.0,
+  "content_excerpt": "6"
+ },
+ {
+  "item": "sum1",
+  "task_type": "summarise",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.205,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 237,
+   "completion_tokens": 26,
+   "total_tokens": 263
+  },
+  "score": 1.0,
+  "content_excerpt": "Meridian City\u2019s new 14-kilometre electric bus line will begin operations in 2027."
+ },
+ {
+  "item": "sum2",
+  "task_type": "summarise",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.302,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 210,
+   "completion_tokens": 30,
+   "total_tokens": 240
+  },
+  "score": 1.0,
+  "content_excerpt": "312 participants in a six-week study found that switching to decaf coffee after noon improved deep sleep by 23% on average."
+ },
+ {
+  "item": "sum3",
+  "task_type": "summarise",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.197,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 208,
+   "completion_tokens": 27,
+   "total_tokens": 235
+  },
+  "score": 1.0,
+  "content_excerpt": "Helios Robotics deployed autonomous pallet-moving robots in fourteen distribution warehouses, achieving a 40% reduction in manual-handling injuries."
+ },
+ {
+  "item": "rsn1",
+  "task_type": "reason",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.393,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 124,
+   "completion_tokens": 3,
+   "total_tokens": 127
+  },
+  "score": 0.0,
+  "content_excerpt": "12"
+ },
+ {
+  "item": "rsn2",
+  "task_type": "reason",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.205,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 123,
+   "completion_tokens": 17,
+   "total_tokens": 140
+  },
+  "score": 1.0,
+  "content_excerpt": "Yes, because all zorks are blue and Fenn is a zork."
+ },
+ {
+  "item": "rsn3",
+  "task_type": "reason",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.297,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 117,
+   "completion_tokens": 3,
+   "total_tokens": 120
+  },
+  "score": 1.0,
+  "content_excerpt": "38"
+ },
+ {
+  "item": "cod1",
+  "task_type": "code",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.4,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 138,
+   "completion_tokens": 38,
+   "total_tokens": 176
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef is_palindrome(s):\n    cleaned = [c.lower() for c in s if c.isalnum()]\n    return cleaned == cleaned[::-1]\n```"
+ },
+ {
+  "item": "cod2",
+  "task_type": "code",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.495,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 136,
+   "completion_tokens": 32,
+   "total_tokens": 168
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef count_vowels(s):\n    return sum(1 for c in s if c.lower() in 'aeiou')\n```"
+ },
+ {
+  "item": "cod3",
+  "task_type": "code",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 3.402,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 135,
+   "completion_tokens": 30,
+   "total_tokens": 165
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef second_largest(nums):\n    distinct = sorted(set(nums), reverse=True)\n    return distinct[1]\n```"
+ },
+ {
+  "item": "ext1",
+  "task_type": "extract",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.489,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 166,
+   "completion_tokens": 59,
+   "total_tokens": 225
+  },
+  "score": 1.0,
+  "content_excerpt": "{\n  \"invoice_id\": \"INV-2041\",\n  \"vendor\": \"Northwind Traders\",\n  \"date\": \"2026-03-14\",\n  \"total\": 1250.75\n}"
+ },
+ {
+  "item": "ext2",
+  "task_type": "extract",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.315,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 155,
+   "completion_tokens": 56,
+   "total_tokens": 211
+  },
+  "score": 1.0,
+  "content_excerpt": "{\n  \"person\": \"Dr. Priya Nair\",\n  \"time\": \"14:30\",\n  \"date\": \"2026-12-02\",\n  \"room\": \"Room 9\"\n}"
+ },
+ {
+  "item": "ext3",
+  "task_type": "extract",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 19.787,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 154,
+   "completion_tokens": 30,
+   "total_tokens": 184
+  },
+  "score": 1.0,
+  "content_excerpt": "{\"model\":\"X200\",\"weight_grams\":240,\"battery_hours\":40,\"price_usd\":89}"
+ },
+ {
+  "item": "cht1",
+  "task_type": "chat",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.099,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 99,
+   "completion_tokens": 3,
+   "total_tokens": 102
+  },
+  "score": 1.0,
+  "content_excerpt": "Canberra"
+ },
+ {
+  "item": "cht2",
+  "task_type": "chat",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.1,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 97,
+   "completion_tokens": 2,
+   "total_tokens": 99
+  },
+  "score": 1.0,
+  "content_excerpt": "Au"
+ },
+ {
+  "item": "cht3",
+  "task_type": "chat",
+  "requested_model": "qwen/qwen3.8-27b",
+  "served_model": "qwen/qwen3.8-27b",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.102,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 100,
+   "completion_tokens": 2,
+   "total_tokens": 102
+  },
+  "score": 1.0,
+  "content_excerpt": "6"
+ },
+ {
+  "item": "sum1",
+  "task_type": "summarise",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.992,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 224,
+   "completion_tokens": 15,
+   "total_tokens": 239
+  },
+  "score": 1.0,
+  "content_excerpt": "Meridian City's 14km route starts in 2027."
+ },
+ {
+  "item": "sum2",
+  "task_type": "summarise",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 2.117,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 202,
+   "completion_tokens": 16,
+   "total_tokens": 218
+  },
+  "score": 1.0,
+  "content_excerpt": "312 participants saw 23% improvement. Six-week study measured sleep quality."
+ },
+ {
+  "item": "sum3",
+  "task_type": "summarise",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.917,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 202,
+   "completion_tokens": 14,
+   "total_tokens": 216
+  },
+  "score": 1.0,
+  "content_excerpt": "Helios Robotics deployed robots in warehouses, reducing injuries by 40%."
+ },
+ {
+  "item": "rsn1",
+  "task_type": "reason",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 2.115,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 120,
+   "completion_tokens": 1,
+   "total_tokens": 121
+  },
+  "score": 0.0,
+  "content_excerpt": "29"
+ },
+ {
+  "item": "rsn2",
+  "task_type": "reason",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.069,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 120,
+   "completion_tokens": 24,
+   "total_tokens": 144
+  },
+  "score": 1.0,
+  "content_excerpt": "Yes. This conclusion is drawn because Fenn is a zork and all zorks are defined as being blue."
+ },
+ {
+  "item": "rsn3",
+  "task_type": "reason",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.679,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 111,
+   "completion_tokens": 2,
+   "total_tokens": 113
+  },
+  "score": 0.0,
+  "content_excerpt": "39"
+ },
+ {
+  "item": "cod1",
+  "task_type": "code",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.394,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 135,
+   "completion_tokens": 35,
+   "total_tokens": 170
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef is_palindrome(s):\n    s = ''.join(c for c in s if c.isalnum()).lower()\n    return s == s[::-1]\n```"
+ },
+ {
+  "item": "cod2",
+  "task_type": "code",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.156,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 133,
+   "completion_tokens": 36,
+   "total_tokens": 169
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef count_vowels(s):\n    vowels = 'aeiouAEIOU'\n    return sum(1 for char in s if char in vowels)\n```"
+ },
+ {
+  "item": "cod3",
+  "task_type": "code",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.747,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 132,
+   "completion_tokens": 29,
+   "total_tokens": 161
+  },
+  "score": 1.0,
+  "content_excerpt": "```python\ndef second_largest(nums):\n    distinct_nums = set(nums)\n    return sorted(distinct_nums, reverse=True)[1]\n```"
+ },
+ {
+  "item": "ext1",
+  "task_type": "extract",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.181,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 152,
+   "completion_tokens": 40,
+   "total_tokens": 192
+  },
+  "score": 1.0,
+  "content_excerpt": "{\"invoice_id\": \"INV-2041\", \"vendor\": \"Northwind Traders\", \"date\": \"2026-03-14\", \"total\": 1250.75}"
+ },
+ {
+  "item": "ext2",
+  "task_type": "extract",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.186,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 145,
+   "completion_tokens": 39,
+   "total_tokens": 184
+  },
+  "score": 1.0,
+  "content_excerpt": "{\"person\": \"Dr. Priya Nair\", \"time\": \"14:30\", \"date\": \"2026-12-02\", \"room\": \"Room 9\"}"
+ },
+ {
+  "item": "ext3",
+  "task_type": "extract",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.077,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 144,
+   "completion_tokens": 30,
+   "total_tokens": 174
+  },
+  "score": 1.0,
+  "content_excerpt": "{\"model\": \"X200\", \"weight_grams\": 240, \"battery_hours\": 40, \"price_usd\": 89}"
+ },
+ {
+  "item": "cht1",
+  "task_type": "chat",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.831,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 96,
+   "completion_tokens": 3,
+   "total_tokens": 99
+  },
+  "score": 1.0,
+  "content_excerpt": "Canberra"
+ },
+ {
+  "item": "cht2",
+  "task_type": "chat",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.957,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 94,
+   "completion_tokens": 2,
+   "total_tokens": 96
+  },
+  "score": 1.0,
+  "content_excerpt": "Au"
+ },
+ {
+  "item": "cht3",
+  "task_type": "chat",
+  "requested_model": "meta-llama/llama-3.3-70b-instruct",
+  "served_model": "meta-llama/llama-3.3-70b-instruct",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.351,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 98,
+   "completion_tokens": 2,
+   "total_tokens": 100
+  },
+  "score": 1.0,
+  "content_excerpt": "6"
+ },
+ {
+  "item": "sum1",
+  "task_type": "summarise",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 2.502,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 235,
+   "completion_tokens": 200,
+   "total_tokens": 435
+  },
+  "score": 0.5,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - **Task:** Summarize the given text.\n   - **Constraints:** \n     - At most 2 sentences.\n     - At "
+ },
+ {
+  "item": "sum2",
+  "task_type": "summarise",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.376,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 208,
+   "completion_tokens": 200,
+   "total_tokens": 408
+  },
+  "score": 0.5,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - **Task:** Summarize the given text.\n   - **Constraints:** \n     - At most 2 sentences.\n     - At "
+ },
+ {
+  "item": "sum3",
+  "task_type": "summarise",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.167,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 210,
+   "completion_tokens": 200,
+   "total_tokens": 410
+  },
+  "score": 0.5,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - **Task:** Summarize the given text\n   - **Constraints:** \n     - At most 2 sentences\n     - At mo"
+ },
+ {
+  "item": "rsn1",
+  "task_type": "reason",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 0.997,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 125,
+   "completion_tokens": 100,
+   "total_tokens": 225
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - User says: \"A shop sells notebooks at $4 each. Maya buys 7 notebooks and pays with a $50 bill. How "
+ },
+ {
+  "item": "rsn2",
+  "task_type": "reason",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.005,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 122,
+   "completion_tokens": 150,
+   "total_tokens": 272
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - Premise 1: All zorks are blue.\n   - Premise 2: Fenn is a zork.\n   - Question: Is Fenn blue?\n   - Fo"
+ },
+ {
+  "item": "rsn3",
+  "task_type": "reason",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.004,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 115,
+   "completion_tokens": 100,
+   "total_tokens": 215
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - User asks: \"What is the next number in the sequence 3, 6, 11, 18, 27? Answer with the number only.\""
+ },
+ {
+  "item": "cod1",
+  "task_type": "code",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.587,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 138,
+   "completion_tokens": 400,
+   "total_tokens": 538
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - **Function name:** `is_palindrome(s)`\n   - **Returns:** `True` if `s` reads the same forwards and"
+ },
+ {
+  "item": "cod2",
+  "task_type": "code",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 2.301,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 134,
+   "completion_tokens": 400,
+   "total_tokens": 534
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - User wants a Python function `def count_vowels(s):`\n   - It should return the number of vowels (a"
+ },
+ {
+  "item": "cod3",
+  "task_type": "code",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 2.395,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 134,
+   "completion_tokens": 400,
+   "total_tokens": 534
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - Function name: `second_largest(nums)`\n   - Purpose: Returns the second largest DISTINCT value in "
+ },
+ {
+  "item": "ext1",
+  "task_type": "extract",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.011,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 164,
+   "completion_tokens": 200,
+   "total_tokens": 364
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - Role: Chief System Architect in Inference for FORGE (but the actual task is to extract fields fro"
+ },
+ {
+  "item": "ext2",
+  "task_type": "extract",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.78,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 152,
+   "completion_tokens": 200,
+   "total_tokens": 352
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - Role: Chief System Architect in Inference for FORGE (but the actual task is to extract fields fro"
+ },
+ {
+  "item": "ext3",
+  "task_type": "extract",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.506,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 154,
+   "completion_tokens": 200,
+   "total_tokens": 354
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Request:**\n   - Role: Chief System Architect in Inference for FORGE (but the actual task is simple data extractio"
+ },
+ {
+  "item": "cht1",
+  "task_type": "chat",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.325,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 97,
+   "completion_tokens": 50,
+   "total_tokens": 147
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - User says: \"What is the capital of Australia? Answer with the city name only.\"\n   - Format instruct"
+ },
+ {
+  "item": "cht2",
+  "task_type": "chat",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.988,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 95,
+   "completion_tokens": 50,
+   "total_tokens": 145
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - User says: \"Reply with exactly one word: the chemical symbol for gold.\"\n   - This is a straightforw"
+ },
+ {
+  "item": "cht3",
+  "task_type": "chat",
+  "requested_model": "nvidia/nemotron-3.5-lightning:free",
+  "served_model": "nvidia/nemotron-3.5-lightning:free",
+  "substituted": false,
+  "http": 200,
+  "latency_s": 1.978,
+  "cache_suspect": false,
+  "usage": {
+   "prompt_tokens": 98,
+   "completion_tokens": 50,
+   "total_tokens": 148
+  },
+  "score": 0.0,
+  "content_excerpt": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - User asks: \"How many sides does a hexagon have?\"\n   - Constraint: \"Answer with a single digit.\"\n\n2."
+ }
+]
