@@ -26,6 +26,7 @@ const GalaxySheet = dynamic(() => import("./GalaxySheet").then((m) => m.GalaxySh
 const ShowcaseSheet = dynamic(() => import("./ShowcaseSheet").then((m) => m.ShowcaseSheet), { ssr: false });
 const TourSheet = dynamic(() => import("./TourSheet").then((m) => m.TourSheet), { ssr: false });
 const CitySheet = dynamic(() => import("./CitySheet").then((m) => m.CitySheet), { ssr: false });
+const EditorialSheet = dynamic(() => import("./EditorialSheet").then((m) => m.EditorialSheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -42,7 +43,7 @@ const CitySheet = dynamic(() => import("./CitySheet").then((m) => m.CitySheet), 
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse" | "life" | "galaxy" | "showcase" | "tour" | "city";
+type SheetKind = "fleet" | "chronicle" | "pulse" | "life" | "galaxy" | "showcase" | "tour" | "city" | "editorial";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
@@ -53,6 +54,7 @@ const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   showcase: { kicker: "The universe, browsable", title: "The Showcase" },
   tour: { kicker: "New here? Start with the story", title: "The Guided Tour" },
   city: { kicker: "The universe as a place", title: "The City" },
+  editorial: { kicker: "The crew, presented properly", title: "The Editorial Edition" },
 };
 
 export function Stage() {
@@ -213,6 +215,13 @@ export function Stage() {
         run: () => openSheet("city"),
       },
       {
+        id: "editorial",
+        label: "Read the editorial edition",
+        hint: "the crew in print — masthead, specifications, spotlight, roster",
+        keys: "editorial newspaper magazine edition print roster spotlight specs noolam",
+        run: () => openSheet("editorial"),
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -314,6 +323,7 @@ export function Stage() {
           {sheet === "showcase" && <ShowcaseSheet onSummon={(kind) => openSheet(kind)} />}
           {sheet === "tour" && <TourSheet onSummon={(kind) => openSheet(kind)} />}
           {sheet === "city" && <CitySheet onSummon={(kind) => openSheet(kind)} />}
+          {sheet === "editorial" && <EditorialSheet />}
         </Sheet>
       )}
     </main>
