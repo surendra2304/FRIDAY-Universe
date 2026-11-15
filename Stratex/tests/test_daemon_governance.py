@@ -293,7 +293,7 @@ class _FakeRegistry:
     def governance_status(self, name):
         return self.STATUSES[name]
 
-    def executable(self, name, tf, symbol):
+    def executable(self, name, tf, symbol, venue=None):
         if self.STATUSES[name] != "VALIDATED":
             return False, f"STATUS_{self.STATUSES[name]}"
         return True, "OK"
@@ -301,7 +301,7 @@ class _FakeRegistry:
     def get(self, name):
         return _FakeSpec(self.STATUSES[name])
 
-    def execute_strategy(self, name, df, tf, symbol, allow_observe=False):
+    def execute_strategy(self, name, df, tf, symbol, allow_observe=False, venue=None):
         if self.STATUSES[name] == "DISABLED":
             raise AssertionError("DISABLED strategy must never be evaluated")
         if self.STATUSES[name] == "OBSERVE_ONLY" and not allow_observe:
