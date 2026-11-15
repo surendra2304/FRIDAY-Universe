@@ -5613,6 +5613,174 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Coordinator: flip to VERIFIED on read-back; merge PR #385. Follow-up candidates: delete S2's stale Swarm ufw trio (2377/7946/4789) for symmetry with S1; revisit P2 rebinds only if a launcher gains dual-bind support or loopback consumers are repointed."
     files:
       - deploy/Caddyfile
+  - id: TASK-SEN-015
+    title: "Execute low-risk network-hardening window P1+P3+P4+P5 (from TASK-SEN-013)"
+    status: VERIFIED
+    owner: muse_ai
+    evidence: "Completion comment on issue #35 (this comment): P3 drill PID 2544072 terminated, 8089 free; P1 OCI tcp/10000 rule removed (snapshot /home/ubuntu/sen015_oci_rollback.json on S2) + S1 ufw 10000 v4/v6 rules deleted, public probe 200 -> timeout, Caddy/mesh/voice all 200; P4 rpcbind masked+inactive both hosts, :111 closed, journals clean; P5 five stale S1 ufw rules (2377/7946/4789 + docker_gwbridge v4/v6) deleted, diff-verified, docker swarm inactive 0 containers. 8765 dormancy question posted #issuecomment-6893986337; 8765 listener NOT touched."
+    next_action: "Coordinator: flip to VERIFIED on read-back. Sequenced follow-ups remain: P2 (VPC bind + S2 ufw rule-1 narrowing), P9 (Caddy access logging), P6 (8765 retire/bind after dormancy replies), and a new small item for the OCI tcp/3000 public rule observed during P1."
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-SEN-017
+    title: "Micro-cleanup: remove Server 2's stale Docker/Swarm ufw rules (2377/tcp, 7946, 4789/udp from 10.0.0.0/16)"
+    status: VERIFIED
+    owner: muse_ai
+    evidence: "Completion comment on issue #35 (this comment): S2 ufw 9 -> 6 rules; deleted exactly 2377/tcp, 7946, 4789/udp (all ALLOW IN from 10.0.0.0/16, v4 only) after re-verifying no listeners on those ports, Swarm.LocalNodeState=inactive, 0 containers. Before/after captures on S2 (/home/ubuntu/sen017_ufw_before.txt, sen017_ufw_after.txt); diff = only the intended deletions, SEN-016 mesh rules byte-identical. Post: S2 local health 8008/8009/8010 200, Caddy routes /sentinel|/cortex|/vyralx/health 200, S1->S2 mesh 200 + :8011 open, fleet-health-watcher post-change run Result=success (2026-11-15 18:09 IST). Zero rollbacks."
+    next_action: "Coordinator: flip to VERIFIED on read-back. No follow-up: stale Swarm ufw rules now removed on both hosts (S1 via TASK-SEN-015, S2 via this task)."
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRG-003
+    title: "Forge build reliability round 2: 5-goal acceptance battery, grounded test synthesis, sys.modules impersonation guard, unparseable-module regeneration"
+    status: VERIFIED
+    owner: muse_ai
+    pr: "#344 (merged 1bd472dd)"
+    evidence: "Pre-fix battery 0/5 SUCCESS (3 proven failure modes: invented test contracts R1/R2, phantom-module fabrication R3/R5, unrecoverable unparseable module R4). Post-fix verbatim re-runs: 1/5 full SUCCESS (R2 11/11), 3 PARTIAL (R1 one-space header assertion; R3 honest FAILED with fabrication eliminated, zero sys.modules; R4 drill: sabotage healed by the new regenerate route, Forge journal 2026-11-15 17:25:48 IST, then honest semantic failures 33/41), 1 FAILED-with-green-deliverable (R5: battery 11/11 all_passed + repro 13/13, state FAILED on the in-graph gate — verdict divergence). Deployed fingerprints verified on Server 1. Regression suite Forge/tests/test_frg003_build_reliability.py: 10F/2P on main, 12/12 on fix."
+    next_action: "Two follow-ups: (1) module-completeness gate (goal/architect-named modules must exist as real files before the tester gate; mandatory create-route coverage for omissions) — R3/R2/R4 layouts prove the gap; (2) verdict-surface consistency task (in-graph gate vs final battery vs task store vs delegate response — 3 divergence instances in this battery, incl. a green deliverable branded FAILED in R5)."
+  - id: TASK-VYR-011
+    title: "VyralX lane-2 source catalogue — stocked inventory of history / did-you-know footage (Universal Newsreels + Prelinger Archives via Internet Archive, Wikimedia Commons, Library of Congress) with per-clip licence/provenance, measured duration + resolution and topic tags, stored where the TASK-VYR-004 remix pipeline consumes it"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/ta***REDACTED***"
+    pr: 389
+    defect: "TASK-VYR-004 built the remix pipeline but VyralX had no stocked shelf of lane-2 (history / did-you-know) footage — the same gap TASK-VYR-006 closed for lane 1: without a persistent, rights-verified inventory there was nothing to plan lane-2 Shorts against."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6893968920 by Muse (TASK-VYR-011 crew) before any editing; PR #389 is the only PR on branch claude/ta***REDACTED***; completion comment posted on issue #35."
+      - "CATALOGUE (PR #389): VyralX/app/data/source_catalog_lane2.json — 61 clips, 385.1 minutes: Internet Archive 42 (Universal Newsreels + Prelinger Archives), Wikimedia Commons 13, Library of Congress 6. Rights gate identical to the remix flow's: public domain / CC0 / CC BY / CC BY-SA only (this build: 59 public domain + 2 CC BY 3.0), every record carrying license_name + permission_reference + rights_basis + provenance page_url. Measured duration + resolution on every record with measurement_source labelled (archive_metadata / commons_metadata / loc_metadata); 26 clips HD or better (>=1280 wide), all >=640 wide and 20-1200s. Harvest accounting (builder prints per-gate counts): 64 accepted pre-dedupe; rejected — duration 15, width 9, curated out 3 (atrocity / home-movie / drone patterns named in the builder), title-stem duplicate scans removed 3, lane-1 overlap 0, licence rejections 0 (PD-focused feeds)."
+      - "LOADER + BUILDER + TESTS (PR #389): VyralX/app/services/source_catalog_lane2.py mirrors the lane-1 loader (stdlib-only; load_clips() filters; as_source_rows() row shape identical for remix_flow; catalogue_stats()). VyralX/scripts/build_lane2_catalog.py regenerates from the four feeds with the same gates. Tests: VyralX/tests/test_source_catalog_lane2.py — 7/7 PASS, run on Server 2 against a sparse clone of the PR branch itself."
+      - "SAMPLE VERIFICATION (live, from Server 2): HTTP 206 ranged GET on 6 sampled media URLs across all three platforms. ffprobe cross-checks of feed metadata: Internet Archive exact (640x480, 134.13s = record); Library of Congress width exact (1920), duration within the feed's whole-second rounding (30.87s probed vs 30.0s recorded); Wikimedia Commons widths exact on partial-file probes (854x480 AV1, 1920x1080 VP8)."
+      - "COORDINATION: TASK-VYR-004 owns the remix pipeline; this task stocks its lane-2 shelf. No uploads attempted (YouTube OAuth dead, TASK-VYR-003); nothing deployed; production untouched."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #389, then flip this entry to VERIFIED and read back. Follow-up (new task id): optionally have remix_flow discovery fall back to the lane catalogues when live adapters return few candidates."
+  - id: TASK-VYR-012
+    title: "VyralX lane-3 source catalogue — stocked inventory of tech & AI explainer footage (NASA/Wikimedia Commons/Internet Archive Prelinger) with per-clip licence/provenance, measured duration + resolution and topic tags, stored where the TASK-VYR-004 remix pipeline consumes it"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/ta***REDACTED***"
+    pr: 395
+    defect: "TASK-VYR-004 built the remix pipeline (licence gate, provenance registry, keyless discovery) and TASK-VYR-006 stocked lane-1, but VyralX had no stocked shelf of lane-3 (tech & AI explainers) footage: without a persistent, rights-verified inventory the pipeline re-discovers from zero on every run and provenance quality depends on per-run luck."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6893867639 by Muse (TASK-VYR-012 crew) before any editing (single copy verified); PR #395 is the only PR on branch claude/ta***REDACTED***."
+      - "CATALOGUE (PR #395): VyralX/app/data/source_catalog_lane3.json — 65 clips, 263.2 minutes: NASA Image & Video Library 20, Wikimedia Commons 33, Internet Archive Prelinger collection 12. Per clip: direct media source_url, provenance page_url, license_name + permission_reference + rights_basis, creator, measured duration_seconds + width/height with measurement_source labelled (ffprobe for NASA assets; platform metadata elsewhere), topic_tags, lane. Licence gate = TASK-VYR-004's exactly (CC0 / public domain / CC BY / CC BY-SA pass; NC/ND/GFDL/unknown/ARR rejected at harvest); quality gates >=640px wide, 20-1200s, topical title screen, financial/trading content excluded, no overlap with the lane-1 catalogue; 43 clips HD or better (>=1280 wide), 12 at 4K; 47 items manually excluded and named in the builder (talking heads, lectures, finished explainers, political footage, duplicate cuts, promo reels, a sex-robot product clip, cricket matches, TV-ad compilations). Sampled media URLs across all three platforms verified live (9/9 HTTP 206 ranged GET)."
+      - "LOADER + BUILDER + TESTS (PR #395): VyralX/app/services/source_catalog_lane3.py (stdlib-only; interface identical to the lane-1 loader — load_clips with tag/platform/min_duration/min_width filters; as_source_rows() maps records onto app.models.Source fields so remix_flow can register them unchanged and the rights gate sees meaningful licence + provenance on every row; catalogue_stats()). VyralX/scripts/build_lane3_catalog.py regenerates the catalogue from the three keyless feeds with the same gates (chunked resilient write for filesystems that intermittently refuse large writes). VyralX/tests/test_source_catalog_lane3.py: 8 tests, all passing against the shipped JSON in a staged tree (licence/provenance meaningfulness + pass-licence shape, measurement sanity + labelled source, id/URL uniqueness, no financial content, loader mapping, stats)."
+      - "COORDINATION: TASK-VYR-004 owns the remix pipeline; TASK-VYR-006 stocked lane-1 (PR #357), TASK-VYR-011 stocks lane-2; this task stocks lane-3. No uploads attempted (YouTube OAuth dead, TASK-VYR-003); nothing deployed — catalogue is data + loader, consumed at VyralX's next deploy."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #395, then flip this entry to VERIFIED and read back. Follow-ups (new task ids): optionally have remix_flow discovery fall back to the lane catalogues when live adapters return few candidates."
+  - id: TASK-STR-RD-012
+    title: "Stratex research RD-012: order-flow proxy families from OHLCV only (windowed-CVD proxies, volume-confirmed momentum, exhaustion reversals), crypto30 at 15m/1h, judged at the running global trial count"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-012
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:53:51+05:30"
+    updated_at: "2026-11-15T16:03:10+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD12.md"
+      - "Stratex/rigorous_backtest/results_rd12/"
+      - "Stratex/rigorous_backtest/rd12/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890924249"
+    defect: "Owner Wave-4 directive 2026-11-15 ~12:33 IST: strategy finding never stops; any configuration passing the full bar is added to demo trading. RD-001/002/003 never tested order-flow constructions. No L2/trade-level data exists in this programme, so this round pre-declared OHLCV-only flow proxies (CLV/sign-weighted volume, windowed CVD, volume z-scores) across 4 families, 10 variants, {crypto30 15m, crypto30 1h} = 20 cells + 8 wf-select procedures = 28 trials, judged at global N = 1,792 (RD-002 final 1,557 + RD-003 declared 207 + 28). Proxies that cannot be computed identically in the live daemon (true trade-level delta, taker-buy/quote-volume CVD, infinite-history CVD) were excluded by construction as unmappable. Research only: no production code, registry or daemon changes."
+    acceptance:
+      - "Pre-declaration before first execution: formulas, grid, exits, cells and trial count frozen in declaration PR #287 (OPEN before the first cell ran; declared 2026-11-15T07:23:51Z, base main 337a1e3f)."
+      - "Sanity anchor re-verified before any RD-012 number is trusted: RD-001 ts_momentum roc42_4h cell (BTC/ETH/SOL) reproduced bit-identically (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518)."
+      - "Every declared cell evaluated and rowed (20/20 EVALUATED, none BROKEN/NO_TRADES), each counting once in the global trial counter whatever its outcome; wf-select procedures run per family x timeframe (8/8)."
+      - "RESULTS_RD12.md + results_rd12/{synthesis.json, coverage.json, wf_select.json, rows/*.json} on main via PR: per-config PASS/FAIL against the full bar and a named passer list (or zero passers stated plainly)."
+      - "Board entry VERIFIED via a fresh-main PR with the full task-id set diffed; completion comment on issue #35 leading with the passer list and the new global trial count."
+    evidence:
+      - "Declaration: PR #287 (branch claude/task-str-rd-012-declaration) OPEN before first execution; 5 files blob-verified byte-identical to local commit a0711dc8."
+      - "RESULT: zero passers of 28 trials. Best cell vol_confirmed_momentum/vcm_b @1h: 11,498 trades, expectancy -0.0084%, PF 0.9952, p = 0.5897 - no cell reaches PF 1.0. 15m momentum cells: breadth 0.000 in all six (no symbol positive). Reversal families worst (PF 0.72-0.82). All 8 wf-select procedures FAIL."
+      - "Data: Binance Vision via harness data_feed contract. 1h: RD-002 verified cache (11 symbols carry the known shared 120-bar hole). 15m: all 30 series 108,192 rows, 0 missing bars; the two independent 15m runs produced byte-identical CSV SHA-256 for all 30 series (cross-checked)."
+      - "Disclosure: sandbox exec file-write fault (EPERM, 0-byte writes) destroyed 4 fresh 15m cache CSVs mid-round; AAVE/MANA/SAND/VET were loaded via in-memory fetch from the same source, pinned by per-zip + canonical CSV SHA-256 in coverage.json and the two-run hash cross-check. Shipped rows carry per_symbol_oos reduced to 4 fields (noted in each file)."
+      - "2x-cost gate: NOT TRIGGERED for any trial - no cell reached pooled PF 1.0, and doubling strictly-adverse costs cannot flip a FAIL; no PASS exists to stress. Recorded explicitly in RESULTS_RD12.md."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-012 crew): zero passers; nothing forwarded to forward demo trading; the OHLCV order-flow-proxy track is closed at 15m/1h for the declared constructions. Global trial counter stands at 1,792 after this round (parallel Wave-4 rounds add theirs as they land; any future passer anywhere is re-checked at the final N by the coordinator)."
+  - id: TASK-STR-RD-016
+    title: "Stratex research round RD-016: RD-003's forex-native families (london_drive, monday_gap_fade, trend_pullback) on the TASK-STR-DATA-001 forex_cross41 panel — 12 pre-declared trials, judgement identical to RD-002/RD-003"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-016
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T15:53:21+05:30"
+    updated_at: "2026-11-15T16:45:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD16.md"
+      - "Stratex/rigorous_backtest/results_rd16/"
+      - "Stratex/rigorous_backtest/rd16/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: ""
+    defect: "RD-003's forex-native families were judged only on the majors-heavy forex28/forex12 panels and comm7. DATA-001 then provenance-verified 41 additional FX crosses/minors/exotics — the operative universe of the owner's OANDA practice account (68 FX pairs, verified) — but no strategy family had ever been honestly judged on them. Whether the FX session/gap/pullback mechanisms transfer to crosses was unknown; assuming transfer without a pre-declared, multiple-testing-corrected round would invite exactly the overfitting the programme exists to prevent."
+    acceptance:
+      - "Declaration frozen and SHA-256 hashed BEFORE any cell runs (hash in the claim comment): families, variants, cells, exit specs, the full RD-002/RD-003 promotion bar, and the Bonferroni gate at the running global counter (state the N used)."
+      - "Walk-forward / out-of-sample only, on hash-manifested data only (every series verified against DATA-001's manifests.json before use); every variant tried disclosed; UNCOVERED stated plainly where data blocks a cell."
+      - "Sanity anchor: one RD-001/RD-002 published row reproduced bit-identically through the crew's harness before any RD-016 number is trusted."
+      - "Verdict reported plainly: passers with full metrics, near-misses, total trials added to the global counter. A passer is only a CANDIDATE for the coordinator's forward-lane decision — no registration, no trading."
+    evidence:
+      - "COMPLETE 2026-11-15: ZERO of 8 cells pass the bar; ZERO near-misses (programme definition). 7 of 8 cells lose money pooled OOS net of 10 bps RT; the only positive cell (monday_gap_fade/gap_1.0 @1d: 167 trades, expectancy +0.0061%, PF 1.016, p=0.513) fails PF/trades/folds/holdout and drops to PF 0.785 at 2x costs. london_drive/drive_plain @1h: 5,052 trades, expectancy -0.1115%, PF 0.423, negative on 0/41 symbols positive — decisively rejected on crosses. trend_pullback loses at both timeframes (PF 0.50-0.67). wf-select procedures (4) rescue nothing. Full table: RESULTS_RD16.md."
+      - "Trials: 12 added (8 cells + 4 wf-select procedures); global counter 1,934 -> 1,946; Bonferroni alpha used 2.569e-05. DSR non-computable in-round (8 cells < the >=10 qualifying rows the dispersion estimator needs) — disclosed, never gating, per the frozen declaration."
+      - "Sanity anchor PASSED bit-identically: RD-001 ts_momentum/roc42_4h reproduced exactly (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518) via RD-001's own load_timeframe construction (results_rd16/anchor.json)."
+      - "Data: 82/82 series FULL_MATCH against DATA-001's manifests.json (csv_sha256 + rows + first/last). Disclosed episode: Yahoo's chart API serves two near-identical 1h FX variants (the non-manifest one differs only in ~0.5% null-bar coverage and <=5-pip revisions on ~1% of bars); the crew re-fetched until the manifest variant was served per symbol and judged ONLY on hash-verified files. UNCOVERED: none — all 8 cells ran on the full 41-symbol panel. Declared load rule applied: in-progress 2026-11-15 daily bar dropped at load (28 stub bars)."
+      - "Declaration frozen 2026-11-15T15:53:21+05:30, sha256 379b6b7135fef2715f5a10be62cf1a388c18c29a0b5e2d292fdd5de6e8654a64 (results_rd16/declaration.json). Signal code rd3/families_fx.py byte-identical to main (PR #294); nothing re-tuned after the freeze."
+    blockers: []
+    next_action: "Done — research only, nothing registered or traded, no candidate forwarded to the forward lane. Coordinator: verify RESULTS_RD16.md + results_rd16/synthesis.json and flip this entry to VERIFIED. The forex_cross41 panel (hash-verified, reusable) and the documented Yahoo-1h two-variant behaviour are the round's durable assets for future RD rounds."
+  - id: TASK-FRD-005
+    title: "Repeatable voice acceptance harness for FRIDAY voice — fixed battery, per-turn latency + transcript + provider, SPEED-first verdicts (Wave 5, FRIDAY agent)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/voice_acceptance/battery.json"
+      - "FRIDAY/voice_acceptance/participant.py"
+      - "FRIDAY/voice_acceptance/make_utterances.py"
+      - "FRIDAY/voice_acceptance/score.py"
+      - "FRIDAY/voice_acceptance/score_check.py"
+      - "FRIDAY/voice_acceptance/run_acceptance.sh"
+      - "FRIDAY/voice_acceptance/README.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891373113"
+    defect: "Every voice fix so far (VOI-003..008) was accepted by a one-off, hand-run call: VOI-004's machine pass did not reproduce in the owner's hands, VOI-007's participant talked over FRIDAY and truncated the Stratex answer, and no two runs are comparable because prompts, thresholds and scoring were re-invented each time. There is no repeatable instrument that can prove — run after run, especially after TASK-VOI-009 removes Groq from voice — that FRIDAY answers fast, in context, and served by Gemini Live only."
+    acceptance:
+      - "Fixed battery (battery.json v1): greeting (FRIDAY speaks first), Stratex delegation, context follow-up whose closed-trade count must match the delegation answer, Tokyo clock, memory remember/recall pair (teal), goodbye. Utterances rendered once via edge-tts (voice/rate pinned) with a sha256 manifest — every run speaks byte-identical prompts."
+      - "Per-turn evidence: silence gap (utterance end -> first agent audio) from the participant timeline, transcript of what FRIDAY heard (user_input_transcribed final) and answered (conversation_item_added) from the FRIDAY-Voice journal, and the serving provider from the worker status file."
+      - "Owner's criterion enforced mechanically: SPEED first — a turn FAILs if its silence gap exceeds the pre-declared threshold (greeting 8s, delegation 12s, simple turns 4-6s, calibrated on VOI-005/006/007/008 measurements) even when the answer is correct. Thresholds are versioned in battery.json and never tuned after seeing results."
+      - "Provider contract: any journal evidence of a Groq/Whisper/Orpheus SERVING path is an automatic FAIL (the post-TASK-VOI-009 Gemini-only rule); missing evidence scores UNVERIFIED, never PASS."
+      - "Talk-over proofing: reply-end detection requires >=0.8s of agent speech AND >=2.0s of continuous silence — the VOI-007 failure mode (fragment + 0.10s dip mistaken for a complete reply) cannot recur in the harness itself."
+      - "Scorer logic covered by offline checks (score_check.py): clean PASS, slow-delegation FAIL (18.6s), slow-greeting FAIL, Groq-serving FAIL, count-mismatch FAIL, wrong-recall FAIL, missing-status UNVERIFIED, no-reply FAIL."
+      - "Measured acceptance run executed AFTER TASK-VOI-009 is merged AND deployed, reported as a per-turn table in five states; a pre-VOI-009 rehearsal run, if performed, is labelled rehearsal and never reported as the acceptance result."
+    evidence:
+      - "Harness code merged via PR #312 (de07f28d0fafef0cf77b5ba86d540f0f877b9484); this entry replaces the stale claim entry from PR #310 (closed as superseded — its base went conflicted; entry text carried verbatim except status/next_action/evidence updated by the merge-runner per item 67)."
+      - "First measured post-VOI-009 run FAILED the owner's SPEED criterion on every turn while PASSING the Gemini-only provider contract (completion comment 6893276215) — the FAIL is the run result, not a harness defect."
+    blockers: []
+    next_action: "Re-run the acceptance battery after TASK-VOI-010 deploys and Server-1 load settles (VOI-010's session-build fix targets the greeting latency that dominated the first run); flip VERIFIED with a passing run's per-turn table."
+  - id: TASK-VYR-009
+    title: "VyralX compliance-gate automation — the per-video compliance checklist as an enforced gate at ready-to-upload (Wave 5, VyralX crew)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-vyr-009-compliance-gate"
+    defect: "TASK-VYR-004's compliance checklist (remix_flow.compliance_checklist, mirroring REMIX_POLICY.md §5) was advisory: produce_remix_short stored checklist_passed on the review-queue entry but queued the render pending_review and created its pending_approval publish job regardless of the outcome. Two checklist items were also asserted by construction ('the TASK-VYR-003 path was used, therefore sync passes') with no measurement ever consulted — the same failure mode TASK-VYR-003 fixed in production. Nothing in code prevented a non-compliant video from being marked ready to upload."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6891543290 (2026-11-15) before editing."
+      - "GATE (new VyralX/app/services/compliance_gate.py): evaluate_compliance_gate over the render's measured production record — 9 fail-closed checks: provenance record present/complete/licence-allowed (fields mirror ProvenanceRecord.require_candidate + media_url); original commentary is the main content (original script, no source narration, narration >= 60% of runtime); sync MEASURED inside the TASK-VYR-003 thresholds (per-beat |rendered segment - voice-over| <= 0.50s, caption word-match >= 0.70, max caption offset <= 0.50s — unmeasured sync FAILS); render < 60s whenever the material is possibly claimed (owner-only material exempt); excluded categories by lane + token scan of lane/format/category; financial advice by lane AND a prescriptive-marker scan of the script itself; attribution present; English; declared format recorded. assert_ready_to_upload raises ComplianceGateError on a failed verdict. Helpers beat_deviations_from_tracks / caption_sync_metrics implement the TASK-VYR-003 measurement recipe (segment_timing landed length; difflib word matching against a Whisper transcript)."
+      - "WIRING (VyralX/app/services/remix_flow.py): produce_remix_short assembles the gate input from the finished render's own artifacts (scene tracks, caption cues, a Whisper transcript of the narration, an ffprobe of the render) and evaluates the gate on every render. PASS: unchanged behaviour (pending_review entry + pending_approval publish job when db given). FAIL: result status BLOCKED_COMPLIANCE, queue entry status blocked_compliance, NO publish job created — the render cannot be marked ready to upload. The advisory compliance_checklist is still computed and stored alongside the gate verdict."
+      - "PROOF (gate verdicts, also pinned as tests): the gate ACCEPTS the TASK-VYR-003 proof render (vyr003-proof) on its real measured record — per-beat deviations 0.00s x3, captions 83/90 words matched, max offset 0.413s, render 30.99s == narration 30.99s (TASK-VYR-003 crew measurement JSONs, ~/workspace/vyr-003/). Its provenance is recorded as the channel's own media-library clip Bqf5iKfRPnc.mp4 (the render predates the VYR-004 registry; NO external licence is claimed for the clip — none was ever recorded — and possibly_claimed is set True explicitly; at 30.99s it satisfies the <60s rule regardless). The gate REJECTS a deliberately non-compliant sample on 7 independent checks: provenance_record, commentary_main_content, sync_measurements, claimed_short_duration, excluded_categories, finance_advice, attribution_present."
+      - "TESTS: VyralX/tests/test_vyr009_compliance_gate.py — 16 tests (per-check failures one at a time, measurement helpers against the proof render's real beat data, both headline samples, wiring pass/block with the heavy pipeline stages stubbed at the module boundary). All pass; test_vyr004_remix_flow.py (23 tests) still passes unchanged. Docs: REMIX_POLICY.md §5/§6 now document the gate enforcement and the blocked_compliance queue status."
+      - "No uploads (YouTube OAuth dead, TASK-VYR-003). No deploy in this task: the gate ships with the next VyralX deploy of remix_flow after merge."
+    blockers: []
+    next_action: "Coordinator: review and merge the PR (branch claude/task-vyr-009-compliance-gate); mark VERIFIED after merge. Note: the legacy viral_remix.produce_viral_short path has no gate — closing that is a separate task if wanted; the VYR-004 remix flow inherits the gate automatically via produce_remix_short."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
