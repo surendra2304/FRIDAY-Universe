@@ -53,6 +53,7 @@ from friday.tools.builtin import (
     ControlPlugTool,
     CreateGitBranchTool,
     CreateGitHubIssueTool,
+    GoalLoopStatusTool,
     DictionaryTool,
     DraftEmailTool,
     DraftGmailTool,
@@ -84,6 +85,7 @@ from friday.tools.builtin import (
     ListSkillsTool,
     ListGitHubIssuesTool,
     LocationMapsTool,
+    StartGoalLoopTool,
     ManageTasksTool,
     ManageVolumeTool,
     ManageWindowsTool,
@@ -207,6 +209,9 @@ class ToolExecutionMixin:
             registry.register(LaptopRunCommandTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
+            # TASK-IG-FRD-001: goal-loop autonomy (goal + criteria, worked in cycles).
+            registry.register(StartGoalLoopTool())
+            registry.register(GoalLoopStatusTool())
             registry.register(WriteCodeFileTool())
             registry.register(ReplaceFileContentTool())
             registry.register(RunTestsTool())
