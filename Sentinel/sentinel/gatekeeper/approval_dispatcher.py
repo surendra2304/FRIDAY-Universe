@@ -22,6 +22,12 @@ production systemd unit does not export the fleet's Telegram pair into the
 Sentinel process, so every approval silently landed in the offline queue
 (a journal line) and no human was ever notified. Resolved values are never
 logged.
+
+Shared channel (TASK-SEN-008): ``dispatch_notification`` exposes the same
+credential resolution and transports to non-approval callers — the operations
+AlertEngine dispatcher (``sentinel.modules.operations.dispatch``) sends its
+alerts through it, so every Sentinel human notification uses one channel
+configuration and one credential-resolution path.
 """
 from __future__ import annotations
 
@@ -183,6 +189,31 @@ class ApprovalDispatcher:
     def discord_webhook_url(self) -> str | None:
         return _resolve_credential("DISCORD_WEBHOOK_URL", "SENTINEL_DISCORD_WEBHOOK_URL")
 
+    @property
+    def channel_configured(self) -> bool:
+        """True when at least one human-notification channel can be dispatched to."""
+        return bool((self.telegram_bot_token and self.telegram_chat_id) or self.discord_webhook_url)
+
+    def dispatch_notification(
+        self,
+        html_text: str,
+        discord_payload: dict[str, Any] | None = None,
+    ) -> dict[str, bool]:
+        """Send a free-form notification through the shared human channels.
+
+        This is the single dispatch entry point for non-approval Sentinel
+        notifications (TASK-SEN-008: operations alerts). It uses the same
+        credential resolution and transports as approval dispatch. Returns a
+        per-channel success map; an unconfigured channel reports False and no
+        exception is raised for transport failures.
+        """
+        sent = {"telegram": False, "discord": False}
+        if self.telegram_bot_token and self.telegram_chat_id:
+            sent["telegram"] = self._send_telegram(html_text)
+        if discord_payload and self.discord_webhook_url:
+            sent["discord"] = self._send_discord_payload(discord_payload)
+        return sent
+
     def submit_approval(
         self,
         agent_name: str,
@@ -292,7 +323,7 @@ class ApprovalDispatcher:
         if self.discord_webhook_url:
             self._send_discord(pending, approve_url, deny_url)
 
-    def _send_telegram(self, html_text: str) -> None:
+    def _send_telegram(self, html_text: str) -> bool:
         url = f"https://api.telegram.org/bot{self.telegram_bot_token}/sendMessage"
         payload = {
             "chat_id": self.telegram_chat_id,
@@ -308,10 +339,12 @@ class ApprovalDispatcher:
                 method="POST",
             )
             urllib.request.urlopen(req, timeout=5.0)
+            return True
         except Exception as e:
             logger.warning("Telegram notification dispatch error: %s", e)
+            return False
 
-    def _send_discord(self, pending: PendingApproval, approve_url: str, deny_url: str) -> None:
+    def _send_discord(self, pending: PendingApproval, approve_url: str, deny_url: str) -> bool:
         payload = {
             "content": "🛡️ **SENTINEL GUARDED ACTION APPROVAL REQUIRED**",
             "embeds": [
@@ -326,7 +359,12 @@ class ApprovalDispatcher:
             ]
         }
         if not self.discord_webhook_url:
-            return
+            return False
+        return self._send_discord_payload(payload)
+
+    def _send_discord_payload(self, payload: dict[str, Any]) -> bool:
+        if not self.discord_webhook_url:
+            return False
         try:
             req = urllib.request.Request(
                 self.discord_webhook_url,
@@ -335,8 +373,10 @@ class ApprovalDispatcher:
                 method="POST",
             )
             urllib.request.urlopen(req, timeout=5.0)
+            return True
         except Exception as e:
             logger.warning("Discord notification dispatch error: %s", e)
+            return False
 
 
 # Global singleton instance

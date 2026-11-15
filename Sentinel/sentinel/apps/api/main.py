@@ -33,6 +33,7 @@ from sentinel.api.metrics import router as metrics_router
 from sentinel.api.security_audit import router as security_audit_router
 from sentinel.api.telemetry_routes import telemetry_router
 from sentinel.api.threat_intel_routes import threat_intel_router
+from sentinel.api.operations_routes import operations_router
 from app.services.vulnerability_scanner import router as vuln_scanner_router
 from app.services.realtime_threat_matcher import router as threat_matcher_router
 from app.services.zero_trust_enforcer import router as zero_trust_router
@@ -87,6 +88,9 @@ from sentinel.core.security.crypto_gatekeeper import (
     crypto_gatekeeper,
 )
 from sentinel.gatekeeper.approval_dispatcher import approval_dispatcher
+from sentinel.modules.operations.alerting import alert_engine as operations_alert_engine
+from sentinel.modules.operations.dispatch import operations_dispatcher
+from sentinel.modules.operations.scheduler import assessment_scheduler
 from sentinel.integrations.friday.models import (
     BlockedActionRecord,
     BlockedTargetRecord,
@@ -177,6 +181,25 @@ async def lifespan(app: FastAPI):
         tls_dns_daemon.start()
         logger.info("Continuous TLS Certificate & DNS drift daemon started")
 
+    # TASK-SEN-008: wire operations alerts into the shared human channel
+    # (approval dispatcher transports + SEN-006 credential resolution) and
+    # start the operations scheduler run loop.
+    operations_enabled = os.getenv("SENTINEL_OPERATIONS_SCHEDULER_ENABLED", "true").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+    if operations_enabled and not is_testing:
+        operations_alert_engine.set_dispatcher(operations_dispatcher)
+        if not any(j.job_id == "ops-findings-fleet" for j in assessment_scheduler.list_jobs()):
+            try:
+                ops_interval = max(30, int(os.getenv("SENTINEL_OPERATIONS_INTERVAL_SECONDS", "300")))
+            except ValueError:
+                ops_interval = 300
+            assessment_scheduler.add_monitoring_job(
+                "ops-findings-fleet", "Fleet findings drift watch", "*", ops_interval
+            )
+        assessment_scheduler.start()
+        logger.info("Operations alerting wired to the shared human channel; scheduler started")
+
     # Clean signal handling for SIGTERM and SIGINT
     loop = asyncio.get_running_loop()
 
@@ -200,6 +223,9 @@ async def lifespan(app: FastAPI):
             if tls_dns_daemon.is_running:
                 await tls_dns_daemon.stop()
                 logger.info("Continuous TLS Certificate & DNS drift daemon stopped cleanly.")
+            if assessment_scheduler.is_running:
+                await assessment_scheduler.stop()
+                logger.info("Operations assessment scheduler stopped cleanly.")
             global _sentinel_inf_client
             if _sentinel_inf_client is not None and not _sentinel_inf_client.is_closed:
                 await _sentinel_inf_client.aclose()
@@ -1875,6 +1901,9 @@ for _sentinel_path_router in (
     incident_timeline_router,
 ):
     app.include_router(_sentinel_path_router, prefix="/api/v1")
+
+
+app.include_router(operations_router, prefix=settings.api_prefix)  # /api/v1/operations/* (TASK-SEN-008)
 
 
 class SentinelInferenceRequest(BaseModel):
