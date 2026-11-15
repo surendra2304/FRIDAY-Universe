@@ -1,0 +1,2227 @@
+{
+  "task": "TASK-STR-RD-008",
+  "panel": "idx2 (NDX = OANDA NAS100, SPX = OANDA US500)",
+  "n_floor_components": {
+    "through_rd002": 1557,
+    "rd003_stage1": 152,
+    "rd003_stage2_counted_from_declaration": 34,
+    "rd003_stage2b": 21,
+    "rd008_cells": 43,
+    "rd008_wf_procedures": 10,
+    "rd008_trials": 53
+  },
+  "n_floor": 1817,
+  "global_counter_floor_after_rd008": 1817,
+  "bonferroni_alpha_at_N_floor": 2.7517886626307103e-05,
+  "sr_std_xtrial_for_dsr": 0.26035125383345015,
+  "candidates": [],
+  "watchlist": [],
+  "rows": [
+    {
+      "family": "ema_cross",
+      "variant": "ema20_100",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 8,
+      "expectancy_net": 0.05979663557644379,
+      "profit_factor_net": 17.49191535192883,
+      "win_rate": 0.875,
+      "max_drawdown_net": -0.02900652073475507,
+      "per_symbol": {
+        "NDX": {
+          "trades": 4,
+          "expectancy_net": 0.07948558325294552,
+          "profit_factor_net": Infinity
+        },
+        "SPX": {
+          "trades": 4,
+          "expectancy_net": 0.04010768789994205,
+          "profit_factor_net": 6.530851254681596
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.0023336390147414843,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 21,
+      "deflated_sharpe_xtrial": 0.5379574352512443,
+      "sensitivity_2x": {
+        "trades": 8,
+        "expectancy_net": 0.05899073341250581,
+        "profit_factor_net": 16.82048230724435
+      },
+      "cost_2x_pass": true,
+      "failed_checks": [
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor"
+      ]
+    },
+    {
+      "family": "tsmom",
+      "variant": "roc126",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 8,
+      "expectancy_net": 0.03599561989911227,
+      "profit_factor_net": 3.778944880366331,
+      "win_rate": 0.625,
+      "max_drawdown_net": -0.06619576022889895,
+      "per_symbol": {
+        "NDX": {
+          "trades": 4,
+          "expectancy_net": 0.030715632717752957,
+          "profit_factor_net": 2.6605795651722546
+        },
+        "SPX": {
+          "trades": 4,
+          "expectancy_net": 0.04127560708047159,
+          "profit_factor_net": 6.570989267524555
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.07258862936206456,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 0.09782719395026201,
+      "sensitivity_2x": {
+        "trades": 8,
+        "expectancy_net": 0.03517844756189464,
+        "profit_factor_net": 3.6522813441388506
+      },
+      "cost_2x_pass": true,
+      "failed_checks": [
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor"
+      ]
+    },
+    {
+      "family": "tsmom",
+      "variant": "roc63",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 14,
+      "expectancy_net": 0.026198571073352495,
+      "profit_factor_net": 2.9375317149766196,
+      "win_rate": 0.6428571428571429,
+      "max_drawdown_net": -0.08781636098633128,
+      "per_symbol": {
+        "NDX": {
+          "trades": 10,
+          "expectancy_net": 0.01575573888252881,
+          "profit_factor_net": 1.8323039476443648
+        },
+        "SPX": {
+          "trades": 4,
+          "expectancy_net": 0.05230565155041171,
+          "profit_factor_net": Infinity
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.01917769623057075,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 2,
+      "deflated_sharpe_xtrial": 0.0987745560367157,
+      "sensitivity_2x": {
+        "trades": 14,
+        "expectancy_net": 0.025388605795751116,
+        "profit_factor_net": 2.8383381011915407
+      },
+      "cost_2x_pass": true,
+      "failed_checks": [
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor"
+      ]
+    },
+    {
+      "family": "ema_cross",
+      "variant": "ema10_50",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 19,
+      "expectancy_net": 0.01975895855601946,
+      "profit_factor_net": 2.1598644284089223,
+      "win_rate": 0.5263157894736842,
+      "max_drawdown_net": -0.1258137630238656,
+      "per_symbol": {
+        "NDX": {
+          "trades": 10,
+          "expectancy_net": 0.019378501989166894,
+          "profit_factor_net": 1.9392191834054715
+        },
+        "SPX": {
+          "trades": 9,
+          "expectancy_net": 0.020181688074744537,
+          "profit_factor_net": 2.5478036471747076
+        }
+      },
+      "folds_positive": 3,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.07698616014043547,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 0.00551183831290252,
+      "sensitivity_2x": {
+        "trades": 19,
+        "expectancy_net": 0.018952533656977244,
+        "profit_factor_net": 2.08803745564361
+      },
+      "cost_2x_pass": true,
+      "failed_checks": [
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor"
+      ]
+    },
+    {
+      "family": "donchian",
+      "variant": "n20",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 55,
+      "expectancy_net": 0.002035089257713407,
+      "profit_factor_net": 1.105370030699028,
+      "win_rate": 0.34545454545454546,
+      "max_drawdown_net": -0.20666329527965077,
+      "per_symbol": {
+        "NDX": {
+          "trades": 28,
+          "expectancy_net": 0.006252933171116976,
+          "profit_factor_net": 1.311447191123431
+        },
+        "SPX": {
+          "trades": 27,
+          "expectancy_net": -0.0023389710969273308,
+          "profit_factor_net": 0.873720545486996
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.41957120995492525,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 3.1830072838688935e-11,
+      "sensitivity_2x": {
+        "trades": 55,
+        "expectancy_net": 0.001230994181672092,
+        "profit_factor_net": 1.0620587939474924
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "tsmom",
+      "variant": "roc64",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 50,
+      "expectancy_net": 0.0008367366664570721,
+      "profit_factor_net": 1.2608208602272482,
+      "win_rate": 0.4,
+      "max_drawdown_net": -0.06628171189318222,
+      "per_symbol": {
+        "NDX": {
+          "trades": 22,
+          "expectancy_net": 0.001918349257142609,
+          "profit_factor_net": 1.475474690625464
+        },
+        "SPX": {
+          "trades": 28,
+          "expectancy_net": -1.3101797652992765e-05,
+          "profit_factor_net": 0.9948794899352714
+        }
+      },
+      "folds_positive": 3,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.2527024138665327,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 4.0420273344206474e-09,
+      "sensitivity_2x": {
+        "trades": 50,
+        "expectancy_net": 3.9383712053716756e-05,
+        "profit_factor_net": 1.010682318949225
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "tsmom",
+      "variant": "roc16",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 97,
+      "expectancy_net": 0.0002807578209800266,
+      "profit_factor_net": 1.0809030160112858,
+      "win_rate": 0.4329896907216495,
+      "max_drawdown_net": -0.06663210647288176,
+      "per_symbol": {
+        "NDX": {
+          "trades": 54,
+          "expectancy_net": 0.0004538332648654895,
+          "profit_factor_net": 1.1099064872475284
+        },
+        "SPX": {
+          "trades": 43,
+          "expectancy_net": 6.34072635424687e-05,
+          "profit_factor_net": 1.0239928011639081
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.3748278221786616,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 8.697339947482546e-18,
+      "sensitivity_2x": {
+        "trades": 97,
+        "expectancy_net": -0.0005180099921637204,
+        "profit_factor_net": 0.8682209395081123
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "ema_cross",
+      "variant": "ema12_48",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 121,
+      "expectancy_net": 5.177013381285076e-05,
+      "profit_factor_net": 1.0068792409370562,
+      "win_rate": 0.39669421487603307,
+      "max_drawdown_net": -0.14023297311749583,
+      "per_symbol": {
+        "NDX": {
+          "trades": 62,
+          "expectancy_net": 0.00019392630611125546,
+          "profit_factor_net": 1.0220122764350852
+        },
+        "SPX": {
+          "trades": 59,
+          "expectancy_net": -9.761431843292993e-05,
+          "profit_factor_net": 0.9841943061305651
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.6020216320421198,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.6186923300156594e-24,
+      "sensitivity_2x": {
+        "trades": 121,
+        "expectancy_net": -0.0007478618550291522,
+        "profit_factor_net": 0.9066017242493968
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "tsmom",
+      "variant": "roc21",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 37,
+      "expectancy_net": -0.00023424756771495418,
+      "profit_factor_net": 0.9883400382064701,
+      "win_rate": 0.2972972972972973,
+      "max_drawdown_net": -0.24533640654896105,
+      "per_symbol": {
+        "NDX": {
+          "trades": 17,
+          "expectancy_net": 0.0028660958841570496,
+          "profit_factor_net": 1.1247176258046119
+        },
+        "SPX": {
+          "trades": 20,
+          "expectancy_net": -0.002869539501806158,
+          "profit_factor_net": 0.8372608333160478
+        }
+      },
+      "folds_positive": 3,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.5121499635813485,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 4.1801663121521674e-08,
+      "sensitivity_2x": {
+        "trades": 37,
+        "expectancy_net": -0.0010438402381108232,
+        "profit_factor_net": 0.9494736861890463
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_intra",
+      "variant": "follow_06",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 34,
+      "expectancy_net": -0.00031239427089594296,
+      "profit_factor_net": 0.8357357033081155,
+      "win_rate": 0.4117647058823529,
+      "max_drawdown_net": -0.02423424576958555,
+      "per_symbol": {
+        "NDX": {
+          "trades": 24,
+          "expectancy_net": -0.0008438707673240382,
+          "profit_factor_net": 0.6325768422290154
+        },
+        "SPX": {
+          "trades": 10,
+          "expectancy_net": 0.0009631493205314853,
+          "profit_factor_net": 2.009695462094415
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.6772427001921967,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 2.5882471205863818e-08,
+      "sensitivity_2x": {
+        "trades": 34,
+        "expectancy_net": -0.0011132295250382241,
+        "profit_factor_net": 0.53083333684512
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "ema_cross",
+      "variant": "ema16_64",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 43,
+      "expectancy_net": -0.00033569653910857486,
+      "profit_factor_net": 0.9249903543335989,
+      "win_rate": 0.37209302325581395,
+      "max_drawdown_net": -0.06528220630329762,
+      "per_symbol": {
+        "NDX": {
+          "trades": 22,
+          "expectancy_net": -0.0014148560503270584,
+          "profit_factor_net": 0.7721386456450883
+        },
+        "SPX": {
+          "trades": 21,
+          "expectancy_net": 0.0007948515202631714,
+          "profit_factor_net": 1.2989394479651677
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.5845267491190663,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.4340611063543856e-09,
+      "sensitivity_2x": {
+        "trades": 43,
+        "expectancy_net": -0.0011345469914424565,
+        "profit_factor_net": 0.7720491967776932
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "tsmom",
+      "variant": "roc12",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 238,
+      "expectancy_net": -0.00034918929741258395,
+      "profit_factor_net": 0.9545614974819076,
+      "win_rate": 0.3697478991596639,
+      "max_drawdown_net": -0.28848312003192367,
+      "per_symbol": {
+        "NDX": {
+          "trades": 123,
+          "expectancy_net": -0.0009587066453360733,
+          "profit_factor_net": 0.8939172872732025
+        },
+        "SPX": {
+          "trades": 115,
+          "expectancy_net": 0.0003027292573229731,
+          "profit_factor_net": 1.0485273827094137
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.6392653911122821,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 3.612827170428038e-45,
+      "sensitivity_2x": {
+        "trades": 238,
+        "expectancy_net": -0.001149961642322739,
+        "profit_factor_net": 0.8595721303625677
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "zrev",
+      "variant": "w50_t2.0",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 188,
+      "expectancy_net": -0.00036523752522120775,
+      "profit_factor_net": 0.8606925882305865,
+      "win_rate": 0.4095744680851064,
+      "max_drawdown_net": -0.15763579233735037,
+      "per_symbol": {
+        "NDX": {
+          "trades": 97,
+          "expectancy_net": -0.0002541163740433492,
+          "profit_factor_net": 0.9150021344631387
+        },
+        "SPX": {
+          "trades": 91,
+          "expectancy_net": -0.00048368534570749684,
+          "profit_factor_net": 0.7830700798874111
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.8656879973672387,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 8.726696552846577e-40,
+      "sensitivity_2x": {
+        "trades": 188,
+        "expectancy_net": -0.0011658423672575434,
+        "profit_factor_net": 0.6260786052251632
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_intra",
+      "variant": "follow_03",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 64,
+      "expectancy_net": -0.0004041082183774107,
+      "profit_factor_net": 0.7841781778942369,
+      "win_rate": 0.40625,
+      "max_drawdown_net": -0.043200731004355175,
+      "per_symbol": {
+        "NDX": {
+          "trades": 40,
+          "expectancy_net": -0.000425527566968188,
+          "profit_factor_net": 0.7934218462454421
+        },
+        "SPX": {
+          "trades": 24,
+          "expectancy_net": -0.00036840930405944856,
+          "profit_factor_net": 0.7638348686843867
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.8109491174059693,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 6.9889219290619746e-15,
+      "sensitivity_2x": {
+        "trades": 64,
+        "expectancy_net": -0.001204730093394663,
+        "profit_factor_net": 0.4868490809722556
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_intra",
+      "variant": "follow_03",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 484,
+      "expectancy_net": -0.00042892304733652164,
+      "profit_factor_net": 0.8762778244779541,
+      "win_rate": 0.45041322314049587,
+      "max_drawdown_net": -0.24396260072034082,
+      "per_symbol": {
+        "NDX": {
+          "trades": 288,
+          "expectancy_net": -0.0007635741170106574,
+          "profit_factor_net": 0.8067155689964539
+        },
+        "SPX": {
+          "trades": 196,
+          "expectancy_net": 6.280913667445318e-05,
+          "profit_factor_net": 1.022789243058846
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.83748066895583,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 4.0917566150033774e-96,
+      "sensitivity_2x": {
+        "trades": 484,
+        "expectancy_net": -0.0012289731400022303,
+        "profit_factor_net": 0.6862340453246344
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_intra",
+      "variant": "follow_06",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 265,
+      "expectancy_net": -0.000436567564439734,
+      "profit_factor_net": 0.8864911208109959,
+      "win_rate": 0.4490566037735849,
+      "max_drawdown_net": -0.20582821757216985,
+      "per_symbol": {
+        "NDX": {
+          "trades": 180,
+          "expectancy_net": -0.0007562851932639605,
+          "profit_factor_net": 0.8143651977200612
+        },
+        "SPX": {
+          "trades": 85,
+          "expectancy_net": 0.0002404815318939212,
+          "profit_factor_net": 1.0714992213658332
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.7167408120091543,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 5.196545593421312e-53,
+      "sensitivity_2x": {
+        "trades": 265,
+        "expectancy_net": -0.0012366622029380682,
+        "profit_factor_net": 0.7120785633296994
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_daily",
+      "variant": "follow_03",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 611,
+      "expectancy_net": -0.0006591750832619082,
+      "profit_factor_net": 0.8327465467532226,
+      "win_rate": 0.4909983633387889,
+      "max_drawdown_net": -0.48426388985818236,
+      "per_symbol": {
+        "NDX": {
+          "trades": 363,
+          "expectancy_net": -0.0008441177948168628,
+          "profit_factor_net": 0.8053690074398361
+        },
+        "SPX": {
+          "trades": 248,
+          "expectancy_net": -0.0003884726465907452,
+          "profit_factor_net": 0.8844442730900536
+        }
+      },
+      "folds_positive": 3,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.9148821330999566,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 6.682485733524472e-130,
+      "sensitivity_2x": {
+        "trades": 611,
+        "expectancy_net": -0.0014592031236003243,
+        "profit_factor_net": 0.6659594254986503
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "tsmom",
+      "variant": "roc48",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 152,
+      "expectancy_net": -0.000697083306650712,
+      "profit_factor_net": 0.9051978073361427,
+      "win_rate": 0.34868421052631576,
+      "max_drawdown_net": -0.2558238760769205,
+      "per_symbol": {
+        "NDX": {
+          "trades": 77,
+          "expectancy_net": -0.00048310310655555667,
+          "profit_factor_net": 0.9409508697327644
+        },
+        "SPX": {
+          "trades": 75,
+          "expectancy_net": -0.000916769645415072,
+          "profit_factor_net": 0.8590147805089445
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.7643715018445987,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.4233869220403049e-31,
+      "sensitivity_2x": {
+        "trades": 152,
+        "expectancy_net": -0.001498018637438491,
+        "profit_factor_net": 0.8097529882792769
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_daily",
+      "variant": "follow_06",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 316,
+      "expectancy_net": -0.0007113165541019653,
+      "profit_factor_net": 0.8454595325178051,
+      "win_rate": 0.5031645569620253,
+      "max_drawdown_net": -0.40052274672569066,
+      "per_symbol": {
+        "NDX": {
+          "trades": 214,
+          "expectancy_net": -0.0010566480857296862,
+          "profit_factor_net": 0.785695099042284
+        },
+        "SPX": {
+          "trades": 102,
+          "expectancy_net": 1.3202541665998184e-05,
+          "profit_factor_net": 1.0033722517021528
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.7757635510379506,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.4113416041422413e-65,
+      "sensitivity_2x": {
+        "trades": 316,
+        "expectancy_net": -0.0015112515785596174,
+        "profit_factor_net": 0.6985878704312998
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "rsi_rev",
+      "variant": "rsi2",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 686,
+      "expectancy_net": -0.0009140862609286171,
+      "profit_factor_net": 0.6543001096881166,
+      "win_rate": 0.4008746355685131,
+      "max_drawdown_net": -0.48157453062896827,
+      "per_symbol": {
+        "NDX": {
+          "trades": 350,
+          "expectancy_net": -0.0008900015630152959,
+          "profit_factor_net": 0.689774084248471
+        },
+        "SPX": {
+          "trades": 336,
+          "expectancy_net": -0.0009391744879216601,
+          "profit_factor_net": 0.6103135119078855
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9998044282838192,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 2.444974419672034e-156,
+      "sensitivity_2x": {
+        "trades": 686,
+        "expectancy_net": -0.0017141391109447692,
+        "profit_factor_net": 0.45638632272675583
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "rsi_rev",
+      "variant": "rsi7",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 342,
+      "expectancy_net": -0.0009652006881188238,
+      "profit_factor_net": 0.6273121271407798,
+      "win_rate": 0.3742690058479532,
+      "max_drawdown_net": -0.30042314401278747,
+      "per_symbol": {
+        "NDX": {
+          "trades": 179,
+          "expectancy_net": -0.0009927389284889142,
+          "profit_factor_net": 0.6502328159994484
+        },
+        "SPX": {
+          "trades": 163,
+          "expectancy_net": -0.000934959307589706,
+          "profit_factor_net": 0.5964786200952711
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9997429458403952,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.9501700180222987e-81,
+      "sensitivity_2x": {
+        "trades": 342,
+        "expectancy_net": -0.001765230195970072,
+        "profit_factor_net": 0.431789511650212
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_daily",
+      "variant": "fade_03",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 611,
+      "expectancy_net": -0.00100289323115169,
+      "profit_factor_net": 0.7561953120638274,
+      "win_rate": 0.425531914893617,
+      "max_drawdown_net": -0.4829110622114898,
+      "per_symbol": {
+        "NDX": {
+          "trades": 363,
+          "expectancy_net": -0.0008397135365199283,
+          "profit_factor_net": 0.8037478793415485
+        },
+        "SPX": {
+          "trades": 248,
+          "expectancy_net": -0.0012417409293425344,
+          "profit_factor_net": 0.6792734881042486
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.9946329472800877,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 8.25026043546907e-114,
+      "sensitivity_2x": {
+        "trades": 611,
+        "expectancy_net": -0.0018031898851158226,
+        "profit_factor_net": 0.6074617592680774
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_daily",
+      "variant": "fade_06",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 316,
+      "expectancy_net": -0.0010542132520408045,
+      "profit_factor_net": 0.7764833944813345,
+      "win_rate": 0.4240506329113924,
+      "max_drawdown_net": -0.2976784789954582,
+      "per_symbol": {
+        "NDX": {
+          "trades": 214,
+          "expectancy_net": -0.0006853769948572509,
+          "profit_factor_net": 0.8533125157368883
+        },
+        "SPX": {
+          "trades": 102,
+          "expectancy_net": -0.0018280461837788485,
+          "profit_factor_net": 0.6198749004007913
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.9705550029311946,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 3.1352866238376483e-68,
+      "sensitivity_2x": {
+        "trades": 316,
+        "expectancy_net": -0.0018541775028557016,
+        "profit_factor_net": 0.6425557072523126
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "zrev",
+      "variant": "w20_t2.0",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 280,
+      "expectancy_net": -0.0010916765567086121,
+      "profit_factor_net": 0.642243139032778,
+      "win_rate": 0.425,
+      "max_drawdown_net": -0.2808010591604936,
+      "per_symbol": {
+        "NDX": {
+          "trades": 145,
+          "expectancy_net": -0.0013249546373422672,
+          "profit_factor_net": 0.6146485578919783
+        },
+        "SPX": {
+          "trades": 135,
+          "expectancy_net": -0.0008411186182502419,
+          "profit_factor_net": 0.6809035754864992
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9965520368874096,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 3.6196329718041884e-86,
+      "sensitivity_2x": {
+        "trades": 280,
+        "expectancy_net": -0.0018915952378707119,
+        "profit_factor_net": 0.4634859444929754
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_intra",
+      "variant": "fade_03",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 485,
+      "expectancy_net": -0.0011050333818507449,
+      "profit_factor_net": 0.7149044693722717,
+      "win_rate": 0.3958762886597938,
+      "max_drawdown_net": -0.4632200425715147,
+      "per_symbol": {
+        "NDX": {
+          "trades": 289,
+          "expectancy_net": -0.0005158100558324689,
+          "profit_factor_net": 0.8637272990690703
+        },
+        "SPX": {
+          "trades": 196,
+          "expectancy_net": -0.0019738371635817744,
+          "profit_factor_net": 0.5077727573381565
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9980286508513482,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.269707822625195e-98,
+      "sensitivity_2x": {
+        "trades": 485,
+        "expectancy_net": -0.0019048926482198286,
+        "profit_factor_net": 0.5651742483030894
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "donchian",
+      "variant": "n20",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 272,
+      "expectancy_net": -0.00111220886576442,
+      "profit_factor_net": 0.8604028534885102,
+      "win_rate": 0.31985294117647056,
+      "max_drawdown_net": -0.3537682038467914,
+      "per_symbol": {
+        "NDX": {
+          "trades": 142,
+          "expectancy_net": -0.00018893404379554266,
+          "profit_factor_net": 0.9782503718392719
+        },
+        "SPX": {
+          "trades": 130,
+          "expectancy_net": -0.0021207090559150392,
+          "profit_factor_net": 0.7046927180485865
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.8996137448116347,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.088292012216611e-53,
+      "sensitivity_2x": {
+        "trades": 272,
+        "expectancy_net": -0.001913429015594513,
+        "profit_factor_net": 0.7751999086068687
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "rsi_rev",
+      "variant": "rsi2",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 177,
+      "expectancy_net": -0.0011272858619809083,
+      "profit_factor_net": 0.4946772025648434,
+      "win_rate": 0.3954802259887006,
+      "max_drawdown_net": -0.2067487789355592,
+      "per_symbol": {
+        "NDX": {
+          "trades": 90,
+          "expectancy_net": -0.0014014593848463834,
+          "profit_factor_net": 0.4790605106718529
+        },
+        "SPX": {
+          "trades": 87,
+          "expectancy_net": -0.0008436580797062791,
+          "profit_factor_net": 0.5194338722234493
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9999434003128608,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 7.249787684369302e-52,
+      "sensitivity_2x": {
+        "trades": 177,
+        "expectancy_net": -0.001926727248541362,
+        "profit_factor_net": 0.29983098062757607
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_intra",
+      "variant": "fade_06",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 265,
+      "expectancy_net": -0.0011276712684022351,
+      "profit_factor_net": 0.7428515488662976,
+      "win_rate": 0.41509433962264153,
+      "max_drawdown_net": -0.2852487282494648,
+      "per_symbol": {
+        "NDX": {
+          "trades": 180,
+          "expectancy_net": -0.00032999741166243196,
+          "profit_factor_net": 0.9182037281596949
+        },
+        "SPX": {
+          "trades": 85,
+          "expectancy_net": -0.002816862965027701,
+          "profit_factor_net": 0.45073239097902557
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9719830371118591,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.6490324170055686e-56,
+      "sensitivity_2x": {
+        "trades": 265,
+        "expectancy_net": -0.0019272010616485508,
+        "profit_factor_net": 0.6043293454373879
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "zrev",
+      "variant": "w50_t2.5",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 86,
+      "expectancy_net": -0.0011444960584563863,
+      "profit_factor_net": 0.6712879890710645,
+      "win_rate": 0.4069767441860465,
+      "max_drawdown_net": -0.13158932153490377,
+      "per_symbol": {
+        "NDX": {
+          "trades": 45,
+          "expectancy_net": -0.001720295629783359,
+          "profit_factor_net": 0.5621570233702333
+        },
+        "SPX": {
+          "trades": 41,
+          "expectancy_net": -0.0005125209191950732,
+          "profit_factor_net": 0.8286375282270442
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9573787672450894,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.017613817558077e-23,
+      "sensitivity_2x": {
+        "trades": 86,
+        "expectancy_net": -0.0019448361514640656,
+        "profit_factor_net": 0.5109291198826148
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "donchian",
+      "variant": "n20",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 117,
+      "expectancy_net": -0.0011486219628232372,
+      "profit_factor_net": 0.7150076737203318,
+      "win_rate": 0.3247863247863248,
+      "max_drawdown_net": -0.15419716806760542,
+      "per_symbol": {
+        "NDX": {
+          "trades": 57,
+          "expectancy_net": -0.001040591360800736,
+          "profit_factor_net": 0.7823894406824544
+        },
+        "SPX": {
+          "trades": 60,
+          "expectancy_net": -0.001251251034744614,
+          "profit_factor_net": 0.6227082159086584
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9372093742910866,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.3261513553030984e-25,
+      "sensitivity_2x": {
+        "trades": 117,
+        "expectancy_net": -0.0019478376207191634,
+        "profit_factor_net": 0.5738274175879411
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "zrev",
+      "variant": "w20_t2.0",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 116,
+      "expectancy_net": -0.0011734005805388039,
+      "profit_factor_net": 0.510278944086498,
+      "win_rate": 0.4396551724137931,
+      "max_drawdown_net": -0.13618549086892118,
+      "per_symbol": {
+        "NDX": {
+          "trades": 59,
+          "expectancy_net": -0.001406110072570935,
+          "profit_factor_net": 0.49685665272557566
+        },
+        "SPX": {
+          "trades": 57,
+          "expectancy_net": -0.0009325258431722108,
+          "profit_factor_net": 0.5298540112703607
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9990860381018173,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 8.377770917718585e-36,
+      "sensitivity_2x": {
+        "trades": 116,
+        "expectancy_net": -0.001972714619080832,
+        "profit_factor_net": 0.3119192661197539
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "zrev",
+      "variant": "w20_t2.5",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 84,
+      "expectancy_net": -0.0012398705655286334,
+      "profit_factor_net": 0.49833973181308616,
+      "win_rate": 0.44047619047619047,
+      "max_drawdown_net": -0.11259197933977627,
+      "per_symbol": {
+        "NDX": {
+          "trades": 43,
+          "expectancy_net": -0.0017088628902928859,
+          "profit_factor_net": 0.44262844236410853
+        },
+        "SPX": {
+          "trades": 41,
+          "expectancy_net": -0.0007480005663856371,
+          "profit_factor_net": 0.5952689701755538
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9970282693173557,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.8953536623515237e-28,
+      "sensitivity_2x": {
+        "trades": 84,
+        "expectancy_net": -0.0020396361431217823,
+        "profit_factor_net": 0.3053000974906403
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "rsi_rev",
+      "variant": "rsi7",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 118,
+      "expectancy_net": -0.00128910959825059,
+      "profit_factor_net": 0.4722211241175768,
+      "win_rate": 0.4152542372881356,
+      "max_drawdown_net": -0.1494567598822908,
+      "per_symbol": {
+        "NDX": {
+          "trades": 62,
+          "expectancy_net": -0.0017005992484352152,
+          "profit_factor_net": 0.43007095089442415
+        },
+        "SPX": {
+          "trades": 56,
+          "expectancy_net": -0.0008335317712604691,
+          "profit_factor_net": 0.5477690191973422
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.999684608534423,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 2.8989071546874832e-39,
+      "sensitivity_2x": {
+        "trades": 118,
+        "expectancy_net": -0.002088430542895538,
+        "profit_factor_net": 0.2900245751494064
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "zrev",
+      "variant": "w20_t2.5",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 137,
+      "expectancy_net": -0.0014778958420063892,
+      "profit_factor_net": 0.5735254996545103,
+      "win_rate": 0.36496350364963503,
+      "max_drawdown_net": -0.18896939955593273,
+      "per_symbol": {
+        "NDX": {
+          "trades": 72,
+          "expectancy_net": -0.001532995714600647,
+          "profit_factor_net": 0.5872252525317768
+        },
+        "SPX": {
+          "trades": 65,
+          "expectancy_net": -0.0014168621369789044,
+          "profit_factor_net": 0.5558588959749567
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9965448587266128,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 4.4837600942714473e-38,
+      "sensitivity_2x": {
+        "trades": 137,
+        "expectancy_net": -0.0022771076184617423,
+        "profit_factor_net": 0.4292090640874936
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "ema_cross",
+      "variant": "ema24_96",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 79,
+      "expectancy_net": -0.0014802051810643767,
+      "profit_factor_net": 0.8038111322791378,
+      "win_rate": 0.31645569620253167,
+      "max_drawdown_net": -0.24051767480871045,
+      "per_symbol": {
+        "NDX": {
+          "trades": 40,
+          "expectancy_net": -0.003345554529727325,
+          "profit_factor_net": 0.6434825859113995
+        },
+        "SPX": {
+          "trades": 39,
+          "expectancy_net": 0.00043297363807710837,
+          "profit_factor_net": 1.0765180772623364
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.8097295781227618,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 3.3064782424506896e-17,
+      "sensitivity_2x": {
+        "trades": 79,
+        "expectancy_net": -0.0022802136808818666,
+        "profit_factor_net": 0.7181906378497914
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "donchian",
+      "variant": "n55",
+      "panel": "idx2",
+      "timeframe": "1h",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 174,
+      "expectancy_net": -0.001570458568167714,
+      "profit_factor_net": 0.7957096788133099,
+      "win_rate": 0.28160919540229884,
+      "max_drawdown_net": -0.4195377598635943,
+      "per_symbol": {
+        "NDX": {
+          "trades": 90,
+          "expectancy_net": -0.00048312552969041777,
+          "profit_factor_net": 0.9421353811767043
+        },
+        "SPX": {
+          "trades": 84,
+          "expectancy_net": -0.0027354582522505326,
+          "profit_factor_net": 0.6080027041414299
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9212212020689525,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 5.051079228881828e-36,
+      "sensitivity_2x": {
+        "trades": 174,
+        "expectancy_net": -0.0023720708271004988,
+        "profit_factor_net": 0.7129310850490594
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "ema_cross",
+      "variant": "ema32_128",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 27,
+      "expectancy_net": -0.0016434004397291749,
+      "profit_factor_net": 0.6372938106093471,
+      "win_rate": 0.25925925925925924,
+      "max_drawdown_net": -0.05935777234782824,
+      "per_symbol": {
+        "NDX": {
+          "trades": 11,
+          "expectancy_net": -0.0029295397031732025,
+          "profit_factor_net": 0.558152851716766
+        },
+        "SPX": {
+          "trades": 16,
+          "expectancy_net": -0.0007591796961114055,
+          "profit_factor_net": 0.7541272490245028
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.8280453663170823,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 3.9981991444644793e-07,
+      "sensitivity_2x": {
+        "trades": 27,
+        "expectancy_net": -0.0024409906862809215,
+        "profit_factor_net": 0.5234596541206954
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "zrev",
+      "variant": "w50_t2.0",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 73,
+      "expectancy_net": -0.0016682881511167669,
+      "profit_factor_net": 0.39263482991471194,
+      "win_rate": 0.410958904109589,
+      "max_drawdown_net": -0.1238329333208793,
+      "per_symbol": {
+        "NDX": {
+          "trades": 38,
+          "expectancy_net": -0.0018623943394857159,
+          "profit_factor_net": 0.4042060345079946
+        },
+        "SPX": {
+          "trades": 35,
+          "expectancy_net": -0.0014575442894590501,
+          "profit_factor_net": 0.3758174024351745
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9995109274826166,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.340073407154791e-28,
+      "sensitivity_2x": {
+        "trades": 73,
+        "expectancy_net": -0.002467321225331367,
+        "profit_factor_net": 0.23951036913270193
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_intra",
+      "variant": "fade_03",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 64,
+      "expectancy_net": -0.0016823354357653453,
+      "profit_factor_net": 0.35003702899956296,
+      "win_rate": 0.28125,
+      "max_drawdown_net": -0.11872566308663002,
+      "per_symbol": {
+        "NDX": {
+          "trades": 40,
+          "expectancy_net": -0.0016346363489998788,
+          "profit_factor_net": 0.4045076958204438
+        },
+        "SPX": {
+          "trades": 24,
+          "expectancy_net": -0.0017618339137077902,
+          "profit_factor_net": 0.24295598260644932
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9999583288588131,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 4.998938951487435e-21,
+      "sensitivity_2x": {
+        "trades": 64,
+        "expectancy_net": -0.002483097362731294,
+        "profit_factor_net": 0.21517237544243378
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "donchian",
+      "variant": "n55",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 64,
+      "expectancy_net": -0.0018820163307128324,
+      "profit_factor_net": 0.5987616405687503,
+      "win_rate": 0.328125,
+      "max_drawdown_net": -0.12602153492022705,
+      "per_symbol": {
+        "NDX": {
+          "trades": 31,
+          "expectancy_net": -0.0012086381521707725,
+          "profit_factor_net": 0.7704996915736316
+        },
+        "SPX": {
+          "trades": 33,
+          "expectancy_net": -0.0025145837105553736,
+          "profit_factor_net": 0.39401051339654103
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9632126296321655,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 1.1916271241925792e-16,
+      "sensitivity_2x": {
+        "trades": 64,
+        "expectancy_net": -0.002681868570643647,
+        "profit_factor_net": 0.4870460117662815
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "zrev",
+      "variant": "w50_t2.5",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 46,
+      "expectancy_net": -0.002098517175519254,
+      "profit_factor_net": 0.326140983648665,
+      "win_rate": 0.391304347826087,
+      "max_drawdown_net": -0.09793195173964431,
+      "per_symbol": {
+        "NDX": {
+          "trades": 25,
+          "expectancy_net": -0.0029587668010636918,
+          "profit_factor_net": 0.26086987941966705
+        },
+        "SPX": {
+          "trades": 21,
+          "expectancy_net": -0.0010744104784425426,
+          "profit_factor_net": 0.4774295541637296
+        }
+      },
+      "folds_positive": 1,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9989622214833423,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 2.2887748044913465e-19,
+      "sensitivity_2x": {
+        "trades": 46,
+        "expectancy_net": -0.002897230579001503,
+        "profit_factor_net": 0.2069139558720033
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "gap_intra",
+      "variant": "fade_06",
+      "panel": "idx2",
+      "timeframe": "15m",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 34,
+      "expectancy_net": -0.002204491107078273,
+      "profit_factor_net": 0.26432317333180416,
+      "win_rate": 0.23529411764705882,
+      "max_drawdown_net": -0.08183846613911017,
+      "per_symbol": {
+        "NDX": {
+          "trades": 24,
+          "expectancy_net": -0.0023676480955073073,
+          "profit_factor_net": 0.26970923570539024
+        },
+        "SPX": {
+          "trades": 10,
+          "expectancy_net": -0.0018129143348485893,
+          "profit_factor_net": 0.24691428284408873
+        }
+      },
+      "folds_positive": 0,
+      "folds_in_profile": 4,
+      "holdout_passes": false,
+      "p_one_sided": 0.9998618784303202,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 4.256041464421255e-12,
+      "sensitivity_2x": {
+        "trades": 34,
+        "expectancy_net": -0.003005995136943464,
+        "profit_factor_net": 0.16714336474590072
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    },
+    {
+      "family": "donchian",
+      "variant": "n55",
+      "panel": "idx2",
+      "timeframe": "1d",
+      "status": "EVALUATED",
+      "verdict": "FAIL",
+      "trades": 41,
+      "expectancy_net": -0.00367111597766744,
+      "profit_factor_net": 0.8234763049421845,
+      "win_rate": 0.2926829268292683,
+      "max_drawdown_net": -0.18407883148449988,
+      "per_symbol": {
+        "NDX": {
+          "trades": 19,
+          "expectancy_net": 0.0010679612648323304,
+          "profit_factor_net": 1.0486559326485707
+        },
+        "SPX": {
+          "trades": 22,
+          "expectancy_net": -0.007763955414371787,
+          "profit_factor_net": 0.6079082666978814
+        }
+      },
+      "folds_positive": 2,
+      "folds_in_profile": 5,
+      "holdout_passes": false,
+      "p_one_sided": 0.7163886786470709,
+      "bonferroni_pass_at_N_floor": false,
+      "bonferroni_alpha": 2.7517886626307103e-05,
+      "breakeven_N": 0,
+      "deflated_sharpe_xtrial": 5.191014092451018e-10,
+      "sensitivity_2x": {
+        "trades": 41,
+        "expectancy_net": -0.0044759006102618355,
+        "profit_factor_net": 0.7904574655732132
+      },
+      "cost_2x_pass": false,
+      "failed_checks": [
+        "expectancy_net_gt_0",
+        "profit_factor_net_gte_1.2",
+        "min_oos_trades_200",
+        "positive_folds",
+        "holdout_passes",
+        "bonferroni_at_N_floor",
+        "cost_2x"
+      ]
+    }
+  ],
+  "wf_procedures": [
+    {
+      "key": "donchian__idx2__1d",
+      "family": "donchian",
+      "timeframe": "1d",
+      "variants_tried": 2,
+      "procedure_pooled_oos": {
+        "trades": 41,
+        "wins": 12,
+        "win_rate": 0.2926829268292683,
+        "expectancy_net": -0.00367111597766744,
+        "profit_factor_net": 0.8234763049421845,
+        "avg_win_net": 0.05851252140770714,
+        "avg_loss_net": -0.029402276275063827,
+        "total_return_net": -0.17075389931334184,
+        "max_drawdown_net": -0.18407883148449988
+      }
+    },
+    {
+      "key": "donchian__idx2__1h",
+      "family": "donchian",
+      "timeframe": "1h",
+      "variants_tried": 2,
+      "procedure_pooled_oos": {
+        "trades": 129,
+        "wins": 28,
+        "win_rate": 0.21705426356589147,
+        "expectancy_net": -0.0039128733514746895,
+        "profit_factor_net": 0.48561904811237466,
+        "avg_win_net": 0.01701916723328956,
+        "avg_loss_net": -0.009715815295765769,
+        "total_return_net": -0.4022892366714832,
+        "max_drawdown_net": -0.4127358201487228
+      }
+    },
+    {
+      "key": "ema_cross__idx2__1d",
+      "family": "ema_cross",
+      "timeframe": "1d",
+      "variants_tried": 2,
+      "procedure_pooled_oos": {
+        "trades": 8,
+        "wins": 7,
+        "win_rate": 0.875,
+        "expectancy_net": 0.05979663557644379,
+        "profit_factor_net": 17.49191535192883,
+        "avg_win_net": 0.07248280076375792,
+        "avg_loss_net": -0.029006520734755143,
+        "total_return_net": 0.5836963626272902,
+        "max_drawdown_net": -0.02900652073475507
+      }
+    },
+    {
+      "key": "ema_cross__idx2__1h",
+      "family": "ema_cross",
+      "timeframe": "1h",
+      "variants_tried": 2,
+      "procedure_pooled_oos": {
+        "trades": 74,
+        "wins": 20,
+        "win_rate": 0.2702702702702703,
+        "expectancy_net": -0.003874261633264854,
+        "profit_factor_net": 0.5394727347478806,
+        "avg_win_net": 0.01679209267651777,
+        "avg_loss_net": -0.011528466933184345,
+        "total_return_net": -0.2544476027656509,
+        "max_drawdown_net": -0.2764026237065996
+      }
+    },
+    {
+      "key": "gap_daily__idx2__1d",
+      "family": "gap_daily",
+      "timeframe": "1d",
+      "variants_tried": 4,
+      "procedure_pooled_oos": {
+        "trades": 316,
+        "wins": 159,
+        "win_rate": 0.5031645569620253,
+        "expectancy_net": -0.0007113165541019653,
+        "profit_factor_net": 0.8454595325178051,
+        "avg_win_net": 0.007733987712247747,
+        "avg_loss_net": -0.009264204314290526,
+        "total_return_net": -0.21946557447312753,
+        "max_drawdown_net": -0.40052274672569066
+      }
+    },
+    {
+      "key": "gap_intra__idx2__1h",
+      "family": "gap_intra",
+      "timeframe": "1h",
+      "variants_tried": 4,
+      "procedure_pooled_oos": {
+        "trades": 230,
+        "wins": 103,
+        "win_rate": 0.44782608695652176,
+        "expectancy_net": -0.000543117002084253,
+        "profit_factor_net": 0.8321710462018899,
+        "avg_win_net": 0.006013533348472558,
+        "avg_loss_net": -0.0058607153178901715,
+        "total_return_net": -0.12232209822570383,
+        "max_drawdown_net": -0.16806644642022628
+      }
+    },
+    {
+      "key": "rsi_rev__idx2__1h",
+      "family": "rsi_rev",
+      "timeframe": "1h",
+      "variants_tried": 2,
+      "procedure_pooled_oos": {
+        "trades": 264,
+        "wins": 93,
+        "win_rate": 0.3522727272727273,
+        "expectancy_net": -0.0012483863950658398,
+        "profit_factor_net": 0.5012226173178718,
+        "avg_win_net": 0.0035611798997630924,
+        "avg_loss_net": -0.0038641154326043816,
+        "total_return_net": -0.2830371428120464,
+        "max_drawdown_net": -0.29127717647869567
+      }
+    },
+    {
+      "key": "tsmom__idx2__1d",
+      "family": "tsmom",
+      "timeframe": "1d",
+      "variants_tried": 3,
+      "procedure_pooled_oos": {
+        "trades": 31,
+        "wins": 7,
+        "win_rate": 0.22580645161290322,
+        "expectancy_net": -0.006254401793432912,
+        "profit_factor_net": 0.7223838286048914,
+        "avg_win_net": 0.07207301433719315,
+        "avg_loss_net": -0.029099898164865513,
+        "total_return_net": -0.2010317591352514,
+        "max_drawdown_net": -0.27089781080062525
+      }
+    },
+    {
+      "key": "tsmom__idx2__1h",
+      "family": "tsmom",
+      "timeframe": "1h",
+      "variants_tried": 2,
+      "procedure_pooled_oos": {
+        "trades": 188,
+        "wins": 68,
+        "win_rate": 0.3617021276595745,
+        "expectancy_net": -0.0007955940876723803,
+        "profit_factor_net": 0.8842457054947406,
+        "avg_win_net": 0.016802593876747218,
+        "avg_loss_net": -0.010767900600843486,
+        "total_return_net": -0.15586656406011556,
+        "max_drawdown_net": -0.2884831200319242
+      }
+    },
+    {
+      "key": "zrev__idx2__1h",
+      "family": "zrev",
+      "timeframe": "1h",
+      "variants_tried": 4,
+      "procedure_pooled_oos": {
+        "trades": 146,
+        "wins": 55,
+        "win_rate": 0.3767123287671233,
+        "expectancy_net": -0.0010288331950972923,
+        "profit_factor_net": 0.6143748998232095,
+        "avg_win_net": 0.004351142480041069,
+        "avg_loss_net": -0.004280466844906191,
+        "total_return_net": -0.14153578425821545,
+        "max_drawdown_net": -0.1523189396783391
+      }
+    }
+  ]
+}
