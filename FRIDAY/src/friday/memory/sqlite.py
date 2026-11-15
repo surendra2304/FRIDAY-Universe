@@ -86,9 +86,6 @@ class SQLiteConversationMemory(BaseMemory):
         self.settings = get_settings()
         self._active_conversation_id = conversation_id or self.create_conversation(title="Default Conversation")
 
-        # Lazy initialize ChromaDB Vector Store for Full-Duplex Voice Engine2 Semantic Vector Memory
-        self._vector_store = None
-
     @property
     def active_conversation_id(self) -> str:
         """Return the currently active conversation ID."""
@@ -1130,38 +1127,6 @@ class SQLiteConversationMemory(BaseMemory):
             ],
         }
 
-    @property
-    def vector_store(self) -> Any | None:
-        """Lazy loader for ChromaVectorStore to prevent blocking startup."""
-        if self._vector_store is None:
-            try:
-                from friday.memory.embeddings.factory import create_embedding_provider
-                from friday.memory.vector_store import ChromaVectorStore
-                provider = self.embedding_provider or create_embedding_provider(self.settings)
-                if provider is not None:
-                    chroma_dir = os.path.join(os.path.dirname(self.db_path) if self.db_path != ":memory:" else "data", "chroma")
-                    self._vector_store = ChromaVectorStore(
-                        persist_dir=chroma_dir,
-                        collection_name="friday_memory_nodes",
-                        embedding_provider=provider,
-                    )
-            except Exception as e:
-                logger.debug(f"ChromaVectorStore initialization skipped or deferred: {e}")
-        return self._vector_store
-
-    def _index_node_in_vector_store_bg(self, node_id: str, content: str, memory_type: str, metadata: dict[str, Any]) -> None:
-        """Background thread target to index memory node into ChromaDB."""
-        try:
-            vs = self.vector_store
-            if vs is not None:
-                meta = dict(metadata)
-                meta["memory_type"] = memory_type
-                meta["node_id"] = node_id
-                vs.add_memory(memory_id=node_id, text=content, metadata=meta)
-                logger.debug(f"Asynchronously indexed memory node '{node_id}' in ChromaDB")
-        except Exception as e:
-            logger.debug(f"Background ChromaDB indexing failed for node '{node_id}': {e}")
-
     def add_memory_node(
         self,
         content: str,
@@ -1208,15 +1173,6 @@ class SQLiteConversationMemory(BaseMemory):
                 ),
             )
             conn.commit()
-
-        # Background vector indexing in non-blocking thread for semantic and episodic memories
-        if memory_type in ("semantic", "episodic") and clean_content:
-            t = threading.Thread(
-                target=self._index_node_in_vector_store_bg,
-                args=(node_id, clean_content, memory_type, meta_dict),
-                daemon=True,
-            )
-            t.start()
 
         return node_id
 
@@ -1266,53 +1222,13 @@ class SQLiteConversationMemory(BaseMemory):
         top_k: int = 5,
         min_importance: float = 0.0,
     ) -> list[dict[str, Any]]:
-        """Bounded retrieval using semantic vector similarity (ChromaDB) and FTS5 ranking to fetch top-K relevant memories."""
+        """Bounded retrieval using FTS5 keyword ranking to fetch top-K relevant memories."""
         if not query or not query.strip():
             return []
 
         results_by_id: dict[str, dict[str, Any]] = {}
 
-        # 1. Semantic Vector Search via ChromaDB
-        vs = self.vector_store
-        if vs is not None:
-            try:
-                where_filter = {"memory_type": memory_type} if memory_type else None
-                semantic_hits = vs.query_similar(
-                    query_text=query,
-                    top_k=top_k,
-                    min_similarity=0.3,
-                    where_filter=where_filter,
-                )
-                if semantic_hits:
-                    hit_ids = [h["id"] for h in semantic_hits]
-                    placeholders = ",".join("?" for _ in hit_ids)
-                    with self._lock:
-                        with self._get_connection() as conn:
-                            rows = conn.execute(
-                                f"SELECT * FROM memory_nodes WHERE id IN ({placeholders}) AND importance >= ?",
-                                hit_ids + [min_importance],
-                            ).fetchall()
-                    for r in rows:
-                        hit_sim = next((h["similarity"] for h in semantic_hits if h["id"] == r["id"]), 0.5)
-                        results_by_id[r["id"]] = {
-                            "id": r["id"],
-                            "conversation_id": r["conversation_id"],
-                            "memory_type": r["memory_type"],
-                            "content": r["content"],
-                            "source": r["source"],
-                            "importance": float(r["importance"]),
-                            "confidence": float(r["confidence"]),
-                            "privacy": r["privacy"],
-                            "recency": r["recency"],
-                            "created_at": r["created_at"],
-                            "metadata": json.loads(r["metadata"]) if r["metadata"] else {},
-                            "score": float(hit_sim),
-                            "retrieval_source": "vector",
-                        }
-            except Exception as e:
-                logger.debug(f"ChromaDB semantic search in search_bounded_memories encountered error: {e}")
-
-        # 2. Keyword Search via SQLite FTS5 (Complement / Fallback)
+        # Keyword Search via SQLite FTS5
         fts_query = self._format_fts_query(query.strip())
         with self._lock, self._get_connection() as conn:
             sql = """

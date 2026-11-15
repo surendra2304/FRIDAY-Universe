@@ -104,7 +104,6 @@ class OracleConversationMemory(BaseMemory):
         self._lock = threading.RLock()
         self._engine = engine
         self._dsn = dsn
-        self._vector_store = None
         self.settings = get_settings()
         self._create_default_conversation = create_default_conversation
         self._active_conversation_id = conversation_id
@@ -999,40 +998,6 @@ class OracleConversationMemory(BaseMemory):
     # ------------------------------------------------------------------
     # Structured memory nodes
     # ------------------------------------------------------------------
-    @property
-    def vector_store(self) -> Any | None:
-        """Lazy ChromaDB vector store (optional dependency, disk-backed)."""
-        if self._vector_store is None:
-            try:
-                from friday.memory.embeddings.factory import create_embedding_provider
-                from friday.memory.vector_store import ChromaVectorStore
-
-                provider = self.embedding_provider or create_embedding_provider(self.settings)
-                if provider is not None:
-                    chroma_dir = os.getenv("FRIDAY_VECTOR_STORE_DIR", os.path.join("data", "chroma"))
-                    self._vector_store = ChromaVectorStore(
-                        persist_dir=chroma_dir,
-                        collection_name="friday_memory_nodes",
-                        embedding_provider=provider,
-                    )
-            except Exception as exc:
-                logger.debug("ChromaVectorStore initialization skipped or deferred: %s", exc)
-        return self._vector_store
-
-    def _index_node_in_vector_store_bg(
-        self, node_id: str, content: str, memory_type: str, metadata: dict[str, Any]
-    ) -> None:
-        try:
-            store = self.vector_store
-            if store is not None:
-                meta = dict(metadata)
-                meta["memory_type"] = memory_type
-                meta["node_id"] = node_id
-                store.add_memory(memory_id=node_id, text=content, metadata=meta)
-                logger.debug("Asynchronously indexed memory node '%s' in ChromaDB", node_id)
-        except Exception as exc:
-            logger.debug("Background ChromaDB indexing failed for node '%s': %s", node_id, exc)
-
     def add_memory_node(
         self,
         content: str,
@@ -1075,12 +1040,6 @@ class OracleConversationMemory(BaseMemory):
             engine=self.engine,
         )
 
-        if memory_type in ("semantic", "episodic") and clean_content:
-            threading.Thread(
-                target=self._index_node_in_vector_store_bg,
-                args=(node_id, clean_content, memory_type, meta_dict),
-                daemon=True,
-            ).start()
         return node_id
 
     @staticmethod
@@ -1133,40 +1092,6 @@ class OracleConversationMemory(BaseMemory):
         if not query or not query.strip():
             return []
         results_by_id: dict[str, dict[str, Any]] = {}
-
-        store = self.vector_store
-        if store is not None:
-            try:
-                where_filter = {"memory_type": memory_type} if memory_type else None
-                hits = store.query_similar(
-                    query_text=query,
-                    top_k=top_k,
-                    min_similarity=0.3,
-                    where_filter=where_filter,
-                )
-                if hits:
-                    hit_ids = [h["id"] for h in hits]
-                    params: dict[str, Any] = {"min_importance": min_importance}
-                    binds = []
-                    for index, hit in enumerate(hit_ids):
-                        key = f"id{index}"
-                        binds.append(f":{key}")
-                        params[key] = hit
-                    rows = oracle.query_all(
-                        "SELECT * FROM memory_nodes WHERE id IN ("
-                        + ", ".join(binds)
-                        + ") AND importance >= :min_importance",
-                        params,
-                        engine=self.engine,
-                    )
-                    for row in rows:
-                        sim = next((h["similarity"] for h in hits if h["id"] == row["id"]), 0.5)
-                        entry = self._node_row(row)
-                        entry["score"] = float(sim)
-                        entry["retrieval_source"] = "vector"
-                        results_by_id[row["id"]] = entry
-            except Exception as exc:
-                logger.debug("Vector search in search_bounded_memories failed: %s", exc)
 
         tokens = self._search_tokens(query)
         if tokens:
