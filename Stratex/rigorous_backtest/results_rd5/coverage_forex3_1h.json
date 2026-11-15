@@ -1,0 +1,23 @@
+[
+ {
+  "file": "YH_EURUSD_1h.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 12291,
+  "source": "yahoo_finance_chart_api"
+ },
+ {
+  "file": "YH_GBPUSD_1h.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 12294,
+  "source": "yahoo_finance_chart_api"
+ },
+ {
+  "file": "YH_USDJPY_1h.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 12223,
+  "source": "yahoo_finance_chart_api"
+ }
+]
