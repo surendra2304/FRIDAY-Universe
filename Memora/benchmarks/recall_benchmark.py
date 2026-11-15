@@ -309,7 +309,7 @@ def main():
                 cleanup["deleted"] += 1
             else:
                 cleanup["errors"].append({"id": rid, "status": status})
-        results, ms = search(run, 100)
+        _status, results, _ms = search(run, 100)
         leftover = [r.get("id") for r in results if r.get("id") in set(all_ids)]
         cleanup["leftover_ids"] = leftover
 
