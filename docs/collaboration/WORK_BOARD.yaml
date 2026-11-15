@@ -7321,6 +7321,195 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Tests: 23 passed (18 new citation-integrity + 5 existing citation-validation); regression suites 27 passed with 15 sandbox-environment setup errors in test_artifacts/test_domain_modes (sqlite DDL under concurrent load) — clean rerun of those two files still owed; see completion comment."
     blockers: []
     next_action: "Coordinator: review and merge the PR; deploy with the next IntelX deploy window; the audit script can then be re-run against production to confirm the after rate on newly produced research."
+  - id: TASK-IG-VYR-05
+    title: "VyralX natural-language video editing (IG corpus): deterministic instruction-to-EDL compiler with validation, keep-segment math and an honest ffmpeg plan builder; edit plans stay pending_review"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-05"
+    pr: 471
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898358440 by Muse (TASK-IG-VYR-05 crew) before any editing."
+      - "CODE: VyralX/app/services/nl_editor.py (stdlib + optional ffmpeg, editor ig-vyr05-1): parse_instructions over 9 defined commands (unknown fragments -> named error entries), parse_time (seconds/m:ss/h:mm:ss), validate_edl (range, inversion, overlap, speed bounds), keep_segments (exact trim/cut resolution), ffmpeg_plan (trim+concat argv for keep segments; speed/mute/punch-in/lower-third as labelled steps; captions/b-roll as renderer steps; executed=False), execute_plan (guarded, honest failures)."
+      - "TESTS: VyralX/tests/test_ig_vyr05_nl_editor.py — 7 tests, all pass locally under pytest, including a real ffmpeg render of a trim+cut plan on a synthetic video and refusal of an EDL that deletes the whole video."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #471, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; next VyralX deploy). Follow-up: hand clone/factory plans (IG-VYR-02/03) to this editor as renderer steps once merged."
+  - id: TASK-IG-VYR-06
+    title: "VyralX previs/storyboarding (IG corpus — MGPREVIS pattern): script-to-storyboard planning with a declared licence strategy per shot and honestly-surfaced unresolved shots, review-queued before any render"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-06"
+    pr: 481
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898396303 by Muse (TASK-IG-VYR-06 crew) before any editing."
+      - "CODE: VyralX/app/services/previs.py (stdlib-only, previs ig-vyr06-1): split_beats, build_storyboard (catalogue matching over the three lane catalogues with overlap scoring; generated_via_intake and owner_upload strategies by caller declaration; unresolved otherwise), storyboard_summary (by-strategy counts, duration total, gap list), contact_sheet_plan (catalogue frames vs explicit placeholders), enqueue_storyboard (VYR-004 review queue, pending_review)."
+      - "TESTS: VyralX/tests/test_ig_vyr06_previs.py — 5 tests, all pass locally under pytest (match + gap marking, duration summation, strategy declaration, contact-sheet honesty, queue wiring, input rejection)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #481, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; next VyralX deploy). Pairs with TASK-IG-VYR-07 (generated-footage intake) for the generated_via_intake strategy."
+  - id: TASK-IG-VYR-07
+    title: "VyralX generated-footage intake (IG corpus): strict provenance intake for AI-generated clips — refusal of incomplete provenance, terms evaluation, registry recording; admission specced as a REMIX_POLICY decision, LTX-2.5 rejected on hardware"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-07"
+    pr: 493
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898435316 by Muse (TASK-IG-VYR-07 crew) before any editing."
+      - "CODE: VyralX/app/services/generated_footage.py (intake ig-vyr07-1): REQUIRED_FIELDS refusal with named gaps, evaluate_terms (assertion + terms URL -> ai_generated_terms; otherwise unknown), intake_generated_clip (ProvenanceRecord platform=ai_generated appended to the VYR-004 registry; candidate=False with the gate reason), intake_batch (refusals collected)."
+      - "DOC: VyralX/docs/GENERATED_FOOTAGE.md — admission decision specified (REMIX_POLICY amendment + ALLOWED_LICENSE_CLASSES addition, suggested minimum conditions incl. the IG-VYR-08 watermark); corpus sources tabled: LTX-2.5 REJECT (hardware), unnamed tools cannot be evaluated, no generator integrated (accounts cannot generate video today)."
+      - "TESTS: VyralX/tests/test_ig_vyr07_generated_footage.py — 6 tests, all pass locally under pytest (recording + terms, gate refusal pinned, gap naming, assertion-without-URL, batch refusals)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #493, splice this fragment, flip IN_REVIEW -> DONE on merge. POLICY DECISION for coordinator/owner (not blocking this PR): whether to amend REMIX_POLICY to admit ai_generated_terms under the doc's conditions."
+  - id: TASK-IG-VYR-08
+    title: "VyralX invisible provenance watermarking (IG corpus — SynthID-style): LSB payload of record id + registry hash in images, registry verification with tamper detection, guarded video frame + metadata marking"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-08"
+    pr: 497
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898500478 by Muse (TASK-IG-VYR-08 crew) before any editing."
+      - "CODE: VyralX/app/services/provenance_watermark.py (watermark ig-vyr08-1, Pillow): build_payload (record_id + sha256 of canonical record JSON), embed_payload/extract_payload (LSB, magic+length+CRC32 frame, capacity-checked), has_watermark_header (tamper vs absence), verify_image (registry match / hash-drift / unknown-record verdicts), watermark_video_frame (guarded ffmpeg frame grab + watermark + MP4 metadata marker, honestly labelled visible)."
+      - "TESTS: VyralX/tests/test_ig_vyr08_provenance_watermark.py — 6 tests, all pass locally under pytest (byte-exact round-trip with LSB-only pixel deltas, unmarked absence, registry verification, CRC tamper detection, capacity refusal, real video marking verified by ffprobe)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #497, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; next VyralX deploy). Follow-up: wire watermark_image_file into the VYR-004 render path so shipped thumbnails carry the mark (one call site, post-merge)."
+  - id: TASK-IG-VYR-09
+    title: "VyralX format templates, chat mockups, motion graphics (IG corpus): gate-validated format registry (game-IP series kept only as original-characters; flyover on PD stock, never Earth Studio), disclaimer-carrying chat-mockup renderer, motion plans + self-contained off-fleet HTML composition export"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-09"
+    pr: 503
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898529609 by Muse (TASK-IG-VYR-09 crew) before any editing."
+      - "CODE: VyralX/app/data/format_templates.json (6 templates, registry ig-vyr09-1) + app/services/format_templates.py (validation: fields, owner lanes, shares sum 1.0, EXCLUDED_TOKENS screen mirroring the gate; instantiate -> contiguous beat plan), app/services/chat_mockup.py (Pillow reveal frames; 'Scripted dramatisation' disclaimer on every frame; input refusal), app/services/motion_graphics.py (title/lower-third/kinetic plans; hyperframes_export = single HTML, zero external refs, off-fleet stamp)."
+      - "TESTS: VyralX/tests/test_ig_vyr09_format_tooling.py — 9 tests, all pass locally under pytest (registry validity, originals mandate, flyover sourcing, gameplay-template rejection, beat contiguity, real PNG frames, kinetic monotonicity, export self-containment)."
+      - "DELIVERY: PR #503 verified via the GitHub API directly (OPEN, mergeable, 5 files, +527/-0, head 7f49b05a) after the shipper's verification read truncated twice."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #503, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code + data; next VyralX deploy). HyperFrames compositions render off-fleet by design."
+  - id: TASK-IG-VYR-10
+    title: "VyralX channel strategy references (IG corpus): per-lane playbook data for the owner's three lanes, niche-selection criteria (lawful supply first), Silk Road lane-2 series seed for IG-VYR-04, creator-tools list held as unverified reference"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-10"
+    pr: 507
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898582074 by Muse (TASK-IG-VYR-10 crew) before any editing."
+      - "DATA: VyralX/app/data/channel_strategy.json (playbook ig-vyr10-1): 3 lane entries with IG sources + pillars + criteria met; 5 selection criteria; series_seeds[0] = Silk Road story (DZP1ifcpIof), 7 chapter topics, cadence_days 2; creator_tools_reference status reference_only_unverified; note field states corpus claims are unverified."
+      - "DOC: VyralX/docs/CHANNEL_STRATEGY.md — doctrine, honesty rule, Silk Road seed rationale, tools rule, explicit not-a-guarantee / not-permission-to-publish section."
+      - "TESTS: VyralX/tests/test_ig_vyr10_channel_strategy.py — 3 tests, all pass locally under pytest (lane coverage, seed shape vs the series-automation contract, honesty markers in JSON + doc)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #507, splice this fragment, flip IN_REVIEW -> DONE on merge. After IG-VYR-04 + this PR merge, the first planned series can be seeded from channel_strategy.json (Silk Road, history lane) — planning only; publishing still gated on YouTube OAuth."
+  - id: "TASK-FRD-TGWEBHOOK"
+    title: "FRIDAY Telegram gateway webhook mode — lock out the off-cloud rival poller (getUpdates rejected while a webhook is set)"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-friday-tgwebhook"
+    pr: 537
+    files:
+      - "FRIDAY/src/friday/proactive/telegram_gateway.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_telegram_webhook.py"
+      - ".github/workflows/owner-workflows.yml"
+    acceptance:
+      - "TELEGRAM_WEBHOOK_URL set ⇒ start() registers the webhook (secret_token from TELEGRAM_WEBHOOK_SECRET), never polls, never calls deleteWebhook; env absent ⇒ polling byte-identical in behaviour."
+      - "POST /telegram-webhook verifies X-Telegram-Bot-Api-Secret-Token (403 mismatch / 404 mode-off / 400 malformed) and dispatches into the same _handle_update path as the poller; duplicate update_ids dropped."
+      - "17 new tests pass; batch5 gateway suite + origin-enforcement suite unregressed."
+    evidence: "PR #537 (OPEN, mergeable at ship). Local: 17/17 new, 47/47 regression, 52/52 on shipped tree; ruff F821 clean. CI 9/9 complete: contracts + test + py310 import gate + secret scan + monorepo/fleet validation all SUCCESS."
+    blockers: []
+    next_action: "Post-merge activation (coordinator): set TELEGRAM_WEBHOOK_URL=https://friday-universe.duckdns.org/friday/telegram-webhook + a fresh TELEGRAM_WEBHOOK_SECRET in the Server 1 ROOT .env, Fleet CD / restart FRIDAY, verify setWebhook registered + owner test message round-trips + 409 lockouts stop. Until activation, production still long-polls (code is inert without the env vars)."
+  - id: TASK-FRG-008
+    title: "Forge output security scan (past builds, 4 vuln classes) + fail-closed security gate in the verification battery"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frg-008-output-security-gate
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:30:00+05:30"
+    updated_at: "2026-11-15T15:30:00+05:30"
+    files:
+      - "Forge/app/verification/security_gate.py   # NEW — OutputSecurityGateChecker (battery gate over OutputSecurityScanner + extended AST rules: path traversal, marshal/dill/shelve/jsonpickle/torch/numpy deserialization, os.popen, os.exec/spawn family, dynamic shell= flag); fail-closed on missing workspace and scanner error"
+      - "Forge/app/verification/engine.py          # register OutputSecurityGateChecker in the default battery (SUCCESS in delegate.py requires manifest.all_passed, so the gate binds every build)"
+      - "Forge/tests/verification/test_security_gate.py  # NEW — 13 tests: clean pass, per-class blocks, fail-closed paths, secret-value non-disclosure, default-battery registration"
+    defect: "OutputSecurityScanner (secrets, eval/exec, os.system, subprocess shell=True, pickle, unsafe yaml, SQLi, CVE deps) existed but was only invoked on opt-in paths (delegate require_sentinel, delivery require_sentinel_gate). The default verification battery — the one whose all_passed verdict declares a build SUCCESS — never ran it, and its own security checkers miss path traversal, extended deserialization, os.popen/exec-family and dynamic shell flags entirely. Audit evidence: a past production build (Server 1 workspace task17814112026172303) contains subprocess.run(command, shell=True) and subprocess.run(f'kill -TERM -{pid}', shell=True) in generated main.py and would pass today's battery ungated."
+    acceptance:
+      - "Scan of ALL 224 production Forge workspaces on Server 1 (215 scannable files, 135 .py): exactly 3 findings, all command_injection — subprocess_shell_true x2 (task17814112026172303/project/main.py lines 187, 208) and eval_call x1 (task18214112026183840/project/test_main.py line 176). hardcoded_secrets 0, unsafe_deserialization 0, path_traversal 0."
+      - "In-repo corpora: Forge/app/templates (12 files, the code Forge emits verbatim) 0 findings; Forge/app + forge_upgrade + top-level (0 findings in production code); Forge/tests 32 findings, all test fixtures (planted fake keys for scanner tests, REL-028 escaping tests). Secret values never quoted anywhere in this task's outputs."
+      - "Unguarded writers confirmed: language_builders.py writes via raw Path.write_text with no containment check on workspace_path/rel_path; autonomous_synthesizer.py copies generated files to a caller-supplied resolved output_path with no containment check (arbitrary-write surface). The battery gate covers their outputs at verification time regardless of writer."
+      - "Gate behaviour proven by tests: clean project passes; shell=True / eval / pickle / unsafe yaml / marshal / os.popen / dynamic shell flag / dynamic-path open / hardcoded secret each fail the battery; missing workspace and scanner exception fail closed; gate present in VerificationEngine default checker list."
+    evidence:
+      - "Claim: issue #35 comment 6891610392 (FRG-008 confirmed unclaimed across all 311 comments + board before claiming)."
+      - "Server-side scan executed on Server 1 via bridge run_shell (scanner streamed over stdin, nothing persisted except /tmp output JSON): WORKSPACES_SCANNED 224, FILES_SCANNED 215, TOTAL_FINDINGS 3."
+      - "Local scanner cross-validated: synthetic vulnerable fixture yields exactly 7 findings across all 4 classes; identical counts from the full and compact scanner implementations."
+      - "Gate tests: see PR for the pytest run (13 new tests) plus neighbouring security suites."
+    blockers: []
+    next_action: "Coordinator: merge the PR, deploy via Fleet CD, then re-run one live Forge build with a planted shell=True snippet to confirm the deployed battery blocks SUCCESS (production verification)."
+  - id: "TASK-MEM-007"
+    title: "Memora backup/restore drill — production export, throwaway restore, identical recall proof"
+    status: IN_REVIEW
+    owner: "muse_ai"
+    branch: "claude/ta***REDACTED***"
+    pr: 384
+    priority: "P2"
+    created_at: "2026-11-15T08:00:00Z"
+    updated_at: "2026-11-15T12:15:00Z"
+    files:
+      - "Memora/scripts/memora_export.py"
+      - "Memora/scripts/memora_restore.py"
+      - "Memora/docs/BACKUP_RESTORE.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    dependencies: []
+    acceptance:
+      - "Production memory store exported read-only to a workspace backup (manifest with per-table counts + sha256)."
+      - "Export restored into a throwaway local store; restored counts equal the manifest and per-record content-hash match rate is 1.0."
+      - "Restored copy answers the recall battery identically to production (corpus battery positions/top-5 compared per query; standard MEM-002 probe set run on the restored copy)."
+      - "Restore procedure documented in Memora/docs/BACKUP_RESTORE.md so memory survives a server loss."
+    evidence: "Export snapshot 2026-11-15T08:13:58Z: 436 records / 436 vectors / 1,527 relationships / 4 agents / 6 namespaces; 8/8 files sha256-verified against manifest after finisher reassembly. Restore RESTORE_VERIFY_OK: counts equal manifest, content-hash match 436/436 = 1.0, vectors 436 written + loaded. MEM-002 probe set on restored copy: 6/9 pass (failures: paraphrase_semantic — local hashing embeddings vs production Gemini; update_recency — known MEM-002 defect #2, pre-fix code; graph_companion_guard — same as live). Corpus battery position parity NOT established: hybrid search discards all 436 signed records when the provenance HMAC secret differs — restore requires provisioning the production provenance-signing secret (documented in BACKUP_RESTORE.md by this task). Full evidence in the TASK-MEM-007 completion comment on issue #35."
+    blockers: []
+    next_action: "Coordinator: review + merge the PR, splice this board entry. Owner: none. Optional follow-up: schedule periodic exports (cron) once the owner wants recurring backups; any production restore must provision the provenance-signing secret first."
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891503223"
+  - id: TASK-SEN-011
+    title: Secrets-hygiene remediation (SEN-005 F-1..F-5)
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: https://github.com/surendra2304/FRIDAY-Universe/pull/366
+    files:
+      - "Forge/app/execution/terminal.py"
+      - "Forge/forge_upgrade/secret_redaction.py"
+      - "Forge/tests/test_secret_redaction.py"
+      - "Forge/tests/test_terminal_log_redaction.py"
+      - "scripts/rotate_gateway_secret.py"
+    summary: >-
+      F-1 fleet GITHUB_TOKEN (classic PAT, fp a9c5de6cddc61ced) identified by
+      fingerprint, redacted from all 5 Forge workspace terminal.logs on S1 and
+      verified gone fleet-wide (0 logs with token shapes); root-cause fix
+      (mask commands at write time in Forge terminal logging + redaction
+      patterns for github_pat_ and URL userinfo) in PR with fail-on-main
+      regression tests. F-2 S2 VyralX credentials dir 700/files 600, health
+      200 after. F-3 S1 VyralX/.env 600. F-4 27 .env.bak* inventoried, all
+      600, nothing deleted. F-5 rotate_gateway_secret.py literal proven a
+      substitution placeholder; swapped for a self-describing one in PR.
+    next_action: >-
+      Coordinator: merge the PR; decide F-1 token rotation (if rotated,
+      refresh Forge/Sentinel .env + the 3 .bak copies carrying it, and strip
+      the token from the 5 completed-workspace .git/config remote URLs);
+      post-deploy, confirm a Forge build terminal.log shows a masked remote
+      URL, then flip VERIFIED.
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
