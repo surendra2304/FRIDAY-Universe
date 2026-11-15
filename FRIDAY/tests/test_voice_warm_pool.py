@@ -81,7 +81,14 @@ def test_warm_steps_survive_failures(monkeypatch):
     def _boom():
         raise RuntimeError("memora unreachable")
 
+    def _boom_preload():
+        raise RuntimeError("fixed-line wav unreadable")
+
     monkeypatch.setattr(worker, "_owner_memory_lines", _boom)
-    monkeypatch.setattr(worker, "EDGE_TTS_AVAILABLE", False)
+    # TASK-VOI-009: the warm thread's second step was an EdgeTTS
+    # synthesis when VOI-008 landed; the greeting is a shipped WAV
+    # since the Groq removal, so the step is now the fixed-line
+    # preload. The contract is unchanged: a failed step only logs.
+    monkeypatch.setattr(worker, "_preload_fixed_lines", _boom_preload)
     # must not raise even when every warm step fails
     worker._executor_warm_steps()

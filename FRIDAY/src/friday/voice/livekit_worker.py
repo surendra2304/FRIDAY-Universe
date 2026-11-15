@@ -7,16 +7,30 @@ key on the host is DEAD (400 INVALID_ARGUMENT / API_KEY_INVALID — the
 chat brain fails over to Groq, but the voice worker had no failover and
 went silently mute).
 
-New provider chain, per job:
+Provider chain, per job (TASK-VOI-009):
 
-  1. Gemini Live realtime — IF the credential pool has a healthy key
-     (full English+Telugu, native VAD, best quality).
-  2. Groq modular pipeline — Groq STT (whisper-large-v3-turbo,
-     multilingual in) + Groq LLM (openai/gpt-oss-120b — the SAME model
-     the chat brain uses live) + Groq TTS (orpheus, English out). This
-     runs on the key that is PROVEN working on this host.
-  3. Neither → the job exits honestly with a reason written to the
-     status file; the dashboard shows it instead of silent failure.
+  1. Gemini Live realtime — the ONLY voice AI. Used when the credential
+     pool yields a probe-verified key (full English+Telugu, native VAD).
+  2. Gemini cannot serve (no resolvable valid key, provider
+     unreachable) → the participant hears the shipped pre-recorded
+     notice (voice/audio/voice_unavailable.wav), the status file
+     records state "unavailable" with the plain cause, the journal
+     logs it plainly, and the job leaves. A recording is the honest
+     replacement for a fallback — there is no second provider.
+
+REMOVED HISTORY (TASK-VOI-009, owner directive 2026-11-15 — "Gemini is
+the only AI for voice and remove groq"): from 2026-11-13 to 2026-11-15
+this worker also carried, as provider path 2, a Groq modular pipeline
+(Whisper STT + a Groq chat LLM + EdgeTTS, or Groq Orpheus TTS when its
+terms probe passed), and the TASK-VOI-004 recovery ladder's last rung
+failed over to it. The owner ruled Groq a TEXT provider (its chat
+failover and Inference-pool roles are untouched) — the pipeline is
+what served his 2026-11-15 live test #2, and it felt "like Google
+voice search". It is deleted, not disabled: no code path in this
+worker can invoke Groq, Whisper, EdgeTTS or Orpheus. Every fixed line
+the worker itself speaks (greeting, recovery-exhausted outcome,
+unavailability notice) is a pre-recorded WAV under voice/audio/,
+played verbatim; nothing here synthesizes speech except Gemini Live.
 
 Every path injects the owner's recent memories into the system prompt so
 voice FRIDAY remembers who it is talking to (the "not remembering me"
@@ -46,7 +60,9 @@ rebuild, then one failover to the Groq pipeline carrying the same
 conversation context and the same no-greeting discipline. Failover
 happens only on an actual provider failure; a healthy live session is
 never torn down, and when the ladder is exhausted the user hears the
-honest "unconfirmed" outcome instead of silence.
+honest "unconfirmed" outcome instead of silence. (TASK-VOI-009 removed
+the failover rung: the ladder is Gemini-only now, and the unconfirmed
+outcome is a pre-recorded line — see the REMOVED HISTORY note above.)
 """
 import asyncio
 import json
@@ -56,6 +72,7 @@ import ssl
 import sys
 import threading
 import time
+import wave
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as _FuturesTimeoutError
 from pathlib import Path
@@ -106,23 +123,16 @@ except Exception as _exc:  # ImportError or a missing optional dependency
     genai_types = None
     print(f"[friday.voice] google plugin unavailable at import: {_exc}")
 
+# TASK-VOI-009: the Groq plugin and the EdgeTTS adapter imports that
+# used to sit here are DELETED (removed history — see the module
+# docstring). Gemini Live is the only speech provider this worker can
+# construct. The rtc import below exists solely to PLAY the shipped
+# pre-recorded fixed lines into the room; it synthesizes nothing.
 try:
-    from livekit.plugins import groq as _lk_groq
-
-    GROQ_PLUGIN_AVAILABLE = True
-except Exception as _exc:
-    GROQ_PLUGIN_AVAILABLE = False
-    _lk_groq = None
-    print(f"[friday.voice] groq plugin unavailable at import: {_exc}")
-
-try:
-    from friday.voice.edge_tts_adapter import EdgeTTS
-
-    EDGE_TTS_AVAILABLE = True
-except Exception as _exc:
-    EDGE_TTS_AVAILABLE = False
-    EdgeTTS = None
-    print(f"[friday.voice] edge-tts adapter unavailable at import: {_exc}")
+    from livekit import rtc as _rtc
+except Exception as _exc:  # pragma: no cover - livekit is a hard dep
+    _rtc = None
+    print(f"[friday.voice] livekit rtc unavailable at import: {_exc}")
 
 logger = logging.getLogger("friday.voice")
 if not logger.handlers:
@@ -161,8 +171,6 @@ logging.getLogger("livekit.agents.telemetry.loop_monitor").setLevel(logging.ERRO
 
 # Warm the URL/regex/httpx code paths that otherwise stall the job loop for
 # seconds the first time a client is built inside a live session.
-_ = httpx.Client(base_url="https://api.groq.com")
-_ = httpx.AsyncClient(base_url="https://api.groq.com")
 _ = httpx.Client(base_url="https://generativelanguage.googleapis.com")
 _ = httpx.AsyncClient(base_url="https://generativelanguage.googleapis.com")
 
@@ -239,34 +247,6 @@ def _write_status(
         STATUS_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     except Exception as exc:  # never let a status write kill the worker
         logger.warning("status file write failed: %s", exc)
-
-
-def _groq_key() -> str:
-    """The Groq key the chat brain already uses (proven live on this host)."""
-    for name in ("FRIDAY_GROQ_API_KEY", "GROQ_API_KEY"):
-        val = (os.getenv(name) or "").strip()
-        if val:
-            return val
-    try:  # .env fallback for service units with a sparse environment
-        from dotenv import dotenv_values
-
-        vals = dotenv_values(FRIDAY_ROOT / ".env")
-        for name in ("FRIDAY_GROQ_API_KEY", "GROQ_API_KEY"):
-            val = (vals.get(name) or "").strip()
-            if val:
-                os.environ[name] = val
-                return val
-    except Exception:
-        pass
-    try:  # last resort: the same Settings path the chat brain uses
-        from friday.core.config import get_settings
-
-        val = (getattr(get_settings(), "groq_api_key", "") or "").strip()
-        if val:
-            return val
-    except Exception:
-        pass
-    return ""
 
 
 def _gemini_pool_keys() -> list[str]:
@@ -359,10 +339,6 @@ def _voice_name() -> str:
     return (os.getenv("FRIDAY_VOICE_NAME") or "Aoede").strip()
 
 
-def _llm_chat_model() -> str:
-    return (os.getenv("FRIDAY_VOICE_CHAT_MODEL") or "openai/gpt-oss-120b").strip()
-
-
 BASE_INSTRUCTIONS = (
     "You are FRIDAY, the central intelligence and sovereign AI operating system of the FRIDAY Universe. "
     "You orchestrate all 10 specialized agents: Stratex (trading), VyralX (video/media), Cortex (CRM), "
@@ -388,18 +364,15 @@ BASE_INSTRUCTIONS = (
 )
 
 
-def _instructions(with_memory: bool = True, english_out: bool = False, memory_block: str = "") -> str:
+def _instructions(with_memory: bool = True, memory_block: str = "") -> str:
+    # TASK-VOI-009: the english_out variant existed only for the removed
+    # Groq pipeline (its TTS was English-only). Gemini Live mirrors the
+    # caller's language natively, so there is exactly one variant now.
     prompt = BASE_INSTRUCTIONS
-    if english_out:
-        prompt += (
-            " You fully understand spoken Telugu and Telugu-English mix. For this call, answer in "
-            "English (your current speech voice is English-only); a warm Telugu greeting word is fine."
-        )
-    else:
-        prompt += (
-            " Answer in the language the user just spoke: Telugu in natural conversational Telugu, "
-            "English in English, mirroring a mix."
-        )
+    prompt += (
+        " Answer in the language the user just spoke: Telugu in natural conversational Telugu, "
+        "English in English, mirroring a mix."
+    )
     if with_memory:
         # the caller passes the ALREADY-RESOLVED memory block (fetched with
         # a thread + timeout) so nothing in this path can block the loop
@@ -547,7 +520,7 @@ def _cached_gemini_key() -> "str | None":
 def _cached_tentative_key() -> "str | None":
     """TASK-VOI-005: the most recent candidate no probe could judge,
     offered briefly so one bad probe window cannot condemn a job to the
-    fallback pipeline when the key may be perfectly good."""
+    recorded unavailable notice when the key may be perfectly good."""
     key = _KEY_CACHE.get("tentative_key")
     if key and (time.time() - float(_KEY_CACHE.get("tentative_ts") or 0.0)) <= _KEY_TENTATIVE_TTL_S:
         return key
@@ -578,15 +551,15 @@ def _resolve_gemini_key_sync() -> "str | None":
     the round ending with "no valid key among 3 candidates" and not one
     probe verdict ever logged, i.e. one slow/hung probe condemned the
     job (and, three hours earlier, the boot warm-up) to the Groq
-    pipeline. Now each candidate gets its own bounded budget; a timeout
-    or a transport failure marks that candidate UNJUDGED and the round
-    moves on. If no candidate verifies but at least one was unjudged,
-    the first unjudged candidate is returned as a TENTATIVE key (cached
-    separately, briefly): the Live session either connects — the common
-    case, the probe was merely slow — or errors, and the TASK-VOI-004
-    recovery ladder fails the job over to the Groq pipeline. Only a
-    round where every candidate was auth-rejected (or no keys exist)
-    is a hard failure and earns the negative cache.
+    pipeline (removed history — TASK-VOI-009). Now each candidate gets
+    its own bounded budget; a timeout or a transport failure marks that
+    candidate UNJUDGED and the round moves on. If no candidate verifies
+    but at least one was unjudged, the first unjudged candidate is
+    returned as a TENTATIVE key (cached separately, briefly): the Live
+    session either connects — the common case, the probe was merely
+    slow — or errors, and the TASK-VOI-004 recovery ladder rebuilds on
+    Gemini. Only a round where every candidate was auth-rejected (or
+    no keys exist) is a hard failure and earns the negative cache.
     """
     with _KEY_RESOLUTION_LOCK:
         cached = _cached_gemini_key()
@@ -754,7 +727,7 @@ async def _try_gemini_realtime(instructions: str, verified_key: "str | None" = N
     if verified_key is None:
         verified_key = await _gemini_best_key()
     if verified_key is None:
-        logger.warning("no probe-valid gemini key found; falling back to the groq pipeline")
+        logger.warning("no probe-valid gemini key found; voice unavailable for this job")
         return None, None
 
     model = _build_realtime_model(verified_key, instructions)
@@ -809,7 +782,10 @@ def _context_block(transcript: list, limit: int = 12) -> str:
 # provider-killed) turn — pinned rebuild, one more pinned rebuild,
 # then ONE failover to the Groq pipeline carrying the same context and
 # no-greeting discipline. Failover happens only on an actual provider
-# failure; a healthy live session is never torn down.
+# failure; a healthy live session is never torn down. (TASK-VOI-009:
+# the failover rung is REMOVED HISTORY — the ladder is the two pinned
+# Gemini rebuilds and nothing below them; exhaustion reaches the same
+# honest unconfirmed outcome it always did.)
 
 
 def _env_float(name: str, default: float) -> float:
@@ -889,15 +865,15 @@ def _error_event_details(ev) -> "tuple[str, bool | None]":
 
 
 def _ladder_plan(kind: "str | None") -> "list[str]":
-    """Rung sequence for one recovery, starting from the kind of
-    session currently in use. Gemini: pinned rebuild, one more pinned
-    rebuild, then ONE context-carrying Groq failover. Groq (already
-    the fallback): pinned rebuild + one retry — there is no rung
-    below it. The plan only ever moves DOWN the provider chain, never
-    back up: pinning survives recovery."""
-    if kind == "groq":
-        return ["groq", "groq"]
-    return ["gemini", "gemini", "groq"]
+    """Rung sequence for one recovery (TASK-VOI-009: Gemini-only).
+
+    Two pinned Gemini rebuilds — there is no rung below Gemini. When
+    both fail the ladder is exhausted and the turn reaches the honest
+    unconfirmed outcome. ``kind`` is accepted for call-site stability:
+    since TASK-VOI-009 this worker has exactly one provider, so every
+    plan is the Gemini plan (the pre-VOI-009 Groq failover rung and the
+    Groq-session plan are removed history)."""
+    return ["gemini", "gemini"]
 
 
 async def _run_recovery_ladder(rungs, attempt, budget_s, rung_prove_s,
@@ -928,143 +904,127 @@ async def _run_recovery_ladder(rungs, attempt, budget_s, rung_prove_s,
     return {"served": served, "steps": steps, "elapsed": now() - started}
 
 
-async def _probe_orpheus_tts() -> bool:
-    """One live call to the orpheus TTS endpoint with the fleet key.
+# ---- TASK-VOI-009: fixed lines are pre-recorded WAVs ----
+# The greeting, the recovery-exhausted ("unconfirmed") outcomes and the
+# voice-unavailable notice used to be spoken through a synthesized
+# fallback TTS (Groq Orpheus when its terms probe passed, EdgeTTS
+# otherwise). Both are deleted with the Groq removal: a fixed line is
+# now a WAV file shipped in this repo (voice/audio/, rendered ONCE at
+# build time — see audio/README.md) and played into the room verbatim
+# as the agent's microphone. Playback synthesizes nothing and calls no
+# provider; if the file cannot be played, the failure is logged and
+# the journal/status text remains the honest record.
+_FIXED_LINE_DIR = Path(__file__).resolve().parent / "audio"
+_FIXED_LINES = ("greeting", "voice_unavailable", "unconfirmed_request", "unconfirmed_general")
 
-    Live E2E 2026-11-13 (TASK-VOICE-E2E-003): every fixed-line greeting and
-    groq-pipeline reply died with 400 'model_terms_required' — the org admin
-    has not accepted the canopylabs/orpheus model terms in the Groq console,
-    so EVERY voice call was silent dead air (dispatch fine, agent_state
-    'speaking', zero audible frames). Probing once per job before relying on
-    orpheus turns that silent failure into a logged, degraded choice.
-    """
-    key = _groq_key()
-    if not key or not GROQ_PLUGIN_AVAILABLE:
-        return False
-    # LATENCY FIX (2026-11-14): the probe used to make a live Groq call on
-    # EVERY job's critical path (15 s timeout) even though _orpheus_ok()
-    # only ever trusts a 5-minute cache — the entrypoint paid the round
-    # trip (or the full timeout, when Groq is slow) before the session was
-    # even built, for zero information gain. A fresh cached verdict is the
-    # same verdict the consumers would have used anyway.
-    if _ORPHEUS_CACHE["ok"] is not None and time.time() - _ORPHEUS_CACHE["ts"] <= 300:
-        return bool(_ORPHEUS_CACHE["ok"])
-    try:
-        async with httpx.AsyncClient(
-            base_url="https://api.groq.com", timeout=15, verify=_SSL_CONTEXT
-        ) as client:
-            resp = await client.post(
-                "/openai/v1/audio/speech",
-                headers={"Authorization": f"Bearer {key}"},
-                json={
-                    "model": "canopylabs/orpheus-v1-english",
-                    "voice": "autumn",
-                    "input": "ok",
-                    "response_format": "wav",
-                },
+
+def _fixed_line_path(name: str) -> Path:
+    return _FIXED_LINE_DIR / f"{name}.wav"
+
+
+def _read_fixed_line(name: str) -> "tuple[bytes, int, float]":
+    """(pcm_bytes, sample_rate, duration_s) for a shipped fixed line.
+
+    Raises on any problem (missing file, not mono 16-bit PCM) — callers
+    decide whether that is fatal (the notice path logs it plainly; the
+    warm-up preload only ever logs)."""
+    path = _fixed_line_path(name)
+    with wave.open(str(path), "rb") as wav:
+        channels = wav.getnchannels()
+        width = wav.getsampwidth()
+        rate = wav.getframerate()
+        frames = wav.getnframes()
+        if channels != 1 or width != 2:
+            raise ValueError(
+                f"fixed line {name} must be mono 16-bit PCM, got "
+                f"channels={channels} sampwidth={width}"
             )
-        if resp.status_code == 200:
-            _ORPHEUS_CACHE["ok"] = True
-            _ORPHEUS_CACHE["ts"] = time.time()
-            logger.info("VOICE orpheus TTS probe: OK (terms accepted)")
-            return True
-        logger.error(
-            "VOICE orpheus TTS probe failed http=%s body=%s",
-            resp.status_code, resp.text[:200],
-        )
-        _ORPHEUS_CACHE["ok"] = False
-        _ORPHEUS_CACHE["ts"] = time.time()
+        raw = wav.readframes(frames)
+    return raw, rate, (frames / float(rate)) if rate else 0.0
+
+
+def _preload_fixed_lines() -> None:
+    """Warm step (TASK-VOI-008 hook, TASK-VOI-009 content): read every
+    shipped fixed line once so the first real playback never pays disk
+    + parse on the call's critical path. Best-effort by design — the
+    caller wraps this so a failure only ever logs."""
+    for name in _FIXED_LINES:
+        _read_fixed_line(name)
+
+
+async def _play_fixed_line(room, name: str) -> bool:
+    """Play a shipped fixed line into the room as the agent's voice.
+
+    Publishes the WAV on its own microphone track via an AudioSource
+    (capture_frame paces in real time, so this returns roughly when
+    the line has finished playing), then unpublishes. Returns True
+    only when the whole line was queued for playout."""
+    if _rtc is None:
+        logger.error("VOICE fixed line %s cannot play: livekit rtc unavailable", name)
         return False
+    try:
+        raw, rate, _duration = _read_fixed_line(name)
     except Exception as exc:
-        logger.error("VOICE orpheus TTS probe error: %s", exc)
-        _ORPHEUS_CACHE["ok"] = False
-        _ORPHEUS_CACHE["ts"] = time.time()
+        logger.error("VOICE fixed line %s unreadable: %s", name, exc)
         return False
-
-
-def _fallback_tts():
-    """A working standalone TTS for fixed lines (greeting fallback).
-
-    Ordering (2026-11-13, ZAI Agent 2): orpheus FIRST only when a live probe
-    proves it works; otherwise EdgeTTS — keyless, en-IN native, verified
-    reachable from this host (28,800-byte probe). None if both are dead.
-    """
-    if GROQ_PLUGIN_AVAILABLE and _orpheus_ok():
-        key = _groq_key()
-        if key:
-            try:
-                return _lk_groq.TTS(
-                    api_key=key, model="canopylabs/orpheus-v1-english",
-                    voice="autumn",
-                )
-            except Exception as exc:
-                logger.warning("fallback groq TTS unavailable: %s", exc)
-    if EDGE_TTS_AVAILABLE:
-        try:
-            tts = EdgeTTS(voice=_edge_voice())
-            logger.info("VOICE fallback TTS: edge-tts %s (orpheus dead/unprobed)", _edge_voice())
-            return tts
-        except Exception as exc:
-            logger.warning("fallback edge TTS unavailable: %s", exc)
-    return None
-
-
-def _edge_voice() -> str:
-    return (os.getenv("FRIDAY_EDGE_TTS_VOICE") or "en-IN-NeerjaNeural").strip()
-
-
-_ORPHEUS_CACHE = {"ok": None, "ts": 0.0}
-
-
-def _orpheus_ok() -> bool:
-    """Cached probe result (5 min) — _fallback_tts is sync, so the probe
-    itself runs in the job entrypoint before any session is built."""
-    now = time.time()
-    if _ORPHEUS_CACHE["ok"] is None or now - _ORPHEUS_CACHE["ts"] > 300:
-        return False  # unprobed counts as dead until the entrypoint proves it
-    return _ORPHEUS_CACHE["ok"]
-
-
-async def _try_groq_pipeline():
-    """Path 2: full Groq pipeline on the key the chat brain already uses."""
-    key = _groq_key()
-    if not key:
-        logger.info("groq pipeline unavailable: no GROQ key in env")
-        return None, "no_groq_key"
-    if not GROQ_PLUGIN_AVAILABLE:
-        logger.warning("groq pipeline unavailable: livekit-plugins-groq not importable on this host")
-        _write_status("no-provider", "none", "livekit-plugins-groq not installed on the voice host")
-        return None, "no_plugin"
-
-    stt = _lk_groq.STT(
-        api_key=key,
-        model="whisper-large-v3-turbo",
-        # TASK-VOI-005: detect_language=True re-detected the language of
-        # every utterance on the owner's 2026-11-15 call and garbled it —
-        # his "Hello" was transcribed as Italian ("E' l'onno?") and his
-        # Telugu speech as Tamil-script text, so the pipeline answered
-        # nonsense with generic chit-chat. The pipeline is English-out by
-        # design (its instructions are built english_out=True), so STT is
-        # pinned to English — the plugin's own default. (Gemini Live,
-        # the primary path, hears languages natively; this pin governs
-        # only the fallback.)
-        language="en",
-    )
-    llm = _lk_groq.LLM(api_key=key, model=_llm_chat_model(), temperature=0.6)
-    if _orpheus_ok():
-        tts = _lk_groq.TTS(api_key=key, model="canopylabs/orpheus-v1-english", voice="autumn")
-        logger.info("groq pipeline ready: whisper-large-v3-turbo + %s + orpheus", _llm_chat_model())
-    elif EDGE_TTS_AVAILABLE:
-        tts = EdgeTTS(voice=_edge_voice())
-        logger.info(
-            "groq pipeline ready: whisper-large-v3-turbo + %s + edge-tts %s "
-            "(orpheus terms unaccepted — degraded, not silent)",
-            _llm_chat_model(), _edge_voice(),
+    source = None
+    track = None
+    try:
+        source = _rtc.AudioSource(rate, 1)
+        track = _rtc.LocalAudioTrack.create_audio_track(f"friday-{name}", source)
+        await room.local_participant.publish_track(
+            track, _rtc.TrackPublishOptions(source=_rtc.TrackSource.SOURCE_MICROPHONE)
         )
+        frame_bytes = max(2, int(rate * 0.02) * 2)  # 20 ms of mono s16
+        for offset in range(0, len(raw), frame_bytes):
+            part = raw[offset:offset + frame_bytes]
+            frame = _rtc.AudioFrame(
+                data=part, sample_rate=rate, num_channels=1,
+                samples_per_channel=len(part) // 2,
+            )
+            queued = source.capture_frame(frame)
+            if asyncio.iscoroutine(queued):
+                await queued
+        wait_playout = getattr(source, "wait_for_playout", None)
+        if wait_playout is not None:
+            done = wait_playout()
+            if asyncio.iscoroutine(done):
+                await done
+        return True
+    except Exception as exc:
+        logger.error("VOICE fixed line %s playback failed: %s", name, exc)
+        return False
+    finally:
+        if track is not None:
+            try:
+                await room.local_participant.unpublish_track(track.sid)
+            except Exception:
+                pass
+        if source is not None:
+            try:
+                await source.aclose()
+            except Exception:
+                pass
+
+
+async def _announce_unavailable(room) -> None:
+    """The TASK-VOI-009 unavailable path's audible half: wait briefly
+    for the participant, then play the recorded notice. The job was
+    dispatched by a join, so the participant is normally already here;
+    the wait is bounded and a no-show is logged, never hung on."""
+    deadline = time.time() + 10.0
+    while not room.remote_participants and time.time() < deadline:
+        await asyncio.sleep(0.25)
+    if not room.remote_participants:
+        logger.error(
+            "VOICE unavailable notice: no participant present to hear it; "
+            "the status file and this journal line are the record"
+        )
+        return
+    if await _play_fixed_line(room, "voice_unavailable"):
+        logger.error("VOICE unavailable notice played (recorded line, no provider)")
     else:
-        _write_status("no-provider", "none", "orpheus 400 model_terms_required and edge-tts unavailable")
-        return None, "orpheus_terms_required"
-    return (stt, llm, tts), None
+        logger.error("VOICE unavailable notice could not be played; see the failure above")
 
 
 async def entrypoint(ctx: JobContext):
@@ -1131,8 +1091,11 @@ async def entrypoint(ctx: JobContext):
     provider_name = "none"
     first_artifacts: dict = {}
 
-    # Try the preferred realtime provider first. Do not spend up to 15 seconds
-    # probing a Groq TTS model on a path that never uses Groq.
+    # Gemini Live is the only provider (TASK-VOI-009). If it cannot
+    # serve this job, the honest replacement for the deleted fallback
+    # pipeline is the recorded notice: the participant HEARS that voice
+    # is unavailable, the status file and the journal say why, plainly,
+    # and the job leaves. No silent rescue by any other provider, ever.
     realtime_model, _used_key = await _try_gemini_realtime(
         instructions, verified_key=_verified_key
     )
@@ -1144,42 +1107,30 @@ async def entrypoint(ctx: JobContext):
             "ready", provider_name, model=_voice_model(), room=_room_name, job_id=_job_id
         )
     else:
-        # Only probe Orpheus when Gemini realtime is unavailable and the
-        # modular Groq pipeline is actually needed.
-        await _probe_orpheus_tts()
-        groq_parts, reason = await _try_groq_pipeline()
-        if groq_parts is None:
-            detail = {
-                "no_groq_key": "no Groq key in the service environment",
-                "no_plugin": "livekit-plugins-groq not installed on the voice host",
-                "orpheus_terms_required": "Groq orpheus TTS requires model terms acceptance "
-                "(org admin, console.groq.com) and edge-tts is unavailable on this host",
-            }.get(reason or "", "no speech provider available")
-            _write_status("no-provider", "none", detail, room=_room_name, job_id=_job_id)
-            logger.error("VOICE job refused: %s", detail)
-            # Leave honestly: joining a room with no way to speak is the
-            # silent-dead-line failure mode this redesign exists to kill.
-            return
-        provider_name = f"groq:{_llm_chat_model()}"
-        pinned.update(
-            kind="groq",
-            key=None,
-            instructions=_instructions(
-                with_memory=True, english_out=True, memory_block=_memory_block
-            ),
-        )
-        first_artifacts = {"groq_parts": groq_parts}
+        if not GOOGLE_PLUGIN_AVAILABLE:
+            _cause = "the Gemini Live plugin is not importable on the voice host"
+        elif not _gemini_pool_keys():
+            _cause = "no Gemini keys are configured for the voice worker"
+        elif _verified_key is not None:
+            _cause = "the Gemini Live session model could not be built on the verified key"
+        else:
+            _cause = (
+                "no Gemini key could be verified "
+                "(every candidate was rejected, unreachable or unjudged)"
+            )
         _write_status(
-            "ready", provider_name, model=_llm_chat_model(), room=_room_name, job_id=_job_id
+            "unavailable", "none", f"voice unavailable: {_cause}",
+            room=_room_name, job_id=_job_id,
         )
+        logger.error(
+            "VOICE job unavailable: %s — playing the recorded notice and leaving", _cause
+        )
+        await _announce_unavailable(ctx.room)
+        return
 
-    # One standalone-TTS instance per job (TASK-VOI-003): the Gemini
-    # session attaches it for fixed lines (greeting-fallback fix, live
-    # journal 2026-11-13: on a realtime session, say() without a
-    # standalone TTS raises 'no TTS model' and the fallback line could
-    # never speak) and the greeting gate checks the same instance. The
-    # pre-fix code built it twice per job and logged it twice.
-    _fallback = _fallback_tts()
+    # TASK-VOI-009: there is no standalone-TTS instance any more. Fixed
+    # lines (the greeting, the unconfirmed outcomes) are shipped WAVs
+    # played by _play_fixed_line; the session below is pure Gemini Live.
 
     # Per-job conversation/turn state. Kept OUTSIDE any single session so
     # the watchdog can carry it into a rebuilt session (TASK-VOI-003).
@@ -1204,11 +1155,11 @@ async def entrypoint(ctx: JobContext):
         "greeting_task": None,
         "watchdog_task": None,
         # TASK-VOI-004 recovery-ladder state: the kind of session
-        # currently in use (rewritten only when a failover rung proves
-        # itself), the provider label for status lines, whether a
-        # ladder run is in flight, the latest session error record
-        # ({"ts", "text", "recoverable"} for the CURRENT session only),
-        # and how many ladder runs this job has needed.
+        # currently in use (always "gemini" since TASK-VOI-009), the
+        # provider label for status lines, whether a ladder run is in
+        # flight, the latest session error record ({"ts", "text",
+        # "recoverable"} for the CURRENT session only), and how many
+        # ladder runs this job has needed.
         "kind": pinned["kind"],
         "provider_name": provider_name,
         "recovering": False,
@@ -1216,66 +1167,33 @@ async def entrypoint(ctx: JobContext):
         "recoveries": 0,
     }
 
-    async def _make_session(
-        instr: str, artifacts: "dict | None" = None, kind: "str | None" = None
-    ):
-        """Build (not start) an AgentSession on the pinned provider.
+    async def _make_session(instr: str, artifacts: "dict | None" = None):
+        """Build (not start) a Gemini Live AgentSession on the pin.
 
         Used for the first session AND for watchdog rebuilds, so a
-        rebuilt session is identical in shape to the original — only the
-        instructions differ (they gain the conversation context block).
-        Rebuilds construct fresh provider artifacts on the PINNED
-        provider/key; they never re-run provider selection.
-
-        ``kind`` (TASK-VOI-004) overrides the branch for ONE build —
-        the recovery ladder's final rung builds a Groq session while
-        the job's pin still says gemini. The pin itself is only
-        rewritten after that rung has PROVEN itself live.
+        rebuilt session is identical in shape to the original — only
+        the instructions differ (they gain the conversation context
+        block). Rebuilds construct a fresh realtime model on the PINNED
+        verified key; they never re-run provider selection. Since
+        TASK-VOI-009 there is exactly one provider to build, so the
+        TASK-VOI-004 per-rung ``kind`` branch is gone.
         """
         artifacts = artifacts or {}
-        kind = kind or pinned["kind"]
         agent = Agent(instructions=instr, tools=_voice_tools())
-        if kind == "gemini":
-            model = artifacts.get("model")
-            if model is None:
-                model = _build_realtime_model(pinned["key"], instr)
-            if model is None:
-                return None, None
-            session = _build_session(
-                llm=model,
-                **({"tts": _fallback} if _fallback is not None else {}),
-                turn_detection="realtime_llm",
-                min_endpointing_delay=0.5,
-                max_endpointing_delay=3.0,
-                allow_interruptions=True,
-                min_interruption_duration=0.8,
-                resume_false_interruption=True,
-                false_interruption_timeout=1.0,
-            )
-            if _fallback is not None:
-                logger.info("gemini session carries a groq fallback TTS for fixed lines")
-            return session, agent
-        parts = artifacts.get("groq_parts")
-        if parts is None:
-            parts, _reason = await _try_groq_pipeline()
-            if parts is None:
-                return None, None
-        stt, llm, tts = parts
+        model = artifacts.get("model")
+        if model is None:
+            model = _build_realtime_model(pinned["key"], instr)
+        if model is None:
+            return None, None
         session = _build_session(
-            stt=stt,
-            llm=llm,
-            tts=tts,
-            turn_detection="stt",
+            llm=model,
+            turn_detection="realtime_llm",
             min_endpointing_delay=0.5,
-            # LATENCY FIX (2026-11-14): 4.0 s of tolerated silence before
-            # the STT turn was allowed to close was the single largest
-            # dead-air term in every reply — the owner stopped talking and
-            # FRIDAY waited up to four full seconds before even starting
-            # to think. 2.0 s still protects mid-sentence pauses (the
-            # 0.5 s minimum is unchanged) while halving the worst case.
-            max_endpointing_delay=2.0,
+            max_endpointing_delay=3.0,
             allow_interruptions=True,
-            min_interruption_duration=0.9,
+            min_interruption_duration=0.8,
+            resume_false_interruption=True,
+            false_interruption_timeout=1.0,
         )
         return session, agent
 
@@ -1366,35 +1284,41 @@ async def entrypoint(ctx: JobContext):
 
     session, agent = await _make_session(pinned["instructions"], first_artifacts)
     if session is None:
+        # The verified key could not build a session: Gemini cannot
+        # serve this job. Same honest unavailable path as a failed key
+        # resolution (TASK-VOI-009) — notice, plain log, leave.
         _write_status(
-            "no-provider", "none", "pinned provider could not build a session",
+            "unavailable", "none",
+            "voice unavailable: the Gemini session could not be built on the verified key",
             room=_room_name, job_id=_job_id,
         )
-        logger.error("VOICE job refused: pinned provider session build failed")
+        logger.error(
+            "VOICE job unavailable: pinned Gemini session build failed "
+            "— playing the recorded notice and leaving"
+        )
+        await _announce_unavailable(ctx.room)
         return
     await _start(session, agent)
 
     greeting_enabled = (os.getenv("FRIDAY_VOICE_GREETING") or "1").strip().lower() not in (
         "0", "false", "no",
     )
-    # Honest fallback (remote main, 2026-11-13): a greeting must never claim
-    # fleet health it has not probed.
-    greeting_text = "I am here, Boss. What would you like to work on?"
-    # The standalone TTS for fixed lines is the single per-job instance
-    # built during provider selection (_fallback above): the gate inside
-    # _greet_when_ready only checks that one exists — say() itself speaks
-    # through the session's attached TTS.
+    # Honest greeting (remote main, 2026-11-13): a greeting must never
+    # claim fleet health it has not probed. Since TASK-VOI-009 the fixed
+    # line below is the shipped recording voice/audio/greeting.wav —
+    # the text is kept here only as the line's documentation.
 
     async def _greet_when_ready(sess) -> None:
         """Speak a greeting the owner can actually HEAR, in this order:
 
-        1. say() the honest fixed line through the standalone TTS — the
-           standard audio path, no realtime-arming race, no dropped
-           generations. Live lesson 2026-11-13: the 'speaking' agent-state
-           fired while the realtime plugin DROPPED every audio chunk
-           ('received server content but no active generation') — state is
-           NOT proof of audible audio, so the deterministic voice speaks
-           first.
+        1. Play the honest fixed line — since TASK-VOI-009 that is the
+           shipped recording (voice/audio/greeting.wav), published into
+           the room verbatim: no synthesis, no realtime-arming race, no
+           dropped generations. Live lesson 2026-11-13: the 'speaking'
+           agent-state fired while the realtime plugin DROPPED every
+           audio chunk ('received server content but no active
+           generation') — state is NOT proof of audible audio, so the
+           deterministic recording speaks first.
         2. Best-effort warm greeting through the realtime model (personal,
            bilingual) — dropped generations are non-fatal: the fixed line
            already played.
@@ -1414,30 +1338,19 @@ async def entrypoint(ctx: JobContext):
         # audible word. 0.3s is enough for the audio pipeline to settle.
         await asyncio.sleep(0.3)
 
-        # 1) deterministic fixed line
-        if _fallback is not None:
-            try:
-                sess.say(greeting_text, allow_interruptions=True)
-                logger.info("VOICE fixed-line greeting spoken via fallback TTS")
-            except TypeError:
-                try:
-                    sess.say(greeting_text)
-                    logger.info("VOICE fixed-line greeting spoken via fallback TTS")
-                except Exception as exc:
-                    logger.error("VOICE fixed-line say() failed: %s", exc)
-            except Exception as exc:
-                logger.error("VOICE fixed-line say() failed: %s", exc)
-            # let the fixed line finish before layering the warm one
-            # (was 4.0s; the orpheus line is ~3s of audio — 2.5s overlaps
-            # just enough that the warm greeting starts as the line ends)
-            await asyncio.sleep(2.5)
+        # 1) deterministic fixed line — the shipped recording. Playback
+        # paces in real time, so when it returns the line has played;
+        # the short settle lets it land before the warm greeting layers.
+        if await _play_fixed_line(ctx.room, "greeting"):
+            logger.info("VOICE fixed-line greeting played (recorded line)")
+        else:
+            logger.error("VOICE fixed-line greeting could not be played")
+        await asyncio.sleep(0.3)
 
         # 2) warm realtime greeting (best-effort)
         _telugu_line = (
             " Add one short Telugu line "
             "(నమస్కారం, ఫ్రైడే సిద్ధంగా ఉంది) so the user knows Telugu works. "
-            if provider_name.startswith("gemini")
-            else " "
         )
         _greeting_prompt = (
             "Greet the user warmly as FRIDAY in one or two short sentences. "
@@ -1482,18 +1395,12 @@ async def entrypoint(ctx: JobContext):
         await _close_quietly(old, "recovery ladder")
         if live.get("session") is old:
             live["session"] = None
-        base_instr = pinned["instructions"]
-        if kind != pinned["kind"]:
-            # Cross-provider failover (gemini -> groq): the pipeline
-            # speaks English out, so its instructions are rebuilt for
-            # it — with the same memory block, the same context block
-            # and the same do-not-greet rule as a pinned rebuild.
-            base_instr = _instructions(
-                with_memory=True, english_out=True, memory_block=_memory_block
-            )
-        instr = base_instr + _context_block(turn["transcript"])
+        # TASK-VOI-009: every rung is a pinned Gemini rebuild with the
+        # same instructions + context block — the pre-VOI-009
+        # cross-provider instruction rebuild is removed history.
+        instr = pinned["instructions"] + _context_block(turn["transcript"])
         live["session_error"] = None
-        sess, ag = await _make_session(instr, kind=kind)
+        sess, ag = await _make_session(instr)
         if sess is None:
             return False, f"{kind} session build failed (provider setup failure)"
         try:
@@ -1545,39 +1452,25 @@ async def entrypoint(ctx: JobContext):
     async def _speak_unconfirmed(pending_text: str) -> None:
         """Ladder exhausted: the owner hears the truth, not silence —
         the same 'unconfirmed' contract the brain bridge uses when a
-        brain call times out (TASK-VOI-003). Best-effort: if no session
-        can speak, the journal + status file carry the outcome."""
-        if pending_text:
-            line = (
-                "I have lost my voice connection, and I could not restore it. "
-                "The outcome of that request is unconfirmed — please check "
-                "the task history before repeating it."
+        brain call times out (TASK-VOI-003). Since TASK-VOI-009 the
+        outcome is a shipped recording played into the room (no session
+        needs to survive for the owner to hear it); the recordings say:
+        with a request pending — "I have lost my voice connection, and
+        I could not restore it. The outcome of that request is
+        unconfirmed. Please check the task history before repeating
+        it."; without — the same opening, then "Please try me again in
+        a moment." If playback itself fails, the journal + status file
+        carry the outcome."""
+        name = "unconfirmed_request" if pending_text else "unconfirmed_general"
+        if await _play_fixed_line(ctx.room, name):
+            logger.error(
+                "VOICE recovery ladder: played the recorded unconfirmed outcome"
             )
         else:
-            line = (
-                "I have lost my voice connection, and I could not restore it. "
-                "Please try me again in a moment."
-            )
-        sess = live.get("session")
-        if sess is None:
             logger.error(
-                "VOICE recovery ladder: no live session can speak the unconfirmed outcome"
+                "VOICE recovery ladder: could not play the unconfirmed "
+                "outcome; the journal carries it"
             )
-            return
-        try:
-            sess.say(line, allow_interruptions=True)
-            logger.error(
-                "VOICE recovery ladder: spoke the unconfirmed outcome via the surviving session"
-            )
-            await asyncio.sleep(3.0)
-        except TypeError:
-            try:
-                sess.say(line)
-                await asyncio.sleep(3.0)
-            except Exception as exc:
-                logger.error("VOICE recovery ladder: unconfirmed say() failed: %s", exc)
-        except Exception as exc:
-            logger.error("VOICE recovery ladder: unconfirmed say() failed: %s", exc)
 
     async def _recover(pending_text: str) -> None:
         """Run the TASK-VOI-004 ladder once for one wedged/dead turn."""
@@ -1618,16 +1511,8 @@ async def entrypoint(ctx: JobContext):
                     )
             served = report["served"]
             if served:
-                if served != live.get("kind"):
-                    # The failover rung proved itself: the job's pin
-                    # moves down the chain for the rest of the call.
-                    live["kind"] = served
-                    pinned["kind"] = served
-                    live["provider_name"] = f"groq:{_llm_chat_model()}"
-                    logger.warning(
-                        "VOICE recovery ladder: job failed over to the groq "
-                        "pipeline WITH context; pin updated for the rest of the call"
-                    )
+                # TASK-VOI-009: served is always the pinned Gemini —
+                # there is no lower rung for the pin to move to.
                 _write_status(
                     "ready", live["provider_name"],
                     f"recovered via the ladder on {served}",
@@ -1668,11 +1553,12 @@ async def entrypoint(ctx: JobContext):
             utterances were never even transcribed.
 
         Either trigger runs the recovery ladder ONCE for that turn
-        (_recover): pinned rebuild, one pinned retry, then one
-        context-carrying Groq failover, bounded by
-        _RECOVERY_BUDGET_S, after which the owner hears the honest
-        unconfirmed outcome. The watchdog stays alive for the job's
-        whole life — a later wedge or death runs the ladder again.
+        (_recover): pinned rebuild, one pinned retry (the pre-VOI-009
+        third rung, a context-carrying Groq failover, is removed
+        history), bounded by _RECOVERY_BUDGET_S, after which the owner
+        hears the honest unconfirmed outcome. The watchdog stays alive
+        for the job's whole life — a later wedge or death runs the
+        ladder again.
         Rebuilt sessions never greet: the owner is mid-conversation,
         and a fresh greeting is precisely the failure this prevents.
         """
@@ -1813,7 +1699,9 @@ def _key_keeper_loop() -> None:
     The boot warm-up resolves ONCE. On 2026-11-14 23:43 IST that single
     round failed under host load and the process stayed keyless for
     three hours — the owner's 02:30 call inherited the failure and was
-    served by the Groq pipeline from the first second. The keeper
+    served by the Groq pipeline from the first second (that pipeline
+    is removed history since TASK-VOI-009; today the same failure
+    would reach the recorded unavailable notice). The keeper
     retries on a slow cadence until a verified key is cached, and
     refreshes it before expiry, so a job normally finds the cache
     already warm and never pays a probe round at all. Cost: at most one
@@ -1835,9 +1723,10 @@ def _warm_up_background() -> None:
     on a cold owner-memory recall (the friday import chain measures
     ~10 s in a fresh process) and cold key probing before the session
     even existed. This daemon thread imports the heavy chains, seeds
-    the verified-key cache with one probe, and constructs one EdgeTTS
-    instance so the network/SSL paths are warm. Best-effort throughout:
-    a warm-up failure only ever logs.
+    the verified-key cache with one probe, and preloads the shipped
+    fixed-line WAVs (TASK-VOI-009; it used to construct an EdgeTTS
+    instance here — removed with the Groq pipeline). Best-effort
+    throughout: a warm-up failure only ever logs.
 
     TASK-VOI-005: after the first pass, this thread becomes the key
     keeper (see _key_keeper_loop) for the process's whole life.
@@ -1860,8 +1749,7 @@ def _warm_up_background() -> None:
             except Exception as exc:
                 logger.info("VOICE warm-up key resolution failed (non-fatal): %s", exc)
             try:
-                if EDGE_TTS_AVAILABLE:
-                    EdgeTTS(voice=_edge_voice())
+                _preload_fixed_lines()
             except Exception:
                 pass
             logger.info("VOICE warm-up finished in %.1fs", time.time() - started)
@@ -1904,6 +1792,12 @@ def _warm_up_background() -> None:
 # the job still recalls fresh for its own instructions) and one
 # throwaway EdgeTTS synthesis of the fixed greeting line (DNS/TLS/
 # WebSocket + first-synthesis costs; the audio is discarded).
+# (TASK-VOI-009 composition note: the EdgeTTS synthesis step warmed a
+# synthesis path that no longer exists — the greeting is a shipped
+# WAV now — so the warm thread's second step preloads the fixed-line
+# WAVs instead: the same off-critical-path first-use cost, for the
+# path the greeting actually takes. The pool, the hook, the throttle
+# and the memory step are VOI-008's, unchanged.)
 # Executors are warmed at worker start and after every job, while
 # calls arrive minutes to hours apart, so the thread is done long
 # before it matters. Every step is best-effort: a warm failure only
@@ -1922,20 +1816,13 @@ def _executor_warm_steps() -> None:
     except Exception as exc:
         logger.info("VOICE executor warm: memory recall failed (non-fatal): %s", exc)
     try:
-        if EDGE_TTS_AVAILABLE:
-            import edge_tts
-
-            async def _drain() -> None:
-                comm = edge_tts.Communicate(
-                    "I am here, Boss. What would you like to work on?",
-                    _edge_voice(),
-                )
-                async for _chunk in comm.stream():
-                    pass
-
-            asyncio.run(_drain())
+        # TASK-VOI-009: was a throwaway EdgeTTS synthesis of the
+        # greeting line (VOI-008); the greeting is a shipped recording
+        # now, so warm its real first-use cost — reading + parsing the
+        # fixed-line WAVs — instead.
+        _preload_fixed_lines()
     except Exception as exc:
-        logger.info("VOICE executor warm: edge-tts synthesis failed (non-fatal): %s", exc)
+        logger.info("VOICE executor warm: fixed-line preload failed (non-fatal): %s", exc)
     logger.info("VOICE executor warm finished in %.1fs", time.time() - started)
 
 

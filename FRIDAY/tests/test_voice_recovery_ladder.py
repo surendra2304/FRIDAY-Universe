@@ -16,6 +16,12 @@ single rebuild:
   the plan only ever moves down the provider chain);
 - the ladder sequencer: rung ordering, first-success stop, and the
   single total elapsed budget shared by all rungs.
+
+TASK-VOI-009 (2026-11-15): the Groq failover rung is REMOVED (owner:
+"Gemini is the only AI for voice"). The plan tests below were converted
+to the Gemini-only contract — two pinned Gemini rebuilds, no second
+provider anywhere in the plan — and the sequencer tests re-scripted
+for the two-rung plan. Classification and budget rules are unchanged.
 """
 
 import asyncio
@@ -126,22 +132,28 @@ def test_error_event_details_no_error_attribute():
 # ---------------------------------------------------------------------------
 
 
-def test_ladder_plan_gemini_is_pinned_pinned_groq():
-    assert worker._ladder_plan("gemini") == ["gemini", "gemini", "groq"]
-    assert worker._ladder_plan(None) == ["gemini", "gemini", "groq"]
+def test_ladder_plan_is_two_pinned_gemini_rebuilds():
+    # TASK-VOI-009: was pinned/pinned/Groq-failover before the removal.
+    assert worker._ladder_plan("gemini") == ["gemini", "gemini"]
+    assert worker._ladder_plan(None) == ["gemini", "gemini"]
 
 
-def test_ladder_plan_groq_has_no_lower_rung():
-    assert worker._ladder_plan("groq") == ["groq", "groq"]
+def test_ladder_plan_has_no_second_provider():
+    # The pre-VOI-009 plan for a Groq session was ["groq", "groq"];
+    # there is no Groq session any more — every input gets the one
+    # Gemini plan, and no plan may name any other provider.
+    assert worker._ladder_plan("groq") == ["gemini", "gemini"]
+    for kind in ("gemini", "groq", None, "anything"):
+        assert "groq" not in worker._ladder_plan(kind)
 
 
-def test_ladder_plan_never_moves_back_up():
+def test_ladder_plan_never_leaves_gemini():
+    # Was "never moves back up the provider chain"; with one provider
+    # the stronger contract is: the plan never leaves Gemini at all.
     for kind in ("gemini", "groq", None, "anything"):
         plan = worker._ladder_plan(kind)
-        assert plan[-1] == "groq" or set(plan) == {"groq"}
-        if "groq" in plan and "gemini" in plan:
-            last_gemini = len(plan) - 1 - plan[::-1].index("gemini")
-            assert plan.index("groq") > last_gemini
+        assert set(plan) == {"gemini"}
+        assert len(plan) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -174,8 +186,7 @@ def test_ladder_walks_the_plan_until_a_rung_serves():
         clock,
         [
             (False, "gemini died on a provider failure: handshake", 40.0),
-            (False, "gemini did not complete the re-asked turn", 100.0),
-            (True, "groq completed the re-asked turn", 12.0),
+            (True, "gemini completed the re-asked turn", 12.0),
         ],
         calls,
     )
@@ -185,10 +196,12 @@ def test_ladder_walks_the_plan_until_a_rung_serves():
             budget_s=300.0, rung_prove_s=100.0, now=clock,
         )
     )
-    assert report["served"] == "groq"
-    assert [c[0] for c in calls] == ["gemini", "gemini", "groq"]
-    assert [s[1] for s in report["steps"]] == [False, False, True]
-    assert report["elapsed"] == 152.0
+    # TASK-VOI-009: the serving rung used to be the Groq failover; the
+    # second pinned Gemini rebuild is now the last rung that can serve.
+    assert report["served"] == "gemini"
+    assert [c[0] for c in calls] == ["gemini", "gemini"]
+    assert [s[1] for s in report["steps"]] == [False, True]
+    assert report["elapsed"] == 52.0
 
 
 def test_ladder_stops_at_first_success():
@@ -213,7 +226,7 @@ def test_ladder_exhaustion_reports_every_rung():
     calls = []
     attempt = _scripted_attempt(
         clock,
-        [(False, "fail 1", 30.0), (False, "fail 2", 30.0), (False, "fail 3", 30.0)],
+        [(False, "fail 1", 30.0), (False, "fail 2", 30.0)],
         calls,
     )
     report = _run(
@@ -223,7 +236,8 @@ def test_ladder_exhaustion_reports_every_rung():
         )
     )
     assert report["served"] is None
-    assert len(report["steps"]) == 3
+    # TASK-VOI-009: two rungs is the whole ladder now (was three).
+    assert len(report["steps"]) == 2
     assert all(not s[1] for s in report["steps"])
 
 
@@ -239,14 +253,17 @@ def test_ladder_total_budget_is_shared_and_binding():
     report = _run(
         worker._run_recovery_ladder(
             worker._ladder_plan("gemini"), attempt,
-            budget_s=150.0, rung_prove_s=100.0, now=clock,
+            budget_s=90.0, rung_prove_s=100.0, now=clock,
         )
     )
-    # rung 1 gets 100 s, rung 2 only the remaining 50 s, rung 3 never runs
-    assert calls == [("gemini", 100.0), ("gemini", 50.0)]
+    # TASK-VOI-009 (two-rung plan): rung 1's prove window is capped by
+    # the shared budget (90 s, not the 100 s rung allowance) and burns
+    # it all; rung 2 is then recorded as budget-exhausted without an
+    # attempt. (Pre-removal this used a 150 s budget across 3 rungs.)
+    assert calls == [("gemini", 90.0)]
     assert report["served"] is None
-    assert len(report["steps"]) == 3
-    assert "budget exhausted" in report["steps"][2][2]
+    assert len(report["steps"]) == 2
+    assert "budget exhausted" in report["steps"][1][2]
 
 
 def test_ladder_with_no_budget_runs_nothing():
