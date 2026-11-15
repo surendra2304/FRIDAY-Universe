@@ -6,7 +6,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 import time
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import case, or_
 
 from storage.relational.models import MemoryRecord, Namespace, LifecycleState, MemoryType
 from storage.relational.access_scope import visible_memory_predicate
@@ -232,9 +232,24 @@ class SearchService:
 
             lexical_candidates = []
             if token_predicates:
+                # Order the bounded candidate scan by how much of the query
+                # each record matches BEFORE the historical importance /
+                # confidence keys (TASK-MEM-002). The scan is capped (500 at
+                # FRIDAY's limit=5), and an importance-first order fills the
+                # whole window with high-importance records that match a
+                # single common token ("the"), so a fresh fact matching most
+                # of the query is never scored at all — the same starvation
+                # shape TASK-REL-031 closed on FRIDAY's local recall path.
+                # Match count is exactly the numerator of the overlap ratio
+                # scored below, so this only changes WHICH records reach the
+                # scoring loop, never how they are scored.
+                match_count_expr = case((token_predicates[0], 1), else_=0)
+                for predicate in token_predicates[1:]:
+                    match_count_expr = match_count_expr + case((predicate, 1), else_=0)
                 lexical_candidates = (
                     kw_query.filter(or_(*token_predicates))
                     .order_by(
+                        match_count_expr.desc(),
                         MemoryRecord.importance.desc(),
                         MemoryRecord.confidence.desc(),
                         MemoryRecord.created_at.desc(),
@@ -247,9 +262,20 @@ class SearchService:
                 text_lower = record.content_text.lower()
                 matched_count = sum(1 for token in scorable_tokens if token in text_lower)
                 if matched_count:
-                    lexical_matches.append((record.id, matched_count / len(scorable_tokens)))
+                    lexical_matches.append(
+                        (
+                            record.id,
+                            matched_count / len(scorable_tokens),
+                            record.created_at.timestamp() if record.created_at else 0.0,
+                        )
+                    )
 
-        lexical_matches.sort(key=lambda item: (-item[1], item[0]))
+        # Equal-overlap records rank newest-first (TASK-MEM-002): the old
+        # id-only tie-break made which version of a fact FRIDAY recalls an
+        # accident of uuid ordering, so a stale value could outrank its
+        # correction indefinitely. Recency decides only exact relevance ties;
+        # the id remains the final deterministic key.
+        lexical_matches.sort(key=lambda item: (-item[1], -item[2], item[0]))
         keyword_ranks = {
             item[0]: (rank + 1, item[1])
             for rank, item in enumerate(lexical_matches[:limit * 3])
@@ -258,7 +284,17 @@ class SearchService:
         # -------------------------------------------------------------
         # 3. GRAPH RELATIONSHIP EXPANSION
         # -------------------------------------------------------------
-        candidate_seed_ids = list(set(list(vector_ranks.keys())[:5] + list(keyword_ranks.keys())[:5]))
+        # Expansion seeds keep the historical relevance order (overlap
+        # ratio, then id): seed choice decides which records RECEIVE graph
+        # boosts (get_graph_neighbors excludes the seeds themselves), so it
+        # must not drift with the ranking tie-break above — otherwise a
+        # record promoted into the seed set by recency would silently lose
+        # the graph signal TASK-REL-024 pinned (TASK-MEM-002).
+        keyword_seed_ids = [
+            item[0]
+            for item in sorted(lexical_matches, key=lambda item: (-item[1], item[0]))[:5]
+        ]
+        candidate_seed_ids = list(set(list(vector_ranks.keys())[:5] + keyword_seed_ids))
         graph_boosts = GraphService.get_graph_neighbors(
             db, candidate_seed_ids, tenant_id=resolved_tenant
         )
