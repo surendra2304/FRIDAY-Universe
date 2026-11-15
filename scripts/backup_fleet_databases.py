@@ -4,7 +4,8 @@
 Backs up every agent's Oracle Autonomous Database schema into a timestamped,
 permission-protected directory: one compressed JSONL file per table plus a
 manifest with row counts and SHA-256 checksums, and (optionally) a snapshot of
-the service configuration files (DB credential env files + systemd units).
+the service configuration files (DB credential env files + systemd units),
+plus local-only agent state files (Stratex measurement state, TASK-SEN-007).
 
 Connection credentials are resolved by the shared helper ``scripts/oracle_db.py``
 (``/etc/friday-universe/db-credentials*.env`` on the servers, or env vars).
@@ -51,6 +52,15 @@ CONFIG_ENV_FILES = (
     "/etc/friday-universe/db-credentials-media.env",
 )
 CONFIG_UNIT_GLOBS = ("/etc/systemd/system/FRIDAY*.service", "/etc/systemd/system/*.service")
+
+# Local-only runtime state that no schema dump can capture (TASK-SEN-007):
+# the Stratex measurement ledger — fill ledger, equity snapshots, position
+# tags — lives in git-ignored JSONL files under Stratex/state/ (see
+# Stratex/measurement/fill_ledger.py). Without a copy here, the phase-3
+# forward-test evidence trail exists exactly once, on Server 1's disk.
+# Paths are repo-relative; STRATEX_STATE_DIR (the daemon's override) is
+# honoured as an additional source when set.
+AGENT_STATE_GLOBS = ("Stratex/state/*.jsonl", "Stratex/state/*.json")
 LOB_CAP_BYTES = 1_000_000
 
 # Where each agent's credentials actually live in production: the per-agent .env
@@ -138,8 +148,51 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def snapshot_configs(dest: Path, log=print) -> list[str]:
-    """Copy credential env files + systemd unit files into dest (600 perms)."""
+def snapshot_agent_state(dest: Path, repo_root: Path, log=print) -> list[str]:
+    """Copy local-only agent state files into dest/configs/agent-state/ (600).
+
+    Covers files that exist only as local runtime state (TASK-SEN-007) —
+    today that is the Stratex measurement state under Stratex/state/.
+    Lock sidecars (*.lock) and non-files are skipped; a missing state
+    directory is not an error (fresh checkouts and other hosts have none).
+    """
+    copied: list[str] = []
+    sources: list[Path] = []
+    for pattern in AGENT_STATE_GLOBS:
+        sources.extend(sorted(repo_root.glob(pattern)))
+    env_state_dir = os.environ.get("STRATEX_STATE_DIR")
+    if env_state_dir:
+        env_dir = Path(env_state_dir)
+        for pattern in ("*.jsonl", "*.json"):
+            sources.extend(sorted(env_dir.glob(pattern)))
+    seen_targets: set[Path] = set()
+    for src_path in sources:
+        if not src_path.is_file() or src_path.name.endswith(".lock"):
+            continue
+        try:
+            rel = src_path.relative_to(repo_root)
+        except ValueError:
+            rel = Path("Stratex") / "state" / src_path.name
+        target = dest / "configs" / "agent-state" / rel
+        if target in seen_targets:
+            continue
+        seen_targets.add(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src_path, target)
+        os.chmod(target, 0o600)
+        copied.append(str(target))
+    if copied:
+        log(f"[CONFIG] copied {len(copied)} agent state files (mode 600)")
+    return copied
+
+
+def snapshot_configs(dest: Path, log=print, repo_root: Path | None = None) -> list[str]:
+    """Copy credential env files + systemd unit files into dest (600 perms).
+
+    Also snapshots local-only agent state (see snapshot_agent_state).
+    repo_root defaults to this script's repository root; tests inject a
+    fixture tree instead.
+    """
     copied: list[str] = []
     env_dir = dest / "configs"
     env_dir.mkdir(parents=True, exist_ok=True)
@@ -165,6 +218,9 @@ def snapshot_configs(dest: Path, log=print) -> list[str]:
             os.chmod(target, 0o600)
             copied.append(str(target))
         log(f"[CONFIG] copied {len(unit_files)} systemd unit files (mode 600)")
+    if repo_root is None:
+        repo_root = Path(__file__).resolve().parents[1]
+    copied.extend(snapshot_agent_state(dest, repo_root, log=log))
     return copied
 
 
