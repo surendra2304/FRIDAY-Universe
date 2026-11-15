@@ -26,7 +26,8 @@ from futuris.core.enums import (
 from futuris.core.schemas import Driver, EvidenceRef, ForecastEvent, Outcome
 from futuris.infra.audit import AuditLogger
 from futuris.infra.auth import AllowAnonymousRead, RequireAdmin, RequireAnalyst
-from futuris.models.adapters import StatsForecastUnavailableError
+from futuris.models.adapters import STATSFORECAST_AVAILABLE, StatsForecastUnavailableError
+from futuris.presentation.uncertainty import forecast_presentation
 from futuris.scenarios.spec import ScenarioSpec
 from futuris.storage.repositories import (
     EventRepository,
@@ -198,6 +199,30 @@ class ForecastResponse(BaseModel):
             "CPU pressure or a request budget, and says which candidates were skipped."
         ),
     )
+    # TASK-FUT-008: plain-language presentation of the same numbers — horizon
+    # in words (the ``horizon`` field above renders a raw timedelta string
+    # like "1 day, 0:00:00"), the method honestly named (no statsforecast
+    # claim while the backend is not installed), the range labelled with its
+    # actual 90% level, and whether calibration was measured or is
+    # unmeasured. Additive: existing fields are unchanged.
+    presentation: dict[str, Any] = Field(default_factory=dict)
+
+
+def _presentation_for(f: Any) -> dict[str, Any]:
+    """Build the TASK-FUT-008 presentation block for a domain Forecast."""
+    return forecast_presentation(
+        target=f.target,
+        horizon=f.horizon,
+        prediction=f.prediction,
+        range_lower=f.range_lower,
+        range_upper=f.range_upper,
+        probability=f.probability,
+        confidence=f.confidence,
+        model_version=f.model_version,
+        calibration_metrics=getattr(f, "calibration_metrics", None),
+        evidence_class=getattr(f, "evidence_class", None),
+        statsforecast_available=STATSFORECAST_AVAILABLE,
+    )
 
 
 class ForecastAbstainedResponse(BaseModel):
@@ -345,6 +370,7 @@ async def create_forecast(
         model_metadata=saved.model_metadata,
         prediction_is_not_authorization=saved.prediction_is_not_authorization,
         executable_commands=saved.executable_commands,
+        presentation=_presentation_for(saved),
     )
 
 
@@ -413,6 +439,7 @@ async def list_forecasts(
             model_metadata=i.model_metadata,
             prediction_is_not_authorization=i.prediction_is_not_authorization,
             executable_commands=i.executable_commands,
+            presentation=_presentation_for(i),
         )
         for i in items
     ]
@@ -452,6 +479,7 @@ async def get_forecast(
         model_metadata=f.model_metadata,
         prediction_is_not_authorization=f.prediction_is_not_authorization,
         executable_commands=f.executable_commands,
+        presentation=_presentation_for(f),
     )
 
 
@@ -525,6 +553,7 @@ async def invalidate_forecast(
         model_metadata=updated.model_metadata,
         prediction_is_not_authorization=updated.prediction_is_not_authorization,
         executable_commands=updated.executable_commands,
+        presentation=_presentation_for(updated),
     )
 
 

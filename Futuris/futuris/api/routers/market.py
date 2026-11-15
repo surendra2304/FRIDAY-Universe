@@ -33,6 +33,7 @@ from futuris.integrations.memora_forecast_publisher import (
     MemoraForecastPublishError,
     publish_forecast_advisory,
 )
+from futuris.presentation.uncertainty import forecast_presentation
 from futuris.storage.db import safe_rollback
 from futuris.storage.repositories import ForecastRepository, OutcomeRepository
 
@@ -144,6 +145,10 @@ class MarketForecastResponse(BaseModel):
     event_context: EventContextPayload = Field(
         default_factory=lambda: EventContextPayload(status="not_requested")
     )
+    # TASK-FUT-008: plain-language presentation — horizon in words, the
+    # method named as the deterministic telemetry rule it is, and the
+    # range_pct stated as a rule bound rather than a statistical interval.
+    presentation: dict[str, Any] = Field(default_factory=dict)
 
 
 class MarketAccuracyResponse(BaseModel):
@@ -426,7 +431,12 @@ async def _generate_market_prediction(
                 point_estimate=volatility_metric,
                 range_lower=lower_pct,
                 range_upper=upper_pct,
-                model_used="statsforecast_garch_intelx",
+                # TASK-FUT-008: this label claimed a statsforecast + GARCH
+                # run. Neither ran — the numbers come from the deterministic
+                # telemetry rule below (persisted honestly as
+                # "heuristic:telemetry_vol_rule@v2" since TASK-TRUST-001).
+                # The label sent to Inference must be the same honest one.
+                model_used="heuristic:telemetry_vol_rule@v2",
                 probability=vol_prob,
                 contextual_factors=[
                     rationale,
@@ -604,6 +614,32 @@ async def _generate_market_prediction(
         memora_event_id=memora_event_id,
         confidence_status=confidence_status,
         confidence_derivation=confidence_derivation,
+        # TASK-FUT-008: presentation — interval_level_pct=None because
+        # range_pct is a deterministic rule bound, not a prediction interval.
+        presentation=forecast_presentation(
+            target=f"market:crypto:{clean_sym}:volatility_{horizon_hours}h",
+            horizon=timedelta(hours=horizon_hours),
+            prediction=float(volatility_metric),
+            range_lower=float(lower_pct),
+            range_upper=float(upper_pct),
+            probability=vol_prob,
+            model_version="heuristic:telemetry_vol_rule@v2",
+            evidence_class=(
+                persisted_forecast.evidence_class
+                if persisted_forecast
+                else EvidenceClass.LIVE
+            ),
+            statsforecast_available=False,
+            interval_level_pct=None,
+            calibration_status_override=(
+                "measured" if confidence_status == "measured" else "unmeasured"
+            ),
+            calibration_clause_override=(
+                f"Calibration has been measured: {confidence_derivation}."
+                if confidence_status == "measured"
+                else f"Calibration is unmeasured — {confidence_derivation}."
+            ),
+        ),
         evidence_class=(
             persisted_forecast.evidence_class if persisted_forecast else EvidenceClass.LIVE
         ),
