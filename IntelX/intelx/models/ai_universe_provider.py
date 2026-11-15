@@ -29,13 +29,19 @@ AI_UNIVERSE_ROLE_MAP: dict[str, str] = {
 
 
 class AIUniverseProvider(BaseLLMProvider):
-    """Adapter routing INTELX agent intelligence requests through AI-Universe multi-agent framework."""
+    """Adapter routing INTELX agent intelligence requests through AI-Universe multi-agent framework.
+
+    TASK-REL-047: the default Inference call timeout is 60 s, aligned with
+    the Inference gateway's own ~60 s request budget — TASK-INF-004 measured
+    the gateway's p99 at 48.4 s, so the previous 45 s default abandoned
+    calls the gateway would still have answered.
+    """
 
     def __init__(
         self,
         base_url: str | None = None,
         api_key: str | None = None,
-        timeout_seconds: float = 45.0,
+        timeout_seconds: float = 60.0,
         settings: Settings | None = None,
     ) -> None:
         self.settings = settings or get_settings()

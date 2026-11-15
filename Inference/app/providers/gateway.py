@@ -57,6 +57,52 @@ def provider_has_credentials(prov_name: str) -> bool:
         return False
 
 
+#: TASK-REL-047 (decided in TASK-REL-045's tuning table, INF-004 evidence):
+#: Groq's free tier caps a request at 8,000 tokens per minute, and prompts of
+#: 9,876–11,207 tokens drew deterministic HTTP 413s (≥6 in one measured hour).
+#: The chat/completions path steers long prompts away from Groq at selection
+#: time (TASK-REL-043's long-context ranking), but the unified/agent-role
+#: path had no equivalent guard, so oversized prompts reached Groq rungs
+#: directly and burned ladder time on a rung that could never answer. The
+#: guard therefore lives here, in the gateway every path traverses: above
+#: this many estimated prompt tokens, Groq rungs are skipped and the request
+#: routes to the remaining ladder. 7,000 leaves response headroom under the
+#: 8,000 cap, per the REL-045 decision.
+GROQ_PROMPT_TOKEN_LIMIT = 7000
+
+
+def estimate_prompt_tokens(request: ProviderRequest) -> int:
+    """Estimate a request's prompt size in tokens (chars // 4).
+
+    The same estimator the provider adapters use for their own token
+    accounting (total_chars // 4 over message contents), plus the system
+    instruction, which the provider also counts against the request.
+    """
+    chars = len(request.system_instruction or "")
+    for msg in request.messages:
+        chars += len(msg.content or "")
+    return max(1, chars // 4)
+
+
+def groq_prompt_over_limit(request: ProviderRequest) -> bool:
+    """Whether this prompt must not be sent to a Groq rung (TASK-REL-047)."""
+    return estimate_prompt_tokens(request) > GROQ_PROMPT_TOKEN_LIMIT
+
+
+def nvidia_rung_enabled() -> bool:
+    """Whether the NVIDIA rung may be attempted (TASK-REL-047).
+
+    Disabled by default: the configured NVIDIA model id returns HTTP 404
+    ("function id not found") on both fleet accounts (TASK-INF-004;
+    TASK-SEN-003 counted 62 dead-function retries), so every ladder attempt
+    on the rung burns request budget on a provider that cannot answer.
+    Re-enable only by setting INFERENCE_NVIDIA_RUNG_ENABLED=true after an
+    INF-003-W5-style metadata probe verifies a live model id. The adapter
+    code itself is untouched — this gate is configuration, not deletion.
+    """
+    return bool(settings.INFERENCE_NVIDIA_RUNG_ENABLED)
+
+
 def _request_timeout_budget(request: ProviderRequest) -> float:
     """Validate the finite positive deadline shared by primary and fallback work."""
     value = request.extra_params.get("timeout", settings.REQUEST_TIMEOUT or 60.0)
@@ -352,6 +398,55 @@ class ModelGateway:
                 "GATEWAY: LOCAL_PREFERRED is enabled but the self-hosted tier failed; "
                 "falling through to cloud providers. Set LOCAL_ENABLED only when a local "
                 "server is actually running if you need a hard guarantee of no egress."
+            )
+
+        # TASK-REL-047 routing guards. Both escalate to the fallback ladder
+        # with the reason recorded, exactly like the unconfigured-provider
+        # gate below: the request is still served by the remaining rungs,
+        # and if nothing can answer, the caller receives this exact error.
+        if prov_name == "groq" and groq_prompt_over_limit(request):
+            over_limit = TemporaryUnavailableError(
+                f"Prompt estimated at {estimate_prompt_tokens(request)} tokens exceeds the "
+                f"{GROQ_PROMPT_TOKEN_LIMIT}-token Groq guard (Groq free-tier cap is 8,000 TPM); "
+                "routing away from Groq rungs for this request.",
+                provider=prov_name,
+                model=request.model,
+            )
+            logger.warning(
+                "GATEWAY: Prompt over the Groq size guard (~%d tokens > %d); "
+                "skipping the Groq primary and routing to the fallback ladder.",
+                estimate_prompt_tokens(request),
+                GROQ_PROMPT_TOKEN_LIMIT,
+            )
+            return await self._execute_dynamic_fallback(
+                failed_provider=prov_name,
+                request=request,
+                capability=capability,
+                stage_name=stage_name,
+                last_error=over_limit,
+                deadline=deadline,
+                skip_local_tier=local_tier_attempted,
+            )
+
+        if prov_name == "nvidia" and not nvidia_rung_enabled():
+            rung_disabled = ProviderUnconfiguredError(
+                "Provider 'nvidia' is disabled by configuration "
+                "(INFERENCE_NVIDIA_RUNG_ENABLED is off; TASK-REL-047); skipping without an attempt.",
+                provider=prov_name,
+                model=request.model,
+            )
+            logger.warning(
+                "GATEWAY: NVIDIA rung is disabled by configuration; "
+                "escalating to the fallback ladder without an attempt."
+            )
+            return await self._execute_dynamic_fallback(
+                failed_provider=prov_name,
+                request=request,
+                capability=capability,
+                stage_name=stage_name,
+                last_error=rung_disabled,
+                deadline=deadline,
+                skip_local_tier=local_tier_attempted,
             )
 
         # Pre-flight credential gate. An unconfigured provider cannot succeed, so the
@@ -779,6 +874,21 @@ class ModelGateway:
                 rem = (deadline - time.monotonic()) if deadline else 60.0
                 if rem <= 0:
                     break
+                # TASK-REL-047 guards, same as the primary gate in execute():
+                # an oversized prompt must not reach a Groq rung here either
+                # (the waterfall cycles back to Groq for non-Groq primaries),
+                # and a disabled NVIDIA rung is never attempted.
+                if sec_name == "groq" and groq_prompt_over_limit(request):
+                    logger.info(
+                        "GATEWAY FALLBACK: Skipping 'groq' — prompt over the %d-token guard (TASK-REL-047).",
+                        GROQ_PROMPT_TOKEN_LIMIT,
+                    )
+                    continue
+                if sec_name == "nvidia" and not nvidia_rung_enabled():
+                    logger.info(
+                        "GATEWAY FALLBACK: Skipping 'nvidia' — rung disabled by configuration (TASK-REL-047)."
+                    )
+                    continue
                 if not provider_has_credentials(sec_name):
                     logger.debug("GATEWAY FALLBACK: Skipping '%s' — no credentials configured.", sec_name)
                     continue
@@ -903,6 +1013,20 @@ class ModelGateway:
         """
         if not providers:
             raise GatewayError("No providers provided for speculative race.")
+        # TASK-REL-047: the Groq size guard applies to raced candidates too —
+        # racing an oversized prompt to Groq only buys a faster 413.
+        if "groq" in providers and groq_prompt_over_limit(request):
+            providers = [p for p in providers if p != "groq"]
+            logger.info(
+                "SPECULATIVE RACE: Removed 'groq' from candidates — prompt over the %d-token guard (TASK-REL-047).",
+                GROQ_PROMPT_TOKEN_LIMIT,
+            )
+            if not providers:
+                raise GatewayError(
+                    "All speculative race candidates were removed by the Groq prompt-size guard.",
+                    provider="groq",
+                    model=request.model,
+                )
         if len(providers) == 1:
             request.extra_params["timeout"] = timeout
             return await self.execute(providers[0], request, stage_name=stage_name)
@@ -991,6 +1115,25 @@ class ModelGateway:
         prov_name = provider.lower().strip()
         timeout_budget = _request_timeout_budget(request)
         deadline = time.monotonic() + timeout_budget
+
+        # TASK-REL-047 guards (same rules as execute()): streaming has no
+        # ladder to escalate to, so a guarded provider is refused up front
+        # with the reason, instead of drawing a deterministic 413 (Groq) or
+        # 404 (disabled NVIDIA rung) from the provider.
+        if prov_name == "groq" and groq_prompt_over_limit(request):
+            raise GatewayError(
+                f"Prompt estimated at {estimate_prompt_tokens(request)} tokens exceeds the "
+                f"{GROQ_PROMPT_TOKEN_LIMIT}-token Groq guard; streaming via Groq was not attempted.",
+                provider=prov_name,
+                model=request.model,
+            )
+        if prov_name == "nvidia" and not nvidia_rung_enabled():
+            raise ProviderUnconfiguredError(
+                "Provider 'nvidia' is disabled by configuration "
+                "(INFERENCE_NVIDIA_RUNG_ENABLED is off; TASK-REL-047); streaming was not attempted.",
+                provider=prov_name,
+                model=request.model,
+            )
 
         if not provider_has_credentials(prov_name):
             raise ProviderUnconfiguredError(
