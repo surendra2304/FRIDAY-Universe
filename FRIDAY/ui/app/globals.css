@@ -861,6 +861,64 @@ button {
   line-height: 1.6;
 }
 
+/* ------------------------------------------------- motion (IG-WEB-01)
+   The scroll-driven motion layer: progress, reveals, parallax.
+   Transform and opacity only; reduced motion lands everything
+   instantly, per the house animation playbook. */
+
+.sheet-progress {
+  flex: none;
+  height: 2px;
+  background: var(--hair-soft);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sheet-progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--glow-a), var(--glow-b), var(--glow-c));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.parallax {
+  will-change: transform;
+}
+
+.fleet-reveal {
+  height: 100%;
+}
+
+.fleet-reveal .fleet-card {
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .parallax {
+    will-change: auto;
+  }
+}
+
 /* ----------------------------------------------------------------- fleet */
 
 .fleet-grid {
