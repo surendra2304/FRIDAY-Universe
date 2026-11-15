@@ -42,6 +42,11 @@ from friday.tools.builtin.fleet_dispatch import FleetDispatchTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
 from friday.tools.builtin.forge_code_task import ForgeCodeTool
 from friday.tools.builtin.intelx_research import IntelXResearchTool
+from friday.tools.builtin.job_hunt_tools import (
+    JobHuntPrepTool,
+    JobHuntScanTool,
+    JobHuntShortlistTool,
+)
 from friday.tools.builtin.stratex_portfolio import StratexPortfolioTool
 from friday.tools.builtin.sentinel_security import SentinelSecurityTool
 from friday.tools.builtin.futuris_forecast import FuturisForecastTool
@@ -240,6 +245,9 @@ __all__ = [
     "TaskStatusQueryTool",
     "ForgeCodeTool",
     "IntelXResearchTool",
+    "JobHuntPrepTool",
+    "JobHuntScanTool",
+    "JobHuntShortlistTool",
     "StratexPortfolioTool",
     "SentinelSecurityTool",
     "FuturisForecastTool",

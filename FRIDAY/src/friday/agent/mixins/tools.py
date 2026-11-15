@@ -118,6 +118,9 @@ from friday.tools.builtin import (
     TaskStatusQueryTool,
     ForgeCodeTool,
     IntelXResearchTool,
+    JobHuntPrepTool,
+    JobHuntScanTool,
+    JobHuntShortlistTool,
     StratexPortfolioTool,
     SentinelSecurityTool,
     FuturisForecastTool,
@@ -161,6 +164,10 @@ class ToolExecutionMixin:
             registry.register(TaskStatusQueryTool())
             registry.register(ForgeCodeTool())
             registry.register(IntelXResearchTool())
+            # TASK-IG-FRD-003: job-hunt workflow (scan/score/prep; drafts only).
+            registry.register(JobHuntScanTool())
+            registry.register(JobHuntShortlistTool())
+            registry.register(JobHuntPrepTool())
             registry.register(StratexPortfolioTool())
             registry.register(SentinelSecurityTool())
             registry.register(FuturisForecastTool())
