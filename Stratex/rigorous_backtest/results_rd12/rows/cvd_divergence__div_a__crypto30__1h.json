@@ -1,0 +1,404 @@
+{
+ "family": "cvd_divergence",
+ "variant": "div_a",
+ "panel": "crypto30",
+ "timeframe": "1h",
+ "stage": "rd12",
+ "status": "EVALUATED",
+ "error": null,
+ "params": {
+  "n": 20,
+  "window": 48
+ },
+ "spec": {
+  "type": "bracket_time",
+  "sl_atr": 1.5,
+  "tp_atr": 2.0,
+  "max_bars": 12
+ },
+ "symbols": [
+  "AAVEUSDT",
+  "ADAUSDT",
+  "ALGOUSDT",
+  "APTUSDT",
+  "ARBUSDT",
+  "ATOMUSDT",
+  "AVAXUSDT",
+  "BCHUSDT",
+  "BNBUSDT",
+  "BTCUSDT",
+  "DOGEUSDT",
+  "DOTUSDT",
+  "ETCUSDT",
+  "ETHUSDT",
+  "FILUSDT",
+  "HBARUSDT",
+  "INJUSDT",
+  "LINKUSDT",
+  "LTCUSDT",
+  "MANAUSDT",
+  "NEARUSDT",
+  "OPUSDT",
+  "SANDUSDT",
+  "SOLUSDT",
+  "SUIUSDT",
+  "TRXUSDT",
+  "UNIUSDT",
+  "VETUSDT",
+  "XLMUSDT",
+  "XRPUSDT"
+ ],
+ "report": {
+  "per_fold": {
+   "W1": {
+    "oos_start": "2024-07-01",
+    "oos_end": "2025-01-01",
+    "trades": 11242,
+    "wins": 4679,
+    "win_rate": 0.4162070805906422,
+    "expectancy_net": -0.0024425767785802317,
+    "profit_factor_net": 0.7891466635329958,
+    "avg_win_net": 0.02196423121840532,
+    "avg_loss_net": -0.019843072682571607,
+    "total_return_net": -0.9999999999999617,
+    "max_drawdown_net": -0.9999999999999956
+   },
+   "W2": {
+    "oos_start": "2025-01-01",
+    "oos_end": "2025-07-01",
+    "trades": 10782,
+    "wins": 4645,
+    "win_rate": 0.43081061027638656,
+    "expectancy_net": -0.0018894088981226962,
+    "profit_factor_net": 0.8352058141910511,
+    "avg_win_net": 0.02222752919719889,
+    "avg_loss_net": -0.02014314483632846,
+    "total_return_net": -0.9999999999422815,
+    "max_drawdown_net": -0.9999999999844228
+   },
+   "W3": {
+    "oos_start": "2025-07-01",
+    "oos_end": "2026-01-01",
+    "trades": 10801,
+    "wins": 4840,
+    "win_rate": 0.4481066567910379,
+    "expectancy_net": -0.0012451061019233313,
+    "profit_factor_net": 0.8715007016896166,
+    "avg_win_net": 0.018844818148758578,
+    "avg_loss_net": -0.01755700567805157,
+    "total_return_net": -0.9999998681338728,
+    "max_drawdown_net": -0.9999999945358765
+   },
+   "W4": {
+    "oos_start": "2026-01-01",
+    "oos_end": "2026-07-01",
+    "trades": 10074,
+    "wins": 4364,
+    "win_rate": 0.433194361723248,
+    "expectancy_net": -0.0018273931791112704,
+    "profit_factor_net": 0.8042036857133301,
+    "avg_win_net": 0.01732649633424047,
+    "avg_loss_net": -0.016466197703851545,
+    "total_return_net": -0.9999999985380553,
+    "max_drawdown_net": -0.9999999986526885
+   },
+   "W5": {
+    "oos_start": "2026-07-01",
+    "oos_end": "2026-11-01",
+    "trades": 6886,
+    "wins": 3049,
+    "win_rate": 0.44278245715945397,
+    "expectancy_net": -0.0015705857104885022,
+    "profit_factor_net": 0.8257255835891619,
+    "avg_win_net": 0.016806347510751708,
+    "avg_loss_net": -0.016173470618375235,
+    "total_return_net": -0.999994653184831,
+    "max_drawdown_net": -0.9999997376736002
+   }
+  },
+  "pooled_oos": {
+   "trades": 49785,
+   "wins": 21577,
+   "win_rate": 0.4334036356332229,
+   "expectancy_net": -0.0018178900869744408,
+   "profit_factor_net": 0.8241231771228497,
+   "avg_win_net": 0.019654345571432832,
+   "avg_loss_net": -0.01824253659865388,
+   "total_return_net": -1.0,
+   "max_drawdown_net": -1.0
+  },
+  "per_symbol_oos": {
+   "AAVEUSDT": {
+    "trades": 1669,
+    "win_rate": 0.43918514080287596,
+    "expectancy_net": -0.0017742276055081477,
+    "profit_factor_net": 0.8467624180599896
+   },
+   "ADAUSDT": {
+    "trades": 1623,
+    "win_rate": 0.44731977818853974,
+    "expectancy_net": -0.0013054044388809858,
+    "profit_factor_net": 0.8750703806709429
+   },
+   "ALGOUSDT": {
+    "trades": 1644,
+    "win_rate": 0.43795620437956206,
+    "expectancy_net": -0.002270837073598105,
+    "profit_factor_net": 0.8125114769462851
+   },
+   "APTUSDT": {
+    "trades": 1657,
+    "win_rate": 0.4375377187688594,
+    "expectancy_net": -0.0013770297386080795,
+    "profit_factor_net": 0.8812129249394869
+   },
+   "ARBUSDT": {
+    "trades": 1670,
+    "win_rate": 0.4407185628742515,
+    "expectancy_net": -0.001432688547109608,
+    "profit_factor_net": 0.8814691348302922
+   },
+   "ATOMUSDT": {
+    "trades": 1676,
+    "win_rate": 0.42899761336515513,
+    "expectancy_net": -0.001994364378546743,
+    "profit_factor_net": 0.8007884098177012
+   },
+   "AVAXUSDT": {
+    "trades": 1680,
+    "win_rate": 0.4172619047619048,
+    "expectancy_net": -0.0026035144553360106,
+    "profit_factor_net": 0.7610048518909565
+   },
+   "BCHUSDT": {
+    "trades": 1601,
+    "win_rate": 0.4509681449094316,
+    "expectancy_net": -0.0010746068086796429,
+    "profit_factor_net": 0.8804526604616493
+   },
+   "BNBUSDT": {
+    "trades": 1634,
+    "win_rate": 0.4314565483476132,
+    "expectancy_net": -0.0015802172944123334,
+    "profit_factor_net": 0.753371502615337
+   },
+   "BTCUSDT": {
+    "trades": 1661,
+    "win_rate": 0.44431065623118604,
+    "expectancy_net": -0.0013831239996868647,
+    "profit_factor_net": 0.7496301468411334
+   },
+   "DOGEUSDT": {
+    "trades": 1652,
+    "win_rate": 0.43099273607748184,
+    "expectancy_net": -0.002078086268216291,
+    "profit_factor_net": 0.8035070210584712
+   },
+   "DOTUSDT": {
+    "trades": 1612,
+    "win_rate": 0.4218362282878412,
+    "expectancy_net": -0.0021822102477560986,
+    "profit_factor_net": 0.795610743220716
+   },
+   "ETCUSDT": {
+    "trades": 1709,
+    "win_rate": 0.41778818022235226,
+    "expectancy_net": -0.0020559189238387025,
+    "profit_factor_net": 0.7788800115369892
+   },
+   "ETHUSDT": {
+    "trades": 1593,
+    "win_rate": 0.44695543000627747,
+    "expectancy_net": -0.0014411918963212617,
+    "profit_factor_net": 0.8157978926585742
+   },
+   "FILUSDT": {
+    "trades": 1566,
+    "win_rate": 0.4220945083014049,
+    "expectancy_net": -0.0021941306721440256,
+    "profit_factor_net": 0.8088596232498136
+   },
+   "HBARUSDT": {
+    "trades": 1725,
+    "win_rate": 0.4121739130434783,
+    "expectancy_net": -0.0027713225663554093,
+    "profit_factor_net": 0.7600879052626044
+   },
+   "INJUSDT": {
+    "trades": 1706,
+    "win_rate": 0.43024618991793667,
+    "expectancy_net": -0.0018670819625258557,
+    "profit_factor_net": 0.8582667063825822
+   },
+   "LINKUSDT": {
+    "trades": 1701,
+    "win_rate": 0.42210464432686656,
+    "expectancy_net": -0.0025179410680245214,
+    "profit_factor_net": 0.7630774964667807
+   },
+   "LTCUSDT": {
+    "trades": 1647,
+    "win_rate": 0.4553734061930783,
+    "expectancy_net": -0.0009608997970611085,
+    "profit_factor_net": 0.8876604199833209
+   },
+   "MANAUSDT": {
+    "trades": 1644,
+    "win_rate": 0.4343065693430657,
+    "expectancy_net": -0.0014252824691122453,
+    "profit_factor_net": 0.8698924169357326
+   },
+   "NEARUSDT": {
+    "trades": 1681,
+    "win_rate": 0.44318857822724567,
+    "expectancy_net": -0.0015557483379987206,
+    "profit_factor_net": 0.8783750764240957
+   },
+   "OPUSDT": {
+    "trades": 1739,
+    "win_rate": 0.4261069580218516,
+    "expectancy_net": -0.0022046393135673873,
+    "profit_factor_net": 0.8273122779357776
+   },
+   "SANDUSDT": {
+    "trades": 1710,
+    "win_rate": 0.4391812865497076,
+    "expectancy_net": -0.0017138074680282292,
+    "profit_factor_net": 0.8487948827855837
+   },
+   "SOLUSDT": {
+    "trades": 1657,
+    "win_rate": 0.44176222088111045,
+    "expectancy_net": -0.0017159298119626884,
+    "profit_factor_net": 0.8206656019150421
+   },
+   "SUIUSDT": {
+    "trades": 1616,
+    "win_rate": 0.44183168316831684,
+    "expectancy_net": -0.0020040953583821937,
+    "profit_factor_net": 0.8396724225765381
+   },
+   "TRXUSDT": {
+    "trades": 1706,
+    "win_rate": 0.3939038686987104,
+    "expectancy_net": -0.002169843481340276,
+    "profit_factor_net": 0.5624516046249682
+   },
+   "UNIUSDT": {
+    "trades": 1654,
+    "win_rate": 0.46009673518742444,
+    "expectancy_net": -0.0007131319973530492,
+    "profit_factor_net": 0.9375794563809665
+   },
+   "VETUSDT": {
+    "trades": 1691,
+    "win_rate": 0.43110585452395034,
+    "expectancy_net": -0.0017959561547309755,
+    "profit_factor_net": 0.8318484139330915
+   },
+   "XLMUSDT": {
+    "trades": 1641,
+    "win_rate": 0.42778793418647165,
+    "expectancy_net": -0.0020446972292534255,
+    "profit_factor_net": 0.7969189239500465
+   },
+   "XRPUSDT": {
+    "trades": 1620,
+    "win_rate": 0.43148148148148147,
+    "expectancy_net": -0.0022185232941137056,
+    "profit_factor_net": 0.7637631358675848
+   }
+  },
+  "fold_profile": [
+   "W1",
+   "W2",
+   "W3",
+   "W4",
+   "W5"
+  ]
+ },
+ "holdout": {
+  "symbols_active_min20": 30,
+  "symbols_positive": 0,
+  "breadth_positive_share": 0.0,
+  "max_symbol_profit_share": 1.0,
+  "max_share_cap": 0.5,
+  "untouched_subset": [
+   "ALGOUSDT",
+   "ATOMUSDT",
+   "BNBUSDT",
+   "DOTUSDT",
+   "FILUSDT",
+   "LINKUSDT",
+   "NEARUSDT",
+   "SOLUSDT",
+   "UNIUSDT",
+   "XRPUSDT"
+  ],
+  "untouched_trades": 16445,
+  "untouched_expectancy": -0.0018927742128223555,
+  "passes": false
+ },
+ "bar": {
+  "bar": {
+   "expectancy_net_gt": 0.0,
+   "profit_factor_net_gte": 1.2,
+   "min_oos_trades": 200,
+   "min_positive_fold_share": 0.8,
+   "positive_folds_needed": 4,
+   "positive_folds": 0,
+   "folds_with_trades": 5
+  },
+  "checks": {
+   "expectancy_net_gt_0": false,
+   "profit_factor_net_gte_1.2": false,
+   "min_oos_trades_200": true,
+   "positive_folds": false,
+   "holdout_passes": false
+  },
+  "passes_bar": false
+ },
+ "trade_stats": {
+  "n": 49785,
+  "sharpe_per_trade": -0.08197187672185073,
+  "t_stat": -18.290018045968537,
+  "p_one_sided": 1.0,
+  "skew": 0.5074433643992179,
+  "kurtosis": 3.8971599329425564
+ },
+ "costs_multiplier": 1,
+ "costs_rt_bps": {
+  "AAVEUSDT": 16.0,
+  "ADAUSDT": 16.0,
+  "ALGOUSDT": 16.0,
+  "APTUSDT": 16.0,
+  "ARBUSDT": 16.0,
+  "ATOMUSDT": 16.0,
+  "AVAXUSDT": 16.0,
+  "BCHUSDT": 16.0,
+  "BNBUSDT": 16.0,
+  "BTCUSDT": 16.0,
+  "DOGEUSDT": 16.0,
+  "DOTUSDT": 16.0,
+  "ETCUSDT": 16.0,
+  "ETHUSDT": 16.0,
+  "FILUSDT": 16.0,
+  "HBARUSDT": 16.0,
+  "INJUSDT": 16.0,
+  "LINKUSDT": 16.0,
+  "LTCUSDT": 16.0,
+  "MANAUSDT": 16.0,
+  "NEARUSDT": 16.0,
+  "OPUSDT": 16.0,
+  "SANDUSDT": 16.0,
+  "SOLUSDT": 16.0,
+  "SUIUSDT": 16.0,
+  "TRXUSDT": 16.0,
+  "UNIUSDT": 16.0,
+  "VETUSDT": 16.0,
+  "XLMUSDT": 16.0,
+  "XRPUSDT": 16.0
+ },
+ "seconds": 32.89,
+ "note": "per_symbol_oos reduced to trades/win_rate/expectancy_net/profit_factor_net for shipping; full metrics reproducible from the frozen code and manifested data (see RESULTS_RD12.md)."
+}

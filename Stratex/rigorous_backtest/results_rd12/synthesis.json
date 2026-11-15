@@ -1,0 +1,1138 @@
+{
+ "task": "TASK-STR-RD-012",
+ "track": "order-flow proxies from OHLCV only (no L2 data exists)",
+ "completed_at_ist": "2026-11-15T16:03:10+05:30",
+ "verdict": "ZERO PASSERS - all 28 trials (20 cells + 8 wf-select procedures) FAIL the full bar. No cell reaches pooled PF 1.0 (best 0.9952). Nothing is forwarded to forward demo trading.",
+ "passers": [],
+ "bar": "expectancy_net > 0 AND profit_factor_net >= 1.2 AND >= 200 pooled OOS trades AND >= 80% of folds positive AND untouched-holdout pass AND Bonferroni one-sided p < 0.05 / N_global AND 2x-cost sensitivity pass",
+ "trial_accounting": {
+  "rd002_final_counter": 1557,
+  "rd003_declared": 207,
+  "basis_before_rd012": 1764,
+  "rd012_cells": 20,
+  "rd012_wf_select_procedures": 8,
+  "rd012_total": 28,
+  "judgement_N": 1792,
+  "bonferroni_alpha": 2.7901785714285717e-05,
+  "caveat": "Parallel Wave-4 rounds (RD-004..RD-011, RD-013) add trials as they land; raw per-row p-values are published so any verdict can be re-derived at the final N. No re-derivation can change this round: every p is ~1.0 except vcm_b@1h 0.5897 and vcl_b@1h 0.7191."
+ },
+ "sanity_anchor": {
+  "cell": "RD-001 ts_momentum roc42_4h (BTC/ETH/SOL, RD-001 cache)",
+  "published": {
+   "trades": 303,
+   "expectancy_net": 0.0024275740638451445,
+   "profit_factor_net": 1.0969220482985518
+  },
+  "replica": {
+   "trades": 303,
+   "expectancy_net": 0.0024275740638451445,
+   "profit_factor_net": 1.0969220482985518
+  },
+  "bit_identical": true
+ },
+ "ranked_rows": [
+  {
+   "key": "vol_confirmed_momentum/vcm_b@1h",
+   "family": "vol_confirmed_momentum",
+   "variant": "vcm_b",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "n": 40,
+    "m": 96,
+    "zstar": 1.5
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 11498,
+   "win_rate": 0.429726909027657,
+   "expectancy_pct": -0.0084,
+   "profit_factor": 0.9952,
+   "positive_folds": 2,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.4666666666666667,
+   "untouched_trades": 3827,
+   "untouched_expectancy_pct": -0.0598,
+   "holdout_passes": false,
+   "p_one_sided": 0.5897376779375894,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_confirmed_momentum__vcm_b__crypto30__1h.json"
+  },
+  {
+   "key": "vol_climax_reversal/vcl_b@1h",
+   "family": "vol_climax_reversal",
+   "variant": "vcl_b",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "m": 96,
+    "zstar": 2.5,
+    "s": 24
+   },
+   "spec": {
+    "type": "bracket_time",
+    "sl_atr": 1.5,
+    "tp_atr": 2.5,
+    "max_bars": 12
+   },
+   "trades": 3503,
+   "win_rate": 0.44047958892377964,
+   "expectancy_pct": -0.0319,
+   "profit_factor": 0.9758,
+   "positive_folds": 4,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.5333333333333333,
+   "untouched_trades": 1113,
+   "untouched_expectancy_pct": -0.0312,
+   "holdout_passes": false,
+   "p_one_sided": 0.7191113924812763,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": true,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_climax_reversal__vcl_b__crypto30__1h.json"
+  },
+  {
+   "key": "vol_climax_reversal/vcl_a@1h",
+   "family": "vol_climax_reversal",
+   "variant": "vcl_a",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "m": 48,
+    "zstar": 2.0,
+    "s": 12
+   },
+   "spec": {
+    "type": "bracket_time",
+    "sl_atr": 1.5,
+    "tp_atr": 2.5,
+    "max_bars": 12
+   },
+   "trades": 5071,
+   "win_rate": 0.43719187536974957,
+   "expectancy_pct": -0.0572,
+   "profit_factor": 0.9516,
+   "positive_folds": 3,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.4,
+   "untouched_trades": 1646,
+   "untouched_expectancy_pct": -0.0809,
+   "holdout_passes": false,
+   "p_one_sided": 0.9246514130325377,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_climax_reversal__vcl_a__crypto30__1h.json"
+  },
+  {
+   "key": "vol_confirmed_momentum/vcm_c@1h",
+   "family": "vol_confirmed_momentum",
+   "variant": "vcm_c",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "n": 20,
+    "m": 48,
+    "zstar": 0.5
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 20964,
+   "win_rate": 0.4199103224575463,
+   "expectancy_pct": -0.0914,
+   "profit_factor": 0.9455,
+   "positive_folds": 1,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.13333333333333333,
+   "untouched_trades": 6940,
+   "untouched_expectancy_pct": -0.0931,
+   "holdout_passes": false,
+   "p_one_sided": 0.9998365209356425,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_confirmed_momentum__vcm_c__crypto30__1h.json"
+  },
+  {
+   "key": "vol_confirmed_momentum/vcm_a@1h",
+   "family": "vol_confirmed_momentum",
+   "variant": "vcm_a",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "n": 20,
+    "m": 48,
+    "zstar": 1.0
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 18217,
+   "win_rate": 0.4187846516989625,
+   "expectancy_pct": -0.0966,
+   "profit_factor": 0.943,
+   "positive_folds": 2,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.16666666666666666,
+   "untouched_trades": 6015,
+   "untouched_expectancy_pct": -0.1123,
+   "holdout_passes": false,
+   "p_one_sided": 0.9997664421028608,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_confirmed_momentum__vcm_a__crypto30__1h.json"
+  },
+  {
+   "key": "cvd_momentum/ofm_a@1h",
+   "family": "cvd_momentum",
+   "variant": "ofm_a",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "proxy": "sv2",
+    "window": 48,
+    "slope_bars": 12
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 23654,
+   "win_rate": 0.403399002282912,
+   "expectancy_pct": -0.1272,
+   "profit_factor": 0.925,
+   "positive_folds": 1,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.2,
+   "untouched_trades": 7889,
+   "untouched_expectancy_pct": -0.1243,
+   "holdout_passes": false,
+   "p_one_sided": 0.9999999390827999,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_momentum__ofm_a__crypto30__1h.json"
+  },
+  {
+   "key": "cvd_momentum/ofm_c@1h",
+   "family": "cvd_momentum",
+   "variant": "ofm_c",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "proxy": "sv1",
+    "window": 48,
+    "slope_bars": 12
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 23093,
+   "win_rate": 0.4047979907331226,
+   "expectancy_pct": -0.1369,
+   "profit_factor": 0.919,
+   "positive_folds": 1,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.1,
+   "untouched_trades": 7739,
+   "untouched_expectancy_pct": -0.116,
+   "holdout_passes": false,
+   "p_one_sided": 0.999999993084656,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_momentum__ofm_c__crypto30__1h.json"
+  },
+  {
+   "key": "cvd_momentum/ofm_b@1h",
+   "family": "cvd_momentum",
+   "variant": "ofm_b",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "proxy": "sv2",
+    "window": 96,
+    "slope_bars": 24
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 20688,
+   "win_rate": 0.40583913379737047,
+   "expectancy_pct": -0.1521,
+   "profit_factor": 0.9094,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.16666666666666666,
+   "untouched_trades": 6815,
+   "untouched_expectancy_pct": -0.1534,
+   "holdout_passes": false,
+   "p_one_sided": 0.9999999994296946,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_momentum__ofm_b__crypto30__1h.json"
+  },
+  {
+   "key": "vol_confirmed_momentum/vcm_b@15m",
+   "family": "vol_confirmed_momentum",
+   "variant": "vcm_b",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "n": 40,
+    "m": 96,
+    "zstar": 1.5
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 45641,
+   "win_rate": 0.41633618895291513,
+   "expectancy_pct": -0.1216,
+   "profit_factor": 0.868,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 15173,
+   "untouched_expectancy_pct": -0.0954,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_confirmed_momentum__vcm_b__crypto30__15m.json"
+  },
+  {
+   "key": "vol_confirmed_momentum/vcm_a@15m",
+   "family": "vol_confirmed_momentum",
+   "variant": "vcm_a",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "n": 20,
+    "m": 48,
+    "zstar": 1.0
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 72940,
+   "win_rate": 0.4096380586783658,
+   "expectancy_pct": -0.1412,
+   "profit_factor": 0.8399,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 24054,
+   "untouched_expectancy_pct": -0.1204,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_confirmed_momentum__vcm_a__crypto30__15m.json"
+  },
+  {
+   "key": "vol_confirmed_momentum/vcm_c@15m",
+   "family": "vol_confirmed_momentum",
+   "variant": "vcm_c",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "n": 20,
+    "m": 48,
+    "zstar": 0.5
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 82626,
+   "win_rate": 0.4088785612277007,
+   "expectancy_pct": -0.1436,
+   "profit_factor": 0.8365,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 27249,
+   "untouched_expectancy_pct": -0.1327,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_confirmed_momentum__vcm_c__crypto30__15m.json"
+  },
+  {
+   "key": "cvd_momentum/ofm_c@15m",
+   "family": "cvd_momentum",
+   "variant": "ofm_c",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "proxy": "sv1",
+    "window": 48,
+    "slope_bars": 12
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 90979,
+   "win_rate": 0.4049176183514877,
+   "expectancy_pct": -0.1473,
+   "profit_factor": 0.8339,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 30140,
+   "untouched_expectancy_pct": -0.1373,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_momentum__ofm_c__crypto30__15m.json"
+  },
+  {
+   "key": "cvd_momentum/ofm_b@15m",
+   "family": "cvd_momentum",
+   "variant": "ofm_b",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "proxy": "sv2",
+    "window": 96,
+    "slope_bars": 24
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 81959,
+   "win_rate": 0.40534901597140033,
+   "expectancy_pct": -0.1532,
+   "profit_factor": 0.8244,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 27175,
+   "untouched_expectancy_pct": -0.1585,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_momentum__ofm_b__crypto30__15m.json"
+  },
+  {
+   "key": "cvd_divergence/div_a@1h",
+   "family": "cvd_divergence",
+   "variant": "div_a",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "n": 20,
+    "window": 48
+   },
+   "spec": {
+    "type": "bracket_time",
+    "sl_atr": 1.5,
+    "tp_atr": 2.0,
+    "max_bars": 12
+   },
+   "trades": 49785,
+   "win_rate": 0.4334036356332229,
+   "expectancy_pct": -0.1818,
+   "profit_factor": 0.8241,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 16445,
+   "untouched_expectancy_pct": -0.1893,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_divergence__div_a__crypto30__1h.json"
+  },
+  {
+   "key": "cvd_momentum/ofm_a@15m",
+   "family": "cvd_momentum",
+   "variant": "ofm_a",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "proxy": "sv2",
+    "window": 48,
+    "slope_bars": 12
+   },
+   "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 3.0
+   },
+   "trades": 92118,
+   "win_rate": 0.4023426474738922,
+   "expectancy_pct": -0.1581,
+   "profit_factor": 0.8232,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 30461,
+   "untouched_expectancy_pct": -0.1501,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_momentum__ofm_a__crypto30__15m.json"
+  },
+  {
+   "key": "cvd_divergence/div_b@1h",
+   "family": "cvd_divergence",
+   "variant": "div_b",
+   "panel": "crypto30",
+   "timeframe": "1h",
+   "status": "EVALUATED",
+   "params": {
+    "n": 40,
+    "window": 96
+   },
+   "spec": {
+    "type": "bracket_time",
+    "sl_atr": 1.5,
+    "tp_atr": 2.0,
+    "max_bars": 12
+   },
+   "trades": 35578,
+   "win_rate": 0.4306875035134072,
+   "expectancy_pct": -0.1987,
+   "profit_factor": 0.814,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 11790,
+   "untouched_expectancy_pct": -0.2091,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_divergence__div_b__crypto30__1h.json"
+  },
+  {
+   "key": "vol_climax_reversal/vcl_b@15m",
+   "family": "vol_climax_reversal",
+   "variant": "vcl_b",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "m": 96,
+    "zstar": 2.5,
+    "s": 24
+   },
+   "spec": {
+    "type": "bracket_time",
+    "sl_atr": 1.5,
+    "tp_atr": 2.5,
+    "max_bars": 24
+   },
+   "trades": 14368,
+   "win_rate": 0.37604398663697103,
+   "expectancy_pct": -0.1855,
+   "profit_factor": 0.7621,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 4795,
+   "untouched_expectancy_pct": -0.227,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_climax_reversal__vcl_b__crypto30__15m.json"
+  },
+  {
+   "key": "vol_climax_reversal/vcl_a@15m",
+   "family": "vol_climax_reversal",
+   "variant": "vcl_a",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "m": 48,
+    "zstar": 2.0,
+    "s": 12
+   },
+   "spec": {
+    "type": "bracket_time",
+    "sl_atr": 1.5,
+    "tp_atr": 2.5,
+    "max_bars": 24
+   },
+   "trades": 22693,
+   "win_rate": 0.37729696382144273,
+   "expectancy_pct": -0.1701,
+   "profit_factor": 0.7597,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 7640,
+   "untouched_expectancy_pct": -0.1741,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/vol_climax_reversal__vcl_a__crypto30__15m.json"
+  },
+  {
+   "key": "cvd_divergence/div_b@15m",
+   "family": "cvd_divergence",
+   "variant": "div_b",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "n": 40,
+    "window": 96
+   },
+   "spec": {
+    "type": "bracket_time",
+    "sl_atr": 1.5,
+    "tp_atr": 2.0,
+    "max_bars": 24
+   },
+   "trades": 136027,
+   "win_rate": 0.42061502495828035,
+   "expectancy_pct": -0.1659,
+   "profit_factor": 0.7316,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 45087,
+   "untouched_expectancy_pct": -0.1746,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_divergence__div_b__crypto30__15m.json"
+  },
+  {
+   "key": "cvd_divergence/div_a@15m",
+   "family": "cvd_divergence",
+   "variant": "div_a",
+   "panel": "crypto30",
+   "timeframe": "15m",
+   "status": "EVALUATED",
+   "params": {
+    "n": 20,
+    "window": 48
+   },
+   "spec": {
+    "type": "bracket_time",
+    "sl_atr": 1.5,
+    "tp_atr": 2.0,
+    "max_bars": 24
+   },
+   "trades": 186295,
+   "win_rate": 0.4206929869293325,
+   "expectancy_pct": -0.1695,
+   "profit_factor": 0.721,
+   "positive_folds": 0,
+   "folds_with_trades": 5,
+   "breadth_positive_share": 0.0,
+   "untouched_trades": 61594,
+   "untouched_expectancy_pct": -0.1733,
+   "holdout_passes": false,
+   "p_one_sided": 1.0,
+   "checks": {
+    "expectancy_net_gt_0": false,
+    "profit_factor_net_gte_1.2": false,
+    "min_oos_trades_200": true,
+    "positive_folds": false,
+    "holdout_passes": false
+   },
+   "passes_bar": false,
+   "row_file": "rows/cvd_divergence__div_a__crypto30__15m.json"
+  }
+ ],
+ "wf_select": [
+  {
+   "key": "cvd_divergence@1h",
+   "panel": "crypto30",
+   "variants_tried": 2,
+   "trades": 35578,
+   "expectancy_pct": -0.1987,
+   "profit_factor": 0.814,
+   "picks": [
+    {
+     "fold": "W1",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.2883,
+     "oos_profit_factor": 0.7609887871207411
+    },
+    {
+     "fold": "W2",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.1936,
+     "oos_profit_factor": 0.8359231478342211
+    },
+    {
+     "fold": "W3",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.1372,
+     "oos_profit_factor": 0.8620197586478928
+    },
+    {
+     "fold": "W4",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.1932,
+     "oos_profit_factor": 0.7986101427839825
+    },
+    {
+     "fold": "W5",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.1555,
+     "oos_profit_factor": 0.8330306615686311
+    }
+   ],
+   "passes_bar": false
+  },
+  {
+   "key": "cvd_momentum@1h",
+   "panel": "crypto30",
+   "variants_tried": 3,
+   "trades": 23654,
+   "expectancy_pct": -0.1272,
+   "profit_factor": 0.925,
+   "picks": [
+    {
+     "fold": "W1",
+     "pick": "ofm_a",
+     "oos_expectancy_pct": -0.1649,
+     "oos_profit_factor": 0.9129830884600371
+    },
+    {
+     "fold": "W2",
+     "pick": "ofm_a",
+     "oos_expectancy_pct": 0.1013,
+     "oos_profit_factor": 1.0565412930175637
+    },
+    {
+     "fold": "W3",
+     "pick": "ofm_a",
+     "oos_expectancy_pct": -0.1691,
+     "oos_profit_factor": 0.897706813242805
+    },
+    {
+     "fold": "W4",
+     "pick": "ofm_a",
+     "oos_expectancy_pct": -0.1819,
+     "oos_profit_factor": 0.8822307649136554
+    },
+    {
+     "fold": "W5",
+     "pick": "ofm_a",
+     "oos_expectancy_pct": -0.2536,
+     "oos_profit_factor": 0.8331765572045979
+    }
+   ],
+   "passes_bar": false
+  },
+  {
+   "key": "vol_climax_reversal@1h",
+   "panel": "crypto30",
+   "variants_tried": 2,
+   "trades": 3503,
+   "expectancy_pct": -0.0319,
+   "profit_factor": 0.9758,
+   "picks": [
+    {
+     "fold": "W1",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": -0.5972,
+     "oos_profit_factor": 0.6551787910685667
+    },
+    {
+     "fold": "W2",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": 0.2393,
+     "oos_profit_factor": 1.1843446393924326
+    },
+    {
+     "fold": "W3",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": 0.1262,
+     "oos_profit_factor": 1.1065856401155465
+    },
+    {
+     "fold": "W4",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": 0.2515,
+     "oos_profit_factor": 1.2379423420450757
+    },
+    {
+     "fold": "W5",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": 0.043,
+     "oos_profit_factor": 1.0415734975533395
+    }
+   ],
+   "passes_bar": false
+  },
+  {
+   "key": "vol_confirmed_momentum@1h",
+   "panel": "crypto30",
+   "variants_tried": 3,
+   "trades": 11498,
+   "expectancy_pct": -0.0084,
+   "profit_factor": 0.9952,
+   "picks": [
+    {
+     "fold": "W1",
+     "pick": "vcm_b",
+     "oos_expectancy_pct": 0.2179,
+     "oos_profit_factor": 1.117736210552637
+    },
+    {
+     "fold": "W2",
+     "pick": "vcm_b",
+     "oos_expectancy_pct": -0.134,
+     "oos_profit_factor": 0.932817845237307
+    },
+    {
+     "fold": "W3",
+     "pick": "vcm_b",
+     "oos_expectancy_pct": -0.073,
+     "oos_profit_factor": 0.9588845235362333
+    },
+    {
+     "fold": "W4",
+     "pick": "vcm_b",
+     "oos_expectancy_pct": 0.1665,
+     "oos_profit_factor": 1.1132369447643489
+    },
+    {
+     "fold": "W5",
+     "pick": "vcm_b",
+     "oos_expectancy_pct": -0.3403,
+     "oos_profit_factor": 0.7920924549919389
+    }
+   ],
+   "passes_bar": false
+  },
+  {
+   "key": "cvd_momentum@15m",
+   "panel": "crypto30",
+   "variants_tried": 3,
+   "trades": 82964,
+   "expectancy_pct": -0.1521,
+   "profit_factor": 0.8258,
+   "picks": [
+    {
+     "fold": "W1",
+     "pick": "ofm_b",
+     "oos_expectancy_pct": -0.1616,
+     "oos_profit_factor": 0.8348257053975032
+    },
+    {
+     "fold": "W2",
+     "pick": "ofm_b",
+     "oos_expectancy_pct": -0.1066,
+     "oos_profit_factor": 0.8870248410656654
+    },
+    {
+     "fold": "W3",
+     "pick": "ofm_b",
+     "oos_expectancy_pct": -0.1631,
+     "oos_profit_factor": 0.8071549943083026
+    },
+    {
+     "fold": "W4",
+     "pick": "ofm_b",
+     "oos_expectancy_pct": -0.1636,
+     "oos_profit_factor": 0.7925883628650879
+    },
+    {
+     "fold": "W5",
+     "pick": "ofm_c",
+     "oos_expectancy_pct": -0.1708,
+     "oos_profit_factor": 0.7814495124126781
+    }
+   ],
+   "passes_bar": false
+  },
+  {
+   "key": "vol_confirmed_momentum@15m",
+   "panel": "crypto30",
+   "variants_tried": 3,
+   "trades": 62089,
+   "expectancy_pct": -0.1341,
+   "profit_factor": 0.8537,
+   "picks": [
+    {
+     "fold": "W1",
+     "pick": "vcm_c",
+     "oos_expectancy_pct": -0.1364,
+     "oos_profit_factor": 0.8596002580282821
+    },
+    {
+     "fold": "W2",
+     "pick": "vcm_c",
+     "oos_expectancy_pct": -0.1189,
+     "oos_profit_factor": 0.8741862289888345
+    },
+    {
+     "fold": "W3",
+     "pick": "vcm_b",
+     "oos_expectancy_pct": -0.1144,
+     "oos_profit_factor": 0.8735666756888195
+    },
+    {
+     "fold": "W4",
+     "pick": "vcm_b",
+     "oos_expectancy_pct": -0.1626,
+     "oos_profit_factor": 0.8069871902208664
+    },
+    {
+     "fold": "W5",
+     "pick": "vcm_b",
+     "oos_expectancy_pct": -0.1567,
+     "oos_profit_factor": 0.8067196178213206
+    }
+   ],
+   "passes_bar": false
+  },
+  {
+   "key": "cvd_divergence@15m",
+   "panel": "crypto30",
+   "variants_tried": 2,
+   "trades": 136027,
+   "expectancy_pct": -0.1659,
+   "profit_factor": 0.7316,
+   "picks": [
+    {
+     "fold": "W1",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.178,
+     "oos_profit_factor": 0.7397824506809986
+    },
+    {
+     "fold": "W2",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.1855,
+     "oos_profit_factor": 0.7286225493356161
+    },
+    {
+     "fold": "W3",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.1703,
+     "oos_profit_factor": 0.7167775904063126
+    },
+    {
+     "fold": "W4",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.1363,
+     "oos_profit_factor": 0.7509940220678049
+    },
+    {
+     "fold": "W5",
+     "pick": "div_b",
+     "oos_expectancy_pct": -0.1528,
+     "oos_profit_factor": 0.718419311600396
+    }
+   ],
+   "passes_bar": false
+  },
+  {
+   "key": "vol_climax_reversal@15m",
+   "panel": "crypto30",
+   "variants_tried": 2,
+   "trades": 14368,
+   "expectancy_pct": -0.1855,
+   "profit_factor": 0.7621,
+   "picks": [
+    {
+     "fold": "W1",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": -0.3008,
+     "oos_profit_factor": 0.6641206100045256
+    },
+    {
+     "fold": "W2",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": -0.0943,
+     "oos_profit_factor": 0.8852841840166441
+    },
+    {
+     "fold": "W3",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": -0.1897,
+     "oos_profit_factor": 0.7485132655852303
+    },
+    {
+     "fold": "W4",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": -0.1295,
+     "oos_profit_factor": 0.8105287851245412
+    },
+    {
+     "fold": "W5",
+     "pick": "vcl_b",
+     "oos_expectancy_pct": -0.2067,
+     "oos_profit_factor": 0.697233143302762
+    }
+   ],
+   "passes_bar": false
+  }
+ ],
+ "double_cost_gate": {
+  "triggered": false,
+  "reason": "Operative near-bar set is empty: no cell reached pooled PF >= 1.0 (best 0.9952, vcm_b@1h). Doubling strictly-adverse costs can only lower expectancy and PF, so no FAIL can flip at 2x costs and no PASS exists to stress. Recorded explicitly rather than silently skipped."
+ },
+ "disclosures": [
+  "Sandbox exec file-write fault (EPERM, silent 0-byte writes) destroyed 4 of 17 fresh 15m cache CSVs mid-round; AAVE, MANA, SAND (0-byte) and VET (absent) were loaded via in-memory fetch from the same Binance Vision source under the same provenance contract, pinned by per-zip + canonical CSV SHA-256 (coverage.json) and a two-run byte-identical hash cross-check on all 30 series.",
+  "Shipped rows/*.json carry per_symbol_oos reduced to trades/win_rate/expectancy_net/profit_factor_net; full metrics are reproducible from the frozen rd12/ code and manifested data.",
+  "Research only: production untouched."
+ ]
+}
