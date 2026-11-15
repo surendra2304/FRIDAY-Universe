@@ -6362,6 +6362,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     residuals: "3x asyncio.timeout shutdown/drain sites (non-identical 3.10 conversion, trigger paths in PR doc); 141 test-scope hits; append_friday.py codegen template"
     next_action: "Coordinator: Fleet CD -> post-deploy Futuris boot probe on Server 1 (the originally-proven failure) -> flip VERIFIED. Note SEN-012 context: a future fleet Python 3.11+ upgrade remains a separate planned decision; this task makes 3.10 safe meanwhile."
   - id: TASK-IG-STR-01
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/options_pricing.py
+      - Stratex/rigorous_backtest/ig/tests/test_options_pricing.py
     title: "IG corpus: Black-Scholes options pricing + greeks (research utility)"
     owner: muse_ai
     status: IN_REVIEW
@@ -6376,6 +6380,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step (research package, no production consumer). Future research may cite the pricer; any options strategy still enters only via the RD programme bar."
   - id: TASK-IG-STR-02
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/dom_features.py
+      - Stratex/rigorous_backtest/ig/tests/test_dom_features.py
     title: "IG corpus: Order-book / depth-of-market research features"
     owner: muse_ai
     status: IN_REVIEW
@@ -6390,6 +6398,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step. A future RD family may consume these features; that family needs its own pre-declaration and must pass the full programme bar."
   - id: TASK-IG-STR-04
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/scenario_sim.py
+      - Stratex/rigorous_backtest/ig/tests/test_scenario_sim.py
     title: "IG corpus: Pre-trade scenario simulation ('Time Machine')"
     owner: muse_ai
     status: IN_REVIEW
@@ -6404,6 +6416,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step. Desks may cite sim output in research memos; it promotes nothing — the RD bar and forward protocol remain the only promotion paths."
   - id: TASK-IG-STR-05
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/desk_journal.py
+      - Stratex/rigorous_backtest/ig/research_desk.py
+      - Stratex/rigorous_backtest/ig/tests/test_desk_journal.py
+      - Stratex/rigorous_backtest/ig/tests/test_research_desk.py
     title: "IG corpus: Multi-agent research desk (skill-pack pipeline) + trade journal"
     owner: muse_ai
     status: IN_REVIEW
@@ -6418,6 +6436,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step. Follow-up (separate task): wire run_desk memos into the RD programme's per-round paperwork."
   - id: TASK-IG-STR-06
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/CONFLUENCE_DECLARATION.md
+      - Stratex/rigorous_backtest/ig/confluence.py
+      - Stratex/rigorous_backtest/ig/declaration.json
+      - Stratex/rigorous_backtest/ig/tests/test_confluence.py
     title: "IG corpus: RD candidate family: Fib/BOS confluence (pre-declared)"
     owner: muse_ai
     status: IN_REVIEW
@@ -6432,6 +6456,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. Next action: the declared RD run (crypto30 + forex_cross41 panels, 1h/4h, walk-forward, 2x-cost shadow, Bonferroni vs the then-current trial floor) as a separate PR with a RESULTS document — pass or fail, the family is judged at the bar and the verdict recorded either way."
   - id: TASK-IG-STR-07
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/arb_scanner.py
+      - Stratex/rigorous_backtest/ig/tests/test_arb_scanner.py
     title: "IG corpus: Cross-venue arbitrage scanner (paper-only)"
     owner: muse_ai
     status: IN_REVIEW
@@ -6446,6 +6474,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step. Follow-up (separate task): a data-collection run feeding the paper journal from public snapshots, then RD evaluation of the family at the bar."
   - id: TASK-IG-STR-08
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/chart_explainer.py
+      - Stratex/rigorous_backtest/ig/tests/test_chart_explainer.py
     title: "IG corpus: LLM chart-reading explainer (labels only, never advice)"
     owner: muse_ai
     status: IN_REVIEW
@@ -6485,6 +6517,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Sentinel/sentinel/modules/endpoint/device_posture.py
       - Sentinel/tests/unit/test_ig_sen_device_posture.py
   - id: TASK-IG-STR-03
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/levels.py
+      - Stratex/rigorous_backtest/ig/tests/test_levels.py
     title: "IG corpus: Support/resistance levels + chart annotation records"
     owner: muse_ai
     status: IN_REVIEW
@@ -6499,6 +6535,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step. Candidate follow-up (separate task): render these records on the Halo/terminal chart surfaces."
   - id: TASK-IG-STR-09
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/assistant_pack.py
+      - Stratex/rigorous_backtest/ig/tests/test_assistant_pack.py
     title: "IG corpus: Assistant content pack: trade-plan template + discipline notes"
     owner: muse_ai
     status: IN_REVIEW
@@ -6513,6 +6553,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step. The assistant layer may render plans from this template; any strategy a plan describes still faces the RD bar."
   - id: TASK-IG-STR-10
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/challenge_journal.py
+      - Stratex/rigorous_backtest/ig/tests/test_challenge_journal.py
     title: "IG corpus: Prop-firm challenge tracker + public trade journal"
     owner: muse_ai
     status: IN_REVIEW
@@ -6527,6 +6571,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step. If the owner ever runs a challenge (his decision, real-money gated), this journal is the record; until then it serves demo forward tests equally well."
   - id: TASK-IG-STR-11
+    files:
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/prediction_lane.py
+      - Stratex/rigorous_backtest/ig/tests/test_prediction_lane.py
     title: "IG corpus: Prediction-market research lane (read-only)"
     owner: muse_ai
     status: IN_REVIEW
@@ -6541,6 +6589,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Merge on green CI. No deploy step. Follow-up (separate task): scheduled public snapshots for study; any strategy derived from this lane enters the RD bar like any other."
   - id: TASK-IG-STR-12
+    files:
+      - Stratex/docs/IG_STACK_EVALUATION.md
+      - Stratex/rigorous_backtest/ig/__init__.py
+      - Stratex/rigorous_backtest/ig/strategy_stacking.py
+      - Stratex/rigorous_backtest/ig/tests/test_strategy_stacking.py
     title: "IG corpus: Strategy stacking (research) + stack/MT5 evaluation"
     owner: muse_ai
     status: IN_REVIEW
