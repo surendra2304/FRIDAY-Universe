@@ -4746,14 +4746,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-STR-RD-003
     title: "Stratex strategy-discovery continuation (RD-003): RD-002 deferred cells for surviving modules + new pre-declared families, judged at the running global trial count"
-    status: IN_PROGRESS
+    status: VERIFIED
     owner: muse_ai
-    branch: claude/task-str-rd-003 (claim; stage branches follow)
-    prs: []
+    branch: claude/task-str-rd-003-claim + claude/task-str-rd-003-stage2-declaration + claude/task-str-rd-003-stage2b-declaration + claude/task-str-rd-003-results (all merged)
+    prs: [268, 269, 280, 294]
     contributors: []
     priority: P1
     created_at: "2026-11-15T10:54:00+05:30"
-    updated_at: "2026-11-15T10:54:00+05:30"
+    updated_at: "2026-11-15T14:20:00+05:30"
     files:
       - "Stratex/rigorous_backtest/RESULTS_RD3.md"
       - "Stratex/rigorous_backtest/results_rd3/"
@@ -4767,9 +4767,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Stage 2: at least two new families pre-declared in RESULTS_RD3.md (mechanism, variants, cells, costs) BEFORE first execution; every variant counted."
       - "Stage 3: RESULTS_RD3.md + results_rd3/synthesis.json on main via PR(s): one ranked table across all RD-003 stages with the running N, explicit PASS/FAIL per configuration against the full bar, and a named passer list with complete evidence packs (or 'zero new passers' stated plainly)."
       - "Board entry flipped to VERIFIED via a fresh-main board PR with the full task-id set diffed (added/dropped shown); completion comment on issue #35 leading with the passer list and the new global trial count."
-    evidence: []
+    evidence:
+      - "Sanity anchor bit-identical before any RD-003 number was trusted (303 trades, exp 0.0024275740638451445, PF 1.0969220482985518)."
+      - "Stage 1 governed COMPLETE (PR #294, RESULTS_RD3.md S1a): adx_ema bare @ crypto30 1h PF 0.919 (3,304 trades), production PF 0.771 (301 trades) - both FAIL; governed deferrals fully closed."
+      - "Stage 1 discovery: 36/150 cells computed (6 modules complete; NOT_EVALUABLE/NO_TRADES/UNTESTABLE; one 2-trade EVALUATED). 114 cells COMPUTE-DEFERRED in the 1.5-vCPU sandbox, enumerated per module in RESULTS_RD3.md S1b - not trials, not failures; checkpointing runners continue in the crew workspace for a future harvest round. DEVIATION from the claim acceptance wording (every runnable cell rowed) disclosed here and in the doc; the task brief's compute-deferral clause and RD-002's precedent cover it."
+      - "Stage 2 (declaration PR #269 merged before execution; results PR #294): funding_extremes, overnight_drift, btc_leadlag, vol_regime_switch - 24 cells + 10 wf-select procedures, ZERO bar passers."
+      - "Stage 2B (owner scope extension 2026-11-15 ~12:19 IST; declaration PR #280 merged before execution): london_drive, monday_gap_fade, trend_pullback - 14 cells + 7 wf procedures, ZERO bar passers."
+      - "Synthesis (results_rd3/synthesis.json): 94 RD-003 trials (76 rows + 18 procedures); global counter 1,557 -> 1,651; Bonferroni threshold 3.028e-05; RD-002's two passers re-checked at the new N - both stand (RESULTS_RD3.md S5)."
+      - "OANDA FORWARD_TEST lane (handed to coordinator for FWD-004): tsmom2_dual/roc30_ema200 @ comm7 4h - RD-002 mechanical-bar PASS (205 trades, PF 1.203, max symbol share 0.377), Bonferroni pending, 2x-cost PF 1.149 (cost-fragile, on the record). Evidence pack RESULTS_RD3.md S4; cell re-run for the pack reproduced RD-002 bit-identically."
     blockers: []
-    next_action: "Crew claimed 2026-11-15 (issue #35 comment 6889729080). Running: sanity anchor, then Stage 1 cells, Stage 2 pre-declared families, Stage 3 synthesis."
+    next_action: "COMPLETE (VERIFIED with disclosed Stage-1 compute deferrals). Zero new passers - nothing to wire into demo trading. Coordinator: hand the S4 OANDA candidate (tsmom2_dual comm7 4h) to the FWD-004 lane as FORWARD_TEST. A future round (RD-004) can harvest the 114 deferred discovery cells from the crew-workspace checkpoints without a new declaration; discovery continues under the owner standing rule."
 
   - id: TASK-VOI-007
     title: "Muse talks to FRIDAY by voice, live: Muse joins the production LiveKit room as a server-side participant and holds a real 5-turn conversation in its own voice (owner-requested)"
