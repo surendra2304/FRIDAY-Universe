@@ -1226,6 +1226,35 @@ class StratexTradingEngine:
         except Exception:
             return None
 
+    def _max_stop_pct_for(self, strategy_name) -> float:
+        """Max-stop cap for a strategy: the engine cap, raised only by
+        an explicit governed override in config_strategy (the single
+        governance source).
+
+        TASK-STR-FWD-002 sleeve: the weekly shock leg's judged bracket
+        (2x ATR(1wk)) is structurally wider than the engine cap — its
+        first two live signals (22.2% / 21.4%) were gate-blocked. Its
+        registry entry carries max_stop_pct=0.90, above the judged
+        range (median 29%, max 84.5% over the RD-002 window), as a
+        data-sanity guard. Every strategy without an override keeps
+        the engine cap; position risk is still bounded by the 1%
+        risk rule regardless of stop width.
+        """
+        cap = self.max_stop_pct
+        try:
+            from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+            from strategies.strategy_registry import governance_key_for
+
+            entry = PRODUCTION_STRATEGY_REGISTRY.get(
+                governance_key_for(strategy_name or "")
+            ) or {}
+            override = entry.get("max_stop_pct")
+            if override:
+                cap = max(cap, float(override))
+        except Exception:
+            pass
+        return cap
+
     def _execute_signal(self, venue: str, symbol: str, signal: dict, timeframe: str) -> bool:
         """Execute a trading signal on the venue."""
         try:
@@ -1311,10 +1340,11 @@ class StratexTradingEngine:
                 return False
 
             # Max stop cap: never risk more than 3% on a single trade.
-            if stop_pct > self.max_stop_pct:
+            max_stop_pct = self._max_stop_pct_for(signal.get("strategy"))
+            if stop_pct > max_stop_pct:
                 logger.info(
                     f"[STRATEX] Skip {symbol}: stop {stop_pct*100:.2f}% "
-                    f"> max {self.max_stop_pct*100:.2f}% (risk too large)"
+                    f"> max {max_stop_pct*100:.2f}% (risk too large)"
                 )
                 return False
 

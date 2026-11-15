@@ -189,6 +189,24 @@ def test_sleeve_registry_entries():
         assert "EXCLUDED" in entry["reason"]
 
 
+def test_max_stop_override_is_sleeve_leg_only():
+    from autonomy.run_daemon import StratexTradingEngine
+
+    daemon = StratexTradingEngine.__new__(StratexTradingEngine)
+    daemon.max_stop_pct = 0.15  # the live engine cap (STRATEX_MAX_STOP_PCT)
+    # The weekly leg's judged stops (median 29%, max 84.5% over the
+    # RD-002 window) need its governed override; both live signals on
+    # day one (22.2% / 21.4%) were blocked without it.
+    assert daemon._max_stop_pct_for(SHOCK_TAG) == pytest.approx(0.90)
+    # Every other strategy keeps the engine cap — including the two
+    # forward winners and unknown names (fail closed to the cap).
+    assert daemon._max_stop_pct_for("strategy_dow_effect") == pytest.approx(0.15)
+    assert daemon._max_stop_pct_for("strategy_ichimoku_trend") == pytest.approx(0.15)
+    assert daemon._max_stop_pct_for("strategy_adx_ema") == pytest.approx(0.15)
+    assert daemon._max_stop_pct_for("strategy_nonsense") == pytest.approx(0.15)
+    assert daemon._max_stop_pct_for(None) == pytest.approx(0.15)
+
+
 def test_sleeve_executability_matrix():
     from strategies.strategy_registry import UnifiedStrategyRegistry
 

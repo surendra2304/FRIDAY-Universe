@@ -344,6 +344,15 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "minimum_required_edge": 0.0005,
         "validated_assets": CRYPTO30_SYMBOLS,
         "sleeve": SLEEVE_NAME,
+        # Governed override of the daemon's max-stop gate for THIS leg
+        # only: judged 2x ATR(1wk) stops are structurally wide — over
+        # the RD-002 window they ran median 29%, p99 78%, max 84.5% of
+        # price (crew-measured on the judged series, 350 entries). The
+        # engine cap (15%) blocked the leg's first two live signals
+        # (22.2% / 21.4%). 0.90 sits above the judged range as a
+        # data-sanity guard; position risk stays capped by the 1%
+        # risk rule (wider stop = smaller position).
+        "max_stop_pct": 0.90,
         "reason": "Crypto leg of the RD-002 Stage-C best-per-class sleeve (owner-approved third forward entrant 2026-11-15, TASK-STR-FWD-002 extension). As a standalone cell it did NOT pass the promotion bar (109 OOS trades, PF 1.575, 3/5 folds) — it trades ONLY as a sleeve component, judged on the sleeve's compounded equity + max drawdown, with the sleeve-level kill rule (combined sleeve DD > 5% of equity -> auto-pause all sleeve components). DEMO venue only; live trading prohibited.",
     },
     "sleeve_tsmom2_dual": {
