@@ -12,10 +12,13 @@ with open(local_secret_file, "w", encoding="utf-8") as f:
 print(f"SUCCESS: Saved new gateway secret locally to {local_secret_file} (length {len(new_secret)})")
 
 # Remote script to update /opt/oracle_mcp/.gateway_secret and service
+# The secret value assigned inside REMOTE_SCRIPT is the substitution
+# placeholder __NEW_GATEWAY_SECRET__ (replaced with the freshly
+# generated secret just before the script is sent) -- not a credential.
 REMOTE_SCRIPT = """
 import os, subprocess, re
 
-secret = "__REPLACE_SECRET__"
+secret = "__NEW_GATEWAY_SECRET__"
 secret_file = "/opt/oracle_mcp/.gateway_secret"
 
 with open(secret_file, "w") as f:
@@ -35,7 +38,7 @@ with open(service_path, "w") as f:
 subprocess.run(["systemctl", "daemon-reload"])
 subprocess.run(["systemctl", "restart", "oracle-cloud-mcp"])
 print("SUCCESS: systemd daemon-reload and oracle-cloud-mcp restarted.")
-""".replace("__REPLACE_SECRET__", new_secret)
+""".replace("__NEW_GATEWAY_SECRET__", new_secret)
 
 SSH_CMD = [
     "ssh", "-o", "BatchMode=yes",
