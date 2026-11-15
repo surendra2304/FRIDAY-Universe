@@ -55,6 +55,19 @@ class StratexTradingEngine:
         self.adx_threshold = float(os.getenv("STRATEX_ADX_THRESHOLD", "25"))
         # Fees: Binance USD-M taker is 0.04% per side (0.08% round trip).
         self.fee_rate_roundtrip = float(os.getenv("STRATEX_FEE_ROUNDTRIP", "0.0008"))
+        # Round-trip FRICTION charged inside the expectancy gate. The gate
+        # must price the full judged cost stack, not fees alone:
+        # TASK-STR-RD-002's cost model (rigorous_backtest/rd2/costs2.py)
+        # is 5 bps/side taker fee + 3 bps/side spread/slippage = 16 bps
+        # round trip, and config_strategy records total_friction_bps=16.0
+        # for both forward entrants. At the old fees-only 8 bps the gate
+        # approved trades whose judged expectancy is negative once
+        # spread/slippage is charged (TASK-STR-RD-010). Operators may
+        # raise this via STRATEX_FRICTION_ROUNDTRIP; the default is the
+        # judged model, not the cheaper demo fee schedule.
+        self.friction_rate_roundtrip = float(
+            os.getenv("STRATEX_FRICTION_ROUNDTRIP", "0.0016")
+        )
         # Expectancy floor in R after fees. 0.0 let every marginal setup
         # through; fees and spread then ate the remainder (14d: -4.5k commissions).
         self.min_expectancy_r = float(os.getenv("STRATEX_MIN_EXPECTANCY_R", "0.10"))
@@ -1450,7 +1463,14 @@ class StratexTradingEngine:
 
             target_pct = abs(take_profit - current_price) / current_price
             rr_actual = target_pct / stop_pct if stop_pct > 0 else 0.0
-            fee_r = self.fee_rate_roundtrip / stop_pct
+            # Full round-trip friction (fees + spread/slippage), per the
+            # RD-002 judged cost model — see __init__ (TASK-STR-RD-010).
+            # The getattr fallback keeps manually-constructed engines
+            # (tests) on the legacy fees-only rate.
+            friction_rate = getattr(
+                self, "friction_rate_roundtrip", None
+            ) or self.fee_rate_roundtrip
+            fee_r = friction_rate / stop_pct
             expectancy_r = win_rate * rr_actual - (1.0 - win_rate) - fee_r
 
             # Reward-side fee floor: the stop side already refuses sub-0.5%

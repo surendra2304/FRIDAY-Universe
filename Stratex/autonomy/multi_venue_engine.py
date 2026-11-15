@@ -22,6 +22,15 @@ from logger import get_logger
 
 logger = get_logger("multi_venue_engine")
 
+# Taker commission schedule used ONLY to estimate round-trip fees on close
+# paths where the venue cannot report actuals (such rows are labelled
+# fees_source="estimate" in the measurement ledger). Binance demo-fapi
+# measured 0.04%/side on 2026-11-15 via /fapi/v1/commissionRate
+# (TASK-STR-RD-010). The broker figure from the adapter's
+# get_realized_pnl always wins when it is available.
+_TAKER_FEE_RATES = {"binance_futures": 0.0004}
+_DEFAULT_TAKER_FEE_RATE = 0.0004
+
 
 class MultiVenueEngine:
     """
@@ -770,6 +779,7 @@ class MultiVenueEngine:
 
                     # Stop tracking it and start the re-entry cooldown.
                     key = f"{venue}:{symbol}"
+                    opened_at = self.position_opened_at.get(key, 0)
                     self.position_opened_at.pop(key, None)
                     self.positions.pop(key, None)
                     self.mark_exit(venue, symbol)
@@ -777,10 +787,18 @@ class MultiVenueEngine:
                     # TASK-STR-PHASE2-001: an engine-initiated close is a
                     # fill like any other — book it through the reconciler's
                     # path (breaker check included) and record it in the
-                    # fill ledger, so it can never happen silently. Fees
-                    # are unknown on this path: the row is labelled
-                    # fees_source=estimate with fees=0 rather than
-                    # inventing a broker figure.
+                    # fill ledger, so it can never happen silently.
+                    # TASK-STR-RD-010: fees are NOT unknown on this path.
+                    # The previous code booked fees=0 / net=gross, which
+                    # overstated every close through here by the full
+                    # round-trip commission (~8 bps of notional at the
+                    # demo taker schedule). Ask the adapter for the broker
+                    # figures first — the same userTrades sum the
+                    # reconciler books for SL/TP exits. Only when the
+                    # venue reports no fills, estimate the round trip at
+                    # the taker schedule and label it "estimate" — never
+                    # zero, and the breaker now books NET like the
+                    # reconciler does.
                     try:
                         strat = self.position_strategy.pop(key, "UNATTRIBUTED")
                         self.position_timeframe.pop(key, None)
@@ -789,7 +807,39 @@ class MultiVenueEngine:
                         gross = (exit_price - float(pos.entry_price or 0.0)) * qty
                         if str(pos.side).upper() in ("SHORT", "SELL"):
                             gross = -gross
-                        self.book_reconciled_pnl(venue, symbol, gross)
+                        fees = 0.0
+                        fees_source = "estimate"
+                        net = gross
+                        pnl_info = None
+                        adapter = self.venues[venue]
+                        if hasattr(adapter, "get_realized_pnl"):
+                            try:
+                                pnl_info = adapter.get_realized_pnl(
+                                    symbol, since_ms=opened_at or None
+                                )
+                            except TypeError:
+                                try:
+                                    pnl_info = adapter.get_realized_pnl(symbol)
+                                except Exception:
+                                    pnl_info = None
+                            except Exception:
+                                pnl_info = None
+                        if pnl_info and int(pnl_info.get("trades", 0) or 0) > 0:
+                            gross = float(pnl_info.get("gross", gross) or 0.0)
+                            fees = abs(float(pnl_info.get("fees", 0.0) or 0.0))
+                            net = float(pnl_info.get("net", gross - fees) or 0.0)
+                            fees_source = "broker"
+                            if float(pnl_info.get("last_price", 0.0) or 0.0) > 0:
+                                exit_price = float(pnl_info["last_price"])
+                        else:
+                            rate = _TAKER_FEE_RATES.get(
+                                venue, _DEFAULT_TAKER_FEE_RATE
+                            )
+                            fees = (
+                                float(pos.entry_price or 0.0) + exit_price
+                            ) * qty * rate
+                            net = gross - fees
+                        self.book_reconciled_pnl(venue, symbol, net)
                         from measurement import fill_ledger as _fl
 
                         _fl.append_fill({
@@ -801,12 +851,12 @@ class MultiVenueEngine:
                             "qty": qty,
                             "entry_price": float(pos.entry_price or 0.0),
                             "exit_price": exit_price,
-                            "entry_time": 0.0,
+                            "entry_time": (opened_at or 0) / 1000.0,
                             "exit_time": time.time(),
                             "gross_pnl": gross,
-                            "fees": 0.0,
-                            "fees_source": "estimate",
-                            "net_pnl": gross,
+                            "fees": fees,
+                            "fees_source": fees_source,
+                            "net_pnl": net,
                             "exit_reason": "ENGINE_CLOSE",
                             "order_id": str(getattr(result, "order_id", "") or ""),
                         })
