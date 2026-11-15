@@ -1,0 +1,93 @@
+[
+ {
+  "file": "ADAUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "AVAXUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "BNBUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "BTCUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "DOGEUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "DOTUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "ETHUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "LINKUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "LTCUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "NEARUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "SOLUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "TRXUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "XRPUSDT_15m_2023-10_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 108192,
+  "source": "binance_vision_futures_um_monthly_klines"
+ }
+]

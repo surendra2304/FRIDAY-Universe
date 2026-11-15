@@ -1,0 +1,4424 @@
+[
+ {
+  "config": "SOI_TOKYO_MOM_L1h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "TOKYO",
+   "direction": "MOM",
+   "lookback_h": 1,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1353,
+   "wins": 342,
+   "win_rate": 0.25277161862527714,
+   "expectancy_net": -0.0006612648393323605,
+   "profit_factor_net": 0.25739583698121105,
+   "avg_win_net": 0.0009067577175233345,
+   "avg_loss_net": -0.001191693834826572,
+   "total_return_net": -0.5918847765906688,
+   "max_drawdown_net": -0.5918847765906698
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 370,
+    "wins": 120,
+    "win_rate": 0.32432432432432434,
+    "expectancy_net": -0.0006902224391494275,
+    "profit_factor_net": 0.34882529118527683,
+    "avg_win_net": 0.0011400397469130397,
+    "avg_loss_net": -0.001568748288459412,
+    "total_return_net": -0.2259134555069967,
+    "max_drawdown_net": -0.22637585202354216
+   },
+   "W3": {
+    "trades": 373,
+    "wins": 92,
+    "win_rate": 0.24664879356568364,
+    "expectancy_net": -0.0006568505876796992,
+    "profit_factor_net": 0.22425351205782248,
+    "avg_win_net": 0.0007698516279900712,
+    "avg_loss_net": -0.0011239559394292326,
+    "total_return_net": -0.21754614293052887,
+    "max_drawdown_net": -0.21754614293052899
+   },
+   "W4": {
+    "trades": 359,
+    "wins": 84,
+    "win_rate": 0.233983286908078,
+    "expectancy_net": -0.0006471181130922236,
+    "profit_factor_net": 0.23468532215816282,
+    "avg_win_net": 0.000848095198461016,
+    "avg_loss_net": -0.0011038378155303042,
+    "total_return_net": -0.20755482362672362,
+    "max_drawdown_net": -0.2097793434552736
+   },
+   "W5": {
+    "trades": 251,
+    "wins": 46,
+    "win_rate": 0.18326693227091634,
+    "expectancy_net": -0.0006453719256046195,
+    "profit_factor_net": 0.16167409704580293,
+    "avg_win_net": 0.0006791309416870378,
+    "avg_loss_net": -0.0009425774470456743,
+    "total_return_net": -0.14971343963250727,
+    "max_drawdown_net": -0.15014932140430481
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006480728333865712,
+    "GBPUSD": -0.0006450613779692729,
+    "USDJPY": -0.0006890604250690887
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.5703792867003313,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0006890604250690887
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_TOKYO_MOM_L1h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "TOKYO",
+   "direction": "MOM",
+   "lookback_h": 1,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1353,
+   "wins": 395,
+   "win_rate": 0.29194382852919437,
+   "expectancy_net": -0.0006440673545169411,
+   "profit_factor_net": 0.3343022184345275,
+   "avg_win_net": 0.0011078836081685694,
+   "avg_loss_net": -0.0013664270938288166,
+   "total_return_net": -0.5824907698034876,
+   "max_drawdown_net": -0.582490769803488
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 370,
+    "wins": 124,
+    "win_rate": 0.33513513513513515,
+    "expectancy_net": -0.0006607876718164022,
+    "profit_factor_net": 0.44437160525208497,
+    "avg_win_net": 0.0015768988604096096,
+    "avg_loss_net": -0.0017887272246457744,
+    "total_return_net": -0.21761870318028698,
+    "max_drawdown_net": -0.2204790779007737
+   },
+   "W3": {
+    "trades": 373,
+    "wins": 108,
+    "win_rate": 0.289544235924933,
+    "expectancy_net": -0.0006206723554804151,
+    "profit_factor_net": 0.3005204395142531,
+    "avg_win_net": 0.0009209720826595171,
+    "avg_loss_net": -0.0012489651830997082,
+    "total_return_net": -0.20696921608840557,
+    "max_drawdown_net": -0.2069800117267271
+   },
+   "W4": {
+    "trades": 359,
+    "wins": 98,
+    "win_rate": 0.27298050139275765,
+    "expectancy_net": -0.0006160250716559531,
+    "profit_factor_net": 0.2976659795379142,
+    "avg_win_net": 0.0009564279445173195,
+    "avg_loss_net": -0.0012064480432459174,
+    "total_return_net": -0.1987451097376829,
+    "max_drawdown_net": -0.2014391456764354
+   },
+   "W5": {
+    "trades": 251,
+    "wins": 65,
+    "win_rate": 0.2589641434262948,
+    "expectancy_net": -0.0006942944333492844,
+    "profit_factor_net": 0.2190602931608519,
+    "avg_win_net": 0.0007520560468595114,
+    "avg_loss_net": -0.0011997394936373047,
+    "total_return_net": -0.16017870618444585,
+    "max_drawdown_net": -0.1611120550291919
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006571036775429763,
+    "GBPUSD": -0.0005896403914462178,
+    "USDJPY": -0.0006870389954392546
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.5290987917795288,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0006870389954392546
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_TOKYO_MOM_L4h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "TOKYO",
+   "direction": "MOM",
+   "lookback_h": 4,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1391,
+   "wins": 355,
+   "win_rate": 0.25521207764198417,
+   "expectancy_net": -0.0006353936988826569,
+   "profit_factor_net": 0.2718339908593543,
+   "avg_win_net": 0.0009294264755660407,
+   "avg_loss_net": -0.001171601384142587,
+   "total_return_net": -0.5874227478406694,
+   "max_drawdown_net": -0.5884386272706598
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 377,
+    "wins": 131,
+    "win_rate": 0.34748010610079577,
+    "expectancy_net": -0.0005680703130528259,
+    "profit_factor_net": 0.41966858272875757,
+    "avg_win_net": 0.0011822314931722898,
+    "avg_loss_net": -0.001500141600107664,
+    "total_return_net": -0.19330883088915396,
+    "max_drawdown_net": -0.19379070360632966
+   },
+   "W3": {
+    "trades": 385,
+    "wins": 100,
+    "win_rate": 0.2597402597402597,
+    "expectancy_net": -0.0005965063438805301,
+    "profit_factor_net": 0.25743172423591404,
+    "avg_win_net": 0.0007961620463647514,
+    "avg_loss_net": -0.00108516191940519,
+    "total_return_net": -0.20543353133296105,
+    "max_drawdown_net": -0.20543353133296027
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 72,
+    "win_rate": 0.1925133689839572,
+    "expectancy_net": -0.0007986907848285448,
+    "profit_factor_net": 0.1454999994526839,
+    "avg_win_net": 0.0007064292998941528,
+    "avg_loss_net": -0.0011575273613187243,
+    "total_return_net": -0.25849289723925406,
+    "max_drawdown_net": -0.25849289723925406
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 52,
+    "win_rate": 0.20392156862745098,
+    "expectancy_net": -0.0005541365929607081,
+    "profit_factor_net": 0.23988708617896942,
+    "avg_win_net": 0.0008575953652215451,
+    "avg_loss_net": -0.0009157625132832557,
+    "total_return_net": -0.1319346374732795,
+    "max_drawdown_net": -0.13451595475079325
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0007064277059661618,
+    "GBPUSD": -0.0006849238281405178,
+    "USDJPY": -0.0005182844665525736
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.6353542211596055,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.0005182844665525736
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_TOKYO_MOM_L4h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "TOKYO",
+   "direction": "MOM",
+   "lookback_h": 4,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1391,
+   "wins": 393,
+   "win_rate": 0.28253055355859097,
+   "expectancy_net": -0.0006454627054809923,
+   "profit_factor_net": 0.33490911810978113,
+   "avg_win_net": 0.0011504075184790566,
+   "avg_loss_net": -0.0013526540862588473,
+   "total_return_net": -0.5933986275631111,
+   "max_drawdown_net": -0.5943958268503978
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 377,
+    "wins": 142,
+    "win_rate": 0.376657824933687,
+    "expectancy_net": -0.0004682004622188538,
+    "profit_factor_net": 0.5661941304232708,
+    "avg_win_net": 0.0016223882146612367,
+    "avg_loss_net": -0.0017314497903761846,
+    "total_return_net": -0.16255470178433107,
+    "max_drawdown_net": -0.16454020230987454
+   },
+   "W3": {
+    "trades": 385,
+    "wins": 109,
+    "win_rate": 0.2831168831168831,
+    "expectancy_net": -0.0006470794499987074,
+    "profit_factor_net": 0.2726977621839575,
+    "avg_win_net": 0.0008569559321209458,
+    "avg_loss_net": -0.0012410644378648022,
+    "total_return_net": -0.22082458438421626,
+    "max_drawdown_net": -0.22082458438421437
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 79,
+    "win_rate": 0.21122994652406418,
+    "expectancy_net": -0.0008422153481465582,
+    "profit_factor_net": 0.17499626409508767,
+    "avg_win_net": 0.0008457471140487074,
+    "avg_loss_net": -0.0012942459736157987,
+    "total_return_net": -0.27055657499037,
+    "max_drawdown_net": -0.2705565749903698
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 63,
+    "win_rate": 0.24705882352941178,
+    "expectancy_net": -0.0006165212572989694,
+    "profit_factor_net": 0.2812194727539789,
+    "avg_win_net": 0.0009763303122117882,
+    "avg_loss_net": -0.0011391756785446869,
+    "total_return_net": -0.14574892052163835,
+    "max_drawdown_net": -0.14879104831587242
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0007655933308804329,
+    "GBPUSD": -0.0006763873259280086,
+    "USDJPY": -0.000500586847688983
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.594624517448283,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.000500586847688983
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_TOKYO_REV_L1h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "TOKYO",
+   "direction": "REV",
+   "lookback_h": 1,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1353,
+   "wins": 389,
+   "win_rate": 0.28750923872875095,
+   "expectancy_net": -0.0005386837426162625,
+   "profit_factor_net": 0.32383221081597346,
+   "avg_win_net": 0.00089732058453541,
+   "avg_loss_net": -0.0011181502190291263,
+   "total_return_net": -0.5182131880727746,
+   "max_drawdown_net": -0.5194097683667139
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 370,
+    "wins": 123,
+    "win_rate": 0.3324324324324324,
+    "expectancy_net": -0.0005096724382315372,
+    "profit_factor_net": 0.46589840074380545,
+    "avg_win_net": 0.0013373808573902335,
+    "avg_loss_net": -0.001429460111759787,
+    "total_return_net": -0.17240198398582773,
+    "max_drawdown_net": -0.17241969960097492
+   },
+   "W3": {
+    "trades": 373,
+    "wins": 115,
+    "win_rate": 0.30831099195710454,
+    "expectancy_net": -0.0005431293251072673,
+    "profit_factor_net": 0.27179908074198084,
+    "avg_win_net": 0.0006575230839670094,
+    "avg_loss_net": -0.001078303848531848,
+    "total_return_net": -0.1836211988809684,
+    "max_drawdown_net": -0.18483934174865713
+   },
+   "W4": {
+    "trades": 359,
+    "wins": 97,
+    "win_rate": 0.27019498607242337,
+    "expectancy_net": -0.0005528686472265891,
+    "profit_factor_net": 0.2600337649089286,
+    "avg_win_net": 0.0007190556733683927,
+    "avg_loss_net": -0.0010237719262254949,
+    "total_return_net": -0.1802666363043025,
+    "max_drawdown_net": -0.18026663630430184
+   },
+   "W5": {
+    "trades": 251,
+    "wins": 54,
+    "win_rate": 0.2151394422310757,
+    "expectancy_net": -0.0005545546573497138,
+    "profit_factor_net": 0.2197231409424562,
+    "avg_win_net": 0.0007258575361543634,
+    "avg_loss_net": -0.0009055305885640293,
+    "total_return_net": -0.13009638322648043,
+    "max_drawdown_net": -0.132238326791545
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005519308742099522,
+    "GBPUSD": -0.0005549243552713077,
+    "USDJPY": -0.0005108025653905921
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.5991781566938736,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0005108025653905921
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_TOKYO_REV_L1h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "TOKYO",
+   "direction": "REV",
+   "lookback_h": 1,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1353,
+   "wins": 444,
+   "win_rate": 0.328159645232816,
+   "expectancy_net": -0.0005558989991500659,
+   "profit_factor_net": 0.3830313524357373,
+   "avg_win_net": 0.0010516759620292568,
+   "avg_loss_net": -0.0013411171320033325,
+   "total_return_net": -0.5295592196207116,
+   "max_drawdown_net": -0.5317781734569402
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 370,
+    "wins": 144,
+    "win_rate": 0.3891891891891892,
+    "expectancy_net": -0.0005391705853707726,
+    "profit_factor_net": 0.5140284724976023,
+    "avg_win_net": 0.0014653513659094307,
+    "avg_loss_net": -0.0018163881118501944,
+    "total_return_net": -0.1815869155193779,
+    "max_drawdown_net": -0.1834445482455176
+   },
+   "W3": {
+    "trades": 373,
+    "wins": 128,
+    "win_rate": 0.34316353887399464,
+    "expectancy_net": -0.0005792890647440366,
+    "profit_factor_net": 0.2991626946686345,
+    "avg_win_net": 0.0007205836733321342,
+    "avg_loss_net": -0.001258406250351179,
+    "total_return_net": -0.19462572289732294,
+    "max_drawdown_net": -0.1946257228973235
+   },
+   "W4": {
+    "trades": 359,
+    "wins": 103,
+    "win_rate": 0.28690807799442897,
+    "expectancy_net": -0.0005839550457728244,
+    "profit_factor_net": 0.31311522405930403,
+    "avg_win_net": 0.0009278054783294086,
+    "avg_loss_net": -0.0011922024441420823,
+    "total_return_net": -0.1894610836272087,
+    "max_drawdown_net": -0.1904310721954221
+   },
+   "W5": {
+    "trades": 251,
+    "wins": 69,
+    "win_rate": 0.2749003984063745,
+    "expectancy_net": -0.0005056715007206523,
+    "profit_factor_net": 0.3493049007921957,
+    "avg_win_net": 0.0009874616810955036,
+    "avg_loss_net": -0.0010717494652553489,
+    "total_return_net": -0.11943631353137552,
+    "max_drawdown_net": -0.12159591637603484
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005429525810139468,
+    "GBPUSD": -0.00061033889715086,
+    "USDJPY": -0.0005128354217667553
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.5586003853693672,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0005128354217667553
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_TOKYO_REV_L4h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "TOKYO",
+   "direction": "REV",
+   "lookback_h": 4,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1391,
+   "wins": 390,
+   "win_rate": 0.2803738317757009,
+   "expectancy_net": -0.0005645536870234976,
+   "profit_factor_net": 0.2982180025494286,
+   "avg_win_net": 0.0008556564034216591,
+   "avg_loss_net": -0.001117882293690442,
+   "total_return_net": -0.544670614871948,
+   "max_drawdown_net": -0.5446803616813838
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 377,
+    "wins": 117,
+    "win_rate": 0.3103448275862069,
+    "expectancy_net": -0.0006318149232790491,
+    "profit_factor_net": 0.3787508022007098,
+    "avg_win_net": 0.0012411751975032227,
+    "avg_loss_net": -0.0014746604776310717,
+    "total_return_net": -0.21247507815240763,
+    "max_drawdown_net": -0.21249193596038285
+   },
+   "W3": {
+    "trades": 385,
+    "wins": 109,
+    "win_rate": 0.2831168831168831,
+    "expectancy_net": -0.0006034730698107986,
+    "profit_factor_net": 0.22264425017389672,
+    "avg_win_net": 0.000610497366041782,
+    "avg_loss_net": -0.0010829034231004048,
+    "total_return_net": -0.2075632211871551,
+    "max_drawdown_net": -0.20866973656519416
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 114,
+    "win_rate": 0.3048128342245989,
+    "expectancy_net": -0.00040129438943099923,
+    "profit_factor_net": 0.3839808837066244,
+    "avg_win_net": 0.0008206259629979069,
+    "avg_loss_net": -0.0009370594670344427,
+    "total_return_net": -0.139597366290506,
+    "max_drawdown_net": -0.140450551810125
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 50,
+    "win_rate": 0.19607843137254902,
+    "expectancy_net": -0.0006457988982318923,
+    "profit_factor_net": 0.14705901769624088,
+    "avg_win_net": 0.0005678585309250872,
+    "avg_loss_net": -0.000941812905343351,
+    "total_return_net": -0.1520016298973712,
+    "max_drawdown_net": -0.15200162989737098
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0004935695107379643,
+    "GBPUSD": -0.0005150636023961441,
+    "USDJPY": -0.000681575433810575
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.5319660906513751,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.000681575433810575
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_TOKYO_REV_L4h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "TOKYO",
+   "direction": "REV",
+   "lookback_h": 4,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1391,
+   "wins": 460,
+   "win_rate": 0.33069734004313445,
+   "expectancy_net": -0.0005544905003005957,
+   "profit_factor_net": 0.3782030353169117,
+   "avg_win_net": 0.0010198582671476141,
+   "avg_loss_net": -0.0013323642199849957,
+   "total_return_net": -0.5385142597266604,
+   "max_drawdown_net": -0.53956173933083
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 377,
+    "wins": 133,
+    "win_rate": 0.35278514588859416,
+    "expectancy_net": -0.000731729843538201,
+    "profit_factor_net": 0.3966855038657805,
+    "avg_win_net": 0.0013637760117797316,
+    "avg_loss_net": -0.0018739522974615,
+    "total_return_net": -0.24180185163045598,
+    "max_drawdown_net": -0.2435228085897464
+   },
+   "W3": {
+    "trades": 385,
+    "wins": 130,
+    "win_rate": 0.33766233766233766,
+    "expectancy_net": -0.0005528904256605423,
+    "profit_factor_net": 0.31854827837779714,
+    "avg_win_net": 0.0007654143775302324,
+    "avg_loss_net": -0.0012249673841499568,
+    "total_return_net": -0.19203343120483696,
+    "max_drawdown_net": -0.19213210139189574
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 127,
+    "win_rate": 0.339572192513369,
+    "expectancy_net": -0.0003577529445984673,
+    "profit_factor_net": 0.4862220810589468,
+    "avg_win_net": 0.0009970348546798175,
+    "avg_loss_net": -0.0010543442422030916,
+    "total_return_net": -0.12556325273870073,
+    "max_drawdown_net": -0.1336180588636896
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 70,
+    "win_rate": 0.27450980392156865,
+    "expectancy_net": -0.0005834185088042794,
+    "profit_factor_net": 0.2929000536550853,
+    "avg_win_net": 0.0008803613956847313,
+    "avg_loss_net": -0.0011372811753676887,
+    "total_return_net": -0.1385029887306709,
+    "max_drawdown_net": -0.13850298873067235
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.00043441839577867334,
+    "GBPUSD": -0.0005235878050967223,
+    "USDJPY": -0.0006992888785244031
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.47649510843158055,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.0006992888785244031
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_LONDON_MOM_L1h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "LONDON",
+   "direction": "MOM",
+   "lookback_h": 1,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1383,
+   "wins": 424,
+   "win_rate": 0.3065798987707881,
+   "expectancy_net": -0.0005908279260267142,
+   "profit_factor_net": 0.3638420363372029,
+   "avg_win_net": 0.0011022122752470458,
+   "avg_loss_net": -0.0013393670765377405,
+   "total_return_net": -0.5592104182067605,
+   "max_drawdown_net": -0.562493301927818
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 376,
+    "wins": 139,
+    "win_rate": 0.3696808510638298,
+    "expectancy_net": -0.0005647886838073121,
+    "profit_factor_net": 0.479420691909655,
+    "avg_win_net": 0.0014069831738439938,
+    "avg_loss_net": -0.001721228718463563,
+    "total_return_net": -0.19204115822839374,
+    "max_drawdown_net": -0.1963328993579464
+   },
+   "W3": {
+    "trades": 383,
+    "wins": 124,
+    "win_rate": 0.3237597911227154,
+    "expectancy_net": -0.0005276659688840822,
+    "profit_factor_net": 0.36833446985631907,
+    "avg_win_net": 0.000950367026487987,
+    "avg_loss_net": -0.001235295665510092,
+    "total_return_net": -0.18334098371043372,
+    "max_drawdown_net": -0.18334098371043406
+   },
+   "W4": {
+    "trades": 375,
+    "wins": 98,
+    "win_rate": 0.2613333333333333,
+    "expectancy_net": -0.0006944696122269254,
+    "profit_factor_net": 0.2652043017610946,
+    "avg_win_net": 0.000959118787911765,
+    "avg_loss_net": -0.001279493667149639,
+    "total_return_net": -0.2296341736377695,
+    "max_drawdown_net": -0.2301034153926349
+   },
+   "W5": {
+    "trades": 249,
+    "wins": 63,
+    "win_rate": 0.25301204819277107,
+    "expectancy_net": -0.0005712140799827147,
+    "profit_factor_net": 0.2964386808642131,
+    "avg_win_net": 0.0009512411276280783,
+    "avg_loss_net": -0.0010868843922379834,
+    "total_return_net": -0.132829864107037,
+    "max_drawdown_net": -0.14196795972368526
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005269853821560224,
+    "GBPUSD": -0.0005642234216066405,
+    "USDJPY": -0.0006776074239249082
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3737564743483749,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0006776074239249082
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_LONDON_MOM_L1h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "LONDON",
+   "direction": "MOM",
+   "lookback_h": 1,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1383,
+   "wins": 469,
+   "win_rate": 0.339117859725235,
+   "expectancy_net": -0.0006251545772450306,
+   "profit_factor_net": 0.4340101579084274,
+   "avg_win_net": 0.0014136047962115875,
+   "avg_loss_net": -0.0016713013454629233,
+   "total_return_net": -0.5802345606848871,
+   "max_drawdown_net": -0.5931853014133521
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 376,
+    "wins": 136,
+    "win_rate": 0.3617021276595745,
+    "expectancy_net": -0.0006980539647540278,
+    "profit_factor_net": 0.5112511437854252,
+    "avg_win_net": 0.0020187682846578175,
+    "avg_loss_net": -0.0022375865727540735,
+    "total_return_net": -0.2320993850257197,
+    "max_drawdown_net": -0.252845002932654
+   },
+   "W3": {
+    "trades": 383,
+    "wins": 139,
+    "win_rate": 0.3629242819843342,
+    "expectancy_net": -0.0005059281557568785,
+    "profit_factor_net": 0.46435295996642184,
+    "avg_win_net": 0.0012084879710312442,
+    "avg_loss_net": -0.0014825832443779814,
+    "total_return_net": -0.1767033412572795,
+    "max_drawdown_net": -0.1767033412572786
+   },
+   "W4": {
+    "trades": 375,
+    "wins": 118,
+    "win_rate": 0.31466666666666665,
+    "expectancy_net": -0.0006405334580121327,
+    "profit_factor_net": 0.391185144324711,
+    "avg_win_net": 0.0013079411174991833,
+    "avg_loss_net": -0.0015351638078577954,
+    "total_return_net": -0.21419213384608748,
+    "max_drawdown_net": -0.2154403894825856
+   },
+   "W5": {
+    "trades": 249,
+    "wins": 76,
+    "win_rate": 0.30522088353413657,
+    "expectancy_net": -0.000675301040855135,
+    "profit_factor_net": 0.2822117832832949,
+    "avg_win_net": 0.0008698853009411157,
+    "avg_loss_net": -0.0013541112256904824,
+    "total_return_net": -0.15505403055115474,
+    "max_drawdown_net": -0.1616207733778955
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005363763222897017,
+    "GBPUSD": -0.0006465545848958666,
+    "USDJPY": -0.0006874327971371962
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.38208136519733926,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0006874327971371962
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_LONDON_MOM_L4h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "LONDON",
+   "direction": "MOM",
+   "lookback_h": 4,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1398,
+   "wins": 453,
+   "win_rate": 0.3240343347639485,
+   "expectancy_net": -0.0005613006755805538,
+   "profit_factor_net": 0.3849694075113616,
+   "avg_win_net": 0.0010842614929052225,
+   "avg_loss_net": -0.00135012571507691,
+   "total_return_net": -0.5447177541410936,
+   "max_drawdown_net": -0.546394669810827
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 381,
+    "wins": 133,
+    "win_rate": 0.34908136482939633,
+    "expectancy_net": -0.0006936054324121672,
+    "profit_factor_net": 0.4147781236487705,
+    "avg_win_net": 0.001408254381175137,
+    "avg_loss_net": -0.0018208125098601977,
+    "total_return_net": -0.23298758450001367,
+    "max_drawdown_net": -0.2358126784941944
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 138,
+    "win_rate": 0.3556701030927835,
+    "expectancy_net": -0.0004722219135635001,
+    "profit_factor_net": 0.40510357798619645,
+    "avg_win_net": 0.0009041146324836388,
+    "avg_loss_net": -0.0012319596869815209,
+    "total_return_net": -0.16777872221897594,
+    "max_drawdown_net": -0.17327580072450854
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 107,
+    "win_rate": 0.28609625668449196,
+    "expectancy_net": -0.0006406317385881758,
+    "profit_factor_net": 0.2911429297007879,
+    "avg_win_net": 0.0009196950476079585,
+    "avg_loss_net": -0.0012659312371761397,
+    "total_return_net": -0.21341009344199025,
+    "max_drawdown_net": -0.21441367634129915
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 75,
+    "win_rate": 0.29411764705882354,
+    "expectancy_net": -0.0003828090275214216,
+    "profit_factor_net": 0.45255870870466425,
+    "avg_win_net": 0.0010759657895063864,
+    "avg_loss_net": -0.0009906318679496749,
+    "total_return_net": -0.09324254182171221,
+    "max_drawdown_net": -0.10086708577483394
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005559133994334084,
+    "GBPUSD": -0.0005553537584694899,
+    "USDJPY": -0.000572458546745211
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.38714483553540835,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.000572458546745211
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_LONDON_MOM_L4h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "LONDON",
+   "direction": "MOM",
+   "lookback_h": 4,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1398,
+   "wins": 488,
+   "win_rate": 0.3490701001430615,
+   "expectancy_net": -0.0006044933713966257,
+   "profit_factor_net": 0.4451041832031818,
+   "avg_win_net": 0.0013890859462416113,
+   "avg_loss_net": -0.0016735776648114167,
+   "total_return_net": -0.5719830129112559,
+   "max_drawdown_net": -0.5829561474498314
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 381,
+    "wins": 135,
+    "win_rate": 0.3543307086614173,
+    "expectancy_net": -0.0007269340091841153,
+    "profit_factor_net": 0.5000150044733099,
+    "avg_win_net": 0.0020516924493717524,
+    "avg_loss_net": -0.0022517899925379456,
+    "total_return_net": -0.24318184351428496,
+    "max_drawdown_net": -0.2625845020602482
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 141,
+    "win_rate": 0.3634020618556701,
+    "expectancy_net": -0.000479288584355048,
+    "profit_factor_net": 0.4846203535137884,
+    "avg_win_net": 0.001240178176773449,
+    "avg_loss_net": -0.0014608465330154452,
+    "total_return_net": -0.17025521965056323,
+    "max_drawdown_net": -0.17436833679103358
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 125,
+    "win_rate": 0.3342245989304813,
+    "expectancy_net": -0.0006913868996183619,
+    "profit_factor_net": 0.35232211265849805,
+    "avg_win_net": 0.0011252876877738132,
+    "avg_loss_net": -0.0016033721342529881,
+    "total_return_net": -0.22851619006664958,
+    "max_drawdown_net": -0.234668932322307
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 87,
+    "win_rate": 0.3411764705882353,
+    "expectancy_net": -0.00048461648833846574,
+    "profit_factor_net": 0.40857034605213316,
+    "avg_win_net": 0.0009812572092406523,
+    "avg_loss_net": -0.0012437296531562236,
+    "total_return_net": -0.11651716225371012,
+    "max_drawdown_net": -0.11991337586233386
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.000589915528216342,
+    "GBPUSD": -0.00062951952095555,
+    "USDJPY": -0.0005939171421374173
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.38500875523441247,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.0005939171421374173
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_LONDON_REV_L1h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "LONDON",
+   "direction": "REV",
+   "lookback_h": 1,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1383,
+   "wins": 423,
+   "win_rate": 0.30585683297180044,
+   "expectancy_net": -0.0006092089578602233,
+   "profit_factor_net": 0.3540947623194153,
+   "avg_win_net": 0.001091940036520567,
+   "avg_loss_net": -0.001358777733509259,
+   "total_return_net": -0.570281294322363,
+   "max_drawdown_net": -0.5702812943223623
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 376,
+    "wins": 132,
+    "win_rate": 0.35106382978723405,
+    "expectancy_net": -0.0006353420955618669,
+    "profit_factor_net": 0.4434434492062642,
+    "avg_win_net": 0.001441950957115611,
+    "avg_loss_net": -0.0017591235830759127,
+    "total_return_net": -0.21320610047136113,
+    "max_drawdown_net": -0.21652059716393912
+   },
+   "W3": {
+    "trades": 383,
+    "wins": 111,
+    "win_rate": 0.2898172323759791,
+    "expectancy_net": -0.0006724038560614481,
+    "profit_factor_net": 0.2758663624986794,
+    "avg_win_net": 0.0008838651636842789,
+    "avg_loss_net": -0.0013074989339723884,
+    "total_return_net": -0.22740591769480345,
+    "max_drawdown_net": -0.23283175412165802
+   },
+   "W4": {
+    "trades": 375,
+    "wins": 114,
+    "win_rate": 0.304,
+    "expectancy_net": -0.0005055003822158943,
+    "profit_factor_net": 0.3883555344681881,
+    "avg_win_net": 0.0010557919661680346,
+    "avg_loss_net": -0.0011874441665674954,
+    "total_return_net": -0.17302736876812985,
+    "max_drawdown_net": -0.17797638847929442
+   },
+   "W5": {
+    "trades": 249,
+    "wins": 66,
+    "win_rate": 0.26506024096385544,
+    "expectancy_net": -0.0006287310866945051,
+    "profit_factor_net": 0.2532166603385491,
+    "avg_win_net": 0.0008042998757095186,
+    "avg_loss_net": -0.0011455619255943167,
+    "total_return_net": -0.14516802036640852,
+    "max_drawdown_net": -0.14516802036640775
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.000673037887052204,
+    "GBPUSD": -0.0006358323505368245,
+    "USDJPY": -0.0005224234042643722
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4174030465688037,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0005224234042643722
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_LONDON_REV_L1h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "LONDON",
+   "direction": "REV",
+   "lookback_h": 1,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1383,
+   "wins": 491,
+   "win_rate": 0.35502530730296455,
+   "expectancy_net": -0.0005748364249035962,
+   "profit_factor_net": 0.46269664020877704,
+   "avg_win_net": 0.0013943177542413978,
+   "avg_loss_net": -0.0016587542522132287,
+   "total_return_net": -0.5499678690115843,
+   "max_drawdown_net": -0.5499678690115829
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 376,
+    "wins": 161,
+    "win_rate": 0.42819148936170215,
+    "expectancy_net": -0.0005020111639719896,
+    "profit_factor_net": 0.6123857677688014,
+    "avg_win_net": 0.0018522547542859146,
+    "avg_loss_net": -0.0022649730841558155,
+    "total_return_net": -0.173323928478904,
+    "max_drawdown_net": -0.1785420247139653
+   },
+   "W3": {
+    "trades": 383,
+    "wins": 120,
+    "win_rate": 0.3133159268929504,
+    "expectancy_net": -0.0006941151278691814,
+    "profit_factor_net": 0.35239138504883916,
+    "avg_win_net": 0.0012054847004615357,
+    "avg_loss_net": -0.0015608526921265429,
+    "total_return_net": -0.23398797288627415,
+    "max_drawdown_net": -0.24032707632821892
+   },
+   "W4": {
+    "trades": 375,
+    "wins": 131,
+    "win_rate": 0.34933333333333333,
+    "expectancy_net": -0.0005594148785668221,
+    "profit_factor_net": 0.43246488926765286,
+    "avg_win_net": 0.0012202592390377527,
+    "avg_loss_net": -0.0015148956548217375,
+    "total_return_net": -0.18991083227539896,
+    "max_drawdown_net": -0.19180794980196525
+   },
+   "W5": {
+    "trades": 249,
+    "wins": 79,
+    "win_rate": 0.3172690763052209,
+    "expectancy_net": -0.0005245618656696813,
+    "profit_factor_net": 0.3853391819249711,
+    "avg_win_net": 0.001036517437002079,
+    "avg_loss_net": -0.0012500046004406756,
+    "total_return_net": -0.12271694319345305,
+    "max_drawdown_net": -0.12271694319345416
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006635686428316166,
+    "GBPUSD": -0.0005533952024299354,
+    "USDJPY": -0.0005126428121812718
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.400373391407794,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0005126428121812718
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_LONDON_REV_L4h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "LONDON",
+   "direction": "REV",
+   "lookback_h": 4,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1398,
+   "wins": 405,
+   "win_rate": 0.28969957081545067,
+   "expectancy_net": -0.0006387471391949559,
+   "profit_factor_net": 0.34117826768311404,
+   "avg_win_net": 0.0011418118853218377,
+   "avg_loss_net": -0.0013649570132425906,
+   "total_return_net": -0.5914629436572298,
+   "max_drawdown_net": -0.5926696482469014
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 381,
+    "wins": 143,
+    "win_rate": 0.3753280839895013,
+    "expectancy_net": -0.0005065789005482987,
+    "profit_factor_net": 0.5253716083974981,
+    "avg_win_net": 0.0014939942332847815,
+    "avg_loss_net": -0.0017086039347421241,
+    "total_return_net": -0.17630220754693937,
+    "max_drawdown_net": -0.18126255233092214
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 101,
+    "win_rate": 0.2603092783505155,
+    "expectancy_net": -0.0007278236808445307,
+    "profit_factor_net": 0.25607819509753815,
+    "avg_win_net": 0.0009624581301465231,
+    "avg_loss_net": -0.001322661530705494,
+    "total_return_net": -0.24639711562202926,
+    "max_drawdown_net": -0.24745522699407219
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 104,
+    "win_rate": 0.27807486631016043,
+    "expectancy_net": -0.0005593476070820041,
+    "profit_factor_net": 0.3570213012222834,
+    "avg_win_net": 0.0011169084856238083,
+    "avg_loss_net": -0.0012050166205686873,
+    "total_return_net": -0.18911533893852506,
+    "max_drawdown_net": -0.1891153389385244
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 57,
+    "win_rate": 0.2235294117647059,
+    "expectancy_net": -0.0008171386128207805,
+    "profit_factor_net": 0.14530940214901134,
+    "avg_win_net": 0.0006215067464200975,
+    "avg_loss_net": -0.0012312940950264875,
+    "total_return_net": -0.18836285227672622,
+    "max_drawdown_net": -0.18928710670740312
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006441440159818512,
+    "GBPUSD": -0.0006446977481975692,
+    "USDJPY": -0.0006275762310714053
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.38489422166059734,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.0006275762310714053
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_LONDON_REV_L4h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "LONDON",
+   "direction": "REV",
+   "lookback_h": 4,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1398,
+   "wins": 481,
+   "win_rate": 0.3440629470672389,
+   "expectancy_net": -0.0005955035443869276,
+   "profit_factor_net": 0.4533776114730134,
+   "avg_win_net": 0.0014355525678847202,
+   "avg_loss_net": -0.0016608666741608235,
+   "total_return_net": -0.5665653293593467,
+   "max_drawdown_net": -0.5678785564895567
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 381,
+    "wins": 166,
+    "win_rate": 0.4356955380577428,
+    "expectancy_net": -0.00047317854896044886,
+    "profit_factor_net": 0.6316358449217292,
+    "avg_win_net": 0.0018622215180979155,
+    "avg_loss_net": -0.002276324647247372,
+    "total_return_net": -0.16631232019008035,
+    "max_drawdown_net": -0.1715746746879282
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 120,
+    "win_rate": 0.30927835051546393,
+    "expectancy_net": -0.0007207243320182109,
+    "profit_factor_net": 0.33844143910339114,
+    "avg_win_net": 0.0011921609801791432,
+    "avg_loss_net": -0.001577240143449862,
+    "total_return_net": -0.24449606850561434,
+    "max_drawdown_net": -0.24609122810093564
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 124,
+    "win_rate": 0.3315508021390374,
+    "expectancy_net": -0.0005085610368524003,
+    "profit_factor_net": 0.47798531952329426,
+    "avg_win_net": 0.0014045100217211978,
+    "avg_loss_net": -0.001457444281904905,
+    "total_return_net": -0.173880101941709,
+    "max_drawdown_net": -0.1738801019417081
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 71,
+    "win_rate": 0.2784313725490196,
+    "expectancy_net": -0.0007152551344828637,
+    "profit_factor_net": 0.26021148267107375,
+    "avg_win_net": 0.000903569758216488,
+    "avg_loss_net": -0.0013399103919918525,
+    "total_return_net": -0.16700872445253423,
+    "max_drawdown_net": -0.169532534420621
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006100604210019584,
+    "GBPUSD": -0.0005704198260605753,
+    "USDJPY": -0.0006061573304070813
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3856389765304958,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.0006061573304070813
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_NEWYORK_MOM_L1h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "NEWYORK",
+   "direction": "MOM",
+   "lookback_h": 1,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1396,
+   "wins": 467,
+   "win_rate": 0.3345272206303725,
+   "expectancy_net": -0.0005652824177396691,
+   "profit_factor_net": 0.41620657767033253,
+   "avg_win_net": 0.00120471344528376,
+   "avg_loss_net": -0.0014550435243402518,
+   "total_return_net": -0.5468347044812318,
+   "max_drawdown_net": -0.5511221224676485
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 156,
+    "win_rate": 0.4126984126984127,
+    "expectancy_net": -0.0004935449206195323,
+    "profit_factor_net": 0.557979046723622,
+    "avg_win_net": 0.001509624452774453,
+    "avg_loss_net": -0.0019011774532747647,
+    "total_return_net": -0.1709628437387204,
+    "max_drawdown_net": -0.18259916296349032
+   },
+   "W3": {
+    "trades": 386,
+    "wins": 127,
+    "win_rate": 0.3290155440414508,
+    "expectancy_net": -0.000553224738910316,
+    "profit_factor_net": 0.3915705845552953,
+    "avg_win_net": 0.001082143943438713,
+    "avg_loss_net": -0.0013551236680930446,
+    "total_return_net": -0.19275000199381942,
+    "max_drawdown_net": -0.1927500019938203
+   },
+   "W4": {
+    "trades": 372,
+    "wins": 119,
+    "win_rate": 0.31989247311827956,
+    "expectancy_net": -0.0005485209468288824,
+    "profit_factor_net": 0.4012987107200622,
+    "avg_win_net": 0.0011493353555214714,
+    "avg_loss_net": -0.0013471173894363615,
+    "total_return_net": -0.185028260261914,
+    "max_drawdown_net": -0.20232544503060557
+   },
+   "W5": {
+    "trades": 260,
+    "wins": 65,
+    "win_rate": 0.25,
+    "expectancy_net": -0.0007114605143487253,
+    "profit_factor_net": 0.22237008892715648,
+    "avg_win_net": 0.0008137934798604558,
+    "avg_loss_net": -0.0012198785124184523,
+    "total_return_net": -0.16913197522487367,
+    "max_drawdown_net": -0.1700539784102172
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005859680048932492,
+    "GBPUSD": -0.0005105502187343165,
+    "USDJPY": -0.0006002055375216779
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.38930039023429913,
+   "holdout_trades": 472,
+   "holdout_expectancy": -0.0006002055375216779
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_NEWYORK_MOM_L1h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "NEWYORK",
+   "direction": "MOM",
+   "lookback_h": 1,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1396,
+   "wins": 521,
+   "win_rate": 0.37320916905444124,
+   "expectancy_net": -0.0005653117057605947,
+   "profit_factor_net": 0.4976819417918848,
+   "avg_win_net": 0.0015007514269209518,
+   "avg_loss_net": -0.001795504725334407,
+   "total_return_net": -0.5474611479197564,
+   "max_drawdown_net": -0.5553232103975704
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 164,
+    "win_rate": 0.43386243386243384,
+    "expectancy_net": -0.0004399809426313172,
+    "profit_factor_net": 0.6565840149619366,
+    "avg_win_net": 0.0019388830609296012,
+    "avg_loss_net": -0.0022630355995658527,
+    "total_return_net": -0.15451938478547733,
+    "max_drawdown_net": -0.18018117567431569
+   },
+   "W3": {
+    "trades": 386,
+    "wins": 140,
+    "win_rate": 0.3626943005181347,
+    "expectancy_net": -0.0006326540688110613,
+    "profit_factor_net": 0.41865607729086163,
+    "avg_win_net": 0.0012561741080606593,
+    "avg_loss_net": -0.0017075969336974065,
+    "total_return_net": -0.21733584974613407,
+    "max_drawdown_net": -0.2173358497461335
+   },
+   "W4": {
+    "trades": 372,
+    "wins": 133,
+    "win_rate": 0.3575268817204301,
+    "expectancy_net": -0.0005504358866118276,
+    "profit_factor_net": 0.4861486004715028,
+    "avg_win_net": 0.0014565638789512654,
+    "avg_loss_net": -0.001667301864937733,
+    "total_return_net": -0.18584490343173088,
+    "max_drawdown_net": -0.20479695414498378
+   },
+   "W5": {
+    "trades": 260,
+    "wins": 84,
+    "win_rate": 0.3230769230769231,
+    "expectancy_net": -0.0006688297097941643,
+    "profit_factor_net": 0.3516748810868915,
+    "avg_win_net": 0.001122944052432746,
+    "avg_loss_net": -0.001523994459947917,
+    "total_return_net": -0.16001867872743603,
+    "max_drawdown_net": -0.1622101373897239
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005989295082508997,
+    "GBPUSD": -0.0005479001924919082,
+    "USDJPY": -0.000550529899695345
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3552863297429925,
+   "holdout_trades": 472,
+   "holdout_expectancy": -0.000550529899695345
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_NEWYORK_MOM_L4h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "NEWYORK",
+   "direction": "MOM",
+   "lookback_h": 4,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1401,
+   "wins": 418,
+   "win_rate": 0.2983583154889365,
+   "expectancy_net": -0.0007011789384936989,
+   "profit_factor_net": 0.3423209636900084,
+   "avg_win_net": 0.0012232358857160379,
+   "avg_loss_net": -0.0015194957203041467,
+   "total_return_net": -0.6265060987684612,
+   "max_drawdown_net": -0.6285142866355504
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 382,
+    "wins": 125,
+    "win_rate": 0.32722513089005234,
+    "expectancy_net": -0.0008723042507895599,
+    "profit_factor_net": 0.3616940141212546,
+    "avg_win_net": 0.0015105452619845294,
+    "avg_loss_net": -0.0020312777492205373,
+    "total_return_net": -0.2841223830750398,
+    "max_drawdown_net": -0.28760238129857296
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 125,
+    "win_rate": 0.32216494845360827,
+    "expectancy_net": -0.0005868302741771717,
+    "profit_factor_net": 0.37400765791381974,
+    "avg_win_net": 0.0010882926534739326,
+    "avg_loss_net": -0.0013829913614638184,
+    "total_return_net": -0.2041010031893441,
+    "max_drawdown_net": -0.2062609695264953
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 117,
+    "win_rate": 0.31283422459893045,
+    "expectancy_net": -0.0005477863762323662,
+    "profit_factor_net": 0.40515701808861954,
+    "avg_win_net": 0.0011926636730206883,
+    "avg_loss_net": -0.0013401313402892044,
+    "total_return_net": -0.18570350895004772,
+    "max_drawdown_net": -0.18612419127237056
+   },
+   "W5": {
+    "trades": 257,
+    "wins": 51,
+    "win_rate": 0.19844357976653695,
+    "expectancy_net": -0.0008426817818537462,
+    "profit_factor_net": 0.17805998317788632,
+    "avg_win_net": 0.000919925706932852,
+    "avg_loss_net": -0.001279055480533923,
+    "total_return_net": -0.19498455968277162,
+    "max_drawdown_net": -0.19540165200994686
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0007742497801620993,
+    "GBPUSD": -0.0007280706903746316,
+    "USDJPY": -0.0006042588122343689
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3579978644101287,
+   "holdout_trades": 474,
+   "holdout_expectancy": -0.0006042588122343689
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_NEWYORK_MOM_L4h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "NEWYORK",
+   "direction": "MOM",
+   "lookback_h": 4,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1401,
+   "wins": 474,
+   "win_rate": 0.33832976445396146,
+   "expectancy_net": -0.000740888017016043,
+   "profit_factor_net": 0.4003819193719993,
+   "avg_win_net": 0.0014622179183101155,
+   "avg_loss_net": -0.0018673952590274772,
+   "total_return_net": -0.6471980325422313,
+   "max_drawdown_net": -0.6493485428335861
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 382,
+    "wins": 134,
+    "win_rate": 0.3507853403141361,
+    "expectancy_net": -0.0008985196171603165,
+    "profit_factor_net": 0.42639663286587526,
+    "avg_win_net": 0.0019040932016366097,
+    "avg_loss_net": -0.0024128346079618813,
+    "total_return_net": -0.2917002603445742,
+    "max_drawdown_net": -0.2957780178589495
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 137,
+    "win_rate": 0.35309278350515466,
+    "expectancy_net": -0.0006167009766068023,
+    "profit_factor_net": 0.4302386417009804,
+    "avg_win_net": 0.0013188706897412428,
+    "avg_loss_net": -0.001673168380151353,
+    "total_return_net": -0.21346993060707398,
+    "max_drawdown_net": -0.21453398972432847
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 139,
+    "win_rate": 0.3716577540106952,
+    "expectancy_net": -0.0005589026648137227,
+    "profit_factor_net": 0.4726968867789655,
+    "avg_win_net": 0.0013480791409453752,
+    "avg_loss_net": -0.0016868621158797421,
+    "total_return_net": -0.1893173277043867,
+    "max_drawdown_net": -0.18940953094736268
+   },
+   "W5": {
+    "trades": 257,
+    "wins": 64,
+    "win_rate": 0.2490272373540856,
+    "expectancy_net": -0.0009589106712858517,
+    "profit_factor_net": 0.22090199957751075,
+    "avg_win_net": 0.0010917893620895575,
+    "avg_loss_net": -0.001638935552819666,
+    "total_return_net": -0.21882615267145278,
+    "max_drawdown_net": -0.219092040098541
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0007566525666962619,
+    "GBPUSD": -0.0007812480853924179,
+    "USDJPY": -0.0006855656069355612
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3573274560471676,
+   "holdout_trades": 474,
+   "holdout_expectancy": -0.0006855656069355612
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_NEWYORK_REV_L1h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "NEWYORK",
+   "direction": "REV",
+   "lookback_h": 1,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1396,
+   "wins": 443,
+   "win_rate": 0.3173352435530086,
+   "expectancy_net": -0.0006347908268627514,
+   "profit_factor_net": 0.37872340066657245,
+   "avg_win_net": 0.0012194092317295198,
+   "avg_loss_net": -0.0014967117355263152,
+   "total_return_net": -0.5887655435721278,
+   "max_drawdown_net": -0.5887655435721291
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 138,
+    "win_rate": 0.36507936507936506,
+    "expectancy_net": -0.0007066388903148207,
+    "profit_factor_net": 0.44001519993165594,
+    "avg_win_net": 0.0015209036039902845,
+    "avg_loss_net": -0.001987475824540256,
+    "total_return_net": -0.23515973914674193,
+    "max_drawdown_net": -0.23517281874557305
+   },
+   "W3": {
+    "trades": 386,
+    "wins": 113,
+    "win_rate": 0.2927461139896373,
+    "expectancy_net": -0.0006468414958517389,
+    "profit_factor_net": 0.3415293817755845,
+    "avg_win_net": 0.0011460363820884585,
+    "avg_loss_net": -0.001388948456317828,
+    "total_return_net": -0.22141754156174576,
+    "max_drawdown_net": -0.23307120111037194
+   },
+   "W4": {
+    "trades": 372,
+    "wins": 116,
+    "win_rate": 0.3118279569892473,
+    "expectancy_net": -0.0006514796553726443,
+    "profit_factor_net": 0.33145588545898097,
+    "avg_win_net": 0.001035813277404518,
+    "avg_loss_net": -0.001416034265537296,
+    "total_return_net": -0.2156708138174721,
+    "max_drawdown_net": -0.21567081381747166
+   },
+   "W5": {
+    "trades": 260,
+    "wins": 76,
+    "win_rate": 0.2923076923076923,
+    "expectancy_net": -0.000488566325246169,
+    "profit_factor_net": 0.3883640108559205,
+    "avg_win_net": 0.001061278170402606,
+    "avg_loss_net": -0.0011287194864924022,
+    "total_return_net": -0.11952756457949043,
+    "max_drawdown_net": -0.12010229807034578
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006140024554831428,
+    "GBPUSD": -0.0006895013057536158,
+    "USDJPY": -0.0005999878561574444
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.34407760645817587,
+   "holdout_trades": 472,
+   "holdout_expectancy": -0.0005999878561574444
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_NEWYORK_REV_L1h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "NEWYORK",
+   "direction": "REV",
+   "lookback_h": 1,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1396,
+   "wins": 500,
+   "win_rate": 0.35816618911174786,
+   "expectancy_net": -0.0006347637236231549,
+   "profit_factor_net": 0.459573259675255,
+   "avg_win_net": 0.001507111676397302,
+   "avg_loss_net": -0.0018300066923845706,
+   "total_return_net": -0.589303455315183,
+   "max_drawdown_net": -0.5893034553151824
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 135,
+    "win_rate": 0.35714285714285715,
+    "expectancy_net": -0.0007602338456405729,
+    "profit_factor_net": 0.4966945516421043,
+    "avg_win_net": 0.0021006949734790913,
+    "avg_loss_net": -0.0023496387451514976,
+    "total_return_net": -0.250973603182421,
+    "max_drawdown_net": -0.2509736031824208
+   },
+   "W3": {
+    "trades": 386,
+    "wins": 134,
+    "win_rate": 0.3471502590673575,
+    "expectancy_net": -0.0005673776098437157,
+    "profit_factor_net": 0.4621610421905042,
+    "avg_win_net": 0.0014044160270059083,
+    "avg_loss_net": -0.0016158710516605795,
+    "total_return_net": -0.19735310536211803,
+    "max_drawdown_net": -0.22005104270259257
+   },
+   "W4": {
+    "trades": 372,
+    "wins": 143,
+    "win_rate": 0.3844086021505376,
+    "expectancy_net": -0.0006495608771787283,
+    "profit_factor_net": 0.41200447552125324,
+    "avg_win_net": 0.001184008104924936,
+    "avg_loss_net": -0.0017945406345622392,
+    "total_return_net": -0.21533901905762998,
+    "max_drawdown_net": -0.21618590848840513
+   },
+   "W5": {
+    "trades": 260,
+    "wins": 88,
+    "win_rate": 0.3384615384615385,
+    "expectancy_net": -0.0005312206185216398,
+    "profit_factor_net": 0.44879715686873717,
+    "avg_win_net": 0.0012779217063172298,
+    "avg_loss_net": -0.0014568283196019916,
+    "total_return_net": -0.1294026533592736,
+    "max_drawdown_net": -0.1301687427353172
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006009305306095854,
+    "GBPUSD": -0.0006521477646285729,
+    "USDJPY": -0.0006497792657578497
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3427027350506186,
+   "holdout_trades": 472,
+   "holdout_expectancy": -0.0006497792657578497
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_NEWYORK_REV_L4h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "NEWYORK",
+   "direction": "REV",
+   "lookback_h": 4,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 1401,
+   "wins": 502,
+   "win_rate": 0.35831548893647397,
+   "expectancy_net": -0.0004988906501774221,
+   "profit_factor_net": 0.463741914836544,
+   "avg_win_net": 0.0012040437862924885,
+   "avg_loss_net": -0.0014498062086956594,
+   "total_return_net": -0.5040495183620941,
+   "max_drawdown_net": -0.5052733174001723
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 382,
+    "wins": 173,
+    "win_rate": 0.45287958115183247,
+    "expectancy_net": -0.0003278493417421528,
+    "profit_factor_net": 0.6763520653170378,
+    "avg_win_net": 0.001512834975099913,
+    "avg_loss_net": -0.001851477986783671,
+    "total_return_net": -0.11850780220146717,
+    "max_drawdown_net": -0.1261031885638607
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 118,
+    "win_rate": 0.30412371134020616,
+    "expectancy_net": -0.0006132413604976773,
+    "profit_factor_net": 0.3620957103385265,
+    "avg_win_net": 0.0011445875403602531,
+    "avg_loss_net": -0.0013814776949466986,
+    "total_return_net": -0.21222089649110376,
+    "max_drawdown_net": -0.21307362675017405
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 122,
+    "win_rate": 0.32620320855614976,
+    "expectancy_net": -0.0006522259627378712,
+    "profit_factor_net": 0.3315028415416768,
+    "avg_win_net": 0.0009915110162931756,
+    "avg_loss_net": -0.0014480033890941716,
+    "total_return_net": -0.2169164208887292,
+    "max_drawdown_net": -0.21744029195615122
+   },
+   "W5": {
+    "trades": 257,
+    "wins": 89,
+    "win_rate": 0.3463035019455253,
+    "expectancy_net": -0.00035734316893386585,
+    "profit_factor_net": 0.48556658130861063,
+    "avg_win_net": 0.0009739759132164827,
+    "avg_loss_net": -0.0010626253017397053,
+    "total_return_net": -0.08797389368047226,
+    "max_drawdown_net": -0.08856922401308698
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0004257033089205746,
+    "GBPUSD": -0.00047198048829818925,
+    "USDJPY": -0.0005959409385294551
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3672522598423225,
+   "holdout_trades": 474,
+   "holdout_expectancy": -0.0005959409385294551
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_NEWYORK_REV_L4h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "NEWYORK",
+   "direction": "REV",
+   "lookback_h": 4,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 1401,
+   "wins": 550,
+   "win_rate": 0.39257673090649536,
+   "expectancy_net": -0.00045918392673774237,
+   "profit_factor_net": 0.5676383102102756,
+   "avg_win_net": 0.0015356301009531274,
+   "avg_loss_net": -0.0017484291855273761,
+   "total_return_net": -0.4763557504005471,
+   "max_drawdown_net": -0.47926513165333373
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 382,
+    "wins": 170,
+    "win_rate": 0.44502617801047123,
+    "expectancy_net": -0.00030168255816688576,
+    "profit_factor_net": 0.7525692060758798,
+    "avg_win_net": 0.0020618512894529585,
+    "avg_loss_net": -0.002196969134088459,
+    "total_return_net": -0.11019796226836842,
+    "max_drawdown_net": -0.12018383641287189
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 137,
+    "win_rate": 0.35309278350515466,
+    "expectancy_net": -0.0005833175164009109,
+    "profit_factor_net": 0.44894302818431114,
+    "avg_win_net": 0.0013458941540305577,
+    "avg_loss_net": -0.0016363135277519516,
+    "total_return_net": -0.20321086007504874,
+    "max_drawdown_net": -0.20794366067242975
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 135,
+    "win_rate": 0.3609625668449198,
+    "expectancy_net": -0.0006411087060774818,
+    "profit_factor_net": 0.4231526555552241,
+    "avg_win_net": 0.001302883791420225,
+    "avg_loss_net": -0.0017391797820699103,
+    "total_return_net": -0.21387739683682483,
+    "max_drawdown_net": -0.2168068723421902
+   },
+   "W5": {
+    "trades": 257,
+    "wins": 108,
+    "win_rate": 0.42023346303501946,
+    "expectancy_net": -0.00024113654359258813,
+    "profit_factor_net": 0.6834558980708184,
+    "avg_win_net": 0.0012389354201231507,
+    "avg_loss_net": -0.0013139403830643985,
+    "total_return_net": -0.060473026660309626,
+    "max_drawdown_net": -0.06889686015860808
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.00044318850139564734,
+    "GBPUSD": -0.00041880168503735296,
+    "USDJPY": -0.000514750037736133
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3527230350589127,
+   "holdout_trades": 474,
+   "holdout_expectancy": -0.000514750037736133
+  },
+  "bonferroni_p": 0.9999999999999886,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_ALL_MOM_L1h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "ALL",
+   "direction": "MOM",
+   "lookback_h": 1,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 4132,
+   "wins": 1233,
+   "win_rate": 0.2984027105517909,
+   "expectancy_net": -0.0006052615209284143,
+   "profit_factor_net": 0.3488814080354945,
+   "avg_win_net": 0.0010868210243675943,
+   "avg_loss_net": -0.001324936504836651,
+   "total_return_net": -0.9184787632949093,
+   "max_drawdown_net": -0.9191608588913368
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 1124,
+    "wins": 415,
+    "win_rate": 0.3692170818505338,
+    "expectancy_net": -0.0005821199533727943,
+    "profit_factor_net": 0.46464268549364357,
+    "avg_win_net": 0.0013683779407872155,
+    "avg_loss_net": -0.0017238077193479767,
+    "total_return_net": -0.4814952350516759,
+    "max_drawdown_net": -0.48627190725151626
+   },
+   "W3": {
+    "trades": 1142,
+    "wins": 343,
+    "win_rate": 0.30035026269702275,
+    "expectancy_net": -0.0005784991983419556,
+    "profit_factor_net": 0.33048296636498137,
+    "avg_win_net": 0.0009507409384149082,
+    "avg_loss_net": -0.001234981509865866,
+    "total_return_net": -0.48416886802923587,
+    "max_drawdown_net": -0.4841688680292364
+   },
+   "W4": {
+    "trades": 1106,
+    "wins": 301,
+    "win_rate": 0.2721518987341772,
+    "expectancy_net": -0.0006300102164607139,
+    "profit_factor_net": 0.3023686440290299,
+    "avg_win_net": 0.0010033373594456262,
+    "avg_loss_net": -0.0012407401796256934,
+    "total_return_net": -0.5024820153559145,
+    "max_drawdown_net": -0.5062428064356334
+   },
+   "W5": {
+    "trades": 760,
+    "wins": 174,
+    "win_rate": 0.22894736842105262,
+    "expectancy_net": -0.000643684727596216,
+    "profit_factor_net": 0.22749520153281236,
+    "avg_win_net": 0.0008279585663741511,
+    "avg_loss_net": -0.0010806573097648915,
+    "total_return_net": -0.3873651848664015,
+    "max_drawdown_net": -0.3899675400030961
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005856010265256272,
+    "GBPUSD": -0.0005731894894074197,
+    "USDJPY": -0.0006555459651114805
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.39646455615467685,
+   "holdout_trades": 1412,
+   "holdout_expectancy": -0.0006555459651114805
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_ALL_MOM_L1h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "ALL",
+   "direction": "MOM",
+   "lookback_h": 1,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 4132,
+   "wins": 1385,
+   "win_rate": 0.335188770571152,
+   "expectancy_net": -0.0006111294898918415,
+   "profit_factor_net": 0.42709295221840005,
+   "avg_win_net": 0.0013591957892242854,
+   "avg_loss_net": -0.0016045406699340095,
+   "total_return_net": -0.920689875634167,
+   "max_drawdown_net": -0.9227932147028044
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 1124,
+    "wins": 424,
+    "win_rate": 0.37722419928825623,
+    "expectancy_net": -0.0005989969089272431,
+    "profit_factor_net": 0.5392764361485636,
+    "avg_win_net": 0.0018586433193318618,
+    "avg_loss_net": -0.002087624704329901,
+    "total_return_net": -0.49204278893515885,
+    "max_drawdown_net": -0.5097455272888453
+   },
+   "W3": {
+    "trades": 1142,
+    "wins": 387,
+    "win_rate": 0.33887915936952717,
+    "expectancy_net": -0.0005862397047374333,
+    "profit_factor_net": 0.39837455738115407,
+    "avg_win_net": 0.001145501777852876,
+    "avg_loss_net": -0.001473900570647963,
+    "total_return_net": -0.48899889353296044,
+    "max_drawdown_net": -0.4889988935329609
+   },
+   "W4": {
+    "trades": 1106,
+    "wins": 349,
+    "win_rate": 0.3155515370705244,
+    "expectancy_net": -0.0006022741386063625,
+    "profit_factor_net": 0.39876154824179844,
+    "avg_win_net": 0.0012658738863269893,
+    "avg_loss_net": -0.0014635471382123595,
+    "total_return_net": -0.48738157618836786,
+    "max_drawdown_net": -0.49115537750181215
+   },
+   "W5": {
+    "trades": 760,
+    "wins": 225,
+    "win_rate": 0.29605263157894735,
+    "expectancy_net": -0.0006793599822237919,
+    "profit_factor_net": 0.2884673311679916,
+    "avg_win_net": 0.0009303210058744163,
+    "avg_loss_net": -0.0013563286220781786,
+    "total_return_net": -0.4039462159884709,
+    "max_drawdown_net": -0.40579816181323947
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005961121309854691,
+    "GBPUSD": -0.0005946321032131447,
+    "USDJPY": -0.0006415381410532116
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.40204158396104184,
+   "holdout_trades": 1412,
+   "holdout_expectancy": -0.0006415381410532116
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_ALL_MOM_L4h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "ALL",
+   "direction": "MOM",
+   "lookback_h": 4,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 4190,
+   "wins": 1226,
+   "win_rate": 0.29260143198090693,
+   "expectancy_net": -0.0006326688955697045,
+   "profit_factor_net": 0.33450289924542115,
+   "avg_win_net": 0.0010868103224643674,
+   "avg_loss_net": -0.0013438974790075493,
+   "total_return_net": -0.9298432425015728,
+   "max_drawdown_net": -0.9300819135912705
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 1140,
+    "wins": 389,
+    "win_rate": 0.3412280701754386,
+    "expectancy_net": -0.0007119705276943535,
+    "profit_factor_net": 0.3954823371397599,
+    "avg_win_net": 0.001365008524549947,
+    "avg_loss_net": -0.0017877958956344772,
+    "total_return_net": -0.5570563497635481,
+    "max_drawdown_net": -0.5583343956400209
+   },
+   "W3": {
+    "trades": 1161,
+    "wins": 363,
+    "win_rate": 0.31266149870801035,
+    "expectancy_net": -0.0005517374601527862,
+    "profit_factor_net": 0.34701818585281446,
+    "avg_win_net": 0.0009377978115797766,
+    "avg_loss_net": -0.0012293080160912827,
+    "total_return_net": -0.4737077118947889,
+    "max_drawdown_net": -0.47493757228049205
+   },
+   "W4": {
+    "trades": 1122,
+    "wins": 296,
+    "win_rate": 0.2638146167557932,
+    "expectancy_net": -0.0006623696332163624,
+    "profit_factor_net": 0.27985905416813,
+    "avg_win_net": 0.0009757159778035508,
+    "avg_loss_net": -0.001249383363073377,
+    "total_return_net": -0.5250517978608737,
+    "max_drawdown_net": -0.5252109366231313
+   },
+   "W5": {
+    "trades": 767,
+    "wins": 178,
+    "win_rate": 0.2320730117340287,
+    "expectancy_net": -0.0005938596494906855,
+    "profit_factor_net": 0.27434903749927875,
+    "avg_win_net": 0.0009674640688655886,
+    "avg_loss_net": -0.0010657028105559093,
+    "total_return_net": -0.3663524295101279,
+    "max_drawdown_net": -0.36968156223383397
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006782296624349972,
+    "GBPUSD": -0.0006565134222227059,
+    "USDJPY": -0.0005650837826711494
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4371953332870425,
+   "holdout_trades": 1416,
+   "holdout_expectancy": -0.0005650837826711494
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_ALL_MOM_L4h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "ALL",
+   "direction": "MOM",
+   "lookback_h": 4,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 4190,
+   "wins": 1355,
+   "win_rate": 0.3233890214797136,
+   "expectancy_net": -0.0006637003504477373,
+   "profit_factor_net": 0.3959781419475167,
+   "avg_win_net": 0.001345443092108613,
+   "avg_loss_net": -0.0016239787859552695,
+   "total_return_net": -0.9386010641427511,
+   "max_drawdown_net": -0.9396931345280808
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 1140,
+    "wins": 411,
+    "win_rate": 0.3605263157894737,
+    "expectancy_net": -0.000698866601325348,
+    "profit_factor_net": 0.4890323493539017,
+    "avg_win_net": 0.0018552459760739367,
+    "avg_loss_net": -0.002138839535908484,
+    "total_return_net": -0.5510840116814781,
+    "max_drawdown_net": -0.558918512337908
+   },
+   "W3": {
+    "trades": 1161,
+    "wins": 387,
+    "win_rate": 0.3333333333333333,
+    "expectancy_net": -0.0005808523151616713,
+    "profit_factor_net": 0.39966826011501116,
+    "avg_win_net": 0.0011600997519917045,
+    "avg_loss_net": -0.0014513283487383594,
+    "total_return_net": -0.49149514827737983,
+    "max_drawdown_net": -0.49256644655258275
+   },
+   "W4": {
+    "trades": 1122,
+    "wins": 343,
+    "win_rate": 0.3057040998217469,
+    "expectancy_net": -0.0006975016375262143,
+    "profit_factor_net": 0.33534873404208304,
+    "avg_win_net": 0.0011511894564809964,
+    "avg_loss_net": -0.0015114952771211733,
+    "total_return_net": -0.5437852515241192,
+    "max_drawdown_net": -0.5438371392487993
+   },
+   "W5": {
+    "trades": 767,
+    "wins": 214,
+    "win_rate": 0.2790091264667536,
+    "expectancy_net": -0.000687392656659726,
+    "profit_factor_net": 0.2913409887617259,
+    "avg_win_net": 0.0010128631123692106,
+    "avg_loss_net": -0.0013453578186347576,
+    "total_return_net": -0.41043546752317095,
+    "max_drawdown_net": -0.4112911360310457
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0007032275432762598,
+    "GBPUSD": -0.0006959251982175082,
+    "USDJPY": -0.0005935518904630583
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.42646822951857155,
+   "holdout_trades": 1416,
+   "holdout_expectancy": -0.0005935518904630583
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_ALL_REV_L1h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "ALL",
+   "direction": "REV",
+   "lookback_h": 1,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 4132,
+   "wins": 1255,
+   "win_rate": 0.3037270087124879,
+   "expectancy_net": -0.0005947587334900515,
+   "profit_factor_net": 0.3547536638788689,
+   "avg_win_net": 0.0010766108625407582,
+   "avg_loss_net": -0.0013238407088180552,
+   "total_return_net": -0.9148609768768905,
+   "max_drawdown_net": -0.9148627993681707
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 1124,
+    "wins": 393,
+    "win_rate": 0.349644128113879,
+    "expectancy_net": -0.0006179510058860614,
+    "profit_factor_net": 0.44844073261063017,
+    "avg_win_net": 0.0014369467408369434,
+    "avg_loss_net": -0.0017227045140422049,
+    "total_return_net": -0.5019749752464884,
+    "max_drawdown_net": -0.5019941525877789
+   },
+   "W3": {
+    "trades": 1142,
+    "wins": 339,
+    "win_rate": 0.2968476357267951,
+    "expectancy_net": -0.0006215400460029041,
+    "profit_factor_net": 0.29932754824552366,
+    "avg_win_net": 0.0008944728584104923,
+    "avg_loss_net": -0.0012615504751388213,
+    "total_return_net": -0.5089251292642821,
+    "max_drawdown_net": -0.5150272848877533
+   },
+   "W4": {
+    "trades": 1106,
+    "wins": 327,
+    "win_rate": 0.29566003616636527,
+    "expectancy_net": -0.0005699755149040954,
+    "profit_factor_net": 0.32983688305734943,
+    "avg_win_net": 0.0009488165891095231,
+    "avg_loss_net": -0.0012075172581806723,
+    "total_return_net": -0.46830555321551914,
+    "max_drawdown_net": -0.4683055532155195
+   },
+   "W5": {
+    "trades": 760,
+    "wins": 196,
+    "win_rate": 0.2578947368421053,
+    "expectancy_net": -0.000556282242296992,
+    "profit_factor_net": 0.2903035595427524,
+    "avg_win_net": 0.0008823328556110303,
+    "avg_loss_net": -0.0010562264961799215,
+    "total_return_net": -0.34526182777773406,
+    "max_drawdown_net": -0.3452618277777333
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006143978171951202,
+    "GBPUSD": -0.000626841549607315,
+    "USDJPY": -0.0005444833384165347
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4343048177016762,
+   "holdout_trades": 1412,
+   "holdout_expectancy": -0.0005444833384165347
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_ALL_REV_L1h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "ALL",
+   "direction": "REV",
+   "lookback_h": 1,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 4132,
+   "wins": 1435,
+   "win_rate": 0.3472894482090997,
+   "expectancy_net": -0.000588881965070096,
+   "profit_factor_net": 0.43913033408167657,
+   "avg_win_net": 0.0013276027753813013,
+   "avg_loss_net": -0.0016085911243388226,
+   "total_return_net": -0.9130500106817713,
+   "max_drawdown_net": -0.9132473696301531
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 1124,
+    "wins": 440,
+    "win_rate": 0.3914590747330961,
+    "expectancy_net": -0.0006010833700113795,
+    "profit_factor_net": 0.5399063337392861,
+    "avg_win_net": 0.0018018578035242446,
+    "avg_loss_net": -0.002146835002110319,
+    "total_return_net": -0.4932368182463832,
+    "max_drawdown_net": -0.49438706851568825
+   },
+   "W3": {
+    "trades": 1142,
+    "wins": 382,
+    "win_rate": 0.3345008756567426,
+    "expectancy_net": -0.000613772918146319,
+    "profit_factor_net": 0.3775129689683798,
+    "avg_win_net": 0.0011127869682216994,
+    "avg_loss_net": -0.0014815964399786652,
+    "total_return_net": -0.5048259547950201,
+    "max_drawdown_net": -0.5107889234806233
+   },
+   "W4": {
+    "trades": 1106,
+    "wins": 377,
+    "win_rate": 0.34086799276672697,
+    "expectancy_net": -0.0005977008021749451,
+    "profit_factor_net": 0.39117306212359665,
+    "avg_win_net": 0.0011266076487696035,
+    "avg_loss_net": -0.0014894213591106031,
+    "total_return_net": -0.4847846978996335,
+    "max_drawdown_net": -0.48478469789963463
+   },
+   "W5": {
+    "trades": 760,
+    "wins": 236,
+    "win_rate": 0.3105263157894737,
+    "expectancy_net": -0.0005206010684845536,
+    "profit_factor_net": 0.3988199682423943,
+    "avg_win_net": 0.0011121900155706362,
+    "avg_loss_net": -0.001255980259013227,
+    "total_return_net": -0.32746041332515885,
+    "max_drawdown_net": -0.3274604133251605
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006038386273461,
+    "GBPUSD": -0.000605360319906275,
+    "USDJPY": -0.0005585485718082705
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4132709155943403,
+   "holdout_trades": 1412,
+   "holdout_expectancy": -0.0005585485718082705
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_ALL_REV_L4h_H2h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "ALL",
+   "direction": "REV",
+   "lookback_h": 4,
+   "hold_h": 2
+  },
+  "pooled_oos": {
+   "trades": 4190,
+   "wins": 1297,
+   "win_rate": 0.30954653937947496,
+   "expectancy_net": -0.0005673528592226259,
+   "profit_factor_net": 0.37073901400764314,
+   "avg_win_net": 0.001079853347423763,
+   "avg_loss_net": -0.0013058341762016668,
+   "total_return_net": -0.9077438237259442,
+   "max_drawdown_net": -0.9078362398078366
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 1140,
+    "wins": 433,
+    "win_rate": 0.3798245614035088,
+    "expectancy_net": -0.00048810459274614535,
+    "profit_factor_net": 0.5272467663270978,
+    "avg_win_net": 0.0014332081389373805,
+    "avg_loss_net": -0.0016648067325183756,
+    "total_return_net": -0.4281914024701059,
+    "max_drawdown_net": -0.43374412659602024
+   },
+   "W3": {
+    "trades": 1161,
+    "wins": 328,
+    "win_rate": 0.28251507321274766,
+    "expectancy_net": -0.0006482948905408564,
+    "profit_factor_net": 0.2841828902418572,
+    "avg_win_net": 0.0009110177250178747,
+    "avg_loss_net": -0.0012622859324415332,
+    "total_return_net": -0.5295519934961783,
+    "max_drawdown_net": -0.5304685639076965
+   },
+   "W4": {
+    "trades": 1122,
+    "wins": 340,
+    "win_rate": 0.30303030303030304,
+    "expectancy_net": -0.0005376226530836248,
+    "profit_factor_net": 0.35408379816486596,
+    "avg_win_net": 0.000972571136101191,
+    "avg_loss_net": -0.0011942286483813708,
+    "total_return_net": -0.4536525335723497,
+    "max_drawdown_net": -0.4540662446833549
+   },
+   "W5": {
+    "trades": 767,
+    "wins": 196,
+    "win_rate": 0.25554106910039115,
+    "expectancy_net": -0.0006061098562378554,
+    "profit_factor_net": 0.24456512091791444,
+    "avg_win_net": 0.0007678707518799329,
+    "avg_loss_net": -0.0010777389266250473,
+    "total_return_net": -0.3722825475960583,
+    "max_drawdown_net": -0.3728979292710918
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005217731481995924,
+    "GBPUSD": -0.0005435164801279423,
+    "USDJPY": -0.0006349480501570442
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3852447710286722,
+   "holdout_trades": 1416,
+   "holdout_expectancy": -0.0006349480501570442
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "SOI_ALL_REV_L4h_H4h",
+  "panel": "forex3_1h",
+  "subfamily": "SOI",
+  "params": {
+   "session": "ALL",
+   "direction": "REV",
+   "lookback_h": 4,
+   "hold_h": 4
+  },
+  "pooled_oos": {
+   "trades": 4190,
+   "wins": 1491,
+   "win_rate": 0.3558472553699284,
+   "expectancy_net": -0.0005363071413676922,
+   "profit_factor_net": 0.4714332787467335,
+   "avg_win_net": 0.001344220082873691,
+   "avg_loss_net": -0.0015751608247111164,
+   "total_return_net": -0.8952586245930587,
+   "max_drawdown_net": -0.8956404980150738
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 1140,
+    "wins": 469,
+    "win_rate": 0.4114035087719298,
+    "expectancy_net": -0.0005012157152522659,
+    "profit_factor_net": 0.5954536844303235,
+    "avg_win_net": 0.0017932317713815807,
+    "avg_loss_net": -0.002104935344509008,
+    "total_return_net": -0.43755572695609934,
+    "max_drawdown_net": -0.44397395312411814
+   },
+   "W3": {
+    "trades": 1161,
+    "wins": 387,
+    "win_rate": 0.3333333333333333,
+    "expectancy_net": -0.0006191481921325823,
+    "profit_factor_net": 0.3726282869279133,
+    "avg_win_net": 0.0011032317462599842,
+    "avg_loss_net": -0.0014803381613288655,
+    "total_return_net": -0.513622443976804,
+    "max_drawdown_net": -0.514598182513581
+   },
+   "W4": {
+    "trades": 1122,
+    "wins": 386,
+    "win_rate": 0.34402852049910876,
+    "expectancy_net": -0.0005024742291761165,
+    "profit_factor_net": 0.45814106110410163,
+    "avg_win_net": 0.0012349015053872948,
+    "avg_loss_net": -0.0014136522638792098,
+    "total_return_net": -0.4321132098967655,
+    "max_drawdown_net": -0.43256639041903866
+   },
+   "W5": {
+    "trades": 767,
+    "wins": 249,
+    "win_rate": 0.3246414602346806,
+    "expectancy_net": -0.0005125604572901129,
+    "profit_factor_net": 0.3976968866069889,
+    "avg_win_net": 0.0010425051241148677,
+    "avg_loss_net": -0.001260072676923009,
+    "total_return_net": -0.3257771285130471,
+    "max_drawdown_net": -0.32670701800153445
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.000496715037702578,
+    "GBPUSD": -0.0005040630387287795,
+    "USDJPY": -0.0006065372050096441
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3834970292362035,
+   "holdout_trades": 1416,
+   "holdout_expectancy": -0.0006065372050096441
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_00UTC_MOM_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 0,
+   "direction": "MOM",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1353,
+   "wins": 236,
+   "win_rate": 0.17442719881744273,
+   "expectancy_net": -0.0006650823658475124,
+   "profit_factor_net": 0.1673010114745494,
+   "avg_win_net": 0.0007660758225143629,
+   "avg_loss_net": -0.000967457775385026,
+   "total_return_net": -0.5938053394336871,
+   "max_drawdown_net": -0.5938053394336881
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 370,
+    "wins": 88,
+    "win_rate": 0.23783783783783785,
+    "expectancy_net": -0.0007170689422859054,
+    "profit_factor_net": 0.2550215604253277,
+    "avg_win_net": 0.0010320795180345506,
+    "avg_loss_net": -0.0012629025043717217,
+    "total_return_net": -0.23340965509101397,
+    "max_drawdown_net": -0.23340965509101486
+   },
+   "W3": {
+    "trades": 373,
+    "wins": 73,
+    "win_rate": 0.19571045576407506,
+    "expectancy_net": -0.0006066692892610672,
+    "profit_factor_net": 0.1662764827602933,
+    "avg_win_net": 0.0006182252796437166,
+    "avg_loss_net": -0.0009047269676945646,
+    "total_return_net": -0.20268641521167008,
+    "max_drawdown_net": -0.20334224238209264
+   },
+   "W4": {
+    "trades": 359,
+    "wins": 50,
+    "win_rate": 0.1392757660167131,
+    "expectancy_net": -0.0006805592562163303,
+    "profit_factor_net": 0.11411380152345628,
+    "avg_win_net": 0.0006294346213776141,
+    "avg_loss_net": -0.0008925323755681011,
+    "total_return_net": -0.21692448636752648,
+    "max_drawdown_net": -0.21778215742653828
+   },
+   "W5": {
+    "trades": 251,
+    "wins": 25,
+    "win_rate": 0.099601593625498,
+    "expectancy_net": -0.0006531175875293176,
+    "profit_factor_net": 0.07540116728556465,
+    "avg_win_net": 0.0005347488017390867,
+    "avg_loss_net": -0.000784518736784672,
+    "total_return_net": -0.1513315494953571,
+    "max_drawdown_net": -0.1513315494953581
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006752993751283691,
+    "GBPUSD": -0.0006339475973444556,
+    "USDJPY": -0.0006872392091739868
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.6371108538232705,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0006872392091739868
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_00UTC_MOM_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 0,
+   "direction": "MOM",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1363,
+   "wins": 382,
+   "win_rate": 0.2802641232575202,
+   "expectancy_net": -0.0006089156672975248,
+   "profit_factor_net": 0.3211998419496011,
+   "avg_win_net": 0.0010280708127895553,
+   "avg_loss_net": -0.0012463558664751646,
+   "total_return_net": -0.5646905763582061,
+   "max_drawdown_net": -0.5646905763582049
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 132,
+    "win_rate": 0.3492063492063492,
+    "expectancy_net": -0.0005647400887347812,
+    "profit_factor_net": 0.4535189170801679,
+    "avg_win_net": 0.001342105822242797,
+    "avg_loss_net": -0.0015879256995032377,
+    "total_return_net": -0.19283991296431657,
+    "max_drawdown_net": -0.19353420258340925
+   },
+   "W3": {
+    "trades": 378,
+    "wins": 96,
+    "win_rate": 0.25396825396825395,
+    "expectancy_net": -0.0006393245942261389,
+    "profit_factor_net": 0.25517251708613464,
+    "avg_win_net": 0.0008624227077934261,
+    "avg_loss_net": -0.001150557718317906,
+    "total_return_net": -0.21495631422218298,
+    "max_drawdown_net": -0.2149563142221822
+   },
+   "W4": {
+    "trades": 365,
+    "wins": 87,
+    "win_rate": 0.23835616438356164,
+    "expectancy_net": -0.0007307466872812495,
+    "profit_factor_net": 0.20429025239767676,
+    "avg_win_net": 0.000787106382050076,
+    "avg_loss_net": -0.001205758259338175,
+    "total_return_net": -0.23442642830841898,
+    "max_drawdown_net": -0.2354269998307984
+   },
+   "W5": {
+    "trades": 242,
+    "wins": 67,
+    "win_rate": 0.2768595041322314,
+    "expectancy_net": -0.00044666555169273686,
+    "profit_factor_net": 0.37296391863958267,
+    "avg_win_net": 0.0009596156233288882,
+    "avg_loss_net": -0.000985070344415302,
+    "total_return_net": -0.10265874905978156,
+    "max_drawdown_net": -0.10323635409405185
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006541750187483782,
+    "GBPUSD": -0.0006809186284512273,
+    "USDJPY": -0.0004962361911352942
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.5869764445381505,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0004962361911352942
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_00UTC_REV_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 0,
+   "direction": "REV",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1353,
+   "wins": 301,
+   "win_rate": 0.22246858832224686,
+   "expectancy_net": -0.0005349124318165486,
+   "profit_factor_net": 0.24942748943912688,
+   "avg_win_net": 0.0007990347245161058,
+   "avg_loss_net": -0.0009165836238851122,
+   "total_return_net": -0.5155283066450453,
+   "max_drawdown_net": -0.5172615419977014
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 370,
+    "wins": 106,
+    "win_rate": 0.2864864864864865,
+    "expectancy_net": -0.0004828901430050744,
+    "profit_factor_net": 0.40535717055357245,
+    "avg_win_net": 0.0011490154618167719,
+    "avg_loss_net": -0.0011381249691835432,
+    "total_return_net": -0.1639812202337393,
+    "max_drawdown_net": -0.1641820184902586
+   },
+   "W3": {
+    "trades": 373,
+    "wins": 77,
+    "win_rate": 0.2064343163538874,
+    "expectancy_net": -0.0005933404517282196,
+    "profit_factor_net": 0.1750364727735858,
+    "avg_win_net": 0.0006098399475983064,
+    "avg_loss_net": -0.0009063299474989714,
+    "total_return_net": -0.1987101143207678,
+    "max_drawdown_net": -0.19909629053838662
+   },
+   "W4": {
+    "trades": 359,
+    "wins": 74,
+    "win_rate": 0.20612813370473537,
+    "expectancy_net": -0.0005194584858046057,
+    "profit_factor_net": 0.18556161320433576,
+    "avg_win_net": 0.0005741739416256791,
+    "avg_loss_net": -0.0008034191862601885,
+    "total_return_net": -0.1702710927653346,
+    "max_drawdown_net": -0.17027109276533503
+   },
+   "W5": {
+    "trades": 251,
+    "wins": 44,
+    "win_rate": 0.1752988047808765,
+    "expectancy_net": -0.000546874830428021,
+    "profit_factor_net": 0.1757447005029587,
+    "avg_win_net": 0.0006651651245772762,
+    "avg_loss_net": -0.0008045065116851857,
+    "total_return_net": -0.12838139426198947,
+    "max_drawdown_net": -0.13147291402256422
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005247728961884863,
+    "GBPUSD": -0.0005661034142401493,
+    "USDJPY": -0.0005126312966576066
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.6268147656105643,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0005126312966576066
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_00UTC_REV_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 0,
+   "direction": "REV",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1363,
+   "wins": 407,
+   "win_rate": 0.29860601614086574,
+   "expectancy_net": -0.0005910738607759013,
+   "profit_factor_net": 0.3259635075774846,
+   "avg_win_net": 0.0009572574896239481,
+   "avg_loss_net": -0.0012502484001197705,
+   "total_return_net": -0.5539682780417189,
+   "max_drawdown_net": -0.5550395983441511
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 132,
+    "win_rate": 0.3492063492063492,
+    "expectancy_net": -0.0006352273370466867,
+    "profit_factor_net": 0.4135945283739929,
+    "avg_win_net": 0.001282991617890915,
+    "avg_loss_net": -0.0016645155567693024,
+    "total_return_net": -0.2140744172583844,
+    "max_drawdown_net": -0.2155097244967753
+   },
+   "W3": {
+    "trades": 378,
+    "wins": 117,
+    "win_rate": 0.30952380952380953,
+    "expectancy_net": -0.0005606932754259118,
+    "profit_factor_net": 0.28817903687413315,
+    "avg_win_net": 0.0007333695897294577,
+    "avg_loss_net": -0.0011407904218748706,
+    "total_return_net": -0.19125815649131395,
+    "max_drawdown_net": -0.1921123949437339
+   },
+   "W4": {
+    "trades": 365,
+    "wins": 110,
+    "win_rate": 0.3013698630136986,
+    "expectancy_net": -0.00046922465738914894,
+    "profit_factor_net": 0.36549147165466345,
+    "avg_win_net": 0.0008968520166704499,
+    "avg_loss_net": -0.001058512634434466,
+    "total_return_net": -0.15769823340769829,
+    "max_drawdown_net": -0.1595128682743282
+   },
+   "W5": {
+    "trades": 242,
+    "wins": 48,
+    "win_rate": 0.19834710743801653,
+    "expectancy_net": -0.0007533416560986443,
+    "profit_factor_net": 0.16410363581092977,
+    "avg_win_net": 0.0007456446017343779,
+    "avg_loss_net": -0.0011242248539130005,
+    "total_return_net": -0.16688165801725507,
+    "max_drawdown_net": -0.1675801588050687
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005458754822003174,
+    "GBPUSD": -0.0005190840273212945,
+    "USDJPY": -0.0007036852318530464
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.49356008526660305,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0007036852318530464
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_08UTC_MOM_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 8,
+   "direction": "MOM",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1381,
+   "wins": 316,
+   "win_rate": 0.22881969587255613,
+   "expectancy_net": -0.0006282273117224331,
+   "profit_factor_net": 0.2152349478821136,
+   "avg_win_net": 0.0007530027185948219,
+   "avg_loss_net": -0.0010380570671968488,
+   "total_return_net": -0.5804901615306548,
+   "max_drawdown_net": -0.5824401143957023
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 112,
+    "win_rate": 0.2962962962962963,
+    "expectancy_net": -0.0005974737883701805,
+    "profit_factor_net": 0.31079222721995436,
+    "avg_win_net": 0.0009093113592927519,
+    "avg_loss_net": -0.001231909640017731,
+    "total_return_net": -0.20247081652468724,
+    "max_drawdown_net": -0.20531318069860993
+   },
+   "W3": {
+    "trades": 383,
+    "wins": 81,
+    "win_rate": 0.21148825065274152,
+    "expectancy_net": -0.0006842445179789037,
+    "profit_factor_net": 0.1686553183683179,
+    "avg_win_net": 0.0006563628614231186,
+    "avg_loss_net": -0.0010438113978847442,
+    "total_return_net": -0.2307461199607227,
+    "max_drawdown_net": -0.23254207257373993
+   },
+   "W4": {
+    "trades": 369,
+    "wins": 75,
+    "win_rate": 0.2032520325203252,
+    "expectancy_net": -0.0006581285741758537,
+    "profit_factor_net": 0.1539993461645991,
+    "avg_win_net": 0.0005894188600289177,
+    "avg_loss_net": -0.000976380470656663,
+    "total_return_net": -0.21580465454511322,
+    "max_drawdown_net": -0.21580465454511388
+   },
+   "W5": {
+    "trades": 251,
+    "wins": 48,
+    "win_rate": 0.19123505976095617,
+    "expectancy_net": -0.0005451064989161028,
+    "profit_factor_net": 0.22063728964605844,
+    "avg_win_net": 0.0008069620949527927,
+    "avg_loss_net": -0.0008648074472200781,
+    "total_return_net": -0.12802986437375918,
+    "max_drawdown_net": -0.1313184522379527
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005905662762913549,
+    "GBPUSD": -0.0006306715488693709,
+    "USDJPY": -0.0006614877035848744
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4240443842155197,
+   "holdout_trades": 467,
+   "holdout_expectancy": -0.0006614877035848744
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_08UTC_MOM_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 8,
+   "direction": "MOM",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1394,
+   "wins": 425,
+   "win_rate": 0.3048780487804878,
+   "expectancy_net": -0.0005977627988404961,
+   "profit_factor_net": 0.36774219766626154,
+   "avg_win_net": 0.0011403863152291709,
+   "avg_loss_net": -0.0013601089015026309,
+   "total_return_net": -0.5663597180085006,
+   "max_drawdown_net": -0.570428167967443
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 380,
+    "wins": 128,
+    "win_rate": 0.3368421052631579,
+    "expectancy_net": -0.0006958406027120588,
+    "profit_factor_net": 0.42496987381436957,
+    "avg_win_net": 0.001526690274997314,
+    "avg_loss_net": -0.00182474517551682,
+    "total_return_net": -0.23310334892033002,
+    "max_drawdown_net": -0.2402984384407706
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 123,
+    "win_rate": 0.3170103092783505,
+    "expectancy_net": -0.0005217788397279635,
+    "profit_factor_net": 0.36159859890098867,
+    "avg_win_net": 0.0009322791776143341,
+    "avg_loss_net": -0.0011966812402302374,
+    "total_return_net": -0.18360044989681212,
+    "max_drawdown_net": -0.1836004498968128
+   },
+   "W4": {
+    "trades": 371,
+    "wins": 110,
+    "win_rate": 0.29649595687331537,
+    "expectancy_net": -0.0005461877017647839,
+    "profit_factor_net": 0.38450116791900196,
+    "avg_win_net": 0.0011507833552514462,
+    "avg_loss_net": -0.0012613862315417393,
+    "total_return_net": -0.1839337539614745,
+    "max_drawdown_net": -0.18599959599989713
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 64,
+    "win_rate": 0.25098039215686274,
+    "expectancy_net": -0.0006422591583681743,
+    "profit_factor_net": 0.22662279196946536,
+    "avg_win_net": 0.0007498643882581139,
+    "avg_loss_net": -0.001108729875562323,
+    "total_return_net": -0.15127967023558064,
+    "max_drawdown_net": -0.1512796702355802
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006405643638594522,
+    "GBPUSD": -0.0005858200094308483,
+    "USDJPY": -0.0005686306256417188
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4295584200140429,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.0005686306256417188
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_08UTC_REV_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 8,
+   "direction": "REV",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1381,
+   "wins": 364,
+   "win_rate": 0.2635771180304127,
+   "expectancy_net": -0.0005717956243268113,
+   "profit_factor_net": 0.23580034293699711,
+   "avg_win_net": 0.0006693768931111882,
+   "avg_loss_net": -0.0010160304289948859,
+   "total_return_net": -0.5464681631254311,
+   "max_drawdown_net": -0.5464681631254321
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 124,
+    "win_rate": 0.328042328042328,
+    "expectancy_net": -0.0006026299601030345,
+    "profit_factor_net": 0.2974457421464659,
+    "avg_win_net": 0.0007777655809509822,
+    "avg_loss_net": -0.0012765238462868853,
+    "total_return_net": -0.20402478365843435,
+    "max_drawdown_net": -0.2040247836584349
+   },
+   "W3": {
+    "trades": 383,
+    "wins": 99,
+    "win_rate": 0.2584856396866841,
+    "expectancy_net": -0.0005157922110576842,
+    "profit_factor_net": 0.24256610841487758,
+    "avg_win_net": 0.0006390336767016327,
+    "avg_loss_net": -0.0009183547564385727,
+    "total_return_net": -0.17944817517445322,
+    "max_drawdown_net": -0.17944817517445355
+   },
+   "W4": {
+    "trades": 369,
+    "wins": 91,
+    "win_rate": 0.24661246612466126,
+    "expectancy_net": -0.0005418749856706219,
+    "profit_factor_net": 0.2245760785179308,
+    "avg_win_net": 0.0006363680640043169,
+    "avg_loss_net": -0.0009275588616433535,
+    "total_return_net": -0.18141146112135798,
+    "max_drawdown_net": -0.18141146112135886
+   },
+   "W5": {
+    "trades": 251,
+    "wins": 50,
+    "win_rate": 0.199203187250996,
+    "expectancy_net": -0.0006548021742184335,
+    "profit_factor_net": 0.1367518593773866,
+    "avg_win_net": 0.0005207285847339247,
+    "avg_loss_net": -0.0009472227610225027,
+    "total_return_net": -0.15172521483729495,
+    "max_drawdown_net": -0.15172521483729595
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006095125856434574,
+    "GBPUSD": -0.0005693858384231033,
+    "USDJPY": -0.000538447434385424
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4316447439281029,
+   "holdout_trades": 467,
+   "holdout_expectancy": -0.000538447434385424
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_08UTC_REV_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 8,
+   "direction": "REV",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1394,
+   "wins": 440,
+   "win_rate": 0.31563845050215206,
+   "expectancy_net": -0.0006022375049088607,
+   "profit_factor_net": 0.3663325651234586,
+   "avg_win_net": 0.0011030419607377206,
+   "avg_loss_net": -0.0013887395645362148,
+   "total_return_net": -0.569059862460189,
+   "max_drawdown_net": -0.5697307763690663
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 380,
+    "wins": 150,
+    "win_rate": 0.39473684210526316,
+    "expectancy_net": -0.0005042520791907144,
+    "profit_factor_net": 0.5342488867139643,
+    "avg_win_net": 0.001465310829661219,
+    "avg_loss_net": -0.0017887496284419754,
+    "total_return_net": -0.17515234849138284,
+    "max_drawdown_net": -0.1751523484913844
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 112,
+    "win_rate": 0.28865979381443296,
+    "expectancy_net": -0.0006782355167727053,
+    "profit_factor_net": 0.2613104367464663,
+    "avg_win_net": 0.0008311684012743461,
+    "avg_loss_net": -0.0012907472516323782,
+    "total_return_net": -0.2317141003260066,
+    "max_drawdown_net": -0.23171410032600714
+   },
+   "W4": {
+    "trades": 371,
+    "wins": 108,
+    "win_rate": 0.29110512129380056,
+    "expectancy_net": -0.0006538105381921005,
+    "profit_factor_net": 0.31770667386179463,
+    "avg_win_net": 0.001045820823932597,
+    "avg_loss_net": -0.0013517580176957786,
+    "total_return_net": -0.2158975385821602,
+    "max_drawdown_net": -0.21589753858216032
+   },
+   "W5": {
+    "trades": 255,
+    "wins": 70,
+    "win_rate": 0.27450980392156865,
+    "expectancy_net": -0.0005575851042094174,
+    "profit_factor_net": 0.29502380933007866,
+    "avg_win_net": 0.0008500332621138144,
+    "avg_loss_net": -0.0010901974590344242,
+    "total_return_net": -0.1327435791858158,
+    "max_drawdown_net": -0.1340937769153876
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005594142392282457,
+    "GBPUSD": -0.000614203456764745,
+    "USDJPY": -0.0006313673409248193
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.39635700327140744,
+   "holdout_trades": 471,
+   "holdout_expectancy": -0.0006313673409248193
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_13UTC_MOM_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 13,
+   "direction": "MOM",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1397,
+   "wins": 352,
+   "win_rate": 0.25196850393700787,
+   "expectancy_net": -0.0006989887751958351,
+   "profit_factor_net": 0.2356536986894096,
+   "avg_win_net": 0.000855279448502471,
+   "avg_loss_net": -0.0012225317558100014,
+   "total_return_net": -0.6240483401045538,
+   "max_drawdown_net": -0.6257994204875652
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 104,
+    "win_rate": 0.2751322751322751,
+    "expectancy_net": -0.0007693712209653964,
+    "profit_factor_net": 0.2767559149818468,
+    "avg_win_net": 0.001070055783778747,
+    "avg_loss_net": -0.00146754789429894,
+    "total_return_net": -0.25287501444707816,
+    "max_drawdown_net": -0.2539605231693356
+   },
+   "W3": {
+    "trades": 387,
+    "wins": 96,
+    "win_rate": 0.24806201550387597,
+    "expectancy_net": -0.0006919243424896602,
+    "profit_factor_net": 0.21980384990702193,
+    "avg_win_net": 0.0007858322241067148,
+    "avg_loss_net": -0.0011794316634286706,
+    "total_return_net": -0.23521444671436698,
+    "max_drawdown_net": -0.23642395085753842
+   },
+   "W4": {
+    "trades": 373,
+    "wins": 95,
+    "win_rate": 0.2546916890080429,
+    "expectancy_net": -0.0005700151188812187,
+    "profit_factor_net": 0.2663434287439605,
+    "avg_win_net": 0.0008124951474972117,
+    "avg_loss_net": -0.0010424556775357184,
+    "total_return_net": -0.19176031586782238,
+    "max_drawdown_net": -0.19176031586782316
+   },
+   "W5": {
+    "trades": 259,
+    "wins": 57,
+    "win_rate": 0.22007722007722008,
+    "expectancy_net": -0.0007925661680983351,
+    "profit_factor_net": 0.15322824254671827,
+    "avg_win_net": 0.0006516777514631634,
+    "avg_loss_net": -0.0012001003434201443,
+    "total_return_net": -0.18593534237519205,
+    "max_drawdown_net": -0.18854806343164654
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006970472295773533,
+    "GBPUSD": -0.0007232476078082339,
+    "USDJPY": -0.0006765257918343972
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3776763385010315,
+   "holdout_trades": 473,
+   "holdout_expectancy": -0.0006765257918343972
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_13UTC_MOM_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 13,
+   "direction": "MOM",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1404,
+   "wins": 490,
+   "win_rate": 0.349002849002849,
+   "expectancy_net": -0.0007201218385223524,
+   "profit_factor_net": 0.42564413390619477,
+   "avg_win_net": 0.0015291236340787859,
+   "avg_loss_net": -0.0019259536564376232,
+   "total_return_net": -0.6376698225790365,
+   "max_drawdown_net": -0.6398836134620065
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 379,
+    "wins": 123,
+    "win_rate": 0.3245382585751979,
+    "expectancy_net": -0.0010680622955179103,
+    "profit_factor_net": 0.3811897028856882,
+    "avg_win_net": 0.0020272826853567987,
+    "avg_loss_net": -0.0025552788292975558,
+    "total_return_net": -0.3340319538352735,
+    "max_drawdown_net": -0.3381009331277035
+   },
+   "W3": {
+    "trades": 389,
+    "wins": 154,
+    "win_rate": 0.39588688946015427,
+    "expectancy_net": -0.00039691273084957186,
+    "profit_factor_net": 0.6090983388965101,
+    "avg_win_net": 0.0015622258100775287,
+    "avg_loss_net": -0.0016807737321379698,
+    "total_return_net": -0.14384306884608478,
+    "max_drawdown_net": -0.154769414778945
+   },
+   "W4": {
+    "trades": 376,
+    "wins": 133,
+    "win_rate": 0.3537234042553192,
+    "expectancy_net": -0.0007055253421455964,
+    "profit_factor_net": 0.37274053702450344,
+    "avg_win_net": 0.0011852452586315228,
+    "avg_loss_net": -0.0017403915557396574,
+    "total_return_net": -0.23366921261526719,
+    "max_drawdown_net": -0.23565504131473614
+   },
+   "W5": {
+    "trades": 260,
+    "wins": 80,
+    "win_rate": 0.3076923076923077,
+    "expectancy_net": -0.0007176110397571802,
+    "profit_factor_net": 0.35277086355768844,
+    "avg_win_net": 0.001271180203122335,
+    "avg_loss_net": -0.0016015182588147423,
+    "total_return_net": -0.1707576680903975,
+    "max_drawdown_net": -0.17075766809039772
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0008065021485172637,
+    "GBPUSD": -0.0007627973197545074,
+    "USDJPY": -0.0005932621568714274
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3964846283110654,
+   "holdout_trades": 472,
+   "holdout_expectancy": -0.0005932621568714274
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_13UTC_REV_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 13,
+   "direction": "REV",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1397,
+   "wins": 413,
+   "win_rate": 0.2956335003579098,
+   "expectancy_net": -0.0005009833791530686,
+   "profit_factor_net": 0.36363947885047615,
+   "avg_win_net": 0.0009683614009636304,
+   "avg_loss_net": -0.0011176900805638377,
+   "total_return_net": -0.5041634503833325,
+   "max_drawdown_net": -0.5144812505739017
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 124,
+    "win_rate": 0.328042328042328,
+    "expectancy_net": -0.0004305881758440595,
+    "profit_factor_net": 0.5037899305725368,
+    "avg_win_net": 0.001332650063189259,
+    "avg_loss_net": -0.0012913816468681995,
+    "total_return_net": -0.1507356794376531,
+    "max_drawdown_net": -0.17061554713872928
+   },
+   "W3": {
+    "trades": 387,
+    "wins": 115,
+    "win_rate": 0.2971576227390181,
+    "expectancy_net": -0.0005081179515431197,
+    "profit_factor_net": 0.33839838989789495,
+    "avg_win_net": 0.0008745998484949064,
+    "avg_loss_net": -0.0010927229037650792,
+    "total_return_net": -0.17879590524937095,
+    "max_drawdown_net": -0.1814148588241905
+   },
+   "W4": {
+    "trades": 373,
+    "wins": 101,
+    "win_rate": 0.2707774798927614,
+    "expectancy_net": -0.000629931578817854,
+    "profit_factor_net": 0.20444674223981438,
+    "avg_win_net": 0.0005978493680547505,
+    "avg_loss_net": -0.001085835533355108,
+    "total_return_net": -0.2096339341852792,
+    "max_drawdown_net": -0.20963393418527865
+   },
+   "W5": {
+    "trades": 259,
+    "wins": 73,
+    "win_rate": 0.28185328185328185,
+    "expectancy_net": -0.0004073564635580524,
+    "profit_factor_net": 0.4113352670717005,
+    "avg_win_net": 0.0010099024933159883,
+    "avg_loss_net": -0.0009635925057720577,
+    "total_return_net": -0.10046872798659934,
+    "max_drawdown_net": -0.1047154291317518
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005030012285117047,
+    "GBPUSD": -0.0004767401133337582,
+    "USDJPY": -0.000523358169400356
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.35949590489637956,
+   "holdout_trades": 473,
+   "holdout_expectancy": -0.000523358169400356
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_13UTC_REV_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 13,
+   "direction": "REV",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1404,
+   "wins": 567,
+   "win_rate": 0.40384615384615385,
+   "expectancy_net": -0.0004799128819338084,
+   "profit_factor_net": 0.5647712972040168,
+   "avg_win_net": 0.0015420609675677133,
+   "avg_loss_net": -0.0018496371025638714,
+   "total_return_net": -0.49224156169858724,
+   "max_drawdown_net": -0.5145174617873265
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 379,
+    "wins": 190,
+    "win_rate": 0.5013192612137203,
+    "expectancy_net": -0.00013204091101936145,
+    "profit_factor_net": 0.8857767134723931,
+    "avg_win_net": 0.002042507820099196,
+    "avg_loss_net": -0.0023180951909798158,
+    "total_return_net": -0.05024236154623629,
+    "max_drawdown_net": -0.10619146996763551
+   },
+   "W3": {
+    "trades": 389,
+    "wins": 134,
+    "win_rate": 0.3444730077120823,
+    "expectancy_net": -0.0008032313997400612,
+    "profit_factor_net": 0.3600498140161298,
+    "avg_win_net": 0.0013119035333137054,
+    "avg_loss_net": -0.0019147140704428248,
+    "total_return_net": -0.2690842830072543,
+    "max_drawdown_net": -0.27021047250723595
+   },
+   "W4": {
+    "trades": 376,
+    "wins": 137,
+    "win_rate": 0.36436170212765956,
+    "expectancy_net": -0.0004943744658602888,
+    "profit_factor_net": 0.5126430786149387,
+    "avg_win_net": 0.0014272211382627506,
+    "avg_loss_net": -0.0015958748749182654,
+    "total_return_net": -0.17030632529184653,
+    "max_drawdown_net": -0.1896499914753197
+   },
+   "W5": {
+    "trades": 260,
+    "wins": 106,
+    "win_rate": 0.4076923076923077,
+    "expectancy_net": -0.0004823552588322171,
+    "profit_factor_net": 0.47823129805778436,
+    "avg_win_net": 0.0010844123904340827,
+    "avg_loss_net": -0.001560779744690839,
+    "total_return_net": -0.11842498213956143,
+    "max_drawdown_net": -0.12226682802706246
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0003935582846519595,
+    "GBPUSD": -0.00043725406046283644,
+    "USDJPY": -0.0006067308448235312
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3458173877970309,
+   "holdout_trades": 472,
+   "holdout_expectancy": -0.0006067308448235312
+  },
+  "bonferroni_p": 0.9999999999999909,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_16UTC_MOM_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 16,
+   "direction": "MOM",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1391,
+   "wins": 285,
+   "win_rate": 0.2048885693745507,
+   "expectancy_net": -0.0006006773715904705,
+   "profit_factor_net": 0.18055829594004164,
+   "avg_win_net": 0.0006459857326723725,
+   "avg_loss_net": -0.0009219241932133548,
+   "total_return_net": -0.5667132047799708,
+   "max_drawdown_net": -0.5679663492847014
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 377,
+    "wins": 102,
+    "win_rate": 0.27055702917771884,
+    "expectancy_net": -0.0005618718307337973,
+    "profit_factor_net": 0.2927239427947515,
+    "avg_win_net": 0.0008595036543166267,
+    "avg_loss_net": -0.001089072919734318,
+    "total_return_net": -0.19114253555496108,
+    "max_drawdown_net": -0.19348189899244028
+   },
+   "W3": {
+    "trades": 387,
+    "wins": 64,
+    "win_rate": 0.165374677002584,
+    "expectancy_net": -0.000635985804838289,
+    "profit_factor_net": 0.1277346367288735,
+    "avg_win_net": 0.0005631686399828145,
+    "avg_loss_net": -0.0008735891623260618,
+    "total_return_net": -0.21832919426728203,
+    "max_drawdown_net": -0.21853184254684865
+   },
+   "W4": {
+    "trades": 370,
+    "wins": 70,
+    "win_rate": 0.1891891891891892,
+    "expectancy_net": -0.000631094204451463,
+    "profit_factor_net": 0.14652107167143122,
+    "avg_win_net": 0.0005726709580598544,
+    "avg_loss_net": -0.0009119727423707706,
+    "total_return_net": -0.2084180786423835,
+    "max_drawdown_net": -0.2084180786423837
+   },
+   "W5": {
+    "trades": 257,
+    "wins": 49,
+    "win_rate": 0.19066147859922178,
+    "expectancy_net": -0.0005606427298686521,
+    "profit_factor_net": 0.12352671172916363,
+    "avg_win_net": 0.00041442451118857757,
+    "avg_loss_net": -0.0007903460703100188,
+    "total_return_net": -0.1342675484974023,
+    "max_drawdown_net": -0.13426754849740175
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006145981319651785,
+    "GBPUSD": -0.0005881384890764785,
+    "USDJPY": -0.0005999708420976201
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3501788786858119,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0005999708420976201
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_16UTC_MOM_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 16,
+   "direction": "MOM",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1410,
+   "wins": 414,
+   "win_rate": 0.2936170212765957,
+   "expectancy_net": -0.0005822775015186237,
+   "profit_factor_net": 0.3647630060020989,
+   "avg_win_net": 0.0011387379267122726,
+   "avg_loss_net": -0.001297639336144719,
+   "total_return_net": -0.5609422215913911,
+   "max_drawdown_net": -0.5621664652191078
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 383,
+    "wins": 126,
+    "win_rate": 0.3289817232375979,
+    "expectancy_net": -0.0005165198610044346,
+    "profit_factor_net": 0.4882355910906781,
+    "avg_win_net": 0.0014978716819064508,
+    "avg_loss_net": -0.0015041203839879812,
+    "total_return_net": -0.180172465267864,
+    "max_drawdown_net": -0.19203844741684528
+   },
+   "W3": {
+    "trades": 391,
+    "wins": 114,
+    "win_rate": 0.2915601023017903,
+    "expectancy_net": -0.0006199264772444346,
+    "profit_factor_net": 0.27244091036244383,
+    "avg_win_net": 0.0007961889458019857,
+    "avg_loss_net": -0.0012027321026137196,
+    "total_return_net": -0.21555287806621026,
+    "max_drawdown_net": -0.21583752380312116
+   },
+   "W4": {
+    "trades": 373,
+    "wins": 109,
+    "win_rate": 0.29222520107238603,
+    "expectancy_net": -0.0005899580577249316,
+    "profit_factor_net": 0.378094633126704,
+    "avg_win_net": 0.001227381800040032,
+    "avg_loss_net": -0.0013402991353627387,
+    "total_return_net": -0.19801994620292462,
+    "max_drawdown_net": -0.19801994620292518
+   },
+   "W5": {
+    "trades": 263,
+    "wins": 65,
+    "win_rate": 0.24714828897338403,
+    "expectancy_net": -0.0006111732404661125,
+    "profit_factor_net": 0.26567879216936874,
+    "avg_win_net": 0.0008947002109673571,
+    "avg_loss_net": -0.0011055256361387161,
+    "total_return_net": -0.14872097222956715,
+    "max_drawdown_net": -0.14872097222956748
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005872887576443906,
+    "GBPUSD": -0.0005649994962745408,
+    "USDJPY": -0.0005946396022334132
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.35309807110252367,
+   "holdout_trades": 473,
+   "holdout_expectancy": -0.0005946396022334132
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_16UTC_REV_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 16,
+   "direction": "REV",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1391,
+   "wins": 292,
+   "win_rate": 0.20992092020129402,
+   "expectancy_net": -0.0005993301193640751,
+   "profit_factor_net": 0.16306556912261722,
+   "avg_win_net": 0.0005562643376753066,
+   "avg_loss_net": -0.0009063670451652574,
+   "total_return_net": -0.5659000227434635,
+   "max_drawdown_net": -0.5659000227434646
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 377,
+    "wins": 102,
+    "win_rate": 0.27055702917771884,
+    "expectancy_net": -0.0006381388653379263,
+    "profit_factor_net": 0.21037696729610897,
+    "avg_win_net": 0.0006283979456209979,
+    "avg_loss_net": -0.0011079088824935998,
+    "total_return_net": -0.21408190133132,
+    "max_drawdown_net": -0.21408190133132077
+   },
+   "W3": {
+    "trades": 387,
+    "wins": 82,
+    "win_rate": 0.21188630490956073,
+    "expectancy_net": -0.0005639760175724974,
+    "profit_factor_net": 0.14826482319283735,
+    "avg_win_net": 0.0004633309260395052,
+    "avg_loss_net": -0.0008401700155271998,
+    "total_return_net": -0.19622593935323618,
+    "max_drawdown_net": -0.19622593935323596
+   },
+   "W4": {
+    "trades": 370,
+    "wins": 79,
+    "win_rate": 0.21351351351351353,
+    "expectancy_net": -0.0005689547777064048,
+    "profit_factor_net": 0.18774549294672965,
+    "avg_win_net": 0.0006159277506269483,
+    "avg_loss_net": -0.0008906239177006828,
+    "total_return_net": -0.18999627738864455,
+    "max_drawdown_net": -0.19137157901365576
+   },
+   "W5": {
+    "trades": 257,
+    "wins": 29,
+    "win_rate": 0.11284046692607004,
+    "expectancy_net": -0.0006393690943622725,
+    "profit_factor_net": 0.06637063984975153,
+    "avg_win_net": 0.00040279889355446116,
+    "avg_loss_net": -0.0007719255489657168,
+    "total_return_net": -0.15161794917626048,
+    "max_drawdown_net": -0.1516179491762608
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005853398159327099,
+    "GBPUSD": -0.0006118679220135396,
+    "USDJPY": -0.0006001041691303215
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.36373917381989446,
+   "holdout_trades": 470,
+   "holdout_expectancy": -0.0006001041691303215
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_16UTC_REV_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 16,
+   "direction": "REV",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1410,
+   "wins": 418,
+   "win_rate": 0.29645390070921984,
+   "expectancy_net": -0.0006177613092483978,
+   "profit_factor_net": 0.3324908423700152,
+   "avg_win_net": 0.0010379728540386144,
+   "avg_loss_net": -0.00131543961595603,
+   "total_return_net": -0.5823831310450709,
+   "max_drawdown_net": -0.5824137724073095
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 383,
+    "wins": 131,
+    "win_rate": 0.34203655352480417,
+    "expectancy_net": -0.0006835689328248186,
+    "profit_factor_net": 0.37070020142198684,
+    "avg_win_net": 0.0011772671452330102,
+    "avg_loss_net": -0.0016509083226088487,
+    "total_return_net": -0.2310142642125349,
+    "max_drawdown_net": -0.2310142642125349
+   },
+   "W3": {
+    "trades": 391,
+    "wins": 113,
+    "win_rate": 0.289002557544757,
+    "expectancy_net": -0.0005800612405587909,
+    "profit_factor_net": 0.2856423642294527,
+    "avg_win_net": 0.0008025629165696578,
+    "avg_loss_net": -0.0011420631461541673,
+    "total_return_net": -0.2032220167271056,
+    "max_drawdown_net": -0.2035556711730454
+   },
+   "W4": {
+    "trades": 373,
+    "wins": 107,
+    "win_rate": 0.2868632707774799,
+    "expectancy_net": -0.0006100633940639233,
+    "profit_factor_net": 0.36331192347281643,
+    "avg_win_net": 0.0012135368123413926,
+    "avg_loss_net": -0.001343616860550272,
+    "total_return_net": -0.20401617179572307,
+    "max_drawdown_net": -0.20908533277266605
+   },
+   "W5": {
+    "trades": 263,
+    "wins": 67,
+    "win_rate": 0.25475285171102663,
+    "expectancy_net": -0.0005888933601673186,
+    "profit_factor_net": 0.2762380341716608,
+    "avg_win_net": 0.0008822777383539725,
+    "avg_loss_net": -0.0010917936846618413,
+    "total_return_net": -0.14371530912377817,
+    "max_drawdown_net": -0.14377813639763726
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.000612595789047012,
+    "GBPUSD": -0.0006350010449367025,
+    "USDJPY": -0.0006055888069077526
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.36905661178213645,
+   "holdout_trades": 473,
+   "holdout_expectancy": -0.0006055888069077526
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_21UTC_MOM_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 21,
+   "direction": "MOM",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1306,
+   "wins": 151,
+   "win_rate": 0.11562021439509954,
+   "expectancy_net": -0.0006074876659942364,
+   "profit_factor_net": 0.11959498097909128,
+   "avg_win_net": 0.0007137303073883273,
+   "avg_loss_net": -0.000780218327449446,
+   "total_return_net": -0.5479861715030261,
+   "max_drawdown_net": -0.5479861715030254
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 364,
+    "wins": 55,
+    "win_rate": 0.1510989010989011,
+    "expectancy_net": -0.0006293972348071485,
+    "profit_factor_net": 0.17031026704853108,
+    "avg_win_net": 0.000855044344348271,
+    "avg_loss_net": -0.0008936182278607021,
+    "total_return_net": -0.20496245888437514,
+    "max_drawdown_net": -0.20496245888437636
+   },
+   "W3": {
+    "trades": 355,
+    "wins": 30,
+    "win_rate": 0.08450704225352113,
+    "expectancy_net": -0.0006313741208088647,
+    "profit_factor_net": 0.06970889653651587,
+    "avg_win_net": 0.0005598390851459027,
+    "avg_loss_net": -0.0007413322628969971,
+    "total_return_net": -0.20090346426650185,
+    "max_drawdown_net": -0.20090346426650285
+   },
+   "W4": {
+    "trades": 357,
+    "wins": 42,
+    "win_rate": 0.11764705882352941,
+    "expectancy_net": -0.0005958885531487626,
+    "profit_factor_net": 0.13340410520882562,
+    "avg_win_net": 0.0007797161601801267,
+    "avg_loss_net": -0.0007793025149259479,
+    "total_return_net": -0.19178344310505235,
+    "max_drawdown_net": -0.19178344310505135
+   },
+   "W5": {
+    "trades": 230,
+    "wins": 24,
+    "win_rate": 0.10434782608695652,
+    "expectancy_net": -0.000553949008510502,
+    "profit_factor_net": 0.08082040861661072,
+    "avg_win_net": 0.0004667744247725046,
+    "avg_loss_net": -0.0006728682434560947,
+    "total_return_net": -0.11968704271258135,
+    "max_drawdown_net": -0.1196870427125808
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.000591113584709449,
+    "GBPUSD": -0.0006176429738031134,
+    "USDJPY": -0.0006122790563593102
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4199394380092573,
+   "holdout_trades": 425,
+   "holdout_expectancy": -0.0006122790563593102
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_21UTC_MOM_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 21,
+   "direction": "MOM",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1335,
+   "wins": 277,
+   "win_rate": 0.20749063670411985,
+   "expectancy_net": -0.0005366176207907192,
+   "profit_factor_net": 0.3008853266040833,
+   "avg_win_net": 0.001113061131889585,
+   "avg_loss_net": -0.0009685278424281901,
+   "total_return_net": -0.5121552910094599,
+   "max_drawdown_net": -0.5121552910094586
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 373,
+    "wins": 117,
+    "win_rate": 0.3136729222520107,
+    "expectancy_net": -0.0003602460541407032,
+    "profit_factor_net": 0.5424359201457992,
+    "avg_win_net": 0.001361503367220423,
+    "avg_loss_net": -0.0011471393443721555,
+    "total_return_net": -0.12627784396044117,
+    "max_drawdown_net": -0.13679754501648633
+   },
+   "W3": {
+    "trades": 361,
+    "wins": 66,
+    "win_rate": 0.18282548476454294,
+    "expectancy_net": -0.0005878238161606374,
+    "profit_factor_net": 0.16043361736964304,
+    "avg_win_net": 0.0006143993952858398,
+    "avg_loss_net": -0.0008567957888910355,
+    "total_return_net": -0.19135129962823827,
+    "max_drawdown_net": -0.19172811622295438
+   },
+   "W4": {
+    "trades": 358,
+    "wins": 59,
+    "win_rate": 0.164804469273743,
+    "expectancy_net": -0.000664174463642054,
+    "profit_factor_net": 0.2383638856766011,
+    "avg_win_net": 0.0012612643383887445,
+    "avg_loss_net": -0.0010441105483237165,
+    "total_return_net": -0.21196434044264256,
+    "max_drawdown_net": -0.21261814602311768
+   },
+   "W5": {
+    "trades": 243,
+    "wins": 35,
+    "win_rate": 0.1440329218106996,
+    "expectancy_net": -0.0005433493413303806,
+    "profit_factor_net": 0.20505077913469155,
+    "avg_win_net": 0.0009730595289949753,
+    "avg_loss_net": -0.0007985142954716664,
+    "total_return_net": -0.12380153671061533,
+    "max_drawdown_net": -0.12380153671061533
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0005115076622147134,
+    "GBPUSD": -0.0005861301549741374,
+    "USDJPY": -0.0005075263463283424
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.4108944435861022,
+   "holdout_trades": 427,
+   "holdout_expectancy": -0.0005075263463283424
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_21UTC_REV_W1h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 21,
+   "direction": "REV",
+   "window_h": 1,
+   "hold_h": 1
+  },
+  "pooled_oos": {
+   "trades": 1306,
+   "wins": 145,
+   "win_rate": 0.1110260336906585,
+   "expectancy_net": -0.0005924744777002627,
+   "profit_factor_net": 0.11802421493879267,
+   "avg_win_net": 0.0007141004063505026,
+   "avg_loss_net": -0.0007556556647694795,
+   "total_return_net": -0.5390304749790287,
+   "max_drawdown_net": -0.5390304749790299
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 364,
+    "wins": 60,
+    "win_rate": 0.16483516483516483,
+    "expectancy_net": -0.0005706071532293683,
+    "profit_factor_net": 0.18654946943440456,
+    "avg_win_net": 0.0007938715098911286,
+    "avg_loss_net": -0.0008399121525294664,
+    "total_return_net": -0.1877550778401632,
+    "max_drawdown_net": -0.187755077840163
+   },
+   "W3": {
+    "trades": 355,
+    "wins": 43,
+    "win_rate": 0.12112676056338029,
+    "expectancy_net": -0.0005685807515462304,
+    "profit_factor_net": 0.08510925754120027,
+    "avg_win_net": 0.00043667629766099155,
+    "avg_loss_net": -0.0007071257935844052,
+    "total_return_net": -0.18287933008628376,
+    "max_drawdown_net": -0.1833245035221277
+   },
+   "W4": {
+    "trades": 357,
+    "wins": 33,
+    "win_rate": 0.09243697478991597,
+    "expectancy_net": -0.0006040382253542707,
+    "profit_factor_net": 0.12168407874032011,
+    "avg_win_net": 0.0009053191402950038,
+    "avg_loss_net": -0.000757769068151882,
+    "total_return_net": -0.19413287976992155,
+    "max_drawdown_net": -0.1941328797699201
+   },
+   "W5": {
+    "trades": 230,
+    "wins": 9,
+    "win_rate": 0.0391304347826087,
+    "expectancy_net": -0.0006460123950028979,
+    "profit_factor_net": 0.04658328494353686,
+    "avg_win_net": 0.0008066284331330437,
+    "avg_loss_net": -0.0007051697137957643,
+    "total_return_net": -0.13814227905443677,
+    "max_drawdown_net": -0.1381422790544371
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006089652581711709,
+    "GBPUSD": -0.000582266336298191,
+    "USDJPY": -0.0005876274633939364
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3962709260850729,
+   "holdout_trades": 425,
+   "holdout_expectancy": -0.0005876274633939364
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "HOD_21UTC_REV_W3h",
+  "panel": "forex3_1h",
+  "subfamily": "HOD",
+  "params": {
+   "hour": 21,
+   "direction": "REV",
+   "window_h": 3,
+   "hold_h": 3
+  },
+  "pooled_oos": {
+   "trades": 1335,
+   "wins": 267,
+   "win_rate": 0.2,
+   "expectancy_net": -0.0006633693202700352,
+   "profit_factor_net": 0.20241506239710666,
+   "avg_win_net": 0.0008417657858380943,
+   "avg_loss_net": -0.0010396530967970673,
+   "total_return_net": -0.5881419586176605,
+   "max_drawdown_net": -0.5896360119247379
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 373,
+    "wins": 91,
+    "win_rate": 0.24396782841823056,
+    "expectancy_net": -0.0008397549087678167,
+    "profit_factor_net": 0.22751563568268604,
+    "avg_win_net": 0.0010137749160381146,
+    "avg_loss_net": -0.0014378797813115747,
+    "total_return_net": -0.26945147271745573,
+    "max_drawdown_net": -0.27210160536875294
+   },
+   "W3": {
+    "trades": 361,
+    "wins": 62,
+    "win_rate": 0.17174515235457063,
+    "expectancy_net": -0.0006121336683501411,
+    "profit_factor_net": 0.1376083379912743,
+    "avg_win_net": 0.000568724555719471,
+    "avg_loss_net": -0.0008569939021037062,
+    "total_return_net": -0.1984210661879695,
+    "max_drawdown_net": -0.19852061539688814
+   },
+   "W4": {
+    "trades": 358,
+    "wins": 80,
+    "win_rate": 0.22346368715083798,
+    "expectancy_net": -0.0005357672608197163,
+    "profit_factor_net": 0.2918842890744725,
+    "avg_win_net": 0.00098827020104711,
+    "avg_loss_net": -0.0009743391922921843,
+    "total_return_net": -0.17487060965397982,
+    "max_drawdown_net": -0.17513431553023295
+   },
+   "W5": {
+    "trades": 243,
+    "wins": 34,
+    "win_rate": 0.13991769547325103,
+    "expectancy_net": -0.0006567264524372096,
+    "profit_factor_net": 0.10224693618628646,
+    "avg_win_net": 0.0005345708506154916,
+    "avg_loss_net": -0.0008505260136993716,
+    "total_return_net": -0.14762612813064446,
+    "max_drawdown_net": -0.14762612813064369
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006885589826299673,
+    "GBPUSD": -0.000613764974899027,
+    "USDJPY": -0.0006924806978489238
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3912492149398814,
+   "holdout_trades": 427,
+   "holdout_expectancy": -0.0006924806978489238
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "WFSEL_SOI",
+  "panel": "forex3_1h",
+  "subfamily": "WFSEL",
+  "params": {
+   "procedure_of": "SOI"
+  },
+  "pooled_oos": {
+   "trades": 1401,
+   "wins": 505,
+   "win_rate": 0.36045681655960027,
+   "expectancy_net": -0.0006147709978168728,
+   "profit_factor_net": 0.442237129803571,
+   "avg_win_net": 0.001352277215970858,
+   "avg_loss_net": -0.0017234309843825021,
+   "total_return_net": -0.5787094413996208,
+   "max_drawdown_net": -0.5830867266491325
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 382,
+    "wins": 125,
+    "win_rate": 0.32722513089005234,
+    "expectancy_net": -0.0008723042507895599,
+    "profit_factor_net": 0.3616940141212546,
+    "avg_win_net": 0.0015105452619845294,
+    "avg_loss_net": -0.0020312777492205373,
+    "total_return_net": -0.2841223830750398,
+    "max_drawdown_net": -0.28760238129857296
+   },
+   "W3": {
+    "trades": 388,
+    "wins": 137,
+    "win_rate": 0.35309278350515466,
+    "expectancy_net": -0.0005833175164009109,
+    "profit_factor_net": 0.44894302818431114,
+    "avg_win_net": 0.0013458941540305577,
+    "avg_loss_net": -0.0016363135277519516,
+    "total_return_net": -0.20321086007504874,
+    "max_drawdown_net": -0.20794366067242975
+   },
+   "W4": {
+    "trades": 374,
+    "wins": 135,
+    "win_rate": 0.3609625668449198,
+    "expectancy_net": -0.0006411087060774818,
+    "profit_factor_net": 0.4231526555552241,
+    "avg_win_net": 0.001302883791420225,
+    "avg_loss_net": -0.0017391797820699103,
+    "total_return_net": -0.21387739683682483,
+    "max_drawdown_net": -0.2168068723421902
+   },
+   "W5": {
+    "trades": 257,
+    "wins": 108,
+    "win_rate": 0.42023346303501946,
+    "expectancy_net": -0.00024113654359258813,
+    "profit_factor_net": 0.6834558980708184,
+    "avg_win_net": 0.0012389354201231507,
+    "avg_loss_net": -0.0013139403830643985,
+    "total_return_net": -0.060473026660309626,
+    "max_drawdown_net": -0.06889686015860808
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.0006064781706881117,
+    "GBPUSD": -0.0006369782845947413,
+    "USDJPY": -0.0006006178268979537
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.35802581492753666,
+   "holdout_trades": 474,
+   "holdout_expectancy": -0.0006006178268979537
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ },
+ {
+  "config": "WFSEL_HOD",
+  "panel": "forex3_1h",
+  "subfamily": "WFSEL",
+  "params": {
+   "procedure_of": "HOD"
+  },
+  "pooled_oos": {
+   "trades": 1403,
+   "wins": 481,
+   "win_rate": 0.3428367783321454,
+   "expectancy_net": -0.000651872061641945,
+   "profit_factor_net": 0.39517511771825237,
+   "avg_win_net": 0.0012423240837942532,
+   "avg_loss_net": -0.0016400589878402217,
+   "total_return_net": -0.6005728192953244,
+   "max_drawdown_net": -0.6016715277795837
+  },
+  "per_fold": {
+   "W2": {
+    "trades": 378,
+    "wins": 104,
+    "win_rate": 0.2751322751322751,
+    "expectancy_net": -0.0007693712209653964,
+    "profit_factor_net": 0.2767559149818468,
+    "avg_win_net": 0.001070055783778747,
+    "avg_loss_net": -0.00146754789429894,
+    "total_return_net": -0.25287501444707816,
+    "max_drawdown_net": -0.2539605231693356
+   },
+   "W3": {
+    "trades": 389,
+    "wins": 134,
+    "win_rate": 0.3444730077120823,
+    "expectancy_net": -0.0008032313997400612,
+    "profit_factor_net": 0.3600498140161298,
+    "avg_win_net": 0.0013119035333137054,
+    "avg_loss_net": -0.0019147140704428248,
+    "total_return_net": -0.2690842830072543,
+    "max_drawdown_net": -0.27021047250723595
+   },
+   "W4": {
+    "trades": 376,
+    "wins": 137,
+    "win_rate": 0.36436170212765956,
+    "expectancy_net": -0.0004943744658602888,
+    "profit_factor_net": 0.5126430786149387,
+    "avg_win_net": 0.0014272211382627506,
+    "avg_loss_net": -0.0015958748749182654,
+    "total_return_net": -0.17030632529184653,
+    "max_drawdown_net": -0.1896499914753197
+   },
+   "W5": {
+    "trades": 260,
+    "wins": 106,
+    "win_rate": 0.4076923076923077,
+    "expectancy_net": -0.0004823552588322171,
+    "profit_factor_net": 0.47823129805778436,
+    "avg_win_net": 0.0010844123904340827,
+    "avg_loss_net": -0.001560779744690839,
+    "total_return_net": -0.11842498213956143,
+    "max_drawdown_net": -0.12226682802706246
+   }
+  },
+  "folds_positive_frac": 0.0,
+  "breadth": {
+   "per_symbol_expectancy": {
+    "EURUSD": -0.000558835642929718,
+    "GBPUSD": -0.0006460461506450846,
+    "USDJPY": -0.0007481719476153141
+   },
+   "symbols_positive_frac": 0.0,
+   "max_symbol_profit_share": 0.3528337307876742,
+   "holdout_trades": 472,
+   "holdout_expectancy": -0.0007481719476153141
+  },
+  "bonferroni_p": 1.0,
+  "verdict": "FAIL"
+ }
+]
