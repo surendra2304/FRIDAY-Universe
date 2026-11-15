@@ -21,6 +21,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from cortex_api.config import get_db_session
 from cortex_api.auth import Role, require_role
+from cortex_api.provenance import (
+    DERIVED,
+    STORED_STATE,
+    build_provenance,
+    input_record,
+)
 
 router = APIRouter()
 
@@ -225,14 +231,19 @@ class RecommendationEngine:
 
     def hybrid_recommend(
         self,
-        user_id: int,
+        user_id: str,
         top_k: int = 10,
         content_weight: float = 0.5,
         collaborative_weight: float = 0.5,
     ) -> RecommendationSet:
         """Hybrid recommendations combining collaborative and content-based."""
-        cf = self.collaborative_filter(user_id, top_k * 2)
-        cb = self.content_filter(user_id, top_k * 2)
+        cf = self.collaborative_filter(user_id, top_k=top_k * 2)
+        # TASK-COR-002: this call used to be positional —
+        # content_filter(user_id, top_k * 2) bound the integer to the
+        # `all_items` parameter, so the hybrid path (the DEFAULT strategy)
+        # raised AttributeError and HTTP 500'd for every user who had a
+        # profile (production probe 2026-11-15; reproduced locally).
+        cb = self.content_filter(user_id, top_k=top_k * 2)
 
         # Merge and weight
         merged: dict[str, Recommendation] = {}
@@ -354,6 +365,65 @@ class RecommendationEngine:
             ),
         }
 
+    # ── Provenance (TASK-COR-002) ─────────────────────────────────────────
+
+    def recommendation_provenance(self, user_id: str, strategy: str) -> dict[str, Any]:
+        """Provenance block for a recommendation response.
+
+        Records what the recommendations were actually computed from: the
+        target user's recorded history, the item-feature catalogue, the
+        number of similar users who contributed, and the profile's last
+        activity timestamp — plus what each strategy's ``confidence``
+        number really is. Before TASK-COR-002 the outputs carried a bare
+        confidence (e.g. 0.7071 from a single shared item) with no basis,
+        and an unknown user was indistinguishable from a known user with
+        nothing to recommend.
+        """
+        profile = self._user_profiles.get(user_id)
+        user_items = self._user_items.get(user_id, set())
+        similar_users = {
+            other
+            for item_id in user_items
+            for other in self._item_users.get(item_id, set())
+            if other != user_id
+        }
+        inputs = [
+            input_record("user_history_items", len(user_items), STORED_STATE),
+            input_record("similar_users_contributing", len(similar_users), DERIVED),
+            input_record("items_with_features", len(self._item_features), STORED_STATE),
+        ]
+        if profile is not None and profile.last_active:
+            inputs.append(input_record(
+                "profile_last_active",
+                time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(profile.last_active)),
+                STORED_STATE,
+            ))
+        bases = {
+            "collaborative": (
+                "Per-item confidence = the cosine-style similarity of the "
+                "contributing user: shared_items / sqrt(|items of target user| * "
+                "|items of similar user|). It is a similarity score, NOT a "
+                "calibrated probability that the user will like the item."
+            ),
+            "content": (
+                "Per-item confidence = min(1, dot product of the user's learned "
+                "preference weights and the item's features). It is a match "
+                "score, NOT a calibrated probability."
+            ),
+            "hybrid": (
+                "Scores blend collaborative similarity and content match with "
+                "the route's weights; per-item confidence is inherited from "
+                "whichever filter produced the item (similarity or match "
+                "score), NOT a calibrated probability."
+            ),
+        }
+        return build_provenance(
+            inputs=inputs,
+            confidence=None,
+            confidence_basis=bases.get(strategy, bases["hybrid"]),
+            data_status="no_data" if profile is None else "complete_inputs",
+        )
+
 
 # Module-level singleton
 recommendation_engine = RecommendationEngine()
@@ -398,12 +468,14 @@ async def get_recommendations(
             "recommendations": [r.__dict__ for r in result.recommendations],
             "strategy": result.strategy,
             "diversity_score": result.diversity_score,
+            "provenance": recommendation_engine.recommendation_provenance(user_id, result.strategy),
         }
 
     return {
         "user_id": user_id,
         "recommendations": [r.__dict__ for r in recs],
         "strategy": strategy,
+        "provenance": recommendation_engine.recommendation_provenance(user_id, strategy),
     }
 
 

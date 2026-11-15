@@ -13,6 +13,14 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from cortex_api.provenance import (
+    CALLER_SUPPLIED,
+    ENGINE_DEFAULT,
+    STORED_STATE,
+    build_provenance,
+    input_record,
+)
+
 router = APIRouter()
 
 
@@ -70,6 +78,9 @@ class Recommendation:
     decider: str = ""
     inputs_snapshot: dict = field(default_factory=dict)
     outcome: dict = field(default_factory=dict)
+    # TASK-COR-002: provenance block (inputs used, defaults applied,
+    # confidence basis) — see cortex_api/provenance.py.
+    provenance: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -166,13 +177,27 @@ class DecisionRecommendationSystem:
         # record shows which inputs were actually supplied and which were
         # defaulted at decision time.
         defaulted_cells: list[str] = []
+        # Calculate weighted scores for each alternative.
+        # TASK-COR-002: a criterion an alternative was never scored on used
+        # to fall back to a silent 0.5 — an invented input that could decide
+        # the ranking (production probe 2026-11-15: 3 of 4 matrix cells were
+        # defaults, yet the output stated confidence 0.5833 with no hint).
+        # The fallback is unchanged, but every cell is now recorded in the
+        # recommendation's provenance as supplied vs engine-defaulted.
         scores = {}
+        provenance_inputs = []
         for alt_id, alt in self._alternatives.items():
             total_score = 0.0
             for crit_id, crit in self._criteria.items():
                 if crit_id not in alt.criteria_scores:
                     defaulted_cells.append(f"{alt_id}:{crit_id}")
+                supplied = crit_id in alt.criteria_scores
                 score = alt.criteria_scores.get(crit_id, 0.5)
+                provenance_inputs.append(input_record(
+                    f"score[{alt.name}][{crit.name}]",
+                    score,
+                    CALLER_SUPPLIED if supplied else ENGINE_DEFAULT,
+                ))
                 # Normalize if direction is minimize
                 if crit.direction == "minimize":
                     score = 1.0 - score
@@ -182,6 +207,15 @@ class DecisionRecommendationSystem:
             # Average by total weight
             total_weight = sum(c.weight for c in self._criteria.values())
             scores[alt_id] = total_score / max(1, total_weight)
+
+        for crit in self._criteria.values():
+            provenance_inputs.append(input_record(
+                f"weight[{crit.name}]", crit.weight, STORED_STATE))
+        for alt in self._alternatives.values():
+            provenance_inputs.append(input_record(
+                f"risk_score[{alt.name}]", alt.risk_score, STORED_STATE))
+            provenance_inputs.append(input_record(
+                f"return_projection[{alt.name}]", alt.return_projection, STORED_STATE))
 
         # Rank alternatives
         ranking = sorted(scores.items(), key=lambda x: x[1], reverse=True)
@@ -262,6 +296,17 @@ class DecisionRecommendationSystem:
                 "success": None,
                 "recorded_at": None,
             },
+            provenance=build_provenance(
+                inputs=provenance_inputs,
+                confidence=round(confidence, 4),
+                confidence_basis=(
+                    "confidence = best alternative's weighted score / sum of all "
+                    "alternatives' weighted scores. It is a share of total score, "
+                    "NOT a calibrated probability of a correct decision. "
+                    "Unscored criterion cells contribute the engine default 0.5 "
+                    "(see defaults_applied)."
+                ),
+            ),
         )
 
         self._recommendations.append(recommendation)
@@ -411,6 +456,10 @@ class DecisionRecommendationSystem:
                     "best": r.best_alternative,
                     "confidence": r.confidence,
                     "risk": r.risk_level,
+                    # TASK-COR-002: surface how much of each past decision
+                    # rested on defaulted (never-supplied) inputs.
+                    "data_status": r.provenance.get("data_status", "unknown"),
+                    "defaults_applied": r.provenance.get("defaults_applied", []),
                 }
                 for r in self._recommendations[-10:]
             ],
@@ -428,9 +477,22 @@ class DecisionRecommendationSystem:
 decision_system = DecisionRecommendationSystem()
 
 
+def _require_fields(payload: dict, *fields: str) -> None:
+    """TASK-COR-002: a missing field is a 400 naming the field.
+
+    These routes used to index payload[...] directly, so a malformed
+    request died as a KeyError 500 (production journal 2026-11-14: 8 of 8
+    decision/score requests 500'd this way) and the caller learned nothing.
+    """
+    missing = [f for f in fields if payload.get(f) is None]
+    if missing:
+        raise HTTPException(400, f"Missing required field(s): {', '.join(missing)}")
+
+
 @router.post("/api/v1/cortex/decision/criteria")
 async def add_criterion(payload: dict):
     """Add a decision criterion."""
+    _require_fields(payload, "name")
     crit = decision_system.add_criterion(
         name=payload["name"],
         weight=payload.get("weight", 1.0),
@@ -442,6 +504,7 @@ async def add_criterion(payload: dict):
 @router.post("/api/v1/cortex/decision/alternatives")
 async def add_alternative(payload: dict):
     """Add a decision alternative."""
+    _require_fields(payload, "name")
     alt = decision_system.add_alternative(
         name=payload["name"],
         description=payload.get("description", ""),
@@ -454,6 +517,7 @@ async def add_alternative(payload: dict):
 @router.post("/api/v1/cortex/decision/alternatives/{alt_id}/score")
 async def score_alternative(alt_id: str, payload: dict):
     """Score an alternative."""
+    _require_fields(payload, "criterion_id", "score")
     alt = decision_system.score_alternative(
         alternative_id=alt_id,
         criterion_id=payload["criterion_id"],
@@ -470,12 +534,22 @@ async def recommend(payload: dict):
     rec = decision_system.recommend(
         payload["problem_statement"], decider=str(payload.get("decider") or "api_caller")
     )
+    _require_fields(payload, "problem_statement")
+    rec = decision_system.recommend(payload["problem_statement"])
     return {
         "recommendation_id": rec.recommendation_id,
         "best_alternative": rec.best_alternative,
+        "alternatives_ranking": rec.alternatives_ranking,
         "confidence": rec.confidence,
         "risk_level": rec.risk_level,
+        "expected_value": rec.expected_value,
+        "sensitivity_analysis": rec.sensitivity_analysis,
         "rationale": rec.rationale,
+        # TASK-COR-002: the full decision record — which inputs were
+        # supplied, which were engine defaults, and what the confidence
+        # number actually is. Previously the route dropped the ranking and
+        # sensitivity analysis and returned confidence with no basis.
+        "provenance": rec.provenance,
     }
 
 
