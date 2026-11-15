@@ -68,10 +68,19 @@ from friday.tools.builtin.face_auth import EnrollFaceIdentityTool, VerifyFaceIde
 from friday.tools.builtin.file_and_command import ExecuteCommandTool, FileOperationsTool
 from friday.tools.builtin.file_listing import FileListingTool
 from friday.tools.builtin.file_reader import FileReaderTool
+from friday.tools.builtin.followup_tools import (
+    FollowUpAddTool,
+    FollowUpCompleteTool,
+    FollowUpListTool,
+)
 from friday.tools.builtin.git_tools import GitCommitTool, GitPushTool, GitStatusTool
 from friday.tools.builtin.github_tools import (
     CreateGitHubIssueTool,
     ListGitHubIssuesTool,
+)
+from friday.tools.builtin.goal_loop_tools import (
+    GoalLoopStatusTool,
+    StartGoalLoopTool,
 )
 from friday.tools.builtin.health_monitor import HealthCheckTool
 from friday.tools.builtin.laptop_control import (
@@ -180,6 +189,9 @@ __all__ = [
     "FileListingTool",
     "FileOperationsTool",
     "FileReaderTool",
+    "FollowUpAddTool",
+    "FollowUpCompleteTool",
+    "FollowUpListTool",
     "FindOnScreenTool",
     "GetAIUniverseStatusTool",
     "GetActiveAppContextTool",
@@ -188,6 +200,8 @@ __all__ = [
     "GitCommitTool",
     "GitPushTool",
     "GitStatusTool",
+    "GoalLoopStatusTool",
+    "StartGoalLoopTool",
     "HealthCheckTool",
     "KillProcessTool",
     "LaunchApplicationTool",
