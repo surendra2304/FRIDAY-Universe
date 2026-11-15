@@ -5325,15 +5325,6 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done as groundwork + first slice. The OWNER's computer is NOT connected — production /api/laptop/devices still shows [] and will until he runs the steps in FRIDAY/docs/LAPTOP_CONTROL.md (install Python + pip packages, copy the one client file, set FRIDAY_API_KEY to the Server 1 FRIDAY env value, run the client). Five-state honesty: implemented + tested + merged + deployed + protocol production-verified IN THE SANDBOX PROOF; his-machine-connected is a separate state that only his run of the steps can flip. Follow-ups (not this task): route the chat fast-path screenshot through screenshot_data so FRIDAY sees the screen in chat too; OCR on the FRIDAY host depends on tesseract availability there; proactive initiation is TASK-PRO-001's lane."
 task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
     description: "PR #23 is labelled TASK-CI-003 but does not match TASK-CI-003's current Master Plan acceptance criteria (workspace test runner)."
