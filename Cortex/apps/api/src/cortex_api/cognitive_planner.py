@@ -123,23 +123,39 @@ _HIGH_IMPACT_MIRROR: dict[str, str] = {
 _GOAL_KEYWORDS: list[tuple[str, str]] = [
     ("health summary", "health_summary"),
     ("health check", "health_summary"),
+    ("site health", "health_summary"),
     ("recommend", "recommend_intervention"),
     ("suggest an intervention", "recommend_intervention"),
     ("pricing change", "pricing_change"),
     ("price change", "pricing_change"),
     ("change the price", "pricing_change"),
+    ("change all the prices", "pricing_change"),
     ("refund", "refund_issue"),
     ("subscription", "subscription_modify"),
+    # TASK-COR-007: rollback outranks deploy/publish — in "roll back
+    # the last deploy" the rollback is the intent and the deploy is
+    # its object; first-match on "deploy" inverted the owner's order.
+    ("roll back", "rollback"),
+    ("rollback", "rollback"),
+    ("undo", "rollback"),
     ("deploy", "page_deploy"),
     ("publish", "content_publish"),
     ("banner", "banner_injection"),
     ("email campaign", "email_dispatch"),
     ("send email", "email_dispatch"),
     ("feature flag", "feature_flag_toggle"),
-    ("roll back", "rollback"),
-    ("rollback", "rollback"),
     ("cancel", "cancel"),
 ]
+
+# TASK-COR-007 guards (owner-intent interpretation test set): keyword
+# resolution is suppressed entirely when the goal negates or stops an
+# action — "don't publish anything yet" must never resolve to the
+# content_publish it forbids — and when the goal is about video
+# content, which is VyralX's domain: "publish the video" must never
+# resolve to a website content operation. Both fail honestly as
+# unresolved instead of confidently wrong.
+_NEGATED_GOAL_RE = re.compile(r"\b(don't|do not|never|stop)\b")
+_VIDEO_GOAL_RE = re.compile(r"\b(video|youtube|shorts?|reels?)\b")
 
 # Context keys that mark the request as telemetry-driven; with no
 # named operation the governed engine's own recommend flow (and its
@@ -218,6 +234,8 @@ def _resolve_operation(
         return _EXECUTOR_DEFAULT_OPERATION, "recommend", "telemetry_context_executor_default"
 
     goal_norm = re.sub(r"\s+", " ", goal.lower())
+    if _NEGATED_GOAL_RE.search(goal_norm) or _VIDEO_GOAL_RE.search(goal_norm):
+        return None, "", "unresolved"
     for keyword, op in _GOAL_KEYWORDS:
         if keyword in goal_norm:
             return flow_of(op, "goal_keyword")
