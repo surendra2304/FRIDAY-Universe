@@ -8012,6 +8012,283 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Production verification is impossible until statsforecast is provisioned (post-ARM, owner decision) — the wiring is proven against the backend's documented regressor contract with recording stand-ins, the same technique as the existing TASK-REL-018 degradation suite."
       - "Delivery was packaged during the 2026-11-15 bridge outage (fleet-wide initialize timeouts; the Server 2 bridge MCP appeared hung from ~15:00 IST, merge queue stalled behind it). This crew's claim POST timed out with outcome UNKNOWN; the packaged deliver.py (crew workspace fut-007/) checks issue #35 for the crew marker FUTURIS-EVENTS-AUDIT-CREW before posting anything, then creates the branch/PR from FRESH main and posts the completion comment — resumable, state-tracked. Claim check before the attempt: board on ef3ca99 carries TASK-FUT-001..003 only; issue #35 newest comments (pages 33-35 at per_page=10) showed FUT-009 claim+completion and FUT-006/FUT-004 coordination, no TASK-FUT-007 claim; middle pages could not be scanned (bridge timeouts) — if a conflicting FUT-007 claim exists there, this crew renumbers on coordinator instruction."
     next_action: "Coordinator: review + merge this PR (code + this board entry together, fresh-main board — insertion-only, task count +1). After the ARM host lands statsforecast, re-run the acceptance with the real backend and flip this entry to VERIFIED with live evidence. Follow-up candidates (new tasks, not this one): exchange-grade holiday calendars, macro release-date features, earnings-season features behind the same CALENDAR_FEATURE_COLUMNS seam."
+  - id: TASK-STR-RD-009
+    title: "Stratex non-strategy profit track: delta-neutral funding-rate carry — feasibility study (net-of-cost, walk-forward)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-rd-009-funding-carry
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:41:00+05:30"
+    updated_at: "2026-11-15T15:10:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD9.md"
+      - "Stratex/rigorous_backtest/results_rd9/"
+      - "Stratex/rigorous_backtest/rd9/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890890087"
+    defect: "Owner question 2026-11-15 ~12:33 IST (Wave 4): 'are there anything to find other than strategies to make profits' — RD-009 is the funding-arbitrage / delta-neutral carry track of the three non-directional profit avenues (RD-009 carry, RD-010 execution quality, RD-011 sizing/portfolio). RD-003's funding_extremes family does NOT answer this question: it was a directional perp signal judged price-only with funding cashflows explicitly not modelled. Whether the funding cashflows themselves survive costs when price exposure is hedged was untested. The original RD-009 crew died on sandbox download failures before running anything; this entry is the re-dispatched run (claim update + frozen declaration: issue #35 comment 6891895567, declaration SHA-256 c5bb1d91f5cf349846f96a76f21d7aca3914f05d6de494ab6744fec8b242479c, posted before any PnL was computed)."
+    acceptance:
+      - "Pre-declared cells only (8 trials): always-on POS/NEG carry + trailing-72h-funding threshold cells (theta 0.15/0.30/0.60% per 72h, both directions), standard folds W1..W5, episodes attributed by entry fold and force-exited at fold end."
+      - "Data provenance: funding from RD-003's cache verified 30/30 against results_rd3/funding_manifest.json; perp 1h from RD-002's cache verified 30/30 against sidecars; spot 1d fetched for this task with every zip SHA-256 verified against its published .CHECKSUM (manifest in results_rd9/spot_manifest.json); uncovered symbol-folds excluded and reported, never filled."
+      - "Costs at 1x: spot taker 0.10%/side, perp taker 0.05%/side, slippage 0.02%/leg-side (round trip 0.38%); NEG borrow 0.02%/day declared assumption (NEG = upper bound); 2x-cost sensitivity on every cell; funding flips charged, never clipped."
+      - "Bar (RD-002's checks, episodes in place of trades): expectancy>0, PF>=1.2, >=200 OOS episodes, >=80% folds, holdout, breadth>=50%, 2x-cost expectancy>0, Bonferroni at the global counter (1,926 + 8 = 1,934). Feasibility verdict stated plainly, separately from the bar outcome."
+      - "Research only: no orders anywhere, no production code/registry/daemon changes; live trading remains prohibited."
+    evidence:
+      - "Claims: original crew claim issue #35 comment 6890890087 (scope only; crew died on sandbox download failures, nothing was run); re-dispatch claim update + frozen declaration comment 6891895567 with declaration SHA-256 c5bb1d91f5cf349846f96a76f21d7aca3914f05d6de494ab6744fec8b242479c posted BEFORE any PnL was computed."
+      - "Data verification: funding 30/30 CSV SHA-256 match results_rd3/funding_manifest.json; perp 1h 30/30 match RD-002 sidecars; spot 1d 30/30 symbols x 1,035 bars, zero absent months, every zip verified against its published .CHECKSUM. Coverage complete: all 30 symbols active in all 5 folds; funding prints lacking a perp price inside the judged era: 0."
+      - "Sanity S1/S2/S3 all pass: S1 synthetic episode reproduces the funding sum exactly; S2 cost-scaling identity holds for all 592 episodes; S3 BTC W1 funding recomputed by an independent brute-force path matches the engine to <1e-9."
+      - "BAR RESULT: ZERO of 8 cells pass (global counter 1,926 -> 1,934). always_pos fails ONLY the >=200-episode check (150 maximum by construction, declared upfront): expectancy +1.273%, PF 2.960, 2x-cost expectancy +0.893%, folds 4/5 (W4 -36.49 summed), breadth 0.80, Bonferroni p=1.13e-05 < 2.59e-05. always_neg fails every check (expectancy -5.445%, PF 0.035, breadth 0.00). thr_pos_015/030 episodes occur ONLY in W1 (the rich-funding regime ended after 2024); thr_pos_060 never triggered anywhere; thr_neg_030/060 positive at 1x on small samples but fail 2x-cost (030) and Bonferroni."
+      - "FEASIBILITY (descriptive evidence, declared as such in the declaration): the continuous always-on POS book compounded +9.34% over the 853-day era with max drawdown -1.18 pts (one-leg notional, equal-weight); per-symbol basis within +/-0.20% over 2.34 years (the hedge works; funding is the entire return); 27/30 symbols net positive on the continuous book. BUT 85% of the fold-split profit is W1-era; the W5 (current) regime annualises to ~+1.29%/yr on one-leg notional, ~+0.65-0.97%/yr on total capital — real but small (Rs 50,000/month would need roughly Rs 6 crore deployed at the current regime). NEG direction NOT viable: borrow drag (only TRX finishes positive, +3.45% era net, and only under the assumed 0.02%/day borrow rate)."
+      - "FAILURE MODES MEASURED: funding flips are the tail risk (worst episode SAND always_pos W5: funding -20.40%, net -20.68%; APT longest negative streak 174 prints ~58 days; ATOM negative-print share 55.6%); margin excursions are the operational constraint (worst intra-episode perp move against the leg: median +20.1%, p95 +109.5%, max +598% — a 3x isolated-margin perp leg would have been liquidated repeatedly; the book needs cross/portfolio margin or ~1x perp margin plus a top-up process). Basis blowouts did not occur."
+      - "FORWARD-TEST SPEC (RESULTS_RD9.md S7): demo-fapi cannot host this book (futures-only, no spot leg); the honest forward test is a paper simulation on live mainnet data (>=6 months AND >=2 funding-regime turns, per-print logging, kill criteria stated). Nothing is wired by this task."
+    blockers: []
+    next_action: "Coordinator: review and merge the RD-009 results PR, then flip this entry to VERIFIED via a fresh-main board PR with the full task-id set diffed (this PR adds exactly one entry: 170 -> 171 ids). No wiring follows (zero bar passers). If the coordinator wants the carry question settled on live data, the S7 paper simulation is a candidate future task; live trading remains prohibited and would be a separate owner decision on a forward record."
+  - id: TASK-STR-RISK-001
+    title: "Risk-guard enforcement audit — verify in code, harness and live config that every Stratex protection actually fires (1% risk cap, 3% daily breaker, DD>5% kill, 3x leverage pin, pause mechanisms, fail-closed live guard); fix decorative guards"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-risk-001
+    pr: null
+    contributors: []
+    priority: P0
+    created_at: "2026-11-15T13:20:00+05:30"
+    updated_at: "2026-11-15T15:05:00+05:30"
+    files:
+      - "docs/verification/STR_RISK_001_AUDIT.md"
+      - "Stratex/autonomy/run_daemon.py"
+      - "Stratex/exchanges/binance_futures_adapter.py"
+      - "Stratex/tests/test_str_risk_001_guard_hardening.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    defect: "Audit found two guards decorative-under-failure and one enforcement gap: (1) the daemon's _execute_signal wrapped the trading_pause and panic_state reads in try/except that logged and CONTINUED to order placement — a raising read silently waved entries through, so /pause and /halt failed exactly when state was broken (the flag modules themselves fail closed on corrupt files); (2) leverage had no code ceiling — BINANCE_LEVERAGE was honoured verbatim (125 constructed a 125x adapter in the harness), the 3x pin was config discipline only; (3) a failed /fapi/v1/leverage POST was silently ignored and the order proceeded at whatever leverage the symbol carried. Separately, the RD-011 test case: before the coordinator's 2026-11-15 settlement the live daemon implemented the written phase-3 pair literally (1%/trade, count caps 30/30, NO aggregate heat cap anywhere in code) — RD-011's simulation shows that pair kills ichimoku on day 2 and dow_effect on day 4 on their own OOS streams."
+    acceptance:
+      - "Per-guard verdicts with evidence (code + 27-check stub-venue harness + live Server 1 config probe 2026-11-15 14:16 IST) in docs/verification/STR_RISK_001_AUDIT.md."
+      - "Decorative guards fixed, never weakened: daemon pause/panic call sites fail CLOSED on read errors; leverage clamped in code at OWNER_LEVERAGE_PIN=3; place_order refuses when pinned leverage cannot be confirmed."
+      - "DD-kill computation verified to match the written protocol exactly (per-strategy pooled fills vs 5% of total equity; >=50-trade expectancy/PF leg; sleeve combined-DD leg)."
+      - "Post-FWD-006 verification (heat <=2%/strategy, per-trade 0.1% in live env + deployed code) completes when TASK-STR-FWD-006 lands; flagged as this entry's next_action until then."
+    evidence:
+      - "Harness 27/27 PASS (forward_guard 6, daily breaker 7, daemon sizing/pause 7, adapter gate/leverage 5 incl. 3 defect reproductions, OANDA engine 5): sizing exact at 1% ($100.00 on $10k); breaker latches at -3.01% and survives state round-trip; live-gate construction refused under TRADING_MODE=LIVE and under live-endpoint-without-both-gates."
+      - "Live config 2026-11-15 14:16 IST (Server 1): STRATEX_RISK_PER_TRADE_PCT=0.01, STRATEX_MAX_DAILY_LOSS_PCT=0.03, STRATEX_MAX_POSITION_PCT=0.10, stop band 0.001/0.15, caps 30/30, BINANCE_ENV=demo, BINANCE_LEVERAGE=3, TRADING_MODE=FUTURES; state/realized_pnl.json daily_start_equity=20572.46 (seeded, not 0.0), daily_loss_limit_hit=false; Stratex-Daemon active."
+      - "New regression suite tests/test_str_risk_001_guard_hardening.py 9/9; adjacent suites 48 passed (live-gate, live-trading guard, daemon governance, OANDA pause); 6 test_trading_pause_wiring write-path failures are a sandbox fsync-EPERM artifact (pass in isolation; server-side pytest is the operative gate)."
+      - "RD-011 evidence incorporated: RESULTS_RD11.md — at literal 1%/trade all six streams breach the 5% kill (ichimoku day 2, dow day 4); avg concurrency 11.9/21.3 = 12-21% heat; no heat computation exists in daemon/engine/forward_guard (grep zero hits, this audit)."
+    blockers: []
+    next_action: "Coordinator merges this PR; when TASK-STR-FWD-006 (heat cap 2%/strategy + per-trade 0.1%) lands, RISK-001 crew verifies live env + deployed daemon heat gate and updates this entry to VERIFIED."
+  - id: TASK-COR-008
+    title: "Cortex governed-execution honesty — GovernedOperationsEngine.execute() never called the tool_bus it was handed, mutated only the in-memory property snapshot (or nothing), yet returned EXECUTED / REAL_EXECUTION with side_effects_applied=1; reclassify honestly"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-008-governed-execution-honesty
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T15:35:00+05:30"
+    updated_at: "2026-11-15T15:35:00+05:30"
+    files:
+      - "Cortex/packages/core/src/cortex_core/governed_operations.py"
+      - "Cortex/tests/unit/test_governed_execution_honesty_cor008.py"
+      - "Cortex/tests/test_prompt9_cortex.py"
+      - "Cortex/docs/RESULTS_COR008.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: ""
+    defect: "TASK-COR-006's probe found GovernedOperationsEngine.execute() never calls the tool_bus it is handed (exploding bus: 0 calls) yet returns EXECUTED / REAL_EXECUTION with side_effects_applied=1, mutating only the in-memory registry state_snapshot — and only for banner_injection/config_update/deployment_traffic_switch; for other actions (cache_flush, email_dispatch) it changed nothing at all while claiming the same. A tool failure on the governed path was structurally invisible and in-memory bookkeeping was labelled a real-world execution. Verified on main b34e2d34 (governed_operations.py blob eb9a73ec byte-identical to the audited copy). Consumer: friday_router.process_task_envelope copies exec_rec.classification into the FRIDAY task response and summary."
+    acceptance:
+      - "execute() records tell the truth: status SIMULATED, classification SIMULATED_EXECUTION, side_effects_applied 0 on both dry-run and non-dry-run paths."
+      - "Result carries external_side_effects_applied=0, state_snapshot_updated (true only when a snapshot branch actually ran), tool_bus_invoked=false, execution_environment=in_memory_property_snapshot, and a message stating no external system was modified."
+      - "Decision documented (RESULTS_COR008.md): reclassification over bus-wiring, because the only same-named bus tool (banner_injection) is a stub lambda returning a canned dict, all other governed actions are unregistered (ToolBus.execute would raise), ToolBus.execute is async while the engine is sync, and no real effector exists anywhere — the registry snapshot is the system's whole model of a property."
+      - "Regression tests: Cortex/tests/unit/test_governed_execution_honesty_cor008.py — 8 tests (exploding bus, recording bus asserting zero calls, None bus, snapshot bookkeeping, no-branch action, dry-run, 5-action sweep): 8/8 pass on the fix, 0/8 on pristine main."
+      - "Existing assertion encoding the mislabel corrected: test_prompt9_cortex.py Acceptance Test 3 now expects SIMULATED_EXECUTION, with an explanatory comment."
+      - "Snapshot bookkeeping and rollback behaviour unchanged (snapshot_before still captured; prompt9 Test 16 flow unaffected by construction)."
+    evidence:
+      - "Investigation read the engine and all consumers on fresh main: friday_router.py process_task_envelope (execute call site + classification/status/result consumption), main.py routing, cortex_core exports; grep-verified no consumer branches on status EXECUTED or side_effects_applied."
+      - "Local test run (direct runner; sandbox pytest startup blocked by the fleet tempfile/write outage — CI runs the file under pytest): fixed engine 8/8 pass; pristine main engine 0/8 pass."
+      - "Full write-up: Cortex/docs/RESULTS_COR008.md in the PR."
+    next_action: "Coordinator: merge the PR; board entry application — if this PR does not carry the WORK_BOARD.yaml change (bridge truncation fallback), apply this entry verbatim from the completion comment on issue #35 via a fresh-main board PR. Follow-ups (own tasks): measure() defaulting unobserved outcomes to expected ones (engine side; COR-006 covers the router side), router summary wording, and any future real-effector build behind the ToolBus."
+  - id: "TASK-INF-004"
+    title: "Inference latency & cost profile + OpenRouter discovery cache fix"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-inf-004-inference-latency-cost"
+    pr: PR_NUMBER_PLACEHOLDER
+    files:
+      - "Inference/app/providers/openrouter.py"
+      - "Inference/tests/test_openrouter_discovery_cache.py"
+      - "Inference/scripts/bench_openrouter_discovery.py"
+      - "docs/verification/INF004_INFERENCE_LATENCY_COST_PROFILE.md"
+    evidence:
+      - "Profile (production, read-only, 2026-11-15; full text in docs/verification/INF004_INFERENCE_LATENCY_COST_PROFILE.md): process /metrics p50 0.402s, p95 29.9s, p99 48.4s over 131 requests — the tail is failure cascades, not serving time."
+      - "Journal 12:17-13:17 IST: 23 fallback-ladder entries (groq 10 incl. >=6 deterministic HTTP 413 oversized-prompt rejections, 9,876-11,207 tokens vs the 8,000 TPM free cap; nvidia 8 incl. >=7 HTTP 404 dead function id; gemini 5 timeouts at the 36s primary slice = 60s x PRIMARY_ATTEMPT_FRACTION 0.6); the ladder's OpenRouter rung itself failed >=5 times in the hour."
+      - "Root cause of the shipped fix: the OpenRouter model catalogue (850,791 bytes; measured 0.59-1.10s from Server 1) was re-downloaded on EVERY fallback — the designed 300s cache lives on the provider instance, but the gateway constructs a fresh instance per attempt (get_provider with an api_key kwarg is never memoised)."
+      - "Fix: module-level discovery cache in Inference/app/providers/openrouter.py (base_url-keyed, 300s TTL, single-flight lock, failures never cached); model-selection behaviour unchanged; no routing-policy surface touched (REL-043/044 disjoint)."
+      - "Harness (Inference/scripts/bench_openrouter_discovery.py; gateway pattern, stub transport at the production-measured 0.8s fetch): 10 simulated fallbacks — before 10 fetches / 8.10s, after 1 fetch / 0.85s; same model selected."
+      - "Tests: Inference/tests/test_openrouter_discovery_cache.py 8/8; regression subset 30/30 (test_gateway_fallback_key_rotation, test_providers, test_universal_task_and_waterfall)."
+      - "Serving map (controlled probes): auto -> groq gpt-oss-20b fast lane 0.60s; identical repeats hit existing L1 caches in 0.01-0.19s; gemini-3.8-flash requests served by gemini-3.6-flash with provenance disclosed (4.71s tiny prompt); REL-043 long-context selection already protects chat/completions from oversized-Groq (8.49s via gemini) — the unified/agent-role path has no such guard (follow-up recommendation in the report)."
+    next_action: "Coordinator: review + merge PR #PR_NUMBER_PLACEHOLDER, deploy via the standard path, then production-verify: after the next natural fallback the journal should show one 'Discovered N active free models on OpenRouter' line per 5-minute window instead of one per fallback; flip this entry to VERIFIED with that evidence. Numbering note: dispatched as TASK-INF-002 but INF-002/INF-003 already held those ids; claimed as TASK-INF-004 on issue #35 (comment 6890994975) before Wave 5 reused INF numbers (its pool-health crew took TASK-INF-003-W5) — renumber on coordinator instruction if needed."
+  - id: TASK-STR-FWD-005
+    title: "Stratex forward-trading scorecard automation — per-strategy forward scorecard from the fill ledger + exchange state: trades, expectancy, PF, max DD, days in window, distance to the phase-3 bar and to every kill criterion, reconciled against exchange-verified balances"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-str-fwd-005
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:16:00+05:30"
+    updated_at: "2026-11-15T16:20:00+05:30"
+    files:
+      - "Stratex/measurement/forward_scorecard.py"
+      - "Stratex/measurement/FORWARD_SCORECARD.md"
+      - "Stratex/tests/test_forward_scorecard.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891594842"
+    defect: "Owner Wave-5 order 2026-11-15 ~13:16 IST (5 crews per agent). The phase-3 forward window opened 2026-11-15 11:29:49 IST (TASK-STR-FWD-002), but the only scorecard (measurement/scorecard.py) is all-time and ledger-only: nothing reported per-entrant distance to the 8-week/100-trade bar or to the kill criteria, and nothing reconciled the ledger against exchange balances. This task builds that job before the window fills with trades, so every future claim about the forward record has one reproducible source."
+    acceptance:
+      - "Per-entrant forward scorecard (window = fills at/after the entrant's forward start; pre-window fills counted as excluded history): closed trades, expectancy, profit factor, max drawdown ($ and % of account equity), days in window, distance to the bar (8 weeks AND >=100 trades, with projected completion) and to each kill criterion (expectancy<0 / PF<1.0 after >=50 trades — NOT_ACTIVE with trades-to-go below 50; drawdown >5% of equity; portfolio 3% daily breaker with the worst day named)."
+      - "Kill/bar arithmetic cannot drift from the enforcer: expectancy/PF/DD semantics imported from measurement/forward_guard.py and a parity test pins the combined-stats helper to forward_guard.strategy_stats exactly. Sleeves are drawdown-only (evaluate_sleeves semantics); no per-trade kill is invented for them."
+      - "Entrants resolve from the live registry shape (config_strategy PRODUCTION_STRATEGY_REGISTRY: forward_protocol entries standalone with forward_lane; entries carrying a 'sleeve' field grouped into one sleeve entrant), with a state/forward_entrants.json override and built-in FWD-002 defaults as fallbacks. Strategies trading inside the window that no entrant claims are scored as UNREGISTERED — visible, never dropped."
+      - "Reconciliation per venue against exchange-verified balances (reset-boundary baselines, USDT-only for Binance per the faucet rule; live read-only probe when supplied, else the engines' snapshot stream with the method labelled): unexplained deltas printed with RECONCILED/DISCREPANCY/UNRECONCILABLE status, never absorbed. The composite supervision figure is never an input."
+      - "First real scorecard produced from live Server-1 data (deployed ledger + registry + snapshots) at the first post-merge run and attached as evidence in the completion comment; 21 unit tests pass locally (server-side pytest is the operative Stratex gate). Demo only; the job reads — it never places orders."
+    evidence:
+      - "Module + docs + tests complete (forward_scorecard.py sha256 97b479a73a0f2cee19e738e8846fbfb56aa1e64c0648d0cbea56c29ea8b4d27c); 21/21 tests pass in a local harness against the deployed fill_ledger.py and fresh-main forward_guard.py (guard-parity test included). Server-side pytest not yet run."
+      - "Production ground truth probed read-only from Server 1 state on 2026-11-15 (~08:30Z): fill_ledger.jsonl holds 9 fills, ALL pre-window (3 legacy owner-directed closes +195.71 booked / +186.34 true net per RD-010; 6 bb_reversion testnet −0.646); ZERO fills at/after the forward start 2026-11-15T05:59:49Z — the first scorecard will read day ~0, 0 closed forward trades. Reset baselines (2026-11-14T13:03:53Z boundaries): binance_futures USDT-only 5000.0 (reported 10583.43 incl. 0.01 BTC faucet), oanda NAV 10000.0033; latest snapshots equal the baselines exactly. Daemon heartbeat total 20554.96 is an all-asset cross-venue figure — a different definition from the snapshot USDT-only total 15000.0; the scorecard prints per-venue figures with definitions and never the composite alone."
+      - "Delivery bridge-blocked 2026-11-15 (bridge MCP hung fleet-wide since ~15:00 IST; three multi-minute delivery attempts failed). Package staged at ~/workspace/fwd-005/ (deliver.py resumable + HANDOFF_STATE.md) for the merge-runner, same pattern as MEM-004/FUT-008/RD-010."
+    blockers: ["Bridge MCP hung (fleet-wide, since 2026-11-15 ~15:00 IST) — GitHub delivery and the module's first live run both wait on bridge recovery."]
+    next_action: "Finisher/coordinator when the bridge recovers: (1) run ~/workspace/fwd-005/deliver.py — creates branch claude/task-str-fwd-005 from fresh main + this board entry + PR (coordinator merges; crew does not); (2) run the module once against live Server-1 state per HANDOFF_STATE.md, substitute the output into completion_comment.md, re-run deliver.py to post it, flip this entry to DONE. Post-merge: deploy with the fleet and schedule daily (systemd timer next to the weekly all-time scorecard). Watch item: the latched unrecorded_close measurement alert (count 5, last update 2026-11-15T06:06:58Z, BTCUSDT missing qty) — a forward-window close may have failed to record; the reconciliation block is the net that will catch any resulting equity gap."
+  - id: TASK-FRD-001
+    title: "FRIDAY chat quality - memory seam fixes (forget frame words, recall fallback probe) + retired-testnet heartbeat fallback removed"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    files:
+      - FRIDAY/src/friday/memory/memora_client.py
+      - FRIDAY/src/friday/api/server.py
+      - FRIDAY/src/friday/tools/builtin/stratex_portfolio.py
+      - FRIDAY/tests/test_frd001_memory_mutation.py
+      - FRIDAY/tests/test_frd001_stratex_fallback.py
+    next_action: "Post-deploy probes (coordinator): re-run audit prompts #18/#19/#6 against production chat after Fleet CD; then flip to VERIFIED."
+  - id: TASK-COR-002
+    title: "Cortex decision provenance: audit of production decision/recommendation outputs (0/11 traceable) + REL-032-pattern provenance block on all decision surfaces + fixes for hybrid-recommendations 500, lead-score 500 (ORA-01400) and decision-route KeyError 500s"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-002-decision-provenance
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:50:02+05:30"
+    updated_at: "2026-11-15T14:48:22+05:30"
+    files:
+      - "Cortex/apps/api/src/cortex_api/provenance.py"
+      - "Cortex/apps/api/src/cortex_api/decision_recommendation_system.py"
+      - "Cortex/apps/api/src/cortex_api/recommendation_engine.py"
+      - "Cortex/apps/api/src/cortex_api/enhanced_crm.py"
+      - "Cortex/apps/api/src/cortex_api/predictive_analytics.py"
+      - "Cortex/tests/unit/test_cor002_decision_provenance.py"
+      - "docs/verification/COR002_DECISION_PROVENANCE.md"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890984834"
+    defect: "Production audit 2026-11-15 (deployed Server 2 sha256 == main 337a1e3f for all four audited modules; journal census 2026-11-08..15, 8,175 lines: decision-surface traffic was all crew probes, zero organic calls). Controlled live probes, 13 outputs sampled, 0 of 11 delivered outputs fully traceable: (1) decision/recommend with only 1 of 4 matrix cells supplied returned confidence 0.5833 on a matrix 75% invented (missing cells silently default to 0.5 via criteria_scores.get(crit_id, 0.5); confidence is a score share, not a probability; no inputs/timestamp/basis in output). (2) Lead score 10 of which 8 points derive from never-supplied inputs (industry '' -> firmographic +5 default, source '' -> source 3 default; only website_visits=10 supplied). (3) CLV 444.0 computed entirely from route defaults (avg_order_value 1000, purchase_frequency 2, lifetime 3y). (4) Forecast 'accuracy' 0.9428 is in-sample OLS fit (1 - residual_std/mean), not forecast accuracy; 'seasonality' flag is a first-half vs second-half mean-shift test. (5) Demand-forecast confidence 0.8 = min(0.85, 0.4 + 2*|growth|) with growth from first/last points only. (6) Seasonality detector compares whole-period means and returned has_seasonality=false on a perfect period-2 pattern [5,9]x4 - structurally unable to detect within-period seasonality. PRODUCTION DEFECTS: hybrid recommendations (the DEFAULT strategy) HTTP 500 for every user with a profile (hybrid_recommend calls content_filter(user_id, top_k*2); content_filter's 2nd positional parameter is all_items -> AttributeError); lead-score route HTTP 500 on 100% of calls (history row persisted with no id -> Oracle ORA-01400 cannot insert NULL into CORTEX.LEAD_SCORES.ID, journal 2026-11-15 13:00:49 IST; score survived only in process memory); decision alternatives/{id}/score route 8 requests / 8x HTTP 500 in the journal window (KeyError: 'criterion_id')."
+    acceptance:
+      - "Every Cortex decision/recommendation output carries a provenance block: inputs used with values and source (caller_supplied / engine_default / route_default / derived / stored_state), defaults applied, decision timestamp, confidence and its basis (the actual formula/rule)."
+      - "No silent defaults: any input the engine or route substitutes is named in defaults_applied and reflected in data_status (no_data / partial_inputs_defaulted / complete_inputs)."
+      - "The three production defects are fixed: hybrid recommendations return results for users with profiles; lead scores persist (history row carries an id) instead of 500ing; malformed decision payloads return 400 naming the missing field instead of KeyError 500."
+      - "New tests fail on clean main where the defect is code and pass with the fix; neighbouring suites show zero new failures."
+      - "Audit sample results (n, % fully traceable) published in the PR and in docs/verification/COR002_DECISION_PROVENANCE.md."
+    evidence:
+      - "AUDIT (full table in docs/verification/COR002_DECISION_PROVENANCE.md): 13 outputs sampled (11 delivered, 2 HTTP 500 with no output); fully traceable 0/11 (0%). Phantom-input decisions proven live: decision matrix 75% invented, lead score 80% from defaults, CLV 100% from defaults. Journal census: POST decision/alternatives/{id}/score 8 requests / 8x 500; decision/recommend 1x 500 + 1x 200; recommendations/leads/crm/analytics endpoints zero requests in the window."
+      - "FIX (local commit 415af127051b45c10e9423b7a1a6e1b2e6cdef67 on branch claude/task-cor-002-decision-provenance, base main 337a1e3f; +896/-12 across 7 files): NEW cortex_api/provenance.py (build_provenance/input_record, REL-032 pattern); decision Recommendation + report carry provenance (every matrix cell caller_supplied vs engine_default; basis states confidence is a score share, NOT a calibrated probability) and _require_fields returns 400 naming missing fields; recommendation_engine hybrid positional-arg fixed (content_filter(user_id, top_k=top_k*2)) + recommendation_provenance on both GET routes (history size, similar-user count, profile last_active, per-strategy basis, no_data for unknown users); enhanced_crm LeadScore provenance (unsupplied inputs marked route_default; basis discloses predicted_value = total x $100 heuristic), score route 400 on missing lead_id, history row id=uuid4().hex (ORA-01400 fix), IntegrityError on commit -> 404 for uncaptured leads (LEAD_SCORES->LEADS FK), CLV/follow-up provenance disclosing the three financial defaults; predictive_analytics provenance on forecast/trend/demand/behavior/seasonality (forecast basis: accuracy is in-sample fit NOT forecast accuracy; seasonality basis discloses the whole-period-means limitation in every return path). Seasonality detector math deliberately UNCHANGED - basis disclosed; changing the statistic is a separate decision."
+      - "TESTS: Cortex/tests/unit/test_cor002_decision_provenance.py - 15 tests: 15/15 FAIL on clean main 337a1e3f (pristine worktree, test file only added), 15/15 PASS with the fix (final run after the FK-guard edit, canary-verified). Neighbours on branch: test_rel020_analytics_honesty + test_no_fabricated_data + test_advanced_analytics = 17 passed. Full Cortex unit sweep (458 collected; 2 files excluded, they need the respx package absent from the sandbox venv - pre-existing): branch 8F/403P/47E vs clean main 7F/382P/69E; all 7 main failures pre-existing; the single branch-only failure (test_webhook_gateway_security::test_stripe_route_is_not_shadowed_by_the_catch_all, subsystem untouched by this PR) also fails intermittently on clean main (2 failed in one standalone main run, 0 in another) - flaky in this sandbox, not a regression; error-count variance is fixture/tempfile noise under sandbox load."
+      - "DELIVERY STATE 2026-11-15 ~15:00 IST: the Server 2 bridge MCP is hung (fleet-wide; see FRD-002/MEM-004/FWD-003 handoffs). The crew's resumable Git Data API push (~/workspace/cor-002/push_via_api.py + push_loop.sh, state in push_state.json) created 1 of 7 blobs (decision_recommendation_system.py fbdb357abc408e6cf6e9c66389090cdbd0502d30) before the bridge stalled; the loop keeps retrying and will create the branch + this crew will open the PR when the bridge recovers. Local commit is complete and verified; nothing is claimed merged/deployed."
+    blockers:
+      - "Bridge MCP hung since ~15:00 IST 2026-11-15: branch push + PR creation + board PR are bridge-blocked; packaged for the merge-runner (this entry + ~/workspace/cor-002/HANDOFF_STATE.md + pr_body.md)."
+    next_action: "Coordinator/merge-runner: when the bridge recovers, either let the crew's push loop finish (branch claude/task-cor-002-decision-provenance, tree must equal local HEAD tree of 415af127) and the crew opens the PR with ~/workspace/cor-002/pr_body.md, or replicate commit 415af127 from ~/workspace/cor-002/repo directly. Then add this entry to WORK_BOARD.yaml via a fresh-main board PR (insertion-only; set pr: to the PR number), merge the code PR, deploy via Fleet CD, and production-verify: hybrid recommendations 200 for a profiled user, lead-score 200 + a LEAD_SCORES row with non-null ID, decision/recommend provenance shows defaults_applied for a partial matrix. Residuals: (1) LEAD_SCORES FK behaviour on production Oracle could not be re-verified live (bridge reads inconclusive); the route is correct under both variants (captured leads persist; uncaptured lead_ids get 404). (2) Seasonality statistic unchanged by design (basis disclosed)."
+  - id: TASK-MEM-008
+    title: "Memora write-path audit: trace every agent write path into the production Oracle store, plant/retrieve-verify each, fix silent-loss paths"
+    status: IN_REVIEW
+    owner: claude
+    assigned_to: muse_ai
+    branch: claude/task-mem-008-write-path-fixes
+    pr: "pending coordinator merge (fix PR + this board PR opened 2026-11-15)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891866751"
+    files:
+      - "Inference/app/memora_cloud_fallback.py"
+      - "Futuris/futuris/integrations/memora_cloud_fallback.py"
+      - "Cortex/cortex_upgrade/memora_cloud_fallback.py"
+      - "Sentinel/sentinel/memora_cloud_fallback.py"
+      - "Stratex/autonomy/memora_cloud_fallback.py"
+      - "Memora/sdk/cloud_fallback.py"
+      - "Forge/app/integrations/memora_client.py"
+      - "IntelX/intelx/integrations/memora_context.py"
+      - "FRIDAY/src/friday/memory/memora_client.py"
+      - "Memora/apps/api/main.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    defect: "PROVEN LIVE 2026-11-15: every non-FRIDAY agent's record_fact path (all five memora_cloud_fallback copies, the Memora SDK fallback, Forge's client, IntelX _store_cloud_memory) sends memory_type=semantic to POST /v1/memories; Memora's write policy rejects direct semantic writes from any non-memora identity with 403, and the clients return error dicts their callers ignore — fact writes from Inference/Futuris/Cortex/Sentinel/Stratex/Forge/IntelX silently vanished fleet-wide. Same payload as episodic returns 201 and persists in Oracle (GET-by-id verified)."
+    acceptance:
+      - "Every production write path planted + retrieve-verified live: FRIDAY create/record-interaction/learn-outcome/learn-experience, legacy POST /memories, Stratex record-interaction, Inference learn-outcome, public Caddy route — all 201, Oracle-durable, retrievable. Viking context remember/write/read PASS (relational snapshot durability receipt state=saved). Mesh envelope friday->inference accepted and polled back from the event log."
+      - "Broken record_fact paths fixed to the policy-sanctioned episodic write in all 8 client copies; FRIDAY client write paths put on the 20s write budget (were 3.5s) with WARNING-level failure logs and a sync_error surface on learn_from_outcome; Memora root endpoint reports the real storage backend instead of the stale sqlite_wal label."
+      - "Tests: FRIDAY memora suites 14 + 41 passed locally; IntelX 6 passed / 1 failure proven pre-existing on pristine HEAD (sandbox InvalidURL); Memora app import verified."
+    evidence:
+      - "Live probes 2026-11-15 (Server 1 localhost + public route), markers MEM008P/R/S: W1 create id 2186eccf-b098-494c-954f-5471f44ee072 (201, oracle, durable, GET+search verified; 12.69s latency noted); A1 inference semantic create -> 403 policy text verbatim; A2 inference episodic create id bd227982-2e54-45dd-9bf5-52f8792163a7 -> 201; A4 stratex record-interaction 201 durable; A5 inference learn-outcome 201 id b61ebffd-e517-4a5c-b49b-171878479751; W8 mesh envelope message_id mem008-64e8b4697a2e polled back from /v1/events."
+      - "INCIDENT (crew-caused, disclosed): probe cleanup treated the hybrid semantic /v1/memories/search (min_score=0) as a literal marker match and hard-deleted its result sets. Memora journal tally for the window: 1,170 DELETE lines, 122 HTTP 200, 268 HTTP 500, 780 HTTP 404; 121 unique ids deleted of which only 6 are known probe ids — an estimated ~85-115 non-probe production memories were hard-deleted. No further deletes made after recognition. Recovery options for the coordinator: Oracle backup state (cf. TASK-MEM-007 backup work), FRIDAY's local-first Oracle fallback twins for friday-owned records."
+    blockers: []
+    next_action: "Coordinator: (1) review + merge the TASK-MEM-008 fix PR, then this board PR; (2) decide recovery for the ~85-115 hard-deleted non-probe memories (backup restore vs FRIDAY local-twin re-sync vs accept loss) — crew recommends checking the MEM-007 backup state first; (3) optional follow-ups: deployed-FRIDAY-client end-to-end probe (bridge transport failed 4x during this audit; endpoints + deployed config verified equivalent), Memora .env ENVIRONMENT=development vs MEMORA_ENV=production mismatch (mesh-envelope signature-required branch reads ENVIRONMENT), write-latency tail (one create took 12.69s vs the 5s fallback-client timeout — post-fix episodic writes from slow paths can still time out client-side; consider raising fallback timeouts in a follow-up)."
+  - id: TASK-STR-DATA-001
+    title: "Stratex data supply: OANDA instrument expansion inventory — provenance-verified history (RD-002 cache contract) for every OANDA instrument beyond the RD-002 panels, feeding TASK-STR-RD-003's forex-native track"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-data-001
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:16:00+05:30"
+    updated_at: "2026-11-15T14:05:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_DATA1.md"
+      - "Stratex/rigorous_backtest/results_data1/"
+      - "Stratex/rigorous_backtest/rd_data1/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: ""
+    defect: "Owner Wave-5 order 2026-11-15 ~13:16 IST: 50 more crews, five per agent. This Stratex track: RD-003's forex-native strategy work is limited to the instruments RD-002 happened to cache (forex28 daily-only beyond 12 majors). Which additional OANDA instruments (FX crosses/minors/exotics, XAU/XAG family, indices, softs, bonds) have provenance-verified history for honest backtesting was unknown — designing families on unverified data availability wastes trials or, worse, invites substituted data."
+    acceptance:
+      - "Every OANDA instrument outside the RD-002 panels inventoried with symbol (OANDA + data-source), history depth, granularity, spread/cost evidence and an RD-002-format hash manifest — or recorded UNCOVERED with the reason, never approximated."
+      - "Provenance actually executed in-task: series fetched from the verifiable source (Yahoo Finance chart API, the RD-002 Stage-A source) and hash-manifested; a spot re-fetch reproduces a shipped csv_sha256 bit-identically."
+      - "Handoff to TASK-STR-RD-003 is explicit: ready panel definitions, fold profiles, cost assignments, and every precondition/gap named (no strategy work done or duplicated here)."
+    evidence:
+      - "COMPLETE 2026-11-15: 55 instruments VERIFIED at 1d + 1h (110 RD-002-format sidecars in results_data1/manifests.json): 41 FX crosses/minors/exotics (1d 2,309-2,311 bars from 2018-01-01; 1h 12,054-12,361 bars from 2024-11-18), 9 index CFDs (daily from 2018-01; session-only 1h), palladium (PA=F proxy) + 4 softs (futures proxies, comm7 precedent)."
+      - "Costs from the standing rd2/costs2.py model: FX crosses/minors/exotics 10 bps RT, indices 8 bps RT. Two GAPS disclosed, not filled by invention: costs2 has no PALLADIUM and no soft-commodity entries — those instruments cannot be judged until RD-003 adds measured costs."
+      - "UNCOVERED stated plainly: CN50_USD (no verified Yahoo ticker), 6 bond CFDs (no honest price series from this sandbox), 19 metal crosses DERIVED_ONLY (implied by provenanced legs, not independently verified), JP225Y_JPY NOT_NEW (twin of covered NIKKEI), OANDA-native candles need the server-side practice token (research crews do not pull venue credentials)."
+      - "VENUE REALITY (TASK-STR-FWD-003, live, twice independently, 2026-11-15): the owner's OANDA practice account lists 68 instruments, ALL FX pairs — no commodities/metals/indices/bonds. The 41 FX crosses are the operative expansion; indices/palladium/softs are data-verified but NOT tradeable on the current account. Open threads: pair-level diff of the 68 vs the 41 new + 28 RD-002 pairs; the oanda_demo engine watchlists XAUUSD, which sits oddly with an FX-only list — resolve server-side before assuming metals tradeable."
+      - "Hash spot-check by this crew after assembly: independent re-fetch of AUDCAD 1d reproduced the shipped csv_sha256 bit-identically (2,311 rows)."
+      - "Cautions on record: softs 1h is null-heavy (SUGAR dropped 9,615 of 14,436 payload rows — daily only; CORN/SOYBN/WHEAT ~5,200 drops each — 1h CAUTION); palladium 1h dropped 3,124 (~22%); cash-index 1h is session-hours only; several FX 1d series carry the in-progress 2026-11-15 bar from the live fetch (drop final partial bar at load)."
+    blockers: []
+    next_action: "Done — data supply only, 0 trials run, global trial counter unaffected. Coordinator: verify RESULTS_DATA1.md + results_data1/inventory.json and flip this entry to VERIFIED. TASK-STR-RD-003: consume the forex_cross41 panel (41 pairs, 1d STANDARD + 1h/4h LATE, 10 bps RT) and idx_exp9 daily panel; close the palladium/softs cost gaps before declaring cells there. Coordinator/FWD lane (server-side): diff the account's 68 FX instruments (FWD-003-verified) against the 41 new + 28 RD-002 pairs, and resolve the XAUUSD watchlist thread."
+  - id: TASK-STR-RD-004
+    title: "Stratex research RD-004: volatility-regime trend following (new family) — Donchian/EMA-cross trend signals gated or scaled by a causal ATR-percentile regime, CRYPTO30 at 15m and 2h, judged at the running global trial count"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-str-rd-004
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:47:00+05:30"
+    updated_at: "2026-11-15T12:47:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD4.md"
+      - "Stratex/rigorous_backtest/results_rd4/"
+      - "Stratex/rigorous_backtest/rd4/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890957904"
+    defect: "Wave-4 research crew (owner order 2026-11-15 ~12:33 IST): test a NEW family not covered by RD-002/RD-003 — volatility-regime trend following. Pre-declared on issue #35 (comment 6890972056) BEFORE any RD-004 data fetch or run: 4 trend signals (don20/don55 Donchian crosses, ema12_48/ema24_96 EMA crosses; events only, 260-bar warmup) x 4 regime modes (base ungated control; gate_hi R>=0.50; gate_lo R<0.50; scale brackets x (0.75+0.5R)) where R is the causal daily ATR-percentile rank (bar ATR%(14) -> daily mean -> rank of yesterday's value among the prior 180 days); bracket exits SL 2.0x / TP 4.0x ATR(14); CRYPTO30 pooled, 15m and 2h, STANDARD folds W1-W5; harness crypto costs 16 bps RT with a 2x-cost sensitivity on every cell. 32 cells + 2 wf-select procedures = 34 trials, judged at running N = 1,557 (RD-001/RD-002) + 207 (RD-003 declared) + 34 = 1,798. Bar unchanged: expectancy>0 AND PF>=1.2 AND >=200 OOS trades AND >=80% folds positive AND holdout AND significance (declared strict form: Bonferroni p<0.05/N AND deflated Sharpe>=0.95) AND 2x-cost PF>=1.2 with expectancy>0. Adjacency disclosed in the declaration: RD-003's vol_regime_switch is a different mechanism (donchian/z-score switch) on different timeframes (4h/1d). Research only: no production code, registry, daemon or priors touched."
+    acceptance:
+      - "Sanity anchor re-verified before any RD-004 number was trusted: RD-001 ts_momentum roc42_4h cell (BTC/ETH/SOL) reproduced bit-identically (303 OOS trades, expectancy 0.0024275740638451445, PF 1.0969220482985518); RD-004 scale engine asserted trade-identical to fastsim.simulate_entries at scale factor 1 (3,934 trades, BTCUSDT 15m don20 base)."
+      - "Data provenance: Binance Vision USDT-M 15m monthly klines 2023-01..2026-10 via the harness cache contract (per-zip SHA-256, canonical CSV SHA-256, gap audit); all 30 CRYPTO30 series covered with ZERO missing bars panel-wide; 2h derived from the verified 15m series (complete 8-bar buckets only, parent hash recorded). Six symbols' cache sidecars lost to a sandbox write-block episode were re-fetched byte-identically and the full panel re-verified (30/30 sidecars, hashes matching) before judging — disclosed in RESULTS_RD4.md."
+      - "All 32 declared cells + 2 wf-select procedures evaluated and rowed, each counting once in the global trial counter whatever its outcome; no grid, threshold or exit changed after the pre-declaration."
+      - "RESULTS_RD4.md + results_rd4/synthesis.json delivered via this PR: per-config OOS PF / expectancy / trades / 2x-cost sensitivity and an explicit PASS / WATCHLIST / FAIL verdict per config against the standing bar, with per-config p-values and deflated Sharpes published for re-judging under either significance convention."
+    evidence:
+      - "Claim: issue #35 comment 6890957904 (2026-11-15T07:17:30Z). Pre-declaration: comment 6890972056 (2026-11-15T07:18:50Z), posted before any RD-004 data fetch or run; machine-readable copy in results_rd4/declaration.json."
+      - "Sanity anchor bit-identical (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518) — recorded in results_rd4/synthesis.json; engine consistency probe identical=true (3,934 trades) in results_rd4/engine_consistency.json."
+      - "Coverage: results_rd4/coverage.json — 30/30 CRYPTO30 15m series, zero missing bars, canonical CSV SHA-256 per series (ARB from 2023-03, SUI from 2023-05, all others 2023-01; 134,400 rows per full series)."
+      - "VERDICTS (results_rd4/synthesis.json, judged at N=1,798): ZERO PASSERS, ZERO WATCHLIST — all 32 cells + both wf-select procedures FAIL. 15m: all 16 cells negative expectancy (PF 0.81-0.89). 2h: gate_lo is the best mode for all 4 signals and gate_hi the worst everywhere (the declared high-vol intuition is inverted in this data); family best ema24_96_gate_lo@2h PF 1.107 / expectancy +0.202% / 2,286 trades fails PF>=1.2, folds (2/5), significance (p 0.0142 vs alpha 2.78e-5; DSR 0.568) and 2x-cost (PF 1.022); wf_select[2h] picked it in all 5 folds with per-fold OOS PF decaying W1 1.459 -> W5 0.914. No verdict is N-sensitive (best p fails Bonferroni even at N=34; all positive rows also fail N-independent elements). Post-run verification: two cells recomputed from the shipped trade CSVs matched their rows bit-identically; fragment counts matched merged trades exactly."
+      - "Execution incidents (sandbox EPERM write-block episodes; staged checkpointed pipeline; two crashed monolithic attempts; sidecar loss + byte-identical repair) disclosed in full in RESULTS_RD4.md — no declared parameter changed at any point."
+    blockers: []
+    next_action: "Coordinator: verify results_rd4/synthesis.json against RESULTS_RD4.md (spot-recompute one cell from results_rd4/rows/trades/ via the rd4 pipeline), then merge this PR and flip this entry to VERIFIED via a fresh-main board PR. Any PASS config is wired into the forward demo protocol under the TASK-STR-FWD line (8 weeks AND >=100 closed trades, phase-3 kill criteria) per the owner's standing rule; WATCHLIST configs are forward-lane candidates at the coordinator's call. Reconcile the global trial counter with sibling Wave-4 crews' additions (RD-004 judged at N=1,798 as declared)."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
