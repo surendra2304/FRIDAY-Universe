@@ -4744,6 +4744,46 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-FUT-003 crew): PR #259 merged and deployed, fingerprint-verified on Server 1, live acceptance passed end-to-end (see evidence). This also completes TASK-FUT-002's follow-up — its entry is flipped to VERIFIED in the same board PR. Residuals unchanged: extra /api/v1/futuris routers retire-or-label; real forecasts wait for ARM + statsforecast (owner decision, do not re-raise)."
 
+  - id: TASK-FUT-004
+    title: "Futuris offline walk-forward forecast evaluation harness: production candidate adapters + harness reference baselines scored per-model/per-origin on sha256-provenanced series (MAE/RMSE/MASE + nominal-90% interval calibration); production path recorded not_scorable — never substituted — while statsforecast is absent"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-fut-004-futuris-eval-harness
+    pr: 324
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:40:00+05:30"
+    updated_at: "2026-11-15T16:09:28+05:30"
+    files:
+      - "Futuris/futuris/evaluation/walkforward.py"
+      - "Futuris/futuris/evaluation/reference_models.py"
+      - "Futuris/scripts/run_forecast_evaluation.py"
+      - "Futuris/tests/test_fut004_walkforward_harness.py"
+      - "Futuris/evaluation_data/PROVENANCE.json"
+      - "Futuris/evaluation_data/air_passengers_monthly.csv"
+      - "Futuris/evaluation_data/fred_dexuseu_daily.csv"
+      - "Futuris/evaluation_data/synthetic_telemetry_5min.csv"
+      - "Futuris/evaluation_data/generate_synthetic_telemetry.py"
+      - "Futuris/docs/forecast_evaluation/BASELINE_SCORECARD.md"
+      - "Futuris/docs/forecast_evaluation/baseline_scorecard.json"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    defect: "Futuris had no offline instrument able to judge its production forecast models: the only pre-existing evaluator (futuris.evaluation.backtest.BacktestEngine) scores the full pipeline end-to-end on synthetic-connector data, scores only the single selected model, and — when an actual observation is missing — substitutes the forecast itself as the actual (actual_val = f.prediction), manufacturing zero error. Separately, since REL-018 the production adapters honestly refuse to fit when statsforecast is not importable, so there were no production forecasts to measure and any accuracy/calibration claim for the production path would have been fabricated. FUT-004 builds the missing yardstick and records the baseline truthfully."
+    acceptance:
+      - "Walk-forward harness drives the five production candidate adapters (registry current_active(): mean_ensemble, auto_ets, seasonal_naive, drift, naive) through expanding-window multi-origin evaluation with no leakage (fit window strictly precedes the scored window), scoring MAE/RMSE/MASE and interval calibration (empirical coverage of the nominal-90% intervals, coverage gap vs 0.90, mean width, Winkler@90), pooled and per-step."
+      - "Every scored series is sha256-verified against evaluation_data/PROVENANCE.json before scoring; a tampered or unverifiable file is refused, never scored. Real series are labelled real with source + transformation; the synthetic telemetry fixture is labelled SYNTHETIC in the manifest, the scorecard and every output."
+      - "A model that refuses/fails/produces invalid output at an origin is counted and classified (backend_unavailable / error / invalid_output); a model with zero scored origins is not_scorable with metrics null — no substitute forecast and no zero-filled metric anywhere (the BacktestEngine defect class, pinned by tests)."
+      - "Harness-internal reference baselines (ref_naive, ref_seasonal_naive) are labelled kind=reference in every output and never presented as production models; they set the bar production must beat when statsforecast lands."
+      - "First real evaluation run ships as Futuris/docs/forecast_evaluation/BASELINE_SCORECARD.md + baseline_scorecard.json with numbers from the run itself; tests (9) pass; no production code changes (new files only); statsforecast is not installed anywhere (post-ARM, owner decision)."
+      - "Scope stays offline/batch: the live forecast-vs-actual tracker is TASK-FUT-006, which adopts this harness's metric definitions verbatim (its coordination note on issue #35); FUT-004 adds no live store and touches no FUT-006 files."
+    evidence:
+      - "BASELINE RESULT (Futuris/docs/forecast_evaluation/BASELINE_SCORECARD.md): the production forecast path CANNOT be scored in any statsforecast-less environment — all 5 production adapters x 3 series are not_scorable, every origin classified backend_unavailable (5/5 air_passengers, 8/8 fred_dexuseu, 7/7 synthetic origins per model) with the refusal text recorded ('statsforecast is not importable in this deployment ... refusing to substitute a mock forecast'); production metrics are null throughout. Reference baselines scored: air_passengers ref_seasonal_naive MAE 38.4333 / MASE 1.3208 / coverage@90 0.8667, ref_naive MASE 2.3002 / coverage 0.7667; fred_dexuseu ref_naive MAE 0.0047 / MASE 0.5178 / coverage 0.9875, ref_seasonal_naive MASE 0.8417; synthetic_telemetry ref_seasonal_naive MAE 107.1874 / MASE 1.0064 / coverage 0.9990, ref_naive MASE 5.9333."
+      - "TESTS: Futuris/tests/test_fut004_walkforward_harness.py — 9/9 pass in the re-run verification (origins/leakage, hand-computed metrics incl. Winkler, reference baselines end-to-end, production adapters follow backend availability, invalid/failed origins counted never scored, vendored provenance loads, tampered series refused, synthetic series regenerates to the pinned sha256, scorecard honesty contract). Sandbox run used --noconftest (tests/conftest.py needs sqlalchemy, absent in the sandbox; these tests use no conftest fixtures) with an env assembled from system numpy 1.26.4 / pandas 2.1.4 + structlog/prometheus_client/pydantic wheels; the repo CI env is the authoritative gate."
+      - "REPRODUCIBILITY (re-run crew, 2026-11-15): the original FUT-004 crew's session errored on an output cap before committing; its uncommitted work was recovered from ~/workspace/fut-004/repo and independently re-verified — a full harness re-run reproduces ALL 21 scorecard rows of the original run (statuses, origin counts, every metric; max diff within the Markdown's 4-decimal rounding) under different numpy/pandas versions (1.26.4/2.1.4 vs the original 2.5.4/3.1.1); the regenerated Markdown is byte-identical to the original except the timestamp and environment lines."
+      - "DISCLOSED DEFECT IN THE RECOVERED WORK, FIXED BEFORE SHIPPING: the original run's baseline_scorecard.json was truncated to 0 bytes by a sandbox write failure during that run (its Markdown survived intact). The shipped scorecard pair was regenerated by the verified re-run (2026-11-15T09:28:29Z) so the JSON in this PR is the real, complete output of the same harness on the same provenanced data; five 0-byte sz*.bin probe files the original crew left in docs/forecast_evaluation/ were removed and are not shipped."
+      - "PROVENANCE: evaluation_data/PROVENANCE.json records source, transformation and sha256 for every series with raw downloads preserved under evaluation_data/raw/ (AirPassengers via Rdatasets; FRED DEXUSEU trimmed to the complete 2022-01-01..2025-12-31 window, 43 missing-marker rows dropped; synthetic telemetry generated in-repo, numpy PCG64 seed 42, regeneration reproduces the pinned sha256 — pinned by test)."
+      - "COORDINATION: TASK-FUT-006 (live forecast-vs-actual tracker) adopted this harness's scoring schema exactly (nominal level 0.90, metric keys mae/rmse/coverage_90/coverage_gap_vs_nominal/mean_interval_width/winkler_90, shared futuris.evaluation.metrics functions, no-substituted-actuals rule) per its coordination comment on issue #35 — FUT-004 is the offline harness, FUT-006 the live store; no duplicated walk-forward code."
+    blockers: []
+    next_action: "Coordinator: merge PR #324. The harness is then the standing yardstick: when statsforecast lands post-ARM, re-run `python3 scripts/run_forecast_evaluation.py` from Futuris/ in that environment — same series, same origins, same metrics; the production rows fill in with real numbers and are judged against the reference bar stated in BASELINE_SCORECARD.md (beat reference MASE AND coverage@90 at least as close to 0.90). Follow-up (separate task, not this PR): retire or fix BacktestEngine's forecast-as-actual substitution."
   - id: TASK-STR-RD-003
     title: "Stratex strategy-discovery continuation (RD-003): RD-002 deferred cells for surviving modules + new pre-declared families, judged at the running global trial count"
     status: IN_PROGRESS
