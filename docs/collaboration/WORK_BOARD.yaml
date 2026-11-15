@@ -5982,6 +5982,63 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       voice recall decoupling after VOI-009 merges) as per-agent implementation crews.
     claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6892549916
     last_update_comment_url: null
+  - id: TASK-MEM-002
+    title: "Memora memory quality round 2: repeatable recall benchmark (fixed probe set incl. fresh-fact and forget cases) + fixes for the two defects it proves"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-mem-002-recall-benchmark
+    pr: 311
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:40:00+05:30"
+    updated_at: "2026-11-15T14:30:00+05:30"
+    files:
+      - "Memora/benchmarks/recall_probe_set.json"
+      - "Memora/benchmarks/recall_benchmark.py"
+      - "Memora/tests/test_mem002_recall_benchmark.py"
+      - "Memora/core/memory/search_service.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891039726"
+    defect: "Two ranking defects in SearchService.hybrid_search, both proven by the new benchmark's offline twin failing on clean main (2 failed / 2 passed): (1) KEYWORD CANDIDATE-SCAN STARVATION — the lexical leg scans a bounded candidate window (500 records at FRIDAY's production limit=5; 5000 cap) ordered by importance/confidence BEFORE scoring token overlap, so when >500 corpus records match a common query token ('the'), a fresh fact matching most of the query is never scored at all (the starvation shape TASK-REL-031 closed on FRIDAY's local recall path, still open in Memora). (2) EQUAL-RELEVANCE RECENCY — two versions of one fact with identical keyword overlap are ranked by the lexical tie-break on record id, an accident of uuid ordering, so a stale value can outrank its correction indefinitely; the shipped retrieval config's recency ranking factor is parsed but never applied in hybrid_search."
+    acceptance:
+      - "Repeatable benchmark shipped: fixed versioned probe set (Memora/benchmarks/recall_probe_set.json, 9 cases extending REL-013/024/027/031 guarantees) + stdlib runner (benchmarks/recall_benchmark.py) printing positions, per-leg scores, match reasons and latencies as JSON; offline twin in Memora/tests/test_mem002_recall_benchmark.py pins the same guarantees in CI."
+      - "Fix (a): the candidate scan orders by query match count first (the numerator of the overlap ratio scored afterwards), then the historical importance/confidence/created_at keys — which records reach the scoring loop changes, scoring itself does not."
+      - "Fix (b): equal-overlap records rank newest-first in the lexical leg (id remains the final deterministic key). Graph expansion seeds deliberately keep the historical (ratio, id) order because get_graph_neighbors excludes seeds from boosts; seed composition must not drift with the ranking tie-break (interaction caught by REL-024's tie test during development)."
+      - "No regression: MEM-002 suite 4/4 with the fix; REL-013 + REL-024 + hybrid-search suites match the clean-main baseline (14/14)."
+      - "Live proof: benchmark run against production Memora before the fix and re-run after merge + Fleet CD deploy, positions/latencies compared per case; probe data hard-deleted with absence verified after each run."
+    evidence:
+      - "Claim: issue #35 comment 6891039726 (2026-11-15)."
+      - "Offline on clean main 337a1e3: tests/test_mem002_recall_benchmark.py = 2 failed (starvation: fresh target absent at limit 5 behind 600 importance-0.95 single-token decoys; recency: stale version rank 1 via id tie-break) / 2 passed (superseded+archived guard, fresh semantic hit guard). Baseline suites REL-013+REL-024+hybrid = 14 passed."
+      - "Offline with fix: 19/19 (MEM-002 4/4, REL-024 3/3, REL-013 6/6, hybrid_search 5/5, direct_evidence_ranking 1/1)."
+      - "LIVE BEFORE (production Memora, pre-fix code; benchmark files sha256-verified from the task branch): 7 passed / 2 failed of 9 scored. update_recency FAILED live exactly as defect (2) predicts (stale version #1, newer correction #2). graph_companion_guard failed live at position 6 with graph_boost 0.0 — the production write path did not apply the companion edge to the synthetic facts (the REL-024 guard is proven offline; flagged for the AFTER comparison, not one of this PR's fixes). fresh_vs_decoys passed live (production store ~441 records is below the 500-candidate scan window; starvation is proven by the offline 600-decoy case). Search latency p50 4.10s / p95 6.20s / max 9.59s (11 searches, loaded host)."
+      - "Cleanup: runner hard-deleted 52/58 created records; the remainder (incl. one whose delete returned HTTP 500) were swept server-side and verified: zero token-carrying records remain in production."
+      - "Full Memora suite is not green at baseline (wave-3: 55 failed / 608 passed / 2 skipped on an older main); a branch full-suite comparison was attempted twice and blocked by sandbox environment failures (shared /tmp exhaustion, sandbox write filter) — operative gate is the search-adjacent set above."
+    blockers: []
+    next_action: "Coordinator: merge the code PR, let Fleet CD deploy, then the crew re-runs benchmarks/recall_benchmark.py on Server 1 for the AFTER table and posts the board VERIFIED update via a fresh-main board PR."
+  - id: TASK-STR-RD-017
+    title: "Funding-carry forward paper simulation (RD-009 s7 forward test)"
+    owner: claude_rd017
+    lane: STRATEX-RESEARCH
+    status: IN_PROGRESS
+    files:
+      - Stratex/rigorous_backtest/rd17/README.md
+      - Stratex/rigorous_backtest/rd17/RESULTS_RD17.md
+      - Stratex/rigorous_backtest/rd17/bridge_fetch.py
+      - Stratex/rigorous_backtest/rd17/carry_paper_sim.py
+      - Stratex/rigorous_backtest/rd17/declaration.json
+      - Stratex/rigorous_backtest/rd17/server_fetch.py
+      - Stratex/rigorous_backtest/rd17/test_carry_paper_sim.py
+    pr: https://github.com/surendra2304/FRIDAY-Universe/pull/379
+    claim_comment: 6893763575
+    declaration_sha256: 9769000a50979a602bcaf58721b66489492082d77befa1742c14127a445317d7
+    evidence:
+      - "Declaration frozen + hash posted BEFORE first data point (claim 6893763575, 2026-11-15T11:40:16Z)"
+      - "Book opened live 2026-11-15T12:01:56Z (SIM_START ledger seq 2), 30/30 entries, first MARK net_1x -57.00 = entry costs exactly, T2 diff 0.0 x30"
+      - "9/9 offline tests pass"
+      - "First live poll failed (since=epoch fetch timeout) - ledger seq 1 ERROR, disclosed in RESULTS_RD17.md; fixed + regression test"
+      - "RD-017B (comment 6894666865): sim migrated to Server 1 as systemd rd17-carry-sim.service (rest transport, active); migrated-state report identical to sandbox baseline (33 rows, SIM_START preserved); hash-chain continuity proven across migration (seq 34 prev_hash == sandbox seq-33 row_hash); sandbox daemon stopped after server verification, sandbox ledger archived intact"
+    running_instance: "Server 1: /home/ubuntu/rd17-carry-sim/ code, state /var/lib/rd17-carry-sim/, systemd rd17-carry-sim.service (rest transport, 300s polls)"
+    next_action: "Verify FUNDING rows for the 2026-11-15T16:00Z settlement booked (30 symbols, from published prints) via: cd /home/ubuntu/rd17-carry-sim && python3 carry_paper_sim.py report --state-dir /var/lib/rd17-carry-sim — expect 30 FUNDING rows and a non-empty T1 identity. Then the long judgement window: no evaluation before 2027-05-15 AND >=2 confirmed regime turns."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
