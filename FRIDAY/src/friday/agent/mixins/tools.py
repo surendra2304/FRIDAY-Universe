@@ -71,6 +71,10 @@ from friday.tools.builtin import (
     GitCommitTool,
     GitPushTool,
     GitStatusTool,
+    ErrandApproveTool,
+    ErrandCreateTool,
+    ErrandRunTool,
+    ErrandStatusTool,
     HealthCheckTool,
     KillProcessTool,
     LaptopClickTool,
@@ -216,6 +220,11 @@ class ToolExecutionMixin:
             registry.register(LaptopRunCommandTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
+            # TASK-IG-FRD-004: delegated errands — framework only, approval-gated, dry-run.
+            registry.register(ErrandCreateTool())
+            registry.register(ErrandStatusTool())
+            registry.register(ErrandApproveTool())
+            registry.register(ErrandRunTool())
             registry.register(WriteCodeFileTool())
             registry.register(ReplaceFileContentTool())
             registry.register(RunTestsTool())
