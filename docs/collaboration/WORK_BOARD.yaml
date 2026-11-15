@@ -4856,6 +4856,39 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Claimed 2026-11-15 (Muse, TASK-VOI-009 crew; issue #35 comment 6890265430). Removal built on branch claude/task-voi-009, composed ON TOP of TASK-VOI-008's merged warm-process fix (PR #273: num_idle_processes=1 + prewarm hook kept; only its EdgeTTS warm step is replaced by the fixed-line WAV preload). Board claim PRs #274/#277 conflicted in sequence as FWD-002 (#275) and VYR-003 (#276) board PRs landed; this entry is union-rebased onto main 6d19ad1d."
 
+  - id: TASK-STR-RD-013
+    title: "Stratex cross-asset rotation (RD-013): pre-declared momentum rotation over crypto majors + gold + index exposure, judged on compounded equity + max drawdown and per-period profit factor"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-013
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:33:00+05:30"
+    updated_at: "2026-11-15T12:57:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD13.md"
+      - "Stratex/rigorous_backtest/results_rd13/declaration.json"
+      - "Stratex/rigorous_backtest/results_rd13/synthesis.json"
+      - "Stratex/rigorous_backtest/rd13/__init__.py"
+      - "Stratex/rigorous_backtest/rd13/rotation.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890930042"
+    defect: "Wave-4 research track (owner order 2026-11-15 ~12:33 IST: ten more Stratex research crews). A rules-based cross-asset ROTATION family — distinct from the RD-002 Stage-C sleeve (a fixed basket of RD-002 members): a fixed 7-asset universe (BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT, GOLD, SPX, NDX), momentum-ranked at weekly/daily cadence, long-only and long/flat variants. Pre-declared on issue #35 (comment 6890930042) BEFORE first execution: L in {21,63,126,252} x K in {1,2,3} x cadence {weekly, daily} x mode {long_only, long_flat} = 48 configurations = 48 trials. Judged OOS-only (folds W1-W5 as RD-002) on compounded equity + max drawdown AND per-period PF, net of turnover costs (crypto 16, GOLD 10, indices 8 bps round-trip, charged on traded notional), with the full seven-gate bar in RESULTS_RD13.md including Bonferroni significance at N_global = 2,000. Research only: no production, governance, registry or daemon changes."
+    acceptance:
+      - "Pre-declaration posted before any run (issue #35 comment 6890930042); grid, universe, costs and bar frozen there; no retuning, no second grid."
+      - "All 48 configurations evaluated and rowed in RESULTS_RD13.md + results_rd13/synthesis.json, each counting once in the global trial counter whatever its outcome (running global >= 1,812 after RD-013)."
+      - "Explicit PASS/FAIL verdict against every gate of the pre-declared bar, with the best configuration dissected (fold concentration, asset concentration, turnover drag) rather than headline-quoted."
+      - "Harness verified independently: the first six OOS weekly periods of L=63/K=1/weekly/long_only recomputed through a separate code path — picks, gross returns and turnover charges reproduce exactly."
+      - "Board entry added insertion-only via a fresh-main PR with the full task-id set diffed (163 -> 164, added = {TASK-STR-RD-013}, dropped = none); completion comment on issue #35."
+    evidence:
+      - "CLAIM + PRE-DECLARATION: issue #35 comment 6890930042 (2026-11-15, before first execution)."
+      - "VERDICT: ZERO of 48 configurations pass the bar. Drawdown gate fails universally (0/48 within the 20% limit; best -21.0%, median about -35%, worst -60.3%). Significance fails universally (best one-sided p = 5.9e-2 vs Bonferroni threshold 2.5e-5 at N = 2,000). 40/48 compound positively OOS, but the tilt is one correlated crypto-trend observation: the champion (L=63, K=1, daily, long_flat, +148.0% compounded, PF 1.20, 4/5 folds) draws down -34.8%, takes 57% of its positive P&L from ETHUSDT alone, earns +89.5% of its fold-compounding in W3 alone (W2 is -10.8%), and pays 10.3% of equity in turnover costs over the OOS window."
+      - "CONTEXT (not trials): GOLD buy-and-hold compounded +66.5% OOS with zero turnover — beating 46 of 48 rotation configurations; SPX +38.3%, BTC +23.1%. The same 48 configurations compound +90% to +624% in-sample (2023-01 to 2024-07), recorded in RESULTS_RD13.md as the regime artefact the bar exists to reject."
+      - "PROVENANCE: every series SHA-256-verified against the RD-002 cache sidecars before use (loader refuses mismatches); SOLUSDT loses 5 incomplete days to the known archive gap block under the complete-buckets-only resample. Full hashes and all 48 rows in results_rd13/synthesis.json; code in rd13/rotation.py."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-013 crew): cross-asset momentum rotation FAILS the standing bar on all 48 pre-declared configurations — no forward entrant, no sleeve change, no production change; the owner's removal rule does not apply (nothing governed was tested). Coordinator: verify and merge the results PR. If rotation is ever revisited it needs a risk mechanism (volatility targeting / drawdown brake) as a NEW pre-declared family, not a retune of this grid. Stratex forward evidence remains the RD-002 candidates + Stage-C sleeve under TASK-STR-FWD-002."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
