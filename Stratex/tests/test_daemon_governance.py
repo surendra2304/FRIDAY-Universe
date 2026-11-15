@@ -76,10 +76,12 @@ class TestRegistryGovernanceStatuses:
     def test_validated_set_is_exactly_the_governed_set(self, registry):
         validated = {s.name for s in registry.snapshot() if s.status == "VALIDATED"}
         # TASK-STR-CLEANUP-001: bb_reversion and factory_winner_1..5 were
-        # deleted (verified OOS PF < 1.2). No VALIDATED strategy remains;
-        # the daemon's executable set is intentionally empty until forward
-        # entrants are chosen from TASK-STR-RD-002 evidence.
-        assert validated == set()
+        # deleted (verified OOS PF < 1.2), leaving the executable set empty.
+        # TASK-STR-FWD-002 (2026-11-15): the two TASK-STR-RD-002 winners
+        # (ichimoku_trend tk_cloud 4h; dow_effect reversal 1d) are now the
+        # VALIDATED forward entrants under the phase-3 protocol — this pin
+        # changes deliberately with this task and with no other.
+        assert validated == {"strategy_ichimoku_trend", "strategy_dow_effect"}
 
     def test_deleted_strategies_are_gone_and_unregistered(self, registry):
         # TASK-STR-CLEANUP-001: these modules were deleted outright, so

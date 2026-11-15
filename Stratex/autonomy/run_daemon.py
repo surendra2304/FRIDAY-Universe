@@ -105,7 +105,10 @@ class StratexTradingEngine:
 
         # Crypto: the registry only validates BTC/ETH/SOL, so scanning the other
         # twelve symbols was pure API load with zero possible trades.
-        crypto_env = os.getenv("STRATEX_CRYPTO_SYMBOLS", "BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,DOTUSDT,BCHUSDT,ATOMUSDT,UNIUSDT,TRXUSDT,NEARUSDT,SUIUSDT,AAVEUSDT,ENAUSDT,WLDUSDT,ZECUSDT,HYPEUSDT,PAXGUSDT,TRUMPUSDT,PEPEUSDT")
+        # Default universe = the judged CRYPTO30 panel (TASK-STR-FWD-002;
+        # config_strategy.CRYPTO30_SYMBOLS). The live .env sets the same
+        # list explicitly; the default only matters for fresh checkouts.
+        crypto_env = os.getenv("STRATEX_CRYPTO_SYMBOLS", "BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,LTCUSDT,LINKUSDT,DOTUSDT,TRXUSDT,AVAXUSDT,NEARUSDT,ATOMUSDT,UNIUSDT,ETCUSDT,BCHUSDT,FILUSDT,APTUSDT,ARBUSDT,OPUSDT,INJUSDT,SUIUSDT,XLMUSDT,HBARUSDT,ALGOUSDT,VETUSDT,SANDUSDT,MANAUSDT,AAVEUSDT")
         # Symbol universe per venue
         self.symbols = {
             "binance_futures": [s.strip() for s in crypto_env.split(",") if s.strip()],
@@ -179,6 +182,11 @@ class StratexTradingEngine:
         # Runs before the loss-limit gate so a losing book can still be exited.
         self._manage_trend_positions()
 
+        # TASK-STR-FWD-002: judged bracket_time exits (dow_effect max_bars)
+        # have no broker-native equivalent; enforce them here, also before
+        # the loss-limit gate so exits are never blocked by it.
+        self._manage_forward_time_exits()
+
         # Check daily loss limit. get_risk_summary() runs the daily reset and
         # seeds daily_start_equity on first call, so the breaker below has a
         # baseline to measure against.
@@ -210,8 +218,13 @@ class StratexTradingEngine:
                     try:
                         # Get candles. The daily trend strategy needs 200 bars for
                         # its EMA200 regime filter; intraday strategies keep 100.
-                        candle_limit = 300 if tf == "1d" else 100
-                        min_bars = 220 if tf == "1d" else 50
+                        # TASK-STR-FWD-002: the forward entrants were judged
+                        # with a 260-bar warmup, so 1d/4h frames must carry
+                        # at least 262 closed bars (300 daily bars fetched;
+                        # 600 4h bars fetched so the warmup holds with
+                        # headroom for the still-forming bar).
+                        candle_limit = 300 if tf == "1d" else 600 if tf == "4h" else 100
+                        min_bars = 262 if tf in ("1d", "4h") else 50
                         candles = self.engine.get_candles(venue, symbol, tf, candle_limit)
                         if not candles or len(candles) < min_bars:
                             continue
@@ -494,6 +507,8 @@ class StratexTradingEngine:
         if hasattr(self, "_last_prune_date"):
             if self._last_prune_date != today:
                 self._maybe_prune_strategies()
+                # TASK-STR-FWD-002: phase-3 kill criteria, same daily slot.
+                self._maybe_apply_forward_guard()
                 self._last_prune_date = today
                 # Weekly scorecard (TASK-STR-PHASE2-001): regenerated from
                 # the fill ledger only, at most once a week.
@@ -849,7 +864,14 @@ class StratexTradingEngine:
                 # exchange-side SL/TP; they do not get a daily-bar exit.
                 strat = self.engine.position_strategy.get(key, "")
                 tf = self.engine.position_timeframe.get(key, "")
-                if strat != "strategy_trend_daily" and tf != "1d":
+                # TASK-STR-FWD-002 fix: the previous condition
+                # (strat != trend_daily AND tf != 1d -> skip) let EVERY 1d
+                # position through, so governed 1d positions (dow_effect)
+                # would have been force-exited by this EMA20 rule instead
+                # of their judged bracket_time exits. The EMA20 exit is
+                # strategy_trend_daily's own rule — scope it to that
+                # strategy only.
+                if strat != "strategy_trend_daily":
                     continue
 
                 candles = self.engine.get_candles(venue, symbol, "1d", 60)
@@ -895,6 +917,132 @@ class StratexTradingEngine:
             except Exception as e:
                 logger.warning(f"[STRATEX] Trend exit check failed for {key}: {e}")
 
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-002: phase-3 forward protocol (time exits + guard)
+    # ------------------------------------------------------------------
+
+    _BAR_SECONDS = {
+        "1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1h": 3600,
+        "4h": 14400, "1d": 86400, "1wk": 604800,
+    }
+
+    def _forward_protocol_entries(self) -> dict:
+        """{module_name: registry entry} for forward_protocol strategies."""
+        try:
+            from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+            return {
+                "strategy_" + key: entry
+                for key, entry in PRODUCTION_STRATEGY_REGISTRY.items()
+                if entry.get("forward_protocol")
+            }
+        except Exception as e:
+            logger.warning(f"[STRATEX] Forward protocol registry read failed: {e}")
+            return {}
+
+    def _manage_forward_time_exits(self) -> None:
+        """Enforce judged bracket_time exits (e.g. dow_effect max_bars=5).
+
+        The judged simulator exits at the close of entry_bar + max_bars - 1
+        when neither bracket level was hit; broker protective orders carry
+        only SL/TP, so the daemon closes the position at market once that
+        bar has fully elapsed (measurement/forward_guard.time_exit_due).
+        Only the market order is sent here — the reconciler books the
+        close into the fill ledger from userTrades, as for trend exits.
+        """
+        now = time.time()
+        if now - getattr(self, "_last_forward_manage", 0) < 60:
+            return
+        self._last_forward_manage = now
+
+        entries = self._forward_protocol_entries()
+        timed = {name: e for name, e in entries.items() if e.get("max_bars")}
+        if not timed:
+            return
+        try:
+            from measurement import forward_guard
+        except Exception as e:
+            logger.warning(f"[STRATEX] Forward guard import failed: {e}")
+            return
+
+        for key, pos in list(self.engine.positions.items()):
+            venue, _, symbol = key.partition(":")
+            if not venue or not symbol:
+                continue
+            strat = self.engine.position_strategy.get(key, "")
+            gov = timed.get(strat)
+            if gov is None:
+                continue
+            adapter = self.engine.venues.get(venue)
+            if adapter is None:
+                continue
+            try:
+                tf = self.engine.position_timeframe.get(key, "") or str(
+                    gov.get("timeframe", "1d")
+                )
+                bar_seconds = self._BAR_SECONDS.get(tf, 86400)
+                opened_ms = float(self.engine.position_opened_at.get(key, 0) or 0)
+                if opened_ms <= 0:
+                    continue
+                if not forward_guard.time_exit_due(
+                    opened_ms / 1000.0, now, int(gov["max_bars"]), bar_seconds
+                ):
+                    continue
+                is_long = str(pos.side).upper() in ("LONG", "BUY")
+                close_side = "SELL" if is_long else "BUY"
+                result = adapter.place_order(
+                    symbol, close_side, "MARKET", pos.quantity
+                )
+                if result is None:
+                    logger.warning(
+                        f"[STRATEX] Forward time exit rejected for {venue}:{symbol}"
+                    )
+                    continue
+                if hasattr(adapter, "cancel_protective_orders"):
+                    adapter.cancel_protective_orders(symbol)
+                logger.info(
+                    f"[STRATEX] Forward time exit {venue}:{symbol} ({pos.side}) "
+                    f"strategy={strat} max_bars={gov['max_bars']} tf={tf} "
+                    f"(TASK-STR-FWD-002 judged bracket_time)"
+                )
+            except Exception as e:
+                logger.warning(f"[STRATEX] Forward time exit check failed for {key}: {e}")
+
+    def _maybe_apply_forward_guard(self) -> None:
+        """Phase-3 kill criteria over the measurement fill ledger.
+
+        A breached forward-protocol strategy is auto-paused through the
+        persisted denylist (survives restarts; the scan loop honours it).
+        """
+        try:
+            from measurement import fill_ledger, forward_guard
+
+            entries = self._forward_protocol_entries()
+            if not entries:
+                return
+            risk = self.engine.get_risk_summary()
+            equity = float(risk.get("total_equity") or 0.0)
+            rows = fill_ledger.read_fills()
+            for decision in forward_guard.evaluate(rows, equity, sorted(entries)):
+                logger.info(
+                    "[STRATEX] Forward guard: "
+                    f"{decision['strategy']} trades={decision['trades']} "
+                    f"net=${decision['net_pnl']:.2f} "
+                    f"pf={decision['profit_factor']:.3f} "
+                    f"expectancy=${decision['expectancy']:.2f} "
+                    f"dd=${decision['max_drawdown_usd']:.2f}/"
+                    f"${decision['drawdown_limit_usd']:.2f}"
+                )
+                if decision["breached"] and decision["strategy"] not in self.strategy_denylist:
+                    self.strategy_denylist.add(decision["strategy"])
+                    self._persist_denylist()
+                    logger.warning(
+                        "[STRATEX] PHASE-3 KILL CRITERION — auto-paused "
+                        f"{decision['strategy']}: " + "; ".join(decision["reasons"])
+                    )
+        except Exception as e:
+            logger.warning(f"[STRATEX] Forward guard evaluation failed: {e}")
+
     def _prefetch_candles(self):
         """Pre-fetch candles for all symbols/timeframes."""
         try:
@@ -907,7 +1055,8 @@ class StratexTradingEngine:
             # The cloud feed caches automatically, just prime it
             for venue, symbol, tf in pairs[:20]:  # Limit to avoid rate limits
                 try:
-                    self.engine.get_candles(venue, symbol, tf, 300 if tf == "1d" else 100)
+                    # Same limits as the scan loop (TASK-STR-FWD-002).
+                    self.engine.get_candles(venue, symbol, tf, 300 if tf == "1d" else 600 if tf == "4h" else 100)
                 except Exception:
                     pass
         except Exception as e:
@@ -1255,7 +1404,13 @@ class StratexTradingEngine:
         try:
             from trading_report import metrics
             stats = metrics()  # reads testnet_trade_ledger.jsonl
+            # TASK-STR-FWD-002: forward-protocol strategies are governed by
+            # the phase-3 kill criteria (>=50 closed trades), not by this
+            # legacy >=10-trade pruner over the retired testnet ledger.
+            forward_names = set(self._forward_protocol_entries())
             for strat, bucket in stats.get("by_strategy", {}).items():
+                if strat in forward_names:
+                    continue
                 if bucket.get("trades", 0) >= 10 and bucket.get("net_pnl", 0) < 0:
                     # Negative expectancy after 10+ trades -> denylist
                     if strat not in self.strategy_denylist:
