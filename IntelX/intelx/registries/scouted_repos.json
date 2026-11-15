@@ -1,0 +1,602 @@
+{
+ "generated_from": "~/workspace/ig-references/repos/ spec cards + INDEX.md (verified 2026-11-15)",
+ "corpus_item": "Dc-zw_Vicxs",
+ "count": 32,
+ "fit_counts": {
+  "adapt": 15,
+  "reference-only": 13,
+  "reject": 2,
+  "adopt": 2
+ },
+ "entries": [
+  {
+   "card": "agent-reach.md",
+   "name": "Agent Reach",
+   "repo": "Panniantong/Agent-Reach",
+   "repo_url": "https://github.com/Panniantong/Agent-Reach",
+   "what_it_does": "A free, read-only CLI 'capability layer' that gives an AI agent eyes on the internet: it installs/tests the best upstream tool per platform (yt-dlp, gh, Jina Reader, bili-cli, etc.) and exposes 14 channels behind one command — YouTube, GitHub, web/RSS and V2EX/Bilibili with no login; X/Twitter, Reddit, LinkedIn, Instagram, Facebook, Xiaohongshu and others via a dedicated background browser / copied login. It only fetches — no posting, comments, likes or DMs.",
+   "license": "MIT",
+   "language": "Python (3.10+)",
+   "friday_agents": [
+    "IntelX"
+   ],
+   "source_videos": [
+    "DerbBtfzj8p"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "A direct fit for IntelX's social-link reader idea, and its Python 3.10+ requirement matches production's interpreter (rare in this corpus). Read-only by design, which suits IntelX's research remit. Care: the logged-in channels use the owner's accounts via a background browser — use no-login channels by default.",
+   "friday_agent_raw": "IntelX"
+  },
+  {
+   "card": "artemis.md",
+   "name": "ARTEMIS (Google)",
+   "repo": "google/artemis",
+   "repo_url": "https://github.com/google/artemis",
+   "what_it_does": "Google's open-source framework that turns natural-language instructions into reliable automation on a real Android phone or emulator (via USB debugging/ADB). It observes screenshot + UI hierarchy + OCR, acts via ADB/UIAutomator2, and captures Logcat/screenshots. Four interfaces: web console, CLI, Python SDK, and a native MCP server (5 tools) that plugs into Claude Code, Codex, Antigravity, Cursor and others. Two execution profiles: Flash (reactive loop, ~3–5s/step) and Pro (planner/operator/checker). Google Research claims 99%+ on its AndroidWorld benchmark (self-reported).",
+   "license": "Apache-2.0",
+   "language": "Python (3.12+)",
+   "friday_agents": [
+    "Laptop-Phone-control"
+   ],
+   "source_videos": [
+    "DehEdBbgQFZ"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The strongest candidate to give FRIDAY's phone control real UI automation (see screen → tap/type through real apps) beyond PHONE-001's Termux executor. Apache-2.0 and Google-maintained. Caveats: Python 3.12+ (fleet production is 3.10 — run it laptop-side, not on the servers) and it needs an ADB path to the phone, which is an owner-side setup step.",
+   "friday_agent_raw": "Laptop-Phone-control"
+  },
+  {
+   "card": "aura-android-use.md",
+   "name": "AURA (aura-android-use)",
+   "repo": "Dinesh210805/aura-android-use",
+   "repo_url": "https://github.com/Dinesh210805/aura-android-use",
+   "what_it_does": "An open-source Android app that puts an MCP server inside the phone. An on-device agent reads the screen via the accessibility tree plus on-device vision (YOLOv8/OCR), then taps/types/scrolls in real apps — no root, no cable, no relay server. The same 45–50+ tools are exposed over MCP so Claude Code / Cursor / any MCP client on a computer can drive the phone; computer and phone must share a Wi-Fi network (LAN-only encrypted WebRTC bridge, PIN pairing). Bring-your-own key from 13 providers; includes voice input and a hard safety gate that blocks banking/payment/authenticator apps and secret entry. Solo-built and self-described as unstable. (Name collision: the unrelated voice-assistant 'AURA' in video Da6PwA8z-wq is a different thing.)",
+   "license": "AGPL-3.0 (with commercial-licence/exception files)",
+   "language": "Kotlin",
+   "friday_agents": [
+    "Laptop-Phone-control"
+   ],
+   "source_videos": [
+    "DfXcABhzvy3"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "A possible shortcut for exactly what PHONE-001 lacks today (tap/swipe/screenshot — the Termux executor can't). But: AGPL + commercial dual licensing, one maintainer, unstable. Pilot carefully on the owner's phone; do not build production dependence on it. Google's ARTEMIS (below) is the safer primary candidate.",
+   "friday_agent_raw": "Laptop-Phone-control"
+  },
+  {
+   "card": "browser-use.md",
+   "name": "Browser Use",
+   "repo": "browser-use/browser-use",
+   "repo_url": "https://github.com/browser-use/browser-use",
+   "what_it_does": "An open-source browser-agent library: give it a task and the model does it in a real browser, writing Python in one persistent REPL against raw Chrome DevTools Protocol with browser-harness helpers. Runs on any LLM, locally (local Chromium / your own Chrome profile) or via the separate paid Browser Use Cloud (stealth browsers, CAPTCHA solving, hosted Agents API). v1.0 rewrite shipped Nov 2026; the README warns to pin the version exactly.",
+   "license": "MIT",
+   "language": "Python (3.11+)",
+   "friday_agents": [
+    "Laptop-Phone-control"
+   ],
+   "source_videos": [
+    "Dc3pMkakrid"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The concrete implementation behind the corpus's browser-use idea (FRIDAY agents operating a real browser). MIT and Python — but it needs Python 3.11+ while production runs 3.10 (the REL-050 constraint), so run it laptop-side or after the fleet Python upgrade. Skip the paid cloud.",
+   "friday_agent_raw": "Laptop-Phone-control / FRIDAY tooling"
+  },
+  {
+   "card": "cactus-needle.md",
+   "name": "needle / Cactus (cactus-compute)",
+   "repo": "cactus-compute/cactus",
+   "repo_url": "https://github.com/cactus-compute/cactus",
+   "what_it_does": "Cactus Compute's tiny on-device foundation-model family, built only for tool/function calling, structured extraction and embeddings — not chat. Needle 2 is a 45M-parameter model shipped as a single 14MB binary that runs a full session in ~28MB RAM, fully offline on phones, wearables, Raspberry Pi and microcontrollers, emitting structured JSON tool calls with a confidence score. The canonical repo is now the unified 'cactus' Python package (pip install cactus-compute) bundling Needle (agents), Whistle (speech-to-text) and Mirage (vision) on their native engine; the old cactus-compute/needle repo is a redirect stub.",
+   "license": "Apache-2.0",
+   "language": "Python package over a native C++ engine",
+   "friday_agents": [
+    "Inference"
+   ],
+   "source_videos": [
+    "DdjJQDFjc9w"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "A genuine fit for the corpus's tiny-on-device-model idea: an always-available, offline fast path for simple FRIDAY commands on the owner's phone/laptop (28MB RAM is nothing). Pilot on-device; the servers don't need it.",
+   "friday_agent_raw": "Inference"
+  },
+  {
+   "card": "claude-mem.md",
+   "name": "claude-mem",
+   "repo": "thedotmack/claude-mem",
+   "repo_url": "https://github.com/thedotmack/claude-mem",
+   "what_it_does": "Persistent memory for coding agents. A second 'observer' agent records everything a coding agent does in a session, compresses it with AI, and injects a compact index of relevant context into future sessions so the agent doesn't restart from zero. Works with Claude Code, Codex, Cursor, OpenCode, Gemini, Hermes, Copilot and more; memory is stored locally (~/.claude-mem), cloud sync opt-in.",
+   "license": "Apache-2.0",
+   "language": "TypeScript",
+   "friday_agents": [
+    "Memora",
+    "Forge"
+   ],
+   "source_videos": [
+    "DeihJQuCpdp"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The observer-agent session-compression pattern is a concrete design input for Memora (how coding/build sessions should be remembered). Built for coding-agent CLIs, so adapt the pattern rather than dropping it in.",
+   "friday_agent_raw": "Memora (pattern); Forge (consumer)"
+  },
+  {
+   "card": "claude-trading-skills-agiprolabs.md",
+   "name": "claude-trading-skills (agiprolabs)",
+   "repo": "agiprolabs/claude-trading-skills",
+   "repo_url": "https://github.com/agiprolabs/claude-trading-skills",
+   "what_it_does": "A different repo with the same name: 68 trading, DeFi and quantitative-finance Agent Skills in the open Agent Skills format, working with Claude Code, Cursor, Codex, Gemini CLI and 30+ other tools. Crypto/DeFi-first: market-data APIs (Birdeye, DexScreener, CoinGecko, Helius, DeFiLlama), Solana infrastructure, on-chain/whale analysis, technical analysis, backtesting (vectorbt/Backtrader, walk-forward), portfolio/risk (incl. Kelly criterion), DeFi/LP/yield, statistics, ML for trading, execution, microstructure, options pricing, prediction markets and tax/compliance. Analysis/research only.",
+   "license": "MIT",
+   "language": "Markdown SKILL.md files with Python examples",
+   "friday_agents": [
+    "Stratex"
+   ],
+   "source_videos": [
+    "DfSKVcsE5yr"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "A broad pattern catalogue — cherry-pick backtesting and risk skill patterns for the RD programme rather than adopting wholesale. Crypto/DeFi emphasis overlaps Stratex's venues, but the repo is thinly maintained.",
+   "friday_agent_raw": "Stratex"
+  },
+  {
+   "card": "claude-trading-skills-tradermonty.md",
+   "name": "claude-trading-skills (tradermonty)",
+   "repo": "tradermonty/claude-trading-skills",
+   "repo_url": "https://github.com/tradermonty/claude-trading-skills",
+   "what_it_does": "A Claude Skills workflow toolkit for individual equity investors: 74 skills across market regime/breadth, portfolio, dividend income, swing screeners (CANSLIM, VCP, FinViz), trade planning, trade memory/journaling and strategy research, plus workflow manifests and pre-built packages for Claude Web. It structures review, risk management, planning and post-mortems; it is explicitly not a signal service and does not place orders. A starter path runs on free public CSVs with no API key; some screeners optionally use paid data (FMP, FinViz Elite, Alpaca).",
+   "license": "MIT",
+   "language": "Python",
+   "friday_agents": [
+    "Stratex"
+   ],
+   "source_videos": [
+    "DfSKVcsE5yr"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The trade-memory/journaling and structured review/post-mortem skills are the valuable part for Stratex's forward-test discipline. Actively maintained and MIT. Paid-data screeners stay out (free tiers only).",
+   "friday_agent_raw": "Stratex"
+  },
+  {
+   "card": "day-trader-skill.md",
+   "name": "day-trader-skill (Jakeschincariol)",
+   "repo": "Jakeschincariol/day-trader-skill",
+   "repo_url": "https://github.com/Jakeschincariol/day-trader-skill",
+   "what_it_does": "A pack of 11 Claude Skills for day trading — not an autonomous bot. Each skill is a SKILL.md plus a small stdlib-only Python tool: a scanner (~5,900 US stocks, opening-range breakouts etc.), news, entry timer, exit planner, a 'Time Machine' (10,000 Monte-Carlo replays of a trade), risk, budget/position-sizing, broker, alerts, an earnings analyst, and a Congress-trades tracker. Skills chain via a shared folder, read free public data (Yahoo Finance, Nasdaq Trader, SEC EDGAR), need no API key, default to paper trading, and no order goes through without an explicit human yes after the risk check.",
+   "license": "MIT",
+   "language": "Python",
+   "friday_agents": [
+    "Stratex"
+   ],
+   "source_videos": [
+    "DfSKVcsE5yr"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The skill-pack structure (scanner → risk → budget chain with a human-yes gate) mirrors Stratex's governed pipeline and is worth mining for the RD programme's workflow design. The strategies themselves are US-equities day-trading content — they enter only through the same RD evidence bar as everything else, demo-only. Single-commit repo: copy patterns, don't depend on it.",
+   "friday_agent_raw": "Stratex"
+  },
+  {
+   "card": "freellmapi.md",
+   "name": "FreeLLM API (FreeLLMAPI)",
+   "repo": "tashfeenahmed/freellmapi",
+   "repo_url": "https://github.com/tashfeenahmed/freellmapi",
+   "what_it_does": "A self-hosted, OpenAI-compatible (plus Anthropic/Gemini/Ollama surfaces) router that pools the free tiers of many providers behind one local endpoint and one unified key. Its README headline claims 87 free providers, 1,313 free model endpoints and ~10.1B tokens/month aggregate, with smart routing, automatic failover on rate limits, per-key usage tracking, encrypted key storage, an admin dashboard and desktop apps. Stated as 'personal experimentation only'; free installs receive the model catalogue 30 days behind the paid live feed.",
+   "license": "MIT",
+   "language": "TypeScript",
+   "friday_agents": [
+    "Inference"
+   ],
+   "source_videos": [
+    "DezJrpTRAQh"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "Inference already implements this exact pattern in production (multi-provider key pool, failover, quota ledger, best-suitable routing) — the corpus's own classification marks the idea already-implemented. Do not duplicate it; the only cherry-pick is comparing catalogue breadth.",
+   "friday_agent_raw": "Inference"
+  },
+  {
+   "card": "herald-os.md",
+   "name": "Herald OS",
+   "repo": "iamlukethedev/Herald-OS",
+   "repo_url": "https://github.com/iamlukethedev/Herald-OS",
+   "what_it_does": "An agent-native operating-system layer with Hermes Agent as the interface (independent project, not affiliated with Nous Research; Hermes is installed alongside, not forked). Instead of menus and folders you talk/type to the agent to open apps, find and organise files, watch what is running, remember what matters, run scheduled routines and build software — with every state-changing action going through a permission system the user controls. Ships as a Fedora-based Linux OS and a fullscreen macOS app. Status: alpha (0.1).",
+   "license": "MIT",
+   "language": "TypeScript",
+   "friday_agents": [
+    "FRIDAY"
+   ],
+   "source_videos": [
+    "DeOjGD5jApL"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "Alpha software — do not adopt. Its permission-gated mission UX and morning-briefing flow are the takeaway, and FRIDAY already has both behaviours; compare details during the voice/UX work.",
+   "friday_agent_raw": "FRIDAY"
+  },
+  {
+   "card": "hermes-agent.md",
+   "name": "Hermes Agent (Nous Research)",
+   "repo": "NousResearch/hermes-agent",
+   "repo_url": "https://github.com/NousResearch/hermes-agent",
+   "what_it_does": "A self-improving, self-hosted personal AI agent: a built-in learning loop creates skills from experience and improves them in use; agent-curated persistent memory with cross-session recall and full-text search; it builds a model of the user. Runs anywhere (laptop, small VPS, GPU cluster, serverless), works with any model provider, and is reachable via a terminal TUI and a single messaging gateway (Telegram, Discord, Slack, WhatsApp, Signal, CLI), with cron scheduling, sub-agent delegation and MCP integration. Several corpus tools (Herald OS, AgentOS, MausBot) build on or alongside it.",
+   "license": "MIT",
+   "language": "Python",
+   "friday_agents": [
+    "FRIDAY",
+    "Memora"
+   ],
+   "source_videos": [
+    "DeEpmLQIq93",
+    "DeOjGD5jApL",
+    "De9Ih2LiSI7",
+    "DfDBob0iL3Y",
+    "DfEoqPfClGT",
+    "DZPYR_0y4VV"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "FRIDAY Universe already implements this pattern (10-agent fleet + Memora), so adopting it would mean replacing FRIDAY. The transferable assets are its skill-learning loop and memory design — mine those for Memora/FRIDAY, don't adopt the platform.",
+   "friday_agent_raw": "FRIDAY / Memora (architecture reference)"
+  },
+  {
+   "card": "hyperframes.md",
+   "name": "HyperFrames (HeyGen)",
+   "repo": "heygen-com/hyperframes",
+   "repo_url": "https://github.com/heygen-com/hyperframes",
+   "what_it_does": "HeyGen's free, open-source framework for turning HTML, CSS, media and seekable animations (GSAP, Lottie, Three.js) into deterministic MP4 videos — 'Write HTML. Render video. Built for agents.' A video is an HTML file whose elements carry timing/track attributes; the renderer seeks each frame in headless Chrome and encodes with FFmpeg. Ships agent skills/plugins for Claude Code, Codex, Cursor and Gemini CLI, a CLI, a free Studio app and ~450 reusable blocks. Requires Node.js 22+ and FFmpeg.",
+   "license": "Apache-2.0",
+   "language": "TypeScript",
+   "friday_agents": [
+    "VyralX"
+   ],
+   "source_videos": [
+    "DeihJQuCpdp",
+    "DemU8amxpoC"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "A strong programmatic-rendering fit for VyralX (and the renderer Hypit builds on). Constraint: headless-Chrome rendering is heavy for ~1GB servers — run renders on the owner's machine or post-ARM, not on the current fleet.",
+   "friday_agent_raw": "VyralX"
+  },
+  {
+   "card": "hypit.md",
+   "name": "Hypit",
+   "repo": "hypit-ai/hypit",
+   "repo_url": "https://github.com/hypit-ai/hypit",
+   "what_it_does": "A system that gives AI coding agents (Claude Code, Codex, etc.) a language (its SVML markup) to create video. You drop in a reference video and the agent clones it as a complete, editable, re-runnable workflow — footage, word-level captions, B-roll and effects, all anchored to words instead of seconds — so you can swap the host, topic, hook, language or aspect ratio and render many variants ('1 command, 100 variants'). It installs as an agent Skill; generation models are optional/pluggable (own API keys, local models, or its paid HypiHub service), so code-rendered clones can cost $0 while AI-generated footage costs money (~$1.07–1.15 per example clone in its README).",
+   "license": "Custom 'Hypit Open Source License' (GitHub: Other/NOASSERTION) — free inside your own organisation; hosting as a multi-tenant service or reselling requires a commercial licence; outputs belong to the user",
+   "language": "TypeScript",
+   "friday_agents": [
+    "VyralX"
+   ],
+   "source_videos": [
+    "DemU8amxpoC"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The concrete engine behind VyralX's viral-format cloning idea (its #1 content-pattern idea). The licence permits internal use, which is exactly VyralX's case. Keep renders code-based/$0 or on free tiers; per-clone AI-footage costs are spend to avoid by default.",
+   "friday_agent_raw": "VyralX"
+  },
+  {
+   "card": "jcode.md",
+   "name": "JCode",
+   "repo": "1jehuang/jcode",
+   "repo_url": "https://github.com/1jehuang/jcode",
+   "what_it_does": "A high-performance coding-agent harness written in Rust, built for heavy multi-agent/multi-session work. Its pitch is extreme efficiency vs Claude Code / Codex CLI — its README benchmarks claim ~71MB for the first headless session and ~3.3MB per additional session (vs ~169MB / ~194MB) and ~19ms time-to-first-input. It includes automatic semantic memory (each turn embedded and queried against a memory graph), parallel sessions coordinated by a server, a swarm tool where agents spawn/message collaborators and resolve file conflicts, built-in browser automation, many providers including Claude/Codex OAuth, and a self-dev mode.",
+   "license": "MIT",
+   "language": "Rust",
+   "friday_agents": [
+    "Forge"
+   ],
+   "source_videos": [
+    "Da5fhPriu3n"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The most hardware-honest tool in the corpus: its tiny footprint is exactly the shape FRIDAY's ~1GB servers demand. Evaluate as a reference architecture — and possibly a pilot harness — for Forge's build runtime (lean prompt/memory/session layer, parallel sessions, lead + helper agents).",
+   "friday_agent_raw": "Forge"
+  },
+  {
+   "card": "ltx-2.md",
+   "name": "LTX-2 / LTX-2.5 (Lightricks)",
+   "repo": "Lightricks/LTX-2",
+   "repo_url": "https://github.com/Lightricks/LTX-2",
+   "what_it_does": "The official Python inference and LoRA-training package for Lightricks' LTX-2.5 audio–video generative model (the legacy LTX-Video repo points here and is no longer actively developed). LTX-2.5 is a 22B DiT-based model generating synchronised audio+video from text/image/audio with native multi-shot generation; the repo provides multiple pipelines (distilled, production-quality, image-to-video, dubbing, etc.), ComfyUI integration and a trainer. Weights are gated Hugging Face downloads (~66 GiB).",
+   "license": "Code: Apache-2.0. Model weights: LTX-2.x Community License (free under $10M annual revenue; commercial licence above)",
+   "language": "Python",
+   "friday_agents": [
+    "VyralX"
+   ],
+   "source_videos": [
+    "DeyMp0wu1Gx"
+   ],
+   "fit": "reject",
+   "fit_rationale": "Reject for now on hardware alone: a 22B model with ~66GB of weights needs a serious GPU; the fleet has none and the free-tier rule rules out hosted generation APIs as a default. Revisit only if the owner gets GPU hardware. The open-source text/image-to-video idea stays on VyralX's list via lighter routes.",
+   "friday_agent_raw": "VyralX"
+  },
+  {
+   "card": "m3e-canvas.md",
+   "name": "M3E Canvas",
+   "repo": "lnkiai/m3e-canvas",
+   "repo_url": "https://github.com/lnkiai/m3e-canvas",
+   "what_it_does": "A free, open-source, browser-only sketchpad for app screens built from real Material 3 Expressive components. You drag parts onto phone or desktop screens, link screens into tap/swipe navigation flows, preview the flow in-browser, theme it (palettes, light/dark, fonts, motion), then copy the whole design out as a concise natural-language prompt/brief (in English, Japanese, Chinese or Korean) for an AI coding tool (Claude Code, Codex, Gemini CLI, Cursor) to build the app. It generates no code itself; there is no backend — a static Next.js export in localStorage, hosted free on GitHub Pages.",
+   "license": "MIT",
+   "language": "TypeScript (Next.js/React)",
+   "friday_agents": [
+    "Forge"
+   ],
+   "source_videos": [
+    "DejpO6SgeTK"
+   ],
+   "fit": "adopt",
+   "fit_rationale": "Zero server cost and a direct implementation of the corpus's sketch-to-prompt front-end idea: the owner sketches, M3E Canvas emits the structured prompt, Forge builds from it. Usable today via its GitHub Pages hosting; nothing to run on the fleet.",
+   "friday_agent_raw": "Forge"
+  },
+  {
+   "card": "nautilus-trader.md",
+   "name": "NautilusTrader",
+   "repo": "nautechsystems/nautilus_trader",
+   "repo_url": "https://github.com/nautechsystems/nautilus_trader",
+   "what_it_does": "A production-grade, Rust-native algorithmic trading engine with a deterministic event-driven architecture spanning research, backtesting and live execution in one system — the same strategy code runs in backtest and live with no reimplementation. Python is the control plane (Rust-only also possible). Asset-class-agnostic with modular adapters for crypto CEX/DEX, FX, equities, futures, options and brokers (Binance, Bybit, Coinbase, Kraken, OKX, Hyperliquid, Interactive Brokers, Polymarket, Kalshi), and nanosecond-resolution historical tick/bar/order-book backtesting.",
+   "license": "LGPL-3.0",
+   "language": "Rust core + Python control plane",
+   "friday_agents": [
+    "Stratex"
+   ],
+   "source_videos": [
+    "DegcLifkzmE"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "The backtest=live parity discipline is the design lesson for Stratex's rig. As a runtime it is far beyond the ~1GB servers and unnecessary for the current demo venues (Binance demo-fapi, OANDA practice) — do not adopt; revisit only if the fleet gets real hardware.",
+   "friday_agent_raw": "Stratex"
+  },
+  {
+   "card": "net-merge.md",
+   "name": "net-merge",
+   "repo": "net-merge/net-merge",
+   "repo_url": "https://github.com/net-merge/net-merge",
+   "what_it_does": "A free tool to use all your internet connections at once on Windows, macOS, Linux and Android. It creates a virtual TUN adapter and load-balances new connections across Wi-Fi, Ethernet, mobile data and phone tethers — no account, no server, no VPN. Its own README states the key limit honestly: a single connection stays on a single link, so one single-stream download does not get faster; gains come from apps that open many connections (Steam, browsers, torrents, download managers).",
+   "license": "MIT",
+   "language": "Go",
+   "friday_agents": [
+    "NONE (owner utility)"
+   ],
+   "source_videos": [
+    "DfMw-ZJTpjB"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "A handy owner-side utility with no FRIDAY-agent role. If Surendra wants faster downloads on his own machines it works as-is; nothing to implement into the fleet.",
+   "friday_agent_raw": "NONE (owner utility)"
+  },
+  {
+   "card": "omniroute.md",
+   "name": "OmniRoute",
+   "repo": "cheaper-inference/OmniRoute",
+   "repo_url": "https://github.com/cheaper-inference/OmniRoute",
+   "what_it_does": "A free, self-hosted AI gateway for coding tools (Claude Code, Codex, Cursor, Cline, Copilot, OpenCode). One local endpoint routes across 375+ providers (150+ free; 1,400+ models) using 'combos' — quota-aware fallback chains ordered Subscription → API → Cheap → Free — plus token compression (claimed 15–95% savings), MCP/A2A support and a dashboard. Its ~1.62B free-tokens/month headline is explicitly an aggregate of third-party free tiers you connect yourself, not a grant. (Original address diegosouzapw/OmniRoute redirects here.)",
+   "license": "MIT",
+   "language": "TypeScript (Node.js/Next.js)",
+   "friday_agents": [
+    "Inference"
+   ],
+   "source_videos": [
+    "DdPncBxAQoz"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "Same pattern as Inference's production gateway (which the corpus marks already-implemented for this idea family). The cherry-pick is its token-compression idea for squeezing free-tier quotas; do not adopt the gateway itself.",
+   "friday_agent_raw": "Inference"
+  },
+  {
+   "card": "openbb.md",
+   "name": "OpenBB (Open Data Platform)",
+   "repo": "OpenBB-finance/OpenBB",
+   "repo_url": "https://github.com/OpenBB-finance/OpenBB",
+   "what_it_does": "An open-source financial data platform: integrate proprietary, licensed and public data sources once and consume them everywhere — a Python SDK (pip install openbb), the OpenBB Workspace/Excel for analysts, MCP servers for AI agents, and REST APIs. Covers equities, crypto, derivatives, economics, fixed income and options. (The repo now renders under openbq-org stewardship; v5, Sep 2026, relicensed from AGPL-3.0 to Apache-2.0 — earlier releases remain AGPL.)",
+   "license": "Apache-2.0 (v5+; pre-v5 releases AGPL-3.0)",
+   "language": "Python",
+   "friday_agents": [
+    "Futuris",
+    "Stratex"
+   ],
+   "source_videos": [
+    "DcsyTU1DsT9",
+    "DegcLifkzmE"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The natural data backbone candidate for Futuris forecasting inputs (and the openbb_routes Stratex already carries). The full platform is far too heavy for the current ~1GB servers — adopt selectively (Python SDK / MCP surface) and only post-ARM. Apache-2.0 removes the old AGPL concern for new versions.",
+   "friday_agent_raw": "Futuris (data backbone); also Stratex"
+  },
+  {
+   "card": "openclaw.md",
+   "name": "OpenClaw",
+   "repo": "openclaw/openclaw",
+   "repo_url": "https://github.com/openclaw/openclaw",
+   "what_it_does": "An open-source personal AI assistant that runs on your own computer and meets you in the channels you already use (Discord, iMessage, Slack, Teams, Telegram, WhatsApp and 20+ more), with native apps for macOS, iOS, Android, Windows and Linux. A single local Gateway is the control plane for sessions, tools, events and channel connections. State, memory and credentials live on your hardware; models and agent harnesses (Claude, Codex, local models) are swappable plugins. Stewarded by the OpenClaw Foundation; no paid tier or hosted service.",
+   "license": "MIT",
+   "language": "TypeScript",
+   "friday_agents": [
+    "FRIDAY"
+   ],
+   "source_videos": [
+    "DeZ-JEFNTpR",
+    "DZPYR_0y4VV",
+    "De9Ih2LiSI7"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "A competing personal-assistant platform — adopting it would replace FRIDAY. The channel-gateway control-plane pattern is the lesson (FRIDAY's bridge/mesh plays this role today).",
+   "friday_agent_raw": "FRIDAY (architecture reference)"
+  },
+  {
+   "card": "openmausbot.md",
+   "name": "MausBot (OpenMausBot)",
+   "repo": "milind-soni/OpenMausBot",
+   "repo_url": "https://github.com/milind-soni/OpenMausBot",
+   "what_it_does": "A free, open-source desktop app (Electron/React) that unifies existing agent CLIs in one Telegram-style chat UI: every sidebar contact is a real bot — Claude Code, Codex, Grok and other engines (16 claimed, incl. Hermes and OpenClaw) running locally on the plan/API key you already have — each with its own personality, model, memory and connected apps. Data lives locally; bots can surface approval cards before acting. (An enterprise/ folder is source-available under a separate licence.)",
+   "license": "Apache-2.0 (enterprise/ folder under a separate source-available licence)",
+   "language": "TypeScript",
+   "friday_agents": [
+    "Forge"
+   ],
+   "source_videos": [
+    "DeZ-JEFNTpR"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "The unified multi-agent shell UX is the reference for Forge's builder-environment idea. A heavyweight Electron desktop app — not a fit for the 1GB servers, and FRIDAY's fleet already has its own coordination surface.",
+   "friday_agent_raw": "Forge"
+  },
+  {
+   "card": "openterminal.md",
+   "name": "OpenTerminal (ErTasselli)",
+   "repo": "ErTasselli/openterminal",
+   "repo_url": "https://github.com/ErTasselli/openterminal",
+   "what_it_does": "A terminal-style, self-hosted trading dashboard built entirely on free public market data — no API keys, no subscriptions. Dark, dense, keyboard-driven widget workspace (drag/resize, persisted layouts): professional charting (candlesticks, 8 timeframes, SMA/EMA/VWAP/Bollinger/RSI/MACD), quotes, watchlists, a full-market screener, live sector heatmap, options chain, crypto board, macro dashboard, portfolio tracker (SQLite), economic/earnings calendar, aggregated news, a command palette, and an optional Claude assistant. Data is stitched from free endpoints (Nasdaq, TradingView, Yahoo/Stooq, CoinGecko/Binance, FRED) with fallback chains.",
+   "license": "MIT",
+   "language": "TypeScript (Next.js/React + Node/Express)",
+   "friday_agents": [
+    "Stratex"
+   ],
+   "source_videos": [
+    "DegcLifkzmE"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "Its dense multi-panel composition is already stored as the 'trading-terminal' design candidate. The TypeScript stack doesn't fit the fleet's Python services; the transferable assets are the layout and the free-data fallback-chain pattern.",
+   "friday_agent_raw": "Stratex (dashboard/UX reference)"
+  },
+  {
+   "card": "paperclip.md",
+   "name": "Paperclip",
+   "repo": "paperclipai/paperclip",
+   "repo_url": "https://github.com/paperclipai/paperclip",
+   "what_it_does": "An open-source orchestration platform for teams of AI agents — 'If OpenClaw is an employee, Paperclip is the company.' A self-hosted Node.js server + React UI that hires agents (Claude Code, Codex, Cursor, OpenClaw, etc.) into an org chart (CEO/CTO/engineers/marketers) with goals, tasks/tickets, heartbeats, per-agent budgets, approvals/governance and audit logs. Bring-your-own-agent; no account required.",
+   "license": "MIT",
+   "language": "TypeScript (Node.js + React)",
+   "friday_agents": [
+    "Forge"
+   ],
+   "source_videos": [
+    "DeihJQuCpdp"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "Its org-chart + budgets + approvals governance mirrors FRIDAY's board/coordination model — mine the governance patterns. Running another Node orchestration server alongside the fleet on ~1GB VMs is not viable.",
+   "friday_agent_raw": "Forge (also FRIDAY/Cortex orchestration reference)"
+  },
+  {
+   "card": "pentagi.md",
+   "name": "PentAGI",
+   "repo": "vxcontrol/pentagi",
+   "repo_url": "https://github.com/vxcontrol/pentagi",
+   "what_it_does": "A self-hosted, fully autonomous multi-agent penetration-testing platform. Specialised agents (researcher, planner, executor, advisers/reflectors/memorists) research a target, plan the test, and run 20+ real security tools (Nmap, SQLMap, Metasploit, etc.) inside isolated Docker sandboxes, storing findings in PostgreSQL/pgvector with an optional knowledge graph, then produce a report. Supports cloud LLMs or local models via Ollama/vLLM. Its docs stress authorised targets only (separate EULA).",
+   "license": "MIT",
+   "language": "Go + TypeScript/React",
+   "friday_agents": [
+    "Sentinel"
+   ],
+   "source_videos": [
+    "Deo925ayzJ9"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "Far too heavy for the fleet (Docker sandboxes + Postgres + Neo4j on ~1GB VMs) and offensive in remit, while Sentinel is defensive. Mine the specialised-agent role design only; any real use would need separate hardware and the owner's explicit authorisation.",
+   "friday_agent_raw": "Sentinel"
+  },
+  {
+   "card": "plexo.md",
+   "name": "Plexo",
+   "repo": "anmolkapil/plexo",
+   "repo_url": "https://github.com/anmolkapil/plexo",
+   "what_it_does": "A free, open-source desktop download manager (Windows/macOS/Linux, Electron) that speeds up a single download: it splits one file into chunks via HTTP range requests and downloads chunks in parallel across every selected connection (Wi-Fi + Ethernet + USB-tethered phone), balancing load, racing slow tail chunks, then reassembling and verifying the file. Also handles torrents, magnet/.torrent and Usenet NZBs, browser-extension capture, pause/resume and scheduling. Caveat from its README: each network needs its own upstream — Wi-Fi + Ethernet on the same router adds nothing. Pre-release (v1.0.0-rc), installers not yet code-signed.",
+   "license": "MIT",
+   "language": "TypeScript (Electron/React)",
+   "friday_agents": [
+    "NONE (owner utility)"
+   ],
+   "source_videos": [
+    "DfLMPvpMeL7"
+   ],
+   "fit": "reference-only",
+   "fit_rationale": "Owner-side utility, no FRIDAY-agent role. Unlike net-merge it genuinely accelerates single downloads; usable by the owner as-is once it hits 1.0.",
+   "friday_agent_raw": "NONE (owner utility)"
+  },
+  {
+   "card": "project-nomad.md",
+   "name": "Project NOMAD (Crosstalk Solutions)",
+   "repo": "Crosstalk-Solutions/project-nomad",
+   "repo_url": "https://github.com/Crosstalk-Solutions/project-nomad",
+   "what_it_does": "A self-contained, offline-first knowledge and education server ('Node for Offline Media, Archives, and Data'). A Docker-orchestrated management UI/API installs and manages containerised tools for use with no internet after initial setup: offline Wikipedia/medical references/ebooks via Kiwix, Khan Academy via Kolibri, downloadable offline maps via ProtoMaps, local AI chat with document upload and RAG via Ollama + Qdrant, CyberChef, FlatNotes, and a one-click app catalogue. Zero built-in telemetry; by design it has no authentication and is not meant to be exposed directly to the internet.",
+   "license": "Apache-2.0",
+   "language": "TypeScript/Node (AdonisJS) Command Center + Docker/shell orchestration",
+   "friday_agents": [
+    "FRIDAY"
+   ],
+   "source_videos": [
+    "Ddy9EMkCb3Z"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The pattern source for FRIDAY's offline-first fallback mode (local LLM + local knowledge store). The full Docker stack is too heavy for the current servers — adopt the pattern in miniature now, fuller version post-ARM (Qdrant is already in FRIDAY's post-ARM plan).",
+   "friday_agent_raw": "FRIDAY"
+  },
+  {
+   "card": "scrcpy.md",
+   "name": "scrcpy (Genymobile)",
+   "repo": "Genymobile/scrcpy",
+   "repo_url": "https://github.com/Genymobile/scrcpy",
+   "what_it_does": "Mirrors an Android device (video + audio) to Linux/Windows/macOS over USB or TCP/IP and lets you control it with the computer's keyboard and mouse. No root, nothing left installed on the device, no account or internet required. Focused on lightness and performance (30–120 fps, 35–70ms latency, ~1s startup); features include audio forwarding, recording, virtual display, screen-off mirroring, bidirectional copy-paste, camera mirroring and HID input.",
+   "license": "Apache-2.0",
+   "language": "C",
+   "friday_agents": [
+    "Laptop-Phone-control"
+   ],
+   "source_videos": [
+    "DYQ2Z2aiaLf"
+   ],
+   "fit": "adopt",
+   "fit_rationale": "The proven transport for Android screen mirror + control that PHONE-001's Termux executor lacks. Mature, tiny, Apache-2.0 — adopt as the mirror/control layer alongside the existing phone bridge.",
+   "friday_agent_raw": "Laptop-Phone-control"
+  },
+  {
+   "card": "strata.md",
+   "name": "Strata",
+   "repo": "Niko1221/Strata",
+   "repo_url": "https://github.com/Niko1221/Strata",
+   "what_it_does": "A local MoE inference engine that runs very large models on consumer hardware by treating experts as a cache: hot experts stay in GPU VRAM, the rest tier across system RAM and SSD. Ships desktop and terminal apps, serves OpenAI- and Anthropic-compatible APIs on localhost for Claude Code/Codex/OpenCode, no account or telemetry. Launch models include a 125B-class Qwen MoE and DeepSeek Flash; reference hardware is a 12GB consumer GPU + ~64GB RAM. IMPORTANT CORRECTION: the reel frames Strata as a way to run a 125B model on free Kaggle GPUs — the repo does not support that framing; it targets your own consumer PC (Cloudflare Tunnel is only an optional remote-access mode). The Kaggle dual-T4 guides that exist are for other projects.",
+   "license": "MIT",
+   "language": "C++/CUDA (+ Python CLI)",
+   "friday_agents": [
+    "Inference"
+   ],
+   "source_videos": [
+    "DfCb_QSk3PC"
+   ],
+   "fit": "reject",
+   "fit_rationale": "Reject for the fleet: it needs a 12GB GPU and ~64GB RAM; the Oracle servers have neither, and there is no Kaggle path in the repo despite the video's claim. At most a future experiment on the owner's own PC.",
+   "friday_agent_raw": "Inference"
+  },
+  {
+   "card": "uplika.md",
+   "name": "Uplika (uplika-mcp setup repo)",
+   "repo": "uplika/uplika-mcp",
+   "repo_url": "https://github.com/uplika/uplika-mcp",
+   "what_it_does": "Uplika is a hosted MCP server that lets an AI agent (Claude, Claude Code, Codex, ChatGPT) publish text/images/video to connected social accounts (Threads, Instagram, YouTube, Facebook, TikTok, Pinterest, Bluesky, Telegram, Discord, Ghost), schedule posts, read/reply to comments, hide comments, and read insights/analytics — the corpus video uses it to run a YouTube channel (analytics → winning formats → titles/hooks/descriptions → scheduling → comments) behind human approval. CRITICAL CAVEAT from its own README: this repository holds setup notes only — 'The server itself is a hosted service and its code is not published here.' The repo is a single README (3 commits, ~2 stars). The service is commercial: free plan/beta, then $10/mo per brand per its terms.",
+   "license": "Not stated (no LICENSE in repo; server closed-source)",
+   "language": "None — no code in the repo",
+   "friday_agents": [
+    "VyralX"
+   ],
+   "source_videos": [
+    "Deg194ZD1eE"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "Adopt the pattern, not the dependency: the approval-gated channel-operator loop is exactly VyralX's agent-operated-channel idea, and VyralX should implement it natively (it also sidesteps VyralX's dead YouTube OAuth only if Uplika's own YouTube connection works — unproven). The hosted service itself is recurring paid spend ($10/mo/brand), which stays the owner's call.",
+   "friday_agent_raw": "VyralX"
+  },
+  {
+   "card": "voicestudio.md",
+   "name": "VoiceStudio",
+   "repo": "debpalash/VoiceStudio",
+   "repo_url": "https://github.com/debpalash/VoiceStudio",
+   "what_it_does": "A free, fully-local, open-source voice studio billed as 'the open-source, fully-local ElevenLabs alternative': clone a voice from a short clean reference recording, design a voice from a text description, dub/translate videos with timed speech, dictate via a floating widget, transcribe, and narrate audiobooks — in 646 languages via its default engine (k2-fsa/OmniVoice, with dozens of other engines selectable). It runs entirely on the user's own hardware (Electron desktop app + local Python/FastAPI backend, Docker option), needs no account or API keys, and exposes a local API and MCP for agents/scripts.",
+   "license": "AGPL-3.0 for the app — BUT the default OmniVoice model weights are CC-BY-NC (non-commercial) per the repo's licence notice; per-engine licences vary; voice cloning requires the voice owner's permission",
+   "language": "Python backend (Electron/TypeScript shell)",
+   "friday_agents": [
+    "Voice"
+   ],
+   "source_videos": [
+    "De1wM7TxD8D",
+    "DeihJQuCpdp"
+   ],
+   "fit": "adapt",
+   "fit_rationale": "The corpus's local voice-cloning candidate for FRIDAY's voice. Runs on the owner's hardware, not the servers. Licence care is mandatory: the app is AGPL and the default engine's weights are non-commercial — fine for FRIDAY's private use, not for any commercial/public output without checking the chosen engine's licence. Gemini Live remains FRIDAY's voice engine; this is a TTS voice-source experiment.",
+   "friday_agent_raw": "Voice"
+  }
+ ]
+}
