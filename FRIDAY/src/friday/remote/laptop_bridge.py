@@ -14,6 +14,11 @@ Security posture:
   this host; the client refuses it again unless the same flag is set locally.
 * Every result is bounded to :data:`MAX_OUTPUT_BYTES` so a chatty command cannot
   exhaust cloud memory. The output is evidence, not a transport for files.
+* TASK-LAP-001: ``screenshot_data`` is the one exception to the evidence-only
+  rule — it returns the captured image as a result-frame ``attachment``
+  (base64 JPEG, downscaled by the client). Attachments are validated and
+  capped separately at :data:`MAX_ATTACHMENT_BYTES`; they never enter the
+  bounded ``output`` text.
 """
 
 from __future__ import annotations
@@ -35,15 +40,25 @@ logger = get_logger("remote.laptop_bridge")
 MAX_OUTPUT_BYTES = 16 * 1024
 MAX_ERROR_CHARS = 2 * 1024
 MAX_ARGS_BYTES = 64 * 1024
+# Base64 characters; ~1.8 MB of binary image at the cap. Only screenshot_data
+# may carry an attachment, and the client downscales to <=1280px JPEG first,
+# so a real attachment is far below this cap — the cap exists so a hostile or
+# buggy client cannot stream unbounded data through a result frame.
+MAX_ATTACHMENT_BYTES = 2_500_000
 DEFAULT_COMMAND_TIMEOUT = 30.0
 MAX_COMMAND_TIMEOUT = 300.0
 MAX_KNOWN_DEVICES = 64
 
 SHELL_COMMAND = "run_shell"
+SCREENSHOT_DATA_COMMAND = "screenshot_data"
 ALLOWED_LAPTOP_COMMANDS = frozenset(
     {
         "screenshot",
+        SCREENSHOT_DATA_COMMAND,
         "open_url",
+        "open_app",
+        "type_text",
+        "click",
         "list_files",
         "read_file",
         SHELL_COMMAND,
@@ -150,6 +165,32 @@ def _normalise_args(args: dict[str, Any] | None) -> dict[str, Any]:
     return dict(args)
 
 
+def _normalise_attachment(command: str, raw: Any) -> dict[str, Any] | None:
+    """Validate a result-frame attachment, or return ``None`` to drop it.
+
+    Only ``screenshot_data`` may carry one, only as a base64 image, and only
+    up to :data:`MAX_ATTACHMENT_BYTES`. Anything else — wrong command, wrong
+    shape, oversize — is dropped rather than trusted, and the caller records
+    that it was dropped so the loss is never silent.
+    """
+    if command != SCREENSHOT_DATA_COMMAND or not isinstance(raw, dict):
+        return None
+    if raw.get("kind") != "image":
+        return None
+    fmt = str(raw.get("format") or "").lower()
+    if fmt not in {"jpeg", "jpg", "png"}:
+        return None
+    data = raw.get("base64")
+    if not isinstance(data, str) or not data or len(data) > MAX_ATTACHMENT_BYTES:
+        return None
+    attachment: dict[str, Any] = {"kind": "image", "format": fmt, "base64": data}
+    for key in ("width", "height"):
+        value = raw.get(key)
+        if isinstance(value, int) and value > 0:
+            attachment[key] = value
+    return attachment
+
+
 def _evidence(
     *,
     request_id: str,
@@ -160,8 +201,9 @@ def _evidence(
     ok: bool,
     output: Any,
     error: Any,
+    attachment: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    evidence = {
         "request_id": request_id,
         "laptop_id": laptop_id,
         "command": command,
@@ -171,6 +213,9 @@ def _evidence(
         "output": _bounded(output),
         "error": None if error is None else _bounded(error, MAX_ERROR_CHARS),
     }
+    if attachment is not None:
+        evidence["attachment"] = attachment
+    return evidence
 
 
 @dataclass
@@ -392,6 +437,13 @@ class LaptopBridge:
                 ),
             )
 
+        attachment = _normalise_attachment(command, result.get("attachment"))
+        if attachment is None and result.get("attachment") is not None:
+            logger.warning(
+                "Dropped invalid/oversize attachment from laptop %s (%s)",
+                laptop_id,
+                command,
+            )
         evidence = _evidence(
             request_id=request_id,
             laptop_id=laptop_id,
@@ -401,6 +453,7 @@ class LaptopBridge:
             ok=bool(result.get("ok")),
             output=result.get("output"),
             error=result.get("error"),
+            attachment=attachment,
         )
         logger.info(
             "Laptop command completed: %s %s ok=%s request=%s",
@@ -451,7 +504,9 @@ laptop_bridge = LaptopBridge()
 __all__ = [
     "ALLOWED_LAPTOP_COMMANDS",
     "DEFAULT_COMMAND_TIMEOUT",
+    "MAX_ATTACHMENT_BYTES",
     "MAX_OUTPUT_BYTES",
+    "SCREENSHOT_DATA_COMMAND",
     "LaptopBridge",
     "LaptopBridgeError",
     "LaptopBridgeTimeout",
