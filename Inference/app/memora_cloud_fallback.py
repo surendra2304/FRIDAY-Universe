@@ -70,8 +70,11 @@ class MemoraClient:
 
     def record_fact(self, agent_name: str, fact_text: str, category: str = "general", importance: float = 0.8, entities=None, confidence: float = UNVERIFIED_MODEL_CONFIDENCE):
         """Stores a fact. ``confidence`` defaults to the unverified prior (was a fixed 1.0)."""
+        # TASK-MEM-008: Memora policy rejects direct SEMANTIC writes from agent
+        # identities (HTTP 403); peers store observations as EPISODIC and
+        # semantic promotion happens server-side via the evidence workflow.
         return self._request(agent_name, "/v1/memories", method="POST", payload={
-            "content_text": fact_text, "memory_type": "semantic", "source": f"agent:{agent_name.lower()}",
+            "content_text": fact_text, "memory_type": "episodic", "source": f"agent:{agent_name.lower()}",
             "confidence": confidence, "importance": importance,
             "provenance": {"category": category, "entities": entities or [agent_name.lower(), category]},
         })
