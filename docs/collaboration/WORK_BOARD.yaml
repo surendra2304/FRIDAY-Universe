@@ -5837,7 +5837,46 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "AFTER = candidate probe on Server 1 with the exact PR file (fingerprint chain: deployed blob 52d81b1d == pre-fix HEAD; candidate blob 3de00dce == PR file byte-identical; production code untouched, service never restarted; envelopes /tmp/int003/after/). SCORES after: D1 mean 2.17 (distribution improved — Q1 0->4 domains incl. nasa.gov reached, no zero-source question; Q2/Q4/Q5 fell on this run set), D2 mean 0.17 (REGRESSED on the probe run set — the fix widens but does not prefer primary sources; named follow-up, not hidden), D3 mean 4.0, D4 mean 2.8 with verified fraction 63% -> 77% (30/39; Q5-after not scoreable, refetch refused). Envelope SUCCESS 4/6; fetch failures absorbed 45 vs 59 baseline."
     blockers: []
     next_action: "Coordinator: merge PR #322, deploy via Fleet CD, then re-run the fixed six-question set against the deployed service and flip this entry VERIFIED via a fresh-main board PR (production-verified state is still owed). Follow-ups named in the score doc: primary-source preference in candidate ordering (the D2 lever), synthesis quote-gate flakiness (now the weakest link), passage-level near-duplicate dedupe, wiring intelx/core/contradiction.py into the live path."
-task_id_warnings:
+  - id: TASK-SEN-007
+    title: 'Backup freshness audit (Wave-5, Sentinel): fleet DB backup never completed and its weekly schedule never fired; Stratex forward-test ledger covered by no
+      backup; master credentials dossier single-copy — audit + repo-side fix for the ledger gap'
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: claude/task-sen-007-backup-audit
+    pr: null
+    defect: 'Read-only audit (2026-11-15, both servers + GitHub API + on-server manifests; doc: docs/observability/BACKUP_FRESHNESS_AUDIT_2026-11-15.md). (1) The fleet
+      database backup (TASK-INF-003) has NEVER completed: exactly 2 Actions runs ever (2026-11-10, both failure); manifest of run 1 shows agents: [] (configs only),
+      run 2 dumped only FORGE/INTELX/STRATEX with STRATEX tables at 0 rows; 7 of 10 schemas incl. MEMORA have no dump at all; the weekly schedule (Sun 03:30 UTC) has
+      never fired although the workflow has been on main since 2026-11-10; both partial artifacts sit only on Server 1 (/var/backups/friday-universe, 100K + 240K).
+      (2) The Stratex phase-3 evidence trail (Stratex/state/fill_ledger.jsonl, equity_snapshots.jsonl — appended live 2026-11-15 13:38 IST — position_tags.jsonl) is
+      git-ignored local files: covered by NO backup (not git, not Oracle, outside the backup tool''s scope). (3) CREDENTIALS.md master dossier exists as ONE copy on
+      Server 2 (16,951 B, mtime 2026-11-09); the sync-credentials workflow (1 run, success 2026-11-11) reconstructs only the lowercase Telegram-subset file from GitHub
+      Secrets. (4) VyralX media schema never backed up (workflow never passes --media; media DB credentials live on Server 2, backup runs on Server 1). (5) Per-agent
+      .env files are outside the backup''s config snapshot. (6) No OCI snapshot mechanism evidenced on either server (no backup cron/timers/units, no oci CLI in PATH);
+      restore never drilled in production (ledger-persistence drill workflow: 0 runs ever). Code + board/plan docs are healthy (GitHub, pushed 2026-11-15T08:05:45Z).'
+    evidence:
+    - 'GitHub Actions API: Fleet Backup workflow 413383579 — total 2 runs (42835686434 2026-11-10T14:35:47Z failure; 42836955350 2026-11-10T14:43:20Z failure), both
+      workflow_dispatch, zero schedule runs; Sync Credentials — 1 run 2026-11-11 success; Ledger Persistence Drill — 0 runs.'
+    - 'Server 1 manifests read live: /var/backups/friday-universe/20261110T143601Z/manifest.json (agents: [], configs incl. db-credentials.env + systemd units) and
+      20261110T144336Z/manifest.json (FORGE/INTELX/STRATEX only; STRATEX ORDER_INTENTS/ORDER_AUDIT_EVENTS/TRADING_JOURNAL/PORTFOLIO_EQUITY_STATE all row_count 0).'
+    - 'Server probes 2026-11-15: Stratex/state file stats + Stratex/.gitignore:143 state/ (git check-ignore confirms); Memora has no local store files (store = Oracle
+      MEMORA schema); CREDENTIALS.md present only on Server 2; /etc/friday-universe contents on both servers; no backup cron/timers/units on either server.'
+    - 'FIX IN THIS PR: scripts/backup_fleet_databases.py — snapshot_agent_state() copies Stratex/state/*.jsonl|*.json (minus .lock sidecars, STRATEX_STATE_DIR honoured)
+      into every backup''s configs/agent-state/ at mode 600, inside the existing --verify existence pass; tests/test_backup_fleet_databases.py +3 tests (TestAgentStateSnapshot)
+      — local run: 3/3 new pass, full file 16 passed + 1 pre-existing environment failure (test_large_fetch_batches writes to a full /tmp; fails identically on unmodified
+      main).'
+    blockers: []
+    next_action: 'Coordinator: merge this PR, then work the audit''s coordinator actions in order — G1 diagnose the two failed backup runs + one supervised full backup
+      (all 10 schemas) + fix/re-arm the schedule + failure alerting; G2 interim manual copy of Stratex/state/ to Server 2 today; G3 offsite copy decision (drill doc
+      recommendation open since 2026-11-10); G4 encrypted off-fleet copy of CREDENTIALS.md (owner); G5 media-schema backup route; G6 --verify + ledger drill after the
+      first complete backup. SEN-007 itself changes nothing on the servers.'
+    files:
+      - "docs/observability/BACKUP_FRESHNESS_AUDIT_2026-11-15.md"
+      - "scripts/backup_fleet_databases.py"
+      - "tests/test_backup_fleet_databases.py"
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
