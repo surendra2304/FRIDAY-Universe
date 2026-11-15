@@ -5420,6 +5420,199 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Generator (app/services/packaging_generator.py): deterministic, no network/randomness; proposes exactly 3 variants (fact_first / curiosity_gap / scale_or_story), scores 0-100 (title 40 + thumbnail 25 + hook 35) with rule citations; scores labelled research priors, NOT predicted CTR (channel has no metrics — VYR-005 autopsy VIDEO_METRICS=0 rows). Never invents facts: missing required slots fail, missing optional slots leave the variant ungenerated at 0."
       - "Coordination: TASK-VYR-005 owns the autopsy + packaging rules (packaging.py); this task consumes their findings and composes their lints when importable (mirrored otherwise) — no duplicated autopsy, no duplicated lint ownership. Tests test_vyr008_packaging_generator.py 8/8 locally, standalone and with packaging.py present. Samples: Space/Venus curiosity_gap 76; History/Titanic scale_or_story 79 (hook 35/35); Tech/AI-exam fact_first 80."
     next_action: "Coordinator: merge the code PR, then this board PR (fresh-main, insertion-only). Follow-up once uploads resume and a VIDEO_METRICS job exists: refit the R-rule weights on the channel's own CTR/retention data and A/B the generator's top-2 variants per video."
+  - id: TASK-REL-046
+    title: "Local staging fleet + local-first pipeline — 10-agent replica on Muse's side under production memory caps, one-command smoke gate as the pre-merge gate, collaboration docs amended (owner direction 2026-11-15: Oracle/bridge is the bottleneck; test locally, push only proven work)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ta***REDACTED***
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T15:35:00+05:30"
+    updated_at: "2026-11-15T16:10:00+05:30"
+    files:
+      - "staging/fleet_manifest.yaml"
+      - "staging/staging_fleet.py"
+      - "staging/smoke_gate.py"
+      - "staging/requirements-staging.txt"
+      - "staging/.gitignore"
+      - "staging/README.md"
+      - "staging/RESULTS_REL046.md"
+      - "docs/collaboration/LOCAL_FIRST_PIPELINE.md"
+      - "docs/collaboration/README.md (one section added)"
+      - "docs/collaboration/WORK_BOARD.yaml (this entry — delivered via the completion comment, INF-003 precedent: the ~600 KB board file cannot transit the crew sandbox; coordinator applies it as a single-entry board PR with the full task-id set diffed)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6892676297"
+    acceptance:
+      - "Staging fleet: local replica of all 10 agents from the repo, production boot recipes (deploy/setup_fleet.sh) and production memory caps (AGENTS.yaml v3.0.0), dummy credentials ONLY (every value a literal staging-dummy placeholder; production secrets never copied), health endpoints answering for every agent that can boot in the sandbox; start/stop/smoke documented in staging/README.md."
+      - "Smoke gate: one script (staging/smoke_gate.py) boots the fleet, enforces caps via a watchdog, runs health + one representative read-only probe per agent, prints a pass/fail/exempt table, exit 0 only when every non-exempt agent passes; designated the pre-merge gate in docs/collaboration/LOCAL_FIRST_PIPELINE.md."
+      - "Pipeline doc: local-first rule (build/test locally → staging smoke gate → PR → merge → Fleet CD → production probe) plus the explicit never-stageable list (live demo-trading credentials/sessions, LiveKit Cloud voice with real keys, production data volumes, owner's phone/laptop) which still needs the bridge, batched and sparingly."
+      - "Proof: the gate run once end-to-end with the real output table in staging/RESULTS_REL046.md; any agent that cannot boot in the sandbox is staging-exempt with the reason — never a faked pass."
+    evidence:
+      - "PROOF RUN (2026-11-15, main 56e28e6 tree, cap enforcement live throughout; full table in staging/RESULTS_REL046.md): 3 PASS (Inference 108M/180M, /v1/models 200; Cortex 124M/200M, probe 200; FRIDAY 189M/200M, /api/tools 200), 2 OOM-KILLED (Stratex — boots and answers health 200 but RSS peak 234 MB / steady ~199 MB vs 180 MB cap, dedicated 110 s RSS-curve diagnostic; Futuris — health 200 but ~194 MB steady vs 180 MB cap, killed in the probe phase), 5 EXEMPT (Memora, IntelX, Forge, Sentinel, VyralX — each connects to Oracle during startup and aborts when unreachable, oracledb DPY-6005; no Oracle instance exists in the sandbox). Gate exit code 1 — the fleet is honestly RED against its own gate today on two footprint findings."
+      - "An earlier full run printed 5 PASS / exit 0 and is INVALID (disclosed in RESULTS_REL046.md): a dict-mutation race crashed the watchdog thread seconds in, so caps were unenforced while Stratex 'passed' at 225 MB. Fixed (snapshot iteration + watchdog error logging) and re-run; the re-run is the proof. A leftover-process false PASS during development likewise produced three gate safety rails: pre-flight port check, post-probe liveness re-check, teardown verification."
+      - "Boot-class map is architectural and code-evidenced: lazy-pool agents (Inference, Futuris, Cortex, FRIDAY, Stratex dashboard) boot degraded against a dummy Oracle DSN on a dead local port; eager agents fail closed at startup (Memora storage/relational/session.py create_db_engine, exit 3, 'refusing to open a local SQLite fallback'). The fleet is Oracle-only by design (repo AGENTS.md); a local Oracle was considered and rejected for the sandbox (no container runtime, multi-GB image, ~1–1.5 GB free RAM)."
+      - "Staging-config fixes from the shake-out (no agent code changed): dummy DATABASE_URL fleet-wide; NO_PROXY sanitised for staging agents (the sandbox value's bracketed IPv6 literals crash httpx's proxy parser — production unaffected); PYTHONPATH mirrors production (<agent>:<repo root>, which carries the shared mesh package); FRIDAY's second src root; Stratex health path /api/v1/health; dummy Sentinel audit signing keys (Sentinel refuses to boot without one, by design)."
+      - "Environment caveat, stated in both docs: staging is Python 3.12 + system library builds vs production's 3.10 venv, so absolute RSS deltas (Stratex/Futuris over cap here, within cap in production) are footprint-risk signals with the version delta as first suspect — not proof of a production breach. Caps were NOT raised to make the table green."
+    blockers: []
+    next_action: "Coordinator: (1) apply this board entry via a single-entry board PR from fresh main (full task-id set diffed — the crew sandbox could not transit the ~600 KB board file; INF-003 precedent), (2) review and merge the TASK-REL-046 PR (staging/ + pipeline docs + collaboration README section), (3) decide the Stratex/Futuris footprint question (footprint work vs closing the Python 3.12→3.10 staging delta) as its own task, (4) the five exempt agents keep the bridge-probe path until a local Oracle or lazy-boot mode exists."
+  - id: "TASK-INT-005"
+    title: "IntelX fact-check sampling — measured accuracy of stored research claims"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-int-005-fact-check"
+    pr: null
+    merge_note: "Census audit complete (PR open, coordinator merges): all 39 findings stored in IntelX production live_research_runs verified (35 CLAIMs + 4 NON_CLAIM boilerplate). Accuracy 65.7% VERIFIED (23/35 claims; 10 PARTIAL, 2 UNVERIFIABLE, 0 UNSUPPORTED, 0 CONTRADICTED) — BELOW the pre-declared >=90% standard; zero fabricated facts found (all defects are citation hygiene). Deliverables: IntelX/docs/RESULTS_INT-005_FACT_CHECK.md + IntelX/docs/results_int-005_fact_check.json. Population caveat: 8/10 runs are crew test probes (REL-038/INT-003, 2026-11-14/15); production claims/evidence tables are empty."
+    blockers: []
+    next_action: "Coordinator: merge the audit PR, then dispatch the verification-pass follow-up specified in RESULTS section 6 (verbatim quote gate, statement-coverage check, degraded-mode boilerplate filter, visible corroboration flag, re-audit hook). Also: live-browser re-check of the Northwell page (2 UNVERIFIABLE claims) and the TechTarget/USENIX quotes (2 PARTIALs)."
+  - id: TASK-FRG-011
+    title: "Forge verdict-surface consistency: one authoritative verdict derivation (Forge/app/verification/verdict.py) settled at finalization via OrchestratorCore.apply_final_verdict and stamped on task record + verification manifest; delegate execute_now/status/verify and read surfaces derive from it (stricter verdict wins; battery PARTIAL never surfaces as SUCCESS; FAILED reconciles to SUCCESS only when the failure is positively identified as superseded gate verdicts — REL-019 unexplained-failure guard preserved; FORGE-002 demotion preserved)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: "#407"
+    evidence: "PR #407 CI green (8 check runs: 7 success, 1 skipped, 0 failures), head 3b1fd31c0d34 parented on main f313c31f335b; base verified by blob SHA at the PR base (orchestrator 5c2edaa6b023, delegate 88eba62cffd0, evidence b0c0c4505c93 identical to validated base 99ba9da83d0e; both new files absent). Divergence reproduced on pristine main with a standalone driver (R5 shape: gate-latched FAILED + final battery 11/11 all_passed -> store FAILED, status endpoint FAILED embedding an all_passed/PASSED manifest). New suite Forge/tests/test_frg011_verdict_consistency.py 9/9 on the fix tree, collection-errors on main; neighbour batch 71/71; full Forge suite excl. integration failure sets byte-identical fix-tree vs pristine main (100 pre-existing sandbox-env failures both sides). Claim comment 6894711637; completion comment is this one."
+    next_action: "Merge PR #407 -> Fleet CD -> post-deploy drill on Server 1: run one delegate build whose in-graph gate fails transiently but whose final battery passes (R5 shape) and confirm delegate response, status endpoint and task record all read SUCCESS with the gate named in verdict_superseded; then flip VERIFIED. Residuals (advisory CLI/delivery battery re-runs for display; legacy unstamped records) documented in the completion comment."
+  - id: TASK-FRD-006
+    title: "Stop FRIDAY peer-escalation broadcasting memory_recall/source_repair to peers that cannot serve them"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frd-006
+    pr: 411
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6895109264
+    summary: "ReflexBrain peer escalation now routes by PeerContract.declared_actions: memory_recall only to Memora (sole declarer), source_repair only to declaring peers (none today, so the fault stays local and surfaces unrepaired instead of broadcasting). Skipped peers are reported with reasons; Cortex untouched; escalation via verified receipts preserved for declared actions. Fail-on-main 15 / pass-on-fix 30/30; neighbours 159 passed (2 pre-existing sandbox failures, identical on main)."
+    next_action: "Merge-runner: merge PR #411 on green CI. Post-deploy (coordinator): the next unrepaired FRIDAY fault episode should produce ZERO POST /v1/task/execute 403s in Cortex's journal (and, once COR-009's PR #406 is deployed, zero task_execute_rejected lines for memory_recall/source_repair) -> flip VERIFIED. Follow-up candidate: align the memory_recall action name with Memora's served vocabulary (recall)."
+    files:
+      - FRIDAY/src/friday/cognition/assistance.py
+      - FRIDAY/src/friday/cognition/mesh.py
+      - FRIDAY/src/friday/cognition/reflex.py
+      - FRIDAY/tests/test_fleet_memory_recall.py
+      - FRIDAY/tests/test_frd006_peer_routing.py
+      - FRIDAY/tests/test_reflex_asks_for_help.py
+  - id: TASK-VYR-010
+    title: "VyralX publish-priority model — ranks the ready pool (29 unlisted + 17 upload-failed) from stored production data so the strongest videos publish first when the owner's YouTube re-auth lands"
+    owner: muse_ai
+    status: IN_PROGRESS
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/ta***REDACTED***"
+    pr: 335
+    evidence:
+      - "Claim: GitHub issue #35 comment 6892002123 by Muse (TASK-VYR-010 crew) before any editing. READ-ONLY against production (SELECT probes only); nothing uploaded, published, or privacy-flipped."
+      - "MODEL (VyralX/app/services/publish_priority.py, stdlib-only, model vyr010-1): five stated-weight metadata components — duration_fit 0.30, title_strength 0.30 (TASK-VYR-005 PACKAGING rules as scores), source_signal 0.20 (labelled proxy: the source's virality was never recorded, only its title markers are read), format_fit 0.10, freshness 0.10 (narrow tiebreak) — renormalised over present components; engagement component (views/likes, weight 0.35) implemented but INACTIVE for this pool. Deterministic; missing inputs reported per row, never invented."
+      - "DATA HONESTY (own read-only SELECT probe, VyralX production DB on Server 2, 2026-11-15; confirms TASK-VYR-005): VIDEO_METRICS = 0 rows, CONTENT_PACKS = 0 rows, publish_jobs = 46, trend_score 0.0 / trend_query NULL / trend_source_video_id NULL for all 46, exactly ONE distinct SOURCES licence (the blanket string) x46. There is NO performance data — the ranking is a heuristic ordering, NOT a performance prediction; stated in the module docstring, docs/PUBLISH_PRIORITY.md, and every output row (METRICS_NO_DATA flag)."
+      - "FLAGS: all 46 rows carry HOLD_PROVENANCE (blanket licence the VYR-005 prepublish checklist rejects — ranking orders the queue, it does not clear the hold) and SYNC_UNVERIFIED (all legacy renders predate the VYR-003 sync fix; no per-video sync measurement stored); the 17 upload-failed rows carry NOT_UPLOADED."
+      - "RANKING (full 46-row table with per-component breakdown in VyralX/docs/PUBLISH_PRIORITY.md; exact input committed as VyralX/docs/publish_priority_input_2026-11-15.json): #1 job 61 (85.5), #2 job 1 (85.0), #3 job 661 (84.8, not uploaded), #4 job 301 (84.4), #5 job 641 (84.0, not uploaded); bottom job 581 (68.4). Scores cluster 68.4-85.5 (formula-identical pool) — order is the deliverable, adjacent ranks are effectively tied."
+      - "TESTS: VyralX/tests/test_vyr010_publish_priority.py — 15 tests, all pass locally (manual runner; sandbox python tempfile is broken in this environment — real pytest runs in CI). Shipped via the git-data API (local git writes are EPERM-blocked in the crew sandbox, same as TASK-STR-RD-008); branch built on fresh main, board id-set diffed (only TASK-VYR-010 added)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #335 (code+docs) and the board PR, then flip to VERIFIED. NOT deployed (library + docs; reaches production with the next VyralX deploy). Follow-ups: the ranking becomes actionable only when (1) the owner re-auths YouTube OAuth + a valid Data API key exists (deferred owner actions, carried in the daily briefing) and (2) per-source provenance is resolved for whichever legacy videos are kept — most of this pool is expected to retire under the researched-lane direction; (3) once VIDEO_METRICS populates, re-validate the heuristic against real outcomes or replace it."
+  - id: "TASK-INT-010"
+    title: "IntelX persists nothing to the canonical research store: root-cause and fix"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-int-010"
+    pr: "https://github.com/surendra2304/FRIDAY-Universe/pull/365"
+    merge_note: null
+    milestone: "Wave 5 (owner parallelism directive 2026-11-15)"
+    files:
+      - "IntelX/intelx/db/models.py"
+      - "IntelX/intelx/db/repos.py"
+      - "IntelX/intelx/agents/retriever.py"
+      - "IntelX/tests/test_int010_canonical_store.py"
+    acceptance:
+      - "Root cause of the seven empty canonical tables established with deployed-store and journal evidence, classified (never-called / silently-failing / wrong-store / by-design)."
+      - "Persistence-layer defects that would break the canonical path on Oracle are repaired with fail-on-main tests."
+      - "Retire-vs-wire recommendation delivered with the smallest wiring change specified; INT-008 checker implications addressed."
+    evidence:
+      - "Claim: issue #35 comment 6893630695."
+      - "INT-008 census (deployed settings, Server 1): 0 rows in research_runs/sources/documents/chunks/claims/evidence/findings; live_research_runs holds the live route's runs (9 crew-probe rows per INT-009)."
+      - "Journal 2026-11-15 (IntelX.service, 300 lines): 10x 'live research persisted' (SUCCESS/DEGRADED), zero /v1/research/jobs traffic, zero ORA/TypeError lines."
+      - "Code trace: only POST /v1/research/jobs creates classic runs (no production caller); embedded worker gated off in production (RUN_EMBEDDED_WORKER default None -> not is_production()); friday-mesh endpoint bypasses DB persistence by its own docstring."
+      - "Latent defects: 15 classic-model columns on stock JSON (Oracle read TypeError, REL-038 precedent) and retriever CLOB-equality on Source.location; both repaired in this PR."
+      - "Tests: test_int010_canonical_store.py 4/4 pass on fix; 3 fail on unpatched tree as designed (CLOB semantics test passes on both — Oracle-only failure, disclosed). Neighbour ring 25 passed / 0 failed combined (20 sandbox setup errors); clean rerun of affected files 20 passed / 0 errors."
+      - "PR #365 verified after ship: 4 files (models.py +44/-38, repos.py +25/-0, retriever.py +4/-2, new test file +195), base main e102db0a."
+    blockers: []
+    next_action: "Coordinator: merge via queue; decide Option W (wire projection after INT-009 PR #355) vs Option R (staged retirement); if W, dispatch as a follow-up task — the projection seam and Degradations surfacing are specified in the INT-010 completion comment."
+  - id: TASK-FUT-011
+    title: "Self-graded backtest outcomes census + annotation: production outcomes table is EMPTY (zero tainted rows ever persisted — nightly job dies on missing statsforecast); guarded marker script shipped as the standing guard for the pre-PR-#362 window"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ta***REDACTED***
+    pr: 370
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T17:00:00+05:30"
+    updated_at: "2026-11-15T17:25:00+05:30"
+    files:
+      - "Futuris/scripts/annotate_self_graded_outcomes.py"
+      - "Futuris/tests/evaluation/test_annotate_self_graded_outcomes.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893755948"
+    defect: "TASK-FUT-010 fixed the BacktestEngine forecast-as-actual substitution (PR #362) but left its historical product unexamined: any production outcomes rows written pre-fix under resolution_rule_version 'backtest:v1.0' with observed_value == the linked forecast's prediction are fabricated ground truth that every calibration/accuracy surface over the outcomes table inherits. FUT-010 ran no production query, so the count was unknown and the coordinator decision (RD-010 precedent) was: enumerate, then MARK — never delete, never rewrite observed_value."
+    acceptance:
+      - "Read-only production census with the exact write-path signature (version 'backtest:v1.0' AND observed_value == round(prediction, 2)), reporting total/tainted/near-miss counts, date range, targets, horizons and writer attribution — or an explicit UNVERIFIED with the query pack if access fails. No invented counts."
+      - "Every reader of the outcomes table identified with file/line evidence, and each reader's headline figure stated as-is AND with tainted rows excluded."
+      - "Annotation mechanism is non-destructive (ambiguity_note marker; observed_value untouchable), shipped as an isolated-branch PR plus a guarded, idempotent, dry-run-first migration script with the verified row-id set as its baseline; the script is NOT executed against production by the crew."
+    evidence:
+      - "CENSUS (2026-11-15, Server 1, deployed app's own session factory, SELECT-only): total outcomes 0; backtest:v1.0 rows 0; tainted 0; near-miss 0; forecasts 11 (API/delegation path, 2026-11-14, none resolved); schema = 12 tables, OUTCOMES the only outcome store, EVALUATION_RUNS also 0."
+      - "ROOT CAUSE of the empty table (journal, Server 1): backtest_nightly_job started 2026-11-15 02:00:00 IST and crashed 02:01:27 with StatsForecastUnavailableError (statsforecast not importable) inside ForecastEngine.orchestrate (core/engine.py:453 -> models/adapters.py:59), before persisting anything. CLI backtest never persists (BacktestEngine() with no repositories, cli.py); app-startup seed passes backtest_days=0. Nothing deletes outcome rows, so an empty table proves no self-graded row was ever persisted in this store."
+      - "LIVE CORROBORATION: GET /futuris/v1/evaluation/calibration returned sample_count 0, data_freshness insufficient_data, ECE 0.0 on 2026-11-15."
+      - "READER MAP: evaluation.py:45 (calibration), friday.py:1235 (calibration report), friday.py:1124 (resolve-time metrics), market.py:152 (meta-confidence), market.py:623 (market accuracy), infra/scheduler.py:343 (hourly calibration sweep driving overconfidence penalty), forecasts.py:538 (single-outcome fetch). Drift monitor is in-process only (scheduler.py:280-284), not a table reader. With the tainted set empty, every surface's as-is figure equals its exclusion figure (enumerated in the completion comment)."
+      - "GUARD SHIPPED (PR #370, 2 files, additions only, base e102db0a): Futuris/scripts/annotate_self_graded_outcomes.py — live signature re-derivation, dry-run default, --apply appends TAINT[TASK-FUT-011] marker to ambiguity_note only, idempotent, post-apply verification asserts observed_value unchanged; dry-run executed against production: 0 rows, matches census baseline, exit 0, no writes. Tests Futuris/tests/evaluation/test_annotate_self_graded_outcomes.py 10/10 pass. Rationale: the deployed engine is still pre-fix (PR #362 undeployed); only the statsforecast crash currently prevents self-graded writes, so the guard covers the window between a statsforecast provisioning and the PR #362 deploy."
+    next_action: "Coordinator: merge PR #370 on green CI -> board VERIFIED (census evidence is production-grade; no annotation execution is owed — zero rows). Standing instruction: if statsforecast is provisioned before PR #362 deploys, run Futuris/scripts/annotate_self_graded_outcomes.py dry-run after the first successful nightly backtest, then --apply --expected-count <dry-run count> if rows appear."
+  - id: TASK-SEN-013
+    title: "Direct-port exposure: consumer map + hardening proposal (READ-ONLY) — follow-up to TASK-SEN-002 F-01/F-12"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ta***REDACTED***
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T17:15:00+05:30"
+    updated_at: "2026-11-15T18:00:00+05:30"
+    files:
+      - "docs/TASK-SEN-013_FINDINGS.md (full report, via PR #372)"
+      - "docs/collaboration/WORK_BOARD.yaml (this entry, spliced by coordinator from the completion comment)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893677520"
+    defect: "SEN-002 F-01/F-12 mapped and dispositioned (full report in docs/TASK-SEN-013_FINDINGS.md). F-01: FRIDAY :10000's public exposure serves NO configured consumer — repo code, live .env files on both servers, Caddy live config, units/timers/cron all use 127.0.0.1, 10.0.0.121 (VPC) or Caddy HTTPS; website/laptop/phone consumers are external-legitimate VIA CADDY only. The direct-vs-proxied split of public-IP log lines is UNVERIFIABLE from existing logs (uvicorn XFF trust; Caddy has no access logging) — P9 fixes visibility. F-12: 8081 = FRIDAY-Voice LiveKit worker health port (production); 8089 = orphaned VOI-009 drill process (session scope, deleted cwd, safe to terminate); 8765 = oracle-cloud-mcp gateway (root, token-gated, Dokploy-era; NOT Docker — the docker_gwbridge ufw rule is stale, interface DOWN; downstreams dead; dormancy confirmation owed before any change). rpcbind: ZERO consumers on both hosts. Docker/Swarm: swarm inactive, 0 containers both hosts, units disabled-but-active. S2 ufw rule 1 allows ANY port from the whole VPC (SEN-002 S7 gap closed). CORRECTION to SEN-002's rebind advice: S2 agents call S1 agents via 10.0.0.121 by live config, so loopback-only binds on S1 would break cross-server mesh calls — P2 uses VPC bind + repointing."
+    evidence:
+      - "CONSUMER MAP (repo @ b34e2d34 + live probes 2026-11-15 ~16:47-17:50 IST, all read-only): Caddy live config proxies /friday* + root to 127.0.0.1:10000; voice brain_bridge + preflight use 127.0.0.1:10000; S1 live .env tokens: 127.0.0.1:10000 x7, S2 live .env tokens: 10.0.0.121:10000 in each of Cortex/Sentinel/VyralX; ZERO public-IP or public-hostname :10000 references in any live .env on either server; website apiBase = window.location.origin (Caddy); laptop client default wss://friday-universe.duckdns.org/friday/... (Caddy); phone bridge (PR #303, unmerged) https://friday-universe.duckdns.org/friday (Caddy); bridge MCP code contains zero :10000 targets and held zero established :10000 connections at probe time."
+      - "FRIDAY JOURNAL (~21.8h window): 127.0.0.1 x637 (327 health, 213 POST /api/chat, 20 livekit token); Cloudflare-egress 104.29.200.107 x1,838 with the six-endpoint UI polling signature (website via Caddy); ~25-IP public long tail (614x 200) indistinguishable between Caddy-proxied visitors and direct callers because uvicorn trusts XFF from 127.0.0.1 and Caddy has no access-log directive (9 proxied error entries in Caddy's journal prove some log traffic is Caddy-borne; no census possible). Connection snapshots: zero established :10000 connections on S1 (~16:49 IST) and zero on any S2 agent port (~17:22 IST)."
+      - "LISTENERS (ss + /proc + systemctl, live): 8081 pid 2564631 livekit_worker.py start, FRIDAY-Voice.service; 8089 pid 2544072 /tmp/voi009/drill_launch.py, etime 3h12m, cwd deleted, session-15952.scope (not a service); 8765 pid 1550481 /usr/bin/python3 /opt/oracle_mcp/server.py, oracle-cloud-mcp.service, root, up 24d15h, token-gated fail-closed, repo source scripts/oracle_cloud_mcp.py (HOST 0.0.0.0 PORT 8765), designed Traefik ingress gone, Dokploy/ngrok downstreams dead, zero established connections."
+      - "RPCBIND/DOCKER (both hosts, live): rpcbind.service+socket enabled+active; /etc/exports empty, no NFS fstab/mounts, nfs-common masked, reverse dependencies = multi-user.target only, zero repo references. docker+containerd disabled-but-active; swarm inactive; containers 0/0; images S1 = dokploy-mcp + traefik leftovers, S2 = none; networks default only; docker0 + docker_gwbridge interfaces DOWN on S1 (the 8765-on-gwbridge ufw rule is stale twice over). S2 ufw captured live: rule 1 = Anywhere ALLOW IN from 10.0.0.0/16; Swarm rules redundant under it."
+      - "PROPOSAL P1-P10 in the findings doc, ordered by risk-reduction vs breakage-risk, each with exact change + consumer-map evidence + breakage analysis + verification probe. NOT verified: fresh external probe from the crew sandbox (egress cannot reach S1; SEN-002's calibrated external series stands, and the 10000 ALLOW ufw rules were confirmed still live today); oracle-mcp consumer liveness (human confirmation, P6); the 7 FRIDAY-log hits from S1's own public IP (consumer unidentified, immaterial)."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #372. Then schedule the change window: P1 (close OCI + ufw ingress for S1:10000; announce on this issue first), P3 (terminate drill leftover pid 2544072 if still running), P4 (disable rpcbind both hosts), P5 (remove Swarm ufw rules) as one low-risk batch; P2 (agent rebind VPC + repoint consumers; narrow S2 ufw rule 1) as a separate planned change; P6 only after a collaborator confirms the oracle-cloud-mcp gateway (8765) is unused; P9/P10 with the next Caddy/deploy-docs touch."
+  - id: TASK-COR-009
+    title: "Cortex /v1/task/execute 403 wall — caller/auth investigation (FRIDAY reflex broadcast vs property-scope gate) + rejection attribution logging"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-009
+    prs: [406]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T18:35:00+05:30"
+    updated_at: "2026-11-15T19:10:00+05:30"
+    files:
+      - "Cortex/apps/api/src/cortex_api/friday_router.py"
+      - "Cortex/apps/api/src/cortex_api/auth.py"
+      - "Cortex/tests/unit/test_task_execute_rejection_attribution.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6894723475"
+    defect: "COR-005/-007 found POST /v1/task/execute took 179 calls, ALL 403, gate unknown. COR-009 verdict: caller is FRIDAY's ReflexBrain peer-escalation (reflex.py ~L994/L1005) broadcasting generic actions memory_recall + source_repair to every mesh peer via AssistanceBroker; Cortex authenticates FRIDAY successfully every time (retained journal: 113 auth-success lines, 0 invalid-key warnings, 54 execute POSTs 100% 403 all from 10.0.0.121, ~27 fault episodes x 2 actions, Forge memory_recall receipts at identical seconds) and its property-scope gate (friday_router.py process_task_envelope) rejects both actions — neither is a website operation on the default property site_storefront. Not an auth defect; not dead callers. Cortex-side defect: the gates logged nothing, so the 403 was unattributable from Cortex's logs."
+    acceptance:
+      - "403 traffic characterised from the Server 2 journal + deployed code (sha-verified == main): caller FRIDAY.service/ReflexBrain on Server 1, fault-driven cadence ~27 episodes in the retained window, actions memory_recall + source_repair, valid FRIDAY service key, gate = property-scope validation in process_task_envelope (OperationNotAllowedError -> 403); crew probes distinguished (none in this traffic)."
+      - "Credential matrix reproduced locally on main's code: none -> 401; wrong/other-agent key -> 403 Invalid FRIDAY service token; Bearer-only and public-key classes -> 401; valid key + memory_recall/source_repair -> 403 scope gate (production signature); valid key + health_summary -> 200."
+      - "PR #406: structured task_execute_rejected WARNINGs at the scope/approval/Sentinel gates in process_task_envelope + client/path attribution in verify_friday_token's invalid-key warning. Wire behaviour unchanged. New tests 6/6 pass on the fix, 4 fail / 2 pass (guards) on pristine main; neighbour ring 32/32; full unit sweep 471 passed with the same 10 pre-existing failures as pristine main (zero regressions)."
+    evidence:
+      - "Journal census (Server 2, retained window 2026-11-14 20:00 -> 2026-11-15 ~18:45 IST): 54x POST /v1/task/execute 403 — the only 403s on the service — all from 10.0.0.121; 113 auth-success lines; 0 invalid-key warnings; per-request auth-success immediately precedes each sampled 403 (13:12-13:13 burst, 18:11 pair)."
+      - "Caller cross-proof: Forge journal (Server 1) 'Received action memory_recall from friday' x27 at matching seconds; FRIDAY code path reflex.py AssistanceBroker escalation -> assistance.py recall_from_peers (action memory_recall to all peers) + request_help_from_peers (action = capability 'source_repair') -> mesh.py PeerContract auth_style 'cortex' (X-Friday-Api-Key only)."
+      - "Local reproduction + test outputs preserved in the crew workspace (~/workspace/cor-009/: repro.py, repro_main.txt, repro_fixed.txt, failed_fixed.txt); deployed files sha256 == main for auth.py/friday_router.py/main.py/web_property.py."
+    blockers: []
+    next_action: "Merge-runner: merge PR #406 on green CI. Post-deploy (coordinator): next FRIDAY fault episode should show task_execute_rejected gate=property_scope lines in Cortex's journal -> flip VERIFIED. FRIDAY-lane follow-up (separate task): assistance.py should not broadcast memory_recall/source_repair to Cortex (memory questions only to Memora; source_repair only to peers that can repair source) — until then ~2 attributed 403s per unrepaired FRIDAY fault are expected and correct."
+  - id: TASK-SEN-016
+    title: "Network hardening phase 2: P2 (VPC binding + S2 rule narrowing) + P9 (Caddy access logging) + tcp/3000 OCI residue"
+    status: VERIFIED
+    owner: muse_ai
+    evidence: "Completion comment on issue #35 (this comment): OCI tcp/3000 rule removed (snapshot /home/ubuntu/sen016_oci_rollback.json on S2; read-back byte-identical otherwise); Caddy access logging live (/var/log/caddy/friday-access.log, JSON, 10mb x5/168h rotation; entries verified; repo mirror PR #385); P2 bind review = all 10 agents documented exceptions (9x uvicorn single --host + Stratex Werkzeug single host; verified loopback consumers for every agent incl. Caddy 127.0.0.1 upstreams and S2 mutual .env entries) — zero rebinds, zero restarts; S2 ufw rule 1 (Anywhere from 10.0.0.0/16) replaced by 8008/8009/8010/8011 tcp from 10.0.0.121 only, auto-rollback armed and cancelled unused, fresh-bridge + mesh + Caddy-route verification all 200, watcher success both hosts. 8765/8081 untouched (same PIDs)."
+    next_action: "Coordinator: flip to VERIFIED on read-back; merge PR #385. Follow-up candidates: delete S2's stale Swarm ufw trio (2377/7946/4789) for symmetry with S1; revisit P2 rebinds only if a launcher gains dual-bind support or loopback consumers are repointed."
+    files:
+      - deploy/Caddyfile
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
