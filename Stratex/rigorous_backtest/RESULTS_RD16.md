@@ -173,14 +173,22 @@ the frozen declaration (DSR disclosed where computable, never gating).
 
 ## Delivery note
 
-The Server-2 bridge MCP has been hung since ~15:00 IST 2026-11-15, so
-the claim comment, PRs and completion comment could not be posted by
-this crew directly. Delivery is packaged as a resumable
-check-then-act script, `~/workspace/rd-016/deliver.py` (claim →
-code/results PR → board PR from fresh main with full task-id set diff
-and read-back → completion comment), for the coordinator's merge
-queue. Status at packaging: **implemented + tested locally (anchor
-bit-identical, all cells evaluated); NOT merged, NOT deployed**
+The Server-2 bridge MCP was hung when this round started (since
+~15:00 IST 2026-11-15) and recovered during delivery. Delivered by the
+crew's resumable check-then-act scripts (`~/workspace/rd-016/
+deliver.py`, `deliver_step2.py`, `deliver_step3.py`): the claim
+comment (with the frozen declaration hash) is posted on issue #35 —
+it landed twice because the bridge truncates comment-page responses
+and the duplicate-check scan missed the first post; the two copies
+are identical. Code + results are in **PR #356** (branch
+`claude/task-str-rd-016`). The board entry could NOT be shipped as a
+board PR from this sandbox: the bridge caps every github_api response
+at ~30 KB and the board file is ~600 KB, so it cannot be read through
+the bridge at all — the entry instead ships as a fragment file in
+this PR (`results_rd16/board_entry.yaml`) and embedded in the
+completion comment on issue #35, for the coordinator's splice (the
+RD-012 fragment precedent). Status: **implemented + tested locally
+(anchor bit-identical, all cells evaluated), PR open; NOT merged**
 (research code — nothing to deploy).
 
 ## Files
