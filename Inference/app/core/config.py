@@ -331,6 +331,17 @@ from typing import Anyfrom pydantic import Field, field_validatorfrom pydanti
         default=False,
         description="Whether the locally loaded model supports OpenAI-style tool calling.",
     )
+    INFERENCE_CUSTOM_ENDPOINTS: str = Field(
+        default="",
+        description=(
+            "TASK-IG-INF-02: JSON array of operator-configured OpenAI-compatible endpoints; "
+            "each entry {name, base_url, models, api_key_env?} becomes a gateway provider "
+            "named custom-<name> whose models are addressable by id. Keys are read only "
+            "from each entry's own api_key_env variable - never from the pooled or "
+            "THIRD_PARTY_* key sets. Empty (default) registers nothing. Parsed fail-closed "
+            "by app.providers.custom_endpoints."
+        ),
+    )
     HUMAN_RATE_LIMIT_PER_HOUR: int = Field(
         default=600,
         ge=1,
