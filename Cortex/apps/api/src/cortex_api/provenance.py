@@ -35,7 +35,9 @@ Every decision/recommendation output carries a ``provenance`` block:
 """
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+
+UTC = timezone.utc  # py310 compat (REL-050 pattern)
 from typing import Any
 
 CALLER_SUPPLIED = "caller_supplied"
