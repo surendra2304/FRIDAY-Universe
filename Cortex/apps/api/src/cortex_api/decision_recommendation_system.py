@@ -62,6 +62,14 @@ class Recommendation:
     sensitivity_analysis: dict = field(default_factory=dict)
     rationale: str = ""
     stakeholder_impact: dict = field(default_factory=dict)
+    # TASK-COR-003: provenance of the stored record itself. Before this fix a
+    # stored recommendation carried no timestamp, no decider, and no snapshot
+    # of the inputs it was computed from — the criteria/alternatives live in
+    # mutable engine state, so a past decision could never be reconstructed.
+    created_at: float = 0.0
+    decider: str = ""
+    inputs_snapshot: dict = field(default_factory=dict)
+    outcome: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -148,16 +156,22 @@ class DecisionRecommendationSystem:
         alt.criteria_scores[criterion_id] = score
         return alt
 
-    def recommend(self, problem_statement: str) -> Recommendation:
+    def recommend(self, problem_statement: str, decider: str = "") -> Recommendation:
         """Generate a decision recommendation."""
         if not self._criteria or not self._alternatives:
             raise HTTPException(400, "Need criteria and alternatives")
 
-        # Calculate weighted scores for each alternative
+        # Calculate weighted scores for each alternative. TASK-COR-003: track
+        # every score cell that falls back to the 0.5 default so the stored
+        # record shows which inputs were actually supplied and which were
+        # defaulted at decision time.
+        defaulted_cells: list[str] = []
         scores = {}
         for alt_id, alt in self._alternatives.items():
             total_score = 0.0
             for crit_id, crit in self._criteria.items():
+                if crit_id not in alt.criteria_scores:
+                    defaulted_cells.append(f"{alt_id}:{crit_id}")
                 score = alt.criteria_scores.get(crit_id, 0.5)
                 # Normalize if direction is minimize
                 if crit.direction == "minimize":
@@ -217,6 +231,37 @@ class DecisionRecommendationSystem:
             sensitivity_analysis=sensitivity,
             rationale=f"Selected '{best_alt.name if best_alt else 'Unknown'}' with highest weighted score ({best_score:.2f})",
             stakeholder_impact={},
+            created_at=time.time(),
+            decider=decider,
+            inputs_snapshot={
+                "criteria": [
+                    {
+                        "criterion_id": c.criterion_id,
+                        "name": c.name,
+                        "weight": c.weight,
+                        "direction": c.direction,
+                    }
+                    for c in self._criteria.values()
+                ],
+                "alternatives": [
+                    {
+                        "alternative_id": a.alternative_id,
+                        "name": a.name,
+                        "criteria_scores": dict(a.criteria_scores),
+                        "risk_score": a.risk_score,
+                        "return_projection": a.return_projection,
+                    }
+                    for a in self._alternatives.values()
+                ],
+                "defaulted_cells": defaulted_cells,
+            },
+            outcome={
+                "status": "decided",
+                "selected": best_alt.name if best_alt else "",
+                "observed_result": None,
+                "success": None,
+                "recorded_at": None,
+            },
         )
 
         self._recommendations.append(recommendation)
@@ -233,6 +278,27 @@ class DecisionRecommendationSystem:
         )
 
         return recommendation
+
+    def record_outcome(
+        self, recommendation_id: str, observed_result: object, success: bool | None = None
+    ) -> bool:
+        """Attach the observed outcome to a stored recommendation (TASK-COR-003).
+
+        Until this method existed, a stored recommendation could never gain
+        an outcome after the fact — the log showed what was picked, never
+        what happened. Returns True when the recommendation was found.
+        """
+        for rec in self._recommendations:
+            if rec.recommendation_id == recommendation_id:
+                rec.outcome = {
+                    "status": "outcome_recorded",
+                    "selected": rec.best_alternative,
+                    "observed_result": observed_result,
+                    "success": success,
+                    "recorded_at": time.time(),
+                }
+                return True
+        return False
 
     def add_stakeholder(self, name: str, role: str, interest: float, influence: float, position: str = "neutral") -> Stakeholder:
         """Add a stakeholder."""
@@ -399,7 +465,11 @@ async def score_alternative(alt_id: str, payload: dict):
 @router.post("/api/v1/cortex/decision/recommend")
 async def recommend(payload: dict):
     """Generate a decision recommendation."""
-    rec = decision_system.recommend(payload["problem_statement"])
+    # TASK-COR-003: record who asked for the decision in the stored record
+    # (callers may identify themselves via the optional "decider" field).
+    rec = decision_system.recommend(
+        payload["problem_statement"], decider=str(payload.get("decider") or "api_caller")
+    )
     return {
         "recommendation_id": rec.recommendation_id,
         "best_alternative": rec.best_alternative,
