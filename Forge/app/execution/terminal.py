@@ -184,15 +184,25 @@ class TerminalTool:
 
         self.pm.check_permission(role, ToolPermission.TERMINAL_EXEC)
 
+        # The command is echoed into the service log, the workspace
+        # terminal.log and the returned result. Mask any credential it
+        # carries (e.g. a token embedded in a git remote URL) once, here,
+        # and only ever write the masked form; the executed command itself
+        # is unchanged. Outputs were already redacted (step 3 below) but the
+        # command line was not, which is how a GitHub token reached
+        # workspace terminal.log files in plaintext (SEN-005 finding F-1,
+        # TASK-SEN-011).
+        safe_command = redact(command)
+
         # 1. Centralized Command Risk Policy Check
         import re
 
         if "git push" in command.lower() and not allow_git_push:
             logger.warning(
-                f"Git push command denied by policy for task {task_id}: Git push requires separate authorization ({command})"
+                f"Git push command denied by policy for task {task_id}: Git push requires separate authorization ({safe_command})"
             )
             return CommandResult(
-                command=command,
+                command=safe_command,
                 exit_code=1,
                 stdout="",
                 stderr="Command denied by security policy: Git push requires separate authorization",
@@ -213,10 +223,10 @@ class TerminalTool:
             )
         ):
             logger.warning(
-                f"Command denied by policy for task {task_id}: {decision.reason} ({command})"
+                f"Command denied by policy for task {task_id}: {decision.reason} ({safe_command})"
             )
             return CommandResult(
-                command=command,
+                command=safe_command,
                 exit_code=1,
                 stdout="",
                 stderr=f"Command denied by security policy: {decision.reason}",
@@ -234,9 +244,9 @@ class TerminalTool:
         )
         for dp in dangerous_patterns:
             if re.search(dp, command, re.IGNORECASE):
-                logger.warning(f"Prohibited dangerous command pattern in task {task_id}: {command}")
+                logger.warning(f"Prohibited dangerous command pattern in task {task_id}: {safe_command}")
                 return CommandResult(
-                    command=command,
+                    command=safe_command,
                     exit_code=1,
                     stdout="",
                     stderr="Command denied: prohibited system-altering command or shell pipe injection",
@@ -346,7 +356,7 @@ class TerminalTool:
                 self._active_processes.discard(process)
 
         except Exception as e:
-            logger.error(f"Error executing command '{command}' in task {task_id}: {e}")
+            logger.error(f"Error executing command '{safe_command}' in task {task_id}: {e}")
             stderr_text = str(e)
             exit_code = 1
 
@@ -369,14 +379,14 @@ class TerminalTool:
 
         # Append command execution record to workspace logs
         log_entry = (
-            f"--- [CMD] {command} (exit={exit_code}, duration={duration_ms:.1f}ms) ---\n"
+            f"--- [CMD] {safe_command} (exit={exit_code}, duration={duration_ms:.1f}ms) ---\n"
             f"STDOUT:\n{stdout_text}\n"
             f"STDERR:\n{stderr_text}\n"
         )
         self.wm.append_log(task_id, "terminal.log", log_entry)
 
         return CommandResult(
-            command=command,
+            command=safe_command,
             exit_code=exit_code,
             stdout=stdout_text,
             stderr=stderr_text,
