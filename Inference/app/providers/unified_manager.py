@@ -6,11 +6,35 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from app.agents.registry import agent_registry
-from app.performance_cache import as_answer_pair, perf_cache
+from app.inference_runtime.config import RuntimeConfig
+from app.inference_runtime.response_cache import CachePolicy, SafeResponseCache
+from app.performance_cache import as_answer_pair
 from app.providers.base import ProviderMessage, ProviderRequest, ProviderResponse
 from app.providers.gateway import model_gateway
 from app.utils.errors import provider_failure_reason
 from app.utils.logger import logger
+
+# TASK-INF-006: unified executions are cached through the context-safe
+# response cache, not the shared-tier perf_cache. perf_cache still serves
+# the friday/agent/instant routes, but this path mixes arbitrary caller
+# contexts, so it uses the cache whose keys bind every answer to the
+# fingerprint of the context it was produced under — an answer computed
+# for one context can never be served to another, and personalised
+# requests (a principal identifier inside ``context``) are never stored.
+_RUNTIME_CONFIG = RuntimeConfig()
+response_cache = SafeResponseCache(
+    CachePolicy(
+        public_ttl_seconds=float(_RUNTIME_CONFIG.resp_cache_public_ttl_seconds),
+        contextual_ttl_seconds=float(_RUNTIME_CONFIG.resp_cache_contextual_ttl_seconds),
+        personalised_ttl_seconds=float(_RUNTIME_CONFIG.resp_cache_personalised_ttl_seconds),
+        template_ttl_seconds=float(_RUNTIME_CONFIG.resp_cache_template_ttl_seconds),
+        stochastic_ttl_cap_seconds=float(_RUNTIME_CONFIG.resp_cache_stochastic_ttl_cap_seconds),
+        max_entries=_RUNTIME_CONFIG.resp_cache_max_entries,
+        policy_version=_RUNTIME_CONFIG.resp_cache_policy_version,
+        allow_personalised_storage=_RUNTIME_CONFIG.resp_cache_allow_personalised_storage,
+    )
+)
+UNIFIED_CACHE_NAMESPACE = "provider.unified"
 
 
 class UnifiedExecutionRequest(BaseModel):
@@ -110,19 +134,24 @@ class UnifiedProviderManager:
         start_time = time.perf_counter()
         agent = None
 
-        # 1. High-Speed L1 Cache Check (< 0.05ms)
-        cache_mode = f"unified_{req.provider}_{req.agent_role or 'general'}"
+        # 1. High-Speed L1 Cache Check (< 0.05ms) — context-safe cache
+        # (TASK-INF-006): the payload fingerprint covers every attribute
+        # in _cache_scope, and the context fingerprint binds the entry to
+        # the exact context it was produced under.
         cache_scope = self._cache_scope(req)
+        cache_class = response_cache.classify(context=req.context, prompt_text=req.prompt)
+        cache_fingerprint = SafeResponseCache.context_fingerprint(req.context)
+        cache_payload = {"prompt": req.prompt, "scope": cache_scope}
+        cache_stochastic = req.temperature > 0
         if not req.no_cache:
-            cached_pair = as_answer_pair(
-                perf_cache.get_query(
-                    req.prompt,
-                    mode=cache_mode,
-                    caller_id=req.agent_role or "unified",
-                    extra=cache_scope,
-                    namespace="provider.unified",
-                )
+            lookup = response_cache.lookup(
+                namespace=UNIFIED_CACHE_NAMESPACE,
+                payload=cache_payload,
+                context_class=cache_class,
+                context_fingerprint=cache_fingerprint,
+                stochastic=cache_stochastic,
             )
+            cached_pair = as_answer_pair(lookup.value) if lookup.hit else None
             if cached_pair:
                 cached_answer, cached_meta = cached_pair
                 cached_latency = round((time.perf_counter() - start_time) * 1000.0, 3)
@@ -219,9 +248,9 @@ class UnifiedProviderManager:
                 # called — and then wrote that fiction into the shared response cache.
                 spec_winner = race.get("served_by") or spec_resp.provider or "speculative"
                 if not req.no_cache:
-                    perf_cache.set_query(
-                        question=req.prompt,
-                        mode=cache_mode,
+                    response_cache.store(
+                        namespace=UNIFIED_CACHE_NAMESPACE,
+                        payload=cache_payload,
                         value=(
                             spec_resp.content,
                             {
@@ -231,10 +260,11 @@ class UnifiedProviderManager:
                                 "finish_reason": spec_resp.finish_reason,
                             },
                         ),
-                        caller_id=req.agent_role or "unified",
-                        extra=cache_scope,
-                        namespace="provider.unified",
-                )
+                        context_class=cache_class,
+                        context_fingerprint=cache_fingerprint,
+                        original_latency_seconds=elapsed_ms / 1000.0,
+                        stochastic=cache_stochastic,
+                    )
                 return UnifiedExecutionResponse(
                     provider_used=spec_winner,
                     model_used=spec_resp.model or "speculative-model",
@@ -289,9 +319,9 @@ class UnifiedProviderManager:
                 actual_provider = str(provenance["actual_provider"])
 
             if not req.no_cache:
-                perf_cache.set_query(
-                    question=req.prompt,
-                    mode=cache_mode,
+                response_cache.store(
+                    namespace=UNIFIED_CACHE_NAMESPACE,
+                    payload=cache_payload,
                     value=(
                         resp.content,
                         {
@@ -304,10 +334,11 @@ class UnifiedProviderManager:
                             "fallback_reason": str(provenance["fallback_reason"])[:300] if provenance.get("fallback_reason") else None,
                         },
                     ),
-                    caller_id=req.agent_role or "unified",
-                    extra=cache_scope,
-                    namespace="provider.unified",
-            )
+                    context_class=cache_class,
+                    context_fingerprint=cache_fingerprint,
+                    original_latency_seconds=elapsed_ms / 1000.0,
+                    stochastic=cache_stochastic,
+                )
 
             return UnifiedExecutionResponse(
                 provider_used=actual_provider,

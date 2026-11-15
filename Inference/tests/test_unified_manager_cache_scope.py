@@ -5,14 +5,22 @@ import pytest
 from app.performance_cache import perf_cache
 from app.providers.base import ProviderResponse
 from app.providers.gateway import model_gateway
-from app.providers.unified_manager import UnifiedExecutionRequest, UnifiedProviderManager
+from app.providers.unified_manager import (
+    UnifiedExecutionRequest,
+    UnifiedProviderManager,
+    response_cache,
+)
 
 
 @pytest.fixture(autouse=True)
 def clear_response_cache():
+    # TASK-INF-006: unified executions now cache through the context-safe
+    # response cache; clear both stores so tests stay isolated.
     perf_cache.clear()
+    response_cache.flush()
     yield
     perf_cache.clear()
+    response_cache.flush()
 
 
 def _request(**overrides) -> UnifiedExecutionRequest:
