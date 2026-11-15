@@ -472,6 +472,24 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
             "'remember that…' and I'll keep it."
         )
 
+    def process_message(self, user_input: str, channel: str = "chat") -> AgentResponse:
+        """Single response chokepoint (TASK-IG-FRD-006 source cards).
+
+        Every surface (API server, CLI, desktop) calls
+        ``agent.process_message``; wrapping it here attaches source
+        cards — the web sources behind the turn's claims, extracted
+        from the turn's actual tool results — to every answer that has
+        them. Fail-open: any error in card extraction returns the
+        original response unchanged.
+        """
+        response = super().process_message(user_input, channel=channel)
+        try:
+            from friday.cognition.source_cards import attach_source_cards
+
+            return attach_source_cards(response)
+        except Exception:
+            return response
+
     def execute_complex_task(self, goal: str, context: dict | None = None) -> AgentResponse:
         """Execute a goal through FRIDAY's bounded, authorized tool loop."""
         import time
