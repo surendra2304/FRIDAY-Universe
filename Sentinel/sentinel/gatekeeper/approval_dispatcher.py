@@ -11,6 +11,17 @@ Channels:
 - Discord Webhook: Dispatches rich embed alerts.
 - REST Endpoints: GET/POST one-click approval & denial routes.
 - Offline Queue: Buffers pending requests if Telegram credentials are not yet linked.
+
+Credential resolution (TASK-SEN-006): channel credentials are resolved from
+the process environment first, then from .env files in the fleet layout —
+``$SENTINEL_ENV_FILE`` if set, then ``./.env`` (process CWD), then
+``<repo>/Sentinel/.env``, then the fleet-shared ``<repo>/.env``. This mirrors
+the candidate pattern already used by ``scripts/notify_turn_complete.py``.
+Before this fallback existed, the dispatcher only read ``os.environ``; the
+production systemd unit does not export the fleet's Telegram pair into the
+Sentinel process, so every approval silently landed in the offline queue
+(a journal line) and no human was ever notified. Resolved values are never
+logged.
 """
 from __future__ import annotations
 
@@ -24,9 +35,83 @@ import urllib.request
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger("approval_dispatcher")
+
+
+def _env_file_candidates() -> list[Path]:
+    """Candidate .env files for channel credentials, highest priority first."""
+    here = Path(__file__).resolve()
+    # Layout: <repo>/Sentinel/sentinel/gatekeeper/approval_dispatcher.py
+    sentinel_dir = here.parents[2]
+    repo_root = here.parents[3]
+    candidates: list[Path] = []
+    override = os.getenv("SENTINEL_ENV_FILE")
+    if override:
+        candidates.append(Path(override))
+    candidates.append(Path.cwd() / ".env")
+    candidates.append(sentinel_dir / ".env")
+    candidates.append(repo_root / ".env")
+    seen: set[Path] = set()
+    unique: list[Path] = []
+    for path in candidates:
+        if path not in seen:
+            seen.add(path)
+            unique.append(path)
+    return unique
+
+
+def _read_env_file(path: Path) -> dict[str, str]:
+    """Parse KEY=VALUE lines from a .env file. Never raises, never logs values."""
+    values: dict[str, str] = {}
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return values
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        if stripped.startswith("export "):
+            stripped = stripped[len("export "):]
+        key, _, value = stripped.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        if key:
+            values[key] = value
+    return values
+
+
+_FILE_ENV_CACHE: dict[str, str] | None = None
+
+
+def _file_env() -> dict[str, str]:
+    """Merged .env-file values (lowest-priority candidate applied first)."""
+    global _FILE_ENV_CACHE
+    if _FILE_ENV_CACHE is None:
+        merged: dict[str, str] = {}
+        for path in reversed(_env_file_candidates()):
+            merged.update(_read_env_file(path))
+        _FILE_ENV_CACHE = merged
+    return _FILE_ENV_CACHE
+
+
+def _resolve_credential(*names: str) -> str | None:
+    """Resolve a channel credential: process environment first, then .env files."""
+    for name in names:
+        value = os.getenv(name)
+        if value:
+            return value
+    file_env = _file_env()
+    for name in names:
+        value = file_env.get(name)
+        if value:
+            return value
+    return None
 
 
 class ApprovalStatus(StrEnum):
@@ -88,15 +173,15 @@ class ApprovalDispatcher:
 
     @property
     def telegram_bot_token(self) -> str | None:
-        return os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("SENTINEL_TELEGRAM_BOT_TOKEN")
+        return _resolve_credential("TELEGRAM_BOT_TOKEN", "SENTINEL_TELEGRAM_BOT_TOKEN")
 
     @property
     def telegram_chat_id(self) -> str | None:
-        return os.getenv("TELEGRAM_CHAT_ID") or os.getenv("SENTINEL_TELEGRAM_CHAT_ID")
+        return _resolve_credential("TELEGRAM_CHAT_ID", "SENTINEL_TELEGRAM_CHAT_ID")
 
     @property
     def discord_webhook_url(self) -> str | None:
-        return os.getenv("DISCORD_WEBHOOK_URL")
+        return _resolve_credential("DISCORD_WEBHOOK_URL", "SENTINEL_DISCORD_WEBHOOK_URL")
 
     def submit_approval(
         self,
@@ -199,7 +284,8 @@ class ApprovalDispatcher:
             logger.info(
                 f"[SENTINEL APPROVAL QUEUED] Action '{pending.action}' by '{pending.agent_name}'. "
                 f"Approve URL: {approve_url} | Deny URL: {deny_url} | "
-                f"(Telegram alerts ready: Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID when desired)."
+                f"(Telegram alerts ready: Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID "
+                f"in the process environment or a fleet .env file when desired)."
             )
 
         # 2. Discord Dispatch
