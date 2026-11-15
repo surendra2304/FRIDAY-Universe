@@ -7571,6 +7571,162 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Coordinator: review and merge the PR (crew does not merge), then set ENABLE_STANDING_WATCHES=true for IntelX on Server 1 and wire TASK-PRO-001's drainer to the watch outbox (./data/watches/outbox.jsonl); flip to VERIFIED after the first production poll cycle matches the proof's behaviour."
     claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891415594"
     last_update_comment_url: null
+  - id: TASK-SEN-008
+    title: "Sentinel operations AlertEngine wired into the shared human channel: alerts dispatch via approval channel (SEN-006 resolution), scheduler run loop live in the API lifespan, operations router mounted, credentials documented"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-sen-008-operations-alerting"
+    pr: <code PR — stacked on PR #306 branch>
+    defect: "Detection-side alerting was a dead end (proven by TASK-SEN-006): operations AlertEngine stored alerts in memory only — register_webhook never called anywhere, process_delta never dispatched, the operations scheduler had no run loop, and its dashboard module was not mounted in the live API. No operations alert could ever reach a human."
+    evidence:
+      - "Fix: AlertEngine dispatches each NEW alert exactly once through OperationsAlertDispatcher -> ApprovalDispatcher.dispatch_notification (shared SEN-006 credential resolution + Telegram/Discord transports); dedup hits never re-dispatch; unconfigured channel logs [SENTINEL OPERATIONS ALERT QUEUED] and marks the alert queued; registered webhooks receive a real JSON POST."
+      - "Scheduler: AssessmentScheduler gained a real asyncio run loop (start/stop/is_running) with a findings-drift snapshot provider, per-job failure counting and escalation alerts after 3 consecutive probe failures; the API lifespan wires the dispatcher, registers the fleet findings job, starts/stops the loop, and mounts /api/v1/operations/* (alerts, jobs, dashboard, drill)."
+      - "Local tests: 12 passed (8 new dispatch/scheduler + 2 routes + 2 pre-existing operations); SEN-006 credential tests pass in CI (locally blocked only by this sandbox's tmp_path lockdown). Local drill in production-layout simulation (credentials ONLY in fleet root .env, empty process env): channel resolved, Discord delivery landed via real HTTP, Telegram transport reached api.telegram.org (401 on the labelled fake drill token), drill alert resolved."
+      - "Credentials documented in Sentinel/.env.example (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID / SENTINEL_TELEGRAM_* / DISCORD_WEBHOOK_URL / SENTINEL_DISCORD_WEBHOOK_URL / SENTINEL_ENV_FILE + operations scheduler vars) — SEN-006 follow-up closed."
+    next_action: "Coordinator: merge PR #306 first, retarget this PR to main and merge, deploy Sentinel to Server 2, then run ONE synthetic operations alert through the real path (POST /api/v1/operations/drill) and confirm a Telegram delivery + [SENTINEL OPERATIONS ALERT DISPATCHED] journal line; resolve the drill alert; then mark VERIFIED."
+  - id: TASK-REL-048
+    title: "Stratex/Futuris memory footprint — Python version artifact or real growth? (REL-046 follow-up: production RSS measured, version effect isolated on a production-pinned 3.10 venv, staging caps set from evidence)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ta***REDACTED***
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T16:24:00+05:30"
+    updated_at: "2026-11-15T17:05:00+05:30"
+    files:
+      - "staging/fleet_manifest.yaml (Stratex/Futuris mem_cap_mb -> evidence-based footprint caps 245/205 MB with derivation comments; production MemoryMax 180 MB recorded as production_memory_max_mb, unchanged in production)"
+      - "staging/RESULTS_REL048.md (new: production measurements, controlled 3.10-vs-3.12 experiment, import attribution, decision, gate re-runs)"
+      - "staging/README.md (environment-delta paragraph corrected: version suspicion refuted; files list gains RESULTS_REL048.md)"
+      - "docs/collaboration/WORK_BOARD.yaml (this entry — delivered via the completion comment, INF-003/REL-046 precedent: the ~600 KB board file cannot transit the crew sandbox; coordinator applies it as a single-entry board PR with the full task-id set diffed)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893273785"
+    acceptance:
+      - "Production truth measured read-only (systemd MemoryCurrent/MemoryMax, /proc VmRSS/VmHWM/VmSwap, journal) for Stratex + Futuris on Server 1 — or explicitly marked UNMEASURED if no route works (a route worked; values in RESULTS_REL048.md §1)."
+      - "Version effect isolated: both agents' staging profiles run under Python 3.10 vs 3.12 locally, or — if 3.10 is unobtainable — import-graph/dependency attribution instead (3.10 WAS obtained: standalone 3.10.15 + a venv pinned to the production freeze; both boots and per-import attribution measured on both stacks)."
+      - "Evidence-based decision: version artifact -> caps converted and documented; real footprint -> top contributors attributed and reductions implemented only if small and clearly safe, else specced as follow-ups. Caps NOT raised merely to go green; production memory limits NOT touched."
+      - "REL-046 smoke gate re-run for Stratex + Futuris with the evidence-based caps/settings, result reported honestly (pass or fail)."
+    evidence:
+      - "VERDICT: REAL FOOTPRINT, NOT A VERSION ARTIFACT. Controlled experiment (same REL-046 gate tree, same staging recipes, RSS sampled 1s over ~110s): Stratex peak/steady 233.3/199.6 MB on py3.12 staging libs vs 236.2/225.8 MB on py3.10 + production-pinned libs; Futuris 186.7/~156 MB vs 199.9/142.4 MB. Bare-interpreter baseline 13.2 MB (3.10) vs 10.4 MB (3.12). Production's own stack is equal or worse on every headline figure."
+      - "PRODUCTION (read-only, Server 1, 2026-11-15 ~16:25 IST, Python 3.10.12): Stratex.service (dashboard.py, MemoryMax 180 MiB) VmRSS 43.4 MiB + VmSwap 188.5 MiB = 231.9 MiB total footprint, VmHWM (peak RSS) 201.2 MiB, NRestarts=0; Futuris.service VmRSS 34.7 + VmSwap 151.4 = 186.1 MiB, VmHWM 168.9 MiB. Host PSI memory full avg10=28.35 — production survives because the kernel swaps the cold majority out from under the cgroup limit, not because the agents fit it. Staging RSS (swap-free) ~= production total footprint for both agents."
+      - "ATTRIBUTION (import-step RSS deltas, both interpreters agree): Stratex dashboard — data.py's top-level numpy/pandas chain +67 MB, api.real_trading_routes chain +40 MB, api.openbb_routes chain +51 MB (3.10), trade_optimizer +12.5 MB, dashboard tail +18 MB (library atoms: ccxt +55.7, pandas +33.6, numpy +20.8 MB). The status dashboard eagerly imports the whole trading-adapter zoo. Futuris — futuris.api.routers.forecasts chain +127 MB (3.10) of which futuris.models.adapters +83.3 MB and futuris.core.engine +34.8 MB: the full forecast-adapter stack loads at boot although statsforecast is absent in production and every adapter refuses to fit."
+      - "SIDE FINDING: current-main Futuris cannot import on production's Python 3.10 at all — futuris/api/app.py:7 'from datetime import UTC' and futuris/core/enums.py:3 'from enum import StrEnum' are 3.11+. Production runs an older deployed checkout so it is unaffected today, but a Fleet CD deploy of current main to the 3.10 venv would fail to boot Futuris. (The 3.10 Futuris footprint was measured with a disclosed local-only sitecustomize shim injecting those two names; Stratex needed no shim.)"
+      - "DECISION: staging caps for the two measured agents are now FOOTPRINT caps anchored to measured production totals — Stratex 245 MB (max measured 236.2 + ~4%), Futuris 205 MB (max measured 199.9 + ~3%) — with production_memory_max_mb: 180 recorded alongside and the conversion documented in the manifest header. No agent-code reductions implemented: both wins (Futuris lazy adapter loading, prize ~83-127 MB; Stratex deferred adapter-blueprint registration, prize ~92 MB) restructure live forecast/trading import paths and are specced as follow-ups for the Futuris/Stratex crews, with 'caps tighten back to 180' as their acceptance criterion. Production limits untouched; no other agents' caps changed."
+      - "GATE RE-RUNS (smoke_gate.py unmodified, amended manifest, 2026-11-15): Stratex PASS on py3.10 (RSS 214M/probe, cap 245M) and py3.12 (233M); Futuris PASS on py3.10 (204M, cap 205M) and py3.12 (196M) — all health 200, probes 200, exit 0. Disclosed: Futuris's 3.10 margin is thin (~1 MB at probe time; the /openapi.json probe itself costs memory) — the cap was NOT raised further; it is a growth alarm set at today's measured footprint."
+    blockers: []
+    next_action: "Coordinator: (1) apply this board entry via a single-entry board PR from fresh main (full task-id set diffed), (2) merge PR #338 (REL-046) first, then this PR (stacked on the REL-046 branch; retarget to main if #338 has landed), (3) dispatch the specced follow-ups: Futuris lazy adapter loading (prize ~83-127 MB boot RSS; acceptance = Futuris staging footprint cap tightens back to 180), Stratex deferred adapter-blueprint registration (prize ~92 MB; same acceptance), and a fleet-wide Python-3.11+-idiom sweep + production-interpreter import check in CI (Futuris current main cannot boot on production's 3.10 — deploy-blocking if Fleet CD ships current main first)."
+  - id: TASK-FRG-004
+    title: "Forge multi-file build battery: 5 progressively larger goals vs the deployed Forge + explicit-layout manifest fix"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frg-004
+    prs: [329]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:47:00+05:30"
+    updated_at: "2026-11-15T15:45:00+05:30"
+    files:
+      - "Forge/app/agents/roles.py"
+      - "Forge/tests/test_frg004_explicit_layout.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: ""
+    defect: "TASK-REL-028's first end-to-end Forge success was a small goal whose requested two-file layout was not produced; residual (1) on that board entry names manifest completeness as a synthesis-planning candidate. FRG-004 stress-tests scale/multi-file shape: a battery of 5 progressively larger goals (5, 6, 6, 7, 10 requested files), each stating its exact layout in the goal text and requirements, run end-to-end against the deployed Forge (delegate path, Server 1). Sibling scope: TASK-FRG-003 runs the acceptance battery; FRG-004 shares fixtures via issue #35 and uses disjoint goal domains."
+    acceptance:
+      - "Battery complete 2026-11-15: 5/5 goals PARTIAL_FAILURE (delegate status; task state FAILED). G1 shortlink package (5 files, 271.2s, 9/11 stages, Ruff+Pytest failed), G2 bookstore REST API (6 files, 228.5s, 9/11, Pytest exit 2 + runtime smoke), G3 loglens CLI (6 files, 496.3s, 9/11, Ruff+Pytest), G4 salespipe ETL (7 files, 350.6s, 10/11, Pytest exit 2), G5 taskboard backend (10 files, 286.0s, 8/11, Ruff+Pytest exit 2+runtime smoke). Zero of the 34 requested layout files were produced; every project was flat main.py + test_main.py (+ at most one improvised module)."
+      - "Root cause evidenced from production artifacts: every run's docs/FILE_MANIFEST.json held a keyword-template fallback ([main.py, README.md] or [main.py, test_main.py, README.md]) and docs/ARCHITECTURE_SPEC.md was the 172-byte DirectProvider stub. Roles run on the deterministic DirectProvider in production (set_provider has no caller), so no model manifest exists; the ArchitectRole fallback keyword-matches the goal and never reads the layout the goal states; downstream synthesis is restricted to the manifest, so the requested project can never be produced."
+      - "Fix (this task's PR, branch claude/task-frg-004): explicit_layout_from_goal(goal, requirements) in Forge/app/agents/roles.py extracts the file paths a goal/requirements state explicitly (>=3 required, stated order, deduped, architect's own artifacts excluded, URLs/dotted modules/versions rejected); ArchitectRole uses it as the manifest (written to docs/FILE_MANIFEST.json) before the keyword templates. Goals stating no layout keep historical template behaviour exactly."
+      - "Regression tests Forge/tests/test_frg004_explicit_layout.py: 8 tests. On main: collection ERROR (function absent) -- fail-on-main. With the fix: 8 passed. The helper was additionally verified to extract exactly the 5 battery goals' stated layouts (5/6/6/7/10 files) and to return [] for prose and two-file goals. Adjacent-suite regression check (9 roles/manifest-adjacent test files): unpatched main 44 passed / 4 failed; patched tree 52 passed / the identical 4 pre-existing failures (2x test_model_routing, 2x generation-boundary pytest-config) -- no regressions."
+      - "Repair rounds: no self-repair or peer-review activity appears in any battery task's terminal log or the Forge journal for its window -- failed verification stages (lint/pytest/runtime) ended every task without a recorded repair attempt (reported as observed; journal grep method in the crew's completion comment on issue #35)."
+      - "Honest scope limit: the fix makes the manifest truthful and gives synthesis the requested path set; it does not wire a real LLM provider into the roles (set_provider has no production caller), and deterministic synthesis still cannot author true package contents for arbitrary layouts. That wiring is a separate coordinator decision, reported -- not bundled into this PR."
+    next_action: "Coordinator: merge the FRG-004 fix PR (claude/task-frg-004), deploy Forge via Fleet CD, then re-run one battery goal (G5 taskboard shape) as the production-verification probe -- expect docs/FILE_MANIFEST.json to list the 10 stated files. Separately decide on wiring a real provider into Forge roles (evidence: FRG-003 + FRG-004)."
+  - id: TASK-FRG-010
+    title: "Forge module-completeness gate: goal/manifest modules must exist as real files before the tester gate; create-route healing; honest FAILED naming the rest"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: "#392 (open; stacked on PR #329 — merge #329 first)"
+    evidence: "PR #392 head 3ba7d5da CI 9/9 check-runs green (test, contracts, secrets scan, layout, monorepo policy, image build). Gate wired in orchestrator step_task (tester gate intercepted; tester never invoked on unhealable omissions) + run_task backstop demoting COMPLETED to FAILED naming missing modules; healing only via RecoveryEngine.create_missing_module (create route: 0.70 bar, compile gate, guarded write; manifest added as a naming source); gate re-reads disk after healing. Suite Forge/tests/test_frg010_completeness_gate.py: 14 tests, imports symbols absent on main (fails there by construction), green in CI. Finisher-verified: shipped blobs byte-identical to crew sources (completeness ddf9c754, test d4eab20e, roles carry 1c99cc7d). Acceptance battery NOT run to completion by the original crew (scratch env staged on S1 /tmp/frg010, zero run artifacts) — outcomes not claimed."
+    next_action: "Merge PR #329, then PR #392 (carry commit drops on rebase). Post-merge: deploy Forge, then run the acceptance battery against the deployed service — FRG-003's R3 inventory goal verbatim + the two-module temperature goal (driver preserved on S1 at /tmp/frg010/repo/Forge/battery.py and in the crew workspace) — and flip this entry to VERIFIED only with those outcomes recorded."
+  - id: TASK-INT-011
+    title: "Wire live IntelX research into the canonical store (Option W)"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: 382
+    branch: claude/task-int-011
+    evidence: "PR stacked on #365 head + #355 files by blob SHA (guards asserted at ship); projection reuses ingest_and_normalize + ClaimRepo span enforcement; INFERRED origin for synthesized statements; idempotency_key live:<run_id>; lookup census honesty fix. Local pytest sandbox-blocked (content-write EPERM); static + in-memory logic verification done; CI is the test gate."
+    next_action: "Coordinator: merge PR #355, then PR #365, then rebase this PR (drop the BASE commit) and merge on green CI. Post-merge: Fleet CD, then production proof = one live research_live call with a census of the seven canonical tables before/after (expect +1 run/source/document, +claims/evidence/finding) — board VERIFIED only on that evidence. No test rows were written to production tables."
+  - id: TASK-SEN-014
+    title: "chromadb exposure determination + dead-code removal (FRIDAY)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: "claude/task-sen-014-chromadb"
+    pr: 368
+    files:
+      - "FRIDAY/requirements.txt"
+      - "FRIDAY/pyproject.toml"
+      - "FRIDAY/src/friday/memory/oracle.py"
+      - "FRIDAY/src/friday/memory/sqlite.py"
+      - "FRIDAY/src/friday/memory/vector_store.py"
+      - "FRIDAY/tests/test_vector_memory_phase22.py"
+    next_action: "Coordinator: PR #368 merged via the merge queue (3b7cf71c); flip to VERIFIED. No deploy step beyond normal Fleet CD; no production probe owed (behaviour unchanged by design — chromadb was dead in production)."
+  - id: TASK-PRO-001
+    title: "Proactive FRIDAY v1: Stratex event alerts (open/close/kill-trip/breaker/measurement) + self-generated morning self-check, via the real NotificationManager path"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-pro-001-proactive-friday
+    pr: <PR_NUMBER>
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:40:00+05:30"
+    updated_at: "2026-11-15T13:50:00+05:30"
+    files:
+      - "FRIDAY/src/friday/proactive/stratex_watch.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_pro001_stratex_watch.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891092229"
+    defect: "FRIDAY only ever answered when asked. The repo's proactive surface was interaction-triggered (VOI-002 morning brief on first greeting, evening Telegram self-report) or theatre (core/notification_router.py and notifications/bridge.py append to in-memory lists and log 'Dispatched' — no transport). Nothing watched Stratex's measurement state, so a forward-entrant trade opening/closing, a phase-3 kill criterion tripping (forward guard auto-pause), the daily loss breaker tripping, or a measurement alert (e.g. unrecorded_close) reached the owner only if he happened to ask. Owner roadmap (2026-11-15): a PROACTIVE FRIDAY that starts things on its own."
+    acceptance:
+      - "Stratex events (trade opened from position_tags.jsonl, trade closed from fill_ledger.jsonl with net PnL + running ledger totals, kill trip from strategy_denylist.json additions with the strategy's ledger stats, breaker trip from daemon_heartbeat.json daily_loss_limit_hit False->True, measurement alerts from measurement_alerts.json) post proactive notifications through observability.notifications.NotificationManager (the durable Oracle-backed path the greeting/chat surfaces pop) — never through the in-memory router/bridge stubs."
+      - "No spam: stable dedupe keys + persisted watcher state (no re-post across cycles or restarts); first cycle on fresh state is a silent baseline; quiet hours 23:00-07:00 IST hold everything except breaker trips and flush held events as ONE digest at/after 07:00; every proactive message logged with its trigger (notification metadata + bounded alert log in watcher state)."
+      - "Morning self-check: once per IST day (first cycle in 07:30-12:00) FRIDAY composes fleet health (FleetStatusTool) + Stratex state (daemon heartbeat + fill ledger) itself and stores it as a morning_self_check notification; unreadable sources produce honest 'could not read' lines, never invented figures."
+      - "Kill switch FRIDAY_PROACTIVE_STRATEX_WATCH env flag, code default OFF; production enables it only after the live proof in this entry's evidence."
+      - "Proof: pytest suite over a synthetic Stratex state dir; isolated harness over a scripted event sequence; one real read-only cycle against production state files (in-memory sink) reporting the true current picture."
+    evidence:
+      - "CLAIM: issue #35 comment 6891092229 (a duplicate posted by a transport-retry was deleted; the surviving claim is the first). Audit: NotificationManager (observability/notifications.py) is the only real delivery path; notification_router/bridge are in-memory stubs (source-read); morning_brief/daily_self_report cover neither Stratex events nor a stored scheduled self-check."
+      - "IMPLEMENTATION (PR #<PR_NUMBER>): new FRIDAY/src/friday/proactive/stratex_watch.py (event diffing over Stratex/state/{position_tags,fill_ledger}.jsonl + strategy_denylist.json + daemon_heartbeat.json + measurement_alerts.json, paths resolved via FRIDAY_STRATEX_STATE_DIR/sibling-Stratex + STRATEX_STATE_DIR/per-file overrides — the fleet's existing seams); one lifespan loop in api/server.py (FRIDAY_PROACTIVE_WATCH_INTERVAL_SECONDS default 120s) beside _daily_report_loop; watcher never writes Stratex state and never touches trading."
+      - "TESTS: 13/13 PASS under real pytest locally (repo conftest, full production import chain) AND 13/13 in a server-side scratch run on the fleet venv (plain runner with identical fixture semantics; friday/core/__init__.py shimmed empty in scratch only — disclosed in the PR). Neighbouring proactive suites (test_morning_brief + test_proactive_greeting_memory) 15/15 PASS — no regressions."
+      - "HARNESS: PASS — scripted sequence over a synthetic Stratex state: silent baseline; open posted; close posted with moved totals; idle cycle silent; 23:20 open HELD by quiet hours; 23:40 breaker trip posted IMMEDIATELY (critical bypass); 07:15 single quiet_hours_digest; kill trip posted with ledger stats; measurement alert posted once; next-day 08:00 morning_self_check stored exactly once. 7 notifications, 8 alert_log entries (held + posted), each with its trigger."
+      - "PRODUCTION READ-ONLY CYCLE (2026-11-15 ~13:28-13:35 IST, byte copies of Server 1 /opt/friday_universe/Stratex/state fetched via bridge run_shell server=1; in-memory sink, nothing posted): PASS — cycle 1 silent baseline over the real state (9 fills, 4 position tags, denylist [strategy_hybrid], heartbeat RUNNING, unrecorded_close alert active); cycle 2 zero events (no spam); morning summary composed over the real data (daemon equity $20,554.34 composite, ledger 9 trades net +$195.06 PF 6.44 by raw-row arithmetic — the Stratex scorecard displays 6.45 because it pools cent-rounded PnLs first, a 0.005 third-decimal rounding-stage difference over identical rows, disclosed rather than fudged; denylist and active alert named); one synthetic close appended to the COPY produced exactly one trade_closed event (10 trades, net +$207.40)."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #<PR_NUMBER> (Fleet CD then deploys; the watcher stays inert with the flag OFF). Post-deploy enablement (coordinator/owner step): set FRIDAY_PROACTIVE_STRATEX_WATCH=on in FRIDAY's production env on Server 1, restart FRIDAY.service, verify the journal's proactive-watch lines and the first stored morning_self_check notification, then flip this entry to VERIFIED via a fresh-main board PR. Do NOT enable before merge+deploy: the flag is the kill switch and its OFF default is the fail-safe."
+  - id: TASK-INT-004
+    title: "IntelX source-diversity audit + pre-synthesis diversity check (wire-echo collapse, single-source flagging)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: claude/task-int-004-source-diversity
+    files:
+      - "IntelX/intelx/api/source_diversity.py"
+      - "IntelX/intelx/api/live_research_task.py"
+      - "IntelX/tests/test_source_diversity.py"
+      - "IntelX/docs/SOURCE_DIVERSITY_AUDIT_INT004.md"
+      - "IntelX/docs/source_diversity_audit_int004.json"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    defect: "In collect_live_brief, source diversity was measured nowhere: retrieval de-duplicated by exact URL only (the same wire copy at ten outlets counted as ten sources), extractive findings carry exactly one citation each (single-source by construction, never flagged), and the synthesizer received all retrieved documents uncollapsed, so syndicated copies masqueraded as independent corroboration. No domain counting, no per-domain cap, no diversity field on the result."
+    acceptance:
+      - "Code-level audit published (IntelX/docs/SOURCE_DIVERSITY_AUDIT_INT004.md + data JSON): how the pipeline counted/flagged sources before the fix, with the defect verdict and evidence."
+      - "Pre-synthesis diversity check implemented: near-duplicate documents (token-set Jaccard >= 0.80) collapse to one independent source; the synthesizer receives cluster representatives only."
+      - "Every finding annotated with independent_source_count and diversity_flag (single_source below 2 independent sources); run-level source_diversity report attached to every brief result."
+      - "Tests: IntelX/tests/test_source_diversity.py — 7/7 pass, including integration proof that wire copy from two outlets reaches synthesis as one document and extractive findings are all flagged single-source."
+      - "Empirical audit of persisted production outputs reported honestly: UNVERIFIED in this delivery (no completed measurement exists); the preserved server-side analysis (~/workspace/int-004/server_analyze.py) is the follow-up instrument."
+    evidence:
+      - "Finisher test run 2026-11-15: 7 passed in 0.31s (pytest 9.2.0) — test names and integration assertions recorded in IntelX/docs/source_diversity_audit_int004.json."
+      - "Inventory: two prior crews died without reports (original: DB timeout; first finisher: silent); code+tests found uncommitted in the clone worktree on branch claude/task-int-004-source-diversity at main a5612c63; no sampled production data exists in the workspace; first finisher's analysis delivery outputs are 0 bytes."
+    blockers: []
+    next_action: "Coordinator/merge-runner: commit the five PR files from ~/workspace/int-004/repo worktree (branch claude/task-int-004-source-diversity; sandbox git index is not writable from the finisher's session), open the PR with ~/workspace/int-004/pr_body.md, dedupe the TASK-INT-004 claim on issue #35 (original claim POST state unverified), post ~/workspace/int-004/completion_comment.md, merge after CI. Post-merge: deploy, confirm a live brief result carries source_diversity, then run the preserved server-side analysis to replace the audit's UNVERIFIED empirical section with measured production figures."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
