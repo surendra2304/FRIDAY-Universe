@@ -171,6 +171,7 @@ jobs:
             tests/test_voice_live_features.py \
             tests/test_voice_confirmation_policy.py \
             tests/test_voice_language_profiles.py \
+            tests/test_voice_surface_contract.py \
             tests/test_ux_and_cli.py
       - name: Run voice, LiveKit, Gemini, and CLI regressions
         run: |
@@ -178,6 +179,7 @@ jobs:
             tests/test_voice_gemini_only.py \
             tests/test_voice_confirmation_policy.py \
             tests/test_voice_language_profiles.py \
+            tests/test_voice_surface_contract.py \
             tests/test_voice_recovery_ladder.py \
             tests/test_voice_session_pinning.py \
             tests/test_voice_key_resolution.py \
