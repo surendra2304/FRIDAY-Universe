@@ -384,6 +384,11 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             **({"synthesis_error": synthesis_failure} if synthesis_failure is not None else {}),
             **({"downgraded_findings": downgraded_findings} if downgraded_findings else {}),
             **({"live_reverification": live_reverification} if live_reverification else {}),
+            # TASK-INT-011: the raw material for the canonical-store
+            # projection. The router captures and REMOVES this key before
+            # the brief is enveloped/archived — page text (up to ~90 KB
+            # per run) belongs in neither the envelope nor the archive.
+            "source_documents": source_documents,
             "findings": findings, "sources": sources, "spoken_summary": spoken,
             "text_response": "\n".join(lines), "source_failures": failures,
             "summary": summary}

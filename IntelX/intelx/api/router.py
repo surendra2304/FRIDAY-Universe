@@ -110,7 +110,7 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
 
     from intelx.agents.citations import export_spoken_citations, export_text_citations
     from intelx.core.enums import RunOutcome, RunStatus
-    from intelx.db.models import Claim, Finding, ResearchRun, Source
+    from intelx.db.models import Chunk, Claim, Document, Evidence, Finding, ResearchRun, Source
     from intelx.db.session import get_sessionmaker
 
     t0 = time.time()
@@ -136,8 +136,16 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
         cfg = get_settings()
         if cfg.MOCK_MODE:
             raise HTTPException(status_code=503, detail="Live research refuses MOCK_MODE; no fixture evidence will be returned")
+        captured_documents: list[dict] = []
+
         async def run_pipeline():
-            return await collect_live_brief(query, WebSearchConnector(settings=cfg), HttpFetchConnector(settings=cfg), synthesize=synthesize_grounded)
+            brief = await collect_live_brief(query, WebSearchConnector(settings=cfg), HttpFetchConnector(settings=cfg), synthesize=synthesize_grounded)
+            # TASK-INT-011: the brief's source documents are the canonical
+            # projection's raw material. Capture them here and keep them
+            # OUT of the envelope and the verbatim archive (up to ~90 KB
+            # of page text per run belongs in neither).
+            captured_documents.extend(brief.pop("source_documents", None) or [])
+            return brief
         envelope = await run_live_research(task_id, query, run_pipeline)
         # TASK-REL-038: persist the completed run durably so it can be
         # retrieved verbatim later (action "research_recall" / the
@@ -160,6 +168,22 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
                 receipt_result = receipt.get("result")
                 if isinstance(receipt_result, dict):
                     receipt_result["run_id"] = run_id
+            # TASK-INT-011 (Option W): project the completed run into the
+            # canonical research store so the citation-integrity machinery
+            # has a real corpus. Runs only after the verbatim persist —
+            # the projection keys on the durable run_id. Never raises and
+            # never alters the live answer; failures surface in the
+            # envelope's degradations (MEM-008 pattern).
+            from intelx.api.canonical_projection import project_and_annotate
+
+            await project_and_annotate(
+                envelope,
+                live_run_id=run_id,
+                task_id=task_id,
+                query=query,
+                source_documents=captured_documents,
+                created_by=api_key.name,
+            )
         return envelope
 
     # TASK-REL-038: retrieve a previously persisted live-research run.
@@ -387,11 +411,38 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
         spoken_summary = export_spoken_citations(findings_items, sources)
         text_response = export_text_citations(findings_items, sources)
 
+        # TASK-INT-011: this action is a read-only lookup over the
+        # canonical store, not fresh research. Report the store's actual
+        # contents so an empty (or thin) result can never again dress
+        # itself as synthesis: TASK-INT-008 found all seven tables empty
+        # in production while this action returned SUCCESS.
+        from sqlalchemy import func as _func
+
+        store_census = {}
+        for _label, _model in (
+            ("research_runs", ResearchRun),
+            ("sources", Source),
+            ("documents", Document),
+            ("chunks", Chunk),
+            ("claims", Claim),
+            ("evidence", Evidence),
+            ("findings", Finding),
+        ):
+            store_census[_label] = int(
+                (await session.execute(select(_func.count()).select_from(_model))).scalar_one()
+            )
+
     lat = int((time.time() - t0) * 1000)
-    summary = f"IntelX synthesized evidence-driven research for query '{query}' with {len(sources_data)} cited sources."
+    summary = (
+        f"IntelX canonical-store lookup for query '{query}': {len(findings_items)} stored "
+        f"finding(s) from {len(run_ids)} completed run(s). This is a lookup of previously "
+        f"stored research, not fresh research; the canonical store currently holds "
+        f"{store_census['research_runs']} run(s), {store_census['claims']} claim(s) and "
+        f"{store_census['findings']} finding(s)."
+    )
     completed_run_ids = [str(run_id) for run_id in run_ids]
 
-    return {
+    response = {
         "task_id": task_id,
         "target_agent": "intelx",
         "status": "SUCCESS",
@@ -403,6 +454,12 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
             "spoken_summary": spoken_summary,
             "text_response": text_response,
             "findings_count": len(findings_items),
+            "lookup": {
+                "kind": "canonical_store_lookup",
+                "fresh_research": False,
+                "matched_run_ids": completed_run_ids,
+                "store_census": store_census,
+            },
         },
         "summary": summary,
         "execution_time_ms": lat,
@@ -420,10 +477,21 @@ async def execute_task(body: dict, request: Request, api_key: ApiKey = Depends(g
                 "sources_count": len(sources_data),
                 "provenance_chain_length": len(provenance_chain),
                 "findings_count": len(findings_items),
+                "lookup": True,
+                "store_census": store_census,
                 "summary": summary,
             },
         ),
     }
+    if not findings_items:
+        response["degradations"] = [
+            {
+                "kind": "lookup_returned_no_findings",
+                "detail": "canonical store lookup matched no stored findings",
+                "store_census": store_census,
+            }
+        ]
+    return response
 
 
 # ==============================================================================
