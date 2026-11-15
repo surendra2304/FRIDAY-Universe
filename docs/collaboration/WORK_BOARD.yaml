@@ -5819,7 +5819,32 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence: "Finisher runs MEM005F-80f08d28 (fingerprints + plant + Server-2 cell) and MEM005F-2cf90132 (full Server-1 matrix, result persisted server-side): writes 7x201 + UNIVERSAL-by-friday 403 + SHARED-to-unregistered 403 + wildcard 403; read matrix 7 records x 5 readers exactly per scope; auth negatives 401/401/401/503; cross-mutations 404/404/422 with target intact; master-as-friday read friday PRIVATE (scope of claimed identity still applies: master-as-stratex could NOT read friday PRIVATE, master-as-friday could NOT read stratex PRIVATE — impersonation, not scope bypass); cleanup 8x DELETE 200 with triple absence verification. Deployed Memora code byte-identical to repo main for all five core files (sha256[:16] recorded in the audit doc). Full matrix + findings F1-F5: Memora/MEMORA_SHARING_AUDIT_MEM005.md."
     blockers: []
     next_action: "Coordinator: verify + merge this PR, then the remediation DECISION (owner/coordinator — this task changed nothing): (1) stop distributing the master key (per-agent keys already exist; check each agent's client credential chain first), (2) split MEMORA_MASTER_KEY from the memora identity, (3) replace FRIDAY's on-behalf-of key-holding with explicit delegation policy, (4) decide UNIVERSAL semantics + share-recipient auto-registration, (5) rotate distributed keys last. Until then the measured state stands: any single agent .env read yields full Memora impersonation."
-task_id_warnings:
+  - id: TASK-REL-045
+    title: "Universe-wide parameter inventory + evidence-based tuning table (KEEP/TUNE/UNKNOWN) for all 10 agents + voice worker + website"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: "claude/task-rel-045-parameter-tuning"
+    pr: 328
+    contributors: []
+    priority: "P1"
+    created_at: "2026-11-15T09:40:00Z"
+    updated_at: "2026-11-15T10:40:19Z"
+    files:
+      - "docs/verification/PARAMETER_TUNING_REL045.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    dependencies: []
+    acceptance:
+      - "Per-agent tuning table published: parameter, current value (live-read 2026-11-15), verdict KEEP/TUNE/UNKNOWN, decided value or named measurement, evidence citation"
+      - "No live setting changed by this task; trading parameters out of scope (FWD-006/RISK-001); voice internals evidence-only until VOI-009 merges"
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6892549916 (2026-11-15) before editing."
+      - "INVENTORY: live read-only reads via the bridge on both servers 2026-11-15 — every agent's .env (secret-named vars recorded by name only), systemd unit files, deployed code."
+      - "RESULT: 53 parameters — KEEP 20, TUNE 7, UNKNOWN 26 (each UNKNOWN names its settling measurement). Doc: docs/verification/PARAMETER_TUNING_REL045.md (PR #328)."
+    risk_flags: []
+    blockers: []
+    next_action: "Coordinator (Muse) reviews and approves the tuning table, then dispatches the five follow-up batches named in the doc (Inference batch; Memora env-flag flip + auth-matrix re-verification; IntelX timeout 45->60s; Cortex 422-on-incomplete-matrix; voice recall decoupling after VOI-009 merges) as per-agent implementation crews."
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6892549916"
+    last_update_comment_url: null
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
