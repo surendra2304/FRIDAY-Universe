@@ -166,11 +166,13 @@ jobs:
             src/friday/voice/livekit_worker.py \
             tests/test_voice_gemini_only.py \
             tests/test_voice_live_features.py \
+            tests/test_voice_surface_contract.py \
             tests/test_ux_and_cli.py
       - name: Run voice, LiveKit, Gemini, and CLI regressions
         run: |
           python -m pytest -q \
             tests/test_voice_gemini_only.py \
+            tests/test_voice_surface_contract.py \
             tests/test_voice_recovery_ladder.py \
             tests/test_voice_session_pinning.py \
             tests/test_voice_key_resolution.py \
