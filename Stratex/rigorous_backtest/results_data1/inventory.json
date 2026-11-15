@@ -1,0 +1,2209 @@
+{
+  "task": "TASK-STR-DATA-001",
+  "generated": "2026-11-15",
+  "scope": "OANDA instruments NOT in RD-002 panels (forex28/forex12/comm7/idx7), probed for provenance-verified history in the RD-002 Stage-A cache contract (Yahoo Finance chart API).",
+  "oanda_reference_universe": "123 instruments (ichimoku/OANDA fxTrade reference list, retrieved 2026-11-15). Owner's practice account (TASK-STR-FWD-003 live verification, twice independently, 2026-11-15): 68 instruments, ALL FX pairs \u2014 see uncovered.oanda_native for the consequences.",
+  "verified": [
+    {
+      "symbol": "AUDCAD",
+      "oanda_instrument": "AUD_CAD",
+      "yahoo_symbol": "AUDCAD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "d91b1da8b08bb70183c08476bfd3046c1e9e9a6a8c791f89146837b8d0233e5d",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12333,
+          "null_ohlc_rows_dropped": 147,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "afd08422f41e21d3b21e64c8d8dcedbde8f77030ef882c793bff4e607954d8ec",
+          "missing_bars": 5088
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "AUDCHF",
+      "oanda_instrument": "AUD_CHF",
+      "yahoo_symbol": "AUDCHF=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "b0d9caa85977a41b317a53ea52ba06249dd041560f6e217f924a3b24eb87b907",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12323,
+          "null_ohlc_rows_dropped": 157,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "e037525f5ca50cdf5296b0f2aaa8607e7aa3d2786d5f1c39bfb23b09879484b8",
+          "missing_bars": 5098
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "AUDHKD",
+      "oanda_instrument": "AUD_HKD",
+      "yahoo_symbol": "AUDHKD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:46:47+00:00",
+          "csv_sha256": "592ce95979d6fc8a475adbc44cc2fc6a513c79096ef5849f3a7db86110bccf53",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12329,
+          "null_ohlc_rows_dropped": 151,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "7aa7a85ce4df274b0c1d6b4df09762c143cdb32986975cae899170647f19bdad",
+          "missing_bars": 5093
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "AUDSGD",
+      "oanda_instrument": "AUD_SGD",
+      "yahoo_symbol": "AUDSGD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:46:47+00:00",
+          "csv_sha256": "8f8809ad5d63862f08abc6e94a452f54c4d0e7029c09efe0efa958e3f4115642",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12300,
+          "null_ohlc_rows_dropped": 180,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "3e24de84d18a0ee46c6211126e0d1ad79dda9c9e0aee600d546d4a8b56d3c742",
+          "missing_bars": 5120
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "CADCHF",
+      "oanda_instrument": "CAD_CHF",
+      "yahoo_symbol": "CADCHF=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "ccda9068ea5421e57aa7f08856cfb8d40626c70fe62466f06180ec214c5a84b5",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12289,
+          "null_ohlc_rows_dropped": 191,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T23:00:00+00:00",
+          "csv_sha256": "82897d24568d2760030d6140fe3043df8dad6a6b32d49e891284add1d016c392",
+          "missing_bars": 5134
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "CADHKD",
+      "oanda_instrument": "CAD_HKD",
+      "yahoo_symbol": "CADHKD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:46:47+00:00",
+          "csv_sha256": "84d1dd7874c84b5c89809517aa716fbdd38e9022713ef9405c1e4d96be30b8e5",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12361,
+          "null_ohlc_rows_dropped": 119,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T23:00:00+00:00",
+          "csv_sha256": "9502fabe7dcef70d4839ee978ea9e581b63a1f8497ebdbb3026d693536054cf3",
+          "missing_bars": 5063
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "CADSGD",
+      "oanda_instrument": "CAD_SGD",
+      "yahoo_symbol": "CADSGD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:46:47+00:00",
+          "csv_sha256": "cc64c98695e4df85c536d8dd07043e6de505cb040a7dd37f2a686c5904ace6f9",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12296,
+          "null_ohlc_rows_dropped": 184,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "e01994d8d1697628c3d17b0a8b839c52e9e6eab3e7c03a0af351723d6ccff9dd",
+          "missing_bars": 5125
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "CHFHKD",
+      "oanda_instrument": "CHF_HKD",
+      "yahoo_symbol": "CHFHKD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:49:47+00:00",
+          "csv_sha256": "3ed13685e7d9761982e6920381b51527011a5608d3fc99bce0892671411c0d42",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12284,
+          "null_ohlc_rows_dropped": 196,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "83f27d90875124e0ca1fc80d77b09d3192b6d4db583d340be31d970b72efdf37",
+          "missing_bars": 5137
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "CHFZAR",
+      "oanda_instrument": "CHF_ZAR",
+      "yahoo_symbol": "CHFZAR=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:49:47+00:00",
+          "csv_sha256": "8fe3aa4f0ebeb14c1752a8a53af91a7a09c022df0d13ff0da1aa47d5b52a5695",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12280,
+          "null_ohlc_rows_dropped": 200,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "6a9d49bc8ed8c70e0cfcb077dd66a517b6ae768362f5ab37703acea287971932",
+          "missing_bars": 5141
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURCAD",
+      "oanda_instrument": "EUR_CAD",
+      "yahoo_symbol": "EURCAD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:21:15+00:00",
+          "csv_sha256": "69d7e3e65e109600366a24b666e91cc2c2ed0927d2313496b76866bbfac2773b",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12288,
+          "null_ohlc_rows_dropped": 192,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "b8e7be9fddcc767276887eb6778998623ef689e896d5749906e46ffe40b08c33",
+          "missing_bars": 5132
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURCZK",
+      "oanda_instrument": "EUR_CZK",
+      "yahoo_symbol": "EURCZK=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "33e891b03c0ad9133fb6695b64fbda2c697a01295056d897dc33c0de1dbadc4d",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12296,
+          "null_ohlc_rows_dropped": 184,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "5121d4af563b2ae2f5ceef2401d0fa4d82aff4d4c43236035be34021357a6bf3",
+          "missing_bars": 5125
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURDKK",
+      "oanda_instrument": "EUR_DKK",
+      "yahoo_symbol": "EURDKK=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:21:15+00:00",
+          "csv_sha256": "130a64450149e3006223677df0462ee04a312068bc9a0c634c9812d665c708ae",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12331,
+          "null_ohlc_rows_dropped": 149,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "8f6266dce8e201af6e09f31a0c4fb36e801fc68eb12c995072b190480e20f57b",
+          "missing_bars": 5090
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURHKD",
+      "oanda_instrument": "EUR_HKD",
+      "yahoo_symbol": "EURHKD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:21:15+00:00",
+          "csv_sha256": "8b707377647919fa05930dff406f83be60f22374f567086a25101b2a853268f3",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12302,
+          "null_ohlc_rows_dropped": 178,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T23:00:00+00:00",
+          "csv_sha256": "7f81b57102f37d58b25011497bdc6a194cd1d14c36384ddd9511e4e62ee8a025",
+          "missing_bars": 5121
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURHUF",
+      "oanda_instrument": "EUR_HUF",
+      "yahoo_symbol": "EURHUF=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "28ddd1c418b35000b66b4e0af8659f75d1e460ac2a5c256a7ee6843494a00517",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12287,
+          "null_ohlc_rows_dropped": 193,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "3a37174c5a6b05525b2dee1dda8fb76770f1fbd6c14eb15348ebe9c4a82920d5",
+          "missing_bars": 5133
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURNOK",
+      "oanda_instrument": "EUR_NOK",
+      "yahoo_symbol": "EURNOK=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "0722527a97124bf91c1da1f57a6685ba958c76c357569f8ba395bc5e4cc11085",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12283,
+          "null_ohlc_rows_dropped": 197,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "79acd22184737bb61850e642ff23106371beccb85738c328a629f3d524fd0d8e",
+          "missing_bars": 5138
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURSEK",
+      "oanda_instrument": "EUR_SEK",
+      "yahoo_symbol": "EURSEK=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:21:15+00:00",
+          "csv_sha256": "d618ccb9806b8c84bb126b65bc3dc1a495b6eef0a3a415a345f979811cee4eb2",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12294,
+          "null_ohlc_rows_dropped": 186,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "125b2d0dbf53dc0a78b879c2ca28fc25db148f482b6097321d256c1fe92b1d2f",
+          "missing_bars": 5128
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURSGD",
+      "oanda_instrument": "EUR_SGD",
+      "yahoo_symbol": "EURSGD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:21:15+00:00",
+          "csv_sha256": "e7eda91dacc7116bab574fa8cc1a90004fab5fa5dcd929721f444a5c737c27de",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12303,
+          "null_ohlc_rows_dropped": 177,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "b7bdd3dca58a00bbde20bf8acdaa61da6eff9eeedeaaf6916a369330026ae66d",
+          "missing_bars": 5117
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURTRY",
+      "oanda_instrument": "EUR_TRY",
+      "yahoo_symbol": "EURTRY=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "11bc63b5222b378f52d0036a2b94b88346147e09bb9ffeaac53289ea88078ea9",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12296,
+          "null_ohlc_rows_dropped": 184,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "dc2fb70c7a2b2155756edeb94f417d23e74304d6346adca5204e27eb2d4a4b7c",
+          "missing_bars": 5124
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "EURZAR",
+      "oanda_instrument": "EUR_ZAR",
+      "yahoo_symbol": "EURZAR=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:21:15+00:00",
+          "csv_sha256": "40a599443498b9e9ff4454d5944413dfbbf25732f80dcc1080b5356d7aa4ee89",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12298,
+          "null_ohlc_rows_dropped": 182,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "911dd7a2f69e79598029f2f880dd1b0365b7d8f377cc9b0dd3b701f0d137685a",
+          "missing_bars": 5121
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "GBPCAD",
+      "oanda_instrument": "GBP_CAD",
+      "yahoo_symbol": "GBPCAD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:49:47+00:00",
+          "csv_sha256": "2f5cb80d4459cb988e7f79a37e35c2ec9fcae1b31d369f39863c9396fcddc989",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12328,
+          "null_ohlc_rows_dropped": 152,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "427b4f09f009f3da605ecd46f2106f1f22ca3a1839eb154886c6c02888c1cabf",
+          "missing_bars": 5093
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "GBPCHF",
+      "oanda_instrument": "GBP_CHF",
+      "yahoo_symbol": "GBPCHF=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:49:47+00:00",
+          "csv_sha256": "c2da17a5489bdfe3a96a3bba22874e167b16b7af71fea01c5fe7c07a68a0b497",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12277,
+          "null_ohlc_rows_dropped": 203,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "4c8feba8d1695346132637e18036f60522f658592f639e076e9c959c0e62cb5f",
+          "missing_bars": 5144
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "GBPHKD",
+      "oanda_instrument": "GBP_HKD",
+      "yahoo_symbol": "GBPHKD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "e518e4483bda476a10c8566ed0f51834dee05379b45e67f2154d2cde778c2187",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12330,
+          "null_ohlc_rows_dropped": 150,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "eef2d4f37f7271698a4cbb6debe514b55d1d984c4a1d5352e4fa10889ac05b73",
+          "missing_bars": 5090
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "GBPNZD",
+      "oanda_instrument": "GBP_NZD",
+      "yahoo_symbol": "GBPNZD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:49:47+00:00",
+          "csv_sha256": "0b87ee94fd2a43091f955bc0a1552c109ea3c855f41b93d54d33bc150f2d4d6c",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12324,
+          "null_ohlc_rows_dropped": 156,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "294eea8eaabdd1d816b02169762f08b0bed8da229c6359ece3e627f67a364aa9",
+          "missing_bars": 5094
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "GBPPLN",
+      "oanda_instrument": "GBP_PLN",
+      "yahoo_symbol": "GBPPLN=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "d9bced2d516be617094a15e7808e75e0611389a3dc84d59402ef6059cef05dfe",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12318,
+          "null_ohlc_rows_dropped": 162,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "e4144093f0ad64e8aa1af5dd6e20e5bf518dbbfdb973b93c3f2e8cccfa41e5c1",
+          "missing_bars": 5104
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "GBPSGD",
+      "oanda_instrument": "GBP_SGD",
+      "yahoo_symbol": "GBPSGD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "88eec1aeb2dfdb82b5409f2617e6b1a4f50b3a03c65985a0fef295687827a9e6",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12288,
+          "null_ohlc_rows_dropped": 192,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "3328796f467f06d9ab4889f61d3877428f261510b99710aa773c5ebf8582969b",
+          "missing_bars": 5133
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "GBPZAR",
+      "oanda_instrument": "GBP_ZAR",
+      "yahoo_symbol": "GBPZAR=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2311,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "59e1c636ef0c1915d7669feae5df2a37dc6b085f209db446acd69f892fe9b595",
+          "missing_bars": 4
+        },
+        "1h": {
+          "rows": 12309,
+          "null_ohlc_rows_dropped": 171,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "e5203546f5a365af436243890296b3dcf9e28956fdd7021ccc0d606fb3f840b6",
+          "missing_bars": 5109
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "HKDJPY",
+      "oanda_instrument": "HKD_JPY",
+      "yahoo_symbol": "HKDJPY=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "8f0398968a08b028c70664db970df76386a8167917fde7f482fc2a883ec1bcd2",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12281,
+          "null_ohlc_rows_dropped": 199,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "53a6fbb666ec11824b354f296e7dd4d653d861c6847ad1e80708bc039dfdc1c4",
+          "missing_bars": 5141
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "NZDCAD",
+      "oanda_instrument": "NZD_CAD",
+      "yahoo_symbol": "NZDCAD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "8040c54ab501a2e1d7f5354fd0ec97598d8c810a9de30baa1af18d2447fe72c8",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12330,
+          "null_ohlc_rows_dropped": 150,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "729b08de34c25aefef786d44bfe4ad74e86a6f0f6c5de405f5bf7d77421a6436",
+          "missing_bars": 5088
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "NZDCHF",
+      "oanda_instrument": "NZD_CHF",
+      "yahoo_symbol": "NZDCHF=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "b114c53b654192374e67db65fcde3b88a1233479697c3597a860dfa27fdc8954",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12334,
+          "null_ohlc_rows_dropped": 146,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "659fcd945095064463d98e1e298e54b6151c6a919deb9b3eaf790700693d5f6c",
+          "missing_bars": 5087
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "NZDHKD",
+      "oanda_instrument": "NZD_HKD",
+      "yahoo_symbol": "NZDHKD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:46:47+00:00",
+          "csv_sha256": "db9d339ad707d7c4b43bc4aa9655239888e907ff7575d8bf176ad03de396d863",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12331,
+          "null_ohlc_rows_dropped": 149,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "50c377bcdcf560e7acc856dd9d024a6e15152a24cbd78e4b57d7df50bf8823de",
+          "missing_bars": 5089
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "NZDSGD",
+      "oanda_instrument": "NZD_SGD",
+      "yahoo_symbol": "NZDSGD=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:46:47+00:00",
+          "csv_sha256": "e5d54dd00f37a3d99d87226fd558c24229fa2c9f5ba87ed65f61a21050e5d650",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12299,
+          "null_ohlc_rows_dropped": 181,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "95661e5d1ad7eba2160c02018bb89fdf399d600d21387f8d3c83b5074eb9d96c",
+          "missing_bars": 5119
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "SGDCHF",
+      "oanda_instrument": "SGD_CHF",
+      "yahoo_symbol": "SGDCHF=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:48:47+00:00",
+          "csv_sha256": "df16daf18852f8fa2277eea3de7e1c5cb86d5f420fd5052646d19914b913f9d8",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12296,
+          "null_ohlc_rows_dropped": 184,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "ef17fb805e3b92c94b4c57b7f6ef3e228e72b34da98b9c7929d4de926cbecbfe",
+          "missing_bars": 5126
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "SGDJPY",
+      "oanda_instrument": "SGD_JPY",
+      "yahoo_symbol": "SGDJPY=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2309,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "4aef341cacec725daa6584e6d4a61c77d30fcc87b9b83458a52be0bcb252dc39",
+          "missing_bars": 6
+        },
+        "1h": {
+          "rows": 12210,
+          "null_ohlc_rows_dropped": 270,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "38bef6b64d7aad3577b97278f4ad622892ea9a7886d676a71045c599e514e697",
+          "missing_bars": 5211
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "TRYJPY",
+      "oanda_instrument": "TRY_JPY",
+      "yahoo_symbol": "TRYJPY=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2309,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "31e617a65ba1f87441381e2b713a8d6426620194fafad058c2abf9bf3a757c2f",
+          "missing_bars": 6
+        },
+        "1h": {
+          "rows": 12054,
+          "null_ohlc_rows_dropped": 426,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "fb4e88abe4be0f83b154afa99949f19106321e8c66d6b841749a42ffcb7544f7",
+          "missing_bars": 5317
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "USDCZK",
+      "oanda_instrument": "USD_CZK",
+      "yahoo_symbol": "USDCZK=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2309,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "d15e1a1f64c6be56dc54590dd923d6f3d33291e99ecd92aef55d8085e8f05a08",
+          "missing_bars": 6
+        },
+        "1h": {
+          "rows": 12302,
+          "null_ohlc_rows_dropped": 178,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "bc029d0e0d1977aaea85008e3f14cabbb1f2eae71f24a15a833dcec6ae747286",
+          "missing_bars": 5118
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "USDDKK",
+      "oanda_instrument": "USD_DKK",
+      "yahoo_symbol": "USDDKK=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:21:15+00:00",
+          "csv_sha256": "7ae78ec70ee5b0a780c491f0f8202b7e3548ae74d51ac1263f6c64e96f501203",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12138,
+          "null_ohlc_rows_dropped": 342,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "4c6f0193b8c050f9af6470fe0e8e7c8efb83b4eccf3f990ef1751f6432423bd7",
+          "missing_bars": 5281
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "USDHUF",
+      "oanda_instrument": "USD_HUF",
+      "yahoo_symbol": "USDHUF=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2309,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "076250d4f85dcfefd84f9e27c057c2f89a9b467d7dfd4f4a67d836c8b558acfd",
+          "missing_bars": 6
+        },
+        "1h": {
+          "rows": 12300,
+          "null_ohlc_rows_dropped": 180,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "9cbf861fd41bad996245a53fdfd642510dd390c17ef3cb0a6a68752c7eddcf14",
+          "missing_bars": 5119
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "USDNOK",
+      "oanda_instrument": "USD_NOK",
+      "yahoo_symbol": "USDNOK=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2310,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-15T05:21:15+00:00",
+          "csv_sha256": "679b7a534ca3207a6a3f6bdc340fd70605d33f0329b51c4bb61002d1698f9790",
+          "missing_bars": 5
+        },
+        "1h": {
+          "rows": 12208,
+          "null_ohlc_rows_dropped": 272,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T21:00:00+00:00",
+          "csv_sha256": "a3ab006caefc30d9581568d6881edb0dd7425a68f19c439e26c8bf95490c0961",
+          "missing_bars": 5204
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "USDPLN",
+      "oanda_instrument": "USD_PLN",
+      "yahoo_symbol": "USDPLN=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2309,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "a5b1055bec1d6cc2fc47fa52c8df58fef44bcfcc22cb0f555cd663c18d7cc7fc",
+          "missing_bars": 6
+        },
+        "1h": {
+          "rows": 12331,
+          "null_ohlc_rows_dropped": 149,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "846348c48574d9c1b6f591d0a4d977f3f83c7cf53e18bbc46ca405be04fdfb4d",
+          "missing_bars": 5090
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "USDTHB",
+      "oanda_instrument": "USD_THB",
+      "yahoo_symbol": "USDTHB=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2309,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "a766fcddf267c7b7d528ba227db71bdaa90ddf11926acf5ca41efd3c6b8fcac7",
+          "missing_bars": 6
+        },
+        "1h": {
+          "rows": 12128,
+          "null_ohlc_rows_dropped": 352,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "dd6ed426148301fe0380dec4d18a31befb27f220c60215790a01993453eca43d",
+          "missing_bars": 5262
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "ZARJPY",
+      "oanda_instrument": "ZAR_JPY",
+      "yahoo_symbol": "ZARJPY=X",
+      "asset_class": "fx_cross_minor_exotic",
+      "costs": {
+        "model": "rd2/costs2.py FX_MINOR",
+        "round_trip_bps": 10.0,
+        "basis": "costs2.py: 'forex minors / crosses / exotics (all other pairs) 10 bps round trip' (0 fee + 5 bps/side spread+slippage), the standing RD-002 model for every non-major pair"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2309,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-01T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T00:00:00+00:00",
+          "csv_sha256": "5bdcc4d64fcded96b0ee70d2c43c4f1a213cd3ebdc1e6b478961bd6290c8c532",
+          "missing_bars": 6
+        },
+        "1h": {
+          "rows": 12278,
+          "null_ohlc_rows_dropped": 202,
+          "first_bar_utc": "2024-11-18T00:00:00+00:00",
+          "last_bar_utc": "2026-11-13T22:00:00+00:00",
+          "csv_sha256": "1e7fa4fc12739f54834f876137924100195049d0d85c237cb6397817f2b65027",
+          "missing_bars": 5144
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)"
+    },
+    {
+      "symbol": "AU200",
+      "oanda_instrument": "AU200_AUD",
+      "yahoo_symbol": "^AXJO",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2247,
+          "null_ohlc_rows_dropped": 1,
+          "first_bar_utc": "2018-01-01T23:00:00+00:00",
+          "last_bar_utc": "2026-11-13T06:07:14+00:00",
+          "csv_sha256": "f53465b7859ca9b4d35df5bb19def6537d2144a52f09ec79771ccd48eee4668e",
+          "missing_bars": 68
+        },
+        "1h": {
+          "rows": 3518,
+          "null_ohlc_rows_dropped": 14,
+          "first_bar_utc": "2024-11-17T23:00:00+00:00",
+          "last_bar_utc": "2026-11-13T05:12:00+00:00",
+          "csv_sha256": "2c6fdde5c282dd342774a4624126cee788a67ba0f74eb41ecdce4226eac51cf1",
+          "missing_bars": 13886
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "CH20",
+      "oanda_instrument": "CH20_CHF",
+      "yahoo_symbol": "^SSMI",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2216,
+          "null_ohlc_rows_dropped": 12,
+          "first_bar_utc": "2018-01-03T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T08:00:00+00:00",
+          "csv_sha256": "25067b7c8e3370daafe78abe2552dd74d11859a6d418320b369e6abaf28a2f8d",
+          "missing_bars": 97
+        },
+        "1h": {
+          "rows": 4459,
+          "null_ohlc_rows_dropped": 15,
+          "first_bar_utc": "2024-11-18T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T16:30:00+00:00",
+          "csv_sha256": "6ccbf8493e92a18f16d3711f9ef93d5cc9fa85953fdfbece74138f74e7a46d62",
+          "missing_bars": 12950
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "CHINAH",
+      "oanda_instrument": "CHINAH_HKD",
+      "yahoo_symbol": "^HSCE",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2182,
+          "null_ohlc_rows_dropped": 0,
+          "first_bar_utc": "2018-01-02T01:30:00+00:00",
+          "last_bar_utc": "2026-11-13T01:30:00+00:00",
+          "csv_sha256": "3707690ff0cc8cfc989fc938981dcbcb444929fd99dcfeb5d2aa3029a8abed70",
+          "missing_bars": 132
+        },
+        "1h": {
+          "rows": 3394,
+          "null_ohlc_rows_dropped": 18,
+          "first_bar_utc": "2024-11-18T01:30:00+00:00",
+          "last_bar_utc": "2026-11-13T07:30:00+00:00",
+          "csv_sha256": "c643f065f7037624edf21c2c980c5f99688cbf1e439e818a0322b3a9dbc1fc48",
+          "missing_bars": 14007
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "ESPIX",
+      "oanda_instrument": "ESPIX_EUR",
+      "yahoo_symbol": "^IBEX",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2269,
+          "null_ohlc_rows_dropped": 1,
+          "first_bar_utc": "2018-01-02T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T08:00:00+00:00",
+          "csv_sha256": "ce730ee8ed3325f2477d3055590449bba3a11f6c2f4d21b851a48975c705688b",
+          "missing_bars": 45
+        },
+        "1h": {
+          "rows": 4493,
+          "null_ohlc_rows_dropped": 80,
+          "first_bar_utc": "2024-11-18T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T16:30:00+00:00",
+          "csv_sha256": "3546dc33086d40e7ae6a8d1711ce6d417c50ebea5e742ceb3031a9687779cbee",
+          "missing_bars": 12917
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "EU50",
+      "oanda_instrument": "EU50_EUR",
+      "yahoo_symbol": "^STOXX50E",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2228,
+          "null_ohlc_rows_dropped": 0,
+          "first_bar_utc": "2018-01-03T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T08:00:00+00:00",
+          "csv_sha256": "36df14b6df746303edcb7a7eaddf6c0753b117a9764b98e84ce1595503a6999e",
+          "missing_bars": 85
+        },
+        "1h": {
+          "rows": 4460,
+          "null_ohlc_rows_dropped": 14,
+          "first_bar_utc": "2024-11-18T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T16:30:00+00:00",
+          "csv_sha256": "cf7395c255f41a39f2971ad0cc43ceb00726d2a1e3a83e1b61cb8ff8cfa40845",
+          "missing_bars": 12950
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "FR40",
+      "oanda_instrument": "FR40_EUR",
+      "yahoo_symbol": "^FCHI",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2271,
+          "null_ohlc_rows_dropped": 1,
+          "first_bar_utc": "2018-01-02T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T08:00:00+00:00",
+          "csv_sha256": "3cf53b6db0af49a505acd1742fd2ac00e61c569ce503d3ed076ec67c964b8316",
+          "missing_bars": 43
+        },
+        "1h": {
+          "rows": 4546,
+          "null_ohlc_rows_dropped": 19,
+          "first_bar_utc": "2024-11-18T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T16:30:00+00:00",
+          "csv_sha256": "d44e0e9881f5b6eaa7a37e29214cdf78c0051d8f822bf7ce7d0fc8bc18f95654",
+          "missing_bars": 12860
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "HK33",
+      "oanda_instrument": "HK33_HKD",
+      "yahoo_symbol": "^HSI",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2182,
+          "null_ohlc_rows_dropped": 0,
+          "first_bar_utc": "2018-01-02T01:30:00+00:00",
+          "last_bar_utc": "2026-11-13T01:30:00+00:00",
+          "csv_sha256": "2e51ceb44196f52a1d6d50ad48c2f2319d1167a08f4daec61ecd34841b9f1a9b",
+          "missing_bars": 132
+        },
+        "1h": {
+          "rows": 3394,
+          "null_ohlc_rows_dropped": 18,
+          "first_bar_utc": "2024-11-18T01:30:00+00:00",
+          "last_bar_utc": "2026-11-13T07:30:00+00:00",
+          "csv_sha256": "a9798008d58531b00407e7ed32197c55ee3f96ee4faaad18c4c1859582f6f9fa",
+          "missing_bars": 14007
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "NL25",
+      "oanda_instrument": "NL25_EUR",
+      "yahoo_symbol": "^AEX",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2271,
+          "null_ohlc_rows_dropped": 0,
+          "first_bar_utc": "2018-01-02T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T08:00:00+00:00",
+          "csv_sha256": "178aa79e721cdac6ecc6cab68530a1af67d43bba7b5f9a42e7b5977e2b0a0285",
+          "missing_bars": 43
+        },
+        "1h": {
+          "rows": 4545,
+          "null_ohlc_rows_dropped": 20,
+          "first_bar_utc": "2024-11-18T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T16:30:00+00:00",
+          "csv_sha256": "02d8ec790a113ad9218c51146ff7e197348d4501bdcdd7151c7cfb303704df8b",
+          "missing_bars": 12861
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "SG30",
+      "oanda_instrument": "SG30_SGD",
+      "yahoo_symbol": "^STI",
+      "asset_class": "index_cfd",
+      "costs": {
+        "model": "rd2/costs2.py INDEX",
+        "round_trip_bps": 8.0,
+        "basis": "costs2.py index CFD/futures spread model, 8 bps round trip"
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2227,
+          "null_ohlc_rows_dropped": 3,
+          "first_bar_utc": "2018-01-02T01:00:00+00:00",
+          "last_bar_utc": "2026-11-13T01:00:00+00:00",
+          "csv_sha256": "001f2c74a79ca54e0f82f4bcd3a1f8e1ef132b298c5159962bac19a2a80191ef",
+          "missing_bars": 87
+        },
+        "1h": {
+          "rows": 3964,
+          "null_ohlc_rows_dropped": 27,
+          "first_bar_utc": "2024-11-18T01:00:00+00:00",
+          "last_bar_utc": "2026-11-13T09:00:00+00:00",
+          "csv_sha256": "66da503b6635ad9c8e3b70f826d33e5ae13d8326b82748a76c1068c5a2551d03",
+          "missing_bars": 13441
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "caution": "Cash-index 1h bars exist only for local session hours (3,394-4,546 bars over the 729d window); the 1h gap count includes all non-session hours by construction. Daily is the primary judging timeframe; 1h suits session-effect work only with session-bounded logic (RD-008 precedent)."
+    },
+    {
+      "symbol": "PALLADIUM",
+      "oanda_instrument": "XPD_USD",
+      "yahoo_symbol": "PA=F",
+      "asset_class": "metal_futures_proxy",
+      "costs": {
+        "model": "NONE in rd2/costs2.py",
+        "round_trip_bps": null,
+        "basis": "GAP: costs2._COMMODITY_RT has GOLD/SILVER/WTI/BRENT/NATGAS/COPPER/PLATINUM but no PALLADIUM entry. Platinum (14 bps) is the nearest analogue but is NOT adopted here; RD-003 must add an explicit PALLADIUM cost (measured from OANDA practice pricing server-side) before any palladium cell is judged."
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2230,
+          "null_ohlc_rows_dropped": 5,
+          "first_bar_utc": "2018-01-02T05:00:00+00:00",
+          "last_bar_utc": "2026-11-13T05:00:00+00:00",
+          "csv_sha256": "85cc1866a2b0b8c02bf23c22af689ff1ecb205a5ddc431761c32011879f9b05f",
+          "missing_bars": 84
+        },
+        "1h": {
+          "rows": 11388,
+          "null_ohlc_rows_dropped": 3061,
+          "first_bar_utc": "2024-11-17T23:00:00+00:00",
+          "last_bar_utc": "2026-11-13T21:59:59+00:00",
+          "csv_sha256": "65d6df6f18c02c229d935592657dbaa33ffbbae109a4276ddfe0ce70d06c64f4",
+          "missing_bars": 5634
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "proxy_disclosure": "COMEX front-month futures (PA=F) proxy for OANDA spot XPD_USD \u2014 the comm7 precedent (GC=F/SI=F/CL=F for spot metals/oil). Futures basis + contract-roll steps disclosed; any survivor still faces live OANDA forward evidence.",
+      "caution": "1h CAUTION: 3,124 null rows dropped (~22% of payload)."
+    },
+    {
+      "symbol": "CORN",
+      "oanda_instrument": "CORN_USD",
+      "yahoo_symbol": "ZC=F",
+      "asset_class": "soft_futures_proxy",
+      "costs": {
+        "model": "NONE in rd2/costs2.py",
+        "round_trip_bps": null,
+        "basis": "GAP: costs2.py has no soft-commodity entries at all. No cost figure is invented here; RD-003 must add measured costs (OANDA practice pricing, server-side) before any softs cell is judged."
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2229,
+          "null_ohlc_rows_dropped": 6,
+          "first_bar_utc": "2018-01-02T05:00:00+00:00",
+          "last_bar_utc": "2026-11-13T05:00:00+00:00",
+          "csv_sha256": "895f8825314ef89bb014c4fd82ba8409e31192686fa882535333c8d62b5c86b9",
+          "missing_bars": 85
+        },
+        "1h": {
+          "rows": 9269,
+          "null_ohlc_rows_dropped": 5176,
+          "first_bar_utc": "2024-11-18T01:00:00+00:00",
+          "last_bar_utc": "2026-11-13T19:19:59+00:00",
+          "csv_sha256": "828804b0011f2493c9a39630d66a9702abc2b8012eee2d5e219fc7147df73e60",
+          "missing_bars": 8151
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "proxy_disclosure": "CBOT front-month futures (ZC=F) proxy for OANDA CORN_USD CFD. Roll steps embedded; session-bound trading (1h payload carries many null rows outside CBOT hours \u2014 dropped and counted, never filled).",
+      "caution": "1h CAUTION: 5,226 null rows dropped; session-bound CBOT hours only."
+    },
+    {
+      "symbol": "SOYBN",
+      "oanda_instrument": "SOYBN_USD",
+      "yahoo_symbol": "ZS=F",
+      "asset_class": "soft_futures_proxy",
+      "costs": {
+        "model": "NONE in rd2/costs2.py",
+        "round_trip_bps": null,
+        "basis": "GAP: costs2.py has no soft-commodity entries at all. No cost figure is invented here; RD-003 must add measured costs (OANDA practice pricing, server-side) before any softs cell is judged."
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2231,
+          "null_ohlc_rows_dropped": 4,
+          "first_bar_utc": "2018-01-02T05:00:00+00:00",
+          "last_bar_utc": "2026-11-13T05:00:00+00:00",
+          "csv_sha256": "75875fb030248481d90549fc5b8b9291136425d04e1516a6151269667b1ed59c",
+          "missing_bars": 83
+        },
+        "1h": {
+          "rows": 9271,
+          "null_ohlc_rows_dropped": 5174,
+          "first_bar_utc": "2024-11-18T01:00:00+00:00",
+          "last_bar_utc": "2026-11-13T19:19:58+00:00",
+          "csv_sha256": "44c98131d451e7056815c124345085ddddee6e7eedb2ed6bfcc6f1c9ca1fdc5a",
+          "missing_bars": 8147
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "proxy_disclosure": "CBOT front-month futures (ZS=F) proxy for OANDA SOYBN_USD CFD. Same futures-proxy caveats as CORN.",
+      "caution": "1h CAUTION: 5,224 null rows dropped; session-bound CBOT hours only."
+    },
+    {
+      "symbol": "SUGAR",
+      "oanda_instrument": "SUGAR_USD",
+      "yahoo_symbol": "SB=F",
+      "asset_class": "soft_futures_proxy",
+      "costs": {
+        "model": "NONE in rd2/costs2.py",
+        "round_trip_bps": null,
+        "basis": "GAP: costs2.py has no soft-commodity entries at all. No cost figure is invented here; RD-003 must add measured costs (OANDA practice pricing, server-side) before any softs cell is judged."
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2233,
+          "null_ohlc_rows_dropped": 465,
+          "first_bar_utc": "2018-01-02T05:00:00+00:00",
+          "last_bar_utc": "2026-11-13T05:00:00+00:00",
+          "csv_sha256": "f202dea5922e4f9b62a336121ebdbe05ebf4f759bc80cfa3443764c07a11a543",
+          "missing_bars": 81
+        },
+        "1h": {
+          "rows": 4855,
+          "null_ohlc_rows_dropped": 9581,
+          "first_bar_utc": "2024-11-18T08:00:00+00:00",
+          "last_bar_utc": "2026-11-13T17:59:59+00:00",
+          "csv_sha256": "30c43d75e78e6c15ffa81638dbe911009715890ae95eb8ef05c50fe851b3d9bd",
+          "missing_bars": 12551
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "proxy_disclosure": "ICE front-month futures (SB=F) proxy for OANDA SUGAR_USD CFD. Thinnest series probed: 1h dropped 9,615 null rows (~2/3 of payload) \u2014 daily only is recommended for judging; 1h is CAUTION.",
+      "caution": "1h CAUTION: 9,615 null-OHLC rows dropped of 14,436 payload rows; usable 4,821 bars are session fragments."
+    },
+    {
+      "symbol": "WHEAT",
+      "oanda_instrument": "WHEAT_USD",
+      "yahoo_symbol": "ZW=F",
+      "asset_class": "soft_futures_proxy",
+      "costs": {
+        "model": "NONE in rd2/costs2.py",
+        "round_trip_bps": null,
+        "basis": "GAP: costs2.py has no soft-commodity entries at all. No cost figure is invented here; RD-003 must add measured costs (OANDA practice pricing, server-side) before any softs cell is judged."
+      },
+      "granularities_verified": [
+        "1d",
+        "1h"
+      ],
+      "derived_granularities": "4h and 1wk derivable from 1h/1d under the harness resample rules (rd2/panels.py); 15m/5m NOT verified (Yahoo depth ~60d/~days \u2014 insufficient for walk-forward folds)",
+      "fold_profile": {
+        "1d": "STANDARD (W1-W5)",
+        "1h/4h": "LATE (W2-W5) \u2014 Yahoo 1h depth starts 2024-11"
+      },
+      "series": {
+        "1d": {
+          "rows": 2231,
+          "null_ohlc_rows_dropped": 4,
+          "first_bar_utc": "2018-01-02T05:00:00+00:00",
+          "last_bar_utc": "2026-11-13T05:00:00+00:00",
+          "csv_sha256": "6f87271d0497c5689b9a3effb8d4cbdda2882a679284c7dc1a942fe8c01f75f6",
+          "missing_bars": 83
+        },
+        "1h": {
+          "rows": 9266,
+          "null_ohlc_rows_dropped": 5179,
+          "first_bar_utc": "2024-11-18T01:00:00+00:00",
+          "last_bar_utc": "2026-11-13T19:19:55+00:00",
+          "csv_sha256": "bd95ecd78d7285d5d4277f4ef1fc1ee7d84c4a630f2b1de4fd29c66b22523378",
+          "missing_bars": 8154
+        }
+      },
+      "full_sidecars": "results_data1/manifests.json (RD-002-format sidecar per series, keyed YH_<SYMBOL>_<tf>)",
+      "proxy_disclosure": "CBOT front-month futures (ZW=F) proxy for OANDA WHEAT_USD CFD. Same futures-proxy caveats as CORN.",
+      "caution": "1h CAUTION: 5,228 null rows dropped; session-bound CBOT hours only."
+    }
+  ],
+  "uncovered": [
+    {
+      "symbol": "CN50",
+      "oanda_instrument": "CN50_USD",
+      "class": "index_cfd",
+      "status": "UNCOVERED",
+      "reason": "No verified Yahoo chart-API ticker for the FTSE China A50 index (^FTSE is the FTSE 100, already in idx7 as FTSE). Not approximated. OANDA-native candles are the only honest source."
+    },
+    {
+      "symbol": "JP225Y",
+      "oanda_instrument": "JP225Y_JPY",
+      "class": "index_cfd",
+      "status": "NOT_NEW",
+      "reason": "JPY-denominated twin of JP225_USD; the underlying (Nikkei 225) is already covered at 1d in RD-002 idx7 as NIKKEI. No new information series."
+    },
+    {
+      "symbol": "BONDS (6)",
+      "oanda_instrument": "DE10YB_EUR, UK10YB_GBP, USB02Y_USD, USB05Y_USD, USB10Y_USD, USB30Y_USD",
+      "class": "bond_cfd",
+      "status": "UNCOVERED",
+      "reason": "OANDA bond CFDs price off bond yields/futures with instrument-specific semantics; Yahoo yield indices (^TNX etc.) are not the CFD price series and bond-futures proxies embed roll + cheapest-to-deliver effects. No honest series available from this sandbox; OANDA-native candles or nothing. Not recommended as an RD-003 track without that native pull."
+    },
+    {
+      "symbol": "METAL_CROSSES (19)",
+      "oanda_instrument": "XAU_AUD, XAU_CAD, XAU_CHF, XAU_EUR, XAU_GBP, XAU_HKD, XAU_JPY, XAU_NZD, XAU_SGD, XAG_AUD, XAG_CAD, XAG_CHF, XAG_EUR, XAG_GBP, XAG_HKD, XAG_JPY, XAG_NZD, XAG_SGD, XAU_XAG",
+      "class": "metal_cross",
+      "status": "DERIVED_ONLY",
+      "reason": "No direct Yahoo spot tickers. Each cross is arithmetically implied by the XAU_USD/XAG_USD legs and the corresponding FX cross (all legs provenanced in RD-002 comm7/forex panels or this inventory). RD-003 may construct them ONLY with the derivation disclosed per series, or pull OANDA-native candles server-side. Not counted as independently verified."
+    },
+    {
+      "symbol": "OANDA_NATIVE",
+      "oanda_instrument": "ALL",
+      "class": "venue_native",
+      "status": "ACCOUNT_CONFIRMED_FX_ONLY",
+      "reason": "TASK-STR-FWD-003 verified the owner's practice account live (twice, independently, 2026-11-15): the account's instrument list is 68 instruments, ALL FX pairs \u2014 no commodities, no metals CFDs, no indices, no bonds. Consequences: (1) the 41 FX crosses in this inventory are the operative expansion (pair-by-pair membership of the 68 vs the 41 new + 28 RD-002 pairs still to be diffed server-side \u2014 the counts imply at most one pair differs); (2) XAU_USD/XAG_USD spot metals ARE traded by the existing oanda_demo engine per its README/selftest watchlist, which sits oddly with an FX-only list \u2014 the account list diff must resolve whether metals are present under a different account view before any metal is assumed tradeable; (3) indices/palladium/softs/bonds in this inventory are DATA-verified only \u2014 they are not tradeable on the owner's current OANDA account and would need a different venue/entity. OANDA-native candle history (bid/ask/mid, S5..M, 5,000/request, time-paginated \u2014 Stratex/oanda_demo/backtest.py) still requires the server-side practice token; research crews do not pull venue credentials (RD-003/RD-007 precedent)."
+    }
+  ]
+}
