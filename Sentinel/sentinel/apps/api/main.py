@@ -9,7 +9,8 @@ import signal
 import uuid
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager, suppress
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 from typing import Any, Literal
 

@@ -6,7 +6,8 @@ import logging
 import os
 import sys
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 # Context variable to hold the correlation / task ID for the active async task/thread

@@ -25,7 +25,8 @@ import json
 import logging
 import os
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, HTTPException, Request, status

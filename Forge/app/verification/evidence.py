@@ -3,7 +3,8 @@ Verification Evidence and Report Models for Project FORGE.
 Enforces the core principle: 'Evidence over model confidence'.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from enum import Enum
 from typing import Any
 

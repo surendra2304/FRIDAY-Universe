@@ -5,7 +5,8 @@ Performs secrets scanning, dangerous function AST detection, CVE dependency chec
 
 import ast
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 from typing import Any
 

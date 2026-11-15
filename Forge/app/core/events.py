@@ -4,7 +4,8 @@ Provides standardized telemetry and audit events for FRIDAY and AI Universe dash
 """
 
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 from uuid import uuid4
 

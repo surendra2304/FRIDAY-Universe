@@ -1,7 +1,8 @@
 """LifecycleManager: State transitions, assumption invalidation, expiry, and outcome resolution."""
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from uuid import uuid4
 
 import pandas as pd

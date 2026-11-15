@@ -4,7 +4,8 @@ When IntelX technical research discovers superior patterns or architectural best
 proposes template updates via self-improvement proposals that require approval.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 from pydantic import BaseModel, Field
 

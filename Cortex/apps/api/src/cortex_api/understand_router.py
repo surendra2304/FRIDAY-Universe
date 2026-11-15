@@ -15,7 +15,8 @@ Every route requires authentication:
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from cortex_analytics import CohortEngine, FunnelEngine, OutcomeTracker, ScoringEngine

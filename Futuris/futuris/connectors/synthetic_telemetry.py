@@ -1,7 +1,8 @@
 """Deterministic synthetic telemetry generator for operational capacity forecasting."""
 
 import math
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 import numpy as np
 

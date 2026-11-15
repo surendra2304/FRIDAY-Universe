@@ -9,7 +9,8 @@ Provides predictive intelligence for autonomous build optimization:
 
 import math
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from functools import lru_cache
 from typing import Any
 

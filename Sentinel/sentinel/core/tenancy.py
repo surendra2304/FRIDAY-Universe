@@ -6,7 +6,8 @@ Provides:
 3. Tenant usage metering (scans executed per month, storage bytes utilized).
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 from pydantic import BaseModel, Field
 

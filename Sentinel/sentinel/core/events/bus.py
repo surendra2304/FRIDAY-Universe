@@ -10,7 +10,8 @@ import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Coroutine
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from sentinel.core.models import Event, EventType

@@ -4,7 +4,8 @@ Tracks stage timings across the 8-stage pipeline, computes dynamic ETA based on 
 and publishes structured progress telemetry to event buses and WebSockets.
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field

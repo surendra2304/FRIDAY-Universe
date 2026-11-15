@@ -15,7 +15,8 @@ that was always healthy from one that keeps repairing itself.
 import asyncio
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from sqlalchemy import func, text

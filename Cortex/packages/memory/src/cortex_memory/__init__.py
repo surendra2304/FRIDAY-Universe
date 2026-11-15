@@ -1,6 +1,7 @@
 import logging
 import uuid
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from enum import Enum
 from typing import Any, Optional
 

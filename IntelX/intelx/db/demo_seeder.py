@@ -8,7 +8,8 @@ whenever canonical demonstration investigations are missing.
 import hashlib
 import json
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 
 from sqlalchemy import select

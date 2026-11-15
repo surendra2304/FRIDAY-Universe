@@ -1,7 +1,8 @@
 """Outcome resolution rules and snapshot-anchored ground truth verification."""
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 from typing import Protocol
 from uuid import uuid4

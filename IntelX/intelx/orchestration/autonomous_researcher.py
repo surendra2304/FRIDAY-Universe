@@ -14,7 +14,8 @@ Ensures IntelX is actively researching 24/7 without requiring manual user input.
 
 import asyncio
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from sqlalchemy import func, select

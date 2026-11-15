@@ -1,7 +1,8 @@
 """INTELX Dynamic Policy Engine, Governance Rules, and Denial Audit Logging."""
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 from urllib.parse import urlparse
 

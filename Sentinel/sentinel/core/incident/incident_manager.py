@@ -8,7 +8,20 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:  # Python < 3.11: behaviour-identical fallback
+    from enum import Enum as _StrEnumBase
+
+    class StrEnum(str, _StrEnumBase):
+        """Stand-in for enum.StrEnum (3.11+) on older interpreters."""
+
+        __str__ = str.__str__
+        __format__ = str.__format__
+
+        @staticmethod
+        def _generate_next_value_(name, start, count, last_values):
+            return name.lower()
 from typing import Any
 
 from sentinel.audit.audit_logger import audit_logger

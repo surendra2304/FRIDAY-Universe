@@ -1,7 +1,8 @@
 """INTELX Versioned REST API Surface (v1.0), OpenAPI Documentation, and Routes."""
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 from typing import Any
 

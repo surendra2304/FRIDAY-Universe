@@ -8,7 +8,8 @@ owns only the request/response shape and delegates here.
 import asyncio
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 from uuid import UUID, uuid4
 

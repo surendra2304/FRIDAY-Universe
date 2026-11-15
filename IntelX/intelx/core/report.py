@@ -1,7 +1,8 @@
 """INTELX Report Rendering Engine, Markdown Formatter, and Machine-Enforced Citation Integrity."""
 
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from intelx.core.enums import ClaimStatus, ResearchMode, normalize_research_mode

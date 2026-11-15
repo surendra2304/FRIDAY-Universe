@@ -25,7 +25,8 @@ from __future__ import annotations
 
 import threading
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from sqlalchemy import CLOB, String, bindparam, create_engine, text

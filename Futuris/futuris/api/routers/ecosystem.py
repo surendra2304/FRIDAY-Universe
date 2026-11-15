@@ -1,6 +1,7 @@
 """Ecosystem integration router for FRIDAY Universe peer agents and health matrix."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends

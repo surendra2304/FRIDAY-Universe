@@ -5,7 +5,8 @@ Provides uniform operator control matching the Task Gateway REST API.
 
 import asyncio
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from urllib.parse import quote, urlparse
 
 import httpx

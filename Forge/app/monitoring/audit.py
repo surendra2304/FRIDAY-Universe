@@ -3,7 +3,8 @@ Structured JSON Logging and Audit Trail Logger for Project FORGE.
 Captures compliance and security events for sensitive operations with key redaction.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 from typing import Any
 

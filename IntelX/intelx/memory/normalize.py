@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 def _parse_published_at(text: str):
     """Parse explicit ISO publication metadata from common document headers."""
     import re
-    from datetime import UTC, datetime
+    from datetime import datetime, timezone
+    UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
     for line in text.splitlines()[:10]:
         match = re.match(

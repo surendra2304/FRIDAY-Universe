@@ -1,6 +1,7 @@
 """Market forecasting: Stratex telemetry, IntelX context and Memora persistence."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Annotated, Any
 from uuid import uuid4
 

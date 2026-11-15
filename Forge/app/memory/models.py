@@ -2,7 +2,8 @@
 Pydantic data models for State, Memory, Task Lifecycle, Checkpoints, and Audit Events in FORGE.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from enum import Enum
 from typing import Any
 from uuid import uuid4

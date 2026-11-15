@@ -4,7 +4,8 @@ import asyncio
 import re
 import time
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4

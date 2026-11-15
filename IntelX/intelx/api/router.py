@@ -1,7 +1,8 @@
 """Main API router combining all endpoint groups."""
 
 import logging
-from datetime import UTC
+from datetime import timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 

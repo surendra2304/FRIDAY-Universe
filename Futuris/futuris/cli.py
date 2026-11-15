@@ -2,7 +2,8 @@
 
 import asyncio
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 import pandas as pd
 import typer

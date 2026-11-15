@@ -2,7 +2,8 @@
 
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Protocol, TypeVar
 
 from mesh.heavy_task import HeavyTaskCoordinator, HeavyTaskLease, coordinator_from_environment

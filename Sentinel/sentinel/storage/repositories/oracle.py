@@ -19,7 +19,8 @@ the schema of the connecting user (``SENTINEL``), with unqualified names.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any, cast
 
 from sqlalchemy import and_, select, update

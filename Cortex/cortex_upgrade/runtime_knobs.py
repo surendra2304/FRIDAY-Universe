@@ -10,7 +10,8 @@ into the next one without an operator choosing so.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 logger = logging.getLogger("cortex-upgrade.runtime-knobs")

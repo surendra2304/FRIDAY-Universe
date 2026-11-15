@@ -8,7 +8,8 @@ import json
 import socket
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 from urllib.parse import urlsplit
 from uuid import UUID

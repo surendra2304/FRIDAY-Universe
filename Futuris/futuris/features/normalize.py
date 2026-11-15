@@ -1,6 +1,7 @@
 """Data normalization, deduplication, regular grid alignment, and quality reporting."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 import pandas as pd

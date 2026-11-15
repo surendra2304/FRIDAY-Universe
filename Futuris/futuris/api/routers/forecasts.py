@@ -1,7 +1,8 @@
 """Forecast management, abstention handling, lifecycle invalidation, and manual resolution."""
 
 import re
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 from uuid import UUID, uuid4
 

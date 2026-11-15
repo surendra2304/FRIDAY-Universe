@@ -3,7 +3,8 @@ import json
 import logging
 import time
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime, timezone
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from enum import Enum
 from typing import Any, Optional, Protocol, runtime_checkable
 

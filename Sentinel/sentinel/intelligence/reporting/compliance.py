@@ -1,6 +1,7 @@
 """SOC2, ISO 27001, and PCI-DSS Compliance Framework Mapping and Evidence Exporters."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from pydantic import BaseModel, Field
