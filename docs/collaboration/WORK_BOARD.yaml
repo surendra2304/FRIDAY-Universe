@@ -5190,6 +5190,33 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "PR opened from fresh main a5612c63 (branch claude/task-fut-009-scenario, git-data API — local git ref-writes are blocked in this sandbox); coordinator merges — this crew does not merge. No production deploy in this task; deployment rides the normal Fleet CD on merge, after which the endpoint should be probed live before any VERIFIED claim."
     blockers: []
     next_action: "Coordinator: review + merge the PR; after Fleet CD, probe POST /v1/scenarios/what-if live on Server 1 and flip this entry to VERIFIED with the probe evidence. Follow-ups if the prototype is accepted: FRIDAY task-envelope exposure and ScenarioRepository persistence (both deliberately out of prototype scope)."
+  - id: TASK-COR-003
+    title: "Cortex decision-log completeness audit — sampled decision records scored against the 4-element provenance bar (inputs considered / options weighed / decider / outcome + timestamp); logging-path gaps closed"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "Cortex/apps/api/src/cortex_api/real_decision_engine.py"
+      - "Cortex/apps/api/src/cortex_api/decision_recommendation_system.py"
+      - "Cortex/packages/core/src/cortex_core/governed_operations.py"
+      - "Cortex/tests/unit/test_cor003_decision_log_completeness.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891568871"
+    defect: "Cortex's decision logs cannot support after-the-fact audit: across every decision-recording path, 0% of sampled records carry a complete provenance record. The persisted real_decision_engine log drops inputs/options/reasoning at write time (six summary fields kept); the live decision_recommendation_system record has no timestamp, no decider and no input snapshot (criteria/alternatives are mutable global state); the governed_operations engine discards its Observation inputs, keeping only an id; the lead_scores table has a near-complete schema but its write path 500s on every call (ORA-01400, TASK-COR-002), so the persisted log received zero writes in the sampled window."
+    evidence:
+      - "Claim: issue #35 comment 6891568871 (Muse, TASK-COR-003 crew). Fresh-main base 7bce776 (Merge PR #294); PR built on current main at delivery (target files byte-identical between the two — sha256-verified via the GitHub API)."
+      - "COMPLETENESS RATE: 0% of sampled decision records complete (bar: inputs considered / options weighed / decider / outcome / timestamp, all in the stored record). Per-element presence across the 3 record-retaining paths: inputs 0/3, options weighed 1/3 full (2/3 partial), decider 1/3, outcome 1/3 full (2/3 partial), timestamp 2/3. Full audit: crew workspace ~/workspace/cor-003/AUDIT.md."
+      - "SAMPLED EVIDENCE: code audit at 7bce776 of all record schemas (decision_recommendation_system Recommendation + DecisionHistory aggregate — whose success_rate/avg_risk_level fields are never updated; real_decision_engine persisted record — module has ZERO importers repo-wide, no live path writes it; governed_operations chain; LeadScoreHistoryModel). Production sample: TASK-COR-002's journal census 2026-11-08 to 15 (8,175 lines; zero organic decision traffic, all crew probes) + its 13 controlled live probes (~/workspace/cor-002/AUDIT.md, probe2_out.txt, logs_cortex.txt); deployed sha256 == fresh main for decision_recommendation_system.py (3e4580de) and enhanced_crm.py (6527c203), both verified by COR-002 against production today."
+      - "LIMITATION (plain): this crew's own extra production probes (deployed fingerprints for real_decision_engine.py/governed_operations.py, decision_history.json file check, approval_queue/workflow_runs row sampling) could not run — the Server 2 bridge timed out on nearly every call during the task (6 attempts ~13:20–14:10 IST; the claim POST succeeded). Those re-verifications remain owed when the bridge recovers; no live figure in this entry rests on them."
+      - "FIX (logging path only): real_decision_engine persists the full record (inputs incl. criteria weights + option scores/risks/benefits, full ranking, reasoning, decider via new decide(decider=...), outcome block) + record_outcome() implements the feedback loop its docstring always claimed; legacy 6-field records still load. decision_recommendation_system: Recommendation gains created_at, decider (route records caller: payload decider, default api_caller), inputs_snapshot incl. defaulted_cells naming every 0.5-defaulted score cell, outcome block + record_outcome(). governed_operations: engine retains Observations; new decision_record(id) assembles the complete chain (inputs -> option -> decider -> executions -> measurements)."
+      - "TESTS: Cortex/tests/unit/test_cor003_decision_log_completeness.py — 7 tests, 7 FAILED on clean main / 7 PASSED with the fix (ti-venv: fastapi 0.162.7, pytest 8.4.2). Neighbouring suites unchanged: test_approval_decisions 6/6, test_friday_task_routing + test_rel020_analytics_honesty 11/11."
+      - "COORDINATION: follows TASK-COR-002 (output-side provenance blocks; claim 6890984834). One route line touched in COR-002's file set (decision recommend route passes the decider) — flagged in the claim before editing; diff confined to record-keeping. The lead-score NULL-id write bug is COR-002's fix; this audit confirms its log-side consequence (zero rows written). Adjacent, non-overlapping: TASK-COR-005 (plan quality), TASK-COR-006 (failure recovery)."
+    blockers: []
+    next_action: "Awaiting coordinator merge (PR from branch claude/task-cor-003-decision-log-completeness). RESIDUALS for the coordinator: (1) decision_recommendation_system + governed_operations logs are still in-memory — a Cortex restart still erases them; durable DB-backed decision log (lead_scores-style schema) is a follow-up decision; (2) real_decision_engine still has no live caller — wire it or retire it as a separate decision; (3) governed_operations measure() invents default observed telemetry when none is supplied (COR-002-class honesty issue, observed, not fixed here); (4) production re-verification owed when the bridge recovers (deployed fingerprints for the two unfingerprinted files, decision_history.json existence, approval_queue/workflow_runs row sampling)."
+
+task_id_warnings:
 task_id_warnings:
 task_id_warnings:
 task_id_warnings:

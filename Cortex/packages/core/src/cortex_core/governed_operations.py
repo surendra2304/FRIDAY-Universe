@@ -226,6 +226,11 @@ class GovernedOperationsEngine:
         self.rejections: dict[str, RejectedRecommendation] = {}
         self.executions: dict[str, ExecutionRecord] = {}
         self.measurements: dict[str, MeasurementRecord] = {}
+        # TASK-COR-003: the Observation is the decision's input record.
+        # Until now observe() returned it to the caller and the engine kept
+        # nothing — a Recommendation referenced its observation_id, but the
+        # inputs behind the decision were unrecoverable from the log.
+        self.observations: dict[str, Observation] = {}
 
     def observe(self, property_id: str, telemetry: dict[str, Any], max_staleness_seconds: float = 60.0) -> Observation:
         """
@@ -252,7 +257,7 @@ class GovernedOperationsEngine:
         if is_stale:
             logger.warning(f"Telemetry for property '{property_id}' is stale: {age:.1f}s > {max_staleness_seconds}s.")
 
-        return Observation(
+        observation = Observation(
             observation_id=f"obs_{uuid.uuid4().hex[:10]}",
             property_id=prop.property_id,
             telemetry=telemetry,
@@ -261,6 +266,10 @@ class GovernedOperationsEngine:
             is_stale=is_stale,
             source=telemetry.get("source", "web_telemetry"),
         )
+        # TASK-COR-003: retain the input record with the engine so every
+        # downstream decision record can be traced back to what was seen.
+        self.observations[observation.observation_id] = observation
+        return observation
 
     def recommend(
         self,
@@ -519,6 +528,105 @@ class GovernedOperationsEngine:
         self.measurements[meas.measurement_id] = meas
         logger.info(f"Recorded measurement '{meas.measurement_id}' for execution '{execution_id}': lift={lift}")
         return meas
+
+    def decision_record(self, recommendation_id: str) -> dict[str, Any] | None:
+        """Assemble the complete provenance record for one decision (TASK-COR-003).
+
+        Returns the full chain for a recommendation — inputs considered (the
+        retained Observation), the option proposed and why, the decider
+        (approval or rejection, with reason and timestamp), and the outcome
+        (executions and their measurements) — or None when the
+        recommendation is unknown. Before TASK-COR-003 the pieces existed
+        but the inputs were discarded at observe() time, so no complete
+        record could ever be assembled.
+        """
+        rec = self.recommendations.get(recommendation_id)
+        if rec is None:
+            return None
+
+        obs = self.observations.get(rec.observation_id)
+        inputs = None
+        if obs is not None:
+            inputs = {
+                "observation_id": obs.observation_id,
+                "property_id": obs.property_id,
+                "telemetry": obs.telemetry,
+                "timestamp": obs.timestamp.isoformat(),
+                "source": obs.source,
+                "is_stale": obs.is_stale,
+                "staleness_seconds": obs.staleness_seconds,
+            }
+
+        approval = next(
+            (a for a in self.approvals.values() if a.recommendation_id == recommendation_id),
+            None,
+        )
+        rejection = self.rejections.get(recommendation_id)
+        decision = None
+        if approval is not None:
+            decision = {
+                "approved": True,
+                "decider": approval.approver_id,
+                "reason": approval.reason,
+                "decided_at": approval.approved_at.isoformat(),
+                "sentinel_verdict": approval.sentinel_verdict,
+                "approval_id": approval.approval_id,
+            }
+        elif rejection is not None:
+            decision = {
+                "approved": False,
+                "decider": rejection.approver_id,
+                "reason": rejection.reason,
+                "decided_at": rejection.rejected_at.isoformat(),
+                "sentinel_verdict": None,
+                "approval_id": None,
+            }
+
+        executions = []
+        if approval is not None:
+            for ex in self.executions.values():
+                if ex.approval_id != approval.approval_id:
+                    continue
+                measurements = [
+                    {
+                        "measurement_id": m.measurement_id,
+                        "expected_outcomes": m.expected_outcomes,
+                        "observed_outcomes": m.observed_outcomes,
+                        "lift_metrics": m.lift_metrics,
+                        "measured_at": m.measured_at.isoformat(),
+                    }
+                    for m in self.measurements.values()
+                    if m.execution_id == ex.execution_id
+                ]
+                executions.append({
+                    "execution_id": ex.execution_id,
+                    "action": ex.action,
+                    "status": ex.status,
+                    "classification": ex.classification,
+                    "dry_run": ex.dry_run,
+                    "result": ex.result,
+                    "executed_at": ex.executed_at.isoformat(),
+                    "measurements": measurements,
+                })
+
+        return {
+            "recommendation_id": rec.recommendation_id,
+            "inputs": inputs,
+            "option_considered": {
+                "proposed_action": rec.proposed_action,
+                "params": rec.params,
+                "rationale": rec.rationale,
+                "confidence": rec.confidence,
+                "expected_outcomes": rec.expected_outcomes,
+                "category": rec.category.value,
+                "impact_level": rec.impact_level.value,
+                "requires_approval": rec.requires_approval,
+                "created_at": rec.created_at.isoformat(),
+                "status": rec.status,
+            },
+            "decision": decision,
+            "outcome": {"executions": executions},
+        }
 
 
 # Global default engine instance
