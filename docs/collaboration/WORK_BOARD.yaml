@@ -4771,6 +4771,35 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Crew claimed 2026-11-15 (issue #35 comment 6889729080). Running: sanity anchor, then Stage 1 cells, Stage 2 pre-declared families, Stage 3 synthesis."
 
+  - id: TASK-STR-RD-014
+    title: "Stratex research: volatility-targeted trend with a drawdown brake — the risk mechanism TASK-STR-RD-013's rotation failure pointed to, as a new pre-declared family on crypto30 @ 4h/1d"
+    status: DONE
+    owner: muse_ai
+    branch: claude/task-str-rd-014
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:43:00+05:30"
+    updated_at: "2026-11-15T15:05:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD14.md"
+      - "Stratex/rigorous_backtest/results_rd14/"
+      - "Stratex/rigorous_backtest/rd14/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891611635"
+    defect: "Owner Wave-5 order 2026-11-15 ~13:16 IST: five more crews per FRIDAY Universe agent. This track: the risk mechanism TASK-STR-RD-013 named as its missing ingredient — volatility-targeted position sizing plus a drawdown brake on plain trend signals — as a NEW pre-declared family (not a retune of RD-013: different universe, judgement unit and signal class), judged at the standing full bar (walk-forward/OOS only, net of costs, variants disclosed, real provenanced data only). Research only: no production code, registry or daemon changes; passers would be wired by the coordinator's forward lane."
+    acceptance:
+      - "Sanity anchor re-verified before any new number is trusted: RD-001's ts_momentum roc42_4h cell (BTC/ETH/SOL) reproduced bit-identically (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518) — results_rd14/sanity_anchor.json."
+      - "Declaration frozen before execution and hashed on issue #35 (comment 6891611635): results_rd14/declaration.json, SHA-256 55007e3b4a742f2ba42b9a690e053646dcd27de0e55b7f1ce3ae779180684022 — 4 trend signals x 3 vol targets x 4 brakes x 2 timeframes = 96 trials joining the global counter (declared gate N = 1,913 = floor 1,817 + 96; break-even N reported per row)."
+      - "Every declared cell evaluated and rowed (96) plus full 2x-cost re-evaluation of every cell; per-config verdict vs the full bar in RESULTS_RD14.md + results_rd14/synthesis.json."
+      - "Zero passers stated plainly if that is the outcome; any passer reported with its complete evidence pack (folds, per-symbol, holdout, Bonferroni at the declared N and at the current floor reference, break-even N, 2x-cost, DSR caveat)."
+    evidence:
+      - "COMPLETE 2026-11-15: 96/96 cells EVALUATED (69 with >= 200 OOS episodes, 38 with positive expectancy); ZERO candidates, ZERO watchlist. Gate survival: PF >= 1.2 only 6/96, >= 80% folds positive only 6/96, holdout 16/96, Bonferroni 2/96 (identical at the declared N = 1,913 and the 1,987 current-floor reference), 2x-cost 4/96, full bar 0/96. DSR = 0.00 on every row."
+      - "Best cell dissected, not headline-quoted: ema20_100_vt30_none @1d (+0.936%/episode, PF 1.237, 273 episodes) earns everything in W1/W3 (PF 1.97/2.14) and gives it back in W2/W4 (PF 0.45/0.37) — 2/5 folds, p = 6.0e-2 vs the 2.6e-5 threshold. tsmom42_vt60_none @1d passes holdout cleanly (breadth 21/30, untouched +0.203% on 583 episodes) and still fails folds (3/5), significance (p = 2.6e-2) and 2x-cost (PF 1.107). The only two Bonferroni passers (ema20_100 vt15/vt30 @4h, brake none) are economically trivial: +0.025%/+0.046% per episode, PF 1.025/1.024, killed by the PF gate and 2x costs."
+      - "The brake verdict: flat_05 cuts the post-hoc portfolio max drawdown in 24/24 (signal, vol, timeframe) groups (worst case -12.2% vs unbraked -8.9% to -53.4%) — the mechanism does its one job — but destroys the expectancy it was protecting: flat_05 portfolio-compounded positive in 1/24 groups (unbraked 19/24); among >= 200-episode rows, flat brakes are 1/21 positive-expectancy vs 21/24 unbraked. The shadow-recovery release rule parks the book through the trend resumption. Vol targeting alone does not rescue the signal either (best unbraked median PF 1.077; era drift, not an edge)."
+      - "Engine verified independently of the verdicts: sanity anchor bit-identical; an independent episode re-implementation reproduced counts exactly (max deviation < 5e-5/episode) and the brake-mechanics audit found 0 position mismatches panel-wide (results_rd14/verification.json). Data: RD-002 Stage-A hash-verified caches, coverage 30/30 symbols at 4h and 1d."
+    blockers: []
+    next_action: "Done — research complete, zero passers: NOTHING from this track is wired into any forward lane and no production state changes. Coordinator: verify RESULTS_RD14.md + results_rd14/synthesis.json and flip this entry to VERIFIED. Global trial counter floor after RD-014: 1,913 on the declared accounting (plus concurrent Wave-4/5 crews' additions). Mechanism note for a future NEW pre-declared family (not a retune): if a drawdown brake is revisited, the release rule is the suspect part — release on the braked book's own recovery or on fresh signal entry, not on shadow-equity recovery; the DD compression (24/24 groups) may still serve as a pure risk overlay on an already-proven strategy."
   - id: TASK-VOI-007
     title: "Muse talks to FRIDAY by voice, live: Muse joins the production LiveKit room as a server-side participant and holds a real 5-turn conversation in its own voice (owner-requested)"
     owner: muse_ai
