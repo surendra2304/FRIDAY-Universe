@@ -443,6 +443,63 @@ async def test_developer_provider_failure_fails_closed(temp_engine):
 
 
 # ----------------------------------------------------------------------
+# architect manifest rescue (real-model truncation failure mode)
+# ----------------------------------------------------------------------
+
+
+class SpecOnlyThenManifestProvider(FakeRealProvider):
+    """Emulates the real-gateway failure mode proven in the FRG-009
+    battery: the combined spec+manifest completion spends its budget on
+    the spec and never emits the manifest block; the manifest-only
+    follow-up call returns it."""
+
+    async def generate(self, prompt, system_prompt=None, temperature=0.2, max_tokens=None, **kwargs):
+        self.prompts.append(prompt)
+        if "Return ONLY the project file manifest" in prompt:
+            return ProviderResponse(
+                content=(
+                    "### File: docs/FILE_MANIFEST.json\n```json\n"
+                    '["pkg/__init__.py", "pkg/core.py", "main.py"]\n```'
+                ),
+                model="fake-real-1",
+                usage=UsageEstimate(total_tokens=5),
+                raw_response={"served_by_model": "fake-real-1"},
+            )
+        return ProviderResponse(
+            content="### File: docs/ARCHITECTURE_SPEC.md\n```markdown\n# Spec\nlong spec, no manifest block\n```",
+            model="fake-real-1",
+            usage=UsageEstimate(total_tokens=5),
+            raw_response={"served_by_model": "fake-real-1"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_architect_manifest_rescue_followup_call(temp_engine):
+    engine, wm = temp_engine
+    task_id = str(uuid4())
+    wm.create_workspace(task_id)
+
+    from app.agents.roles import ArchitectRole
+
+    provider = SpecOnlyThenManifestProvider()
+    architect = ArchitectRole(provider=provider)
+    result = await architect.execute_step(
+        task_id=task_id,
+        node_title="System Architecture & Module Design",
+        context={"goal": "Build a tiny pkg package", "requirements": []},
+        engine=engine,
+    )
+
+    import json
+
+    raw = engine.fs.read_file(task_id, "docs/FILE_MANIFEST.json", role="architect")
+    assert json.loads(raw) == ["pkg/__init__.py", "pkg/core.py", "main.py"]
+    # exactly one combined call + one manifest-only follow-up
+    assert len(provider.prompts) == 2
+    assert result["status"] == "success"
+
+
+# ----------------------------------------------------------------------
 # delegate labelling helpers
 # ----------------------------------------------------------------------
 

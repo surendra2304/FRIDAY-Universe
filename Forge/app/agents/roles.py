@@ -418,6 +418,72 @@ class ArchitectRole(BaseAgent):
             )
             written.append("docs/ARCHITECTURE_SPEC.md")
 
+        # TASK-FRG-009: with a real model, the combined spec+manifest
+        # completion can exhaust its token budget on the specification
+        # alone, so the manifest block is never emitted (proven in the
+        # FRG-009 real-gateway battery: the spec ended mid-section and the
+        # manifest fell back to keyword templates). When no manifest was
+        # extracted, make a second, manifest-ONLY call with its own
+        # budget; if the delimited block still does not appear, rescue a
+        # bare JSON array of file paths from the response text. Only when
+        # all of that fails does the template fallback below run.
+        if "docs/FILE_MANIFEST.json" not in written:
+            try:
+                from app.agents.provider_wiring import is_mock_provider
+
+                if not is_mock_provider(self.provider):
+                    manifest_prompt = (
+                        f"Objective: {goal}\n\n"
+                        "Return ONLY the project file manifest for this "
+                        "objective — every file the project needs, including "
+                        "package files, modules, the entry point and tests, "
+                        "using the exact layout the objective states. No "
+                        "explanation, no specification. Format exactly:\n"
+                        "### File: docs/FILE_MANIFEST.json\n"
+                        "```json\n"
+                        "[\"path/one.py\", \"path/two.py\"]\n"
+                        "```"
+                    )
+                    manifest_resp = await self.prompt_model(manifest_prompt)
+                    extra = self.apply_extracted_files(
+                        task_id=task_id,
+                        response_text=manifest_resp.content,
+                        engine=engine,
+                        default_filename="docs/FILE_MANIFEST.json",
+                    )
+                    for p in extra:
+                        if p not in written:
+                            written.append(p)
+                    if "docs/FILE_MANIFEST.json" not in written:
+                        import json as _json
+                        import re as _re
+
+                        m = _re.search(
+                            r"\[\s*\"[^\"]+\"(?:\s*,\s*\"[^\"]+\")*\s*\]",
+                            manifest_resp.content,
+                        )
+                        if m:
+                            rescued = [
+                                str(x)
+                                for x in _json.loads(m.group(0))
+                                if isinstance(x, str)
+                                and _re.search(
+                                    r"\.(py|md|txt|toml|html|css|js|json)$", x
+                                )
+                            ]
+                            if len(rescued) >= 2:
+                                engine.fs.create_file(
+                                    task_id=task_id,
+                                    relative_path="docs/FILE_MANIFEST.json",
+                                    content=_json.dumps(rescued, indent=2),
+                                    role=self.role_name,
+                                )
+                                written.append("docs/FILE_MANIFEST.json")
+            except Exception:
+                # A failed rescue must not break architecture; the
+                # template fallback below remains the last resort.
+                pass
+
         # Parse or generate File Manifest
         manifest_files: list[str] = []
         if "docs/FILE_MANIFEST.json" in written:
