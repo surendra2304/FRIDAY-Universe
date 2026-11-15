@@ -1497,6 +1497,327 @@ button {
   }
 }
 
+/* --------------------------------------------- editorial (IG-WEB-08)
+   The NOOLAM palette — ivory, maroon, gold — lives ONLY inside
+   this layer's page. Nothing here touches Halo's tokens. */
+
+.editorial {
+  --ed-ivory: #f6f1e7;
+  --ed-ink: #221a17;
+  --ed-dim: #5d5348;
+  --ed-maroon: #6d1a2d;
+  --ed-gold: #a97e14;
+  --ed-rule: rgba(34, 26, 23, 0.18);
+  background: var(--ed-ivory);
+  color: var(--ed-ink);
+  border-radius: 14px;
+  padding: 30px 30px 26px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+.editorial-masthead {
+  text-align: center;
+  border-bottom: 3px double var(--ed-ink);
+  padding-bottom: 16px;
+}
+
+.editorial-dateline {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ed-dim);
+}
+
+.editorial-title {
+  margin: 8px 0 4px;
+  font-size: clamp(38px, 7.5vw, 58px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ed-maroon);
+}
+
+.editorial-tagline {
+  margin: 0;
+  font-style: italic;
+  font-size: 14.5px;
+  color: var(--ed-dim);
+}
+
+.editorial-notice {
+  margin: 22px 0 4px;
+  text-align: center;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ed-dim);
+}
+
+.editorial-kicker {
+  margin: 0;
+  font-size: 11.5px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ed-gold);
+  font-weight: 700;
+}
+
+.editorial-kicker.is-centred {
+  text-align: center;
+}
+
+.editorial-feature {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 26px;
+  padding: 24px 0 6px;
+  border-bottom: 1px solid var(--ed-rule);
+}
+
+@media (max-width: 640px) {
+  .editorial-feature {
+    grid-template-columns: 1fr;
+  }
+
+  .editorial {
+    padding: 22px 18px;
+  }
+}
+
+.editorial-feature-name {
+  margin: 8px 0 2px;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--ed-ink);
+}
+
+.editorial-feature-role {
+  margin: 0;
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ed-maroon);
+}
+
+.editorial-feature-body {
+  margin: 12px 0 16px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ed-dim);
+}
+
+.editorial-spec-head {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ed-gold);
+  font-weight: 700;
+}
+
+.editorial-spec dl,
+.editorial dl {
+  margin: 0;
+}
+
+.editorial-spec-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--ed-rule);
+  font-size: 13.5px;
+}
+
+.editorial-spec-row dt {
+  color: var(--ed-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11.5px;
+  padding-top: 2px;
+}
+
+.editorial-spec-row dd {
+  margin: 0;
+  text-align: right;
+  color: var(--ed-ink);
+}
+
+.editorial-spotlight-block {
+  padding: 24px 0 4px;
+  border-bottom: 1px solid var(--ed-rule);
+}
+
+.editorial-carousel {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.editorial-arrow {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 22px;
+  color: var(--ed-maroon);
+  padding: 0 6px;
+}
+
+.editorial-spotlight {
+  width: min(380px, 100%);
+  border: 1.5px solid var(--ed-ink);
+  padding: 22px 22px 16px;
+  text-align: center;
+  background: #fffdf8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.editorial-spot-name {
+  margin: 0;
+  font-size: 31px;
+  font-weight: 700;
+}
+
+.editorial-spot-role {
+  margin: 4px 0 0;
+  font-style: italic;
+  font-size: 14.5px;
+  color: var(--ed-dim);
+}
+
+.editorial-status {
+  margin: 14px 0 4px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.editorial-status.is-on {
+  color: #1d6b4f;
+}
+
+.editorial-status.is-off {
+  color: var(--ed-dim);
+}
+
+.editorial-spot-back {
+  width: 100%;
+  text-align: left;
+}
+
+.editorial-flip {
+  margin-top: 14px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ed-maroon);
+  border: 1px solid var(--ed-maroon);
+  border-radius: 999px;
+  padding: 6px 14px;
+}
+
+.editorial-row-block {
+  padding-top: 22px;
+}
+
+.editorial-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.editorial-filters {
+  display: flex;
+  gap: 7px;
+}
+
+.editorial-chip {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 12.5px;
+  color: var(--ed-dim);
+  border: 1px solid var(--ed-rule);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+
+.editorial-chip.is-on {
+  color: var(--ed-ivory);
+  background: var(--ed-maroon);
+  border-color: var(--ed-maroon);
+}
+
+.editorial-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 16px 4px 10px;
+  scrollbar-width: thin;
+}
+
+.editorial-card {
+  flex: none;
+  width: 158px;
+  text-align: left;
+  background: #fffdf8;
+  border: 1px solid var(--ed-rule);
+  padding: 13px 13px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  transition: transform 0.25s ease;
+}
+
+.editorial-card:hover {
+  transform: rotate(0deg) translateY(-3px) !important;
+}
+
+.editorial-card-name {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--ed-ink);
+}
+
+.editorial-card-role {
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--ed-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.editorial-card-status {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.editorial-card-status.is-on {
+  color: #1d6b4f;
+}
+
+.editorial-card-status.is-off {
+  color: var(--ed-dim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editorial-card {
+    transition: none;
+  }
+
+  .editorial-card:hover {
+    transform: none !important;
+  }
+}
+
 /* ------------------------------------------------- motion (IG-WEB-01)
    The scroll-driven motion layer: progress, reveals, parallax.
    Transform and opacity only; reduced motion lands everything
