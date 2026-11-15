@@ -1,0 +1,157 @@
+{
+  "result_kind": "what_if_prototype",
+  "engine": "futuris.scenarios.whatif@v1-prototype",
+  "target": "BTCUSDT",
+  "base_path": [
+    {
+      "step": 1,
+      "label": null,
+      "central": 100000.0,
+      "lower": 96000.0,
+      "upper": 104000.0
+    },
+    {
+      "step": 2,
+      "label": null,
+      "central": 101500.0,
+      "lower": 97440.0,
+      "upper": 105560.0
+    },
+    {
+      "step": 3,
+      "label": null,
+      "central": 103000.0,
+      "lower": 98880.0,
+      "upper": 107120.0
+    },
+    {
+      "step": 4,
+      "label": null,
+      "central": 104200.0,
+      "lower": 100032.0,
+      "upper": 108368.0
+    },
+    {
+      "step": 5,
+      "label": null,
+      "central": 105000.0,
+      "lower": 100800.0,
+      "upper": 109200.0
+    },
+    {
+      "step": 6,
+      "label": null,
+      "central": 106400.0,
+      "lower": 102144.0,
+      "upper": 110656.0
+    }
+  ],
+  "adjusted_path": [
+    {
+      "step": 1,
+      "label": null,
+      "base_central": 100000.0,
+      "base_lower": 96000.0,
+      "base_upper": 104000.0,
+      "adjusted_central": 100000.0,
+      "adjusted_lower": 96000.0,
+      "adjusted_upper": 104000.0,
+      "total_effect_pct": 0.0,
+      "contributions_pct": {
+        "btc_crash_20": -0.0,
+        "rate_hike_1pp": -0.0
+      }
+    },
+    {
+      "step": 2,
+      "label": null,
+      "base_central": 101500.0,
+      "base_lower": 97440.0,
+      "base_upper": 105560.0,
+      "adjusted_central": 91350.0,
+      "adjusted_lower": 87513.3,
+      "adjusted_upper": 95186.7,
+      "total_effect_pct": -10.0,
+      "contributions_pct": {
+        "btc_crash_20": -10.0,
+        "rate_hike_1pp": -0.0
+      }
+    },
+    {
+      "step": 3,
+      "label": null,
+      "base_central": 103000.0,
+      "base_lower": 98880.0,
+      "base_upper": 107120.0,
+      "adjusted_central": 80855.0,
+      "adjusted_lower": 77273.1235,
+      "adjusted_upper": 84436.8765,
+      "total_effect_pct": -21.5,
+      "contributions_pct": {
+        "btc_crash_20": -20.0,
+        "rate_hike_1pp": -1.5
+      }
+    },
+    {
+      "step": 4,
+      "label": null,
+      "base_central": 104200.0,
+      "base_lower": 100032.0,
+      "base_upper": 108368.0,
+      "adjusted_central": 81797.0,
+      "adjusted_lower": 78173.3929,
+      "adjusted_upper": 85420.6071,
+      "total_effect_pct": -21.5,
+      "contributions_pct": {
+        "btc_crash_20": -20.0,
+        "rate_hike_1pp": -1.5
+      }
+    },
+    {
+      "step": 5,
+      "label": null,
+      "base_central": 105000.0,
+      "base_lower": 100800.0,
+      "base_upper": 109200.0,
+      "adjusted_central": 82425.0,
+      "adjusted_lower": 78773.5725,
+      "adjusted_upper": 86076.4275,
+      "total_effect_pct": -21.5,
+      "contributions_pct": {
+        "btc_crash_20": -20.0,
+        "rate_hike_1pp": -1.5
+      }
+    },
+    {
+      "step": 6,
+      "label": null,
+      "base_central": 106400.0,
+      "base_lower": 102144.0,
+      "base_upper": 110656.0,
+      "adjusted_central": 83524.0,
+      "adjusted_lower": 79823.88680000001,
+      "adjusted_upper": 87224.11319999999,
+      "total_effect_pct": -21.5,
+      "contributions_pct": {
+        "btc_crash_20": -20.0,
+        "rate_hike_1pp": -1.5
+      }
+    }
+  ],
+  "assumptions": [
+    "shock 'btc_crash_20': driver BTC -20%, declared elasticity 1 (% target move per 1% driver move), onset step 2, ramp 2 step(s), permanent after ramp",
+    "shock 'rate_hike_1pp': driver policy_rate +1pp, declared elasticity -1.5 (% target move per 1pp driver move), onset step 3, ramp 1 step(s), permanent after ramp",
+    "elasticities are caller-declared assumptions; this engine does not estimate them from data and does not validate them against history",
+    "shock contributions add linearly in percentage terms per step and the total is applied multiplicatively to the base central value",
+    "band widening: each half-width grows by 0.5 x |total effect %| / 100 of itself per step (declared)",
+    "probability is not recomputed by this engine; the base forecast's probability is carried verbatim (or null)",
+    "non-negativity floor declared: adjusted values are clamped at 0 before the band-ordering check",
+    "caller note: SAMPLE OUTPUT \u2014 illustrative base path and declared elasticities; not a measured forecast."
+  ],
+  "warnings": [],
+  "evidence_class": "synthetic",
+  "evidence_source": "caller_supplied_example_base_path (illustrative sample); +futuris.scenarios.whatif@v1-prototype shock transform",
+  "probability_outcome": null,
+  "probability_status": "not_recomputed_by_whatif_engine",
+  "prediction_is_not_authorization": true
+}
