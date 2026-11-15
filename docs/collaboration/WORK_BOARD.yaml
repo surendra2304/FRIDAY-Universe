@@ -5095,6 +5095,38 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "PROVENANCE: every series SHA-256-verified against the RD-002 cache sidecars before use (loader refuses mismatches); SOLUSDT loses 5 incomplete days to the known archive gap block under the complete-buckets-only resample. Full hashes and all 48 rows in results_rd13/synthesis.json; code in rd13/rotation.py."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-013 crew): cross-asset momentum rotation FAILS the standing bar on all 48 pre-declared configurations — no forward entrant, no sleeve change, no production change; the owner's removal rule does not apply (nothing governed was tested). Coordinator: verify and merge the results PR. If rotation is ever revisited it needs a risk mechanism (volatility targeting / drawdown brake) as a NEW pre-declared family, not a retune of this grid. Stratex forward evidence remains the RD-002 candidates + Stage-C sleeve under TASK-STR-FWD-002."
+  - id: TASK-STR-RD-007
+    title: "Stratex research (Wave 4): GOLD & COMMODITIES INTRADAY — new pre-declared families for XAUUSD/XAGUSD/WTI at 15m/1h, judged per-instrument under the full bar"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-007-declaration (declaration PR #290); claude/task-str-rd-007-results (results + this entry)
+    prs: [290]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:47:00+05:30"
+    updated_at: "2026-11-15T13:15:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD7.md"
+      - "Stratex/rigorous_backtest/results_rd7/"
+      - "Stratex/rigorous_backtest/rd7/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890936016"
+    defect: "Owner Wave-4 order 2026-11-15 ~12:33 IST: create more strategy-research workers for Stratex. This track: GOLD & COMMODITIES INTRADAY, a new family — XAUUSD first, then XAGUSD and WTI (OANDA practice is the eventual venue), intraday breakout and mean-reversion variants at 15m/1h with pre-declared session filters. Distinct from TASK-STR-RD-003's forex-pairs track. Research only: no production code, registry or daemon changes."
+    acceptance:
+      - "Data provenance first: hash-manifested series only (RD-002 Stage-A Yahoo futures GC=F/SI=F/CL=F 1h), SHA-256 re-verified by this crew; unobtainable/unprovenanced instruments or timeframes declared UNCOVERED with reasons, never substituted, never synthetic."
+      - "Families pre-declared (declaration.json + family code + runner) in PR #290 BEFORE the first judged cell executes; nothing declared may change afterwards."
+      - "Verdicts per config against the standing full bar: walk-forward OOS only (LATE profile W2-W5), net of rd2/costs2 OANDA-modelled costs, expectancy>0, PF>=1.2, >=200 OOS trades, >=80% folds positive, holdout, Bonferroni at the running global N, 2x-cost sensitivity for near-bar rows; exact trial count reported."
+    evidence:
+      - "Declaration PR #290 opened before any judged run (declaration.json, rd7/families7.py, rd7/run_rd7.py — contents verified byte-identical to the executed local copies)."
+      - "DATA: GOLD 11,438 bars / SILVER 11,434 / WTI 11,311 (Yahoo futures 1h, 2024-11-15 -> 2026-11-13); SHA-256 of every CSV re-verified against its RD-002 sidecar (GOLD 244f8e08a06f774a47154f82fda76b88cec2d11faf1e498e4df3ced786abe60c; all three hash_verified=true in results_rd7/sanity_checks.json). Spot XAUUSD/XAGUSD unobtainable provenanced (Yahoo spot 404 per RD-002; Dukascopy HTTP 503 re-probed 2026-11-15; OANDA API needs server credentials research crews do not pull) — futures are the declared equivalently-provenanced history with roll/basis caveats disclosed."
+      - "15m UNCOVERED, measured: Yahoo provenanced 15m depth for GC=F/SI=F/CL=F is 5,545 bars spanning only 2026-09-08 -> 2026-11-13 (~67 days) — cannot populate the W2-W5 folds; no 15m cells were run and none were substituted."
+      - "RESULT: 45 trials (30 fixed cells + 15 wf-select procedures) — ZERO promotable, ZERO watchlist: every row has NEGATIVE pooled OOS expectancy net of costs (best: prevday_breakout/pd_ema SILVER, 278 trades, expectancy -0.0137%/trade, PF 0.979; donchian_intra/dc_ema GOLD PF 0.938). No row reached the near-bar band, so no 2x-cost sensitivity was triggered. Full 45-row table + per-fold metrics in Stratex/rigorous_backtest/RESULTS_RD7.md and results_rd7/rows.json; synthesis in results_rd7/synthesis.json."
+      - "SANITY: 5 sampled trades from the first cell re-derived by an independent brute-force bar scan — exit time, exit price and net return identical in all 5 (results_rd7/sanity_checks.json)."
+      - "TRIAL ACCOUNTING: RD-007 adds 45 trials; global counter 1,557 -> 1,602 (declared lower bound; sibling Wave-4 crews raise the final N — with zero passers there is nothing to re-gate)."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-007 crew): gold & commodities intraday is a closed, negative result — nothing to wire into any forward lane, and the owner's removal rule is not triggered (these were research configurations, never production strategies). Coordinator: merge declaration PR #290 and the results PR, then re-gate any future revival of these mechanisms only as a NEW pre-declared round (e.g. if a provenanced long 15m series becomes obtainable); re-tuning on this data is prohibited by the trial-counter rule."
+task_id_warnings:
+task_id_warnings:
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
