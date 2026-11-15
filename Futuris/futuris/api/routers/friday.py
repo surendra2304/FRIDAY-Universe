@@ -40,6 +40,12 @@ from futuris.models.adapters import (
     STATSFORECAST_IMPORT_ERROR,
     StatsForecastUnavailableError,
 )
+from futuris.presentation.uncertainty import (
+    blocked_presentation,
+    forecast_presentation,
+    horizon_text,
+    scenario_presentation,
+)
 from futuris.scenarios.engine import ScenarioEngine
 from futuris.scenarios.spec import ScenarioSpec
 from futuris.storage.models import ForecastModel
@@ -196,6 +202,15 @@ class FridayForecastResponse(BaseModel):
     friday_request_id: str
     prediction: PredictionPayload
     confidence: str
+    # TASK-FUT-008: the delegation response previously dropped the forecast's
+    # horizon entirely and left the method as the opaque ``model_used`` label
+    # ("seasonal_naive@v1:c8f93a"), with no statement of what level the range
+    # is or whether calibration was ever measured. ``horizon`` and
+    # ``presentation`` carry those three things in plain language on every
+    # response — including the BLOCKED ones, where the presentation states
+    # plainly that no forecast was computed.
+    horizon: str = ""
+    presentation: dict[str, Any] = Field(default_factory=dict)
     status: str = "COMPLETED"
     calibration_score: float
     calibration_metrics: dict[str, Any] = Field(default_factory=dict)
@@ -303,6 +318,11 @@ class FridayScenarioResponse(BaseModel):
     # inherits the base forecast's provenance; the label must travel.
     evidence_class: EvidenceClass = EvidenceClass.SYNTHETIC
     evidence_source: str | None = None
+    # TASK-FUT-008: plain-language presentation — the base forecast's horizon,
+    # the propagation method, the sampled spread, and an explicit statement
+    # that the risk label is sized off the delta (not a recomputed
+    # probability) and that the probability was carried over unchanged.
+    presentation: dict[str, Any] = Field(default_factory=dict)
     prediction_is_not_authorization: bool = True
     executable_commands: list[str] = Field(default_factory=list)
 
@@ -376,6 +396,22 @@ def _friday_forecast_response(
         for d in forecast.drivers
     ]
     cal_score, cal_metrics = _honest_calibration(forecast)
+    # TASK-FUT-008: attach the plain-language presentation (horizon, honestly
+    # named method, level-labelled range, measured-or-unmeasured calibration).
+    presentation = forecast_presentation(
+        target=forecast.target,
+        horizon=getattr(forecast, "horizon", None) or req.horizon,
+        prediction=forecast.prediction,
+        range_lower=forecast.range_lower,
+        range_upper=forecast.range_upper,
+        probability=prob,
+        confidence=forecast.confidence,
+        model_version=forecast.model_version,
+        calibration_metrics=cal_metrics,
+        evidence_class=getattr(forecast, "evidence_class", None)
+        or EvidenceClass.SYNTHETIC,
+        statsforecast_available=STATSFORECAST_AVAILABLE,
+    )
     return FridayForecastResponse(
         futuris_forecast_id=forecast.forecast_id,
         friday_request_id=req.friday_request_id,
@@ -385,6 +421,8 @@ def _friday_forecast_response(
             upper_bound=forecast.range_upper,
             probability_distribution=prob_dist,
         ),
+        horizon=presentation["horizon_text"],
+        presentation=presentation,
         confidence=forecast.confidence.value.upper(),
         status=forecast.status.value,
         calibration_score=cal_score,
@@ -431,6 +469,17 @@ def _statsforecast_blocked_response(
             lower_bound=0.0,
             upper_bound=0.0,
             probability_distribution={"exceedance_probability": 0.0},
+        ),
+        # TASK-FUT-008: even a refusal carries the horizon and a plain
+        # statement that no forecast was computed.
+        horizon=horizon_text(req.horizon),
+        presentation=blocked_presentation(
+            target=req.target,
+            horizon=req.horizon,
+            reason=(
+                "The statsforecast model backend is unavailable in this "
+                "deployment, so no forecast was computed."
+            ),
         ),
         confidence="INSUFFICIENT_DATA",
         status="BLOCKED",
@@ -525,6 +574,12 @@ async def delegate_forecast(
                     upper_bound=0.0,
                     probability_distribution={"exceedance_probability": 0.0},
                 ),
+                horizon=horizon_text(req.horizon),
+                presentation=blocked_presentation(
+                    target=req.target,
+                    horizon=req.horizon,
+                    reason=f"Telemetry is stale and was refused. {e}",
+                ),
                 confidence="INSUFFICIENT_DATA",
                 status="BLOCKED",
                 calibration_score=0.0,
@@ -550,6 +605,12 @@ async def delegate_forecast(
                     lower_bound=0.0,
                     upper_bound=0.0,
                     probability_distribution={"exceedance_probability": 0.0},
+                ),
+                horizon=horizon_text(req.horizon),
+                presentation=blocked_presentation(
+                    target=req.target,
+                    horizon=req.horizon,
+                    reason=f"There is not enough data to forecast from. {e}",
                 ),
                 confidence="INSUFFICIENT_DATA",
                 status="INSUFFICIENT_DATA",
@@ -780,7 +841,12 @@ async def delegate_task(
             action=envelope.action,
             status="SUCCESS" if f_resp.status != "BLOCKED" else "BLOCKED",
             result=f_resp.model_dump(mode="json"),
-            summary=f"Forecast executed for target '{req.target}' with status '{f_resp.status}'.",
+            # TASK-FUT-008: the summary FRIDAY relays must itself carry the
+            # horizon, range and calibration state — not just a status.
+            summary=(
+                f"Forecast executed for target '{req.target}' with status "
+                f"'{f_resp.status}'. {f_resp.presentation.get('summary', '')}"
+            ).strip(),
             prediction_is_not_authorization=True,
             executable_commands=[],
             execution_time_ms=lat,
@@ -881,7 +947,14 @@ async def delegate_task(
             action=envelope.action,
             status="SUCCESS",
             result=cal_resp.model_dump(mode="json"),
-            summary=f"Calibration score ECE: {cal_resp.overall_ece}, trend: {cal_resp.trend}.",
+            # TASK-FUT-008: when calibration is unmeasured, the summary must
+            # not present the 0.0 sentinel ECE as a score.
+            summary=(
+                "Calibration is unmeasured: no resolved forecast pairs yet, "
+                "so no ECE or trend can be reported."
+                if cal_resp.trend == "unmeasured"
+                else f"Calibration score ECE: {cal_resp.overall_ece}, trend: {cal_resp.trend}."
+            ),
             prediction_is_not_authorization=True,
             executable_commands=[],
             execution_time_ms=lat,
@@ -974,6 +1047,29 @@ async def evaluate_scenario(
         scenario_spec=req.scenario_spec.model_dump(mode="json"),
         evidence_class=getattr(base, "evidence_class", None) or EvidenceClass.SYNTHETIC,
         evidence_source=getattr(base, "evidence_source", None),
+        # TASK-FUT-008: presentation with the p10–p90 spread averaged across
+        # the scenario's sampled nodes (consistent with div_pred being the
+        # mean of node means above).
+        presentation=scenario_presentation(
+            horizon=getattr(base, "horizon", None),
+            base_prediction=base.prediction,
+            divergent_prediction=div_pred,
+            delta_pct=delta_pct,
+            risk_assessment=risk,
+            monte_carlo=True,
+            range_lower=(
+                sum(d["p10"] for d in s_res.distributions.values())
+                / len(s_res.distributions)
+                if s_res.distributions
+                else None
+            ),
+            range_upper=(
+                sum(d["p90"] for d in s_res.distributions.values())
+                / len(s_res.distributions)
+                if s_res.distributions
+                else None
+            ),
+        ),
         prediction_is_not_authorization=True,
         executable_commands=[],
     )
@@ -1193,6 +1289,21 @@ async def list_friday_forecasts(
 
     out = []
     for m in models:
+        # TASK-FUT-008: rows previously carried no horizon, no range bounds
+        # and no method — a bare prediction + probability + confidence label.
+        presentation = forecast_presentation(
+            target=m.target,
+            horizon=m.horizon,
+            prediction=m.prediction,
+            range_lower=m.range_lower,
+            range_upper=m.range_upper,
+            probability=m.probability,
+            confidence=m.confidence,
+            model_version=m.model_version,
+            calibration_metrics=getattr(m, "calibration_metrics", None),
+            evidence_class=m.evidence_class or EvidenceClass.SYNTHETIC.value,
+            statsforecast_available=STATSFORECAST_AVAILABLE,
+        )
         out.append(
             {
                 "forecast_id": m.forecast_id,
@@ -1203,6 +1314,10 @@ async def list_friday_forecasts(
                 "confidence": m.confidence,
                 "status": m.status,
                 "model_version": m.model_version,
+                "horizon": presentation["horizon_text"],
+                "range_lower": m.range_lower,
+                "range_upper": m.range_upper,
+                "presentation": presentation,
                 # TASK-FUT-002: the list surface dropped provenance entirely;
                 # a stored row's class defaults to synthetic when unlabelled.
                 "evidence_class": m.evidence_class or EvidenceClass.SYNTHETIC.value,

@@ -623,6 +623,13 @@ async def quick_forecast(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
         ev_val = str(ev_class) if ev_class else "synthetic"
     is_live = ev_val == "live" or ev_class == EvidenceClass.LIVE
 
+    # TASK-FUT-008: plain-language presentation — the range gets its actual
+    # 90% level, the model label gets an honest method name (no statsforecast
+    # claim while the backend is not installed), and calibration is stated
+    # as measured or unmeasured.
+    from futuris.models.adapters import STATSFORECAST_AVAILABLE
+    from futuris.presentation.uncertainty import forecast_presentation
+
     result = {
         "forecast_id": str(f.forecast_id),
         "target": f.target,
@@ -641,6 +648,19 @@ async def quick_forecast(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
         "evidence_class": ev_val,
         "evidence_source": getattr(f, "evidence_source", None),
         "input_telemetry_verified": is_live,
+        "presentation": forecast_presentation(
+            target=f.target,
+            horizon=f.horizon,
+            prediction=float(f.prediction),
+            range_lower=float(f.range_lower),
+            range_upper=float(f.range_upper),
+            probability=f.probability,
+            confidence=f.confidence,
+            model_version=f.model_version,
+            calibration_metrics=getattr(f, "calibration_metrics", None),
+            evidence_class=ev_val,
+            statsforecast_available=STATSFORECAST_AVAILABLE,
+        ),
         "prediction_is_not_authorization": True,
         "executable_commands": [],
     }
@@ -743,10 +763,22 @@ async def quick_simulate(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
         )
         ev_class = getattr(base, "evidence_class", None)
         ev_val = ev_class.value if hasattr(ev_class, "value") else str(ev_class or "synthetic")
+        # TASK-FUT-008: name the horizon and the actual method (deterministic
+        # linear propagation — no distribution, no spread) in plain language.
+        from futuris.presentation.uncertainty import scenario_presentation
+
         return {
             "scenario_id": str(res.scenario_id),
             "base_forecast_id": str(base.forecast_id),
             "name": res.spec.name,
+            "horizon": str(base.horizon),
+            "presentation": scenario_presentation(
+                horizon=base.horizon,
+                base_prediction=float(base.prediction),
+                divergent_prediction=perturbed_prediction,
+                delta_pct=delta_percentage,
+                monte_carlo=False,
+            ),
             "perturbed_prediction": round(perturbed_prediction, 4),
             "perturbed_probability": None,
             "probability_status": "not_recomputed_by_scenario_engine",
@@ -786,6 +818,11 @@ async def quick_trends(limit: int = 10) -> dict[str, Any]:
         # TASK-FUT-002: list_filtered replaces the nonexistent list_recent
         # (see quick_simulate); the surface 500'd on every call.
         recent = await f_repo.list_filtered(limit=limit)
+        # TASK-FUT-008: trend rows previously carried no horizon, no model
+        # and no range level — a bare prediction with a confidence label.
+        from futuris.models.adapters import STATSFORECAST_AVAILABLE
+        from futuris.presentation.uncertainty import forecast_presentation
+
         trends = []
         for f in recent:
             ev_class = getattr(f, "evidence_class", None)
@@ -803,6 +840,20 @@ async def quick_trends(limit: int = 10) -> dict[str, Any]:
                     "range_upper": round(float(f.range_upper), 4),
                     "probability": f.probability,
                     "confidence": f.confidence.value,
+                    "model": f.model_version,
+                    "presentation": forecast_presentation(
+                        target=f.target,
+                        horizon=f.horizon,
+                        prediction=float(f.prediction),
+                        range_lower=float(f.range_lower),
+                        range_upper=float(f.range_upper),
+                        probability=f.probability,
+                        confidence=f.confidence,
+                        model_version=f.model_version,
+                        calibration_metrics=getattr(f, "calibration_metrics", None),
+                        evidence_class=ev_val,
+                        statsforecast_available=STATSFORECAST_AVAILABLE,
+                    ),
                     # TASK-FUT-002: the domain Forecast has no created_at
                     # attribute (this line raised AttributeError on any
                     # non-empty result); as_of is the generation timestamp.
