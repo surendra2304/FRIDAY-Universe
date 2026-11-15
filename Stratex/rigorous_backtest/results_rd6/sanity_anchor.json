@@ -1,0 +1,14 @@
+{
+  "anchor": "RD-001 ts_momentum roc42_4h BTC/ETH/SOL via rd2 chain",
+  "expected": {
+    "trades": 303,
+    "expectancy_net": 0.0024275740638451445,
+    "profit_factor_net": 1.0969220482985518
+  },
+  "got": {
+    "trades": 303,
+    "expectancy_net": 0.0024275740638451445,
+    "profit_factor_net": 1.0969220482985518
+  },
+  "bit_identical": true
+}
