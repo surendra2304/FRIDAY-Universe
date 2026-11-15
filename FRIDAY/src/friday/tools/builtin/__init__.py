@@ -83,6 +83,7 @@ from friday.tools.builtin.laptop_control import (
     LaptopScreenshotTool,
     LaptopTypeTextTool,
 )
+from friday.tools.builtin.laptop_dictation import LaptopDictateTool
 from friday.tools.builtin.launch_application import LaunchApplicationTool
 from friday.tools.builtin.location_maps import LocationMapsTool
 from friday.tools.builtin.media_control import MediaControlTool
@@ -197,6 +198,7 @@ __all__ = [
     "LaptopOpenUrlTool",
     "LaptopRunCommandTool",
     "LaptopScreenshotTool",
+    "LaptopDictateTool",
     "LaptopTypeTextTool",
     "ListGitHubIssuesTool",
     "LocationMapsTool",
