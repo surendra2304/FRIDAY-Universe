@@ -2659,7 +2659,12 @@ async def execute_command(req: CommandRequest, _: None = Depends(_require_contro
     # history BEFORE dispatch and is completed in place afterwards.
     # Round 1 lost the user's coding message from the restored transcript
     # because logging happened only after a (never-returning) dispatch.
+    # TASK-FRD-003: per-stage wall-clock for the chat latency breakdown
+    # attached to the response metadata below (persist-begin / dispatch /
+    # persist-finalize / total). Pure measurement — no behaviour change.
+    _frd003_t0 = time.perf_counter()
     entry = await _begin_conversation_entry(req.command)
+    _frd003_t1 = time.perf_counter()
     timeout_s = _chat_timeout_seconds()
     try:
         result = await asyncio.wait_for(
@@ -2747,6 +2752,7 @@ async def execute_command(req: CommandRequest, _: None = Depends(_require_contro
         if isinstance(meta.get(_tool_key), dict) and _tool_key not in agents_involved:
             agents_involved.append(_tool_key)
     
+    _frd003_t2 = time.perf_counter()
     # Complete the persist-first conversation entry in place (TASK-REL-007B).
     await _finalize_conversation_entry(
         entry,
@@ -2755,7 +2761,28 @@ async def execute_command(req: CommandRequest, _: None = Depends(_require_contro
         agents_involved=agents_involved,
         metadata=meta,
     )
-    
+    _frd003_t3 = time.perf_counter()
+    # TASK-FRD-003: expose the stage breakdown on the response itself so
+    # any client can see where a turn's time went (dispatch_ms includes
+    # the response-formatting and activity-emit steps above; the timeout
+    # path reaches here too — only a dispatch exception re-raises past
+    # this point, and it returns no response to annotate).
+    try:
+        _latency_ms = {
+            "persist_begin_ms": round((_frd003_t1 - _frd003_t0) * 1000, 1),
+            "dispatch_ms": round((_frd003_t2 - _frd003_t1) * 1000, 1),
+            "persist_finalize_ms": round((_frd003_t3 - _frd003_t2) * 1000, 1),
+            "total_ms": round((_frd003_t3 - _frd003_t0) * 1000, 1),
+        }
+        if isinstance(result, dict):
+            _meta_out = result.get("metadata")
+            if not isinstance(_meta_out, dict):
+                _meta_out = {}
+                result["metadata"] = _meta_out
+            _meta_out["latency_ms"] = _latency_ms
+    except Exception:
+        pass
+
     # Chaos-loop fix (2026-11-13): every branch below serializes ``result``
     # through raw json.dumps; datetimes in the metadata crashed the response.
     result = _json_safe(result)

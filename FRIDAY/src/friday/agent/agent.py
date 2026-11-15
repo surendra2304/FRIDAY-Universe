@@ -502,13 +502,49 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         recalled_messages: list[Message] = []
 
         # Recall persistent long-term memories and self-upgraded operational guidelines from Memora
+        # TASK-FRD-003 (2026-11-15): the two Memora context legs are
+        # independent reads (memory recall, 15s timeout; experience recall,
+        # 3.5s timeout) but ran SERIALLY before the first LLM call, so every
+        # cognitive turn paid both round trips end to end. They now run
+        # concurrently; block content and prompt ordering are unchanged
+        # (context block first, self-upgrade block second), each leg stays
+        # fail-open exactly as before, and per-leg timings ride out in the
+        # response metadata ("latency") so the saving is measurable in
+        # production, not just in tests.
+        memora_latency: dict[str, float] = {}
         try:
             from friday.memory.memora_client import memora_client
             recalled_blocks = []
-            memora_context = memora_client.build_context_block("friday", goal)
+            _memora_t0 = time.perf_counter()
+            _leg_seconds: dict[str, float] = {}
+
+            def _timed_leg(name: str, fn: Callable[[], str]) -> str:
+                _leg_t0 = time.perf_counter()
+                try:
+                    return fn() or ""
+                except Exception:
+                    return ""
+                finally:
+                    _leg_seconds[name] = round(time.perf_counter() - _leg_t0, 3)
+
+            with ThreadPoolExecutor(max_workers=2, thread_name_prefix="frd003-memora") as _pool:
+                _ctx_future = _pool.submit(
+                    _timed_leg, "context",
+                    lambda: memora_client.build_context_block("friday", goal),
+                )
+                _upgrade_future = _pool.submit(
+                    _timed_leg, "self_upgrade",
+                    lambda: memora_client.build_self_upgrade_context("friday", goal, domain="tool_execution"),
+                )
+                memora_context = _ctx_future.result()
+                self_upgrade_context = _upgrade_future.result()
+            memora_latency = {
+                "memora_context_wall_seconds": round(time.perf_counter() - _memora_t0, 3),
+                "memora_context_leg_seconds": _leg_seconds.get("context", 0.0),
+                "memora_self_upgrade_leg_seconds": _leg_seconds.get("self_upgrade", 0.0),
+            }
             if memora_context:
                 recalled_blocks.append(memora_context)
-            self_upgrade_context = memora_client.build_self_upgrade_context("friday", goal, domain="tool_execution")
             if self_upgrade_context:
                 recalled_blocks.append(self_upgrade_context)
             local_memories = (context or {}).get("recalled_memories", [])
@@ -578,6 +614,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                     "goal_orchestration": False,
                     "memory_recall": True,
                     "memory_not_found": True,
+                    "latency": memora_latency,
                     "duration_seconds": time.perf_counter() - start_time,
                     "is_successful": True,
                     "iterations": 0,
@@ -652,6 +689,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                         metadata={
                             "goal_orchestration": False,
                             "offline_fallback": True,
+                            "latency": memora_latency,
                             "offline_detail": offline.as_dict(),
                             "llm_error": f"{type(exc).__name__}: {exc}",
                             "duration_seconds": time.perf_counter() - start_time,
@@ -680,6 +718,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                     metadata={
                         "goal_orchestration": False,
                         "offline_fallback": False,
+                        "latency": memora_latency,
                         "offline_detail": offline.as_dict() if offline is not None else None,
                         "llm_error": f"{type(exc).__name__}: {exc}",
                         "duration_seconds": time.perf_counter() - start_time,
@@ -755,6 +794,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                                 if _route_ctx is not None and _route_ctx.events
                                 else {}
                             ),
+                            "latency": memora_latency,
                         },
                     )
                 empty_turns += 1
@@ -908,6 +948,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                                 if _route_ctx is not None and _route_ctx.events
                                 else {}
                             ),
+                            "latency": memora_latency,
                         },
                     )
             except Exception as exc:
@@ -940,6 +981,7 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                 "duration_seconds": time.perf_counter() - start_time,
                 "is_successful": not bool(last_error),
                 "iterations": iterations,
+                "latency": memora_latency,
                 "tool_error_detail": last_error or None,
                 "tool_error_tool": last_error_tool or None,
                 # TASK-REL-044: which brain served this turn.
