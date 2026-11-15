@@ -567,6 +567,35 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
             )
 
         iterations = 0
+        # TASK-REL-044: the per-turn route context for the LLM escalation
+        # layer. process_message binds it with full signals; entry points
+        # that reach the loop directly get a goal-only classification so
+        # the depth trigger and routing telemetry still work. Advisory:
+        # any failure here leaves _route_ctx None and the turn unchanged.
+        _route_ctx = None
+        try:
+            from friday.llm.escalation import (
+                TurnRouteContext,
+                bind_turn_route_context,
+                classify_turn_complexity,
+                current_turn_route_context,
+            )
+
+            _route_ctx = current_turn_route_context()
+            if _route_ctx is None:
+                _route_ctx = bind_turn_route_context(
+                    TurnRouteContext(
+                        channel="other",
+                        goal=goal,
+                        task_kinds=classify_turn_complexity(
+                            goal,
+                            routed_capability=(context or {}).get("routed_capability"),
+                        ),
+                        routed_capability=(context or {}).get("routed_capability"),
+                    )
+                )
+        except Exception:
+            _route_ctx = None
         # TASK-ORCH-005 (2026-11-11 IST): reasoning models served via Groq
         # (gpt-oss-120b) sometimes emit a turn whose visible content is empty —
         # the whole answer sits in the reasoning channel or inside <thought>
@@ -585,6 +614,8 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
         phantom_redirects = 0
         for _ in range(self.max_tool_iterations):
             iterations += 1
+            if _route_ctx is not None:
+                _route_ctx.tool_iterations = iterations
             try:
                 response = self.llm.generate(messages, tools=self.tools.get_schemas())
             except Exception as exc:
@@ -700,6 +731,12 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                             "duration_seconds": time.perf_counter() - start_time,
                             "is_successful": True,
                             "iterations": iterations,
+                            # TASK-REL-044: which brain served this turn.
+                            **(
+                                {"llm_routing": list(_route_ctx.events)}
+                                if _route_ctx is not None and _route_ctx.events
+                                else {}
+                            ),
                         },
                     )
                 empty_turns += 1
@@ -847,6 +884,12 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                             "duration_seconds": time.perf_counter() - start_time,
                             "is_successful": True,
                             "iterations": iterations + 1,
+                            # TASK-REL-044: which brain served this turn.
+                            **(
+                                {"llm_routing": list(_route_ctx.events)}
+                                if _route_ctx is not None and _route_ctx.events
+                                else {}
+                            ),
                         },
                     )
             except Exception as exc:
@@ -881,6 +924,12 @@ class FridayAgent(MemoryMixin, FastPathMixin, ToolExecutionMixin, CognitiveMixin
                 "iterations": iterations,
                 "tool_error_detail": last_error or None,
                 "tool_error_tool": last_error_tool or None,
+                # TASK-REL-044: which brain served this turn.
+                **(
+                    {"llm_routing": list(_route_ctx.events)}
+                    if _route_ctx is not None and _route_ctx.events
+                    else {}
+                ),
             },
         )
 

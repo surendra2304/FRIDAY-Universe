@@ -126,8 +126,17 @@ class CognitiveMixin:
     def process_message(
             self,
             user_input: str,
+            channel: str = "chat",
         ) -> AgentResponse:
-            """Process a user message through reasoning, safety validation, and sequential/parallel tool execution."""
+            """Process a user message through reasoning, safety validation, and sequential/parallel tool execution.
+
+            ``channel`` (TASK-REL-044) names the surface the turn arrived
+            on — "chat" for the HTTP surfaces, "voice" for the LiveKit /
+            Gemini Live session — and rides the per-turn route context
+            the LLM escalation layer reads. Voice turns never
+            complexity-escalate; everything else about the pipeline is
+            channel-blind.
+            """
             start_time = time.perf_counter()
             clean_input = self.normalize_wake_phrase(user_input)
 
@@ -488,6 +497,39 @@ class CognitiveMixin:
                 )
             if intent_result is not None:
                 context["intent_classification"] = intent_result.to_dict()
+
+            # TASK-REL-044: bind the per-turn route context the LLM
+            # escalation layer reads (owner routing policy: chat on
+            # FRIDAY's own keys, complex tasks escalate to Inference).
+            # Classified HERE, where the turn's real signals converge —
+            # the capability-router verdict, the intent tier's verdict
+            # and its required tools, and the goal text itself. Advisory
+            # only: a binding failure must never break the turn.
+            try:
+                from friday.llm.escalation import (
+                    TurnRouteContext,
+                    bind_turn_route_context,
+                    classify_turn_complexity,
+                )
+
+                bind_turn_route_context(
+                    TurnRouteContext(
+                        channel=channel,
+                        goal=clean_input,
+                        task_kinds=classify_turn_complexity(
+                            clean_input,
+                            routed_capability=routing_decision.selected_capability.value,
+                            intent=getattr(intent_result, "intent", None),
+                            required_tools=list(
+                                getattr(intent_result, "required_tools", []) or []
+                            ),
+                        ),
+                        routed_capability=routing_decision.selected_capability.value,
+                        intent=getattr(intent_result, "intent", None),
+                    )
+                )
+            except Exception as _route_exc:  # never break a turn on routing telemetry
+                logger.debug(f"route context binding skipped: {_route_exc}")
 
             exec_res = self.execute_complex_task(goal=exec_goal, context=context)
             

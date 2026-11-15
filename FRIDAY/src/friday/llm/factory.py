@@ -14,6 +14,7 @@ from friday.core.exceptions import ConfigError
 from friday.core.logging import get_logger
 from friday.llm.ai_universe_provider import AIUniverseLLMProvider
 from friday.llm.base import BaseLLMProvider
+from friday.llm.escalation import EscalatingLLMProvider, InferenceChatProvider
 from friday.llm.fallback_chain_provider import (
     ExhaustionFailoverProvider,
     FallbackChainLLMProvider,
@@ -31,6 +32,55 @@ from friday.llm.openrouter_provider import (
 logger = get_logger("llm.factory")
 
 _DEFAULT_LLM_MODEL = Settings.model_fields["llm_model"].default
+
+
+def _build_inference_chat_provider(settings: Settings) -> InferenceChatProvider | None:
+    """TASK-REL-044: the Inference escalation target, or None.
+
+    None when escalation is kill-switched (FRIDAY_LLM_ESCALATION=off) or
+    when no Inference endpoint is actually configured: the Settings
+    default ``http://inference:8000`` is a compose hostname that resolves
+    nowhere outside docker, so the default alone is not a configuration
+    (production sets FRIDAY_INFERENCE_URL). With no configured endpoint
+    the factory builds exactly the pre-REL-044 stack. Construction never
+    probes the network — an unreachable Inference is a per-call fallback
+    event inside EscalatingLLMProvider, not a startup failure.
+    """
+    try:
+        from friday.llm.escalation import escalation_enabled
+
+        if not escalation_enabled():
+            logger.info("LLM escalation to Inference disabled (FRIDAY_LLM_ESCALATION=off).")
+            return None
+        url = os.getenv("FRIDAY_INFERENCE_URL") or os.getenv("INFERENCE_URL")
+        if not url:
+            settings_url = getattr(settings, "inference_url", None)
+            if settings_url and settings_url.rstrip("/") != "http://inference:8000":
+                url = settings_url
+        if not url:
+            logger.info(
+                "No Inference endpoint configured; LLM escalation not armed "
+                "(chat stays on FRIDAY's own pool, pre-REL-044 stack)."
+            )
+            return None
+        key = (
+            getattr(settings, "inference_api_key", None)
+            or os.getenv("FRIDAY_INFERENCE_API_KEY")
+            or ""
+        )
+        logger.info(f"LLM escalation target armed: Inference chat completions at {url}")
+        return InferenceChatProvider(
+            base_url=url,
+            api_key=key,
+            temperature=settings.llm_temperature,
+            max_tokens=settings.llm_max_tokens,
+        )
+    except Exception as exc:
+        logger.warning(
+            f"Inference escalation target could not be constructed ({exc}); "
+            "continuing without escalation (pre-REL-044 stack)."
+        )
+        return None
 
 
 def create_llm_provider(settings: Settings) -> BaseLLMProvider:
@@ -120,6 +170,17 @@ def create_llm_provider(settings: Settings) -> BaseLLMProvider:
             or bool(os.getenv("FRIDAY_GROQ_API_KEY"))
             or bool(getattr(groq_credential_pool, "credentials", None))
         )
+        # TASK-REL-044: owner routing policy — chat stays on FRIDAY's own
+        # pool; complex tasks escalate to Inference (friday.llm.escalation).
+        # The escalation wrapper also re-orders the REL-010 exhaustion
+        # safety net when an Inference endpoint is configured: the
+        # exhaustion fallback tries Inference FIRST (the rung that brings
+        # more usage, per the owner's words) with Groq behind it, so
+        # REL-010's never-die-on-exhaustion guarantee is preserved and
+        # strengthened. With no Inference configured, the stack below is
+        # exactly the pre-REL-044 one.
+        inference_provider = _build_inference_chat_provider(settings)
+        own_stack: BaseLLMProvider = gemini_provider
         if groq_available:
             try:
                 groq_provider = create_llm_provider(
@@ -129,15 +190,23 @@ def create_llm_provider(settings: Settings) -> BaseLLMProvider:
                     "Gemini pool-exhaustion failover armed: Groq text provider "
                     "stands by if the Gemini credential pool is exhausted."
                 )
-                return ExhaustionFailoverProvider(
-                    primary=gemini_provider, fallback=groq_provider
+                exhaustion_fallback: BaseLLMProvider = (
+                    FallbackChainLLMProvider([inference_provider, groq_provider])
+                    if inference_provider is not None
+                    else groq_provider
+                )
+                own_stack = ExhaustionFailoverProvider(
+                    primary=gemini_provider, fallback=exhaustion_fallback
                 )
             except Exception as exc:
                 logger.warning(
                     f"Groq exhaustion failover could not be constructed ({exc}); "
                     "continuing with the Gemini provider only."
                 )
-        return gemini_provider
+                own_stack = gemini_provider
+        if inference_provider is not None:
+            return EscalatingLLMProvider(own=own_stack, inference=inference_provider)
+        return own_stack
 
     if provider_type == "groq":
         # Ensure Groq never inherits Gemini model names
