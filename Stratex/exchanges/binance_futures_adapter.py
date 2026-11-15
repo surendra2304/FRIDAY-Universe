@@ -32,6 +32,12 @@ from logger import get_logger
 
 logger = get_logger("binance_futures_adapter")
 
+# TASK-STR-RISK-001: the owner's leverage pin is 3x (demo-fapi). The env
+# value is a request, not an authority — code clamps it to this ceiling so
+# no .env edit or deployment variable can silently raise leverage above
+# the pin. Lower values in env are honoured (they only reduce risk).
+OWNER_LEVERAGE_PIN = 3
+
 
 def _env_flag(name: str, default: str = "false") -> bool:
     """True when the env var holds a truthy value (1/true/yes/on, case-insensitive)."""
@@ -168,7 +174,14 @@ class BinanceFuturesAdapter(BaseExchange):
         self._symbol_cache: Optional[Dict] = None
         self._exchange_info: Optional[Dict] = None
         self._leverage_set: set = set()
-        self.target_leverage = int(os.getenv("BINANCE_LEVERAGE", "3"))
+        _lev_raw = int(os.getenv("BINANCE_LEVERAGE", "3"))
+        if _lev_raw > OWNER_LEVERAGE_PIN:
+            logger.warning(
+                f"[BINANCE_FUTURES] BINANCE_LEVERAGE={_lev_raw} exceeds the "
+                f"owner pin {OWNER_LEVERAGE_PIN}x; clamped (TASK-STR-RISK-001)"
+            )
+            _lev_raw = OWNER_LEVERAGE_PIN
+        self.target_leverage = max(1, _lev_raw)
 
     def _enforce_no_live_trading(self) -> None:
         """Re-checked on every order/cancel path (defense in depth).
@@ -541,11 +554,17 @@ class BinanceFuturesAdapter(BaseExchange):
     def min_notional(self, symbol: str) -> float:
         return float(self._symbol_filters(symbol).get("minNotional", 0) or 0)
 
-    def _ensure_leverage(self, symbol: str) -> None:
-        """Set a low leverage so a single position can't be liquidated easily."""
+    def _ensure_leverage(self, symbol: str) -> bool:
+        """Confirm the pinned leverage is set on the venue for this symbol.
+
+        TASK-STR-RISK-001: returns True only when the venue has accepted
+        the leverage setting (or it was already confirmed this session).
+        Previously a failed POST was silently ignored and the order went
+        out at whatever leverage the symbol happened to carry.
+        """
         sym = self.denormalize_symbol(symbol)
         if sym in self._leverage_set:
-            return
+            return True
         res = self._post(
             "/fapi/v1/leverage",
             signed=True,
@@ -553,6 +572,12 @@ class BinanceFuturesAdapter(BaseExchange):
         )
         if res is not None:
             self._leverage_set.add(sym)
+            return True
+        logger.error(
+            f"[BINANCE_FUTURES] Leverage confirmation failed for {sym}; "
+            "order paths must refuse (TASK-STR-RISK-001)"
+        )
+        return False
 
     def get_orderbook(self, symbol: str, limit: int = 20) -> Dict[str, List[List[float]]]:
         data = self._get("/fapi/v1/depth", params={"symbol": self.denormalize_symbol(symbol), "limit": limit})
@@ -583,7 +608,12 @@ class BinanceFuturesAdapter(BaseExchange):
         binance_side = "BUY" if side in ("BUY", "LONG") else "SELL"
         order_type = order_type.upper()
 
-        self._ensure_leverage(symbol)
+        if not self._ensure_leverage(symbol):
+            raise RuntimeError(
+                f"[BINANCE_FUTURES] Refusing order for {symbol}: leverage "
+                f"could not be confirmed at the pinned {self.target_leverage}x "
+                "(TASK-STR-RISK-001 fail-closed)"
+            )
 
         if order_type == "MARKET":
             binance_type = "MARKET"
