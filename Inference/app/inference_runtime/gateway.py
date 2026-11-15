@@ -12,6 +12,7 @@ from .circuit import CircuitBreaker
 from .config import RuntimeConfig
 from .contracts import CompletionRequest, CompletionResult, ProviderEndpoint
 from .dedupe import RequestDeduper
+from .response_cache import CachePolicy, SafeResponseCache
 from .errors import ProviderUnavailable, SchemaViolation
 from .health import ProviderHealth
 from .key_pool import SafeKeyPool
@@ -33,6 +34,22 @@ class HardenedGateway:
         self.router = CapabilityRouter(self.health)
         self.budget = BudgetLedger(self.config.default_budget_usd)
         self.cache = TenantCache()
+        # TASK-INF-006: completions are cached through the context-safe
+        # response cache (per-class TTLs, context fingerprints, template
+        # matching, generation invalidation). TenantCache remains for
+        # generic tenant payloads; it no longer serves completions.
+        self.response_cache = SafeResponseCache(
+            CachePolicy(
+                public_ttl_seconds=float(self.config.resp_cache_public_ttl_seconds),
+                contextual_ttl_seconds=float(self.config.resp_cache_contextual_ttl_seconds),
+                personalised_ttl_seconds=float(self.config.resp_cache_personalised_ttl_seconds),
+                template_ttl_seconds=float(self.config.resp_cache_template_ttl_seconds),
+                stochastic_ttl_cap_seconds=float(self.config.resp_cache_stochastic_ttl_cap_seconds),
+                max_entries=self.config.resp_cache_max_entries,
+                policy_version=self.config.resp_cache_policy_version,
+                allow_personalised_storage=self.config.resp_cache_allow_personalised_storage,
+            )
+        )
         self.dedupe = RequestDeduper()
         self.trace = TraceRecorder()
         self.transports: dict[str, ProviderTransport] = {}
@@ -52,12 +69,30 @@ class HardenedGateway:
         out = request.max_tokens or 512
         return (prompt / 1000) * endpoint.cost_per_1k_input + (out / 1000) * endpoint.cost_per_1k_output
 
-    def _cache_key(self, request: CompletionRequest) -> str | None:
+    def _cache_plan(self, request: CompletionRequest) -> dict | None:
+        """Build the safe-cache plan for a request, or None when the
+        request must not be cached at all (not flagged cacheable, or
+        streaming). The plan carries the context classification and
+        fingerprint that bind a cached answer to the context it was
+        produced under (TASK-INF-006)."""
         if not request.cacheable or request.stream:
             return None
-        return self.cache.key(
-            request.tenant_id,
-            {
+        prompt_text = " ".join(
+            m.content for m in request.messages if isinstance(m.content, str)
+        )
+        context_class = self.response_cache.classify(
+            declared=request.context_class,
+            principal_id=request.principal_id,
+            context=request.context,
+            prompt_text=prompt_text,
+        )
+        stochastic = request.temperature > 0
+        top_p = request.extra.get("top_p") if isinstance(request.extra, dict) else None
+        if isinstance(top_p, (int, float)) and not isinstance(top_p, bool) and top_p < 1:
+            stochastic = True
+        return {
+            "namespace": f"gateway:{request.tenant_id}",
+            "payload": {
                 "model": request.model,
                 "messages": [m.__dict__ for m in request.messages],
                 "temperature": request.temperature,
@@ -66,28 +101,41 @@ class HardenedGateway:
                 "capabilities": sorted(capability.value for capability in request.capabilities),
                 "extra": request.extra,
             },
-        )
+            "context_class": context_class,
+            "context_fingerprint": SafeResponseCache.context_fingerprint(
+                request.context, request.principal_id
+            ),
+            "stochastic": stochastic,
+        }
 
     async def complete(self, request: CompletionRequest) -> CompletionResult:
         self.trace.emit("admission", request.request_id, model=request.model, tenant=request.tenant_id)
         if request.stream:
             raise ValueError("Use stream() for streaming requests")
 
-        cache_key = self._cache_key(request)
+        cache_plan = self._cache_plan(request)
         # Cache hits must remain available while providers are unhealthy and must not
         # reserve budget. Validate cached values just as strictly as fresh responses;
         # evict malformed entries and recompute rather than trusting stale payloads.
-        if cache_key:
-            hit = self.cache.get(cache_key)
-            if hit is not None:
+        if cache_plan:
+            lookup = self.response_cache.lookup(
+                namespace=cache_plan["namespace"],
+                payload=cache_plan["payload"],
+                context_class=cache_plan["context_class"],
+                context_fingerprint=cache_plan["context_fingerprint"],
+                template_id=request.template_id,
+                template_slots=request.template_slots,
+                stochastic=cache_plan["stochastic"],
+            )
+            if lookup.hit:
                 try:
-                    cached_fields = dict(hit)
+                    cached_fields = dict(lookup.value)
                     cached_fields["cached"] = True
                     cached_result = CompletionResult(**cached_fields)
                     if request.response_schema is not None:
                         validate_json(cached_result.text, dict(request.response_schema))
                 except (TypeError, ValueError, SchemaViolation):
-                    self.cache.delete(cache_key)
+                    self.response_cache.delete(lookup.key)
                 else:
                     self.trace.emit(
                         "cache_hit",
@@ -150,8 +198,19 @@ class HardenedGateway:
 
         result = await self.dedupe.run(dedupe_key, execute_and_account)
 
-        if cache_key:
-            self.cache.put(cache_key, result.__dict__, request.tenant_id, self.config.cache_ttl_seconds)
+        if cache_plan:
+            self.response_cache.store(
+                namespace=cache_plan["namespace"],
+                payload=cache_plan["payload"],
+                value=result.__dict__,
+                context_class=cache_plan["context_class"],
+                context_fingerprint=cache_plan["context_fingerprint"],
+                principal_id=request.principal_id,
+                original_latency_seconds=result.latency_seconds,
+                template_id=request.template_id,
+                template_slots=request.template_slots,
+                stochastic=cache_plan["stochastic"],
+            )
         return result
 
     async def _execute(self, request: CompletionRequest, ep: ProviderEndpoint) -> CompletionResult:
