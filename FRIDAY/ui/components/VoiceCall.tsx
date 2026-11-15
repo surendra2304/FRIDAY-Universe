@@ -1,89 +1,100 @@
 "use client";
 
-import { AlertTriangle, Mic, PhoneOff, Radio } from "lucide-react";
+import { Mic, MicOff, PhoneCall, PhoneOff, Radio } from "lucide-react";
 import { Room, RoomEvent, Track } from "livekit-client";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Arc, ArcState } from "./Arc";
-import { apiBase, formatClock, requestJson } from "@/lib/api";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
+import { apiBase, durationClock, fetchWorker, requestJson, type WorkerStatus } from "@/lib/wire";
 
-/* ============================================================
-   The voice line — a continuous LiveKit call with FRIDAY.
+/* ================================================================
+   The voice line for the Halo console (TASK-WEB-002).
 
-   One tap opens a fresh private room (a new room per call, so
-   no stale agent session can linger from the last one), the
-   microphone stays open for the whole conversation, and the
-   line puts itself to rest when it goes quiet — the free
-   LiveKit minutes are finite and are treated that way.
+   One continuous LiveKit conversation with FRIDAY. Every call
+   opens its own room — a room per call means no stale agent can
+   linger from the last conversation — and the microphone stays
+   open until the line closes. The line rests itself after three
+   quiet minutes and caps a single call at thirty, because the
+   free voice minutes are a budget, not an assumption.
 
-   The worker's own heartbeat (/api/voice/diagnostics) is read
-   before anything else: when the speech service cannot take
-   a call, the button says why instead of ringing into silence.
+   Before anything rings, the worker heartbeat is read: if the
+   speech service cannot take a call, the controls say so plainly
+   instead of opening a room nobody answers.
 
-   Connection behaviour is carried over unchanged from the
-   previous console — token fetch, per-call room, intentional-
-   end guard, bounded reconnect, session diagnostics report.
-   Everything the owner sees and reads here is new.
-   ============================================================ */
+   The connection discipline here (fresh room, intentional-end
+   guard, bounded reconnect, session diagnostics) is production
+   behaviour carried over deliberately; every word the owner
+   reads and every pixel of presentation is new.
+   ================================================================ */
 
 const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
 const HARD_CAP_MS = 30 * 60 * 1000;
 
+export type VoicePhase = "resting" | "opening" | "listening" | "thinking" | "speaking" | "down";
+
+export interface VoiceLinkControls {
+  start: () => void;
+  end: () => void;
+  toggleMute: () => void;
+}
+
 type LineStatus = "idle" | "connecting" | "connected" | "error";
 
-type WorkerStatus = {
-  state?: string;
-  provider?: string;
-  detail?: string;
-  updated_at?: string;
-};
-
-export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState) => void }) {
+export function VoiceCall({
+  onPhase,
+  linkRef,
+}: {
+  onPhase?: (phase: VoicePhase) => void;
+  linkRef?: MutableRefObject<VoiceLinkControls | null>;
+}) {
   const [status, setStatus] = useState<LineStatus>("idle");
-  const [message, setMessage] = useState("Tap the ring and just talk — no menus, no wake word.");
+  const [message, setMessage] = useState("Quiet for now. Start the line and speak whenever you're ready.");
   const [peerSpeaking, setPeerSpeaking] = useState(false);
   const [micSpeaking, setMicSpeaking] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [muted, setMuted] = useState(false);
   const [worker, setWorker] = useState<WorkerStatus | null>(null);
   const roomRef = useRef<Room | null>(null);
-  /* Both time refs are (re)stamped the moment a call connects; their
-     initial values are never read before that. */
+  /* Both stamps are set the moment a call connects; nothing reads
+     them before that. */
   const lastActivityRef = useRef<number>(0);
   const connectedAtRef = useRef<number>(0);
   const sessionIdRef = useRef<string>("");
   const sessionStartRef = useRef<number>(0);
-  /* Intentional-end guard: a call the owner ended on purpose must
-     never resurrect itself through the drop-reconnect path. */
+  /* Intentional-end guard: a line the owner closed on purpose must
+     never pull itself back through the drop-reconnect path. */
   const intentionalEndRef = useRef(false);
+  const lastVoiceRef = useRef<number>(0);
 
-  const arcState: ArcState =
+  const phase: VoicePhase =
     status === "connected"
       ? peerSpeaking
         ? "speaking"
         : micSpeaking
           ? "listening"
-          : "listening"
+          : Date.now() - lastVoiceRef.current < 6000
+            ? "thinking"
+            : "listening"
       : status === "connecting"
-        ? "connecting"
+        ? "opening"
         : status === "error"
-          ? "thinking"
-          : "idle";
+          ? "down"
+          : "resting";
 
   useEffect(() => {
-    onStateChange?.(arcState);
-  }, [arcState, onStateChange]);
+    onPhase?.(phase);
+  }, [phase, onPhase]);
 
-  /* Worker heartbeat: fetched once on mount. Only real failures
-     (no-provider / error) are surfaced — the resting "registered"
-     heartbeat is the service's normal state, not a warning. */
+  /* Worker heartbeat, read once on mount. Only a real failure is
+     surfaced; the resting heartbeat is the service breathing, not
+     a warning. */
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await requestJson<{ worker?: WorkerStatus }>("/api/voice/diagnostics");
-        if (!cancelled && res?.worker) setWorker(res.worker);
+        const w = await fetchWorker();
+        if (!cancelled && w) setWorker(w);
       } catch {
-        /* endpoint absent → the line behaves as it always has */
+        /* no heartbeat endpoint → the line behaves as it always has */
       }
     })();
     return () => {
@@ -98,7 +109,7 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
   }, []);
 
   const endCall = useCallback(
-    (note: string) => {
+    (note: string = "Line closed. The room is yours again.") => {
       intentionalEndRef.current = true;
       roomRef.current?.disconnect();
       roomRef.current = null;
@@ -106,6 +117,7 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
       setPeerSpeaking(false);
       setMicSpeaking(false);
       setAudioBlocked(false);
+      setMuted(false);
       setSeconds(0);
       setStatus("idle");
       setMessage(note);
@@ -113,16 +125,25 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
     [clearAudioElements],
   );
 
-  /* Call clock + the two self-rest rules (idle, hard cap). */
+  const toggleMute = useCallback(() => {
+    const room = roomRef.current;
+    if (!room || status !== "connected") return;
+    const next = !muted;
+    setMuted(next);
+    void room.localParticipant.setMicrophoneEnabled(!next).catch(() => {
+      setMuted(!next);
+    });
+  }, [muted, status]);
+
+  /* Call clock and the two self-rest rules. */
   useEffect(() => {
     if (status !== "connected") return;
     const timer = window.setInterval(() => {
       setSeconds(Math.floor((Date.now() - connectedAtRef.current) / 1000));
-      const idleFor = Date.now() - lastActivityRef.current;
-      if (idleFor > IDLE_TIMEOUT_MS) {
-        endCall("Closed after three quiet minutes — your free voice minutes matter more than an open line. Tap to talk again.");
+      if (Date.now() - lastActivityRef.current > IDLE_TIMEOUT_MS) {
+        endCall("Three quiet minutes, so I closed the line — your voice minutes are worth more than an open room.");
       } else if (Date.now() - connectedAtRef.current > HARD_CAP_MS) {
-        endCall("That's the 30-minute mark for one call. Tap whenever you're ready to continue.");
+        endCall("Thirty minutes on one line is the cap. Start again whenever you like.");
       }
     }, 1000);
     return () => window.clearInterval(timer);
@@ -137,19 +158,39 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
     };
   }, []);
 
+  /* Expose the line's controls so the halo itself can start and
+     end the call — the orb is the room, not a picture of it. The
+     effect re-runs on every status/message change, so the ref
+     always holds the current render's closures. */
+  useEffect(() => {
+    if (!linkRef) return;
+    linkRef.current = {
+      start: () => {
+        setMuted(false);
+        void startCall();
+      },
+      end: () => endCall(),
+      toggleMute,
+    };
+    return () => {
+      if (linkRef) linkRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkRef, endCall, toggleMute, status, message]);
+
   async function startCall() {
     if (status === "connecting" || status === "connected") return;
     setStatus("connecting");
-    setMessage("Opening a private room for us…");
+    setMessage("Reaching FRIDAY…");
     setPeerSpeaking(false);
     setMicSpeaking(false);
     setAudioBlocked(false);
     intentionalEndRef.current = false;
 
-    /* A fresh room per call: the shared fixed room once accumulated
-       one agent per call, which is exactly the dead-air failure this
-       design replaced. A new room gives every call exactly one agent
-       and a clean lifecycle — the room empties when the call ends. */
+    /* A fresh room for every call. The old shared room collected
+       one agent per call and left them talking to nobody; a new
+       room gives each conversation exactly one agent and a clean
+       lifecycle — when the call ends, the room empties. */
     const suffix =
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID().slice(0, 8)
@@ -163,7 +204,7 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
     try {
       void room.startAudio().catch(() => {});
     } catch {
-      /* optional playback warm-up */
+      /* playback warm-up is best-effort */
     }
 
     try {
@@ -199,12 +240,13 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
         lastActivityRef.current = Date.now();
         const peer = speakers.some((s) => s.identity && !s.identity.startsWith("owner-"));
         const self = speakers.some((s) => s.identity?.startsWith("owner-"));
+        if (peer || self) lastVoiceRef.current = Date.now();
         setPeerSpeaking(peer);
         setMicSpeaking(self);
-        /* Once FRIDAY actually speaks, the line stops saying "waking
-           up" — the owner can see the call came alive. */
+        /* The first time FRIDAY actually speaks, the line stops
+           announcing itself and simply becomes a conversation. */
         if (peer) {
-          setMessage((current) => (current.startsWith("Line's open") ? "We're live. Talk over me whenever you need to." : current));
+          setMessage((current) => (current.startsWith("I'm listening") ? "We're talking — interrupt me any time." : current));
         }
       });
 
@@ -244,7 +286,7 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
             }),
           });
         } catch {
-          /* diagnostics are best-effort — never block the call flow */
+          /* diagnostics never block the conversation */
         }
       };
 
@@ -256,20 +298,20 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
         setMicSpeaking(false);
         setSeconds(0);
         setStatus("idle");
-        setMessage("Line closed.");
+        setMessage("Line closed. The room is yours again.");
       };
 
       room.on(RoomEvent.Disconnected, async () => {
-        /* A failed setup owns its cleanup and its error state — it was
-           never a live session, so no reconnect and no overwrite. */
+        /* A failed opening owns its own cleanup and its error —
+           it was never a live session, so no reconnect, no overwrite. */
         if (startupFailed) return;
         if (!startupComplete) {
           startupDisconnected = true;
           return;
         }
         const duration = (Date.now() - sessionStartRef.current) / 1000;
-        /* Intentional end: report the session and settle. Never
-           resurrect a line the owner closed on purpose. */
+        /* Intentional end: report the session and settle. A line
+           the owner closed stays closed. */
         if (intentionalEndRef.current) {
           await settleClosed(duration);
           return;
@@ -277,9 +319,9 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
         if (reconnectAttempts < MAX_RECONNECT && Date.now() - lastActivityRef.current < IDLE_TIMEOUT_MS) {
           reconnectAttempts += 1;
           setStatus("connecting");
-          setMessage(`The line dropped — bringing it back (${reconnectAttempts}/${MAX_RECONNECT})…`);
+          setMessage(`The line stumbled — pulling it back (${reconnectAttempts}/${MAX_RECONNECT})…`);
           try {
-            await new Promise((r) => setTimeout(r, 1000 * reconnectAttempts));
+            await new Promise((r) => window.setTimeout(r, 1000 * reconnectAttempts));
             if (!roomRef.current) {
               const fresh = new Room({ adaptiveStream: true, dynacast: true });
               await fresh.connect(body.server_url, body.token);
@@ -288,7 +330,7 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
               connectedAtRef.current = Date.now();
               lastActivityRef.current = Date.now();
               setStatus("connected");
-              setMessage("Back with you — go ahead.");
+              setMessage("Back. Where were we?");
               return;
             }
           } catch {
@@ -300,7 +342,7 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
 
       await room.connect(body.server_url, body.token);
       await room.localParticipant.setMicrophoneEnabled(true);
-      if (startupDisconnected) throw new Error("The line dropped while it was opening. Tap to try again.");
+      if (startupDisconnected) throw new Error("The line dropped while it was opening. Try again.");
 
       startupComplete = true;
       roomRef.current = room;
@@ -310,90 +352,96 @@ export function VoiceCall({ onStateChange }: { onStateChange?: (state: ArcState)
       sessionStartRef.current = Date.now();
       setSeconds(0);
       setStatus("connected");
-      setMessage("Line's open. Give me a moment — I'll say hello first.");
+      setMessage("I'm listening — give me a second to say hello first.");
     } catch (error) {
       const reason = error instanceof Error ? error.message : "The voice line couldn't open.";
       startupFailed = true;
       intentionalEndRef.current = true;
-      /* roomRef is only assigned after the mic publishes; clean the
-         locally allocated room even when setup failed before that. */
+      /* roomRef is only assigned once the mic publishes; the
+         locally allocated room is cleaned up either way, and a
+         cleanup failure never masks the original error. */
       try {
         await room.disconnect();
       } catch {
-        /* retain the original error */
+        /* keep the original error */
       }
       roomRef.current = null;
       clearAudioElements();
       setStatus("error");
       setMessage(
         reason.includes("permission") || reason.toLowerCase().includes("denied")
-          ? "Mic permission denied — the browser blocked it. Allow mic access for this site, then tap again."
+          ? "Mic permission denied — your browser blocked the microphone. Allow it for this site, then start again."
           : reason,
       );
     }
   }
 
   return (
-    <div className="voice-line">
-      <button
-        type="button"
-        className="arc-button"
-        onClick={() => {
-          /* The ring starts a call; it never ends one — an accidental
-             tap mid-conversation must not hang up. The End call
-             button below owns ending. */
-          if (status === "idle" || status === "error") void startCall();
-        }}
-        disabled={status === "connecting" || (workerFailed && status === "idle")}
-        aria-label={status === "connected" ? "Voice call in progress" : "Start a voice call with FRIDAY"}
-        title={workerFailed && status === "idle" ? `Voice service unavailable: ${worker?.detail || worker?.state}` : undefined}
-      >
-        <Arc state={arcState} />
-      </button>
-
-      <div className="line-readout" aria-live="polite">
-        <strong className="line-message">{message}</strong>
+    <div className="voice-cluster">
+      <p className="voice-state" aria-live="polite">
+        <span className="voice-line-text">{message}</span>
         {status === "connected" && (
-          <span className="line-timer">
-            <span className="rec-dot" aria-hidden="true" />
-            {formatClock(seconds)}
+          <span className="voice-clock">
+            <span className="voice-dot" aria-hidden="true" />
+            {durationClock(seconds)}
           </span>
         )}
-      </div>
+      </p>
 
       {workerFailed && status === "idle" && (
-        <p className="line-warning" role="alert">
-          <AlertTriangle size={14} aria-hidden="true" />
-          <span>The voice service can&apos;t take a call right now: {worker?.detail || worker?.state}</span>
+        <p className="voice-warning" role="alert">
+          The voice service isn&apos;t answering right now: {worker?.detail || worker?.state}
         </p>
       )}
 
-      <button
-        type="button"
-        className={`call-btn ${status === "connected" ? "is-live" : ""}`}
-        onClick={() => (status === "connected" ? endCall("Line closed.") : void startCall())}
-        disabled={status === "connecting" || (workerFailed && status === "idle")}
-        aria-label={status === "connected" ? "End voice call" : "Start voice call"}
-      >
-        {status === "connecting" ? (
-          <>
-            <Radio size={17} className="spin" /> Connecting
-          </>
-        ) : status === "connected" ? (
-          <>
-            <PhoneOff size={16} /> End call
-          </>
-        ) : (
-          <>
-            <Mic size={17} /> Talk to FRIDAY
-          </>
+      <div className="voice-actions">
+        <button
+          type="button"
+          className={`voice-main ${status === "connected" ? "is-live" : ""}`}
+          onClick={() => {
+            if (status === "connected") {
+              endCall();
+            } else {
+              setMuted(false);
+              void startCall();
+            }
+          }}
+          disabled={status === "connecting" || (workerFailed && status === "idle")}
+          aria-label={status === "connected" ? "End the voice call" : "Start a voice call with FRIDAY"}
+        >
+          {status === "connecting" ? (
+            <>
+              <Radio size={16} className="spin" aria-hidden="true" /> Connecting
+            </>
+          ) : status === "connected" ? (
+            <>
+              <PhoneOff size={16} aria-hidden="true" /> End the line
+            </>
+          ) : (
+            <>
+              <PhoneCall size={16} aria-hidden="true" /> Start the line
+            </>
+          )}
+        </button>
+
+        {status === "connected" && (
+          <button
+            type="button"
+            className={`voice-mute ${muted ? "is-muted" : ""}`}
+            onClick={toggleMute}
+            aria-label={muted ? "Unmute the microphone" : "Mute the microphone"}
+            aria-pressed={muted}
+          >
+            {muted ? <MicOff size={16} aria-hidden="true" /> : <Mic size={16} aria-hidden="true" />}
+            {muted ? "Muted" : "Mute"}
+          </button>
         )}
-      </button>
+      </div>
 
       {audioBlocked && (
-        <p className="line-note warn">Your browser held back the sound — tap anywhere once, then press the button again.</p>
+        <p className="voice-note">Your browser is holding the sound back — tap once anywhere, then start again.</p>
       )}
-      <p className="line-note">English or Telugu · I hear you through the whole call, not in turns</p>
+      <p className="voice-note">The mic stays open for the whole conversation. English and Telugu both work.</p>
     </div>
   );
 }

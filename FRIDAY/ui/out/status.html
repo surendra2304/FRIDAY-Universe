@@ -3,210 +3,107 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FRIDAY — Who's answering</title>
-  <meta name="description" content="A plain, live answer to one question: which of FRIDAY's ten agents are reachable right now. Refreshed every minute; a down agent is shown down, never painted green." />
+  <title>FRIDAY — the roll call</title>
+  <meta name="description" content="Ten agents, one question: who is answering right now? Read live every minute — an agent that is down is shown down." />
   <style>
     :root {
-      --bg: #010204;
-      --panel: rgba(10, 24, 34, 0.55);
-      --line: rgba(94, 224, 255, 0.16);
-      --line-soft: rgba(94, 224, 255, 0.08);
-      --cyan: #57e6ff;
-      --ice: #eafbff;
-      --text: #d3e9f0;
-      --muted: #7f9aa6;
-      --faint: #4d6470;
-      --good: #3dffa8;
-      --warn: #ffc44d;
-      --bad: #ff5d6c;
-      --mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      --display: "Rajdhani", ui-sans-serif, system-ui, sans-serif;
+      --void: #030409;
+      --panel: rgba(13, 18, 36, 0.72);
+      --hair: rgba(148, 163, 255, 0.14);
+      --ink: #e9edfb;
+      --dim: #a3adc9;
+      --faint: #626c8f;
+      --good: #2fe6bd;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
     }
     * { box-sizing: border-box; }
     html, body {
       margin: 0; padding: 0; min-height: 100%;
-      background: var(--bg); color: var(--text);
+      background:
+        radial-gradient(60% 40% at 50% 0%, rgba(56, 189, 248, 0.08), transparent 70%),
+        var(--void);
+      color: var(--ink);
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    body {
-      background:
-        radial-gradient(1000px 480px at 50% -160px, rgba(27, 159, 216, 0.13), transparent 62%),
-        radial-gradient(800px 420px at 88% 110%, rgba(87, 230, 255, 0.05), transparent 60%),
-        var(--bg);
-      background-attachment: fixed;
-      padding: 40px 16px 64px;
-    }
-    .container { max-width: 720px; margin: 0 auto; }
-
-    /* ---------- Header ---------- */
-    header { text-align: center; margin-bottom: 28px; }
-    .eyebrow {
-      display: inline-block;
-      font-family: var(--mono);
-      font-size: 10.5px; letter-spacing: 0.26em; text-transform: uppercase;
-      color: var(--cyan);
-      margin-bottom: 14px;
+    .wrap { max-width: 680px; margin: 0 auto; padding: 44px 20px 60px; }
+    .kicker {
+      font-family: var(--display); font-size: 11px; letter-spacing: 0.3em;
+      text-transform: uppercase; color: #38bdf8; margin: 0 0 8px;
     }
     h1 {
-      font-family: var(--display); font-weight: 600;
-      font-size: clamp(24px, 6vw, 34px); line-height: 1.15;
-      margin: 0 0 10px; letter-spacing: 0.14em; color: var(--ice);
-      text-transform: uppercase;
+      font-family: var(--display); font-size: 34px; font-weight: 700;
+      letter-spacing: 0.04em; margin: 0 0 10px;
     }
-    .subtitle { color: var(--muted); font-size: 14px; line-height: 1.55; }
-
-    /* ---------- Overall banner ---------- */
-    .overall {
-      display: inline-flex; align-items: center; gap: 11px;
-      padding: 11px 22px 11px 18px; border-radius: 999px;
-      font-family: var(--mono);
-      font-size: 14px; letter-spacing: 0.04em; margin: 22px 0 0;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      color: var(--muted);
+    .overall { display: flex; align-items: center; gap: 10px; font-size: 16px; color: var(--dim); }
+    .overall .beacon {
+      width: 11px; height: 11px; border-radius: 50%; background: var(--faint); flex: none;
     }
-    .overall.operational { color: var(--good); border-color: rgba(61, 255, 168, 0.45); }
-    .overall.degraded { color: var(--warn); border-color: rgba(255, 196, 77, 0.45); }
-    .overall.major-outage { color: #ff9d97; border-color: rgba(255, 93, 108, 0.5); }
-    .dot-wrap { position: relative; width: 10px; height: 10px; flex: 0 0 10px; display: inline-flex; }
-    .dot {
-      position: relative; z-index: 1;
-      width: 10px; height: 10px; border-radius: 50%;
-      background: currentColor; box-shadow: 0 0 12px currentColor, 0 0 3px currentColor;
-    }
-    .dot-wrap::after {
-      content: ""; position: absolute; inset: 0; border-radius: 50%;
-      background: currentColor; opacity: 0.55;
-      animation: pulse-ring 2.2s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
-    }
-    @keyframes pulse-ring {
-      0% { transform: scale(1); opacity: 0.55; }
-      70%, 100% { transform: scale(2.6); opacity: 0; }
-    }
-    .refresh-note {
-      color: var(--faint); font-family: var(--mono); font-size: 11px; margin-top: 13px;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* ---------- Error ---------- */
+    .overall.operational .beacon { background: var(--good); box-shadow: 0 0 14px rgba(47, 230, 189, 0.8); }
+    .overall.degraded .beacon { background: var(--warn); box-shadow: 0 0 14px rgba(251, 191, 36, 0.8); }
+    .overall.major_outage .beacon, .overall.outage .beacon { background: var(--bad); box-shadow: 0 0 14px rgba(251, 113, 133, 0.8); }
+    .checked { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-top: 8px; }
     .error-banner {
-      padding: 13px 16px; border-radius: 13px;
-      background: rgba(255, 93, 108, 0.08);
-      border: 1px solid rgba(255, 93, 108, 0.4); color: #ff9d97; font-size: 13px; line-height: 1.5;
-      margin: 18px 0 0; display: none; text-align: left;
+      display: none; margin-top: 16px; padding: 12px 16px; border-radius: 14px;
+      border: 1px solid rgba(251, 191, 36, 0.4); color: #fde9c0; font-size: 14px;
     }
-
-    /* ---------- Agent rows ---------- */
-    .fleet-label {
-      font-family: var(--mono);
-      font-size: 10.5px; letter-spacing: 0.24em; text-transform: uppercase;
-      color: var(--faint); margin: 4px 2px 12px; text-align: left;
-    }
-    .agents { display: grid; gap: 9px; }
+    .agents { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; }
     .agent {
-      display: flex; align-items: center; justify-content: space-between; gap: 14px;
-      padding: 14px 16px; border-radius: 14px;
-      background: var(--panel);
-      border: 1px solid var(--line-soft);
-      border-left: 3px solid var(--line);
-      animation: rise 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--panel); border: 1px solid var(--hair); border-radius: 18px;
+      padding: 14px 18px; animation: rise 0.5s ease both;
     }
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .agent-left { display: flex; align-items: center; gap: 13px; min-width: 0; }
-    .agent-icon {
-      flex: 0 0 42px; width: 42px; height: 42px;
-      display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 50%;
-      font-family: var(--mono);
-      font-size: 12.5px; letter-spacing: 0.06em;
-      color: var(--cyan);
-      background: radial-gradient(circle at 36% 30%, rgba(87, 230, 255, 0.16), rgba(87, 230, 255, 0.03) 72%);
-      border: 1px solid var(--line);
+    .agent-mark {
+      width: 38px; height: 38px; border-radius: 50%; flex: none;
+      display: grid; place-items: center;
+      font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: 0.05em;
+      border: 1px solid var(--hair); color: var(--dim);
+      background: radial-gradient(70% 70% at 35% 30%, rgba(56, 189, 248, 0.25), rgba(99, 102, 241, 0.12));
     }
-    .agent-name { font-weight: 650; font-size: 14.5px; letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .agent-role {
-      color: var(--faint); font-family: var(--mono); font-size: 10px; margin-top: 3px;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .agent-right { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-    .agent-latency {
-      color: var(--muted); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums;
-      letter-spacing: 0.02em; white-space: nowrap;
-    }
-
-    /* ---------- Status pills (class names / semantics preserved) ---------- */
+    .agent-name { font-family: var(--display); font-size: 16px; font-weight: 600; }
+    .agent-role { font-size: 12.5px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .agent-right { display: flex; align-items: center; gap: 10px; flex: none; }
+    .agent-latency { font-family: var(--mono); font-size: 12px; color: var(--dim); }
     .status-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 11px; border-radius: 999px;
-      font-family: var(--mono);
-      font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
-      border: 1px solid var(--line); color: var(--muted);
+      font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+      border-radius: 999px; padding: 4px 9px; border: 1px solid var(--hair); color: var(--dim);
     }
-    .status-pill::before {
-      content: ""; width: 6px; height: 6px; border-radius: 50%;
-      background: currentColor; box-shadow: 0 0 8px currentColor; flex: 0 0 6px;
-    }
-    .status-pill.online, .status-pill.reachable { color: var(--good); background: rgba(61, 255, 168, 0.09); border-color: rgba(61, 255, 168, 0.4); }
-    .status-pill.degraded { color: var(--warn); background: rgba(255, 196, 77, 0.09); border-color: rgba(255, 196, 77, 0.4); }
-    .status-pill.unreachable, .status-pill.offline, .status-pill.unknown { color: #ff9d97; background: rgba(255, 93, 108, 0.09); border-color: rgba(255, 93, 108, 0.42); }
-
-    /* ---------- Footer ---------- */
-    footer { text-align: center; margin-top: 34px; color: var(--faint); font-size: 12px; line-height: 1.65; }
-    footer p { margin: 4px 0; }
-    footer .build { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); }
-    a { color: var(--cyan); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* ---------- Responsive ---------- */
-    @media (max-width: 400px) {
-      body { padding: 28px 12px 52px; }
-      .agent { flex-wrap: wrap; padding: 13px 14px; }
-      .agent-left { flex: 1 1 100%; }
-      .agent-name, .agent-role { white-space: normal; }
-      .agent-right { flex: 1 1 100%; justify-content: space-between; padding-left: 55px; }
-      .overall { font-size: 13px; padding: 10px 18px 10px 15px; }
-    }
-
-    /* ---------- Reduced motion ---------- */
+    .status-pill.online, .status-pill.healthy, .status-pill.reachable { color: var(--good); border-color: rgba(47, 230, 189, 0.4); }
+    .status-pill.degraded { color: var(--warn); border-color: rgba(251, 191, 36, 0.4); }
+    .status-pill.offline, .status-pill.unreachable, .status-pill.error { color: var(--bad); border-color: rgba(251, 113, 133, 0.4); }
+    footer { margin-top: 34px; font-size: 13px; line-height: 1.65; color: var(--faint); }
+    footer a { color: #38bdf8; }
+    .build { font-family: var(--mono); font-size: 11.5px; }
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-      .dot-wrap::after { animation: none; opacity: 0; }
-      .agent { animation: none; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <header>
-      <span class="eyebrow">FRIDAY · Live readings</span>
-      <h1>Who's answering</h1>
-      <div class="subtitle">One question, answered plainly every minute: which of the ten agents are reachable right now, and how fast they answer.</div>
-      <div id="overall" class="overall operational">
-        <span class="dot-wrap"><span class="dot"></span></span>
-        <span id="overall-text">Taking the reading…</span>
+      <p class="kicker">FRIDAY Universe</p>
+      <h1>The roll call</h1>
+      <div class="overall" id="overall">
+        <span class="beacon"></span>
+        <span id="overall-text">Calling the roll…</span>
       </div>
-      <div class="refresh-note" id="checked">—</div>
+      <div class="checked" id="checked">—</div>
       <div id="error" class="error-banner"></div>
     </header>
     <main>
-      <div class="fleet-label">The ten</div>
       <div id="agents" class="agents">
-        <div class="agent"><div class="agent-left"><span class="agent-name">Asking the crew…</span></div></div>
+        <div class="agent"><div class="agent-left"><span class="agent-name">Asking each of the ten…</span></div></div>
       </div>
     </main>
     <footer>
-      <p>Every line here is a real probe result from a moment ago — a down agent is shown down, never painted green.</p>
-      <p>"degraded" means some of the ten didn't answer; "major outage" means none did.</p>
-      <p class="build">FRIDAY · Arc</p>
+      <p>Every row is a probe result from a moment ago, refreshed each minute. Nothing here is painted
+        greener than it is: "degraded" means some of the ten stayed silent, and a full outage says so.</p>
+      <p class="build">FRIDAY · Halo</p>
       <p>The project: <a href="https://github.com/surendra2304/FRIDAY-Universe">FRIDAY Universe on GitHub</a></p>
     </footer>
   </div>
@@ -224,7 +121,7 @@
         errEl.style.display = "none";
         render(data);
       } catch (e) {
-        errEl.textContent = "The reading didn't come through: " + e.message + " — trying again in a minute.";
+        errEl.textContent = "That reading didn't come through: " + e.message + " — the roll is called again in a minute.";
         errEl.style.display = "block";
       }
     }
@@ -233,13 +130,13 @@
       const overallText = document.getElementById("overall-text");
       overall.className = "overall " + data.overall;
       overallText.textContent = data.overall === "operational"
-        ? "Everyone's answering"
+        ? "All ten are answering"
         : data.overall === "degraded"
-          ? "Some are down — " + data.healthy_agents + "/" + data.total_agents + " answering"
-          : "Nobody's answering";
+          ? "Some stayed silent — " + data.healthy_agents + " of " + data.total_agents + " answering"
+          : "Silence from the whole crew";
       const checked = document.getElementById("checked");
       const when = data.checked_at ? new Date(data.checked_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST" : "—";
-      checked.textContent = "Read at: " + when + " · refreshes every minute";
+      checked.textContent = "Read at " + when + " · called again every minute";
       const agentsEl = document.getElementById("agents");
       agentsEl.innerHTML = "";
       data.agents.forEach(function (a, idx) {
@@ -248,19 +145,18 @@
         const div = document.createElement("div");
         div.className = "agent";
         div.style.animationDelay = (idx * 55) + "ms";
-        div.innerHTML = `
-          <div class="agent-left">
-            <span class="agent-icon">${initials(a.id)}</span>
-            <div>
-              <div class="agent-name">${a.name || a.id}</div>
-              <div class="agent-role">${a.role || ""}</div>
-            </div>
-          </div>
-          <div class="agent-right">
-            ${latency ? `<span class="agent-latency">${latency}</span>` : ""}
-            <span class="status-pill ${status}">${status}</span>
-          </div>
-        `;
+        div.innerHTML =
+          '<div class="agent-left">' +
+            '<span class="agent-mark">' + initials(a.id) + "</span>" +
+            "<div>" +
+              '<div class="agent-name">' + (a.name || a.id) + "</div>" +
+              '<div class="agent-role">' + (a.role || "") + "</div>" +
+            "</div>" +
+          "</div>" +
+          '<div class="agent-right">' +
+            (latency ? '<span class="agent-latency">' + latency + "</span>" : "") +
+            '<span class="status-pill ' + status + '">' + status + "</span>" +
+          "</div>";
         agentsEl.appendChild(div);
       });
     }
