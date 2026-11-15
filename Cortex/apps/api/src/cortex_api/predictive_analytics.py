@@ -21,8 +21,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from cortex_api.config import get_db_session
 from cortex_api.auth import Role, require_role
+from cortex_api.provenance import (
+    CALLER_SUPPLIED,
+    DERIVED,
+    ROUTE_DEFAULT,
+    build_provenance,
+    input_record,
+)
 
 router = APIRouter()
+
+
+def _history_input(name: str, history: list[float]) -> dict[str, Any]:
+    """Provenance record for a caller-supplied series (capped at 50 points)."""
+    value: Any = list(history) if len(history) <= 50 else f"{len(history)} points (truncated in provenance)"
+    return input_record(name, value, CALLER_SUPPLIED)
 
 
 @dataclass
@@ -44,6 +57,8 @@ class ForecastResult:
     accuracy: float
     trend: str  # upward, downward, stable
     seasonality: bool
+    # TASK-COR-002: provenance block — see cortex_api/provenance.py.
+    provenance: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -56,6 +71,7 @@ class TrendAnalysis:
     projected_value: float
     projected_time: float
     confidence: float
+    provenance: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -68,6 +84,7 @@ class DemandForecast:
     confidence: float
     seasonal_factor: float
     recommendation: str
+    provenance: dict = field(default_factory=dict)
 
 
 class PredictiveAnalytics:
@@ -96,6 +113,16 @@ class PredictiveAnalytics:
                 accuracy=0.0,
                 trend="stable",
                 seasonality=False,
+                provenance=build_provenance(
+                    inputs=[_history_input("history", history)],
+                    confidence=None,
+                    confidence_basis=(
+                        "Fewer than 3 history points: no fit is attempted, "
+                        "accuracy is 0.0 and the forecast repeats the last "
+                        "observed value (or is empty)."
+                    ),
+                    data_status="no_data" if not history else "estimated_from_inputs",
+                ),
             )
 
         # Calculate trend
@@ -145,6 +172,25 @@ class PredictiveAnalytics:
             accuracy=accuracy,
             trend=trend,
             seasonality=seasonality,
+            provenance=build_provenance(
+                inputs=[
+                    _history_input("history", history),
+                    input_record("steps", steps, CALLER_SUPPLIED),
+                    input_record("ols_slope", slope, DERIVED),
+                    input_record("residual_std", std, DERIVED),
+                ],
+                confidence=None,
+                confidence_basis=(
+                    "Model: ordinary least squares linear trend on the point "
+                    "index. 'accuracy' = 1 - (in-sample residual std / mean of "
+                    "history): it measures FIT to the supplied history, NOT "
+                    "out-of-sample forecast accuracy. Intervals are forecast "
+                    "+/- 1.96 x residual std. 'seasonality' is a level-shift "
+                    "heuristic (first-half vs second-half mean differs by "
+                    ">20%), NOT a periodic-pattern test."
+                ),
+                data_status="estimated_from_inputs",
+            ),
         )
 
         self._forecasts[metric_name] = result
@@ -185,6 +231,12 @@ class PredictiveAnalytics:
                 projected_value=history[-1] if history else 0.0,
                 projected_time=project_days,
                 confidence=0.0,
+                provenance=build_provenance(
+                    inputs=[_history_input("history", history)],
+                    confidence=0.0,
+                    confidence_basis="Fewer than 2 history points: no trend is computed.",
+                    data_status="no_data",
+                ),
             )
 
         # Calculate recent change
@@ -214,6 +266,20 @@ class PredictiveAnalytics:
             projected_value=projected,
             projected_time=project_days,
             confidence=confidence,
+            provenance=build_provenance(
+                inputs=[
+                    _history_input("history", history),
+                    input_record("last_step_pct_change", pct_change, DERIVED),
+                    input_record("project_days", project_days, CALLER_SUPPLIED),
+                ],
+                confidence=confidence,
+                confidence_basis=(
+                    "confidence = min(0.9, 0.3 + 5 x |last-step % change|). "
+                    "It depends ONLY on the final step of the supplied "
+                    "history; it is a heuristic, not a calibrated probability."
+                ),
+                data_status="estimated_from_inputs",
+            ),
         )
 
     # ── Seasonality Detection ────────────────────────────────────────────────
@@ -224,8 +290,25 @@ class PredictiveAnalytics:
         period: int = 7,
     ) -> dict[str, Any]:
         """Detect seasonal patterns."""
+        # TASK-COR-002: this detector compares WHOLE-period averages, so it
+        # can only see level differences between consecutive periods — it
+        # structurally cannot detect a pattern that repeats WITHIN a period
+        # (production probe 2026-11-15: a perfect [5, 9] x 4 series at
+        # period 2 returned has_seasonality=false, CV 0.0). The statistic
+        # is unchanged; the provenance states exactly what was computed so
+        # the output is no longer read as a general seasonality verdict.
+        _basis = (
+            "Compares the means of consecutive whole periods: "
+            "has_seasonality = (std of period means / overall mean) > 0.15. "
+            "Detects level shifts BETWEEN periods only; a pattern repeating "
+            "within a period is invisible to this statistic."
+        )
         if len(history) < period * 2:
-            return {"has_seasonality": False, "period": period}
+            return {"has_seasonality": False, "period": period,
+                    "provenance": build_provenance(
+                        inputs=[_history_input("history", history)],
+                        confidence=None, confidence_basis=_basis,
+                        data_status="no_data")}
 
         # Split into periods
         periods = []
@@ -233,7 +316,11 @@ class PredictiveAnalytics:
             periods.append(history[i:i + period])
 
         if len(periods) < 2:
-            return {"has_seasonality": False, "period": period}
+            return {"has_seasonality": False, "period": period,
+                    "provenance": build_provenance(
+                        inputs=[_history_input("history", history)],
+                        confidence=None, confidence_basis=_basis,
+                        data_status="no_data")}
 
         # Compare period averages
         period_avgs = [sum(p) / len(p) for p in periods]
@@ -252,6 +339,16 @@ class PredictiveAnalytics:
             "coefficient_of_variation": cv,
             "peak_period": period_avgs.index(max(period_avgs)),
             "trough_period": period_avgs.index(min(period_avgs)),
+            "provenance": build_provenance(
+                inputs=[
+                    _history_input("history", history),
+                    input_record("period", period, CALLER_SUPPLIED),
+                    input_record("periods_compared", len(periods), DERIVED),
+                ],
+                confidence=None,
+                confidence_basis=_basis,
+                data_status="estimated_from_inputs",
+            ),
         }
 
     # ── Demand Forecasting ──────────────────────────────────────────────────
@@ -261,6 +358,7 @@ class PredictiveAnalytics:
         product_id: str,
         sales_history: list[float],
         seasonal_factor: float = 1.0,
+        supplied_fields: set[str] | None = None,
     ) -> DemandForecast:
         """Forecast product demand."""
         if not sales_history:
@@ -272,6 +370,12 @@ class PredictiveAnalytics:
                 confidence=0.0,
                 seasonal_factor=seasonal_factor,
                 recommendation="No historical data",
+                provenance=build_provenance(
+                    inputs=[],
+                    confidence=0.0,
+                    confidence_basis="No sales history supplied: no forecast is computed.",
+                    data_status="no_data",
+                ),
             )
 
         current_demand = sales_history[-1]
@@ -304,6 +408,29 @@ class PredictiveAnalytics:
             confidence=confidence,
             seasonal_factor=seasonal_factor,
             recommendation=recommendation,
+            provenance=build_provenance(
+                inputs=[
+                    _history_input("sales_history", sales_history),
+                    input_record(
+                        "seasonal_factor", seasonal_factor,
+                        CALLER_SUPPLIED
+                        if supplied_fields is None or "seasonal_factor" in supplied_fields
+                        else ROUTE_DEFAULT,
+                    ),
+                    input_record("growth_rate_endpoints_only",
+                                 [sales_history[0], sales_history[-1]], DERIVED),
+                ],
+                confidence=confidence,
+                confidence_basis=(
+                    "confidence = min(0.85, 0.4 + 2 x |growth_rate|), where "
+                    "growth_rate = (last - first) / first of the supplied "
+                    "sales history — ONLY the first and last points are used; "
+                    "intermediate points do not affect the result. The "
+                    "inventory recommendation fires at |growth_rate| > 0.1. "
+                    "A heuristic, not a calibrated probability."
+                ),
+                data_status="estimated_from_inputs",
+            ),
         )
 
         self._demand_forecasts[product_id] = result
@@ -318,7 +445,16 @@ class PredictiveAnalytics:
     ) -> dict[str, Any]:
         """Predict future customer behavior."""
         if not behavior_history:
-            return {"prediction": "inactive", "confidence": 0.0}
+            return {
+                "prediction": "inactive",
+                "confidence": 0.0,
+                "provenance": build_provenance(
+                    inputs=[],
+                    confidence=0.0,
+                    confidence_basis="No behavior history supplied: no prediction is computed.",
+                    data_status="no_data",
+                ),
+            }
 
         # Analyze recent patterns
         recent = behavior_history[-10:]
@@ -360,6 +496,27 @@ class PredictiveAnalytics:
             "confidence": confidence,
             "predicted_action": predicted_action,
             "engagement_trend": "rising" if engagement_change > 0 else "falling" if engagement_change < 0 else "stable",
+            # TASK-COR-002: the confidence is a bucket constant chosen by a
+            # frequency rule — say so, and record the window actually used.
+            "provenance": build_provenance(
+                inputs=[
+                    input_record("behavior_records_supplied", len(behavior_history), CALLER_SUPPLIED),
+                    input_record("behavior_records_used", len(recent), DERIVED),
+                    input_record("days_active_in_window", days_active, DERIVED),
+                    input_record("activity_frequency", frequency, DERIVED),
+                    input_record("engagement_change", engagement_change, DERIVED),
+                ],
+                confidence=confidence,
+                confidence_basis=(
+                    "Rule buckets over the last 10 supplied records: "
+                    "frequency > 0.5 and engagement rising -> 0.8; "
+                    "frequency > 0.3 -> 0.6; frequency > 0.1 -> 0.5; "
+                    "otherwise 0.4, where frequency = distinct active days / "
+                    "records in window. The value is a bucket constant, NOT "
+                    "a calibrated probability."
+                ),
+                data_status="estimated_from_inputs",
+            ),
         }
 
     # ── Reporting ──────────────────────────────────────────────────────────
@@ -403,6 +560,7 @@ async def forecast_metric(
         "accuracy": result.accuracy,
         "trend": result.trend,
         "seasonality": result.seasonality,
+        "provenance": result.provenance,
     }
 
 
@@ -439,6 +597,7 @@ async def demand_forecast(
         product_id=payload["product_id"],
         sales_history=payload["sales_history"],
         seasonal_factor=payload.get("seasonal_factor", 1.0),
+        supplied_fields=set(payload.keys()),
     )
     return result.__dict__
 

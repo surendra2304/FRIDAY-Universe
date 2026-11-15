@@ -16,17 +16,26 @@ from __future__ import annotations
 import logging
 import math
 import time
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cortex_api.config import get_db_session
 from cortex_api.db_models import LeadModel, LeadScoreHistoryModel
 from cortex_api.auth import Role, require_role
+from cortex_api.provenance import (
+    CALLER_SUPPLIED,
+    ROUTE_DEFAULT,
+    STORED_STATE,
+    build_provenance,
+    input_record,
+)
 
 logger = logging.getLogger("cortex-enhanced-crm")
 
@@ -51,6 +60,9 @@ class LeadScore:
     predicted_value: float
     churn_risk: float
     segment: str
+    # TASK-COR-002: provenance block (inputs used, defaults applied,
+    # value/churn basis) — see cortex_api/provenance.py.
+    provenance: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -106,8 +118,19 @@ class EnhancedCRM:
         demo_requests: int = 0,
         engagement_time: float = 0.0,
         source: str = "",
+        supplied_fields: set[str] | None = None,
     ) -> LeadScore:
-        """Score a lead across four dimensions and assign a grade + segment."""
+        """Score a lead across four dimensions and assign a grade + segment.
+
+        TASK-COR-002: ``supplied_fields`` names the inputs the caller
+        actually provided (the route passes the request payload's keys).
+        Every other input is recorded in the score's provenance as a
+        route/engine default, because the defaults are material: an
+        unlisted industry contributes +5 firmographic points and an
+        unmapped source contributes 3 source points whether or not anyone
+        supplied them (production probe 2026-11-15: 8 of a lead's 10
+        points came from never-supplied inputs).
+        """
 
         # ── Behavior (0–40) ──
         behavior = 0.0
@@ -146,6 +169,40 @@ class EnhancedCRM:
             "source": source_score / 10.0,
         }
 
+        raw_inputs = {
+            "company_size": company_size,
+            "industry": industry,
+            "website_visits": website_visits,
+            "email_opens": email_opens,
+            "email_clicks": email_clicks,
+            "form_submissions": form_submissions,
+            "demo_requests": demo_requests,
+            "engagement_time": engagement_time,
+            "source": source,
+        }
+        provenance = build_provenance(
+            inputs=[
+                input_record(
+                    name, value,
+                    CALLER_SUPPLIED
+                    if supplied_fields is None or name in supplied_fields
+                    else ROUTE_DEFAULT,
+                )
+                for name, value in raw_inputs.items()
+            ],
+            confidence=None,
+            confidence_basis=(
+                "total_score is a rule score (behavior <=40 + firmographic <=30 "
+                "+ engagement <=20 + source <=10), not a probability. "
+                "predicted_value = total_score x $100 (linear heuristic, NOT "
+                "measured revenue). churn_risk = (100 - total_score)/100 x "
+                "(1 - 0.3 x engagement_factor). Firmographic industry points: "
+                "15 if industry in {finance, tech, healthcare, saas, "
+                "enterprise}, else 5. Source points: referral 10, organic 8, "
+                "direct 7, paid 6, social 5, unmapped 3."
+            ),
+        )
+
         score = LeadScore(
             lead_id=lead_id,
             tenant_id=tenant_id,
@@ -159,6 +216,7 @@ class EnhancedCRM:
             predicted_value=predicted_value,
             churn_risk=churn_risk,
             segment=segment,
+            provenance=provenance,
         )
 
         self._lead_scores[lead_id] = score
@@ -343,6 +401,8 @@ async def score_lead(
     user: dict = Depends(require_role(Role.CORTEX_OPERATOR)),
 ):
     """Score a lead with the enhanced model."""
+    if payload.get("lead_id") is None:
+        raise HTTPException(400, "Missing required field(s): lead_id")
     score = enhanced_crm.score_lead(
         lead_id=payload["lead_id"],
         tenant_id=payload.get("tenant_id", ""),
@@ -355,10 +415,17 @@ async def score_lead(
         demo_requests=payload.get("demo_requests", 0),
         engagement_time=payload.get("engagement_time", 0.0),
         source=payload.get("source", ""),
+        supplied_fields=set(payload.keys()),
     )
 
-    # Persist score history
+    # Persist score history.
+    # TASK-COR-002: the model row MUST carry an id — LeadScoreHistoryModel.id
+    # has no database-side default, and Oracle rejects the NULL primary key
+    # (ORA-01400), which made this route HTTP 500 on every production call
+    # while the score silently survived only in process memory
+    # (production journal 2026-11-15 13:00:49 IST).
     history = LeadScoreHistoryModel(
+        id=uuid.uuid4().hex,
         tenant_id=score.tenant_id or "unknown",
         lead_id=score.lead_id,
         total_score=score.total_score,
@@ -370,7 +437,18 @@ async def score_lead(
         triggered_by="enhanced_crm",
     )
     db.add(history)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        # TASK-COR-002: LeadScoreHistoryModel.lead_id references LEADS.id.
+        # Scoring a lead that was never captured violates that FK on
+        # enforcing databases (Oracle ORA-02291) — a client error, not a
+        # server fault, so answer 404 instead of 500.
+        await db.rollback()
+        raise HTTPException(
+            status_code=404,
+            detail=f"Lead {score.lead_id} not found; capture the lead before scoring it",
+        )
 
     return {
         "lead_id": score.lead_id,
@@ -385,6 +463,7 @@ async def score_lead(
             "engagement": score.engagement_score,
             "source": score.source_score,
         },
+        "provenance": score.provenance,
     }
 
 
@@ -397,7 +476,12 @@ async def suggest_follow_up(
     if lead_id not in enhanced_crm._lead_scores:
         raise HTTPException(404, "Lead not found")
     score = enhanced_crm._lead_scores[lead_id]
-    return enhanced_crm.suggest_follow_up(score)
+    suggestion = enhanced_crm.suggest_follow_up(score)
+    # TASK-COR-002: the suggestion is only as good as the score behind it —
+    # carry the score's provenance so a follow-up driven mostly by
+    # defaulted inputs is visible as such.
+    suggestion["provenance"] = score.provenance
+    return suggestion
 
 
 @router.post("/api/v1/leads/{lead_id}/clv")
@@ -417,7 +501,29 @@ async def predict_clv(
         purchase_frequency=payload.get("purchase_frequency", 2.0),
         customer_lifetime_years=payload.get("customer_lifetime_years", 3.0),
     )
-    return {"lead_id": lead_id, "predicted_clv": clv}
+    # TASK-COR-002: an empty request used to return a bare dollar figure
+    # computed entirely from the three route defaults below (production
+    # probe 2026-11-15: predicted_clv 444.0 from {}). Disclose them.
+    provenance = build_provenance(
+        inputs=[
+            input_record("avg_order_value", payload.get("avg_order_value", 1000.0),
+                         CALLER_SUPPLIED if "avg_order_value" in payload else ROUTE_DEFAULT),
+            input_record("purchase_frequency", payload.get("purchase_frequency", 2.0),
+                         CALLER_SUPPLIED if "purchase_frequency" in payload else ROUTE_DEFAULT),
+            input_record("customer_lifetime_years", payload.get("customer_lifetime_years", 3.0),
+                         CALLER_SUPPLIED if "customer_lifetime_years" in payload else ROUTE_DEFAULT),
+            input_record("lead_total_score", score.total_score, STORED_STATE),
+            input_record("lead_churn_risk", score.churn_risk, STORED_STATE),
+        ],
+        confidence=None,
+        confidence_basis=(
+            "predicted_clv = avg_order_value x purchase_frequency x "
+            "customer_lifetime_years x (1 - churn_risk) x (total_score / 50). "
+            "A deterministic heuristic over the stated inputs, NOT a measured "
+            "or modelled revenue forecast."
+        ),
+    )
+    return {"lead_id": lead_id, "predicted_clv": clv, "provenance": provenance}
 
 
 @router.post("/api/v1/crm/engagement")
