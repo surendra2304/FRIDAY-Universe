@@ -339,6 +339,19 @@ def _voice_name() -> str:
     return (os.getenv("FRIDAY_VOICE_NAME") or "Aoede").strip()
 
 
+def _voice_language() -> "str | None":
+    """TASK-IG-VOI-03: the configured language profile's BCP-47 code
+    (FRIDAY_VOICE_LANGUAGE), or None — None is the default and means
+    exactly today's behaviour: no language is passed and Gemini Live
+    mirrors the caller's language natively."""
+    try:
+        from friday.voice.language_profiles import configured_language
+
+        return configured_language()
+    except Exception:
+        return None
+
+
 BASE_INSTRUCTIONS = (
     "You are FRIDAY, the central intelligence and sovereign AI operating system of the FRIDAY Universe. "
     "You orchestrate all 10 specialized agents: Stratex (trading), VyralX (video/media), Cortex (CRM), "
@@ -691,7 +704,7 @@ def _build_realtime_model(key: str, instructions: str):
     for the job's whole life.
     """
     try:
-        model = _lk_google.realtime.RealtimeModel(
+        kwargs = dict(
             api_key=key,
             model=_voice_model(),
             voice=_voice_name(),
@@ -702,6 +715,26 @@ def _build_realtime_model(key: str, instructions: str):
                 async_client_args={"ssl": _SSL_CONTEXT},
             ),
         )
+        # TASK-IG-VOI-03: a configured language profile anchors the
+        # session language; unconfigured (the default) passes nothing
+        # and keeps today's native mirroring byte-for-byte.
+        language = _voice_language()
+        if language:
+            kwargs["language"] = language
+        try:
+            model = _lk_google.realtime.RealtimeModel(**kwargs)
+        except TypeError:
+            if not language:
+                raise
+            # The deployed plugin generation predates the language
+            # option: build without it rather than lose the call —
+            # Gemini still mirrors the caller's language natively.
+            logger.warning(
+                "realtime plugin rejected the language option; "
+                "building without it (profile degrades to mirroring)"
+            )
+            kwargs.pop("language")
+            model = _lk_google.realtime.RealtimeModel(**kwargs)
         logger.info("gemini realtime model built on a probe-verified key")
         return model
     except Exception as exc:
