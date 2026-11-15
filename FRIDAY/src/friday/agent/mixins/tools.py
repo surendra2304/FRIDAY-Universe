@@ -63,6 +63,9 @@ from friday.tools.builtin import (
     FileListingTool,
     FileOperationsTool,
     FileReaderTool,
+    FollowUpAddTool,
+    FollowUpCompleteTool,
+    FollowUpListTool,
     FindOnScreenTool,
     GetActiveAppContextTool,
     GetAIUniverseStatusTool,
@@ -182,6 +185,10 @@ class ToolExecutionMixin:
             registry.register(TimeDateTool())
             registry.register(CalculatorTool())
             registry.register(FileReaderTool())
+            # TASK-IG-FRD-002: persistent owner follow-ups (never dropped).
+            registry.register(FollowUpAddTool())
+            registry.register(FollowUpListTool())
+            registry.register(FollowUpCompleteTool())
             registry.register(FileListingTool())
             registry.register(MemorySearchTool(self.memory))
             registry.register(ScreenSnapshotTool())
