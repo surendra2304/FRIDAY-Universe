@@ -270,7 +270,20 @@ async def delegate_task(
             lat = int((time.time() - t0) * 1000)
             manifest_dict = manifest.model_dump(mode="json")
 
-            if manifest.all_passed:
+            # TASK-FRG-011: a battery-only verdict, derived by the same
+            # function every other surface uses (no task state is settled
+            # or consulted by this action).
+            from app.verification.verdict import derive_build_verdict
+
+            decision = derive_build_verdict(
+                task_state=None,
+                battery_all_passed=manifest.all_passed,
+                battery_partial_failure=manifest.partial_failure,
+                battery_failure_reasons=(
+                    [manifest.failure_summary] if manifest.failure_summary else []
+                ),
+            )
+            if decision is not None and decision.verdict.value == "SUCCESS":
                 return TaskResultModel(
                     task_id=target_id,
                     target_agent="forge",
@@ -281,7 +294,7 @@ async def delegate_task(
                     execution_time_ms=lat,
                 )
             else:
-                task_status = "PARTIAL_FAILURE" if manifest.partial_failure else "FAILED"
+                task_status = decision.verdict.value if decision is not None else "FAILED"
                 return TaskResultModel(
                     task_id=target_id,
                     target_agent="forge",
@@ -363,39 +376,104 @@ async def delegate_task(
             manifest = verification_engine.generate_manifest(task.id, report)
             manifest_dict = manifest.model_dump(mode="json")
 
-            # TASK-REL-019: the task's own terminal state gates this report.
-            # Only the re-run manifest used to be consulted, so a task that
-            # ended FAILED in execution could still be reported SUCCESS —
-            # with a completion receipt — whenever its leftover artifacts
-            # happened to verify. Mirror any non-COMPLETED terminal state
-            # honestly instead; SUCCESS below now genuinely means the task
-            # completed AND the manifest passed.
-            if completed_task.state != TaskState.COMPLETED:
-                lat = int((time.time() - t0) * 1000)
-                state_name = (
-                    completed_task.state.value
-                    if hasattr(completed_task.state, "value")
-                    else str(completed_task.state)
+            # TASK-FRG-011: run_task settled the task against ITS battery
+            # run; this re-run just overwrote the manifest, so re-settle
+            # the stored state against THIS run through the same
+            # authoritative derivation (app/verification/verdict.py), then
+            # report the settled verdict. The hand-rolled mirroring this
+            # replaces (TASK-REL-019) still let the surfaces disagree: a
+            # COMPLETED store row under a FAILED response when the re-run
+            # battery flipped, and a FAILED response embedding an
+            # all-passed manifest for TASK-FRG-003's R5. Settling first
+            # makes the store, the manifest stamp and this response one
+            # verdict; SUCCESS below genuinely means the task completed
+            # AND the final battery passed (TASK-REL-019's guarantee).
+            settled_ok = False
+            try:
+                settled_task = await orchestrator.apply_final_verdict(task.id, report)
+                if settled_task is not None:
+                    completed_task = settled_task
+                    settled_ok = True
+            except Exception as settle_exc:
+                logger.warning(
+                    f"Verdict settling failed for task {task.id}: {settle_exc}"
                 )
-                if completed_task.state == TaskState.FAILED:
-                    mirror_status = "PARTIAL_FAILURE" if manifest.partial_failure else "FAILED"
-                    mirror_error = completed_task.error_message or manifest.failure_summary
-                elif completed_task.state == TaskState.CANCELLED:
-                    mirror_status = "CANCELLED"
-                    mirror_error = completed_task.error_message
-                elif completed_task.state == TaskState.BLOCKED:
-                    mirror_status = "BLOCKED"
-                    mirror_error = completed_task.error_message
-                else:
-                    mirror_status = "DEGRADED"
+
+            from app.verification.verdict import derive_build_verdict, stamped_verdict_of
+
+            state_name = (
+                completed_task.state.value
+                if hasattr(completed_task.state, "value")
+                else str(completed_task.state)
+            )
+            decision = derive_build_verdict(
+                task_state=completed_task.state,
+                battery_all_passed=manifest.all_passed,
+                battery_partial_failure=manifest.partial_failure,
+                battery_failure_reasons=(
+                    [manifest.failure_summary] if manifest.failure_summary else []
+                ),
+                # The stamp is trusted only when apply_final_verdict just
+                # re-derived it from THIS battery run; a stale stamp must
+                # not outrank the fresher battery.
+                stamped_verdict=stamped_verdict_of(completed_task) if settled_ok else None,
+                stamped_reasons=(
+                    (completed_task.metadata or {}).get("verdict_reasons") or []
+                    if settled_ok else []
+                ),
+                stamped_superseded=(
+                    (completed_task.metadata or {}).get("verdict_superseded") or []
+                    if settled_ok else []
+                ),
+                recorded_error=completed_task.error_message,
+            )
+            verdict_str = decision.verdict.value if decision is not None else "DEGRADED"
+
+            if verdict_str in ("FAILED", "PARTIAL_FAILURE"):
+                lat = int((time.time() - t0) * 1000)
+                res = TaskResultModel(
+                    task_id=task.id,
+                    target_agent="forge",
+                    status=verdict_str,
+                    result={
+                        "forge_task_id": task.id,
+                        "goal": task.goal,
+                        "state": state_name,
+                        "manifest": manifest_dict,
+                        "artifacts": _task_artifact_paths(task.id),
+                        "primary_source": _task_primary_source(task.id),
+                    },
+                    summary=(
+                        f"Code generation finished, but verification failed: {manifest.failure_summary}"
+                        if manifest.failure_summary
+                        else f"Forge task '{task.id}' ended in state {state_name}; "
+                        "it is not reported as a successful build."
+                    ),
+                    error=manifest.failure_summary or completed_task.error_message,
+                    verification_manifest=manifest_dict,
+                    execution_time_ms=lat,
+                )
+                if callback_url:
+                    asyncio.create_task(_dispatch_webhook_callback(callback_url, res))
+                return res
+
+            if verdict_str != "SUCCESS":
+                # CANCELLED / BLOCKED / DEGRADED (incl. a non-terminal
+                # state run_task returned without settling): the task's
+                # own state gates this report -- never SUCCESS.
+                lat = int((time.time() - t0) * 1000)
+                mirror_error = completed_task.error_message
+                if verdict_str == "DEGRADED" and not mirror_error:
                     mirror_error = (
-                        f"Execution ended in non-terminal state {state_name}; "
+                        "; ".join(decision.reasons)
+                        if decision is not None and decision.reasons
+                        else f"Execution ended in non-terminal state {state_name}; "
                         "completion is not certified."
                     )
                 res = TaskResultModel(
                     task_id=task.id,
                     target_agent="forge",
-                    status=mirror_status,
+                    status=verdict_str,
                     result={
                         "forge_task_id": task.id,
                         "goal": task.goal,
@@ -425,12 +503,30 @@ async def delegate_task(
                     scanner = OutputSecurityScanner(paths.project)
                     scan_report = scanner.scan_all()
                     if scan_report.blocks_delivery or scan_report.critical_count > 0:
+                        sentinel_error = (
+                            f"Sentinel Gate Failure: {scan_report.critical_count} "
+                            "critical findings detected."
+                        )
+                        # TASK-FRG-011: a delivery block is a named hard
+                        # failure -- settle it into the task record too,
+                        # so the store and this response agree the build
+                        # failed instead of the response alone saying so.
+                        try:
+                            await orchestrator.apply_final_verdict(
+                                task.id,
+                                report,
+                                extra_hard_failure_reasons=[sentinel_error],
+                            )
+                        except Exception as settle_exc:
+                            logger.warning(
+                                f"Verdict settling failed for task {task.id}: {settle_exc}"
+                            )
                         lat = int((time.time() - t0) * 1000)
                         res = TaskResultModel(
                             task_id=task.id,
                             target_agent="forge",
                             status="FAILED",
-                            error=f"Sentinel Gate Failure: {scan_report.critical_count} critical findings detected.",
+                            error=sentinel_error,
                             summary="Blocked by Sentinel security review gate.",
                             verification_manifest=manifest_dict,
                             execution_time_ms=lat,
@@ -457,30 +553,10 @@ async def delegate_task(
 
             lat = int((time.time() - t0) * 1000)
 
-            # Check for partial failure: code synthesized but verification checks failed
-            if not manifest.all_passed:
-                task_status = "PARTIAL_FAILURE" if manifest.partial_failure else "FAILED"
-                res = TaskResultModel(
-                    task_id=task.id,
-                    target_agent="forge",
-                    status=task_status,
-                    result={
-                        "forge_task_id": task.id,
-                        "goal": task.goal,
-                        "state": completed_task.state.value if hasattr(completed_task.state, "value") else str(completed_task.state),
-                        "manifest": manifest_dict,
-                        "artifacts": _task_artifact_paths(task.id),
-                        "primary_source": _task_primary_source(task.id),
-                    },
-                    summary=f"Code generation finished, but verification failed: {manifest.failure_summary}",
-                    error=manifest.failure_summary,
-                    verification_manifest=manifest_dict,
-                    execution_time_ms=lat,
-                )
-                if callback_url:
-                    asyncio.create_task(_dispatch_webhook_callback(callback_url, res))
-                return res
-
+            # TASK-FRG-011: the partial/failure shapes are settled above --
+            # reaching here means the derived verdict is SUCCESS (state
+            # COMPLETED and the final battery passed), so there is no
+            # second, competing verdict left to compute in this block.
             res = TaskResultModel(
                 task_id=task.id,
                 target_agent="forge",
@@ -576,6 +652,8 @@ async def get_task_status(
 
     status_str = "RUNNING"
     verification_error = None
+    verdict_reasons: list[str] = []
+    verdict_superseded: list[str] = []
     if task.state == TaskState.VERIFYING:
         # TASK-REL-019: every non-terminal state used to fall through to the
         # RUNNING default, so a task still queued (PENDING/READY) — or a
@@ -586,36 +664,130 @@ async def get_task_status(
         status_str = "RUNNING"
     elif task.state in (TaskState.PENDING, TaskState.READY):
         status_str = "PLANNED" if _task_mode_value(task) == TaskMode.PLAN_ONLY.value else "PENDING"
-    elif task.state == TaskState.COMPLETED:
-        stages = manifest_data.get("stages") if isinstance(manifest_data, dict) else None
-        verified = (
-            manifest_data is not None
-            and manifest_data.get("all_passed") is True
-            and not manifest_data.get("failed_stages")
-            and isinstance(stages, dict) and bool(stages)
-            and all(isinstance(stage, dict) and stage.get("passed") is True
-                    and type(stage.get("exit_code")) is int and stage["exit_code"] == 0
-                    for stage in stages.values())
+    elif task.state in (TaskState.COMPLETED, TaskState.FAILED):
+        # TASK-FRG-011: terminal build states report the ONE derived
+        # verdict (app/verification/verdict.py) -- the same derivation
+        # that settled the task at finalization -- instead of this
+        # endpoint's own third set of rules, which let it disagree with
+        # the delegate response and the manifest it embedded (a FAILED
+        # status over an all-passed manifest; a SUCCESS over a partial
+        # one). Inputs: the saved manifest's effective battery outcome
+        # (keeping this endpoint's per-stage exit-code strictness), the
+        # graph's named failures, the fallback-stub marker, the snapshot
+        # binding, and the finalization stamp -- trusted only when the
+        # saved manifest carries the same stamp, because a later battery
+        # re-run regenerates the manifest unstamped and supersedes it.
+        from app.verification.verdict import (
+            derive_build_verdict,
+            failure_reasons_from_graph,
+            stamped_verdict_of,
         )
-        if verified:
+
+        stages = manifest_data.get("stages") if isinstance(manifest_data, dict) else None
+        battery_all_passed = None
+        battery_partial = None
+        battery_reasons: list[str] = []
+        if isinstance(manifest_data, dict) and isinstance(stages, dict) and stages:
+            battery_all_passed = bool(
+                manifest_data.get("all_passed") is True
+                and not manifest_data.get("failed_stages")
+                and all(
+                    isinstance(stage, dict)
+                    and stage.get("passed") is True
+                    and type(stage.get("exit_code")) is int
+                    and stage["exit_code"] == 0
+                    for stage in stages.values()
+                )
+            )
+            battery_partial = bool(manifest_data.get("partial_failure"))
+            if manifest_data.get("failure_summary"):
+                battery_reasons = [str(manifest_data["failure_summary"])]
+        elif isinstance(manifest_data, dict):
+            # A manifest exists but carries no usable stage evidence:
+            # it does not certify the build (pinned behaviour from
+            # test_delegate_verification_status — a COMPLETED state
+            # must not paper over it). That is a failing battery
+            # input, not missing evidence.
+            battery_all_passed = False
+            battery_partial = bool(manifest_data.get("partial_failure"))
+            battery_reasons = [
+                str(
+                    manifest_data.get("failure_summary")
+                    or "Saved verification does not certify task completion."
+                )
+            ]
+
+        snapshot_bound = None
+        if battery_all_passed:
             project = getattr(paths, "project", None) if paths else None
-            if project is not None and snapshot_matches(project, manifest_data.get("source_snapshot")):
-                status_str = "SUCCESS"
-            else:
-                status_str = "DEGRADED"
-                verification_error = "Saved verification is not bound to the current project files; re-run verification."
-        elif manifest_data:
-            status_str = "PARTIAL_FAILURE" if manifest_data.get("partial_failure") else "FAILED"
-            verification_error = manifest_data.get("failure_summary") or "Saved verification does not certify task completion."
-        else:
-            status_str = "DEGRADED"
-            verification_error = "Task execution completed but verification evidence is unavailable."
-    elif task.state == TaskState.FAILED:
-        status_str = "PARTIAL_FAILURE" if (manifest_data and manifest_data.get("partial_failure")) else "FAILED"
+            snapshot_bound = bool(
+                project is not None
+                and snapshot_matches(project, manifest_data.get("source_snapshot"))
+            )
+
+        hard_reasons: list[str] = []
+        gate_reasons: list[str] = []
+        graph_getter = getattr(store, "get_latest_task_graph_for_project", None)
+        if graph_getter is not None:
+            try:
+                graph = await graph_getter(task_id)
+            except Exception:
+                graph = None
+            if graph is not None:
+                hard_reasons, gate_reasons = failure_reasons_from_graph(graph)
+        if paths is not None:
+            try:
+                if (paths.state / "FALLBACK_STUB.json").exists():
+                    hard_reasons.append(
+                        "TASK FAILED: Fell back to stub generation. "
+                        "Please check API keys and try again."
+                    )
+            except Exception:
+                pass
+
+        stamped = stamped_verdict_of(task)
+        if not (
+            isinstance(manifest_data, dict)
+            and manifest_data.get("build_verdict") == stamped
+        ):
+            stamped = None
+
+        decision = derive_build_verdict(
+            task_state=task.state,
+            battery_all_passed=battery_all_passed,
+            battery_partial_failure=battery_partial,
+            battery_failure_reasons=battery_reasons,
+            hard_failure_reasons=hard_reasons,
+            gate_failure_reasons=gate_reasons,
+            stamped_verdict=stamped,
+            stamped_reasons=(
+                manifest_data.get("verdict_reasons") or [] if stamped else []
+            ),
+            stamped_superseded=(
+                manifest_data.get("superseded_checks") or [] if stamped else []
+            ),
+            recorded_error=task.error_message,
+            snapshot_bound=snapshot_bound,
+            evidence_available=manifest_data is not None,
+        )
+        if decision is not None:
+            status_str = decision.verdict.value
+            verdict_reasons = list(decision.reasons)
+            verdict_superseded = list(decision.superseded)
+            if decision.reasons:
+                verification_error = "; ".join(decision.reasons)
     elif task.state == TaskState.CANCELLED:
         status_str = "CANCELLED"
     elif task.state == TaskState.BLOCKED:
         status_str = "BLOCKED"
+
+    summary = f"Task '{task_id}' execution state {task_state_str}; verification status {status_str}."
+    if verdict_superseded:
+        summary += (
+            " Superseded in-graph gate verdict(s): "
+            + "; ".join(verdict_superseded)
+            + "."
+        )
 
     return TaskResultModel(
         task_id=task_id,
@@ -626,11 +798,14 @@ async def get_task_status(
             "state": task_state_str,
             "mode": _task_mode_value(task),
             "progress_percentage": task.progress_percentage,
+            "build_verdict": status_str,
+            "verdict_reasons": verdict_reasons,
+            "verdict_superseded": verdict_superseded,
             "artifacts": _task_artifact_paths(task_id),
             "created_at": task.created_at.isoformat() if hasattr(task.created_at, "isoformat") else str(task.created_at),
         },
-        summary=f"Task '{task_id}' execution state {task_state_str}; verification status {status_str}.",
-        error=verification_error or task.error_message,
+        summary=summary,
+        error=None if status_str == "SUCCESS" else (verification_error or task.error_message),
         verification_manifest=manifest_data,
     )
 
