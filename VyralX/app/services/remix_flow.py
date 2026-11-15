@@ -26,7 +26,12 @@ Flow: discovery -> provenance -> download -> remix -> render -> review queue.
 
 The governing policy document is ``VyralX/docs/REMIX_POLICY.md`` — the
 transformative edit spec and the per-video compliance checklist live there
-and are mirrored by :func:`compliance_checklist`.
+and are mirrored by :func:`compliance_checklist`. Since TASK-VYR-009 the
+checklist is also enforced by the automated gate in
+:mod:`app.services.compliance_gate`: :func:`produce_remix_short` evaluates
+it on the finished render's measured production record, and a failing
+render is queued as ``blocked_compliance`` with no publish job — it can
+never be marked ready to upload.
 """
 from __future__ import annotations
 
@@ -43,6 +48,7 @@ from typing import Any, Iterable
 import httpx
 
 from app.config import get_settings
+from app.services import compliance_gate
 
 log = logging.getLogger("vyralx.remix_flow")
 
@@ -682,6 +688,68 @@ def list_review_queue(queue_path: Path | None = None) -> list[dict[str, Any]]:
 # --------------------------------------------------------------------------- #
 # Produce: provenance-gated remix through the TASK-VYR-003 path
 # --------------------------------------------------------------------------- #
+def _gate_input_for_render(
+    record: ProvenanceRecord,
+    *,
+    script: str,
+    lane: str,
+    format_name: str,
+    tracks: dict[str, Any],
+    cues: list[dict[str, Any]],
+    render_path: Path,
+) -> compliance_gate.GateInput:
+    """Assemble the compliance gate's measured production record.
+
+    Sync is measured from the finished render's own artifacts — the same
+    recipe TASK-VYR-003 used for its production proof: per-beat rendered
+    segment vs measured beat audio (via segment_timing), and the burned
+    caption cues vs a Whisper transcript of the finished narration.
+    Anything that cannot be measured stays None, and the gate fails that
+    check — sync is proven from measurements, never asserted (TASK-VYR-009).
+    """
+    from app.services import viral_remix as vr
+    from app.services.source_analysis import probe_media
+
+    render_seconds: float | None = None
+    try:
+        probed = probe_media(render_path)
+        render_seconds = float(probed.duration) if probed and probed.duration else None
+    except Exception as exc:  # a probe failure must not crash the produce step
+        log.warning(
+            "Compliance gate: render probe failed (%s: %s)",
+            type(exc).__name__, str(exc)[:120],
+        )
+    heard: list[dict[str, Any]] = []
+    try:
+        heard = vr._whisper_words(tracks["narration_path"])
+    except Exception as exc:  # unmeasured captions fail the gate, not the render
+        log.warning(
+            "Compliance gate: caption measurement unavailable (%s: %s)",
+            type(exc).__name__, str(exc)[:120],
+        )
+    match_rate, offset_max = compliance_gate.caption_sync_metrics(cues, heard)
+    sync = compliance_gate.SyncMeasurements(
+        beat_deviations_seconds=compliance_gate.beat_deviations_from_tracks(tracks),
+        caption_offset_max_abs_seconds=offset_max,
+        caption_match_rate=match_rate,
+        narration_seconds=float(tracks["total_seconds"]),
+        render_seconds=render_seconds,
+    )
+    return compliance_gate.GateInput(
+        provenance=record,
+        lane=lane,
+        format_name=format_name,
+        script=script,
+        # The audition above already skipped narrated sources, and a source
+        # with no audio track has no narration either.
+        source_has_speech=False,
+        # build_remix_metadata always emits the attribution block.
+        attribution_included=True,
+        language="en",
+        sync=sync,
+    )
+
+
 def produce_remix_short(
     record: ProvenanceRecord,
     script: str,
@@ -699,6 +767,13 @@ def produce_remix_short(
     ``script`` is the ORIGINAL commentary written for this video (the
     transformative element); ``lane`` is the content lane for the compliance
     checklist. Nothing is uploaded: the result is a review-queue entry.
+
+    After the render, the TASK-VYR-009 compliance gate
+    (:mod:`app.services.compliance_gate`) evaluates the render's measured
+    production record. A passing render is queued ``pending_review`` (and
+    gets its ``pending_approval`` publish job when ``db`` is given); a
+    failing render is queued ``blocked_compliance`` and NO publish job is
+    created — it cannot be marked ready to upload.
     """
     # Gates first, before any heavy import or network: a source without
     # provenance (or with a failing licence) never reaches the pipeline.
@@ -754,6 +829,20 @@ def produce_remix_short(
         render_seconds=tracks["total_seconds"],
         format_name=format_name,
     )
+    # TASK-VYR-009: the checklist is advisory; the compliance GATE decides.
+    # It evaluates the finished render's measured production record, and a
+    # failing render never reaches a publish job (see below).
+    gate_verdict = compliance_gate.evaluate_compliance_gate(
+        _gate_input_for_render(
+            record,
+            script=script,
+            lane=lane,
+            format_name=format_name,
+            tracks=tracks,
+            cues=cues,
+            render_path=render_path,
+        )
+    )
     beats = [
         {
             "index": beat["index"],
@@ -764,7 +853,7 @@ def produce_remix_short(
         for beat in tracks["beats"]
     ]
     result: dict[str, Any] = {
-        "status": "PENDING_REVIEW",
+        "status": "PENDING_REVIEW" if gate_verdict.passed else "BLOCKED_COMPLIANCE",
         "project_key": project_key,
         "record_id": record.record_id,
         "title": title,
@@ -776,6 +865,7 @@ def produce_remix_short(
         "source_duration": round(duration, 2),
         "beats": beats,
         "checklist_passed": checklist_passed(checklist),
+        "compliance_gate": gate_verdict.to_dict(),
         "metadata": meta,
     }
     entry = {
@@ -786,7 +876,19 @@ def produce_remix_short(
         "compliance_checklist": checklist,
         **result,
     }
+    if not gate_verdict.passed:
+        entry["status"] = "blocked_compliance"
     enqueue_review(entry, queue_path)
+
+    if not gate_verdict.passed:
+        # The gate is a hard precondition for ready-to-upload: a blocked
+        # render is queued for the record, but NO publish job is created,
+        # so nothing downstream can approve or upload it.
+        log.warning(
+            "Remix short BLOCKED by the compliance gate: %s — failed checks: %s",
+            project_key, ", ".join(gate_verdict.blocking_failures),
+        )
+        return result
 
     if db is not None:
         result["publish_job_id"] = _persist_review_job(
