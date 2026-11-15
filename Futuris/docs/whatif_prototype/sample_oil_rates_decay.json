@@ -1,0 +1,156 @@
+{
+  "result_kind": "what_if_prototype",
+  "engine": "futuris.scenarios.whatif@v1-prototype",
+  "target": "energy_equity_basket",
+  "base_path": [
+    {
+      "step": 1,
+      "label": null,
+      "central": 250.0,
+      "lower": 242.5,
+      "upper": 257.5
+    },
+    {
+      "step": 2,
+      "label": null,
+      "central": 252.0,
+      "lower": 244.44,
+      "upper": 259.56
+    },
+    {
+      "step": 3,
+      "label": null,
+      "central": 255.0,
+      "lower": 247.35,
+      "upper": 262.65000000000003
+    },
+    {
+      "step": 4,
+      "label": null,
+      "central": 257.0,
+      "lower": 249.29,
+      "upper": 264.71
+    },
+    {
+      "step": 5,
+      "label": null,
+      "central": 260.0,
+      "lower": 252.2,
+      "upper": 267.8
+    },
+    {
+      "step": 6,
+      "label": null,
+      "central": 262.0,
+      "lower": 254.14,
+      "upper": 269.86
+    }
+  ],
+  "adjusted_path": [
+    {
+      "step": 1,
+      "label": null,
+      "base_central": 250.0,
+      "base_lower": 242.5,
+      "base_upper": 257.5,
+      "adjusted_central": 265.0,
+      "adjusted_lower": 256.8115,
+      "adjusted_upper": 273.1885,
+      "total_effect_pct": 6.0,
+      "contributions_pct": {
+        "oil_up_15": 6.0,
+        "rate_hike_1pp": -0.0
+      }
+    },
+    {
+      "step": 2,
+      "label": null,
+      "base_central": 252.0,
+      "base_lower": 244.44,
+      "base_upper": 259.56,
+      "adjusted_central": 260.82,
+      "adjusted_lower": 252.85846949999998,
+      "adjusted_upper": 268.7815305,
+      "total_effect_pct": 3.5,
+      "contributions_pct": {
+        "oil_up_15": 4.5,
+        "rate_hike_1pp": -1.0
+      }
+    },
+    {
+      "step": 3,
+      "label": null,
+      "base_central": 255.0,
+      "base_lower": 247.35,
+      "base_upper": 262.65000000000003,
+      "adjusted_central": 257.55,
+      "adjusted_lower": 249.78486750000002,
+      "adjusted_upper": 265.31513250000006,
+      "total_effect_pct": 1.0,
+      "contributions_pct": {
+        "oil_up_15": 3.0,
+        "rate_hike_1pp": -2.0
+      }
+    },
+    {
+      "step": 4,
+      "label": null,
+      "base_central": 257.0,
+      "base_lower": 249.29,
+      "base_upper": 264.71,
+      "adjusted_central": 255.715,
+      "adjusted_lower": 248.024371375,
+      "adjusted_upper": 263.40562862499996,
+      "total_effect_pct": -0.5,
+      "contributions_pct": {
+        "oil_up_15": 1.5,
+        "rate_hike_1pp": -2.0
+      }
+    },
+    {
+      "step": 5,
+      "label": null,
+      "base_central": 260.0,
+      "base_lower": 252.2,
+      "base_upper": 267.8,
+      "adjusted_central": 254.79999999999998,
+      "adjusted_lower": 247.07955999999996,
+      "adjusted_upper": 262.52044,
+      "total_effect_pct": -2.0,
+      "contributions_pct": {
+        "oil_up_15": 0.0,
+        "rate_hike_1pp": -2.0
+      }
+    },
+    {
+      "step": 6,
+      "label": null,
+      "base_central": 262.0,
+      "base_lower": 254.14,
+      "base_upper": 269.86,
+      "adjusted_central": 256.76,
+      "adjusted_lower": 248.98017199999998,
+      "adjusted_upper": 264.539828,
+      "total_effect_pct": -2.0,
+      "contributions_pct": {
+        "oil_up_15": 0.0,
+        "rate_hike_1pp": -2.0
+      }
+    }
+  ],
+  "assumptions": [
+    "shock 'oil_up_15': driver oil +15%, declared elasticity 0.4 (% target move per 1% driver move), onset step 1, ramp 1 step(s), linear decay to zero over 4 steps after ramp",
+    "shock 'rate_hike_1pp': driver policy_rate +1pp, declared elasticity -2 (% target move per 1pp driver move), onset step 2, ramp 2 step(s), permanent after ramp",
+    "elasticities are caller-declared assumptions; this engine does not estimate them from data and does not validate them against history",
+    "shock contributions add linearly in percentage terms per step and the total is applied multiplicatively to the base central value",
+    "band widening: each half-width grows by 0.5 x |total effect %| / 100 of itself per step (declared)",
+    "probability is not recomputed by this engine; the base forecast's probability is carried verbatim (or null)",
+    "caller note: SAMPLE OUTPUT \u2014 illustrative base path and declared elasticities; not a measured forecast."
+  ],
+  "warnings": [],
+  "evidence_class": "synthetic",
+  "evidence_source": "caller_supplied_example_base_path (illustrative sample); +futuris.scenarios.whatif@v1-prototype shock transform",
+  "probability_outcome": null,
+  "probability_status": "not_recomputed_by_whatif_engine",
+  "prediction_is_not_authorization": true
+}
