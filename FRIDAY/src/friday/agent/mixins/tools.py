@@ -80,6 +80,7 @@ from friday.tools.builtin import (
     ErrandStatusTool,
     HealthCheckTool,
     KillProcessTool,
+    LaptopBrowserTaskTool,
     LaptopClickTool,
     LaptopDictateTool,
     LaptopHotkeyTool,
@@ -233,6 +234,7 @@ class ToolExecutionMixin:
             registry.register(LaptopHotkeyTool())
             registry.register(LaptopStorageCheckTool())
             registry.register(LaptopStorageRepairTool())
+            registry.register(LaptopBrowserTaskTool())
             registry.register(LaptopClickTool())
             registry.register(LaptopRunCommandTool())
             registry.register(SystemControlTool())

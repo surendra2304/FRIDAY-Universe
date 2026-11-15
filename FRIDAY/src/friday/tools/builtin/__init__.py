@@ -111,6 +111,7 @@ from friday.tools.builtin.laptop_pc_care import (
     LaptopStorageCheckTool,
     LaptopStorageRepairTool,
 )
+from friday.tools.builtin.laptop_browser_control import LaptopBrowserTaskTool
 from friday.tools.builtin.launch_application import LaunchApplicationTool
 from friday.tools.builtin.location_maps import LocationMapsTool
 from friday.tools.builtin.media_control import MediaControlTool
@@ -240,6 +241,7 @@ __all__ = [
     "LaptopPcHealthTool",
     "LaptopStorageCheckTool",
     "LaptopStorageRepairTool",
+    "LaptopBrowserTaskTool",
     "LaptopTypeTextTool",
     "ListGitHubIssuesTool",
     "LocationMapsTool",
