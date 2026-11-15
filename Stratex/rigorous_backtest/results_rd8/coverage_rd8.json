@@ -1,0 +1,74 @@
+[
+  {
+    "symbol": "NDX",
+    "timeframe": "1d",
+    "source": "yahoo_finance_chart_api",
+    "yahoo_symbol": "^NDX",
+    "rows": 2230,
+    "first_bar_utc": "2018-01-02T14:30:00+00:00",
+    "last_bar_utc": "2026-11-13T14:30:00+00:00",
+    "csv_sha256": "4dd2893217154491dc5732eae71883a71d4a234ff87b46d4b32cb964ed6ea581",
+    "manifest_verified_at_load": true,
+    "fold_profile": "STANDARD"
+  },
+  {
+    "symbol": "SPX",
+    "timeframe": "1d",
+    "source": "yahoo_finance_chart_api",
+    "yahoo_symbol": "^GSPC",
+    "rows": 2230,
+    "first_bar_utc": "2018-01-02T14:30:00+00:00",
+    "last_bar_utc": "2026-11-13T14:30:00+00:00",
+    "csv_sha256": "ab1482ee3b03fa53fa80ffc818cd86f4c60feb8c85265b4ca808e0b60b4673bb",
+    "manifest_verified_at_load": true,
+    "fold_profile": "STANDARD"
+  },
+  {
+    "symbol": "NDX",
+    "timeframe": "1h",
+    "source": "yahoo_finance_chart_api",
+    "yahoo_symbol": "^NDX",
+    "rows": 3477,
+    "first_bar_utc": "2024-11-15T14:30:00+00:00",
+    "last_bar_utc": "2026-11-13T21:00:00+00:00",
+    "csv_sha256": "a31e8b58983d043b2680977fd813cedb26a4b0c3c9e1353ce7020348c7b111f0",
+    "manifest_verified_at_load": true,
+    "fold_profile": "LATE"
+  },
+  {
+    "symbol": "SPX",
+    "timeframe": "1h",
+    "source": "yahoo_finance_chart_api",
+    "yahoo_symbol": "^GSPC",
+    "rows": 3477,
+    "first_bar_utc": "2024-11-15T14:30:00+00:00",
+    "last_bar_utc": "2026-11-13T21:00:00+00:00",
+    "csv_sha256": "b6bbcb016372729563917fbefe14c01bc8ea611c7adf74242830effce135e16f",
+    "manifest_verified_at_load": true,
+    "fold_profile": "LATE"
+  },
+  {
+    "symbol": "NDX",
+    "timeframe": "15m",
+    "source": "yahoo_finance_chart_api",
+    "yahoo_symbol": "^NDX",
+    "rows": 1561,
+    "first_bar_utc": "2026-08-21T13:30:00+00:00",
+    "last_bar_utc": "2026-11-13T21:00:00+00:00",
+    "csv_sha256": "aefa5b33c6025daa307926b2631f3b09e2984df3b8b5fa5f6fa916dc396c2e3d",
+    "manifest_verified_at_load": true,
+    "fold_profile": "SHORT"
+  },
+  {
+    "symbol": "SPX",
+    "timeframe": "15m",
+    "source": "yahoo_finance_chart_api",
+    "yahoo_symbol": "^GSPC",
+    "rows": 1561,
+    "first_bar_utc": "2026-08-21T13:30:00+00:00",
+    "last_bar_utc": "2026-11-13T21:00:00+00:00",
+    "csv_sha256": "c21cd27c3b061e9676bb929181c5b0c3885e1adee358948a95308fc3045cfabd",
+    "manifest_verified_at_load": true,
+    "fold_profile": "SHORT"
+  }
+]

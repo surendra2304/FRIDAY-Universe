@@ -1,0 +1,950 @@
+{
+  "family": "ema_cross",
+  "variant": "ema10_50",
+  "panel": "idx2",
+  "timeframe": "1d",
+  "stage": "rd8",
+  "status": "EVALUATED",
+  "error": null,
+  "spec": {
+    "type": "bracket",
+    "sl_atr": 2.0,
+    "tp_atr": 4.0
+  },
+  "session_flat": false,
+  "costs_rt_bps": {
+    "NDX": 8.0,
+    "SPX": 8.0
+  },
+  "symbols": [
+    "NDX",
+    "SPX"
+  ],
+  "report": {
+    "per_fold": {
+      "W1": {
+        "oos_start": "2024-07-01",
+        "oos_end": "2025-01-01",
+        "trades": 5,
+        "wins": 2,
+        "win_rate": 0.4,
+        "expectancy_net": 0.007390063072308571,
+        "profit_factor_net": 1.3222760314703375,
+        "avg_win_net": 0.07580228063335713,
+        "avg_loss_net": -0.03821808196839047,
+        "total_return_net": 0.02942523677907105,
+        "max_drawdown_net": -0.07819184594986528
+      },
+      "W2": {
+        "oos_start": "2025-01-01",
+        "oos_end": "2025-07-01",
+        "trades": 6,
+        "wins": 4,
+        "win_rate": 0.6666666666666666,
+        "expectancy_net": 0.04311516082057035,
+        "profit_factor_net": 5.9419461212988285,
+        "avg_win_net": 0.077759233807561,
+        "avg_loss_net": -0.026172985153410946,
+        "total_return_net": 0.27857313396758054,
+        "max_drawdown_net": -0.05166141877218655
+      },
+      "W3": {
+        "oos_start": "2025-07-01",
+        "oos_end": "2026-01-01",
+        "trades": 2,
+        "wins": 0,
+        "win_rate": 0.0,
+        "expectancy_net": -0.03576176727606482,
+        "profit_factor_net": 0.0,
+        "avg_win_net": null,
+        "avg_loss_net": -0.03576176727606482,
+        "total_return_net": -0.07027631208158969,
+        "max_drawdown_net": -0.07027631208158969
+      },
+      "W4": {
+        "oos_start": "2026-01-01",
+        "oos_end": "2026-07-01",
+        "trades": 4,
+        "wins": 4,
+        "win_rate": 1.0,
+        "expectancy_net": 0.05911366475541963,
+        "profit_factor_net": Infinity,
+        "avg_win_net": 0.05911366475541963,
+        "avg_loss_net": null,
+        "total_return_net": 0.25816362140558113,
+        "max_drawdown_net": 0.0
+      },
+      "W5": {
+        "oos_start": "2026-07-01",
+        "oos_end": "2026-11-01",
+        "trades": 2,
+        "wins": 0,
+        "win_rate": 0.0,
+        "expectancy_net": -0.04257609609507203,
+        "profit_factor_net": 0.0,
+        "avg_win_net": null,
+        "avg_loss_net": -0.04257609609507203,
+        "total_return_net": -0.08334038197416271,
+        "max_drawdown_net": -0.08334038197416271
+      }
+    },
+    "pooled_oos": {
+      "trades": 19,
+      "wins": 10,
+      "win_rate": 0.5263157894736842,
+      "expectancy_net": 0.01975895855601946,
+      "profit_factor_net": 2.1598644284089223,
+      "avg_win_net": 0.06990961555186367,
+      "avg_loss_net": -0.035963993661585224,
+      "total_return_net": 0.4113005319276153,
+      "max_drawdown_net": -0.1258137630238656
+    },
+    "per_symbol_oos": {
+      "NDX": {
+        "trades": 10,
+        "wins": 5,
+        "win_rate": 0.5,
+        "expectancy_net": 0.019378501989166894,
+        "profit_factor_net": 1.9392191834054715,
+        "avg_win_net": 0.08002213640227615,
+        "avg_loss_net": -0.041265132423942356,
+        "total_return_net": 0.18967444066217354,
+        "max_drawdown_net": -0.08334038197416271
+      },
+      "SPX": {
+        "trades": 9,
+        "wins": 5,
+        "win_rate": 0.5555555555555556,
+        "expectancy_net": 0.020181688074744537,
+        "profit_factor_net": 2.5478036471747076,
+        "avg_win_net": 0.059797094701451205,
+        "avg_loss_net": -0.029337570208638808,
+        "total_return_net": 0.18629137828840348,
+        "max_drawdown_net": -0.05166141877218666
+      }
+    },
+    "fold_profile": [
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5"
+    ]
+  },
+  "holdout": {
+    "symbols_active_min20": 0,
+    "symbols_positive": 0,
+    "breadth_positive_share": 0.0,
+    "max_symbol_profit_share": 0.5161816370194571,
+    "max_share_cap": 0.8,
+    "untouched_subset": [
+      "SPX"
+    ],
+    "untouched_trades": 9,
+    "untouched_expectancy": 0.020181688074744537,
+    "passes": false,
+    "adaptation": "rd8 declared 2-symbol holdout (declaration deviation 2)"
+  },
+  "bar": {
+    "bar": {
+      "expectancy_net_gt": 0.0,
+      "profit_factor_net_gte": 1.2,
+      "min_oos_trades": 200,
+      "min_positive_fold_share": 0.8,
+      "positive_folds_needed": 4,
+      "positive_folds": 3,
+      "folds_with_trades": 5
+    },
+    "checks": {
+      "expectancy_net_gt_0": true,
+      "profit_factor_net_gte_1.2": true,
+      "min_oos_trades_200": false,
+      "positive_folds": false,
+      "holdout_passes": false
+    },
+    "passes_bar": false
+  },
+  "fold_profile_name": "STANDARD",
+  "trade_stats": {
+    "n": 20,
+    "sharpe_per_trade": 0.3187827669602969,
+    "t_stat": 1.4256398739573959,
+    "p_one_sided": 0.07698616014043547,
+    "skew": 0.14240288163795045,
+    "kurtosis": 1.2870452445783016
+  },
+  "sensitivity_2x": {
+    "trades": 19,
+    "wins": 10,
+    "win_rate": 0.5263157894736842,
+    "expectancy_net": 0.018952533656977244,
+    "profit_factor_net": 2.08803745564361,
+    "avg_win_net": 0.06910593004377827,
+    "avg_loss_net": -0.03677346232835724,
+    "total_return_net": 0.39018530625788617,
+    "max_drawdown_net": -0.12870382402644254
+  },
+  "seconds": 0.1,
+  "trades": [
+    {
+      "symbol": "NDX",
+      "entry_time": "2019-01-28T14:30:00+00:00",
+      "exit_time": "2019-03-13T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 6691.83984375,
+      "exit_price": 7241.22686860937,
+      "net_return": 0.08123272109362853,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2019-01-28T14:30:00+00:00",
+      "exit_time": "2019-03-13T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 2644.969970703125,
+      "exit_price": 2818.361835000572,
+      "net_return": 0.06470322092130722,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2019-05-24T13:30:00+00:00",
+      "exit_time": "2019-06-11T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 7353.97021484375,
+      "exit_price": 7593.245433062051,
+      "net_return": -0.03336323621224046,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2019-05-24T13:30:00+00:00",
+      "exit_time": "2019-06-10T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 2832.409912109375,
+      "exit_price": 2901.220707364,
+      "net_return": -0.025113843966770043,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2019-06-13T13:30:00+00:00",
+      "exit_time": "2019-07-24T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 2886.239990234375,
+      "exit_price": 3018.462428941139,
+      "net_return": 0.04497499678633406,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2019-06-18T13:30:00+00:00",
+      "exit_time": "2019-08-05T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 7606.60986328125,
+      "exit_price": 7394.317960816153,
+      "net_return": -0.028686234146359908,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2019-08-08T13:30:00+00:00",
+      "exit_time": "2019-09-05T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 7608.02978515625,
+      "exit_price": 7858.535992764579,
+      "net_return": -0.03375322644521937,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2019-08-08T13:30:00+00:00",
+      "exit_time": "2019-09-05T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 2896.2099609375,
+      "exit_price": 2969.3137992006564,
+      "net_return": -0.02606172925347019,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2019-09-06T13:30:00+00:00",
+      "exit_time": "2019-10-02T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 7868.8701171875,
+      "exit_price": 7606.484529038367,
+      "net_return": -0.03411777531874043,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2019-09-06T13:30:00+00:00",
+      "exit_time": "2019-10-02T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 2980.330078125,
+      "exit_price": 2898.8043644322165,
+      "net_return": -0.02813239733183496,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2019-10-03T13:30:00+00:00",
+      "exit_time": "2019-10-11T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 7557.18994140625,
+      "exit_price": 7835.93017578125,
+      "net_return": -0.0377139504533409,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2019-10-04T13:30:00+00:00",
+      "exit_time": "2019-10-11T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 2918.56005859375,
+      "exit_price": 2990.516000007276,
+      "net_return": -0.02547465533308727,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2019-10-15T13:30:00+00:00",
+      "exit_time": "2019-11-18T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 7867.9599609375,
+      "exit_price": 8318.960197973813,
+      "net_return": 0.05647559622657913,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2019-10-16T13:30:00+00:00",
+      "exit_time": "2019-11-25T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 2989.679931640625,
+      "exit_price": 3131.758918787398,
+      "net_return": 0.04668545963624248,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2020-02-28T14:30:00+00:00",
+      "exit_time": "2020-03-02T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 2916.89990234375,
+      "exit_price": 3022.3377883661747,
+      "net_return": -0.036976491274712545,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2020-03-02T14:30:00+00:00",
+      "exit_time": "2020-03-03T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 8569.91015625,
+      "exit_price": 8962.570714029831,
+      "net_return": -0.046655504693914836,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2020-04-17T13:30:00+00:00",
+      "exit_time": "2020-06-23T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 8876.66015625,
+      "exit_price": 10195.419439117555,
+      "net_return": 0.14764632029121927,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2020-04-30T13:30:00+00:00",
+      "exit_time": "2020-08-03T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 2930.909912109375,
+      "exit_price": 3292.6183124372515,
+      "net_return": 0.12251327050720369,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2020-09-25T13:30:00+00:00",
+      "exit_time": "2020-09-28T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3236.659912109375,
+      "exit_price": 3360.09251355311,
+      "net_return": -0.03896663676112022,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2020-10-01T13:30:00+00:00",
+      "exit_time": "2020-10-29T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 3385.8701171875,
+      "exit_price": 3265.1301386326622,
+      "net_return": -0.03643111932017375,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2020-11-02T14:30:00+00:00",
+      "exit_time": "2020-11-04T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3296.199951171875,
+      "exit_price": 3416.1971859243204,
+      "net_return": -0.03723417509247224,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2020-11-03T14:30:00+00:00",
+      "exit_time": "2020-11-04T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 11155.849609375,
+      "exit_price": 11690.635611766902,
+      "net_return": -0.048776406319105584,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2020-11-05T14:30:00+00:00",
+      "exit_time": "2021-01-20T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 12021.76953125,
+      "exit_price": 13177.856848193687,
+      "net_return": 0.09528956978549913,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2020-11-06T14:30:00+00:00",
+      "exit_time": "2021-01-06T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 3508.340087890625,
+      "exit_price": 3775.583007445778,
+      "net_return": 0.0753130124883478,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2021-03-05T14:30:00+00:00",
+      "exit_time": "2021-03-16T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 12594.16015625,
+      "exit_price": 13173.415106500268,
+      "net_return": -0.046831062349360325,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2021-04-05T13:30:00+00:00",
+      "exit_time": "2021-06-28T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 13434.0400390625,
+      "exit_price": 14523.73500221432,
+      "net_return": 0.08024991869550736,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2021-09-30T13:30:00+00:00",
+      "exit_time": "2021-10-18T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 14830.2998046875,
+      "exit_price": 15234.528509007258,
+      "net_return": -0.028079081988299594,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2021-09-30T13:30:00+00:00",
+      "exit_time": "2021-10-15T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4370.669921875,
+      "exit_price": 4463.504748727334,
+      "net_return": -0.022057730569375513,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2021-10-19T13:30:00+00:00",
+      "exit_time": "2021-11-05T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 4497.33984375,
+      "exit_price": 4704.870602449319,
+      "net_return": 0.04530864338774605,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2021-10-20T13:30:00+00:00",
+      "exit_time": "2021-11-04T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 15448.0,
+      "exit_price": 16262.25657463527,
+      "net_return": 0.051867683274011644,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2022-01-11T14:30:00+00:00",
+      "exit_time": "2022-01-24T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 15582.7197265625,
+      "exit_price": 14160.91015625,
+      "net_return": 0.09051541281838071,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2022-01-20T14:30:00+00:00",
+      "exit_time": "2022-01-24T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4547.35009765625,
+      "exit_price": 4292.30684975472,
+      "net_return": 0.055330692146087664,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2022-03-28T13:30:00+00:00",
+      "exit_time": "2022-04-18T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 4541.08984375,
+      "exit_price": 4377.777250525078,
+      "net_return": -0.0367342246985802,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2022-03-29T13:30:00+00:00",
+      "exit_time": "2022-04-06T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 15142.9296875,
+      "exit_price": 14412.32814462365,
+      "net_return": -0.04900813849143625,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2022-04-12T13:30:00+00:00",
+      "exit_time": "2022-04-29T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 14175.66015625,
+      "exit_price": 12850.629421489386,
+      "net_return": 0.09274672945632122,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2022-07-28T13:30:00+00:00",
+      "exit_time": "2022-09-06T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 12580.6103515625,
+      "exit_price": 11936.428767308538,
+      "net_return": -0.05196305194021543,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2022-07-29T13:30:00+00:00",
+      "exit_time": "2022-09-01T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 4087.330078125,
+      "exit_price": 3931.7585671065426,
+      "net_return": -0.03883113357100658,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2022-09-02T13:30:00+00:00",
+      "exit_time": "2022-09-23T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3994.659912109375,
+      "exit_price": 3727.139892578125,
+      "net_return": 0.06622268735649853,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2022-11-14T14:30:00+00:00",
+      "exit_time": "2022-12-19T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 3977.969970703125,
+      "exit_price": 3803.536650683536,
+      "net_return": -0.04461444757052696,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2022-11-21T14:30:00+00:00",
+      "exit_time": "2022-12-20T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 11623.349609375,
+      "exit_price": 11017.194534575938,
+      "net_return": -0.052907752670374564,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2022-12-21T14:30:00+00:00",
+      "exit_time": "2023-01-12T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3839.489990234375,
+      "exit_price": 3977.570068359375,
+      "net_return": -0.0367922322680202,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2023-01-13T14:30:00+00:00",
+      "exit_time": "2023-03-13T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 3960.60009765625,
+      "exit_price": 3831.9832792640227,
+      "net_return": -0.03324778468525799,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2023-01-23T14:30:00+00:00",
+      "exit_time": "2023-02-02T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 11652.0,
+      "exit_price": 12655.1796875,
+      "net_return": 0.08522653551221124,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2023-03-31T13:30:00+00:00",
+      "exit_time": "2023-06-05T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 4056.179931640625,
+      "exit_price": 4299.003351057961,
+      "net_return": 0.059017498213074636,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2023-08-23T13:30:00+00:00",
+      "exit_time": "2023-08-29T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 14947.580078125,
+      "exit_price": 15379.408184818343,
+      "net_return": -0.02971294044252278,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2023-08-23T13:30:00+00:00",
+      "exit_time": "2023-08-29T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4396.43994140625,
+      "exit_price": 4485.21796252737,
+      "net_return": -0.02100964247578975,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2023-08-30T13:30:00+00:00",
+      "exit_time": "2023-09-20T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 4500.33984375,
+      "exit_price": 4401.749273369998,
+      "net_return": -0.022689522424387088,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2023-09-22T13:30:00+00:00",
+      "exit_time": "2023-10-26T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4341.740234375,
+      "exit_price": 4166.707196693572,
+      "net_return": 0.03954597207009896,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2023-09-25T13:30:00+00:00",
+      "exit_time": "2023-10-10T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 14662.6904296875,
+      "exit_price": 15079.2461357445,
+      "net_return": -0.029232283959800515,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2023-10-17T13:30:00+00:00",
+      "exit_time": "2023-10-23T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 15009.259765625,
+      "exit_price": 14514.1103515625,
+      "net_return": -0.033762894879472975,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2023-11-09T14:30:00+00:00",
+      "exit_time": "2023-12-12T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 15351.1201171875,
+      "exit_price": 16250.483148631349,
+      "net_return": 0.05773962005599343,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2023-11-13T14:30:00+00:00",
+      "exit_time": "2023-12-11T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 4406.66015625,
+      "exit_price": 4616.792884290531,
+      "net_return": 0.046847445275150834,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2024-04-19T13:30:00+00:00",
+      "exit_time": "2024-05-03T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 17334.7109375,
+      "exit_price": 17850.873075432322,
+      "net_return": -0.030600368986272594,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2024-04-22T13:30:00+00:00",
+      "exit_time": "2024-04-26T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4987.330078125,
+      "exit_price": 5103.90424288267,
+      "net_return": -0.024193089321302087,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2024-05-07T13:30:00+00:00",
+      "exit_time": "2024-06-12T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 5187.2001953125,
+      "exit_price": 5435.708803046681,
+      "net_return": 0.047070051324356044,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2024-05-08T13:30:00+00:00",
+      "exit_time": "2024-06-07T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 17987.69921875,
+      "exit_price": 19073.13956697585,
+      "net_return": 0.059495543288882985,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2024-07-31T13:30:00+00:00",
+      "exit_time": "2024-08-05T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 19222.849609375,
+      "exit_price": 17444.400390625,
+      "net_return": 0.09179118340160447,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2024-08-06T13:30:00+00:00",
+      "exit_time": "2024-08-13T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 5206.419921875,
+      "exit_price": 5383.6652615966605,
+      "net_return": -0.03487117791448176,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2024-08-19T13:30:00+00:00",
+      "exit_time": "2024-11-06T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 5557.22998046875,
+      "exit_price": 5894.340263950293,
+      "net_return": 0.0598133778651098,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2024-08-21T13:30:00+00:00",
+      "exit_time": "2024-09-03T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 19758.470703125,
+      "exit_price": 18978.82645434465,
+      "net_return": -0.04022686022061243,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2024-09-06T13:30:00+00:00",
+      "exit_time": "2024-09-18T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 18903.029296875,
+      "exit_price": 19635.047127794438,
+      "net_return": -0.03955620777007724,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2025-01-13T14:30:00+00:00",
+      "exit_time": "2025-01-15T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 5782.02001953125,
+      "exit_price": 5932.583954939049,
+      "net_return": -0.026861183675196198,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2025-01-21T14:30:00+00:00",
+      "exit_time": "2025-02-27T14:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 6014.1201171875,
+      "exit_price": 5865.542106686372,
+      "net_return": -0.025484786631625695,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2025-02-28T14:30:00+00:00",
+      "exit_time": "2025-03-31T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 20518.650390625,
+      "exit_price": 18998.5390625,
+      "net_return": 0.07334334306886532,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2025-02-28T14:30:00+00:00",
+      "exit_time": "2025-03-10T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 5856.740234375,
+      "exit_price": 5575.900130943299,
+      "net_return": 0.047189663065942314,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2025-05-08T13:30:00+00:00",
+      "exit_time": "2025-06-24T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 20067.4296875,
+      "exit_price": 22179.115419173733,
+      "net_return": 0.10434567687170529,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2025-05-09T13:30:00+00:00",
+      "exit_time": "2025-06-27T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 5679.64990234375,
+      "exit_price": 6173.935784930813,
+      "net_return": 0.08615825222373105,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2025-11-24T14:30:00+00:00",
+      "exit_time": "2025-12-02T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 24462.869140625,
+      "exit_price": 25455.02495809963,
+      "net_return": -0.04139040193887806,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2025-11-24T14:30:00+00:00",
+      "exit_time": "2025-11-26T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 6636.5400390625,
+      "exit_price": 6831.052751140207,
+      "net_return": -0.030133132613251574,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2026-02-06T14:30:00+00:00",
+      "exit_time": "2026-03-30T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 24655.25,
+      "exit_price": 23080.64916961061,
+      "net_return": 0.06311551991119399,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2026-03-04T14:30:00+00:00",
+      "exit_time": "2026-03-20T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 6831.68994140625,
+      "exit_price": 6478.522438699702,
+      "net_return": 0.0509365345592947,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2026-04-15T13:30:00+00:00",
+      "exit_time": "2026-05-01T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 25859.189453125,
+      "exit_price": 27627.16445697616,
+      "net_return": 0.06751495875801167,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2026-04-15T13:30:00+00:00",
+      "exit_time": "2026-05-06T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 6978.169921875,
+      "exit_price": 7367.076545546035,
+      "net_return": 0.05488764579317817,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2026-07-27T13:30:00+00:00",
+      "exit_time": "2026-08-04T13:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 28412.310546875,
+      "exit_price": 29571.170111829197,
+      "net_return": -0.04162019719071315,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NDX",
+      "entry_time": "2026-08-07T13:30:00+00:00",
+      "exit_time": "2026-10-30T13:30:00+00:00",
+      "side": "LONG",
+      "entry_price": 29596.44921875,
+      "exit_price": 28330.712246952986,
+      "net_return": -0.04353199499943091,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SPX",
+      "entry_time": "2026-11-03T14:30:00+00:00",
+      "exit_time": "2026-11-04T14:30:00+00:00",
+      "side": "SHORT",
+      "entry_price": 7552.919921875,
+      "exit_price": 7713.948858224605,
+      "net_return": -0.022137473535677587,
+      "exit_reason": "SL"
+    }
+  ]
+}
