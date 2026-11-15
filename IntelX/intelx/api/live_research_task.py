@@ -328,9 +328,20 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
                 texts[url] = None
         return reverify_findings_against_texts(draft_findings, texts)
 
+    # TASK-INT-004: pre-synthesis source-diversity check. Near-duplicate
+    # documents (the same wire copy republished by several outlets) collapse
+    # to ONE independent source, and the synthesizer is handed only the
+    # cluster representatives — syndicated copies must not masquerade as
+    # independent corroboration. Findings are annotated with their
+    # independent-source count after the synthesis step below, and the
+    # run-level report is attached to the result as "source_diversity".
+    from intelx.api.source_diversity import (
+        annotate_findings, build_diversity_report, cluster_documents, collapse_documents)
+    _cluster_of, _collapsed_groups = cluster_documents(source_documents)
+    synthesis_documents = collapse_documents(source_documents, _cluster_of)
     if synthesize is not None and source_documents:
         try:
-            draft = await synthesize(query, source_documents)
+            draft = await synthesize(query, synthesis_documents)
             if draft.get("status") != "SUCCESS":
                 # TASK-REL-016: a refused/unverified draft is a synthesis
                 # failure, not a reason to destroy evidence already retrieved.
@@ -381,6 +392,13 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             failures.append(failure)
     if synthesis_failure is not None:
         answer_kind = "unsynthesised_raw_findings"
+    # TASK-INT-004: annotate the final findings (extractive or synthesised)
+    # with independent-source counts from the pre-synthesis clustering and
+    # build the run-level diversity report. A finding whose citations reach
+    # fewer than two independent sources is flagged "single_source" on the
+    # result itself — visible to every consumer, never silently upgraded.
+    findings = annotate_findings(findings, source_documents, _cluster_of)
+    source_diversity = build_diversity_report(findings, source_documents, _cluster_of, _collapsed_groups)
     spoken_body = " ".join(f"According to {f['citations'][0]['source_title']}, {f['statement']}" for f in findings[:3])
     if synthesis_failure is not None:
         spoken = (f"Unsynthesised raw findings — synthesis failed ({synthesis_failure['reason']}). {spoken_body}"
@@ -425,4 +443,5 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             "source_documents": source_documents,
             "findings": findings, "sources": sources, "spoken_summary": spoken,
             "text_response": "\n".join(lines), "source_failures": failures,
+            "source_diversity": source_diversity,
             "summary": summary}
