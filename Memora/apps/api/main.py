@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from apps.api.dependencies import authenticate_agent
 from apps.api.middleware import RequestBodyLimitMiddleware
 from core.config import settings, validate_startup_config
-from storage.relational.session import init_db, storage_ready, get_db
+from storage.relational.session import init_db, storage_ready, get_db, storage_receipt
 from storage.vector.qdrant_adapter import vector_adapter
 from core.events.emitter import event_emitter, start_cloud_sync, stop_cloud_sync
 from apps.api.routers.health import readiness_check
@@ -343,12 +343,19 @@ def root(request: Request):
         if STATIC_INDEX.exists():
             return HTMLResponse(content=STATIC_INDEX.read_text(encoding="utf-8"))
         return RedirectResponse(url="/docs")
+    # TASK-MEM-008: report the storage actually in use. This was a hardcoded
+    # "sqlite_wal" string left from the retired local-replica era; production
+    # persists to Oracle Autonomous Database and the root payload said
+    # otherwise, contradicting /health and every write receipt.
+    receipt = storage_receipt()
     return JSONResponse(status_code=200, content={
         "status": "ok",
         "service": "memora",
         "evidence_class": "process_liveness",
         "observed_at": datetime.now(timezone.utc).isoformat(),
-        "storage": "sqlite_wal",
+        "storage": receipt["backend"],
+        "storage_durable": receipt["durable"],
+        "storage_durability": receipt["durability"],
     })
 
 @app.api_route("/dashboard", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)

@@ -34,7 +34,10 @@ class MemoraMemoryClient:
             return {"status": "blocked_missing_credentials", "cloud": False}
         payload = {
             "content_text": json.dumps(content, ensure_ascii=False, sort_keys=True),
-            "memory_type": "semantic",
+            # TASK-MEM-008: Memora policy rejects direct SEMANTIC writes from
+            # agent identities (HTTP 403); peers store observations as
+            # EPISODIC, promotion is server-side and evidence-gated.
+            "memory_type": "episodic",
             "source": "agent:intelx",
             "target_namespace_path": namespace,
             "importance": importance,

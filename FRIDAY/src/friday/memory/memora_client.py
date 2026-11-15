@@ -387,7 +387,11 @@ class MemoraClient:
                 headers=self._remote_headers("friday", json_body=True),
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+            # TASK-MEM-008: this is a write; it gets the write budget, not the
+            # 3.5s generic one (same defect class TASK-REL-031 fixed for
+            # record_fact/record_interaction — a slow Memora commit outlives
+            # the generic budget and the notice is reported lost).
+            with urllib.request.urlopen(req, timeout=self.write_timeout) as response:
                 if response.status not in (200, 201):
                     return False
                 result = json.loads(response.read().decode("utf-8"))
@@ -436,11 +440,14 @@ class MemoraClient:
                 headers=headers,
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+            # TASK-MEM-008: envelope publish is a write; use the write budget
+            # and log failures at WARNING (was the 3.5s generic budget and a
+            # DEBUG log — invisible in production, cf. TASK-REL-031).
+            with urllib.request.urlopen(req, timeout=self.write_timeout) as response:
                 result = json.loads(response.read().decode("utf-8"))
                 return {"status": "ok", **result} if response.status == 202 else {"status": "error", "error": f"HTTP {response.status}"}
         except Exception as exc:
-            logger.debug("Memora event publish failed (%s)", type(exc).__name__)
+            logger.warning("Memora event publish failed (%s)", type(exc).__name__)
             return {"status": "error", "error": type(exc).__name__}
 
     def _ensure_tables(self) -> None:
@@ -1150,7 +1157,8 @@ class MemoraClient:
                     headers=self._remote_headers(agent_name),
                     method="DELETE",
                 )
-                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                # TASK-MEM-008: a mutation; use the write budget.
+                with urllib.request.urlopen(req, timeout=self.write_timeout) as resp:
                     if resp.status in (200, 204):
                         body = {}
                         try:
@@ -1260,7 +1268,8 @@ class MemoraClient:
                         headers=self._remote_headers(agent_name, json_body=True),
                         method="POST",
                     )
-                    with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    # TASK-MEM-008: a mutation; use the write budget.
+                    with urllib.request.urlopen(req, timeout=self.write_timeout) as resp:
                         if resp.status not in (200, 201):
                             receipts_valid = False
                             break
@@ -1359,7 +1368,8 @@ class MemoraClient:
                     headers=self._remote_headers(agent_name, json_body=True),
                     method="POST",
                 )
-                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                # TASK-MEM-008: a mutation; use the write budget.
+                with urllib.request.urlopen(req, timeout=self.write_timeout) as resp:
                     if resp.status in (200, 201):
                         return {"status": "superseded", "id": memory_id, "winner_id": winner_id}
             except Exception as e:
@@ -1467,19 +1477,30 @@ class MemoraClient:
             "domain": domain or "operational",
         }
 
+        sync_error: Optional[str] = None
         if self.remote_enabled:
             try:
                 url = f"{self.base_url}/v1/memories/learn-outcome"
                 headers = self._remote_headers(agent_name, json_body=True)
                 req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
-                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                # TASK-MEM-008: this is a write; it gets the write budget, not
+                # the 3.5s generic one. TASK-REL-031 fixed exactly this defect
+                # for record_fact/record_interaction after production writes
+                # timed out client-side and landed local-only (or nowhere
+                # shared); learn-outcome kept the old budget and a DEBUG log,
+                # so its failures stayed invisible. The local fallback below
+                # has no re-sync queue, so a shared-side miss here is final —
+                # the failure is logged at WARNING and returned as sync_error.
+                with urllib.request.urlopen(req, timeout=self.write_timeout) as resp:
                     if resp.status in (200, 201):
                         return json.loads(resp.read().decode("utf-8"))
+                    sync_error = f"HTTP {resp.status}"
             except Exception as e:
-                logger.debug(f"Memora learn-outcome API write failed ({e}), using local fallback.")
+                sync_error = type(e).__name__
+                logger.warning(f"Memora learn-outcome API write failed ({sync_error}), using local fallback.")
 
         local = self._learn_locally(agent_name, task_name, status, error_clean, actions_clean, context_clean, domain)
-        return {**local, "status": "local_only" if local.get("status") == "success" else local.get("status"), "cloud": False}
+        return {**local, "status": "local_only" if local.get("status") == "success" else local.get("status"), "cloud": False, "sync_error": sync_error}
 
     def recall_experience(
         self,

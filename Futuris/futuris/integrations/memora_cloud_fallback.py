@@ -106,7 +106,10 @@ class MemoraClient:
             method="POST",
             payload={
                 "content_text": fact_text,
-                "memory_type": "semantic",
+                # TASK-MEM-008: Memora policy rejects direct SEMANTIC writes
+                # from agent identities (HTTP 403); peers store observations
+                # as EPISODIC, promotion is server-side and evidence-gated.
+                "memory_type": "episodic",
                 "source": f"agent:{agent_name.lower()}",
                 "confidence": 1.0,
                 "importance": importance,
