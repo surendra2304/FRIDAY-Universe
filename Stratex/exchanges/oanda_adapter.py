@@ -475,6 +475,35 @@ class OandaExchangeAdapter(BaseExchange):
         data = self._request("PUT", f"/accounts/{self.account_id}/trades/{trade_id}/close", json=body)
         return bool(data)
 
+    def get_closed_trade(self, trade_id: str) -> Optional[Dict[str, Any]]:
+        """Closed-trade record for measurement (TASK-STR-FWD-004).
+
+        The Phase-2 fill ledger must book a close from the broker's own
+        outcome — realized PL and average close price — never from a
+        candle reconstruction. Returns None while the trade is still
+        open or when the record is unavailable (callers retry on a later
+        scan; a close is never booked from a guess).
+        """
+        data = self._request("GET", f"/accounts/{self.account_id}/trades/{trade_id}")
+        if not data or "trade" not in data:
+            return None
+        t = data["trade"]
+        if str(t.get("state", "")).upper() != "CLOSED":
+            return None
+        try:
+            return {
+                "id": str(t.get("id", trade_id)),
+                "instrument": self.normalize_symbol(t.get("instrument", "")),
+                "units": float(t.get("initialUnits", 0) or 0),
+                "entry_price": float(t.get("price", 0) or 0),
+                "exit_price": float(t.get("averageClosePrice", 0) or 0),
+                "realized_pl": float(t.get("realizedPL", 0) or 0),
+                "open_time": t.get("openTime", ""),
+                "close_time": t.get("closeTime", ""),
+            }
+        except (KeyError, ValueError):
+            return None
+
     def update_trade_stop_loss(self, symbol: str, trade_id: str, price: float) -> bool:
         """Move a trade's stop loss (e.g. to breakeven) via a trade-dependent
         STOP_LOSS order bound to the trade. This creates an order, so the
