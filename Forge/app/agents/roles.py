@@ -1252,6 +1252,62 @@ class TesterRole(BaseAgent):
             provider=provider,
         )
 
+    #: Bounds for the implementation bundle handed to test synthesis:
+    #: per-file cap and total cap keep the generate-tests payload sane
+    #: on multi-module projects while covering the modules under test.
+    _SOURCE_BUNDLE_FILE_CAP = 12000
+    _SOURCE_BUNDLE_TOTAL_CAP = 48000
+
+    def _implementation_sources(self, task_id: str, engine) -> str:
+        """Concatenate the project's implementation sources for test synthesis.
+
+        TASK-FRG-003 (production tasks task21515112026072807 and
+        task22115112026075654): the tester used to hand Inference's
+        generate-tests ONLY main.py, so the generated suite asserted an
+        imagined contract for every other module -- exact error-message
+        strings that exist nowhere in the code, a private helper
+        (``_validate_kelvin``) the implementation never had, lowercase
+        rejection the implementation deliberately does not perform, and
+        import-error handling the entry point never wrote. All 7 failing
+        generated tests across the two builds were that single seam; in
+        both builds the code satisfied the stated goal. Ground the test
+        author in ALL implementation sources (test files excluded),
+        each under its own ``### File:`` header, bounded per file and
+        in total. Falls back to the historical main.py-only read when
+        the workspace cannot be listed.
+        """
+        try:
+            candidates = engine.fs.search_files(
+                task_id=task_id, pattern="*.py", role=self.role_name
+            )
+        except Exception:
+            candidates = []
+        parts: list[str] = []
+        total = 0
+        for rel_path in sorted(candidates):
+            name = rel_path.rsplit("/", 1)[-1]
+            if name.startswith("test_") or name == "conftest.py":
+                continue
+            if "__pycache__" in rel_path.split("/"):
+                continue
+            try:
+                content = engine.fs.read_file(task_id, rel_path, role=self.role_name)
+            except Exception:
+                continue
+            if len(content) > self._SOURCE_BUNDLE_FILE_CAP:
+                content = content[: self._SOURCE_BUNDLE_FILE_CAP]
+            block = f"### File: {rel_path}\n{content}"
+            if parts and total + len(block) > self._SOURCE_BUNDLE_TOTAL_CAP:
+                break
+            parts.append(block)
+            total += len(block)
+        if parts:
+            return "\n\n".join(parts)
+        try:
+            return engine.fs.read_file(task_id, "main.py", role=self.role_name)
+        except Exception:
+            return ""
+
     async def execute_step(
         self, task_id: str, node_title: str, context: dict[str, Any], engine
     ) -> dict[str, Any]:
@@ -1293,12 +1349,9 @@ class TesterRole(BaseAgent):
 
                 ai_client = get_ai_universe_client()
 
-                # Try generating tests from existing main.py / implementation files
-                main_code = ""
-                try:
-                    main_code = engine.fs.read_file(task_id, "main.py", role=self.role_name)
-                except Exception:
-                    pass
+                # TASK-FRG-003: generate tests from ALL implementation
+                # sources, not main.py alone (see _implementation_sources).
+                main_code = self._implementation_sources(task_id, engine)
 
                 if main_code:
                     test_res = await ai_client.generate_tests(
@@ -1340,10 +1393,18 @@ class TesterRole(BaseAgent):
                 logger.warning(f"[Task {task_id}] {synthesis_note}")
 
             if not test_synthesized:
+                # TASK-FRG-003: the fallback author gets the same grounded
+                # implementation bundle as the Inference path, plus the
+                # instruction that follows from the two production builds
+                # it indicted: assert only what the code actually does.
                 prompt = (
                     f"Objective: {goal}\n"
                     f"QA Task: {node_title}\n"
                     f"{workspace_summary}\n\n"
+                    f"Implementation sources -- ground every assertion in "
+                    f"this code; do not invent behaviour, error-message "
+                    f"text, or helper functions it does not contain:\n"
+                    f"{self._implementation_sources(task_id, engine)}\n\n"
                     f"Write comprehensive {test_framework} unit tests for the existing application.\n"
                     f"Format tests as:\n### File: test_main.py\n```python\n...\n```"
                 )

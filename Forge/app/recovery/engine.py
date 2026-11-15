@@ -95,6 +95,13 @@ class RecoveryEngine:
                                 works with every AI endpoint unreachable.
           3. ``agent``        -- the Debugger agent reads the real failure
                                 evidence and writes the fix itself.
+          4. ``regenerate``   -- recreate a module that exists but does not
+                                parse (TASK-FRG-003). Every earlier route
+                                works from the file's existing text; an
+                                unparseable file offers no sound basis for a
+                                patch, so as a last resort it is regenerated
+                                from the goal and spec through the create
+                                route's channel and gates.
 
         A route is only abandoned once it has actually been tried. Before this
         ladder existed, the first route to return *any* patch won and the engine
@@ -119,16 +126,20 @@ class RecoveryEngine:
         last_patch: RepairPatch | None = None
         routes_tried: list[str] = []
 
-        for route in ("create", "synthesis", "deterministic", "agent"):
+        for route in ("create", "synthesis", "deterministic", "agent", "regenerate"):
             if route == "create":
                 patch = await self._create_missing_module_patch(task_id, diagnosis)
             elif route == "synthesis":
                 patch = await self._synthesize_patch_for_diagnosis(task_id, diagnosis)
             elif route == "deterministic":
                 patch = self._deterministic_syntax_repair(task_id, target_file, diagnosis)
-            else:
+            elif route == "agent":
                 patch = await self._escalate_repair_to_agent(
                     task_id, diagnosis, failed_evidence
+                )
+            else:
+                patch = await self._regenerate_unparseable_module_patch(
+                    task_id, diagnosis, target_file
                 )
 
             if not patch:
@@ -426,6 +437,124 @@ class RecoveryEngine:
                 "absent from the workspace."
             ),
             patch_type="create",
+        )
+
+    async def _regenerate_unparseable_module_patch(
+        self, task_id: str, diagnosis: FailureDiagnosis, target_file: str | None
+    ) -> RepairPatch | None:
+        """Regenerate a project module that exists but does not parse.
+
+        TASK-FRG-003 (production task22515112026084702): a module damaged
+        mid-build into a syntactically invalid state (an appended broken
+        ``def``) failed every route -- the deterministic rescue only
+        repairs the escape-corrupted shape, and the patch/agent routes
+        work by matching snippets of the existing text, which an
+        unparseable file cannot reliably offer. The build failed
+        honestly, but the capability gap is real: the create route can
+        author a missing module from the goal and spec, and a module
+        that cannot be parsed is, for repair purposes, missing. This
+        route is the ladder's last resort and fires only when ALL of
+        these hold: the diagnosis is syntax_error; the target file is a
+        project .py file that exists; its current content does not
+        compile (verified directly, not inferred from the evidence);
+        and the task goal or the architecture spec names the file as
+        part of the project. Content comes from the same Inference code
+        channel and 0.70 confidence bar as the create route, parsed by
+        the same ast-validating extractor, compile-gated here and again
+        by the ladder before the rewrite is applied -- a bad generation
+        changes nothing, and the re-verification after recovery still
+        decides the task's fate.
+        """
+        if diagnosis.failure_class != FailureClass.SYNTAX_ERROR:
+            return None
+        if not target_file or not target_file.endswith(".py"):
+            return None
+        try:
+            existing = self.exec_engine.fs.search_files(
+                task_id, pattern="*.py", role="debugger"
+            )
+        except Exception:
+            return None
+        if not any(
+            p == target_file or p.endswith("/" + target_file) for p in existing
+        ):
+            return None
+        try:
+            current = self.exec_engine.fs.read_file(
+                task_id, target_file, role="debugger"
+            )
+        except Exception:
+            return None
+        try:
+            compile(current, target_file, "exec")
+            return None  # Parses after all: not this route's failure shape.
+        except (SyntaxError, ValueError):
+            pass
+
+        goal, requirements = await self._load_task_objective(task_id)
+        spec_text = ""
+        try:
+            spec_text = self.exec_engine.fs.read_file(
+                task_id, "docs/ARCHITECTURE_SPEC.md", role="debugger"
+            )
+        except Exception:
+            spec_text = ""
+        if target_file not in goal and target_file not in spec_text:
+            return None
+
+        try:
+            from app.agents.parser import LLMResponseParser
+            from app.integrations.ai_universe_client import get_ai_universe_client
+
+            client = get_ai_universe_client()
+            reply = await client.generate_code(
+                filename=target_file,
+                goal=goal or f"Recreate the project module {target_file}",
+                file_type="python",
+                requirements=[
+                    *requirements,
+                    f"The project module {target_file} exists but is "
+                    "syntactically invalid and cannot be repaired by patch. "
+                    "Recreate the complete module from scratch so it parses "
+                    "and the documented behaviour works; the other project "
+                    "files import from it.",
+                ],
+                context={
+                    "project_goal": goal,
+                    "stage": "recovery_regenerate_unparseable_module",
+                    "failure_evidence": diagnosis.error_message[:2000],
+                },
+            )
+        except Exception as exc:
+            logger.warning(
+                f"[Task {task_id}] Unparseable-module regeneration for "
+                f"'{target_file}' failed at the provider call: {type(exc).__name__}"
+            )
+            return None
+        if not reply or reply.confidence < 0.70 or not reply.answer:
+            return None
+        files = LLMResponseParser.extract_files(reply.answer, default_filename=target_file)
+        if len(files) != 1 or files[0].relative_path != target_file:
+            return None
+        content = files[0].content
+        try:
+            compile(content, target_file, "exec")
+        except (SyntaxError, ValueError):
+            return None
+        logger.info(
+            f"[Task {task_id}] Recovery regenerating unparseable project "
+            f"module '{target_file}'"
+        )
+        return RepairPatch(
+            target_file=target_file,
+            original_snippet=None,
+            replacement_snippet=content,
+            explanation=(
+                f"Regenerated {target_file}: the file existed but was "
+                "syntactically invalid, so no patch route could repair it; "
+                "recreated from the task goal and architecture spec."
+            ),
+            patch_type="rewrite",
         )
 
     def _deterministic_syntax_repair(

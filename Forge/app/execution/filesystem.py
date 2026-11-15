@@ -147,6 +147,82 @@ class FilesystemTool:
             return False
         return any(isinstance(stmt, ast.Raise) for stmt in tree.body)
 
+    @staticmethod
+    def _impersonated_modules(content: str, relative_path: str) -> list[str]:
+        """Module names this file would impersonate via ``sys.modules``.
+
+        TASK-FRG-003 (production task22215112026080942): a build whose
+        synthesis never created store.py or pricing.py still passed its
+        final verification battery, because the generated models.py
+        defined stand-in implementations and registered them as
+        ``sys.modules["store"]`` and ``sys.modules["pricing"]`` at
+        import time -- the generated tests exercised phantom modules
+        while the delivered project lacked the files it imports. A
+        module may register ITSELF (key == its own module name); a
+        literal registration of any OTHER module name is impersonation
+        and is refused at the write boundary, so the missing file must
+        be created for real (the recovery create route does exactly
+        that) instead of being faked inside a sibling module. Only
+        literal string keys are judged; computed keys cannot be proven
+        to impersonate and are left alone.
+        """
+        try:
+            tree = ast.parse(content)
+        except (SyntaxError, ValueError):
+            return []
+        stem = Path(relative_path).stem
+        own_names = {stem}
+        if stem == "__init__":
+            own_names.add(Path(relative_path).parent.name)
+
+        def _is_sys_modules(node: ast.AST) -> bool:
+            return (
+                isinstance(node, ast.Attribute)
+                and node.attr == "modules"
+                and isinstance(node.value, ast.Name)
+                and node.value.id == "sys"
+            )
+
+        def _literal_key(node: ast.AST) -> str | None:
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                return node.value
+            return None
+
+        impersonated: list[str] = []
+        for node in ast.walk(tree):
+            keys: list[str] = []
+            if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                for target in targets:
+                    if isinstance(target, ast.Subscript) and _is_sys_modules(target.value):
+                        key = _literal_key(target.slice)
+                        if key is not None:
+                            keys.append(key)
+            elif (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and _is_sys_modules(node.func.value)
+            ):
+                if node.func.attr in {"setdefault", "__setitem__"} and node.args:
+                    key = _literal_key(node.args[0])
+                    if key is not None:
+                        keys.append(key)
+                elif node.func.attr == "update":
+                    for arg in node.args:
+                        if isinstance(arg, ast.Dict):
+                            for dict_key in arg.keys:
+                                if dict_key is not None:
+                                    key = _literal_key(dict_key)
+                                    if key is not None:
+                                        keys.append(key)
+                    for keyword in node.keywords:
+                        if keyword.arg is not None:
+                            keys.append(keyword.arg)
+            for key in keys:
+                if key not in own_names and key not in impersonated:
+                    impersonated.append(key)
+        return impersonated
+
     def _guard_python_content(
         self, relative_path: str, content: str, task_id: str | None = None
     ) -> str:
@@ -179,6 +255,14 @@ class FilesystemTool:
                     f"Refusing to write '{relative_path}': the module "
                     "unconditionally raises at import time (top-level raise), "
                     "so it could never be imported."
+                )
+            impersonated = self._impersonated_modules(content, relative_path)
+            if impersonated:
+                raise ValueError(
+                    f"Refusing to write '{relative_path}': it registers "
+                    f"stand-in module(s) {impersonated} in sys.modules "
+                    "instead of those modules existing as real files; a "
+                    "delivered project must contain the modules it imports."
                 )
             repaired = self._repair_sibling_paths(content, task_id, relative_path)
             if repaired is not None:
@@ -244,6 +328,22 @@ class FilesystemTool:
             raise ValueError(f"Target snippet not found in '{relative_path}'")
 
         modified = original.replace(target_content, replacement_content, 1)
+        if relative_path.endswith(".py"):
+            # Same write-boundary rule as create_file (TASK-FRG-003): an
+            # edit must not newly introduce sys.modules impersonation of
+            # another module. Edits to a file that already impersonates
+            # stay allowed so it can be repaired.
+            new_phantoms = [
+                name
+                for name in self._impersonated_modules(modified, relative_path)
+                if name not in self._impersonated_modules(original, relative_path)
+            ]
+            if new_phantoms:
+                raise ValueError(
+                    f"Refusing edit to '{relative_path}': it would register "
+                    f"stand-in module(s) {new_phantoms} in sys.modules "
+                    "instead of those modules existing as real files."
+                )
         if (
             relative_path.endswith(".py")
             and self._has_top_level_raise(modified)
