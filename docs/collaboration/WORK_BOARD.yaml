@@ -7727,6 +7727,291 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Inventory: two prior crews died without reports (original: DB timeout; first finisher: silent); code+tests found uncommitted in the clone worktree on branch claude/task-int-004-source-diversity at main a5612c63; no sampled production data exists in the workspace; first finisher's analysis delivery outputs are 0 bytes."
     blockers: []
     next_action: "Coordinator/merge-runner: commit the five PR files from ~/workspace/int-004/repo worktree (branch claude/task-int-004-source-diversity; sandbox git index is not writable from the finisher's session), open the PR with ~/workspace/int-004/pr_body.md, dedupe the TASK-INT-004 claim on issue #35 (original claim POST state unverified), post ~/workspace/int-004/completion_comment.md, merge after CI. Post-merge: deploy, confirm a live brief result carries source_diversity, then run the preserved server-side analysis to replace the audit's UNVERIFIED empirical section with measured production figures."
+  - id: TASK-FRG-005
+    title: "Forge self-repair stress test - measured convergence + loop hardening (evidence refresh, indentation repair, import targeting)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    files:
+      - Forge/app/core/orchestrator.py
+      - Forge/app/recovery/syntax_repair.py
+      - Forge/app/recovery/classifier.py
+      - Forge/app/recovery/engine.py
+      - Forge/tests/unit/test_frg005_repair_loop.py
+    next_action: "Server-side re-run of the planted-defect battery with the live Inference channel (packaged harness) - sandbox run had the model channel unreachable (401), so model-backed repair classes are reported not-judged; several probe output JSONs are 0 bytes, battery evidence is partial. Then flip to VERIFIED with the full results."
+  - id: "TASK-MEM-004"
+    title: "Memora dedup + contradiction hygiene — production store scan (dry-run) + guarded cleanup pass"
+    status: IN_REVIEW
+    owner: "muse_ai"
+    branch: "claude/task-mem-004-dedup-hygiene"
+    pr: null
+    merge_note: "Wave 5 (Memora crew). Implemented + tested; NOT merged, NOT deployed, and the cleanup was NOT run against production — production apply waits for coordinator confirmation per the tasking. DRY-RUN (read-only, SELECT-only via Memora's own ORM on Server 1, 2026-11-15 ~13:5x IST; the store is live, a second scan ~30 min later counted 419 live vs 413): 441 total records (active 413, deleted 28; zero candidate/verified/superseded/archived — the lifecycle machinery has never been used in production). Live = 413 (episodic 410, experience 3). EXACT DUPLICATES: 13 groups / 44 records / 31 excess records (7.5% of live) — friday/general 11 groups/29 excess (repeated FRIDAY task-instruction records, Nov 2-4; largest group 10 copies of a 'Store the research findings…' record), forge/private 2 groups/2 excess. NEAR DUPLICATES (token Jaccard >= 0.85, the pipeline threshold): 32 pairs / 31 records — review class only. DIRECT CONTRADICTIONS (repo's conservative ContradictionDetector): 0 pairs; corroborated by 0 stored write-time contradiction_candidate flags and 0 contradicts/supersedes relationship rows. Only pointer inconsistency: 2 DELETED 2026-11-13 test-probe rows with superseded_by_id set (targets also deleted) — cosmetic, dead rows. Winner rule (module docstring): VERIFIED first, then SupersessionEngine evidence, then last_verified_at, then newest created_at — 'newest verified value' reconciled with the codebase's never-recency-alone doctrine. Apply semantics: losers SUPERSEDED via MemoryLifecycleEngine (never deleted), superseded_by_id set, provenance preserved + annotated on both records, AuditLog row per action, one transaction per action, idempotent; near-dups applied only with explicit --include-near; CLI --apply additionally requires MEMORA_HYGIENE_APPLY=1."
+    milestone: "Wave 5 — Memora hygiene"
+    files:
+      - "Memora/core/memory/hygiene.py"
+      - "Memora/scripts/memory_hygiene.py"
+      - "Memora/tests/test_memory_hygiene.py"
+      - "Memora/docs/memory_hygiene_dry_run_2026-11-15.md"
+    acceptance:
+      - "Production store duplicates and contradictions quantified with evidence (dry-run report in Memora/docs/memory_hygiene_dry_run_2026-11-15.md)."
+      - "Guarded dedup/merge pass keeps the newest verified value, preserves provenance, never deletes; dry-run by default with an env-gated apply."
+      - "Cleanup NOT run against production until the coordinator confirms."
+    evidence:
+      - "Dry-run scan (read-only) 2026-11-15: 13 exact-dup groups / 31 excess / 32 near-dup pairs / 0 contradiction pairs; samples with record ids in the dry-run report."
+      - "Tests: tests/test_memory_hygiene.py 10/10 green; neighbouring suites test_contradiction_detector.py green with it (20/20 combined); CLI exercised end-to-end on a seeded throwaway SQLite store (dry-run mutates nothing; unarmed --apply refuses; armed apply superseded 2, skipped near-dup without opt-in, audit rows written, provenance intact)."
+    blockers: []
+    next_action: "Coordinator: merge this PR, then decide the production apply (recommended first run: exact duplicates only — 31 supersessions, reversible; near-dups stay review-only). Crew does not merge and does not apply to production."
+  - id: TASK-COR-006
+    title: "Cortex failure-recovery patterns — sub-task killed mid-plan in each distinct way (timeout, error return, empty result, partial result): detection, retry/replan, and never reporting overall success on a silently failed step"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-006-failure-recovery
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:30:00+05:30"
+    updated_at: "2026-11-15T15:05:00+05:30"
+    files:
+      - "Cortex/packages/core/src/cortex_core/orchestrator.py"
+      - "Cortex/apps/api/src/cortex_api/friday_router.py"
+      - "Cortex/apps/worker/src/cortex_worker/main.py"
+      - "Cortex/tests/unit/test_failure_recovery_cor006.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891419799"
+    defect: "Staging harness (real Orchestrator.run_cognitive_loop, scripted 3-step plan on a real ToolBus, middle step killed) proved every silent-failure mode: (1) TIMEOUT — no timeout existed anywhere on the execute path; a hung step hung the plan forever (killed by the harness guard at 20s, no audit written). (2) ERROR RETURN (exception) — the step's exception propagated and killed the whole loop: completed steps went unreported and no audit record was written. (3) ERROR-STATUS RETURN, (4) EMPTY RESULT, (5) NONE RESULT — all counted as executed successes; the loop returned overall status 'success'. Self-contradiction on healthy runs: phase 7.Verify read 'failed' and the audit recorded verification='failed' (the check demanded a provider 'verified' the bus almost never reports) while the headline status said 'success' regardless. Failed steps were also recorded into strategy memory as outcomes. The FRIDAY command endpoint hardcoded status='success' whatever the loop returned, and the worker ACKed any loop return as delivered. Governed-envelope path: a FAILED ExecutionRecord was still measured — measure() defaults observed outcomes to expected ones — so the response claimed 'Achieved lift: 5.0%', goal_met=true for work that never applied (its state did downgrade to PARTIALLY_COMPLETED via Rule 14). Structural finding (NOT fixed here): GovernedOperationsEngine.execute() never calls the tool_bus it is handed (harness probe: exploding bus, 0 calls) yet returns EXECUTED / REAL_EXECUTION with side_effects_applied=1 — tool failure on that path is structurally invisible; needs its own follow-up task to wire the bus (async engine) or reclassify."
+    acceptance:
+      - "Per-failure-mode behaviour table (before/after) measured by a staging harness driving the real cognitive loop — see the PR body and the completion comment on issue #35."
+      - "Timeout: per-step hard bound (Orchestrator step_timeout_seconds, default 30s); a hung step fails as 'timeout' and the plan completes with the remaining steps."
+      - "Exception: caught per step, recorded in step_outcomes and the audit; remaining steps still run; overall status 'partial' (or 'failed' when no step succeeded)."
+      - "Error-status returns, empty results, None results, and bus 'blocked'/'skipped' envelopes are classified as step failures — never counted as executed successes."
+      - "Bounded retry: exactly one retry for READ-only tools on exception/timeout, with a fresh idempotency key (the bus burns the original key pre-execution, so reuse would read as 'skipped'); side-effecting tools are never blindly retried."
+      - "Verification grounded in step outcomes; strategy-memory outcome learning only from successful steps; FRIDAY command response propagates the loop's status; the worker treats a 'failed' loop as an error (redelivery/DLQ path), 'partial' as handled-and-recorded."
+      - "Governed envelope: FAILED/BLOCKED executions are no longer measured; the summary states the failure plainly and measurement is null."
+      - "Regression tests: Cortex/tests/unit/test_failure_recovery_cor006.py — 11 tests, all pass; every one of the silent-success assertions fails on clean main by construction (pre-fix loop returned 'success'/raised/hung on these inputs)."
+    evidence:
+      - "Harness BEFORE (pristine 337a1e3f content, governed_operations.py verified byte-identical to fresh main 1eebae08): control success but verify='failed'/audit verification='failed'; timeout hung (20s guard kill, 0 audits); exception raised RuntimeError out of the loop (0 audits); error-status/empty/None all returned status 'success' with executed_actions=3."
+      - "Harness AFTER (this branch): control success + verify 'verified' + audit 'passed'; timeout returns in ~4s at a 2s step bound (2 attempts) as partial; exception partial with step_outcomes recorded and audit written; error-status/empty/None partial; all-steps-raise returns status 'failed', executed_actions=0."
+      - "Governed probe AFTER: FAILED record -> summary 'Cortex FAILED to execute ... No measurement was taken.', measurement null, state PARTIALLY_COMPLETED (Rule 14). Probe G1 (engine never calls its tool_bus) unchanged — documented as the structural finding above."
+      - "Tests: new suite 11/11 pass. Pre-change targeted baseline (orchestrator collaboration + agents, worker delivery + DLQ/PEL, tool execution, friday task routing, friday integration, approval decisions, full cognitive loop) = 62/62 pass; in the post-change FULL Cortex suite run (548 passed) none of those 62 appears in the failure set. Full-suite residue (25 failed / 76 errors) classified by pristine head-to-head: every named FAILED suspect (route authorization, connector health, peer-integration x2, sentinel client contract) FAILS IDENTICALLY on pristine code = pre-existing; the ERROR clusters and the fresh-boot/persistence failures PASS on pristine in a healthy window = environmental (sqlite temp-DB fixtures during the sandbox /tmp+tempfile outage that hit the fixed-code run). Zero regressions attributable to this diff."
+    blockers: []
+    next_action: "Coordinator: review + merge the PR; flip this entry to VERIFIED after a post-merge targeted-suite run. Follow-up task to raise separately: wire GovernedOperationsEngine.execute() to the tool_bus it is handed (or reclassify its snapshot mutations) so a tool failure on the governed path can exist at all."
+  - id: TASK-COR-005
+    title: "Cortex plan-quality review — grade produced plans against what actually happened; fix the planner"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-005
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:40:00+05:30"
+    updated_at: "2026-11-15T15:05:00+05:30"
+    files:
+      - "Cortex/apps/api/src/cortex_api/cognitive_planner.py"
+      - "Cortex/apps/api/src/cortex_api/main.py"
+      - "Cortex/tests/unit/test_cognitive_planner.py"
+      - "Cortex/tests/unit/test_cognitive_reasoning.py"
+      - "Cortex/tests/e2e/test_e2e_tier1.py"
+      - "Cortex/docs/PLAN_QUALITY_REVIEW_COR005.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891503838"
+    defect: "Owner Wave-5 order 2026-11-15 ~13:16 IST (5 crews per agent): Cortex crew 5 — plan-quality review. Cortex's /plan and /decompose endpoints returned one fixed 3-step template for every goal (only the goal string was interpolated), with invented durations, no approval/scope/measurement steps, and zero production usage (journal: 0 calls in the current run; no caller in the repo). Plans could never be graded against outcomes: no provenance, no per-step expected outcome."
+    acceptance:
+      - "Sample of real plans graded against what actually happened (production journal + governed executor code): 6 samples in Cortex/docs/PLAN_QUALITY_REVIEW_COR005.md — 0/6 matched reality; failure patterns P1-P6 named (goal-blind template, dead steps, missing gates, invented precision, decompose contract breach, ungradeable output)."
+      - "Planner improvements shipped via isolated-branch PR from fresh main: new cortex_api/cognitive_planner.py (deterministic, executor-aligned phases, approval/Sentinel gates in executor order, honest plannable=false degradation, labelled phase budgets, per-step expected_outcome + executor_state); /plan and /decompose rewired to it."
+      - "Tests: new tests/unit/test_cognitive_planner.py (15 tests; 14 pass + 1 environment-skip in the crew sandbox, mirror-vs-source verified programmatically 28/28); two template-locking assertions updated with disclosure (test_cognitive_reasoning.py decompose opener, test_e2e_tier1.py F8.3 capability trio)."
+    evidence:
+      - "Production journal (Server 2, Cortex.service run from 2026-11-15 04:04 IST, 8,600 lines): POST /plan, /v1/plan, /decompose, /v1/decompose, /execute, /friday/task = 0 calls each; POST /v1/task/execute = 179 calls, all HTTP 403 (gate identity not in the access log — caller/auth thread, reported as context, not fixed here)."
+      - "Sampler executed the shipped step/subtask literals verbatim for 6 goals: identical step sets for a read-only health check, a high-impact billing change, and a goal Cortex cannot serve (which still returned status 'planned'). Decompose returned 3 subtasks at max_subtasks=10 and a decapitated 1-subtask chain at max_subtasks=1."
+      - "New planner smoke-verified on the same 6 samples: recommend/execute/read-only flows match the governed executor's phases and ordering; unresolvable goal returns plannable=false; read_only constraint truncates mutation steps; production context adds the Sentinel gate; pre-approved context skips the approval step."
+    blockers: []
+    next_action: "Coordinator: review + merge the TASK-COR-005 PR (code + review doc + tests), run the Cortex test suite in CI, then flip this entry to VERIFIED. Follow-ups noted in the review doc: multi-operation goal splitting; a measured timing baseline for phase budgets; the 179x403 caller/auth thread (not this task)."
+  - id: TASK-COR-007
+    title: "Cortex owner-intent interpretation test set — ambiguous shorthand owner requests vs actual decomposition behaviour; worst misreads fixed"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-007
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:16:00+05:30"
+    updated_at: "2026-11-15T15:15:00+05:30"
+    files:
+      - "Cortex/apps/api/src/cortex_api/cognitive_planner.py"
+      - "Cortex/tests/unit/test_owner_intent.py"
+      - "Cortex/docs/OWNER_INTENT_REVIEW_COR007.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: ""
+    defect: "Owner Wave-5 order 2026-11-15 ~13:16 IST (5 crews per agent): Cortex crew 7 — owner-intent interpretation test set. Scored against the real planner code, Cortex's decomposition misread the owner in the worst direction on the cases that matter most: the pre-COR-005 template planner (still what the old Server-2 checkout serves) scores 0/36 — one fixed execution-shaped decomposition for every goal, no refusal path, no gates. COR-005's cognitive_planner (not yet on main) scores 27/36 but has 6 dangerous misreads in its goal-keyword layer: 'roll back the last deploy' resolved to page_deploy (keyword order: deploy before roll back — intent inversion); 'publish the video' resolved to the website's content_publish (VyralX's domain claimed by Cortex); and negations fired the forbidden action ('don't publish anything yet' -> content_publish, 'stop the email campaign' -> email_dispatch, 'never send email to them again' -> email_dispatch, 'do not change the price' -> pricing_change)."
+    acceptance:
+      - "36-case owner-intent test set (7 categories: clear shorthand, ambiguous, out-of-domain, negations, typos/truncation, multi-intent bundles, high-impact) written before scoring, shipped as Cortex/tests/unit/test_owner_intent.py (41 tests incl. approval-gate assertions; importorskip until the planner lands with COR-005)."
+      - "Scoring executed against the real code of both planner generations (template simulated from main.py's constant return; COR-005 planner executed directly): template 0/36 (17 FAIL, 19 WORST); COR-005 planner 23 PASS / 4 ACCEPTABLE / 3 FAIL / 6 WORST. Full per-case table in Cortex/docs/OWNER_INTENT_REVIEW_COR007.md."
+      - "Worst misinterpretations fixed in the keyword layer (~25 lines, planner file carried in this PR because the module is not on main yet — COR-005's module, sha 9cdc7b14, plus only the COR-007 hunks): negation guard (don't/do not/never/stop suppress keyword resolution), video-context guard (video/youtube/short/reel never resolves to a site op), rollback precedence over deploy/publish, and owner shorthand keywords (site health, undo, change all the prices). Re-scored: 28 PASS / 5 ACCEPTABLE / 0 FAIL, dangerous misreads 0; pytest 41/41 on the patched planner, 10 failures on the unpatched planner; COR-005's own suite on the patched planner 14 passed + 1 skipped, identical to baseline."
+    evidence:
+      - "Working papers + scorer + per-planner score JSONs preserved in the crew workspace (~/workspace/cor-007/: test_set.py, scorer.py, scores_template.json, scores_cor005.json, scores_patched.json); the original COR-007 crew died on a database pool timeout after extracting FRIDAY's keyword tables (keyword_tables.txt) — a finisher crew completed the task; no prior COR-007 claim or board entry was found (board id set diffed: 168 ids, TASK-COR-007 absent)."
+      - "Reported, not forced (in the review doc): rollback/cancel carry no approval-gate step in either planner generation (executor classes them DIRECT) — flagged as an executor-design question; multi-intent bundles lose intents silently (single-op resolver); goal-text 'production' does not trigger the Sentinel gate (context-driven only)."
+      - "Scoring ran against planner code executed locally, not the live Server-2 HTTP service (its checkout predates both planner generations; COR-005's journal review found zero production calls to /plan and /decompose)."
+    blockers: []
+    next_action: "Coordinator: merge TASK-COR-005's PR first (it lands cognitive_planner.py + the /plan//decompose rewiring), then this PR (its planner file is COR-005's module plus the COR-007 keyword hunks — if COR-005 lands first the file conflicts trivially and the COR-007 version is the superset), then flip this entry to VERIFIED. Follow-ups in the review doc: approval gate for rollback/cancel (executor design), multi-operation goal splitting, goal-text production -> Sentinel gate."
+  - id: TASK-VYR-007
+    title: "VyralX script-quality system: rubric + hook library (3 confirmed lanes) + pre-production script scorer, wired into the scriptwriter (content.py) as a default-off lane integration"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-vyr-007
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T14:25:00+05:30"
+    updated_at: "2026-11-15T14:25:00+05:30"
+    files:
+      - "VyralX/app/services/script_quality.py"
+      - "VyralX/app/services/script_quality_data.json"
+      - "VyralX/app/services/content.py"
+      - "VyralX/tests/test_script_quality.py"
+      - "VyralX/tests/script_quality_samples.py"
+      - "VyralX/scripts/run_script_quality_samples.py"
+      - "VyralX/docs/SCRIPT_QUALITY.md"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891957110"
+    defect: "Owner-confirmed VyralX direction 2026-11-15: three lanes (space & science / history & facts / tech & AI explainers), transformative original-commentary production by VyralX's own pipeline, and no template-identical volume (YouTube inauthentic-content risk). The scriptwriter (content.py -> Inference) had NO rubric, NO lane hook library, NO format rotation and NO quality gate: scripts went to production ungraded, which is how the old autopilot shipped weak, templated output. This task builds the missing quality system as data/config inside VyralX plus a deterministic scorer, and wires it into the scriptwriter."
+    acceptance:
+      - "Library as data/config (script_quality_data.json): 3 lanes with signal vocabulary, lane bans and source types; 10 hook formulas with per-lane examples and a 3-second spoken-word budget (5-8 ideal / 10 soft / 12 hard at 2.6 wps); 3 rotating formats (one-fact / Top-5 / story) with beat ranges, structures and rules; escalation markers and 5 payoff patterns; banned global terms (financial advice, deception framing, throat-clearing openers); rubric weights summing to 100."
+      - "Rotation (choose_rotation): least-recently-used format + hook formula per lane from production history; consecutive scripts never share a format+formula pairing; formats cycle before repeating (unit-tested)."
+      - "Scorer (score_script / score_content_pack): six weighted dimensions (hook 25, escalation 20, payoff 15, format fit 15, lane fit 10, originality 15) with per-dimension notes; hard gates for banned content, hook > 12 words, estimated duration > 75 s, 4-gram template repeat >= 0.5 vs recent scripts, empty script; verdicts PASS >= 75 / REVISE 55-74 / REJECT < 55 or any gate."
+      - "Scriptwriter integration: content.py generate_content_pack gains optional lane/script_format/recent_scripts (default off, historical prompt byte-identical when unset); with a lane, the rubric brief is injected into the prompt + context and the finished pack is stamped script_brief + script_quality (advisory; editor review unchanged; grading failure can never block generation)."
+      - "Sample evidence: 8 sample scripts scored (docs/SCRIPT_QUALITY.md) - 4 good PASS (77.2 / 84.0 / 80.2 / 88.0), 4 flawed REJECT (old-autopilot-style Top-5 at 48.6; template repeat gated at 4-gram 0.73; NASA-conspiracy framing gated banned_content; 21-word hook gated hook_too_long)."
+      - "Tests: 25 new tests in tests/test_script_quality.py all pass; regression subset (test_viral_hooks_and_distribution.py + test_agent_services.py incl. the content-generation contract test) 49 passed on the modified tree and 49 passed on the pristine tree - zero delta. Four DB-backed test files error at collection in the crew sandbox on BOTH trees (environmental, pre-existing)."
+    evidence:
+      - "Scorer is deterministic and standard-library only (no new dependency on the 956 MB hosts); duration estimated from word count at 2.6 wps - VYR-003's measured per-beat timings remain the render authority."
+      - "Originality uses word 4-gram containment plus a beat-shape structural fingerprint against caller-supplied recent results (score_script results feed straight back as history); with no history, originality is graded on rotation only (9/15) and says so in its notes."
+      - "Delivery disclosure: this crew's sandbox cannot fetch the full ~627 KB WORK_BOARD.yaml through the bridge (responses elide past ~30 KB), so per the board-hazard rule this PR does NOT touch the board; this entry was supplied verbatim in the task's completion comment on issue #35 for the coordinator to apply from a fresh full clone."
+    blockers: []
+    next_action: "Coordinator: review + merge the PR, apply this board entry, flip to VERIFIED after the usual fresh-main board diff. Follow-ups (not in this task): feed real production history (score results) into the autopilot's recent_scripts so the anti-template check runs on live data; consider making a REJECT verdict regenerate automatically in the pipeline."
+  - id: TASK-FRD-003
+    title: "FRIDAY chat latency profiling — serial-stage map, parallel Memora context legs, per-stage latency metadata"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/src/friday/agent/agent.py"
+      - "FRIDAY/src/friday/agent/mixins/cognitive.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_frd003_chat_latency.py"
+      - "docs/verification/FRD003_CHAT_LATENCY.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891640114"
+    defect: "FRIDAY chat answers are slow end to end (production journal 2026-11-15: 29 cognitive turns, median 20.47s, max 46.47s; a deterministic fast-path probe took 5.53s end to end with only 1.38s inside process_message). Code-evidenced serial waste: execute_complex_task ran two independent Memora reads (build_context_block, 15s timeout; build_self_upgrade_context, 3.5s timeout) strictly serially before the first LLM call; process_message adds a bounded intent-tier call (2.5s) and a local recall in series; execute_command awaits two durable Oracle history writes per turn. Worst-case pre-LLM serial waiting 21s. No per-stage timing existed anywhere on the chat path, so none of this was attributable from production data."
+    acceptance:
+      - "Live profile recorded (docs/verification/FRD003_CHAT_LATENCY.md): production turn-duration distribution, a timed fast-path probe split inside/outside process_message, and the full code-evidenced serial map; probes that the loaded bridge dropped are reported as not captured, never estimated."
+      - "Memora context legs run concurrently with byte-identical block content and prompt ordering; per-leg fail-open preserved (one leg failing yields '' for that leg only); local before/after: serial legs 0.855s -> parallel wall 0.463s at 0.4s/leg harness scale."
+      - "Per-stage instrumentation on every chat response: metadata latency (Memora wall + per-leg seconds) from execute_complex_task, intent_classify_seconds + local_recall_seconds forwarded by process_message, and latency_ms {persist_begin_ms, dispatch_ms, persist_finalize_ms, total_ms} from execute_command."
+      - "Tests: new test_frd003_chat_latency.py 3/3 pass; regression batches 60 passed (rel027/intent/rel039/memora-hardening/rel022) and 64 passed + 1 pre-existing failure (test_agent_multi_turn_context_retention, fails identically on pristine HEAD — verified by stash-comparison)."
+    evidence:
+      - "Claim: issue #35 comment 6891640114 (TASK-FRD-003 free — only FRD-005 claimed among FRD ids in the last 35 comments at claim time)."
+      - "Live probes via bridge run_shell on Server 1 (load 5.19, 76MB free): fast-path /api/chat TIME_TOTAL 5.53s vs process_message duration_seconds 1.38s; journal Turn-processed durations n=29, min 5.39s / median 20.47s / max 46.47s."
+      - "Local harness (REL-027 pattern, 0.4s fake Memora legs, instant stub LLM): BEFORE serial legs 0.855s; AFTER execute_complex_task wall 0.479s, latency metadata {wall 0.463, legs 0.456/0.405}."
+    blockers: []
+    next_action: "Coordinator: review + merge PR (branch claude/task-frd-003-chat-latency, based on main ef3ca99); after Fleet CD deploys, read production latency_ms / latency metadata for the after-numbers. Residuals for follow-up: persist-write concurrency is a REL-007B/029 contract decision; intent tier vs local recall overlap."
+  - id: TASK-MEM-006
+    title: "Memora expiry/forgetting policy — retention rules: transient context expires (and is erased), durable facts persist, owner-requested forgetting is hard erasure verified end-to-end"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "Memora/core/memory/retention.py"
+      - "Memora/core/memory/service.py"
+      - "Memora/apps/api/routers/v1_memories.py"
+      - "Memora/docs/RETENTION_AND_FORGETTING_POLICY.md"
+      - "Memora/tests/test_retention_forgetting_policy.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891575271"
+    acceptance:
+      - "Policy spec shipped (Memora/docs/RETENTION_AND_FORGETTING_POLICY.md): retention classes TRANSIENT (working 30d, tool 7d), SHORT_TERM (episodic/experience 90d), DURABLE (semantic/preference/procedural/decision/relationship/project/system — no expiry); TTLs never shorter than the HorizonSweeper condensation horizons so zero-work-lost promotion runs first; override precedence = explicit expires_at > provenance retention_ttl_hours (clamped 1h..1y) > env MEMORA_RETENTION_TTL_HOURS_<TYPE> > provenance retention_class > per-type default."
+      - "Write path assigns policy expiry: MemoryService.create_memory resolves expires_at via core/memory/retention.py when the caller did not supply one (durable types get None)."
+      - "Expiry is erasure, not hiding: RetentionSweeper.run_expiry_sweep hard-erases lapsed records through the shared _hard_erase_record convergence path (vector + graph + cache + relational + tombstone, per-record commit); exposed as POST /v1/memories/sweep-retention (admin, tenant-bound, same posture as /sweep-horizon)."
+      - "Forgetting is erasure, verified: MemoryService.forget_memory + POST /v1/memories/{id}/forget always hard-erase under the existing ownership/policy checks, then verify_erasure re-checks every store; any residue or unverifiable store reports forget_incomplete, never a false success. The hard-erase path now actually evicts the cache entry (previously cache_deleted was asserted True without touching the cache)."
+      - "Erasure proof in a staging store (in-memory SQLite test_db; no production data): plant (relational + vector mock store + graph edge + cache entry) -> forget -> verify-gone test inspects every store directly; expiry sweep test erases lapsed transient + soft-deleted records end-to-end while durable and unexpired records persist; sweep is idempotent."
+    evidence:
+      - "Claim: issue #35 comment 6891575271 (Muse, TASK-MEM-006 crew, Wave 5). Pre-claim scan of every issue #35 comment from 2026-11-15T07:31Z to 08:14Z confirmed MEM-006 unclaimed (only MEM-005 and MEM-007 claimed by sibling Wave-5 Memora crews)."
+      - "New suite Memora/tests/test_retention_forgetting_policy.py: 8/8 passed (ti-venv pytest, staging SQLite). Neighbouring suites on the same tree: test_prompt3_memora.py 10/10 passed (incl. the pre-existing multi-store hard-delete convergence and expiry-filtering tests); test_deep_upgrade_integration.py + test_horizon_sweeper.py 8 passed / 1 failed — the failure (test_horizon_sweeper_api_endpoint) also fails on pristine main ef3ca99f (verified by stash A/B), so it is pre-existing, not a regression from this change."
+      - "Environment note: after those runs the sandbox /tmp tmpfs hit 100% and Python tempfile began failing sandbox-wide (Errno 2/EPERM on unrelated processes); the lifecycle/API suites could not be re-run in that window. The change's blast radius (create-path expiry, extracted erase helper, two added endpoints) is covered by the suites above; coordinator may re-run tests/test_lifecycle*.py + tests/test_api.py at merge time."
+    blockers: []
+    next_action: "Coordinator: review and merge the TASK-MEM-006 PR (branch claude/task-mem-006-forgetting-policy from fresh main ef3ca99f), then mark VERIFIED. No deploy step in this task — the policy takes effect on the next regular Memora deploy; the expiry sweep runs via POST /v1/memories/sweep-retention or RetentionSweeper.run_expiry_sweep."
+  - id: TASK-FUT-008
+    title: "Futuris uncertainty communication: every forecast presented to FRIDAY and the owner carries its horizon, its honestly named method (no statsforecast claim while the backend is not installed), and a calibrated uncertainty range in plain language"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-fut-008-futuris-uncertainty
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:38:00+05:30"
+    updated_at: "2026-11-15T15:20:00+05:30"
+    files:
+      - "Futuris/futuris/presentation/__init__.py"
+      - "Futuris/futuris/presentation/uncertainty.py"
+      - "Futuris/futuris/api/routers/friday.py"
+      - "Futuris/futuris/api/routers/forecasts.py"
+      - "Futuris/futuris/api/routers/market.py"
+      - "Futuris/futuris/api/app.py"
+      - "Futuris/tests/test_fut008_uncertainty_presentation.py"
+      - "Futuris/docs/uncertainty-presentation.md"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891486676"
+    defect: "Audit on fresh main ef3ca99 (full table in Futuris/docs/uncertainty-presentation.md): the FRIDAY delegation response dropped the forecast's horizon entirely (no horizon field, although the domain Forecast has one) and left the method as the opaque model_used label 'seasonal_naive@v1:c8f93a'; the canonical /v1/forecasts response renders horizon as str(timedelta) — literally '1 day, 0:00:00'; no surface stated the range's actual level (adapters build 90% prediction intervals, z=1.645 over residual std) or whether calibration was measured; GET /v1/friday/forecasts carried no horizon, no range bounds and no method; /trends carried no horizon or model; scenario risk labels (HIGH_RISK etc.) are sized purely off the delta with no stated basis; the delegate summary FRIDAY relays was target+status only; and the market router sent model_used='statsforecast_garch_intelx' to the Inference gateway for numbers a deterministic telemetry rule produced — neither statsforecast nor GARCH ran (the persisted record has been honestly labelled heuristic:telemetry_vol_rule@v2 since TASK-TRUST-001; the outbound label was never corrected), while its range_pct rule bounds read as a statistical interval. Already honest and untouched: REL-018 blocked/stale/insufficient refusals, FUT-002 calibration report + scenario probability + market confidence derivation."
+    acceptance:
+      - "Every forecast surface (FRIDAY delegation + scenario + list, canonical /v1/forecasts, owner /forecast + /trends + /simulate, market forecast) carries a presentation block with horizon in plain words, an honestly named method, the range with its level (or an explicit rule-bound statement), and a measured-vs-unmeasured calibration statement; all additions are additive — no existing field changes shape."
+      - "Method naming follows the runtime backend check: a statsforecast model is named '(statsforecast)' only when STATSFORECAST_AVAILABLE is true in that deployment; otherwise the label is reported as a recorded label that was not produced by a statsforecast run there."
+      - "The market router's outbound Inference label is the honest heuristic label; no code path sends 'statsforecast_garch_intelx'."
+      - "New tests (Futuris/tests/test_fut008_uncertainty_presentation.py) pass; neighbour ring (test_friday_delegation, test_fut002_hardening) failure sets identical to clean main; ruff clean on all new files and no new findings on edited files."
+      - "Before/after outputs from the same stub forecast are recorded in Futuris/docs/uncertainty-presentation.md."
+    evidence:
+      - "BEFORE (generated from pristine main ef3ca99 code with a stub forecast): FridayForecastResponse keys contain NO horizon and NO presentation; confidence 'MEDIUM'; model_used 'seasonal_naive@v1:c8f93a'; canonical ForecastResponse horizon == '1 day, 0:00:00'."
+      - "AFTER (same stub, patched code): horizon '24 hours'; presentation.summary states the 90% range 100.2 to 156.8, names the method 'Seasonal naive (recorded model label)' with the explicit not-installed-backend statement (the sandbox, like production, has no statsforecast), reports calibration 'unmeasured', synthetic-input and confidence-label explanations. Full JSON in Futuris/docs/uncertainty-presentation.md."
+      - "TESTS: tests/test_fut008_uncertainty_presentation.py — 12/12 pass (fut-003 venv, --noconftest -s; the Futuris conftest's sqlite schema-template fixture errors identically on pristine main in this sandbox — pre-existing environmental failure, disclosed). Neighbour ring test_friday_delegation + test_fut002_hardening under identical flags: 10 passed / 5 failed on BOTH pristine main and the patched tree — the 5 failures are Oracle-connect errors caused by --noconftest removing the conftest's sqlite session swap, byte-identical failure sets, zero regressions from this change."
+      - "IMPORT/STRUCTURE: futuris.api.app imports cleanly on the patched tree (109 routes; /forecast, /trends, /simulate, /v1/friday/forecast present); in-memory compile of all edited files OK; ruff: presentation package + test file clean, friday/forecasts/market routers clean, app.py carries exactly the 8 findings already on pristine main."
+      - "BOARD NOTE: this entry is delivered as text in the crew's completion comment, not inside the code PR — the crew sandbox's shared-clone board copy was stale (missing TASK-REL-043/044, TASK-VYR-005, TASK-WEB-002 vs fresh main), and shipping it would have dropped those sibling entries (the known board hazard). Coordinator to insert this entry via a fresh-main board PR."
+    blockers: []
+    next_action: "PR open for coordinator merge (crews do not merge). After merge + Fleet CD deploy: live probes of /v1/friday/forecast (authed), /forecast, /trends, /simulate and /v1/forecasts on Server 1 verifying the presentation block is served, then flip this entry to VERIFIED via a fresh-main board PR. Coordination: FUT-004's harness is the instrument that will measure the coverage this presentation cites as unmeasured; FUT-006 flagged on issue #35 in case of file overlap in friday.py/app.py."
+  - id: TASK-FUT-007
+    title: "Futuris events/calendar integration audit: known future events (holidays) computed by ContextLayer but discarded by every model adapter — wire calendar features into the exogenous-capable model and route it"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-fut-007-event-wiring
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:30:00+05:30"
+    updated_at: "2026-11-15T15:20:00+05:30"
+    files:
+      - "Futuris/futuris/features/contextualize.py"
+      - "Futuris/futuris/features/__init__.py"
+      - "Futuris/futuris/models/adapters.py"
+      - "Futuris/futuris/models/base.py"
+      - "Futuris/futuris/models/routing.py"
+      - "Futuris/tests/models/test_fut007_event_wiring.py"
+      - "Futuris/tests/models/test_engine.py"
+      - "Futuris/FUT007_EVENTS_AUDIT.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    defect: "Futuris's known-event integration was computed and discarded at every seam. (1) ContextLayer/SimpleHolidayCalendar produce is_holiday + calendar features for history, but build_feature_table is point-in-time (<= as_of) and no future calendar frame existed for the horizon. (2) Every statsforecast adapter discarded the feature frame (`_ = x` in all six fit methods); no adapter ever passed X to its backend, so all models fitted univariately on y alone. (3) AutoARIMA — the only backend accepting exogenous regressors — was registered in models/registry.py but ModelRouter never returned it as a candidate, so it could never be selected. (4) No other known-event source exists in the forecast path: no earnings calendar, no macro release dates (scheduler forecasts FRED series with no release awareness), no exchange-grade market-holiday calendars beyond 6 generic US dates, no owner-calendar input anywhere. The only exogenous input that did anything was IntelX research sentiment, which adjusts interval bounds and driver labels in the engine/market paths and never moves the point forecast. Proof (before): with recording statsforecast stand-ins and a real ContextLayer table spanning Christmas 2026 (is_holiday = 1 on all 288 five-minute rows of 2026-12-25), all six adapters produced byte-identical forecasts with the real features vs is_holiday zeroed, and none ever passed X."
+    acceptance:
+      - "A known event inside the horizon demonstrably changes the forecast path of the exogenous-capable model at exactly the event steps, proven by automated tests with the backend's regressor contract (fit(y, X) / predict(h, X)); prediction metadata reports the event steps contained in the horizon (known_event_steps)."
+      - "Future calendar features are produced by the same single formula source as the historical ones (test pins them identical on identical timestamps); only timestamp-determined features are projected forward — value-dependent features (lags/rolling/regime) are never fabricated for the future."
+      - "The exogenous-capable model is selectable: ModelRouter offers auto_arima in the moderate and rich-history branches, ranked behind incumbents, with held-out validation MAE still deciding whether it serves."
+      - "Honesty contracts preserved: with statsforecast absent, fit still raises StatsForecastUnavailableError (TASK-REL-018); univariate adapters declare supports_exogenous=False and are provably unmoved by events; a misaligned future frame is refused (ValueError), never silently misaligned."
+      - "Audit of every named event class (market holidays, earnings, macro releases, owner calendar) is written down with its actual state — present-and-wired, present-but-discarded, or absent — in Futuris/FUT007_EVENTS_AUDIT.md; absent sources are reported as gaps, not implied to exist."
+    evidence:
+      - "BEFORE (experiment, crew workspace fut-007/before_experiment.py): ContextLayer flags 2026-12-25 is_holiday=1 on 288/288 rows, 0 elsewhere; all 6 adapters' point forecasts byte-identical with real vs holiday-zeroed feature frames; X passed to backend by 0/6 adapters."
+      - "FIX: contextualize.py adds CALENDAR_FEATURE_COLUMNS (8 timestamp-only features), calendar_features_for_index() as the single formula source for history + future frames, ContextLayer.build_future_calendar_features(), summarize_known_events(). adapters.py: supports_exogenous declared per adapter (AutoARIMA True, others False); adapters record the history grid at fit; AutoARIMAAdapter fit passes historical calendar X (TypeError -> documented univariate fallback + warning), predict passes the future calendar frame (derived from the recorded grid or an explicit future_x) and stamps metadata exogenous_features + known_event_steps; misaligned future_x refused with ValueError. routing.py: auto_arima added to moderate/rich candidate branches behind incumbents. base.py: protocol predict gains optional future_x with the contract documented."
+      - "TESTS (local, fut-003 venv, statsforecast absent by design): new Futuris/tests/models/test_fut007_event_wiring.py — 10/10 PASS. Headline: history ending 2026-12-24 12:00 UTC, horizon 288 — forecast differs from the no-event control by exactly +25.0 (the stand-in's holiday effect) at exactly the Christmas steps and 0.0 elsewhere; metadata known_event_steps.holiday_steps equals the frame's true count; a November window reports 0. Also: history/future calendar definitions identical on the same timestamps; univariate adapters identical with/without future_x; fit without calendar columns stays univariate; unavailable backend still raises."
+      - "NEIGHBOUR RING A/B (same sandbox, clean main ef3ca99 vs fixed tree): tests/models/test_engine.py — failure sets IDENTICAL on both trees (test_seasonal_naive_beats_naive_on_seasonal_data, test_forecast_engine_end_to_end_and_reproducibility — both pre-existing, they require a real statsforecast backend); test_router_heuristics_policy_branches passes on the fixed tree after its disclosed update to the new routing policy. tests/features/test_features.py 3/3 pass (fixed). test_statsforecast_degradation.py 4 passed / 2 skipped (fixed). test_drivers_and_decisions.py 4/4 pass (fixed). test_diffusion_forecaster.py 5/5, test_volatility_forecaster.py 4/4 (fixed). test_scheduler_and_pipeline.py on the fixed tree: 2 failed / 1 passed — the same two tests (test_modular_pipeline_stage_composition, test_scheduler_jobs_direct_trigger) FAILED on clean main in the combined ring run; the sandbox was under fleet-wide write/CPU throttling during these runs (fleet /tmp at 100%, tempfile failures on both trees), so the scheduler/fut002 files could not be re-run to a clean per-file A/B in this session — disclosed, not hidden. Ruff: changed production files clean; py_compile clean."
+      - "NOT DEPLOYED / NOT PRODUCTION-VERIFIED: production has no statsforecast (owner decision — it waits for the ARM host), so in production every adapter still refuses to fit and forecasts surface as degraded/BLOCKED exactly as before; the wiring activates when a real backend first serves, and prediction metadata (exogenous_features, known_event_steps) will make its use visible in every served forecast. Board status is IN_REVIEW until the coordinator merges; deploy + production verification belong to the post-ARM statsforecast step, not to this PR."
+    blockers:
+      - "Production verification is impossible until statsforecast is provisioned (post-ARM, owner decision) — the wiring is proven against the backend's documented regressor contract with recording stand-ins, the same technique as the existing TASK-REL-018 degradation suite."
+      - "Delivery was packaged during the 2026-11-15 bridge outage (fleet-wide initialize timeouts; the Server 2 bridge MCP appeared hung from ~15:00 IST, merge queue stalled behind it). This crew's claim POST timed out with outcome UNKNOWN; the packaged deliver.py (crew workspace fut-007/) checks issue #35 for the crew marker FUTURIS-EVENTS-AUDIT-CREW before posting anything, then creates the branch/PR from FRESH main and posts the completion comment — resumable, state-tracked. Claim check before the attempt: board on ef3ca99 carries TASK-FUT-001..003 only; issue #35 newest comments (pages 33-35 at per_page=10) showed FUT-009 claim+completion and FUT-006/FUT-004 coordination, no TASK-FUT-007 claim; middle pages could not be scanned (bridge timeouts) — if a conflicting FUT-007 claim exists there, this crew renumbers on coordinator instruction."
+    next_action: "Coordinator: review + merge this PR (code + this board entry together, fresh-main board — insertion-only, task count +1). After the ARM host lands statsforecast, re-run the acceptance with the real backend and flip this entry to VERIFIED with live evidence. Follow-up candidates (new tasks, not this one): exchange-grade holiday calendars, macro release-date features, earnings-season features behind the same CALENDAR_FEATURE_COLUMNS seam."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
