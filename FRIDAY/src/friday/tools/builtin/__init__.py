@@ -33,6 +33,10 @@ from friday.tools.builtin.phone_control import (
     PhoneTapTool,
     PhoneTypeTextTool,
 )
+from friday.tools.builtin.phone_ui_control import (
+    PhoneUiDumpTool,
+    PhoneUiTaskTool,
+)
 from friday.tools.builtin.browser_tool import BrowserAutomationTool
 from friday.tools.builtin.fleet_dispatch import FleetDispatchTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
@@ -84,6 +88,7 @@ from friday.tools.builtin.laptop_control import (
     LaptopScreenshotTool,
     LaptopTypeTextTool,
 )
+from friday.tools.builtin.laptop_dictation import LaptopDictateTool
 from friday.tools.builtin.launch_application import LaunchApplicationTool
 from friday.tools.builtin.location_maps import LocationMapsTool
 from friday.tools.builtin.media_control import MediaControlTool
@@ -161,6 +166,8 @@ __all__ = [
     "PhoneSwipeTool",
     "PhoneTapTool",
     "PhoneTypeTextTool",
+    "PhoneUiDumpTool",
+    "PhoneUiTaskTool",
     "SwipeScreenTool",
     "TapScreenTool",
     "BrowserAutomationTool",
@@ -199,6 +206,7 @@ __all__ = [
     "LaptopRunCommandTool",
     "LaptopLockTool",
     "LaptopScreenshotTool",
+    "LaptopDictateTool",
     "LaptopTypeTextTool",
     "ListGitHubIssuesTool",
     "LocationMapsTool",
