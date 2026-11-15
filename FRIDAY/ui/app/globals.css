@@ -94,6 +94,14 @@ button {
   transition: opacity 1.2s ease;
 }
 
+/* The ambient sky canvas (IG-WEB-04): inside .stage-ambience,
+   above its gradients, below the room. Never interactive. */
+.ambience-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .stage[data-phase="thinking"] .stage-ambience {
   background:
     radial-gradient(58% 42% at 50% 30%, rgba(168, 85, 247, 0.13), transparent 70%),
