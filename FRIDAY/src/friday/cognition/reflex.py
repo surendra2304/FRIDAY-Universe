@@ -1001,12 +1001,20 @@ class ReflexBrain:
         except Exception as exc:
             recall = {"error": f"{type(exc).__name__}: {exc}", "memories": [], "reason": "recall failed"}
 
+        # Ask the work only of peers that declare the capability (TASK-FRD-006).
+        # A peer that remembered the fault is the preferred target when it also
+        # declares the work; otherwise the request goes to every declaring peer.
+        # When no peer declares it, the broker sends nothing and the fault stays
+        # unrepaired, reported as such — rather than broadcast at peers whose
+        # contracts cannot serve it (Cortex's correct 403s, TASK-COR-009).
+        supporting = broker.peers_that_support(capability)
+        targets = tuple(peer for peer in recalled_peers if peer in supporting) or None
         try:
             asked = await broker.request_help_from_peers(
                 caller="friday",
                 capability=capability,
                 objective=objective,
-                peers=recalled_peers or None,
+                peers=targets,
                 inputs=evidence,
             )
         except Exception as exc:
@@ -1046,20 +1054,32 @@ class ReflexBrain:
                 evidence_class="peer_verified_work",
             )
 
+        if asked["asked"]:
+            escalation_detail = (
+                "The peers were then asked and none of them completed it either; "
+                "each peer's own answer is in the evidence."
+            )
+        else:
+            # Nobody was sent the work — say why, never that peers were asked.
+            escalation_detail = f"No peer was asked to do the work: {asked['reason']}."
+        if recalled_peers:
+            escalation_detail += (
+                f" The fleet's memory was consulted first and {recalled_peers[0]} remembered "
+                "this kind of fault"
+                + (
+                    ", so it was asked directly."
+                    if recalled_peers[0] in asked["asked"]
+                    else "."
+                )
+            )
+        else:
+            escalation_detail += " No peer remembered this kind of fault either."
+
         return ActionOutcome(
             incident=incident,
             status=local.status,
             action=local.action,
-            detail=(
-                f"{local.detail} The peers were then asked and none of them completed it either; "
-                "each peer's own answer is in the evidence."
-                + (
-                    f" The fleet's memory was consulted first and {recalled_peers[0]} remembered "
-                    "this kind of fault, so it was asked directly."
-                    if recalled_peers
-                    else " No peer remembered this kind of fault either."
-                )
-            ),
+            detail=f"{local.detail} {escalation_detail}",
             evidence={**local.evidence, "peer_escalation": asked, "fleet_recall": recall},
             evidence_class=local.evidence_class,
         )

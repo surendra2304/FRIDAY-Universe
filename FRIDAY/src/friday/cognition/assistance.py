@@ -129,6 +129,53 @@ def _memories_from(
     return accepted, dropped
 
 
+def _declares(contract: Any, action: str) -> bool:
+    """Whether a peer's contract declares the fleet-generic ``action``.
+
+    Duck-typed on purpose: the broker reads contracts as they arrive, and a
+    contract with no declaration surface declares nothing.
+    """
+    declared = getattr(contract, "declared_actions", None)
+    if declared is not None:
+        return action in declared
+    supports = getattr(contract, "supports", None)
+    return bool(supports(action)) if callable(supports) else False
+
+
+def _route_fanout(
+    known: dict[str, Any],
+    action: str,
+    *,
+    peers: tuple[str, ...] | None,
+    caller: str,
+) -> tuple[list[str], list[str], dict[str, str]]:
+    """Split the candidate peers for a generic action: (asked, excluded, skipped).
+
+    A peer is asked only if its contract declares ``action`` (TASK-FRD-006):
+    a generic action broadcast to every peer is received by agents whose
+    contracts cannot serve it — Cortex correctly 403s ``memory_recall`` and
+    ``source_repair`` at its property-scope gate, ~2 avoidable 403s per
+    unrepaired fault episode (TASK-COR-009). The caller is never asked (a
+    loopback is not an attempt), and every other candidate is reported in
+    ``skipped`` with the reason, so a peer that was not asked is accounted
+    for rather than silently absent.
+    """
+    chosen = tuple(peers) if peers else tuple(sorted(known))
+    asked: list[str] = []
+    excluded: list[str] = []
+    skipped: dict[str, str] = {}
+    for peer in chosen:
+        if peer not in known:
+            continue
+        if peer == caller:
+            excluded.append(peer)
+        elif _declares(known[peer], action):
+            asked.append(peer)
+        else:
+            skipped[peer] = f"{peer} does not declare {action!r}"
+    return asked, excluded, skipped
+
+
 class AssistanceBroker:
     """One agent asking another, locally or across the mesh."""
 
@@ -174,6 +221,19 @@ class AssistanceBroker:
             logger.warning("no mesh available for assistance: %s", exc)
             self._mesh = None
         return self._mesh
+
+    def peers_that_support(self, action: str) -> tuple[str, ...]:
+        """The known peers whose contracts declare the fleet-generic ``action``.
+
+        This is the addressing information the reflex's escalation routes by:
+        a remembering peer is the preferred target for the work only when it
+        also declares the capability the work needs.
+        """
+        mesh = self.mesh()
+        if mesh is None:
+            return ()
+        contracts = getattr(mesh, "contracts", {})
+        return tuple(peer for peer in sorted(contracts) if _declares(contracts[peer], action))
 
     # -- who knows this? ---------------------------------------------------
 
@@ -416,6 +476,11 @@ class AssistanceBroker:
         * the caller is never asked to recall to itself. That is the same loopback
           refusal as the rest of the ladder: it is not an attempt, so it is not
           reported as one.
+
+        Routing (TASK-FRD-006): the ``memory_recall`` envelope is addressed
+        only to peers whose contract declares it — today that is Memora, the
+        fleet's memory, alone. Every other peer is reported in ``skipped``
+        with the reason instead of receiving a question it cannot serve.
         """
         mesh = self.mesh()
         empty: dict[str, Any] = {
@@ -423,6 +488,7 @@ class AssistanceBroker:
             "question": question,
             "asked": [],
             "excluded": [],
+            "skipped": {},
             "memories": [],
             "dropped": [],
             "answered_by": [],
@@ -434,19 +500,20 @@ class AssistanceBroker:
             return {**empty, "reason": "no mesh client is attached, so no peer could be asked"}
 
         known = {peer: contract for peer, contract in getattr(mesh, "contracts", {}).items()}
-        chosen = tuple(peers) if peers else tuple(sorted(known))
-        asked = [peer for peer in chosen if peer in known and peer != caller]
-        excluded = [peer for peer in chosen if peer in known and peer == caller]
+        asked, excluded, skipped = _route_fanout(
+            known, "memory_recall", peers=peers, caller=caller
+        )
         if not asked:
-            return {
-                **empty,
-                "excluded": excluded,
-                "reason": (
-                    "only the caller itself was named; asking yourself is not an attempt"
-                    if excluded
-                    else "no known peer matches the peers that were named"
-                ),
-            }
+            if excluded and not skipped:
+                reason = "only the caller itself was named; asking yourself is not an attempt"
+            elif skipped:
+                reason = (
+                    "no peer that could be named declares 'memory_recall'; a memory "
+                    "question is addressed only to a peer that declares it"
+                )
+            else:
+                reason = "no known peer matches the peers that were named"
+            return {**empty, "excluded": excluded, "skipped": skipped, "reason": reason}
 
         payload = dict(inputs or {})
         payload.setdefault("capability", capability)
@@ -502,6 +569,7 @@ class AssistanceBroker:
             "question": question,
             "asked": asked,
             "excluded": excluded,
+            "skipped": skipped,
             "memories": memories,
             "dropped": dropped,
             "answered_by": answered_by,
@@ -549,12 +617,21 @@ class AssistanceBroker:
         that is unreachable must not stop the others from being asked. Completion
         is only ever claimed from a verified receipt, and the summary names *which*
         peer did the work — a delegation reported as local work would be a lie.
+
+        Routing (TASK-FRD-006): the request is sent only to peers whose
+        contract declares the capability as a fleet-generic action. A peer
+        that does not declare it is reported in ``skipped``, never sent the
+        envelope; when no peer declares it, the request stays local —
+        ``performed`` is False and the reason says so — rather than being
+        broadcast at peers that cannot serve it.
         """
         mesh = self.mesh()
         if mesh is None:
             return {
                 "capability": capability,
                 "asked": [],
+                "excluded": [],
+                "skipped": {},
                 "completed_by": None,
                 "performed": False,
                 "reason": "no mesh client is attached, so no peer could be asked",
@@ -562,15 +639,22 @@ class AssistanceBroker:
             }
 
         known = {peer: contract for peer, contract in getattr(mesh, "contracts", {}).items()}
-        chosen = tuple(peers) if peers else tuple(sorted(known))
-        asked = [peer for peer in chosen if peer in known]
+        asked, excluded, skipped = _route_fanout(
+            known, capability, peers=peers, caller=caller
+        )
         if not asked:
             return {
                 "capability": capability,
                 "asked": [],
+                "excluded": excluded,
+                "skipped": skipped,
                 "completed_by": None,
                 "performed": False,
-                "reason": "no known peer matches the peers that were named",
+                "reason": (
+                    f"no peer declares {capability!r}; the request was not sent anywhere"
+                    if skipped or excluded
+                    else "no known peer matches the peers that were named"
+                ),
                 "attempts": {},
             }
 
@@ -599,6 +683,8 @@ class AssistanceBroker:
         return {
             "capability": capability,
             "asked": asked,
+            "excluded": excluded,
+            "skipped": skipped,
             "completed_by": completed_by,
             "performed": completed_by is not None,
             "answer": won_answer,
