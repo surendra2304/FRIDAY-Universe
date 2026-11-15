@@ -19,8 +19,16 @@ Modes:
     --verify       re-read the last (or --from) backup and validate checksums
     --config-only  only snapshot config files (env files + systemd units)
     --media        include the VyralX media schema (VYRALX_MEDIA)
+    --media-only   only the VyralX media schema (for the Server 2 job,
+                   TASK-SEN-009: the media credentials live on Server 2)
 
-Runbook: docs/observability/BACKUP_RESTORE_DRILL.md
+TASK-SEN-009 additions: per-agent .env files join the config snapshot
+(``snapshot_agent_envs``); the manifest records ``complete`` and pruning
+keeps the newest successful backups, not merely the newest directories;
+a media failure counts as a failure instead of a silent skip.
+
+Runbook: docs/observability/BACKUP_RESTORE_AND_LEDGER_DRILL.md
+Repair report: docs/observability/BACKUP_REPAIR_SEN009.md
 """
 from __future__ import annotations
 
@@ -224,6 +232,39 @@ def snapshot_configs(dest: Path, log=print, repo_root: Path | None = None) -> li
     return copied
 
 
+def snapshot_agent_envs(dest: Path, repo_root: Path | None = None, log=print) -> list[str]:
+    """Copy per-agent .env files into dest/configs/agent-env/ (600 perms).
+
+    TASK-SEN-009 (SEN-007 gap G7): the per-agent .env files are each agent's
+    systemd EnvironmentFile and hold the values a rebuilt server needs; until
+    now no backup covered them. They are SECRETS: they are copied only into
+    the backup directory itself (mode 700, created by the caller) with mode
+    600, exactly like the /etc credential files in snapshot_configs; their
+    contents are never logged and never enter the manifest (paths only).
+    Agents whose .env does not exist on this host are skipped silently —
+    each server snapshots the env files of the agents it actually hosts.
+    """
+    if repo_root is None:
+        repo_root = Path(__file__).resolve().parents[1]
+    copied: list[str] = []
+    seen_dirs: set[str] = set()
+    for agent, env_dir_name in sorted(AGENT_ENV_DIRS.items()):
+        if env_dir_name in seen_dirs:
+            continue  # VYRALX_MEDIA shares the VyralX directory
+        seen_dirs.add(env_dir_name)
+        src_path = repo_root / env_dir_name / ".env"
+        if not src_path.is_file():
+            continue
+        target = dest / "configs" / "agent-env" / env_dir_name / ".env"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src_path, target)
+        os.chmod(target, 0o600)
+        copied.append(str(target))
+    if copied:
+        log(f"[CONFIG] copied {len(copied)} per-agent .env files (mode 600)")
+    return copied
+
+
 def backup_agent(agent: str, out_dir: Path, *, env_file: str | None, media: bool,
                  dry_run: bool, log=print) -> dict:
     """Dump one agent schema. Returns the manifest entry (or inventory for dry-run)."""
@@ -279,20 +320,20 @@ def verify_backup(out_dir: Path, manifest: dict, log=print) -> tuple[int, int]:
                 failed += 1
             else:
                 ok += 1
-    if manifest.get("configs"):
-        for cfg in manifest["configs"]:
+    for key in ("configs", "agent_envs"):
+        for cfg in manifest.get(key) or []:
             if Path(cfg).is_file():
                 ok += 1
             else:
-                log(f"[VERIFY-FAIL] config missing: {cfg}")
+                log(f"[VERIFY-FAIL] {key} file missing: {cfg}")
                 failed += 1
     return ok, failed
 
 
 def run(args, log=print) -> int:
     agents = [a.strip().upper() for a in args.agents.split(",") if a.strip()]
-    media = args.media
-    requested = agents or ALL_AGENTS
+    media = bool(args.media or getattr(args, "media_only", False))
+    requested = [] if getattr(args, "media_only", False) else (agents or ALL_AGENTS)
 
     if args.verify:
         base = Path(args.from_dir or args.out)
@@ -324,14 +365,14 @@ def run(args, log=print) -> int:
     os.chmod(out_dir, 0o700)
 
     manifest: dict = {"task": "TASK-INF-003", "created_at": utcnow(), "agents": [],
-                      "configs": [], "root": str(out_dir)}
+                      "configs": [], "agent_envs": [], "root": str(out_dir)}
     failed_agents = []
     for agent in requested:
         try:
             manifest["agents"].append(
                 backup_agent(agent, out_dir, env_file=args.env_file, media=False,
                              dry_run=False, log=log))
-        except (OracleConfigError, Exception) as exc:  # noqa: BLE001 — keep going per agent
+        except Exception as exc:  # noqa: BLE001 — keep going per agent
             log(f"[{agent}] FAILED: {exc}")
             failed_agents.append(agent)
     if media:
@@ -339,14 +380,22 @@ def run(args, log=print) -> int:
             manifest["agents"].append(
                 backup_agent(MEDIA_SCHEMA, out_dir, env_file=args.env_file, media=True,
                              dry_run=False, log=log))
-        except OracleConfigError as exc:
-            log(f"[{MEDIA_SCHEMA}] SKIP: {exc}")
+        except Exception as exc:  # noqa: BLE001 — TASK-SEN-009: a requested media
+            # backup that fails is a FAILURE (counted, exit 1), never a silent
+            # skip, and it must not take the whole manifest down with it.
+            log(f"[{MEDIA_SCHEMA}] FAILED: {exc}")
+            failed_agents.append(MEDIA_SCHEMA)
     if not args.no_configs:
         manifest["configs"] = snapshot_configs(out_dir, log=log)
+        manifest["agent_envs"] = snapshot_agent_envs(out_dir, log=log)
 
     ok, failed = verify_backup(out_dir, manifest, log=log)
     manifest["verify"] = {"ok": ok, "failed": failed, "verified_at": utcnow()}
     manifest["failed_agents"] = failed_agents
+    # TASK-SEN-009: completeness is the retention/freshness currency — a
+    # backup only counts as a restorable copy when every requested schema
+    # dumped and every written file verified.
+    manifest["complete"] = not failed_agents and failed == 0
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     os.chmod(out_dir / "manifest.json", 0o600)
     log(f"[BACKUP] complete: {out_dir} (verify: {ok} OK / {failed} failed; agents failed: {failed_agents or 'none'})")
@@ -355,20 +404,63 @@ def run(args, log=print) -> int:
     return 0 if not failed_agents and failed == 0 else 1
 
 
+def backup_completeness(backup_dir: Path) -> bool | None:
+    """True/False from a backup dir's manifest; None when it cannot be judged.
+
+    TASK-SEN-009: manifests written by this version carry an explicit
+    ``complete`` flag. Older manifests are judged by the fields they do
+    have (no failed agents and a clean verify). A missing or unreadable
+    manifest is None (unknown) — such directories are treated
+    conservatively by the pruner.
+    """
+    manifest_path = backup_dir / "manifest.json"
+    if not manifest_path.is_file():
+        return None
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except Exception:  # noqa: BLE001 — unreadable manifest = unknown
+        return None
+    if "complete" in manifest:
+        return bool(manifest["complete"])
+    verify = manifest.get("verify") or {}
+    return not manifest.get("failed_agents") and verify.get("failed", 1) == 0
+
+
 def prune_old_backups(root: Path, *, keep: int, log=print) -> None:
-    """Keep only the newest ``keep`` backup directories."""
+    """Retention (TASK-SEN-009, owner mandate "maintain a backup").
+
+    The unit of retention is the SUCCESSFUL backup, so one bad run can
+    never push out the last good copy:
+
+    * complete backups: keep the newest ``keep``;
+    * incomplete backups (manifest present, not complete): keep only the
+      newest one, and only while it is newer than the newest complete
+      backup (it is the forensic record of the latest failed attempt);
+    * unjudgeable directories (no/unreadable manifest): keep the newest
+      ``keep`` — never destroy what cannot be classified.
+    """
     if not root.is_dir():
         return
     dirs = sorted([d for d in root.iterdir() if d.is_dir()], reverse=True)
-    for old in dirs[keep:]:
-        shutil.rmtree(old)
-        log(f"[PRUNE] removed old backup {old}")
+    judged = {d: backup_completeness(d) for d in dirs}
+    complete = [d for d in dirs if judged[d] is True]
+    incomplete = [d for d in dirs if judged[d] is False]
+    unknown = [d for d in dirs if judged[d] is None]
+    keep_set = set(complete[:keep]) | set(unknown[:keep])
+    if incomplete and (not complete or incomplete[0] > complete[0]):
+        keep_set.add(incomplete[0])
+    for old in dirs:
+        if old not in keep_set:
+            shutil.rmtree(old)
+            log(f"[PRUNE] removed old backup {old}")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--agents", default="", help="comma list (default: all ten)")
     ap.add_argument("--media", action="store_true", help="include the VyralX media schema")
+    ap.add_argument("--media-only", action="store_true",
+                    help="only the VyralX media schema (Server 2 job, TASK-SEN-009)")
     ap.add_argument("--out", default=DEFAULT_OUT_ROOT, help="backup root (a timestamped dir is created inside)")
     ap.add_argument("--from-dir", default="", help="(verify) backup dir to verify")
     ap.add_argument("--dry-run", action="store_true", help="inventory only, no files written")
@@ -384,9 +476,11 @@ def main() -> int:
         out_dir.mkdir(parents=True, exist_ok=True)
         os.chmod(out_dir, 0o700)
         copied = snapshot_configs(out_dir)
+        env_copied = snapshot_agent_envs(out_dir)
         (out_dir / "manifest.json").write_text(
-            json.dumps({"task": "TASK-INF-003", "created_at": utcnow(), "configs": copied}, indent=2) + "\n")
-        print(f"[CONFIG-ONLY] {len(copied)} files -> {out_dir}")
+            json.dumps({"task": "TASK-INF-003", "created_at": utcnow(),
+                        "configs": copied, "agent_envs": env_copied}, indent=2) + "\n")
+        print(f"[CONFIG-ONLY] {len(copied) + len(env_copied)} files -> {out_dir}")
         return 0
     return run(args)
 

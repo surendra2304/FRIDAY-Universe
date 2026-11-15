@@ -1,0 +1,69 @@
+name: Backup Watchdog
+
+# TASK-SEN-009 — freshness tripwire for the fleet backup (owner mandate
+# 2026-11-15: "Maintain a backup"). The Fleet Backup workflow failed twice
+# on 2026-11-10 and its schedule then never fired, and nothing noticed for
+# five days. A backup job cannot alert on its own silence, so this
+# watchdog runs on its OWN schedule (Mon + Thu, offset from the Sun + Wed
+# backup slots), checks the age of the last COMPLETE backup on Server 1
+# via scripts/check_backup_freshness.py, and opens/updates the
+# [BACKUP-ALERT] issue when the backup is stale or missing. When
+# freshness recovers it comments and closes the alert.
+#
+# The same JSON the script prints is what Sentinel (or any poller) can
+# consume on Server 1 to show backup age at a glance:
+#   sudo /opt/friday_universe/venv/bin/python \
+#     scripts/check_backup_freshness.py --json
+# Exit codes: 0 fresh, 1 stale, 2 no complete backup exists.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 4 * * 1"  # Mondays 04:30 UTC (after the Sunday backup slot)
+    - cron: "30 4 * * 4"  # Thursdays 04:30 UTC (after the Wednesday slot)
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  freshness:
+    name: Check backup freshness on Server 1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run freshness check
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SERVER1_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/friday_universe
+            sudo /opt/friday_universe/venv/bin/python scripts/check_backup_freshness.py \
+              --root /var/backups/friday-universe --max-age-hours 120
+
+      - name: Alert — backup is stale or missing
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="[BACKUP-ALERT] Fleet backup is failing or stale"
+          BODY="Backup Watchdog run ${{ github.run_id }}: the last COMPLETE fleet backup on Server 1 is stale (>120h) or missing entirely. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} — check the Fleet Backup workflow and dispatch a manual run. (TASK-SEN-009 freshness tripwire.)"
+          EXISTING=$(gh issue list --search "[BACKUP-ALERT] in:title state:open" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+      - name: Recover — close the alert when freshness is back
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING=$(gh issue list --search "[BACKUP-ALERT] in:title state:open" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "Backup Watchdog run ${{ github.run_id }}: freshness check PASSED — a complete backup is within the 120h window again. Closing this alert."
+            gh issue close "$EXISTING"
+          fi
