@@ -1,11 +1,16 @@
 """Checklist A8 (MASTER_COMPLETION_CHECKLIST) — Batch 8, ZAI Agent 2.
 
-The single source of truth for FRIDAY's identity contract — the rules BOTH
-the chat path (prompts.py:build_system_message) and the voice path
-(gemini_live_session.py:_build_system_instruction) must honor. Extracted
-here so the two paths can never drift: a change to the contract is one
-edit, and the parity test (test_batch8_persona_parity) fails if either
-path stops carrying a rule.
+The single source of truth for FRIDAY's identity contract — the rules
+every FRIDAY surface must honor. Wiring (TASK-FRD-004, 2026-11-15): the
+chat path (prompts.py:get_default_system_prompt) consumes
+boss_contract_text() verbatim, so a contract change is one edit there.
+The legacy voice path (gemini_live_session.py:_build_system_instruction)
+hand-carries the same key phrases, and the parity test
+(test_batch8_persona_parity) fails if either of those two paths drops a
+rule. KNOWN GAP: the production LiveKit worker prompt
+(voice/livekit_worker.py:BASE_INSTRUCTIONS) does not carry the contract
+yet and is not covered by the parity test — aligning it is a tracked
+follow-up; until then, edits here do NOT reach the live voice surface.
 
 The contract is intentionally minimal — only the identity + safety rules
 that MUST be identical across chat and voice. Surface-specific style
