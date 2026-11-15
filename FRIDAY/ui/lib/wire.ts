@@ -16,6 +16,7 @@
      GET  /api/system_telemetry              host vitals
      GET  /api/autonomous/status             autonomy ledger
      GET  /api/tasks/timeline                delegation ledger
+     GET  /api/memory/browser                the owner's memories (Memora)
      WS   /api/ws/activity                   live activity frames
    ================================================================ */
 
@@ -150,6 +151,29 @@ export interface WorkerStatus {
   updated_at?: string;
 }
 
+/* GET /api/memory/browser — the owner's memory, visible: the most
+   recent ACTIVE memories from the live Memora store, each with an
+   importance tier and score, plus a tier breakdown. Read-only;
+   an unreachable store answers status "unreachable" with an
+   empty list — never a fabricated one. */
+export interface MemoryEntry {
+  id: string;
+  text: string;
+  tier: string; // "pinned" | "normal" | "trivial" | "other"
+  score: number;
+  category: string;
+  created_at: string;
+  active_goal: boolean;
+}
+
+export interface MemoryBrowserSnapshot {
+  status: string; // "ok" | "unreachable"
+  count?: number;
+  memories: MemoryEntry[];
+  summary?: { tiers?: Record<string, number>; active_goals?: number };
+  error?: string;
+}
+
 export interface ChatReply {
   reply: string;
   mode?: string;
@@ -232,6 +256,10 @@ export function fetchTimeline(): Promise<TimelineSnapshot> {
 export async function fetchWorker(): Promise<WorkerStatus | null> {
   const res = await requestJson<{ worker?: WorkerStatus }>("/api/voice/diagnostics");
   return res?.worker ?? null;
+}
+
+export function fetchMemories(): Promise<MemoryBrowserSnapshot> {
+  return requestJson<MemoryBrowserSnapshot>("/api/memory/browser");
 }
 
 export function openActivitySocket(onFrame: (frame: ActivityFrame) => void): WebSocket | null {

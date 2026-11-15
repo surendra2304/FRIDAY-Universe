@@ -7,6 +7,7 @@ import SplitText from "../reactbits/SplitText";
 import Magnet from "../reactbits/Magnet";
 import type { VoiceLinkControls, VoicePhase } from "../VoiceCall";
 import { Halo } from "./Halo";
+import { Ambience } from "./Ambience";
 import { Conversation } from "./Conversation";
 import { Veil, type VeilCommand } from "./Veil";
 import { Sheet } from "./Sheet";
@@ -21,6 +22,7 @@ const FleetSheet = dynamic(() => import("./FleetSheet").then((m) => m.FleetSheet
 const ChronicleSheet = dynamic(() => import("./ChronicleSheet").then((m) => m.ChronicleSheet), { ssr: false });
 const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet), { ssr: false });
 const LifeSheet = dynamic(() => import("./LifeSheet").then((m) => m.LifeSheet), { ssr: false });
+const GalaxySheet = dynamic(() => import("./GalaxySheet").then((m) => m.GalaxySheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -37,13 +39,14 @@ const LifeSheet = dynamic(() => import("./LifeSheet").then((m) => m.LifeSheet), 
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse" | "life";
+type SheetKind = "fleet" | "chronicle" | "pulse" | "life" | "galaxy";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
   chronicle: { kicker: "Everything asked, everything done", title: "The Chronicle" },
   pulse: { kicker: "The box underneath it all", title: "Machine Pulse" },
   life: { kicker: "Your time, as a grid of dots", title: "Life in Weeks" },
+  galaxy: { kicker: "What FRIDAY remembers, as a sky", title: "Memory Galaxy" },
 };
 
 export function Stage() {
@@ -54,6 +57,22 @@ export function Stage() {
   const [flaring, setFlaring] = useState<ReadonlySet<string>>(new Set());
   const [veilOpen, setVeilOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetKind | null>(null);
+  /* The ambient sky (IG-WEB-04) is opt-in and off by default:
+     Halo's home look is the live design and does not change
+     uninvited. The choice lives in this browser only. */
+  const [ambienceOn, setAmbienceOn] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAmbienceOn(window.localStorage.getItem("friday.ambience") === "on");
+  }, []);
+
+  const toggleAmbience = useCallback(() => {
+    setAmbienceOn((on) => {
+      window.localStorage.setItem("friday.ambience", on ? "off" : "on");
+      return !on;
+    });
+  }, []);
   const linkRef = useRef<VoiceLinkControls | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const haloTouchY = useRef<number | null>(null);
@@ -153,6 +172,20 @@ export function Stage() {
         run: () => openSheet("life"),
       },
       {
+        id: "galaxy",
+        label: "Wander the memory galaxy",
+        hint: "FRIDAY's memories as stars — pinned, ordinary, and trivial",
+        keys: "memory galaxy memories remember stars memora sky brain",
+        run: () => openSheet("galaxy"),
+      },
+      {
+        id: "ambience",
+        label: ambienceOn ? "Turn off the ambient sky" : "Turn on the ambient sky",
+        hint: "a slow field of drifting light behind the room",
+        keys: "ambience background sky particles stars ambient animated backdrop",
+        run: toggleAmbience,
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -170,14 +203,16 @@ export function Stage() {
         run: () => composerRef.current?.focus(),
       },
     ],
-    [callLive, openSheet],
+    [callLive, openSheet, ambienceOn, toggleAmbience],
   );
 
   const agents = fleet?.agents ?? [];
 
   return (
     <main className="stage" data-phase={stagePhase}>
-      <div className="stage-ambience" aria-hidden="true" />
+      <div className="stage-ambience" aria-hidden="true">
+        {ambienceOn && <Ambience />}
+      </div>
 
       <header className="stage-top">
         <button type="button" className="wordmark" onClick={() => setVeilOpen(true)} aria-label="Open the veil — everything the room can show">
@@ -248,6 +283,7 @@ export function Stage() {
           {sheet === "chronicle" && <ChronicleSheet />}
           {sheet === "pulse" && <PulseSheet />}
           {sheet === "life" && <LifeSheet />}
+          {sheet === "galaxy" && <GalaxySheet />}
         </Sheet>
       )}
     </main>
