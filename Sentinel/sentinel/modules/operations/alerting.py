@@ -5,6 +5,18 @@ Features:
 2. Alert Correlation & Deduplication (Suppresses storming alerts within cooldown window).
 3. Dispatch Channels (Webhook notification dispatch, Email dispatch adapter stub).
 4. Operator Alert Management (Acknowledge, Resolve, Escalate).
+
+Dispatch wiring (TASK-SEN-008): an AlertEngine may carry a dispatcher —
+any object exposing ``dispatch(alert, webhook_urls) -> dict``. Every NEWLY
+created alert is dispatched exactly once; deduplication hits only bump
+``occurrence_count`` and never re-dispatch, so a storm cannot spam the
+human channel. The production dispatcher is
+``sentinel.modules.operations.dispatch.OperationsAlertDispatcher``, which
+sends through the approval dispatcher's shared human channel (TASK-SEN-006
+credential resolution). The API lifespan wires it into the global
+``alert_engine`` singleton; engines constructed without a dispatcher keep
+the historical store-only behaviour (used by unit tests and tools).
+Dispatch failures never break alert creation.
 """
 
 import hashlib
@@ -25,10 +37,14 @@ except ImportError:  # Python < 3.11: behaviour-identical fallback
         def _generate_next_value_(name, start, count, last_values):
             return name.lower()
 
+import logging
+from typing import Any
 from pydantic import BaseModel, Field
 
 from sentinel.core.models import SeverityLevel
 from sentinel.modules.operations.baseline import BaselineDelta, ChangeType
+
+logger = logging.getLogger("sentinel.operations.alerting")
 
 
 class AlertStatus(StrEnum):
@@ -51,18 +67,36 @@ class Alert(BaseModel):
     resolved_at: datetime | None = None
     occurrence_count: int = 1
     fingerprint: str = ""
+    # TASK-SEN-008 dispatch outcome (defaults preserve pre-wiring semantics:
+    # an alert that was never offered to a dispatcher is simply undispatched).
+    dispatched: bool = False
+    dispatch_channels: list[str] = Field(default_factory=list)
+    dispatch_queued: bool = False
 
 
 class AlertEngine:
     """Manages active alerts, storm deduplication, and webhook dispatching."""
 
-    def __init__(self):
+    def __init__(self, dispatcher: Any | None = None):
         self._alerts: dict[str, Alert] = {}
         self._webhook_urls: list[str] = []
+        self._dispatcher = dispatcher
+
+    def set_dispatcher(self, dispatcher: Any | None):
+        """Attach (or replace) the dispatch backend for NEW alerts."""
+        self._dispatcher = dispatcher
+
+    @property
+    def dispatcher(self) -> Any | None:
+        return self._dispatcher
 
     def register_webhook(self, url: str):
         if url not in self._webhook_urls:
             self._webhook_urls.append(url)
+
+    @property
+    def webhook_urls(self) -> list[str]:
+        return list(self._webhook_urls)
 
     def process_delta(self, delta: BaselineDelta) -> Alert:
         # Calculate deduplication fingerprint based on target, type, and description
@@ -85,7 +119,31 @@ class AlertEngine:
             fingerprint=fingerprint,
         )
         self._alerts[alert.alert_id] = alert
+        self._dispatch_new_alert(alert)
         return alert
+
+    def _dispatch_new_alert(self, alert: Alert) -> None:
+        """Offer a newly created alert to the dispatcher exactly once.
+
+        Any dispatcher failure is logged and swallowed: alert creation is
+        the durable record and must not fail because a channel is down.
+        """
+        if self._dispatcher is None:
+            return
+        try:
+            result = self._dispatcher.dispatch(alert, list(self._webhook_urls)) or {}
+        except Exception as e:
+            logger.warning("Alert dispatch failed for %s: %s", alert.alert_id, e)
+            return
+        channels: list[str] = []
+        if result.get("telegram"):
+            channels.append("telegram")
+        if result.get("discord"):
+            channels.append("discord")
+        channels.extend(f"webhook:{url}" for url in result.get("webhooks") or [])
+        alert.dispatch_channels = channels
+        alert.dispatched = bool(channels)
+        alert.dispatch_queued = bool(result.get("queued")) and not channels
 
     def list_alerts(
         self,
