@@ -119,6 +119,12 @@ async def process_event_with_status(
       ("ok", result)    — processed; safe to acknowledge
       ("poison", None)  — payload can never validate; acknowledge to stop redelivery
       ("error", None)   — transient failure; leave pending for PEL recovery
+
+    A loop that RETURNS with status "failed" (every executed step failed,
+    TASK-COR-006) is an "error", not an "ok": acknowledging it would bury a
+    total step failure as delivered. A "partial" loop is an "ok" — the
+    failure is recorded in the loop result/audit, and redelivering the whole
+    event would re-run the steps that already succeeded.
     """
     try:
         event_dict = json.loads(payload_str)
@@ -139,6 +145,12 @@ async def process_event_with_status(
     try:
         async with AsyncSessionLocal() as db_session:
             result = await orchestrator.run_cognitive_loop(event=event, db_session=db_session)
+            if result.get("status") == "failed":
+                logger.error(
+                    f"Cognitive Loop failed all executed steps [loop_id={result['loop_id']}] "
+                    f"| step_outcomes={result.get('step_outcomes')}"
+                )
+                return "error", None
             logger.info(
                 f"Cognitive Loop complete [loop_id={result['loop_id']}] | agent='{result['agent_id']}' | decision='{result['decision']}' | actions_executed={result['executed_actions']}"
             )
