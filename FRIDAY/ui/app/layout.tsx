@@ -1,41 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Mono, Inter, Rajdhani } from "next/font/google";
+import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-/* TASK-WEB-001 (2026-11-15) — type system for the from-scratch
-   redesign: Rajdhani carries the display voice (wide, technical,
-   cinematic — headings, the wordmark, navigation), Inter carries
-   prose and FRIDAY's replies, DM Mono is reserved for numerals and
-   machine readouts. */
-const rajdhani = Rajdhani({
+/* TASK-WEB-002 (2026-11-15) — the Halo console's type system.
+   Space Grotesk is the voice of the room (wordmark, headings,
+   commands); Manrope carries conversation and prose; JetBrains
+   Mono is kept for numbers and machine readouts only. */
+const grotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
-  variable: "--font-rajdhani",
+  variable: "--font-grotesk",
   display: "swap",
 });
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-manrope",
   display: "swap",
 });
 
-const dmMono = DM_Mono({
+const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-dm-mono",
+  weight: ["400", "500", "600"],
+  variable: "--font-jetbrains",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "FRIDAY",
-  description:
-    "Talk to FRIDAY. One voice line, one conversation, and a crew of ten specialist agents behind it.",
+  description: "One room, one voice, one conversation — and ten specialists listening behind the light.",
   applicationName: "FRIDAY",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#010204",
+  themeColor: "#030409",
   width: "device-width",
   initialScale: 1,
 };
@@ -43,7 +41,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${rajdhani.variable} ${inter.variable} ${dmMono.variable}`}>{children}</body>
+      <body className={`${grotesk.variable} ${manrope.variable} ${jetbrains.variable}`}>{children}</body>
     </html>
   );
 }

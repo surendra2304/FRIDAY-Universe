@@ -373,9 +373,11 @@ class _RunnerFakeAdapter:
 
     account_id = "101-001-FAKE"
 
-    def __init__(self, eurusd_candles):
+    def __init__(self, eurusd_candles, fail_orders=False):
         self._eurusd = eurusd_candles
         self.orders = []
+        self.fail_orders = fail_orders
+        self.pricing_requests = []
 
     # adapter surface used by the runner
     def normalize_symbol(self, s):
@@ -393,6 +395,7 @@ class _RunnerFakeAdapter:
         return []
 
     def get_pricing(self, symbols):
+        self.pricing_requests.append(list(symbols))
         out = {}
         for s in symbols:
             out[s] = {"bid": 1.0, "ask": 1.0, "mid": 1.0, "spread": 0.0}
@@ -428,6 +431,8 @@ class _RunnerFakeAdapter:
 
     def place_order(self, symbol, side, order_type, units, **kw):
         self.orders.append((symbol, side, units, kw))
+        if self.fail_orders:
+            raise RuntimeError("MARKET_HALTED")
         return SimpleNamespace(trade_id="9001", order_id="9000", price=1.0,
                                status="FILLED")
 
@@ -490,3 +495,53 @@ def test_runner_refuses_when_governance_revoked(tmp_path, monkeypatch):
     out = runner.run_once()
     assert "governance" in str(out.get("halted", ""))
     assert adapter.orders == []
+
+
+# ---------------------------------------------------------------------------
+# Runner execution hygiene (defects found in the first live hour,
+# 2026-11-15: duplicate pricing instrument 400; JPY-pair notional
+# math shrinking sizes ~150x; rejected orders retried every scan)
+# ---------------------------------------------------------------------------
+
+def test_runner_pricing_request_has_no_duplicates(tmp_path):
+    adapter = _RunnerFakeAdapter(_eurusd_signal_frame())
+    runner = _make_runner(tmp_path, adapter, dry_run=True)
+    runner.run_once()
+    assert adapter.pricing_requests, "pricing must be requested"
+    for req in adapter.pricing_requests:
+        assert len(req) == len(set(req)), f"duplicate instruments in {req}"
+
+
+def test_runner_sizing_jpy_pair_uses_real_notional(tmp_path):
+    adapter = _RunnerFakeAdapter(_eurusd_signal_frame())
+    runner = _make_runner(tmp_path, adapter, dry_run=True)
+    pricing = {"USDJPY": {"bid": 159.7, "ask": 159.73, "mid": 159.717, "spread": 0.0}}
+    units = runner._position_units(
+        "USDJPY", 2.098, pricing, equity=10_000.0,
+        free_margin=10_000.0, margin_rate=0.02,
+    )
+    # Notional per unit is $1 for USDJPY -> the 25% notional cap is
+    # 2,500 units (the raw-price formula would give 15).
+    assert units == 2500
+
+
+def test_runner_sizing_eurusd_sanity(tmp_path):
+    adapter = _RunnerFakeAdapter(_eurusd_signal_frame())
+    runner = _make_runner(tmp_path, adapter, dry_run=True)
+    pricing = {"EURUSD": {"bid": 1.08, "ask": 1.08, "mid": 1.08, "spread": 0.0}}
+    units = runner._position_units(
+        "EURUSD", 0.02, pricing, equity=10_000.0,
+        free_margin=10_000.0, margin_rate=0.02,
+    )
+    assert units == int(2500 / 1.08)
+
+
+def test_runner_failed_order_backs_off_instrument(tmp_path):
+    adapter = _RunnerFakeAdapter(_eurusd_signal_frame(), fail_orders=True)
+    runner = _make_runner(tmp_path, adapter, dry_run=False)
+    runner.run_once()
+    assert len(adapter.orders) == 1  # one attempt, rejected
+    state = json.loads((tmp_path / "sleeve_state.json").read_text())
+    assert state["cooldowns"]["EURUSD"] > time.time()
+    runner.run_once()
+    assert len(adapter.orders) == 1  # no retry while cooling down

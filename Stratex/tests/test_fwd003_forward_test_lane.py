@@ -1,0 +1,728 @@
+"""TASK-STR-FWD-003 — the FORWARD-TEST lane for RD-002's watchlist.
+
+The four RD-002 WATCHLIST configurations passed the mechanical bar but
+failed Bonferroni significance; the owner directed that real demo
+forward evidence decide them. This file pins:
+
+1. EQUIVALENCE: the production lane modules (strategy_bollinger_trend,
+   strategy_shock_breakout, strategy_adx_ema_bare) reproduce the judged
+   rd2 harness entry-for-entry on real historical slices
+   (tests/fixtures/fwd002/, shared with TASK-STR-FWD-002).
+2. GOVERNANCE: the FORWARD_TEST classification is distinct from the
+   VALIDATED entrants, keeps its judged priors, binds its lane_assets,
+   and tsmom2_dual is registered-but-excluded (no module, no assets,
+   forward_protocol off) because its judged Yahoo-futures universe
+   cannot be traded faithfully on either demo venue.
+3. DEMO-ONLY ENFORCEMENT: the registry executes FORWARD_TEST
+   strategies only when the caller names a venue the host daemon has
+   attested as demo; everywhere else the lane is blocked fail-closed.
+4. DAEMON WIRING: the lane flows through the scan/execution path with
+   its judged geometry (the forward-protocol min-RR exemption covers
+   adx_ema_bare's RR 1.0), the phase-3 forward guard evaluates lane
+   strategies (kill criteria), and closed lane positions are booked
+   into the Phase-2 ledger tagged lane=FORWARD_TEST.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+import time
+from types import SimpleNamespace
+
+import numpy as np
+import pandas as pd
+import pytest
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+import strategy_adx_ema as prod_adx
+import strategy_adx_ema_bare as adx_bare
+import strategy_bollinger_trend as bol
+import strategy_shock_breakout as shk
+from rigorous_backtest.rd.common import atr as harness_atr
+from rigorous_backtest.rd2 import families3
+
+FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures", "fwd002")
+WARMUP = 260
+
+
+def _load(name: str) -> pd.DataFrame:
+    df = pd.read_csv(os.path.join(FIXTURES, name), index_col=0, parse_dates=True)
+    if df.index.tz is None:
+        df.index = df.index.tz_localize("UTC")
+    return df
+
+
+# ---------------------------------------------------------------------------
+# 1. Equivalence: production modules vs the judged harness
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("fixture", ["BTCUSDT_1d.csv", "SOLUSDT_1d.csv"])
+def test_bollinger_entries_match_judged_harness(fixture):
+    df = _load(fixture)
+    judged = families3.sig_bollinger_trend(df, 50, WARMUP)
+    production = bol.entries_for_frame(df, WARMUP)
+    assert len(judged) >= 10, "fixture must contain a meaningful entry set"
+    assert production == judged
+
+
+@pytest.mark.parametrize("fixture", ["BTCUSDT_1d.csv", "SOLUSDT_1d.csv"])
+def test_shock_entries_match_judged_harness(fixture):
+    df = _load(fixture)
+    judged = families3.sig_shock(df, 1.0, WARMUP)
+    production = shk.entries_for_frame(df, WARMUP)
+    assert len(judged) >= 20, "fixture must contain a meaningful entry set"
+    assert production == judged
+
+
+def _gov2_bare_entries(df: pd.DataFrame):
+    """Inline replica of the judged gov2 bare evaluation
+    (rd2/gov2.py eval_module_cell with signal_filter=None):
+    features once over the frame, get_signal on trailing <=500-bar
+    windows, bars [260, len-2]; distances from the signal-bar close."""
+    featured = prod_adx.add_features(df)
+    closes = df["close"].to_numpy(dtype=float)
+    out = []
+    for i in range(WARMUP, len(df) - 1):
+        res = prod_adx.get_signal(featured.iloc[max(0, i - 499): i + 1].copy())
+        if res is None or res.side not in ("BUY", "SELL") or res.sl is None:
+            continue
+        if res.side == "BUY":
+            out.append((i, "LONG", closes[i] - res.sl, res.tp - closes[i]))
+        else:
+            out.append((i, "SHORT", res.sl - closes[i], closes[i] - res.tp))
+    return out
+
+
+@pytest.mark.parametrize("fixture", ["BTCUSDT_4h.csv", "SOLUSDT_4h.csv"])
+def test_adx_bare_entries_match_judged_harness(fixture):
+    df = _load(fixture)
+    judged = _gov2_bare_entries(df)
+    production = adx_bare.entries_for_frame(df, WARMUP)
+    assert len(judged) >= 5, "fixture must contain a meaningful entry set"
+    assert production == judged
+    # The judged module bracket is 3.0 x ATR both sides (RR 1.0).
+    featured = prod_adx.add_features(df)
+    for i, _side, sl_dist, tp_dist in production:
+        atr_i = float(featured["atr_adx_ema"].iloc[i])
+        assert sl_dist == pytest.approx(3.0 * atr_i)
+        assert tp_dist == pytest.approx(3.0 * atr_i)
+
+
+@pytest.mark.parametrize("fixture", ["BTCUSDT_1d.csv", "BTCUSDT_4h.csv"])
+def test_atr_matches_judged_harness(fixture):
+    df = _load(fixture)
+    expected = harness_atr(df, 14)
+    np.testing.assert_allclose(bol.atr14(df).to_numpy(), expected.to_numpy())
+    np.testing.assert_allclose(shk.atr14(df).to_numpy(), expected.to_numpy())
+    featured = prod_adx.add_features(df)
+    np.testing.assert_allclose(
+        featured["atr_adx_ema"].to_numpy(), expected.to_numpy()
+    )
+
+
+def test_bollinger_live_signal_reproduces_judged_bracket():
+    df = _load("BTCUSDT_1d.csv")
+    judged = families3.sig_bollinger_trend(df, 50, WARMUP)
+    atr = harness_atr(df, 14).to_numpy()
+    for i, side in judged[:6]:
+        sig = bol.get_signal(df.iloc[: i + 1])
+        assert sig["side"] == ("BUY" if side == "LONG" else "SELL")
+        assert sig["sl_dist"] == pytest.approx(2.0 * atr[i])
+        assert sig["tp_dist"] == pytest.approx(4.0 * atr[i])
+        assert sig["win_rate_prior"] == pytest.approx(0.3929)
+        assert sig["rr_ratio"] == pytest.approx(2.0)
+    entry_bars = {i for i, _ in judged}
+    quiet = next(i for i in range(WARMUP, len(df) - 2) if i not in entry_bars)
+    assert bol.get_signal(df.iloc[: quiet + 1])["side"] is None
+
+
+def test_shock_live_signal_reproduces_judged_bracket():
+    df = _load("SOLUSDT_1d.csv")
+    judged = families3.sig_shock(df, 1.0, WARMUP)
+    atr = harness_atr(df, 14).to_numpy()
+    for i, side in judged[:6]:
+        sig = shk.get_signal(df.iloc[: i + 1])
+        assert sig["side"] == ("BUY" if side == "LONG" else "SELL")
+        assert sig["sl_dist"] == pytest.approx(2.0 * atr[i])
+        assert sig["tp_dist"] == pytest.approx(4.0 * atr[i])
+        assert sig["win_rate_prior"] == pytest.approx(0.3893)
+        assert sig["rr_ratio"] == pytest.approx(2.0)
+    entry_bars = {i for i, _ in judged}
+    quiet = next(i for i in range(WARMUP, len(df) - 2) if i not in entry_bars)
+    assert shk.get_signal(df.iloc[: quiet + 1])["side"] is None
+
+
+def test_adx_bare_live_signal_reproduces_judged_bracket():
+    df = _load("BTCUSDT_4h.csv")
+    judged = adx_bare.entries_for_frame(df, WARMUP)
+    assert judged, "fixture must contain judged entries"
+    for i, side, sl_dist, tp_dist in judged[:4]:
+        sig = adx_bare.get_signal(df.iloc[: i + 1])
+        assert sig["side"] == ("BUY" if side == "LONG" else "SELL")
+        assert sig["sl_dist"] == pytest.approx(sl_dist)
+        assert sig["tp_dist"] == pytest.approx(tp_dist)
+        # The lane's own RD-002 prior — NOT the production module's
+        # (deliberately None) and NOT the production config's record.
+        assert sig["win_rate_prior"] == pytest.approx(0.5699)
+        assert sig["rr_ratio"] == pytest.approx(1.0)
+
+
+def test_forming_bar_is_never_evaluated():
+    now = 1_800_000_000.0  # fixed epoch, arbitrary
+    # 1d modules: bars opening now-3d / now-2d / now-1d-1s are closed;
+    # the bar opening now-1h is still forming.
+    opens = [now - 3 * 86400, now - 2 * 86400, now - 86400 - 1, now - 3600]
+    idx = pd.to_datetime(opens, unit="s", utc=True)
+    df = pd.DataFrame(
+        {"open": 1.0, "high": 1.0, "low": 1.0, "close": 1.0, "volume": 1.0},
+        index=idx,
+    )
+    assert len(bol._closed_frame(df, now_s=now)) == 3
+    assert len(shk._closed_frame(df, now_s=now)) == 3
+    # 4h wrapper: opens at now-12h / now-8h / now-4h-1s closed, now-1h forming.
+    opens4 = [now - 12 * 3600, now - 8 * 3600, now - 4 * 3600 - 1, now - 3600]
+    idx4 = pd.to_datetime(opens4, unit="s", utc=True)
+    df4 = pd.DataFrame(
+        {"open": 1.0, "high": 1.0, "low": 1.0, "close": 1.0, "volume": 1.0},
+        index=idx4,
+    )
+    assert len(adx_bare._closed_frame(df4, now_s=now)) == 3
+
+
+# ---------------------------------------------------------------------------
+# 2. Governance: the FORWARD_TEST classification
+# ---------------------------------------------------------------------------
+
+def test_config_registry_lane_entries():
+    from config_strategy import CRYPTO30_SYMBOLS, PRODUCTION_STRATEGY_REGISTRY
+
+    for key, wr, pf, rr in (
+        ("bollinger_trend", 0.3929, 1.456, 2.0),
+        ("shock_breakout", 0.3893, 1.318, 2.0),
+        ("adx_ema_bare", 0.5699, 1.233, 1.0),
+    ):
+        entry = PRODUCTION_STRATEGY_REGISTRY[key]
+        assert entry["status"] == "FORWARD_TEST", key
+        assert entry["forward_protocol"] is True, key
+        assert entry["forward_lane"] == "FORWARD_TEST", key
+        assert entry["lane_assets"] == CRYPTO30_SYMBOLS, key
+        # Judged priors survive the registry's nulling loop (the
+        # daemon's expectancy gate reads them).
+        assert entry["oos_win_rate_prior"] == pytest.approx(wr), key
+        assert entry["expected_net_edge_bps"] > 0, key
+        assert entry["rr_ratio"] == pytest.approx(rr), key
+        # The lane is not a validation: no validated_assets key may
+        # carry the universe for a FORWARD_TEST entry.
+        assert not entry.get("validated_assets"), key
+
+    # The passed entrants are untouched. The VALIDATED set also holds
+    # the FWD-002 sleeve extension's components (sleeve_shock_breakout
+    # with a daemon module; sleeve_tsmom2_dual registry-only, running
+    # through the OANDA sleeve runner) — separate judged objects from
+    # this lane's shock_breakout / tsmom2_dual, with separate records.
+    validated = {
+        k for k, e in PRODUCTION_STRATEGY_REGISTRY.items() if e["status"] == "VALIDATED"
+    }
+    assert validated == {
+        "ichimoku_trend",
+        "dow_effect",
+        "sleeve_shock_breakout",
+        "sleeve_tsmom2_dual",
+    }
+    # adx_ema's production configuration keeps its own measurement.
+    assert PRODUCTION_STRATEGY_REGISTRY["adx_ema"]["status"] == "OBSERVE_ONLY"
+
+
+def test_tsmom2_registered_but_excluded():
+    from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+    from strategies.strategy_registry import UnifiedStrategyRegistry
+
+    entry = PRODUCTION_STRATEGY_REGISTRY["tsmom2_dual"]
+    assert entry["status"] == "FORWARD_TEST"
+    assert entry["forward_protocol"] is False
+    assert entry["lane_assets"] == []
+    assert "EXCLUDED" in entry["reason"]
+    # No production module exists for it, so discovery finds nothing
+    # and nothing can evaluate or execute it.
+    reg = UnifiedStrategyRegistry()
+    assert reg.get("strategy_tsmom2_dual") is None
+    assert not reg.executable("strategy_tsmom2_dual", "4h", "XAUUSD", venue="oanda")[0]
+
+
+# ---------------------------------------------------------------------------
+# 3. Demo-only enforcement in the registry
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def registry():
+    from strategies.strategy_registry import UnifiedStrategyRegistry
+
+    return UnifiedStrategyRegistry()
+
+
+def test_lane_blocked_without_demo_attestation(registry):
+    # Fresh registry: no daemon has attested demo venues yet.
+    assert registry.demo_venues() == frozenset()
+    ok, reason = registry.executable(
+        "strategy_bollinger_trend", "1d", "BTCUSDT", venue="binance_futures"
+    )
+    assert not ok and reason == "FORWARD_TEST_DEMO_VENUE_ONLY"
+    ok, reason = registry.executable("strategy_bollinger_trend", "1d", "BTCUSDT")
+    assert not ok and reason == "FORWARD_TEST_REQUIRES_VENUE"
+
+
+def test_lane_executable_only_on_attested_demo_venue(registry):
+    registry.set_demo_venues({"binance_futures"})
+    try:
+        assert registry.executable(
+            "strategy_bollinger_trend", "1d", "BTCUSDT", venue="binance_futures"
+        )[0]
+        assert registry.executable(
+            "strategy_shock_breakout", "1d", "AAVEUSDT", venue="binance_futures"
+        )[0]
+        assert registry.executable(
+            "strategy_adx_ema_bare", "4h", "ETHUSDT", venue="binance_futures"
+        )[0]
+        # Wrong timeframe / off-universe symbol / unattested venue.
+        assert not registry.executable(
+            "strategy_bollinger_trend", "4h", "BTCUSDT", venue="binance_futures"
+        )[0]
+        assert not registry.executable(
+            "strategy_bollinger_trend", "1d", "EURUSD", venue="binance_futures"
+        )[0]
+        assert not registry.executable(
+            "strategy_bollinger_trend", "1d", "BTCUSDT", venue="oanda"
+        )[0]
+        # VALIDATED entrants are unaffected by the venue rule.
+        assert registry.executable("strategy_ichimoku_trend", "4h", "BTCUSDT")[0]
+        assert registry.executable(
+            "strategy_ichimoku_trend", "4h", "BTCUSDT", venue="anywhere"
+        )[0]
+    finally:
+        registry.set_demo_venues(set())
+
+
+def test_lane_execute_strategy_blocked_and_tagged(registry, monkeypatch):
+    monkeypatch.setitem(
+        registry._get_signal_fns,
+        "strategy_shock_breakout",
+        lambda df: {
+            "side": "BUY",
+            "sl_dist": 2.0,
+            "tp_dist": 4.0,
+            "win_rate_prior": 0.3893,
+            "rr_ratio": 2.0,
+            "strategy_type": "RULE_BASED",
+        },
+    )
+    df = _load("BTCUSDT_1d.csv")
+    blocked = registry.execute_strategy(
+        "strategy_shock_breakout", df, "1d", "BTCUSDT", venue="binance_futures"
+    )
+    assert blocked["status"] == "BLOCKED"
+    assert blocked["reason"] == "FORWARD_TEST_DEMO_VENUE_ONLY"
+
+    registry.set_demo_venues({"binance_futures"})
+    try:
+        sig = registry.execute_strategy(
+            "strategy_shock_breakout", df, "1d", "BTCUSDT", venue="binance_futures"
+        )
+        assert sig["status"] == "SIGNAL"
+        assert sig["forward_test"] is True
+        assert sig["observe_only"] is False
+    finally:
+        registry.set_demo_venues(set())
+
+
+def test_adx_bare_and_adx_production_are_distinct_records(registry):
+    assert registry.governance_status("strategy_adx_ema") == "OBSERVE_ONLY"
+    assert registry.governance_status("strategy_adx_ema_bare") == "FORWARD_TEST"
+    # The production config can evaluate for evidence but never execute,
+    # even on an attested demo venue; the bare lane config is the
+    # reverse — it exists to execute (demo only).
+    assert not registry.executable(
+        "strategy_adx_ema", "4h", "BTCUSDT", venue="binance_futures"
+    )[0]
+    assert registry.evaluable("strategy_adx_ema", "4h", "BTCUSDT")[0]
+    assert registry.evaluable("strategy_adx_ema_bare", "4h", "BTCUSDT")[0]
+
+
+# ---------------------------------------------------------------------------
+# 4. Daemon wiring
+# ---------------------------------------------------------------------------
+
+def _daemon_bare():
+    from autonomy.run_daemon import StratexTradingEngine
+
+    return StratexTradingEngine.__new__(StratexTradingEngine)
+
+
+def test_forward_protocol_entries_cover_the_lane():
+    daemon = _daemon_bare()
+    entries = daemon._forward_protocol_entries()
+    for name in (
+        "strategy_bollinger_trend",
+        "strategy_shock_breakout",
+        "strategy_adx_ema_bare",
+        "strategy_ichimoku_trend",
+        "strategy_dow_effect",
+    ):
+        assert name in entries, name
+    # The excluded candidate is NOT under the forward protocol.
+    assert "strategy_tsmom2_dual" not in entries
+
+
+def test_lane_tag_mapping():
+    daemon = _daemon_bare()
+    assert daemon._lane_for_strategy("strategy_bollinger_trend") == "FORWARD_TEST"
+    assert daemon._lane_for_strategy("strategy_shock_breakout") == "FORWARD_TEST"
+    assert daemon._lane_for_strategy("strategy_adx_ema_bare") == "FORWARD_TEST"
+    assert daemon._lane_for_strategy("strategy_ichimoku_trend") is None
+    assert daemon._lane_for_strategy("strategy_dow_effect") is None
+    assert daemon._lane_for_strategy("strategy_adx_ema") is None
+    assert daemon._lane_for_strategy("strategy_unknown") is None
+
+
+def test_forward_guard_hook_pauses_lane_strategy(monkeypatch):
+    from measurement import fill_ledger
+
+    base = 1_700_000_000.0
+    rows = [
+        {
+            "strategy": "strategy_bollinger_trend",
+            "engine": "daemon",
+            "lane": "FORWARD_TEST",
+            "net_pnl": -1.0,
+            "exit_time": base + 3600 * k,
+        }
+        for k in range(55)
+    ]
+    monkeypatch.setattr(fill_ledger, "read_fills", lambda: rows)
+    daemon = _daemon_bare()
+    daemon.engine = SimpleNamespace(
+        get_risk_summary=lambda: {"total_equity": 10_000.0}
+    )
+    daemon.strategy_denylist = set()
+    persisted = []
+    daemon._persist_denylist = lambda: persisted.append(True)
+    daemon._maybe_apply_forward_guard()
+    assert "strategy_bollinger_trend" in daemon.strategy_denylist
+    assert persisted
+
+
+# --- Scan-path behaviour with a fake registry -------------------------------
+
+class _FakeAdapter:
+    def round_quantity(self, symbol, qty):
+        return qty
+
+    def min_notional(self, symbol):
+        return 0.0
+
+
+class _FakeTicker:
+    last = 100.0
+
+
+class _FakeOrderResult:
+    status = "FILLED"
+
+
+class _FakeEngine:
+    def __init__(self, candles, venues=("binance_futures",)):
+        self.venues = {v: _FakeAdapter() for v in venues}
+        self.positions = {}
+        self.position_opened_at = {}
+        self.position_strategy = {}
+        self.position_timeframe = {}
+        self.realized_pnl = 0.0
+        self.daily_realized_pnl = 0.0
+        self.daily_start_equity = 100_000.0
+        self.max_daily_loss_pct = 0.03
+        self.daily_loss_limit_hit = False
+        self.telegram_bot = None
+        self._candles = candles
+        self.orders = []
+
+    def get_risk_summary(self):
+        return {"daily_loss_limit_hit": False, "total_equity": 100_000.0}
+
+    def get_candles(self, venue, symbol, tf, limit):
+        return self._candles
+
+    def get_ticker(self, venue, symbol):
+        return _FakeTicker()
+
+    def can_open_position(self, venue):
+        return True, "OK"
+
+    def has_open_position(self, venue, symbol):
+        return False
+
+    def symbol_in_cooldown(self, venue, symbol):
+        return False
+
+    def get_free_margin(self, venue):
+        return 100_000.0
+
+    def place_order(self, **kwargs):
+        self.orders.append(kwargs)
+        return _FakeOrderResult()
+
+    def save_state(self):
+        pass
+
+
+class _LaneFakeRegistry:
+    """Registry stand-in: one FORWARD_TEST strategy with judged RR 1.0
+    (adx_ema_bare's real name, so the daemon's forward-protocol set —
+    read from the real config — covers it) and one VALIDATED strategy
+    also with RR 1.0 (control: the generic min-RR filter must still
+    block it)."""
+
+    STATUSES = {
+        "strategy_adx_ema_bare": "FORWARD_TEST",
+        "strategy_fake_validated": "VALIDATED",
+    }
+
+    def __init__(self, demo_venues):
+        self._demo = set(demo_venues)
+        self.invoked = []
+
+    def get_all_strategy_names(self):
+        return list(self.STATUSES)
+
+    def governance_status(self, name):
+        return self.STATUSES[name]
+
+    def get(self, name):
+        return SimpleNamespace(status=self.STATUSES[name], rr_ratio=1.0)
+
+    def executable(self, name, tf, symbol, venue=None):
+        if self.STATUSES[name] == "FORWARD_TEST":
+            if venue in self._demo:
+                return True, "OK"
+            return False, "FORWARD_TEST_DEMO_VENUE_ONLY"
+        return True, "OK"
+
+    def demo_venues(self):
+        return frozenset(self._demo)
+
+    def execute_strategy(self, name, df, tf, symbol, allow_observe=False, venue=None):
+        ok, reason = self.executable(name, tf, symbol, venue=venue)
+        if not ok:
+            return {"status": "BLOCKED", "reason": reason, "strategy": name}
+        self.invoked.append(name)
+        return {
+            "status": "SIGNAL",
+            "strategy": name,
+            "side": "BUY",
+            "stop_loss": 99.0,
+            "take_profit": 101.0,
+            "win_rate_prior": 0.5699,
+            "rr_ratio": 1.0,
+            "strategy_type": "RULE_BASED",
+            "observe_only": False,
+            "forward_test": self.STATUSES[name] == "FORWARD_TEST",
+        }
+
+
+def _candles(rows: int = 300, bar_seconds: int = 14400):
+    now = int(time.time())
+    return [
+        {
+            "timestamp": now - (rows - i) * bar_seconds,
+            "open": 100.0,
+            "high": 101.0,
+            "low": 99.0,
+            "close": 100.0,
+            "volume": 1.0,
+        }
+        for i in range(rows)
+    ]
+
+
+def _scan_daemon(fake_engine):
+    import datetime
+
+    from autonomy.run_daemon import StratexTradingEngine
+
+    d = StratexTradingEngine.__new__(StratexTradingEngine)
+    d.engine = fake_engine
+    d.scan_interval = 0.0
+    d.max_positions = 9999
+    d.min_confidence = 0.55
+    d.min_rr = 1.5
+    d.risk_per_trade = 0.01
+    d.max_position_pct = 0.10
+    d.min_stop_pct = 0.005
+    d.max_stop_pct = 0.030
+    d.entry_confluence = 1
+    d.adx_threshold = 0.0
+    d.fee_rate_roundtrip = 0.0008
+    d.min_expectancy_r = 0.05  # the live Server-1 value
+    d._confluence_signals = {}
+    d._last_signal_bar = {}
+    d.adx_strategies = set()
+    d.strategy_denylist = set()
+    d.strategy_allowlist = set()
+    d.strategy_priors = {}
+    d.symbols = {v: ["BTCUSDT"] for v in fake_engine.venues}
+    d.timeframes = ["4h"]
+    d.running = True
+    d.last_scan = 0
+    d.scan_count = 0
+    d._last_trend_manage = time.time()
+    d._shadow = None
+    d._last_summary_date = datetime.datetime.now(
+        datetime.timezone.utc
+    ).date().isoformat()
+    return d
+
+
+@pytest.fixture
+def scan_env(monkeypatch):
+    import autonomy.run_daemon as run_daemon
+
+    monkeypatch.setattr("trading_pause.is_trading_paused", lambda: False)
+    monkeypatch.setattr("panic_state.is_panic_active", lambda: False)
+    monkeypatch.setattr("panic_state.is_kill_switch_locked", lambda: False)
+    return run_daemon, monkeypatch
+
+
+def test_lane_strategy_executes_on_demo_despite_min_rr(scan_env):
+    run_daemon, monkeypatch = scan_env
+    fake_registry = _LaneFakeRegistry({"binance_futures"})
+    monkeypatch.setattr(run_daemon, "strategy_registry", fake_registry)
+    engine = _FakeEngine(_candles())
+    daemon = _scan_daemon(engine)
+    results = daemon.scan_and_execute()
+    assert results["errors"] == 0
+    # The lane's judged RR 1.0 clears the forward-protocol exemption
+    # and reaches order placement on the demo venue...
+    assert fake_registry.invoked == ["strategy_adx_ema_bare"]
+    placed = {o.get("strategy_name") for o in engine.orders}
+    assert placed == {"strategy_adx_ema_bare"}
+    # ...while the VALIDATED control with the same RR 1.0 is still
+    # stopped by the generic min-RR pre-filter (never even evaluated).
+    assert "strategy_fake_validated" not in fake_registry.invoked
+
+
+def test_lane_strategy_blocked_on_non_demo_venue(scan_env):
+    run_daemon, monkeypatch = scan_env
+    fake_registry = _LaneFakeRegistry({"binance_futures"})
+    monkeypatch.setattr(run_daemon, "strategy_registry", fake_registry)
+    engine = _FakeEngine(_candles(), venues=("live_venue",))
+    daemon = _scan_daemon(engine)
+    results = daemon.scan_and_execute()
+    assert results["errors"] == 0
+    assert fake_registry.invoked == []
+    assert engine.orders == []
+
+
+# --- Ledger tagging through the reconciler ----------------------------------
+
+class _ReconcileAdapter:
+    def get_positions_or_none(self):
+        return []  # flat at the broker: the tracked position has closed
+
+    def get_realized_pnl(self, symbol, since_ms=None):
+        return {
+            "net": 5.0,
+            "gross": 5.4,
+            "fees": 0.4,
+            "trades": 1,
+            "last_price": 101.0,
+        }
+
+    def cancel_protective_orders(self, symbol):
+        return 0
+
+
+class _ReconcileEngine:
+    def __init__(self, strategy_name):
+        key = "binance_futures:BTCUSDT"
+        self.venues = {"binance_futures": _ReconcileAdapter()}
+        self.positions = {
+            key: SimpleNamespace(
+                symbol="BTCUSDT",
+                side="LONG",
+                quantity=0.1,
+                entry_price=100.0,
+                mark_price=101.0,
+                position_id="t1",
+            )
+        }
+        self.position_opened_at = {key: (time.time() - 3600) * 1000}
+        self.position_strategy = {key: strategy_name}
+        self.position_timeframe = {key: "1d"}
+        self.realized_pnl = 0.0
+        self.daily_realized_pnl = 0.0
+        self.telegram_bot = None
+
+    def _check_daily_loss_limit(self):
+        pass
+
+    def save_state(self):
+        pass
+
+    def mark_exit(self, venue, symbol):
+        pass
+
+    def equity_snapshot(self, trigger="fill"):
+        return {"engine": "daemon", "trigger": trigger, "total_equity": 10_000.0}
+
+
+def _run_reconcile(monkeypatch, tmp_path, strategy_name):
+    import json as _json
+
+    import autonomy.run_daemon as run_daemon
+    from measurement import fill_ledger
+
+    fills = tmp_path / "fills.jsonl"
+    snaps = tmp_path / "snaps.jsonl"
+    monkeypatch.setattr(fill_ledger, "fill_ledger_path", lambda: fills)
+    monkeypatch.setattr(fill_ledger, "equity_snapshot_path", lambda: snaps)
+    # The legacy ledger path derives from run_daemon.__file__.
+    fake_file = tmp_path / "autonomy" / "run_daemon.py"
+    fake_file.parent.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(run_daemon, "__file__", str(fake_file))
+
+    daemon = _daemon_bare()
+    daemon.engine = _ReconcileEngine(strategy_name)
+    daemon._reconcile_pass = 1  # keep the untracked sweep out of this pass
+    daemon._reconcile_positions()
+
+    fill_rows = [
+        _json.loads(line) for line in fills.read_text().splitlines() if line.strip()
+    ]
+    legacy = tmp_path / "testnet_trade_ledger.jsonl"
+    legacy_rows = (
+        [_json.loads(line) for line in legacy.read_text().splitlines() if line.strip()]
+        if legacy.exists()
+        else []
+    )
+    return fill_rows, legacy_rows
+
+
+def test_lane_fill_is_tagged_forward_test(monkeypatch, tmp_path):
+    fill_rows, legacy_rows = _run_reconcile(
+        monkeypatch, tmp_path, "strategy_bollinger_trend"
+    )
+    assert len(fill_rows) == 1
+    assert fill_rows[0]["strategy"] == "strategy_bollinger_trend"
+    assert fill_rows[0]["lane"] == "FORWARD_TEST"
+    assert len(legacy_rows) == 1
+    assert legacy_rows[0]["lane"] == "FORWARD_TEST"
+
+
+def test_entrant_fill_has_no_lane_tag(monkeypatch, tmp_path):
+    fill_rows, legacy_rows = _run_reconcile(
+        monkeypatch, tmp_path, "strategy_ichimoku_trend"
+    )
+    assert len(fill_rows) == 1
+    assert "lane" not in fill_rows[0]
+    assert len(legacy_rows) == 1
+    assert "lane" not in legacy_rows[0]

@@ -1,0 +1,245 @@
+"use client";
+
+import { Layers } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import SplitText from "../reactbits/SplitText";
+import Magnet from "../reactbits/Magnet";
+import type { VoiceLinkControls, VoicePhase } from "../VoiceCall";
+import { Halo } from "./Halo";
+import { Conversation } from "./Conversation";
+import { Veil, type VeilCommand } from "./Veil";
+import { Sheet } from "./Sheet";
+import { fetchFleet, openActivitySocket, toneFor, type FleetSnapshot } from "@/lib/wire";
+
+/* The voice line (LiveKit) and the three sheets are lazy chunks:
+   the stage paints and breathes on the small core bundle, and
+   the heavy machinery streams in behind it. The sheets only
+   exist when summoned, so they only load when summoned. */
+const VoiceCall = dynamic(() => import("../VoiceCall").then((m) => m.VoiceCall), { ssr: false });
+const FleetSheet = dynamic(() => import("./FleetSheet").then((m) => m.FleetSheet), { ssr: false });
+const ChronicleSheet = dynamic(() => import("./ChronicleSheet").then((m) => m.ChronicleSheet), { ssr: false });
+const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet), { ssr: false });
+
+/* ================================================================
+   The stage (TASK-WEB-002) — the whole app is this one room.
+
+   A black stage, a living light at its centre, the conversation
+   flowing underneath it, and ten small lights breathing around
+   the rim — one per agent, so the fleet is glanceable without
+   opening anything. There are no other screens. Everything else
+   (the fleet in detail, the chronicle, the machine's pulse) is
+   summoned over this stage through one veil and sinks back into
+   it; the stage — and any live call on it — never unmounts.
+
+   The wordmark, the pill in the corner, a swipe up from the
+   halo, or Cmd/Ctrl-K all open the same veil.
+   ================================================================ */
+
+type SheetKind = "fleet" | "chronicle" | "pulse";
+
+const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
+  fleet: { kicker: "The crew, in detail", title: "The Fleet" },
+  chronicle: { kicker: "Everything asked, everything done", title: "The Chronicle" },
+  pulse: { kicker: "The box underneath it all", title: "Machine Pulse" },
+};
+
+export function Stage() {
+  const [voicePhase, setVoicePhase] = useState<VoicePhase>("resting");
+  const [chatBusy, setChatBusy] = useState(false);
+  const [fleet, setFleet] = useState<FleetSnapshot | null>(null);
+  const [fleetOk, setFleetOk] = useState(false);
+  const [flaring, setFlaring] = useState<ReadonlySet<string>>(new Set());
+  const [veilOpen, setVeilOpen] = useState(false);
+  const [sheet, setSheet] = useState<SheetKind | null>(null);
+  const linkRef = useRef<VoiceLinkControls | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
+  const haloTouchY = useRef<number | null>(null);
+
+  const stagePhase: VoicePhase =
+    voicePhase === "resting" || voicePhase === "down" ? (chatBusy ? "thinking" : voicePhase) : voicePhase;
+
+  /* The rim lights need the fleet even when no sheet is open. */
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const snap = await fetchFleet();
+        if (cancelled) return;
+        setFleet(snap);
+        setFleetOk(true);
+      } catch {
+        if (!cancelled) setFleetOk(false);
+      }
+    };
+    void load();
+    const timer = window.setInterval(load, 20_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  /* Live activity makes the rim breathe: a working agent's light
+     flares as its frames arrive, then settles after ~2.6 s. */
+  useEffect(() => {
+    const timers = new Set<number>();
+    const socket = openActivitySocket((frame) => {
+      const who = (frame.agent || frame.agents_involved || "").toLowerCase();
+      if (!who) return;
+      setFlaring((current) => new Set(current).add(who));
+      const timer = window.setTimeout(() => {
+        setFlaring((current) => {
+          const next = new Set(current);
+          next.delete(who);
+          return next;
+        });
+        timers.delete(timer);
+      }, 2600);
+      timers.add(timer);
+    });
+    return () => {
+      socket?.close();
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+  }, []);
+
+  /* Cmd/Ctrl-K summons the veil from anywhere. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setVeilOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const openSheet = useCallback((kind: SheetKind) => setSheet(kind), []);
+
+  const callLive = voicePhase === "opening" || voicePhase === "listening" || voicePhase === "thinking" || voicePhase === "speaking";
+
+  const commands = useMemo<VeilCommand[]>(
+    () => [
+      {
+        id: "fleet",
+        label: "Look at the fleet",
+        hint: "who is awake, who is working, how fast they answer",
+        keys: "agents crew status online latency stratex memora forge",
+        run: () => openSheet("fleet"),
+      },
+      {
+        id: "chronicle",
+        label: "Open the chronicle",
+        hint: "every delegation FRIDAY has taken on, and what came of it",
+        keys: "history record tasks delegations activity done",
+        run: () => openSheet("chronicle"),
+      },
+      {
+        id: "pulse",
+        label: "Check the machine's pulse",
+        hint: "the host's vitals, the voice service, autonomy's latest moves",
+        keys: "system telemetry cpu ram health diagnostics voice worker",
+        run: () => openSheet("pulse"),
+      },
+      {
+        id: "talk",
+        label: callLive ? "End the voice line" : "Start the voice line",
+        hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
+        keys: "voice call talk speak microphone livekit",
+        run: () => {
+          if (callLive) linkRef.current?.end();
+          else linkRef.current?.start();
+        },
+      },
+      {
+        id: "write",
+        label: "Write a message instead",
+        hint: "drop the cursor into the composer below the halo",
+        keys: "chat type message text keyboard send",
+        run: () => composerRef.current?.focus(),
+      },
+    ],
+    [callLive, openSheet],
+  );
+
+  const agents = fleet?.agents ?? [];
+
+  return (
+    <main className="stage" data-phase={stagePhase}>
+      <div className="stage-ambience" aria-hidden="true" />
+
+      <header className="stage-top">
+        <button type="button" className="wordmark" onClick={() => setVeilOpen(true)} aria-label="Open the veil — everything the room can show">
+          <SplitText text="FRIDAY" tag="span" splitType="chars" delay={45} duration={0.9} trigger="load" />
+        </button>
+        <div className="stage-top-right">
+          <span className={`link-dot ${fleetOk ? "is-live" : ""}`} title={fleetOk ? "Fleet link is answering" : "Fleet link is quiet"} aria-hidden="true" />
+          <Magnet padding={60} magnetStrength={3}>
+            <button type="button" className="summon-pill" onClick={() => setVeilOpen(true)}>
+              <Layers size={15} aria-hidden="true" /> Everything else
+            </button>
+          </Magnet>
+        </div>
+      </header>
+
+      <div
+        className="halo-zone"
+        onTouchStart={(e) => {
+          haloTouchY.current = e.touches[0]?.clientY ?? null;
+        }}
+        onTouchEnd={(e) => {
+          const start = haloTouchY.current;
+          haloTouchY.current = null;
+          if (start === null) return;
+          const end = e.changedTouches[0]?.clientY ?? start;
+          if (start - end > 70) setVeilOpen(true);
+        }}
+      >
+        <div className="halo-wrap">
+          <Halo
+            phase={stagePhase}
+            onTap={() => {
+              /* The halo starts a call; it never ends one — a stray
+                 tap mid-conversation must not hang up. */
+              if (voicePhase === "resting" || voicePhase === "down") linkRef.current?.start();
+            }}
+          />
+          <div className="rim" aria-label="Fleet at a glance">
+            {agents.map((agent, idx) => {
+              const tone = toneFor(agent.status);
+              const isFlaring = flaring.has(agent.name.toLowerCase()) || flaring.has(agent.id.toLowerCase());
+              const angle = (idx / Math.max(agents.length, 1)) * 360;
+              return (
+                <button
+                  key={agent.id}
+                  type="button"
+                  className={`rim-light tone-${tone}${isFlaring ? " is-flaring" : ""}`}
+                  style={{ "--a": `${angle}deg` } as React.CSSProperties}
+                  onClick={() => openSheet("fleet")}
+                  aria-label={`${agent.name}: ${agent.status}. Open the fleet.`}
+                  title={`${agent.name} — ${agent.status}`}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <VoiceCall onPhase={setVoicePhase} linkRef={linkRef} />
+
+      <Conversation onBusyChange={setChatBusy} composerRef={composerRef} />
+
+      {veilOpen && <Veil commands={commands} onClose={() => setVeilOpen(false)} />}
+
+      {sheet && (
+        <Sheet kicker={SHEET_HEADS[sheet].kicker} title={SHEET_HEADS[sheet].title} onClose={() => setSheet(null)}>
+          {sheet === "fleet" && <FleetSheet />}
+          {sheet === "chronicle" && <ChronicleSheet />}
+          {sheet === "pulse" && <PulseSheet />}
+        </Sheet>
+      )}
+    </main>
+  );
+}

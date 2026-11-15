@@ -654,7 +654,7 @@ class GeminiLiveVoiceSession:
             # Execute locally and send result to Live model for speaking
             answer = "Done."
             try:
-                local_response = await asyncio.to_thread(self.agent.process_message, text)
+                local_response = await asyncio.to_thread(self.agent.process_message, text, channel="voice")
                 answer = (local_response.content or "").strip() or "Done."
             except Exception as e:
                 logger.warning(f"Typed instant command failed: {e}")
@@ -1220,7 +1220,7 @@ class GeminiLiveVoiceSession:
                             local_instant_action_pending = True
                             suppress_model_until_result = True
                             try:
-                                local_response = await asyncio.to_thread(self.agent.process_message, user_text)
+                                local_response = await asyncio.to_thread(self.agent.process_message, user_text, channel="voice")
                                 if local_response.content:
                                     agent_text = local_response.content
                                 local_agent_handled = True
