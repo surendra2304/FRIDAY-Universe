@@ -1,3 +1,4 @@
+import asyncio
 import contextvars
 import logging
 import os
@@ -118,6 +119,7 @@ class Orchestrator:
         scoring_engine: ScoringEngine | None = None,
         context_builder: ContextBuilder | None = None,
         memory_store: MemoryStore | None = None,
+        step_timeout_seconds: float = 30.0,
     ):
         self.agent_registry = agent_registry or AgentRegistry()
         self.ai_client = ai_client or AIUniverseClient()
@@ -129,6 +131,10 @@ class Orchestrator:
         self.context_builder = context_builder or ContextBuilder()
         self.memory_store = memory_store or MemoryStore()
         self.context_firewall = ContextFirewall()
+        # Hard per-step execution bound (TASK-COR-006): a sub-task that hangs
+        # must fail as a step, not hang the whole plan. Previously no timeout
+        # existed anywhere on the execute path.
+        self.step_timeout_seconds = step_timeout_seconds
         # Bounded in-memory audit trail (pressure hardening 2026-10-07): the list
         # used to grow forever — one entry per cognitive loop — which is a slow
         # memory leak on a long-running worker. The durable record is the DB row;
@@ -198,6 +204,105 @@ class Orchestrator:
                 for agent_id, output in result.outputs.items()
             ],
         }
+
+    @staticmethod
+    def _classify_step_result(res: Any) -> str:
+        """Classify one ToolBus envelope into a step outcome (TASK-COR-006).
+
+        The bus reports transport success for ANY envelope it returns, so a
+        step is only a success when the envelope says so AND the tool's own
+        result is a non-empty payload that does not itself report an error.
+        """
+        if not isinstance(res, dict):
+            return "error_result"
+        envelope_status = res.get("status")
+        if envelope_status in ("blocked", "skipped"):
+            return envelope_status
+        if envelope_status != "success":
+            return "error_result"
+        inner = res.get("result")
+        if inner is None or (isinstance(inner, dict) and not inner):
+            return "empty_result"
+        if isinstance(inner, dict):
+            if inner.get("status") in ("error", "failed", "failure", "blocked"):
+                return "error_result"
+            if inner.get("error"):
+                return "error_result"
+        return "success"
+
+    async def _execute_step(
+        self,
+        exec_item: Execution,
+        tool: Tool,
+        tools_circuit: Any,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Execute one authorized step; a failed step is data, never a raise.
+
+        TASK-COR-006: previously a step exception propagated and killed the
+        whole loop (completed steps went unreported, no audit was written),
+        a hung step hung the plan forever (no timeout existed), and steps
+        that returned error/empty payloads were counted as successes.
+
+        Behaviour now: hard per-step timeout; ONE bounded retry for READ-only
+        tools on exception/timeout (fresh idempotency key — the bus burns
+        the original key before executing, so reusing it would return a
+        misleading "skipped"); side-effecting tools are never blindly
+        retried. Returns (step_outcome, result_envelope_for_audit).
+        """
+        max_attempts = 2 if tool.side_effect_level == SideEffectLevel.READ else 1
+        attempt = 0
+        while True:
+            attempt += 1
+            attempt_exec = exec_item
+            if attempt > 1:
+                attempt_exec = exec_item.model_copy(
+                    update={
+                        "idempotency_key": (
+                            f"{exec_item.idempotency_key}#retry{attempt - 1}" if exec_item.idempotency_key else None
+                        ),
+                        "result": None,
+                        "error": None,
+                        "verification": None,
+                    }
+                )
+            try:
+                res = await asyncio.wait_for(
+                    self.tool_bus.execute(tool.name, exec_item.params, attempt_exec),
+                    timeout=self.step_timeout_seconds,
+                )
+            except TimeoutError:
+                await tools_circuit.record_failure(f"{tool.name}:TimeoutError")
+                if attempt < max_attempts:
+                    continue
+                outcome = {
+                    "tool": tool.name,
+                    "status": "timeout",
+                    "attempts": attempt,
+                    "error": f"step exceeded {self.step_timeout_seconds}s",
+                }
+                return outcome, {"status": "timeout", "tool": tool.name, "error": outcome["error"]}
+            except Exception as exc:  # noqa: BLE001 - a step failure is recorded, not raised
+                await tools_circuit.record_failure(f"{tool.name}:{type(exc).__name__}")
+                if attempt < max_attempts:
+                    continue
+                outcome = {
+                    "tool": tool.name,
+                    "status": "error",
+                    "attempts": attempt,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+                return outcome, {"status": "error", "tool": tool.name, "error": outcome["error"]}
+            await tools_circuit.record_success()
+            status = self._classify_step_result(res)
+            outcome = {"tool": tool.name, "status": status, "attempts": attempt}
+            if status == "error_result":
+                inner = res.get("result") if isinstance(res, dict) else None
+                outcome["error"] = str(inner.get("error") if isinstance(inner, dict) else res)[:300]
+            elif status in ("blocked", "skipped"):
+                outcome["error"] = str(res.get("reason"))[:300]
+            elif status == "empty_result":
+                outcome["error"] = "tool returned an empty result"
+            return outcome, res
 
     async def run_cognitive_loop(self, event: EventSchema, db_session: AsyncSession | None = None) -> dict[str, Any]:
         loop_id = f"loop_{uuid.uuid4().hex[:8]}"
@@ -577,35 +682,39 @@ class Orchestrator:
             else:
                 trace.append({"phase": "5.Authorize", "status": "no_actions_to_authorize", "count": 0})
 
-            # 6. EXECUTE
+            # 6. EXECUTE — every authorized step is attempted and individually
+            # accounted (TASK-COR-006). A failed step no longer kills the loop
+            # or vanishes: it is recorded in step_outcomes, the remaining steps
+            # still run, and the loop's overall status (below) tells the truth.
             execution_results = []
+            step_outcomes: list[dict[str, Any]] = []
             if authorized_actions:
                 from cortex_core.resilience import global_health_registry
 
                 tools_circuit = global_health_registry.circuit("tools")
                 for exec_item, tool in authorized_actions:
-                    try:
-                        res = await self.tool_bus.execute(tool.name, exec_item.params, exec_item)
-                        await tools_circuit.record_success()
-                    except Exception as exc:
-                        await tools_circuit.record_failure(f"{tool.name}:{type(exc).__name__}")
-                        raise
+                    outcome, res = await self._execute_step(exec_item, tool, tools_circuit)
+                    step_outcomes.append(outcome)
                     execution_results.append(res)
-                    trace.append({"phase": "6.Execute", "tool": tool.name, "result": res})
+                    trace.append({"phase": "6.Execute", "tool": tool.name, "result": res, "step_status": outcome["status"]})
             else:
                 trace.append({"phase": "6.Execute", "status": "no_auto_approved_actions_executed", "count": 0})
 
-            # 7. VERIFY
-            verification_passed = (
-                all(
-                    exec_item.verification.get("status") == "verified"
-                    for exec_item, _ in authorized_actions
-                    if exec_item.verification
-                )
-                if authorized_actions
-                else True
+            # 7. VERIFY — grounded in what the steps actually did (TASK-COR-006).
+            # The previous check compared Execution.verification against
+            # "verified", which the tool bus reports only when an executor
+            # self-reports provider confirmation — so verification read
+            # "failed" on perfectly healthy runs, while the loop's headline
+            # status ignored verification entirely and always said "success".
+            failed_steps = [o for o in step_outcomes if o["status"] != "success"]
+            verification_passed = not failed_steps
+            trace.append(
+                {
+                    "phase": "7.Verify",
+                    "status": "verified" if verification_passed else "failed",
+                    "failed_steps": [o["tool"] for o in failed_steps],
+                }
             )
-            trace.append({"phase": "7.Verify", "status": "verified" if verification_passed else "failed"})
 
             # 8. MEASURE
             measured_impact = agent_output.expected_outcomes
@@ -621,6 +730,8 @@ class Orchestrator:
                 changes={
                     "agent_output": agent_output.model_dump(mode="json"),
                     "executions": execution_results,
+                    "step_outcomes": step_outcomes,
+                    "failed_actions": len(failed_steps),
                     "pending_approvals": pending_approvals,
                     "verification": "passed" if verification_passed else "failed",
                     "ai_used": should_call_ai,
@@ -637,19 +748,22 @@ class Orchestrator:
             )
             self.audit_records.append(audit)
 
-            # Record outcome learning in Strategy Memory
-            if authorized_actions:
-                for _exec_item, tool in authorized_actions:
-                    await self.memory_store.record_strategy_outcome(
-                        db=db_session,
-                        strategy_name=f"{agent.agent_id}:{tool.name}",
-                        context_features={
-                            "intent_score": context_package.intent_score,
-                            "decision": agent_output.decision,
-                        },
-                        action_taken=tool.name,
-                        outcome_lift_pct=measured_impact.get("conversion_lift_pct", 10.0),
-                    )
+            # Record outcome learning in Strategy Memory — successful steps only
+            # (TASK-COR-006: failed steps used to be recorded as outcomes too,
+            # teaching the strategy memory that failures were wins).
+            for outcome in step_outcomes:
+                if outcome["status"] != "success":
+                    continue
+                await self.memory_store.record_strategy_outcome(
+                    db=db_session,
+                    strategy_name=f"{agent.agent_id}:{outcome['tool']}",
+                    context_features={
+                        "intent_score": context_package.intent_score,
+                        "decision": agent_output.decision,
+                    },
+                    action_taken=outcome["tool"],
+                    outcome_lift_pct=measured_impact.get("conversion_lift_pct", 10.0),
+                )
 
             if db_session:
                 try:
@@ -675,15 +789,31 @@ class Orchestrator:
             # 10. CONTINUE
             trace.append({"phase": "10.Continue", "status": "cycle_complete"})
 
+            # Overall status tells the truth about the steps (TASK-COR-006):
+            # "success" only when every executed step succeeded; "partial"
+            # when some did and some did not; "failed" when steps were
+            # attempted and none succeeded. No steps attempted (nothing
+            # proposed, or everything gated to human approval) stays
+            # "success" — the loop completed and pending_approvals says why.
+            succeeded_steps = len(step_outcomes) - len(failed_steps)
+            if not failed_steps:
+                overall_status = "success"
+            elif succeeded_steps:
+                overall_status = "partial"
+            else:
+                overall_status = "failed"
+
             return {
                 "loop_id": loop_id,
-                "status": "success",
+                "status": overall_status,
                 "trace_id": trace_id,
                 "agent_id": agent.agent_id,
                 "decision": agent_output.decision,
                 "ai_used": should_call_ai,
                 "classification": classification.value,
-                "executed_actions": len(execution_results),
+                "executed_actions": succeeded_steps,
+                "failed_actions": len(failed_steps),
+                "step_outcomes": step_outcomes,
                 "trace": trace,
             }
 

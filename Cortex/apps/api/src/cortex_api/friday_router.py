@@ -428,7 +428,10 @@ async def execute_friday_command(
         ) from exc
 
     return FridayCommandResponse(
-        status="success",
+        # TASK-COR-006: propagate the loop's own verdict — this used to be a
+        # hardcoded "success", so FRIDAY was told a command succeeded even
+        # when the loop's steps had failed.
+        status=loop_result.get("status", "success"),
         command_id=command_id,
         cortex_loop_id=loop_result["loop_id"],
         agent_id=loop_result["agent_id"],
@@ -1089,11 +1092,20 @@ async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession |
         )
         task.executions.append(exec_rec.__dict__)
 
-        # Phase 5: Measurement
-        meas = global_governed_engine.measure(exec_rec.execution_id)
-        task.measurements.append(meas.__dict__)
-
-        task.update_progress(TaskState.COMPLETED, 1.0, "Execution and measurement complete")
+        # Phase 5: Measurement — only for an execution that actually applied.
+        # TASK-COR-006: a FAILED/BLOCKED execution used to be measured anyway,
+        # and measure() defaults its "observed" outcomes to the expected ones,
+        # so the response claimed an achieved lift (goal_met) for work that
+        # never happened. A failed execution has no outcome to measure.
+        execution_failed = exec_rec.status in ("FAILED", "BLOCKED")
+        meas = None
+        if execution_failed:
+            task.error = f"Execution '{exec_rec.execution_id}' ended {exec_rec.status}: {exec_rec.result}"
+            task.update_progress(TaskState.EXECUTING, 0.8, f"Execution failed ({exec_rec.status}); no measurement taken")
+        else:
+            meas = global_governed_engine.measure(exec_rec.execution_id)
+            task.measurements.append(meas.__dict__)
+            task.update_progress(TaskState.COMPLETED, 1.0, "Execution and measurement complete")
         global_task_manager.finalize_task(task.task_id)
         lat = (time.time() - t0) * 1000
 
@@ -1114,14 +1126,22 @@ async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession |
                     "action": exec_rec.action,
                     "result": exec_rec.result,
                 },
-                "measurement": {
-                    "measurement_id": meas.measurement_id,
-                    "lift_metrics": meas.lift_metrics,
-                    "expected_outcomes": meas.expected_outcomes,
-                    "observed_outcomes": meas.observed_outcomes,
-                },
+                "measurement": (
+                    {
+                        "measurement_id": meas.measurement_id,
+                        "lift_metrics": meas.lift_metrics,
+                        "expected_outcomes": meas.expected_outcomes,
+                        "observed_outcomes": meas.observed_outcomes,
+                    }
+                    if meas is not None
+                    else None
+                ),
             },
-            summary=f"Cortex executed '{op}' on '{property_id}' ({exec_rec.classification}). Achieved lift: {meas.lift_metrics.get('achieved_pct')}%.",
+            summary=(
+                f"Cortex executed '{op}' on '{property_id}' ({exec_rec.classification}). Achieved lift: {meas.lift_metrics.get('achieved_pct')}%."
+                if meas is not None
+                else f"Cortex FAILED to execute '{op}' on '{property_id}': execution status {exec_rec.status}. No measurement was taken."
+            ),
             execution_time_ms=lat,
         )
         if envelope.idempotency_key:
