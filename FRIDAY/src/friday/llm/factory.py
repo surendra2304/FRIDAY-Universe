@@ -23,6 +23,7 @@ from friday.llm.gemini_provider import GeminiLLMProvider
 from friday.llm.groq_provider import GROQ_DEFAULT_MODEL, GroqLLMProvider
 from friday.llm.mistral_provider import MISTRAL_DEFAULT_MODEL, MistralLLMProvider
 from friday.llm.mock_provider import MockLLMProvider
+from friday.llm.offline_fallback import offline_fallback_enabled
 from friday.llm.openai_provider import OpenAILLMProvider
 from friday.llm.openrouter_provider import (
     OPENROUTER_DEFAULT_MODEL,
@@ -204,9 +205,26 @@ def create_llm_provider(settings: Settings) -> BaseLLMProvider:
                     "continuing with the Gemini provider only."
                 )
                 own_stack = gemini_provider
-        if inference_provider is not None:
-            return EscalatingLLMProvider(own=own_stack, inference=inference_provider)
-        return own_stack
+        final_stack: BaseLLMProvider = (
+            EscalatingLLMProvider(own=own_stack, inference=inference_provider)
+            if inference_provider is not None
+            else own_stack
+        )
+        # TASK-IG-FRD-007: offline-first fallback (Project NOMAD pattern,
+        # miniature). Behind FRIDAY_OFFLINE_FALLBACK=on, the offline
+        # provider rides as the LAST rung of a fallback chain: it engages
+        # only when the whole stack raises LLMProviderError (network down
+        # / pools dead) and answers from the local knowledge cache —
+        # clearly labelled, never fabricated. Default off: unchanged.
+        if offline_fallback_enabled():
+            from friday.llm.offline_fallback import OfflineFallbackProvider
+
+            logger.info(
+                "Offline fallback armed (FRIDAY_OFFLINE_FALLBACK=on): "
+                "cached-knowledge provider is the last rung."
+            )
+            return FallbackChainLLMProvider([final_stack, OfflineFallbackProvider()])
+        return final_stack
 
     if provider_type == "groq":
         # Ensure Groq never inherits Gemini model names
