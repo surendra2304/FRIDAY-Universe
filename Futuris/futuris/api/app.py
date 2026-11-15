@@ -33,6 +33,7 @@ from futuris.api.routers.events import router as events_router
 from futuris.api.routers.forecasts import router as forecasts_router
 from futuris.api.routers.friday import router as friday_router
 from futuris.api.routers.market import router as market_router
+from futuris.api.routers.market_data import router as market_data_router
 from futuris.api.routers.models import router as models_router
 from futuris.api.routers.predictions import router as predictions_router
 from futuris.api.routers.risk import router as risk_router
@@ -315,6 +316,7 @@ app.include_router(ecosystem_router)
 app.include_router(market_router, prefix="/v1/futuris")
 app.include_router(market_router, prefix="/api/v1/futuris", include_in_schema=False)
 app.include_router(market_router, prefix="/v1/market", include_in_schema=False)
+app.include_router(market_data_router)
 # (TASK-TRUST-001: legacy predict/* routers unmounted — see the import block note)
 app.include_router(predictions_router)
 app.include_router(self_status_router)

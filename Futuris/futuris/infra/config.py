@@ -148,6 +148,18 @@ class Settings(BaseSettings):
         default="http://nexus-service.local",
         description="NEXUS telemetry broker URL (used when FUTURIS_TELEMETRY_SOURCE=nexus)",
     )
+    FUTURIS_MARKET_DATA_PROVIDERS: str = Field(
+        default="yahoo_chart,stooq",
+        description=(
+            "TASK-IG-FUT-01: ordered, comma-separated provider names for the "
+            "market-data backbone (futuris/market_data). Registered names: "
+            "yahoo_chart, stooq, openbb_sdk. Providers are tried in order; "
+            "the first returning real data wins and total failure is an "
+            "explicit unavailable -- there is no synthetic fallback. "
+            "openbb_sdk additionally requires the OpenBB Platform SDK to be "
+            "installed (post-ARM adoption path)."
+        ),
+    )
     NEXUS_API_KEY: str | None = Field(
         default=None,
         description="NEXUS telemetry broker API key",
