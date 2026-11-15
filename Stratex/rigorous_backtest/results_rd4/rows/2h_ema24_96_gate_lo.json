@@ -1,0 +1,574 @@
+{
+  "family": "vol_regime_trend",
+  "signal": "ema24_96",
+  "mode": "gate_lo",
+  "variant": "ema24_96_gate_lo",
+  "panel": "crypto30",
+  "timeframe": "2h",
+  "status": "EVALUATED",
+  "costs": {
+    "venue_model": "Binance USDT-M futures, taker",
+    "fee_bps_per_side": 5.0,
+    "spread_slippage_bps_per_side": 3.0,
+    "round_trip_bps": 16.0
+  },
+  "report": {
+    "per_fold": {
+      "W1": {
+        "oos_start": "2024-07-01",
+        "oos_end": "2025-01-01",
+        "trades": 422,
+        "wins": 175,
+        "win_rate": 0.4146919431279621,
+        "expectancy_net": 0.007643305908548019,
+        "profit_factor_net": 1.4593561417229504,
+        "avg_win_net": 0.05855546131384023,
+        "avg_loss_net": -0.028428059257144846,
+        "total_return_net": 15.243370661066148,
+        "max_drawdown_net": -0.6411755315212422
+      },
+      "W2": {
+        "oos_start": "2025-01-01",
+        "oos_end": "2025-07-01",
+        "trades": 480,
+        "wins": 199,
+        "win_rate": 0.41458333333333336,
+        "expectancy_net": 0.00651027886837427,
+        "profit_factor_net": 1.3180203370883776,
+        "avg_win_net": 0.06508111290470733,
+        "avg_loss_net": -0.03496871036020324,
+        "total_return_net": 11.083898513129208,
+        "max_drawdown_net": -0.7722503077514598
+      },
+      "W3": {
+        "oos_start": "2025-07-01",
+        "oos_end": "2026-01-01",
+        "trades": 552,
+        "wins": 183,
+        "win_rate": 0.33152173913043476,
+        "expectancy_net": -0.001525573325445051,
+        "profit_factor_net": 0.9254541767770944,
+        "avg_win_net": 0.05712848133505557,
+        "avg_loss_net": -0.03061416953918926,
+        "total_return_net": -0.738354621280118,
+        "max_drawdown_net": -0.8753504475853174
+      },
+      "W4": {
+        "oos_start": "2026-01-01",
+        "oos_end": "2026-07-01",
+        "trades": 520,
+        "wins": 180,
+        "win_rate": 0.34615384615384615,
+        "expectancy_net": -0.0008357021453561749,
+        "profit_factor_net": 0.9559177625402151,
+        "avg_win_net": 0.052352720847056985,
+        "avg_loss_net": -0.02899427902369255,
+        "total_return_net": -0.574715393509077,
+        "max_drawdown_net": -0.9047513107386947
+      },
+      "W5": {
+        "oos_start": "2026-07-01",
+        "oos_end": "2026-11-01",
+        "trades": 312,
+        "wins": 103,
+        "win_rate": 0.3301282051282051,
+        "expectancy_net": -0.0014269614777224747,
+        "profit_factor_net": 0.9138199476824428,
+        "avg_win_net": 0.04583355026243731,
+        "avg_loss_net": -0.024718027072155296,
+        "total_return_net": -0.47324123315363575,
+        "max_drawdown_net": -0.8168113301236091
+      }
+    },
+    "pooled_oos": {
+      "trades": 2286,
+      "wins": 840,
+      "win_rate": 0.3674540682414698,
+      "expectancy_net": 0.002024722387553203,
+      "profit_factor_net": 1.1072192704799018,
+      "avg_win_net": 0.05690143418068485,
+      "avg_loss_net": -0.029853865376091738,
+      "total_return_net": 10.505029273055479,
+      "max_drawdown_net": -0.9905897264806339
+    },
+    "per_symbol_oos": {
+      "BTCUSDT": {
+        "trades": 72,
+        "wins": 25,
+        "win_rate": 0.3472222222222222,
+        "expectancy_net": -0.0020235357058747765,
+        "profit_factor_net": 0.8264329642348974,
+        "avg_win_net": 0.027748770498361865,
+        "avg_loss_net": -0.017859868793234694,
+        "total_return_net": -0.1510562096282415,
+        "max_drawdown_net": -0.197016163463118
+      },
+      "ETHUSDT": {
+        "trades": 72,
+        "wins": 31,
+        "win_rate": 0.4305555555555556,
+        "expectancy_net": 0.004956244257607852,
+        "profit_factor_net": 1.3663215074649535,
+        "avg_win_net": 0.04293524950909188,
+        "avg_loss_net": -0.023759588981319104,
+        "total_return_net": 0.37000514925223493,
+        "max_drawdown_net": -0.20285167018044736
+      },
+      "SOLUSDT": {
+        "trades": 74,
+        "wins": 32,
+        "win_rate": 0.43243243243243246,
+        "expectancy_net": 0.007388313302287179,
+        "profit_factor_net": 1.4448215018080528,
+        "avg_win_net": 0.05549520615016782,
+        "avg_loss_net": -0.029264557438955213,
+        "total_return_net": 0.6102261107750209,
+        "max_drawdown_net": -0.22808192946285033
+      },
+      "BNBUSDT": {
+        "trades": 80,
+        "wins": 30,
+        "win_rate": 0.375,
+        "expectancy_net": 0.0010588649066436014,
+        "profit_factor_net": 1.0950756055992918,
+        "avg_win_net": 0.032522527633501636,
+        "avg_loss_net": -0.017819332729471223,
+        "total_return_net": 0.06171446094555555,
+        "max_drawdown_net": -0.17095534263911705
+      },
+      "XRPUSDT": {
+        "trades": 67,
+        "wins": 32,
+        "win_rate": 0.47761194029850745,
+        "expectancy_net": 0.008405300983489438,
+        "profit_factor_net": 1.6368366433660801,
+        "avg_win_net": 0.045232999557175024,
+        "avg_loss_net": -0.025265737712451664,
+        "total_return_net": 0.6773570599607708,
+        "max_drawdown_net": -0.11573648425356575
+      },
+      "DOGEUSDT": {
+        "trades": 78,
+        "wins": 30,
+        "win_rate": 0.38461538461538464,
+        "expectancy_net": 0.0016473317045513612,
+        "profit_factor_net": 1.088518915297421,
+        "avg_win_net": 0.05266890649061531,
+        "avg_loss_net": -0.03024115253673861,
+        "total_return_net": 0.06375175924808785,
+        "max_drawdown_net": -0.19958510279492636
+      },
+      "ADAUSDT": {
+        "trades": 75,
+        "wins": 27,
+        "win_rate": 0.36,
+        "expectancy_net": 0.002548773044739789,
+        "profit_factor_net": 1.1308969545247463,
+        "avg_win_net": 0.06116770088638422,
+        "avg_loss_net": -0.0304243738661852,
+        "total_return_net": 0.12308785120693533,
+        "max_drawdown_net": -0.3469719485563656
+      },
+      "LTCUSDT": {
+        "trades": 87,
+        "wins": 23,
+        "win_rate": 0.26436781609195403,
+        "expectancy_net": -0.007122877953252756,
+        "profit_factor_net": 0.6052657871345816,
+        "avg_win_net": 0.041313146765777346,
+        "avg_loss_net": -0.024529574336654196,
+        "total_return_net": -0.4839811005121124,
+        "max_drawdown_net": -0.5672811248745891
+      },
+      "LINKUSDT": {
+        "trades": 73,
+        "wins": 27,
+        "win_rate": 0.3698630136986301,
+        "expectancy_net": 0.0013806967380990084,
+        "profit_factor_net": 1.0710825878638826,
+        "avg_win_net": 0.056249300166429185,
+        "avg_loss_net": -0.030824787882877392,
+        "total_return_net": 0.03349052462620494,
+        "max_drawdown_net": -0.2890454610435107
+      },
+      "DOTUSDT": {
+        "trades": 75,
+        "wins": 30,
+        "win_rate": 0.4,
+        "expectancy_net": 0.0023222775387347,
+        "profit_factor_net": 1.1179711891306041,
+        "avg_win_net": 0.05501850495455029,
+        "avg_loss_net": -0.03280854073847568,
+        "total_return_net": 0.10868495600497252,
+        "max_drawdown_net": -0.3685218633598808
+      },
+      "TRXUSDT": {
+        "trades": 92,
+        "wins": 19,
+        "win_rate": 0.20652173913043478,
+        "expectancy_net": -0.007264667186876467,
+        "profit_factor_net": 0.2890304262464178,
+        "avg_win_net": 0.014300212707214032,
+        "avg_loss_net": -0.012877444145612354,
+        "total_return_net": -0.4920132146183156,
+        "max_drawdown_net": -0.4920132146183156
+      },
+      "AVAXUSDT": {
+        "trades": 96,
+        "wins": 35,
+        "win_rate": 0.3645833333333333,
+        "expectancy_net": 0.0030544067037299887,
+        "profit_factor_net": 1.1562724404773086,
+        "avg_win_net": 0.0619880297590769,
+        "avg_loss_net": -0.03075996718048545,
+        "total_return_net": 0.21501919219846655,
+        "max_drawdown_net": -0.43146442342543
+      },
+      "NEARUSDT": {
+        "trades": 78,
+        "wins": 37,
+        "win_rate": 0.47435897435897434,
+        "expectancy_net": 0.013107633788916924,
+        "profit_factor_net": 1.6167562657398624,
+        "avg_win_net": 0.07243494927418447,
+        "avg_loss_net": -0.04043165091730013,
+        "total_return_net": 1.4299173588879128,
+        "max_drawdown_net": -0.32975448058099177
+      },
+      "ATOMUSDT": {
+        "trades": 82,
+        "wins": 25,
+        "win_rate": 0.3048780487804878,
+        "expectancy_net": -0.0020652281196386294,
+        "profit_factor_net": 0.8928318971843604,
+        "avg_win_net": 0.0564346749907459,
+        "avg_loss_net": -0.02772308036103535,
+        "total_return_net": -0.208924200361004,
+        "max_drawdown_net": -0.4934529153425208
+      },
+      "UNIUSDT": {
+        "trades": 79,
+        "wins": 30,
+        "win_rate": 0.379746835443038,
+        "expectancy_net": 0.004512147555676774,
+        "profit_factor_net": 1.2029867792917543,
+        "avg_win_net": 0.07041776416768301,
+        "avg_loss_net": -0.03583822996187807,
+        "total_return_net": 0.28140749750391625,
+        "max_drawdown_net": -0.24444360925859565
+      },
+      "ETCUSDT": {
+        "trades": 85,
+        "wins": 27,
+        "win_rate": 0.3176470588235294,
+        "expectancy_net": -0.002362233084619865,
+        "profit_factor_net": 0.8736739546520657,
+        "avg_win_net": 0.05143211663973606,
+        "avg_loss_net": -0.027404430370095902,
+        "total_return_net": -0.2292348640816334,
+        "max_drawdown_net": -0.3609907571137665
+      },
+      "BCHUSDT": {
+        "trades": 83,
+        "wins": 31,
+        "win_rate": 0.37349397590361444,
+        "expectancy_net": 0.0004335900370458771,
+        "profit_factor_net": 1.0252802223465582,
+        "avg_win_net": 0.047082268923471914,
+        "avg_loss_net": -0.027376199299092727,
+        "total_return_net": -0.019888913714446677,
+        "max_drawdown_net": -0.24468912655506925
+      },
+      "FILUSDT": {
+        "trades": 86,
+        "wins": 23,
+        "win_rate": 0.26744186046511625,
+        "expectancy_net": -0.008514647340433551,
+        "profit_factor_net": 0.6621053364152838,
+        "avg_win_net": 0.06238541027405855,
+        "avg_loss_net": -0.034398795358422746,
+        "total_return_net": -0.5577128736980921,
+        "max_drawdown_net": -0.6292227929332581
+      },
+      "APTUSDT": {
+        "trades": 68,
+        "wins": 26,
+        "win_rate": 0.38235294117647056,
+        "expectancy_net": 0.002009629856973686,
+        "profit_factor_net": 1.090523188309663,
+        "avg_win_net": 0.06331792906041,
+        "avg_loss_net": -0.03594312679277261,
+        "total_return_net": 0.057026639769718335,
+        "max_drawdown_net": -0.5217288879904016
+      },
+      "ARBUSDT": {
+        "trades": 81,
+        "wins": 28,
+        "win_rate": 0.345679012345679,
+        "expectancy_net": 0.0013799223584256793,
+        "profit_factor_net": 1.0595698551552915,
+        "avg_win_net": 0.07100430632485223,
+        "avg_loss_net": -0.035402771057799653,
+        "total_return_net": 0.006569518800798146,
+        "max_drawdown_net": -0.3493407483155153
+      },
+      "OPUSDT": {
+        "trades": 75,
+        "wins": 25,
+        "win_rate": 0.3333333333333333,
+        "expectancy_net": -0.0007008670052843322,
+        "profit_factor_net": 0.972433815305532,
+        "avg_win_net": 0.07417204631591724,
+        "avg_loss_net": -0.03813732366588511,
+        "total_return_net": -0.1473478541614558,
+        "max_drawdown_net": -0.36272912089939235
+      },
+      "INJUSDT": {
+        "trades": 77,
+        "wins": 34,
+        "win_rate": 0.44155844155844154,
+        "expectancy_net": 0.012209113059875345,
+        "profit_factor_net": 1.5698889309242186,
+        "avg_win_net": 0.07616836428662546,
+        "avg_loss_net": -0.03836331814267126,
+        "total_return_net": 1.2394806336526836,
+        "max_drawdown_net": -0.31612316618757386
+      },
+      "SUIUSDT": {
+        "trades": 78,
+        "wins": 30,
+        "win_rate": 0.38461538461538464,
+        "expectancy_net": 0.0058047632090742485,
+        "profit_factor_net": 1.2565689530018886,
+        "avg_win_net": 0.07391627619414742,
+        "avg_loss_net": -0.03676493240659647,
+        "total_return_net": 0.3917206465660277,
+        "max_drawdown_net": -0.3494070663723077
+      },
+      "XLMUSDT": {
+        "trades": 70,
+        "wins": 19,
+        "win_rate": 0.2714285714285714,
+        "expectancy_net": -0.0065899188963279,
+        "profit_factor_net": 0.6737029029129664,
+        "avg_win_net": 0.05012792379505423,
+        "avg_loss_net": -0.027720095585274187,
+        "total_return_net": -0.3974183687542193,
+        "max_drawdown_net": -0.44062093211802633
+      },
+      "HBARUSDT": {
+        "trades": 63,
+        "wins": 26,
+        "win_rate": 0.4126984126984127,
+        "expectancy_net": 0.004533223873182896,
+        "profit_factor_net": 1.2480837155364444,
+        "avg_win_net": 0.05526113845733974,
+        "avg_loss_net": -0.031113418807575958,
+        "total_return_net": 0.25306241376380867,
+        "max_drawdown_net": -0.1471818924704149
+      },
+      "ALGOUSDT": {
+        "trades": 67,
+        "wins": 32,
+        "win_rate": 0.47761194029850745,
+        "expectancy_net": 0.013007560498844101,
+        "profit_factor_net": 1.7781054163572623,
+        "avg_win_net": 0.06223572388358718,
+        "avg_loss_net": -0.03200104602434957,
+        "total_return_net": 1.2041109835241652,
+        "max_drawdown_net": -0.14504558832845338
+      },
+      "VETUSDT": {
+        "trades": 68,
+        "wins": 32,
+        "win_rate": 0.47058823529411764,
+        "expectancy_net": 0.011230359453607596,
+        "profit_factor_net": 1.708693542173872,
+        "avg_win_net": 0.057538467979535615,
+        "avg_loss_net": -0.029932403680550643,
+        "total_return_net": 0.9976349184532416,
+        "max_drawdown_net": -0.13726329238751678
+      },
+      "SANDUSDT": {
+        "trades": 75,
+        "wins": 25,
+        "win_rate": 0.3333333333333333,
+        "expectancy_net": -0.0032002059524039034,
+        "profit_factor_net": 0.8589578140111476,
+        "avg_win_net": 0.058468504795003214,
+        "avg_loss_net": -0.03403456132610746,
+        "total_return_net": -0.2696082612674272,
+        "max_drawdown_net": -0.4540203193364093
+      },
+      "MANAUSDT": {
+        "trades": 69,
+        "wins": 22,
+        "win_rate": 0.3188405797101449,
+        "expectancy_net": -0.001991204321275174,
+        "profit_factor_net": 0.9126589930719009,
+        "avg_win_net": 0.06525782262133772,
+        "avg_loss_net": -0.03346947225185994,
+        "total_return_net": -0.19169456483408243,
+        "max_drawdown_net": -0.3834814144695877
+      },
+      "AAVEUSDT": {
+        "trades": 61,
+        "wins": 27,
+        "win_rate": 0.4426229508196721,
+        "expectancy_net": 0.010487264744325629,
+        "profit_factor_net": 1.5160856020655118,
+        "avg_win_net": 0.06960337244638998,
+        "avg_loss_net": -0.03645787960731372,
+        "total_return_net": 0.7323179761274581,
+        "max_drawdown_net": -0.20411540820423957
+      }
+    },
+    "fold_profile": [
+      "W1",
+      "W2",
+      "W3",
+      "W4",
+      "W5"
+    ]
+  },
+  "holdout": {
+    "symbols_active_min20": 30,
+    "symbols_positive": 20,
+    "breadth_positive_share": 0.6666666666666666,
+    "max_symbol_profit_share": 0.126912378640802,
+    "max_share_cap": 0.5,
+    "untouched_subset": [
+      "ALGOUSDT",
+      "ATOMUSDT",
+      "BNBUSDT",
+      "DOTUSDT",
+      "FILUSDT",
+      "LINKUSDT",
+      "NEARUSDT",
+      "SOLUSDT",
+      "UNIUSDT",
+      "XRPUSDT"
+    ],
+    "untouched_trades": 761,
+    "untouched_expectancy": 0.0037034355963860037,
+    "passes": true
+  },
+  "bar": {
+    "bar": {
+      "expectancy_net_gt": 0.0,
+      "profit_factor_net_gte": 1.2,
+      "min_oos_trades": 200,
+      "min_positive_fold_share": 0.8,
+      "positive_folds_needed": 4,
+      "positive_folds": 2,
+      "folds_with_trades": 5
+    },
+    "checks": {
+      "expectancy_net_gt_0": true,
+      "profit_factor_net_gte_1.2": false,
+      "min_oos_trades_200": true,
+      "positive_folds": false,
+      "holdout_passes": true
+    },
+    "passes_bar": false
+  },
+  "trade_stats": {
+    "n": 2286,
+    "sharpe_per_trade": 0.045827105779225795,
+    "t_stat": 2.1910916468038026,
+    "p_one_sided": 0.014222580545783181,
+    "skew": 0.676499284949569,
+    "kurtosis": 1.9544387456979035
+  },
+  "metrics_2x": {
+    "pooled_oos": {
+      "trades": 2286,
+      "wins": 840,
+      "win_rate": 0.3674540682414698,
+      "expectancy_net": 0.0004281317470244885,
+      "profit_factor_net": 1.0215195615246973,
+      "avg_win_net": 0.05530796031171783,
+      "avg_loss_net": -0.03145226658931189,
+      "total_return_net": -0.7018247880961344,
+      "max_drawdown_net": -0.998895036127693
+    },
+    "per_fold": {
+      "W1": {
+        "oos_start": "2024-07-01",
+        "oos_end": "2025-01-01",
+        "trades": 422,
+        "wins": 175,
+        "win_rate": 0.4146919431279621,
+        "expectancy_net": 0.006046631286427158,
+        "profit_factor_net": 1.34406591611742,
+        "avg_win_net": 0.05695958344086782,
+        "avg_loss_net": -0.03002529837765023,
+        "total_return_net": 7.306684941227651,
+        "max_drawdown_net": -0.6726059395648958
+      },
+      "W2": {
+        "oos_start": "2025-01-01",
+        "oos_end": "2025-07-01",
+        "trades": 480,
+        "wins": 199,
+        "win_rate": 0.41458333333333336,
+        "expectancy_net": 0.004915379205376834,
+        "profit_factor_net": 1.2295821645308587,
+        "avg_win_net": 0.06349866542054572,
+        "avg_loss_net": -0.03657242847013423,
+        "total_return_net": 4.630824937464909,
+        "max_drawdown_net": -0.8000678989072896
+      },
+      "W3": {
+        "oos_start": "2025-07-01",
+        "oos_end": "2026-01-01",
+        "trades": 552,
+        "wins": 183,
+        "win_rate": 0.33152173913043476,
+        "expectancy_net": -0.003124347828806576,
+        "profit_factor_net": 0.854917678472347,
+        "avg_win_net": 0.0555337712052225,
+        "avg_loss_net": -0.032214959707471395,
+        "total_return_net": -0.8921585763398439,
+        "max_drawdown_net": -0.9343553760685556
+      },
+      "W4": {
+        "oos_start": "2026-01-01",
+        "oos_end": "2026-07-01",
+        "trades": 520,
+        "wins": 180,
+        "win_rate": 0.34615384615384615,
+        "expectancy_net": -0.0024305204159653497,
+        "profit_factor_net": 0.8784753839644458,
+        "avg_win_net": 0.050756942235583816,
+        "avg_loss_net": -0.030588588878550198,
+        "total_return_net": -0.8149226999622666,
+        "max_drawdown_net": -0.9283594349601426
+      },
+      "W5": {
+        "oos_start": "2026-07-01",
+        "oos_end": "2026-11-01",
+        "trades": 312,
+        "wins": 103,
+        "win_rate": 0.3301282051282051,
+        "expectancy_net": -0.003025130224204966,
+        "profit_factor_net": 0.8283750145594404,
+        "avg_win_net": 0.044229081631472884,
+        "avg_loss_net": -0.026313091090878742,
+        "total_return_net": -0.6806014025348615,
+        "max_drawdown_net": -0.865069865165214
+      }
+    }
+  },
+  "full_period": {
+    "trades": 3102,
+    "wins": 1154,
+    "win_rate": 0.3720180528691167,
+    "expectancy_net": 0.002217374551600126,
+    "profit_factor_net": 1.1198777040765928,
+    "avg_win_net": 0.05568102548851831,
+    "avg_loss_net": -0.02945462400137913,
+    "total_return_net": 52.666683305150464,
+    "max_drawdown_net": -0.9905897264806339
+  }
+}
