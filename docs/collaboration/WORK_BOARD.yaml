@@ -6915,6 +6915,43 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - Inference/docs/CORPUS_DISPOSITIONS.md
     next_action: "Merge on green CI → VERIFIED (record is the deliverable; token-compression candidate needs its own task + IG-INF-03 evidence if pursued)"
+  - id: TASK-FRD-004
+    title: FRIDAY prompt/instruction coherence audit — one identity source, no stale fleet facts, anti-thin substance rule (Wave 5, FRIDAY)
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+    - FRIDAY/src/friday/agent/prompts.py
+    - FRIDAY/src/friday/persona/friday.py
+    - FRIDAY/src/friday/persona/contract.py
+    - docs/collaboration/WORK_BOARD.yaml
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6892186637
+    defect: FRIDAY's instructions had drifted into four separate prompt copies (chat prompts.py, persona/contract.py, voice/gemini_live_session.py, voice/livekit_worker.py
+      BASE_INSTRUCTIONS). contract.py declared itself the single source of truth but no code consumed boss_contract_text() — chat hand-wrote the Boss contract with
+      drift ('Fully Responsive Intelligent Digital Assistant for You' vs the contract's expansion). The chat prompt taught stale fleet facts (Memora as '9 GB Turso
+      AWS Mumbai', Stratex as '24/7 Binance Futures automated trading' with no demo-only qualifier, Inference as a fictional '10 specialist agents', FRIDAY as 'Local
+      Desktop OS'), demanded concision ~6 times and completeness never (structural thin-answer cause), carried duplicated tool-selection blocks (one hardcoding tool
+      names absent from some turns' schemas), left the <thought> scratchpad's stripper failure modes unstated (unclosed block leaks; answer inside a block is deleted),
+      and scoped self_develop to 'never say you don't know' — conflating missing capabilities with missing knowledge.
+    acceptance:
+    - Chat prompt embeds boss_contract_text() verbatim (single source of truth is real, not aspirational); all six contract_key_phrases present in the chat prompt by
+      construction; parity suite green.
+    - 'Ecosystem block states only verified facts: Memora on the fleet Oracle DB; Stratex demo-only (Binance demo futures + OANDA practice, live trading disabled without
+      owner authorization); Inference as model gateway/router; FRIDAY as cloud-hosted orchestrator; no emoji bullets.'
+    - 'ANSWER SUBSTANCE section present: lead with the answer, state tool-returned figures, completeness beats brevity, bare ''Done.'' only for pure action confirmations,
+      honest one-line unknown.'
+    - <thought> guardrails present (brief, always closed, answer lives outside the block) with every test_autonomous_think_loop pinned phrase preserved verbatim.
+    - Tool selection appears once, schema-authoritative (pinned catalog paragraph untouched); self_develop scoped to missing capabilities, not missing knowledge.
+    - FRIDAY_TEXT_BLOCK no longer restates the contract (one-line pointer); style bullets unchanged; persona pins preserved.
+    - 'Local suites: test_friday_persona + test_batch8_persona_parity 28 passed; test_autonomous_think_loop + test_voice_personality + test_persona_clock_annotations
+      14 passed / 1 pre-existing failure (max_3_retries wording drift — fails identically on clean main ef3ca99, disclosed in PR, not fixed here). No test files modified.'
+    evidence: []
+    blockers: []
+    next_action: 'PR opened from branch claude/task-frd-004 (base main ef3ca99f) — coordinator review + merge, then deploy FRIDAY and re-run the persona/parity suites
+      against the deployed fingerprint. FOLLOW-UP (flagged in PR, not this task): production voice prompt voice/livekit_worker.py BASE_INSTRUCTIONS carries no Boss
+      contract at all and is not covered by the parity test — align it onto boss_contract_text() once VOI-009/FRD-005 voice work settles.'
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
