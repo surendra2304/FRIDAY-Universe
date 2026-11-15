@@ -1335,7 +1335,12 @@ class StratexTradingEngine:
                     logger.info(f"[STRATEX] Entries paused; {symbol} signal ignored")
                     return False
             except Exception as e:
-                logger.warning(f"[STRATEX] Pause-state read failed: {e}")
+                # TASK-STR-RISK-001: fail CLOSED. trading_pause itself fails
+                # closed on a corrupt flag; a read that raises must not
+                # silently wave entries through — that made /pause and
+                # /halt decorative exactly when state was broken.
+                logger.error(f"[STRATEX] Pause-state read failed ({e}); failing CLOSED, entry refused")
+                return False
 
             try:
                 from panic_state import is_panic_active, is_kill_switch_locked
@@ -1344,7 +1349,11 @@ class StratexTradingEngine:
                     logger.info(f"[STRATEX] Panic/kill-switch active; {symbol} signal ignored")
                     return False
             except Exception as e:
-                logger.warning(f"[STRATEX] Panic-state read failed: {e}")
+                # TASK-STR-RISK-001: fail CLOSED, same reasoning as the
+                # pause gate above — panic_state fails closed on corrupt
+                # files; an unreadable panic state must block, not pass.
+                logger.error(f"[STRATEX] Panic-state read failed ({e}); failing CLOSED, entry refused")
+                return False
 
             # Check position limits + free-margin floor (restored gates; the
             # exchange-side rejection loop this replaces produced ~2,000
