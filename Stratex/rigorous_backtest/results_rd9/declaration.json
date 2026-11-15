@@ -1,0 +1,67 @@
+{
+  "task": "TASK-STR-RD-009",
+  "title": "Delta-neutral funding-carry feasibility study (RE-DISPATCH declaration)",
+  "declared_at_utc": "2026-11-15T08:30:00Z",
+  "status": "Frozen before any PnL computation. The original RD-009 crew claimed scope in issue #35 comment 6890890087 but died (sandbox download failures) before fetching data or running anything; no cell was ever executed under that claim. This declaration freezes the cells for the re-dispatched run and is posted on issue #35 with its SHA-256 before the runner executes.",
+  "question": "Does a delta-neutral cash-and-carry book on Binance USDT-M perpetuals (long spot vs short perp; reverse where funding is negative) harvest funding net of realistic costs, out-of-sample, on the standard walk-forward folds?",
+  "boundary_vs_rd003": "RD-003's funding_extremes family was a DIRECTIONAL perp signal judged price-only, with funding cashflows explicitly NOT modelled (rd3/families_rd3.py: 'price-only judgement (funding cashflows are NOT ...)'). RD-009 models the funding cashflows themselves with price exposure hedged coin-quantity-neutral. Different mechanism; RD-003's cells are not re-judged.",
+  "universe": {
+    "panel": "crypto30",
+    "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT", "ADAUSDT", "LTCUSDT", "LINKUSDT", "DOTUSDT", "TRXUSDT", "AVAXUSDT", "NEARUSDT", "ATOMUSDT", "UNIUSDT", "ETCUSDT", "BCHUSDT", "FILUSDT", "APTUSDT", "ARBUSDT", "OPUSDT", "INJUSDT", "SUIUSDT", "XLMUSDT", "HBARUSDT", "ALGOUSDT", "VETUSDT", "SANDUSDT", "MANAUSDT", "AAVEUSDT"],
+    "activation_rule": "A symbol is active in a fold only if funding, perp and spot series all cover that fold. Uncovered symbol-folds are excluded and reported, never filled or approximated."
+  },
+  "data": {
+    "funding": "Binance Vision UM fundingRate monthly archives, via the RD-003 cache (~/workspace/str-rd3/cache_funding). Every panel CSV's SHA-256 verified against Stratex/rigorous_backtest/results_rd3/funding_manifest.json before use: 30/30 match.",
+    "perp_prices": "Binance Vision UM 1h klines via the RD-002 cache (~/workspace/str-rd2/cache2). Every CSV's SHA-256 verified against its sidecar manifest: 30/30 match. Daily close = close of the last complete 1h bar of the UTC day.",
+    "spot_prices": "Binance Vision spot 1d klines monthly archives fetched for this task (months 2024-01..2026-10). Every zip's SHA-256 verified against its published .CHECKSUM before use; canonical CSV + per-symbol sidecar; merged manifest ships in results_rd9/spot_manifest.json. Absent months (404) recorded, never filled."
+  },
+  "folds": {
+    "profile": "STANDARD (harness walkforward.py)",
+    "windows": {"W1": ["2024-07-01", "2025-01-01"], "W2": ["2025-01-01", "2025-07-01"], "W3": ["2025-07-01", "2026-01-01"], "W4": ["2026-01-01", "2026-07-01"], "W5": ["2026-07-01", "2026-11-01"]},
+    "rule": "Headline metrics use ONLY episodes entered inside folds. Episodes are force-exited at fold end and attributed to the fold of entry."
+  },
+  "mechanics": {
+    "decision_grid": "Daily at 00:00 UTC. Signal F72(t) = sum of funding prints with timestamps in (t-72h, t], expressed in % of notional. Uses only prints at or before t (causal).",
+    "execution_prices": "Entry/exit at the daily close of day t-1 (the price at decision time t) for both legs.",
+    "funding_window": "An episode entered at t_e and exited at t_x earns the prints with timestamps in (t_e, t_x].",
+    "hedge": "Coin-quantity hedge fixed at entry (q units spot vs q units perp). No rebalance trades occur by construction; margin drift is reported as an operational caveat, not modelled as PnL.",
+    "funding_notional": "Each print's cashflow uses P_print = close of the perp 1h bar ending at the print timestamp (declared approximation of the settlement mark price).",
+    "episode_pnl_pct_of_entry_spot_notional": "dir * ( ((S_exit - S_entry) - (P_exit - P_entry)) / S_entry + SUM_{prints in (t_e,t_x]} rate * P_print / S_entry ) * 100 - fees_pct - slippage_pct - borrow_pct",
+    "borrow": "NEG direction only: 0.02% of notional per day held (declared assumption; archive data cannot observe real margin borrow rates, so NEG results are upper bounds)."
+  },
+  "costs": {
+    "1x": {"spot_taker_fee_pct_per_side": 0.10, "perp_taker_fee_pct_per_side": 0.05, "slippage_pct_per_leg_side": 0.02, "round_trip_fees_plus_slippage_pct": 0.38, "borrow_pct_per_day_NEG_only": 0.02},
+    "2x": "Fees, slippage and borrow all doubled (sensitivity run for every cell)."
+  },
+  "cells": [
+    {"id": "always_pos", "dir": 1, "rule": "Hold POS carry (long spot / short perp) for every active symbol for the whole fold; one episode per symbol per fold."},
+    {"id": "always_neg", "dir": -1, "rule": "Hold NEG carry (short spot / long perp) likewise; borrow charged."},
+    {"id": "thr_pos_015", "dir": 1, "theta_pct_per_72h": 0.15, "entry": "F72 >= theta", "exit": "F72 < theta/3, or 45 days held, or fold end"},
+    {"id": "thr_pos_030", "dir": 1, "theta_pct_per_72h": 0.30, "entry": "F72 >= theta", "exit": "F72 < theta/3, or 45 days held, or fold end"},
+    {"id": "thr_pos_060", "dir": 1, "theta_pct_per_72h": 0.60, "entry": "F72 >= theta", "exit": "F72 < theta/3, or 45 days held, or fold end"},
+    {"id": "thr_neg_015", "dir": -1, "theta_pct_per_72h": 0.15, "entry": "F72 <= -theta", "exit": "F72 > -theta/3, or 45 days held, or fold end"},
+    {"id": "thr_neg_030", "dir": -1, "theta_pct_per_72h": 0.30, "entry": "F72 <= -theta", "exit": "F72 > -theta/3, or 45 days held, or fold end"},
+    {"id": "thr_neg_060", "dir": -1, "theta_pct_per_72h": 0.60, "entry": "F72 <= -theta", "exit": "F72 > -theta/3, or 45 days held, or fold end"}
+  ],
+  "trials": 8,
+  "global_counter": {"floor_before_rd009": 1926, "rd009_trials": 8, "floor_after": 1934, "bonferroni_alpha": 0.05 / 1934},
+  "bar": "A cell PASSES only if ALL of RD-002's checks hold, with episodes in place of trades: expectancy > 0; PF >= 1.2; >= 200 OOS episodes; >= 80% of folds positive (4/5, fold PnL summed over its episodes); holdout (W5) expectancy > 0; breadth >= 50% of episode-bearing symbols net positive; 2x-cost expectancy > 0; Bonferroni: one-sided t-test p on episode PnLs < 0.05/1934. A cell failing any check is a FAIL; near-misses are reported as texture, never promoted.",
+  "known_limitations_declared_upfront": [
+    "Episode PnLs share calendar days across symbols (cross-correlated), so t-test p-values are optimistic; the Bonferroni threshold at the global counter is the guard, and the feasibility verdict does not rest on p-values alone.",
+    "Always-on cells produce at most 150 episodes (30 symbols x 5 folds) and therefore cannot meet the 200-episode check; their bar outcome is reported as declared, and the feasibility verdict for the always-on book rests on the descriptive evidence (net yield, drawdown, decomposition) labelled as such.",
+    "NEG-direction borrow cost is a declared assumption (0.02%/day), not observed data; NEG results are upper bounds. Spot borrow availability in size is not observable from archives.",
+    "Funding settlement uses the 1h-close approximation for the mark price at each print."
+  ],
+  "descriptive_not_trials": [
+    "Per-symbol always-on POS and NEG net carry: gross funding, basis component, costs, net, annualised net yield on one-leg notional.",
+    "always_pos pooled equity curve (continuous book over the whole OOS era, equal-weight across active symbols, daily marked: funding accrued at prints, basis marked at daily closes, entry costs once, exit costs at era end) with max drawdown; same for always_neg.",
+    "Failure-mode census: worst episodes decomposed (funding vs basis vs costs); negative-print share per symbol in the OOS era; longest negative-funding streaks; worst 1-day basis moves; max adverse perp excursion during episodes (1h highs/lows vs entry) as liquidation-distance evidence at 1x and at the owner's 3x pin.",
+    "Forward-test specification: what a paper simulation on demo-fapi would need (duration, logging fields, kill criteria) before any governed deployment could be proposed."
+  ],
+  "sanity_checks": [
+    "S1: synthetic zero-cost frozen-price input => episode PnL equals the sum of funding prints exactly.",
+    "S2: for every real episode, funding + basis - costs == total PnL (decomposition identity, tolerance 1e-9).",
+    "S3: BTC always_pos W1 funding component recomputed by an independent summation path and compared."
+  ],
+  "prohibitions": "Research only: no orders placed anywhere, no production code, registry or daemon changes, live trading prohibited. Paper simulation only, on historical archives."
+}

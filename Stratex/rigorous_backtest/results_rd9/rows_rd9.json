@@ -1,0 +1,522 @@
+{
+ "always_pos": {
+  "pooled": {
+   "trades": 150,
+   "expectancy_pct": 1.273187487911304,
+   "pf": 2.960082017553788
+  },
+  "pooled_2x": {
+   "trades": 150,
+   "expectancy_pct": 0.893187487911304,
+   "pf": 2.1825591989133106
+  },
+  "folds": {
+   "W1": {
+    "episodes": 30,
+    "pnl_sum_pct": 161.82617980470218,
+    "trades": 30,
+    "expectancy_pct": 5.394205993490073,
+    "pf": 100.46352497879131
+   },
+   "W2": {
+    "episodes": 30,
+    "pnl_sum_pct": 15.832841239158302,
+    "trades": 30,
+    "expectancy_pct": 0.5277613746386101,
+    "pf": 2.6996388412590093
+   },
+   "W3": {
+    "episodes": 30,
+    "pnl_sum_pct": 36.753828398827295,
+    "trades": 30,
+    "expectancy_pct": 1.2251276132942432,
+    "pf": 3.3790647717454787
+   },
+   "W4": {
+    "episodes": 30,
+    "pnl_sum_pct": -36.485291327901045,
+    "trades": 30,
+    "expectancy_pct": -1.2161763775967016,
+    "pf": 0.12716680898654426
+   },
+   "W5": {
+    "episodes": 30,
+    "pnl_sum_pct": 13.05056507190881,
+    "trades": 30,
+    "expectancy_pct": 0.43501883573029365,
+    "pf": 1.446303012389295
+   }
+  },
+  "folds_positive": 4,
+  "breadth": 0.8,
+  "symbols_with_episodes": 30,
+  "p_value_one_sided_t": 1.1324035647206463e-05,
+  "bonferroni_alpha": 2.5853154084798348e-05,
+  "checks": {
+   "expectancy_gt_0": true,
+   "pf_ge_1_2": true,
+   "episodes_ge_200": false,
+   "folds_ge_80pct": true,
+   "holdout_exp_gt_0": true,
+   "breadth_ge_50pct": true,
+   "cost2x_exp_gt_0": true,
+   "bonferroni": true
+  },
+  "PASS": false
+ },
+ "always_neg": {
+  "pooled": {
+   "trades": 150,
+   "expectancy_pct": -5.445187487911303,
+   "pf": 0.03512589716426858
+  },
+  "pooled_2x": {
+   "trades": 150,
+   "expectancy_pct": -9.237187487911305,
+   "pf": 0.010618644625148818
+  },
+  "folds": {
+   "W1": {
+    "episodes": 30,
+    "pnl_sum_pct": -295.0261798047022,
+    "trades": 30,
+    "expectancy_pct": -9.834205993490075,
+    "pf": 0.0
+   },
+   "W2": {
+    "episodes": 30,
+    "pnl_sum_pct": -147.23284123915832,
+    "trades": 30,
+    "expectancy_pct": -4.907761374638611,
+    "pf": 0.0
+   },
+   "W3": {
+    "episodes": 30,
+    "pnl_sum_pct": -169.9538283988273,
+    "trades": 30,
+    "expectancy_pct": -5.665127613294244,
+    "pf": 0.024753458657604952
+   },
+   "W4": {
+    "episodes": 30,
+    "pnl_sum_pct": -94.91470867209897,
+    "trades": 30,
+    "expectancy_pct": -3.163823622403299,
+    "pf": 0.06540414446452167
+   },
+   "W5": {
+    "episodes": 30,
+    "pnl_sum_pct": -109.65056507190882,
+    "trades": 30,
+    "expectancy_pct": -3.655018835730294,
+    "pf": 0.1462172044620375
+   }
+  },
+  "folds_positive": 0,
+  "breadth": 0.0,
+  "symbols_with_episodes": 30,
+  "p_value_one_sided_t": 1.0,
+  "bonferroni_alpha": 2.5853154084798348e-05,
+  "checks": {
+   "expectancy_gt_0": false,
+   "pf_ge_1_2": false,
+   "episodes_ge_200": false,
+   "folds_ge_80pct": false,
+   "holdout_exp_gt_0": false,
+   "breadth_ge_50pct": false,
+   "cost2x_exp_gt_0": false,
+   "bonferroni": false
+  },
+  "PASS": false
+ },
+ "thr_pos_015": {
+  "pooled": {
+   "trades": 31,
+   "expectancy_pct": 2.4461851972132496,
+   "pf": 1605.9157026935125
+  },
+  "pooled_2x": {
+   "trades": 31,
+   "expectancy_pct": 2.066185197213249,
+   "pf": 91.59362820477628
+  },
+  "folds": {
+   "W1": {
+    "episodes": 31,
+    "pnl_sum_pct": 75.83174111361073,
+    "trades": 31,
+    "expectancy_pct": 2.4461851972132496,
+    "pf": 1605.9157026935125
+   },
+   "W2": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W3": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W4": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W5": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   }
+  },
+  "folds_positive": 1,
+  "breadth": 1.0,
+  "symbols_with_episodes": 30,
+  "p_value_one_sided_t": 1.922789467176425e-12,
+  "bonferroni_alpha": 2.5853154084798348e-05,
+  "checks": {
+   "expectancy_gt_0": true,
+   "pf_ge_1_2": true,
+   "episodes_ge_200": false,
+   "folds_ge_80pct": false,
+   "holdout_exp_gt_0": false,
+   "breadth_ge_50pct": true,
+   "cost2x_exp_gt_0": true,
+   "bonferroni": true
+  },
+  "PASS": false
+ },
+ "thr_pos_030": {
+  "pooled": {
+   "trades": 25,
+   "expectancy_pct": 0.26034182814895784,
+   "pf": 23.1598573062204
+  },
+  "pooled_2x": {
+   "trades": 25,
+   "expectancy_pct": -0.11965817185104222,
+   "pf": 0.2993787711267999
+  },
+  "folds": {
+   "W1": {
+    "episodes": 25,
+    "pnl_sum_pct": 6.508545703723946,
+    "trades": 25,
+    "expectancy_pct": 0.26034182814895784,
+    "pf": 23.1598573062204
+   },
+   "W2": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W3": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W4": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W5": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   }
+  },
+  "folds_positive": 1,
+  "breadth": 0.84,
+  "symbols_with_episodes": 25,
+  "p_value_one_sided_t": 1.611766908656383e-05,
+  "bonferroni_alpha": 2.5853154084798348e-05,
+  "checks": {
+   "expectancy_gt_0": true,
+   "pf_ge_1_2": true,
+   "episodes_ge_200": false,
+   "folds_ge_80pct": false,
+   "holdout_exp_gt_0": false,
+   "breadth_ge_50pct": true,
+   "cost2x_exp_gt_0": false,
+   "bonferroni": true
+  },
+  "PASS": false
+ },
+ "thr_pos_060": {
+  "pooled": {
+   "trades": 0,
+   "expectancy_pct": null,
+   "pf": null
+  },
+  "pooled_2x": {
+   "trades": 0,
+   "expectancy_pct": null,
+   "pf": null
+  },
+  "folds": {
+   "W1": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W2": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W3": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W4": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W5": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   }
+  },
+  "folds_positive": 0,
+  "breadth": 0.0,
+  "symbols_with_episodes": 0,
+  "p_value_one_sided_t": null,
+  "bonferroni_alpha": 2.5853154084798348e-05,
+  "checks": {
+   "expectancy_gt_0": false,
+   "pf_ge_1_2": false,
+   "episodes_ge_200": false,
+   "folds_ge_80pct": false,
+   "holdout_exp_gt_0": false,
+   "breadth_ge_50pct": false,
+   "cost2x_exp_gt_0": false,
+   "bonferroni": false
+  },
+  "PASS": false
+ },
+ "thr_neg_015": {
+  "pooled": {
+   "trades": 167,
+   "expectancy_pct": -0.03441999471338366,
+   "pf": 0.8672176603698372
+  },
+  "pooled_2x": {
+   "trades": 167,
+   "expectancy_pct": -0.5705876593840423,
+   "pf": 0.1896296611633777
+  },
+  "folds": {
+   "W1": {
+    "episodes": 24,
+    "pnl_sum_pct": -5.019629412708752,
+    "trades": 24,
+    "expectancy_pct": -0.20915122552953133,
+    "pf": 0.16508938116451416
+   },
+   "W2": {
+    "episodes": 33,
+    "pnl_sum_pct": -9.25334419348865,
+    "trades": 33,
+    "expectancy_pct": -0.280404369499656,
+    "pf": 0.03134486995035964
+   },
+   "W3": {
+    "episodes": 42,
+    "pnl_sum_pct": 0.6750661717202292,
+    "trades": 42,
+    "expectancy_pct": 0.016073004088576887,
+    "pf": 1.0590318158054832
+   },
+   "W4": {
+    "episodes": 51,
+    "pnl_sum_pct": -1.5915914984106014,
+    "trades": 51,
+    "expectancy_pct": -0.031207676439423557,
+    "pf": 0.8688367115579132
+   },
+   "W5": {
+    "episodes": 17,
+    "pnl_sum_pct": 9.441359815752705,
+    "trades": 17,
+    "expectancy_pct": 0.5553741068089826,
+    "pf": 3.272329483048834
+   }
+  },
+  "folds_positive": 2,
+  "breadth": 0.15,
+  "symbols_with_episodes": 20,
+  "p_value_one_sided_t": 0.6736030810679234,
+  "bonferroni_alpha": 2.5853154084798348e-05,
+  "checks": {
+   "expectancy_gt_0": false,
+   "pf_ge_1_2": false,
+   "episodes_ge_200": false,
+   "folds_ge_80pct": false,
+   "holdout_exp_gt_0": true,
+   "breadth_ge_50pct": false,
+   "cost2x_exp_gt_0": false,
+   "bonferroni": false
+  },
+  "PASS": false
+ },
+ "thr_neg_030": {
+  "pooled": {
+   "trades": 51,
+   "expectancy_pct": 0.39953714966063403,
+   "pf": 3.266371624192128
+  },
+  "pooled_2x": {
+   "trades": 51,
+   "expectancy_pct": -0.13105108563348367,
+   "pf": 0.7437681441138333
+  },
+  "folds": {
+   "W1": {
+    "episodes": 6,
+    "pnl_sum_pct": -1.4337527195034472,
+    "trades": 6,
+    "expectancy_pct": -0.23895878658390787,
+    "pf": 0.0
+   },
+   "W2": {
+    "episodes": 3,
+    "pnl_sum_pct": -0.728318089989868,
+    "trades": 3,
+    "expectancy_pct": -0.24277269666328935,
+    "pf": 0.0
+   },
+   "W3": {
+    "episodes": 14,
+    "pnl_sum_pct": 7.069553756686178,
+    "trades": 14,
+    "expectancy_pct": 0.5049681254775841,
+    "pf": 3.8974560205384603
+   },
+   "W4": {
+    "episodes": 20,
+    "pnl_sum_pct": 3.6160857512439404,
+    "trades": 20,
+    "expectancy_pct": 0.18080428756219702,
+    "pf": 2.1366125503673303
+   },
+   "W5": {
+    "episodes": 8,
+    "pnl_sum_pct": 11.852825934255533,
+    "trades": 8,
+    "expectancy_pct": 1.4816032417819416,
+    "pf": 10.817555971743978
+   }
+  },
+  "folds_positive": 3,
+  "breadth": 0.5714285714285714,
+  "symbols_with_episodes": 14,
+  "p_value_one_sided_t": 0.01863138171191478,
+  "bonferroni_alpha": 2.5853154084798348e-05,
+  "checks": {
+   "expectancy_gt_0": true,
+   "pf_ge_1_2": true,
+   "episodes_ge_200": false,
+   "folds_ge_80pct": false,
+   "holdout_exp_gt_0": true,
+   "breadth_ge_50pct": true,
+   "cost2x_exp_gt_0": false,
+   "bonferroni": false
+  },
+  "PASS": false
+ },
+ "thr_neg_060": {
+  "pooled": {
+   "trades": 18,
+   "expectancy_pct": 1.282385350789379,
+   "pf": 16.78878641125809
+  },
+  "pooled_2x": {
+   "trades": 18,
+   "expectancy_pct": 0.7390520174560455,
+   "pf": 3.70019319129337
+  },
+  "folds": {
+   "W1": {
+    "episodes": 0,
+    "pnl_sum_pct": 0.0,
+    "trades": 0,
+    "expectancy_pct": null,
+    "pf": null
+   },
+   "W2": {
+    "episodes": 1,
+    "pnl_sum_pct": -0.4012248964605802,
+    "trades": 1,
+    "expectancy_pct": -0.4012248964605802,
+    "pf": 0.0
+   },
+   "W3": {
+    "episodes": 6,
+    "pnl_sum_pct": 7.525742803968048,
+    "trades": 6,
+    "expectancy_pct": 1.254290467328008,
+    "pf": 33.590231798569796
+   },
+   "W4": {
+    "episodes": 6,
+    "pnl_sum_pct": 4.44359821152797,
+    "trades": 6,
+    "expectancy_pct": 0.7405997019213283,
+    "pf": 15.15538806245403
+   },
+   "W5": {
+    "episodes": 5,
+    "pnl_sum_pct": 11.514820195173385,
+    "trades": 5,
+    "expectancy_pct": 2.302964039034677,
+    "pf": 23.318909668791008
+   }
+  },
+  "folds_positive": 3,
+  "breadth": 0.8,
+  "symbols_with_episodes": 10,
+  "p_value_one_sided_t": 0.008577535800744189,
+  "bonferroni_alpha": 2.5853154084798348e-05,
+  "checks": {
+   "expectancy_gt_0": true,
+   "pf_ge_1_2": true,
+   "episodes_ge_200": false,
+   "folds_ge_80pct": false,
+   "holdout_exp_gt_0": true,
+   "breadth_ge_50pct": true,
+   "cost2x_exp_gt_0": true,
+   "bonferroni": false
+  },
+  "PASS": false
+ }
+}
