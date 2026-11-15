@@ -106,31 +106,83 @@ def validate_citations(
 def filter_and_ground_findings(
     findings: list[dict[str, Any]],
     claims_by_id: dict[str, Any],
+    integrity_by_claim: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Partition findings into grounded and unverified observations."""
+    """Partition findings into grounded and unverified observations.
+
+    Legacy behaviour (``integrity_by_claim is None``): a finding is grounded
+    when at least one cited claim exists with ACTIVE/VERIFIED status.
+
+    Citation-integrity behaviour (TASK-INT-008): when an integrity map from
+    :func:`intelx.core.citation_integrity.check_claims` is supplied, a claim
+    grounds a finding only when it is mechanically verified — its source was
+    actually retrieved, its quote matches the document span, its wording is
+    supported by the quote, and its origin is EXTRACTED (not INFERRED).
+    Findings without a verified claim are unverified and carry the specific
+    integrity failure as their reason, so they render as labelled inference
+    instead of standing as fact.
+    """
     grounded: list[dict[str, Any]] = []
     unverified: list[dict[str, Any]] = []
 
     for f in findings:
         claim_ids = f.get("claim_ids") or f.get("claim_ids_json") or []
         valid_supporting_claims = []
+        integrity_reason: str | None = None
+        saw_inference_only = bool(claim_ids)
         for cid in claim_ids:
             claim = claims_by_id.get(cid)
+            resolved_id = cid
             if not claim:
                 resolved_id = resolve_citation_id(cid, set(claims_by_id.keys()))
                 if resolved_id:
                     claim = claims_by_id[resolved_id]
 
-            if claim:
-                status = _get_val(claim, "status", ClaimStatus.ACTIVE)
-                if status == ClaimStatus.ACTIVE or str(status).upper() in ("ACTIVE", "VERIFIED"):
+            if not claim:
+                saw_inference_only = False
+                continue
+
+            if integrity_by_claim is not None:
+                claim_id = str(_get_val(claim, "id", resolved_id) or resolved_id)
+                integrity = integrity_by_claim.get(claim_id)
+                if integrity is not None and integrity.grounding_ok:
                     valid_supporting_claims.append(claim)
+                elif integrity is not None:
+                    if not (integrity.is_inference and integrity.exists and integrity.span_verified):
+                        saw_inference_only = False
+                    if integrity_reason is None and integrity.failures:
+                        integrity_reason = (
+                            "Citation integrity check failed: " + integrity.failures[0]
+                        )
+                else:
+                    saw_inference_only = False
+                    if integrity_reason is None:
+                        integrity_reason = (
+                            "Citation integrity check failed: claim was not verified"
+                        )
+                continue
+
+            status = _get_val(claim, "status", ClaimStatus.ACTIVE)
+            if status == ClaimStatus.ACTIVE or str(status).upper() in ("ACTIVE", "VERIFIED"):
+                valid_supporting_claims.append(claim)
 
         if valid_supporting_claims:
             grounded.append(f)
         else:
             f_copy = dict(f)
-            f_copy["unverified_reason"] = "Lacks active, verified supporting claims"
+            if integrity_by_claim is not None and claim_ids:
+                if integrity_reason is not None:
+                    f_copy["unverified_reason"] = integrity_reason
+                elif saw_inference_only:
+                    f_copy["unverified_reason"] = (
+                        "Supported only by inferred claims — no retrieved evidence"
+                    )
+                else:
+                    f_copy["unverified_reason"] = (
+                        "Citation integrity check failed: no cited claim is verifiable"
+                    )
+            else:
+                f_copy["unverified_reason"] = "Lacks active, verified supporting claims"
             unverified.append(f_copy)
 
     return grounded, unverified
