@@ -1,0 +1,32 @@
+# TASK-STR-RD-012 board entry (fragment fallback: the full-board write failed in the crew ship step; coordinator to splice this entry into docs/collaboration/WORK_BOARD.yaml after the TASK-STR-RD-003 entry)
+  - id: TASK-STR-RD-012
+    title: "Stratex research RD-012: order-flow proxy families from OHLCV only (windowed-CVD proxies, volume-confirmed momentum, exhaustion reversals), crypto30 at 15m/1h, judged at the running global trial count"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-012
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:53:51+05:30"
+    updated_at: "2026-11-15T16:03:10+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD12.md"
+      - "Stratex/rigorous_backtest/results_rd12/"
+      - "Stratex/rigorous_backtest/rd12/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890924249"
+    defect: "Owner Wave-4 directive 2026-11-15 ~12:33 IST: strategy finding never stops; any configuration passing the full bar is added to demo trading. RD-001/002/003 never tested order-flow constructions. No L2/trade-level data exists in this programme, so this round pre-declared OHLCV-only flow proxies (CLV/sign-weighted volume, windowed CVD, volume z-scores) across 4 families, 10 variants, {crypto30 15m, crypto30 1h} = 20 cells + 8 wf-select procedures = 28 trials, judged at global N = 1,792 (RD-002 final 1,557 + RD-003 declared 207 + 28). Proxies that cannot be computed identically in the live daemon (true trade-level delta, taker-buy/quote-volume CVD, infinite-history CVD) were excluded by construction as unmappable. Research only: no production code, registry or daemon changes."
+    acceptance:
+      - "Pre-declaration before first execution: formulas, grid, exits, cells and trial count frozen in declaration PR #287 (OPEN before the first cell ran; declared 2026-11-15T07:23:51Z, base main 337a1e3f)."
+      - "Sanity anchor re-verified before any RD-012 number is trusted: RD-001 ts_momentum roc42_4h cell (BTC/ETH/SOL) reproduced bit-identically (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518)."
+      - "Every declared cell evaluated and rowed (20/20 EVALUATED, none BROKEN/NO_TRADES), each counting once in the global trial counter whatever its outcome; wf-select procedures run per family x timeframe (8/8)."
+      - "RESULTS_RD12.md + results_rd12/{synthesis.json, coverage.json, wf_select.json, rows/*.json} on main via PR: per-config PASS/FAIL against the full bar and a named passer list (or zero passers stated plainly)."
+      - "Board entry VERIFIED via a fresh-main PR with the full task-id set diffed; completion comment on issue #35 leading with the passer list and the new global trial count."
+    evidence:
+      - "Declaration: PR #287 (branch claude/task-str-rd-012-declaration) OPEN before first execution; 5 files blob-verified byte-identical to local commit a0711dc8."
+      - "RESULT: zero passers of 28 trials. Best cell vol_confirmed_momentum/vcm_b @1h: 11,498 trades, expectancy -0.0084%, PF 0.9952, p = 0.5897 - no cell reaches PF 1.0. 15m momentum cells: breadth 0.000 in all six (no symbol positive). Reversal families worst (PF 0.72-0.82). All 8 wf-select procedures FAIL."
+      - "Data: Binance Vision via harness data_feed contract. 1h: RD-002 verified cache (11 symbols carry the known shared 120-bar hole). 15m: all 30 series 108,192 rows, 0 missing bars; the two independent 15m runs produced byte-identical CSV SHA-256 for all 30 series (cross-checked)."
+      - "Disclosure: sandbox exec file-write fault (EPERM, 0-byte writes) destroyed 4 fresh 15m cache CSVs mid-round; AAVE/MANA/SAND/VET were loaded via in-memory fetch from the same source, pinned by per-zip + canonical CSV SHA-256 in coverage.json and the two-run hash cross-check. Shipped rows carry per_symbol_oos reduced to 4 fields (noted in each file)."
+      - "2x-cost gate: NOT TRIGGERED for any trial - no cell reached pooled PF 1.0, and doubling strictly-adverse costs cannot flip a FAIL; no PASS exists to stress. Recorded explicitly in RESULTS_RD12.md."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-012 crew): zero passers; nothing forwarded to forward demo trading; the OHLCV order-flow-proxy track is closed at 15m/1h for the declared constructions. Global trial counter stands at 1,792 after this round (parallel Wave-4 rounds add theirs as they land; any future passer anywhere is re-checked at the final N by the coordinator)."
