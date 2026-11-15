@@ -4828,6 +4828,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "SERIES (owner-approved 2026-11-15 ~11:40 IST): 'Money in 40 seconds' — simple money explainers, ~40s, hook in the first 2 seconds, explainers only (no tips, no return promises). The proof render's content was already locked to the same-source comparison, so scripts S1-S5 (compounding / leverage / paper-vs-real / why traders lose / compounding quiz) are queued as the series' first five episodes, returned verbatim in the crew's completion report for the first production run."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-VYR-003 crew). Owner decisions/actions outstanding (NOT this task): (1) autopilot publish gate (Sentinel approval / pending_approval) — urgent in light of the OAuth finding: uploads resume the moment a valid token exists; (2) re-auth the YouTube OAuth credential if autopilot uploads are wanted (Google-side invalid_grant; likely publish the OAuth consent screen to production to escape the 7-day testing-token expiry); (3) supply a valid YouTube Data API v3 key for discovery. First 'Money in 40 seconds' production run (episodes S1-S5) can be dispatched as a follow-up task once (3) lands, since candidate discovery needs the Data API."
+  - id: TASK-REL-044
+    title: "FRIDAY routing policy (owner decision 2026-11-15): chat/talk on FRIDAY's own env keys; complex tasks escalate to Inference for more usage"
+    owner: muse_ai
+    status: CLAIMED
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-rel-044-friday-escalation"
+    defect: "FRIDAY_LLM_PROVIDER=gemini routes EVERY turn to FRIDAY's own 5-key Gemini pool (Groq text failover on exhaustion, TASK-REL-010): a complex delegated task and a one-line chat draw on the same small free-tier pool, so complex work starves on ~20 req/day/model while Inference's big pools (11 Gemini + 14 Groq + 14 OpenRouter, best-suitable policy since TASK-REL-043) sit unused by FRIDAY's brain. The only wired Inference provider (AIUniverseLLMProvider -> /v1/friday/ask) is unfit for complex work — live probe 2026-11-15: a complex prompt was capped at 35 words, confidence 0.55 (below FRIDAY's own 0.70 gate), the model visibly fighting the ~40-word cap."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6890797737 (2026-11-15) before editing. Owner policy in his words (2026-11-15): FRIDAY uses the API keys in its own env to talk and chat; when he assigns a complex task (where its own usage is not enough) it then uses Inference to get more usage."
+      - "SURFACE PROBES (Server 1, live, 2026-11-15): /v1/friday/ask complex prompt -> 200, 6.5s, 35 words, confidence 0.55. /v1/chat/completions model=auto -> same 21-word stub twice, served by non-catalogue openai/gpt-oss-20b (~0s, fast-lane) — NOT a complex-work target. Named catalogue models: openai/gpt-oss-120b -> 200, 1.3s, 187-word correct code answer; gemini-3.8-flash -> 200, 15.0s, 336-word structured answer, served by gemini-3.6-flash WITH the REL-043 provenance block (requested/served/selected_as). Inference chat completions has NO tool-calling surface (messages-only schema, prompt flattening) — escalated tool turns bridge via FRIDAY's existing text tool-markup protocol (TASK-REL-006A recovery)."
+    blockers: []
+    next_action: "Implement the escalation layer (friday/llm/escalation.py: per-turn route context + deterministic complexity classifier + InferenceChatProvider + EscalatingLLMProvider; factory wiring in the gemini/groq branches; REL-010 exhaustion fallback becomes Inference-first with Groq behind it), tests, PR, deploy, live acceptance (own-pool chat proof / escalated complex task with provenance / isolated exhaustion drill / chat latency spot-check), then board VERIFIED."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
