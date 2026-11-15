@@ -6484,6 +6484,132 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - Sentinel/sentinel/modules/endpoint/device_posture.py
       - Sentinel/tests/unit/test_ig_sen_device_posture.py
+  - id: TASK-IG-STR-03
+    title: "IG corpus: Support/resistance levels + chart annotation records"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-03"
+    pr: 460
+    defect: "IG corpus gap (DWqHA4ghG56): no S/R level detection existed for owner review of Stratex charts."
+    evidence:
+      - "PR #460: test_levels.py — 5 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. Candidate follow-up (separate task): render these records on the Halo/terminal chart surfaces."
+  - id: TASK-IG-STR-09
+    title: "IG corpus: Assistant content pack: trade-plan template + discipline notes"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-09"
+    pr: 473
+    defect: "IG corpus gap (DRSGKJXDAU4/DQn4VCfDMCd): trader questions had no structured plan format, and the discipline content lived as prose, not as a versioned assistant-layer asset."
+    evidence:
+      - "PR #473: test_assistant_pack.py — 3 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. The assistant layer may render plans from this template; any strategy a plan describes still faces the RD bar."
+  - id: TASK-IG-STR-10
+    title: "IG corpus: Prop-firm challenge tracker + public trade journal"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-10"
+    pr: 475
+    defect: "IG corpus gap (DappZ3Kz40y): no challenge-tracking or public-journal tooling existed for forward-test discipline."
+    evidence:
+      - "PR #475: test_challenge_journal.py — 5 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. If the owner ever runs a challenge (his decision, real-money gated), this journal is the record; until then it serves demo forward tests equally well."
+  - id: TASK-IG-STR-11
+    title: "IG corpus: Prediction-market research lane (read-only)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-11"
+    pr: 476
+    defect: "IG corpus gap (DWBGc0dEZXj): prediction markets were an unregistered idea; unregistered lanes are how unmeasured risk enters a research programme."
+    evidence:
+      - "PR #476: test_prediction_lane.py — 5 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. Follow-up (separate task): scheduled public snapshots for study; any strategy derived from this lane enters the RD bar like any other."
+  - id: TASK-IG-STR-12
+    title: "IG corpus: Strategy stacking (research) + stack/MT5 evaluation"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-12"
+    pr: 477
+    defect: "IG corpus items DcJyszBG6VF/DYpKBKgKkoJ/Dc6T3_CSDSE/DcayVNzjuqQ/DegcLifkzmE raised venue/stack/composition questions with no recorded evaluation; unevaluated ideas resurface as opinions."
+    evidence:
+      - "PR #477: test_strategy_stacking.py — 4 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. The OpenBB contract in the evaluation doc is the interface the Futuris lane's data-layer work can be reviewed against from the Stratex side."
+  - id: TASK-IG-SEN-03
+    title: "IG corpus: Telegram public channels as threat-intel source — watchlist monitor over t.me/s previews, IOC extraction, fail-closed"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: "#485"
+    branch: "claude/task-ig-sen-03"
+    evidence: "PR #485: Sentinel/sentinel/integrations/threat_feeds/telegram_channels.py + tests/unit/test_ig_sen_telegram_watch.py (5/5 local pass, fake fetcher). Corpus source DV6UeTQkUH9. Public-preview only (no account/API key), watchlist keyword matching, critical terms HIGH, IOCs defanged, seen-state dedupe persisted, fail-closed on errors; findings -> operations AlertEngine as BaselineDeltas."
+    next_action: "Coordinator: merge on green CI -> Fleet CD -> configure channels/keywords server-side + schedule periodic sync -> flip VERIFIED on first live match cycle."
+    files:
+      - Sentinel/sentinel/integrations/threat_feeds/telegram_channels.py
+      - Sentinel/tests/unit/test_ig_sen_telegram_watch.py
+  - id: TASK-IG-SEN-04
+    title: "IG corpus: Sentinel security reference — curated learning list, OSINT/recon capability registry (Shodan/Maltego/Nmap/Sherlock mapped to existing adapters + gaps), Qubes-style compartmentalisation assessment, PentAGI role-design notes"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: "#488"
+    branch: "claude/task-ig-sen-04"
+    evidence: "PR #488: Sentinel/docs/SECURITY_REFERENCE_IG.md (docs only). Corpus sources DV9IyW1jCeJ, DZZ_-xxzaOR, DeU2IZOukqT; PentAGI card verdict reference-only honoured (role design only, no adoption). Registry grounded in the live adapter inventory on main (recon x5, network x5, wireless x3)."
+    next_action: "Coordinator: merge on green CI (docs-only) -> flip VERIFIED at merge; registry/compartmentalisation sections are maintained by follow-up PRs as adapters land."
+    files:
+      - Sentinel/docs/SECURITY_REFERENCE_IG.md
+  - id: TASK-IG-FRG-04
+    title: "IG corpus: sketch-to-prompt front end for Forge (M3E Canvas pattern)"
+    owner: muse_ai
+    status: IN_REVIEW
+    source: "Instagram reference corpus (owner directive 2026-11-15): DejpO6SgeTK"
+    deliverable: "Forge/app/planning/sketch_prompt.py + Forge/tests/test_ig_frg04_sketch_prompt.py (PR in this thread)"
+    files:
+      - Forge/app/planning/sketch_prompt.py
+      - Forge/tests/test_ig_frg04_sketch_prompt.py
+    next_action: "Merge on green CI; then accept M3E Canvas exports at the Forge intake (paste/import sketch JSON -> brief -> build)"
+  - id: TASK-IG-FRG-05
+    title: "IG corpus: project-context digest + checkpoint/rollback for Forge generated changes (Unity AI pattern)"
+    owner: muse_ai
+    status: IN_REVIEW
+    source: "Instagram reference corpus (owner directive 2026-11-15): DX8TWC9yGUh"
+    deliverable: "Forge/app/execution/checkpoints.py + Forge/tests/test_ig_frg05_checkpoints.py (PR in this thread)"
+    files:
+      - Forge/app/execution/checkpoints.py
+      - Forge/tests/test_ig_frg05_checkpoints.py
+    next_action: "Merge on green CI; then wire checkpoints around generation waves in the orchestrator (checkpoint before a wave, offer rollback on battery failure) and feed project_context_digest into DeveloperRole context"
+  - id: TASK-IG-VYR-01
+    title: "VyralX channel operator (IG corpus — Uplika pattern): approval-gated analytics -> titles/hooks -> schedule plan -> comment drafts, implemented natively; the paid hosted MCP is never used and the operator publishes nothing"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-01"
+    pr: 443
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898209029 by Muse (TASK-IG-VYR-01 crew) before any editing."
+      - "CODE: VyralX/app/services/channel_operator.py (stdlib-only, operator ig-vyr01-1): analyse_channel names winning formats ONLY from measured views (metrics_available=False -> winning_formats=[] with the reason stated); propose_packaging builds deterministic lane title/hook/description candidates scored by publish_priority.title_strength and screened by compliance_gate.find_finance_advice (trips dropped + counted); build_schedule emits plan-only entries (publish=False, privacy unlisted, IST weekly slots); draft_comment_replies emits draft_pending_approval drafts and suggested approval-gated hide actions; run_operator_cycle states publishes_anything=False; enqueue_operator_plan appends to the VYR-004 review queue as pending_review."
+      - "TESTS: VyralX/tests/test_ig_vyr01_channel_operator.py — 8 tests, all pass locally under pytest (analytics honesty, gated/scored proposals, advice screen, plan-only schedule, draft-only comments, cycle + queue wiring)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #443, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; reaches production with the next VyralX deploy). Becomes live-useful when the owner re-auths YouTube OAuth (deferred owner action) — until then operator plans are review-queue proposals only."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
