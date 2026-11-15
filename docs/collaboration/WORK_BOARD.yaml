@@ -6915,6 +6915,157 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - Inference/docs/CORPUS_DISPOSITIONS.md
     next_action: "Merge on green CI → VERIFIED (record is the deliverable; token-compression candidate needs its own task + IG-INF-03 evidence if pursued)"
+  - id: TASK-IG-INT-01
+    title: "IntelX standing real-time financial-headline watch (FinancialJuice/DeltaOne/Unusual Whales pattern) as a pre-trade news feed for Stratex — IG corpus item DaFMj_es1SH"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-int-01"
+    pr: 465
+    defect: "IntelX had RSS news ingestion (news_ingester) but no standing real-time headline watch: no impact classification, no deduped pre-trade headline feed, and the real-time X wires traders actually watch (FinancialJuice, DeltaOne, Unusual Whales) were not represented at all."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6898207093 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-01 claim."
+      - "FinancialJuice public RSS verified live from the sandbox 2026-11-15 (HTTP 200, real-time items); FXStreet + Investing.com RSS likewise 200. X/Twitter accounts have no keyless feed — registered inactive with explicit unavailable_reason; source_report() surfaces the gap; nothing fabricates X content."
+      - "Tests: IntelX/tests/test_ig_headline_watch.py 12/12 passed locally (hermetic, injected fetch): RSS/Atom parsing, classifier tiers incl. word-boundary regression ('war' must not match 'award'), dedupe across sweeps, per-source error isolation, X-account non-fabrication."
+    blockers: []
+    next_action: "Coordinator: merge PR #465 on green CI -> Fleet CD -> production probe: run one poll sweep on Server 1 and confirm FinancialJuice headlines land in the watch buffer with impact tiers; then flip VERIFIED. Follow-up (separate task if wanted): wire HeadlineWatch.run() into the INT-007 standing-watch engine once INT-007 lands, and add an X API adapter if credentials are ever provisioned."
+  - id: TASK-IG-INT-02
+    title: "IntelX social-link reader (Agent Reach pattern): read public Instagram/YouTube/Reddit links as research sources, read-only — IG corpus item DerbBtfzj8p"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-int-02"
+    pr: 483
+    defect: "IntelX research could search and fetch ordinary web pages but had no reader for social links: YouTube videos, Reddit threads and Instagram posts pasted into a research question were opaque, and the Agent Reach pattern (read-only, no-login) was not implemented anywhere in the fleet."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6898212245 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-02 claim."
+      - "Repo card ~/workspace/ig-references/repos/agent-reach.md verified the upstream (MIT, Python 3.10+) with fit=adapt and the care note 'use no-login channels by default' — adopted as a binding constraint."
+      - "Tests: IntelX/tests/test_ig_social_links.py 10/10 passed locally (hermetic): verbatim YouTube description extraction, Reddit read + honest 403, Instagram OpenGraph + honest login-wall, generic web, read-only URL spy, scheme rejection."
+    blockers: []
+    next_action: "Coordinator: merge PR #483 on green CI -> Fleet CD -> production probe: read one public YouTube link and one Reddit link through the deployed IntelX and confirm verbatim documents return (a Reddit 403 from the server IP, if it occurs, is an acceptable honest outcome — record it, do not work around it with accounts); then flip VERIFIED. Follow-up (separate task if wanted): wire SocialLinkReader into collect_live_brief as a candidate source type."
+  - id: TASK-IG-INT-03
+    title: "IntelX live tracking data layer (God's-Eye pattern): flights/satellites/ships/events from public feeds, normalised snapshots with per-layer scope labels — IG corpus items Dcto0vKzJxJ, DccLLkoPCT1"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-int-03"
+    pr: 498
+    defect: "IntelX had no live world-tracking data layer: the God's-Eye-style corpus ideas (real-time flights, ships, satellites, events) had no normalised, honestly-scoped data service behind them — and naive implementations of this pattern routinely present regional AIS coverage as if it were global."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6898213412 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-03 claim."
+      - "All four feeds verified live from the build sandbox 2026-11-15: OpenSky states/all 200 with real state vectors over India; wheretheiss.at ISS position JSON; USGS 2.5_day GeoJSON 200; Digitraffic AIS 200 with the provider-documented Accept/gzip/Digitraffic-User headers."
+      - "Tests: IntelX/tests/test_ig_tracking.py 8/8 passed locally (hermetic): OpenSky parsing + honest 429, satellite unit normalisation + bbox filter, AIS parsing + regional scope label assertion, USGS parsing, snapshot failure isolation, kind filtering."
+    blockers: []
+    next_action: "Coordinator: merge PR #498 on green CI -> Fleet CD -> production probe on Server 1: one TrackingService snapshot (flights over India bbox + satellites + events) and confirm real counts per layer with the ships layer's Baltic scope note present in the payload; then flip VERIFIED. Follow-up (owner-gated): if the owner picks the gods-eye-map design candidate, wire it to this service; the service is UI-agnostic until then."
+  - id: TASK-IG-INT-04
+    title: "IntelX OSINT public-footprint lookups (username/phone/email) + footprint-audit report type with named blind spots — IG corpus items DaLZEXNjZQ5, DaLY8BGDYWp, DaIzCa0Dbgq, Dc-9-4kyO-o; DaiasjkJSVn scoped out with reason"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-int-04"
+    pr: 504
+    defect: "IntelX's named OSINT capabilities lived in the legacy layer that falls back to synthetic findings when upstreams fail (repo AGENTS.md caveat); there was no fail-closed, keyless public-footprint toolkit (username presence, email public profile, phone format) and no footprint-audit report type that states its own coverage limits."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6898214491 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-04 claim."
+      - "Keyless signals verified live 2026-11-15: Gravatar avatar ?d=404 returns 404 for an unknown email; GitHub profile URLs return 200/404 as documented."
+      - "Tests: IntelX/tests/test_ig_osint.py 12/12 passed locally (hermetic): three-state username verdicts incl. marker-in-200 and 403-is-unknown, Gravatar found/absent with verbatim fields, E.164 parsing incl. 00-prefix, audit composition asserting dark_web_search / breach_database_check / carrier_line_type_lookup are named unavailable in every report."
+    blockers: []
+    next_action: "Coordinator: merge PR #504 on green CI -> Fleet CD -> production probe: run one FootprintAudit for a throwaway username/email from Server 1 and confirm found/unknown verdicts return with the unavailable sections intact; then flip VERIFIED. Separate owner decision if ever wanted: a paid HIBP key would enable the breach section — do not enable by default."
+  - id: TASK-IG-INT-05
+    title: "IntelX named research/archive source utilities: working Archive.org connector, fail-closed WolframAlpha adapter, honest seed-site registry (OpenCulture/AlternativeTo/JustWatch) — IG corpus item DZ7MtMhjAZI"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-int-05"
+    pr: 510
+    defect: "The corpus roundup named five research/archive utilities (Internet Archive, WolframAlpha, OpenCulture, AlternativeTo, JustWatch) that IntelX could not use at all; two of the five have keyed/no APIs, so an uncritical implementation would have invented endpoints that do not exist."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6898215591 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-05 claim."
+      - "archive.org advancedsearch + metadata APIs verified live 2026-11-15 (real JSON payloads; metadata {} for unknown identifiers confirmed as the not-found signal)."
+      - "Tests: IntelX/tests/test_ig_named_sources.py 7/7 passed locally (hermetic): registry kinds honest (api_keyless / api_keyed / seed_site with 'No public API' notes), Archive.org parsing incl. not-found, Wolfram fail-closed + configured parsing."
+    blockers: []
+    next_action: "Coordinator: merge PR #510 on green CI -> Fleet CD -> production probe: one Archive.org search + one metadata fetch from Server 1; then flip VERIFIED. WolframAlpha stays disabled unless the owner supplies an AppID (paid key decision is his; do not enable by default)."
+  - id: TASK-IG-INT-06
+    title: "IntelX scouted open-source repo registry: all 32 verified corpus spec cards as a queryable in-repo registry with binding fit verdicts — IG corpus item Dc-zw_Vicxs"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-int-06"
+    pr: 518
+    defect: "The corpus repo pass produced 32 verified spec cards with binding fit verdicts, but they lived only in the coordinator's workspace (~/workspace/ig-references/repos/); the fleet itself had no registry an agent could query when deciding whether a scouted repo is adopt/adapt/reference/reject for its domain."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6898216643 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-06 claim."
+      - "Registry generated by script from the 32 cards + INDEX.md; card-by-card diff vs the index table showed zero fit mismatches and only parenthetical repo-name annotations in the index. Fit counts from the cards: adopt=2, adapt=15, reference-only=13, reject=2 — the roll-up summary's adapt/reference-only counts are transposed against its own cards (flagged in the completion comment)."
+      - "Tests: IntelX/tests/test_ig_scouted_repos.py 5/5 passed locally; PR #518 file list verified via the public GitHub API after push (exactly 3 added files)."
+    blockers: []
+    next_action: "Coordinator: merge PR #518 on green CI -> Fleet CD (data file deploys with the package) -> production probe: intelx.scouted_repos.summary() on Server 1 returns count 32; then flip VERIFIED. Also correct the ROLLUP.md / briefing fit counts to adapt=15, reference-only=13 per the cards."
+  - id: TASK-IG-INF-06
+    title: "Prompt-engineering discipline: versioned prompts, changelog, bench-before/after admission (INF-005 standard applied to the prompt layer)"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: 517
+    branch: claude/task-ig-inf-06
+    source: "IG corpus Dd1MCKhhp3Y"
+    files:
+      - Inference/docs/PROMPT_ENGINEERING_DISCIPLINE.md
+    next_action: "Merge on green CI → first prompt change under the discipline replaces a baseline changelog row with measured before/after → VERIFIED"
+  - id: TASK-IG-VYR-02
+    title: "VyralX content factory (IG corpus): one automated chain — research over the stocked catalogues -> long-form outline -> repurpose into shorts -> schedule plan — emitting pending_review runs only"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-02"
+    pr: 445
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898246555 by Muse (TASK-IG-VYR-02 crew) before any editing."
+      - "CODE: VyralX/app/services/content_factory.py (stdlib-only, factory ig-vyr02-1): research_stage keyword-matches topics against source_catalog / source_catalog_lane2 / source_catalog_lane3 with transparent overlap scoring and shelf_empty honesty; generate_stage builds the outline and blocks on compliance_gate.find_finance_advice hits; repurpose_stage slices one Short per beat keeping catalog_id provenance + publish_priority.title_strength; schedule_stage emits plan-only entries (publish=False, privacy unlisted); run_factory chains all four; enqueue_factory_run appends to the VYR-004 review queue as pending_review."
+      - "TESTS: VyralX/tests/test_ig_vyr02_content_factory.py — 6 tests, all pass locally under pytest (keyword research + provenance kept, empty-shelf honesty, stocked-catalogue default path, generate/repurpose chain, plan-only full run + queue wiring, unknown-lane rejection)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #445, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; next VyralX deploy). Follow-up: wire factory runs into the operator cycle (TASK-IG-VYR-01) once both are merged."
+  - id: TASK-IG-VYR-03
+    title: "VyralX viral-pattern analysis & format cloning (IG corpus — Hypit pattern): ffmpeg keyframe analysis, word-anchored structure-only format templates, deterministic hook scoring, pending_review clone plans"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-03"
+    pr: 450
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898282397 by Muse (TASK-IG-VYR-03 crew) before any editing."
+      - "CODE: VyralX/app/services/format_clone.py (stdlib + optional ffmpeg/ffprobe, clone ig-vyr03-1): extract_keyframes (scene-select with first-frame fallback; available=False + reason on any failure — no fabricated frames), probe_video, build_format_template (beats at >0.25s pauses, word-index anchored, carries_reference_words/media=False), score_hook (5 named heuristic components, basis states it is not a virality predictor), clone_format/make_variants (proportional word mapping, exact word accounting, status pending_review)."
+      - "TESTS: VyralX/tests/test_ig_vyr03_format_clone.py — 7 tests, all pass locally under pytest, including a real ffmpeg run over a synthetic two-scene video (keyframes extracted + probe facts) and honest-failure coverage for a missing file."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #450, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; next VyralX deploy). Follow-up: feed clone plans into the content factory (TASK-IG-VYR-02) once both are merged."
+  - id: TASK-IG-VYR-04
+    title: "VyralX faceless series automation (IG corpus): recurring-show planning layer — validated series specs, deduped episode briefs on a cadence, review-queued; renders and publishes nothing"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-vyr-04"
+    pr: 459
+    evidence:
+      - "Claim: GitHub issue #35 comment 6898319657 by Muse (TASK-IG-VYR-04 crew) before any editing."
+      - "CODE: VyralX/app/services/series_automation.py (stdlib-only, series ig-vyr04-1): validate_series (owner lanes; compliance_gate.EXCLUDED_LANES/EXCLUDED_TOKENS; find_finance_advice seed screen with exclusions reported), plan_episodes (deterministic title/hook/outline briefs; dedupe by exact title and topic-substring; skips + shortfall recorded), daily_queue (start + (k-1)*cadence_days), enqueue_briefs (VYR-004 review queue, pending_review)."
+      - "TESTS: VyralX/tests/test_ig_vyr04_series_automation.py — 8 tests, all pass locally under pytest (clean-spec acceptance, excluded/unapproved rejection, advice-seed screening, dedupe + recorded skips, no-silent-seed-repeat, cadence date arithmetic, queue wiring, invalid-spec error)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #459, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; next VyralX deploy). First real series (lane-2 Silk Road story, IG source DZP1ifcpIof) is seeded by TASK-IG-VYR-10's strategy data."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
