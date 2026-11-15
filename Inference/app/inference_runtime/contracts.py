@@ -35,6 +35,24 @@ class CompletionRequest:
     cacheable: bool = False
     stream: bool = False
     extra: Mapping[str, Any] = field(default_factory=dict)
+    # TASK-INF-006: context the answer depends on, beyond the messages
+    # themselves (memory snippets, account state, tool results). The safe
+    # response cache fingerprints it into the key for CONTEXTUAL and
+    # PERSONALISED requests, so an answer produced under one context is
+    # never served under another.
+    context: Mapping[str, Any] = field(default_factory=dict)
+    # Identifier of the principal the answer is bound to (user/session/
+    # conversation id). Its presence classifies the request PERSONALISED:
+    # such answers are not stored unless the cache policy explicitly
+    # enables principal-scoped storage.
+    principal_id: str | None = None
+    # Optional declared context class ("public" | "contextual" |
+    # "personalised"). Automatic classification can only raise it.
+    context_class: str | None = None
+    # Optional registered task template for template matching; slots are
+    # the template's variable values (see response_cache.TemplateSpec).
+    template_id: str | None = None
+    template_slots: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True)
