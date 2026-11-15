@@ -20,6 +20,7 @@ const VoiceCall = dynamic(() => import("../VoiceCall").then((m) => m.VoiceCall),
 const FleetSheet = dynamic(() => import("./FleetSheet").then((m) => m.FleetSheet), { ssr: false });
 const ChronicleSheet = dynamic(() => import("./ChronicleSheet").then((m) => m.ChronicleSheet), { ssr: false });
 const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet), { ssr: false });
+const EditorialSheet = dynamic(() => import("./EditorialSheet").then((m) => m.EditorialSheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -36,12 +37,13 @@ const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse";
+type SheetKind = "fleet" | "chronicle" | "pulse" | "editorial";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
   chronicle: { kicker: "Everything asked, everything done", title: "The Chronicle" },
   pulse: { kicker: "The box underneath it all", title: "Machine Pulse" },
+  editorial: { kicker: "The crew, presented properly", title: "The Editorial Edition" },
 };
 
 export function Stage() {
@@ -144,6 +146,13 @@ export function Stage() {
         run: () => openSheet("pulse"),
       },
       {
+        id: "editorial",
+        label: "Read the editorial edition",
+        hint: "the crew in print — masthead, specifications, spotlight, roster",
+        keys: "editorial newspaper magazine edition print roster spotlight specs noolam",
+        run: () => openSheet("editorial"),
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -238,6 +247,7 @@ export function Stage() {
           {sheet === "fleet" && <FleetSheet />}
           {sheet === "chronicle" && <ChronicleSheet />}
           {sheet === "pulse" && <PulseSheet />}
+          {sheet === "editorial" && <EditorialSheet />}
         </Sheet>
       )}
     </main>
