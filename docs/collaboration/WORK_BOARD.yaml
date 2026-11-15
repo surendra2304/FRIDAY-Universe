@@ -4744,6 +4744,42 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-FUT-003 crew): PR #259 merged and deployed, fingerprint-verified on Server 1, live acceptance passed end-to-end (see evidence). This also completes TASK-FUT-002's follow-up — its entry is flipped to VERIFIED in the same board PR. Residuals unchanged: extra /api/v1/futuris routers retire-or-label; real forecasts wait for ARM + statsforecast (owner decision, do not re-raise)."
 
+  - id: "TASK-FUT-006"
+    title: "Futuris forecast-vs-actual tracker: live scoring store - every resolved forecast scored (point error, interval hit, Winkler) with a rolling calibration report (empirical coverage vs nominal level)"
+    status: "IN_PROGRESS"
+    owner: "muse_ai"
+    branch: "claude/task-fut-006-futuris-forecast-tracker"
+    pr: 318
+    contributors: []
+    priority: "P2"
+    created_at: "2026-11-15T08:02:00Z"
+    updated_at: "2026-11-15T10:05:02Z"
+    files:
+      - "Futuris/futuris/services/forecast_tracker.py"
+      - "Futuris/futuris/storage/score_repository.py"
+      - "Futuris/futuris/storage/models.py (ForecastScoreModel appended)"
+      - "Futuris/futuris/infra/scheduler.py (forecast_scoring_job, 30 min)"
+      - "Futuris/alembic/versions/0005_forecast_scores.py"
+      - "Futuris/scripts/run_forecast_tracker.py"
+      - "Futuris/tests/test_fut006_forecast_tracker.py"
+    dependencies:
+      - "TASK-FUT-004 (shared scoring schema: nominal level 0.90, coverage_90 / coverage_gap_vs_nominal / winkler_90 keys, futuris.evaluation.metrics functions)"
+    acceptance:
+      - "Every forecast Futuris issues is in the issuance store (forecasts table, pre-existing) and every resolved forecast with a numeric actual gets exactly one forecast_scores row (issuance snapshot + signed/abs error + interval hit + width + Winkler); the scoring sweep is idempotent"
+      - "Rolling calibration report: MAE/RMSE, empirical coverage vs nominal level (coverage_90, coverage_gap_vs_nominal), mean interval width, Winkler; broken down per nominal level, per target and per evidence class; insufficient_data with null metrics below 30 scored forecasts"
+      - "Event-only outcomes are never scored as zero error and no actual is ever substituted anywhere in the path"
+    evidence:
+      - "Claim: issue #35 comment 6891421086. FUT-004 coordination (shared schema): issue #35 comment 6892057935."
+      - "Tests: Futuris/tests/test_fut006_forecast_tracker.py - 8 passed / 1 skipped in the crew sandbox (borrowed venv lacks apscheduler; the scheduler-wiring test importorskips locally and runs in CI). Neighbour ring: test_fut003_oracle_json_reads 4/4 passed against the modified models.py; py_compile clean on all touched files."
+      - "Synthetic pipeline proof (evidence_class=synthetic, in-memory store): 100 forecasts issued + resolved -> score_resolved scored 100; report status measured, coverage_90 0.80 (constructed ground truth 0.80), coverage_gap_vs_nominal -0.10, MAE 6.0, RMSE 13.416408, winkler_90 100.0, verdict overconfident - every figure matches hand computation."
+      - "LIVE STATE (honest): production Futuris currently resolves ~0 numeric forecasts (statsforecast post-ARM; the calibration sweep's resolved_count was 0 per TASK-FUT-003), so the live store starts empty and the production report will read insufficient_data until real forecasts resolve. The first scoring pass backfills all historically resolved forecasts."
+      - "Defect caught by the new tests pre-merge: event-only outcomes would have been re-considered and re-skipped on every sweep forever; fixed by keeping them out of the work queue and reporting their count separately (event_only_resolved)."
+    risk_flags:
+      - "New table forecast_scores: created on Oracle by ensure_schema create_all at service startup (the repo bootstrap path); alembic 0005 is the managed-migration equivalent - model and migration must stay in step."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #318, then Fleet CD deploy. Production verification after deploy: Futuris journal shows forecast_scoring_job_completed; run scripts/run_forecast_tracker.py on Server 1 - expect status insufficient_data with the true scored count (0 until real forecasts resolve post-ARM); flip this entry to VERIFIED with that output."
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891421086"
+    last_update_comment_url: null
   - id: TASK-STR-RD-003
     title: "Stratex strategy-discovery continuation (RD-003): RD-002 deferred cells for surviving modules + new pre-declared families, judged at the running global trial count"
     status: IN_PROGRESS
