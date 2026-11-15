@@ -82,7 +82,12 @@ from friday.tools.builtin import (
     KillProcessTool,
     LaptopClickTool,
     LaptopDictateTool,
+    LaptopHotkeyTool,
     LaptopListDevicesTool,
+    LaptopPcCleanupTool,
+    LaptopPcHealthTool,
+    LaptopStorageCheckTool,
+    LaptopStorageRepairTool,
     LaptopOpenAppTool,
     LaptopOpenUrlTool,
     LaptopRunCommandTool,
@@ -223,6 +228,11 @@ class ToolExecutionMixin:
             registry.register(LaptopScreenshotTool())
             registry.register(LaptopTypeTextTool())
             registry.register(LaptopDictateTool())
+            registry.register(LaptopPcHealthTool())
+            registry.register(LaptopPcCleanupTool())
+            registry.register(LaptopHotkeyTool())
+            registry.register(LaptopStorageCheckTool())
+            registry.register(LaptopStorageRepairTool())
             registry.register(LaptopClickTool())
             registry.register(LaptopRunCommandTool())
             registry.register(SystemControlTool())

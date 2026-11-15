@@ -39,7 +39,9 @@ laptop and returns its path), ``screenshot_data`` * (returns the image itself
 as a base64 JPEG attachment so FRIDAY can actually see the screen),
 ``open_url``, ``open_app`` * (launch an application by name), ``type_text`` *
 and ``click`` * (keyboard/mouse via pyautogui, or xdotool on Linux),
-``list_files``, ``read_file``, ``run_shell``, ``system_info``, ``notify``.
+``list_files``, ``read_file``, ``run_shell``, ``system_info``, ``notify``,
+plus the TASK-IG-LAP-03 PC care pack: ``pc_health``, ``pc_cleanup``,
+``hotkey``, ``storage_check``, ``storage_repair``.
 
 Optional laptop-side dependencies: Pillow (screenshots), pyautogui
 (type/click; xdotool is the Linux fallback), plyer or win10toast (notify),
@@ -110,6 +112,11 @@ ALLOWED_COMMANDS = frozenset(
         SHELL_COMMAND,
         "system_info",
         "notify",
+        "pc_health",
+        "pc_cleanup",
+        "hotkey",
+        "storage_check",
+        "storage_repair",
     }
 )
 _TRUNCATION_MARKER = "\n[truncated]"
@@ -538,6 +545,505 @@ def _cmd_notify(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | 
     return True, "Notification written to the laptop bridge log (no desktop notifier installed).", None
 
 
+def _run_capture(argv: list[str], timeout: float) -> tuple[int | None, str, str]:
+    """Run a local utility, capturing output. rc is None when the tool
+    could not run at all (missing binary, deadline) — callers must treat
+    that as 'check did not run', never as 'check passed'."""
+    try:
+        completed = subprocess.run(
+            argv,
+            capture_output=True,
+            timeout=max(1.0, timeout),
+            check=False,
+            stdin=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        return None, "", f"{argv[0]} is not installed on this laptop"
+    except subprocess.TimeoutExpired:
+        return None, "", f"{argv[0]} exceeded its {timeout:g}s deadline"
+    except Exception as exc:
+        return None, "", f"{argv[0]} failed to start: {type(exc).__name__}: {exc}"
+    return (
+        completed.returncode,
+        completed.stdout.decode("utf-8", errors="replace"),
+        completed.stderr.decode("utf-8", errors="replace"),
+    )
+
+
+def _psutil_module() -> Any | None:
+    try:
+        import psutil
+
+        return psutil
+    except ImportError:
+        return None
+
+
+def _volume_inventory() -> list[dict[str, str]]:
+    """Mounted volumes as {device, mount, fstype}; stdlib fallback = the
+    home drive only (enough for a health report, labelled as such)."""
+    psutil = _psutil_module()
+    volumes: list[dict[str, str]] = []
+    if psutil is not None:
+        try:
+            for part in psutil.disk_partitions(all=False):
+                volumes.append(
+                    {"device": part.device, "mount": part.mountpoint, "fstype": part.fstype}
+                )
+        except Exception:
+            volumes = []
+    if not volumes:
+        anchor = Path.home().anchor or "/"
+        volumes.append({"device": anchor, "mount": anchor, "fstype": ""})
+    return volumes
+
+
+def _dir_size_bytes(root: Path, entry_cap: int = 100_000) -> tuple[int, int]:
+    """(total bytes, file count) under root, bounded and error-tolerant."""
+    total = 0
+    count = 0
+    scanned = 0
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for name in filenames:
+            scanned += 1
+            if scanned > entry_cap:
+                return total, count
+            try:
+                target = Path(dirpath) / name
+                if not target.is_symlink():
+                    total += target.stat().st_size
+                    count += 1
+            except OSError:
+                continue
+    return total, count
+
+
+def _pc_health_payload() -> dict[str, Any]:
+    """Read-only PC health report (TASK-IG-LAP-03). Every section is
+    best-effort: a section that cannot be measured says so in 'notes'
+    instead of inventing a number."""
+    import shutil
+
+    payload: dict[str, Any] = {
+        "hostname": socket.gethostname(),
+        "system": platform.system(),
+        "release": platform.release(),
+        "machine": platform.machine(),
+    }
+    notes: list[str] = []
+    checklist: list[str] = []
+    psutil = _psutil_module()
+    if psutil is None:
+        notes.append(
+            "psutil is not installed on this laptop; CPU, process and battery "
+            "detail is limited. 'pip install psutil' enables the full report."
+        )
+        payload["cpu_count"] = os.cpu_count()
+    else:
+        try:
+            payload["cpu_count"] = psutil.cpu_count()
+            payload["cpu_percent"] = psutil.cpu_percent(interval=0.1)
+            memory = psutil.virtual_memory()
+            payload["memory"] = {
+                "total_gb": round(memory.total / 1e9, 2),
+                "used_percent": round(memory.percent, 1),
+            }
+            if memory.percent >= 85:
+                checklist.append(
+                    f"Memory pressure is high ({memory.percent:.0f}% used) — the top "
+                    "processes in this report are the place to look."
+                )
+            payload["uptime_seconds"] = int(time.time() - psutil.boot_time())
+            battery = psutil.sensors_battery()
+            if battery is not None:
+                payload["battery"] = {
+                    "percent": round(battery.percent, 1),
+                    "charging": bool(battery.power_plugged),
+                }
+                if battery.percent <= 20 and not battery.power_plugged:
+                    checklist.append(f"Battery is low ({battery.percent:.0f}%).")
+            processes = []
+            for proc in psutil.process_iter(["pid", "name", "memory_percent"]):
+                try:
+                    info = proc.info
+                    processes.append(
+                        {
+                            "pid": info.get("pid"),
+                            "name": info.get("name"),
+                            "memory_percent": round(info.get("memory_percent") or 0.0, 1),
+                        }
+                    )
+                except Exception:
+                    continue
+            processes.sort(key=lambda item: item["memory_percent"], reverse=True)
+            payload["top_processes"] = processes[:5]
+        except Exception as exc:
+            notes.append(f"psutil detail failed: {type(exc).__name__}")
+
+    disks: list[dict[str, Any]] = []
+    for volume in _volume_inventory():
+        mount = volume["mount"]
+        try:
+            usage = shutil.disk_usage(mount)
+        except OSError:
+            continue
+        percent = round(100.0 * usage.used / usage.total, 1) if usage.total else 0.0
+        disks.append(
+            {
+                "mount": mount,
+                "device": volume["device"],
+                "total_gb": round(usage.total / 1e9, 2),
+                "free_gb": round(usage.free / 1e9, 2),
+                "used_percent": percent,
+            }
+        )
+        if percent >= 90:
+            checklist.append(
+                f"Disk {mount} is {percent:.0f}% full — cleanup or archiving recommended."
+            )
+        elif usage.free < 10 * 1024**3:
+            checklist.append(f"Disk {mount} has under 10 GB free.")
+    payload["disks"] = disks
+
+    if platform.system() == "Windows":
+        rc, out, _err = _run_capture(["powercfg", "/getactivescheme"], 10.0)
+        if rc == 0 and out.strip():
+            payload["power_plan"] = out.strip().splitlines()[0].strip()
+
+    temp_root = Path(tempfile.gettempdir())
+    temp_bytes, temp_files = _dir_size_bytes(temp_root)
+    payload["temp_dir"] = {
+        "path": str(temp_root),
+        "files": temp_files,
+        "size_mb": round(temp_bytes / 1e6, 1),
+    }
+    if temp_bytes >= 500 * 1024**2:
+        checklist.append(
+            f"Temporary files occupy about {temp_bytes / 1e9:.1f} GB — pc_cleanup "
+            "can reclaim files older than 24 hours."
+        )
+    if not checklist:
+        checklist.append("No issues flagged by the measured checks.")
+    payload["checklist"] = checklist
+    payload["notes"] = notes
+    return payload
+
+
+def _cmd_pc_health(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    try:
+        payload = _pc_health_payload()
+    except Exception as exc:
+        return False, "", f"pc_health failed: {type(exc).__name__}: {exc}"
+    return True, json.dumps(payload), None
+
+
+def _cleanup_targets() -> list[Path]:
+    """The ONLY directories pc_cleanup may touch: temp locations."""
+    targets = [Path(tempfile.gettempdir())]
+    if platform.system() == "Windows":
+        windir = os.getenv("SystemRoot") or r"C:\Windows"
+        targets.append(Path(windir) / "Temp")
+    return targets
+
+
+def _enumerate_cleanup(
+    targets: list[Path], min_age_hours: int, entry_cap: int = 100_000
+) -> list[dict[str, Any]]:
+    cutoff = time.time() - min_age_hours * 3600
+    candidates: list[dict[str, Any]] = []
+    scanned = 0
+    for root in targets:
+        if not root.exists():
+            continue
+        for dirpath, _dirnames, filenames in os.walk(root):
+            for name in filenames:
+                scanned += 1
+                if scanned > entry_cap:
+                    return candidates
+                target = Path(dirpath) / name
+                try:
+                    if target.is_symlink():
+                        continue
+                    stat = target.stat()
+                except OSError:
+                    continue
+                if stat.st_mtime <= cutoff:
+                    candidates.append({"path": str(target), "size": stat.st_size})
+    return candidates
+
+
+def _cmd_pc_cleanup(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    """One-command temp cleanup (TASK-IG-LAP-03). Default is enumerate
+    only — nothing is deleted unless apply=true arrives in the call."""
+    apply = args.get("apply") is True
+    min_age_hours = _clamp_int(args.get("min_age_hours"), default=24, low=0, high=8760)
+    targets = _cleanup_targets()
+    candidates = _enumerate_cleanup(targets, min_age_hours)
+    total_bytes = sum(item["size"] for item in candidates)
+    payload: dict[str, Any] = {
+        "targets": [str(target) for target in targets],
+        "min_age_hours": min_age_hours,
+        "candidate_count": len(candidates),
+        "candidate_bytes": total_bytes,
+    }
+    if not apply:
+        payload["mode"] = "enumerate"
+        payload["sample"] = candidates[:50]
+        payload["note"] = (
+            "Nothing was deleted. Re-run with apply=true to delete exactly "
+            "these enumerated files."
+        )
+        return True, json.dumps(payload), None
+    deleted = 0
+    freed = 0
+    failures: list[str] = []
+    for item in candidates:
+        try:
+            os.remove(item["path"])
+            deleted += 1
+            freed += item["size"]
+        except OSError as exc:
+            if len(failures) < 20:
+                failures.append(f"{item['path']}: {exc.strerror or exc}")
+    payload.update(
+        {
+            "mode": "apply",
+            "deleted": deleted,
+            "freed_bytes": freed,
+            "failed": len(candidates) - deleted,
+            "failures_sample": failures,
+        }
+    )
+    return True, json.dumps(payload), None
+
+
+# Hotkey key names (TASK-IG-LAP-03). Canonical names are validated here
+# AND in the server-side tool; "mod" is resolved on the laptop (ctrl on
+# Windows/Linux, command on macOS) because only the laptop knows its OS.
+_HOTKEY_KEYS = frozenset(
+    set("abcdefghijklmnopqrstuvwxyz0123456789")
+    | {f"f{i}" for i in range(1, 13)}
+    | {
+        "ctrl", "alt", "shift", "win", "command", "mod",
+        "enter", "esc", "tab", "space", "backspace", "delete", "insert",
+        "home", "end", "pageup", "pagedown", "up", "down", "left", "right",
+        "-", "=", "[", "]", ";", "'", ",", ".", "/", "\\", "`",
+    }
+)
+_KEY_ALIASES = {
+    "control": "ctrl",
+    "escape": "esc",
+    "cmd": "command",
+    "meta": "command",
+    "windows": "win",
+    "return": "enter",
+    "pgup": "pageup",
+    "pgdn": "pagedown",
+    "del": "delete",
+}
+_XDOTOOL_KEYMAP = {
+    "win": "super",
+    "command": "super",
+    "esc": "Escape",
+    "enter": "Return",
+    "backspace": "BackSpace",
+    "delete": "Delete",
+    "pageup": "Prior",
+    "pagedown": "Next",
+    "home": "Home",
+    "end": "End",
+    "up": "Up",
+    "down": "Down",
+    "left": "Left",
+    "right": "Right",
+    "tab": "Tab",
+    "insert": "Insert",
+    "-": "minus",
+    "=": "equal",
+    "[": "bracketleft",
+    "]": "bracketright",
+    ";": "semicolon",
+    "'": "apostrophe",
+    ",": "comma",
+    ".": "period",
+    "/": "slash",
+    "\\": "backslash",
+    "`": "grave",
+}
+_PYAUTOGUI_KEYMAP = {"win": "winleft"}
+
+
+def _normalise_key(raw: str) -> str | None:
+    name = str(raw or "").strip().lower()
+    name = _KEY_ALIASES.get(name, name)
+    return name if name in _HOTKEY_KEYS else None
+
+
+def _cmd_hotkey(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    raw_keys = args.get("keys")
+    if not isinstance(raw_keys, list) or not raw_keys or len(raw_keys) > 6:
+        return False, "", "hotkey requires a 'keys' list of 1-6 key names"
+    keys: list[str] = []
+    for raw in raw_keys:
+        name = _normalise_key(str(raw))
+        if name is None:
+            return False, "", f"key '{raw}' is not in the hotkey allowlist"
+        if name == "mod":
+            name = "command" if platform.system() == "Darwin" else "ctrl"
+        keys.append(name)
+    pyautogui, xdotool = _input_backend()
+    try:
+        if pyautogui is not None:
+            pyautogui.hotkey(*[_PYAUTOGUI_KEYMAP.get(key, key) for key in keys])
+            return True, f"Pressed {'+'.join(keys)} via pyautogui.", None
+        if xdotool:
+            combo = "+".join(_XDOTOOL_KEYMAP.get(key, key) for key in keys)
+            completed = subprocess.run(
+                [xdotool, "key", combo],
+                capture_output=True,
+                timeout=max(1.0, timeout),
+                check=False,
+            )
+            if completed.returncode == 0:
+                return True, f"Pressed {combo} via xdotool.", None
+            detail = completed.stderr.decode("utf-8", errors="replace").strip()
+            return False, "", f"xdotool key failed: {detail or 'unknown error'}"
+    except Exception as exc:
+        return False, "", f"hotkey failed: {type(exc).__name__}: {exc}"
+    return False, "", _NO_INPUT_BACKEND
+
+
+def _normalise_volume(value: Any) -> str:
+    text = str(value or "").strip().rstrip("/\\")
+    if re.fullmatch(r"[A-Za-z]:", text or ""):
+        return text.upper()
+    return text
+
+
+def _system_volume() -> str:
+    if platform.system() == "Windows":
+        return _normalise_volume(os.getenv("SystemDrive") or "C:")
+    return "/"
+
+
+def _match_volume(volume: str) -> dict[str, str] | None:
+    target = _normalise_volume(volume)
+    for entry in _volume_inventory():
+        if target in {_normalise_volume(entry["device"]), _normalise_volume(entry["mount"])}:
+            return entry
+    return None
+
+
+def _cmd_storage_check(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    """Read-only volume check (TASK-IG-LAP-03): chkdsk with no repair
+    flags / diskutil verifyVolume / fsck -n — and on Linux a MOUNTED
+    volume is honestly skipped, because fsck must not run on one."""
+    system = platform.system()
+    wanted = str(args.get("volume") or "").strip()
+    if wanted:
+        match = _match_volume(wanted)
+        targets = [
+            {
+                "volume": wanted,
+                "device": (match or {}).get("device", wanted),
+                "mount": (match or {}).get("mount", ""),
+                "mounted": match is not None,
+            }
+        ]
+    else:
+        targets = [
+            {"volume": entry["mount"], "device": entry["device"],
+             "mount": entry["mount"], "mounted": True}
+            for entry in _volume_inventory()
+        ]
+    results: list[dict[str, Any]] = []
+    for target in targets:
+        entry: dict[str, Any] = dict(target)
+        if system == "Windows":
+            drive = _normalise_volume(target["device"] or target["volume"])
+            rc, out, err = _run_capture(["chkdsk", drive], timeout)
+            if rc is None:
+                entry.update(status="not_run", detail=err)
+            else:
+                entry.update(
+                    status="ok" if "found no problems" in out.lower() or rc == 0 else "issues_reported",
+                    detail=(out + err)[-1500:],
+                )
+        elif system == "Darwin":
+            subject = target["mount"] or target["device"]
+            rc, out, err = _run_capture(["diskutil", "verifyVolume", subject], timeout)
+            if rc is None:
+                entry.update(status="not_run", detail=err)
+            else:
+                entry.update(status="ok" if rc == 0 else "issues_reported",
+                             detail=(out + err)[-1500:])
+        else:  # Linux and friends
+            if target["mounted"]:
+                entry.update(
+                    status="skipped",
+                    detail=(
+                        f"Volume is mounted at {target['mount']}; a filesystem check "
+                        "needs it unmounted. Unmount/eject it, then re-run."
+                    ),
+                )
+            else:
+                rc, out, err = _run_capture(["fsck", "-n", target["device"]], timeout)
+                if rc is None:
+                    entry.update(status="not_run", detail=err)
+                else:
+                    entry.update(status="ok" if rc == 0 else "issues_reported",
+                                 detail=(out + err)[-1500:])
+        results.append(entry)
+    return True, json.dumps({"volumes": results}), None
+
+
+def _cmd_storage_repair(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    """Repair a volume (TASK-IG-LAP-03). Hard refusals, in order: no
+    explicit volume, no confirm=true, the system volume, and (outside
+    Windows, where chkdsk /f manages its own lock) a mounted volume."""
+    volume = str(args.get("volume") or "").strip()
+    if not volume:
+        return False, "", "storage_repair requires an explicit 'volume' argument"
+    if args.get("confirm") is not True:
+        return (
+            False,
+            "",
+            "storage_repair can modify a filesystem: pass confirm=true in the "
+            "same call to proceed",
+        )
+    if _normalise_volume(volume) == _normalise_volume(_system_volume()):
+        return False, "", f"refusing to repair the system volume ({volume})"
+    match = _match_volume(volume)
+    system = platform.system()
+    if match is not None and system != "Windows":
+        return (
+            False,
+            "",
+            f"volume {volume} is mounted at {match['mount']}; unmount/eject it "
+            "before repair (repairing a mounted filesystem can corrupt it)",
+        )
+    device = (match or {}).get("device", volume)
+    if system == "Windows":
+        argv = ["chkdsk", _normalise_volume(device), "/f"]
+    elif system == "Darwin":
+        argv = ["diskutil", "repairVolume", volume]
+    else:
+        argv = ["fsck", "-y", device]
+    rc, out, err = _run_capture(argv, timeout)
+    if rc is None:
+        return False, "", err
+    tail = (out + err)[-2000:]
+    if rc != 0:
+        return (
+            False,
+            tail,
+            f"repair command exited {rc}; administrator/root rights are "
+            "commonly required for filesystem repair",
+        )
+    return True, json.dumps({"volume": volume, "command": " ".join(argv),
+                             "output_tail": tail}), None
+
+
 _COMMANDS = {
     "screenshot": _cmd_screenshot,
     "screenshot_data": _cmd_screenshot_data,
@@ -550,6 +1056,11 @@ _COMMANDS = {
     SHELL_COMMAND: _cmd_run_shell,
     "system_info": _cmd_system_info,
     "notify": _cmd_notify,
+    "pc_health": _cmd_pc_health,
+    "pc_cleanup": _cmd_pc_cleanup,
+    "hotkey": _cmd_hotkey,
+    "storage_check": _cmd_storage_check,
+    "storage_repair": _cmd_storage_repair,
 }
 
 
