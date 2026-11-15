@@ -74,8 +74,8 @@ from friday.tools.builtin import (
     HealthCheckTool,
     KillProcessTool,
     LaptopClickTool,
-    LaptopDictateTool,
     LaptopListDevicesTool,
+    LaptopLockTool,
     LaptopOpenAppTool,
     LaptopOpenUrlTool,
     LaptopRunCommandTool,
@@ -204,9 +204,10 @@ class ToolExecutionMixin:
             registry.register(LaptopOpenUrlTool())
             registry.register(LaptopScreenshotTool())
             registry.register(LaptopTypeTextTool())
-            registry.register(LaptopDictateTool())
             registry.register(LaptopClickTool())
             registry.register(LaptopRunCommandTool())
+            # TASK-IG-FRD-010: lock the laptop screen (no unlock, by design).
+            registry.register(LaptopLockTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
             registry.register(WriteCodeFileTool())
@@ -285,10 +286,6 @@ class ToolExecutionMixin:
                     PhoneTapTool,
                     PhoneTypeTextTool,
                 )
-                from friday.tools.builtin.phone_ui_control import (
-                    PhoneUiDumpTool,
-                    PhoneUiTaskTool,
-                )
                 registry.register(PhoneStatusTool())
                 registry.register(PhoneOpenAppTool())
                 registry.register(PhoneCloseAppTool())
@@ -306,9 +303,6 @@ class ToolExecutionMixin:
                 registry.register(PhoneTypeTextTool())
                 registry.register(PhonePressKeyTool())
                 registry.register(PhoneScreenshotTool())
-                # TASK-IG-LAP-01: natural-language UI automation surfaces.
-                registry.register(PhoneUiDumpTool())
-                registry.register(PhoneUiTaskTool())
             except ImportError:
                 pass
             # The skill layer (24 registered skills) had no caller in the running

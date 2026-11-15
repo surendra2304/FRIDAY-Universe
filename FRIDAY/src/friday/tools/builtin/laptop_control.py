@@ -319,6 +319,43 @@ class LaptopScreenshotTool(_LaptopTool):
         )
 
 
+class LaptopLockTool(_LaptopTool):
+    """Lock the owner's connected laptop screen (TASK-IG-FRD-010).
+
+    The safe half of the voice-assistant desktop pattern: FRIDAY can
+    lock the laptop on request ("lock my laptop"). There is no unlock
+    tool and no unlock bridge command — unlocking means handling the
+    owner's OS credentials at the secure-desktop boundary, which an
+    agent must never store or type. That refusal is by design.
+    """
+
+    name = "laptop_lock_screen"
+    description = (
+        "Lock the screen of the owner's connected laptop through the "
+        "laptop bridge. Use when the user asks to lock their computer. "
+        "FRIDAY cannot unlock a laptop — that stays with the owner at "
+        "the machine, by design."
+    )
+    safety_level = SafetyLevel.SENSITIVE
+    risk_level = "SENSITIVE"
+    command = "lock_screen"
+    parameters = {
+        "type": "object",
+        "properties": {
+            "laptop_id": {"type": "string", "description": "Optional laptop id when more than one is connected."},
+        },
+        "required": [],
+    }
+
+    def execute(self, laptop_id: str = "", **kwargs: Any) -> ToolResult:
+        evidence, error = self._dispatch({}, laptop_id or None)
+        if error is not None:
+            return error
+        return self._evidence_result(
+            evidence, f"Locked the screen of laptop '{evidence.get('laptop_id')}'."
+        )
+
+
 class LaptopTypeTextTool(_LaptopTool):
     """Type text on the owner's connected laptop."""
 
