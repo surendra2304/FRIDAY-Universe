@@ -118,6 +118,7 @@ from friday.tools.builtin.laptop_pc_care import (
 from friday.tools.builtin.laptop_browser_control import LaptopBrowserTaskTool
 from friday.tools.builtin.laptop_screen_vision import LaptopDescribeScreenTool
 from friday.tools.builtin.launch_application import LaunchApplicationTool
+from friday.tools.builtin.life_calendar import LifeCalendarTool
 from friday.tools.builtin.location_maps import LocationMapsTool
 from friday.tools.builtin.media_control import MediaControlTool
 from friday.tools.builtin.memory_search import MemorySearchTool
@@ -234,6 +235,7 @@ __all__ = [
     "HealthCheckTool",
     "WorkflowTemplateListTool",
     "WorkflowTemplateRunTool",
+    "LifeCalendarTool",
     "KillProcessTool",
     "LaunchApplicationTool",
     "LaptopClickTool",
