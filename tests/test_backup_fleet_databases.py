@@ -197,3 +197,48 @@ class TestManifestSecurity:
         redacted = target.redacted()
         assert "SuperSecret" not in redacted
         assert "MEMORA" in redacted
+
+
+class TestAgentStateSnapshot:
+    """TASK-SEN-007: Stratex measurement state joins the config snapshot."""
+
+    def _make_state(self, root: Path) -> Path:
+        state = root / "Stratex" / "state"
+        state.mkdir(parents=True)
+        (state / "fill_ledger.jsonl").write_text('{"pnl": 1}\n')
+        (state / "equity_snapshots.jsonl").write_text('{"equity": 10000}\n')
+        (state / "account_balance.json").write_text('{"balance": 10000}\n')
+        (state / "fill_ledger.jsonl.lock").write_text("")
+        (state / "notes.txt").write_text("not state data")
+        return state
+
+    def test_copies_jsonl_and_json_skips_locks_and_others(self, tmp_path):
+        repo_root = tmp_path / "repo"
+        self._make_state(repo_root)
+        dest = tmp_path / "backup"
+        copied = backup_mod.snapshot_agent_state(dest, repo_root, log=lambda *a: None)
+        names = sorted(Path(c).name for c in copied)
+        assert names == ["account_balance.json", "equity_snapshots.jsonl",
+                         "fill_ledger.jsonl"]
+        target = dest / "configs" / "agent-state" / "Stratex" / "state" / "fill_ledger.jsonl"
+        assert target.read_text() == '{"pnl": 1}\n'
+        assert (target.stat().st_mode & 0o777) == 0o600
+
+    def test_missing_state_dir_is_quiet(self, tmp_path):
+        copied = backup_mod.snapshot_agent_state(
+            tmp_path / "backup", tmp_path / "empty-repo", log=lambda *a: None)
+        assert copied == []
+
+    def test_snapshot_configs_includes_state_files(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(backup_mod, "CONFIG_ENV_FILES", ())
+        monkeypatch.setattr(backup_mod, "CONFIG_UNIT_GLOBS", ())
+        repo_root = tmp_path / "repo"
+        self._make_state(repo_root)
+        dest = tmp_path / "backup"
+        copied = backup_mod.snapshot_configs(dest, log=lambda *a: None,
+                                             repo_root=repo_root)
+        assert any(c.endswith("fill_ledger.jsonl") for c in copied)
+        # verify pass treats manifest config entries as must-exist files
+        ok, failed = backup_mod.verify_backup(
+            dest, {"agents": [], "configs": copied}, log=lambda *a: None)
+        assert failed == 0 and ok == len(copied)
