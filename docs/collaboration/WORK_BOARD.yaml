@@ -5012,6 +5012,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     created: 2026-11-15
     updated_at: 2026-11-15
     branch: "claude/task-sen-005-secrets-hygiene"
+    pr: 348
     evidence:
       - "CLAIM: GitHub issue #35 comment 6891593876 (2026-11-15) by the original SEN-005 crew; that crew died on a database transport failure and a finisher crew completed the task from its preserved scan state plus a fresh re-scan at main b34e2d34."
       - "REPO (main b34e2d34, 5,915 tracked files, 9 pattern classes): ZERO confirmed real secrets in the tree or in the 1,121-commit history window (2026-10-24 to 2026-11-15). All strong-pattern hits triaged structurally, values never read out: test fixtures, scanner-tooling pattern data, dummy-marked placeholders, prose mentions, and 32 branch-name false positives (sk- inside claude/task-* names) in the collaboration docs."
