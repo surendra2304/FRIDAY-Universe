@@ -370,3 +370,18 @@ async def test_canned_recovery_with_invalid_schema_is_not_retried_or_certified()
     with pytest.raises(ProviderError, match='requested schema'):
         await provider.complete([{'role': 'user', 'content': 'Public fixture question'}], model='fixture', role='analyst', schema_model=DummySchema)
     assert ask.call_count == 1
+
+
+def test_default_inference_timeout_is_60_seconds():
+    """TASK-REL-047: the default Inference call timeout is 60 s, aligned with
+    the gateway's own ~60 s request budget (TASK-INF-004 measured gateway
+    p99 at 48.4 s; the previous 45 s default abandoned calls the gateway
+    would still have answered)."""
+    import inspect
+
+    default = inspect.signature(AIUniverseProvider.__init__).parameters[
+        "timeout_seconds"
+    ].default
+    assert default == 60.0
+    provider = AIUniverseProvider(base_url="https://inference.example.test")
+    assert provider.timeout_seconds == 60.0
