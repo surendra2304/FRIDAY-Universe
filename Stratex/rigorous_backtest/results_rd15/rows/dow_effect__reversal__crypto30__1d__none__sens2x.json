@@ -1,0 +1,27 @@
+{
+  "family": "dow_effect",
+  "variant": "reversal",
+  "panel": "crypto30",
+  "timeframe": "1d",
+  "gate": "none_anchor",
+  "sensitivity": "2x_costs",
+  "status": "EVALUATED",
+  "signals": {
+    "signals_total": 6208,
+    "signals_dropped": 0,
+    "signals_unknown_state": 0
+  },
+  "pooled_oos": {
+    "trades": 3660,
+    "wins": 1879,
+    "win_rate": 0.5133879781420765,
+    "expectancy_net": 0.007173050387707745,
+    "profit_factor_net": 1.205788975250453,
+    "avg_win_net": 0.08186672006767788,
+    "avg_loss_net": -0.0716306583875106,
+    "total_return_net": 457.93805814074364,
+    "max_drawdown_net": -0.9999999295497396
+  },
+  "seconds": 2.77,
+  "note": "Ungated 2x-cost comparator for the gate_vol sensitivity (not a trial)."
+}

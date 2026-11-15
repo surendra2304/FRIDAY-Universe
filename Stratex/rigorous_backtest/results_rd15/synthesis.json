@@ -1,0 +1,653 @@
+{
+  "task": "TASK-STR-RD-015",
+  "question": "Can a causal market-regime detector improve the two live forward entrants by standing them down (suppressing entries) in hostile regimes, judged walk-forward / out-of-sample only, net of costs?",
+  "declaration": "results_rd15/declaration.json",
+  "declaration_sha256": "c22148e9b896f689da649453dc395051d0957f9dcb74758985afe6bd453c9d0c",
+  "trials": {
+    "cells": "4 gates x 2 entrants; one cell = one trial in the global counter, whatever its outcome",
+    "count": 8,
+    "global_counter_floor_after": 1825,
+    "global_counter_floor_before": 1817,
+    "not_trials": "the 2 ungated baseline reproductions (anchors) and any 2x-cost sensitivity re-runs"
+  },
+  "anchors": {
+    "dow_effect__reversal": {
+      "trades_match": true,
+      "expectancy_abs_err": 0.0,
+      "pf_abs_err": 0.0,
+      "pass": true
+    },
+    "ichimoku_trend__tk_cloud": {
+      "trades_match": true,
+      "expectancy_abs_err": 0.0,
+      "pf_abs_err": 0.0,
+      "pass": true
+    }
+  },
+  "verdicts": {
+    "ichimoku_trend/tk_cloud crypto30 4h": "NO gate improves the entrant \u2014 all 4 gates lower expectancy and PF. Gating is counterproductive for this trend-follower.",
+    "dow_effect/reversal crypto30 1d": "ONE gate passes the pre-declared improvement rule: gate_vol (stand down when ATR%(14) is in its trailing-252 top tercile). Expectancy +0.8777% -> +0.9437%/trade, PF 1.257 -> 1.289, 2,560/3,660 trades retained; improvement survives 2x costs (gated +0.7836%/PF 1.235 vs ungated +0.7173%/PF 1.206). CANDIDATE for owner decision + forward-demo validation only; the live entrant is unchanged."
+  },
+  "rows": [
+    {
+      "family": "dow_effect",
+      "variant": "reversal",
+      "panel": "crypto30",
+      "timeframe": "1d",
+      "gate": "gate_both",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 6208,
+        "signals_dropped": 3424,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 1608,
+        "wins": 877,
+        "win_rate": 0.5453980099502488,
+        "expectancy_net": 0.008888206040916826,
+        "profit_factor_net": 1.2624090407675554,
+        "avg_win_net": 0.0784010478242962,
+        "avg_loss_net": -0.07450818553777497,
+        "total_return_net": 394.01628215152107,
+        "max_drawdown_net": -0.9987313078932069
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 389,
+          "expectancy_net": 0.010147989961499057,
+          "profit_factor_net": 1.2725275372153522
+        },
+        "W2": {
+          "trades": 246,
+          "expectancy_net": 0.014670366101312365,
+          "profit_factor_net": 1.4807767269044199
+        },
+        "W3": {
+          "trades": 335,
+          "expectancy_net": 0.01214033407529286,
+          "profit_factor_net": 1.3734305023510587
+        },
+        "W4": {
+          "trades": 392,
+          "expectancy_net": 0.0014644090801758565,
+          "profit_factor_net": 1.0388352298327976
+        },
+        "W5": {
+          "trades": 246,
+          "expectancy_net": 0.008515027980472526,
+          "profit_factor_net": 1.3079776928527846
+        }
+      },
+      "improvement": {
+        "checks": {
+          "expectancy_up": true,
+          "pf_not_down": true,
+          "dd_not_deeper": true,
+          "retains_half_trades": false
+        },
+        "improves": false
+      }
+    },
+    {
+      "family": "dow_effect",
+      "variant": "reversal",
+      "panel": "crypto30",
+      "timeframe": "1d",
+      "gate": "gate_counter",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 6208,
+        "signals_dropped": 3238,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 1764,
+        "wins": 958,
+        "win_rate": 0.5430839002267573,
+        "expectancy_net": 0.007179719090036315,
+        "profit_factor_net": 1.215732813549591,
+        "avg_win_net": 0.07450106063021067,
+        "avg_loss_net": -0.07283745857185828,
+        "total_return_net": 57.51522542257719,
+        "max_drawdown_net": -0.9998297979077447
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 442,
+          "expectancy_net": 0.00533888578011249,
+          "profit_factor_net": 1.134070122567235
+        },
+        "W2": {
+          "trades": 387,
+          "expectancy_net": 0.008794001060909315,
+          "profit_factor_net": 1.2680072951501606
+        },
+        "W3": {
+          "trades": 375,
+          "expectancy_net": 0.005796872336538134,
+          "profit_factor_net": 1.166574662323759
+        },
+        "W4": {
+          "trades": 295,
+          "expectancy_net": 0.018714531422220276,
+          "profit_factor_net": 1.7398019339708743
+        },
+        "W5": {
+          "trades": 265,
+          "expectancy_net": -0.002991152250242813,
+          "profit_factor_net": 0.8995966038882769
+        }
+      },
+      "improvement": {
+        "checks": {
+          "expectancy_up": false,
+          "pf_not_down": false,
+          "dd_not_deeper": true,
+          "retains_half_trades": false
+        },
+        "improves": false
+      }
+    },
+    {
+      "family": "dow_effect",
+      "variant": "reversal",
+      "panel": "crypto30",
+      "timeframe": "1d",
+      "gate": "gate_range",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 6208,
+        "signals_dropped": 1877,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 2570,
+        "wins": 1393,
+        "win_rate": 0.5420233463035019,
+        "expectancy_net": 0.008359277628445173,
+        "profit_factor_net": 1.2362987553034948,
+        "avg_win_net": 0.0806887066315757,
+        "avg_loss_net": -0.07724386137016215,
+        "total_return_net": 852.7932410857171,
+        "max_drawdown_net": -0.9999996880268172
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 625,
+          "expectancy_net": 0.010615888304108777,
+          "profit_factor_net": 1.2470772867100033
+        },
+        "W2": {
+          "trades": 488,
+          "expectancy_net": 0.018270266103754693,
+          "profit_factor_net": 1.6852710031279319
+        },
+        "W3": {
+          "trades": 578,
+          "expectancy_net": 0.007899235210906285,
+          "profit_factor_net": 1.230980111953952
+        },
+        "W4": {
+          "trades": 518,
+          "expectancy_net": -0.004728037026668317,
+          "profit_factor_net": 0.8859673029007284
+        },
+        "W5": {
+          "trades": 361,
+          "expectancy_net": 0.010570328765413216,
+          "profit_factor_net": 1.3890846923228024
+        }
+      },
+      "improvement": {
+        "checks": {
+          "expectancy_up": false,
+          "pf_not_down": false,
+          "dd_not_deeper": true,
+          "retains_half_trades": true
+        },
+        "improves": false
+      }
+    },
+    {
+      "family": "dow_effect",
+      "variant": "reversal",
+      "panel": "crypto30",
+      "timeframe": "1d",
+      "gate": "gate_vol",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 6208,
+        "signals_dropped": 1836,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 2560,
+        "wins": 1338,
+        "win_rate": 0.52265625,
+        "expectancy_net": 0.009436997469280079,
+        "profit_factor_net": 1.2891871726667026,
+        "avg_win_net": 0.08049235628597719,
+        "avg_loss_net": -0.06836338722527044,
+        "total_return_net": 63592.15402708718,
+        "max_drawdown_net": -0.999447357821326
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 565,
+          "expectancy_net": 0.009842068146898053,
+          "profit_factor_net": 1.2591473879029123
+        },
+        "W2": {
+          "trades": 415,
+          "expectancy_net": 0.01756751884488363,
+          "profit_factor_net": 1.5379877962574942
+        },
+        "W3": {
+          "trades": 551,
+          "expectancy_net": 0.01494196552371126,
+          "profit_factor_net": 1.48727985558129
+        },
+        "W4": {
+          "trades": 646,
+          "expectancy_net": -0.001344165262232878,
+          "profit_factor_net": 0.961054429190982
+        },
+        "W5": {
+          "trades": 383,
+          "expectancy_net": 0.010294340609844455,
+          "profit_factor_net": 1.422189652382423
+        }
+      },
+      "improvement": {
+        "checks": {
+          "expectancy_up": true,
+          "pf_not_down": true,
+          "dd_not_deeper": true,
+          "retains_half_trades": true
+        },
+        "improves": true
+      },
+      "sensitivity_2x_costs": {
+        "gated_pooled_oos": {
+          "trades": 2560,
+          "wins": 1315,
+          "win_rate": 0.513671875,
+          "expectancy_net": 0.007835996577079419,
+          "profit_factor_net": 1.2345788387681313,
+          "avg_win_net": 0.08028574592831068,
+          "avg_loss_net": -0.0686872326573536,
+          "total_return_net": 1049.1376693291052,
+          "max_drawdown_net": -0.9997060855436807
+        },
+        "ungated_comparator_pooled_oos": {
+          "trades": 3660,
+          "wins": 1879,
+          "win_rate": 0.5133879781420765,
+          "expectancy_net": 0.007173050387707745,
+          "profit_factor_net": 1.205788975250453,
+          "avg_win_net": 0.08186672006767788,
+          "avg_loss_net": -0.0716306583875106,
+          "total_return_net": 457.93805814074364,
+          "max_drawdown_net": -0.9999999295497396
+        },
+        "note": "Comparator is a sensitivity re-run, not a trial: ungated dow_effect at 2x costs."
+      }
+    },
+    {
+      "family": "dow_effect",
+      "variant": "reversal",
+      "panel": "crypto30",
+      "timeframe": "1d",
+      "gate": "none_anchor",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 6208,
+        "signals_dropped": 0,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 3660,
+        "wins": 1913,
+        "win_rate": 0.5226775956284153,
+        "expectancy_net": 0.0087767850641235,
+        "profit_factor_net": 1.2574511877169772,
+        "avg_win_net": 0.08201585450155388,
+        "avg_loss_net": -0.07142146326661739,
+        "total_return_net": 163755.1258647019,
+        "max_drawdown_net": -0.9999998735273476
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 810,
+          "expectancy_net": 0.010450204412627135,
+          "profit_factor_net": 1.2479624156464828
+        },
+        "W2": {
+          "trades": 750,
+          "expectancy_net": 0.01773722926689772,
+          "profit_factor_net": 1.5977629075486992
+        },
+        "W3": {
+          "trades": 810,
+          "expectancy_net": 0.010865473291315092,
+          "profit_factor_net": 1.335574670636035
+        },
+        "W4": {
+          "trades": 780,
+          "expectancy_net": -0.0045520182031523445,
+          "profit_factor_net": 0.8779279169050013
+        },
+        "W5": {
+          "trades": 510,
+          "expectancy_net": 0.010009777730949696,
+          "profit_factor_net": 1.3906101828525488
+        }
+      },
+      "anchor_vs_rd002": {
+        "trades_match": true,
+        "expectancy_abs_err": 0.0,
+        "pf_abs_err": 0.0,
+        "pass": true
+      }
+    },
+    {
+      "family": "ichimoku_trend",
+      "variant": "tk_cloud",
+      "panel": "crypto30",
+      "timeframe": "4h",
+      "gate": "gate_both",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 5959,
+        "signals_dropped": 3955,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 824,
+        "wins": 329,
+        "win_rate": 0.39927184466019416,
+        "expectancy_net": 0.007206561197347448,
+        "profit_factor_net": 1.250171226702672,
+        "avg_win_net": 0.09019688387760826,
+        "avg_loss_net": -0.047952663371957215,
+        "total_return_net": 46.51441267186128,
+        "max_drawdown_net": -0.9016065309299924
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 138,
+          "expectancy_net": 0.004833320913322901,
+          "profit_factor_net": 1.1470385357911461
+        },
+        "W2": {
+          "trades": 189,
+          "expectancy_net": 0.028646069644904553,
+          "profit_factor_net": 2.0307768501215087
+        },
+        "W3": {
+          "trades": 165,
+          "expectancy_net": -0.007742462282249024,
+          "profit_factor_net": 0.7635231384160286
+        },
+        "W4": {
+          "trades": 202,
+          "expectancy_net": 0.004125035416252063,
+          "profit_factor_net": 1.1617553651319399
+        },
+        "W5": {
+          "trades": 130,
+          "expectancy_net": 0.002318077693668836,
+          "profit_factor_net": 1.0887808831363943
+        }
+      },
+      "improvement": {
+        "checks": {
+          "expectancy_up": false,
+          "pf_not_down": false,
+          "dd_not_deeper": true,
+          "retains_half_trades": false
+        },
+        "improves": false
+      }
+    },
+    {
+      "family": "ichimoku_trend",
+      "variant": "tk_cloud",
+      "panel": "crypto30",
+      "timeframe": "4h",
+      "gate": "gate_counter",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 5959,
+        "signals_dropped": 2064,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 1526,
+        "wins": 588,
+        "win_rate": 0.3853211009174312,
+        "expectancy_net": 0.0076634044470566,
+        "profit_factor_net": 1.2279558481816535,
+        "avg_win_net": 0.10713489974631323,
+        "avg_loss_net": -0.05469186126292516,
+        "total_return_net": 518.6361995841007,
+        "max_drawdown_net": -0.9963354492259676
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 282,
+          "expectancy_net": 0.019232487064116895,
+          "profit_factor_net": 1.5699172915364474
+        },
+        "W2": {
+          "trades": 348,
+          "expectancy_net": 0.01910840787163197,
+          "profit_factor_net": 1.520951491399569
+        },
+        "W3": {
+          "trades": 299,
+          "expectancy_net": -0.0033529390132844153,
+          "profit_factor_net": 0.9093571807719536
+        },
+        "W4": {
+          "trades": 362,
+          "expectancy_net": 0.0006728767203564114,
+          "profit_factor_net": 1.0214726751933667
+        },
+        "W5": {
+          "trades": 235,
+          "expectancy_net": 0.0016170863276702093,
+          "profit_factor_net": 1.0574388956018859
+        }
+      },
+      "improvement": {
+        "checks": {
+          "expectancy_up": false,
+          "pf_not_down": false,
+          "dd_not_deeper": true,
+          "retains_half_trades": true
+        },
+        "improves": false
+      }
+    },
+    {
+      "family": "ichimoku_trend",
+      "variant": "tk_cloud",
+      "panel": "crypto30",
+      "timeframe": "4h",
+      "gate": "gate_range",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 5959,
+        "signals_dropped": 2688,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 1339,
+        "wins": 535,
+        "win_rate": 0.39955190440627336,
+        "expectancy_net": 0.008633421592032349,
+        "profit_factor_net": 1.2495080613056095,
+        "avg_win_net": 0.10820920959156133,
+        "avg_loss_net": -0.05762658659173382,
+        "total_return_net": 651.7022460736994,
+        "max_drawdown_net": -0.9929108806206152
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 250,
+          "expectancy_net": 0.0218173147372679,
+          "profit_factor_net": 1.644094646717322
+        },
+        "W2": {
+          "trades": 295,
+          "expectancy_net": 0.014030420707148232,
+          "profit_factor_net": 1.351137253765749
+        },
+        "W3": {
+          "trades": 242,
+          "expectancy_net": -0.005506972170338392,
+          "profit_factor_net": 0.8586335372503521
+        },
+        "W4": {
+          "trades": 349,
+          "expectancy_net": 0.0072133463202073604,
+          "profit_factor_net": 1.2360275499429552
+        },
+        "W5": {
+          "trades": 203,
+          "expectancy_net": 0.003852601567857792,
+          "profit_factor_net": 1.1307146313491636
+        }
+      },
+      "improvement": {
+        "checks": {
+          "expectancy_up": false,
+          "pf_not_down": false,
+          "dd_not_deeper": true,
+          "retains_half_trades": true
+        },
+        "improves": false
+      }
+    },
+    {
+      "family": "ichimoku_trend",
+      "variant": "tk_cloud",
+      "panel": "crypto30",
+      "timeframe": "4h",
+      "gate": "gate_vol",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 5959,
+        "signals_dropped": 1774,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 1712,
+        "wins": 662,
+        "win_rate": 0.3866822429906542,
+        "expectancy_net": 0.005994625002787184,
+        "profit_factor_net": 1.2089263219700894,
+        "avg_win_net": 0.08970454886212571,
+        "avg_loss_net": -0.046782488897100544,
+        "total_return_net": 444.4662030253506,
+        "max_drawdown_net": -0.9962062526052784
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 314,
+          "expectancy_net": 0.007861317692155324,
+          "profit_factor_net": 1.253881424500426
+        },
+        "W2": {
+          "trades": 398,
+          "expectancy_net": 0.021537317155385934,
+          "profit_factor_net": 1.773933004374537
+        },
+        "W3": {
+          "trades": 355,
+          "expectancy_net": -0.003357989335689493,
+          "profit_factor_net": 0.8952167950038366
+        },
+        "W4": {
+          "trades": 382,
+          "expectancy_net": -0.001761336868543993,
+          "profit_factor_net": 0.9350919600329517
+        },
+        "W5": {
+          "trades": 263,
+          "expectancy_net": 0.004134634675075514,
+          "profit_factor_net": 1.1652483870133212
+        }
+      },
+      "improvement": {
+        "checks": {
+          "expectancy_up": false,
+          "pf_not_down": false,
+          "dd_not_deeper": true,
+          "retains_half_trades": true
+        },
+        "improves": false
+      }
+    },
+    {
+      "family": "ichimoku_trend",
+      "variant": "tk_cloud",
+      "panel": "crypto30",
+      "timeframe": "4h",
+      "gate": "none_anchor",
+      "status": "EVALUATED",
+      "signals": {
+        "signals_total": 5959,
+        "signals_dropped": 0,
+        "signals_unknown_state": 0
+      },
+      "pooled_oos": {
+        "trades": 2302,
+        "wins": 923,
+        "win_rate": 0.4009556907037359,
+        "expectancy_net": 0.008937174793676827,
+        "profit_factor_net": 1.27834395636154,
+        "avg_win_net": 0.10236931490345472,
+        "avg_loss_net": -0.05359934828197582,
+        "total_return_net": 373385.71520943666,
+        "max_drawdown_net": -0.99848199628147
+      },
+      "per_fold": {
+        "W1": {
+          "trades": 451,
+          "expectancy_net": 0.01993853509932826,
+          "profit_factor_net": 1.6322543723429088
+        },
+        "W2": {
+          "trades": 501,
+          "expectancy_net": 0.016233447814323537,
+          "profit_factor_net": 1.4627188300055842
+        },
+        "W3": {
+          "trades": 445,
+          "expectancy_net": -0.0012211013897438475,
+          "profit_factor_net": 0.9656308891741001
+        },
+        "W4": {
+          "trades": 556,
+          "expectancy_net": 0.004276445761572523,
+          "profit_factor_net": 1.1438095192044844
+        },
+        "W5": {
+          "trades": 349,
+          "expectancy_net": 0.004624143166970208,
+          "profit_factor_net": 1.1651757717371658
+        }
+      },
+      "anchor_vs_rd002": {
+        "trades_match": true,
+        "expectancy_abs_err": 0.0,
+        "pf_abs_err": 0.0,
+        "pass": true
+      }
+    }
+  ],
+  "full_rows_dir": "results_rd15/rows/"
+}
