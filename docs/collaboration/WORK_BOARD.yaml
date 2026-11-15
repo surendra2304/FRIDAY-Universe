@@ -6610,6 +6610,152 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "TESTS: VyralX/tests/test_ig_vyr01_channel_operator.py — 8 tests, all pass locally under pytest (analytics honesty, gated/scored proposals, advice screen, plan-only schedule, draft-only comments, cycle + queue wiring)."
     blockers: []
     next_action: "Coordinator: review/merge PR #443, splice this fragment, flip IN_REVIEW -> DONE on merge. NOT deployed (library code; reaches production with the next VyralX deploy). Becomes live-useful when the owner re-auths YouTube OAuth (deferred owner action) — until then operator plans are review-queue proposals only."
+  - id: TASK-IG-VOI-01
+    title: "Confirmation safeguard for voice-initiated actions — ambiguous or high-blast-radius voice commands are confirmed before anything executes (IG corpus DdEg9_QtHbR, the Dexter-skit lesson)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/src/friday/voice/confirmation_policy.py"
+      - "FRIDAY/src/friday/voice/brain_bridge.py"
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/tests/test_voice_confirmation_policy.py"
+      - ".github/workflows/friday-universe-ci.yml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898233181"
+    defect: "FRIDAY's voice path had no confirmation layer: the voice model hands free-form requests to the brain via execute_friday_task, and an ambiguous spoken command ('message her', 'send it') or a misheard high-impact one (pay/delete/unlock) would execute on the model's guess. The Dexter reel shows exactly this failure in the wild."
+    acceptance:
+      - "A gated request causes ZERO brain submissions (proven by test: the bridge returns confirmation_required with the spoken question and the send path is never invoked)."
+      - "Questions about actions and reversible writes are never gated (9 question shapes + memory/dictation cases pinned by tests)."
+      - "Post-confirmation re-issue of the same request executes exactly once; grants expire after 180s and are family-scoped."
+      - "CI voice-regressions green on PR #448 including the new suite; post-merge: Fleet CD, then a live voice drill — 'message her on Instagram' must produce the confirmation question and no action; a named-target send must pass ungated."
+    evidence:
+      - "PR #448 (branch claude/task-ig-voi-01 on main 1ff34a04): 5 files — new policy module + tests, bridge gate, worker instructions aggregator, CI lists."
+      - "Local tests: 40 passed, 1 skipped (worker-instructions assertion needs the livekit stack; CI is its gate). Ruff clean on all touched Python files."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #448 on green CI, Fleet CD to Server 1, run the live confirmation drill in the acceptance, then flip VERIFIED. If VOI-010's PR lands first, this branch's worker hunk is confined to _instructions/_extra_instruction_sections and should rebase cleanly — never force-push."
+  - id: TASK-IG-VOI-03
+    title: "Indian-language voice profiles — FRIDAY_VOICE_LANGUAGE pins a Gemini Live session to one of 11 Indian-language profiles for business-style deployments; unset keeps native mirroring (IG corpus DV563QjD0Ft)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/src/friday/voice/language_profiles.py"
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/.env.example"
+      - "FRIDAY/tests/test_voice_language_profiles.py"
+      - ".github/workflows/friday-universe-ci.yml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898233181"
+    defect: "FRIDAY's voice language was purely emergent (Gemini Live mirrors the caller). There was no way to pin a session to a chosen Indian language — the core requirement of the business voice-agent pattern in the owner's saved reel — and no named profile set to build deployments on."
+    acceptance:
+      - "Unset profile: realtime model built with no language argument and instructions unchanged (test-pinned; production behaviour byte-identical)."
+      - "Set profile (e.g. te-IN): model built with the profile's BCP-47 code; a plugin generation without the language option degrades to a build without it, never to a failed call (test-pinned)."
+      - "Post-merge: Fleet CD, staging drill with FRIDAY_VOICE_LANGUAGE=te-IN (first word in Telugu) + an unset-profile regression call, then flip VERIFIED."
+    evidence:
+      - "PR #467 (branch claude/task-ig-voi-03 on main 6a8a921): profile module + worker wiring + .env.example + tests + CI lists."
+      - "Local tests: 19 passed, 4 skipped (worker wiring; CI is the gate). Ruff clean."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #467 on green CI, Fleet CD, run the te-IN staging drill + unset regression call in the acceptance, then flip VERIFIED. Worker hunks are confined to _voice_language and _build_realtime_model — outside VOI-010's regions."
+  - id: TASK-IG-VOI-04
+    title: "AURA voice surface contract — status-file schema, state vocabulary, speed and provider-honesty rules any designed voice surface binds to; status file gains voice+language fields (IG corpus Da6PwA8z-wq)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/docs/VOICE_SURFACE_CONTRACT.md"
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/tests/test_voice_surface_contract.py"
+      - ".github/workflows/friday-universe-ci.yml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898233181"
+    defect: "Designed voice surfaces (the stored AURA/ULTRON/orb candidates) had no contract to build against: the worker status schema, state vocabulary and diagnostics doctrine existed only as code, so any design swap risked inventing states, displaying a fallback provider that does not exist, or faking liveness — the exact failure of 2026-11-14."
+    acceptance:
+      - "Contract document names every status key, every worker state, the FRD-005 speed thresholds and the additive-only change rule (test-pinned)."
+      - "Status writes emit voice + language additively and never raise into the worker (test-pinned, CI-gated half)."
+      - "Post-merge: Fleet CD, read a live voice_worker_status.json after a drill call and confirm voice/language present, then flip VERIFIED for the wiring. The design pick itself remains the owner's."
+    evidence:
+      - "PR #484 (branch claude/task-ig-voi-04 on main 6a8a921): contract doc + _write_status fields + tests + CI lists."
+      - "Local tests: 2 passed, 3 skipped (worker emission; CI is the gate). Ruff clean."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #484 on green CI, Fleet CD, confirm voice/language keys in a live status file after a drill call, then flip VERIFIED. The AURA candidate stays stored until the owner picks a design."
+  - id: TASK-IG-FRG-01
+    title: "IG corpus: independent review passes for Forge-generated code (security review + cross-model audit + self-red-team)"
+    owner: muse_ai
+    status: IN_REVIEW
+    source: "Instagram reference corpus (owner directive 2026-11-15): Dc_iv4YKCAh, DdRxjWhlrNC, DeihJQuCpdp"
+    deliverable: "Forge/app/verification/review_passes.py + Forge/tests/test_ig_frg01_review_passes.py (PR in this comment thread)"
+    files:
+      - Forge/app/verification/review_passes.py
+      - Forge/tests/test_ig_frg01_review_passes.py
+    next_action: "Merge on green CI; then wire run_review_passes into the verification battery (feed FINDINGS to verdict hard-failure reasons) and run against a deployed Forge build"
+  - id: TASK-IG-FRG-02
+    title: "IG corpus: specialised build-agent roster + skill registry for Forge (63-agent/249-skill pattern)"
+    owner: muse_ai
+    status: IN_REVIEW
+    source: "Instagram reference corpus (owner directive 2026-11-15): Dc_iv4YKCAh"
+    deliverable: "Forge/app/agents/skill_registry.py + Forge/tests/test_ig_frg02_skill_registry.py (PR in this thread)"
+    files:
+      - Forge/app/agents/skill_registry.py
+      - Forge/tests/test_ig_frg02_skill_registry.py
+    next_action: "Merge on green CI; then adopt in roles.py prompt assembly (specialist fragments per role) as a follow-up wiring step"
+  - id: TASK-IG-FRG-03
+    title: "IG corpus: design-tool-to-agent pipeline for Forge (Stitch/Figma spec -> explicit manifest + build goal)"
+    owner: muse_ai
+    status: IN_REVIEW
+    source: "Instagram reference corpus (owner directive 2026-11-15): DcbDzR8yxCm"
+    deliverable: "Forge/app/integrations/design_import.py + Forge/tests/test_ig_frg03_design_import.py (PR in this thread)"
+    files:
+      - Forge/app/integrations/design_import.py
+      - Forge/tests/test_ig_frg03_design_import.py
+    next_action: "Merge on green CI; then connect a live Stitch/Figma MCP fetcher behind McpDesignSource and run one design-driven build end-to-end"
+  - id: TASK-IG-FRG-06
+    title: "IG corpus: bounded loop-until-done + structured plan-to-ship workflow for Forge (Ralph Loop / GSD pattern)"
+    owner: muse_ai
+    status: IN_REVIEW
+    source: "Instagram reference corpus (owner directive 2026-11-15): DdeTgRuE4yq"
+    deliverable: "Forge/app/planning/plan_to_ship.py + Forge/tests/test_ig_frg06_plan_to_ship.py (PR in this thread)"
+    files:
+      - Forge/app/planning/plan_to_ship.py
+      - Forge/tests/test_ig_frg06_plan_to_ship.py
+    next_action: "Merge on green CI; then drive the orchestrator's build waves with run_plan (step_fn = build+battery) so retries are criteria-bound instead of ad hoc"
+  - id: TASK-IG-FRG-07
+    title: "IG corpus: Forge build-template pack (SaaS stack, solo-founder launch, one-prompt agent, portfolio website)"
+    owner: muse_ai
+    status: IN_REVIEW
+    source: "Instagram reference corpus (owner directive 2026-11-15): DZm0KTppMuD, DeJnEzVpp2o, DfHw7hsIfvd, DfMhyC7Ma31"
+    deliverable: "Forge/app/templates/ig_templates.py + Forge/tests/test_ig_frg07_ig_templates.py (PR in this thread)"
+    files:
+      - Forge/app/templates/ig_templates.py
+      - Forge/tests/test_ig_frg07_ig_templates.py
+    next_action: "Merge on green CI; then expose the templates at Forge intake (template name + project name -> render_goal -> build) and run one saas-stack build as the acceptance shape"
+  - id: TASK-IG-FRG-08
+    title: "IG corpus: evaluation notes for reference-only Forge items (JCode, OpenMausBot, Paperclip, Codex, agentic IDEs, claude-mem)"
+    owner: muse_ai
+    status: IN_REVIEW
+    source: "Instagram reference corpus (owner directive 2026-11-15): Da5fhPriu3n, DeZ-JEFNTpR, DeihJQuCpdp, Ddlk8oQyOVO, DXMg0D9jD3Y, DdjTV_zCTUH, DahPUsHOkrC"
+    deliverable: "Forge/docs/IG_EVALUATION_NOTES.md (PR in this thread)"
+    files:
+      - Forge/docs/IG_EVALUATION_NOTES.md
+    next_action: "Merge on green CI; coordinator decision on the two follow-ups named in the notes (preview endpoint bound to verification manifest; budget/heartbeat board fields)"
+  - id: TASK-IG-LAP-01
+    title: "IG corpus: Android UI automation (ARTEMIS pattern + scrcpy transport) — ADB executor for the phone bridge UI commands, ui_dump observation, safety-gated natural-language planner, phone_ui_task/phone_ui_dump tools"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-lap-01"
+    pr: 454
+    defect: "Corpus items DehEdBbgQFZ (ARTEMIS), DYQ2Z2aiaLf (scrcpy), DfXcABhzvy3 (AURA): PHONE-001 allowlisted tap/swipe/type_text/press_key/screenshot but no shipped executor could serve them (Termux cannot inject touches; companion app uncompiled), so natural-language phone control — the ULTRON pattern — had no working actuation path."
+    acceptance:
+      - "ADB executor (owner PC, stdlib+adb, Python 3.10) pairs via the PHONE-001 flow and serves exactly the 10 commands it advertises; scrcpy adopted as optional external mirror, not vendored; ARTEMIS/AURA are pattern references, no code copied (AURA is AGPL)."
+      - "Planner refuses password-field typing, credential instructions and banking/payment/authenticator packages in code; budget-exhausted tasks report not-done."
+      - "Tests: 21 new in tests/test_phone_ui_automation.py, 52 passed locally with the phone/laptop bridge suites."
+    next_action: "Merge on green CI -> Fleet CD -> owner pairs the ADB agent (docs/PHONE_UI_AUTOMATION.md) and runs the battery-level instruction -> flip VERIFIED with that live evidence."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
