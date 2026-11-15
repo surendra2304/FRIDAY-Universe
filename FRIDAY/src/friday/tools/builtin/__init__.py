@@ -73,6 +73,12 @@ from friday.tools.builtin.github_tools import (
     CreateGitHubIssueTool,
     ListGitHubIssuesTool,
 )
+from friday.tools.builtin.errand_tools import (
+    ErrandApproveTool,
+    ErrandCreateTool,
+    ErrandRunTool,
+    ErrandStatusTool,
+)
 from friday.tools.builtin.health_monitor import HealthCheckTool
 from friday.tools.builtin.laptop_control import (
     LaptopClickTool,
@@ -188,6 +194,10 @@ __all__ = [
     "GitCommitTool",
     "GitPushTool",
     "GitStatusTool",
+    "ErrandApproveTool",
+    "ErrandCreateTool",
+    "ErrandRunTool",
+    "ErrandStatusTool",
     "HealthCheckTool",
     "KillProcessTool",
     "LaunchApplicationTool",
