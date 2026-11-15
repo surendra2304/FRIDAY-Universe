@@ -169,7 +169,12 @@ def test_approved_low_risk_operation_executes_once_and_returns_measurement():
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "COMPLETED"
-    assert data["classification"] == "REAL_EXECUTION"
+    # TASK-COR-008: this assertion used to demand REAL_EXECUTION, but nothing
+    # real is executed — cache_flush on the in-memory registry changes no
+    # external system (it has no snapshot branch either). The governed engine
+    # now honestly reports SIMULATED_EXECUTION; see
+    # Cortex/tests/unit/test_governed_execution_honesty_cor008.py.
+    assert data["classification"] == "SIMULATED_EXECUTION"
     assert "execution" in data["result"]
     assert "measurement" in data["result"]
     meas = data["result"]["measurement"]

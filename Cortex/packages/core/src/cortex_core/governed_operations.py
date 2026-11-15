@@ -414,8 +414,19 @@ class GovernedOperationsEngine:
 
     def execute(self, approval_id: str, idempotency_key: str, tool_bus: Any, dry_run: bool = False) -> ExecutionRecord:
         """
-        Phase 4: Executes the approved action with idempotency and rollback snapshot.
-        If dry_run=True, simulates execution without applying side effects.
+        Phase 4: Applies the approved action to the in-memory property snapshot.
+
+        HONESTY (TASK-COR-008): this engine has no effector that reaches a real
+        property — the registry's ``state_snapshot`` dict is the whole of the
+        state it can change. Every record produced here is therefore a
+        SIMULATED_EXECUTION with zero external side effects, whether or not
+        ``dry_run`` is set; ``dry_run`` additionally skips the snapshot update.
+        ``tool_bus`` is accepted for interface compatibility and is NOT
+        invoked: no governed-action effectors are registered on it (the one
+        same-named tool, ``banner_injection`` in ``build_default_tool_bus``,
+        is a stub lambda returning a canned dict), so dispatching to it could
+        not make the execution real. A record may only claim REAL_EXECUTION
+        once a real effector performs the action.
         """
         if not idempotency_key:
             raise ValueError("Idempotency key is strictly required for outbound actions.")
@@ -437,6 +448,11 @@ class GovernedOperationsEngine:
                 "property_id": appr.property_id,
                 "simulated_params": appr.params,
                 "dry_run": True,
+                "side_effects_applied": 0,
+                "external_side_effects_applied": 0,
+                "state_snapshot_updated": False,
+                "tool_bus_invoked": False,
+                "execution_environment": "in_memory_property_snapshot",
                 "message": f"Simulated execution of {appr.action_type} completed with zero side effects.",
             }
             exec_rec = ExecutionRecord(
@@ -456,21 +472,35 @@ class GovernedOperationsEngine:
             self.executions[exec_rec.execution_id] = exec_rec
             return exec_rec
 
-        # Real Execution
-        # Mutate property state snapshot if applicable
+        # Simulated execution (TASK-COR-008): the only state this engine can
+        # change is the in-memory registry snapshot below. Nothing external is
+        # modified and the tool_bus is not invoked (see the docstring), so the
+        # record says exactly that instead of claiming a real execution.
+        snapshot_updated = False
         if appr.action_type == "banner_injection":
             prop.state_snapshot["active_banner"] = appr.params.get("variant", "promotional_banner")
+            snapshot_updated = True
         elif appr.action_type == "config_update":
             prop.state_snapshot.update(appr.params.get("config", {}))
+            snapshot_updated = True
         elif appr.action_type == "deployment_traffic_switch":
             prop.state_snapshot["traffic_split_pct"] = appr.params.get("traffic_split_pct", 100)
+            snapshot_updated = True
 
         exec_result = {
-            "status": "executed",
+            "status": "simulated",
             "action": appr.action_type,
             "property_id": appr.property_id,
             "applied_params": appr.params,
-            "side_effects_applied": 1,
+            "side_effects_applied": 0,
+            "external_side_effects_applied": 0,
+            "state_snapshot_updated": snapshot_updated,
+            "tool_bus_invoked": False,
+            "execution_environment": "in_memory_property_snapshot",
+            "message": (
+                f"Simulated execution of {appr.action_type}: applied to the in-memory "
+                "property snapshot only. No external system was modified."
+            ),
         }
 
         exec_rec = ExecutionRecord(
@@ -480,15 +510,18 @@ class GovernedOperationsEngine:
             action=appr.action_type,
             params=appr.params,
             idempotency_key=idempotency_key,
-            status="EXECUTED",
+            status="SIMULATED",
             dry_run=False,
-            classification="REAL_EXECUTION",
+            classification="SIMULATED_EXECUTION",
             snapshot_before=snapshot_before,
             result=exec_result,
             executed_at=datetime.now(UTC),
         )
         self.executions[exec_rec.execution_id] = exec_rec
-        logger.info(f"Executed action '{exec_rec.execution_id}' for property '{appr.property_id}'")
+        logger.info(
+            f"Simulated execution '{exec_rec.execution_id}' for property '{appr.property_id}' "
+            "(in-memory snapshot only; no external side effects)"
+        )
         return exec_rec
 
     def measure(self, execution_id: str, observed_telemetry: dict[str, Any] | None = None) -> MeasurementRecord:
