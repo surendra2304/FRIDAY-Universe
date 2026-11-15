@@ -6347,6 +6347,143 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       from Futuris/ in that environment — same series, same origins, same metrics; the production rows fill in with real numbers and are judged against the reference
       bar stated in BASELINE_SCORECARD.md (beat reference MASE AND coverage@90 at least as close to 0.90). Follow-up (separate task, not this PR): retire or fix BacktestEngine''s
       forecast-as-actual substitution.'
+  - id: TASK-REL-050
+    title: Fleet-wide Python 3.11+ idiom sweep + production-interpreter (3.10) import gate
+    owner: muse_ai
+    status: IN_REVIEW
+    files:
+      - scripts/check_py310_imports.py
+      - .github/workflows/py310-import-gate.yml
+      - docs/verification/PY310_IDIOM_SWEEP_REL050.md
+    pr: 397
+    branch: claude/task-rel-050-py310-gate
+    claim_comment: 6893842591
+    evidence: "248 import-time idioms fixed in 231 files (Cortex 74, Sentinel 66, Futuris 56, IntelX 29, Forge 23); entrypoint imports on clean 3.10.15: 5 agents FAIL->PASS, 10/10 PASS post-fix (VyralX dev/test config); gate fails pre-fix tree naming 5 agents, refuses non-3.10 interpreters; post-fix rescan 0 unguarded hits; all branch files blob-verified. PR #397 merged 5f0a5062 after REL-050-FIX (head bfb041ff: one genuinely missed file Futuris/futuris/scenarios/whatif.py + 2 main-drift sites repaired; py310 gate SUCCESS, zero failing checks). NOTE: the board entry was NOT in the merged PR (the in-place branch repair dropped the board hunk) — this batch entry is the record, adapted from completion comment 6894657567."
+    residuals: "3x asyncio.timeout shutdown/drain sites (non-identical 3.10 conversion, trigger paths in PR doc); 141 test-scope hits; append_friday.py codegen template"
+    next_action: "Coordinator: Fleet CD -> post-deploy Futuris boot probe on Server 1 (the originally-proven failure) -> flip VERIFIED. Note SEN-012 context: a future fleet Python 3.11+ upgrade remains a separate planned decision; this task makes 3.10 safe meanwhile."
+  - id: TASK-IG-STR-01
+    title: "IG corpus: Black-Scholes options pricing + greeks (research utility)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-01"
+    pr: 452
+    defect: "IG corpus gap (DXqzqc0Dh6K): Stratex had no options-pricing utility; option structures could only be hand-waved in research."
+    evidence:
+      - "PR #452: test_options_pricing.py — 7 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step (research package, no production consumer). Future research may cite the pricer; any options strategy still enters only via the RD programme bar."
+  - id: TASK-IG-STR-02
+    title: "IG corpus: Order-book / depth-of-market research features"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-02"
+    pr: 458
+    defect: "IG corpus gap (DXRVxfjDZmu): order-book/depth features did not exist as research inputs for Stratex strategy work."
+    evidence:
+      - "PR #458: test_dom_features.py — 6 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. A future RD family may consume these features; that family needs its own pre-declaration and must pass the full programme bar."
+  - id: TASK-IG-STR-04
+    title: "IG corpus: Pre-trade scenario simulation ('Time Machine')"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-04"
+    pr: 461
+    defect: "IG corpus gap (Det0-D8Oc41): no pre-trade scenario simulation existed; sizing/expectation questions were answered by intuition."
+    evidence:
+      - "PR #461: test_scenario_sim.py — 6 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. Desks may cite sim output in research memos; it promotes nothing — the RD bar and forward protocol remain the only promotion paths."
+  - id: TASK-IG-STR-05
+    title: "IG corpus: Multi-agent research desk (skill-pack pipeline) + trade journal"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-05"
+    pr: 464
+    defect: "IG corpus gap (Det0-D8Oc41/DfSKVcsE5yr): no structured research-desk workflow or trade-journal/post-mortem discipline existed as code; the Agent-Skills repos showed the pattern."
+    evidence:
+      - "PR #464: test_research_desk.py — 5 passed; test_desk_journal.py — 3 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. Follow-up (separate task): wire run_desk memos into the RD programme's per-round paperwork."
+  - id: TASK-IG-STR-06
+    title: "IG corpus: RD candidate family: Fib/BOS confluence (pre-declared)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-06"
+    pr: 466
+    defect: "IG corpus item DYeU6nSBl9K (SK-System Fib/BOS confluence model) had no RD registration; unregistered ideas either get lost or, worse, get eyeballed instead of tested."
+    evidence:
+      - "PR #466: test_confluence.py — 5 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. Next action: the declared RD run (crypto30 + forex_cross41 panels, 1h/4h, walk-forward, 2x-cost shadow, Bonferroni vs the then-current trial floor) as a separate PR with a RESULTS document — pass or fail, the family is judged at the bar and the verdict recorded either way."
+  - id: TASK-IG-STR-07
+    title: "IG corpus: Cross-venue arbitrage scanner (paper-only)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-07"
+    pr: 469
+    defect: "IG corpus gap (DXYCIhsjHKY): cross-venue discrepancies were never measured; the idea existed only as a claim in a video."
+    evidence:
+      - "PR #469: test_arb_scanner.py — 5 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. Follow-up (separate task): a data-collection run feeding the paper journal from public snapshots, then RD evaluation of the family at the bar."
+  - id: TASK-IG-STR-08
+    title: "IG corpus: LLM chart-reading explainer (labels only, never advice)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-str-08"
+    pr: 472
+    defect: "IG corpus gap (Def5xMKtvmC): no chart-explanation capability existed alongside the strategy engine for owner-facing review."
+    evidence:
+      - "PR #472: test_chart_explainer.py — 5 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+    blockers: []
+    next_action: "Merge on green CI. No deploy step. Candidate follow-up (separate task): surface explain() output next to Stratex charts in the owner UI."
+  - id: TASK-IG-SEN-01
+    title: "IG corpus: attacker-view self-audit — recurring exposure/auth/camera checks on Sentinel's own surface + Wi-Fi posture via existing wireless adapter"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: "#456"
+    branch: "claude/task-ig-sen-01"
+    evidence: "PR #456: new Sentinel/sentinel/modules/attacker_view/ (models/probes/audit) + tests/unit/test_ig_sen_attacker_view.py (10 tests, local 10/10 + operations 2/2 pass). Corpus sources DVYxqjPE5km, DXb4CpmDBcx, DWWlMNyCA2O. Hard allowlist refuses off-list targets (tested, never probed); read-only probes only; findings -> operations AlertEngine as BaselineDeltas (no new alert path); Wi-Fi check composes the existing WirelessConfigAssessmentAdapter (WIFI-002 WPS rule)."
+    next_action: "Coordinator: merge on green CI -> Fleet CD -> run audit server-side with default_fleet_config(140.245.208.100, 140.245.243.168), expect zero AV-EXP-001 -> flip VERIFIED."
+    files:
+      - Sentinel/sentinel/modules/attacker_view/__init__.py
+      - Sentinel/sentinel/modules/attacker_view/models.py
+      - Sentinel/sentinel/modules/attacker_view/probes.py
+      - Sentinel/sentinel/modules/attacker_view/audit.py
+      - Sentinel/tests/unit/test_ig_sen_attacker_view.py
+  - id: TASK-IG-SEN-02
+    title: "IG corpus: owner device & account posture checks — Android posture evaluator (fraud surface, dangerous grants, untrusted pairings) + recurring credential-file mode checks"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: "#468"
+    branch: "claude/task-ig-sen-02"
+    evidence: "PR #468: Sentinel/sentinel/modules/endpoint/device_posture.py + tests/unit/test_ig_sen_device_posture.py (7/7 local pass). Corpus sources DViOIKejfEK, DXeyj7HCg-M. Device evaluator is pure (judges a posture report, no device access); credential checker is stat-only (SEN-011 one-off fixes made recurring); findings -> operations AlertEngine as BaselineDeltas."
+    next_action: "Coordinator: merge on green CI -> Fleet CD -> first live pass of CredentialPostureChecker on both servers' .env/credential paths; device evaluator activates when a posture report source lands (PHONE-001 companion) -> flip VERIFIED."
+    files:
+      - Sentinel/sentinel/modules/endpoint/device_posture.py
+      - Sentinel/tests/unit/test_ig_sen_device_posture.py
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
