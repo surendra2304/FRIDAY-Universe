@@ -422,6 +422,105 @@ async def test_developer_consumes_manifest_file_via_provider(temp_engine):
     assert any("pkg layout as manifested" in p for p in provider.prompts)
 
 
+class FlakyFileProvider(FakeRealProvider):
+    """Returns unparseable Python for pkg/core.py on the first attempt
+    (the write-boundary compile gate refuses it — the FRG-009 G5 battery
+    failure mode) and valid content on the corrective retry."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.core_attempts = 0
+
+    async def generate(self, prompt, system_prompt=None, temperature=0.2, max_tokens=None, **kwargs):
+        if "contents of the file 'pkg/core.py'" in prompt:
+            self.prompts.append(prompt)
+            self.core_attempts += 1
+            if self.core_attempts == 1:
+                return ProviderResponse(
+                    content="### File: pkg/core.py\n```python\nthis is not python !!!\n```",
+                    model="fake-real-1",
+                    usage=UsageEstimate(total_tokens=5),
+                    raw_response={"served_by_model": "fake-real-1"},
+                )
+        return await super().generate(
+            prompt, system_prompt=system_prompt, temperature=temperature,
+            max_tokens=max_tokens, **kwargs,
+        )
+
+
+class BrokenFileProvider(FakeRealProvider):
+    """Always returns unparseable Python for pkg/core.py."""
+
+    async def generate(self, prompt, system_prompt=None, temperature=0.2, max_tokens=None, **kwargs):
+        if "contents of the file 'pkg/core.py'" in prompt:
+            self.prompts.append(prompt)
+            return ProviderResponse(
+                content="### File: pkg/core.py\n```python\nstill not python !!!\n```",
+                model="fake-real-1",
+                usage=UsageEstimate(total_tokens=5),
+                raw_response={"served_by_model": "fake-real-1"},
+            )
+        return await super().generate(
+            prompt, system_prompt=system_prompt, temperature=temperature,
+            max_tokens=max_tokens, **kwargs,
+        )
+
+
+@pytest.mark.asyncio
+async def test_developer_corrective_retry_heals_unparseable_file(temp_engine):
+    engine, wm = temp_engine
+    task_id = str(uuid4())
+    wm.create_workspace(task_id)
+
+    provider = FlakyFileProvider()
+    developer = DeveloperRole(provider=provider)
+    result = await developer.execute_step(
+        task_id=task_id,
+        node_title="Implement the package",
+        context={
+            "goal": "Build a tiny pkg package",
+            "requirements": [],
+            "file_manifest": list(MANIFEST),
+        },
+        engine=engine,
+    )
+
+    assert result["status"] == "success"
+    assert "pkg/core.py" in result["files_written"]
+    assert "provider_failed_files" not in result
+    assert provider.core_attempts == 2  # one rejection + one corrective retry
+    content = engine.fs.read_file(task_id, "pkg/core.py", role="developer")
+    assert "authored-by-fake-provider" in content
+
+
+@pytest.mark.asyncio
+async def test_developer_unauthorable_file_recorded_not_fatal(temp_engine):
+    engine, wm = temp_engine
+    task_id = str(uuid4())
+    wm.create_workspace(task_id)
+
+    developer = DeveloperRole(provider=BrokenFileProvider())
+    result = await developer.execute_step(
+        task_id=task_id,
+        node_title="Implement the package",
+        context={
+            "goal": "Build a tiny pkg package",
+            "requirements": [],
+            "file_manifest": list(MANIFEST),
+        },
+        engine=engine,
+    )
+
+    # The build continues; the gap is named in the result for verification
+    # to judge — it is neither hidden nor allowed to kill the whole node.
+    assert result["status"] == "success"
+    assert result["provider_failed_files"] == ["pkg/core.py"]
+    assert "pkg/__init__.py" in result["files_written"]
+    assert "main.py" in result["files_written"]
+    with pytest.raises(Exception):
+        engine.fs.read_file(task_id, "pkg/core.py", role="developer")
+
+
 @pytest.mark.asyncio
 async def test_developer_provider_failure_fails_closed(temp_engine):
     engine, wm = temp_engine
