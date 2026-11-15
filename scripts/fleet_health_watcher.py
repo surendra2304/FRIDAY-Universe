@@ -14,6 +14,7 @@ Designed for the production hosts (see deploy/fleet-health-watcher.{service,time
 
 Usage:
     python scripts/fleet_health_watcher.py --once                 # one cycle (timer mode)
+    python scripts/fleet_health_watcher.py --status               # liveness from the state file (exit 0/1/2)
     python scripts/fleet_health_watcher.py --interval 300         # daemon mode
     python scripts/fleet_health_watcher.py --state /tmp/s.json --alert-command 'curl ...'
 
@@ -192,6 +193,58 @@ class WatchState:
         tmp.replace(p)
 
 
+def open_alert_keys(state: WatchState, service: str) -> list[str]:
+    """Real open-alert keys for a service ('<service>:<ALERT_CLASS>').
+
+    The '<service>:last' bookkeeping key (the last alert/recovery note,
+    written by dispatch_alerts) is NOT an open alert. Counting it as one made
+    every healthy cycle after a service's first-ever alert emit a spurious
+    RECOVERED (TASK-SEN-010 — observed live on both production hosts: 8 junk
+    lines per cycle on Server 1, 3 on Server 2, and open_alerts never
+    returned to empty).
+    """
+    prefix = service + ":"
+    return [k for k in state.open_alerts
+            if k.startswith(prefix) and k != prefix + "last"]
+
+
+def state_status(path: str, *, max_age_s: int = 900,
+                 now_epoch: float | None = None) -> tuple[int, dict]:
+    """Watcher liveness from its state file — the canonical 'is it alive' check.
+
+    The watcher is a timer-triggered oneshot: its systemd unit reads
+    'inactive (dead)' between runs even when perfectly healthy (that resting
+    state was misread as an outage by the TASK-REL-045 inventory). Judge it
+    by the state file instead: exit 0 = a cycle completed within max_age_s;
+    1 = state file present but stale or unreadable; 2 = no state file
+    (the watcher has never completed a cycle on this host).
+    """
+    p = Path(path)
+    report: dict = {"state_file": path, "last_cycle": "",
+                    "age_s": None, "open_alerts": {}}
+    if not p.is_file():
+        report["status"] = "missing"
+        return 2, report
+    state = WatchState.load(path)
+    report["last_cycle"] = state.last_cycle
+    report["open_alerts"] = {
+        k: v for k, v in state.open_alerts.items() if not k.endswith(":last")
+    }
+    age = None
+    if state.last_cycle:
+        try:
+            last = dt.datetime.strptime(state.last_cycle, "%Y-%m-%dT%H:%M:%SZ")
+            last = last.replace(tzinfo=dt.timezone.utc)
+            age = int((time.time() if now_epoch is None else now_epoch)
+                      - last.timestamp())
+        except ValueError:
+            age = None
+    report["age_s"] = age
+    fresh = age is not None and 0 <= age <= max_age_s
+    report["status"] = "fresh" if fresh else "stale"
+    return (0 if fresh else 1), report
+
+
 def evaluate(
     snapshot: ServiceSnapshot,
     state: WatchState,
@@ -241,7 +294,7 @@ def evaluate(
             "severity": "warning",
         })
 
-    was_alerted = any(k.startswith(snapshot.name + ":") for k in state.open_alerts)
+    was_alerted = bool(open_alert_keys(state, snapshot.name))
     if not alerts and was_alerted:
         alerts.append({
             "alert": "RECOVERED",
@@ -315,7 +368,19 @@ def main() -> int:
     ap.add_argument("--cooldown", type=int, default=1800, help="seconds before re-alerting the same condition")
     ap.add_argument("--alert-command", default=os.environ.get("FLEET_ALERT_COMMAND"),
                     help="shell command invoked per NEW alert (env: FLEET_ALERT_TEXT, FLEET_ALERT_JSON)")
+    ap.add_argument("--status", action="store_true",
+                    help="report watcher liveness from the state file and exit "
+                         "(0=fresh, 1=stale, 2=no state file); the canonical "
+                         "is-the-watcher-alive check — the oneshot unit itself "
+                         "reads 'inactive (dead)' between timer runs")
+    ap.add_argument("--max-age", type=int, default=900,
+                    help="--status freshness budget in seconds (default 900 = 3 missed cycles)")
     args = ap.parse_args()
+
+    if args.status:
+        code, report = state_status(args.state, max_age_s=args.max_age)
+        print(json.dumps(report, indent=2))
+        return code
 
     services = parse_services(args.services)
     state = WatchState.load(args.state)
