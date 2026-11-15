@@ -95,6 +95,12 @@ def _stats(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "estimated_fee_fills": sum(
             1 for r in rows if str(r.get("fees_source") or "") != "broker"
         ),
+        # Rows whose "broker" fees cover only the EXIT-side commission
+        # (the entry side was never staged) — their net_pnl is overstated
+        # by the missing entry commission (TASK-STR-RD-010).
+        "exit_only_fee_fills": sum(
+            1 for r in rows if str(r.get("fees_scope") or "") == "exit_only"
+        ),
         "first_exit": rows[0].get("recorded_at") if rows else None,
         "last_exit": rows[-1].get("recorded_at") if rows else None,
     }

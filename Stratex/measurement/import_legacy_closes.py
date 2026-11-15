@@ -16,6 +16,17 @@ ledger as what they are:
 Idempotent: a record whose close_order_id already exists in the ledger
 is skipped, so re-running is safe.
 
+Fee scope (TASK-STR-RD-010): the 2026-11-14 staged records carry fills
+for the CLOSE order only, so their "fees" are the exit-side commission
+alone — exchange-verified against userTrades: the entry-side commissions
+(SOL 4.41769956, UNI 4.41956800, PAXG 0.53000094; $9.37 total) are
+missing, and the imported net_pnl overstates the legacy result by that
+amount (corrected legacy net +$186.34, not +$195.71). Every imported row
+is therefore stamped with fees_scope: "exit_only" when the staged fills
+cover only the close order, "round_trip" when they extend beyond it,
+"unknown" when no fill list was staged. The scorecard surfaces the
+exit_only count so the caveat travels with the numbers.
+
 Run on the server from the Stratex/ directory:
     python3 -m measurement.import_legacy_closes
 """
@@ -64,6 +75,23 @@ def import_records(path: Path | None = None) -> Dict[str, int]:
             counts["skipped_existing"] += 1
             continue
         closed_ms = float(rec.get("closed_at_ms") or 0.0)
+        fill_ids = [str(x) for x in (rec.get("fill_order_ids") or [])]
+        if fill_ids and set(fill_ids) == {order_id}:
+            fees_scope = "exit_only"
+        elif fill_ids:
+            fees_scope = "round_trip"
+        else:
+            fees_scope = "unknown"
+        if fees_scope == "exit_only":
+            logger.warning(
+                "[MEASUREMENT] Legacy record %s: staged fills cover ONLY "
+                "the close order %s — 'fees' are the exit-side commission "
+                "only and net_pnl is overstated by the missing entry-side "
+                "commission (TASK-STR-RD-010). Row stamped "
+                "fees_scope='exit_only'.",
+                rec.get("symbol"),
+                order_id,
+            )
         row = {
             "strategy": "LEGACY-UNATTRIBUTED",
             "engine": "daemon",
@@ -78,6 +106,7 @@ def import_records(path: Path | None = None) -> Dict[str, int]:
             "gross_pnl": float(rec.get("gross_pnl") or 0.0),
             "fees": float(rec.get("fees") or 0.0),
             "fees_source": "broker",
+            "fees_scope": fees_scope,
             "net_pnl": float(rec.get("net_pnl") or 0.0),
             "exit_reason": "OWNER_DIRECTED_CLOSE",
             "order_id": order_id,
