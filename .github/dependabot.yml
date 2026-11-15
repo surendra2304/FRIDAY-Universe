@@ -52,3 +52,147 @@ updates:
       - "python"
     commit-message:
       prefix: "deps(friday):"
+
+  - package-ecosystem: "pip"
+    directory: "/Inference"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(inference):"
+
+  - package-ecosystem: "pip"
+    directory: "/Memora"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(memora):"
+
+  - package-ecosystem: "pip"
+    directory: "/Stratex"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(stratex):"
+
+  - package-ecosystem: "pip"
+    directory: "/Futuris"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(futuris):"
+
+  - package-ecosystem: "pip"
+    directory: "/IntelX"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(intelx):"
+
+  - package-ecosystem: "pip"
+    directory: "/Forge"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(forge):"
+
+  - package-ecosystem: "pip"
+    directory: "/Sentinel"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(sentinel):"
+
+  - package-ecosystem: "pip"
+    directory: "/Cortex"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(cortex):"
+
+  - package-ecosystem: "pip"
+    directory: "/VyralX"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 3
+    groups:
+      python-security:
+        update-types: ["patch"]
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(vyralx):"
