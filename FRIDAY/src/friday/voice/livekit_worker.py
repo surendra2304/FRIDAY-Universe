@@ -1874,6 +1874,93 @@ def _warm_up_background() -> None:
     threading.Thread(target=_run, name="friday-voice-warmup", daemon=True).start()
 
 
+# ---------------------------------------------------------------------------
+# TASK-VOI-008 — a warmed job executor, resident before the call arrives.
+#
+# Diagnosis (the owner's 2026-11-15 question: why did the greeting take
+# 25.6 s, and why "blame the server"?): the journal for job
+# AJ_5zsYdisRNeJ4 shows the worker was CONFIGURED to start every call
+# cold — WorkerOptions carried num_idle_processes=0, so the SDK pool
+# kept zero warmed executors and the job paid executor creation on the
+# critical path ("no warmed process available for job, waiting for one
+# to be created", 10:58:34.420; "job runner initialized" 1.78 s later).
+# That is a software setting in this file, not a hardware fact.
+#
+# Why THREAD + exactly 1 idle: a warmed executor in THREAD mode is a
+# thread inside this process — no second interpreter, no duplicated
+# imports; its marginal footprint is thread/runner state (single-digit
+# MB). The alternative PROCESS mode would hold a full second copy of
+# this worker resident: this service's cgroup footprint already peaks
+# at ~242 MB (FRIDAY-Voice MemoryMax=300M; measured 2026-11-15:
+# memory.current 31.6 MB + memory.swap.current 194 MB) on a 956 MB
+# host with ~163 MB available, so a warmed process cannot fit beside a
+# live job without breaching the cap and inviting a mid-call OOM kill.
+#
+# The prewarm hook itself stays featherweight: executor initialisation
+# has a 10 s SDK timeout and a failure removes the executor from the
+# pool, so the hook only starts a throttled daemon thread that pays
+# the first-use network costs a job otherwise pays serially — one
+# owner-memory recall (client construction + first Memora round-trip;
+# the job still recalls fresh for its own instructions) and one
+# throwaway EdgeTTS synthesis of the fixed greeting line (DNS/TLS/
+# WebSocket + first-synthesis costs; the audio is discarded).
+# Executors are warmed at worker start and after every job, while
+# calls arrive minutes to hours apart, so the thread is done long
+# before it matters. Every step is best-effort: a warm failure only
+# ever logs.
+# ---------------------------------------------------------------------------
+_EXECUTOR_WARM_LOCK = threading.Lock()
+_EXECUTOR_WARM_LAST = [0.0]
+_EXECUTOR_WARM_MIN_INTERVAL_S = 45.0
+
+
+def _executor_warm_steps() -> None:
+    """The warm thread's work: pay first-use costs, discard results."""
+    started = time.time()
+    try:
+        _owner_memory_lines()
+    except Exception as exc:
+        logger.info("VOICE executor warm: memory recall failed (non-fatal): %s", exc)
+    try:
+        if EDGE_TTS_AVAILABLE:
+            import edge_tts
+
+            async def _drain() -> None:
+                comm = edge_tts.Communicate(
+                    "I am here, Boss. What would you like to work on?",
+                    _edge_voice(),
+                )
+                async for _chunk in comm.stream():
+                    pass
+
+            asyncio.run(_drain())
+    except Exception as exc:
+        logger.info("VOICE executor warm: edge-tts synthesis failed (non-fatal): %s", exc)
+    logger.info("VOICE executor warm finished in %.1fs", time.time() - started)
+
+
+def _start_executor_warm() -> None:
+    """Start the warm thread unless one ran very recently."""
+    now = time.time()
+    with _EXECUTOR_WARM_LOCK:
+        if now - _EXECUTOR_WARM_LAST[0] < _EXECUTOR_WARM_MIN_INTERVAL_S:
+            return
+        _EXECUTOR_WARM_LAST[0] = now
+    threading.Thread(
+        target=_executor_warm_steps, name="friday-voice-executor-warm", daemon=True
+    ).start()
+
+
+def _prewarm_job_executor(proc) -> None:
+    """SDK prewarm hook (WorkerOptions.prewarm_fnc): runs inside each
+    job executor as the pool warms it. Must never raise and must return
+    immediately — see the TASK-VOI-008 note above."""
+    try:
+        _start_executor_warm()
+    except Exception:
+        pass
+
+
 def _on_worker_started() -> None:
     """Worker process heartbeat: the service is up and registered."""
     _write_status("registered", "pending", detail="waiting for the first job")
@@ -1893,6 +1980,28 @@ def _agent_name() -> str:
     return (os.getenv("FRIDAY_VOICE_AGENT_NAME") or "friday").strip() or "friday"
 
 
+def _worker_options() -> WorkerOptions:
+    """Worker registration options.
+
+    TASK-VOI-008: num_idle_processes=1 keeps ONE job executor warmed
+    and resident (see _prewarm_job_executor), so a call no longer pays
+    executor creation on its critical path; the executor type stays
+    THREAD because a warmed PROCESS executor cannot fit this host's
+    memory budget (numbers in the TASK-VOI-008 note above
+    _prewarm_job_executor).
+    """
+    return WorkerOptions(
+        entrypoint_fnc=entrypoint,
+        agent_name=_agent_name(),
+        ws_url=os.getenv("LIVEKIT_URL"),
+        api_key=os.getenv("LIVEKIT_API_KEY"),
+        api_secret=os.getenv("LIVEKIT_API_SECRET"),
+        num_idle_processes=1,
+        job_executor_type=JobExecutorType.THREAD,
+        prewarm_fnc=_prewarm_job_executor,
+    )
+
+
 if __name__ == "__main__":
     try:
         from livekit.agents import RunConfig, run_kwargs  # type: ignore
@@ -1901,14 +2010,4 @@ if __name__ == "__main__":
     except Exception:
         pass
     _on_worker_started()
-    cli.run_app(
-        WorkerOptions(
-            entrypoint_fnc=entrypoint,
-            agent_name=_agent_name(),
-            ws_url=os.getenv("LIVEKIT_URL"),
-            api_key=os.getenv("LIVEKIT_API_KEY"),
-            api_secret=os.getenv("LIVEKIT_API_SECRET"),
-            num_idle_processes=0,
-            job_executor_type=JobExecutorType.THREAD,
-        )
-    )
+    cli.run_app(_worker_options())
