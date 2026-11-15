@@ -153,12 +153,36 @@ class DecisionRecommendationSystem:
         if not self._criteria or not self._alternatives:
             raise HTTPException(400, "Need criteria and alternatives")
 
-        # Calculate weighted scores for each alternative
+        # TASK-REL-047: no silent defaults. A criterion an alternative was
+        # never scored on used to contribute an invented 0.5 to the weighted
+        # score (TASK-COR-002's controlled live probe: a recommendation with
+        # confidence 0.5833 computed from a matrix that was 75% invented
+        # cells, with no hint in the output). An incomplete score matrix is
+        # now rejected outright: the caller gets HTTP 422 naming every
+        # missing cell, not a recommendation computed from invented inputs.
+        missing = [
+            f"{alt.name} / {crit.name}"
+            for alt in self._alternatives.values()
+            for crit in self._criteria.values()
+            if crit.criterion_id not in alt.criteria_scores
+        ]
+        if missing:
+            raise HTTPException(
+                422,
+                "Incomplete decision matrix: missing scores for "
+                + ", ".join(missing)
+                + ". Supply a score for every alternative-by-criterion cell "
+                "before requesting a recommendation.",
+            )
+
+        # Calculate weighted scores for each alternative. Completeness is
+        # validated above, so direct indexing is safe — and any future path
+        # that bypasses validation fails loudly instead of inventing a 0.5.
         scores = {}
         for alt_id, alt in self._alternatives.items():
             total_score = 0.0
             for crit_id, crit in self._criteria.items():
-                score = alt.criteria_scores.get(crit_id, 0.5)
+                score = alt.criteria_scores[crit_id]
                 # Normalize if direction is minimize
                 if crit.direction == "minimize":
                     score = 1.0 - score
@@ -189,7 +213,7 @@ class DecisionRecommendationSystem:
             # Vary weight by ±20%
             varied_scores = {}
             for alt_id, alt in self._alternatives.items():
-                score = alt.criteria_scores.get(crit_id, 0.5)
+                score = alt.criteria_scores[crit_id]
                 if crit.direction == "minimize":
                     score = 1.0 - score
                 varied_scores[alt_id] = score * crit.weight * 1.2
