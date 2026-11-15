@@ -830,6 +830,7 @@ class MemoryWriteService:
 
             # Knowledge Graph Entity Resolution & Auto-Linking
             graph_links = []
+            graph_link_error = None
             try:
                 from core.memory.graph_service import GraphService
                 linked_edges = GraphService.auto_link_entity_memories(db, record, extracted_meta)
@@ -838,7 +839,18 @@ class MemoryWriteService:
                     for edge in linked_edges if edge
                 ]
             except Exception as e:
-                logger.debug(f"Graph auto-linking skipped: {e}")
+                # Fail-soft (a graph failure must not fail the write), but
+                # never silent: a skipped auto-link leaves the record with no
+                # companion edges, which is indistinguishable from "nothing
+                # to link" unless the failure is logged at WARNING and
+                # recorded in the step trace. TASK-MEM-011: the previous
+                # debug-only swallow is what made a healthy write path look
+                # broken during the MEM-002 graph-companion investigation.
+                graph_link_error = f"{type(e).__name__}: {e}"
+                logger.warning(
+                    "Graph auto-linking failed for memory %s: %s",
+                    record.id, graph_link_error,
+                )
 
             # Graceful Vector Upsert with tenant isolation
             vector_indexed = False
@@ -885,7 +897,8 @@ class MemoryWriteService:
                 "storage_durability": storage["durability"],
                 "vector_indexed": vector_indexed,
                 "graph_links_created": len(graph_links),
-                "graph_links": graph_links
+                "graph_links": graph_links,
+                "graph_link_error": graph_link_error
             }
 
             # -------------------------------------------------------------
