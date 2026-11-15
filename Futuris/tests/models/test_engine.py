@@ -78,6 +78,9 @@ def test_router_heuristics_policy_branches():
     assert router.select_candidates(meta_short, horizon_steps=24) == ["drift", "naive"]
 
     # Rich history (>= 2016) with weekly seasonality
+    # TASK-FUT-007: 'auto_arima' is now a candidate in the rich/moderate
+    # branches — it is the only exogenous-capable adapter (calendar
+    # features), and it was previously registered but never routed.
     meta_rich = SeriesMetadata(
         history_points=2500, frequency_minutes=5, has_weekly_seasonality=True
     )
@@ -86,6 +89,7 @@ def test_router_heuristics_policy_branches():
         "auto_ets",
         "seasonal_naive",
         "drift",
+        "auto_arima",
         "naive",
     ]
 
@@ -95,6 +99,7 @@ def test_router_heuristics_policy_branches():
         "seasonal_naive",
         "auto_ets",
         "drift",
+        "auto_arima",
         "naive",
     ]
 

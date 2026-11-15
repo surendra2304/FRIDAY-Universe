@@ -1,12 +1,17 @@
 """StatsForecast model adapters: Naive, SeasonalNaive, Drift, AutoETS, AutoARIMA, MeanEnsemble."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
+from futuris.features.contextualize import (
+    CALENDAR_FEATURE_COLUMNS,
+    ContextLayer,
+    summarize_known_events,
+)
 from futuris.models.base import (
     ModelPrediction,
     PredictionIntervals,
@@ -81,6 +86,12 @@ except (ImportError, OSError) as exc:
 class BaseStatsForecastAdapter:
     """Base wrapper for single-series statsforecast model estimators."""
 
+    # TASK-FUT-007: whether the wrapped backend can consume exogenous
+    # regressors. Only AutoARIMA in the statsforecast family accepts X;
+    # the other adapters keep the univariate contract and say so here
+    # instead of silently discarding the feature frame they were handed.
+    supports_exogenous: bool = False
+
     def __init__(self, name: str, config: dict[str, Any] | None = None) -> None:
         self._name = name
         self._config = config or {}
@@ -88,6 +99,63 @@ class BaseStatsForecastAdapter:
         self.y_history: np.ndarray | None = None
         self.residuals: np.ndarray = np.array([])
         self.as_of: datetime | None = None
+        # Exogenous-wiring state (TASK-FUT-007): the calendar columns the
+        # model was actually fitted with, and the history grid needed to
+        # derive the future calendar frame at predict time.
+        self.exog_columns: list[str] = []
+        self.exog_used: bool = False
+        self._last_observed_ts: datetime | None = None
+        self._step_minutes: float | None = None
+
+    def _note_history_frame(self, x: pd.DataFrame | None) -> None:
+        """Record the history grid (last timestamp + step) from the fit frame.
+
+        Known future events are functions of future timestamps; deriving
+        those timestamps at predict time requires knowing where history
+        ended and on what grid — information every caller already passes
+        in ``x`` and every adapter previously threw away.
+        """
+        if x is None or not isinstance(x.index, pd.DatetimeIndex) or len(x) == 0:
+            return
+        self._last_observed_ts = x.index[-1].to_pydatetime()
+        if len(x) >= 2:
+            step = (x.index[-1] - x.index[-2]).total_seconds() / 60.0
+            if step > 0:
+                self._step_minutes = step
+
+    def _future_calendar_frame(
+        self,
+        horizon: int,
+        future_x: pd.DataFrame | None,
+    ) -> pd.DataFrame:
+        """Resolve the future calendar frame for an exogenous predict.
+
+        An explicit ``future_x`` wins (validated for length); otherwise the
+        frame is derived deterministically from the recorded history grid.
+        Raises ValueError when neither is possible — an exogenous model
+        must never be served a silently wrong or silently absent frame.
+        """
+        if future_x is not None:
+            if len(future_x) != horizon:
+                msg = (
+                    f"future_x has {len(future_x)} rows but horizon is {horizon}; "
+                    "refusing to misalign known-event features with forecast steps"
+                )
+                raise ValueError(msg)
+            return future_x
+        if self._last_observed_ts is None or self._step_minutes is None:
+            msg = (
+                "model was fitted with exogenous calendar features but the "
+                "history frame carried no DatetimeIndex grid to derive future "
+                "timestamps from, and no future_x was supplied"
+            )
+            raise ValueError(msg)
+        start = self._last_observed_ts + timedelta(minutes=self._step_minutes)
+        return ContextLayer().build_future_calendar_features(
+            start=start,
+            steps=horizon,
+            step_minutes=int(self._step_minutes),
+        )
 
     @property
     def name(self) -> str:
@@ -125,6 +193,7 @@ class BaseStatsForecastAdapter:
         point_forecast: np.ndarray,
         capacity_threshold: float | None = None,
         probability_method: str = "empirical",
+        extra_metadata: dict[str, Any] | None = None,
     ) -> ModelPrediction:
         std_res = float(np.std(self.residuals)) if len(self.residuals) > 0 else 0.0
         z_90 = 1.645  # 90% prediction interval
@@ -160,6 +229,9 @@ class BaseStatsForecastAdapter:
                 method=probability_method,
             )
 
+        metadata: dict[str, Any] = {"model": self.name, "config_hash": self.get_config_hash()}
+        if extra_metadata:
+            metadata.update(extra_metadata)
         return ModelPrediction(
             point_forecast=[float(v) for v in point_forecast],
             intervals=intervals,
@@ -167,7 +239,7 @@ class BaseStatsForecastAdapter:
             range_upper=round(range_upper, 2),
             central_estimate=round(central, 2),
             exceedance_probability=prob,
-            metadata={"model": self.name, "config_hash": self.get_config_hash()},
+            metadata=metadata,
         )
 
 
@@ -178,7 +250,7 @@ class NaiveAdapter(BaseStatsForecastAdapter):
         super().__init__("naive", config)
 
     def fit(self, x: pd.DataFrame, y: pd.Series, as_of: datetime) -> "NaiveAdapter":
-        _ = x
+        self._note_history_frame(x)
         self.as_of = as_of
         self.y_history = y.to_numpy(dtype=float)
         self.fitted_model = _SF_Naive().fit(y=self.y_history)
@@ -190,7 +262,9 @@ class NaiveAdapter(BaseStatsForecastAdapter):
         horizon: int,
         capacity_threshold: float | None = None,
         probability_method: str = "empirical",
+        future_x: pd.DataFrame | None = None,
     ) -> ModelPrediction:
+        _ = future_x  # univariate backend: known events cannot move this model
         preds = self.fitted_model.predict(h=horizon)["mean"]
         return self._build_prediction(preds, capacity_threshold, probability_method)
 
@@ -206,7 +280,7 @@ class SeasonalNaiveAdapter(BaseStatsForecastAdapter):
         self.season_length = season_length
 
     def fit(self, x: pd.DataFrame, y: pd.Series, as_of: datetime) -> "SeasonalNaiveAdapter":
-        _ = x
+        self._note_history_frame(x)
         self.as_of = as_of
         self.y_history = y.to_numpy(dtype=float)
         eff_season = self.season_length if len(self.y_history) >= self.season_length else 1
@@ -224,7 +298,9 @@ class SeasonalNaiveAdapter(BaseStatsForecastAdapter):
         horizon: int,
         capacity_threshold: float | None = None,
         probability_method: str = "empirical",
+        future_x: pd.DataFrame | None = None,
     ) -> ModelPrediction:
+        _ = future_x  # univariate backend: known events cannot move this model
         preds = self.fitted_model.predict(h=horizon)["mean"]
         return self._build_prediction(preds, capacity_threshold, probability_method)
 
@@ -236,7 +312,7 @@ class DriftAdapter(BaseStatsForecastAdapter):
         super().__init__("drift", config)
 
     def fit(self, x: pd.DataFrame, y: pd.Series, as_of: datetime) -> "DriftAdapter":
-        _ = x
+        self._note_history_frame(x)
         self.as_of = as_of
         self.y_history = y.to_numpy(dtype=float)
         self.fitted_model = _SF_RandomWalkWithDrift().fit(y=self.y_history)
@@ -248,7 +324,9 @@ class DriftAdapter(BaseStatsForecastAdapter):
         horizon: int,
         capacity_threshold: float | None = None,
         probability_method: str = "empirical",
+        future_x: pd.DataFrame | None = None,
     ) -> ModelPrediction:
+        _ = future_x  # univariate backend: known events cannot move this model
         preds = self.fitted_model.predict(h=horizon)["mean"]
         return self._build_prediction(preds, capacity_threshold, probability_method)
 
@@ -264,7 +342,7 @@ class AutoETSAdapter(BaseStatsForecastAdapter):
         self.season_length = season_length
 
     def fit(self, x: pd.DataFrame, y: pd.Series, as_of: datetime) -> "AutoETSAdapter":
-        _ = x
+        self._note_history_frame(x)
         self.as_of = as_of
         self.y_history = y.to_numpy(dtype=float)
         # Cap eff_season at 24 for ETS numerical stability
@@ -279,13 +357,25 @@ class AutoETSAdapter(BaseStatsForecastAdapter):
         horizon: int,
         capacity_threshold: float | None = None,
         probability_method: str = "empirical",
+        future_x: pd.DataFrame | None = None,
     ) -> ModelPrediction:
+        _ = future_x  # statsforecast ETS accepts no regressors; stated, not hidden
         preds = self.fitted_model.predict(h=horizon)["mean"]
         return self._build_prediction(preds, capacity_threshold, probability_method)
 
 
 class AutoARIMAAdapter(BaseStatsForecastAdapter):
-    """Automatic ARIMA adapter with deterministic search parameters."""
+    """Automatic ARIMA adapter with deterministic search parameters.
+
+    TASK-FUT-007: this is the one statsforecast backend that accepts
+    exogenous regressors, so it is where known future events (holidays,
+    weekends — the calendar block ContextLayer computes) enter the
+    forecast path. Fit passes the historical calendar columns as X;
+    predict passes the future calendar frame for the horizon, derived
+    from the recorded history grid unless the caller supplies one.
+    """
+
+    supports_exogenous = True
 
     def __init__(self, season_length: int = 1, config: dict[str, Any] | None = None) -> None:
         cfg = {"season_length": season_length, "max_p": 3, "max_q": 3}
@@ -295,15 +385,35 @@ class AutoARIMAAdapter(BaseStatsForecastAdapter):
         self.season_length = season_length
 
     def fit(self, x: pd.DataFrame, y: pd.Series, as_of: datetime) -> "AutoARIMAAdapter":
-        _ = x
+        self._note_history_frame(x)
         self.as_of = as_of
         self.y_history = y.to_numpy(dtype=float)
         eff_season = self.season_length if len(self.y_history) >= 2 * self.season_length else 1
-        self.fitted_model = _SF_AutoARIMA(
+        model = _SF_AutoARIMA(
             season_length=eff_season,
             max_p=self.config.get("max_p", 3),
             max_q=self.config.get("max_q", 3),
-        ).fit(y=self.y_history)
+        )
+        self.exog_columns = (
+            [c for c in CALENDAR_FEATURE_COLUMNS if c in x.columns] if x is not None else []
+        )
+        self.exog_used = False
+        if self.exog_columns:
+            try:
+                self.fitted_model = model.fit(y=self.y_history, X=x[self.exog_columns])
+                self.exog_used = True
+            except TypeError:
+                # A backend build without regressor support: fall back to
+                # the univariate fit and record that events are NOT wired,
+                # rather than pretending otherwise.
+                logger.warning(
+                    "auto_arima_exogenous_unsupported_by_backend: "
+                    "fitted univariately; calendar features not consumed"
+                )
+                self.fitted_model = model.fit(y=self.y_history)
+                self.exog_columns = []
+        else:
+            self.fitted_model = model.fit(y=self.y_history)
         self._extract_residuals(self.y_history)
         return self
 
@@ -312,7 +422,26 @@ class AutoARIMAAdapter(BaseStatsForecastAdapter):
         horizon: int,
         capacity_threshold: float | None = None,
         probability_method: str = "empirical",
+        future_x: pd.DataFrame | None = None,
     ) -> ModelPrediction:
+        if self.exog_used and self.exog_columns:
+            future_frame = self._future_calendar_frame(horizon, future_x)
+            missing = [c for c in self.exog_columns if c not in future_frame.columns]
+            if missing:
+                msg = f"future calendar frame is missing fitted exogenous columns: {missing}"
+                raise ValueError(msg)
+            preds = self.fitted_model.predict(
+                h=horizon, X=future_frame[self.exog_columns]
+            )["mean"]
+            return self._build_prediction(
+                preds,
+                capacity_threshold,
+                probability_method,
+                extra_metadata={
+                    "exogenous_features": list(self.exog_columns),
+                    "known_event_steps": summarize_known_events(future_frame),
+                },
+            )
         preds = self.fitted_model.predict(h=horizon)["mean"]
         return self._build_prediction(preds, capacity_threshold, probability_method)
 
@@ -366,9 +495,17 @@ class MeanEnsembleAdapter:
         horizon: int,
         capacity_threshold: float | None = None,
         probability_method: str = "empirical",
+        future_x: pd.DataFrame | None = None,
     ) -> ModelPrediction:
-        p_ets = self.ets_adapter.predict(horizon, capacity_threshold, probability_method)
-        p_snaive = self.snaive_adapter.predict(horizon, capacity_threshold, probability_method)
+        # Both components are univariate backends; future_x is forwarded so
+        # the call contract is uniform, and both document that known events
+        # cannot move them.
+        p_ets = self.ets_adapter.predict(
+            horizon, capacity_threshold, probability_method, future_x=future_x
+        )
+        p_snaive = self.snaive_adapter.predict(
+            horizon, capacity_threshold, probability_method, future_x=future_x
+        )
 
         avg_point = 0.5 * (np.array(p_ets.point_forecast) + np.array(p_snaive.point_forecast))
         # Clamp at zero for non-negative series, same rule as the single-model
