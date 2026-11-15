@@ -88,6 +88,20 @@ def groq_prompt_over_limit(request: ProviderRequest) -> bool:
     return estimate_prompt_tokens(request) > GROQ_PROMPT_TOKEN_LIMIT
 
 
+def nvidia_rung_enabled() -> bool:
+    """Whether the NVIDIA rung may be attempted (TASK-REL-047).
+
+    Disabled by default: the configured NVIDIA model id returns HTTP 404
+    ("function id not found") on both fleet accounts (TASK-INF-004;
+    TASK-SEN-003 counted 62 dead-function retries), so every ladder attempt
+    on the rung burns request budget on a provider that cannot answer.
+    Re-enable only by setting INFERENCE_NVIDIA_RUNG_ENABLED=true after an
+    INF-003-W5-style metadata probe verifies a live model id. The adapter
+    code itself is untouched — this gate is configuration, not deletion.
+    """
+    return bool(settings.INFERENCE_NVIDIA_RUNG_ENABLED)
+
+
 def _request_timeout_budget(request: ProviderRequest) -> float:
     """Validate the finite positive deadline shared by primary and fallback work."""
     value = request.extra_params.get("timeout", settings.REQUEST_TIMEOUT or 60.0)
@@ -374,6 +388,27 @@ class ModelGateway:
                 capability=capability,
                 stage_name=stage_name,
                 last_error=over_limit,
+                deadline=deadline,
+                skip_local_tier=local_tier_attempted,
+            )
+
+        if prov_name == "nvidia" and not nvidia_rung_enabled():
+            rung_disabled = ProviderUnconfiguredError(
+                "Provider 'nvidia' is disabled by configuration "
+                "(INFERENCE_NVIDIA_RUNG_ENABLED is off; TASK-REL-047); skipping without an attempt.",
+                provider=prov_name,
+                model=request.model,
+            )
+            logger.warning(
+                "GATEWAY: NVIDIA rung is disabled by configuration; "
+                "escalating to the fallback ladder without an attempt."
+            )
+            return await self._execute_dynamic_fallback(
+                failed_provider=prov_name,
+                request=request,
+                capability=capability,
+                stage_name=stage_name,
+                last_error=rung_disabled,
                 deadline=deadline,
                 skip_local_tier=local_tier_attempted,
             )
@@ -803,6 +838,11 @@ class ModelGateway:
                         GROQ_PROMPT_TOKEN_LIMIT,
                     )
                     continue
+                if sec_name == "nvidia" and not nvidia_rung_enabled():
+                    logger.info(
+                        "GATEWAY FALLBACK: Skipping 'nvidia' — rung disabled by configuration (TASK-REL-047)."
+                    )
+                    continue
                 if not provider_has_credentials(sec_name):
                     logger.debug("GATEWAY FALLBACK: Skipping '%s' — no credentials configured.", sec_name)
                     continue
@@ -1032,6 +1072,14 @@ class ModelGateway:
                 provider=prov_name,
                 model=request.model,
             )
+        if prov_name == "nvidia" and not nvidia_rung_enabled():
+            raise ProviderUnconfiguredError(
+                "Provider 'nvidia' is disabled by configuration "
+                "(INFERENCE_NVIDIA_RUNG_ENABLED is off; TASK-REL-047); streaming was not attempted.",
+                provider=prov_name,
+                model=request.model,
+            )
+
         if not provider_has_credentials(prov_name):
             raise ProviderUnconfiguredError(
                 f"Provider '{prov_name}' has no configured credential; streaming was not attempted.",
