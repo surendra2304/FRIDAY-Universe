@@ -37,72 +37,104 @@ ERA_START = pd.Timestamp("2024-07-01", tz="UTC")
 ERA_END = pd.Timestamp("2026-11-01", tz="UTC")
 
 
-def stream_daily_equity(trades) -> pd.Series:
-    """Daily equity (start 1.0) compounding the stream's trades at exit."""
-    if not trades:
-        return pd.Series(dtype=float)
-    # compound sequentially per exit day
-    eq = {}
-    cur = 1.0
-    for t in sorted(trades, key=lambda x: x.exit_time):
-        d = t.exit_time.normalize()
-        cur *= (1.0 + t.net_return)
-        eq[d] = cur
+def stream_daily_returns(trades) -> pd.Series:
+    """Daily returns of ONE stream under fixed-fractional sizing.
+
+    A pooled stream holds many overlapping positions (up to 30 symbols
+    at once); compounding every trade sequentially at 100% size would
+    be unbounded implicit leverage and produces meaningless equity
+    explosions. Instead the stream is treated as an equal-weight book:
+    each day, the stream's return is the sum of that day's exiting
+    trades' net returns divided by the number of positions actually
+    open that day (sweep-line count). 30 positions exiting together at
+    -8% therefore yield a -8% day, not -240%. Disclosed in every
+    Stage C result.
+    """
     days = pd.date_range(ERA_START, ERA_END, freq="D")
-    s = pd.Series(eq).reindex(days).ffill().fillna(1.0)
+    if not trades:
+        return pd.Series(0.0, index=days)
+    day0 = days[0]
+    ndays = len(days)
+    diff = np.zeros(ndays + 1)
+    exit_sum = np.zeros(ndays)
+    for t in trades:
+        e = (t.entry_time.normalize() - day0).days
+        x = (t.exit_time.normalize() - day0).days
+        e = min(max(e, 0), ndays - 1)
+        x = min(max(x, 0), ndays - 1)
+        diff[e] += 1
+        if x + 1 < ndays:
+            diff[x + 1] -= 1
+        exit_sum[x] += t.net_return
+    open_count = np.cumsum(diff)[:ndays]
+    open_count = np.maximum(open_count, 1.0)
+    rets = exit_sum / open_count
+    active = open_count > 0
+    k_avg = float(open_count[active].mean()) if active.any() else 1.0
+    s = pd.Series(rets, index=days)
+    s.attrs["avg_concurrency"] = k_avg
     return s
 
 
+def stream_daily_equity(trades) -> pd.Series:
+    """Daily equity (start 1.0) from the stream's normalized returns."""
+    r = stream_daily_returns(trades)
+    return (1.0 + r).cumprod()
+
+
 def combine(streams: dict[str, list], weighting: str) -> dict:
-    eqs = {k: stream_daily_equity(v) for k, v in streams.items()
-           if len(v) > 0}
-    if len(eqs) < 2:
-        return {"status": "INSUFFICIENT_STREAMS", "n_streams": len(eqs)}
-    E = pd.DataFrame(eqs)
-    R = E.pct_change().fillna(0.0)
+    rets = {k: stream_daily_returns(v) for k, v in streams.items()
+            if len(v) > 0}
+    if len(rets) < 2:
+        return {"status": "INSUFFICIENT_STREAMS", "n_streams": len(rets)}
+    R = pd.DataFrame(rets)
+    conc = {k: rets[k].attrs.get("avg_concurrency") for k in rets}
     if weighting == "equal":
-        port_eq = E.mean(axis=1)
-        port_eq = port_eq / port_eq.iloc[0]
+        port_ret = R.mean(axis=1)
     else:  # inverse-vol, expanding, monthly refresh
-        weights = pd.DataFrame(0.0, index=E.index, columns=E.columns)
-        cur_w = {c: 1.0 / len(E.columns) for c in E.columns}
+        weights = pd.DataFrame(0.0, index=R.index, columns=R.columns)
+        cur_w = {c: 1.0 / len(R.columns) for c in R.columns}
         last_refresh = None
-        for d in E.index:
+        for d in R.index:
             if last_refresh is None or (d - last_refresh).days >= 30:
                 hist = R.loc[:d].iloc[:-1]  # strictly past returns
                 if len(hist) >= 60:
                     vol = hist.std()
                     inv = {c: (1.0 / vol[c] if vol[c] > 1e-9 else 0.0)
-                           for c in E.columns}
+                           for c in R.columns}
                     tot = sum(inv.values())
                     if tot > 0:
-                        cur_w = {c: inv[c] / tot for c in E.columns}
+                        cur_w = {c: inv[c] / tot for c in R.columns}
                 last_refresh = d
-            for c in E.columns:
+            for c in R.columns:
                 weights.loc[d, c] = cur_w[c]
         port_ret = (weights.shift(1).fillna(
-            {c: 1.0 / len(E.columns) for c in E.columns}) * R).sum(axis=1)
-        port_eq = (1.0 + port_ret).cumprod()
+            {c: 1.0 / len(R.columns) for c in R.columns}) * R).sum(axis=1)
+    port_eq = (1.0 + port_ret).cumprod()
     total = float(port_eq.iloc[-1] - 1.0)
     dd = float((port_eq / port_eq.cummax() - 1.0).min())
-    daily = port_eq.pct_change().dropna()
+    daily = port_ret
     sharpe_d = float(daily.mean() / daily.std() * np.sqrt(252)) \
         if daily.std() > 0 else 0.0
     corr = R.corr()
     iu = np.triu_indices(len(corr), k=1)
     mean_corr = float(corr.values[iu].mean()) if len(corr) > 1 else None
-    pos_streams = sum(1 for v in streams.values()
-                      if v and np.prod([1 + t.net_return for t in v]) > 1.0)
+    stream_totals = {k: float((1.0 + rets[k]).prod() - 1.0) for k in rets}
+    pos_streams = sum(1 for v in stream_totals.values() if v > 0)
     return {"status": "EVALUATED", "weighting": weighting,
-            "n_streams": len(eqs), "total_return_compounded": total,
+            "sizing": "equal-weight book: daily return = sum of the "
+                      "day's exiting net returns / positions open that day",
+            "n_streams": len(rets), "total_return_compounded": total,
             "max_drawdown": dd, "sharpe_daily_ann": sharpe_d,
             "mean_pairwise_corr": mean_corr,
             "correlation_matrix": {a: {b: (None if pd.isna(corr.loc[a, b])
                                             else float(corr.loc[a, b]))
                                         for b in corr.columns}
                                    for a in corr.index},
-            "streams_positive_share": pos_streams / max(1, len(eqs)),
-            "streams": sorted(eqs.keys())}
+            "streams_positive_share": pos_streams / max(1, len(rets)),
+            "stream_total_returns": stream_totals,
+            "stream_avg_concurrency": conc,
+            "streams": sorted(rets.keys())}
 
 
 def load_streams(out_dir: Path) -> list[dict]:
@@ -123,6 +155,15 @@ def load_streams(out_dir: Path) -> list[dict]:
             if not oos:
                 continue
             po = r["report"]["pooled_oos"]
+            # Unit-integrity guard (same rule as synth): pairs rows are
+            # denominated in log-spread units, not capital returns —
+            # single "trades" of -500% or +1300% poison any equity
+            # construction. Excluded from Stage C entirely.
+            if po.get("expectancy_net") is not None and \
+                    abs(po["expectancy_net"]) > 0.5:
+                continue
+            if any(abs(t.net_return) > 1.0 for t in oos):
+                continue
             rows.append({
                 "id": f"{r['family']}/{r['variant']}@{r['panel']}/{r['timeframe']}",
                 "family": r["family"], "variant": r["variant"],

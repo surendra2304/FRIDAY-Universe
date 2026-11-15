@@ -1,0 +1,241 @@
+{
+ "family": "governed",
+ "variant": "strategy_factory_winner_4:bare",
+ "module": "strategy_factory_winner_4",
+ "config": "bare",
+ "panel": "idx7",
+ "timeframe": "1d",
+ "status": "EVALUATED",
+ "detail": {
+  "feature_pipeline": "module.add_features",
+  "trades_by_symbol": {
+   "SPX": 65,
+   "NDX": 52,
+   "DJI": 56,
+   "RUT": 52,
+   "FTSE": 38,
+   "NIKKEI": 39,
+   "DAX": 49
+  },
+  "signals_without_bracket": 0
+ },
+ "symbols": [
+  "DAX",
+  "DJI",
+  "FTSE",
+  "NDX",
+  "NIKKEI",
+  "RUT",
+  "SPX"
+ ],
+ "report": {
+  "per_fold": {
+   "W1": {
+    "oos_start": "2024-07-01",
+    "oos_end": "2025-01-01",
+    "trades": 26,
+    "wins": 6,
+    "win_rate": 0.23076923076923078,
+    "expectancy_net": -0.011220213250090379,
+    "profit_factor_net": 0.48052901031718737,
+    "avg_win_net": 0.04497607180128633,
+    "avg_loss_net": -0.028079098765503387,
+    "total_return_net": -0.2651862785751722,
+    "max_drawdown_net": -0.3813507315450194
+   },
+   "W2": {
+    "oos_start": "2025-01-01",
+    "oos_end": "2025-07-01",
+    "trades": 23,
+    "wins": 11,
+    "win_rate": 0.4782608695652174,
+    "expectancy_net": 0.030062921817656935,
+    "profit_factor_net": 2.7472093437496277,
+    "avg_win_net": 0.09883554232596045,
+    "avg_loss_net": -0.03297864698162127,
+    "total_return_net": 0.8657961743748643,
+    "max_drawdown_net": -0.16232025971211428
+   },
+   "W3": {
+    "oos_start": "2025-07-01",
+    "oos_end": "2026-01-01",
+    "trades": 27,
+    "wins": 1,
+    "win_rate": 0.037037037037037035,
+    "expectancy_net": -0.019596073279292775,
+    "profit_factor_net": 0.10842196948682727,
+    "avg_win_net": 0.06434143645734268,
+    "avg_loss_net": -0.022824439038394137,
+    "total_return_net": -0.41672817039277354,
+    "max_drawdown_net": -0.41672817039277343
+   },
+   "W4": {
+    "oos_start": "2026-01-01",
+    "oos_end": "2026-07-01",
+    "trades": 23,
+    "wins": 8,
+    "win_rate": 0.34782608695652173,
+    "expectancy_net": 0.0032031135311354933,
+    "profit_factor_net": 1.1761923635261253,
+    "avg_win_net": 0.061475412999534663,
+    "avg_loss_net": -0.027875446185344065,
+    "total_return_net": 0.051509936375977894,
+    "max_drawdown_net": -0.19751235511454557
+   },
+   "W5": {
+    "oos_start": "2026-07-01",
+    "oos_end": "2026-11-01",
+    "trades": 14,
+    "wins": 8,
+    "win_rate": 0.5714285714285714,
+    "expectancy_net": 0.008730550864605667,
+    "profit_factor_net": 1.685729987732327,
+    "avg_win_net": 0.03755904716734926,
+    "avg_loss_net": -0.02970744420571912,
+    "total_return_net": 0.11927010296206175,
+    "max_drawdown_net": -0.1484753277725327
+   }
+  },
+  "pooled_oos": {
+   "trades": 113,
+   "wins": 34,
+   "win_rate": 0.3008849557522124,
+   "expectancy_net": 0.0005887345317119513,
+   "profit_factor_net": 1.0309840435037227,
+   "avg_win_net": 0.06510777982899107,
+   "avg_loss_net": -0.027178955849395517,
+   "total_return_net": -0.05884589291486242,
+   "max_drawdown_net": -0.5174208815338155
+  },
+  "per_symbol_oos": {
+   "DAX": {
+    "trades": 12,
+    "wins": 3,
+    "win_rate": 0.25,
+    "expectancy_net": 0.0007657500874713487,
+    "profit_factor_net": 1.041246543109341,
+    "avg_win_net": 0.07732377759285723,
+    "avg_loss_net": -0.02475359241432394,
+    "total_return_net": -0.003714536414998304,
+    "max_drawdown_net": -0.11886615917158516
+   },
+   "DJI": {
+    "trades": 23,
+    "wins": 7,
+    "win_rate": 0.30434782608695654,
+    "expectancy_net": 1.7123924792982155e-05,
+    "profit_factor_net": 1.0010399361447568,
+    "avg_win_net": 0.05415989809401799,
+    "avg_loss_net": -0.02367033977424296,
+    "total_return_net": -0.017005445262773256,
+    "max_drawdown_net": -0.12733225229864897
+   },
+   "FTSE": {
+    "trades": 9,
+    "wins": 3,
+    "win_rate": 0.3333333333333333,
+    "expectancy_net": 0.005722917841019293,
+    "profit_factor_net": 1.5247846616848242,
+    "avg_win_net": 0.04988456017018339,
+    "avg_loss_net": -0.016357903323562753,
+    "total_return_net": 0.047525773526446935,
+    "max_drawdown_net": -0.07925214788232271
+   },
+   "NDX": {
+    "trades": 13,
+    "wins": 5,
+    "win_rate": 0.38461538461538464,
+    "expectancy_net": 0.0071257460728924565,
+    "profit_factor_net": 1.3388741789561345,
+    "avg_win_net": 0.0731989712986505,
+    "avg_loss_net": -0.03417001969320632,
+    "total_return_net": 0.07255859153618882,
+    "max_drawdown_net": -0.13344459028404754
+   },
+   "NIKKEI": {
+    "trades": 13,
+    "wins": 2,
+    "win_rate": 0.15384615384615385,
+    "expectancy_net": -0.014815113153226965,
+    "profit_factor_net": 0.5612903595099145,
+    "avg_win_net": 0.12320511389110418,
+    "avg_loss_net": -0.0399096998885599,
+    "total_return_net": -0.19520437860787476,
+    "max_drawdown_net": -0.2681804045840782
+   },
+   "RUT": {
+    "trades": 21,
+    "wins": 7,
+    "win_rate": 0.3333333333333333,
+    "expectancy_net": 0.0013085273455235363,
+    "profit_factor_net": 1.0631191142159313,
+    "avg_win_net": 0.06611881914603222,
+    "avg_loss_net": -0.031096618554730806,
+    "total_return_net": 0.0009493161744149603,
+    "max_drawdown_net": -0.13396489761807984
+   },
+   "SPX": {
+    "trades": 22,
+    "wins": 7,
+    "win_rate": 0.3181818181818182,
+    "expectancy_net": 0.0035418449083061995,
+    "profit_factor_net": 1.259940812916481,
+    "avg_win_net": 0.05395477084868039,
+    "avg_loss_net": -0.019984187197201755,
+    "total_return_net": 0.06179921660480403,
+    "max_drawdown_net": -0.11157689955609296
+   }
+  },
+  "fold_profile": [
+   "W1",
+   "W2",
+   "W3",
+   "W4",
+   "W5"
+  ]
+ },
+ "holdout": {
+  "symbols_active_min20": 3,
+  "symbols_positive": 3,
+  "breadth_positive_share": 1.0,
+  "max_symbol_profit_share": 0.3574925028912631,
+  "max_share_cap": 0.5,
+  "untouched_subset": [
+   "FTSE",
+   "RUT"
+  ],
+  "untouched_trades": 30,
+  "untouched_expectancy": 0.002632844494172263,
+  "passes": true
+ },
+ "bar": {
+  "bar": {
+   "expectancy_net_gt": 0.0,
+   "profit_factor_net_gte": 1.2,
+   "min_oos_trades": 200,
+   "min_positive_fold_share": 0.8,
+   "positive_folds_needed": 4,
+   "positive_folds": 3,
+   "folds_with_trades": 5
+  },
+  "checks": {
+   "expectancy_net_gt_0": true,
+   "profit_factor_net_gte_1.2": false,
+   "min_oos_trades_200": false,
+   "positive_folds": false,
+   "holdout_passes": true
+  },
+  "passes_bar": false
+ },
+ "trade_stats": {
+  "n": 113,
+  "sharpe_per_trade": 0.012086567668132004,
+  "t_stat": 0.12848197668772743,
+  "p_one_sided": 0.4488837802625185,
+  "skew": 1.4460186835372735,
+  "kurtosis": 4.54454848055851
+ },
+ "pooled_trades_total": 351,
+ "seconds": 11.11,
+ "trades_stripped_for_ship": true
+}

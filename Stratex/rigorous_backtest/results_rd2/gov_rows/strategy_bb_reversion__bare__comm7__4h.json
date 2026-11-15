@@ -1,0 +1,227 @@
+{
+ "family": "governed",
+ "variant": "strategy_bb_reversion:bare",
+ "module": "strategy_bb_reversion",
+ "config": "bare",
+ "panel": "comm7",
+ "timeframe": "4h",
+ "status": "EVALUATED",
+ "detail": {
+  "feature_pipeline": "module.add_features",
+  "trades_by_symbol": {
+   "GOLD": 119,
+   "SILVER": 117,
+   "WTI": 111,
+   "BRENT": 101,
+   "NATGAS": 114,
+   "COPPER": 96,
+   "PLATINUM": 110
+  },
+  "signals_without_bracket": 0
+ },
+ "symbols": [
+  "BRENT",
+  "COPPER",
+  "GOLD",
+  "NATGAS",
+  "PLATINUM",
+  "SILVER",
+  "WTI"
+ ],
+ "report": {
+  "per_fold": {
+   "W2": {
+    "oos_start": "2025-01-01",
+    "oos_end": "2025-07-01",
+    "trades": 175,
+    "wins": 64,
+    "win_rate": 0.3657142857142857,
+    "expectancy_net": 0.0011819085153707714,
+    "profit_factor_net": 1.0791364784516475,
+    "avg_win_net": 0.04406985173049634,
+    "avg_loss_net": -0.023546274960016947,
+    "total_return_net": 0.09669966259582097,
+    "max_drawdown_net": -0.2700690744260761
+   },
+   "W3": {
+    "oos_start": "2025-07-01",
+    "oos_end": "2026-01-01",
+    "trades": 198,
+    "wins": 80,
+    "win_rate": 0.40404040404040403,
+    "expectancy_net": 0.004502603475742031,
+    "profit_factor_net": 1.3332007638201804,
+    "avg_win_net": 0.044589075824534176,
+    "avg_loss_net": -0.02267466591326959,
+    "total_return_net": 1.1200691949975847,
+    "max_drawdown_net": -0.3584999827585501
+   },
+   "W4": {
+    "oos_start": "2026-01-01",
+    "oos_end": "2026-07-01",
+    "trades": 205,
+    "wins": 58,
+    "win_rate": 0.28292682926829266,
+    "expectancy_net": -0.00673058708571014,
+    "profit_factor_net": 0.7359059339549541,
+    "avg_win_net": 0.06628915409845808,
+    "avg_loss_net": -0.03554109721279692,
+    "total_return_net": -0.8112338123342397,
+    "max_drawdown_net": -0.837169326948783
+   },
+   "W5": {
+    "oos_start": "2026-07-01",
+    "oos_end": "2026-11-01",
+    "trades": 165,
+    "wins": 59,
+    "win_rate": 0.3575757575757576,
+    "expectancy_net": 0.0007260270158676183,
+    "profit_factor_net": 1.0449352790943687,
+    "avg_win_net": 0.04721572498288605,
+    "avg_loss_net": -0.025150314305397353,
+    "total_return_net": 0.003931915599197255,
+    "max_drawdown_net": -0.3758216611528381
+   }
+  },
+  "pooled_oos": {
+   "trades": 743,
+   "wins": 261,
+   "win_rate": 0.351278600269179,
+   "expectancy_net": -0.00021753218918656056,
+   "profit_factor_net": 0.9877367352525714,
+   "avg_win_net": 0.0498777597257293,
+   "avg_loss_net": -0.027343820964690783,
+   "total_return_net": -0.5593779655699849,
+   "max_drawdown_net": -0.8497662725119363
+  },
+  "per_symbol_oos": {
+   "BRENT": {
+    "trades": 96,
+    "wins": 30,
+    "win_rate": 0.3125,
+    "expectancy_net": -0.0023913987264521327,
+    "profit_factor_net": 0.8880796390008922,
+    "avg_win_net": 0.06072182037259107,
+    "avg_loss_net": -0.03107922558965359,
+    "total_return_net": -0.2878799251955373,
+    "max_drawdown_net": -0.5329354123584531
+   },
+   "COPPER": {
+    "trades": 91,
+    "wins": 37,
+    "win_rate": 0.4065934065934066,
+    "expectancy_net": 0.002408452650301823,
+    "profit_factor_net": 1.1967216537266772,
+    "avg_win_net": 0.03603452183863787,
+    "avg_loss_net": -0.020631631793558054,
+    "total_return_net": 0.1948097084872933,
+    "max_drawdown_net": -0.1728355184697632
+   },
+   "GOLD": {
+    "trades": 116,
+    "wins": 43,
+    "win_rate": 0.3706896551724138,
+    "expectancy_net": 0.0014045572262112267,
+    "profit_factor_net": 1.1471117750478907,
+    "avg_win_net": 0.029545223131275007,
+    "avg_loss_net": -0.015171451457593464,
+    "total_return_net": 0.1388804306379725,
+    "max_drawdown_net": -0.13105117392893684
+   },
+   "NATGAS": {
+    "trades": 112,
+    "wins": 39,
+    "win_rate": 0.3482142857142857,
+    "expectancy_net": 0.002431791071295942,
+    "profit_factor_net": 1.1082539790560795,
+    "avg_win_net": 0.07149490705610279,
+    "avg_loss_net": -0.0344649421260666,
+    "total_return_net": 0.10846862327714346,
+    "max_drawdown_net": -0.414632414580155
+   },
+   "PLATINUM": {
+    "trades": 107,
+    "wins": 36,
+    "win_rate": 0.3364485981308411,
+    "expectancy_net": 0.0002723426665196854,
+    "profit_factor_net": 1.014529111455635,
+    "avg_win_net": 0.056522637675423794,
+    "avg_loss_net": -0.028248933676023245,
+    "total_return_net": -0.07437004657749147,
+    "max_drawdown_net": -0.2771839790181283
+   },
+   "SILVER": {
+    "trades": 114,
+    "wins": 37,
+    "win_rate": 0.32456140350877194,
+    "expectancy_net": -0.0035078864798043356,
+    "profit_factor_net": 0.8252783075695512,
+    "avg_win_net": 0.05105076563667775,
+    "avg_loss_net": -0.02972438165265936,
+    "total_return_net": -0.3946647709156471,
+    "max_drawdown_net": -0.5864674833914643
+   },
+   "WTI": {
+    "trades": 107,
+    "wins": 39,
+    "win_rate": 0.3644859813084112,
+    "expectancy_net": -0.0020163754658807085,
+    "profit_factor_net": 0.8970881874767522,
+    "avg_win_net": 0.04822369524366268,
+    "avg_loss_net": -0.03083053366694235,
+    "total_return_net": -0.2678849151485849,
+    "max_drawdown_net": -0.5312580960735727
+   }
+  },
+  "fold_profile": [
+   "W2",
+   "W3",
+   "W4",
+   "W5"
+  ]
+ },
+ "holdout": {
+  "symbols_active_min20": 7,
+  "symbols_positive": 4,
+  "breadth_positive_share": 0.5714285714285714,
+  "max_symbol_profit_share": 0.3984215340373098,
+  "max_share_cap": 0.5,
+  "untouched_subset": [
+   "GOLD",
+   "SILVER"
+  ],
+  "untouched_trades": 230,
+  "untouched_expectancy": -0.0010303061759008346,
+  "passes": false
+ },
+ "bar": {
+  "bar": {
+   "expectancy_net_gt": 0.0,
+   "profit_factor_net_gte": 1.2,
+   "min_oos_trades": 200,
+   "min_positive_fold_share": 0.8,
+   "positive_folds_needed": 4,
+   "positive_folds": 3,
+   "folds_with_trades": 4
+  },
+  "checks": {
+   "expectancy_net_gt_0": false,
+   "profit_factor_net_gte_1.2": false,
+   "min_oos_trades_200": true,
+   "positive_folds": false,
+   "holdout_passes": false
+  },
+  "passes_bar": false
+ },
+ "trade_stats": {
+  "n": 768,
+  "sharpe_per_trade": -0.00926800386238496,
+  "t_stat": -0.2568424571903255,
+  "p_one_sided": 0.6013498034525344,
+  "skew": 1.0522570516257372,
+  "kurtosis": 4.376808297728289
+ },
+ "pooled_trades_total": 768,
+ "seconds": 3.82,
+ "trades_stripped_for_ship": true
+}

@@ -1,0 +1,294 @@
+{
+ "family": "governed",
+ "variant": "strategy_bb_reversion:bare",
+ "module": "strategy_bb_reversion",
+ "config": "bare",
+ "panel": "forex12",
+ "timeframe": "4h",
+ "status": "EVALUATED",
+ "detail": {
+  "feature_pipeline": "module.add_features",
+  "trades_by_symbol": {
+   "EURUSD": 151,
+   "GBPUSD": 161,
+   "USDJPY": 153,
+   "USDCHF": 142,
+   "AUDUSD": 157,
+   "USDCAD": 134,
+   "NZDUSD": 154,
+   "EURGBP": 133,
+   "EURJPY": 156,
+   "GBPJPY": 153,
+   "AUDJPY": 160,
+   "EURCHF": 117
+  },
+  "signals_without_bracket": 0
+ },
+ "symbols": [
+  "AUDJPY",
+  "AUDUSD",
+  "EURCHF",
+  "EURGBP",
+  "EURJPY",
+  "EURUSD",
+  "GBPJPY",
+  "GBPUSD",
+  "NZDUSD",
+  "USDCAD",
+  "USDCHF",
+  "USDJPY"
+ ],
+ "report": {
+  "per_fold": {
+   "W2": {
+    "oos_start": "2025-01-01",
+    "oos_end": "2025-07-01",
+    "trades": 418,
+    "wins": 153,
+    "win_rate": 0.3660287081339713,
+    "expectancy_net": -0.00038839878862981627,
+    "profit_factor_net": 0.9045085476061766,
+    "avg_win_net": 0.010051037518203368,
+    "avg_loss_net": -0.006415695977103316,
+    "total_return_net": -0.16236602373647002,
+    "max_drawdown_net": -0.252892394059293
+   },
+   "W3": {
+    "oos_start": "2025-07-01",
+    "oos_end": "2026-01-01",
+    "trades": 494,
+    "wins": 159,
+    "win_rate": 0.32186234817813764,
+    "expectancy_net": -0.0007133193082099729,
+    "profit_factor_net": 0.7643062506938423,
+    "avg_win_net": 0.007186760144476786,
+    "avg_loss_net": -0.004462909257395628,
+    "total_return_net": -0.302549729721025,
+    "max_drawdown_net": -0.33807579939987975
+   },
+   "W4": {
+    "oos_start": "2026-01-01",
+    "oos_end": "2026-07-01",
+    "trades": 481,
+    "wins": 176,
+    "win_rate": 0.3659043659043659,
+    "expectancy_net": -0.0002905242287857008,
+    "profit_factor_net": 0.9034793647667538,
+    "avg_win_net": 0.007432122031320116,
+    "avg_loss_net": -0.004746870923141845,
+    "total_return_net": -0.1386797383219216,
+    "max_drawdown_net": -0.1940980794839876
+   },
+   "W5": {
+    "oos_start": "2026-07-01",
+    "oos_end": "2026-11-01",
+    "trades": 338,
+    "wins": 102,
+    "win_rate": 0.30177514792899407,
+    "expectancy_net": -0.0008454962402003683,
+    "profit_factor_net": 0.7001573818079538,
+    "avg_win_net": 0.006542300975195307,
+    "avg_loss_net": -0.004038527240074771,
+    "total_return_net": -0.25207002640915177,
+    "max_drawdown_net": -0.2892793842727751
+   }
+  },
+  "pooled_oos": {
+   "trades": 1731,
+   "wins": 590,
+   "win_rate": 0.340843443096476,
+   "expectancy_net": -0.0005431833131927421,
+   "profit_factor_net": 0.8319818082751299,
+   "avg_win_net": 0.007891308102100316,
+   "avg_loss_net": -0.004904576770706243,
+   "total_return_net": -0.6236489486099903,
+   "max_drawdown_net": -0.6309318909764879
+  },
+  "per_symbol_oos": {
+   "AUDJPY": {
+    "trades": 157,
+    "wins": 54,
+    "win_rate": 0.34394904458598724,
+    "expectancy_net": -0.00029734457892559583,
+    "profit_factor_net": 0.9284504240385232,
+    "avg_win_net": 0.011218055188809958,
+    "avg_loss_net": -0.006334544457155887,
+    "total_return_net": -0.05148888799202955,
+    "max_drawdown_net": -0.08298190073525202
+   },
+   "AUDUSD": {
+    "trades": 154,
+    "wins": 58,
+    "win_rate": 0.37662337662337664,
+    "expectancy_net": -0.00023551700453474002,
+    "profit_factor_net": 0.9336560208169437,
+    "avg_win_net": 0.008800358865144518,
+    "avg_loss_net": -0.0056946920091326255,
+    "total_return_net": -0.039732893517980705,
+    "max_drawdown_net": -0.050605809762392484
+   },
+   "EURCHF": {
+    "trades": 112,
+    "wins": 43,
+    "win_rate": 0.38392857142857145,
+    "expectancy_net": -9.518136423492156e-05,
+    "profit_factor_net": 0.9622311853542334,
+    "avg_win_net": 0.006316079174648318,
+    "avg_loss_net": -0.004090604598611433,
+    "total_return_net": -0.012186581116655826,
+    "max_drawdown_net": -0.06137472426182666
+   },
+   "EURGBP": {
+    "trades": 131,
+    "wins": 44,
+    "win_rate": 0.33587786259541985,
+    "expectancy_net": -0.000675529938459983,
+    "profit_factor_net": 0.6939466043748208,
+    "avg_win_net": 0.004560285920988249,
+    "avg_loss_net": -0.0033235287639280546,
+    "total_return_net": -0.08565046910807939,
+    "max_drawdown_net": -0.09416193019785524
+   },
+   "EURJPY": {
+    "trades": 152,
+    "wins": 45,
+    "win_rate": 0.29605263157894735,
+    "expectancy_net": -0.0011628212181558685,
+    "profit_factor_net": 0.6580013467584134,
+    "avg_win_net": 0.007556947561745715,
+    "avg_loss_net": -0.004830013695684572,
+    "total_return_net": -0.16438397774130342,
+    "max_drawdown_net": -0.165043301772533
+   },
+   "EURUSD": {
+    "trades": 147,
+    "wins": 45,
+    "win_rate": 0.30612244897959184,
+    "expectancy_net": -0.000894307011539875,
+    "profit_factor_net": 0.7034358028182097,
+    "avg_win_net": 0.006929425119131114,
+    "avg_loss_net": -0.004345953539777074,
+    "total_return_net": -0.12525201774629757,
+    "max_drawdown_net": -0.14307275281749088
+   },
+   "GBPJPY": {
+    "trades": 148,
+    "wins": 48,
+    "win_rate": 0.32432432432432434,
+    "expectancy_net": -0.0007919078778285283,
+    "profit_factor_net": 0.7679805439905434,
+    "avg_win_net": 0.008082039243177885,
+    "avg_loss_net": -0.005051402495911607,
+    "total_return_net": -0.113405378687645,
+    "max_drawdown_net": -0.13996024416786335
+   },
+   "GBPUSD": {
+    "trades": 158,
+    "wins": 64,
+    "win_rate": 0.4050632911392405,
+    "expectancy_net": 0.0002603878816354496,
+    "profit_factor_net": 1.1044810436115267,
+    "avg_win_net": 0.006795456643259649,
+    "avg_loss_net": -0.004189020636917196,
+    "total_return_net": 0.03940948246993248,
+    "max_drawdown_net": -0.05083995153310794
+   },
+   "NZDUSD": {
+    "trades": 152,
+    "wins": 51,
+    "win_rate": 0.3355263157894737,
+    "expectancy_net": -0.000748244972225566,
+    "profit_factor_net": 0.8054944598579065,
+    "avg_win_net": 0.009235231809244557,
+    "avg_loss_net": -0.005789406515344143,
+    "total_return_net": -0.11115565536279959,
+    "max_drawdown_net": -0.15264158129509453
+   },
+   "USDCAD": {
+    "trades": 131,
+    "wins": 34,
+    "win_rate": 0.2595419847328244,
+    "expectancy_net": -0.0011670981325227574,
+    "profit_factor_net": 0.5849707542459514,
+    "avg_win_net": 0.006338043354899609,
+    "avg_loss_net": -0.003797766282753278,
+    "total_return_net": -0.14305931522940563,
+    "max_drawdown_net": -0.1564899446607022
+   },
+   "USDCHF": {
+    "trades": 139,
+    "wins": 54,
+    "win_rate": 0.38848920863309355,
+    "expectancy_net": 0.0001887698848660214,
+    "profit_factor_net": 1.059353884080357,
+    "avg_win_net": 0.008672527196700098,
+    "avg_loss_net": -0.005200911230887392,
+    "total_return_net": 0.02309040402967355,
+    "max_drawdown_net": -0.08707716640984597
+   },
+   "USDJPY": {
+    "trades": 150,
+    "wins": 50,
+    "win_rate": 0.3333333333333333,
+    "expectancy_net": -0.0008899049946382257,
+    "profit_factor_net": 0.7663788977708389,
+    "avg_win_net": 0.008757827127824573,
+    "avg_loss_net": -0.005713771055869626,
+    "total_return_net": -0.128475644718974,
+    "max_drawdown_net": -0.16152106179464376
+   }
+  },
+  "fold_profile": [
+   "W2",
+   "W3",
+   "W4",
+   "W5"
+  ]
+ },
+ "holdout": {
+  "symbols_active_min20": 12,
+  "symbols_positive": 2,
+  "breadth_positive_share": 0.16666666666666666,
+  "max_symbol_profit_share": 0.6105832970318892,
+  "max_share_cap": 0.5,
+  "untouched_subset": [
+   "EURCHF",
+   "EURUSD",
+   "NZDUSD",
+   "USDJPY"
+  ],
+  "untouched_trades": 561,
+  "untouched_expectancy": -0.0006940150240012349,
+  "passes": false
+ },
+ "bar": {
+  "bar": {
+   "expectancy_net_gt": 0.0,
+   "profit_factor_net_gte": 1.2,
+   "min_oos_trades": 200,
+   "min_positive_fold_share": 0.8,
+   "positive_folds_needed": 4,
+   "positive_folds": 0,
+   "folds_with_trades": 4
+  },
+  "checks": {
+   "expectancy_net_gt_0": false,
+   "profit_factor_net_gte_1.2": false,
+   "min_oos_trades_200": true,
+   "positive_folds": false,
+   "holdout_passes": false
+  },
+  "passes_bar": false
+ },
+ "trade_stats": {
+  "n": 1771,
+  "sharpe_per_trade": -0.08205421897235517,
+  "t_stat": -3.4531082782632296,
+  "p_one_sided": 0.9997229167430022,
+  "skew": 0.7337126889622794,
+  "kurtosis": 2.517938480039711
+ },
+ "pooled_trades_total": 1771,
+ "seconds": 14.35,
+ "trades_stripped_for_ship": true
+}

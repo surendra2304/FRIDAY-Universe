@@ -1,0 +1,1262 @@
+{
+  "streams_available": 851,
+  "eligible": 566,
+  "combinations": [
+    {
+      "status": "EVALUATED",
+      "weighting": "equal",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 5,
+      "total_return_compounded": 1.0254187052671986,
+      "max_drawdown": -0.201669040144409,
+      "sharpe_daily_ann": 0.944747425155375,
+      "mean_pairwise_corr": 0.3723049948381829,
+      "correlation_matrix": {
+        "shock_breakout/k1.0@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 1.0,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": -0.053323660265230416,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.07080400280415694,
+          "macd_trend/hist_raw@crypto30/1d": 0.06592414392284701,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.10085284123429053
+        },
+        "tsmom2_dual/roc90_ema200@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.053323660265230416,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 1.0,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5623386128967662,
+          "macd_trend/hist_raw@crypto30/1d": 0.6336037678700288,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5663314210017909
+        },
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.07080400280415694,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5623386128967662,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.0,
+          "macd_trend/hist_raw@crypto30/1d": 0.6201824881585456,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5822041439630887
+        },
+        "macd_trend/hist_raw@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06592414392284701,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.6336037678700288,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.6201824881585456,
+          "macd_trend/hist_raw@crypto30/1d": 1.0,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5741321867955443
+        },
+        "donchian_turtle/n55_b26@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.10085284123429053,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5663314210017909,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5822041439630887,
+          "macd_trend/hist_raw@crypto30/1d": 0.5741321867955443,
+          "donchian_turtle/n55_b26@crypto30/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "shock_breakout/k1.0@crypto30/1wk": 0.2512060209631921,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 0.887023208938666,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.668965240135471,
+        "macd_trend/hist_raw@crypto30/1d": 1.824372035082634,
+        "donchian_turtle/n55_b26@crypto30/1d": 0.22588225291048425
+      },
+      "stream_avg_concurrency": {
+        "shock_breakout/k1.0@crypto30/1wk": 19.519906323185012,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 13.67096018735363,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 17.59367681498829,
+        "macd_trend/hist_raw@crypto30/1d": 24.229508196721312,
+        "donchian_turtle/n55_b26@crypto30/1d": 18.741217798594846
+      },
+      "streams": [
+        "donchian_turtle/n55_b26@crypto30/1d",
+        "macd_trend/hist_raw@crypto30/1d",
+        "shock_breakout/k1.0@crypto30/1wk",
+        "tsmom2_dual/roc90_ema200@crypto30/1d",
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d"
+      ],
+      "set": "top5_overall"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "invvol",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 5,
+      "total_return_compounded": 1.1240740520025185,
+      "max_drawdown": -0.19767114211476622,
+      "sharpe_daily_ann": 1.0145379269601036,
+      "mean_pairwise_corr": 0.3723049948381829,
+      "correlation_matrix": {
+        "shock_breakout/k1.0@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 1.0,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": -0.053323660265230416,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.07080400280415694,
+          "macd_trend/hist_raw@crypto30/1d": 0.06592414392284701,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.10085284123429053
+        },
+        "tsmom2_dual/roc90_ema200@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.053323660265230416,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 1.0,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5623386128967662,
+          "macd_trend/hist_raw@crypto30/1d": 0.6336037678700288,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5663314210017909
+        },
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.07080400280415694,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5623386128967662,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.0,
+          "macd_trend/hist_raw@crypto30/1d": 0.6201824881585456,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5822041439630887
+        },
+        "macd_trend/hist_raw@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06592414392284701,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.6336037678700288,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.6201824881585456,
+          "macd_trend/hist_raw@crypto30/1d": 1.0,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5741321867955443
+        },
+        "donchian_turtle/n55_b26@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.10085284123429053,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5663314210017909,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5822041439630887,
+          "macd_trend/hist_raw@crypto30/1d": 0.5741321867955443,
+          "donchian_turtle/n55_b26@crypto30/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "shock_breakout/k1.0@crypto30/1wk": 0.2512060209631921,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 0.887023208938666,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.668965240135471,
+        "macd_trend/hist_raw@crypto30/1d": 1.824372035082634,
+        "donchian_turtle/n55_b26@crypto30/1d": 0.22588225291048425
+      },
+      "stream_avg_concurrency": {
+        "shock_breakout/k1.0@crypto30/1wk": 19.519906323185012,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 13.67096018735363,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 17.59367681498829,
+        "macd_trend/hist_raw@crypto30/1d": 24.229508196721312,
+        "donchian_turtle/n55_b26@crypto30/1d": 18.741217798594846
+      },
+      "streams": [
+        "donchian_turtle/n55_b26@crypto30/1d",
+        "macd_trend/hist_raw@crypto30/1d",
+        "shock_breakout/k1.0@crypto30/1wk",
+        "tsmom2_dual/roc90_ema200@crypto30/1d",
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d"
+      ],
+      "set": "top5_overall"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "equal",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 3,
+      "total_return_compounded": 1.0396531726549125,
+      "max_drawdown": -0.20643939321282956,
+      "sharpe_daily_ann": 0.938711757741087,
+      "mean_pairwise_corr": 0.19327298514523092,
+      "correlation_matrix": {
+        "shock_breakout/k1.0@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 1.0,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": -0.053323660265230416,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.07080400280415694
+        },
+        "tsmom2_dual/roc90_ema200@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.053323660265230416,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 1.0,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5623386128967662
+        },
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.07080400280415694,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5623386128967662,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "shock_breakout/k1.0@crypto30/1wk": 0.2512060209631921,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 0.887023208938666,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.668965240135471
+      },
+      "stream_avg_concurrency": {
+        "shock_breakout/k1.0@crypto30/1wk": 19.519906323185012,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 13.67096018735363,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 17.59367681498829
+      },
+      "streams": [
+        "shock_breakout/k1.0@crypto30/1wk",
+        "tsmom2_dual/roc90_ema200@crypto30/1d",
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d"
+      ],
+      "set": "top3_crypto"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "invvol",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 3,
+      "total_return_compounded": 1.1070187761133514,
+      "max_drawdown": -0.20105614393104654,
+      "sharpe_daily_ann": 0.9804757031405817,
+      "mean_pairwise_corr": 0.19327298514523092,
+      "correlation_matrix": {
+        "shock_breakout/k1.0@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 1.0,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": -0.053323660265230416,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.07080400280415694
+        },
+        "tsmom2_dual/roc90_ema200@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.053323660265230416,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 1.0,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5623386128967662
+        },
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.07080400280415694,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5623386128967662,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "shock_breakout/k1.0@crypto30/1wk": 0.2512060209631921,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 0.887023208938666,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.668965240135471
+      },
+      "stream_avg_concurrency": {
+        "shock_breakout/k1.0@crypto30/1wk": 19.519906323185012,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 13.67096018735363,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 17.59367681498829
+      },
+      "streams": [
+        "shock_breakout/k1.0@crypto30/1wk",
+        "tsmom2_dual/roc90_ema200@crypto30/1d",
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d"
+      ],
+      "set": "top3_crypto"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "equal",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 3,
+      "total_return_compounded": 0.09280865953597672,
+      "max_drawdown": -0.02153268966441335,
+      "sharpe_daily_ann": 1.2393960019346733,
+      "mean_pairwise_corr": 0.08291577601764398,
+      "correlation_matrix": {
+        "tsmom2_dual/roc90_ema200@forex28/1d": {
+          "tsmom2_dual/roc90_ema200@forex28/1d": 1.0,
+          "zscore_reversion/w50_t2.5_filt@forex28/1d": 0.3153025114517727,
+          "stoch_reversion/k14_raw@forex28/1d": -0.009550392823869616
+        },
+        "zscore_reversion/w50_t2.5_filt@forex28/1d": {
+          "tsmom2_dual/roc90_ema200@forex28/1d": 0.3153025114517727,
+          "zscore_reversion/w50_t2.5_filt@forex28/1d": 1.0,
+          "stoch_reversion/k14_raw@forex28/1d": -0.05700479057497115
+        },
+        "stoch_reversion/k14_raw@forex28/1d": {
+          "tsmom2_dual/roc90_ema200@forex28/1d": -0.009550392823869616,
+          "zscore_reversion/w50_t2.5_filt@forex28/1d": -0.05700479057497115,
+          "stoch_reversion/k14_raw@forex28/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "tsmom2_dual/roc90_ema200@forex28/1d": 0.042195047083653625,
+        "zscore_reversion/w50_t2.5_filt@forex28/1d": 0.1764362461890978,
+        "stoch_reversion/k14_raw@forex28/1d": 0.06092071779037833
+      },
+      "stream_avg_concurrency": {
+        "tsmom2_dual/roc90_ema200@forex28/1d": 10.601873536299765,
+        "zscore_reversion/w50_t2.5_filt@forex28/1d": 3.812646370023419,
+        "stoch_reversion/k14_raw@forex28/1d": 20.7576112412178
+      },
+      "streams": [
+        "stoch_reversion/k14_raw@forex28/1d",
+        "tsmom2_dual/roc90_ema200@forex28/1d",
+        "zscore_reversion/w50_t2.5_filt@forex28/1d"
+      ],
+      "set": "top3_forex"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "invvol",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 3,
+      "total_return_compounded": 0.0866696373241187,
+      "max_drawdown": -0.02045101729872234,
+      "sharpe_daily_ann": 1.2037827624862978,
+      "mean_pairwise_corr": 0.08291577601764398,
+      "correlation_matrix": {
+        "tsmom2_dual/roc90_ema200@forex28/1d": {
+          "tsmom2_dual/roc90_ema200@forex28/1d": 1.0,
+          "zscore_reversion/w50_t2.5_filt@forex28/1d": 0.3153025114517727,
+          "stoch_reversion/k14_raw@forex28/1d": -0.009550392823869616
+        },
+        "zscore_reversion/w50_t2.5_filt@forex28/1d": {
+          "tsmom2_dual/roc90_ema200@forex28/1d": 0.3153025114517727,
+          "zscore_reversion/w50_t2.5_filt@forex28/1d": 1.0,
+          "stoch_reversion/k14_raw@forex28/1d": -0.05700479057497115
+        },
+        "stoch_reversion/k14_raw@forex28/1d": {
+          "tsmom2_dual/roc90_ema200@forex28/1d": -0.009550392823869616,
+          "zscore_reversion/w50_t2.5_filt@forex28/1d": -0.05700479057497115,
+          "stoch_reversion/k14_raw@forex28/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "tsmom2_dual/roc90_ema200@forex28/1d": 0.042195047083653625,
+        "zscore_reversion/w50_t2.5_filt@forex28/1d": 0.1764362461890978,
+        "stoch_reversion/k14_raw@forex28/1d": 0.06092071779037833
+      },
+      "stream_avg_concurrency": {
+        "tsmom2_dual/roc90_ema200@forex28/1d": 10.601873536299765,
+        "zscore_reversion/w50_t2.5_filt@forex28/1d": 3.812646370023419,
+        "stoch_reversion/k14_raw@forex28/1d": 20.7576112412178
+      },
+      "streams": [
+        "stoch_reversion/k14_raw@forex28/1d",
+        "tsmom2_dual/roc90_ema200@forex28/1d",
+        "zscore_reversion/w50_t2.5_filt@forex28/1d"
+      ],
+      "set": "top3_forex"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "equal",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 3,
+      "total_return_compounded": 0.2637453515765673,
+      "max_drawdown": -0.12821276474919063,
+      "sharpe_daily_ann": 0.6496243480153553,
+      "mean_pairwise_corr": 0.04292169777197637,
+      "correlation_matrix": {
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": {
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 1.0,
+          "ichimoku_trend/tk_cloud@comm7/4h": 0.0736873326645208,
+          "keltner_breakout/ema20_m1.5@comm7/1d": 0.02521587503610699
+        },
+        "ichimoku_trend/tk_cloud@comm7/4h": {
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.0736873326645208,
+          "ichimoku_trend/tk_cloud@comm7/4h": 1.0,
+          "keltner_breakout/ema20_m1.5@comm7/1d": 0.029861885615301335
+        },
+        "keltner_breakout/ema20_m1.5@comm7/1d": {
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.02521587503610699,
+          "ichimoku_trend/tk_cloud@comm7/4h": 0.029861885615301335,
+          "keltner_breakout/ema20_m1.5@comm7/1d": 1.0
+        }
+      },
+      "streams_positive_share": 0.6666666666666666,
+      "stream_total_returns": {
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.25905267601227866,
+        "ichimoku_trend/tk_cloud@comm7/4h": 0.47610977565183976,
+        "keltner_breakout/ema20_m1.5@comm7/1d": -0.03893913279570682
+      },
+      "stream_avg_concurrency": {
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": 1.9543325526932085,
+        "ichimoku_trend/tk_cloud@comm7/4h": 2.177985948477752,
+        "keltner_breakout/ema20_m1.5@comm7/1d": 4.180327868852459
+      },
+      "streams": [
+        "ichimoku_trend/tk_cloud@comm7/4h",
+        "keltner_breakout/ema20_m1.5@comm7/1d",
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h"
+      ],
+      "set": "top3_comm"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "invvol",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 3,
+      "total_return_compounded": 0.15223377313239528,
+      "max_drawdown": -0.24744718125817078,
+      "sharpe_daily_ann": 0.32253652553004664,
+      "mean_pairwise_corr": 0.04292169777197637,
+      "correlation_matrix": {
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": {
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 1.0,
+          "ichimoku_trend/tk_cloud@comm7/4h": 0.0736873326645208,
+          "keltner_breakout/ema20_m1.5@comm7/1d": 0.02521587503610699
+        },
+        "ichimoku_trend/tk_cloud@comm7/4h": {
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.0736873326645208,
+          "ichimoku_trend/tk_cloud@comm7/4h": 1.0,
+          "keltner_breakout/ema20_m1.5@comm7/1d": 0.029861885615301335
+        },
+        "keltner_breakout/ema20_m1.5@comm7/1d": {
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.02521587503610699,
+          "ichimoku_trend/tk_cloud@comm7/4h": 0.029861885615301335,
+          "keltner_breakout/ema20_m1.5@comm7/1d": 1.0
+        }
+      },
+      "streams_positive_share": 0.6666666666666666,
+      "stream_total_returns": {
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.25905267601227866,
+        "ichimoku_trend/tk_cloud@comm7/4h": 0.47610977565183976,
+        "keltner_breakout/ema20_m1.5@comm7/1d": -0.03893913279570682
+      },
+      "stream_avg_concurrency": {
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": 1.9543325526932085,
+        "ichimoku_trend/tk_cloud@comm7/4h": 2.177985948477752,
+        "keltner_breakout/ema20_m1.5@comm7/1d": 4.180327868852459
+      },
+      "streams": [
+        "ichimoku_trend/tk_cloud@comm7/4h",
+        "keltner_breakout/ema20_m1.5@comm7/1d",
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h"
+      ],
+      "set": "top3_comm"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "equal",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 3,
+      "total_return_compounded": 0.17224328725457427,
+      "max_drawdown": -0.07052394303652176,
+      "sharpe_daily_ann": 0.7983891301103471,
+      "mean_pairwise_corr": 0.12121423252348641,
+      "correlation_matrix": {
+        "keltner_breakout/ema20_m2.0@idx7/1d": {
+          "keltner_breakout/ema20_m2.0@idx7/1d": 1.0,
+          "turtle2/n20_trail_filt@idx7/1d": -0.03137387867278759,
+          "shock_breakout/k1.0@idx7/1d": 0.3899619951704161
+        },
+        "turtle2/n20_trail_filt@idx7/1d": {
+          "keltner_breakout/ema20_m2.0@idx7/1d": -0.03137387867278759,
+          "turtle2/n20_trail_filt@idx7/1d": 1.0,
+          "shock_breakout/k1.0@idx7/1d": 0.005054581072830762
+        },
+        "shock_breakout/k1.0@idx7/1d": {
+          "keltner_breakout/ema20_m2.0@idx7/1d": 0.3899619951704161,
+          "turtle2/n20_trail_filt@idx7/1d": 0.005054581072830762,
+          "shock_breakout/k1.0@idx7/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "keltner_breakout/ema20_m2.0@idx7/1d": 0.040627815966929326,
+        "turtle2/n20_trail_filt@idx7/1d": 0.240063244043055,
+        "shock_breakout/k1.0@idx7/1d": 0.2132792923982938
+      },
+      "stream_avg_concurrency": {
+        "keltner_breakout/ema20_m2.0@idx7/1d": 3.8149882903981265,
+        "turtle2/n20_trail_filt@idx7/1d": 3.531615925058548,
+        "shock_breakout/k1.0@idx7/1d": 5.592505854800937
+      },
+      "streams": [
+        "keltner_breakout/ema20_m2.0@idx7/1d",
+        "shock_breakout/k1.0@idx7/1d",
+        "turtle2/n20_trail_filt@idx7/1d"
+      ],
+      "set": "top3_idx"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "invvol",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 3,
+      "total_return_compounded": 0.17465149871119245,
+      "max_drawdown": -0.07298119483038301,
+      "sharpe_daily_ann": 0.7625616749734386,
+      "mean_pairwise_corr": 0.12121423252348641,
+      "correlation_matrix": {
+        "keltner_breakout/ema20_m2.0@idx7/1d": {
+          "keltner_breakout/ema20_m2.0@idx7/1d": 1.0,
+          "turtle2/n20_trail_filt@idx7/1d": -0.03137387867278759,
+          "shock_breakout/k1.0@idx7/1d": 0.3899619951704161
+        },
+        "turtle2/n20_trail_filt@idx7/1d": {
+          "keltner_breakout/ema20_m2.0@idx7/1d": -0.03137387867278759,
+          "turtle2/n20_trail_filt@idx7/1d": 1.0,
+          "shock_breakout/k1.0@idx7/1d": 0.005054581072830762
+        },
+        "shock_breakout/k1.0@idx7/1d": {
+          "keltner_breakout/ema20_m2.0@idx7/1d": 0.3899619951704161,
+          "turtle2/n20_trail_filt@idx7/1d": 0.005054581072830762,
+          "shock_breakout/k1.0@idx7/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "keltner_breakout/ema20_m2.0@idx7/1d": 0.040627815966929326,
+        "turtle2/n20_trail_filt@idx7/1d": 0.240063244043055,
+        "shock_breakout/k1.0@idx7/1d": 0.2132792923982938
+      },
+      "stream_avg_concurrency": {
+        "keltner_breakout/ema20_m2.0@idx7/1d": 3.8149882903981265,
+        "turtle2/n20_trail_filt@idx7/1d": 3.531615925058548,
+        "shock_breakout/k1.0@idx7/1d": 5.592505854800937
+      },
+      "streams": [
+        "keltner_breakout/ema20_m2.0@idx7/1d",
+        "shock_breakout/k1.0@idx7/1d",
+        "turtle2/n20_trail_filt@idx7/1d"
+      ],
+      "set": "top3_idx"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "equal",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 4,
+      "total_return_compounded": 0.18831658063926393,
+      "max_drawdown": -0.11536722202508587,
+      "sharpe_daily_ann": 0.5927670017169374,
+      "mean_pairwise_corr": 0.013439920113716091,
+      "correlation_matrix": {
+        "shock_breakout/k1.0@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 1.0,
+          "tsmom2_dual/roc90_ema200@forex28/1d": -0.0006052167336167256,
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.022125379593936668,
+          "keltner_breakout/ema20_m2.0@idx7/1d": -0.0002449789026077427
+        },
+        "tsmom2_dual/roc90_ema200@forex28/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.0006052167336167256,
+          "tsmom2_dual/roc90_ema200@forex28/1d": 1.0,
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": -0.004102944416995779,
+          "keltner_breakout/ema20_m2.0@idx7/1d": 0.07886424886634182
+        },
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.022125379593936668,
+          "tsmom2_dual/roc90_ema200@forex28/1d": -0.004102944416995779,
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 1.0,
+          "keltner_breakout/ema20_m2.0@idx7/1d": -0.01539696772476169
+        },
+        "keltner_breakout/ema20_m2.0@idx7/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.0002449789026077427,
+          "tsmom2_dual/roc90_ema200@forex28/1d": 0.07886424886634182,
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": -0.01539696772476169,
+          "keltner_breakout/ema20_m2.0@idx7/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "shock_breakout/k1.0@crypto30/1wk": 0.2512060209631921,
+        "tsmom2_dual/roc90_ema200@forex28/1d": 0.042195047083653625,
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.25905267601227866,
+        "keltner_breakout/ema20_m2.0@idx7/1d": 0.040627815966929326
+      },
+      "stream_avg_concurrency": {
+        "shock_breakout/k1.0@crypto30/1wk": 19.519906323185012,
+        "tsmom2_dual/roc90_ema200@forex28/1d": 10.601873536299765,
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": 1.9543325526932085,
+        "keltner_breakout/ema20_m2.0@idx7/1d": 3.8149882903981265
+      },
+      "streams": [
+        "keltner_breakout/ema20_m2.0@idx7/1d",
+        "shock_breakout/k1.0@crypto30/1wk",
+        "tsmom2_dual/roc90_ema200@forex28/1d",
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h"
+      ],
+      "set": "best_per_class"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "invvol",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 4,
+      "total_return_compounded": 0.16131102852215373,
+      "max_drawdown": -0.083416151240292,
+      "sharpe_daily_ann": 0.6660644486370048,
+      "mean_pairwise_corr": 0.013439920113716091,
+      "correlation_matrix": {
+        "shock_breakout/k1.0@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 1.0,
+          "tsmom2_dual/roc90_ema200@forex28/1d": -0.0006052167336167256,
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.022125379593936668,
+          "keltner_breakout/ema20_m2.0@idx7/1d": -0.0002449789026077427
+        },
+        "tsmom2_dual/roc90_ema200@forex28/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.0006052167336167256,
+          "tsmom2_dual/roc90_ema200@forex28/1d": 1.0,
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": -0.004102944416995779,
+          "keltner_breakout/ema20_m2.0@idx7/1d": 0.07886424886634182
+        },
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.022125379593936668,
+          "tsmom2_dual/roc90_ema200@forex28/1d": -0.004102944416995779,
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": 1.0,
+          "keltner_breakout/ema20_m2.0@idx7/1d": -0.01539696772476169
+        },
+        "keltner_breakout/ema20_m2.0@idx7/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.0002449789026077427,
+          "tsmom2_dual/roc90_ema200@forex28/1d": 0.07886424886634182,
+          "vol_adaptive_trend/ema20_50_gate@comm7/4h": -0.01539696772476169,
+          "keltner_breakout/ema20_m2.0@idx7/1d": 1.0
+        }
+      },
+      "streams_positive_share": 1.0,
+      "stream_total_returns": {
+        "shock_breakout/k1.0@crypto30/1wk": 0.2512060209631921,
+        "tsmom2_dual/roc90_ema200@forex28/1d": 0.042195047083653625,
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": 0.25905267601227866,
+        "keltner_breakout/ema20_m2.0@idx7/1d": 0.040627815966929326
+      },
+      "stream_avg_concurrency": {
+        "shock_breakout/k1.0@crypto30/1wk": 19.519906323185012,
+        "tsmom2_dual/roc90_ema200@forex28/1d": 10.601873536299765,
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h": 1.9543325526932085,
+        "keltner_breakout/ema20_m2.0@idx7/1d": 3.8149882903981265
+      },
+      "streams": [
+        "keltner_breakout/ema20_m2.0@idx7/1d",
+        "shock_breakout/k1.0@crypto30/1wk",
+        "tsmom2_dual/roc90_ema200@forex28/1d",
+        "vol_adaptive_trend/ema20_50_gate@comm7/4h"
+      ],
+      "set": "best_per_class"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "equal",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 15,
+      "total_return_compounded": 0.9073105623097006,
+      "max_drawdown": -0.26135748764152966,
+      "sharpe_daily_ann": 0.9793328172088792,
+      "mean_pairwise_corr": 0.3483781044435719,
+      "correlation_matrix": {
+        "shock_breakout/k1.0@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 1.0,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": -0.053323660265230416,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.07080400280415694,
+          "macd_trend/hist_raw@crypto30/1d": 0.06592414392284701,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.10085284123429053,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.06428425265514767,
+          "ts_momentum/roc72@crypto30/1d": 0.14783038063927825,
+          "ha_trend/two_candle@crypto30/1wk": 0.8853558877421001,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.07440706589168408,
+          "ts_momentum/roc42@crypto30/1d": 0.06366214739878037,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.06952898378739904,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.06542564091345186,
+          "shock_breakout/k1.5@crypto30/1d": 0.09462494277032134,
+          "shock_breakout/k1.0@crypto30/1d": 0.11022976807395642,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.1241905336717353
+        },
+        "tsmom2_dual/roc90_ema200@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.053323660265230416,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 1.0,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5623386128967662,
+          "macd_trend/hist_raw@crypto30/1d": 0.6336037678700288,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5663314210017909,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.447138237294969,
+          "ts_momentum/roc72@crypto30/1d": 0.2796180300477621,
+          "ha_trend/two_candle@crypto30/1wk": 0.0020083690646330943,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5287251936517805,
+          "ts_momentum/roc42@crypto30/1d": 0.48872255589619745,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.04240773276041308,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.4257796058531454,
+          "shock_breakout/k1.5@crypto30/1d": 0.3416925319530194,
+          "shock_breakout/k1.0@crypto30/1d": 0.45835227072566237,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.3631736931947441
+        },
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.07080400280415694,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5623386128967662,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.0,
+          "macd_trend/hist_raw@crypto30/1d": 0.6201824881585456,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5822041439630887,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.44707859250568277,
+          "ts_momentum/roc72@crypto30/1d": 0.4386679656771635,
+          "ha_trend/two_candle@crypto30/1wk": -0.011660929085649599,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5748273488558744,
+          "ts_momentum/roc42@crypto30/1d": 0.5648191825666089,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.15613417819703213,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.45890429550251977,
+          "shock_breakout/k1.5@crypto30/1d": 0.4870103763245047,
+          "shock_breakout/k1.0@crypto30/1d": 0.5461662177433937,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.5007317593320043
+        },
+        "macd_trend/hist_raw@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06592414392284701,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.6336037678700288,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.6201824881585456,
+          "macd_trend/hist_raw@crypto30/1d": 1.0,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5741321867955443,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.35029525161027325,
+          "ts_momentum/roc72@crypto30/1d": 0.5265183776248037,
+          "ha_trend/two_candle@crypto30/1wk": -0.030017514231524715,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.517334532956539,
+          "ts_momentum/roc42@crypto30/1d": 0.5875434919413551,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.2829815155485012,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.5028123801067567,
+          "shock_breakout/k1.5@crypto30/1d": 0.48355636851590256,
+          "shock_breakout/k1.0@crypto30/1d": 0.5659276021381692,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.39399832156869113
+        },
+        "donchian_turtle/n55_b26@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.10085284123429053,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5663314210017909,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5822041439630887,
+          "macd_trend/hist_raw@crypto30/1d": 0.5741321867955443,
+          "donchian_turtle/n55_b26@crypto30/1d": 1.0,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.3350830157968412,
+          "ts_momentum/roc72@crypto30/1d": 0.32437413160801787,
+          "ha_trend/two_candle@crypto30/1wk": -0.005983587795299722,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.6374441305015939,
+          "ts_momentum/roc42@crypto30/1d": 0.3045187059745767,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.12016217021177411,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.32398433048517655,
+          "shock_breakout/k1.5@crypto30/1d": 0.38195434974695064,
+          "shock_breakout/k1.0@crypto30/1d": 0.4505958577319622,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.4680105441782384
+        },
+        "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06428425265514767,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.447138237294969,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.44707859250568277,
+          "macd_trend/hist_raw@crypto30/1d": 0.35029525161027325,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.3350830157968412,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 1.0,
+          "ts_momentum/roc72@crypto30/1d": 0.40073461839533947,
+          "ha_trend/two_candle@crypto30/1wk": 0.026041293884910995,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.4557585051564386,
+          "ts_momentum/roc42@crypto30/1d": 0.42467342545048864,
+          "governed/strategy_adx_ema:bare@crypto30/1d": -0.025313603752890674,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.45527306551799573,
+          "shock_breakout/k1.5@crypto30/1d": 0.28945261661080335,
+          "shock_breakout/k1.0@crypto30/1d": 0.48298469198692434,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.356878569331268
+        },
+        "ts_momentum/roc72@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.14783038063927825,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.2796180300477621,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.4386679656771635,
+          "macd_trend/hist_raw@crypto30/1d": 0.5265183776248037,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.32437413160801787,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.40073461839533947,
+          "ts_momentum/roc72@crypto30/1d": 1.0,
+          "ha_trend/two_candle@crypto30/1wk": -0.010617927122891595,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.49285553991858194,
+          "ts_momentum/roc42@crypto30/1d": 0.4865455224735293,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.23138233536024214,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.5172130015473049,
+          "shock_breakout/k1.5@crypto30/1d": 0.525246538129134,
+          "shock_breakout/k1.0@crypto30/1d": 0.5784795263780651,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.4336907609701208
+        },
+        "ha_trend/two_candle@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.8853558877421001,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.0020083690646330943,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": -0.011660929085649599,
+          "macd_trend/hist_raw@crypto30/1d": -0.030017514231524715,
+          "donchian_turtle/n55_b26@crypto30/1d": -0.005983587795299722,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.026041293884910995,
+          "ts_momentum/roc72@crypto30/1d": -0.010617927122891595,
+          "ha_trend/two_candle@crypto30/1wk": 1.0,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": -0.008263231756771853,
+          "ts_momentum/roc42@crypto30/1d": 0.022110059757275334,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.0021660442703034183,
+          "ichimoku_trend/tk_cloud@crypto30/1d": -0.02309203134400387,
+          "shock_breakout/k1.5@crypto30/1d": 0.001824481883298007,
+          "shock_breakout/k1.0@crypto30/1d": 0.027347901072146973,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.02796718452433316
+        },
+        "bollinger_trend/p50_sd2.0@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.07440706589168408,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5287251936517805,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5748273488558744,
+          "macd_trend/hist_raw@crypto30/1d": 0.517334532956539,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.6374441305015939,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.4557585051564386,
+          "ts_momentum/roc72@crypto30/1d": 0.49285553991858194,
+          "ha_trend/two_candle@crypto30/1wk": -0.008263231756771853,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 1.0,
+          "ts_momentum/roc42@crypto30/1d": 0.5110687832346996,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.10604711331839799,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.5519714075481411,
+          "shock_breakout/k1.5@crypto30/1d": 0.5162685886600656,
+          "shock_breakout/k1.0@crypto30/1d": 0.6711379431682205,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.7325695969835664
+        },
+        "ts_momentum/roc42@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06366214739878037,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.48872255589619745,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5648191825666089,
+          "macd_trend/hist_raw@crypto30/1d": 0.5875434919413551,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.3045187059745767,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.42467342545048864,
+          "ts_momentum/roc72@crypto30/1d": 0.4865455224735293,
+          "ha_trend/two_candle@crypto30/1wk": 0.022110059757275334,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5110687832346996,
+          "ts_momentum/roc42@crypto30/1d": 1.0,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.29334014870498837,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.4841286872950928,
+          "shock_breakout/k1.5@crypto30/1d": 0.4918664132405313,
+          "shock_breakout/k1.0@crypto30/1d": 0.5602591782926504,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.47386994206026756
+        },
+        "governed/strategy_adx_ema:bare@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06952898378739904,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.04240773276041308,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.15613417819703213,
+          "macd_trend/hist_raw@crypto30/1d": 0.2829815155485012,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.12016217021177411,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": -0.025313603752890674,
+          "ts_momentum/roc72@crypto30/1d": 0.23138233536024214,
+          "ha_trend/two_candle@crypto30/1wk": 0.0021660442703034183,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.10604711331839799,
+          "ts_momentum/roc42@crypto30/1d": 0.29334014870498837,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 1.0,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.19194518799765023,
+          "shock_breakout/k1.5@crypto30/1d": 0.2762112083756405,
+          "shock_breakout/k1.0@crypto30/1d": 0.19673971098116827,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.13656384014699927
+        },
+        "ichimoku_trend/tk_cloud@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06542564091345186,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.4257796058531454,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.45890429550251977,
+          "macd_trend/hist_raw@crypto30/1d": 0.5028123801067567,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.32398433048517655,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.45527306551799573,
+          "ts_momentum/roc72@crypto30/1d": 0.5172130015473049,
+          "ha_trend/two_candle@crypto30/1wk": -0.02309203134400387,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5519714075481411,
+          "ts_momentum/roc42@crypto30/1d": 0.4841286872950928,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.19194518799765023,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 1.0,
+          "shock_breakout/k1.5@crypto30/1d": 0.5085744290169901,
+          "shock_breakout/k1.0@crypto30/1d": 0.6244695242277288,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.4853344913179055
+        },
+        "shock_breakout/k1.5@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.09462494277032134,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.3416925319530194,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.4870103763245047,
+          "macd_trend/hist_raw@crypto30/1d": 0.48355636851590256,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.38195434974695064,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.28945261661080335,
+          "ts_momentum/roc72@crypto30/1d": 0.525246538129134,
+          "ha_trend/two_candle@crypto30/1wk": 0.001824481883298007,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5162685886600656,
+          "ts_momentum/roc42@crypto30/1d": 0.4918664132405313,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.2762112083756405,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.5085744290169901,
+          "shock_breakout/k1.5@crypto30/1d": 1.0,
+          "shock_breakout/k1.0@crypto30/1d": 0.8037002082058062,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.6166320929332924
+        },
+        "shock_breakout/k1.0@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.11022976807395642,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.45835227072566237,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5461662177433937,
+          "macd_trend/hist_raw@crypto30/1d": 0.5659276021381692,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.4505958577319622,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.48298469198692434,
+          "ts_momentum/roc72@crypto30/1d": 0.5784795263780651,
+          "ha_trend/two_candle@crypto30/1wk": 0.027347901072146973,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.6711379431682205,
+          "ts_momentum/roc42@crypto30/1d": 0.5602591782926504,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.19673971098116827,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.6244695242277288,
+          "shock_breakout/k1.5@crypto30/1d": 0.8037002082058062,
+          "shock_breakout/k1.0@crypto30/1d": 1.0,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.6916828460168605
+        },
+        "volume_breakout/donch20_vol1.5@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.1241905336717353,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.3631736931947441,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5007317593320043,
+          "macd_trend/hist_raw@crypto30/1d": 0.39399832156869113,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.4680105441782384,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.356878569331268,
+          "ts_momentum/roc72@crypto30/1d": 0.4336907609701208,
+          "ha_trend/two_candle@crypto30/1wk": 0.02796718452433316,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.7325695969835664,
+          "ts_momentum/roc42@crypto30/1d": 0.47386994206026756,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.13656384014699927,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.4853344913179055,
+          "shock_breakout/k1.5@crypto30/1d": 0.6166320929332924,
+          "shock_breakout/k1.0@crypto30/1d": 0.6916828460168605,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 1.0
+        }
+      },
+      "streams_positive_share": 0.8,
+      "stream_total_returns": {
+        "shock_breakout/k1.0@crypto30/1wk": 0.2512060209631921,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 0.887023208938666,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.668965240135471,
+        "macd_trend/hist_raw@crypto30/1d": 1.824372035082634,
+        "donchian_turtle/n55_b26@crypto30/1d": 0.22588225291048425,
+        "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 2.675896130387442,
+        "ts_momentum/roc72@crypto30/1d": 3.5544592992729864,
+        "ha_trend/two_candle@crypto30/1wk": -0.20285428817510975,
+        "bollinger_trend/p50_sd2.0@crypto30/1d": 0.42514397086340905,
+        "ts_momentum/roc42@crypto30/1d": 1.5203462857816472,
+        "governed/strategy_adx_ema:bare@crypto30/1d": -0.1603527221807588,
+        "ichimoku_trend/tk_cloud@crypto30/1d": 1.0005396549078514,
+        "shock_breakout/k1.5@crypto30/1d": 0.9455862684040002,
+        "shock_breakout/k1.0@crypto30/1d": 0.6742484726850604,
+        "volume_breakout/donch20_vol1.5@crypto30/1d": -0.5074911203485686
+      },
+      "stream_avg_concurrency": {
+        "shock_breakout/k1.0@crypto30/1wk": 19.519906323185012,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 13.67096018735363,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 17.59367681498829,
+        "macd_trend/hist_raw@crypto30/1d": 24.229508196721312,
+        "donchian_turtle/n55_b26@crypto30/1d": 18.741217798594846,
+        "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 13.043325526932085,
+        "ts_momentum/roc72@crypto30/1d": 10.30327868852459,
+        "ha_trend/two_candle@crypto30/1wk": 19.640515222482435,
+        "bollinger_trend/p50_sd2.0@crypto30/1d": 15.187353629976581,
+        "ts_momentum/roc42@crypto30/1d": 12.784543325526933,
+        "governed/strategy_adx_ema:bare@crypto30/1d": 3.040983606557377,
+        "ichimoku_trend/tk_cloud@crypto30/1d": 11.789227166276346,
+        "shock_breakout/k1.5@crypto30/1d": 14.764637002341921,
+        "shock_breakout/k1.0@crypto30/1d": 23.884074941451992,
+        "volume_breakout/donch20_vol1.5@crypto30/1d": 15.133489461358314
+      },
+      "streams": [
+        "bollinger_trend/p50_sd2.0@crypto30/1d",
+        "donchian_turtle/n55_b26@crypto30/1d",
+        "governed/strategy_adx_ema:bare@crypto30/1d",
+        "ha_trend/two_candle@crypto30/1wk",
+        "ichimoku_trend/tk_cloud@crypto30/1d",
+        "macd_trend/hist_raw@crypto30/1d",
+        "shock_breakout/k1.0@crypto30/1d",
+        "shock_breakout/k1.0@crypto30/1wk",
+        "shock_breakout/k1.5@crypto30/1d",
+        "ts_momentum/roc42@crypto30/1d",
+        "ts_momentum/roc72@crypto30/1d",
+        "tsmom2_dual/roc90_ema200@crypto30/1d",
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d",
+        "vol_adaptive_trend/ema20_50_nogate@crypto30/1d",
+        "volume_breakout/donch20_vol1.5@crypto30/1d"
+      ],
+      "set": "all_positive_top15"
+    },
+    {
+      "status": "EVALUATED",
+      "weighting": "invvol",
+      "sizing": "equal-weight book: daily return = sum of the day's exiting net returns / positions open that day",
+      "n_streams": 15,
+      "total_return_compounded": 0.9621647553730053,
+      "max_drawdown": -0.2444357876308706,
+      "sharpe_daily_ann": 1.0159919516035416,
+      "mean_pairwise_corr": 0.3483781044435719,
+      "correlation_matrix": {
+        "shock_breakout/k1.0@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 1.0,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": -0.053323660265230416,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.07080400280415694,
+          "macd_trend/hist_raw@crypto30/1d": 0.06592414392284701,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.10085284123429053,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.06428425265514767,
+          "ts_momentum/roc72@crypto30/1d": 0.14783038063927825,
+          "ha_trend/two_candle@crypto30/1wk": 0.8853558877421001,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.07440706589168408,
+          "ts_momentum/roc42@crypto30/1d": 0.06366214739878037,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.06952898378739904,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.06542564091345186,
+          "shock_breakout/k1.5@crypto30/1d": 0.09462494277032134,
+          "shock_breakout/k1.0@crypto30/1d": 0.11022976807395642,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.1241905336717353
+        },
+        "tsmom2_dual/roc90_ema200@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": -0.053323660265230416,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 1.0,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5623386128967662,
+          "macd_trend/hist_raw@crypto30/1d": 0.6336037678700288,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5663314210017909,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.447138237294969,
+          "ts_momentum/roc72@crypto30/1d": 0.2796180300477621,
+          "ha_trend/two_candle@crypto30/1wk": 0.0020083690646330943,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5287251936517805,
+          "ts_momentum/roc42@crypto30/1d": 0.48872255589619745,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.04240773276041308,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.4257796058531454,
+          "shock_breakout/k1.5@crypto30/1d": 0.3416925319530194,
+          "shock_breakout/k1.0@crypto30/1d": 0.45835227072566237,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.3631736931947441
+        },
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.07080400280415694,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5623386128967662,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.0,
+          "macd_trend/hist_raw@crypto30/1d": 0.6201824881585456,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5822041439630887,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.44707859250568277,
+          "ts_momentum/roc72@crypto30/1d": 0.4386679656771635,
+          "ha_trend/two_candle@crypto30/1wk": -0.011660929085649599,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5748273488558744,
+          "ts_momentum/roc42@crypto30/1d": 0.5648191825666089,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.15613417819703213,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.45890429550251977,
+          "shock_breakout/k1.5@crypto30/1d": 0.4870103763245047,
+          "shock_breakout/k1.0@crypto30/1d": 0.5461662177433937,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.5007317593320043
+        },
+        "macd_trend/hist_raw@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06592414392284701,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.6336037678700288,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.6201824881585456,
+          "macd_trend/hist_raw@crypto30/1d": 1.0,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.5741321867955443,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.35029525161027325,
+          "ts_momentum/roc72@crypto30/1d": 0.5265183776248037,
+          "ha_trend/two_candle@crypto30/1wk": -0.030017514231524715,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.517334532956539,
+          "ts_momentum/roc42@crypto30/1d": 0.5875434919413551,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.2829815155485012,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.5028123801067567,
+          "shock_breakout/k1.5@crypto30/1d": 0.48355636851590256,
+          "shock_breakout/k1.0@crypto30/1d": 0.5659276021381692,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.39399832156869113
+        },
+        "donchian_turtle/n55_b26@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.10085284123429053,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5663314210017909,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5822041439630887,
+          "macd_trend/hist_raw@crypto30/1d": 0.5741321867955443,
+          "donchian_turtle/n55_b26@crypto30/1d": 1.0,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.3350830157968412,
+          "ts_momentum/roc72@crypto30/1d": 0.32437413160801787,
+          "ha_trend/two_candle@crypto30/1wk": -0.005983587795299722,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.6374441305015939,
+          "ts_momentum/roc42@crypto30/1d": 0.3045187059745767,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.12016217021177411,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.32398433048517655,
+          "shock_breakout/k1.5@crypto30/1d": 0.38195434974695064,
+          "shock_breakout/k1.0@crypto30/1d": 0.4505958577319622,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.4680105441782384
+        },
+        "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06428425265514767,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.447138237294969,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.44707859250568277,
+          "macd_trend/hist_raw@crypto30/1d": 0.35029525161027325,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.3350830157968412,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 1.0,
+          "ts_momentum/roc72@crypto30/1d": 0.40073461839533947,
+          "ha_trend/two_candle@crypto30/1wk": 0.026041293884910995,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.4557585051564386,
+          "ts_momentum/roc42@crypto30/1d": 0.42467342545048864,
+          "governed/strategy_adx_ema:bare@crypto30/1d": -0.025313603752890674,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.45527306551799573,
+          "shock_breakout/k1.5@crypto30/1d": 0.28945261661080335,
+          "shock_breakout/k1.0@crypto30/1d": 0.48298469198692434,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.356878569331268
+        },
+        "ts_momentum/roc72@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.14783038063927825,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.2796180300477621,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.4386679656771635,
+          "macd_trend/hist_raw@crypto30/1d": 0.5265183776248037,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.32437413160801787,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.40073461839533947,
+          "ts_momentum/roc72@crypto30/1d": 1.0,
+          "ha_trend/two_candle@crypto30/1wk": -0.010617927122891595,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.49285553991858194,
+          "ts_momentum/roc42@crypto30/1d": 0.4865455224735293,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.23138233536024214,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.5172130015473049,
+          "shock_breakout/k1.5@crypto30/1d": 0.525246538129134,
+          "shock_breakout/k1.0@crypto30/1d": 0.5784795263780651,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.4336907609701208
+        },
+        "ha_trend/two_candle@crypto30/1wk": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.8853558877421001,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.0020083690646330943,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": -0.011660929085649599,
+          "macd_trend/hist_raw@crypto30/1d": -0.030017514231524715,
+          "donchian_turtle/n55_b26@crypto30/1d": -0.005983587795299722,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.026041293884910995,
+          "ts_momentum/roc72@crypto30/1d": -0.010617927122891595,
+          "ha_trend/two_candle@crypto30/1wk": 1.0,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": -0.008263231756771853,
+          "ts_momentum/roc42@crypto30/1d": 0.022110059757275334,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.0021660442703034183,
+          "ichimoku_trend/tk_cloud@crypto30/1d": -0.02309203134400387,
+          "shock_breakout/k1.5@crypto30/1d": 0.001824481883298007,
+          "shock_breakout/k1.0@crypto30/1d": 0.027347901072146973,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.02796718452433316
+        },
+        "bollinger_trend/p50_sd2.0@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.07440706589168408,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.5287251936517805,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5748273488558744,
+          "macd_trend/hist_raw@crypto30/1d": 0.517334532956539,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.6374441305015939,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.4557585051564386,
+          "ts_momentum/roc72@crypto30/1d": 0.49285553991858194,
+          "ha_trend/two_candle@crypto30/1wk": -0.008263231756771853,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 1.0,
+          "ts_momentum/roc42@crypto30/1d": 0.5110687832346996,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.10604711331839799,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.5519714075481411,
+          "shock_breakout/k1.5@crypto30/1d": 0.5162685886600656,
+          "shock_breakout/k1.0@crypto30/1d": 0.6711379431682205,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.7325695969835664
+        },
+        "ts_momentum/roc42@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06366214739878037,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.48872255589619745,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5648191825666089,
+          "macd_trend/hist_raw@crypto30/1d": 0.5875434919413551,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.3045187059745767,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.42467342545048864,
+          "ts_momentum/roc72@crypto30/1d": 0.4865455224735293,
+          "ha_trend/two_candle@crypto30/1wk": 0.022110059757275334,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5110687832346996,
+          "ts_momentum/roc42@crypto30/1d": 1.0,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.29334014870498837,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.4841286872950928,
+          "shock_breakout/k1.5@crypto30/1d": 0.4918664132405313,
+          "shock_breakout/k1.0@crypto30/1d": 0.5602591782926504,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.47386994206026756
+        },
+        "governed/strategy_adx_ema:bare@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06952898378739904,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.04240773276041308,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.15613417819703213,
+          "macd_trend/hist_raw@crypto30/1d": 0.2829815155485012,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.12016217021177411,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": -0.025313603752890674,
+          "ts_momentum/roc72@crypto30/1d": 0.23138233536024214,
+          "ha_trend/two_candle@crypto30/1wk": 0.0021660442703034183,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.10604711331839799,
+          "ts_momentum/roc42@crypto30/1d": 0.29334014870498837,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 1.0,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.19194518799765023,
+          "shock_breakout/k1.5@crypto30/1d": 0.2762112083756405,
+          "shock_breakout/k1.0@crypto30/1d": 0.19673971098116827,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.13656384014699927
+        },
+        "ichimoku_trend/tk_cloud@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.06542564091345186,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.4257796058531454,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.45890429550251977,
+          "macd_trend/hist_raw@crypto30/1d": 0.5028123801067567,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.32398433048517655,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.45527306551799573,
+          "ts_momentum/roc72@crypto30/1d": 0.5172130015473049,
+          "ha_trend/two_candle@crypto30/1wk": -0.02309203134400387,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5519714075481411,
+          "ts_momentum/roc42@crypto30/1d": 0.4841286872950928,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.19194518799765023,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 1.0,
+          "shock_breakout/k1.5@crypto30/1d": 0.5085744290169901,
+          "shock_breakout/k1.0@crypto30/1d": 0.6244695242277288,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.4853344913179055
+        },
+        "shock_breakout/k1.5@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.09462494277032134,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.3416925319530194,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.4870103763245047,
+          "macd_trend/hist_raw@crypto30/1d": 0.48355636851590256,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.38195434974695064,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.28945261661080335,
+          "ts_momentum/roc72@crypto30/1d": 0.525246538129134,
+          "ha_trend/two_candle@crypto30/1wk": 0.001824481883298007,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.5162685886600656,
+          "ts_momentum/roc42@crypto30/1d": 0.4918664132405313,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.2762112083756405,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.5085744290169901,
+          "shock_breakout/k1.5@crypto30/1d": 1.0,
+          "shock_breakout/k1.0@crypto30/1d": 0.8037002082058062,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.6166320929332924
+        },
+        "shock_breakout/k1.0@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.11022976807395642,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.45835227072566237,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5461662177433937,
+          "macd_trend/hist_raw@crypto30/1d": 0.5659276021381692,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.4505958577319622,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.48298469198692434,
+          "ts_momentum/roc72@crypto30/1d": 0.5784795263780651,
+          "ha_trend/two_candle@crypto30/1wk": 0.027347901072146973,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.6711379431682205,
+          "ts_momentum/roc42@crypto30/1d": 0.5602591782926504,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.19673971098116827,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.6244695242277288,
+          "shock_breakout/k1.5@crypto30/1d": 0.8037002082058062,
+          "shock_breakout/k1.0@crypto30/1d": 1.0,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 0.6916828460168605
+        },
+        "volume_breakout/donch20_vol1.5@crypto30/1d": {
+          "shock_breakout/k1.0@crypto30/1wk": 0.1241905336717353,
+          "tsmom2_dual/roc90_ema200@crypto30/1d": 0.3631736931947441,
+          "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 0.5007317593320043,
+          "macd_trend/hist_raw@crypto30/1d": 0.39399832156869113,
+          "donchian_turtle/n55_b26@crypto30/1d": 0.4680105441782384,
+          "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 0.356878569331268,
+          "ts_momentum/roc72@crypto30/1d": 0.4336907609701208,
+          "ha_trend/two_candle@crypto30/1wk": 0.02796718452433316,
+          "bollinger_trend/p50_sd2.0@crypto30/1d": 0.7325695969835664,
+          "ts_momentum/roc42@crypto30/1d": 0.47386994206026756,
+          "governed/strategy_adx_ema:bare@crypto30/1d": 0.13656384014699927,
+          "ichimoku_trend/tk_cloud@crypto30/1d": 0.4853344913179055,
+          "shock_breakout/k1.5@crypto30/1d": 0.6166320929332924,
+          "shock_breakout/k1.0@crypto30/1d": 0.6916828460168605,
+          "volume_breakout/donch20_vol1.5@crypto30/1d": 1.0
+        }
+      },
+      "streams_positive_share": 0.8,
+      "stream_total_returns": {
+        "shock_breakout/k1.0@crypto30/1wk": 0.2512060209631921,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 0.887023208938666,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 1.668965240135471,
+        "macd_trend/hist_raw@crypto30/1d": 1.824372035082634,
+        "donchian_turtle/n55_b26@crypto30/1d": 0.22588225291048425,
+        "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 2.675896130387442,
+        "ts_momentum/roc72@crypto30/1d": 3.5544592992729864,
+        "ha_trend/two_candle@crypto30/1wk": -0.20285428817510975,
+        "bollinger_trend/p50_sd2.0@crypto30/1d": 0.42514397086340905,
+        "ts_momentum/roc42@crypto30/1d": 1.5203462857816472,
+        "governed/strategy_adx_ema:bare@crypto30/1d": -0.1603527221807588,
+        "ichimoku_trend/tk_cloud@crypto30/1d": 1.0005396549078514,
+        "shock_breakout/k1.5@crypto30/1d": 0.9455862684040002,
+        "shock_breakout/k1.0@crypto30/1d": 0.6742484726850604,
+        "volume_breakout/donch20_vol1.5@crypto30/1d": -0.5074911203485686
+      },
+      "stream_avg_concurrency": {
+        "shock_breakout/k1.0@crypto30/1wk": 19.519906323185012,
+        "tsmom2_dual/roc90_ema200@crypto30/1d": 13.67096018735363,
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": 17.59367681498829,
+        "macd_trend/hist_raw@crypto30/1d": 24.229508196721312,
+        "donchian_turtle/n55_b26@crypto30/1d": 18.741217798594846,
+        "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": 13.043325526932085,
+        "ts_momentum/roc72@crypto30/1d": 10.30327868852459,
+        "ha_trend/two_candle@crypto30/1wk": 19.640515222482435,
+        "bollinger_trend/p50_sd2.0@crypto30/1d": 15.187353629976581,
+        "ts_momentum/roc42@crypto30/1d": 12.784543325526933,
+        "governed/strategy_adx_ema:bare@crypto30/1d": 3.040983606557377,
+        "ichimoku_trend/tk_cloud@crypto30/1d": 11.789227166276346,
+        "shock_breakout/k1.5@crypto30/1d": 14.764637002341921,
+        "shock_breakout/k1.0@crypto30/1d": 23.884074941451992,
+        "volume_breakout/donch20_vol1.5@crypto30/1d": 15.133489461358314
+      },
+      "streams": [
+        "bollinger_trend/p50_sd2.0@crypto30/1d",
+        "donchian_turtle/n55_b26@crypto30/1d",
+        "governed/strategy_adx_ema:bare@crypto30/1d",
+        "ha_trend/two_candle@crypto30/1wk",
+        "ichimoku_trend/tk_cloud@crypto30/1d",
+        "macd_trend/hist_raw@crypto30/1d",
+        "shock_breakout/k1.0@crypto30/1d",
+        "shock_breakout/k1.0@crypto30/1wk",
+        "shock_breakout/k1.5@crypto30/1d",
+        "ts_momentum/roc42@crypto30/1d",
+        "ts_momentum/roc72@crypto30/1d",
+        "tsmom2_dual/roc90_ema200@crypto30/1d",
+        "vol_adaptive_trend/ema12_26_nogate@crypto30/1d",
+        "vol_adaptive_trend/ema20_50_nogate@crypto30/1d",
+        "volume_breakout/donch20_vol1.5@crypto30/1d"
+      ],
+      "set": "all_positive_top15"
+    }
+  ],
+  "ensembles": [
+    {
+      "variant": "vote2_of3",
+      "panel": "crypto30",
+      "timeframe": "4h"
+    },
+    {
+      "variant": "vote2_of3",
+      "panel": "forex12",
+      "timeframe": "4h"
+    }
+  ]
+}

@@ -1,0 +1,796 @@
+{
+ "macd_trend/hist_raw@crypto30/1d": {
+  "base_expectancy": 0.05839657122638037,
+  "base_pf": 1.5521958229576205,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 369,
+    "wins": 155,
+    "win_rate": 0.42005420054200543,
+    "expectancy_net": 0.056861265127699845,
+    "profit_factor_net": 1.5329877412025172,
+    "avg_win_net": 0.38934324830026135,
+    "avg_loss_net": -0.18395512455336105,
+    "total_return_net": 269.98476145800674,
+    "max_drawdown_net": -0.999952583756338
+   }
+  }
+ },
+ "bollinger_trend/p50_sd2.0@crypto30/1d": {
+  "base_expectancy": 0.03544830323866597,
+  "base_pf": 1.4562452015985086,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 420,
+    "wins": 164,
+    "win_rate": 0.3904761904761905,
+    "expectancy_net": 0.03389775736718241,
+    "profit_factor_net": 1.4309687096267871,
+    "avg_win_net": 0.2882443524813921,
+    "avg_loss_net": -0.12904303012785814,
+    "total_return_net": 102.07789992398264,
+    "max_drawdown_net": -0.9957636313308289
+   }
+  }
+ },
+ "ichimoku_trend/tk_cloud@crypto30/1d": {
+  "base_expectancy": 0.030131226146392548,
+  "base_pf": 1.3673995159203105,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 398,
+    "wins": 158,
+    "win_rate": 0.3969849246231156,
+    "expectancy_net": 0.02855781671118672,
+    "profit_factor_net": 1.3440356122363892,
+    "avg_win_net": 0.2810336753041929,
+    "avg_loss_net": -0.13765545686254235,
+    "total_return_net": 13.788388953020517,
+    "max_drawdown_net": -0.9983154014140138
+   }
+  }
+ },
+ "shock_breakout/k1.5@crypto30/1d": {
+  "base_expectancy": 0.02811329244347055,
+  "base_pf": 1.3324556191293353,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 486,
+    "wins": 196,
+    "win_rate": 0.40329218106995884,
+    "expectancy_net": 0.0265142479901539,
+    "profit_factor_net": 1.3101373611270446,
+    "avg_win_net": 0.2777296559553979,
+    "avg_loss_net": -0.14327271739325237,
+    "total_return_net": 4.037714097501282,
+    "max_drawdown_net": -0.9993137024199485
+   }
+  }
+ },
+ "shock_breakout/k1.0@crypto30/1d": {
+  "base_expectancy": 0.026957103807614794,
+  "base_pf": 1.3178769620471882,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 732,
+    "wins": 284,
+    "win_rate": 0.3879781420765027,
+    "expectancy_net": 0.02535708102907113,
+    "profit_factor_net": 1.2955994214881348,
+    "avg_win_net": 0.28645681910755755,
+    "avg_loss_net": -0.14016150293139792,
+    "total_return_net": 4.886501754203199,
+    "max_drawdown_net": -0.9995522170186435
+   }
+  }
+ },
+ "keltner_breakout/ema20_m2.0@crypto30/1d": {
+  "base_expectancy": 0.019412547219544336,
+  "base_pf": 1.2284259330628102,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 437,
+    "wins": 164,
+    "win_rate": 0.37528604118993136,
+    "expectancy_net": 0.017812203025711848,
+    "profit_factor_net": 1.207158909912886,
+    "avg_win_net": 0.27657699435409383,
+    "avg_loss_net": -0.13763624304701577,
+    "total_return_net": -0.8371324490354747,
+    "max_drawdown_net": -0.9986321527487949
+   }
+  }
+ },
+ "psar_trend/af0.01_max0.10@crypto30/1d": {
+  "base_expectancy": 0.018281675992741456,
+  "base_pf": 1.2165421816008521,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 648,
+    "wins": 244,
+    "win_rate": 0.3765432098765432,
+    "expectancy_net": 0.016715389969017367,
+    "profit_factor_net": 1.1956797991904655,
+    "avg_win_net": 0.2712505269846305,
+    "avg_loss_net": -0.13701375218892722,
+    "total_return_net": -0.9283450455645063,
+    "max_drawdown_net": -0.9999014553256221
+   }
+  }
+ },
+ "ha_trend/two_candle@crypto30/1d": {
+  "base_expectancy": 0.016712170151642784,
+  "base_pf": 1.1878038075472255,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 775,
+    "wins": 282,
+    "win_rate": 0.3638709677419355,
+    "expectancy_net": 0.01514312243948637,
+    "profit_factor_net": 1.1682381198678797,
+    "avg_win_net": 0.28898479643365627,
+    "avg_loss_net": -0.1414965369243187,
+    "total_return_net": -0.9980492141375066,
+    "max_drawdown_net": -0.9999966313744799
+   }
+  }
+ },
+ "bar_patterns/engulfing@crypto30/1d": {
+  "base_expectancy": 0.01586837224083563,
+  "base_pf": 1.174342545334009,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 548,
+    "wins": 211,
+    "win_rate": 0.38503649635036497,
+    "expectancy_net": 0.014303887783728606,
+    "profit_factor_net": 1.1554554923515454,
+    "avg_win_net": 0.2761209432264911,
+    "avg_loss_net": -0.14962311132138384,
+    "total_return_net": -0.9905873795044187,
+    "max_drawdown_net": -0.9999697178767205
+   }
+  }
+ },
+ "keltner_breakout/ema50_m2.0@crypto30/1d": {
+  "base_expectancy": 0.014654540814414661,
+  "base_pf": 1.169603889235015,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 501,
+    "wins": 179,
+    "win_rate": 0.35728542914171657,
+    "expectancy_net": 0.013078521632043953,
+    "profit_factor_net": 1.1495787161179454,
+    "avg_win_net": 0.28132754941428595,
+    "avg_loss_net": -0.13604127952640735,
+    "total_return_net": -0.9863536635227118,
+    "max_drawdown_net": -0.9993161003085248
+   }
+  }
+ },
+ "psar_trend/af0.02_max0.20@crypto30/1d": {
+  "base_expectancy": 0.014469267604289406,
+  "base_pf": 1.1525911125679378,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 651,
+    "wins": 239,
+    "win_rate": 0.3671274961597542,
+    "expectancy_net": 0.012894892333108837,
+    "profit_factor_net": 1.1345663276477675,
+    "avg_win_net": 0.2961381081039831,
+    "avg_loss_net": -0.1514136721553352,
+    "total_return_net": -0.9994490193539775,
+    "max_drawdown_net": -0.9999976928278012
+   }
+  }
+ },
+ "ichimoku_trend/tk_cloud@crypto30/4h": {
+  "base_expectancy": 0.008937174793676827,
+  "base_pf": 1.27834395636154,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 2302,
+    "wins": 922,
+    "win_rate": 0.4005212858384014,
+    "expectancy_net": 0.007341237769808499,
+    "profit_factor_net": 1.2219545598394739,
+    "avg_win_net": 0.10091010853881201,
+    "avg_loss_net": -0.05517361646861268,
+    "total_return_net": 9482.080570381757,
+    "max_drawdown_net": -0.9994470847123585
+   }
+  }
+ },
+ "xs_lowvol/lv20_r10@crypto30/1d": {
+  "base_expectancy": 0.007156229510753745,
+  "base_pf": 1.178977800025495,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 510,
+    "wins": 271,
+    "win_rate": 0.5313725490196078,
+    "expectancy_net": 0.0055610093549820295,
+    "profit_factor_net": 1.1364522217368895,
+    "avg_win_net": 0.08716157746644246,
+    "avg_loss_net": -0.08696515783416348,
+    "total_return_net": -0.32427173894291983,
+    "max_drawdown_net": -0.9759914195519153
+   }
+  }
+ },
+ "ichimoku_trend/tk_cloud@comm7/4h": {
+  "base_expectancy": 0.006385716435809141,
+  "base_pf": 1.3140006078128652,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 207,
+    "wins": 84,
+    "win_rate": 0.4057971014492754,
+    "expectancy_net": 0.005015998814607272,
+    "profit_factor_net": 1.2372191192634923,
+    "avg_win_net": 0.0644681812368697,
+    "avg_loss_net": -0.03558549162010854,
+    "total_return_net": 0.9933673013868949,
+    "max_drawdown_net": -0.6100241969104963
+   }
+  }
+ },
+ "shock_breakout/k1.5@comm7/4h": {
+  "base_expectancy": 0.005655953485791525,
+  "base_pf": 1.2358685502812075,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 326,
+    "wins": 125,
+    "win_rate": 0.3834355828220859,
+    "expectancy_net": 0.0043197033242842455,
+    "profit_factor_net": 1.1742281827194474,
+    "avg_win_net": 0.07592688812989638,
+    "avg_loss_net": -0.04021212802248948,
+    "total_return_net": 1.0411945851149365,
+    "max_drawdown_net": -0.5902088509996603
+   }
+  }
+ },
+ "tsmom2_dual/roc30_ema200@comm7/4h": {
+  "base_expectancy": 0.0055805799369819074,
+  "base_pf": 1.2026201995165708,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 205,
+    "wins": 81,
+    "win_rate": 0.3951219512195122,
+    "expectancy_net": 0.004233574144366826,
+    "profit_factor_net": 1.1493105551418625,
+    "avg_win_net": 0.08247510884666563,
+    "avg_loss_net": -0.046875815459554174,
+    "total_return_net": 0.41634836465934266,
+    "max_drawdown_net": -0.5585614292260992
+   }
+  }
+ },
+ "shock_breakout/k1.0@comm7/4h": {
+  "base_expectancy": 0.005104570083340909,
+  "base_pf": 1.2254813335021628,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 516,
+    "wins": 197,
+    "win_rate": 0.3817829457364341,
+    "expectancy_net": 0.003781106304289679,
+    "profit_factor_net": 1.1612406558671144,
+    "avg_win_net": 0.07132635641050196,
+    "avg_loss_net": -0.03793179109672543,
+    "total_return_net": 1.7083563097937775,
+    "max_drawdown_net": -0.6158853760605992
+   }
+  }
+ },
+ "governed/strategy_supertrend:bare@comm7/4h": {
+  "base_expectancy": 0.005040420917033473,
+  "base_pf": 1.236172458365806,
+  "at_2x_costs": {
+   "status": "EVALUATED",
+   "pooled_oos": {
+    "trades": 343,
+    "wins": 101,
+    "win_rate": 0.2944606413994169,
+    "expectancy_net": 0.003683891041493527,
+    "profit_factor_net": 1.1652636508719743,
+    "avg_win_net": 0.08821173813432065,
+    "avg_loss_net": -0.031594260017909534,
+    "total_return_net": 0.8305684611931006,
+    "max_drawdown_net": -0.7549344492599237
+   }
+  }
+ },
+ "ha_trend/one_candle@comm7/4h": {
+  "base_expectancy": 0.004241524406375082,
+  "base_pf": 1.1900665505688846,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 554,
+    "wins": 207,
+    "win_rate": 0.37364620938628157,
+    "expectancy_net": 0.002933777450090545,
+    "profit_factor_net": 1.1268704708103552,
+    "avg_win_net": 0.069739693187884,
+    "avg_loss_net": -0.036918742889169534,
+    "total_return_net": 0.9050895623378734,
+    "max_drawdown_net": -0.8161798346322455
+   }
+  }
+ },
+ "xs_reversal/rev5_r5@comm7/1d": {
+  "base_expectancy": 0.0038409484498453154,
+  "base_pf": 1.1961604403564232,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 708,
+    "wins": 371,
+    "win_rate": 0.5240112994350282,
+    "expectancy_net": 0.002475993670251157,
+    "profit_factor_net": 1.1224264250669391,
+    "avg_win_net": 0.043320313696641334,
+    "avg_loss_net": -0.0424891182875849,
+    "total_return_net": 0.7899318561831621,
+    "max_drawdown_net": -0.8190299043745
+   }
+  }
+ },
+ "xs_reversal/rev10_r5@comm7/1d": {
+  "base_expectancy": 0.0033208587641580965,
+  "base_pf": 1.1683586570587117,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 708,
+    "wins": 362,
+    "win_rate": 0.5112994350282486,
+    "expectancy_net": 0.0019546199778136377,
+    "profit_factor_net": 1.0958880515862104,
+    "avg_win_net": 0.043690671370809085,
+    "avg_loss_net": -0.04171142223104287,
+    "total_return_net": 0.23764418635709017,
+    "max_drawdown_net": -0.9468166263889728
+   }
+  }
+ },
+ "stoch_reversion/k14_raw@forex28/1d": {
+  "base_expectancy": 0.0028608918905023823,
+  "base_pf": 1.2622988017386825,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 365,
+    "wins": 140,
+    "win_rate": 0.3835616438356164,
+    "expectancy_net": 0.002049391619501655,
+    "profit_factor_net": 1.1796146610882792,
+    "avg_win_net": 0.03509038742400207,
+    "avg_loss_net": -0.01850945021440971,
+    "total_return_net": 0.802279570474431,
+    "max_drawdown_net": -0.5858962772600306
+   }
+  }
+ },
+ "governed/strategy_factory_winner_1:bare@comm7/4h": {
+  "base_expectancy": 0.0025737480034732528,
+  "base_pf": 1.1574171496267514,
+  "at_2x_costs": {
+   "status": "EVALUATED",
+   "pooled_oos": {
+    "trades": 360,
+    "wins": 136,
+    "win_rate": 0.37777777777777777,
+    "expectancy_net": 0.0012167412306827374,
+    "profit_factor_net": 1.0707170386317728,
+    "avg_win_net": 0.048765475729819374,
+    "avg_loss_net": -0.02765213328665022,
+    "total_return_net": 0.139248526802338,
+    "max_drawdown_net": -0.5118665790659274
+   }
+  }
+ },
+ "governed/strategy_factory_winner_2:bare@comm7/4h": {
+  "base_expectancy": 0.0025737480034732528,
+  "base_pf": 1.1574171496267514,
+  "at_2x_costs": {
+   "status": "EVALUATED",
+   "pooled_oos": {
+    "trades": 360,
+    "wins": 136,
+    "win_rate": 0.37777777777777777,
+    "expectancy_net": 0.0012167412306827374,
+    "profit_factor_net": 1.0707170386317728,
+    "avg_win_net": 0.048765475729819374,
+    "avg_loss_net": -0.02765213328665022,
+    "total_return_net": 0.139248526802338,
+    "max_drawdown_net": -0.5118665790659274
+   }
+  }
+ },
+ "fx_meanrev/rsi2_filt@idx7/1d": {
+  "base_expectancy": 0.0022549414069862163,
+  "base_pf": 1.1934752944383886,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 205,
+    "wins": 104,
+    "win_rate": 0.5073170731707317,
+    "expectancy_net": 0.0014503258729005183,
+    "profit_factor_net": 1.1204287736449472,
+    "avg_win_net": 0.026597456413548347,
+    "avg_loss_net": -0.0244437491392517,
+    "total_return_net": 0.24539216464462843,
+    "max_drawdown_net": -0.3860755776766046
+   }
+  }
+ },
+ "ts_momentum/roc72@forex28/1d": {
+  "base_expectancy": 0.0018454152962949961,
+  "base_pf": 1.1734996423885415,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 226,
+    "wins": 83,
+    "win_rate": 0.3672566371681416,
+    "expectancy_net": 0.0010512355640606727,
+    "profit_factor_net": 1.0944089799855488,
+    "avg_win_net": 0.03318155496392566,
+    "avg_loss_net": -0.017597830940756065,
+    "total_return_net": 0.15814652060041023,
+    "max_drawdown_net": -0.5818861310699399
+   }
+  }
+ },
+ "vol_adaptive_trend/ema12_26_nogate@crypto30/1d": {
+  "base_expectancy": 0.06233119035617631,
+  "base_pf": 1.695558654665393,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 299,
+    "wins": 134,
+    "win_rate": 0.44816053511705684,
+    "expectancy_net": 0.0608281596798647,
+    "profit_factor_net": 1.67213620308263,
+    "avg_win_net": 0.3376645193143798,
+    "avg_loss_net": -0.16399652026574152,
+    "total_return_net": 2023.3113491696133,
+    "max_drawdown_net": -0.9897913418379242
+   }
+  }
+ },
+ "donchian_turtle/n55_b26@crypto30/1d": {
+  "base_expectancy": 0.05613782859270738,
+  "base_pf": 1.6501546715922955,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 298,
+    "wins": 104,
+    "win_rate": 0.348993288590604,
+    "expectancy_net": 0.05456782151280724,
+    "profit_factor_net": 1.6245644835524358,
+    "avg_win_net": 0.406704718594053,
+    "avg_loss_net": -0.1342065975410565,
+    "total_return_net": 536.8955128458927,
+    "max_drawdown_net": -0.9984750317673333
+   }
+  }
+ },
+ "vol_adaptive_trend/ema20_50_nogate@crypto30/1d": {
+  "base_expectancy": 0.056083486646600636,
+  "base_pf": 1.6358510473151222,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 246,
+    "wins": 104,
+    "win_rate": 0.42276422764227645,
+    "expectancy_net": 0.05457979828747024,
+    "profit_factor_net": 1.6123751219941436,
+    "avg_win_net": 0.33992432493448266,
+    "avg_loss_net": -0.15440492545400364,
+    "total_return_net": 215.04628248144914,
+    "max_drawdown_net": -0.9986513450457686
+   }
+  }
+ },
+ "ts_momentum/roc72@crypto30/1d": {
+  "base_expectancy": 0.04376420686563943,
+  "base_pf": 1.6049439963217034,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 334,
+    "wins": 142,
+    "win_rate": 0.4251497005988024,
+    "expectancy_net": 0.04220171911905204,
+    "profit_factor_net": 1.575979022257013,
+    "avg_win_net": 0.27160141682139977,
+    "avg_loss_net": -0.1274584739733093,
+    "total_return_net": 1039.3449530942403,
+    "max_drawdown_net": -0.9939895889996909
+   }
+  }
+ },
+ "ts_momentum/roc42@crypto30/1d": {
+  "base_expectancy": 0.032126450037359644,
+  "base_pf": 1.4354079563030544,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 460,
+    "wins": 196,
+    "win_rate": 0.4260869565217391,
+    "expectancy_net": 0.03054030629581379,
+    "profit_factor_net": 1.4087581057010625,
+    "avg_win_net": 0.24702744060191456,
+    "avg_loss_net": -0.13018499038598833,
+    "total_return_net": 175.03094872914056,
+    "max_drawdown_net": -0.9959938900070636
+   }
+  }
+ },
+ "volume_breakout/donch20_vol1.5@crypto30/1d": {
+  "base_expectancy": 0.02416942010046002,
+  "base_pf": 1.3038336609908407,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 558,
+    "wins": 218,
+    "win_rate": 0.3906810035842294,
+    "expectancy_net": 0.022556703017162956,
+    "profit_factor_net": 1.2801177222431035,
+    "avg_win_net": 0.2638533732457227,
+    "avg_loss_net": -0.13215704436467834,
+    "total_return_net": 1.873234019992136,
+    "max_drawdown_net": -0.9997867612196947
+   }
+  }
+ },
+ "donchian_turtle/n20_b26@crypto30/1d": {
+  "base_expectancy": 0.015955456006215934,
+  "base_pf": 1.1640917599432252,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 400,
+    "wins": 109,
+    "win_rate": 0.2725,
+    "expectancy_net": 0.014353562372480012,
+    "profit_factor_net": 1.1458637081483651,
+    "avg_win_net": 0.4137889690315458,
+    "avg_loss_net": -0.13526313634174053,
+    "total_return_net": -0.9975707085531873,
+    "max_drawdown_net": -0.9995015365222713
+   }
+  }
+ },
+ "ts_momentum/roc168@crypto30/1d": {
+  "base_expectancy": 0.015793422614308644,
+  "base_pf": 1.1775975922835573,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 265,
+    "wins": 104,
+    "win_rate": 0.39245283018867927,
+    "expectancy_net": 0.014209876722548363,
+    "profit_factor_net": 1.1580416768308153,
+    "avg_win_net": 0.26531109098088035,
+    "avg_loss_net": -0.14799214987910708,
+    "total_return_net": -0.8955182492569616,
+    "max_drawdown_net": -0.9997261714248561
+   }
+  }
+ },
+ "mtf_confluence/h4_native_ema200@crypto30/1d": {
+  "base_expectancy": 0.01471849318549507,
+  "base_pf": 1.190184251966129,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 217,
+    "wins": 80,
+    "win_rate": 0.3686635944700461,
+    "expectancy_net": 0.013171485763803496,
+    "profit_factor_net": 1.1679477223804802,
+    "avg_win_net": 0.24845846581704306,
+    "avg_loss_net": -0.12422237120159188,
+    "total_return_net": -0.6634032485968212,
+    "max_drawdown_net": -0.9984257097916732
+   }
+  }
+ },
+ "turtle2/n55_trail_filt@crypto30/1d": {
+  "base_expectancy": 0.011696969628823543,
+  "base_pf": 1.2037401517085669,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 400,
+    "wins": 148,
+    "win_rate": 0.37,
+    "expectancy_net": 0.010090990158218613,
+    "profit_factor_net": 1.1727369471343818,
+    "avg_win_net": 0.18516010847760803,
+    "avg_loss_net": -0.09272738091824817,
+    "total_return_net": -0.8224024742273456,
+    "max_drawdown_net": -0.9993678467527201
+   }
+  }
+ },
+ "donchian_turtle/n20_trail@crypto30/1d": {
+  "base_expectancy": 0.010869810698796762,
+  "base_pf": 1.1967782222308403,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 677,
+    "wins": 260,
+    "win_rate": 0.38404726735598227,
+    "expectancy_net": 0.009261794846039933,
+    "profit_factor_net": 1.1647364040371746,
+    "avg_win_net": 0.17050948611998995,
+    "avg_loss_net": -0.0912763340058234,
+    "total_return_net": -0.9094515811390476,
+    "max_drawdown_net": -0.9993392555375608
+   }
+  }
+ },
+ "turtle2/n20_trail@crypto30/1d": {
+  "base_expectancy": 0.010869810698796762,
+  "base_pf": 1.1967782222308403,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 677,
+    "wins": 260,
+    "win_rate": 0.38404726735598227,
+    "expectancy_net": 0.009261794846039933,
+    "profit_factor_net": 1.1647364040371746,
+    "avg_win_net": 0.17050948611998995,
+    "avg_loss_net": -0.0912763340058234,
+    "total_return_net": -0.9094515811390476,
+    "max_drawdown_net": -0.9993392555375608
+   }
+  }
+ },
+ "turtle2/n20_trail_filt@crypto30/1d": {
+  "base_expectancy": 0.008919223314637086,
+  "base_pf": 1.159017197394985,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 558,
+    "wins": 205,
+    "win_rate": 0.3673835125448029,
+    "expectancy_net": 0.007316706276430921,
+    "profit_factor_net": 1.1281233173405383,
+    "avg_win_net": 0.17535750588444712,
+    "avg_loss_net": -0.09027072692369181,
+    "total_return_net": -0.953404198974519,
+    "max_drawdown_net": -0.9995968211147622
+   }
+  }
+ },
+ "dow_effect/reversal@crypto30/1d": {
+  "base_expectancy": 0.0087767850641235,
+  "base_pf": 1.2574511877169772,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 3660,
+    "wins": 1879,
+    "win_rate": 0.5133879781420765,
+    "expectancy_net": 0.007173050387707745,
+    "profit_factor_net": 1.205788975250453,
+    "avg_win_net": 0.08186672006767788,
+    "avg_loss_net": -0.0716306583875106,
+    "total_return_net": 457.93805814074364,
+    "max_drawdown_net": -0.9999999295497396
+   }
+  }
+ },
+ "donchian_turtle/n55_trail@crypto30/1d": {
+  "base_expectancy": 0.008636528601016394,
+  "base_pf": 1.1509339164185033,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 435,
+    "wins": 157,
+    "win_rate": 0.36091954022988504,
+    "expectancy_net": 0.007033659663549095,
+    "profit_factor_net": 1.1207768379043888,
+    "avg_win_net": 0.18084497550601522,
+    "avg_loss_net": -0.09112596834820337,
+    "total_return_net": -0.9451775861635061,
+    "max_drawdown_net": -0.9994176335561441
+   }
+  }
+ },
+ "turtle2/n55_trail@crypto30/1d": {
+  "base_expectancy": 0.008636528601016394,
+  "base_pf": 1.1509339164185033,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 435,
+    "wins": 157,
+    "win_rate": 0.36091954022988504,
+    "expectancy_net": 0.007033659663549095,
+    "profit_factor_net": 1.1207768379043888,
+    "avg_win_net": 0.18084497550601522,
+    "avg_loss_net": -0.09112596834820337,
+    "total_return_net": -0.9451775861635061,
+    "max_drawdown_net": -0.9994176335561441
+   }
+  }
+ },
+ "mtf_confluence/h4_native_ema200@crypto30/4h": {
+  "base_expectancy": 0.00489606805171131,
+  "base_pf": 1.1537873319781193,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 1668,
+    "wins": 635,
+    "win_rate": 0.38069544364508395,
+    "expectancy_net": 0.0033024163901808224,
+    "profit_factor_net": 1.1005723835671077,
+    "avg_win_net": 0.09492793201927835,
+    "avg_loss_net": -0.053021109674172444,
+    "total_return_net": 0.9894192176589729,
+    "max_drawdown_net": -0.9982089944439443
+   }
+  }
+ },
+ "turtle2/n55_trail_filt@crypto30/4h": {
+  "base_expectancy": 0.0036645978862974967,
+  "base_pf": 1.1584913647502617,
+  "at_2x_costs": {
+   "pooled_oos": {
+    "trades": 2966,
+    "wins": 1133,
+    "win_rate": 0.38199595414699933,
+    "expectancy_net": 0.0020672471149494926,
+    "profit_factor_net": 1.085764921598103,
+    "avg_win_net": 0.06851091107999982,
+    "avg_loss_net": -0.03900240442482248,
+    "total_return_net": -0.5858183263586434,
+    "max_drawdown_net": -0.9999320319834827
+   }
+  }
+ },
+ "governed/strategy_adx_ema:bare@crypto30/4h": {
+  "base_expectancy": 0.007954793567814741,
+  "base_pf": 1.2331594654324856,
+  "at_2x_costs": {
+   "status": "EVALUATED",
+   "pooled_oos": {
+    "trades": 837,
+    "wins": 477,
+    "win_rate": 0.5698924731182796,
+    "expectancy_net": 0.006367087560888029,
+    "profit_factor_net": 1.1829241391247867,
+    "avg_win_net": 0.0722493219608166,
+    "avg_loss_net": -0.08092687301901733,
+    "total_return_net": 10.869083527448264,
+    "max_drawdown_net": -0.9167409976238708
+   }
+  }
+ },
+ "governed/strategy_adx_ema:production@crypto30/4h": {
+  "base_expectancy": 0.006131653759779449,
+  "base_pf": 1.1971571681804005,
+  "at_2x_costs": {
+   "status": "EVALUATED",
+   "pooled_oos": {
+    "trades": 341,
+    "wins": 195,
+    "win_rate": 0.5718475073313783,
+    "expectancy_net": 0.004523127875557895,
+    "profit_factor_net": 1.14252756103092,
+    "avg_win_net": 0.06340543195337676,
+    "avg_loss_net": -0.0741210453790632,
+    "total_return_net": 0.8993645496371199,
+    "max_drawdown_net": -0.9302153073284904
+   }
+  }
+ },
+ "discovery/strategy_bbi_blend@idx7/1d": {
+  "base_expectancy": 0.0027348067653084245,
+  "base_pf": 1.1641786350847145,
+  "at_2x_costs": {
+   "error": "n_code\n  File \"/home/hatch/workspace/str-rd2/wt/Stratex/rigorous_backtest/rd2/sens.py\", line 85, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/hatch/workspace/str-rd2/wt/Stratex/rigorous_backtest/rd2/sens.py\", line 45, in main\n    cfg = next(c for c in build_configs() + build_configs3()\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nStopIteration\n"
+  }
+ }
+}
