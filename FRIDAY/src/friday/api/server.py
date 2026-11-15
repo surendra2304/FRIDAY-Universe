@@ -907,6 +907,49 @@ agent = FridayAgent(
 android = AndroidDeviceController()
 
 
+@app.post("/telegram-webhook")
+async def telegram_webhook(request: Request) -> JSONResponse:
+    """Inbound Telegram updates in webhook mode (TASK-FRD-TGWEBHOOK).
+
+    When TELEGRAM_WEBHOOK_URL is configured, the Telegram gateway
+    registers this endpoint with Telegram instead of long polling;
+    Telegram then pushes each update exactly once and rejects getUpdates
+    for the token — the off-cloud rival poller that has been consuming
+    the owner's messages is locked out at the Telegram API level.
+
+    This route is deliberately NOT behind the dashboard control gate:
+    Telegram's servers cannot hold a control token. The credential is
+    the webhook secret — the X-Telegram-Bot-Api-Secret-Token header is
+    verified against TELEGRAM_WEBHOOK_SECRET (403 on mismatch, 400 on a
+    malformed body, 404 while webhook mode is off) — and the gateway's
+    owner-id gate still applies to every update. Handling runs through
+    the gateway's own dispatch (same path as the poller) on its thread,
+    so Telegram gets its fast 200.
+    """
+    from friday.proactive.telegram_gateway import telegram_gateway
+
+    if not telegram_gateway.webhook_mode:
+        return JSONResponse(
+            status_code=404, content={"ok": False, "error": "webhook mode not configured"}
+        )
+    secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+    if not telegram_gateway.webhook_secret_matches(secret):
+        logger.warning("[TG-WEBHOOK] rejected POST with a mismatched secret header")
+        return JSONResponse(
+            status_code=403, content={"ok": False, "error": "secret mismatch"}
+        )
+    try:
+        update = await request.json()
+    except Exception:
+        update = None
+    if not isinstance(update, dict):
+        return JSONResponse(
+            status_code=400, content={"ok": False, "error": "invalid JSON body"}
+        )
+    telegram_gateway.process_webhook_update(update)
+    return JSONResponse(status_code=200, content={"ok": True})
+
+
 @app.get("/api/control/session")
 async def control_session(request: Request) -> JSONResponse:
     """Mint a short-lived control token for the owner's dashboard.

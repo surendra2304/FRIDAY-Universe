@@ -21,12 +21,21 @@ Honesty rules (unchanged from every FRIDAY surface):
 - one poller per bot token: the gateway refuses to start when another
   process is already polling (Telegram 409) — it backs off and retries
   rather than fighting, and logs the conflict honestly;
+- webhook mode (TASK-FRD-TGWEBHOOK, opt-in via ``TELEGRAM_WEBHOOK_URL``):
+  when a rival poller sits OFF the fleet (e.g. an off-cloud instance), no
+  amount of local backoff wins the token back — the owner's messages are
+  consumed by the rival and lost. With a webhook registered, Telegram
+  delivers each update exactly once to FRIDAY's HTTPS endpoint and
+  rejects getUpdates for the token, so the rival is locked out at the
+  Telegram API level. Polling stays the default; webhook mode changes
+  only how updates ARRIVE, never how they are handled;
 - never raises into the caller: the loop's failures are logged, the loop
   continues.
 """
 
 from __future__ import annotations
 
+import hmac
 import logging
 import os
 import threading
@@ -70,6 +79,34 @@ def _env_credentials() -> tuple[str, str]:
     return token, chat_id
 
 
+def _env_webhook_config() -> tuple[str, str]:
+    """Webhook URL + secret from the environment (never hardcoded).
+
+    Webhook mode is opt-in (TASK-FRD-TGWEBHOOK): ``TELEGRAM_WEBHOOK_URL``
+    set means Telegram pushes updates to that HTTPS endpoint instead of
+    the gateway long-polling; unset means polling, exactly as before.
+    ``TELEGRAM_WEBHOOK_SECRET`` is handed to Telegram as the webhook's
+    ``secret_token`` at registration and verified on every inbound POST.
+    Read from the same places as the bot credentials (process env first,
+    then the repo-root .env) so activation is just the two lines in the
+    root .env plus a restart.
+    """
+    url = (os.getenv("TELEGRAM_WEBHOOK_URL") or "").strip()
+    secret = (os.getenv("TELEGRAM_WEBHOOK_SECRET") or "").strip()
+    if not url or not secret:
+        try:
+            from dotenv import dotenv_values
+
+            values = dotenv_values(
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".env")
+            )
+            url = url or (values.get("TELEGRAM_WEBHOOK_URL") or "").strip()
+            secret = secret or (values.get("TELEGRAM_WEBHOOK_SECRET") or "").strip()
+        except Exception:
+            pass
+    return url, secret
+
+
 class TelegramGateway:
     """Owner-gated two-way bridge between Telegram and FRIDAY's brain."""
 
@@ -109,6 +146,25 @@ class TelegramGateway:
     def set_brain(self, brain: Callable[[str], Any]) -> None:
         """Wire the command executor (the same one /api/chat uses)."""
         self._brain = brain
+
+    @property
+    def webhook_mode(self) -> bool:
+        """True when TELEGRAM_WEBHOOK_URL is set (webhook, not polling)."""
+        url, _ = _env_webhook_config()
+        return bool(url)
+
+    def webhook_secret_matches(self, secret_header: str | None) -> bool:
+        """Check an inbound POST's secret header against the configured one.
+
+        When no secret is configured there is nothing to match against and
+        the check passes — the owner-id gate inside ``_handle_update``
+        still applies to every update either way. Activation always sets
+        a secret, so production webhook POSTs are verified.
+        """
+        _, secret = _env_webhook_config()
+        if not secret:
+            return True
+        return hmac.compare_digest((secret_header or ""), secret)
 
     # ------------------------------------------------------------------
     # Telegram primitives (thin, honest wrappers)
@@ -261,6 +317,71 @@ class TelegramGateway:
         return mission_queue.render_status()
 
     # ------------------------------------------------------------------
+    # webhook mode (TASK-FRD-TGWEBHOOK)
+    # ------------------------------------------------------------------
+    def set_webhook(self) -> bool:
+        """Register the configured webhook with Telegram.
+
+        Telegram delivers each update exactly once to the registered
+        webhook and rejects getUpdates for this token while it is set —
+        the mechanism that locks out an off-cloud rival poller consuming
+        the owner's messages. The ``secret_token`` makes every inbound
+        POST verifiable via the X-Telegram-Bot-Api-Secret-Token header.
+        """
+        url, secret = _env_webhook_config()
+        if not url:
+            return False
+        payload: dict[str, Any] = {
+            "url": url,
+            "allowed_updates": ["message", "edited_message"],
+        }
+        if secret:
+            payload["secret_token"] = secret
+        data = self._api("setWebhook", payload)
+        if data:
+            logger.info(
+                "[TG-GATEWAY] webhook registered (%s); updates now arrive via "
+                "HTTPS POST and getUpdates is rejected for this token",
+                url,
+            )
+            return True
+        logger.error(
+            "[TG-GATEWAY] setWebhook failed for %s — inbound Telegram is NOT "
+            "live in webhook mode; registration is retried on the next start",
+            url,
+        )
+        return False
+
+    def process_webhook_update(self, update: dict[str, Any]) -> bool:
+        """Dispatch ONE webhook-delivered update (TASK-FRD-TGWEBHOOK).
+
+        The caller is FRIDAY's POST /telegram-webhook route, which has
+        already verified the secret header. Duplicate deliveries (Telegram
+        retries) are dropped by update_id, mirroring the poller's offset
+        logic, and handling runs through ``_handle_update`` — the same
+        owner gate + brain path the poller uses, on a daemon thread so
+        the HTTP route answers Telegram immediately. Returns True when
+        the update was accepted for handling. Never raises.
+        """
+        if not isinstance(update, dict):
+            return False
+        uid = int(update.get("update_id") or 0)
+        if uid <= self._last_update_id:
+            return False  # duplicate delivery / replay
+        self._last_update_id = uid
+
+        def _run() -> None:
+            try:
+                self._handle_update(update)
+            except Exception:
+                logger.exception("[TG-GATEWAY] webhook update handling failed")
+
+        threading.Thread(
+            target=_run, name="friday-telegram-webhook", daemon=True
+        ).start()
+        return True
+
+    # ------------------------------------------------------------------
     # polling loop
     # ------------------------------------------------------------------
     def _poll_once(self) -> None:
@@ -298,7 +419,14 @@ class TelegramGateway:
         logger.info("[TG-GATEWAY] gateway loop stopped")
 
     def start(self) -> bool:
-        """Start the background polling thread. False when unconfigured."""
+        """Start the gateway in its configured mode. False when unconfigured.
+
+        Polling mode (default): the background long-poll thread below,
+        exactly as before. Webhook mode (TELEGRAM_WEBHOOK_URL set):
+        register the webhook and serve inbound from the API route — no
+        polling thread and no deleteWebhook, so a rival poller of this
+        token stays locked out by Telegram itself.
+        """
         if not self.is_configured():
             logger.info("[TG-GATEWAY] not configured (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID) — gateway stays off")
             return False
@@ -306,6 +434,9 @@ class TelegramGateway:
             if self._running:
                 return True
             self._running = True
+        if self.webhook_mode:
+            self.set_webhook()
+            return True
         # Clear any stale webhook so long polling works (Telegram rule).
         self._api("deleteWebhook", {"drop_pending_updates": False})
         self._thread = threading.Thread(target=self._loop, name="friday-telegram-gateway", daemon=True)
