@@ -345,12 +345,32 @@ class TestTraderRisk:
         assert summary.get("trailed") == ["6"]
 
     def test_run_once_places_order_on_signal(self, tmp_path, monkeypatch):
+        # TASK-STR-FWD-004 (disclosed test change): the governance gate
+        # now fails closed for UNREGISTERED strategies, and
+        # Donchian-Trend-v3 has no registry entry — so this order-
+        # placement test drives the GOVERNED strategy (FX-MR-v4) on its
+        # own signal fixture instead. The behaviour under test (a signal
+        # produces a market order with a stop attached, logged to CSV)
+        # is unchanged; Donchian's blocked status is pinned by
+        # tests/test_oanda_forward_activation.py.
+        from oanda_demo.strategy import MeanReversionStrategy
+
         monkeypatch.setattr("oanda_demo.trader.DATA_DIR", tmp_path)
         monkeypatch.setattr("oanda_demo.trader.TRADES_CSV", tmp_path / "trades.csv")
-        trader = self._trader(tmp_path, strategy=DonchianTrendStrategy())
+        monkeypatch.setattr("oanda_demo.trader.KILL_SWITCH", tmp_path / "kill")
+        monkeypatch.setattr(
+            "oanda_demo.trader.ENTRIES_PAUSED_FILE", tmp_path / "paused"
+        )
+        monkeypatch.setenv("STRATEX_STATE_DIR", str(tmp_path))
+        trader = self._trader(
+            tmp_path,
+            strategy=MeanReversionStrategy(),
+            candles=reverting_df(n=482),
+        )
         trader.dry_run = False
         summary = trader.run_once()
-        assert trader.adapter.orders, "expected at least one order on a clean trending dataset"
+        assert summary["governance"]["governed"] is True
+        assert trader.adapter.orders, "expected at least one order on a clean MR dataset"
         symbol, side, order_type, quantity, kw = trader.adapter.orders[0]
         assert side in ("BUY", "SELL") and order_type == "MARKET"
         assert quantity >= 1
