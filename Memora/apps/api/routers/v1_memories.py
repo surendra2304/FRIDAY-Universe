@@ -779,6 +779,30 @@ def delete_memory_endpoint(
     except PermissionDeniedError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
+@router.post("/{memory_id}/forget")
+def forget_memory_endpoint(
+    memory_id: str,
+    actor_name: str = Depends(get_actor_header),
+    db: Session = Depends(get_db)
+):
+    """Owner-requested forgetting (TASK-MEM-006): always a hard erase with
+    store-by-store verification — never the soft delete, which retains the
+    content behind a lifecycle flag."""
+    try:
+        res = MemoryService.forget_memory(
+            db=db,
+            memory_id=memory_id,
+            actor_name=actor_name
+        )
+        event_emitter.publish("memory.updated", {"memory_id": memory_id, "action": "forget", "hard": True}, db=db)
+        db.commit()
+        return res
+    except MemoryNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionDeniedError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
 @router.post("/decay")
 def trigger_memory_decay(
     req: Optional[MemoryDecayRequest] = None,
@@ -833,6 +857,47 @@ def trigger_horizon_sweep(
 
     from storage.convergence.horizon_sweeper import horizon_sweeper
     result = horizon_sweeper.run_sweep_pass(db, tenant_id=actor.tenant_id)
+    return {
+        "status": "success",
+        "actor": actor.name,
+        "sweep_result": result,
+    }
+
+
+class MemorySweepRetentionRequest(BaseModel):
+    tenant_id: Optional[str] = Field(default=None, max_length=128, description="Target tenant ID")
+
+
+@router.post("/sweep-retention")
+def trigger_retention_sweep(
+    req: Optional[MemorySweepRetentionRequest] = None,
+    actor_name: str = Depends(get_actor_header),
+    db: Session = Depends(get_db),
+):
+    """Retention expiry sweep (TASK-MEM-006): hard-erases every record in
+    the caller's tenant whose policy ``expires_at`` has passed. Durable
+    records (no expiry) are never touched. Same tenant-bound admin posture
+    as /sweep-horizon."""
+    require_admin(actor_name)
+
+    actor = IdentityService.get_agent_by_name(
+        db, actor_name, tenant_id="default"
+    )
+    if actor is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The Memora service identity is not provisioned in the API-bound tenant.",
+        )
+
+    requested_tenant = (req.tenant_id or "").strip() if req else ""
+    if requested_tenant and requested_tenant != actor.tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The retention sweep tenant must match the authenticated service tenant.",
+        )
+
+    from core.memory.retention import RetentionSweeper
+    result = RetentionSweeper.run_expiry_sweep(db, tenant_id=actor.tenant_id)
     return {
         "status": "success",
         "actor": actor.name,

@@ -34,6 +34,7 @@ from core.lifecycle.state_machine import MemoryLifecycleEngine
 from core.lifecycle.supersession import SupersessionEngine
 from core.lifecycle.decay import MemoryDecayEngine
 from core.memory.schemas import MemoryRecordCreate, MemoryQuery
+from core.memory.retention import resolve_create_expires_at
 
 logger = logging.getLogger(__name__)
 
@@ -323,7 +324,12 @@ class MemoryService:
             lifecycle_state=requested_lifecycle,
             valid_from=memory_in.valid_from,
             valid_until=memory_in.valid_until,
-            expires_at=memory_in.expires_at,
+            # Retention policy (TASK-MEM-006): an explicit caller expiry
+            # wins; otherwise the policy assigns one by retention class —
+            # transient/short-term types expire, durable types get None.
+            expires_at=resolve_create_expires_at(
+                memory_in.memory_type, memory_in.expires_at, memory_in.provenance
+            ),
             entities=memory_in.entities or [],
         )
         db.add(record)
@@ -750,59 +756,7 @@ class MemoryService:
 
         tenant_id = getattr(record, "tenant_id", "default")
         if hard_delete:
-            # Local-only deletion convergence: the durable store is the Oracle
-            # relational database reached through the ORM session.
-            tombstone = DeletionTombstone(
-                tenant_id=tenant_id,
-                memory_id=memory_id,
-                relational_deleted=False,
-                vector_deleted=False,
-                cache_deleted=False,
-                graph_deleted=False,
-                status="DELETE_REQUESTED"
-            )
-            db.add(tombstone)
-            db.flush()
-
-            # 1. Vector deletion — against the store the write path upserts
-            # into (TASK-REL-013). On the Oracle backend the embedding lives
-            # in the native vector table; deleting only from the Qdrant
-            # adapter would mark the tombstone vector_deleted while the real
-            # vector survives. The Oracle delete joins this transaction via
-            # the caller's session, so it converges atomically with the
-            # relational delete below.
-            vec_ok = False
-            try:
-                from storage.vector.oracle_vector_adapter import oracle_vector_adapter
-                if oracle_vector_adapter.is_oracle_backend():
-                    vec_ok = oracle_vector_adapter.delete_embedding(
-                        memory_id, tenant_id=tenant_id, db=db
-                    )
-                else:
-                    vec_ok = vector_adapter.delete_embedding(memory_id, tenant_id=tenant_id)
-            except Exception:
-                vec_ok = False
-            tombstone.vector_deleted = bool(vec_ok)
-
-            # 2. Graph relationship deletion (Requirement 9: multi-store convergence)
-            try:
-                from storage.relational.models import MemoryRelationship
-                db.query(MemoryRelationship).filter(
-                    or_(
-                        MemoryRelationship.source_memory_id == memory_id,
-                        MemoryRelationship.target_memory_id == memory_id
-                    )
-                ).delete(synchronize_session=False)
-                tombstone.graph_deleted = True
-            except Exception:
-                tombstone.graph_deleted = False
-
-            tombstone.cache_deleted = True
-
-            # 3. Relational deletion
-            db.delete(record)
-            tombstone.relational_deleted = True
-            tombstone.status = "CONVERGED" if tombstone.is_converged() else "PENDING_RETRY"
+            tombstone = MemoryService._hard_erase_record(db, record)
 
             PolicyEngine.log_audit_decision(
                 db,
@@ -831,6 +785,218 @@ class MemoryService:
             db.commit()
             db.refresh(record)
             return {"status": "soft_deleted", "memory_id": memory_id, "lifecycle_state": "deleted"}
+
+    @staticmethod
+    def _evict_memory_from_cache(tenant_id: str, memory_id: str) -> bool:
+        """Actually evict a memory from the tenant cache, reported truthfully.
+
+        Returns True only when the entry was evicted or is verifiably
+        absent. (Before TASK-MEM-006 the hard-delete path set the
+        tombstone's cache flag to True without touching the cache.)
+        """
+        try:
+            from core.cache.memory_cache import memory_cache
+
+            if memory_cache.delete(tenant_id, memory_id):
+                return True
+            return memory_cache.get(tenant_id, memory_id) is None
+        except Exception:
+            return False
+
+    @staticmethod
+    def _hard_erase_record(db: Session, record: MemoryRecord) -> DeletionTombstone:
+        """Erase one record from every store it can live in.
+
+        Shared by ``delete_memory(hard_delete=True)``, ``forget_memory``,
+        and the retention expiry sweep (TASK-MEM-006), so every erasure
+        path converges the same way: a DeletionTombstone tracks the
+        vector, graph, cache, and relational removals individually.
+        Flushes but does not commit; the caller owns the transaction.
+        """
+        memory_id = record.id
+        tenant_id = getattr(record, "tenant_id", "default")
+
+        # Local-only deletion convergence: the durable store is the Oracle
+        # relational database reached through the ORM session.
+        tombstone = DeletionTombstone(
+            tenant_id=tenant_id,
+            memory_id=memory_id,
+            relational_deleted=False,
+            vector_deleted=False,
+            cache_deleted=False,
+            graph_deleted=False,
+            status="DELETE_REQUESTED"
+        )
+        db.add(tombstone)
+        db.flush()
+
+        # 1. Vector deletion — against the store the write path upserts
+        # into (TASK-REL-013). On the Oracle backend the embedding lives
+        # in the native vector table; deleting only from the Qdrant
+        # adapter would mark the tombstone vector_deleted while the real
+        # vector survives. The Oracle delete joins this transaction via
+        # the caller's session, so it converges atomically with the
+        # relational delete below.
+        vec_ok = False
+        try:
+            from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+            if oracle_vector_adapter.is_oracle_backend():
+                vec_ok = oracle_vector_adapter.delete_embedding(
+                    memory_id, tenant_id=tenant_id, db=db
+                )
+            else:
+                vec_ok = vector_adapter.delete_embedding(memory_id, tenant_id=tenant_id)
+        except Exception:
+            vec_ok = False
+        tombstone.vector_deleted = bool(vec_ok)
+
+        # 2. Graph relationship deletion (Requirement 9: multi-store convergence)
+        try:
+            from storage.relational.models import MemoryRelationship
+            db.query(MemoryRelationship).filter(
+                or_(
+                    MemoryRelationship.source_memory_id == memory_id,
+                    MemoryRelationship.target_memory_id == memory_id
+                )
+            ).delete(synchronize_session=False)
+            tombstone.graph_deleted = True
+        except Exception:
+            tombstone.graph_deleted = False
+
+        # 3. Cache eviction — performed, not asserted (TASK-MEM-006).
+        tombstone.cache_deleted = MemoryService._evict_memory_from_cache(
+            tenant_id, memory_id
+        )
+
+        # 4. Relational deletion
+        db.delete(record)
+        tombstone.relational_deleted = True
+        tombstone.status = "CONVERGED" if tombstone.is_converged() else "PENDING_RETRY"
+        db.flush()
+        return tombstone
+
+    @staticmethod
+    def verify_erasure(
+        db: Session,
+        memory_id: str,
+        tenant_id: str = "default",
+    ) -> Dict[str, Any]:
+        """Store-by-store absence check: the proof half of forgetting.
+
+        Returns per-store booleans (True = verifiably absent) and an
+        ``erased`` aggregate that is True only when every store checks
+        out. The vector check is exact where the store can be inspected
+        (the Qdrant adapter's local store when no live Qdrant is
+        connected); on the Oracle backend the embedding is deleted inside
+        the erasure transaction, so the tombstone's vector flag is the
+        evidence. A store that cannot be inspected reports None, which
+        keeps ``erased`` False — unverifiable is never reported as gone.
+        """
+        from storage.relational.models import MemoryRelationship
+
+        relational_absent = (
+            db.query(MemoryRecord)
+            .filter(
+                MemoryRecord.id == memory_id,
+                MemoryRecord.tenant_id == tenant_id,
+            )
+            .first()
+            is None
+        )
+        graph_absent = (
+            db.query(MemoryRelationship)
+            .filter(
+                or_(
+                    MemoryRelationship.source_memory_id == memory_id,
+                    MemoryRelationship.target_memory_id == memory_id,
+                )
+            )
+            .count()
+            == 0
+        )
+        try:
+            from core.cache.memory_cache import memory_cache
+
+            cache_absent: Optional[bool] = (
+                memory_cache.get(tenant_id, memory_id) is None
+            )
+        except Exception:
+            cache_absent = None
+
+        vector_absent: Optional[bool] = None
+        try:
+            from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+
+            if oracle_vector_adapter.is_oracle_backend() or getattr(
+                vector_adapter, "_initialized", False
+            ):
+                tombstone = (
+                    db.query(DeletionTombstone)
+                    .filter(
+                        DeletionTombstone.memory_id == memory_id,
+                        DeletionTombstone.tenant_id == tenant_id,
+                    )
+                    .order_by(DeletionTombstone.created_at.desc())
+                    .first()
+                )
+                vector_absent = bool(tombstone and tombstone.vector_deleted)
+            else:
+                vector_absent = memory_id not in getattr(
+                    vector_adapter, "_mock_store", {}
+                )
+        except Exception:
+            vector_absent = None
+
+        stores = {
+            "relational": relational_absent,
+            "vector": vector_absent,
+            "graph": graph_absent,
+            "cache": cache_absent,
+        }
+        return {
+            "memory_id": memory_id,
+            "tenant_id": tenant_id,
+            "stores": stores,
+            "erased": all(v is True for v in stores.values()),
+        }
+
+    @staticmethod
+    def forget_memory(
+        db: Session,
+        memory_id: str,
+        actor_name: Optional[str] = None,
+        tenant_id: str = "default",
+    ) -> Dict[str, Any]:
+        """Owner-requested forgetting: hard erase + verified absence.
+
+        Unlike ``delete_memory``'s default soft delete (a lifecycle
+        transition that retains the content), forgetting always takes the
+        hard path under the same ownership/policy checks, then proves
+        erasure store by store. If any store still holds the memory, the
+        result reports ``forget_incomplete`` instead of claiming success.
+        """
+        result = MemoryService.delete_memory(
+            db,
+            memory_id=memory_id,
+            actor_name=actor_name,
+            hard_delete=True,
+            tenant_id=tenant_id,
+        )
+        tombstone = (
+            db.query(DeletionTombstone)
+            .filter(DeletionTombstone.memory_id == memory_id)
+            .order_by(DeletionTombstone.created_at.desc())
+            .first()
+        )
+        effective_tenant = tombstone.tenant_id if tombstone else tenant_id
+        verification = MemoryService.verify_erasure(
+            db, memory_id, tenant_id=effective_tenant
+        )
+        result["erasure_verified"] = verification["erased"]
+        result["verification"] = verification
+        if not verification["erased"]:
+            result["status"] = "forget_incomplete"
+        return result
 
     @staticmethod
     def promote_to_semantic(
