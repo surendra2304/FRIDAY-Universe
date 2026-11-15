@@ -135,8 +135,9 @@ def _stratex_state_dir() -> Path | None:
 def _read_local_snapshot() -> tuple[dict[str, Any], str] | None:
     """Last-known Stratex engine state from local files (READ-ONLY, newest-wins).
 
-    Sources: Stratex/testnet_heartbeat.json / heartbeat.json (the engine's own
-    heartbeat, newest timestamp wins) and, as a secondary equity source, the
+    Sources: none at present (TASK-FRD-001 retired the heartbeat files —
+    see the note at the source loop below); the ledger equity block only
+    runs when a snapshot exists, as a secondary equity source, the
     last line of Stratex/ledger/live_equity_curve.jsonl. Only fields actually
     present in the files are returned — nothing is fabricated. Never raises.
     """
@@ -145,7 +146,20 @@ def _read_local_snapshot() -> tuple[dict[str, Any], str] | None:
         return None
     best: tuple[dict[str, Any], str] | None = None
     best_ts = ""
-    for rel in ("testnet_heartbeat.json", "heartbeat.json"):
+    # TASK-FRD-001 (2026-11-15): no local heartbeat file is a truthful
+    # last-known state for the live engine. testnet_heartbeat.json is
+    # written by Stratex/testnet_engine — the classic-testnet engine
+    # retired in TASK-STR-RETIRE-001; its file froze at
+    # 2026-11-14T21:31:34Z still naming deleted strategies (bb_reversion,
+    # factory_winner_1..5) and a STOPPED engine — and FRIDAY served it as
+    # the "last known engine state" on every live-query timeout during
+    # the 2026-11-15 audit (3 of 9 portfolio questions) while the
+    # demo-fapi daemon was live. heartbeat.json belongs to the paper
+    # forward runner, not the live daemon either. The source list is
+    # therefore empty: the ledger block below only runs when a snapshot
+    # exists, so this reader now returns None and the caller reports
+    # honestly that no recorded state exists.
+    for rel in ():
         f = base / rel
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
