@@ -7321,6 +7321,34 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Tests: 23 passed (18 new citation-integrity + 5 existing citation-validation); regression suites 27 passed with 15 sandbox-environment setup errors in test_artifacts/test_domain_modes (sqlite DDL under concurrent load) — clean rerun of those two files still owed; see completion comment."
     blockers: []
     next_action: "Coordinator: review and merge the PR; deploy with the next IntelX deploy window; the audit script can then be re-run against production to confirm the after rate on newly produced research."
+  - id: TASK-STR-RD-006
+    title: "Stratex research: pairs / statistical arbitrage — cointegration-screened (Engle-Granger ADF + half-life) pairs over CRYPTO30, z-score entry 2.0/2.5, 1h/4h walk-forward, judged at the running global trial count"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-006
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:52:00+05:30"
+    updated_at: "2026-11-15T14:40:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD6.md"
+      - "Stratex/rigorous_backtest/results_rd6/"
+      - "Stratex/rigorous_backtest/rd6/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890997830"
+    defect: "Owner Wave-4 order 2026-11-15 ~12:33 IST: ten more Stratex research crews, one per unexplored strategy territory. This track: pairs / statistical arbitrage — the full cointegration treatment (RD-002 touched pairs only as small grid cells). All 435 unordered CRYPTO30 pairs, Engle-Granger screen (OLS on log prices + BIC-lag ADF on residuals, MacKinnon EG 5% tau < -3.34) plus half-life filter (6-240 bars 1h / 6-120 bars 4h), formation-frozen hedge ratio and spread moments, z-score entries at 2.0/2.5, exit at z=0 cross, stop |z| >= 4, next-bar-open execution on both legs, exact two-leg P&L, 32 bps round-trip cost. Pre-declared before execution (rd6/PREDECLARATION.md, frozen 2026-11-15 12:52 IST) and judged against the standing full bar. Research only: no production code, registry or daemon changes; passers would be wired by the coordinator's forward lane."
+    acceptance:
+      - "Sanity anchor re-verified before any new number is trusted: RD-001's ts_momentum roc42_4h cell (BTC/ETH/SOL) reproduced bit-identically via the untouched rd2 chain (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518) — results_rd6/sanity_anchor.json. Data cross-check: all 30 fetched 1h series hash-match the RD-002 caches (0 mismatches, crosscheck_rd2.json in the crew record)."
+      - "Machinery validated on synthetic fixtures before the run (validation only, never market evidence): ADF tau -14.14 on stationary AR(1) vs +1.36 on a random walk; constructed cointegrated pair recovered (tau -9.63, beta 0.794 vs 0.8 constructed, HL 15.1 vs 13.5 constructed); independent-random-walk screen pass rate 0/40."
+      - "Pre-declaration frozen before execution: 435 pairs x 2 timeframes x 2 entry configs = 1,740 trials joining the global counter; every pair-config the screen could have selected counts, traded or not. Per-config verdicts vs the full bar (expectancy > 0, PF >= 1.2, >= 200 OOS trades, >= 3/5 folds traded, >= 80% of traded folds positive, Bonferroni at N = 1,740 with flags at the conservative floor and the current global floor, DSR >= 0.95, 2x-cost PF >= 1.0, untouched-holdout pass) in RESULTS_RD6.md + results_rd6/synthesis.json + config_verdicts.csv."
+      - "Failure accounting published in full: per-fold screen funnel (screened / ADF pass / half-life pass / DATA-SKIP / traded), selection persistence distribution, cointegration-breakdown list, traded-fold sign flips, and the pooled procedure-level result per (timeframe, config)."
+    evidence:
+      - "COMPLETE 2026-11-15: full declared grid evaluated — 1,740 trials, 409 configs traded, 164,570 OOS trades; ZERO passers, ZERO watchlist. No config passes even the mechanical bar: best net PF among the 186 configs with >= 200 trades is 0.797 (XRPUSDT/AAVEUSDT 4h); smallest p anywhere 0.0073 vs Bonferroni 2.9e-5 at N = 1,740; max DSR 0.837 vs 0.95 required. Holdout correctly never evaluated (zero bar-passers)."
+      - "Procedure level (all screen-selected trades pooled, net of 32 bps): 1h E2.0 PF 0.384 (65,774 trades), 1h E2.5 PF 0.381, 4h E2.0 PF 0.574, 4h E2.5 PF 0.566 — all 20 fold cells negative; pooled expectancy still negative GROSS of costs (-0.03%/trade 1h, -0.11%/trade 4h), so cheaper execution would not rescue it. Mechanism measured: 99.7% of exits are |z| >= 4 stops, only 159 of 164,570 trades exit by crossing zero, median hold 1 bar — formation cointegration does not persist out-of-sample. 99 pair-tf combos selected early break down later; BTC/ETH never passed the ADF screen in any fold. DATA-SKIPs 0. Full record: RESULTS_RD6.md + results_rd6/ (synthesis, 409 config verdicts, 4,350 screen rows, analysis digest, sanity anchor)."
+      - "Execution integrity: synthetic fixtures pass identically on every run; roc42_4h sanity anchor bit-identical (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518); fetched data hash-matched to RD-002 caches (0 mismatches). Finisher crew executed the frozen pre-declaration after the original crew died mid-run — declared design untouched; evaluation parallelised by pair-range slices over the stock engine with validated checkpoint merge, verdict/holdout/synthesis stage on the stock engine single-process, trade-for-trade independent recomputation (1,395 trades across slices and timeframes, nets identical). Verdicts identical at every global N (declared 1,740; running floor 2,072 pre-RD-006 / 3,812 incl.; conservative 3,297) — no boundary cases."
+    blockers: []
+    next_action: "Done — research complete, zero passers: NOTHING from this track is wired into any forward lane. Coordinator: verify RESULTS_RD6.md + results_rd6/synthesis.json and flip this entry to VERIFIED. Global trial counter floor after RD-006: 3,812 (2,072 + 1,740). Any future pairs work requires a NEW pre-declared family (different mechanism), not a retune of this one."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
