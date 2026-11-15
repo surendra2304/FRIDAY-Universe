@@ -141,19 +141,45 @@ class StratexTradingEngine:
             logger.warning(f"[STRATEX] Shadow tracker unavailable: {e}")
         self._last_equity_snapshot = 0.0
         self._reconcile_pass = 0
+        # TASK-STR-FWD-003: attest this daemon's demo venues to the
+        # registry so the FORWARD_TEST lane can execute — on those
+        # venues only. Detection is by venue-adapter base URL; an
+        # unrecognised endpoint is NOT demo (fail-closed).
+        try:
+            strategy_registry.set_demo_venues(self._detect_demo_venues())
+        except Exception as e:
+            logger.warning(f"[STRATEX] Demo-venue attestation failed: {e}")
         self._log_governance_summary()
+
+    def _detect_demo_venues(self) -> set:
+        """Venue names whose adapters point at demo endpoints.
+
+        demo-fapi / Binance testnet / OANDA practice hosts count as
+        demo; anything else (including a missing base_url) does not.
+        """
+        demo = set()
+        venues = getattr(self.engine, "venues", None) or {}
+        for name, adapter in venues.items():
+            url = str(getattr(adapter, "base_url", "") or "").lower()
+            if any(marker in url for marker in ("demo", "testnet", "fxpractice", "practice")):
+                demo.add(name)
+        return demo
 
     def _log_governance_summary(self) -> None:
         """Log the governed strategy sets once at startup (audit evidence).
 
         The daemon's executable set is whatever config_strategy governance
         marks VALIDATED — nothing else may place orders (TASK-STR-SAFETY-001).
+        TASK-STR-FWD-003 adds the FORWARD_TEST lane: those strategies may
+        place orders on attested demo venues only (see _detect_demo_venues).
         """
         try:
-            executable, observe_only, excluded = [], [], []
+            executable, forward_test, observe_only, excluded = [], [], [], []
             for spec in strategy_registry.snapshot():
                 if spec.status == "VALIDATED":
                     executable.append(spec.name)
+                elif spec.status == "FORWARD_TEST":
+                    forward_test.append(spec.name)
                 elif spec.status == "OBSERVE_ONLY":
                     observe_only.append(spec.name)
                 else:
@@ -161,6 +187,8 @@ class StratexTradingEngine:
             logger.info(
                 "[STRATEX] Governance (config_strategy): "
                 f"executable={sorted(executable)} "
+                f"forward_test={sorted(forward_test)} "
+                f"demo_venues={sorted(strategy_registry.demo_venues())} "
                 f"observe_only={sorted(observe_only)} "
                 f"excluded={sorted(excluded)}"
             )
@@ -173,6 +201,13 @@ class StratexTradingEngine:
         scanned_symbols = set()
         scanned_1d = 0
         self._confluence_signals = {}
+        # TASK-STR-FWD-003: forward-protocol strategies (the VALIDATED
+        # entrants and the FORWARD_TEST lane) trade their JUDGED
+        # geometry — the generic min-RR pre-filter must not silently
+        # veto a judged configuration (the lane's adx_ema_bare is RR
+        # 1.0 by construction). The expectancy gate in _execute_signal
+        # and the phase-3 kill criteria still govern them.
+        forward_names = set(self._forward_protocol_entries())
 
         # Detect broker-side exits first: a position closed by SL/TP must be
         # booked even when the daily loss limit stops us from scanning.
@@ -309,27 +344,36 @@ class StratexTradingEngine:
                                     except Exception:
                                         pass
                                 continue
-                            if gov_status != "VALIDATED":
+                            if gov_status not in ("VALIDATED", "FORWARD_TEST"):
                                 # DISABLED / UNREGISTERED: not evaluated for
-                                # execution at all.
+                                # execution at all. FORWARD_TEST (the
+                                # TASK-STR-FWD-003 lane) proceeds like
+                                # VALIDATED here, but the registry's
+                                # executable()/execute_strategy() checks
+                                # below confine it to attested DEMO venues
+                                # — fail-closed, venue by venue.
                                 continue
 
-                            ok, reason = strategy_registry.executable(strat_name, tf, symbol)
+                            ok, reason = strategy_registry.executable(strat_name, tf, symbol, venue=venue)
                             if not ok:
                                 continue
 
                             # Static geometry that can never satisfy the R:R gate
                             # is skipped before running it: on 15 symbols x 3
                             # timeframes these executions dominated scan time.
+                            # Forward-protocol strategies are exempt (see
+                            # forward_names above): their geometry is the
+                            # judged object under test.
                             spec = strategy_registry.get(strat_name)
                             if (
                                 spec is not None
                                 and spec.rr_ratio
                                 and spec.rr_ratio < self.min_rr
+                                and strat_name not in forward_names
                             ):
                                 continue
 
-                            result = strategy_registry.execute_strategy(strat_name, df, tf, symbol)
+                            result = strategy_registry.execute_strategy(strat_name, df, tf, symbol, venue=venue)
                             results["scanned"] += 1
 
                             logger.info(f"[STRATEX] Strategy {strat_name} on {venue}:{symbol} {tf}: {result.get('status')} - {result.get('side', 'N/A')}")
@@ -374,7 +418,7 @@ class StratexTradingEngine:
                                         f"no R:R metric"
                                     )
                                     continue
-                                if rr < self.min_rr:
+                                if rr < self.min_rr and strat_name not in forward_names:
                                     logger.info(
                                         f"[STRATEX] Skip {strat_name} {symbol}: "
                                         f"R:R {rr:.2f} < {self.min_rr}"
@@ -475,6 +519,18 @@ class StratexTradingEngine:
                     logger.warning(
                         f"[STRATEX] Blocked OBSERVE_ONLY candidate {strat_name} "
                         f"from execution on {c_venue}:{c_symbol}"
+                    )
+                    continue
+                if result.get("forward_test") and c_venue not in strategy_registry.demo_venues():
+                    # Defence in depth (TASK-STR-FWD-003): a FORWARD_TEST
+                    # candidate may only execute on an attested demo
+                    # venue. The registry already enforced this at
+                    # evaluation; re-check at the point of order
+                    # placement so no future path can route a lane
+                    # signal to a live venue.
+                    logger.warning(
+                        f"[STRATEX] Blocked FORWARD_TEST candidate {strat_name} "
+                        f"from execution on non-demo venue {c_venue}:{c_symbol}"
                     )
                     continue
                 # Copy so per-candidate stamping cannot leak between attempts.
@@ -677,6 +733,10 @@ class StratexTradingEngine:
                     # see it even if one of them fails.
                     strat = self.engine.position_strategy.pop(key, "unknown")
                     tf = self.engine.position_timeframe.pop(key, "n/a")
+                    # TASK-STR-FWD-003: FORWARD_TEST lane fills are
+                    # tagged in both ledgers so scorecards never blend
+                    # the lane with the VALIDATED entrants.
+                    lane = self._lane_for_strategy(strat)
                     entry_price = pos.entry_price
                     try:
                         risk_per_unit = abs(entry_price - pos.mark_price) if pos.mark_price else 0.0
@@ -704,6 +764,8 @@ class StratexTradingEngine:
                             "exit_timestamp": time.time(),
                             "timestamp": time.time(),
                         }
+                        if lane:
+                            ledger_entry["lane"] = lane
                         ledger_path = os.path.join(
                             os.path.dirname(os.path.dirname(__file__)), "testnet_trade_ledger.jsonl"
                         )
@@ -721,7 +783,7 @@ class StratexTradingEngine:
                     try:
                         from measurement import fill_ledger as _fl
 
-                        _fl.append_fill({
+                        fill_row = {
                             "strategy": strat,
                             "engine": "daemon",
                             "venue": venue,
@@ -738,7 +800,10 @@ class StratexTradingEngine:
                             "net_pnl": net,
                             "exit_reason": "SL_TP_BROKER",
                             "order_id": str(getattr(pos, "position_id", "") or ""),
-                        })
+                        }
+                        if lane:
+                            fill_row["lane"] = lane
+                        _fl.append_fill(fill_row)
                         _fl.append_equity_snapshot(
                             self.engine.equity_snapshot(trigger="fill")
                         )
@@ -939,6 +1004,24 @@ class StratexTradingEngine:
         except Exception as e:
             logger.warning(f"[STRATEX] Forward protocol registry read failed: {e}")
             return {}
+
+    def _lane_for_strategy(self, strat: str) -> str | None:
+        """TASK-STR-FWD-003: the fill-ledger lane tag for a strategy.
+
+        Returns "FORWARD_TEST" when config_strategy governance classifies
+        the strategy FORWARD_TEST, else None (VALIDATED entrants and
+        legacy strategies keep their historical row shape — no lane key).
+        """
+        try:
+            from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+            key = strat[len("strategy_"):] if strat.startswith("strategy_") else strat
+            entry = PRODUCTION_STRATEGY_REGISTRY.get(key) or {}
+            if entry.get("status") == "FORWARD_TEST":
+                return str(entry.get("forward_lane") or "FORWARD_TEST")
+        except Exception:
+            pass
+        return None
 
     def _manage_forward_time_exits(self) -> None:
         """Enforce judged bracket_time exits (e.g. dow_effect max_bars=5).
