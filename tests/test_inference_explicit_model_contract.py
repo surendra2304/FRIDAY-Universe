@@ -15,18 +15,30 @@ from types import SimpleNamespace
 from typing import Any, Literal
 
 import pytest
+from fastapi import status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _top_level_name(node):
+    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+        return node.name
+    if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+        return node.targets[0].id
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        return node.target.id
+    return None
 
 
 def actual_nodes(relative, names):
     tree = ast.parse((ROOT / relative).read_text())
     selected = []
     for node in tree.body:
-        if isinstance(node, (ast.ClassDef, ast.AsyncFunctionDef)) and node.name in names:
+        if _top_level_name(node) in names:
             node = copy.deepcopy(node)
-            if isinstance(node, ast.AsyncFunctionDef):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 node.decorator_list = []  # registration only, not function logic
             selected.append(node)
     assert len(selected) == len(names), 'Source boundaries changed: inspect, do not substitute copied logic'
@@ -50,6 +62,7 @@ def boundary():
     state = {'finish': 'stop', 'provenance': None, 'fail': False}
     context = {'__name__': 'offline_inference_contract', 'Any': Any, 'Literal': Literal,
                'BaseModel': BaseModel, 'Field': Field, 'field_validator': field_validator,
+               'JSONResponse': JSONResponse, 'status': status,
                'time': time, 'uuid': uuid, 'perf_cache': OfflineCache(),
                'as_answer_pair': lambda value: value,
                'agent_registry': SimpleNamespace(get_agent=lambda _: None),
@@ -74,7 +87,11 @@ def boundary():
     context['model_gateway'] = SimpleNamespace(execute=execute, execute_speculative=execute_speculative)
     nodes = actual_nodes('Inference/app/providers/base.py', {'ProviderMessage', 'ProviderRequest', 'ProviderResponse'})
     nodes += actual_nodes('Inference/app/providers/unified_manager.py', {'UnifiedExecutionRequest', 'UnifiedExecutionResponse', 'UnifiedProviderManager'})
-    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'ChatMessage', 'ChatCompletionRequest', 'chat_completions'})
+    # chat_completions resolves providers through the module-level helper
+    # _provider_for_model (TASK-REL-032), which reads the real MODEL_CATALOG /
+    # _CATALOG_PROVIDERS tables; all three are extracted as actual source so
+    # the route under test executes the same routing code as production.
+    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'MODEL_CATALOG', '_CATALOG_PROVIDERS', '_provider_for_model', 'ChatMessage', 'ChatCompletionRequest', 'chat_completions'})
     # Only trusted, tracked repository code; no user/network input is executed.
     exec(compile(ast.Module(body=nodes, type_ignores=[]), 'actual_inference_source', 'exec'), context)  # noqa: S102
     manager = context['UnifiedProviderManager']()
@@ -180,8 +197,18 @@ def test_speculative_finish_reason_survives_response_and_cache(boundary):
 def test_failed_provider_never_gets_completed_finish_reason(boundary):
     boundary.state['fail'] = True
     result = completion(boundary)
-    assert result['choices'][0]['message']['content'] == ''
-    assert result['choices'][0]['finish_reason'] is None
+    # TASK-REL-032 contract: a degraded result means no model answered, so
+    # the route fails honestly — HTTP 503 provider_degraded, retryable —
+    # instead of the pre-REL-032 HTTP 200 completion with an empty body.
+    # There is no completion at all, so nothing can carry a finish reason.
+    # (Mirrors Inference/tests/test_rel030_model_catalogue.py's accepted
+    # test_chat_completions_degraded_is_not_a_fake_200.)
+    assert result.status_code == 503
+    body = json.loads(result.body)
+    assert body['error']['code'] == 'provider_degraded'
+    assert body['retryable'] is True
+    assert body['requested_model'] == 'llama-3.3-70b-versatile'
+    assert 'choices' not in body
 
 
 @pytest.mark.parametrize('model', ['', 'x' * 201])
