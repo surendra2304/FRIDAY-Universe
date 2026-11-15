@@ -6071,6 +6071,52 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: 'Coordinator: merge this PR, then dispatch remediation follow-ups - F-1 revoke/rotate the exposed GitHub token, purge/redact the 5 Forge logs and add
       credential redaction to Forge terminal logging; F-2/F-3 permission fixes (dir 700, files 600); F-4 env-backup retention limit; F-5 verify the rotate_gateway_secret.py
       literal is a placeholder and move it to env.'
+  - id: TASK-INF-005
+    title: 'Inference model quality benchmark: fixed test set scored across the verified catalogue'
+    status: DONE
+    owner: muse_ai
+    branch: claude/task-inf-005
+    pr: 354
+    contributors: []
+    priority: P2
+    created_at: '2026-11-15T08:06:00Z'
+    updated_at: '2026-11-15T11:30:00Z'
+    files:
+    - Inference/benchmarks/testset.json
+    - Inference/benchmarks/run_benchmark.py
+    - Inference/benchmarks/score.py
+    - Inference/benchmarks/RESULTS_INF005.md
+    - Inference/benchmarks/results_inf005/summary.json
+    - Inference/benchmarks/results_inf005/scores.json
+    - Inference/benchmarks/results_inf005/latency_pass.json
+    dependencies:
+    - TASK-REL-043 (best-suitable policy this benchmark supplies evidence for)
+    acceptance:
+    - Fixed test set across 5 task types (summarise, reason, code, extract, chat) with deterministic checkers — done (testset.json v1, 15 items)
+    - Every verified-live catalogue model scored on accuracy + latency + cost against the live gateway — done (90 calls, all HTTP 200, measured 2026-11-15)
+    - Evidence table the REL-043 policy should route by, in RESULTS_INF005.md — done
+    evidence:
+    - 'Claim: issue #35 comment 6891501628.'
+    - 'Measured (as-served overall accuracy): openai/gpt-oss-120b 0.988 (28 calls), qwen/qwen3.8-27b 0.933 (median live latency 0.302s), meta-llama/llama-3.3-70b-instruct
+      0.867 (1.181s), gemini-3.6-flash 0.490, nvidia/nemotron-3.5-lightning:free 0.100; gemini-3.8-flash served 0 of 15 requests (substituted 15/15) — no quality measurement
+      exists for it in this window.'
+    - 'Cache-busted latency pass (second window, 30 calls, zero cache replays): qwen median 0.196s, gpt-oss-120b median 0.698s live (all 5 answers correct), llama 1.376s,
+      nemotron 2.204s, gemini-3.6 7.520s; gemini-3.8-flash substituted 5/5 again = 0/20 across both windows. Every main-run defect reproduced in the second window.'
+    - 'gemini-3.6-flash truncation: finish_reason MAX_TOKENS on 14/17 served calls with 0-15 visible completion tokens while total_tokens ran 330-518 (hidden reasoning
+      burn) — extract 0.00, code 0.33, summarise 0.33.'
+    - 'nemotron :free: 15/15 responses are truncated chain-of-thought (''Here''s a thinking process:...'', finish=length) served as HTTP 200 — overall 0.100.'
+    - 'L1 cache proven: 11 of gpt-oss-120b''s 15 direct calls were cache replays (usage prompt_tokens=0/completion_tokens=0, byte-identical to its earlier substituted
+      generations, 0.007-0.104s); a cache-busted latency pass (per-model nonce) supplies clean live latencies in results_inf005/latency_pass.json.'
+    - 'REL-043 cross-check: reasoning and code rankings CONFIRMED (gpt-oss #1, qwen #2 for code); chat ranking NOT confirmed — its #1 (gemini-3.8-flash) never served
+      and #4 (gemini-3.6-flash) truncates; qwen/llama measured best for chat. REL-043 health filtering is provider-level; the 3.8 failure is model-level (same provider
+      served 3.6 fine) — model-level servability tracking is the evidence-backed follow-up.'
+    risk_flags:
+    - Single measurement window under Wave-5 fleet load; Gemini servability/truncation may vary with quota state — re-run the harness before acting on the Gemini rows.
+    blockers: []
+    next_action: 'Coordinator: merge PR 354; consider a follow-up task for model-level servability tracking in REL-043 selection and for the Gemini-route hidden-token
+      truncation (Inference gateway, not the models).'
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891501628
+    last_update_comment_url: null
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
