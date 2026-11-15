@@ -1,0 +1,459 @@
+{
+  "london_drive__forex_cross41__1h": {
+    "family": "london_drive",
+    "panel": "forex_cross41",
+    "timeframe": "1h",
+    "variants_tried": 2,
+    "wf_selection": {
+      "procedure_pooled_oos": {
+        "trades": 5052,
+        "wins": 1670,
+        "win_rate": 0.33056215360253366,
+        "expectancy_net": -0.0011145638212148353,
+        "profit_factor_net": 0.42300678177274137,
+        "avg_win_net": 0.0024718859782905914,
+        "avg_loss_net": -0.0028855192219168053,
+        "total_return_net": -0.9965275697307454,
+        "max_drawdown_net": -0.9967259554987667
+      },
+      "picks": [
+        {
+          "fold": "W1",
+          "pick": null
+        },
+        {
+          "fold": "W2",
+          "pick": "drive_plain",
+          "is": {
+            "trades": 270,
+            "win_rate": 0.32222222222222224,
+            "expectancy_net": -0.001216684056805068,
+            "profit_factor_net": 0.43601636001888244
+          },
+          "oos": {
+            "trades": 1391,
+            "wins": 511,
+            "win_rate": 0.36736161035226456,
+            "expectancy_net": -0.001098146033520316,
+            "profit_factor_net": 0.511893793273859,
+            "avg_win_net": 0.003134958966391347,
+            "avg_loss_net": -0.0035562331414235654,
+            "total_return_net": -0.7860115635849164,
+            "max_drawdown_net": -0.7977495806072264
+          }
+        },
+        {
+          "fold": "W3",
+          "pick": "drive_plain",
+          "is": {
+            "trades": 1661,
+            "win_rate": 0.3600240818783865,
+            "expectancy_net": -0.001117414706781534,
+            "profit_factor_net": 0.49998727597675174
+          },
+          "oos": {
+            "trades": 1503,
+            "wins": 447,
+            "win_rate": 0.29740518962075846,
+            "expectancy_net": -0.0012913453144102534,
+            "profit_factor_net": 0.32461179001143936,
+            "avg_win_net": 0.0020869145307678932,
+            "avg_loss_net": -0.0027213473511475935,
+            "total_return_net": -0.8574737388469883,
+            "max_drawdown_net": -0.8575363232350276
+          }
+        },
+        {
+          "fold": "W4",
+          "pick": "drive_plain",
+          "is": {
+            "trades": 3164,
+            "win_rate": 0.3302781289506953,
+            "expectancy_net": -0.0012000372425798795,
+            "profit_factor_net": 0.42346024910998686
+          },
+          "oos": {
+            "trades": 1198,
+            "wins": 409,
+            "win_rate": 0.34140233722871455,
+            "expectancy_net": -0.0010161305314791455,
+            "profit_factor_net": 0.4463381810702904,
+            "avg_win_net": 0.002399399007378362,
+            "avg_loss_net": -0.002786664855170807,
+            "total_return_net": -0.7059441818574654,
+            "max_drawdown_net": -0.7059441818574651
+          }
+        },
+        {
+          "fold": "W5",
+          "pick": "drive_plain",
+          "is": {
+            "trades": 4362,
+            "win_rate": 0.3333333333333333,
+            "expectancy_net": -0.001149528246729655,
+            "profit_factor_net": 0.429186461653962
+          },
+          "oos": {
+            "trades": 960,
+            "wins": 303,
+            "win_rate": 0.315625,
+            "expectancy_net": -0.0009844155290416273,
+            "profit_factor_net": 0.3930072005848163,
+            "avg_win_net": 0.002019407797519179,
+            "avg_loss_net": -0.0023697404422043738,
+            "total_return_net": -0.612814969035399,
+            "max_drawdown_net": -0.6137482341135327
+          }
+        }
+      ],
+      "variants_considered": 2
+    }
+  },
+  "monday_gap_fade__forex_cross41__1d": {
+    "family": "monday_gap_fade",
+    "panel": "forex_cross41",
+    "timeframe": "1d",
+    "variants_tried": 2,
+    "wf_selection": {
+      "procedure_pooled_oos": {
+        "trades": 167,
+        "wins": 84,
+        "win_rate": 0.5029940119760479,
+        "expectancy_net": 6.1027434575614776e-05,
+        "profit_factor_net": 1.0158571395328724,
+        "avg_win_net": 0.007772667474203362,
+        "avg_loss_net": -0.007743523930830781,
+        "total_return_net": 0.002063717112632535,
+        "max_drawdown_net": -0.2642345012917048
+      },
+      "picks": [
+        {
+          "fold": "W1",
+          "pick": "gap_1.0",
+          "is": {
+            "trades": 453,
+            "win_rate": 0.4856512141280353,
+            "expectancy_net": -0.0002357283629450828,
+            "profit_factor_net": 0.9412757174386013
+          },
+          "oos": {
+            "trades": 24,
+            "wins": 8,
+            "win_rate": 0.3333333333333333,
+            "expectancy_net": -0.004377684537593011,
+            "profit_factor_net": 0.26009491501866516,
+            "avg_win_net": 0.004616592766675613,
+            "avg_loss_net": -0.008874823189727321,
+            "total_return_net": -0.10089569691882383,
+            "max_drawdown_net": -0.11241253034505172
+          }
+        },
+        {
+          "fold": "W2",
+          "pick": "gap_1.0",
+          "is": {
+            "trades": 477,
+            "win_rate": 0.4779874213836478,
+            "expectancy_net": -0.0004441286736191924,
+            "profit_factor_net": 0.8919361502952042
+          },
+          "oos": {
+            "trades": 39,
+            "wins": 27,
+            "win_rate": 0.6923076923076923,
+            "expectancy_net": 0.004317561958438391,
+            "profit_factor_net": 3.823220551646929,
+            "avg_win_net": 0.008445472782943903,
+            "avg_loss_net": -0.004970237396699009,
+            "total_return_net": 0.18142231047927848,
+            "max_drawdown_net": -0.035448400699094385
+          }
+        },
+        {
+          "fold": "W3",
+          "pick": "gap_1.0",
+          "is": {
+            "trades": 516,
+            "win_rate": 0.4941860465116279,
+            "expectancy_net": -8.423345142879347e-05,
+            "profit_factor_net": 0.9784834957390145
+          },
+          "oos": {
+            "trades": 13,
+            "wins": 7,
+            "win_rate": 0.5384615384615384,
+            "expectancy_net": 0.001466611936598679,
+            "profit_factor_net": 3.2141764274275144,
+            "avg_win_net": 0.003953830219623786,
+            "avg_loss_net": -0.0014351427269306126,
+            "total_return_net": 0.019151541676432293,
+            "max_drawdown_net": -0.006170648107097554
+          }
+        },
+        {
+          "fold": "W4",
+          "pick": "gap_1.0",
+          "is": {
+            "trades": 529,
+            "win_rate": 0.4952741020793951,
+            "expectancy_net": -4.612193905760811e-05,
+            "profit_factor_net": 0.9879731105913737
+          },
+          "oos": {
+            "trades": 89,
+            "wins": 41,
+            "win_rate": 0.4606741573033708,
+            "expectancy_net": -0.0008447214170796035,
+            "profit_factor_net": 0.8251410358964841,
+            "avg_win_net": 0.008652865241212872,
+            "avg_loss_net": -0.008957243354371093,
+            "total_return_net": -0.07710407963738852,
+            "max_drawdown_net": -0.26266455689966683
+          }
+        },
+        {
+          "fold": "W5",
+          "pick": "gap_1.0",
+          "is": {
+            "trades": 618,
+            "win_rate": 0.49029126213592233,
+            "expectancy_net": -0.00016113060175009598,
+            "profit_factor_net": 0.9594979750421445
+          },
+          "oos": {
+            "trades": 2,
+            "wins": 1,
+            "win_rate": 0.5,
+            "expectancy_net": 0.0014926725207822537,
+            "profit_factor_net": 2.187521577923058,
+            "avg_win_net": 0.005499274133097978,
+            "avg_loss_net": -0.0025139290915334707,
+            "total_return_net": 0.0029715202563389553,
+            "max_drawdown_net": -0.0025139290915334733
+          }
+        }
+      ],
+      "variants_considered": 2
+    }
+  },
+  "trend_pullback__forex_cross41__1d": {
+    "family": "trend_pullback",
+    "panel": "forex_cross41",
+    "timeframe": "1d",
+    "variants_tried": 2,
+    "wf_selection": {
+      "procedure_pooled_oos": {
+        "trades": 428,
+        "wins": 130,
+        "win_rate": 0.3037383177570093,
+        "expectancy_net": -0.0030882339973359392,
+        "profit_factor_net": 0.6706023776051244,
+        "avg_win_net": 0.020699280279125695,
+        "avg_loss_net": -0.013465337540758801,
+        "total_return_net": -0.7574967068678029,
+        "max_drawdown_net": -0.7618476996276382
+      },
+      "picks": [
+        {
+          "fold": "W1",
+          "pick": "pb_ema200",
+          "is": {
+            "trades": 1121,
+            "win_rate": 0.29973238180196254,
+            "expectancy_net": -0.001854487709988384,
+            "profit_factor_net": 0.8428476522912859
+          },
+          "oos": {
+            "trades": 88,
+            "wins": 28,
+            "win_rate": 0.3181818181818182,
+            "expectancy_net": -0.0016985335579221322,
+            "profit_factor_net": 0.8214045884925913,
+            "avg_win_net": 0.024551927911106056,
+            "avg_loss_net": -0.013948748910135289,
+            "total_return_net": -0.16045211530093262,
+            "max_drawdown_net": -0.2938192022287045
+          }
+        },
+        {
+          "fold": "W2",
+          "pick": "pb_ema200",
+          "is": {
+            "trades": 1209,
+            "win_rate": 0.3010752688172043,
+            "expectancy_net": -0.0018431362084318664,
+            "profit_factor_net": 0.8415717357224765
+          },
+          "oos": {
+            "trades": 73,
+            "wins": 23,
+            "win_rate": 0.3150684931506849,
+            "expectancy_net": -0.0024797975423427048,
+            "profit_factor_net": 0.7872116655938596,
+            "avg_win_net": 0.02911755841553527,
+            "avg_loss_net": -0.017014581282966575,
+            "total_return_net": -0.18954513551161523,
+            "max_drawdown_net": -0.3402367936123022
+          }
+        },
+        {
+          "fold": "W3",
+          "pick": "pb_ema200",
+          "is": {
+            "trades": 1282,
+            "win_rate": 0.30187207488299533,
+            "expectancy_net": -0.0018793891549026087,
+            "profit_factor_net": 0.8384713472916371
+          },
+          "oos": {
+            "trades": 72,
+            "wins": 25,
+            "win_rate": 0.3472222222222222,
+            "expectancy_net": 0.0003641723504990948,
+            "profit_factor_net": 1.0480906118967432,
+            "avg_win_net": 0.022857987184093237,
+            "avg_loss_net": -0.01160062277375311,
+            "total_return_net": 0.010090005521091516,
+            "max_drawdown_net": -0.1796176571109308
+          }
+        },
+        {
+          "fold": "W4",
+          "pick": "pb_ema200",
+          "is": {
+            "trades": 1354,
+            "win_rate": 0.30428360413589367,
+            "expectancy_net": -0.0017600860320156637,
+            "profit_factor_net": 0.8458633758804271
+          },
+          "oos": {
+            "trades": 115,
+            "wins": 31,
+            "win_rate": 0.26956521739130435,
+            "expectancy_net": -0.005860388786002701,
+            "profit_factor_net": 0.3951827918010956,
+            "avg_win_net": 0.014204843752055931,
+            "avg_loss_net": -0.01326541507981005,
+            "total_return_net": -0.49819172886954677,
+            "max_drawdown_net": -0.5435756313257151
+          }
+        },
+        {
+          "fold": "W5",
+          "pick": "pb_ema200",
+          "is": {
+            "trades": 1469,
+            "win_rate": 0.30156569094622193,
+            "expectancy_net": -0.0020810763769499793,
+            "profit_factor_net": 0.8155664062299574
+          },
+          "oos": {
+            "trades": 80,
+            "wins": 23,
+            "win_rate": 0.2875,
+            "expectancy_net": -0.004294295950215517,
+            "profit_factor_net": 0.4837752474333571,
+            "avg_win_net": 0.013997772839217172,
+            "avg_loss_net": -0.011675306163495375,
+            "total_return_net": -0.29685410407825175,
+            "max_drawdown_net": -0.3257366240425783
+          }
+        }
+      ],
+      "variants_considered": 2
+    }
+  },
+  "trend_pullback__forex_cross41__4h": {
+    "family": "trend_pullback",
+    "panel": "forex_cross41",
+    "timeframe": "4h",
+    "variants_tried": 2,
+    "wf_selection": {
+      "procedure_pooled_oos": {
+        "trades": 2271,
+        "wins": 594,
+        "win_rate": 0.261558784676354,
+        "expectancy_net": -0.0020892599971005996,
+        "profit_factor_net": 0.47531377807207364,
+        "avg_win_net": 0.007236089365728658,
+        "avg_loss_net": -0.005392335442253002,
+        "total_return_net": -0.991864421454996,
+        "max_drawdown_net": -0.9918644214549961
+      },
+      "picks": [
+        {
+          "fold": "W1",
+          "pick": null
+        },
+        {
+          "fold": "W2",
+          "pick": null
+        },
+        {
+          "fold": "W3",
+          "pick": "pb_ema200",
+          "is": {
+            "trades": 747,
+            "win_rate": 0.285140562248996,
+            "expectancy_net": -0.0014398470611824573,
+            "profit_factor_net": 0.7044084656886677
+          },
+          "oos": {
+            "trades": 862,
+            "wins": 210,
+            "win_rate": 0.24361948955916474,
+            "expectancy_net": -0.002277802036591904,
+            "profit_factor_net": 0.43238208180201415,
+            "avg_win_net": 0.007122222543733124,
+            "avg_loss_net": -0.005305417315530947,
+            "total_return_net": -0.8628731914620033,
+            "max_drawdown_net": -0.8641601433113484
+          }
+        },
+        {
+          "fold": "W4",
+          "pick": "pb_ema200",
+          "is": {
+            "trades": 1609,
+            "win_rate": 0.26289620882535736,
+            "expectancy_net": -0.0018887701120233167,
+            "profit_factor_net": 0.5718360689834415
+          },
+          "oos": {
+            "trades": 833,
+            "wins": 228,
+            "win_rate": 0.2737094837935174,
+            "expectancy_net": -0.0021389892361106133,
+            "profit_factor_net": 0.49336638666137395,
+            "avg_win_net": 0.007610169163371169,
+            "avg_loss_net": -0.005813052236245896,
+            "total_return_net": -0.8365607023712719,
+            "max_drawdown_net": -0.8390505384522832
+          }
+        },
+        {
+          "fold": "W5",
+          "pick": "pb_ema200",
+          "is": {
+            "trades": 2442,
+            "win_rate": 0.2665847665847666,
+            "expectancy_net": -0.001974123318560875,
+            "profit_factor_net": 0.5458372851025491
+          },
+          "oos": {
+            "trades": 576,
+            "wins": 156,
+            "win_rate": 0.2708333333333333,
+            "expectancy_net": -0.001735184139224131,
+            "profit_factor_net": 0.5164461581804969,
+            "avg_win_net": 0.006842639614168209,
+            "avg_loss_net": -0.004921232961912715,
+            "total_return_net": -0.6369975245876729,
+            "max_drawdown_net": -0.6369975245876722
+          }
+        }
+      ],
+      "variants_considered": 2
+    }
+  }
+}
