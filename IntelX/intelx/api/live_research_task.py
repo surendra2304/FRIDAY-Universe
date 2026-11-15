@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from typing import Awaitable, Callable
 from urllib.parse import urlsplit
 
@@ -20,6 +21,39 @@ def public_source(source: object) -> bool:
         return url.scheme in {"http", "https"} and bool(url.hostname) and not url.username and not url.password
     except ValueError:
         return False
+
+
+class DocumentText(HTMLParser):
+    """HTML-to-text extractor for retrieved pages (paragraph breaks kept).
+
+    Module-level since TASK-INT-009 so the re-audit script
+    (scripts/reaudit_live_research.py) extracts text from a live page with
+    exactly the same rules the brief collector used at storage time —
+    a quote must survive the same extraction to count as re-verified.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.hidden = 0
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"script", "style", "noscript", "pre", "nav", "header", "footer"}:
+            self.hidden += 1
+        if tag in {"p", "div", "li", "h1", "h2", "h3", "br"} and not self.hidden:
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in {"script", "style", "noscript", "pre", "nav", "header", "footer"}:
+            self.hidden = max(0, self.hidden - 1)
+        if tag in {"p", "div", "li"} and not self.hidden:
+            self.parts.append("\n")
+
+    def handle_data(self, data):
+        if not self.hidden:
+            # Source formatting newlines are not paragraph boundaries.
+            # Splitting on them returned isolated sentence tails in live docs.
+            self.parts.append(data.replace("\r", " ").replace("\n", " "))
 
 
 async def run_live_research(task_id: str, query: str, run: Callable[[], Awaitable[dict]]) -> dict:
@@ -79,31 +113,14 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
     """
     import hashlib
     import re
-    from html.parser import HTMLParser
 
-    class DocumentText(HTMLParser):
-        def __init__(self):
-            super().__init__()
-            self.hidden = 0
-            self.parts = []
+    from intelx.api.grounded_live_research import (
+        is_boilerplate_text,
+        reverify_findings_against_texts,
+    )
 
-        def handle_starttag(self, tag, attrs):
-            if tag in {"script", "style", "noscript", "pre", "nav", "header", "footer"}:
-                self.hidden += 1
-            if tag in {"p", "div", "li", "h1", "h2", "h3", "br"} and not self.hidden:
-                self.parts.append("\n")
-
-        def handle_endtag(self, tag):
-            if tag in {"script", "style", "noscript", "pre", "nav", "header", "footer"}:
-                self.hidden = max(0, self.hidden - 1)
-            if tag in {"p", "div", "li"} and not self.hidden:
-                self.parts.append("\n")
-
-        def handle_data(self, data):
-            if not self.hidden:
-                # Source formatting newlines are not paragraph boundaries.
-                # Splitting on them returned isolated sentence tails in live docs.
-                self.parts.append(data.replace("\r", " ").replace("\n", " "))
+    # DocumentText (the HTML extractor) is module-level since TASK-INT-009;
+    # see its docstring for why the re-audit script shares it.
 
     # Explicit source URLs are fetched directly; they are still subject to the
     # hardened connector's SSRF, redirect, robots, MIME and byte limits.
@@ -163,6 +180,22 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             # answers. Require a prose sentence; version-number dots don't count.
             paragraphs = [p for p in paragraphs if 40 <= len(p) <= 4000
                           and re.search(r"[.!?](?:\s|$)", p)]
+            # TASK-INT-005 verification pass: the fact-check audit found page
+            # chrome stored as findings (two copies of a page title, a
+            # "Home »" breadcrumb, a title + "Skip to main content"). Titles
+            # pass the prose filter when they contain sentence punctuation
+            # ("...live longer?"), so drop title/breadcrumb/accessibility
+            # passages explicitly before they can be ranked as findings.
+            page_title = str(getattr(candidate, "title", "") or "")
+
+            def _is_chrome(p: str) -> bool:
+                # TASK-INT-009: the predicate lives in grounded_live_research
+                # (is_boilerplate_text) and is shared with the re-audit
+                # classifier, so storage and audit can never disagree about
+                # what counts as page chrome.
+                return is_boilerplate_text(p, page_title)
+
+            paragraphs = [p for p in paragraphs if not _is_chrome(p)]
             document_terms = set().union(*(normalized_words(p) for p in paragraphs))
             if len(terms) >= 3 and len(terms & document_terms) < 2:
                 failures.append({"url": url, "reason": "insufficient_topic_overlap"})
@@ -188,6 +221,12 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
                 excerpt = passage[:1200]
                 findings.append({"statement": excerpt, "status": "source_excerpt", "quote": excerpt,
                                  "truncated": len(passage) > len(excerpt),
+                                 # TASK-INT-009 (INT-005 §6 item 4): surface the
+                                 # corroboration state on every finding, not
+                                 # just on the source record — an excerpt cites
+                                 # exactly one source and is never
+                                 # independently verified.
+                                 "independently_verified": False, "single_source": True,
                                  "citations": [{"source_id": sid, "source_title": title, "source_url": final_url}]})
         except asyncio.CancelledError:
             raise
@@ -212,6 +251,49 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
     answer_kind = "source_excerpts"
     synthesis_metadata = {}
     synthesis_failure = None
+    downgraded_findings: list = []
+    live_reverification = None
+
+    async def _reverify_against_live(draft_findings):
+        """TASK-INT-009: independently re-retrieve each cited source and
+        re-check every draft quote against the page as retrieved NOW.
+
+        The synthesis gates verify quotes against the snapshot supplied to
+        the model. The INT-005 audit's Bruker finding passed those gates
+        with quotes_verified=true while its quote does not exist on the
+        live cited page — snapshot-vs-live divergence. This second,
+        independent retrieval is what a stored quotes_verified may claim;
+        a source that cannot be retrieved yields no text, which downgrades
+        its findings (fail closed) instead of passing them."""
+        urls: list[str] = []
+        for f in draft_findings:
+            for c in f.get("citations") or []:
+                u = str(c.get("source_url") or "")
+                if u and u not in urls:
+                    urls.append(u)
+        texts: dict = {}
+        for url in urls:
+            try:
+                document = await fetch.fetch(url, max_bytes=1_000_000)
+                if document.status_code != 200:
+                    texts[url] = None
+                    continue
+                content_type = str(document.content_type).lower()
+                if not any(t in content_type for t in ("text/html", "text/plain", "text/markdown")):
+                    texts[url] = None
+                    continue
+                text = document.content.decode("utf-8", "replace")
+                if "text/html" in content_type:
+                    parser = DocumentText()
+                    parser.feed(text)
+                    text = "".join(parser.parts)
+                texts[url] = text
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                texts[url] = None
+        return reverify_findings_against_texts(draft_findings, texts)
+
     if synthesize is not None and source_documents:
         try:
             draft = await synthesize(query, source_documents)
@@ -223,11 +305,33 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
                 synthesis_failure = {"reason": str(draft.get("error") or "synthesis_unverified")}
                 failures.append(dict(synthesis_failure))
             else:
+                extractive_findings = findings
                 findings = draft["findings"]
                 answer_kind = draft["answer_kind"]
                 synthesis_metadata = {k: draft[k] for k in ["quotes_verified", "semantic_entailment_verified", "synthesis_provider"]}
-                used_ids = {c["source_id"] for f in findings for c in f["citations"]}
-                sources = [s for s in sources if s["id"] in used_ids]
+                kept, downgraded = await _reverify_against_live(findings)
+                if downgraded:
+                    downgraded_findings = downgraded
+                    live_reverification = {"checked": len(findings), "kept": len(kept),
+                                           "downgraded": len(downgraded)}
+                    for entry in downgraded:
+                        entry_url = str((entry.get("citations") or [{}])[0].get("source_url") or "")
+                        failures.append({"url": entry_url, "reason": entry["downgrade_reason"]})
+                    # The run as synthesised claimed every quote verified;
+                    # after live re-verification that claim no longer holds.
+                    synthesis_metadata["quotes_verified"] = False
+                if kept:
+                    findings = kept
+                    used_ids = {c["source_id"] for f in findings for c in f["citations"]}
+                    sources = [s for s in sources if s["id"] in used_ids]
+                else:
+                    # Every draft finding failed live re-verification: fail
+                    # closed exactly like a synthesis failure (TASK-REL-016)
+                    # — extractive findings, labelled unsynthesised, no
+                    # verified brief claimed.
+                    findings = extractive_findings
+                    synthesis_failure = {"reason": "quote_live_reverification_failed"}
+                    failures.append(dict(synthesis_failure))
         except asyncio.CancelledError:
             raise
         except Exception as exc:
@@ -278,6 +382,8 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             "synthesis_status": ("failed" if synthesis_failure is not None else
                                  "succeeded" if synthesize is not None and source_documents else "not_attempted"),
             **({"synthesis_error": synthesis_failure} if synthesis_failure is not None else {}),
+            **({"downgraded_findings": downgraded_findings} if downgraded_findings else {}),
+            **({"live_reverification": live_reverification} if live_reverification else {}),
             "findings": findings, "sources": sources, "spoken_summary": spoken,
             "text_response": "\n".join(lines), "source_failures": failures,
             "summary": summary}
