@@ -215,3 +215,79 @@ class TestCycleIntegration:
         assert [s.name for s in snaps] == ["FRIDAY", "Memora"]
         assert state.previous_restarts == {"FRIDAY": 0, "Memora": 8002 and 0}
         assert state.last_cycle != ""
+
+
+class TestRecoveredSelfTrigger:
+    """TASK-SEN-010 regression: the '<service>:last' bookkeeping key must
+    never count as an open alert. Pre-fix, once a service had alerted once,
+    every later healthy cycle re-emitted RECOVERED forever (observed live on
+    both production hosts) and open_alerts never returned to empty."""
+
+    def test_last_bookkeeping_key_alone_is_not_an_open_alert(self):
+        state = watcher.WatchState(
+            open_alerts={"FRIDAY:last": "recovered at 2026-11-15 16:17:06 IST"})
+        alerts = watcher.evaluate(snap(), state, crash_loop_delta=3, first_seen=False)
+        assert alerts == []
+
+    def test_open_alert_keys_excludes_last(self):
+        state = watcher.WatchState(open_alerts={
+            "FRIDAY:HEALTH_FAIL": "1", "FRIDAY:last": "HEALTH_FAIL at x",
+            "Memora:last": "recovered at y"})
+        assert watcher.open_alert_keys(state, "FRIDAY") == ["FRIDAY:HEALTH_FAIL"]
+        assert watcher.open_alert_keys(state, "Memora") == []
+
+    def test_recovered_fires_exactly_once_across_cycles(self, monkeypatch, capsys):
+        services = watcher.parse_services("FRIDAY:10000")
+        state = watcher.WatchState()
+        # Cycle 1: service down -> SERVICE_DOWN opens.
+        monkeypatch.setattr(watcher, "observe",
+                            lambda spec: snap(active="failed", sub="failed", http=None))
+        watcher.run_cycle(services, state, crash_loop_delta=3,
+                          cooldown_s=1800, alert_command=None, first_seen=True)
+        # Cycle 2: healthy again -> exactly one RECOVERED, family pruned.
+        monkeypatch.setattr(watcher, "observe", lambda spec: snap())
+        watcher.run_cycle(services, state, crash_loop_delta=3,
+                          cooldown_s=1800, alert_command=None, first_seen=False)
+        # Cycle 3: still healthy -> silence. Pre-fix code printed RECOVERED
+        # again here (the ':last' key re-triggered it), every cycle forever.
+        capsys.readouterr()
+        watcher.run_cycle(services, state, crash_loop_delta=3,
+                          cooldown_s=1800, alert_command=None, first_seen=False)
+        out = capsys.readouterr().out
+        assert "RECOVERED" not in out
+        assert watcher.open_alert_keys(state, "FRIDAY") == []
+
+
+class TestStateStatus:
+    """TASK-SEN-010: --status is the canonical watcher-liveness check."""
+
+    def _write_state(self, tmp_path, last_cycle, open_alerts=None):
+        path = str(tmp_path / "state.json")
+        watcher.WatchState(previous_restarts={"FRIDAY": 0},
+                           open_alerts=open_alerts or {},
+                           last_cycle=last_cycle).save(path)
+        return path
+
+    def test_missing_state_file_is_exit_2(self, tmp_path):
+        code, report = watcher.state_status(str(tmp_path / "nope.json"))
+        assert code == 2 and report["status"] == "missing"
+
+    def test_fresh_state_is_exit_0(self, tmp_path):
+        import datetime as _dt
+        now = 1763000000.0
+        last = _dt.datetime.fromtimestamp(now - 60, _dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        path = self._write_state(tmp_path, last, {"FRIDAY:last": "recovered at x"})
+        code, report = watcher.state_status(path, max_age_s=900, now_epoch=now)
+        assert code == 0 and report["status"] == "fresh" and report["age_s"] == 60
+        # ':last' is bookkeeping, never reported as an open alert.
+        assert report["open_alerts"] == {}
+
+    def test_stale_state_is_exit_1(self, tmp_path):
+        import datetime as _dt
+        now = 1763000000.0
+        last = _dt.datetime.fromtimestamp(now - 7200, _dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        path = self._write_state(tmp_path, last,
+                                 {"FRIDAY:SERVICE_DOWN": "1", "FRIDAY:last": "y"})
+        code, report = watcher.state_status(path, max_age_s=900, now_epoch=now)
+        assert code == 1 and report["status"] == "stale"
+        assert report["open_alerts"] == {"FRIDAY:SERVICE_DOWN": "1"}
