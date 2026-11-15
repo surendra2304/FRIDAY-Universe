@@ -921,6 +921,21 @@ class OrchestratorCore:
                 # capture it as the final report instead of discarding it.
                 final_report = await engine.verify_task(task_id)
 
+            if final_report is not None and final_report.all_passed:
+                # TASK-FRG-007 (early exit): the objective battery is green
+                # after repair -- the same state the first-pass early return
+                # above treats as "verification complete". Peer review is a
+                # failure-path mechanism: it exists to fix what the battery
+                # flags. Running its LLM rounds (plus a possible third
+                # battery) on an already-green build is pure serial dead
+                # time, so settle on the green report here.
+                logger.info(
+                    f"Verification for '{task_id}' green after repair "
+                    f"({final_report.passed_checks}/{final_report.total_checks}); "
+                    "skipping peer review (early exit)"
+                )
+                return final_report
+
             # Peer review: specialist agents inspect each other's output and the
             # fixers act on it. This is the collaboration loop that makes the
             # run a team rather than a queue of independent specialists.
