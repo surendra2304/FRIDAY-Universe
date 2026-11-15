@@ -78,6 +78,55 @@ def _forge_receipt(
     }
 
 
+async def _task_provider_summary(orchestrator: Any, task_id: str) -> dict[str, Any]:
+    """Aggregate the provider stamps the orchestrator recorded on node
+    results (TASK-FRG-009): which provider(s) generated this build, whether
+    any role ran on the deterministic mock (generation degraded), and which
+    model actually served. Empty dict when no stamps are available."""
+    try:
+        graph = await orchestrator.store.get_latest_task_graph_for_project(task_id)
+        if graph is None:
+            return {}
+        providers: list[str] = []
+        served_models: list[str] = []
+        degraded = False
+        for node in graph.nodes.values():
+            result = getattr(node, "result", None)
+            if not isinstance(result, dict):
+                continue
+            label = result.get("provider")
+            if label and label not in providers:
+                providers.append(label)
+            served = result.get("served_by_model")
+            if served and served not in served_models:
+                served_models.append(served)
+            if result.get("generation_degraded"):
+                degraded = True
+        if not providers and not degraded:
+            return {}
+        summary: dict[str, Any] = {
+            "provider": providers[0] if len(providers) == 1 else (providers or "unknown"),
+            "generation_degraded": degraded,
+        }
+        if len(providers) > 1:
+            summary["providers"] = providers
+        if served_models:
+            summary["served_by_model"] = served_models
+        return summary
+    except Exception:
+        return {}
+
+
+def _degraded_suffix(provider_summary: dict[str, Any]) -> str:
+    """Disclosure appended to delegate summaries for mock-generated builds."""
+    if provider_summary.get("generation_degraded"):
+        return (
+            " Provider: mock/direct — generation quality degraded "
+            "(deterministic mock output, not model-generated)."
+        )
+    return ""
+
+
 def _plan_stage_count(plan: Any) -> int:
     """Stage count of an intake plan.
 
@@ -362,6 +411,10 @@ async def delegate_task(
             report = await verification_engine.verify_task(task.id)
             manifest = verification_engine.generate_manifest(task.id, report)
             manifest_dict = manifest.model_dump(mode="json")
+            # TASK-FRG-009: which provider generated this build (and whether
+            # any of it was deterministic mock output) is part of the result,
+            # not an implementation detail.
+            provider_summary = await _task_provider_summary(orchestrator, task.id)
 
             # TASK-REL-019: the task's own terminal state gates this report.
             # Only the re-run manifest used to be consulted, so a task that
@@ -403,10 +456,12 @@ async def delegate_task(
                         "manifest": manifest_dict,
                         "artifacts": _task_artifact_paths(task.id),
                         "primary_source": _task_primary_source(task.id),
+                        "provider": provider_summary,
                     },
                     summary=(
                         f"Forge task '{task.id}' ended in state {state_name}; "
                         "it is not reported as a successful build."
+                        + _degraded_suffix(provider_summary)
                     ),
                     error=mirror_error,
                     verification_manifest=manifest_dict,
@@ -471,8 +526,10 @@ async def delegate_task(
                         "manifest": manifest_dict,
                         "artifacts": _task_artifact_paths(task.id),
                         "primary_source": _task_primary_source(task.id),
+                        "provider": provider_summary,
                     },
-                    summary=f"Code generation finished, but verification failed: {manifest.failure_summary}",
+                    summary=f"Code generation finished, but verification failed: {manifest.failure_summary}"
+                    + _degraded_suffix(provider_summary),
                     error=manifest.failure_summary,
                     verification_manifest=manifest_dict,
                     execution_time_ms=lat,
@@ -492,8 +549,10 @@ async def delegate_task(
                     "manifest": manifest_dict,
                     "artifacts": _task_artifact_paths(task.id),
                     "primary_source": _task_primary_source(task.id),
+                    "provider": provider_summary,
                 },
-                summary=f"Forge successfully synthesized and verified goal (Task ID: {task.id})",
+                summary=f"Forge successfully synthesized and verified goal (Task ID: {task.id})"
+                + _degraded_suffix(provider_summary),
                 verification_manifest=manifest_dict,
                 execution_time_ms=lat,
                 receipt=_forge_receipt(
@@ -504,6 +563,7 @@ async def delegate_task(
                         "task_id": task.id,
                         "verification_stages": manifest.total_stages,
                         "all_passed": manifest.all_passed,
+                        "provider": provider_summary,
                     },
                 ),
             )

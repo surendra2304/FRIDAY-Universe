@@ -776,6 +776,106 @@ class DeveloperRole(BaseAgent):
                 )
                 written.extend(w)
                 continue
+            # TASK-FRG-009: a real model provider is wired into this role —
+            # author the file through it, consuming the manifest entry
+            # directly. The prompt carries the goal, the requirements, the
+            # architecture spec and the sibling files already written, so
+            # cross-file imports and interfaces line up. A provider failure
+            # raises (the Inference provider is fail-closed): the node fails
+            # honestly instead of silently degrading to mock output.
+            from app.agents.provider_wiring import is_mock_provider
+
+            if not is_mock_provider(self.provider):
+                arch_spec = ""
+                try:
+                    arch_spec = engine.fs.read_file(
+                        task_id, "docs/ARCHITECTURE_SPEC.md", role=self.role_name
+                    )[:3000]
+                except Exception:
+                    pass
+                sibling_block = ""
+                for w_file in written:
+                    try:
+                        sibling_block += (
+                            f"\n--- File: {w_file} ---\n"
+                            + engine.fs.read_file(task_id, w_file, role=self.role_name)[:2000]
+                        )
+                    except Exception:
+                        pass
+                req_block = "\n".join(
+                    f"- {r}" for r in context.get("requirements", [])
+                )
+                provider_prompt = (
+                    f"Project goal: {goal}\n"
+                    f"Implementation task: {node_title}\n"
+                    f"Requirements:\n{req_block}\n\n"
+                    f"Architecture specification:\n{arch_spec}\n\n"
+                    f"Files in this project (the manifest — implement exactly "
+                    f"the requested file, consistent with the others): "
+                    f"{', '.join(file_manifest)}\n"
+                    f"{sibling_block}\n\n"
+                    f"Write the COMPLETE contents of the file '{filename}' now. "
+                    f"No placeholders, no TODOs, no truncation. Honour every "
+                    f"interface the goal and the architecture spec define for "
+                    f"this file, and match the sibling files exactly.\n"
+                    f"Output the file delimited exactly as:\n"
+                    f"### File: {filename}\n```\n<complete file contents>\n```"
+                )
+                resp = await self.prompt_model(provider_prompt)
+                extracted = self.apply_extracted_files(
+                    task_id=task_id,
+                    response_text=resp.content,
+                    engine=engine,
+                    default_filename=filename,
+                )
+                if extracted:
+                    for p in extracted:
+                        try:
+                            ext_c = engine.fs.read_file(task_id, p, role=self.role_name)
+                            sanitized = _sanitize_web_asset(
+                                p, ext_c, goal or node_title, is_web_3d
+                            )
+                            if sanitized != ext_c:
+                                engine.fs.create_file(
+                                    task_id=task_id,
+                                    relative_path=p,
+                                    content=sanitized,
+                                    role=self.role_name,
+                                )
+                        except Exception:
+                            pass
+                        if p not in written:
+                            written.append(p)
+                else:
+                    # The model returned raw code without the file delimiter:
+                    # strip any code fence and store it as the requested file.
+                    clean_code = resp.content.strip()
+                    if clean_code.startswith("```"):
+                        lines = clean_code.splitlines()
+                        if lines and lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines and lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        clean_code = "\n".join(lines).strip()
+                    if clean_code:
+                        clean_code = _sanitize_web_asset(
+                            filename, clean_code, goal or node_title, is_web_3d
+                        )
+                        engine.fs.create_file(
+                            task_id=task_id,
+                            relative_path=filename,
+                            content=clean_code,
+                            role=self.role_name,
+                        )
+                        if filename not in written:
+                            written.append(filename)
+                    else:
+                        logger.warning(
+                            f"[Task {task_id}] Role provider returned no usable "
+                            f"content for manifest file '{filename}'; the file "
+                            "was not written and verification will judge the gap."
+                        )
+                continue
             try:
                 from app.integrations.ai_universe_client import get_ai_universe_client
 

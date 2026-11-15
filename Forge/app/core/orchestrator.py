@@ -293,6 +293,36 @@ class OrchestratorCore:
 
         return ready_task, saved_graph
 
+    async def _record_provider_degradation(self, task_id: str, dag) -> None:
+        """Record a task-level event when any node ran on a mock/degraded
+        provider (TASK-FRG-009), so a completed-but-degraded build is
+        labelled in the task's audit trail and delegate output."""
+        degraded_labels: list[str] = []
+        for n in dag.graph.nodes.values():
+            if (
+                n.result
+                and isinstance(n.result, dict)
+                and n.result.get("generation_degraded")
+            ):
+                label = n.result.get("provider") or "mock/direct"
+                if label not in degraded_labels:
+                    degraded_labels.append(label)
+        if degraded_labels:
+            await self.store.record_event(
+                task_id=task_id,
+                event_type="task.provider_degraded",
+                payload={
+                    "provider": degraded_labels[0],
+                    "providers": degraded_labels,
+                    "generation_degraded": True,
+                    "note": (
+                        "One or more roles ran on the deterministic mock "
+                        "provider (explicit test/dev mode or degraded "
+                        "fallback); generated content is not model output."
+                    ),
+                },
+            )
+
     async def step_task(self, task_id: str) -> tuple[TaskEntity, list[str]]:
         """
         Execute the next available batch of ready nodes in the DAG.
@@ -355,6 +385,7 @@ class OrchestratorCore:
                     production_monitor.record_task_event("failed")
                     await _finalize_tracker(task_id, success=False)
                 else:
+                    await self._record_provider_degradation(task_id, dag)
                     task = await self.lifecycle.transition(
                         task_id, TaskState.COMPLETED, progress_percentage=100
                     )
@@ -369,6 +400,26 @@ class OrchestratorCore:
         ) -> tuple[str, bool, dict[str, Any] | None, str | None, str]:
             role_name = node.assigned_agent or "developer"
             agent = self.registry.create_agent(role_name)
+            # TASK-FRG-009: stamp the provider this node actually ran on
+            # into its result, so task output can never present a
+            # mock-generated build as a model-generated success.
+            from app.agents.provider_wiring import (
+                is_mock_provider,
+                provider_kind,
+                provider_label,
+            )
+
+            # Defensive: a registry double (or a future agent type) may not
+            # carry a provider — stamping must never break node execution.
+            _agent_provider = getattr(agent, "provider", None)
+            if _agent_provider is not None:
+                node_provider_label = provider_label(_agent_provider)
+                node_provider_kind = provider_kind(_agent_provider)
+                node_provider_mock = is_mock_provider(_agent_provider)
+            else:
+                node_provider_label = "unknown"
+                node_provider_kind = "unknown"
+                node_provider_mock = False
             dag.mark_running(node.id)
 
             # Drive the fine-grained progress tracker. ProgressTracker.start_stage
@@ -404,6 +455,18 @@ class OrchestratorCore:
                     context=context,
                     engine=self.engine,
                 )
+                if isinstance(result, dict):
+                    result.setdefault("provider", node_provider_label)
+                    result.setdefault("provider_kind", node_provider_kind)
+                    _scratchpad = (
+                        getattr(getattr(agent, "state", None), "scratchpad", None)
+                        or {}
+                    )
+                    if node_provider_mock or _scratchpad.get("provider_degraded"):
+                        result["generation_degraded"] = True
+                    served_model = _scratchpad.get("served_by_model")
+                    if served_model:
+                        result.setdefault("served_by_model", served_model)
                 if stage is not None:
                     try:
                         await tracker.complete_stage(stage, details={"node": node.title})
@@ -639,6 +702,7 @@ class OrchestratorCore:
                 )
                 production_monitor.record_task_event("failed")
             else:
+                await self._record_provider_degradation(task_id, dag)
                 task = await self.lifecycle.transition(
                     task_id, TaskState.COMPLETED, progress_percentage=100
                 )
