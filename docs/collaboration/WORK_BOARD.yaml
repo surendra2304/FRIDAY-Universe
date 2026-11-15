@@ -5781,6 +5781,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "No uploads (YouTube OAuth dead, TASK-VYR-003). No deploy in this task: the gate ships with the next VyralX deploy of remix_flow after merge."
     blockers: []
     next_action: "Coordinator: review and merge the PR (branch claude/task-vyr-009-compliance-gate); mark VERIFIED after merge. Note: the legacy viral_remix.produce_viral_short path has no gate — closing that is a separate task if wanted; the VYR-004 remix flow inherits the gate automatically via produce_remix_short."
+  - id: TASK-COR-004
+    title: "Cortex routing-accuracy test — labelled set through AgentRegistry.route_for_event, confusion-pair breakdown, routing-signal fix for the worst pairs"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-cor-004"
+    defect: "Cortex's AgentRegistry.route_for_event (the routing the Orchestrator applies to every cognitive-loop event) had never been measured. On a 103-case labelled set grounded in each specialist agent's declared domain + capabilities, the unmodified cascade scored 57/103 = 55.3%: 39 of 46 misses fell through to the reliability default (whole event classes had no keyword — payments/billing for revops, rate-limit/circuit/attack for mitigation, cancellation/downgrade/usage-drop for churn_risk, demo/intent for qualification, audit/KYC for compliance, signup/conversion for growth, complaint/refund for support); the substring 'cro' fired inside cross_sell/microservice/microtransaction (3 misses); rule order let 'score' steal churn_score_computed and 'lead' steal lead_scoring/lead.qualified ('score' does not substring-match 'scoring'; 'qualify' does not match 'qualified'); error.payment_declined routed to support instead of revops."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6891642291 (2026-11-15, Muse, TASK-COR-004 crew) — posted before editing; TASK-COR-004 confirmed unclaimed (COR-003/005/006 held by sibling Wave-5 crews)."
+      - "MEASUREMENT (harness run against fresh main dda26887, then against the fixed code): BEFORE 57/103 = 55.3% (per-agent recall: qualification 1/10, churn_risk 3/10, mitigation 5/11, revops 6/13, growth 6/11, compliance 5/9, support 7/10, sales 6/9, competitive 5/6, reliability 7/8, cro 6/6); AFTER 103/103 = 100%. Confusion pairs before: ->reliability 39 (qualification 7, mitigation 6, churn_risk 6, revops 5, growth 5, compliance 4, support 3, sales 2, competitive 1), ->cro 3 (substring trap), qualification->sales 2, churn_risk->qualification 1, revops->support 1. Full table: Cortex/docs/ROUTING_ACCURACY_COR004.md."
+      - "FIX (Cortex/packages/agents/src/cortex_agents/__init__.py, route_for_event only + one re import): vocabulary added for each agent's OWN declared signals (revops payment/billing/quote/past_due/transaction; mitigation rate_limit/circuit/attack/fraud/security/stuffing; compliance audit/masking/kyc/erasure; churn cancellation/downgrade/winback/win_back/usage_drop/session_decline/inactive; qualification scoring/demo/qualified/high_intent/mql/prospect; growth signup/conversion/campaign/referral/seo; sales cross_sell/upsell/purchase; support complaint/refund/bug_report; competitive win_loss); 'cro' matched as a whole token instead of a substring; churn rule moved before qualification so a churn score is not stolen by 'score'."
+      - "REGRESSION GATE: Cortex/tests/unit/test_routing_accuracy_cor004.py ships the 103-case labelled set (plus 6 documented unscored AMBIGUOUS cases). All 14 pre-existing route_for_event assertions in the repo are a subset of the set and pass after the fix. Sandbox disclosure: the shared sandbox intermittently denied temp-file creation during this run (fleet-wide load; /tmp at 100%), so the pytest runner could not execute here — the module's assertions were executed directly against both code states (before 57/103, after 103/103, every parametrized case + aggregate called); CI runs the module normally."
+    blockers: []
+    next_action: "Coordinator: review + merge the PR for branch claude/task-cor-004, then mark this entry VERIFIED. No deploy step (repo-only routing change; Cortex picks it up on its next Fleet CD deploy). Follow-up if wanted: grow the labelled set from production event logs (COR-003's decision-log audit can supply real event types)."
+    files:
+      - "Cortex/packages/agents/src/cortex_agents/__init__.py"
+      - "Cortex/tests/unit/test_routing_accuracy_cor004.py"
+      - "Cortex/docs/ROUTING_ACCURACY_COR004.md"
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
