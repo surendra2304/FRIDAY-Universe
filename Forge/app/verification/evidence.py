@@ -105,6 +105,15 @@ class VerificationManifest(BaseModel):
     all_passed: bool = True
     partial_failure: bool = False
     failure_summary: str | None = None
+    # TASK-FRG-011: the authoritative build verdict stamped at
+    # finalization by OrchestratorCore.apply_final_verdict (see
+    # app/verification/verdict.py). None on manifests written by a bare
+    # battery run that no finalization has settled yet -- a re-run
+    # regenerating the manifest clears the stamp, which is how read
+    # surfaces know the stamp no longer describes this manifest.
+    build_verdict: str | None = None
+    verdict_reasons: list[str] = Field(default_factory=list)
+    superseded_checks: list[str] = Field(default_factory=list)
     total_stages: int = 0
     passed_stages: int = 0
     failed_stages: int = 0
