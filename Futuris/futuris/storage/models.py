@@ -1,6 +1,7 @@
 """SQLAlchemy 2.0 ORM database models mapping to the Oracle Autonomous Database schema."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from uuid import UUID, uuid4
 
 from sqlalchemy import (

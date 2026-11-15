@@ -5,7 +5,8 @@ Manages long-running background processes (dev servers, test monitors) inside ta
 
 import asyncio
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 from pydantic import BaseModel, Field
 

@@ -16,7 +16,8 @@ import argparse
 import asyncio
 import json
 import sys
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

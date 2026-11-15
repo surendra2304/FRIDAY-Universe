@@ -1,6 +1,7 @@
 """Scenario generation, Monte Carlo simulations, and multi-scenario comparison router."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException

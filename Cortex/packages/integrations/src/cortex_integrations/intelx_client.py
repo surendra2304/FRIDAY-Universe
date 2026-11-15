@@ -2,7 +2,8 @@ import asyncio
 import logging
 import os
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from pydantic import BaseModel, Field

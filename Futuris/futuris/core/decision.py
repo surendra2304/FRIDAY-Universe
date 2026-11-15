@@ -7,7 +7,8 @@ and ZERO HTTP/webhook communication capabilities. All output suggestions are str
 require human/governance approval for execution.
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Literal
 from uuid import UUID, uuid4
 

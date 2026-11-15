@@ -1,7 +1,8 @@
 """Agent communication protocol: typed messages and structured result handlers."""
 
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any, Protocol
 from uuid import UUID, uuid4
 

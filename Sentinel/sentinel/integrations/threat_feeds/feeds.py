@@ -7,7 +7,8 @@ Provides:
 4. 6-hour refresh interval and offline cache fallback.
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 from pydantic import BaseModel
 

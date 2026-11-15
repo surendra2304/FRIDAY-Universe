@@ -4,7 +4,8 @@ import asyncio
 from collections import OrderedDict
 import hashlib
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from time import monotonic
 from typing import Any, Callable
 

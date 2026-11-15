@@ -7,7 +7,8 @@ import asyncio
 import json
 import mimetypes
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status

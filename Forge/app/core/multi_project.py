@@ -5,7 +5,8 @@ Supports priority task queuing, preemption, concurrency gating, and workspace li
 
 import heapq
 import shutil
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 from pydantic import BaseModel, Field
 

@@ -1,6 +1,7 @@
 """IntelX Threat Research Client and Cache Service."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 from pydantic import BaseModel, Field
 

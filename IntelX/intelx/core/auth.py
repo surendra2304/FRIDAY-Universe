@@ -7,7 +7,8 @@ import secrets
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from fastapi import Depends, Header, HTTPException, Request, status

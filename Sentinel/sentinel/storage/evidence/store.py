@@ -6,7 +6,8 @@ import io
 import json
 import uuid
 import zipfile
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from sentinel.audit.audit_logger import AuditLogger

@@ -8,7 +8,8 @@ Aggregates operational posture metrics:
 5. Real-Time Alert Feeds.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from pydantic import BaseModel, Field

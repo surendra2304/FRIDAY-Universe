@@ -1,0 +1,39 @@
+name: Python 3.10 Import Gate
+
+# TASK-REL-050: production runs Python 3.10.12, but the other CI jobs
+# run 3.11/3.12, so 3.11+-only constructs at import time (datetime.UTC,
+# enum.StrEnum, tomllib, ...) merged green and would only fail when a
+# service tried to boot after deploy. This job imports every agent's
+# production entrypoint under 3.10 — see
+# scripts/check_py310_imports.py for exactly what is and is not covered.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: py310-import-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  py310-import-gate:
+    name: Import all agent entrypoints under Python 3.10
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.10'
+
+      - name: Install gate dependencies (production-pinned subset)
+        run: pip install -r scripts/requirements-py310-gate.txt
+
+      - name: Run the 3.10 import gate
+        run: python scripts/check_py310_imports.py

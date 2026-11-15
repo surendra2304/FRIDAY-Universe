@@ -11,7 +11,8 @@ import hmac
 import json
 import os
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from threading import RLock
 from typing import Any
 

@@ -7,7 +7,8 @@ Provides:
 """
 
 from collections import defaultdict
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from sentinel.monitoring.continuous import DriftAlert

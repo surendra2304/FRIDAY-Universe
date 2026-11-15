@@ -11,7 +11,8 @@ Implements pre-configured conversion funnels and optimization goals for the FRID
 from __future__ import annotations
 
 import statistics
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from enum import Enum
 from typing import Any
 from pydantic import BaseModel, Field

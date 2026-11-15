@@ -5,7 +5,8 @@ prevents observation noise, and manages finding lifecycle states with repository
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 
 from pydantic import BaseModel, Field
 

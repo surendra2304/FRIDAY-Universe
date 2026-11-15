@@ -7,8 +7,22 @@ Manages:
 """
 
 import asyncio
-from datetime import UTC, datetime
-from enum import StrEnum
+from datetime import datetime, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
+try:
+    from enum import StrEnum
+except ImportError:  # Python < 3.11: behaviour-identical fallback
+    from enum import Enum as _StrEnumBase
+
+    class StrEnum(str, _StrEnumBase):
+        """Stand-in for enum.StrEnum (3.11+) on older interpreters."""
+
+        __str__ = str.__str__
+        __format__ = str.__format__
+
+        @staticmethod
+        def _generate_next_value_(name, start, count, last_values):
+            return name.lower()
 
 from pydantic import BaseModel
 

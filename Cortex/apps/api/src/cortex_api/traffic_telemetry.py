@@ -27,7 +27,8 @@ Honesty rules (a wrong series is worse than no series):
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 from sqlalchemy import and_, select

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import asdict
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any
 
 import numpy as np

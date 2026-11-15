@@ -1,6 +1,7 @@
 """IntelX Context Injector fetching external research findings as exogenous features."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from math import isfinite
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
