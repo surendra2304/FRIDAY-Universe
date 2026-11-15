@@ -153,6 +153,10 @@ When ZAI, Vercel v0 or another contributor is introduced:
 4. Require it to inspect the latest shared records and open PRs.
 5. Do not assign a task until it has registered and completed its onboarding check.
 
+## Local-first pipeline
+
+Since 2026-11-15 (TASK-REL-046, owner direction), agent changes are built and tested **locally first**: local tests → the staging smoke gate (`staging/smoke_gate.py`, a local fleet replica under production memory caps with dummy credentials) → PR → merge → Fleet CD deploy → production probe. The full rule, the gate's current per-agent state, and the list of what can never be staged locally (live demo-trading sessions, LiveKit Cloud voice with real keys, production data volumes, the owner's phone/laptop) — which still needs the bridge, batched and sparingly — are in [LOCAL_FIRST_PIPELINE.md](LOCAL_FIRST_PIPELINE.md). Staging operations are documented in `staging/README.md`.
+
 ## Snapshot warning
 
 The YAML files are an initial snapshot dated 2026-11-09. Contributors must refresh GitHub and runtime state before acting. The records are not a live dashboard and do not update themselves.
