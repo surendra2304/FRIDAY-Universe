@@ -1,7 +1,8 @@
 """
-oanda_demo/backtest.py — Historical validation of SMT-v2 on real OANDA candles.
+oanda_demo/backtest.py — Historical validation of the OANDA demo
+strategies (Donchian-v3, FX-MR-v4) on real OANDA candles.
 
-Owner directive (2026-11-13): "make Stratex take profitable trades" — so the
+Owner directive (2026-11-13): "make Stratex take profitable trades" — so a
 strategy must prove itself on real history before it is allowed to trade.
 
 Model:
@@ -9,8 +10,12 @@ Model:
     (costs included, conservative).
   - Intrabar SL/TP checks on raw high/low; when both are touched in the same
     bar the stop is assumed first (worst case).
-  - Breakeven move at +1R (same rule the live trader applies).
+  - Fixed-TP mode: breakeven move at +1R.
   - 1% equity risk per trade, compounded — identical to live sizing.
+
+(SMT-v2, the original engine this validator was built for, was deleted
+on 2026-11-15 by TASK-STR-CLEANUP-002 under the owner's PF < 1.2 removal
+rule; the validator itself is strategy-generic and remains.)
 
 Usage (from Stratex/):
     python3 -m oanda_demo.backtest --instruments EURUSD,GBPUSD,USDJPY \
@@ -33,8 +38,6 @@ from oanda_demo.strategy import (
     DonchianTrendStrategy,
     MeanReversionConfig,
     MeanReversionStrategy,
-    StratexTrendStrategy,
-    StrategyConfig,
 )
 
 # Observed OANDA *practice* closeout spreads in PRICE units (2026-11-13
@@ -88,7 +91,7 @@ def fetch_history(adapter: OandaExchangeAdapter, symbol: str, granularity: str,
 
 
 def run_backtest(
-    strategy: StratexTrendStrategy,
+    strategy,
     df: pd.DataFrame,
     instrument: str,
     spread: float,
@@ -239,9 +242,9 @@ def run_backtest(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="SMT-v2 backtest on OANDA history")
-    parser.add_argument("--strategy", default="mr", choices=["smt", "donchian", "mr"],
-                        help="smt = EMA-stack+RSI; donchian = breakout+trail; mr = RSI2 reversion")
+    parser = argparse.ArgumentParser(description="OANDA demo strategy backtest on OANDA history")
+    parser.add_argument("--strategy", default="mr", choices=["donchian", "mr"],
+                        help="donchian = breakout+trail; mr = RSI2 reversion")
     parser.add_argument("--entry-bars", type=int, default=55, help="donchian channel length")
     parser.add_argument("--instruments", default="EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD,NZDUSD,EURJPY,EURGBP")
     parser.add_argument("--granularity", default="H1", choices=sorted(GRAN_TO_TF))
@@ -249,8 +252,6 @@ def main() -> int:
     parser.add_argument("--pages", type=int, default=2, help="history pages (5000/page)")
     parser.add_argument("--risk-pct", type=float, default=0.01)
     parser.add_argument("--tp-atr", type=float, default=None, help="override tp_atr_mult")
-    parser.add_argument("--extension", type=float, default=None, help="override max_extension_atr")
-    parser.add_argument("--strength", type=float, default=None, help="override min_trend_strength")
     parser.add_argument("--json-out", default=None)
     args = parser.parse_args()
 
@@ -262,18 +263,9 @@ def main() -> int:
             cfg.tp_atr_mult = args.tp_atr
             cfg.trailing_atr = None
         strategy = DonchianTrendStrategy(cfg)
-    elif args.strategy == "mr":
+    else:
         cfg = MeanReversionConfig()
         strategy = MeanReversionStrategy(cfg)
-    else:
-        cfg = StrategyConfig()
-        if args.tp_atr:
-            cfg.tp_atr_mult = args.tp_atr
-        if args.extension is not None:
-            cfg.max_extension_atr = args.extension
-        if args.strength is not None:
-            cfg.min_trend_strength = args.strength
-        strategy = StratexTrendStrategy(cfg)
 
     api_key, account_id, practice = load_oanda_credentials()
     adapter = OandaExchangeAdapter(api_key=api_key, account_id=account_id, practice=practice)

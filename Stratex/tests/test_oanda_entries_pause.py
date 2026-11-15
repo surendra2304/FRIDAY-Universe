@@ -1,8 +1,11 @@
 """
-tests/test_oanda_entries_pause.py — TASK-STR-PHASE2-001, SMT-v2 pause.
+tests/test_oanda_entries_pause.py — TASK-STR-PHASE2-001, entries pause.
 
-The OANDA demo engine's exchange-verified record is 19 trades, -$167,
-negative on every instrument. The phase-2 entries pause must:
+The pause was introduced after the OANDA demo engine's exchange-verified
+SMT-v2 record (19 trades, -$167, negative on every instrument). SMT-v2
+has since been deleted (TASK-STR-CLEANUP-002, 2026-11-15); the pause is
+engine-wide and remains in force while the measurement programme runs.
+The phase-2 entries pause must:
   * keep the scan cycle running (account read, trade management, state),
   * open NO new trades while active (env flag OR pause file),
   * be fully reversible (removing both resumes normal scanning),

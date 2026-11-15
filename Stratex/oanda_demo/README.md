@@ -3,7 +3,7 @@
 Owner directive (2026-11-13): *store the OANDA demo key in credentials.md,
 implement OANDA demo trading, and make Stratex take profitable trades.*
 
-This module is the result: a credential loader, three strategy engines, a
+This module is the result: a credential loader, two strategy engines, a
 live trading engine with a risk governor, a historical validator, and a live
 selftest — all against the OANDA **practice** environment (demo funds only;
 the live environment is never used without owner approval).
@@ -13,7 +13,7 @@ the live environment is never used without owner approval).
 | File | Purpose |
 |---|---|
 | `credentials.py` | Resolves OANDA_API_KEY / OANDA_ACCOUNT_ID from env, else `credentials.md` (never logs values) |
-| `strategy.py` | Three engines: SMT-v2 (EMA stack, TP-capped), Donchian-v3 (breakout + chandelier trail), **FX-MR-v4 (RSI-2 mean reversion — the validated default)** |
+| `strategy.py` | Two engines: Donchian-v3 (breakout + chandelier trail), **FX-MR-v4 (RSI-2 mean reversion — the validated default)** |
 | `trader.py` | Live engine: scan → signal → size → MARKET order with native SL → manage exits → log + Telegram |
 | `backtest.py` | Event-driven validator on real OANDA history (paginated to 10k bars, spread costs, conservative SL-first fills) |
 | `selftest.py` | Live API proof: account, pricing, candles, precision, **1-unit order round-trip** |
@@ -33,6 +33,16 @@ spreads before being allowed to trade:
 Robustness: 10y/10y holdout split is positive in BOTH halves (+11.3R first
 decade, +7.2R second). The only consistently trending pair (USDJPY, PF 1.18
 on Donchian D1) confirms the regime read: the basket mean-reverts.
+
+> **SMT-v2 removal (2026-11-15, TASK-STR-CLEANUP-002):** the SMT-v2 row
+> above is the historical validation record. The engine itself was
+> deleted completely (code, config, dedicated tests) under the owner's
+> strict removal rule — verified out-of-sample profit factor < 1.2 means
+> delete — after the TASK-STR-RD-002 mega-grid retest of the deployed
+> code measured 627 OOS trades at PF 0.655 (−30.0R). The evidence record
+> stays in `Stratex/rigorous_backtest/RESULTS_RD2.md`; the strategy does
+> not. Donchian-v3 was never deployed as the live default and remains
+> available via `STRATEX_OANDA_STRATEGY=donchian`.
 
 Strategy rules (FX-MR-v4): long when RSI(2) < 10 with close > EMA200 (short
 mirrored); exit when close re-crosses EMA5 or after 10 bars; 4×ATR disaster

@@ -7,9 +7,11 @@ take profitable trades.
 What one scan (--once) does:
   1. Pull the real account state (balance / equity / margin).
   2. Daily-loss circuit breaker (-3% NAV) and max-position governor.
-  3. Manage open trades: move stops to breakeven at +1R (OANDA-side,
-     survives restarts), detect closes, apply per-instrument cooldowns.
-  4. Scan the watchlist with SMT-v2 (trend + momentum + ATR risk box).
+  3. Manage open trades: strategy exit rules (MR rule exit, Donchian
+     chandelier trailing stop — OANDA-side, survives restarts), detect
+     closes, apply per-instrument cooldowns.
+  4. Scan the watchlist with the configured strategy engine
+     (STRATEX_OANDA_STRATEGY; default FX-MR-v4 mean reversion).
   5. Size each entry to 1% account risk, capped by notional (10% equity)
      and free margin, then fire a MARKET order with native SL/TP attached.
   6. Log to data/oanda_demo_trades.csv and notify the owner on Telegram.
@@ -51,7 +53,6 @@ from oanda_demo.strategy import (
     DonchianTrendStrategy,
     MeanReversionStrategy,
     Signal,
-    StratexTrendStrategy,
 )
 
 logger = get_logger("oanda_demo_trader")
@@ -67,11 +68,10 @@ MAX_NOTIONAL_PCT = 0.25        # notional cap: 25% of equity per position
 MAX_LEVERAGE = 50.0            # OANDA demo margin rate 2% on majors
 DAILY_LOSS_LIMIT_PCT = 0.03    # -3% NAV day: stop opening new trades
 REENTRY_COOLDOWN_S = 3600      # 60 min cooldown per instrument after a close
-BREAKEVEN_R = 1.0              # SMT mode: move stop to entry at +1R
 STRATEGY_NAME = os.getenv("STRATEX_OANDA_STRATEGY", "mr").lower()
 # NOTE: timeframes use the adapter's granularity-map keys ("15m","1h","4h","1d")
 # — anything else silently falls back to M15 in get_historical_data.
-_DEFAULT_TF = {"mr": "1d", "donchian": "4h", "smt": "4h"}
+_DEFAULT_TF = {"mr": "1d", "donchian": "4h"}
 TIMEFRAME = os.getenv("STRATEX_OANDA_TF", _DEFAULT_TF.get(STRATEGY_NAME, "4h"))
 HISTORY_BARS = 400
 
@@ -119,9 +119,11 @@ def _rfc3339_to_unix(ts: str) -> float:
 def build_default_strategy():
     """Strategy selected by env (STRATEX_OANDA_STRATEGY). Default: MR —
     the only strategy class that survived 20y/2.9y validation on the FX
-    practice basket (see data/oanda_demo_backtest_*.json)."""
-    if STRATEGY_NAME == "smt":
-        return StratexTrendStrategy()
+    practice basket (see data/oanda_demo_backtest_*.json).
+
+    SMT-v2 was the third option ("smt") until TASK-STR-CLEANUP-002
+    deleted it (2026-11-15) under the owner's PF < 1.2 removal rule;
+    an unrecognised name now falls through to MR, as before."""
     if STRATEGY_NAME == "donchian":
         return DonchianTrendStrategy()
     return MeanReversionStrategy()
@@ -133,7 +135,7 @@ class OandaDemoTrader:
     def __init__(
         self,
         adapter: Optional[OandaExchangeAdapter] = None,
-        strategy: Optional[StratexTrendStrategy] = None,
+        strategy=None,
         timeframe: str = TIMEFRAME,
         dry_run: bool = False,
         state_file: Optional[Path] = None,
@@ -399,8 +401,9 @@ class OandaDemoTrader:
                 if instrument:
                     cooldowns[instrument] = time.time() + REENTRY_COOLDOWN_S
 
-        # Exit management: rule exit (MR), chandelier trail (Donchian), or
-        # breakeven (SMT).
+        # Exit management: rule exit (MR) or chandelier trail (Donchian).
+        # (SMT-v2's breakeven-at-+1R path was deleted with the strategy
+        # itself by TASK-STR-CLEANUP-002, 2026-11-15.)
         rule_exit = getattr(self.strategy.cfg, "exit_rule", None) == "mr"
         trailing_mult = getattr(self.strategy.cfg, "trailing_atr", None)
         if pricing is None:
@@ -492,37 +495,6 @@ class OandaDemoTrader:
                     )
                 continue
 
-            # --- SMT breakeven at +1R ---
-            if not t["stop_loss"]:
-                continue
-            direction = 1.0 if t["units"] > 0 else -1.0
-            px = pricing.get(t["instrument"])
-            if not px:
-                continue
-            risk_dist = abs(t["price"] - t["stop_loss"])
-            if risk_dist <= 0:
-                continue
-            progress_r = direction * (px["mid"] - t["price"]) / risk_dist
-            if progress_r < BREAKEVEN_R:
-                continue
-            # Stop not yet at/beyond entry -> move to breakeven.
-            if (direction > 0 and t["stop_loss"] < t["price"]) or (
-                direction < 0 and t["stop_loss"] > t["price"]
-            ):
-                ok = False
-                if not self.dry_run:
-                    try:
-                        ok = self.adapter.update_trade_stop_loss(
-                            t["instrument"], t["id"], t["price"]
-                        )
-                    except Exception as exc:
-                        logger.warning(f"[OANDA-DEMO] SL update failed {t['id']}: {exc}")
-                if ok or self.dry_run:
-                    summary.setdefault("breakeven", []).append(t["id"])
-                    logger.info(
-                        f"[OANDA-DEMO] breakeven stop set on {t['instrument']} "
-                        f"trade {t['id']} at {t['price']}"
-                    )
 
     # -- utilities ------------------------------------------------------------
     def status(self) -> Dict:

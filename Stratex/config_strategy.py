@@ -124,7 +124,9 @@ TESTNET_RISK = {
 # adx_ema (PF 1.46 production-faithful / 1.57 bare — the only governed
 # strategy at or above the bar) and ml (DISABLED; never honestly
 # backtested, so not removable under the evidence rule). SMT-v2 (OANDA)
-# is not governed here and is excluded pending its RD-002 retest.
+# was never governed here; its TASK-STR-RD-002 retest measured OOS
+# PF 0.655 (627 trades, -30.0R) and TASK-STR-CLEANUP-002 (2026-11-15)
+# DELETED it under the same rule — code, config and dedicated tests.
 # ==============================================================================
 PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
     "adx_ema": {
