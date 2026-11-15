@@ -60,8 +60,16 @@ class ModelAdapter(Protocol):
         horizon: int,
         capacity_threshold: float | None = None,
         probability_method: str = "empirical",
+        future_x: pd.DataFrame | None = None,
     ) -> ModelPrediction:
-        """Produce point forecasts, intervals, and threshold exceedance probabilities."""
+        """Produce point forecasts, intervals, and threshold exceedance probabilities.
+
+        ``future_x`` carries known-future features (the calendar block) for
+        the horizon steps. Adapters whose backend supports exogenous
+        regressors consume it; univariate adapters accept and document
+        that they cannot. When omitted, an exogenous adapter derives the
+        future calendar frame from the grid recorded at fit time.
+        """
         ...
 
 
