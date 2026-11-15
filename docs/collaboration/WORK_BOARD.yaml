@@ -4744,6 +4744,33 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-FUT-003 crew): PR #259 merged and deployed, fingerprint-verified on Server 1, live acceptance passed end-to-end (see evidence). This also completes TASK-FUT-002's follow-up — its entry is flipped to VERIFIED in the same board PR. Residuals unchanged: extra /api/v1/futuris routers retire-or-label; real forecasts wait for ARM + statsforecast (owner decision, do not re-raise)."
 
+  - id: TASK-STR-RD-003
+    title: "Stratex strategy-discovery continuation (RD-003): RD-002 deferred cells for surviving modules + new pre-declared families, judged at the running global trial count"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-str-rd-003 (claim; stage branches follow)
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T10:54:00+05:30"
+    updated_at: "2026-11-15T10:54:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD3.md"
+      - "Stratex/rigorous_backtest/results_rd3/"
+      - "Stratex/rigorous_backtest/rd3/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6889729080"
+    defect: "Owner standing rule 2026-11-15 ~10:49 IST: strategy finding never stops, and any strategy passing the full bar is added to demo trading. TASK-STR-RD-002 left disclosed compute deferrals: discovery daily cells for 49 of 58 modules (196), all discovery 4h cells (116), governed crypto 1h cells for 8 module-configs. Since then, CLEANUP-001/002 deleted 33 of the 58 discovery modules and 6 of the 8 governed 1h module-configs under the owner's PF<1.2 rule — their deferred cells are closed-by-deletion and must NOT be resurrected. Runnable Stage-1 remainder: 25 surviving discovery modules x 6 cells (150) + governed adx_ema bare/production @ crypto30 1h (2). Stage 2 adds at least two NEW pre-declared families (mechanism-grounded, not re-skins of the judged crypto daily-trend cluster). Global trial counter continues from 1,557; the bar is unchanged (expectancy>0, PF>=1.2, >=200 OOS trades, >=80% folds, holdout, Bonferroni at the running N, 2x-cost, breadth). Research only: no production code, registry or daemon changes (passers are wired by TASK-STR-FWD-002/coordinator)."
+    acceptance:
+      - "Sanity anchor re-verified before any new number is trusted: RD-001's ts_momentum roc42_4h cell (BTC/ETH/SOL) reproduced bit-identically (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518)."
+      - "Stage 1: every runnable deferred cell evaluated and rowed (150 discovery + 2 governed), each counting once in the global trial counter whatever its outcome; closed-by-deletion cells (162 discovery + 6 governed) enumerated by module in RESULTS_RD3.md, never run."
+      - "Stage 2: at least two new families pre-declared in RESULTS_RD3.md (mechanism, variants, cells, costs) BEFORE first execution; every variant counted."
+      - "Stage 3: RESULTS_RD3.md + results_rd3/synthesis.json on main via PR(s): one ranked table across all RD-003 stages with the running N, explicit PASS/FAIL per configuration against the full bar, and a named passer list with complete evidence packs (or 'zero new passers' stated plainly)."
+      - "Board entry flipped to VERIFIED via a fresh-main board PR with the full task-id set diffed (added/dropped shown); completion comment on issue #35 leading with the passer list and the new global trial count."
+    evidence: []
+    blockers: []
+    next_action: "Crew claimed 2026-11-15 (issue #35 comment 6889729080). Running: sanity anchor, then Stage 1 cells, Stage 2 pre-declared families, Stage 3 synthesis."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
