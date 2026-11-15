@@ -262,6 +262,16 @@ class ForecastScheduler:
                 stride_hours=24,
                 horizon=sub.horizon,
             )
+            if report.scored_forecasts == 0:
+                # No origin had a genuinely observed actual, so the report's
+                # metrics are NaN: appending one to the drift history would
+                # poison every later comparison for this target.
+                logger.info(
+                    "drift_check_skipped_no_scored_forecasts",
+                    target=sub.target,
+                    unscored=report.unscored_forecasts,
+                )
+                continue
             h_metrics = list(report.metrics_by_horizon.values())
             if h_metrics:
                 recent_mae = h_metrics[0].mae
