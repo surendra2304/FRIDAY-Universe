@@ -20,6 +20,7 @@ const VoiceCall = dynamic(() => import("../VoiceCall").then((m) => m.VoiceCall),
 const FleetSheet = dynamic(() => import("./FleetSheet").then((m) => m.FleetSheet), { ssr: false });
 const ChronicleSheet = dynamic(() => import("./ChronicleSheet").then((m) => m.ChronicleSheet), { ssr: false });
 const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet), { ssr: false });
+const GalaxySheet = dynamic(() => import("./GalaxySheet").then((m) => m.GalaxySheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -36,12 +37,13 @@ const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse";
+type SheetKind = "fleet" | "chronicle" | "pulse" | "galaxy";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
   chronicle: { kicker: "Everything asked, everything done", title: "The Chronicle" },
   pulse: { kicker: "The box underneath it all", title: "Machine Pulse" },
+  galaxy: { kicker: "What FRIDAY remembers, as a sky", title: "Memory Galaxy" },
 };
 
 export function Stage() {
@@ -144,6 +146,13 @@ export function Stage() {
         run: () => openSheet("pulse"),
       },
       {
+        id: "galaxy",
+        label: "Wander the memory galaxy",
+        hint: "FRIDAY's memories as stars — pinned, ordinary, and trivial",
+        keys: "memory galaxy memories remember stars memora sky brain",
+        run: () => openSheet("galaxy"),
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -238,6 +247,7 @@ export function Stage() {
           {sheet === "fleet" && <FleetSheet />}
           {sheet === "chronicle" && <ChronicleSheet />}
           {sheet === "pulse" && <PulseSheet />}
+          {sheet === "galaxy" && <GalaxySheet />}
         </Sheet>
       )}
     </main>
