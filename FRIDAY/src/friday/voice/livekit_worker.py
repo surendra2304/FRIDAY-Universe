@@ -232,10 +232,24 @@ def _write_status(
     """
     try:
         STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        # TASK-IG-VOI-04: the voice surface contract (docs/
+        # VOICE_SURFACE_CONTRACT.md) renders the configured voice and
+        # language profile from this file, so both ride every status
+        # write. Additive keys; older readers ignore them. The
+        # language lookup is a local import so this heartbeat can
+        # never fail on module state.
+        try:
+            from friday.voice.language_profiles import configured_language
+
+            _language = configured_language() or ""
+        except Exception:
+            _language = ""
         payload = {
             "state": state,
             "provider": provider,
             "model": model,
+            "voice": _voice_name(),
+            "language": _language,
             "detail": detail,
             "pid": os.getpid(),
             "updated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
