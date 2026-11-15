@@ -4916,6 +4916,36 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 6890028406 (2026-11-15) - includes the design-vs-plumbing distinction and the navigation-model paragraph, posted before building."
     blockers: []
     next_action: "Crew: finish local gates (tsc, eslint, production build, harness), ship the PR, merge, Fleet CD deploy, run the production probes, then flip this entry VERIFIED via a fresh-main board PR with the full task-id set diffed."
+  - id: TASK-FRD-005
+    title: "Repeatable voice acceptance harness for FRIDAY voice — fixed battery, per-turn latency + transcript + provider, SPEED-first verdicts (Wave 5, FRIDAY agent)"
+    owner: muse_ai
+    status: IN_PROGRESS
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/voice_acceptance/battery.json"
+      - "FRIDAY/voice_acceptance/participant.py"
+      - "FRIDAY/voice_acceptance/make_utterances.py"
+      - "FRIDAY/voice_acceptance/score.py"
+      - "FRIDAY/voice_acceptance/score_check.py"
+      - "FRIDAY/voice_acceptance/run_acceptance.sh"
+      - "FRIDAY/voice_acceptance/README.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891373113"
+    defect: "Every voice fix so far (VOI-003..008) was accepted by a one-off, hand-run call: VOI-004's machine pass did not reproduce in the owner's hands, VOI-007's participant talked over FRIDAY and truncated the Stratex answer, and no two runs are comparable because prompts, thresholds and scoring were re-invented each time. There is no repeatable instrument that can prove — run after run, especially after TASK-VOI-009 removes Groq from voice — that FRIDAY answers fast, in context, and served by Gemini Live only."
+    acceptance:
+      - "Fixed battery (battery.json v1): greeting (FRIDAY speaks first), Stratex delegation, context follow-up whose closed-trade count must match the delegation answer, Tokyo clock, memory remember/recall pair (teal), goodbye. Utterances rendered once via edge-tts (voice/rate pinned) with a sha256 manifest — every run speaks byte-identical prompts."
+      - "Per-turn evidence: silence gap (utterance end -> first agent audio) from the participant timeline, transcript of what FRIDAY heard (user_input_transcribed final) and answered (conversation_item_added) from the FRIDAY-Voice journal, and the serving provider from the worker status file."
+      - "Owner's criterion enforced mechanically: SPEED first — a turn FAILs if its silence gap exceeds the pre-declared threshold (greeting 8s, delegation 12s, simple turns 4-6s, calibrated on VOI-005/006/007/008 measurements) even when the answer is correct. Thresholds are versioned in battery.json and never tuned after seeing results."
+      - "Provider contract: any journal evidence of a Groq/Whisper/Orpheus SERVING path is an automatic FAIL (the post-TASK-VOI-009 Gemini-only rule); missing evidence scores UNVERIFIED, never PASS."
+      - "Talk-over proofing: reply-end detection requires >=0.8s of agent speech AND >=2.0s of continuous silence — the VOI-007 failure mode (fragment + 0.10s dip mistaken for a complete reply) cannot recur in the harness itself."
+      - "Scorer logic covered by offline checks (score_check.py): clean PASS, slow-delegation FAIL (18.6s), slow-greeting FAIL, Groq-serving FAIL, count-mismatch FAIL, wrong-recall FAIL, missing-status UNVERIFIED, no-reply FAIL."
+      - "Measured acceptance run executed AFTER TASK-VOI-009 is merged AND deployed, reported as a per-turn table in five states; a pre-VOI-009 rehearsal run, if performed, is labelled rehearsal and never reported as the acceptance result."
+    evidence: []
+    blockers: []
+    next_action: "Claimed 2026-11-15 (Muse, TASK-FRD-005 crew; issue #35 comment 6891373113). Harness built in FRIDAY/voice_acceptance/ and shipped via PR from fresh main; coordinator merges. Sequencing: the measured acceptance run waits for TASK-VOI-009 (PR #284) to merge + deploy — the harness verifies the Gemini-Live-only contract, so a pre-VOI-009 run cannot be the acceptance result."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
