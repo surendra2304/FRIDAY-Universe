@@ -14,6 +14,10 @@ These tests pin the policy that replaces that behaviour:
   unhealthy — e.g. quota-dead — is skipped for the next-best);
 - a degraded first attempt gets exactly one bounded retry with the
   next-best suitable model, and only then the honest REL-032 503;
+- containment: a gateway-ladder serve from OUTSIDE the catalogue (the
+  best-free rung answering after a deadline — observed live 2026-11-15
+  even with selection active) counts as a failed attempt, is retried
+  the same way, and is never passed through as the answer;
 - provenance records the suitability basis (selected_as) and flags a
   materially weaker substitute explicitly (downgrade);
 - catalogue models still serve under their own name, untouched.
@@ -34,11 +38,15 @@ async def _post_chat(auth, payload):
         return await client.post("/v1/chat/completions", json=payload)
 
 
-def _stub_execute(monkeypatch, degraded_models=()):
+def _stub_execute(monkeypatch, degraded_models=(), breach_models=()):
     """Replace the unified manager's execute with a recording double.
 
     Models in `degraded_models` come back as honest degraded results
-    (no model answered); every other model answers successfully under
+    (no model answered); models in `breach_models` come back as
+    "successful" results served by a NON-catalogue free model — the
+    gateway ladder behaviour observed live on 2026-11-15 (the selected
+    model hit the gateway deadline and the ladder's best-free rung
+    answered instead). Every other model answers successfully under
     its own name. Returns the list of execution requests, in order.
     """
     from app.providers.unified_manager import UnifiedExecutionResponse, unified_provider_manager
@@ -47,6 +55,18 @@ def _stub_execute(monkeypatch, degraded_models=()):
 
     async def stub(req):
         calls.append(req)
+        if req.model in breach_models:
+            return UnifiedExecutionResponse(
+                provider_used="openrouter",
+                model_used="nvidia/nemotron-3.5-super-vl:free",
+                agent_role=req.agent_role or "system_architect",
+                content="OK",
+                latency_ms=1.0,
+                timestamp=1729000000.0,
+                token_usage={"prompt_tokens": 3, "completion_tokens": 1, "total_tokens": 4},
+                finish_reason="stop",
+                fallback_reason=f"Request deadline exceeded for provider '{req.provider}' (test double)",
+            )
         if req.model in degraded_models:
             return UnifiedExecutionResponse(
                 provider_used=req.provider,
@@ -237,6 +257,63 @@ async def test_downgrade_is_flagged_when_only_a_weaker_class_is_available(
     assert provenance["downgrade"] is True
     assert "flagship" in provenance["downgrade_reason"]
     assert "standard" in provenance["downgrade_reason"]
+
+
+@pytest.mark.asyncio
+async def test_ladder_breach_is_contained_and_retried_with_next_best(auth, monkeypatch, healthy_tracker):
+    # Live incident, 2026-11-15: the policy selected gemini-3.8-flash,
+    # the gateway's deadline fired, and its best-free ladder rung served
+    # a NON-catalogue model behind HTTP 200. Containment: that serve
+    # counts as a failed attempt; the next-best suitable model answers.
+    calls = _stub_execute(monkeypatch, breach_models={"gemini-3.8-flash"})
+    res = await _post_chat(
+        auth,
+        {"model": RETIRED_70B, "messages": [{"role": "user", "content": "hello there"}], "max_tokens": 16},
+    )
+    assert res.status_code == 200, res.text
+    assert [c.model for c in calls] == ["gemini-3.8-flash", "openai/gpt-oss-120b"]
+    body = res.json()
+    assert body["model"] == "openai/gpt-oss-120b"
+    assert body["provenance"]["selected_model"] == "openai/gpt-oss-120b"
+    assert body["provenance"]["served_by_model"] == "openai/gpt-oss-120b"
+
+
+@pytest.mark.asyncio
+async def test_catalogue_request_breached_by_ladder_is_also_contained(auth, monkeypatch, healthy_tracker):
+    # The same ladder breach on a direct catalogue request (also
+    # observed live) must not pass through either.
+    calls = _stub_execute(monkeypatch, breach_models={"gemini-3.8-flash"})
+    res = await _post_chat(
+        auth,
+        {"model": "gemini-3.8-flash", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 16},
+    )
+    assert res.status_code == 200, res.text
+    assert [c.model for c in calls] == ["gemini-3.8-flash", "openai/gpt-oss-120b"]
+    body = res.json()
+    assert body["model"] == "openai/gpt-oss-120b"
+    provenance = body["provenance"]
+    assert provenance["requested_model"] == "gemini-3.8-flash"
+    assert provenance["selected_as"] == "best_suitable_for_chat"
+
+
+@pytest.mark.asyncio
+async def test_ladder_breach_everywhere_is_an_honest_503_never_a_serve(auth, monkeypatch, healthy_tracker):
+    from app.api.v1_core_routes import MODEL_CATALOG
+
+    _stub_execute(monkeypatch, breach_models={entry["id"] for entry in MODEL_CATALOG})
+    res = await _post_chat(
+        auth,
+        {"model": RETIRED_70B, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 16},
+    )
+    # When every route can only be reached through a non-catalogue
+    # substitute, the policy's answer is the honest 503 — the banned
+    # model is never presented as the answer.
+    assert res.status_code == 503, res.text
+    body = res.json()
+    assert body["error"]["code"] == "provider_degraded"
+    assert body["requested_model"] == RETIRED_70B
+    assert "choices" not in body
+    assert "nemotron-3.5-super-vl" not in res.text
 
 
 def test_suitability_tables_cover_exactly_the_verified_catalogue():

@@ -1262,23 +1262,44 @@ async def chat_completions(req: ChatCompletionRequest):
             )
         )
 
+    def _attempt_failed(result) -> bool:
+        # TASK-REL-043 containment: an attempt failed the owner's policy
+        # when the provider stack reports it degraded — OR when it
+        # "succeeded" only by serving a model OUTSIDE the verified
+        # catalogue. The gateway's fallback ladder still contains a
+        # best-free-model rung (observed live 2026-11-15, minutes after
+        # this policy first deployed: the selected gemini-3.8-flash hit
+        # the gateway's request deadline and the ladder served
+        # nvidia/nemotron-3.5-super-vl:free behind HTTP 200 — the exact
+        # substitution the owner banned). Selection at this layer is
+        # therefore paired with containment at this layer: a
+        # non-catalogue serve counts as a failed attempt, is retried
+        # once with the next-best suitable model, and otherwise gets the
+        # honest 503 below — never passed through silently. The 'auto'
+        # policy path is exempt: delegating the choice is its contract.
+        if result.degraded:
+            return True
+        if req.model == "auto":
+            return False
+        return (result.model_used or "").lower() not in _CATALOG_PROVIDERS
+
     res = await _execute_once(attempt_model, attempt_provider)
-    if res.degraded and req.model != "auto":
+    if _attempt_failed(res) and req.model != "auto":
         # One bounded policy retry: the best suitable catalogue model
         # that has not been tried yet (for a catalogue request, the
-        # requested model itself is excluded). Only a successful retry
-        # is served; otherwise the first degraded result stands and the
-        # honest 503 below reports it — best-suitable service first,
-        # refusal only when nothing suitable could answer.
+        # requested model itself is excluded). Only a retry that passes
+        # the policy is served; otherwise the first failed result stands
+        # and the honest 503 below reports it — best-suitable service
+        # first, refusal only when nothing suitable could answer.
         retry = _select_best_suitable(
             req, exclude={req.model.lower(), attempt_model.lower()}
         )
         if retry is not None:
             retry_res = await _execute_once(retry["model"], retry["provider"])
-            if not retry_res.degraded:
+            if not _attempt_failed(retry_res):
                 res = retry_res
                 selection = retry
-    if res.degraded:
+    if _attempt_failed(res):
         # TASK-REL-030: a degraded unified result means NO model answered.
         # The pre-fix handler returned it as HTTP 200 with an empty
         # completion, presenting an infrastructure failure as a successful
@@ -1288,7 +1309,12 @@ async def chat_completions(req: ChatCompletionRequest):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={
                 "error": {
-                    "message": res.error or "No provider could answer this request.",
+                    "message": res.error
+                    or (
+                        "No provider could answer this request."
+                        if res.degraded
+                        else "The request could only be served by a model outside the verified catalogue, which the model-selection policy does not allow."
+                    ),
                     "type": "gateway_error",
                     "code": "provider_degraded",
                 },
