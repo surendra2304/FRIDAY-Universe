@@ -6756,6 +6756,165 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Planner refuses password-field typing, credential instructions and banking/payment/authenticator packages in code; budget-exhausted tasks report not-done."
       - "Tests: 21 new in tests/test_phone_ui_automation.py, 52 passed locally with the phone/laptop bridge suites."
     next_action: "Merge on green CI -> Fleet CD -> owner pairs the ADB agent (docs/PHONE_UI_AUTOMATION.md) and runs the battery-level instruction -> flip VERIFIED with that live evidence."
+  - id: TASK-IG-VOI-02
+    title: "Hands-free dictation mode — owner talks, FRIDAY types his words verbatim into the active app on his laptop via LAP-001, spoken 'send' sends (IG corpus DfM_GI2EkTH + DfOVzvvBxVs)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/src/friday/voice/dictation.py"
+      - "FRIDAY/tests/test_voice_dictation.py"
+      - ".github/workflows/friday-universe-ci.yml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898233181"
+    defect: "FRIDAY voice could converse and delegate, but had no dictation mode: no way for the owner to speak text into other applications hands-free (the Infina/Wispr pattern he saved twice)."
+    acceptance:
+      - "Control phrases act only as whole utterances; dictated sentences containing command words are typed as content (test-pinned)."
+      - "Every brain-bound relay carries the Dictation: structured prefix and passes the TASK-IG-VOI-01 confirmation gate (cross-check test active once PR #448 is on main)."
+      - "Post-merge: Fleet CD, then a live drill on the owner's connected laptop — start dictation, a dictated sentence appears verbatim in the active app, 'new line' breaks without sending, 'send' sends, 'stop dictation' resumes conversation — then flip VERIFIED."
+    evidence:
+      - "PR #457 (branch claude/task-ig-voi-02 on main 6a8a921): new dictation module + tests + CI lists; no worker edits."
+      - "Local tests: 14 passed, 1 skipped (confirmation-gate cross-check; skips until PR #448's policy module is on main). Ruff clean."
+    blockers: []
+    next_action: "Coordinator: merge PR #457 on green CI (either order vs PR #448 — they compose), Fleet CD with the voice lane, run the laptop dictation drill in the acceptance after the owner's laptop is connected, then flip VERIFIED."
+  - id: TASK-IG-VOI-05
+    title: "VoiceStudio evaluated — NOT adopted into the live voice path (no TTS slot post-VOI-009; desktop-class hardware; licence care); owner-gated offline options recorded (IG corpus De1wM7TxD8D)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P3
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/docs/VOICESTUDIO_EVALUATION.md"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898233181"
+    defect: "An unevaluated adoption candidate sat in the corpus: a local voice-cloning/design studio that, adopted naively, would have rebuilt FRIDAY voice as STT-to-LLM-to-TTS — the pipeline shape the owner rejected in live test #2 and banned by his Gemini-only rule."
+    acceptance:
+      - "Evaluation document states the verdict with its three grounds (no TTS slot, hardware, speed), the licence position (AGPL-3.0 app; CC-BY-NC default weights barred from published/business use), and the owner-gated offline options."
+      - "No code, dependency or install introduced by this task."
+    evidence:
+      - "PR #487 (branch claude/task-ig-voi-05 on main 6a8a921): FRIDAY/docs/VOICESTUDIO_EVALUATION.md only."
+      - "Grounded in the verified spec card ig-references/repos/voicestudio.md (github.com/debpalash/VoiceStudio)."
+    blockers: []
+    next_action: "Coordinator: merge PR #487 (document only) and close the idea as EVALUATED. Follow-ups (fixed-line re-render, VyralX narration experiment) start only on the owner's explicit word."
+  - id: TASK-IG-LAP-02
+    title: "IG corpus: voice dictation typing for laptop control — laptop_dictate tool (spoken-punctuation dictation + verbatim modes, lossless chunking) over the laptop bridge type_text command"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-lap-02"
+    pr: 474
+    defect: "Corpus item DdVlSrQhlng: FRIDAY could type literal strings into the owner's laptop (LAP-001 laptop_type_text) but had no dictation surface — no spoken-punctuation handling and no safe path for long dictated text."
+    acceptance:
+      - "Dictation mode maps spoken tokens (new line/paragraph, period, comma, question mark, ...) with word-boundary protection; verbatim mode is byte-exact; chunking is lossless and mid-dictation failures report the typed-so-far count."
+      - "Tests: 12 new in tests/test_laptop_dictation.py; 48 passed locally with the laptop-bridge and phone-UI suites."
+    next_action: "Merge on green CI -> Fleet CD -> owner connects the laptop client and dictates a note -> flip VERIFIED with that live evidence."
+  - id: TASK-IG-LAP-03
+    title: "IG corpus PC care cluster: laptop pc_health report + enumerate-first pc_cleanup, hotkey shortcut set, storage_check/storage_repair utilities over the LAP-001 laptop bridge"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-lap-03"
+    pr: 489
+    defect: "Corpus items DVQMe9GAE3b/DVhR_XQk6Ml/DemQIPwyiyJ/Dee-1i7hsRy/DefKD7YKzol (PC health/tune-up/cleanup), DVekxHGCFWT (shortcuts), DVlGJaNEal2 (storage repair): the laptop bridge had no health, cleanup, hotkey or filesystem-repair surface at all."
+    acceptance:
+      - "Cleanup is enumerate-first (apply=false deletes nothing); repair is DANGEROUS-class with explicit volume + confirm=true enforced on tool and client, system volume refused, mounted volumes refused outside Windows; storage check is read-only and skips mounted Linux volumes honestly."
+      - "Tests: 15 new in tests/test_laptop_pc_care.py; 80 passed locally across the lane suites; one real gate bug (system-volume normalisation) caught by the tests and fixed pre-ship."
+    next_action: "Merge on green CI -> Fleet CD -> owner updates the laptop client from the merged repo, connects, and runs a health report + USB storage check -> flip VERIFIED with that live evidence."
+  - id: TASK-IG-LAP-04
+    title: "IG corpus: browser-use pattern for the owner's own browser — laptop_browser_task planner loop over the laptop bridge (screenshot+OCR observation, safety-gated actions)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-ig-lap-04"
+    pr: 495
+    defect: "Corpus item Dc3pMkakrid (browser-use): FRIDAY's browser automation runs only on the server (real_browser_agent), so it cannot operate the owner's own logged-in browser on his laptop; the browser-use library itself is unusable on the fleet (Python 3.11+ vs 3.10)."
+    acceptance:
+      - "Loop uses only existing bridge commands; gates refuse credential instructions, stop typing at sign-in forms, stop on banking/payment pages; exhausted budgets report not-done; every result carries the step transcript."
+      - "Tests: 9 new in tests/test_laptop_browser_agent.py; 89 passed locally across the six lane suites."
+    next_action: "Merge on green CI -> Fleet CD -> owner connects the laptop client and asks FRIDAY to look something up in his own browser -> flip VERIFIED with that live evidence."
+  - id: TASK-IG-FUT-01
+    title: "IG corpus: OpenBB-style market-data backbone for Futuris (evaluation + bounded lazy adapter)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-fut-01
+    pr: 496
+    contributors: [muse_ai]
+    priority: P2
+    created_at: "2026-11-15"
+    updated_at: "2026-11-15"
+    files:
+      - Futuris/futuris/market_data/
+      - Futuris/futuris/api/routers/market_data.py
+      - Futuris/futuris/api/app.py
+      - Futuris/futuris/infra/config.py
+      - Futuris/tests/market_data/
+      - Futuris/docs/DATA_BACKBONE_IGFUT01.md
+    evidence:
+      - "Measured OpenBB 5.0.0 in isolated venv 2026-11-15: install tree ~1.1 GB (27 openbb-* packages); 'from openbb import obb' 210.9 s import, 995.6 MB peak RSS vs 956 MB total Server-1 RAM and Futuris MemoryMax 180 MB (TASK-REL-048) -- full SDK cannot run in-process on the current fleet; adapter-over-data-model delivered per the repo card's adapt verdict."
+      - "Local pytest (Python 3.12 venv, mock Oracle URL): 39 passed across tests/market_data/ (21 new), tests/connectors/test_provenance.py, tests/test_fut002_hardening.py. Pre-existing failure on fresh main, unrelated: tests/api/test_health.py imports install_sqlite_pragmas from futuris.storage.db (removed by the Oracle-only sweep)."
+      - "PR #496 verified via API after shipping: open, base main, head 6a5acc3d23, 16 changed files, +1373/-0."
+    next_action: "Coordinator: merge PR #496 on green CI (incl. the Python 3.10 import gate), then Fleet CD, then probe GET /v1/market-data/ohlcv?symbol=BTCUSDT on the deployed Futuris and record the live provider/status. Post-ARM: install the OpenBB SDK and add openbb_sdk to FUTURIS_MARKET_DATA_PROVIDERS."
+  - id: TASK-IG-FUT-02
+    title: "IG corpus: geopolitical/event context in Futuris market outlooks (cited IntelX events)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-fut-02
+    pr: 508
+    contributors: [muse_ai]
+    priority: P2
+    created_at: "2026-11-15"
+    updated_at: "2026-11-15"
+    files:
+      - Futuris/futuris/features/event_context.py
+      - Futuris/futuris/api/routers/market.py
+      - Futuris/tests/features/test_event_context.py
+      - Futuris/tests/api/test_market_event_context.py
+    evidence:
+      - "Local pytest (Python 3.12 venv, mock Oracle URL): 24 passed across tests/features/test_event_context.py + tests/api/test_market_event_context.py (12 new) and tests/test_fut002_hardening.py (existing market-router suite, no regressions)."
+      - "PR #508 verified via API after shipping: 4 changed files, +565/-0, additions-only, based on fresh main c3d87dcf."
+    next_action: "Coordinator: merge PR #508 on green CI (incl. the Python 3.10 import gate), then Fleet CD, then probe a market forecast with IntelX context on the deployed Futuris and confirm the event_context block renders (status + cited events)."
+  - id: TASK-IG-INF-03
+    title: "New-model evaluation pipeline: candidate spec → serve-check (INF-005 rules) → bench → ADMIT/REJECT; MiniMax + Bytez specs shipped BLOCKED_NO_CREDENTIALS"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: 492
+    branch: claude/task-ig-inf-03
+    source: "IG corpus DZPYR_0y4VV, DbyNa6Np-pz, De4qvI2zaCe + model-discovery cluster"
+    files:
+      - Inference/benchmarks/candidate_eval.py
+      - Inference/benchmarks/candidates/bytez.json
+      - Inference/benchmarks/candidates/minimax.json
+      - Inference/benchmarks/evaluate_candidate.py
+      - Inference/tests/test_ig_inf03_candidate_eval.py
+    next_action: "Merge on green CI → when MINIMAX_API_KEY or BYTEZ_API_KEY is provisioned on Server 1, run benchmarks/evaluate_candidate.py there and act on the verdict → VERIFIED"
+  - id: TASK-IG-INF-04
+    title: "Local/on-device inference assessment: server rung not viable (RAM), owner-hardware rung already shipped (local provider + IG-INF-02), Strata/Kaggle rejected per card, needle piloted 6/6 routing with 2 design constraints + client-side fast-path spec"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: 512
+    branch: claude/task-ig-inf-04
+    source: "IG corpus DZW48tnyDas, DcvlVi8zzb5, DfCb_QSk3PC, DdjJQDFjc9w"
+    files:
+      - Inference/benchmarks/needle_pilot.py
+      - Inference/docs/LOCAL_INFERENCE_ASSESSMENT.md
+    next_action: "Merge on green CI → fast-path build (if pursued) happens in the phone/laptop lane under the spec's admission gate → VERIFIED"
+  - id: TASK-IG-INF-05
+    title: "Corpus disposition record: free-token cluster verify-and-note (none wired), subscription pooling not adopted, 7 already-implemented verified against code, FreeLLMAPI/OmniRoute reference-only"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: 514
+    branch: claude/task-ig-inf-05
+    source: "IG corpus Inference lane remainder (15 items)"
+    files:
+      - Inference/docs/CORPUS_DISPOSITIONS.md
+    next_action: "Merge on green CI → VERIFIED (record is the deliverable; token-compression candidate needs its own task + IG-INF-03 evidence if pursued)"
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
