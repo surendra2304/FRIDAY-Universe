@@ -24,6 +24,8 @@ const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet
 const LifeSheet = dynamic(() => import("./LifeSheet").then((m) => m.LifeSheet), { ssr: false });
 const GalaxySheet = dynamic(() => import("./GalaxySheet").then((m) => m.GalaxySheet), { ssr: false });
 const ShowcaseSheet = dynamic(() => import("./ShowcaseSheet").then((m) => m.ShowcaseSheet), { ssr: false });
+const TourSheet = dynamic(() => import("./TourSheet").then((m) => m.TourSheet), { ssr: false });
+const CitySheet = dynamic(() => import("./CitySheet").then((m) => m.CitySheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -40,7 +42,7 @@ const ShowcaseSheet = dynamic(() => import("./ShowcaseSheet").then((m) => m.Show
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse" | "life" | "galaxy" | "showcase";
+type SheetKind = "fleet" | "chronicle" | "pulse" | "life" | "galaxy" | "showcase" | "tour" | "city";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
@@ -49,6 +51,8 @@ const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   life: { kicker: "Your time, as a grid of dots", title: "Life in Weeks" },
   galaxy: { kicker: "What FRIDAY remembers, as a sky", title: "Memory Galaxy" },
   showcase: { kicker: "The universe, browsable", title: "The Showcase" },
+  tour: { kicker: "New here? Start with the story", title: "The Guided Tour" },
+  city: { kicker: "The universe as a place", title: "The City" },
 };
 
 export function Stage() {
@@ -195,6 +199,20 @@ export function Stage() {
         run: () => openSheet("showcase"),
       },
       {
+        id: "tour",
+        label: "Take the guided tour",
+        hint: "five short chapters — voice, crew, ledger, machine, watch",
+        keys: "tour guide story intro about meet friday chapters welcome",
+        run: () => openSheet("tour"),
+      },
+      {
+        id: "city",
+        label: "Walk the city",
+        hint: "the ten agents as districts in a night skyline, lit by who's awake",
+        keys: "city districts skyline places map explore streets plaza watchtower",
+        run: () => openSheet("city"),
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -294,6 +312,8 @@ export function Stage() {
           {sheet === "life" && <LifeSheet />}
           {sheet === "galaxy" && <GalaxySheet />}
           {sheet === "showcase" && <ShowcaseSheet onSummon={(kind) => openSheet(kind)} />}
+          {sheet === "tour" && <TourSheet onSummon={(kind) => openSheet(kind)} />}
+          {sheet === "city" && <CitySheet onSummon={(kind) => openSheet(kind)} />}
         </Sheet>
       )}
     </main>
