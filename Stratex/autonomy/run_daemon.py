@@ -223,9 +223,19 @@ class StratexTradingEngine:
                         # at least 262 closed bars (300 daily bars fetched;
                         # 600 4h bars fetched so the warmup holds with
                         # headroom for the still-forming bar).
-                        candle_limit = 300 if tf == "1d" else 600 if tf == "4h" else 100
-                        min_bars = 262 if tf in ("1d", "4h") else 50
-                        candles = self.engine.get_candles(venue, symbol, tf, candle_limit)
+                        # Sleeve extension: the 1wk timeframe is a DERIVED
+                        # timeframe — 1,120 daily bars are fetched and
+                        # aggregated into the judged weekly buckets by
+                        # strategy_sleeve_shock_breakout.weekly_candles
+                        # (Binance native weekly klines are Monday-
+                        # anchored and are NOT the judged bars).
+                        candle_limit = 300 if tf == "1d" else 600 if tf == "4h" else 160 if tf == "1wk" else 100
+                        min_bars = 262 if tf in ("1d", "4h") else 106 if tf == "1wk" else 50
+                        fetch_tf = "1d" if tf == "1wk" else tf
+                        fetch_limit = 1120 if tf == "1wk" else candle_limit
+                        candles = self.engine.get_candles(venue, symbol, fetch_tf, fetch_limit)
+                        if tf == "1wk" and candles:
+                            candles = self._weekly_aggregate(symbol, candles)
                         if not candles or len(candles) < min_bars:
                             continue
 
@@ -926,6 +936,20 @@ class StratexTradingEngine:
         "4h": 14400, "1d": 86400, "1wk": 604800,
     }
 
+    def _weekly_aggregate(self, symbol: str, daily_candles: list) -> list:
+        """Rebuild judged weekly buckets from daily candles (sleeve leg).
+
+        Delegates to strategy_sleeve_shock_breakout.weekly_candles,
+        which owns the judged bar construction (7-day buckets anchored
+        per symbol at the RD-002 series starts)."""
+        try:
+            import strategy_sleeve_shock_breakout as _shock
+
+            return _shock.weekly_candles(daily_candles, symbol)
+        except Exception as e:
+            logger.warning(f"[STRATEX] Weekly aggregation failed for {symbol}: {e}")
+            return []
+
     def _forward_protocol_entries(self) -> dict:
         """{module_name: registry entry} for forward_protocol strategies."""
         try:
@@ -1040,6 +1064,60 @@ class StratexTradingEngine:
                         "[STRATEX] PHASE-3 KILL CRITERION — auto-paused "
                         f"{decision['strategy']}: " + "; ".join(decision["reasons"])
                     )
+            # Sleeve-level rule (TASK-STR-FWD-002 sleeve extension): a
+            # portfolio sleeve is judged on compounded equity + max
+            # drawdown ONLY — no per-trade kills for its components.
+            # A breach pauses EVERY component: daemon-side components
+            # via this denylist; the OANDA sleeve runner via its own
+            # pause file (data/sleeve_oanda/sleeve_entries_paused).
+            try:
+                from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+                sleeve_map: Dict[str, list] = {}
+                for key, entry in PRODUCTION_STRATEGY_REGISTRY.items():
+                    if entry.get("sleeve"):
+                        sleeve_map.setdefault(entry["sleeve"], []).append(
+                            "strategy_" + key
+                        )
+                for sd in forward_guard.evaluate_sleeves(rows, equity, sleeve_map):
+                    logger.info(
+                        "[STRATEX] Sleeve guard: "
+                        f"{sd['sleeve']} components={sd['components']} "
+                        f"trades={sd['trades']} net=${sd['net_pnl']:.2f} "
+                        f"dd=${sd['max_drawdown_usd']:.2f}/"
+                        f"${sd['drawdown_limit_usd']:.2f} breached={sd['breached']}"
+                    )
+                    if not sd["breached"]:
+                        continue
+                    changed = False
+                    for comp in sd["components"]:
+                        if comp not in self.strategy_denylist:
+                            self.strategy_denylist.add(comp)
+                            changed = True
+                    if changed:
+                        self._persist_denylist()
+                    try:
+                        pause_dir = os.path.join(
+                            os.path.dirname(os.path.dirname(__file__)),
+                            "data", "sleeve_oanda",
+                        )
+                        os.makedirs(pause_dir, exist_ok=True)
+                        with open(
+                            os.path.join(pause_dir, "sleeve_entries_paused"),
+                            "w", encoding="utf-8",
+                        ) as fh:
+                            fh.write(
+                                "TASK-STR-FWD-002 sleeve guard: "
+                                + "; ".join(sd["reasons"])
+                            )
+                    except Exception as pe:
+                        logger.warning(f"[STRATEX] Sleeve pause-file write failed: {pe}")
+                    logger.warning(
+                        "[STRATEX] SLEEVE KILL RULE — auto-paused sleeve "
+                        f"{sd['sleeve']}: " + "; ".join(sd["reasons"])
+                    )
+            except Exception as se:
+                logger.warning(f"[STRATEX] Sleeve guard evaluation failed: {se}")
         except Exception as e:
             logger.warning(f"[STRATEX] Forward guard evaluation failed: {e}")
 
@@ -1050,8 +1128,13 @@ class StratexTradingEngine:
             for venue, symbols in self.symbols.items():
                 for symbol in symbols:
                     for tf in self.timeframes:
+                        # 1wk is derived at scan time from daily bars;
+                        # adapters have no native 1wk feed (they would
+                        # silently substitute another timeframe).
+                        if tf == "1wk":
+                            continue
                         pairs.append((venue, symbol, tf))
-            
+
             # The cloud feed caches automatically, just prime it
             for venue, symbol, tf in pairs[:20]:  # Limit to avoid rate limits
                 try:
@@ -1407,7 +1490,19 @@ class StratexTradingEngine:
             # TASK-STR-FWD-002: forward-protocol strategies are governed by
             # the phase-3 kill criteria (>=50 closed trades), not by this
             # legacy >=10-trade pruner over the retired testnet ledger.
+            # Sleeve components are likewise governed ONLY by the
+            # sleeve-level drawdown rule, never by per-trade pruning.
             forward_names = set(self._forward_protocol_entries())
+            try:
+                from config_strategy import PRODUCTION_STRATEGY_REGISTRY
+
+                forward_names |= {
+                    "strategy_" + key
+                    for key, entry in PRODUCTION_STRATEGY_REGISTRY.items()
+                    if entry.get("sleeve")
+                }
+            except Exception:
+                pass
             for strat, bucket in stats.get("by_strategy", {}).items():
                 if strat in forward_names:
                     continue

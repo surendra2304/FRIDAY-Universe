@@ -163,6 +163,95 @@ DOW_EFFECT_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-002 sleeve extension (2026-11-15): the RD-002 Stage-C
+# best-per-class portfolio sleeve, approved by the owner as third forward
+# entrant (~11:46 IST). Judged set (synthesis.json stage_c, EQUAL weight,
+# +18.8% compounded / -11.5% max DD in-window, mean corr 0.01):
+#   shock_breakout/k1.0 @ crypto30 1wk          -> Binance daemon (BELOW)
+#   tsmom2_dual/roc90_ema200 @ forex28 1d       -> OANDA sleeve runner
+#   vol_adaptive_trend/ema20_50_gate @ comm7 4h -> EXCLUDED (see registry)
+#   keltner_breakout/ema20_m2.0 @ idx7 1d       -> EXCLUDED (see registry)
+# Venue fidelity verified live 2026-11-15: the OANDA practice account
+# holds exactly 68 instruments, ALL currency pairs (all 28 FOREX28
+# available; ZERO commodity or index instruments). The traded sleeve is
+# therefore a REDUCED 2-of-4-leg sleeve (crypto + forex; the two kept
+# legs' in-window pairwise correlation was -0.0006) and is named as such
+# everywhere. It is judged on compounded equity + max drawdown ONLY;
+# its kill rule is the sleeve-level drawdown rule in
+# measurement/forward_guard.py (DD > 5% of equity from the sleeve's
+# forward peak -> auto-pause ALL sleeve components).
+# ==============================================================================
+
+SLEEVE_NAME = "best_per_class"
+
+SLEEVE_SHOCK_BREAKOUT_STRATEGY = {
+    "NAME": "Sleeve leg: Shock Breakout (k=1.0 ATR shock, weekly)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-002 sleeve)",
+    "TIMEFRAME": "1wk",
+    "SHOCK_K": 1.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 104,     # judged warmup_for("1wk")
+    # Ranked-table cell (NOT a bar passer alone: 109 OOS trades, 3/5
+    # folds — it enters as a portfolio component, judged on the sleeve):
+    "OOS_TRADES": 109,
+    "OOS_PROFIT_FACTOR": 1.575,
+    "OOS_EXPECTANCY_PCT": 9.04,
+    # Win rate computed by the FWD-002 crew running the judged pipeline
+    # (sig_shock + BR24 + fastsim, crypto costs) over the full RD-002
+    # cache series, all 30 symbols: 150 simulated trades, WR 0.4267.
+    # Used ONLY as the daemon expectancy-gate prior.
+    "OOS_WIN_RATE": 0.4267,
+}
+
+SLEEVE_TSMOM2_DUAL_STRATEGY = {
+    "NAME": "Sleeve leg: Dual Momentum (ROC90 zero-cross + EMA200 filter)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-002 sleeve)",
+    "TIMEFRAME": "1d",
+    "ROC_LOOKBACK": 90,
+    "TREND_EMA": 200,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.5,          # judged bracket (families2 tsmom2_dual)
+    "TP_ATR": 5.0,          # judged bracket (families2 tsmom2_dual)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # Ranked-table cell (portfolio component; sleeve-judged):
+    "OOS_TRADES": 127,
+    "OOS_PROFIT_FACTOR": 1.505,
+    "OOS_EXPECTANCY_PCT": 0.62,
+}
+
+# Judged weekly-bar anchors: the RD-002 harness built weekly bars as
+# 7-day buckets (panels._to_weekly: resample "7D", origin=start_day,
+# buckets with all 7 daily bars) anchored at each symbol's judged 1d
+# series start. Binance native weekly klines are Monday-anchored and
+# are NOT the judged bars; the daemon rebuilds the judged buckets from
+# daily bars using these per-symbol anchors (epoch seconds, UTC).
+# Values = first bar of each symbol's RD-002 cache 1d series.
+WEEKLY_BUCKET_ANCHORS = {
+    "BTCUSDT": 1640995200, "ETHUSDT": 1640995200, "SOLUSDT": 1640995200,
+    "BNBUSDT": 1640995200, "XRPUSDT": 1640995200, "DOGEUSDT": 1640995200,
+    "ADAUSDT": 1640995200, "LTCUSDT": 1640995200, "LINKUSDT": 1640995200,
+    "DOTUSDT": 1640995200, "TRXUSDT": 1640995200, "AVAXUSDT": 1640995200,
+    "NEARUSDT": 1640995200, "ATOMUSDT": 1640995200, "UNIUSDT": 1640995200,
+    "ETCUSDT": 1640995200, "BCHUSDT": 1640995200, "FILUSDT": 1640995200,
+    "APTUSDT": 1666224000, "ARBUSDT": 1679616000, "OPUSDT": 1654128000,
+    "INJUSDT": 1660780800, "SUIUSDT": 1683158400, "XLMUSDT": 1640995200,
+    "HBARUSDT": 1640995200, "ALGOUSDT": 1640995200, "VETUSDT": 1640995200,
+    "SANDUSDT": 1640995200, "MANAUSDT": 1640995200, "AAVEUSDT": 1640995200,
+}
+
+# The judged FOREX28 panel (rigorous_backtest/rd2/panels.py FOREX28) —
+# all 28 verified present on the OANDA practice account 2026-11-15.
+FOREX28_SYMBOLS = [
+    "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD",
+    "NZDUSD", "EURGBP", "EURJPY", "GBPJPY", "EURCHF", "AUDJPY",
+    "CADJPY", "CHFJPY", "EURAUD", "EURNZD", "GBPAUD", "AUDNZD",
+    "NZDJPY", "USDSEK", "USDNOK", "USDMXN", "USDZAR", "USDTRY",
+    "USDCNH", "USDSGD", "USDHKD", "EURPLN",
+]
+
+# ==============================================================================
 # PRODUCTION STRATEGY REGISTRY
 # Explicit classification of all candidate strategies
 # ==============================================================================
@@ -239,6 +328,52 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "validated_assets": CRYPTO30_SYMBOLS,
         "forward_protocol": True,
         "reason": "TASK-STR-RD-002 winner: dow_effect/reversal @ CRYPTO30 1d passed the full bar (expectancy>0, PF 1.257 >= 1.2, 3,660 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.206). Calendar effect — flagged in RD-002 as most prone to era decay; the forward window is the arbiter. Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Time exit (max_bars=5) enforced by the daemon (no broker-native equivalent). Phase-3 protocol as for ichimoku_trend. DEMO venue only; live trading prohibited.",
+    },
+    "sleeve_shock_breakout": {
+        "status": "VALIDATED",
+        "version": "v1.0.0 (TASK-STR-FWD-002 sleeve)",
+        "timeframe": "1wk",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Weekly bar close moves more than 1.0 x ATR(14) versus the prior weekly close: up-move -> LONG, down-move -> SHORT (rigorous_backtest/rd2/families3.py sig_shock k=1.0). Weekly bars are the JUDGED construction: 7-day buckets anchored per symbol at WEEKLY_BUCKET_ANCHORS (the RD-002 series starts), rebuilt by the daemon from daily bars — NOT Binance Monday-anchored native weekly klines. Warmup 104 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.4267,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 904.0,
+        "minimum_required_edge": 0.0005,
+        "validated_assets": CRYPTO30_SYMBOLS,
+        "sleeve": SLEEVE_NAME,
+        "reason": "Crypto leg of the RD-002 Stage-C best-per-class sleeve (owner-approved third forward entrant 2026-11-15, TASK-STR-FWD-002 extension). As a standalone cell it did NOT pass the promotion bar (109 OOS trades, PF 1.575, 3/5 folds) — it trades ONLY as a sleeve component, judged on the sleeve's compounded equity + max drawdown, with the sleeve-level kill rule (combined sleeve DD > 5% of equity -> auto-pause all sleeve components). DEMO venue only; live trading prohibited.",
+    },
+    "sleeve_tsmom2_dual": {
+        "status": "VALIDATED",
+        "version": "v1.0.0 (TASK-STR-FWD-002 sleeve)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "ROC(90) crosses zero with price on the same side of EMA(200): ROC up-cross + close > EMA200 -> LONG; ROC down-cross + close < EMA200 -> SHORT (rigorous_backtest/rd2/families2.py sig_dual_momentum lookback=90). Warmup 260 bars. Executed by oanda_demo/sleeve_runner.py (governed here, the single source); the Binance daemon never evaluates it (no daemon module exists by design).",
+        "sl_method": "2.5 * ATR(14) at signal bar (judged bracket)",
+        "tp_method": "5.0 * ATR(14) at signal bar (judged bracket)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": None,
+        "total_friction_bps": 6.0,
+        "expected_net_edge_bps": 62.0,
+        "minimum_required_edge": 0.0005,
+        "validated_assets": FOREX28_SYMBOLS,
+        "sleeve": SLEEVE_NAME,
+        "reason": "Forex leg of the RD-002 Stage-C best-per-class sleeve (owner-approved 2026-11-15). Standalone cell: 127 OOS trades, PF 1.505, +0.62%/trade — sleeve component only, judged on the sleeve. All 28 FOREX28 instruments verified present on the OANDA practice account 2026-11-15. Production bars are OANDA UTC-midnight-aligned daily candles (dailyAlignment=0) vs Yahoo research bars — same alignment convention, venue-canonical price source (disclosed deviation). DEMO (practice) only; live trading prohibited.",
+    },
+    "sleeve_vol_adaptive_trend": {
+        "status": "DISABLED",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "reason": "EXCLUDED from the forward sleeve (TASK-STR-FWD-002, 2026-11-15): the commodities leg of the RD-002 Stage-C best-per-class set (vol_adaptive_trend/ema20_50_gate @ comm7 4h, judged stream +25.9%) cannot be traded — the OANDA practice account holds ZERO commodity instruments (verified live 2026-11-15: 68 instruments, all currency pairs; no XAU/XAG/oil/gas/copper/platinum). No substitute venue or instrument is used: a silently substituted leg under the judged sleeve's name is prohibited. Revisit only if the account gains commodity instruments.",
+    },
+    "sleeve_keltner_breakout": {
+        "status": "DISABLED",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "reason": "EXCLUDED from the forward sleeve (TASK-STR-FWD-002, 2026-11-15): the indices leg of the RD-002 Stage-C best-per-class set (keltner_breakout/ema20_m2.0 @ idx7 1d, judged stream +4.1%) cannot be traded — the OANDA practice account holds ZERO index instruments (verified live 2026-11-15: 68 instruments, all currency pairs; no SPX/NDX/DJI/RUT/FTSE/NIKKEI/DAX CFDs). No substitute venue or instrument is used. Revisit only if the account gains index instruments.",
     }
 }
 

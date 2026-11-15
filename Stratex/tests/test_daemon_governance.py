@@ -81,7 +81,19 @@ class TestRegistryGovernanceStatuses:
         # (ichimoku_trend tk_cloud 4h; dow_effect reversal 1d) are now the
         # VALIDATED forward entrants under the phase-3 protocol — this pin
         # changes deliberately with this task and with no other.
-        assert validated == {"strategy_ichimoku_trend", "strategy_dow_effect"}
+        # Sleeve extension (same task, owner approval 2026-11-15 ~11:46
+        # IST): the crypto leg of the RD-002 Stage-C best-per-class
+        # sleeve joins the VALIDATED set as a sleeve component (judged
+        # on the sleeve, not standalone). The sleeve's forex leg
+        # (sleeve_tsmom2_dual) is VALIDATED in the registry too but has
+        # no daemon module by design, so it never appears in a daemon
+        # snapshot; the commodities/indices legs are DISABLED
+        # (instruments unavailable on the practice account).
+        assert validated == {
+            "strategy_ichimoku_trend",
+            "strategy_dow_effect",
+            "strategy_sleeve_shock_breakout",
+        }
 
     def test_deleted_strategies_are_gone_and_unregistered(self, registry):
         # TASK-STR-CLEANUP-001: these modules were deleted outright, so

@@ -355,6 +355,12 @@ class OandaDemoTrader:
                 "status": result.status,
                 "timeframe": self.timeframe,
             }
+            # Ownership record (TASK-STR-FWD-002): this engine manages
+            # only trades it opened; persist the id at order time.
+            if row["trade_id"]:
+                own_ids = set(state.get("own_trade_ids", []))
+                own_ids.add(str(row["trade_id"]))
+                state["own_trade_ids"] = sorted(own_ids)
             self._log_trade_csv(row)
             self._telegram(
                 f"Stratex OANDA demo: {side_word} {units} {symbol} @ {result.price}\n"
@@ -377,18 +383,46 @@ class OandaDemoTrader:
         state: Dict,
         summary: Dict,
     ) -> None:
-        """Breakeven moves at +1R; close detection -> cooldowns."""
+        """Breakeven moves at +1R; close detection -> cooldowns.
+
+        TASK-STR-FWD-002 ownership scoping: this engine manages ONLY
+        trades it opened itself (state["own_trade_ids"], persisted at
+        order time). The practice account is shared — the sleeve
+        runner (oanda_demo/sleeve_runner.py) holds its own positions
+        on it, and applying this engine's MR rule exits / trailing
+        stops / cooldowns to foreign trades would confiscate them.
+        Before this fix the loops below acted on every open trade in
+        the account. Behaviour for this engine's OWN trades is
+        unchanged; the entries pause is untouched. One-time migration:
+        if the own-set has never been recorded, currently-open trades
+        are adopted as own (they could only have been opened by this
+        engine before the sleeve existed) and the adoption is logged.
+        """
         known: set = set(state.get("known_trade_ids", []))
         current_ids = {t["id"] for t in trades}
 
-        # Trades that disappeared since last scan -> closed: instrument cooldown.
+        if "own_trade_ids" not in state:
+            state["own_trade_ids"] = sorted(current_ids)
+            if current_ids:
+                logger.warning(
+                    "[OANDA-DEMO] adopted %d existing open trades as own "
+                    "(TASK-STR-FWD-002 ownership-scoping migration)",
+                    len(current_ids),
+                )
+        own: set = set(state.get("own_trade_ids", []))
+        summary["foreign_open_trades"] = len(current_ids - own)
+
+        # Trades that disappeared since last scan -> closed: instrument
+        # cooldown. Only OWN closes are this engine's business; foreign
+        # closes are booked by their own engine.
         if known:
             now = time.time()
             cooldowns = state.setdefault("cooldowns", {})
-            for gone_id in known - current_ids:
+            for gone_id in (known & own) - current_ids:
                 summary.setdefault("closes", []).append(gone_id)
                 self._telegram(f"Stratex OANDA demo: trade {gone_id} closed.")
         state["known_trade_ids"] = sorted(current_ids)
+        state["own_trade_ids"] = sorted(own & current_ids)
 
         # Remember id -> instrument so future closes can arm the cooldown.
         id_map: Dict[str, str] = state.setdefault("trade_instruments", {})
@@ -396,7 +430,7 @@ class OandaDemoTrader:
             id_map[t["id"]] = t["instrument"]
         if known:
             cooldowns = state.setdefault("cooldowns", {})
-            for gone_id in known - current_ids:
+            for gone_id in (known & own) - current_ids:
                 instrument = id_map.get(gone_id, "")
                 if instrument:
                     cooldowns[instrument] = time.time() + REENTRY_COOLDOWN_S
@@ -411,6 +445,10 @@ class OandaDemoTrader:
             pricing = self.adapter.get_pricing(need) if need else {}
 
         for t in trades:
+            if t["id"] not in own:
+                # Foreign position on the shared account (e.g. a sleeve
+                # leg): never managed by this engine (TASK-STR-FWD-002).
+                continue
             if not t["price"]:
                 continue
 
