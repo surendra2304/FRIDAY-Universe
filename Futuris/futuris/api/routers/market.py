@@ -24,6 +24,7 @@ from futuris.core.hashing import content_hash_of
 from futuris.core.schemas import Driver, EvidenceRef, Forecast
 from futuris.ecosystem.adapters import ecosystem_adapter
 from futuris.evaluation.calibration import CalibrationAnalyzer
+from futuris.features.event_context import build_event_context, headline_event
 from futuris.infra.audit import AuditLogger
 from futuris.infra.auth import AllowAnonymousHeavyRead, AllowAnonymousRead, RequireAnalyst
 from futuris.infra.config import settings
@@ -99,6 +100,25 @@ class RegimeOutlookPayload(BaseModel):
     )
 
 
+class MarketEventPayload(BaseModel):
+    """One real-world event classified from an IntelX research report
+    (TASK-IG-FUT-02). The title is the report's own text, cited by id."""
+
+    title: str
+    category: str
+    source: str = "intelx"
+    source_report_id: str
+    published_at: str
+
+
+class EventContextPayload(BaseModel):
+    """Event context block. Status is one of available / none_reported /
+    source_unavailable / not_requested -- stated, never filled in."""
+
+    status: str = "not_requested"
+    events: list[MarketEventPayload] = Field(default_factory=list)
+
+
 class MarketForecastResponse(BaseModel):
     status: str = "OK"
     symbol: str
@@ -118,6 +138,12 @@ class MarketForecastResponse(BaseModel):
     # plausible-looking constant.
     confidence_status: str = "uncalibrated"
     confidence_derivation: str | None = None
+    # TASK-IG-FUT-02: geopolitical/event context classified from the
+    # IntelX reports behind this forecast, each event cited to its
+    # source report. Explanatory only -- it moves no number above.
+    event_context: EventContextPayload = Field(
+        default_factory=lambda: EventContextPayload(status="not_requested")
+    )
 
 
 class MarketAccuracyResponse(BaseModel):
@@ -205,6 +231,7 @@ async def _generate_market_prediction(
         "confidence_penalty": 0.0,
     }
     top_findings = []
+    intelx_fetch_failed = False
     if include_intelx:
         intelx_client = IntelXContextInjector(
             base_url=settings.INTELX_URL,
@@ -217,6 +244,7 @@ async def _generate_market_prediction(
                 as_of=now,
             )
         except Exception as exc:
+            intelx_fetch_failed = True
             logger.warning("intelx_market_query_failed", symbol=clean_sym, error=type(exc).__name__)
         try:
             intelx_reports.extend(
@@ -257,6 +285,31 @@ async def _generate_market_prediction(
             )
         )
         top_findings = [catalyst_summary]
+
+    # TASK-IG-FUT-02: classify the reports behind this forecast into
+    # cited market events (geopolitical conflict, sanctions/trade,
+    # energy supply, monetary policy, regulatory) so the outlook can
+    # explain event-driven moves. Explanatory only: no forecast number
+    # reads this block, and an unreachable IntelX is reported as
+    # source_unavailable rather than backfilled.
+    event_context_model = build_event_context(
+        intelx_reports,
+        requested=include_intelx,
+        source_failed=intelx_fetch_failed,
+    )
+    event_context = EventContextPayload(
+        status=event_context_model.status,
+        events=[
+            MarketEventPayload(
+                title=event.title,
+                category=event.category,
+                source=event.source,
+                source_report_id=event.source_report_id,
+                published_at=event.published_at.isoformat(),
+            )
+            for event in event_context_model.events
+        ],
+    )
 
     # 2. Ingest Stratex Market Telemetry
     trading_connector = TradingBotConnector(
@@ -353,6 +406,16 @@ async def _generate_market_prediction(
 
     if top_findings:
         rationale += f" Catalyst: {top_findings[0]}"
+
+    # TASK-IG-FUT-02: when a real-world event sits behind this outlook,
+    # the rationale says so -- the event's own reported text, its
+    # category, and its source, so a war-driven move reads as one.
+    headline = headline_event(event_context_model.events)
+    if headline is not None:
+        rationale += (
+            f" Event context [{headline.category}]: {headline.title} "
+            f"(IntelX, {headline.published_at.date().isoformat()})."
+        )
 
     # 6. Qualitative Grounding with Multi-Agent Inference Gateway
     inference_grounded = False
@@ -534,6 +597,7 @@ async def _generate_market_prediction(
             rationale=rationale,
         ),
         intelx_context_included=bool(intelx_reports),
+        event_context=event_context,
         inference_grounded=inference_grounded,
         forecast_id=str(persisted_forecast.forecast_id if persisted_forecast else forecast_id),
         timestamp=now.isoformat(),
