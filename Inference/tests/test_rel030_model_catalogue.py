@@ -120,10 +120,20 @@ async def test_chat_completions_degraded_is_not_a_fake_200(auth, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_chat_completions_substitution_carries_provenance(auth, monkeypatch):
-    from app.providers.unified_manager import UnifiedExecutionResponse
+    # TASK-REL-043 DISCLOSURE: this test previously pinned the REL-032
+    # contract — a ladder substitution to nvidia/nemotron-3.5-super-vl:free
+    # (a model outside the verified catalogue) was SERVED, with provenance
+    # disclosing it. The owner's 2026-11-15 policy ("Inference should give
+    # the best suitable model from the models it have"; never substitute
+    # outside the verified catalogue) supersedes that contract: the
+    # out-of-catalogue serve is contained as a failed attempt and retried
+    # with the best suitable catalogue model. The guarantee this test
+    # exists for — a substituted answer is never silent — is preserved
+    # and strengthened: what is served is an in-catalogue substitution,
+    # disclosed in provenance together with its suitability basis.
+    from app.providers.unified_manager import UnifiedExecutionResponse, unified_provider_manager
 
-    _mock_execute(
-        monkeypatch,
+    responses = [
         UnifiedExecutionResponse(
             provider_used="openrouter",
             model_used="nvidia/nemotron-3.5-super-vl:free",
@@ -135,20 +145,40 @@ async def test_chat_completions_substitution_carries_provenance(auth, monkeypatc
             finish_reason="stop",
             served_by_provider="openrouter",
         ),
-    )
+        UnifiedExecutionResponse(
+            provider_used="gemini",
+            model_used="gemini-3.8-flash",
+            agent_role="system_architect",
+            content="OK",
+            latency_ms=42.0,
+            timestamp=1729000000.0,
+            token_usage={"prompt_tokens": 10, "completion_tokens": 1, "total_tokens": 11},
+            finish_reason="stop",
+        ),
+    ]
+    calls = []
+
+    async def sequence_execute(req):
+        calls.append(req)
+        return responses[min(len(calls) - 1, len(responses) - 1)]
+
+    monkeypatch.setattr(unified_provider_manager, "execute", sequence_execute)
     res = await _post_chat(
         auth,
         {"model": "gemini-3.6-flash", "messages": [{"role": "user", "content": "hi"}], "max_tokens": 16},
     )
     assert res.status_code == 200, res.text
+    assert [c.model for c in calls] == ["gemini-3.6-flash", "gemini-3.8-flash"]
     body = res.json()
-    assert body["model"] == "nvidia/nemotron-3.5-super-vl:free"
+    assert body["model"] == "gemini-3.8-flash"
     provenance = body.get("provenance")
     assert provenance is not None, "substituted answer must not be silent"
     assert provenance["requested_model"] == "gemini-3.6-flash"
     assert provenance["requested_provider"] == "gemini"
-    assert provenance["served_by_provider"] == "openrouter"
-    assert provenance["served_by_model"] == "nvidia/nemotron-3.5-super-vl:free"
+    assert provenance["served_by_provider"] == "gemini"
+    assert provenance["served_by_model"] == "gemini-3.8-flash"
+    assert provenance["selected_as"] == "best_suitable_for_chat"
+    assert provenance["selected_model"] == "gemini-3.8-flash"
 
 
 @pytest.mark.asyncio
