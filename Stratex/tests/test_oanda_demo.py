@@ -19,8 +19,6 @@ from oanda_demo.credentials import parse_credentials_text
 from oanda_demo.strategy import (
     DonchianTrendStrategy,
     Signal,
-    StratexTrendStrategy,
-    StrategyConfig,
 )
 from oanda_demo.trader import OandaDemoTrader
 
@@ -61,7 +59,7 @@ REST base: https://api-fxpractice.oanda.com
 def trending_df(n: int = 403, drift: float = 0.0004, amp: float = 0.010,
                 period: int = 24, rng: float = 0.0008) -> pd.DataFrame:
     """Rally with regular pullbacks: price oscillates around its own EMA-fast
-    (period-24 wave) while drifting up — realistic SMT-v2 entry conditions
+    (period-24 wave) while drifting up — realistic trend-entry conditions
     (not overextended, trend-strength, momentum confirmed)."""
     idx = np.arange(n)
     wave = -np.cos(2 * np.pi * idx / period)
@@ -166,53 +164,9 @@ class TestCredentialsParsing:
 
 
 # ---------------------------------------------------------------------------
-# Strategy
+# Strategy (SMT-v2's dedicated tests were deleted with the strategy by
+# TASK-STR-CLEANUP-002, 2026-11-15)
 # ---------------------------------------------------------------------------
-
-class TestStrategy:
-    def test_long_signal_on_uptrend(self):
-        strategy = StratexTrendStrategy()
-        signal = strategy.evaluate("EURUSD", trending_df(), spread=0.0002)
-        assert signal.side == "LONG"
-        assert signal.stop < signal.entry < signal.take
-
-    def test_risk_box_ratios(self):
-        strategy = StratexTrendStrategy()
-        signal = strategy.evaluate("EURUSD", trending_df(), spread=0.0002)
-        assert signal.atr > 0
-        assert abs((signal.entry - signal.stop) / signal.atr - 1.5) < 1e-6
-        assert abs((signal.take - signal.entry) / signal.atr - 2.25) < 1e-6
-
-    def test_dead_market_no_signal(self):
-        n = 420
-        flat = pd.DataFrame({
-            "timestamp": np.arange(n),
-            "open": np.full(n, 1.0), "high": np.full(n, 1.0),
-            "low": np.full(n, 1.0), "close": np.full(n, 1.0),
-            "volume": np.full(n, 0),
-        })
-        signal = StratexTrendStrategy().evaluate("EURUSD", flat)
-        assert signal.side is None
-        assert signal.checks.get("vol_ok") is False
-
-    def test_wide_spread_blocks_signal(self):
-        strategy = StratexTrendStrategy()
-        signal = strategy.evaluate("EURUSD", trending_df(), spread=0.0100)
-        assert signal.side is None
-        assert "spread" in signal.reason
-
-    def test_short_signal_on_downtrend(self):
-        strategy = StratexTrendStrategy()
-        df = trending_df(n=391, drift=-0.0004)
-        signal = strategy.evaluate("EURUSD", df, spread=0.0002)
-        assert signal.side == "SHORT"
-        assert signal.stop > signal.entry > signal.take
-
-    def test_insufficient_history(self):
-        signal = StratexTrendStrategy().evaluate("EURUSD", trending_df(100))
-        assert signal.side is None
-        assert signal.reason == "insufficient history"
-
 
 class TestDonchianStrategy:
     def test_breakout_long_signal(self):
@@ -377,18 +331,6 @@ class TestTraderRisk:
         assert summary["actions"] == []
         assert trader.adapter.orders == []
 
-    def test_breakeven_move(self, tmp_path):
-        # SMT mode: long from 1.0 with SL 0.99 (1R = 0.01); price now 1.02 -> +2R.
-        trades = [{
-            "id": "5", "instrument": "EURUSD", "units": 1000, "price": 1.0,
-            "unrealized_pl": 20.0, "stop_loss": 0.99, "take_profit": 1.0225,
-            "open_time": "",
-        }]
-        trader = self._trader(tmp_path, trades=trades, strategy=StratexTrendStrategy())
-        trader.dry_run = False
-        summary = trader.run_once()
-        assert summary.get("breakeven") == ["5"]
-
     def test_chandelier_trailing_move(self, tmp_path):
         # Donchian mode: long from 1.10, current trend extreme 1.1608 and
         # ATR ~0.003 -> trail should move above the original 1.05 stop.
@@ -423,15 +365,6 @@ class TestTraderRisk:
 # ---------------------------------------------------------------------------
 
 class TestBacktestEngine:
-    def test_profitable_on_synthetic_trend(self):
-        from oanda_demo.backtest import run_backtest
-        strategy = StratexTrendStrategy(StrategyConfig(min_bars=260))
-        df = trending_df(n=1200, drift=0.0004)
-        res = run_backtest(strategy, df, "EURUSD", spread=0.0001)
-        assert res["trades"] > 0
-        assert res["total_r"] > 0
-        assert res["final_equity"] > 100000.0
-
     def test_donchian_trailing_profitable_on_synthetic_trend(self):
         from oanda_demo.backtest import run_backtest
         strategy = DonchianTrendStrategy()

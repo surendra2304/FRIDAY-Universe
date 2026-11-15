@@ -23,7 +23,7 @@ import pandas as pd
 
 from exchanges.oanda_adapter import OandaExchangeAdapter
 from oanda_demo.credentials import load_oanda_credentials
-from oanda_demo.strategy import StratexTrendStrategy
+from oanda_demo.strategy import MeanReversionStrategy
 
 CHECKS: List[str] = []
 
@@ -76,7 +76,8 @@ def main() -> int:
     check("historical candles", ok, f"{len(candles)} H1 candles")
     signal = None
     if ok:
-        strategy = StratexTrendStrategy()
+        # The deployed default engine (FX-MR-v4) proves the strategy path.
+        strategy = MeanReversionStrategy()
         df = pd.DataFrame(candles)
         signal = strategy.evaluate("EURUSD", df, spread=pricing.get("EURUSD", {}).get("spread"))
         check(

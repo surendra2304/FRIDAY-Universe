@@ -1,22 +1,20 @@
 """
-oanda_demo/strategy.py — Stratex Momentum-Trend v2 (SMT-v2).
+oanda_demo/strategy.py — signal engines for the OANDA demo account.
 
-A risk-first trend-following strategy for the OANDA demo account.
+Two engines live here:
+  - DonchianTrendStrategy (v3) — breakout + chandelier trailing exit.
+  - MeanReversionStrategy (FX-MR-v4) — Connors RSI-2 reversion, the
+    validated default the live trader runs (STRATEX_OANDA_STRATEGY=mr).
 
-Owner directive (2026-11-13): "make Stratex take profitable trades."
+Shared building blocks: the Signal dataclass and the ema/rsi/atr
+indicators. The same code path powers the backtest and the live trader,
+so what is validated is what trades.
 
-Design:
-  1. Trade WITH the trend — EMA 20/50/200 stack, slope-confirmed.
-  2. Momentum gate — RSI(14) must agree (>=52 long / <=48 short).
-  3. Every signal ships with an ATR risk box:
-       stop-loss  = 1.5 x ATR (adverse)
-       take-profit = 2.25 x ATR (favourable, 1.5:1 reward:risk)
-  4. Regime filters — skip dead markets (ATR% floor), news chaos
-     (ATR% ceiling) and wide spreads (spread > 35% of ATR).
-  5. Breakeven move at +1R turns winners into risk-free runners.
-
-The same code path powers the backtest and the live trader, so what is
-validated is what trades.
+SMT-v2 (the original EMA-stack engine, StratexTrendStrategy) was
+DELETED on 2026-11-15 by TASK-STR-CLEANUP-002 under the owner's strict
+removal rule (verified OOS profit factor < 1.2 -> delete completely):
+its TASK-STR-RD-002 mega-grid retest measured 627 OOS trades,
+expectancy -0.081%/trade, PF 0.655 (RESULTS_RD2.md is the record).
 """
 from __future__ import annotations
 
@@ -25,30 +23,6 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-
-
-@dataclass
-class StrategyConfig:
-    ema_fast: int = 20
-    ema_mid: int = 50
-    ema_slow: int = 200
-    rsi_period: int = 14
-    rsi_long_min: float = 52.0
-    rsi_short_max: float = 48.0
-    atr_period: int = 14
-    sl_atr_mult: float = 1.5
-    tp_atr_mult: float = 2.25
-    breakeven_r: float = 1.0
-    min_atr_pct: float = 0.0003     # 0.03% of price — dead-market floor
-    max_atr_pct: float = 0.0040     # 0.40% of price — chaos ceiling
-    max_spread_frac_atr: float = 0.35
-    slope_bars: int = 5
-    min_bars: int = 260
-    # --- v2.1 trade-quality filters (2026-11-13 backtest-driven) ------------
-    max_extension_atr: float = 1.2   # entry within 1.2 ATR of EMA-fast (no chasing)
-    min_trend_strength: float = 0.10  # |EMA fast - EMA mid| >= 0.10 ATR
-    # --- v2.2 trailing exit (None = TP-cap mode) ----------------------------
-    trailing_atr: Optional[float] = None  # chandelier multiple; disables TP cap
 
 
 @dataclass
@@ -103,118 +77,6 @@ def atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
     return tr.ewm(alpha=1.0 / period, adjust=False).mean()
 
 
-class StratexTrendStrategy:
-    """SMT-v2 — deterministic signal engine (no network, no state)."""
-
-    name = "SMT-v2"
-
-    def __init__(self, config: Optional[StrategyConfig] = None):
-        self.cfg = config or StrategyConfig()
-
-    # ------------------------------------------------------------------
-    def add_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
-        c = self.cfg
-        d = df.copy()
-        d["ema_f"] = ema(d["close"], c.ema_fast)
-        d["ema_m"] = ema(d["close"], c.ema_mid)
-        d["ema_s"] = ema(d["close"], c.ema_slow)
-        d["rsi"] = rsi(d["close"], c.rsi_period)
-        d["atr"] = atr(d, c.atr_period)
-        d["atr_pct"] = d["atr"] / d["close"]
-        d["slope"] = d["ema_m"] - d["ema_m"].shift(c.slope_bars)
-        return d
-
-    # ------------------------------------------------------------------
-    def signal_at(self, row) -> Tuple[Optional[str], Dict[str, bool]]:
-        """Evaluate one indicator row. Returns ("LONG"|"SHORT"|None, checks)."""
-        c = self.cfg
-        checks = {
-            "stack_up": bool(row.ema_f > row.ema_m > row.ema_s),
-            "stack_dn": bool(row.ema_f < row.ema_m < row.ema_s),
-            "above_fast": bool(row.close > row.ema_f),
-            "below_fast": bool(row.close < row.ema_f),
-            "slope_up": bool(row.slope > 0),
-            "slope_dn": bool(row.slope < 0),
-            "rsi_long": bool(row.rsi >= c.rsi_long_min),
-            "rsi_short": bool(row.rsi <= c.rsi_short_max),
-            "vol_ok": bool(c.min_atr_pct <= row.atr_pct <= c.max_atr_pct),
-        }
-        if row.atr > 0:
-            checks["not_extended_long"] = bool(
-                row.close - row.ema_f <= c.max_extension_atr * row.atr
-            )
-            checks["not_extended_short"] = bool(
-                row.ema_f - row.close <= c.max_extension_atr * row.atr
-            )
-            checks["strength_long"] = bool(
-                (row.ema_f - row.ema_m) / row.atr >= c.min_trend_strength
-            )
-            checks["strength_short"] = bool(
-                (row.ema_m - row.ema_f) / row.atr >= c.min_trend_strength
-            )
-        else:
-            checks["not_extended_long"] = False
-            checks["not_extended_short"] = False
-            checks["strength_long"] = False
-            checks["strength_short"] = False
-        long_ok = (
-            checks["stack_up"] and checks["above_fast"] and checks["slope_up"]
-            and checks["rsi_long"] and checks["vol_ok"]
-            and checks["not_extended_long"] and checks["strength_long"]
-        )
-        short_ok = (
-            checks["stack_dn"] and checks["below_fast"] and checks["slope_dn"]
-            and checks["rsi_short"] and checks["vol_ok"]
-            and checks["not_extended_short"] and checks["strength_short"]
-        )
-        if long_ok:
-            return "LONG", checks
-        if short_ok:
-            return "SHORT", checks
-        return None, checks
-
-    # ------------------------------------------------------------------
-    def evaluate(self, instrument: str, df: Optional[pd.DataFrame], spread: Optional[float] = None) -> Signal:
-        """Full evaluation on the latest closed bar."""
-        c = self.cfg
-        if df is None or len(df) < c.min_bars:
-            return Signal(instrument, None, reason="insufficient history")
-
-        d = self.add_indicators(df)
-        row = d.iloc[-1]
-        side, checks = self.signal_at(row)
-
-        if side and spread is not None and spread > c.max_spread_frac_atr * float(row.atr):
-            return Signal(
-                instrument, None,
-                entry=float(row.close), atr=float(row.atr),
-                reason=f"spread too wide ({spread:.5f} > {c.max_spread_frac_atr:.2f} x ATR)",
-                checks=checks,
-            )
-        if not side:
-            return Signal(
-                instrument, None,
-                entry=float(row.close), atr=float(row.atr),
-                reason="no trend/momentum alignment",
-                checks=checks,
-            )
-
-        entry = float(row.close)
-        a = float(row.atr)
-        if side == "LONG":
-            sl = entry - c.sl_atr_mult * a
-            tp = entry + c.tp_atr_mult * a if c.trailing_atr is None else 0.0
-        else:
-            sl = entry + c.sl_atr_mult * a
-            tp = entry - c.tp_atr_mult * a if c.trailing_atr is None else 0.0
-        return Signal(
-            instrument, side,
-            entry=entry, stop=sl, take=tp, atr=a,
-            reason="trend + momentum aligned, risk box attached",
-            checks=checks,
-        )
-
-
 # ---------------------------------------------------------------------------
 # v3 — Donchian breakout + chandelier trailing (classic turtle structure)
 # ---------------------------------------------------------------------------
@@ -228,7 +90,7 @@ class DonchianConfig:
     regime_filter: bool = True    # only breakouts in the direction of EMA200
     min_bars: int = 260
     max_spread_frac_atr: float = 0.50
-    # compatibility with the SMT config surface used by backtest/trader
+    # compatibility with the shared config surface used by backtest/trader
     tp_atr_mult: Optional[float] = None
     breakeven_r: float = 0.0
 
