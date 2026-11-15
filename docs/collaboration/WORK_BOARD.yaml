@@ -2726,6 +2726,33 @@ tasks:
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
     defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
+  - id: "TASK-INT-008"
+    title: "IntelX citation integrity: mechanical exists/retrieved/supports verification in the pipeline; unsupported claims labelled as inference"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-int-008"
+    pr: null
+    merge_note: null
+    milestone: "Wave 5 (owner parallelism directive 2026-11-15)"
+    files:
+      - "IntelX/intelx/core/citation_integrity.py"
+      - "IntelX/intelx/core/report.py"
+      - "IntelX/intelx/agents/synthesizer.py"
+      - "IntelX/scripts/audit_citation_integrity.py"
+      - "IntelX/tests/test_citation_integrity.py"
+    acceptance:
+      - "Every claim in IntelX outputs carries a citation that (a) exists, (b) was actually retrieved, and (c) supports the claim's wording — verified mechanically by an automated checker in the pipeline."
+      - "Unsupported claims are labelled as inference in the rendered report."
+      - "Measured citation failure rate over stored research reported before and after the fix."
+    evidence:
+      - "Claim: issue #35 comment 6892781668 (a duplicate, 6892896477, was posted by the crew's retry daemon after a runtime restart scrolled the first claim out of its dedupe window — disclosed in the completion comment; the first claim is the claim of record)."
+      - "Production audit 2026-11-15 (SELECT-only, deployed tree + fixed filter on Server 1): production IntelX research store is EMPTY — 0 claims, 0 findings; stored-research citation failure rate undefined (0/0), not zero."
+      - "Independent probe through the deployed settings: engine oracle+oracledb @ adb.ap-hyderabad-1.oraclecloud.com (fridaycore_medium); row counts 0 in all 7 research tables (research_runs/sources/documents/chunks/claims/evidence/findings)."
+      - "Checker efficacy on synthetic corpus: claim failures 2/3; finding failure rate before 66.7% (2/3 shipped as fact) -> after 0% (1 grounded, 2 relabelled as inference). Audit used the real fixed filter_and_ground_findings (after_partition_source in audit output)."
+      - "Tests: 23 passed (18 new citation-integrity + 5 existing citation-validation); regression suites 27 passed with 15 sandbox-environment setup errors in test_artifacts/test_domain_modes (sqlite DDL under concurrent load) — clean rerun of those two files still owed; see completion comment."
+    blockers: []
+    next_action: "Coordinator: review and merge the PR; deploy with the next IntelX deploy window; the audit script can then be re-run against production to confirm the after rate on newly produced research."
+
 task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
     acceptance:
       - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
