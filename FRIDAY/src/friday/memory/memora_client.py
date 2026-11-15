@@ -932,6 +932,20 @@ class MemoraClient:
         if correction:
             query = re.split(r"\b(?:is|are|to|now)\b", query, maxsplit=1, flags=re.IGNORECASE)[0]
         ignored = {"my", "the", "a", "an", "about", "of", "that", "this", "it", "your", "please"}
+        # TASK-FRD-001 (2026-11-15): conversational frame words are not fact
+        # subjects. _mutation_targets requires EVERY subject token to appear
+        # in the stored fact, so the owner's natural "forget the test code I
+        # gave you" resolved to not_found in production — the stored fact
+        # ("test code: …") can never contain "i", "gave" or "you". Pronouns
+        # and speech verbs carry no discriminating content; dropping them
+        # can only move a case toward matched/needs_clarification, and the
+        # ambiguity guard still refuses (needs_clarification) whenever two
+        # distinct facts match — never toward a wrong deletion.
+        ignored |= {
+            "i", "you", "me", "we", "he", "she", "they", "him", "her", "them", "us",
+            "gave", "give", "given", "told", "tell", "telling", "said", "say",
+            "asked", "ask", "mentioned", "reminded",
+        }
         return set(re.findall(r"\w+", query.lower())) - ignored
 
     @staticmethod

@@ -3530,6 +3530,26 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         except Exception as _e:
             _mem_error = f"{type(_e).__name__}"
             logger.debug(f"Memora recall skipped in memory fast-path: {_e}")
+        if not _hits and _q_personal and not _mem_error:
+            # TASK-FRD-001 (2026-11-15): the first search DID return hits,
+            # but every one was filtered out above as unpresentable
+            # (dialogue dumps, agent logs, experience records). The
+            # owner-fact probe inside the try only fired when the raw
+            # search returned literally nothing, so a generic personal
+            # question ("what do you remember about me") was answered
+            # "my memory store came back empty" while owner facts sat in
+            # the store unscored (live audit 2026-11-15: recall returned
+            # remembered_count=0 forty seconds after a confirmed store).
+            # Run the same probe before concluding the store is empty.
+            try:
+                from friday.memory.memora_client import memora_client as _memora
+                from friday.memory.hygiene import is_unpresentable_recall_hit as _is_unpresentable
+                _probe_hits = await asyncio.to_thread(
+                    _memora.recall_memories, "friday", "my favorite preference boss surendra", limit=10
+                ) or []
+                _hits = [h for h in _probe_hits if not _is_unpresentable(h)]
+            except Exception as _e2:
+                logger.debug(f"Memora recall fallback probe skipped in memory fast-path: {_e2}")
         # Rank client-side so the answer leads with what he actually asked
         # about: question-word overlap wins, personal facts beat agent logs.
         _q_words = {w for w in _clean_memory_line(cmd).split() if len(w) > 3}
