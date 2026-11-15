@@ -50,6 +50,7 @@ ALL_CAPABILITIES = [
     "type_text",
     "press_key",
     "screenshot",
+    "ui_dump",
 ]
 
 # 1x1 transparent PNG — the mock's "screen".
@@ -153,6 +154,27 @@ class MockPhoneExecutor:
             return True, f"pressed {args.get('key')}", None
         if command == "screenshot":
             return True, _FAKE_PNG_B64, None
+        if command == "ui_dump":
+            # A tiny pruned hierarchy in the real executors' shape
+            # (TASK-IG-LAP-01): one labelled, tappable node.
+            return True, {
+                "nodes": [
+                    {
+                        "text": "Battery",
+                        "desc": "",
+                        "id": "android:id/title",
+                        "class": "TextView",
+                        "package": "com.android.settings",
+                        "clickable": True,
+                        "focused": False,
+                        "password": False,
+                        "bounds": [100, 400, 700, 500],
+                        "center": [400, 450],
+                    }
+                ],
+                "count": 1,
+                "truncated": False,
+            }, None
         return False, "", f"mock executor does not know command '{command}'"
 
 

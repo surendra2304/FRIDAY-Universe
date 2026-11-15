@@ -83,12 +83,18 @@ ALLOWED_PHONE_COMMANDS = frozenset(
         "type_text",
         "press_key",
         "screenshot",
+        # TASK-IG-LAP-01: the on-screen UI hierarchy (node list), the
+        # observation half of natural-language UI automation. Executors
+        # prune it to actionable nodes before sending (see
+        # scripts/phone_ui_agent_adb.py).
+        "ui_dump",
     }
 )
 
 # Commands whose result is an image payload and therefore gets the larger
-# bound. Everything else stays at MAX_OUTPUT_BYTES.
-_LARGE_RESULT_COMMANDS = frozenset({"screenshot"})
+# bound. Everything else stays at MAX_OUTPUT_BYTES. ui_dump joins them:
+# a pruned hierarchy of a dense screen legitimately exceeds 16 KB.
+_LARGE_RESULT_COMMANDS = frozenset({"screenshot", "ui_dump"})
 
 _TRUNCATION_MARKER = "\n[truncated]"
 _DEVICE_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$")
