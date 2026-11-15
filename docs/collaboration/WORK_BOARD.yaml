@@ -8289,6 +8289,165 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Execution incidents (sandbox EPERM write-block episodes; staged checkpointed pipeline; two crashed monolithic attempts; sidecar loss + byte-identical repair) disclosed in full in RESULTS_RD4.md — no declared parameter changed at any point."
     blockers: []
     next_action: "Coordinator: verify results_rd4/synthesis.json against RESULTS_RD4.md (spot-recompute one cell from results_rd4/rows/trades/ via the rd4 pipeline), then merge this PR and flip this entry to VERIFIED via a fresh-main board PR. Any PASS config is wired into the forward demo protocol under the TASK-STR-FWD line (8 weeks AND >=100 closed trades, phase-3 kill criteria) per the owner's standing rule; WATCHLIST configs are forward-lane candidates at the coordinator's call. Reconcile the global trial counter with sibling Wave-4 crews' additions (RD-004 judged at N=1,798 as declared)."
+  - id: TASK-IG-FRD-002
+    title: "Persistent follow-up tracking — owner-delegated follow-ups as durable registry objects with due dates and a Memora episodic mirror; FRIDAY never drops a follow-up (IG corpus idea, reel DeZzk3XxkrI)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/src/friday/proactive/followup_registry.py"
+      - "FRIDAY/src/friday/tools/builtin/followup_tools.py"
+      - "FRIDAY/src/friday/tools/builtin/__init__.py"
+      - "FRIDAY/src/friday/agent/mixins/tools.py"
+      - "FRIDAY/tests/test_ig_frd_002_followup_registry.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898336116"
+    evidence:
+      - "PR #463: 5 files, additions only — diff verified via the GitHub API by the crew."
+      - "Tests: 10/10 passed locally (frd-006 venv, pytest 9.2.0; fake Memora in success/local_only/error-dict/raising modes). Module absent on main, so the suite fails on main by construction."
+      - "Honesty: mirror verdicts distinguish cloud success, local_only (labelled, sync pending) and failure (error dict or exception, reason stored on the record); the file registry is the source of truth; closes are explicit-only and audited in the record history."
+    blockers: []
+    next_action: "Coordinator: merge PR #463 on green CI → Fleet CD → production proof: add a follow-up via chat, restart FRIDAY, confirm it survives and its Memora mirror record exists (category followup), then flip VERIFIED. Follow-up candidate: wire due_followups() into the morning brief composition."
+  - id: TASK-IG-FRD-003
+    title: "Job-hunt workflow: career-page scan, CV-fit scoring, prep plan, outreach drafts only (IG corpus)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: "2026-11-15"
+    source: "IG corpus DeYL3wXs5gd + DehBdAERZWo + DfKvyiNSQXD (rollup FRIDAY idea 1)"
+    files:
+      - "FRIDAY/src/friday/workflows/job_hunt.py"
+      - "FRIDAY/src/friday/tools/builtin/job_hunt_tools.py"
+      - "FRIDAY/tests/test_ig_frd_003_job_hunt.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898379409"
+    evidence:
+      - "PR #478 open; diff verified via public API = exactly 5 files, additions only (after fixup 60fa0345 removed leaked FRD-001/002 wiring)"
+      - "Local pytest: 11 passed (test_ig_frd_003_job_hunt.py); no-send-path structural test included"
+      - "Python 3.10-compatible (no datetime.UTC / StrEnum / asyncio.timeout)"
+    blockers: []
+    next_action: "Coordinator: merge PR #478 on green CI -> Fleet CD -> production proof: create the owner profile at FRIDAY/.data/job_hunt/profile.json with real career_pages, run one scan via chat, confirm ranked shortlist + a saved draft -> then VERIFIED."
+  - id: TASK-IG-FRD-004
+    title: "Delegated-errand framework: approval-gated steps + budget ledger, dry-run channels only (IG corpus)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: "2026-11-15"
+    source: "IG corpus DejxPCWjUro (rollup FRIDAY idea 4; Manus Cue pattern, framework only per coordinator hard rule)"
+    files:
+      - "FRIDAY/src/friday/autonomous/errands.py"
+      - "FRIDAY/src/friday/tools/builtin/errand_tools.py"
+      - "FRIDAY/tests/test_ig_frd_004_errands.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898486030"
+    evidence:
+      - "PR #494 open; diff verified via public API = exactly 5 files, additions only"
+      - "Local pytest: 9 passed (test_ig_frd_004_errands.py) incl. live-channel registration refusal and zero-execution gate proof"
+      - "Python 3.10-compatible (no datetime.UTC / StrEnum / asyncio.timeout)"
+    blockers: []
+    next_action: "Coordinator: merge PR #494 on green CI -> Fleet CD -> production proof: create a sample errand via chat, show the approval gate refusing a run, approve, run, confirm the summary states dry-run/framework-only -> then VERIFIED. Any live channel remains a separate owner-gated task."
+  - id: TASK-IG-FRD-005
+    title: "Ready-made automation workflow templates with validated instantiation + mission-queue enqueue (IG corpus)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: "2026-11-15"
+    source: "IG corpus DdbljkbH5b2 (rollup FRIDAY idea 7)"
+    files:
+      - "FRIDAY/src/friday/workflows/templates.py"
+      - "FRIDAY/src/friday/tools/builtin/workflow_template_tools.py"
+      - "FRIDAY/tests/test_ig_frd_005_templates.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898515844"
+    evidence:
+      - "PR #499 open; diff verified via public API = exactly 5 files, additions only"
+      - "Local pytest: 8 passed (test_ig_frd_005_templates.py) incl. enqueue-failure honesty"
+      - "Python 3.10-compatible (no datetime.UTC / StrEnum / asyncio.timeout)"
+    blockers: []
+    next_action: "Coordinator: merge PR #499 on green CI -> Fleet CD -> production proof: list templates via chat, instantiate business_morning_ops with enqueue, confirm missions land in the queue -> then VERIFIED."
+  - id: TASK-IG-FRD-006
+    title: "Source cards on answers: sources extracted from the turn's real tool results, wired at process_message (IG corpus)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: "2026-11-15"
+    source: "IG corpus DfO5vLSjodF (rollup FRIDAY idea 9)"
+    files:
+      - "FRIDAY/src/friday/cognition/source_cards.py"
+      - "FRIDAY/src/friday/agent/agent.py"
+      - "FRIDAY/tests/test_ig_frd_006_source_cards.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898547556"
+    evidence:
+      - "PR #502 open; diff verified via public API = exactly 3 files, additions only"
+      - "Local pytest: 8 passed (test_ig_frd_006_source_cards.py); agent.py py_compile clean"
+      - "Python 3.10-compatible (no datetime.UTC / StrEnum / asyncio.timeout)"
+    blockers: []
+    next_action: "Coordinator: merge PR #502 on green CI -> Fleet CD -> production proof: ask FRIDAY a question that triggers web research and confirm the answer carries a Sources: section whose URLs match the tool results -> then VERIFIED."
+  - id: TASK-IG-FRD-007
+    title: "Offline-first fallback: cached-knowledge provider as last fallback rung, env-gated (IG corpus, NOMAD miniature)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: "2026-11-15"
+    source: "IG corpus Ddy9EMkCb3Z (rollup FRIDAY idea 6; project-nomad card verdict: adapt)"
+    files:
+      - "FRIDAY/src/friday/llm/offline_fallback.py"
+      - "FRIDAY/src/friday/llm/factory.py"
+      - "FRIDAY/tests/test_ig_frd_007_offline_fallback.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898571208"
+    evidence:
+      - "PR #505 open; diff verified via public API = exactly 3 files (factory +21/-3, rest additions)"
+      - "Local pytest: 8 passed (test_ig_frd_007_offline_fallback.py) incl. chain fall-through integration"
+      - "Python 3.10-compatible (no datetime.UTC / StrEnum / asyncio.timeout)"
+    blockers: []
+    next_action: "Coordinator: merge PR #505 on green CI -> Fleet CD -> set FRIDAY_OFFLINE_FALLBACK=on on Server 1, warm the store with a few facts, kill network egress briefly in a drill window and confirm a labelled cached answer -> then VERIFIED. Follow-ups: scheduled cache warming from Memora + chat answers; local-LLM rung post-ARM."
+  - id: TASK-IG-FRD-008
+    title: "Screen-vision: laptop_describe_screen via bridge capture + Gemini vision, honest OCR fallback (IG corpus)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: "2026-11-15"
+    source: "IG corpus DfEoqPfClGT (rollup FRIDAY idea 10)"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/laptop_screen_vision.py"
+      - "FRIDAY/tests/test_ig_frd_008_screen_vision.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898596742"
+    evidence:
+      - "PR #509 open; diff verified via public API = exactly 4 files, additions only"
+      - "Local pytest: 5 passed (test_ig_frd_008_screen_vision.py)"
+      - "Python 3.10-compatible (no datetime.UTC / StrEnum / asyncio.timeout)"
+    blockers: []
+    next_action: "Coordinator: merge PR #509 on green CI -> Fleet CD -> production proof once the owner's laptop is connected (LAP-001 client): ask FRIDAY 'what is on my laptop screen' by voice and confirm a real vision description returns -> then VERIFIED."
+  - id: TASK-IG-FRD-009
+    title: "Life-in-weeks dot-grid calendar computation tool (stateless, grid as data) (IG corpus)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: "2026-11-15"
+    source: "IG corpus DTjp4aaE_bT (rollup FRIDAY idea 8)"
+    files:
+      - "FRIDAY/src/friday/tools/builtin/life_calendar.py"
+      - "FRIDAY/tests/test_ig_frd_009_life_calendar.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898617929"
+    evidence:
+      - "PR #511 open; diff verified via public API = exactly 4 files, additions only"
+      - "Local pytest: 5 passed (test_ig_frd_009_life_calendar.py)"
+      - "Python 3.10-compatible (no datetime.UTC / StrEnum / asyncio.timeout)"
+    blockers: []
+    next_action: "Coordinator: merge PR #511 on green CI -> Fleet CD -> production proof: ask FRIDAY for a life-in-weeks view for a sample DOB and confirm the numbers + grid metadata -> then VERIFIED. Rendering the grid on the website is a Website-UI follow-up once the owner picks a design direction."
+  - id: TASK-IG-FRD-011
+    title: "IG reference notes: org pattern verified vs AGENTS.yaml, peer-Jarvis benchmark, reference-only repo verdicts (docs only)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: "2026-11-15"
+    source: "IG corpus DanLpQ2KdzV + DaMk3NWxVop (rollup FRIDAY idea 11 + already-implemented org pattern)"
+    files:
+      - "FRIDAY/docs/IG_REFERENCE_NOTES.md"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898687157"
+    evidence:
+      - "PR #519 open; diff verified via public API = exactly 1 file, additions only"
+      - "AGENTS.yaml v3.0.0 facts (10 agents, names, ports) read from the file on 2026-11-15 before writing"
+    blockers: []
+    next_action: "Coordinator: merge PR #519 on green CI (docs-only; no deploy impact) -> board may flip straight to VERIFIED on merge since the deliverable is the note itself."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
