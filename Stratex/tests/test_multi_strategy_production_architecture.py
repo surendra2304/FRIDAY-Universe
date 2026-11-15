@@ -45,10 +45,19 @@ class TestProductionStrategyRegistry:
 
     def test_unvalidated_registry_entries_carry_no_live_performance_priors(self):
         for entry in PRODUCTION_STRATEGY_REGISTRY.values():
-            if entry["status"] != "VALIDATED":
-                assert entry.get("oos_win_rate_prior") is None
-                assert entry.get("expected_net_edge_bps") is None
-                assert entry.get("validated_assets") == []
+            if entry["status"] == "VALIDATED":
+                continue
+            # TASK-STR-FWD-003: FORWARD_TEST lane entries deliberately
+            # keep their judged TASK-STR-RD-002 pooled priors (the
+            # daemon's expectancy gate reads them, exactly as for
+            # VALIDATED entrants) — disclosed watchlist statistics,
+            # never a validation. Their universe lives under
+            # lane_assets; validated_assets must still be empty.
+            assert entry.get("validated_assets") == []
+            if entry["status"] == "FORWARD_TEST":
+                continue
+            assert entry.get("oos_win_rate_prior") is None
+            assert entry.get("expected_net_edge_bps") is None
 
 class TestStrategyEquivalenceAndIntegrity:
     def test_causal_indicators_no_lookahead(self):

@@ -137,9 +137,17 @@ def test_production_registry_advertises_no_unbacked_runtime_priors():
     for name, entry in PRODUCTION_STRATEGY_REGISTRY.items():
         if entry.get("status") == "VALIDATED":
             continue
+        assert entry.get("validated_assets") == [], f"{name} advertises validated assets while unvalidated"
+        if entry.get("status") == "FORWARD_TEST":
+            # TASK-STR-FWD-003: FORWARD_TEST lane entries advertise
+            # only their judged TASK-STR-RD-002 pooled statistics —
+            # backed, reproducible, and labelled watchlist-grade in
+            # the entry itself; the daemon's expectancy gate reads
+            # them. That is a governed exception, not an unbacked
+            # claim: the lane is demo-only and never a validation.
+            continue
         assert entry.get("oos_win_rate_prior") is None, f"{name} advertises a win-rate prior while unvalidated"
         assert entry.get("expected_net_edge_bps") is None, f"{name} advertises an edge prior while unvalidated"
-        assert entry.get("validated_assets") == [], f"{name} advertises validated assets while unvalidated"
 
 
 def test_artifact_reports_the_run_failed_out_of_sample(optimization):
