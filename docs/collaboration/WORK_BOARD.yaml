@@ -5324,15 +5324,17 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "DEPLOYED + FINGERPRINT-VERIFIED: Fleet CD deployed merge 5213d239 to Server 1; sha256 of all 6 changed FRIDAY code files on Server 1 byte-identical to the merged blobs (remote/laptop_bridge.py ab4c6e55a6e3, tools/builtin/laptop_control.py 9791a6d740ba, scripts/laptop_bridge_client.py ec745372d03a, remote/__init__.py 7dcdce3c5794, tools/builtin/__init__.py debfaf32c3cd, agent/mixins/tools.py 5e9bf3025420); FRIDAY.service active (restarted 2026-11-15 16:41:47 IST); GET 127.0.0.1:10000/api/laptop/devices -> 200 {\"devices\": []} — the route is live on the new code and the registry is empty, as expected until the owner connects his machine."
     blockers: []
     next_action: "Done as groundwork + first slice. The OWNER's computer is NOT connected — production /api/laptop/devices still shows [] and will until he runs the steps in FRIDAY/docs/LAPTOP_CONTROL.md (install Python + pip packages, copy the one client file, set FRIDAY_API_KEY to the Server 1 FRIDAY env value, run the client). Five-state honesty: implemented + tested + merged + deployed + protocol production-verified IN THE SANDBOX PROOF; his-machine-connected is a separate state that only his run of the steps can flip. Follow-ups (not this task): route the chat fast-path screenshot through screenshot_data so FRIDAY sees the screen in chat too; OCR on the FRIDAY host depends on tesseract availability there; proactive initiation is TASK-PRO-001's lane."
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
+  - id: "TASK-INF-003-W5"
+    title: "Wave 5: Inference key-pool health monitor — per-key live/dead/exhausted probing, third-party pool separate, fingerprints only"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/ta***REDACTED***"
+    pr: null  # set by coordinator from the PR created at delivery
+    evidence:
+      - "Claim: issue #35 comment 6891480367 (2026-11-15)."
+      - "18/18 tests passed (bucket separation, classification matrix, fake-transport probe, no-key-leak assertions)."
+      - "Live sweep on Server 1 against deployed Inference .env (2026-11-15): 45 keys probed, 45 live, 0 dead/exhausted/transient/unknown, no cross-pool duplicates; pools gemini 11+4tp, groq 14+1tp, openrouter 14+1tp; sweep exit 0."
+    next_action: "Coordinator: merge the code PR, set pr number here, then run python -m app.core.key_pool_health on Server 1 post-deploy and mark VERIFIED."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
