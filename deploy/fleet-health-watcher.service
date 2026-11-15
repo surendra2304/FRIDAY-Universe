@@ -1,6 +1,11 @@
 [Unit]
 Description=FRIDAY Universe fleet health watcher (TASK-OBS-001)
 # One cycle of crash-loop detection and /health alerting; triggered by the timer.
+# NOTE (TASK-SEN-010): Type=oneshot — between timer runs `systemctl status`
+# shows this unit as "inactive (dead)". That is its NORMAL resting state, not
+# an outage (a fleet inventory misread it as one in 2026-11). Judge watcher
+# liveness by the TIMER (systemctl is-active fleet-health-watcher.timer) and
+# the state file: scripts/fleet_health_watcher.py --status (exit 0 = fresh).
 Documentation=https://github.com/surendra2304/FRIDAY-Universe
 
 [Service]
