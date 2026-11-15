@@ -1,0 +1,17 @@
+/* React Bits — Orb.css styles, vendored from reactbits.dev
+   (github.com/DavidHDev/react-bits) with attribution. TASK-WEB-002. */
+.orb-container {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.orb-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
