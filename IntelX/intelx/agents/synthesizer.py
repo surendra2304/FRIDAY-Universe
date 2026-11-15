@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from intelx.agents.analyst import AnalysisResult
 from intelx.agents.base import BaseAgent
 from intelx.agents.critic import CritiqueReport
+from intelx.core.citation_integrity import check_claims, label_unbacked_findings
 from intelx.core.confidence import get_confidence_label
 from intelx.core.enums import ClaimStatus
 from intelx.core.report import (
@@ -19,7 +20,7 @@ from intelx.core.report import (
     render_report_markdown,
     validate_citations,
 )
-from intelx.db.models import Claim, Evidence, Finding, ResearchRun, Source
+from intelx.db.models import Chunk, Claim, Document, Evidence, Finding, ResearchRun, Source
 from intelx.db.session import get_sqlite_write_lock
 from intelx.memory.artifacts import generate_and_save_artifacts
 from intelx.models.gateway import ModelGateway
@@ -182,6 +183,68 @@ class SynthesizerAgent(BaseAgent):
         valid_source_ids = {sid for sid in valid_source_ids if sid}
         valid_claim_ids = set(claims_by_id.keys())
 
+        # CITATION INTEGRITY (TASK-INT-008): mechanically verify every claim
+        # against its stored source/document/chunk — the source must have
+        # been actually retrieved, the quote must match the document span,
+        # and the claim's wording must be supported by the quote. Claims
+        # failing verification (or originating as INFERRED) cannot ground a
+        # finding presented as fact; their findings are labelled inference.
+        integrity_by_claim = None
+        integrity_degradation: str | None = None
+        if session is not None and claims:
+            try:
+                def _field(obj: Any, name: str) -> Any:
+                    return getattr(obj, name, None) or (
+                        obj.get(name) if isinstance(obj, dict) else None
+                    )
+
+                doc_ids = {
+                    str(d) for c in claims if (d := _field(c, "document_id")) is not None
+                }
+                chunk_ids = {
+                    str(ch) for c in claims if (ch := _field(c, "chunk_id")) is not None
+                }
+                documents_by_id: dict[str, Any] = {}
+                chunks_by_id: dict[str, Any] = {}
+                if doc_ids:
+                    doc_rows = (
+                        (await session.execute(select(Document).where(Document.id.in_(doc_ids))))
+                        .scalars()
+                        .all()
+                    )
+                    documents_by_id = {str(d.id): d for d in doc_rows}
+                if chunk_ids:
+                    chunk_rows = (
+                        (await session.execute(select(Chunk).where(Chunk.id.in_(chunk_ids))))
+                        .scalars()
+                        .all()
+                    )
+                    chunks_by_id = {str(ch.id): ch for ch in chunk_rows}
+                sources_by_id: dict[str, Any] = {}
+                for s in all_sources:
+                    sid = _field(s, "id")
+                    if sid is not None:
+                        sources_by_id[str(sid)] = s
+                integrity_by_claim = check_claims(
+                    claims, sources_by_id, documents_by_id, chunks_by_id
+                )
+                failed_integrity = [
+                    r for r in integrity_by_claim.values() if not r.grounding_ok
+                ]
+                if failed_integrity:
+                    integrity_degradation = (
+                        f"Citation integrity: {len(failed_integrity)} of "
+                        f"{len(integrity_by_claim)} claim(s) failed mechanical "
+                        "verification (retrieval, span, or wording support) or are "
+                        "inferred; findings resting on them are labelled as inference."
+                    )
+            except Exception as exc:  # never let the audit break synthesis
+                logger.warning("Citation integrity check unavailable: %s", type(exc).__name__)
+                integrity_degradation = (
+                    "Citation integrity verification could not run for this report "
+                    f"({type(exc).__name__}); claim grounding used existence checks only."
+                )
+
         # Keep execution provenance explicit even when the insufficient-evidence path
         # skips the synthesis provider call entirely.
         llm_res = None
@@ -318,10 +381,10 @@ class SynthesizerAgent(BaseAgent):
             )
             draft: DraftReport = llm_res.parsed
 
-            # Groundedness Check
+            # Groundedness Check (citation-integrity aware when the map exists)
             raw_findings = [f.model_dump() for f in draft.key_findings]
             grounded_findings, unverified_findings = filter_and_ground_findings(
-                raw_findings, claims_by_id
+                raw_findings, claims_by_id, integrity_by_claim=integrity_by_claim
             )
 
             # If LLM draft findings lacked grounded claims, synthesize directly from verified claims
@@ -400,6 +463,8 @@ class SynthesizerAgent(BaseAgent):
             }
             for c in disputed_claims
         ]
+        if integrity_degradation:
+            degradations = [*(degradations or []), integrity_degradation]
         report_md = render_report_markdown(
             objective=objective,
             executive_answer=clean_exec_answer,
@@ -423,6 +488,10 @@ class SynthesizerAgent(BaseAgent):
             valid_source_ids=valid_source_ids,
             valid_claim_ids=valid_claim_ids,
         )
+
+        # Stripping tokens above can leave a Key Finding with neither a
+        # citation nor a label; label anything unbacked as inference.
+        report_md = label_unbacked_findings(report_md)
 
         # Persist findings to database
         if session and run_id:
