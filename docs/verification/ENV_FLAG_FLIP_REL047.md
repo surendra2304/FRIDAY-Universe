@@ -117,3 +117,66 @@ systemctl restart Memora
 ```
 
 Then re-verify §2's snapshot values and the /health answer.
+
+## 6. Stratex — the same flip (companion commit, same maintenance window)
+
+TASK-REL-045's appendix recorded the identical drift in Stratex — "the same
+flag incoherence as Memora's row, in the agent where fail-closed matters
+most" — and referred it here. Verified live by the REL-047 crew on
+2026-11-15 (Server 1, read-only):
+
+| Flag (deployed `/opt/friday_universe/Stratex/.env`) | Value |
+|---|---|
+| `ENVIRONMENT` | `development` ← drift |
+| `APP_ENV` | `development` ← drift |
+
+Why it matters here: `Stratex/api/auth.py` decides production mode from
+`ENVIRONMENT` alone (`_is_production()`), and `Stratex/dashboard.py` falls
+back to `ENVIRONMENT`/`APP_ENV`, defaulting to `development`. Stratex's API
+auth is therefore running with its production check **off** today — the
+flip turns it on, which is the point, and is also why this half gets the
+same caution as Memora's: any caller that was silently relying on
+development-mode leniency will start failing, and that must surface in the
+post-flip checks below, not in the trading daemon's next incident.
+
+This is **not** a trading-parameter change: no risk, sizing, or strategy
+value is touched (those are FWD-006/RISK-001 territory and out of scope).
+
+### 6.1 Flip (Server 1, immediately after §3, same window)
+
+```bash
+grep -E '^(ENVIRONMENT|APP_ENV)=' /opt/friday_universe/Stratex/.env   # snapshot first
+cp -a /opt/friday_universe/Stratex/.env /opt/friday_universe/Stratex/.env.bak-rel047
+chmod 600 /opt/friday_universe/Stratex/.env.bak-rel047
+sed -i 's/^ENVIRONMENT=.*/ENVIRONMENT=production/' /opt/friday_universe/Stratex/.env
+sed -i 's/^APP_ENV=.*/APP_ENV=production/'       /opt/friday_universe/Stratex/.env
+grep -E '^(ENVIRONMENT|APP_ENV)=' /opt/friday_universe/Stratex/.env   # both production
+systemctl restart Stratex Stratex-Daemon   # use the unit names as found in the §2-style snapshot
+systemctl is-active Stratex Stratex-Daemon
+```
+
+### 6.2 Post-flip checks (MANDATORY, before the window closes)
+
+1. Stratex `/health` answers healthy on :8003.
+2. One authenticated read with Stratex's own API credential succeeds
+   (the credential stays server-side; only the HTTP status is recorded).
+3. One **unauthenticated** API call is now rejected (401/403). Before the
+   flip this same call is the control: record its pre-flip status in the
+   snapshot step — if it was already rejected pre-flip, say so; the flip
+   must not be credited with a change that did not happen.
+4. The trading daemon's journal for the first full scan cycle after
+   restart shows normal operation (scans running, no auth-error storm,
+   no new exception class). The daemon must be reading the same `.env`
+   (its unit's `EnvironmentFile` is this file — `deploy/Stratex-Daemon.service`).
+5. Memora §4 matrix is unaffected by this half (different service), but
+   both restarts happen in one window so any cross-effect is visible in
+   the same journal pass.
+
+Any failure in 1–4: roll back Stratex only
+(`cp -a .env.bak-rel047 .env`, restart, re-verify) and report — do not
+leave Stratex running on flipped flags with a known auth regression.
+
+### 6.3 State
+
+As of this note: **prepared, not executed** — the Stratex flip is not
+deployed and not production-verified until §6.1–§6.2 are run and reported.
