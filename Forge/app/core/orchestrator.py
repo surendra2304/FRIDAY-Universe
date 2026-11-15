@@ -414,8 +414,43 @@ class OrchestratorCore:
                 logger.error(f"Execution error on node '{node.title}': {e}")
                 return node.id, False, None, str(e), role_name
 
-        wave_tasks = [_execute_single_node(node) for node in ready_nodes]
-        wave_results = await asyncio.gather(*wave_tasks)
+        # TASK-FRG-010: module completeness gate. When the tester gate
+        # is about to run, every module the goal or the architect's
+        # manifest names must exist as a real file; missing ones are
+        # created through the recovery create route first. A module that
+        # still cannot be produced fails the gate node here -- with the
+        # missing names in the error -- instead of letting the tester
+        # judge an incomplete file set (the collection errors of
+        # TASK-FRG-003's R3, and the phantom stand-ins before it, are
+        # what an ungated run produces).
+        gate_results: list[tuple[str, bool, dict[str, Any] | None, str | None, str]] = []
+        dispatch_nodes = ready_nodes
+        tester_gate_ids = {
+            n.id
+            for n in ready_nodes
+            if n.metadata.get("node_type") == "verification_gate"
+            and n.assigned_agent == "tester"
+        }
+        if tester_gate_ids:
+            completeness = await self._module_completeness(task_id, task)
+            if completeness is not None and completeness.missing:
+                dispatch_nodes = [
+                    n for n in ready_nodes if n.id not in tester_gate_ids
+                ]
+                for n in ready_nodes:
+                    if n.id in tester_gate_ids:
+                        gate_results.append(
+                            (
+                                n.id,
+                                False,
+                                None,
+                                completeness.failure_message(),
+                                "tester",
+                            )
+                        )
+        wave_tasks = [_execute_single_node(node) for node in dispatch_nodes]
+        wave_results = await asyncio.gather(*wave_tasks) if wave_tasks else []
+        wave_results = [*gate_results, *wave_results]
 
         has_failed = False
         first_error = ""
@@ -653,6 +688,30 @@ class OrchestratorCore:
 
         return task, executed_nodes
 
+    async def _module_completeness(self, task_id: str, task: TaskEntity):
+        """Run the TASK-FRG-010 module completeness gate for a task.
+
+        Returns the gate's report, or None when the gate itself could not
+        run (infrastructure error): a broken guard must not become a new
+        way for builds to fail, so the caller proceeds ungated and the
+        verification battery remains the judge, exactly as before.
+        """
+        try:
+            from app.execution.completeness import ModuleCompletenessGate
+
+            gate = ModuleCompletenessGate(engine=self.engine, store=self.store)
+            return await gate.ensure_complete(
+                task_id,
+                goal=task.goal or "",
+                requirements=list(task.requirements or []),
+            )
+        except Exception as exc:
+            logger.error(
+                f"Module completeness gate could not run for '{task_id}': {exc}",
+                exc_info=True,
+            )
+            return None
+
     async def run_task(self, task_id: str, max_iterations: int = 20) -> TaskEntity:
         """
         Run the full autonomous task execution loop until completion or terminal state.
@@ -712,6 +771,37 @@ class OrchestratorCore:
                 break
             if not executed:
                 break
+
+        # TASK-FRG-010 backstop: a plan whose DAG contained no tester
+        # gate (or whose files changed after it ran) reaches verification
+        # with the same hole the in-DAG gate guards. Run the completeness
+        # gate once more before the battery; a build still missing
+        # goal/manifest modules that the create route cannot produce
+        # fails here, naming them, instead of being judged on an
+        # incomplete file set.
+        if task.state == TaskState.COMPLETED:
+            completeness = await self._module_completeness(task_id, task)
+            if completeness is not None and completeness.missing:
+                reason = completeness.failure_message()
+                task = await self.lifecycle.transition(
+                    task_id=task_id,
+                    to_state=TaskState.FAILED,
+                    reason=reason,
+                    error_message=reason,
+                    progress_percentage=100,
+                )
+                await self.store.record_event(
+                    task_id=task_id,
+                    event_type="task.failed",
+                    payload={
+                        "reason": reason,
+                        "module_completeness_gate": True,
+                        "missing_modules": completeness.missing,
+                    },
+                )
+                production_monitor.record_task_event("failed")
+                await _finalize_tracker(task_id, success=False)
+                return task
 
         final_report = await self._verify_and_repair(task_id)
         task = await self.store.get_task(task_id) or task
