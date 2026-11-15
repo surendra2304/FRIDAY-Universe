@@ -277,6 +277,7 @@ from typing import Anyfrom pydantic import Field, field_validatorfrom pydanti
     # LiteLLM Integration (Optional Transport & Fallback Layer)
     INFERENCE_LITELLM_ENABLED: bool = Field(default=False, description="Enable LiteLLM unified model transport layer")
     INFERENCE_LITELLM_FALLBACK_ENABLED: bool = Field(default=True, description="Allow falling back to LiteLLM when native routes fail")
+    INFERENCE_NVIDIA_RUNG_ENABLED: bool = Field(default=False, description="Enable the NVIDIA NIM rung in the gateway ladder (TASK-REL-047: disabled — the configured model id 404s on both fleet accounts; re-enable only after a metadata probe verifies a live model id)")
     LITELLM_DEFAULT_TIMEOUT: float = Field(default=60.0, description="Default LiteLLM request timeout")
     LITELLM_DROP_PARAMS: bool = Field(default=True, description="Drop non-standard parameters in LiteLLM calls")
     LITELLM_SUCCESS_CALLBACKS: str = Field(default="", description="LiteLLM success callback handlers")
