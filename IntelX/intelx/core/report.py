@@ -5,6 +5,12 @@ from datetime import UTC, datetime
 from typing import Any
 
 from intelx.core.enums import ClaimStatus, ResearchMode, normalize_research_mode
+from intelx.core.owner_briefing import (
+    assess_stored_briefing,
+    render_change_conditions,
+    render_headline_block,
+    stored_headline,
+)
 
 CITATION_PATTERN = re.compile(r"\[([SC]):([a-zA-Z0-9_\-]+)\]")
 __all__ = [
@@ -567,7 +573,16 @@ def export_text_citations(findings: list[Any], sources: list[Any]) -> str:
         for finding in findings
         for claim_id in (_get_val(finding, "claim_ids") or _get_val(finding, "claim_ids_json", []))
     }
-    lines: list[str] = ["### Key Findings with Citations\n"]
+    # TASK-INT-006: owner-briefing frame — headline answer and plain
+    # confidence first, "what would change this conclusion" after the
+    # evidence. The findings block and sources block below (including
+    # every [C:]/[S:] citation token) are unchanged, so CitationValidator
+    # behaviour is preserved.
+    assessment = assess_stored_briefing(findings, sources)
+    lines: list[str] = [
+        render_headline_block(stored_headline(findings), assessment),
+        "\n### Key Findings with Citations\n",
+    ]
     used_sources: set[str] = set()
 
     for idx, f in enumerate(findings, 1):
@@ -590,6 +605,10 @@ def export_text_citations(findings: list[Any], sources: list[Any]) -> str:
         prefix = "[Inference] " if str(status).lower() in ("inference", "unverified") else ""
         cite_str = f" ({' '.join(cites)})" if cites else ""
         lines.append(f"{idx}. {prefix}{statement}{cite_str} *(Confidence: {conf})*")
+
+    conditions_block = render_change_conditions(assessment, markdown=True)
+    if conditions_block:
+        lines.append("\n" + conditions_block)
 
     if used_sources or sources_by_id:
         lines.append("\n### Sources & Evidence References")
