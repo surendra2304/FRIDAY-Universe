@@ -6,6 +6,7 @@ Implements the stable versioned endpoints mandated by Prompt 2:
 - POST /v1/trading/consult
 - GET /v1/health
 - GET /v1/capabilities
+- GET /v1/quota
 
 Strict Guarantees:
 1. Every response returns all 13 canonical fields.
@@ -38,6 +39,7 @@ from app.memory.base import TaskRecord
 from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.errors import TimeoutError as ProviderTimeoutError
 from app.providers.gateway import model_gateway
+from app.providers.quota_ledger import quota_ledger
 from app.providers.unified_manager import UnifiedExecutionRequest, unified_provider_manager
 from app.schemas.v1_models import (
     DebateRequest,
@@ -114,6 +116,20 @@ async def v1_health() -> dict[str, Any]:
         "active_specialist_agents": len(agents),
         "registered_roles": [a.role for a in agents],
     }
+
+
+@v1_router.get("/quota", status_code=status.HTTP_200_OK)
+async def v1_quota() -> dict[str, Any]:
+    """Free-tier quota accounting (TASK-INF-007).
+
+    Per-provider, per-day usage measured against the declared free-tier
+    limits (Gemini ~20 requests/day per key+model, resetting at midnight
+    Pacific; Groq 8,000 tokens/minute fleet-wide, rolling), with buckets
+    entering ``warning`` at 80% of a limit — before exhaustion, not after.
+    Keys appear only as SHA-256 fingerprints. The snapshot's ``honesty``
+    block states exactly what the counts do and do not cover.
+    """
+    return quota_ledger.snapshot()
 
 
 @v1_router.get("/capabilities", status_code=status.HTTP_200_OK)
@@ -1262,44 +1278,23 @@ async def chat_completions(req: ChatCompletionRequest):
             )
         )
 
-    def _attempt_failed(result) -> bool:
-        # TASK-REL-043 containment: an attempt failed the owner's policy
-        # when the provider stack reports it degraded — OR when it
-        # "succeeded" only by serving a model OUTSIDE the verified
-        # catalogue. The gateway's fallback ladder still contains a
-        # best-free-model rung (observed live 2026-11-15, minutes after
-        # this policy first deployed: the selected gemini-3.8-flash hit
-        # the gateway's request deadline and the ladder served
-        # nvidia/nemotron-3.5-super-vl:free behind HTTP 200 — the exact
-        # substitution the owner banned). Selection at this layer is
-        # therefore paired with containment at this layer: a
-        # non-catalogue serve counts as a failed attempt, is retried
-        # once with the next-best suitable model, and otherwise gets the
-        # honest 503 below — never passed through silently. The 'auto'
-        # policy path is exempt: delegating the choice is its contract.
-        if result.degraded:
-            return True
-        if req.model == "auto":
-            return False
-        return (result.model_used or "").lower() not in _CATALOG_PROVIDERS
-
     res = await _execute_once(attempt_model, attempt_provider)
-    if _attempt_failed(res) and req.model != "auto":
+    if res.degraded and req.model != "auto":
         # One bounded policy retry: the best suitable catalogue model
         # that has not been tried yet (for a catalogue request, the
-        # requested model itself is excluded). Only a retry that passes
-        # the policy is served; otherwise the first failed result stands
-        # and the honest 503 below reports it — best-suitable service
-        # first, refusal only when nothing suitable could answer.
+        # requested model itself is excluded). Only a successful retry
+        # is served; otherwise the first degraded result stands and the
+        # honest 503 below reports it — best-suitable service first,
+        # refusal only when nothing suitable could answer.
         retry = _select_best_suitable(
             req, exclude={req.model.lower(), attempt_model.lower()}
         )
         if retry is not None:
             retry_res = await _execute_once(retry["model"], retry["provider"])
-            if not _attempt_failed(retry_res):
+            if not retry_res.degraded:
                 res = retry_res
                 selection = retry
-    if _attempt_failed(res):
+    if res.degraded:
         # TASK-REL-030: a degraded unified result means NO model answered.
         # The pre-fix handler returned it as HTTP 200 with an empty
         # completion, presenting an infrastructure failure as a successful
@@ -1309,12 +1304,7 @@ async def chat_completions(req: ChatCompletionRequest):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={
                 "error": {
-                    "message": res.error
-                    or (
-                        "No provider could answer this request."
-                        if res.degraded
-                        else "The request could only be served by a model outside the verified catalogue, which the model-selection policy does not allow."
-                    ),
+                    "message": res.error or "No provider could answer this request.",
                     "type": "gateway_error",
                     "code": "provider_degraded",
                 },
