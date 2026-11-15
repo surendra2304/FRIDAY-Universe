@@ -1,0 +1,45 @@
+{
+ "hash_verification": {
+  "GOLD": true,
+  "SILVER": true,
+  "WTI": true
+ },
+ "brute_force_trade_checks": [
+  {
+   "cell": "orb_breakout/orb_plain GOLD",
+   "entry_time": "2024-12-04 16:00:00+00:00",
+   "exit_time": "2024-12-04 16:00:00+00:00",
+   "side": "LONG",
+   "rederived_identical": true
+  },
+  {
+   "cell": "orb_breakout/orb_plain GOLD",
+   "entry_time": "2024-12-05 18:00:00+00:00",
+   "exit_time": "2024-12-05 20:00:00+00:00",
+   "side": "SHORT",
+   "rederived_identical": true
+  },
+  {
+   "cell": "orb_breakout/orb_plain GOLD",
+   "entry_time": "2024-12-10 17:00:00+00:00",
+   "exit_time": "2024-12-10 20:00:00+00:00",
+   "side": "LONG",
+   "rederived_identical": true
+  },
+  {
+   "cell": "orb_breakout/orb_plain GOLD",
+   "entry_time": "2024-12-11 16:00:00+00:00",
+   "exit_time": "2024-12-11 20:00:00+00:00",
+   "side": "LONG",
+   "rederived_identical": true
+  },
+  {
+   "cell": "orb_breakout/orb_plain GOLD",
+   "entry_time": "2024-12-17 18:00:00+00:00",
+   "exit_time": "2024-12-17 20:00:00+00:00",
+   "side": "LONG",
+   "rederived_identical": true
+  }
+ ],
+ "all_brute_force_identical": true
+}
