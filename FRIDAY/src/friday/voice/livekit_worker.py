@@ -364,6 +364,28 @@ BASE_INSTRUCTIONS = (
 )
 
 
+def _extra_instruction_sections() -> str:
+    """Optional voice-policy sections contributed by sibling modules
+    (TASK-IG-VOI-01+). Each module exposes ``instruction_section()``;
+    a module that is absent or fails contributes nothing, so each
+    section lands with its own PR in any merge order and no import
+    failure can break session build. This runs at session-build time
+    only — never on the greeting's critical path after build — and
+    the imports are sys.modules-cached after the first call."""
+    import importlib
+
+    sections = []
+    for mod_name in ("confirmation_policy", "dictation", "language_profiles"):
+        try:
+            mod = importlib.import_module(f"friday.voice.{mod_name}")
+            section = mod.instruction_section()
+        except Exception:
+            continue
+        if section:
+            sections.append(section)
+    return " ".join(sections)
+
+
 def _instructions(with_memory: bool = True, memory_block: str = "") -> str:
     # TASK-VOI-009: the english_out variant existed only for the removed
     # Groq pipeline (its TTS was English-only). Gemini Live mirrors the
@@ -373,6 +395,9 @@ def _instructions(with_memory: bool = True, memory_block: str = "") -> str:
         " Answer in the language the user just spoke: Telugu in natural conversational Telugu, "
         "English in English, mirroring a mix."
     )
+    extra = _extra_instruction_sections()
+    if extra:
+        prompt += " " + extra
     if with_memory:
         # the caller passes the ALREADY-RESOLVED memory block (fetched with
         # a thread + timeout) so nothing in this path can block the loop

@@ -11,6 +11,13 @@ from typing import Any
 
 import httpx
 
+try:  # TASK-IG-VOI-01: the confirmation gate is pure stdlib; if it
+    # ever fails to import, the bridge degrades to ungated (its pre-
+    # IG-VOI-01 behaviour) instead of taking voice down with it.
+    from friday.voice import confirmation_policy as _confirmation_policy
+except Exception:  # pragma: no cover - defensive, mirrors _voice_tools
+    _confirmation_policy = None
+
 BRAIN_URL = "http://127.0.0.1:10000/api/chat"
 BRAIN_ORIGIN = "http://127.0.0.1:10000"
 
@@ -31,13 +38,36 @@ BRAIN_TIMEOUT_S = _brain_timeout_s()
 
 
 class VoiceBrainBridge:
-    def __init__(self, client: httpx.AsyncClient | None = None) -> None:
+    def __init__(self, client: httpx.AsyncClient | None = None,
+                 confirmation_gate: Any = None) -> None:
         self.client = client
+        # TASK-IG-VOI-01: one gate per bridge (i.e. per session build).
+        # A watchdog rebuild creates a fresh bridge, so a confirmation
+        # earned before a rebuild is asked again — fail-closed.
+        if confirmation_gate is not None:
+            self._gate = confirmation_gate
+        elif _confirmation_policy is not None:
+            self._gate = _confirmation_policy.gate_from_env()
+        else:
+            self._gate = None
 
     async def execute(self, request: str) -> dict[str, Any]:
         text = (request or "").strip()
         if not text or len(text) > 4000:
             return {"state": "refused", "spoken_reply": "Please give me a request between 1 and 4000 characters. Nothing was submitted."}
+        if self._gate is not None:
+            # The gate runs BEFORE anything is submitted: a gated
+            # request has caused no side effect anywhere when the
+            # owner hears the confirmation question.
+            decision = self._gate.check(text)
+            if decision.verdict == _confirmation_policy.CONFIRM:
+                return {
+                    "state": "confirmation_required",
+                    "spoken_reply": decision.question,
+                    "confirmation_required": True,
+                    "action_summary": decision.classification.action_summary,
+                    "completion_verified": False,
+                }
         try:
             if self.client is None:
                 async with httpx.AsyncClient(trust_env=False, follow_redirects=False) as client:
@@ -94,7 +124,10 @@ def build_voice_tools(bridge: VoiceBrainBridge | None = None) -> list:
         "remembering/recalling preferences, sourced research, code build/test, video "
         "draft/render/status/approval, and fleet status. Read spoken_reply faithfully; "
         "never turn pending/refused/failed/unconfirmed into success. Never upload or "
-        "publish automatically; approval remains a separate owner action."))
+        "publish automatically; approval remains a separate owner action. "
+        "If the result state is confirmation_required, nothing was submitted: ask "
+        "its spoken_reply as a question and re-issue the SAME request only after "
+        "the user clearly confirms or supplies the missing detail."))
     async def execute_friday_task(request: str) -> dict[str, Any]:
         return await brain.execute(request)
 
