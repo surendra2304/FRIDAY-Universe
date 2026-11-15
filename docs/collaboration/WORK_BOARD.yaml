@@ -5053,6 +5053,35 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Live harness on Server 1 (deployed head 56e28e63): HEADER agent_mode=friday-agent, authorizer=DefaultSecureAuthorizer, autonomous_mode=true, full_access_mode=true, registry_tools=90, schemas=90, memory=OracleConversationMemory; batch A 21 probes recorded with per-tool verdicts, latencies and outputs (full table in the results doc)."
       - "Fix verified locally by direct assertions (schema enum, terminate attempt -> Unknown action error, system_status unaffected, kill_process still DANGEROUS); pytest files ship in the PR for CI/server-venv runs."
     next_action: "Coordinator: review + merge the fix PR, deploy via Fleet CD, then production-probe system_control (terminate_process must return Unknown action) and mark VERIFIED. Follow-ups D2/D3/D4 to be triaged by the coordinator (FRD-001/003 and Futuris crews)."
+  - id: TASK-STR-RD-005
+    title: "Stratex research wave 4 (RD-005): session / time-of-day effects — session-open impulse + hour-of-day windows on crypto30 and forex majors, judged at the running global trial count"
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-str-rd-005
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:34:00+05:30"
+    updated_at: "2026-11-15T13:23:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD5.md"
+      - "Stratex/rigorous_backtest/results_rd5/"
+      - "Stratex/rigorous_backtest/rd5/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891055743"
+    defect: "Owner wave-4 order 2026-11-15 ~12:33 IST: 10 more Stratex research crews. RD-005's track is a NEW family never judged by RD-001/002/003: session / time-of-day effects — entries conditioned on session opens (Asia/London/New York) and hour-of-day windows, momentum-continuation and reversal variants, on crypto30 (24/7 session effects) AND forex majors (EURUSD, GBPUSD, USDJPY), 15m/1h. Distinct from RD-002's session_breakout (no range condition), RD-003's overnight_drift / london_drive (no fixed overnight hold, no Asia-range break, no ATR brackets) and RD-003's forex-native mean-reversion track (session timing, not indicator MR)."
+    acceptance:
+      - "Family pre-declared and frozen before any cell ran: results_rd5/declaration.json SHA-256 4b640f87ab6921d517503ff4e87a9e7aef0a9f03899e0b02c98aa411ad6ec658, posted in the claim (issue #35 comment 6891055743). 162 trials: 156 cells (SOI 32 + HOD 20 per panel x 3 panels) + 6 walk-forward-select procedures."
+      - "Judged by the unchanged bar: expectancy>0, PF>=1.2, >=200 OOS trades, >=80% folds positive (literal: LATE panels 4/4), alphabetical every-3rd-symbol untouched holdout (forex3: USDJPY), breadth, 2x-cost sensitivity, Bonferroni p < 0.05/N at gate floor N=1,926 (counter 1,764 before RD-005 = 1,557 + RD-003's declared 207) with candidate stability required at N=3,000."
+      - "RESULT: ZERO candidates, ZERO watchlist — all 162 configurations have negative OOS expectancy net of costs (crypto30@1h mean -0.161% vs 16 bps cost; crypto13@15m mean -0.159%; forex3@1h mean -0.060% vs 6 bps cost). Least-bad cell SOI_TOKYO_MOM_L4h_H4h (-0.077% @1h / -0.070% @15m, PF 0.885/0.878) fails the first gate outright and is recorded as texture in RESULTS_RD5.md, not as a watchlist entry."
+      - "Evidence integrity: every data file's SHA-256 verified against its RD-002 sidecar manifest before loading; sanity S1-S3 passed; independent recomputation (rd5/check_btc.py) reproduces the runner's BTCUSDT expectancy for the best row to <1e-12 (-0.0014068014828270 over 853 OOS trades)."
+      - "Research only: no production/governance/priors/engine changes; no live trading. Forex 15m UNCOVERED (Yahoo depth), never synthetic; forex history is RD-002's provenanced Yahoo series with OANDA-modelled costs (OANDA API unreachable from the research sandbox — same disclosed basis as RD-003 Stage 2B)."
+    evidence:
+      - "Claim + frozen declaration hash: issue #35 comment 6891055743 (2026-11-15, before the first cell ran)."
+      - "RESULTS_RD5.md + results_rd5/ (declaration, synthesis, per-panel rows with per-fold metrics/breadth/holdout/exact p-values, coverage manifests) + rd5/ (runner + independent checker) in this PR."
+    blockers: []
+    next_action: "Results complete in this PR (branch claude/task-str-rd-005): 162/162 FAIL, zero passers — coordinator to merge and flip this entry to VERIFIED after independent verification. Global trial count after RD-005: >= 1,926. The session/time-of-day family is closed as a direction-picking family at 15m/1h; the least-bad Tokyo-open momentum cell is on record in RESULTS_RD5.md so no future crew re-spends trials rediscovering it."
+task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

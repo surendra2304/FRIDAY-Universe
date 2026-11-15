@@ -1,0 +1,212 @@
+[
+ {
+  "file": "AAVEUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "ADAUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "ALGOUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "APTUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 35374,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "ARBUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 31641,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "ATOMUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "AVAXUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "BCHUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "BNBUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "BTCUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "DOGEUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "DOTUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "ETCUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "ETHUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "FILUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "HBARUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "INJUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 36886,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "LINKUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "LTCUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "MANAUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "NEARUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "OPUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 38722,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "SANDUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "SOLUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "SUIUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 30656,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "TRXUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "UNIUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42360,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "VETUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "XLMUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ },
+ {
+  "file": "XRPUSDT_1h_2022-01_2026-10.csv",
+  "sidecar": true,
+  "sha256_match": true,
+  "rows_manifest": 42240,
+  "source": "binance_vision_futures_um_monthly_klines"
+ }
+]
