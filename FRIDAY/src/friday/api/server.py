@@ -67,6 +67,16 @@ from friday.remote.laptop_bridge import (
     normalise_laptop_id,
     shell_execution_enabled,
 )
+from friday.remote.phone_bridge import (
+    ALLOWED_PHONE_COMMANDS,
+    PhoneBridgeTimeout,
+    PhoneDisconnected,
+    PhoneNotConnected,
+    PhoneUnsupportedCommand,
+    normalise_device_id,
+    phone_bridge,
+    phone_bridge_enabled,
+)
 from friday.autonomous import autonomous_controller, autonomous_daemon, enhanced_controller
 from friday.autonomous.repair_loop import repair_loop
 from friday.cognition.reflex import get_reflex_brain, parse_incident_scope
@@ -5124,6 +5134,228 @@ async def laptop_connect_endpoint(websocket: WebSocket, laptop_id: str) -> None:
         logger.warning("Laptop tunnel error for %s: %s", laptop_id, exc)
     finally:
         await laptop_bridge.unregister(laptop_id, websocket)
+
+
+# =========================================================================
+# Phone Reverse Tunnel (cloud FRIDAY -> owner's Android phone, TASK-PHONE-001)
+# =========================================================================
+#
+# The phone dials out; the cloud never listens on the phone's network. Unlike
+# the laptop tunnel, the phone does NOT hold the shared control secret: it
+# pairs once with a 6-digit code (issued below to a control-authenticated
+# caller) and afterwards authenticates with its own per-device token, whose
+# hash is all the server keeps. Dispatch is restricted to the allowlist and
+# the capabilities enforced in `friday.remote.phone_bridge`.
+
+
+class PhoneCommandRequest(BaseModel):
+    command: str
+    args: dict[str, Any] = {}
+    timeout: float = 30.0
+
+
+class PhonePairRequest(BaseModel):
+    pairing_code: str
+    device_name: str = ""
+    executor: str = ""
+
+
+def _phone_tunnel_authorised(websocket: WebSocket, device_id: str) -> bool:
+    """Authorise a phone tunnel upgrade with the device's own token.
+
+    Browsers cannot be trusted to drive this route, so the origin policy
+    applies first. The agent presents its per-device token as a bearer
+    header, an ``x-friday-device-token`` header, or the ``token`` query
+    parameter (a WebSocket client cannot always set custom headers).
+    """
+    if not _websocket_origin_allowed(websocket):
+        return False
+    provided = websocket.headers.get("x-friday-device-token", "")
+    authorization = websocket.headers.get("authorization", "")
+    if not provided and authorization.lower().startswith("bearer "):
+        provided = authorization[7:].strip()
+    if not provided:
+        provided = websocket.query_params.get("token", "")
+    return phone_bridge.pairing.authenticate(device_id, provided)
+
+
+@app.post("/api/phone/pairing-code")
+async def phone_pairing_code_endpoint(
+    _: None = Depends(_require_control_access),
+) -> dict[str, Any]:
+    """Issue a single-use 6-digit pairing code (10-minute TTL).
+
+    Control-authenticated: only the owner (or FRIDAY itself on his behalf)
+    can mint a code, and the code alone is worthless without a phone agent
+    completing the exchange in the window.
+    """
+    if not phone_bridge_enabled():
+        raise HTTPException(status_code=403, detail="Phone bridge is disabled (FRIDAY_PHONE_ENABLED=false)")
+    return phone_bridge.pairing.create_pairing_code()
+
+
+@app.post("/api/phone/pair")
+async def phone_pair_endpoint(req: PhonePairRequest) -> dict[str, Any]:
+    """Exchange a pairing code for a device id + device token (shown once)."""
+    if not phone_bridge_enabled():
+        raise HTTPException(status_code=403, detail="Phone bridge is disabled (FRIDAY_PHONE_ENABLED=false)")
+    issued = phone_bridge.pairing.consume_pairing_code(
+        req.pairing_code, device_name=req.device_name, executor=req.executor
+    )
+    if issued is None:
+        raise HTTPException(status_code=401, detail="Pairing code is invalid, expired or already used")
+    logger.info("Phone paired: %s (executor=%s)", issued["device_id"], req.executor or "unknown")
+    return issued
+
+
+@app.get("/api/phone/devices")
+async def phone_devices_endpoint(_: None = Depends(_require_control_access)) -> dict[str, Any]:
+    """List every paired phone, with current tunnel state and capabilities."""
+    return {"devices": await phone_bridge.list_devices()}
+
+
+@app.delete("/api/phone/devices/{device_id}")
+async def phone_revoke_endpoint(
+    device_id: str, _: None = Depends(_require_control_access)
+) -> dict[str, Any]:
+    """Revoke a phone's pairing. Its token stops working immediately."""
+    try:
+        device_id = normalise_device_id(device_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    await phone_bridge.unregister(device_id)
+    if not phone_bridge.pairing.revoke(device_id):
+        raise HTTPException(status_code=404, detail=f"Phone '{device_id}' is not paired")
+    return {"revoked": device_id}
+
+
+@app.post("/api/phone/{device_id}/command")
+async def phone_command_endpoint(
+    device_id: str,
+    req: PhoneCommandRequest,
+    _: None = Depends(_require_control_access),
+) -> Any:
+    """Dispatch one allowlisted command to a connected phone.
+
+    A missing tunnel is 404, an unsupported executor capability is 422, a
+    deadline is 504 and a tunnel that dies in flight is 502. The evidence
+    record is returned in every one of those cases so the caller can see
+    what actually happened.
+    """
+    try:
+        evidence = await phone_bridge.execute(device_id, req.command, req.timeout, req.args)
+    except PhoneNotConnected as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PhoneUnsupportedCommand as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except PhoneBridgeTimeout as exc:
+        return JSONResponse(status_code=504, content=exc.evidence)
+    except PhoneDisconnected as exc:
+        return JSONResponse(status_code=502, content=exc.evidence)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return evidence
+
+
+@app.websocket("/api/phone/connect/{device_id}")
+async def phone_connect_endpoint(websocket: WebSocket, device_id: str) -> None:
+    """Phone-side reverse tunnel.
+
+    The socket is accepted before the 1008 close is sent because an ASGI
+    server turns a pre-accept close into an HTTP 403 handshake rejection,
+    which hides the authentication reason from the client.
+    """
+    try:
+        device_id = normalise_device_id(device_id)
+    except ValueError as exc:
+        await websocket.accept()
+        await websocket.close(code=1008, reason=str(exc))
+        return
+    if not phone_bridge_enabled():
+        await websocket.accept()
+        await websocket.close(code=1008, reason="Phone bridge is disabled")
+        return
+    if not _phone_tunnel_authorised(websocket, device_id):
+        logger.warning("Rejected phone tunnel for %s: device token authentication failed", device_id)
+        await websocket.accept()
+        await websocket.close(code=1008, reason="FRIDAY phone device authentication required")
+        return
+
+    await websocket.accept()
+
+    # The executor introduces itself with a hello frame carrying its
+    # capability map. No hello (capabilities=None) means the executor claims
+    # the full allowlist and answers for itself per command; a hello with a
+    # list gates dispatch to exactly what it declared.
+    executor = "unknown"
+    capabilities: list[str] | None = None
+    try:
+        hello = await asyncio.wait_for(websocket.receive_json(), timeout=15.0)
+        if isinstance(hello, dict) and str(hello.get("type") or "").lower() == "hello":
+            executor = str(hello.get("executor") or "unknown")
+            caps = hello.get("capabilities")
+            capabilities = [str(c) for c in caps] if isinstance(caps, list) else []
+    except Exception:
+        logger.warning("Phone tunnel %s sent no hello frame; executor claims the full allowlist", device_id)
+
+    replaced = await phone_bridge.register(
+        device_id, websocket, executor=executor, capabilities=capabilities
+    )
+    if replaced is not None:
+        try:
+            await replaced.websocket.close(code=1012, reason="Replaced by a newer phone tunnel")
+        except Exception:
+            logger.debug("Previous phone tunnel for %s was already closed", device_id)
+
+    try:
+        await websocket.send_json(
+            {
+                "type": "welcome",
+                "device_id": device_id,
+                "heartbeat_interval": 25.0,
+                "commands": sorted(ALLOWED_PHONE_COMMANDS),
+                "capabilities_accepted": sorted(
+                    c for c in (capabilities or []) if c in ALLOWED_PHONE_COMMANDS
+                ),
+                "server_time": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+    except Exception as exc:
+        logger.warning("Phone tunnel %s failed during welcome: %s", device_id, exc)
+        await phone_bridge.unregister(device_id, websocket)
+        return
+
+    try:
+        while True:
+            try:
+                message = await websocket.receive_json()
+            except json.JSONDecodeError:
+                logger.warning("Phone tunnel %s sent invalid JSON", device_id)
+                continue
+            if not isinstance(message, dict):
+                logger.warning("Phone tunnel %s sent a non-object frame", device_id)
+                continue
+
+            kind = str(message.get("type") or "").strip().lower()
+            if kind in {"result", "command_result"}:
+                if not await phone_bridge.resolve_result(device_id, message):
+                    logger.warning(
+                        "Phone tunnel %s returned an unknown or expired request", device_id
+                    )
+            elif kind in {"ping", "heartbeat"}:
+                await phone_bridge.touch(device_id)
+                await websocket.send_json(
+                    {"type": "pong", "server_time": datetime.now(timezone.utc).isoformat()}
+                )
+            else:
+                # `hello` and any future informational frame only refresh liveness.
+                await phone_bridge.touch(device_id)
+    except WebSocketDisconnect:
+        logger.info("Phone tunnel disconnected: %s", device_id)
+    except Exception as exc:
+        logger.warning("Phone tunnel error for %s: %s", device_id, exc)
+    finally:
+        await phone_bridge.unregister(device_id, websocket)
 
 
 # --- Owner dashboard (Next.js static export from FRIDAY/ui) ------------------
