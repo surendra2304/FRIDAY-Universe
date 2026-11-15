@@ -907,6 +907,244 @@ def _provider_for_model(model: str) -> str:
     return "groq"
 
 
+# ---------------------------------------------------------------------------
+# TASK-REL-043 — best-suitable-model selection (owner policy, 2026-11-15:
+# "Inference should give the best suitable model from the models it have").
+#
+# REL-032 made the catalogue truthful, but a request naming a model the
+# gateway does not have (a retired or unknown id) was still forwarded
+# verbatim: the provider 404'd, and the gateway's fallback ladder served
+# whatever it reached first — observed live, a request for the retired
+# llama-3.3-70b-versatile was answered by a free-tier lightweight
+# (nvidia/nemotron-3.5-super-vl:free). Under the owner's policy the
+# substitute is CHOSEN here, from the verified catalogue only, by declared
+# suitability for the request's task type — never by ladder accident. The
+# same selection supplies the one bounded retry when a catalogue model's
+# own route comes back degraded, so the honest REL-032 503 reaches the
+# caller only once the best suitable alternative has also failed.
+# Substitution is never silent: the provenance block gains ``selected_as``
+# (the suitability basis) and an explicit downgrade flag when the best
+# available suitable model is a materially weaker class than requested.
+# ---------------------------------------------------------------------------
+
+#: Capability classes by tier value (higher is stronger). The downgrade
+#: disclosure compares the requested model's class against the selected
+#: substitute's class.
+MODEL_CLASS_TIERS: dict[str, int] = {"flagship": 3, "standard": 2, "economy": 1}
+
+#: Declared quality class of every verified-catalogue model. Keys are
+#: exactly the MODEL_CATALOG ids; a catalogue id missing here is treated
+#: as "standard" by the selection code (never silently top-class).
+MODEL_CLASSES: dict[str, str] = {
+    "gemini-3.8-flash": "flagship",
+    "openai/gpt-oss-120b": "flagship",
+    "gemini-3.6-flash": "standard",
+    "meta-llama/llama-3.3-70b-instruct": "standard",
+    "qwen/qwen3.8-27b": "standard",
+    "nvidia/nemotron-3.5-lightning:free": "economy",
+}
+
+#: Best-suitable ranking per task type: verified-catalogue ids, best
+#: first. Every list ranks the FULL catalogue — selection never leaves
+#: the catalogue, and availability filtering (provider health, retry
+#: exclusions) happens at selection time, not by editing these lists.
+#: Rationale, briefly: the Gemini flashes are the catalogue's only
+#: multimodal models and its long-context class; gpt-oss-120b is the
+#: strongest reasoner/coder and is served at Groq speed; qwen3.8-27b is
+#: the fidelity-proven mid-size coder (TASK-REL-021); llama-3.3-70b is
+#: the general 70B instruct; the nemotron :free listing is the economy
+#: rung of last resort, not a peer substitute for a flagship request.
+MODEL_SUITABILITY: dict[str, list[str]] = {
+    "chat": [
+        "gemini-3.8-flash",
+        "openai/gpt-oss-120b",
+        "meta-llama/llama-3.3-70b-instruct",
+        "gemini-3.6-flash",
+        "qwen/qwen3.8-27b",
+        "nvidia/nemotron-3.5-lightning:free",
+    ],
+    "reasoning": [
+        "openai/gpt-oss-120b",
+        "gemini-3.8-flash",
+        "qwen/qwen3.8-27b",
+        "meta-llama/llama-3.3-70b-instruct",
+        "gemini-3.6-flash",
+        "nvidia/nemotron-3.5-lightning:free",
+    ],
+    "code": [
+        "openai/gpt-oss-120b",
+        "qwen/qwen3.8-27b",
+        "gemini-3.8-flash",
+        "meta-llama/llama-3.3-70b-instruct",
+        "gemini-3.6-flash",
+        "nvidia/nemotron-3.5-lightning:free",
+    ],
+    "long_context": [
+        "gemini-3.8-flash",
+        "gemini-3.6-flash",
+        "openai/gpt-oss-120b",
+        "meta-llama/llama-3.3-70b-instruct",
+        "qwen/qwen3.8-27b",
+        "nvidia/nemotron-3.5-lightning:free",
+    ],
+    "vision": [
+        "gemini-3.8-flash",
+        "gemini-3.6-flash",
+        "openai/gpt-oss-120b",
+        "meta-llama/llama-3.3-70b-instruct",
+        "qwen/qwen3.8-27b",
+        "nvidia/nemotron-3.5-lightning:free",
+    ],
+}
+
+#: Task-type inference hints. Deliberately small and deterministic: the
+#: inference reads only the request's shape (model-id hints, prompt text,
+#: prompt size) — no model call and no heuristics beyond these tables.
+_CODE_HINTS = (
+    "```",
+    "def ",
+    "class ",
+    "function ",
+    "traceback",
+    "stack trace",
+    "syntaxerror",
+    "compile error",
+    "#include",
+    "console.log",
+)
+_REASONING_HINTS = (
+    "step by step",
+    "prove that",
+    "theorem",
+    "derive the",
+    "logic puzzle",
+    "syllogism",
+)
+_LONG_CONTEXT_MIN_CHARS = 24000
+
+#: Requested-class inference for ids the catalogue does not know (the
+#: class of a catalogue id is declared in MODEL_CLASSES and always wins).
+#: Heuristic by design — it only drives the downgrade DISCLOSURE, and it
+#: errs toward flagging: size tokens first, then premium/economy markers.
+_FLAGSHIP_SIZE_HINTS = ("405b", "120b", "70b")
+_ECONOMY_SIZE_HINTS = ("1b", "3b", "7b", "8b")
+_FLAGSHIP_NAME_HINTS = ("gpt-4", "gpt-5", "opus", "ultra", "max", "-pro", "pro-", "sonnet")
+_ECONOMY_NAME_HINTS = ("mini", "nano", "lite", "lightning", ":free", "small", "haiku", "instant")
+
+
+def _infer_task_type(req: ChatCompletionRequest) -> str:
+    """Infer the task type for suitability selection from request shape.
+
+    Deterministic and documented: a vision hint in the requested model
+    id wins; then code markers in the prompt; then prompt size (long
+    context); then reasoning markers; otherwise plain chat.
+    """
+    model_hint = (req.model or "").lower()
+    if "vision" in model_hint or "-vl" in model_hint:
+        return "vision"
+    text = "\n".join(msg.content for msg in req.messages).lower()
+    if any(hint in text for hint in _CODE_HINTS):
+        return "code"
+    if len(text) >= _LONG_CONTEXT_MIN_CHARS:
+        return "long_context"
+    if any(hint in text for hint in _REASONING_HINTS):
+        return "reasoning"
+    return "chat"
+
+
+def _requested_class(model: str) -> str:
+    """Class of the model the caller asked for (downgrade disclosure)."""
+    norm = (model or "").lower().strip()
+    if norm in MODEL_CLASSES:
+        return MODEL_CLASSES[norm]
+    if any(hint in norm for hint in _FLAGSHIP_SIZE_HINTS):
+        return "flagship"
+    if any(hint in norm for hint in _ECONOMY_SIZE_HINTS):
+        return "economy"
+    if any(hint in norm for hint in _FLAGSHIP_NAME_HINTS):
+        return "flagship"
+    if any(hint in norm for hint in _ECONOMY_NAME_HINTS):
+        return "economy"
+    return "standard"
+
+
+def _provider_available(provider: str) -> bool:
+    """Whether a provider is currently fit to be selected (health-aware).
+
+    Consults the gateway's live health tracker — the same singleton the
+    gateway records outcomes into. A provider the tracker judges
+    unhealthy (e.g. quota-dead on repeated 429s) is not "available" for
+    selection. Any failure to consult the tracker fails OPEN (treated as
+    available): health is a selection signal, never a reason by itself
+    to refuse service.
+    """
+    try:
+        report = model_gateway.get_provider_health(provider)
+    except Exception:  # noqa: BLE001 - health lookup must never break routing
+        return True
+    return bool(getattr(report, "is_healthy", True))
+
+
+def _ranked_suitable_models(task_type: str, exclude: set[str] | None = None) -> list[str]:
+    """Ranked verified-catalogue candidates for a task type, best first.
+
+    Exclusions (already-tried models) are dropped first; models whose
+    provider is currently unhealthy are dropped next. If health filtering
+    would empty the list, the unfiltered ranking is returned instead —
+    health is advisory, the gateway's own ladder remains the backstop,
+    and a half-open probe may still succeed. Selection never returns a
+    model outside the verified catalogue.
+    """
+    ranked = MODEL_SUITABILITY.get(task_type) or MODEL_SUITABILITY["chat"]
+    excluded = {(item or "").lower() for item in (exclude or set())}
+    pool = [
+        model_id
+        for model_id in ranked
+        if model_id.lower() not in excluded and model_id.lower() in _CATALOG_PROVIDERS
+    ]
+    healthy = [
+        model_id
+        for model_id in pool
+        if _provider_available(_CATALOG_PROVIDERS[model_id.lower()])
+    ]
+    return healthy or pool
+
+
+def _select_best_suitable(
+    req: ChatCompletionRequest, exclude: set[str] | None = None
+) -> dict[str, Any] | None:
+    """Choose the best suitable verified-catalogue model for a request.
+
+    Returns a selection record — chosen model and provider, the
+    suitability basis recorded in provenance (``selected_as``), and the
+    downgrade disclosure — or None when every catalogue model has been
+    excluded (nothing suitable remains to try).
+    """
+    task_type = _infer_task_type(req)
+    candidates = _ranked_suitable_models(task_type, exclude=exclude)
+    if not candidates:
+        return None
+    chosen = candidates[0]
+    requested_class = _requested_class(req.model)
+    served_class = MODEL_CLASSES.get(chosen.lower(), "standard")
+    downgrade = MODEL_CLASS_TIERS[served_class] < MODEL_CLASS_TIERS[requested_class]
+    return {
+        "model": chosen,
+        "provider": _provider_for_model(chosen),
+        "task_type": task_type,
+        "selected_as": f"best_suitable_for_{task_type}",
+        "requested_class": requested_class,
+        "served_class": served_class,
+        "downgrade": downgrade,
+        "downgrade_reason": (
+            f"requested a {requested_class}-class model; the best available suitable "
+            f"model is {chosen} ({served_class}-class)"
+            if downgrade
+            else None
+        ),
+    }
+
+
 @v1_router.get("/models", status_code=status.HTTP_200_OK)
 async def list_models() -> dict[str, Any]:
     """OpenAI-compatible models catalog listing available gateway models."""
@@ -933,10 +1171,18 @@ async def chat_completions(req: ChatCompletionRequest):
     tokens = max(1, min(int(req.max_tokens or 1024), 128000))
 
     if req.stream:
+        stream_model = req.model if req.model != "auto" else "openai/gpt-oss-120b"
+        if req.model != "auto" and req.model.lower() not in _CATALOG_PROVIDERS:
+            # TASK-REL-043: the same best-suitable selection as the
+            # non-stream path — a named model the gateway does not have
+            # is not forwarded to the streaming gateway either.
+            stream_selection = _select_best_suitable(req)
+            if stream_selection is not None:
+                stream_model = stream_selection["model"]
         prov_req = ProviderRequest(
             messages=[ProviderMessage(role=m.role, content=m.content) for m in req.messages],
             system_instruction=system_instruction,
-            model=req.model if req.model != "auto" else "openai/gpt-oss-120b",
+            model=stream_model,
             temperature=req.temperature,
             max_tokens=tokens,
         )
@@ -986,16 +1232,52 @@ async def chat_completions(req: ChatCompletionRequest):
     else:
         exec_provider = _provider_for_model(req.model)
 
-    exec_req = UnifiedExecutionRequest(
-        provider=exec_provider,
-        model=None if req.model == "auto" else req.model,
-        agent_role="system_architect",
-        prompt=f"{system_instruction}\n\n{prompt}",
-        temperature=exec_temp,
-        max_tokens=exec_tokens,
-        fast_lane=True if req.model == "auto" else False,
-    )
-    res = await unified_provider_manager.execute(exec_req)
+    # TASK-REL-043: best-suitable selection. A named model the gateway
+    # does not have is never forwarded verbatim — it can only 404 at the
+    # provider and be replaced by ladder accident — so the route selects
+    # the best suitable verified-catalogue model up front. Catalogue
+    # models execute under their own name exactly as before; `selection`
+    # stays None for them unless their route degrades (bounded retry
+    # below). `exec_provider` above remains the REQUESTED route and is
+    # what the degraded response below reports as `requested_provider`.
+    selection: dict[str, Any] | None = None
+    attempt_model = req.model
+    attempt_provider = exec_provider
+    if req.model != "auto" and req.model.lower() not in _CATALOG_PROVIDERS:
+        selection = _select_best_suitable(req)
+        if selection is not None:
+            attempt_model = selection["model"]
+            attempt_provider = selection["provider"]
+
+    async def _execute_once(model: str, provider: str):
+        return await unified_provider_manager.execute(
+            UnifiedExecutionRequest(
+                provider=provider,  # type: ignore[arg-type]  # pydantic validates the Literal at runtime
+                model=None if model == "auto" else model,
+                agent_role="system_architect",
+                prompt=f"{system_instruction}\n\n{prompt}",
+                temperature=exec_temp,
+                max_tokens=exec_tokens,
+                fast_lane=True if model == "auto" else False,
+            )
+        )
+
+    res = await _execute_once(attempt_model, attempt_provider)
+    if res.degraded and req.model != "auto":
+        # One bounded policy retry: the best suitable catalogue model
+        # that has not been tried yet (for a catalogue request, the
+        # requested model itself is excluded). Only a successful retry
+        # is served; otherwise the first degraded result stands and the
+        # honest 503 below reports it — best-suitable service first,
+        # refusal only when nothing suitable could answer.
+        retry = _select_best_suitable(
+            req, exclude={req.model.lower(), attempt_model.lower()}
+        )
+        if retry is not None:
+            retry_res = await _execute_once(retry["model"], retry["provider"])
+            if not retry_res.degraded:
+                res = retry_res
+                selection = retry
     if res.degraded:
         # TASK-REL-030: a degraded unified result means NO model answered.
         # The pre-fix handler returned it as HTTP 200 with an empty
@@ -1058,6 +1340,18 @@ async def chat_completions(req: ChatCompletionRequest):
             "served_by_policy": bool(res.served_by_policy),
             "fallback_reason": res.fallback_reason,
         }
+        if selection is not None:
+            # TASK-REL-043: this substitute was CHOSEN by the suitability
+            # policy, not reached by ladder accident — record the basis,
+            # the model the policy picked (the gateway ladder may still
+            # have moved on from it; served_by_model above is the truth
+            # about what answered), and the explicit downgrade flag when
+            # the best available suitable model is a weaker class than
+            # the caller asked for.
+            body["provenance"]["selected_as"] = selection["selected_as"]
+            body["provenance"]["selected_model"] = selection["model"]
+            body["provenance"]["downgrade"] = selection["downgrade"]
+            body["provenance"]["downgrade_reason"] = selection["downgrade_reason"]
     return body
 
 

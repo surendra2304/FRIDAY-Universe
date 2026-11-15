@@ -91,7 +91,12 @@ def boundary():
     # _provider_for_model (TASK-REL-032), which reads the real MODEL_CATALOG /
     # _CATALOG_PROVIDERS tables; all three are extracted as actual source so
     # the route under test executes the same routing code as production.
-    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'MODEL_CATALOG', '_CATALOG_PROVIDERS', '_provider_for_model', 'ChatMessage', 'ChatCompletionRequest', 'chat_completions'})
+    # TASK-REL-043: chat_completions also runs the best-suitable selection
+    # (_select_best_suitable and its helpers/tables) for non-catalogue ids;
+    # every module-level name that path reads is extracted too, per the
+    # REL-042 lesson — a helper an extracted symbol depends on joins the
+    # extraction set in the same PR that introduces the dependency.
+    nodes += actual_nodes('Inference/app/api/v1_core_routes.py', {'MODEL_CATALOG', '_CATALOG_PROVIDERS', '_provider_for_model', 'MODEL_CLASS_TIERS', 'MODEL_CLASSES', 'MODEL_SUITABILITY', '_CODE_HINTS', '_REASONING_HINTS', '_LONG_CONTEXT_MIN_CHARS', '_FLAGSHIP_SIZE_HINTS', '_ECONOMY_SIZE_HINTS', '_FLAGSHIP_NAME_HINTS', '_ECONOMY_NAME_HINTS', '_infer_task_type', '_requested_class', '_provider_available', '_ranked_suitable_models', '_select_best_suitable', 'ChatMessage', 'ChatCompletionRequest', 'chat_completions'})
     # Only trusted, tracked repository code; no user/network input is executed.
     exec(compile(ast.Module(body=nodes, type_ignores=[]), 'actual_inference_source', 'exec'), context)  # noqa: S102
     manager = context['UnifiedProviderManager']()
@@ -110,12 +115,46 @@ def completion(b, model='llama-3.3-70b-versatile'):
     return asyncio.run(b.c['chat_completions'](req))
 
 
-def test_nonstream_route_forwards_the_explicit_model_to_policy_gateway(boundary):
-    completion(boundary)
-    assert boundary.calls[0]['request'].model == 'llama-3.3-70b-versatile'
+def test_nonstream_route_forwards_an_explicit_catalogue_model_verbatim(boundary):
+    # TASK-REL-043 DISCLOSURE (same pattern as the REL-042 assertion
+    # update in this file): this test previously asserted that the
+    # RETIRED id llama-3.3-70b-versatile was forwarded to the policy
+    # gateway untouched. That was the TASK-REL-032 contract. The owner's
+    # 2026-11-15 policy — "Inference should give the best suitable model
+    # from the models it have" — supersedes it for non-catalogue ids:
+    # forwarding a dead id only guarantees a provider 404 and a
+    # ladder-accident substitute (observed live: a free-tier lightweight
+    # answering a 70B request). The verbatim-forwarding guarantee now
+    # covers catalogue ids and is asserted here with one; the retired-id
+    # behaviour is asserted by the next test. Nothing is skipped or
+    # loosened: the gateway call's model, provider, stage and token
+    # budget are all still pinned exactly.
+    completion(boundary, 'qwen/qwen3.8-27b')
+    assert boundary.calls[0]['request'].model == 'qwen/qwen3.8-27b'
     assert boundary.calls[0]['provider_name'] == 'groq'
     assert boundary.calls[0]['stage_name'] == 'unified_direct'
     assert boundary.calls[0]['request'].max_tokens == 2400
+
+
+def test_retired_model_is_replaced_by_best_suitable_with_provenance(boundary):
+    # TASK-REL-043: llama-3.3-70b-versatile is not in the verified
+    # catalogue, so the route selects the best suitable catalogue model
+    # for the task (plain chat -> gemini-3.8-flash) BEFORE execution —
+    # the dead id itself never reaches the gateway — and discloses the
+    # substitution, its basis and the (absent) downgrade in provenance.
+    result = completion(boundary)
+    assert boundary.calls[0]['request'].model == 'gemini-3.8-flash'
+    assert boundary.calls[0]['provider_name'] == 'gemini'
+    assert boundary.calls[0]['stage_name'] == 'unified_direct'
+    assert result['model'] == 'gemini-3.8-flash'
+    provenance = result['provenance']
+    assert provenance['requested_model'] == 'llama-3.3-70b-versatile'
+    assert provenance['selected_as'] == 'best_suitable_for_chat'
+    assert provenance['selected_model'] == 'gemini-3.8-flash'
+    # A 70B (flagship-class) request served by the flagship catalogue
+    # model is a substitution, not a downgrade.
+    assert provenance['downgrade'] is False
+    assert provenance['downgrade_reason'] is None
 
 
 def test_gpt_oss_models_route_to_groq_not_openai(boundary):
@@ -130,11 +169,19 @@ def test_gpt_oss_models_route_to_groq_not_openai(boundary):
 
 
 def test_two_advertised_groq_models_do_not_share_cache_or_provider_request(boundary):
-    first = completion(boundary, 'llama-3.3-70b-versatile')
-    second = completion(boundary, 'llama-3.1-8b-instant')
+    # TASK-REL-043 DISCLOSURE: this test previously used the retired ids
+    # llama-3.3-70b-versatile / llama-3.1-8b-instant. Under the owner's
+    # best-suitable policy both retired ids now select the SAME
+    # substitute, so they can no longer demonstrate per-model cache
+    # isolation. The guarantee itself — two advertised Groq models never
+    # share a cache entry or a provider request, and each response
+    # reports its own model — is unchanged and asserted here with the
+    # two advertised Groq catalogue models.
+    first = completion(boundary, 'openai/gpt-oss-120b')
+    second = completion(boundary, 'qwen/qwen3.8-27b')
     assert len(boundary.calls) == 2
-    assert first['model'] == 'llama-3.3-70b-versatile'
-    assert second['model'] == 'llama-3.1-8b-instant'
+    assert first['model'] == 'openai/gpt-oss-120b'
+    assert second['model'] == 'qwen/qwen3.8-27b'
 
 
 def test_role_defaults_cannot_overwrite_explicit_model(boundary):
