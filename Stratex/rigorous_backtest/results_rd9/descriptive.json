@@ -1,0 +1,833 @@
+{
+ "per_symbol_always_on_era": {
+  "BTCUSDT": {
+   "symbol": "BTCUSDT",
+   "pos": {
+    "gross_funding_pct": 16.9545383970053,
+    "basis_pct": 0.08508569344839557,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 16.659624090453697,
+    "annualised_net_pct": 7.133561194652067
+   },
+   "neg": {
+    "gross_funding_pct": -16.9545383970053,
+    "basis_pct": -0.08508569344839557,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -34.4796240904537,
+    "annualised_net_pct": -14.7639890961761
+   }
+  },
+  "ETHUSDT": {
+   "symbol": "ETHUSDT",
+   "pos": {
+    "gross_funding_pct": 10.25425620215467,
+    "basis_pct": -0.009016450659653577,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 9.865239751495015,
+    "annualised_net_pct": 4.2242424610006495
+   },
+   "neg": {
+    "gross_funding_pct": -10.25425620215467,
+    "basis_pct": 0.009016450659653577,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -27.685239751495015,
+    "annualised_net_pct": -11.854670362524683
+   }
+  },
+  "SOLUSDT": {
+   "symbol": "SOLUSDT",
+   "pos": {
+    "gross_funding_pct": 5.911863596787408,
+    "basis_pct": 0.049109883364019176,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 5.580973480151427,
+    "annualised_net_pct": 2.3897427475091546
+   },
+   "neg": {
+    "gross_funding_pct": -5.911863596787408,
+    "basis_pct": -0.049109883364019176,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -23.400973480151425,
+    "annualised_net_pct": -10.020170649033187
+   }
+  },
+  "BNBUSDT": {
+   "symbol": "BNBUSDT",
+   "pos": {
+    "gross_funding_pct": 2.471502712710451,
+    "basis_pct": 0.03607007901065551,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 2.1275727917211062,
+    "annualised_net_pct": 0.9110151959860892
+   },
+   "neg": {
+    "gross_funding_pct": -2.471502712710451,
+    "basis_pct": -0.03607007901065551,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -19.947572791721107,
+    "annualised_net_pct": -8.541443097510124
+   }
+  },
+  "XRPUSDT": {
+   "symbol": "XRPUSDT",
+   "pos": {
+    "gross_funding_pct": 33.00955374627175,
+    "basis_pct": 0.08401596303296702,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 32.71356970930472,
+    "annualised_net_pct": 14.007774134025263
+   },
+   "neg": {
+    "gross_funding_pct": -33.00955374627175,
+    "basis_pct": -0.08401596303296702,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -50.533569709304714,
+    "annualised_net_pct": -21.638202035549295
+   }
+  },
+  "DOGEUSDT": {
+   "symbol": "DOGEUSDT",
+   "pos": {
+    "gross_funding_pct": 20.278840526670873,
+    "basis_pct": 0.008033419023144282,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 19.906873945694016,
+    "annualised_net_pct": 8.524016071119274
+   },
+   "neg": {
+    "gross_funding_pct": -20.278840526670873,
+    "basis_pct": -0.008033419023144282,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -37.72687394569401,
+    "annualised_net_pct": -16.154443972643303
+   }
+  },
+  "ADAUSDT": {
+   "symbol": "ADAUSDT",
+   "pos": {
+    "gross_funding_pct": 17.727837388379104,
+    "basis_pct": 0.025484199796116522,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 17.373321588175223,
+    "annualised_net_pct": 7.439162614397421
+   },
+   "neg": {
+    "gross_funding_pct": -17.727837388379104,
+    "basis_pct": -0.025484199796116522,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -35.19332158817522,
+    "annualised_net_pct": -15.069590515921455
+   }
+  },
+  "LTCUSDT": {
+   "symbol": "LTCUSDT",
+   "pos": {
+    "gross_funding_pct": 15.693235336343223,
+    "basis_pct": 0.013278449077145147,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 15.326513785420367,
+    "annualised_net_pct": 6.562730551142778
+   },
+   "neg": {
+    "gross_funding_pct": -15.693235336343223,
+    "basis_pct": -0.013278449077145147,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -33.14651378542037,
+    "annualised_net_pct": -14.193158452666811
+   }
+  },
+  "LINKUSDT": {
+   "symbol": "LINKUSDT",
+   "pos": {
+    "gross_funding_pct": 15.205258118058904,
+    "basis_pct": 0.09803235067571842,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 14.92329046873462,
+    "annualised_net_pct": 6.390072501413036
+   },
+   "neg": {
+    "gross_funding_pct": -15.205258118058904,
+    "basis_pct": -0.09803235067571842,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -32.74329046873462,
+    "annualised_net_pct": -14.02050040293707
+   }
+  },
+  "DOTUSDT": {
+   "symbol": "DOTUSDT",
+   "pos": {
+    "gross_funding_pct": 5.0544948120836795,
+    "basis_pct": -0.02574416733708486,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 4.6487506447465945,
+    "annualised_net_pct": 1.990569956616288
+   },
+   "neg": {
+    "gross_funding_pct": -5.0544948120836795,
+    "basis_pct": 0.02574416733708486,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -22.468750644746592,
+    "annualised_net_pct": -9.62099785814032
+   }
+  },
+  "TRXUSDT": {
+   "symbol": "TRXUSDT",
+   "pos": {
+    "gross_funding_pct": -21.075178785324766,
+    "basis_pct": 0.1844426623897195,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": -21.270736122935045,
+    "annualised_net_pct": -9.108014500471308
+   },
+   "neg": {
+    "gross_funding_pct": 21.075178785324766,
+    "basis_pct": -0.1844426623897195,
+    "costs_pct": 17.439999999999998,
+    "net_pct": 3.450736122935048,
+    "annualised_net_pct": 1.4775865989472758
+   }
+  },
+  "AVAXUSDT": {
+   "symbol": "AVAXUSDT",
+   "pos": {
+    "gross_funding_pct": 3.986326639407334,
+    "basis_pct": 0.03405994550410462,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 3.6403865849114387,
+    "annualised_net_pct": 1.5587939040315393
+   },
+   "neg": {
+    "gross_funding_pct": -3.986326639407334,
+    "basis_pct": -0.03405994550410462,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -21.460386584911436,
+    "annualised_net_pct": -9.189221805555572
+   }
+  },
+  "NEARUSDT": {
+   "symbol": "NEARUSDT",
+   "pos": {
+    "gross_funding_pct": 7.095735623868784,
+    "basis_pct": 0.07541478129712592,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 6.79115040516591,
+    "annualised_net_pct": 2.9079339806410887
+   },
+   "neg": {
+    "gross_funding_pct": -7.095735623868784,
+    "basis_pct": -0.07541478129712592,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -24.61115040516591,
+    "annualised_net_pct": -10.538361882165121
+   }
+  },
+  "ATOMUSDT": {
+   "symbol": "ATOMUSDT",
+   "pos": {
+    "gross_funding_pct": -4.746561341304057,
+    "basis_pct": 0.014852220406955798,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": -5.111709120897101,
+    "annualised_net_pct": -2.1888062794931606
+   },
+   "neg": {
+    "gross_funding_pct": 4.746561341304057,
+    "basis_pct": -0.014852220406955798,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -12.708290879102897,
+    "annualised_net_pct": -5.441621622030872
+   }
+  },
+  "UNIUSDT": {
+   "symbol": "UNIUSDT",
+   "pos": {
+    "gross_funding_pct": 13.236952322539006,
+    "basis_pct": 0.16137708445401364,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 13.018329406993018,
+    "annualised_net_pct": 5.574378447718875
+   },
+   "neg": {
+    "gross_funding_pct": -13.236952322539006,
+    "basis_pct": -0.16137708445401364,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -30.83832940699302,
+    "annualised_net_pct": -13.204806349242908
+   }
+  },
+  "ETCUSDT": {
+   "symbol": "ETCUSDT",
+   "pos": {
+    "gross_funding_pct": 10.138437060954097,
+    "basis_pct": -0.05065428450824823,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 9.707782776445848,
+    "annualised_net_pct": 4.1568202334077915
+   },
+   "neg": {
+    "gross_funding_pct": -10.138437060954097,
+    "basis_pct": 0.05065428450824823,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -27.527782776445846,
+    "annualised_net_pct": -11.787248134931824
+   }
+  },
+  "BCHUSDT": {
+   "symbol": "BCHUSDT",
+   "pos": {
+    "gross_funding_pct": -5.641359447157344,
+    "basis_pct": -0.0076142131979626175,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": -6.028973660355306,
+    "annualised_net_pct": -2.5815740087277557
+   },
+   "neg": {
+    "gross_funding_pct": 5.641359447157344,
+    "basis_pct": 0.0076142131979626175,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -11.791026339644691,
+    "annualised_net_pct": -5.048853892796276
+   }
+  },
+  "FILUSDT": {
+   "symbol": "FILUSDT",
+   "pos": {
+    "gross_funding_pct": 8.05341899368314,
+    "basis_pct": -0.05133928571429493,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 7.622079707968845,
+    "annualised_net_pct": 3.2637334271226504
+   },
+   "neg": {
+    "gross_funding_pct": -8.05341899368314,
+    "basis_pct": 0.05133928571429493,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -25.442079707968844,
+    "annualised_net_pct": -10.894161328646684
+   }
+  },
+  "APTUSDT": {
+   "symbol": "APTUSDT",
+   "pos": {
+    "gross_funding_pct": 2.1243668626130274,
+    "basis_pct": -0.08898305084745096,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 1.6553838117655764,
+    "annualised_net_pct": 0.7088264211575344
+   },
+   "neg": {
+    "gross_funding_pct": -2.1243668626130274,
+    "basis_pct": 0.08898305084745096,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -19.475383811765575,
+    "annualised_net_pct": -8.339254322681567
+   }
+  },
+  "ARBUSDT": {
+   "symbol": "ARBUSDT",
+   "pos": {
+    "gross_funding_pct": 7.850493314341035,
+    "basis_pct": -0.03242299538594924,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 7.438070318955086,
+    "annualised_net_pct": 3.1849415990601937
+   },
+   "neg": {
+    "gross_funding_pct": -7.850493314341035,
+    "basis_pct": 0.03242299538594924,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -25.258070318955085,
+    "annualised_net_pct": -10.815369500584227
+   }
+  },
+  "OPUSDT": {
+   "symbol": "OPUSDT",
+   "pos": {
+    "gross_funding_pct": 7.698269359628399,
+    "basis_pct": -0.020521353300054435,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 7.297748006328344,
+    "annualised_net_pct": 3.1248563415139836
+   },
+   "neg": {
+    "gross_funding_pct": -7.698269359628399,
+    "basis_pct": 0.020521353300054435,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -25.11774800632834,
+    "annualised_net_pct": -10.755284243038016
+   }
+  },
+  "INJUSDT": {
+   "symbol": "INJUSDT",
+   "pos": {
+    "gross_funding_pct": 4.074788734593997,
+    "basis_pct": -0.06799830004249144,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 3.6267904345515056,
+    "annualised_net_pct": 1.5529721057678048
+   },
+   "neg": {
+    "gross_funding_pct": -4.074788734593997,
+    "basis_pct": 0.06799830004249144,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -21.446790434551502,
+    "annualised_net_pct": -9.183400007291837
+   }
+  },
+  "SUIUSDT": {
+   "symbol": "SUIUSDT",
+   "pos": {
+    "gross_funding_pct": 24.42598928740399,
+    "basis_pct": -0.012193634922582613,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 24.03379565248141,
+    "annualised_net_pct": 10.291141690584801
+   },
+   "neg": {
+    "gross_funding_pct": -24.42598928740399,
+    "basis_pct": 0.012193634922582613,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -41.85379565248141,
+    "annualised_net_pct": -17.921569592108835
+   }
+  },
+  "XLMUSDT": {
+   "symbol": "XLMUSDT",
+   "pos": {
+    "gross_funding_pct": 6.61540699101865,
+    "basis_pct": -0.15334063526834746,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 6.082066355750303,
+    "annualised_net_pct": 2.6043080145812407
+   },
+   "neg": {
+    "gross_funding_pct": -6.61540699101865,
+    "basis_pct": 0.15334063526834746,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -23.9020663557503,
+    "annualised_net_pct": -10.234735916105272
+   }
+  },
+  "HBARUSDT": {
+   "symbol": "HBARUSDT",
+   "pos": {
+    "gross_funding_pct": 17.216068308604925,
+    "basis_pct": -0.013037809647992176,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 16.823030498956932,
+    "annualised_net_pct": 7.20353093756626
+   },
+   "neg": {
+    "gross_funding_pct": -17.216068308604925,
+    "basis_pct": 0.013037809647992176,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -34.64303049895693,
+    "annualised_net_pct": -14.833958839090293
+   }
+  },
+  "ALGOUSDT": {
+   "symbol": "ALGOUSDT",
+   "pos": {
+    "gross_funding_pct": 11.32203261231844,
+    "basis_pct": 0.006920415224920417,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 10.948953027543359,
+    "annualised_net_pct": 4.688282641629791
+   },
+   "neg": {
+    "gross_funding_pct": -11.32203261231844,
+    "basis_pct": -0.006920415224920417,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -28.76895302754336,
+    "annualised_net_pct": -12.318710543153825
+   }
+  },
+  "VETUSDT": {
+   "symbol": "VETUSDT",
+   "pos": {
+    "gross_funding_pct": 14.650749724383946,
+    "basis_pct": -0.022404779686342535,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 14.248344944697603,
+    "annualised_net_pct": 6.1010644678203985
+   },
+   "neg": {
+    "gross_funding_pct": -14.650749724383946,
+    "basis_pct": 0.022404779686342535,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -32.0683449446976,
+    "annualised_net_pct": -13.73149236934443
+   }
+  },
+  "SANDUSDT": {
+   "symbol": "SANDUSDT",
+   "pos": {
+    "gross_funding_pct": 8.109574264152114,
+    "basis_pct": -0.06940253470125302,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 7.6601717294508616,
+    "annualised_net_pct": 3.2800442253012045
+   },
+   "neg": {
+    "gross_funding_pct": -8.109574264152114,
+    "basis_pct": 0.06940253470125302,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -25.48017172945086,
+    "annualised_net_pct": -10.910472126825237
+   }
+  },
+  "MANAUSDT": {
+   "symbol": "MANAUSDT",
+   "pos": {
+    "gross_funding_pct": 8.565362861840207,
+    "basis_pct": -0.026540843409034058,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 8.158822018431172,
+    "annualised_net_pct": 3.4935635899554347
+   },
+   "neg": {
+    "gross_funding_pct": -8.565362861840207,
+    "basis_pct": 0.026540843409034058,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -25.978822018431174,
+    "annualised_net_pct": -11.123991491479469
+   }
+  },
+  "AAVEUSDT": {
+   "symbol": "AAVEUSDT",
+   "pos": {
+    "gross_funding_pct": 24.99214734671037,
+    "basis_pct": 0.19501180334598966,
+    "costs_pct": 0.38000000000000006,
+    "net_pct": 24.80715915005636,
+    "annualised_net_pct": 10.622291769704674
+   },
+   "neg": {
+    "gross_funding_pct": -24.99214734671037,
+    "basis_pct": -0.19501180334598966,
+    "costs_pct": 17.439999999999998,
+    "net_pct": -42.62715915005636,
+    "annualised_net_pct": -18.252719671228704
+   }
+  }
+ },
+ "always_pos_portfolio": {
+  "symbols_in_curve": 30,
+  "days": 853,
+  "final_net_pct_incl_entry_exit_costs": 9.34247920607208,
+  "max_drawdown_pct_points": -1.1825629597525786
+ },
+ "always_neg_portfolio_note": "NEG curve additionally carries borrow drag not in the mirrored series; see per-symbol table for NEG nets.",
+ "always_neg_portfolio_mirrored_ex_borrow": {
+  "max_drawdown_pct_points": -10.395501832180825
+ },
+ "funding_print_census": {
+  "BTCUSDT": {
+   "prints": 2558,
+   "negative_share": 0.17474589523064896,
+   "longest_negative_streak_prints": 18,
+   "mean_rate_pct": 0.004604334245504301
+  },
+  "ETHUSDT": {
+   "prints": 2558,
+   "negative_share": 0.18999218139171228,
+   "longest_negative_streak_prints": 16,
+   "mean_rate_pct": 0.004449586786551994
+  },
+  "SOLUSDT": {
+   "prints": 2558,
+   "negative_share": 0.36825645035183735,
+   "longest_negative_streak_prints": 22,
+   "mean_rate_pct": 0.001511558639562158
+  },
+  "BNBUSDT": {
+   "prints": 2558,
+   "negative_share": 0.09773260359655982,
+   "longest_negative_streak_prints": 20,
+   "mean_rate_pct": 0.0007373029710711492
+  },
+  "XRPUSDT": {
+   "prints": 2558,
+   "negative_share": 0.31039874902267395,
+   "longest_negative_streak_prints": 16,
+   "mean_rate_pct": 0.003289404222048476
+  },
+  "DOGEUSDT": {
+   "prints": 2558,
+   "negative_share": 0.24784988272087569,
+   "longest_negative_streak_prints": 13,
+   "mean_rate_pct": 0.00458735652853792
+  },
+  "ADAUSDT": {
+   "prints": 2558,
+   "negative_share": 0.2670054730258014,
+   "longest_negative_streak_prints": 11,
+   "mean_rate_pct": 0.004016102032838155
+  },
+  "LTCUSDT": {
+   "prints": 2558,
+   "negative_share": 0.20680218921032056,
+   "longest_negative_streak_prints": 8,
+   "mean_rate_pct": 0.005174834636434715
+  },
+  "LINKUSDT": {
+   "prints": 2558,
+   "negative_share": 0.191164972634871,
+   "longest_negative_streak_prints": 13,
+   "mean_rate_pct": 0.005415131352619235
+  },
+  "DOTUSDT": {
+   "prints": 2558,
+   "negative_share": 0.33620015637216577,
+   "longest_negative_streak_prints": 29,
+   "mean_rate_pct": 0.0005295211102423776
+  },
+  "TRXUSDT": {
+   "prints": 2558,
+   "negative_share": 0.46051602814698983,
+   "longest_negative_streak_prints": 56,
+   "mean_rate_pct": -0.0037414648162627045
+  },
+  "AVAXUSDT": {
+   "prints": 2558,
+   "negative_share": 0.37568412822517594,
+   "longest_negative_streak_prints": 48,
+   "mean_rate_pct": 0.0008628150899139956
+  },
+  "NEARUSDT": {
+   "prints": 2558,
+   "negative_share": 0.2642689601250977,
+   "longest_negative_streak_prints": 11,
+   "mean_rate_pct": 0.0036691293979671624
+  },
+  "ATOMUSDT": {
+   "prints": 2558,
+   "negative_share": 0.555512118842846,
+   "longest_negative_streak_prints": 79,
+   "mean_rate_pct": -0.005929175136825645
+  },
+  "UNIUSDT": {
+   "prints": 2558,
+   "negative_share": 0.17005473025801407,
+   "longest_negative_streak_prints": 10,
+   "mean_rate_pct": 0.0057612091477716966
+  },
+  "ETCUSDT": {
+   "prints": 2558,
+   "negative_share": 0.2310398749022674,
+   "longest_negative_streak_prints": 14,
+   "mean_rate_pct": 0.00463571383893667
+  },
+  "BCHUSDT": {
+   "prints": 2558,
+   "negative_share": 0.4890539483971853,
+   "longest_negative_streak_prints": 39,
+   "mean_rate_pct": -0.0027873643471462086
+  },
+  "FILUSDT": {
+   "prints": 2558,
+   "negative_share": 0.2619233776387803,
+   "longest_negative_streak_prints": 18,
+   "mean_rate_pct": 0.0031344116497263493
+  },
+  "APTUSDT": {
+   "prints": 2558,
+   "negative_share": 0.4311962470680219,
+   "longest_negative_streak_prints": 174,
+   "mean_rate_pct": -0.0046601939014855355
+  },
+  "ARBUSDT": {
+   "prints": 2558,
+   "negative_share": 0.25254104769351055,
+   "longest_negative_streak_prints": 16,
+   "mean_rate_pct": 0.0043880046911649725
+  },
+  "OPUSDT": {
+   "prints": 2558,
+   "negative_share": 0.2830336200156372,
+   "longest_negative_streak_prints": 13,
+   "mean_rate_pct": 0.003263268960125098
+  },
+  "INJUSDT": {
+   "prints": 2558,
+   "negative_share": 0.39601250977326036,
+   "longest_negative_streak_prints": 27,
+   "mean_rate_pct": -0.0018404370602032837
+  },
+  "SUIUSDT": {
+   "prints": 2558,
+   "negative_share": 0.2947615324472244,
+   "longest_negative_streak_prints": 15,
+   "mean_rate_pct": 0.003040861219702893
+  },
+  "XLMUSDT": {
+   "prints": 2558,
+   "negative_share": 0.3936669272869429,
+   "longest_negative_streak_prints": 25,
+   "mean_rate_pct": 0.00043738663017982825
+  },
+  "HBARUSDT": {
+   "prints": 2558,
+   "negative_share": 0.3017982799061767,
+   "longest_negative_streak_prints": 20,
+   "mean_rate_pct": 0.00302196520719312
+  },
+  "ALGOUSDT": {
+   "prints": 2558,
+   "negative_share": 0.31118060985144647,
+   "longest_negative_streak_prints": 14,
+   "mean_rate_pct": 0.0023147642689601254
+  },
+  "VETUSDT": {
+   "prints": 2558,
+   "negative_share": 0.17396403440187647,
+   "longest_negative_streak_prints": 10,
+   "mean_rate_pct": 0.005832734558248632
+  },
+  "SANDUSDT": {
+   "prints": 2558,
+   "negative_share": 0.33502736512900705,
+   "longest_negative_streak_prints": 44,
+   "mean_rate_pct": -0.004314498827208757
+  },
+  "MANAUSDT": {
+   "prints": 2558,
+   "negative_share": 0.31782642689601254,
+   "longest_negative_streak_prints": 17,
+   "mean_rate_pct": 0.0020631465989053954
+  },
+  "AAVEUSDT": {
+   "prints": 2558,
+   "negative_share": 0.23025801407349492,
+   "longest_negative_streak_prints": 15,
+   "mean_rate_pct": 0.0043690879593432375
+  }
+ },
+ "worst_episodes": [
+  {
+   "cell": "always_pos",
+   "symbol": "SANDUSDT",
+   "fold": "W5",
+   "entry": "2026-07-01T00:00:00+00:00",
+   "exit": "2026-11-01T00:00:00+00:00",
+   "days": 123,
+   "funding_pct": -20.404603060176125,
+   "basis_pct": 0.10745755426605305,
+   "pnl_pct": -20.677145505910072,
+   "max_adverse_pct": 89.40012900451515
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "XRPUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -11.051818932157097,
+   "basis_pct": 0.021003990758241754,
+   "pnl_pct": -15.090814941398856,
+   "max_adverse_pct": 19.91596638655462
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "XLMUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -10.93053919682366,
+   "basis_pct": -0.010952902519178534,
+   "pnl_pct": -15.001492099342839,
+   "max_adverse_pct": 17.003071522597637
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "DOGEUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -10.588504826719152,
+   "basis_pct": -0.12050128534707504,
+   "pnl_pct": -14.769006112066227,
+   "max_adverse_pct": 35.387705905986344
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "ADAUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -8.445507861620802,
+   "basis_pct": -0.07645259938835663,
+   "pnl_pct": -12.58196046100916,
+   "max_adverse_pct": 29.900586286005606
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "AAVEUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -8.02624731910088,
+   "basis_pct": -0.10263779123472679,
+   "pnl_pct": -12.188885110335608,
+   "max_adverse_pct": 27.379119186941793
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "HBARUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -7.684675602346819,
+   "basis_pct": -0.16949152542375356,
+   "pnl_pct": -11.914167127770572,
+   "max_adverse_pct": 45.798538622129435
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "APTUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -7.753582558827704,
+   "basis_pct": 0.12853107344630413,
+   "pnl_pct": -11.685051485381399,
+   "max_adverse_pct": 39.27612045808002
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "SUIUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -7.29355640531641,
+   "basis_pct": -0.21948542860624332,
+   "pnl_pct": -11.573041833922654,
+   "max_adverse_pct": 43.587553386211106
+  },
+  {
+   "cell": "always_neg",
+   "symbol": "VETUSDT",
+   "fold": "W1",
+   "entry": "2024-07-01T00:00:00+00:00",
+   "exit": "2025-01-01T00:00:00+00:00",
+   "days": 184,
+   "funding_pct": -7.414890129910439,
+   "basis_pct": -0.02240477968631662,
+   "pnl_pct": -11.497294909596755,
+   "max_adverse_pct": 29.464285714285722
+  }
+ ],
+ "adverse_excursion_all_episodes": {
+  "median_pct": 20.111955856337875,
+  "p95_pct": 109.54125991363932,
+  "max_pct": 598.343571741992
+ }
+}
