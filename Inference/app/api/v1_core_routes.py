@@ -1326,6 +1326,20 @@ async def chat_completions(req: ChatCompletionRequest):
     created = int(time.time())
     cmpl_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
     usage = res.token_usage or {}
+    usage_block: dict[str, Any] = {
+        "prompt_tokens": usage.get("prompt_tokens", 0),
+        "completion_tokens": usage.get("completion_tokens", 0),
+        "total_tokens": usage.get("total_tokens", 0),
+    }
+    if usage.get("reasoning_tokens") is not None:
+        # TASK-INF-009: OpenAI-shaped detail. completion_tokens above
+        # counts VISIBLE output; reasoning_tokens is the hidden thinking
+        # share, already included in total_tokens. Reporting it closes
+        # the previously unexplained gap between the three numbers (and
+        # is how a still-truncated answer's cost stays attributable).
+        usage_block["completion_tokens_details"] = {
+            "reasoning_tokens": usage["reasoning_tokens"]
+        }
     body: dict[str, Any] = {
         "id": cmpl_id,
         "object": "chat.completion",
@@ -1342,11 +1356,7 @@ async def chat_completions(req: ChatCompletionRequest):
                 "finish_reason": res.finish_reason,
             }
         ],
-        "usage": {
-            "prompt_tokens": usage.get("prompt_tokens", 0),
-            "completion_tokens": usage.get("completion_tokens", 0),
-            "total_tokens": usage.get("total_tokens", 0),
-        },
+        "usage": usage_block,
     }
     # TASK-REL-030: fallback substitution is legitimate gateway behaviour,
     # but it must never be silent. When a different provider or model than

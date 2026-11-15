@@ -80,6 +80,13 @@ class ProviderResponse(BaseModel):
     prompt_tokens: int | None = 0
     completion_tokens: int | None = 0
     total_tokens: int | None = 0
+    # Hidden reasoning/thinking tokens reported by the provider (e.g.
+    # Gemini's usageMetadata.thoughtsTokenCount); None when the provider
+    # does not report them. completion_tokens counts *visible* output
+    # only — a provider's total_tokens may include reasoning tokens, and
+    # until TASK-INF-009 the Gemini adapter never read this field, so
+    # the burn was invisible while it consumed callers' output budgets.
+    reasoning_tokens: int | None = None
     latency_seconds: float = 0.0
     finish_reason: str | None = "stop"
     raw_response: dict[str, Any] | None = None
