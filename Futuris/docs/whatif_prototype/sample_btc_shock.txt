@@ -1,0 +1,23 @@
+WHAT-IF (prototype) — target: BTCUSDT
+engine: futuris.scenarios.whatif@v1-prototype
+evidence_class: synthetic | evidence_source: caller_supplied_example_base_path (illustrative sample); +futuris.scenarios.whatif@v1-prototype shock transform
+probability: None (not_recomputed_by_whatif_engine)
+prediction_is_not_authorization: true
+
+ASSUMPTIONS (declared by the caller, not estimated by this engine):
+  - shock 'btc_crash_20': driver BTC -20%, declared elasticity 1 (% target move per 1% driver move), onset step 2, ramp 2 step(s), permanent after ramp
+  - shock 'rate_hike_1pp': driver policy_rate +1pp, declared elasticity -1.5 (% target move per 1pp driver move), onset step 3, ramp 1 step(s), permanent after ramp
+  - elasticities are caller-declared assumptions; this engine does not estimate them from data and does not validate them against history
+  - shock contributions add linearly in percentage terms per step and the total is applied multiplicatively to the base central value
+  - band widening: each half-width grows by 0.5 x |total effect %| / 100 of itself per step (declared)
+  - probability is not recomputed by this engine; the base forecast's probability is carried verbatim (or null)
+  - non-negativity floor declared: adjusted values are clamped at 0 before the band-ordering check
+  - caller note: SAMPLE OUTPUT — illustrative base path and declared elasticities; not a measured forecast.
+
+step | base central -> adjusted central (effect %) | base band -> adjusted band
+1 | 100000.0000 -> 100000.0000 (+0.00%) | [96000.0000, 104000.0000] -> [96000.0000, 104000.0000]
+2 | 101500.0000 -> 91350.0000 (-10.00%) | [97440.0000, 105560.0000] -> [87513.3000, 95186.7000]
+3 | 103000.0000 -> 80855.0000 (-21.50%) | [98880.0000, 107120.0000] -> [77273.1235, 84436.8765]
+4 | 104200.0000 -> 81797.0000 (-21.50%) | [100032.0000, 108368.0000] -> [78173.3929, 85420.6071]
+5 | 105000.0000 -> 82425.0000 (-21.50%) | [100800.0000, 109200.0000] -> [78773.5725, 86076.4275]
+6 | 106400.0000 -> 83524.0000 (-21.50%) | [102144.0000, 110656.0000] -> [79823.8868, 87224.1132]

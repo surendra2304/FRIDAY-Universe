@@ -1,0 +1,22 @@
+WHAT-IF (prototype) — target: energy_equity_basket
+engine: futuris.scenarios.whatif@v1-prototype
+evidence_class: synthetic | evidence_source: caller_supplied_example_base_path (illustrative sample); +futuris.scenarios.whatif@v1-prototype shock transform
+probability: None (not_recomputed_by_whatif_engine)
+prediction_is_not_authorization: true
+
+ASSUMPTIONS (declared by the caller, not estimated by this engine):
+  - shock 'oil_up_15': driver oil +15%, declared elasticity 0.4 (% target move per 1% driver move), onset step 1, ramp 1 step(s), linear decay to zero over 4 steps after ramp
+  - shock 'rate_hike_1pp': driver policy_rate +1pp, declared elasticity -2 (% target move per 1pp driver move), onset step 2, ramp 2 step(s), permanent after ramp
+  - elasticities are caller-declared assumptions; this engine does not estimate them from data and does not validate them against history
+  - shock contributions add linearly in percentage terms per step and the total is applied multiplicatively to the base central value
+  - band widening: each half-width grows by 0.5 x |total effect %| / 100 of itself per step (declared)
+  - probability is not recomputed by this engine; the base forecast's probability is carried verbatim (or null)
+  - caller note: SAMPLE OUTPUT — illustrative base path and declared elasticities; not a measured forecast.
+
+step | base central -> adjusted central (effect %) | base band -> adjusted band
+1 | 250.0000 -> 265.0000 (+6.00%) | [242.5000, 257.5000] -> [256.8115, 273.1885]
+2 | 252.0000 -> 260.8200 (+3.50%) | [244.4400, 259.5600] -> [252.8585, 268.7815]
+3 | 255.0000 -> 257.5500 (+1.00%) | [247.3500, 262.6500] -> [249.7849, 265.3151]
+4 | 257.0000 -> 255.7150 (-0.50%) | [249.2900, 264.7100] -> [248.0244, 263.4056]
+5 | 260.0000 -> 254.8000 (-2.00%) | [252.2000, 267.8000] -> [247.0796, 262.5204]
+6 | 262.0000 -> 256.7600 (-2.00%) | [254.1400, 269.8600] -> [248.9802, 264.5398]

@@ -20,6 +20,8 @@ from futuris.scenarios.engine import (
 )
 from futuris.scenarios.monte_carlo import DriverDistribution, MonteCarloScenarioEngine
 from futuris.scenarios.spec import ScenarioSpec
+from futuris.scenarios.whatif import WhatIfRequest, WhatIfResult
+from futuris.scenarios.whatif import apply_whatif as _apply_whatif
 from futuris.storage.repositories import ForecastRepository, ScenarioRepository
 
 logger = get_logger("futuris.api.scenarios")
@@ -301,3 +303,24 @@ async def forecast_fan_chart(
         logger.warning("fan_chart_stream_broadcast_failed", target=f.target, error=str(exc))
     return resp
 
+
+
+@fan_chart_router.post(
+    "/what-if",
+    response_model=WhatIfResult,
+    summary="Apply Declared Shocks to a Base Forecast Path (What-If Prototype)",
+)
+async def run_what_if(
+    req: WhatIfRequest,
+    user: AllowAnonymousRead = None,
+) -> WhatIfResult:
+    _ = user
+    """Apply caller-declared shocks to a base forecast path (TASK-FUT-009).
+
+    Prototype: a deterministic transform of the caller's base path. The
+    response prints every assumption (shocks, declared elasticities,
+    profiles), inherits the base evidence class without upgrading it, and
+    does not recompute the base probability. No DB, no model fitting, and
+    no statsforecast (post-ARM) involvement.
+    """
+    return _apply_whatif(req)
