@@ -861,6 +861,124 @@ button {
   line-height: 1.6;
 }
 
+/* ------------------------------------------------ galaxy (IG-WEB-03) */
+
+.galaxy-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 12px;
+}
+
+.galaxy-search input {
+  flex: 1;
+  background: var(--void-raise);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 12px;
+}
+
+.galaxy-search input::placeholder {
+  color: var(--faint);
+}
+
+.galaxy-match-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--dim);
+  flex: none;
+}
+
+.galaxy-canvas-wrap {
+  width: 100%;
+  border: 1px solid var(--hair-soft);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(99, 102, 241, 0.08), transparent 60%),
+    var(--void-raise);
+  overflow: hidden;
+}
+
+.galaxy-canvas {
+  display: block;
+  cursor: pointer;
+}
+
+.galaxy-readout {
+  min-height: 22px;
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  color: var(--dim);
+}
+
+.galaxy-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.galaxy-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.galaxy-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.galaxy-detail {
+  margin-top: 18px;
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--void-raise);
+}
+
+.galaxy-detail-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.galaxy-detail-cat {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.galaxy-detail-text {
+  margin: 10px 0 6px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.galaxy-detail-score {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
+.galaxy-detail-score b {
+  font-family: var(--font-mono);
+  color: var(--dim);
+}
+
+.galaxy-note {
+  margin-top: 16px;
+}
+
 /* ------------------------------------------------- motion (IG-WEB-01)
    The scroll-driven motion layer: progress, reveals, parallax.
    Transform and opacity only; reduced motion lands everything
