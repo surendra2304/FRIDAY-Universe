@@ -6,6 +6,8 @@ connects out to FRIDAY and this package keeps the resulting reverse tunnels.
 
 from friday.remote.laptop_bridge import (
     ALLOWED_LAPTOP_COMMANDS,
+    MAX_ATTACHMENT_BYTES,
+    SCREENSHOT_DATA_COMMAND,
     LaptopBridge,
     LaptopBridgeTimeout,
     LaptopDisconnected,
@@ -17,6 +19,8 @@ from friday.remote.laptop_bridge import (
 
 __all__ = [
     "ALLOWED_LAPTOP_COMMANDS",
+    "MAX_ATTACHMENT_BYTES",
+    "SCREENSHOT_DATA_COMMAND",
     "LaptopBridge",
     "LaptopBridgeTimeout",
     "LaptopDisconnected",
