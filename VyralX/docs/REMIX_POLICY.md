@@ -135,11 +135,26 @@ stores the result in the review-queue entry:
 - [ ] Declared format recorded — structure varies across the declared formats (one-fact / Top-5 / story / countdown); template-identical mass volume risks 'inauthentic content' demonetisation
 - [ ] Held for owner review — this flow never uploads
 
+**Enforcement (TASK-VYR-009):** this checklist is an automated gate, not
+an advisory list. `app/services/compliance_gate.py` evaluates it over the
+finished render's *measured* production record — the provenance record,
+the narration's share of the runtime, per-beat segment/voice-over
+deviations and caption-vs-audio offsets measured from the render's own
+artifacts (the TASK-VYR-003 recipe), the <60s claimed-Short rule,
+excluded-category and finance-advice scans of the declared lane/format
+and the script itself. Sync is never asserted by construction: a render
+whose sync was not measured **fails** the gate. `produce_remix_short`
+runs the gate on every render; a failing render is queued as
+`blocked_compliance` and **no publish job is created**, so it cannot be
+marked ready to upload. A passing render proceeds to `pending_review`
+exactly as before.
+
 ## 6. Review queue — nothing uploads from this flow
 
 Renders land in `data/remix_review_queue.jsonl` with status
 `pending_review` (plus a `pending_approval` publish job when produced with
-`--with-db`). Uploading additionally requires the YouTube OAuth credential,
+`--with-db`); gate-blocked renders land with status `blocked_compliance`
+and no publish job. Uploading additionally requires the YouTube OAuth credential,
 which is currently **dead** (`invalid_grant` — TASK-VYR-003); uploads are
 impossible until the owner re-auths.
 
