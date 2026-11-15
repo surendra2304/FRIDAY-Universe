@@ -1,0 +1,5 @@
+{
+  "probe": "BTCUSDT 15m don20 base: simulate_scaled (f=1) vs fastsim.simulate_entries BR24",
+  "trades": 3934,
+  "identical": true
+}
