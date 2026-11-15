@@ -7538,6 +7538,39 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       the token from the 5 completed-workspace .git/config remote URLs);
       post-deploy, confirm a Forge build terminal.log shows a masked remote
       URL, then flip VERIFIED.
+  - id: "TASK-INT-007"
+    title: "IntelX standing research watches — design + v1 (AI model releases watch, end-to-end)"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-int-007"
+    pr: null
+    contributors: []
+    priority: "P2"
+    created_at: "2026-11-15T13:32:00+05:30"
+    updated_at: "2026-11-15T13:55:00+05:30"
+    files:
+      - "IntelX/intelx/watches/engine.py"
+      - "IntelX/intelx/watches/__init__.py"
+      - "IntelX/intelx/watches/run_once.py"
+      - "IntelX/intelx/core/settings.py"
+      - "IntelX/intelx/app/lifespan.py"
+      - "IntelX/docs/STANDING_WATCHES.md"
+      - "IntelX/tests/test_standing_watches.py"
+    dependencies:
+      - "TASK-PRO-001 (delivery: watch alert envelopes route through its dedupe + quiet-hours rules; IntelX never notifies the owner directly)"
+    acceptance:
+      - "Design for three standing watches (AI model releases, crypto market structure, India tech/regulatory) with structural dedupe and an explicit noise budget per watch, recorded in IntelX/docs/STANDING_WATCHES.md."
+      - "v1 implements ONE watch end-to-end (ai_model_releases) and proves it live: fires once on a real item, stays silent on duplicates."
+      - "Alerts leave IntelX as PRO-001 envelopes (schema intelx.watch_alert/1, stable dedupe_key, quiet_hours_exempt=false) appended to a JSONL outbox."
+    evidence:
+      - "Claim: issue #35 comment 6891415594 (2026-11-15). Live proof 2026-11-15 on the real feeds, final source list: poll 1 fetched 2,314 items -> exactly 1 alert ('Introducing Images 2.6', OpenAI Blog, published 2026-11-04, score 5), 3 suppressed over the per-poll cap, 2,186 baselined, 122 below threshold; poll 2 -> 0 alerts / 2,314 duplicates; poll 3 with a fresh outbox -> 0 alerts (dedupe lives in the seen-store). Proof used the documented baseline_max_age_hours override (30 days); all other production defaults untouched."
+      - "14/14 unit tests pass via a direct harness in the crew sandbox (the sandbox cannot run the repo pytest harness: tests/conftest.py imports the full IntelX app stack, which is not installed there, and sandbox child-process restrictions break its startup; PR CI is the pytest authority)."
+      - "Side finding: Anthropic has discontinued its public RSS — news/rss.xml, rss.xml, feed.xml and news/feed.xml all returned 404 when probed 2026-11-15. The news ingester's Anthropic entry carries the same dead URL. Watch v1 ships without Anthropic; the Claude-coverage gap is documented in the design doc section 5."
+    risk_flags: []
+    blockers: []
+    next_action: "Coordinator: review and merge the PR (crew does not merge), then set ENABLE_STANDING_WATCHES=true for IntelX on Server 1 and wire TASK-PRO-001's drainer to the watch outbox (./data/watches/outbox.jsonl); flip to VERIFIED after the first production poll cycle matches the proof's behaviour."
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891415594"
+    last_update_comment_url: null
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

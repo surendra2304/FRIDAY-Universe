@@ -87,8 +87,24 @@ class AutonomousResearchHook:
         await self._researcher.stop()
 
 
+class StandingWatchHook:
+    """Hook managing the IntelX standing research watches (TASK-INT-007)."""
+
+    def __init__(self) -> None:
+        from intelx.watches.engine import WatchRunner
+
+        self._runner = WatchRunner()
+
+    async def start(self) -> None:
+        await self._runner.start()
+
+    async def stop(self) -> None:
+        await self._runner.stop()
+
+
 news_hook = NewsIngesterHook()
 auto_research_hook = AutonomousResearchHook()
+watch_hook = StandingWatchHook()
 
 
 @asynccontextmanager
@@ -184,6 +200,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await auto_research_hook.start()
         logger.info("Autonomous research engine started.")
 
+    if settings.ENABLE_STANDING_WATCHES:
+        await watch_hook.start()
+        logger.info("IntelX standing watches started.")
+
     yield
 
     # Shutdown sequence: abort active tasks gracefully and flush SQLite handles within 5s
@@ -191,6 +211,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         async with asyncio.timeout(5.0):
             await auto_research_hook.stop()
+            await watch_hook.stop()
             await news_hook.stop()
             await worker_hook.stop()
             await dispose_engine()
