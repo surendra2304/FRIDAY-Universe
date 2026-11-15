@@ -26,6 +26,13 @@ These tests pin the rework:
   by the chat path's quota accounting is still a voice candidate;
 - the background key keeper resolves while keyless and stands down
   while a verified key is fresh.
+
+TASK-VOI-009 note (2026-11-15): the Groq pipeline that served the
+owner on that call has since been deleted by owner directive; the one
+test below that pinned its STT language was converted to assert the
+pipeline's absence. The key-resolution contract above is unchanged —
+with no fallback left, it is now the only thing between a call and
+the recorded unavailable notice.
 """
 
 import asyncio
@@ -210,36 +217,20 @@ def test_pool_keys_include_benched_keys_healthy_first(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_groq_pipeline_stt_is_pinned_to_english(monkeypatch):
-    """2026-11-15: detect_language=True turned the owner's 'Hello' into
-    Italian and his Telugu into Tamil script. The pipeline is
-    English-out by design; its STT must be pinned to English."""
-    captured = {}
+def test_groq_pipeline_is_gone_not_merely_pinned():
+    """TASK-VOI-009 conversion of the VOI-005 STT-language pin.
 
-    class _FakeSTT:
-        def __init__(self, **kwargs):
-            captured.update(kwargs)
-
-    class _FakeLLM:
-        def __init__(self, **kwargs):
-            pass
-
-    class _FakeEdgeTTS:
-        def __init__(self, voice=None):
-            self.voice = voice
-
-    fake_groq = SimpleNamespace(STT=_FakeSTT, LLM=_FakeLLM, TTS=object)
-    monkeypatch.setattr(worker, "GROQ_PLUGIN_AVAILABLE", True)
-    monkeypatch.setattr(worker, "_groq_key", lambda: "gsk_test")
-    monkeypatch.setattr(worker, "_lk_groq", fake_groq)
-    monkeypatch.setattr(worker, "_orpheus_ok", lambda: False)
-    monkeypatch.setattr(worker, "EDGE_TTS_AVAILABLE", True)
-    monkeypatch.setattr(worker, "EdgeTTS", _FakeEdgeTTS)
-
-    parts, reason = _run(worker._try_groq_pipeline())
-    assert parts is not None, reason
-    assert captured.get("language") == "en"
-    assert not captured.get("detect_language")
+    The test this replaces pinned the Groq pipeline's Whisper STT to
+    English (detect_language=True had turned the owner's 'Hello' into
+    Italian and his Telugu into Tamil script). The owner then ordered
+    the pipeline itself removed — Gemini Live hears languages natively
+    and is the only voice AI — so the pin's subject no longer exists.
+    The converted assertion is the stronger one: the pipeline's whole
+    surface (builder, key reader, plugin handle) is absent from the
+    worker, so the garbling path can never run again. The full
+    Gemini-only contract lives in test_voice_gemini_only.py."""
+    for name in ("_try_groq_pipeline", "_groq_key", "_lk_groq", "GROQ_PLUGIN_AVAILABLE"):
+        assert not hasattr(worker, name), f"worker still exposes {name}"
 
 
 # ---------------------------------------------------------------------------
