@@ -64,6 +64,14 @@ ALLOWED_LAPTOP_COMMANDS = frozenset(
         SHELL_COMMAND,
         "system_info",
         "notify",
+        # TASK-IG-LAP-03: PC care pack — health report, temp cleanup,
+        # hotkeys, storage check/repair (client handlers carry the
+        # destructive-action gates; see laptop_pc_care tools).
+        "pc_health",
+        "pc_cleanup",
+        "hotkey",
+        "storage_check",
+        "storage_repair",
     }
 )
 
