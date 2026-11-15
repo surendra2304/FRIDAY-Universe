@@ -150,6 +150,25 @@ memora_event_state: dict[str, Any] = {
     "last_result": None,
 }
 
+# TASK-PRO-001: proactive Stratex watch — FRIDAY speaks first about trade
+# opens/closes, kill-criterion trips, breaker trips and measurement
+# alerts, and stores a self-composed morning self-check. The watcher is
+# inert unless FRIDAY_PROACTIVE_STRATEX_WATCH is enabled (kill switch;
+# code default OFF — production enables it only after the task's live
+# proof, see docs/collaboration board entry TASK-PRO-001).
+try:
+    STRATEX_WATCH_INTERVAL_SECONDS = max(
+        30, int(os.getenv("FRIDAY_PROACTIVE_WATCH_INTERVAL_SECONDS", "120"))
+    )
+except ValueError:
+    STRATEX_WATCH_INTERVAL_SECONDS = 120
+proactive_watch_state: dict[str, Any] = {
+    "running": False,
+    "interval_seconds": STRATEX_WATCH_INTERVAL_SECONDS,
+    "last_completed_at": None,
+    "last_report": None,
+}
+
 
 async def _fleet_supervision_loop() -> None:
     """Continuously refresh peer reachability while the cloud FRIDAY process is alive."""
@@ -320,6 +339,36 @@ async def _daily_report_loop() -> None:
             logger.exception("Daily self-report loop error (continuing)")
 
 
+async def _stratex_watch_loop() -> None:
+    """TASK-PRO-001: proactive Stratex watch cycle.
+
+    Every interval, diff Stratex's measurement state and post proactive
+    notifications (trade opens/closes, kill trips, breaker trips,
+    measurement alerts) plus the once-a-day morning self-check. The
+    watcher itself enforces the kill switch, dedupe, quiet hours and
+    the silent first-cycle baseline; a cycle failure is logged and
+    never takes the service down.
+    """
+    proactive_watch_state["running"] = True
+    try:
+        while True:
+            await asyncio.sleep(STRATEX_WATCH_INTERVAL_SECONDS)
+            try:
+                from friday.proactive.stratex_watch import run_watch_cycle
+
+                report = await asyncio.to_thread(run_watch_cycle, agent.notifications)
+                proactive_watch_state["last_completed_at"] = datetime.now(timezone.utc).isoformat()
+                proactive_watch_state["last_report"] = report
+                if report.get("posted") or report.get("held") or report.get("summary"):
+                    logger.info("Proactive Stratex watch: %s", report)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception("Proactive Stratex watch cycle error (continuing)")
+    finally:
+        proactive_watch_state["running"] = False
+
+
 #: The server's main event loop, captured at startup so worker threads (the
 #: Telegram gateway, the mission executor) can schedule coroutines onto the
 #: SAME loop instead of racing a second one (G5/G6).
@@ -456,12 +505,15 @@ async def lifespan(_: FastAPI):
     # store at boot (first-touch lazy hydration covers every other path;
     # this just means the transcript is whole before the first request).
     history_task = asyncio.create_task(_ensure_history_hydrated(), name="friday-history-hydration")
+    # TASK-PRO-001: proactive Stratex watch (inert unless the
+    # FRIDAY_PROACTIVE_STRATEX_WATCH kill switch is enabled).
+    stratex_watch_task = asyncio.create_task(_stratex_watch_loop(), name="friday-stratex-watch")
     try:
         yield
     finally:
         logger.info("Graceful shutdown initiated: stopping background tasks and listener loops...")
-        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task]
-        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task):
+        background_tasks = [repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task, stratex_watch_task]
+        for task in (repair_task, supervision_task, memora_task, reflex_task, memory_mirror_task, consolidation_task, followup_task, telegram_task, report_task, mission_task, agent_watch_task, history_task, stratex_watch_task):
             task.cancel()
         try:
             await asyncio.wait_for(
