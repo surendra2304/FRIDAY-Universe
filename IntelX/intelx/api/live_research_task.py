@@ -11,6 +11,12 @@ from datetime import datetime, timezone
 from typing import Awaitable, Callable
 from urllib.parse import urlsplit
 
+from intelx.core.owner_briefing import (
+    assess_live_briefing,
+    render_change_conditions,
+    render_headline_block,
+)
+
 
 def public_source(source: object) -> bool:
     if not isinstance(source, dict):
@@ -287,19 +293,46 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
     else:
         spoken = ("I retrieved sources but could not produce a source-grounded answer. No completed brief is being claimed."
                   if sources else "I could not retrieve topical readable sources for that query. I will not invent a research brief.")
+    # TASK-INT-006: owner-briefing format — headline answer first, plain
+    # confidence with its measured basis, cited evidence, then what would
+    # change the conclusion. The retired disclaimer-first headers carried
+    # the same honesty content; it now lives in the confidence basis and
+    # the change conditions (see intelx/core/owner_briefing.py). Nothing
+    # about retrieval, synthesis or the grounding gates changes here.
+    assessment = assess_live_briefing(
+        answer_kind=answer_kind,
+        synthesis_status=("failed" if synthesis_failure is not None else
+                          "succeeded" if synthesize is not None and source_documents
+                          else "not_attempted"),
+        synthesis_error_reason=(synthesis_failure or {}).get("reason"),
+        quotes_verified=bool(synthesis_metadata.get("quotes_verified")),
+        source_urls=[str(s.get("url") or "") for s in sources],
+        findings_count=len(findings))
     if synthesis_failure is not None:
-        header = (f"Unsynthesised — raw findings: synthesis failed ({synthesis_failure['reason']}); "
-                  "the excerpts below are verbatim retrieved source passages, NOT a synthesised answer.")
+        headline = (f"No conclusion — synthesis failed ({synthesis_failure['reason']}); "
+                    "the excerpts below are verbatim retrieved source passages, not an answer.")
+    elif not findings:
+        headline = ("No grounded answer could be produced from the retrieved sources."
+                    if sources else
+                    "No sources could be retrieved for that query, so no brief can be offered.")
     elif answer_kind != "source_excerpts":
-        header = "Source-attributed model draft — quotations checked, claims not independently verified."
+        headline = findings[0]["statement"]
     else:
-        header = "Retrieved-source excerpts — not independently verified facts or a verified answer to every part of the question."
-    lines = [header]
+        lead = findings[0]["statement"]
+        headline = ("Strongest retrieved passage (verbatim — not a synthesised answer): "
+                    + (lead[:280] + "…" if len(lead) > 280 else lead))
+    briefing = {"headline": headline, "confidence_level": assessment.level,
+                "confidence_basis": assessment.basis,
+                "change_conditions": list(assessment.change_conditions)}
+    lines = [render_headline_block(headline, assessment)]
     for finding in findings:
         citation = finding["citations"][0]
         lines.extend([f"\n{citation['source_title']}: {finding['statement']}", citation["source_url"]])
         if synthesis_failure is None and answer_kind != "source_excerpts":
             lines.append(f"Supporting source quotation: {finding['quote']}")
+    conditions_block = render_change_conditions(assessment, markdown=False)
+    if conditions_block:
+        lines.append("\n" + conditions_block)
     if findings and synthesis_failure is not None:
         summary = (f"Retrieved {len(sources)} source document(s); synthesis failed ({synthesis_failure['reason']}) — "
                    f"returning {len(findings)} unsynthesised raw finding(s) (verbatim source excerpts), not a synthesised brief.")
@@ -313,5 +346,6 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
                                  "succeeded" if synthesize is not None and source_documents else "not_attempted"),
             **({"synthesis_error": synthesis_failure} if synthesis_failure is not None else {}),
             "findings": findings, "sources": sources, "spoken_summary": spoken,
-            "text_response": "\n".join(lines), "source_failures": failures,
+            "text_response": "\n".join(lines), "briefing": briefing,
+            "source_failures": failures,
             "summary": summary}
