@@ -20,9 +20,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
 ]
+# TASK-SEN-012 (2026-11-15): fleet-shared floors reconciled with SEN-002's live-venv probe; see docs/DEPENDENCY_LOCKS.md.
 dependencies = [
-    "fastapi>=0.110.0",
-    "uvicorn[standard]>=0.28.0",
+    "fastapi>=0.161.1",
+    "uvicorn[standard]>=0.54.0",
     "pydantic>=2.6.0",
     "pydantic-settings>=2.2.0",
     "sqlalchemy[asyncio]>=2.0.28",
@@ -35,22 +36,22 @@ dependencies = [
     "httpx>=0.27.0",
     "redis>=5.0,<7.0",
     "structlog>=24.1.0",
-    "cryptography>=42.0.5",
-    "pyjwt>=2.8.0",
+    "cryptography>=50.0.2",
+    "pyjwt>=2.15.1",
     "reportlab>=4.1.0",
-    "weasyprint>=61.0",
+    "weasyprint>=70.0",
     "sse-starlette>=2.0.0",
-    "python-dotenv>=1.0.0",
+    "python-dotenv>=1.2.4",
     "pyyaml>=6.0",
-    "dnspython>=2.6.0",
+    "dnspython>=2.9.2",
     "dpkt>=1.9.0",
     "psutil>=5.9.0",
-    "jinja2>=3.1.0",
+    "jinja2>=3.1.6",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.1.0",
+    "pytest>=9.0.3",
     "pytest-asyncio>=0.23.5",
     "pytest-cov>=4.1.0",
     "aiosqlite>=0.20.0",
