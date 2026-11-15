@@ -156,6 +156,9 @@ def generate_content_pack(
     target_seconds: int = 45,
     research_context: list[dict[str, Any]] | None = None,
     memora_context: list[dict[str, Any]] | None = None,
+    lane: str | None = None,
+    script_format: str | None = None,
+    recent_scripts: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Use Inference /v1/task/execute to generate original scripts and scene plans."""
     settings = get_settings()
@@ -193,6 +196,15 @@ def generate_content_pack(
             "created_at": str(item.get("created_at") or "")[:80],
         })
     channel_strategy = _configured_channel_strategy(settings)
+    # TASK-VYR-007: when a lane is requested, the scriptwriter gets the
+    # rubric brief (assigned hook formula + format, rotated against the
+    # lane's recent scripts) and the finished pack is graded before
+    # production. lane=None keeps the historical behaviour byte-identical.
+    script_brief: dict[str, Any] | None = None
+    if lane is not None:
+        from app.services.script_quality import build_script_brief
+
+        script_brief = build_script_brief(lane, script_format, recent_scripts)
     context = {
         "topic": topic.strip()[:500],
         "format": video_format,
@@ -203,6 +215,12 @@ def generate_content_pack(
         "intelx_research_context": safe_research,
         "memora_private_context": safe_memories,
     }
+    if script_brief is not None:
+        context["script_quality_brief"] = {
+            "lane": script_brief["lane"],
+            "format": script_brief["format"],
+            "hook_formula": script_brief["hook_formula"],
+        }
     prompt = (
         "You are VyralX, an original video producer. Create a new script and production plan "
         "for the topic and constraints in the context. Never copy or closely imitate a named "
@@ -222,6 +240,7 @@ def generate_content_pack(
         + json.dumps(schema, ensure_ascii=False)
         + "\nContext:\n"
         + json.dumps(context, ensure_ascii=False)
+        + ("\n" + script_brief["brief_text"] if script_brief is not None else "")
     )
     url = settings.inference_url.rstrip("/") + settings.inference_generation_path
     headers = {
@@ -307,6 +326,27 @@ def generate_content_pack(
     pack["requires_editor_review"] = True
     pack["fact_check_passed"] = False
     pack = attach_research_review_notes(pack, safe_research)
+    if script_brief is not None:
+        # Pre-production quality gate (TASK-VYR-007): grade the generated
+        # script against the rubric brief it was written to. Advisory -
+        # the grade never blocks generation; editor review still decides.
+        pack["script_brief"] = {
+            "lane": script_brief["lane"],
+            "format": script_brief["format"],
+            "hook_formula": script_brief["hook_formula"],
+        }
+        try:
+            from app.services.script_quality import score_content_pack
+
+            pack["script_quality"] = score_content_pack(
+                pack,
+                lane=script_brief["lane"],
+                fmt=script_brief["format"],
+                hook_formula=script_brief["hook_formula"],
+                recent=recent_scripts,
+            )
+        except Exception:  # pragma: no cover - grading never blocks generation
+            pack.setdefault("script_quality", {"error": "script quality grading unavailable"})
     # Every content pack ships with one self-contained explainer diagram so the
     # operator does not need a second render request; failures never block.
     try:
