@@ -861,6 +861,170 @@ button {
   line-height: 1.6;
 }
 
+/* ------------------------------------------------- tour (IG-WEB-06) */
+
+.tour-hero {
+  border-radius: 18px;
+  padding: 40px 28px 34px;
+  text-align: center;
+  border: 1px solid rgba(251, 191, 36, 0.22);
+  background:
+    radial-gradient(90% 120% at 50% 0%, rgba(251, 191, 36, 0.1), transparent 65%),
+    radial-gradient(70% 90% at 50% 110%, rgba(99, 102, 241, 0.12), transparent 70%),
+    var(--void-raise);
+}
+
+.tour-hero-chip {
+  display: inline-block;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--warn);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 999px;
+  padding: 6px 13px;
+}
+
+.tour-hero-title {
+  margin: 20px 0 10px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: clamp(42px, 8vw, 64px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.tour-hero-sub {
+  margin: 0 auto;
+  max-width: 52ch;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--dim);
+}
+
+.tour-cta {
+  margin-top: 24px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: #191104;
+  background: var(--warn);
+  border-radius: 999px;
+  padding: 12px 26px;
+  transition: transform 0.2s ease;
+}
+
+.tour-cta:hover {
+  transform: translateY(-1px);
+}
+
+.tour-anchor {
+  height: 6px;
+}
+
+.tour-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.tour-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.tour-chapter {
+  padding: 30px 6px 26px;
+  border-bottom: 1px solid var(--hair-soft);
+}
+
+.tour-chapter-num {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--warn);
+}
+
+.tour-chapter-title {
+  margin: 6px 0 8px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tour-chapter-body {
+  margin: 0;
+  max-width: 58ch;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--dim);
+}
+
+.tour-chapter-note {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  color: var(--faint);
+}
+
+.tour-fact {
+  display: inline-block;
+  margin: 14px 0 0;
+  font-size: 13.5px;
+  color: var(--dim);
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  padding: 6px 13px;
+}
+
+.tour-fact b {
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+.tour-link {
+  display: block;
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--glow-a);
+  text-align: left;
+  padding: 0;
+}
+
+.tour-link:hover {
+  text-decoration: underline;
+}
+
+.tour-end {
+  padding: 28px 6px 8px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--dim);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .tour-cta {
+    transition: none;
+  }
+
+  .tour-cta:hover {
+    transform: none;
+  }
+}
+
 /* ----------------------------------------------------------------- fleet */
 
 .fleet-grid {

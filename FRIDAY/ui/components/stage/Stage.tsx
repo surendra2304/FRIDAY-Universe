@@ -20,6 +20,7 @@ const VoiceCall = dynamic(() => import("../VoiceCall").then((m) => m.VoiceCall),
 const FleetSheet = dynamic(() => import("./FleetSheet").then((m) => m.FleetSheet), { ssr: false });
 const ChronicleSheet = dynamic(() => import("./ChronicleSheet").then((m) => m.ChronicleSheet), { ssr: false });
 const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet), { ssr: false });
+const TourSheet = dynamic(() => import("./TourSheet").then((m) => m.TourSheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -36,12 +37,13 @@ const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse";
+type SheetKind = "fleet" | "chronicle" | "pulse" | "tour";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
   chronicle: { kicker: "Everything asked, everything done", title: "The Chronicle" },
   pulse: { kicker: "The box underneath it all", title: "Machine Pulse" },
+  tour: { kicker: "New here? Start with the story", title: "The Guided Tour" },
 };
 
 export function Stage() {
@@ -144,6 +146,13 @@ export function Stage() {
         run: () => openSheet("pulse"),
       },
       {
+        id: "tour",
+        label: "Take the guided tour",
+        hint: "five short chapters — voice, crew, ledger, machine, watch",
+        keys: "tour guide story intro about meet friday chapters welcome",
+        run: () => openSheet("tour"),
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -238,6 +247,7 @@ export function Stage() {
           {sheet === "fleet" && <FleetSheet />}
           {sheet === "chronicle" && <ChronicleSheet />}
           {sheet === "pulse" && <PulseSheet />}
+          {sheet === "tour" && <TourSheet onSummon={(kind) => openSheet(kind)} />}
         </Sheet>
       )}
     </main>
