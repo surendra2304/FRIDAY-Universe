@@ -57,6 +57,35 @@ def utc_now() -> datetime:
     return datetime.now(UTC)
 
 
+# Defined before the models on purpose: every JSON column in this module
+# uses TolerantJSON (TASK-INT-010). Stock JSON columns crash on READ under
+# Oracle 23ai (see the class docstring); before TASK-INT-010 only
+# LiveResearchRun's columns used the tolerant type, which is one reason the
+# classic research store (research_runs/sources/documents/chunks/claims/
+# evidence/findings) could never be read back in production.
+class TolerantJSON(JSON):
+    """JSON type whose result processor accepts pre-deserialized values.
+
+    Oracle 23ai's native JSON type makes python-oracledb return dict/list
+    objects directly, while SQLAlchemy's stock JSON result processor
+    unconditionally applies ``json.loads`` and raises ``TypeError`` on
+    them (observed live, TASK-REL-038: archive reads failed with
+    'the JSON object must be str, bytes or bytearray, not dict' while
+    writes succeeded). Values that arrive as text are decoded normally,
+    so SQLite and other backends behave exactly like stock JSON.
+    """
+
+    def result_processor(self, dialect, coltype):  # noqa: ANN001, ANN202
+        base_processor = super().result_processor(dialect, coltype)
+
+        def process(value):  # noqa: ANN001, ANN202
+            if value is None or isinstance(value, (dict, list)):
+                return value
+            return base_processor(value) if base_processor is not None else value
+
+        return process
+
+
 class ResearchRun(Base):
     """Execution container for an end-to-end intelligence investigation."""
 
@@ -64,7 +93,7 @@ class ResearchRun(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     objective: Mapped[str] = mapped_column(Text, nullable=False)
-    scope_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    scope_json: Mapped[dict[str, Any]] = mapped_column(TolerantJSON, default=dict, nullable=False)
     status: Mapped[RunStatus] = mapped_column(
         Enum(RunStatus, name="run_status_enum", native_enum=False),
         default=RunStatus.QUEUED,
@@ -78,7 +107,7 @@ class ResearchRun(Base):
     parent_run_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("research_runs.id"), nullable=True
     )
-    plan_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    plan_json: Mapped[dict[str, Any] | None] = mapped_column(TolerantJSON, nullable=True)
     idempotency_key: Mapped[str | None] = mapped_column(
         String(128), unique=True, nullable=True, index=True
     )
@@ -86,7 +115,7 @@ class ResearchRun(Base):
     output_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     usd_cost: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     tool_calls: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    error_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    error_json: Mapped[dict[str, Any] | None] = mapped_column(TolerantJSON, nullable=True)
     created_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -128,9 +157,9 @@ class Task(Base):
         Enum(TaskErrorClass, name="task_error_class_enum", native_enum=False),
         nullable=True,
     )
-    error_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    payload_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    result_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    error_json: Mapped[dict[str, Any] | None] = mapped_column(TolerantJSON, nullable=True)
+    payload_json: Mapped[dict[str, Any] | None] = mapped_column(TolerantJSON, nullable=True)
+    result_json: Mapped[dict[str, Any] | None] = mapped_column(TolerantJSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
     )
@@ -322,7 +351,7 @@ class Claim(Base):
         nullable=False,
         index=True,
     )
-    entities_json: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    entities_json: Mapped[list[str]] = mapped_column(TolerantJSON, default=list, nullable=False)
     quote: Mapped[str] = mapped_column(Text, nullable=False)
     span_start: Mapped[int] = mapped_column(Integer, nullable=False)
     span_end: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -382,7 +411,7 @@ class Evidence(Base):
         nullable=False,
         index=True,
     )
-    independent_of_json: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    independent_of_json: Mapped[list[str]] = mapped_column(TolerantJSON, default=list, nullable=False)
     created_by_run_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("research_runs.id"), nullable=False, index=True
     )
@@ -408,10 +437,10 @@ class Finding(Base):
     confidence_method: Mapped[str] = mapped_column(
         String(64), default="v1-composite", nullable=False
     )
-    claim_ids_json: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
-    gaps_json: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
-    contradictions_json: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
-    unverified_json: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    claim_ids_json: Mapped[list[str]] = mapped_column(TolerantJSON, default=list, nullable=False)
+    gaps_json: Mapped[list[str]] = mapped_column(TolerantJSON, default=list, nullable=False)
+    contradictions_json: Mapped[list[str]] = mapped_column(TolerantJSON, default=list, nullable=False)
+    unverified_json: Mapped[list[str]] = mapped_column(TolerantJSON, default=list, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
     )
@@ -450,7 +479,7 @@ class Event(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(36), ForeignKey("research_runs.id"), nullable=False)
     type: Mapped[str] = mapped_column(String(64), nullable=False)
-    payload_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    payload_json: Mapped[dict[str, Any]] = mapped_column(TolerantJSON, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
     )
@@ -471,7 +500,7 @@ class AuditEvent(Base):
     action: Mapped[str] = mapped_column(String(128), nullable=False)
     object_type: Mapped[str] = mapped_column(String(64), nullable=False)
     object_id: Mapped[str] = mapped_column(String(64), nullable=False)
-    detail_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    detail_json: Mapped[dict[str, Any]] = mapped_column(TolerantJSON, default=dict, nullable=False)
     prev_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     hash: Mapped[str] = mapped_column(String(64), nullable=False)
 
@@ -503,7 +532,7 @@ class Policy(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     key: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True)
-    value_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    value_json: Mapped[dict[str, Any]] = mapped_column(TolerantJSON, default=dict, nullable=False)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     updated_by: Mapped[str] = mapped_column(String(128), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -535,29 +564,6 @@ class ApiKey(Base):
         DateTime(timezone=True), default=None, nullable=True
     )
     revoked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
-
-class TolerantJSON(JSON):
-    """JSON type whose result processor accepts pre-deserialized values.
-
-    Oracle 23ai's native JSON type makes python-oracledb return dict/list
-    objects directly, while SQLAlchemy's stock JSON result processor
-    unconditionally applies ``json.loads`` and raises ``TypeError`` on
-    them (observed live, TASK-REL-038: archive reads failed with
-    'the JSON object must be str, bytes or bytearray, not dict' while
-    writes succeeded). Values that arrive as text are decoded normally,
-    so SQLite and other backends behave exactly like stock JSON.
-    """
-
-    def result_processor(self, dialect, coltype):  # noqa: ANN001, ANN202
-        base_processor = super().result_processor(dialect, coltype)
-
-        def process(value):  # noqa: ANN001, ANN202
-            if value is None or isinstance(value, (dict, list)):
-                return value
-            return base_processor(value) if base_processor is not None else value
-
-        return process
 
 
 class LiveResearchRun(Base):

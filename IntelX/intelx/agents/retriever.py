@@ -123,8 +123,10 @@ class RetrieverAgent(BaseAgent):
         # Instant cache bypass: check if source was already ingested into database
         from sqlalchemy import select
 
-        stmt_s = select(Source).where(Source.location == location)
-        existing_src = (await session.execute(stmt_s)).scalar_one_or_none()
+        # Source.location is a CLOB on Oracle and cannot be compared with
+        # "=" there; the repository lookup pre-filters on a SUBSTR prefix
+        # and matches the location in Python (TASK-INT-010).
+        existing_src = await SourceRepo.get_source_by_location(session, location)
         if existing_src:
             doc = await SourceRepo.get_document_by_source_id(session, existing_src.id)
             if doc:

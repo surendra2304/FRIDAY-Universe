@@ -350,6 +350,31 @@ class SourceRepo:
         return result.scalar_one_or_none()
 
     @staticmethod
+    async def get_source_by_location(session: AsyncSession, location: str) -> Source | None:
+        """Find a source by its exact location (URL or file path).
+
+        ``Source.location`` is a Text column — a CLOB on Oracle — and Oracle
+        rejects equality predicates on CLOB columns, so the lookup cannot be
+        a single ``WHERE location = ...`` (that is the query the retriever's
+        cache check used to issue, and it raises on Oracle). Instead the
+        candidate set is pre-filtered on a VARCHAR-length prefix of the
+        column (``SUBSTR`` is legal on CLOBs and returns a comparable
+        VARCHAR2), and the exact location match is made in Python over
+        that small candidate set.
+        """
+        if not location:
+            return None
+        prefix = location[:255]
+        stmt = select(Source).where(
+            func.substr(Source.location, 1, len(prefix)) == prefix
+        )
+        result = await session.execute(stmt)
+        for source in result.scalars().all():
+            if source.location == location:
+                return source
+        return None
+
+    @staticmethod
     async def get_or_create_source(
         session: AsyncSession,
         kind: SourceKind,
