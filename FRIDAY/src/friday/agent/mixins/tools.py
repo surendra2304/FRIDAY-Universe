@@ -79,6 +79,8 @@ from friday.tools.builtin import (
     ErrandRunTool,
     ErrandStatusTool,
     HealthCheckTool,
+    WorkflowTemplateListTool,
+    WorkflowTemplateRunTool,
     KillProcessTool,
     LaptopBrowserTaskTool,
     LaptopClickTool,
@@ -244,6 +246,9 @@ class ToolExecutionMixin:
             registry.register(ErrandStatusTool())
             registry.register(ErrandApproveTool())
             registry.register(ErrandRunTool())
+            # TASK-IG-FRD-005: ready-made workflow templates.
+            registry.register(WorkflowTemplateListTool())
+            registry.register(WorkflowTemplateRunTool())
             registry.register(WriteCodeFileTool())
             registry.register(ReplaceFileContentTool())
             registry.register(RunTestsTool())

@@ -83,6 +83,10 @@ from friday.tools.builtin.followup_tools import (
     FollowUpListTool,
 )
 from friday.tools.builtin.git_tools import GitCommitTool, GitPushTool, GitStatusTool
+from friday.tools.builtin.workflow_template_tools import (
+    WorkflowTemplateListTool,
+    WorkflowTemplateRunTool,
+)
 from friday.tools.builtin.github_tools import (
     CreateGitHubIssueTool,
     ListGitHubIssuesTool,
@@ -227,6 +231,8 @@ __all__ = [
     "ErrandRunTool",
     "ErrandStatusTool",
     "HealthCheckTool",
+    "WorkflowTemplateListTool",
+    "WorkflowTemplateRunTool",
     "KillProcessTool",
     "LaunchApplicationTool",
     "LaptopClickTool",
