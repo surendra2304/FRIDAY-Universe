@@ -53,6 +53,7 @@ from friday.tools.builtin import (
     ControlPlugTool,
     CreateGitBranchTool,
     CreateGitHubIssueTool,
+    GoalLoopStatusTool,
     DictionaryTool,
     DraftEmailTool,
     DraftGmailTool,
@@ -63,6 +64,9 @@ from friday.tools.builtin import (
     FileListingTool,
     FileOperationsTool,
     FileReaderTool,
+    FollowUpAddTool,
+    FollowUpCompleteTool,
+    FollowUpListTool,
     FindOnScreenTool,
     GetActiveAppContextTool,
     GetAIUniverseStatusTool,
@@ -84,6 +88,7 @@ from friday.tools.builtin import (
     ListSkillsTool,
     ListGitHubIssuesTool,
     LocationMapsTool,
+    StartGoalLoopTool,
     ManageTasksTool,
     ManageVolumeTool,
     ManageWindowsTool,
@@ -117,6 +122,9 @@ from friday.tools.builtin import (
     TaskStatusQueryTool,
     ForgeCodeTool,
     IntelXResearchTool,
+    JobHuntPrepTool,
+    JobHuntScanTool,
+    JobHuntShortlistTool,
     StratexPortfolioTool,
     SentinelSecurityTool,
     FuturisForecastTool,
@@ -160,6 +168,10 @@ class ToolExecutionMixin:
             registry.register(TaskStatusQueryTool())
             registry.register(ForgeCodeTool())
             registry.register(IntelXResearchTool())
+            # TASK-IG-FRD-003: job-hunt workflow (scan/score/prep; drafts only).
+            registry.register(JobHuntScanTool())
+            registry.register(JobHuntShortlistTool())
+            registry.register(JobHuntPrepTool())
             registry.register(StratexPortfolioTool())
             registry.register(SentinelSecurityTool())
             registry.register(FuturisForecastTool())
@@ -170,6 +182,10 @@ class ToolExecutionMixin:
             registry.register(TimeDateTool())
             registry.register(CalculatorTool())
             registry.register(FileReaderTool())
+            # TASK-IG-FRD-002: persistent owner follow-ups (never dropped).
+            registry.register(FollowUpAddTool())
+            registry.register(FollowUpListTool())
+            registry.register(FollowUpCompleteTool())
             registry.register(FileListingTool())
             registry.register(MemorySearchTool(self.memory))
             registry.register(ScreenSnapshotTool())
@@ -207,6 +223,9 @@ class ToolExecutionMixin:
             registry.register(LaptopRunCommandTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
+            # TASK-IG-FRD-001: goal-loop autonomy (goal + criteria, worked in cycles).
+            registry.register(StartGoalLoopTool())
+            registry.register(GoalLoopStatusTool())
             registry.register(WriteCodeFileTool())
             registry.register(ReplaceFileContentTool())
             registry.register(RunTestsTool())
