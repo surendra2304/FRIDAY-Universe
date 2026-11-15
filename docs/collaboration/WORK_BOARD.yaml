@@ -5355,6 +5355,54 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "NOT YET DONE (honest state): server end-to-end before/after on Server 1 is pending -- the bridge was degraded for most of this session (initialize timeouts under Wave-5 load); a baseline tree is staged at Server 1 /var/tmp/frg007/base/ and the profiling driver is in the crew workspace (~/workspace/frg-007/profile_driver.py) for the coordinator to run when the bridge recovers. Merged / deployed / production-verified are the coordinator's steps after PR review."
     blockers: []
     next_action: "Coordinator: review + merge the PR (branch claude/task-frg-007-build-time), insert this entry into WORK_BOARD.yaml after TASK-VOI-009 (it is delivered as board_entry.yaml in the crew workspace and summarised in the completion comment, per the TASK-STR-RD-008 precedent, to avoid a stale-base board edit), then run the staged Server-1 end-to-end A/B (upload ~/workspace/frg-007/profile_driver.py, run it against /var/tmp/frg007/base/ and the deployed tree) to production-verify the timings."
+  - id: "TASK-INF-003-W5"
+    title: "Wave 5: Inference key-pool health monitor — per-key live/dead/exhausted probing, third-party pool separate, fingerprints only"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/ta***REDACTED***"
+    pr: null  # set by coordinator from the PR created at delivery
+    evidence:
+      - "Claim: issue #35 comment 6891480367 (2026-11-15)."
+      - "18/18 tests passed (bucket separation, classification matrix, fake-transport probe, no-key-leak assertions)."
+      - "Live sweep on Server 1 against deployed Inference .env (2026-11-15): 45 keys probed, 45 live, 0 dead/exhausted/transient/unknown, no cross-pool duplicates; pools gemini 11+4tp, groq 14+1tp, openrouter 14+1tp; sweep exit 0."
+    next_action: "Coordinator: merge the code PR, set pr number here, then run python -m app.core.key_pool_health on Server 1 post-deploy and mark VERIFIED."
+  - id: TASK-SEN-006
+    title: "Sentinel alerting-path drill: approval alerts never reached a human (Telegram credentials invisible to the process) — dispatcher credential resolution fixed"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/ta***REDACTED***"
+    pr: <this PR>
+    defect: "Live drill 2026-11-15 13:40 IST: synthetic approval request appr_1d6ad2cccd50 returned 200/PENDING but the dispatcher logged [SENTINEL APPROVAL QUEUED] — Telegram credentials invisible to the Sentinel process (not in the unit environment, not in Sentinel/.env; the fleet pair sits in <repo>/.env which nothing loads). Alert landed only in the in-memory pending dict + journal. Prior 14 days of journal: zero approval dispatches. Detection-side AlertEngine alerts are in-memory only and never dispatched (separate gap)."
+    evidence:
+      - "Drill: POST /api/v1/approvals/request 13:40:00 IST -> 200 in 1.96s; journal 13:40:02 IST [SENTINEL APPROVAL QUEUED]; pending list showed the request; denied at cleanup. No Telegram/Discord delivery occurred."
+      - "Fix PR: dispatcher resolves credentials env-first, then fleet .env candidates ($SENTINEL_ENV_FILE, ./.env, Sentinel/.env, <repo>/.env). 6 new tests pass locally; production-layout simulation passes."
+    next_action: "Coordinator: merge this PR, deploy Sentinel to Server 2, re-run one synthetic approval request and confirm a Telegram delivery replaces the QUEUED journal line; then mark VERIFIED. Follow-ups: (1) wire operations AlertEngine alerts into a real dispatch channel (separate task); (2) document TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID / DISCORD_WEBHOOK_URL in Sentinel/.env.example."
+  - id: "TASK-INF-007"
+    title: "Inference quota accounting: per-provider daily usage vs free-tier limits, warning before exhaustion"
+    status: "IN_REVIEW"
+    owner: "claude"
+    branch: "claude/task-inf-007"
+    pr: 314
+    evidence:
+      - "Claimed on issue #35 (comment 6891494266); PR #314 based on main b00f46fb."
+      - "NEW Inference/app/providers/quota_ledger.py: every gateway attempt recorded (provider, model, outcome, provider-reported tokens; keys only as sha256 fingerprints). Gemini per key+model per Pacific day vs 20 requests/day; Groq fleet rolling-60s vs 8,000 tokens/minute; warning at 80%; a provider 429 marks a Gemini bucket exhausted until the Pacific-midnight reset; fleet exhausted only when every model has every key exhausted."
+      - "Persistence: append-only JSONL per Pacific day under Inference/app/.data/ (no SQLite per house rule), replayed on startup; GET /v1/quota serves limits, buckets, warnings, reset countdown, coverage and an honesty block. Gateway hooks cover execute(), the fallback ladder, the local tier and stream(); accounting can never break serving."
+      - "Tests: Inference/tests/test_quota_ledger.py 20/20 green; neighbouring gateway suites 47/47 green."
+    next_action: "Coordinator: merge PR #314, deploy Inference to Server 1, production-verify GET /v1/quota; then wire snapshot warnings into the proactive/briefing path."
+  - id: TASK-VYR-008
+    title: "VyralX packaging research + generator — 3 scored title/thumbnail/hook variants per video from public Shorts research (R1-R10)"
+    owner: muse_ai
+    status: IN_REVIEW
+    branch: "claude/task-vyr-008-packaging-generator"
+    pr: PRNUM
+    evidence:
+      - "Research (docs/PACKAGING_RESEARCH.md): SubSub 120,703-video title study (top Shorts titles ~49 chars; 57% of top Shorts use 1-2 emoji vs 17% of low), x20 18,000-Shorts thumbnail analysis (3-word text max, high contrast, top-two-thirds subject), vidIQ/Zebracat (50-60% of drop-off in first 3s), Galloway 3.3B-Shorts VVSA bands, 50-video hook-type test (in-media-res 85% vs no-hook 62% 3s retention). Ten findings encoded as rule ids R1-R10."
+      - "Generator (app/services/packaging_generator.py): deterministic, no network/randomness; proposes exactly 3 variants (fact_first / curiosity_gap / scale_or_story), scores 0-100 (title 40 + thumbnail 25 + hook 35) with rule citations; scores labelled research priors, NOT predicted CTR (channel has no metrics — VYR-005 autopsy VIDEO_METRICS=0 rows). Never invents facts: missing required slots fail, missing optional slots leave the variant ungenerated at 0."
+      - "Coordination: TASK-VYR-005 owns the autopsy + packaging rules (packaging.py); this task consumes their findings and composes their lints when importable (mirrored otherwise) — no duplicated autopsy, no duplicated lint ownership. Tests test_vyr008_packaging_generator.py 8/8 locally, standalone and with packaging.py present. Samples: Space/Venus curiosity_gap 76; History/Titanic scale_or_story 79 (hook 35/35); Tech/AI-exam fact_first 80."
+    next_action: "Coordinator: merge the code PR, then this board PR (fresh-main, insertion-only). Follow-up once uploads resume and a VIDEO_METRICS job exists: refit the R-rule weights on the channel's own CTR/retention data and A/B the generator's top-2 variants per video."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
