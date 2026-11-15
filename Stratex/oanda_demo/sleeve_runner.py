@@ -203,11 +203,17 @@ class SleeveRunner:
         mid = pricing.get(symbol, {}).get("mid", 0)
         if conv <= 0 or sl_dist <= 0 or mid <= 0:
             return 0
+        # Notional per unit in account currency (USD): price x quote
+        # conversion. (Dividing caps by the raw pair price instead —
+        # as a naive port of the MR trader's formula would — shrinks
+        # JPY-pair sizes by the ~150x price factor and would silently
+        # neuter 8 of the 28 judged instruments.)
+        notional_per_unit = mid * conv
         risk_usd = equity * RISK_PER_TRADE_PCT
         units = int(risk_usd / (sl_dist * conv))
-        max_units_notional = int((equity * MAX_NOTIONAL_PCT) / mid)
+        max_units_notional = int((equity * MAX_NOTIONAL_PCT) / notional_per_unit)
         lev = (1.0 / margin_rate) if margin_rate and margin_rate > 0 else 20.0
-        max_units_margin = int((free_margin * 0.5) * lev / mid)
+        max_units_margin = int((free_margin * 0.5) * lev / notional_per_unit)
         return max(0, min(units, max_units_notional, max_units_margin))
 
     # -- ledger booking ---------------------------------------------------------
@@ -317,7 +323,10 @@ class SleeveRunner:
             return summary
 
         occupied = {t["instrument"] for t in trades}  # netting protection
-        pricing = self.adapter.get_pricing(list(FOREX28_SYMBOLS) + ["USDJPY"])
+        # Dedupe: USDJPY is already in FOREX28 — a duplicate instrument
+        # 400s the OANDA pricing batch (observed live 2026-11-15).
+        wanted = list(dict.fromkeys(list(FOREX28_SYMBOLS) + ["USDJPY"]))
+        pricing = self.adapter.get_pricing(wanted)
         if not pricing:
             summary["error"] = "pricing unavailable"
             self._save_state(state)
@@ -371,6 +380,14 @@ class SleeveRunner:
             except Exception as exc:
                 logger.warning(f"[SLEEVE] order failed for {symbol}: {exc}")
                 summary["actions"].append(f"ORDER FAILED {symbol}: {exc}")
+                # Back off this instrument (e.g. MARKET_HALTED over the
+                # weekend): retrying every scan would spam the broker
+                # with rejected orders. The signal is re-evaluated on
+                # the next daily bar regardless — entries are judged on
+                # closed bars, so an hourly retry loses nothing.
+                state.setdefault("cooldowns", {})[symbol] = (
+                    time.time() + REENTRY_COOLDOWN_S
+                )
                 continue
             trade_id = str(getattr(result, "trade_id", "") or "")
             if trade_id:
