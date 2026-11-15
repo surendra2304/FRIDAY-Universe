@@ -530,3 +530,30 @@ carries the idiom and would need the same one-line fix.
 - `Cortex/packages/workflow_engine/src/cortex_workflow_engine/auto_remediation.py` — from datetime import UTC L16
 - `Cortex/packages/workflow_engine/src/cortex_workflow_engine/capacity_planning.py` — from datetime import UTC L2
 - `Cortex/packages/workflow_engine/src/cortex_workflow_engine/security_incident.py` — from datetime import UTC L3
+
+## Addendum — REL-050-FIX (2026-11-15, post-ship correction)
+
+The sweep above missed one production file, and the omission was caught
+by this PR's own gate in CI (the local proof had run against a snapshot
+whose import graph did not expose it):
+
+- `Futuris/futuris/scenarios/whatif.py` carried a bare
+  `from enum import StrEnum` (line 42). It is reached from the Futuris
+  entrypoint via `futuris/api/routers/scenarios.py`, so the Futuris
+  entrypoint failed to import under Python 3.10 and the gate run at
+  PR #397's head FAILED (Futuris only; the other nine passed). Fixed
+  with the same try/except StrEnum fallback as the rest of the sweep.
+
+Two further import-time sites landed on main after the sweep snapshot
+and are fixed in the same follow-up:
+
+- `Futuris/futuris/services/forecast_tracker.py` (TASK-FUT-006) —
+  `from datetime import UTC` → the `UTC = timezone.utc` alias form.
+- `Cortex/packages/agents/src/cortex_agents/__init__.py` — main's
+  COR-004 replacement rewrote the file and reintroduced
+  `from datetime import UTC`; the merge of main into this branch
+  union-resolved it (main's rewrite kept, sweep's datetime form kept).
+
+After these fixes, an AST re-scan of the merged tree finds zero
+unguarded production-scope 3.11+ import idioms, and the gate passes
+10/10 under Python 3.10.
