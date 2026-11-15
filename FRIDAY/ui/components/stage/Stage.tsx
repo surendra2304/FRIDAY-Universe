@@ -20,6 +20,7 @@ const VoiceCall = dynamic(() => import("../VoiceCall").then((m) => m.VoiceCall),
 const FleetSheet = dynamic(() => import("./FleetSheet").then((m) => m.FleetSheet), { ssr: false });
 const ChronicleSheet = dynamic(() => import("./ChronicleSheet").then((m) => m.ChronicleSheet), { ssr: false });
 const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet), { ssr: false });
+const ShowcaseSheet = dynamic(() => import("./ShowcaseSheet").then((m) => m.ShowcaseSheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -36,12 +37,13 @@ const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse";
+type SheetKind = "fleet" | "chronicle" | "pulse" | "showcase";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
   chronicle: { kicker: "Everything asked, everything done", title: "The Chronicle" },
   pulse: { kicker: "The box underneath it all", title: "Machine Pulse" },
+  showcase: { kicker: "The universe, browsable", title: "The Showcase" },
 };
 
 export function Stage() {
@@ -144,6 +146,13 @@ export function Stage() {
         run: () => openSheet("pulse"),
       },
       {
+        id: "showcase",
+        label: "Browse the showcase",
+        hint: "the universe as a catalogue — billboard, crew, ledger, rooms",
+        keys: "showcase browse netflix catalogue billboard featured rows discover",
+        run: () => openSheet("showcase"),
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -238,6 +247,7 @@ export function Stage() {
           {sheet === "fleet" && <FleetSheet />}
           {sheet === "chronicle" && <ChronicleSheet />}
           {sheet === "pulse" && <PulseSheet />}
+          {sheet === "showcase" && <ShowcaseSheet onSummon={(kind) => openSheet(kind)} />}
         </Sheet>
       )}
     </main>
