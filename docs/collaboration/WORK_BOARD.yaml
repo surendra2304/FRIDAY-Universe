@@ -4630,6 +4630,19 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-REL-040 crew): PR #255 merged, deploy fingerprint-verified on Server 1, live acceptance exact to the minute against independent conversions (Tokyo/London/IST/date) plus a live compound-turn negative. Residuals: (1) places outside the offline layer's deliberately small well-known table and not written as IANA names (e.g. 'what time is it in Reykjavik?') still fall through to the LLM loop and may non-answer - widening the table is a data task, not a routing one; (2) pre-existing Tokyo non-answer turns remain in conversation history (REL-029 store) but can no longer be produced or consulted for time asks; (3) the voice surface (gemini_live_session) was not touched - spoken time asks ride the voice pipeline's own tool loop."
 
+  - id: TASK-STR-RD-002
+    title: "Stratex mega-grid R&D (RD-002): widened data, 1,557-trial grid, combinations, synthesis"
+    status: VERIFIED
+    owner: muse_ai
+    branch: "claude/task-str-rd-002-stageA + claude/task-str-rd-002-stageD (+ claude/task-str-rd-002-stageD-fix)"
+    prs: [217, 260, 261]
+    contributors: []
+    issue_35_comments: [6884074111, 6884490629, 6887062878]
+    evidence:
+      - "PRs #217 (Stage A), #260 (Stages B/C/D, merge 8102a19c), #261 (correction, merge 64c94a6e); issue #35 comments 6884074111 / 6884490629 / 6887062878; RESULTS_RD2.md + results_rd2/synthesis.json on main"
+    result: "2 candidates (ichimoku tk_cloud crypto 4h; dow_effect reversal crypto 1d) pass bar+Bonferroni+holdout+2x-cost at N=1,557; SMT-v2 FAILS removal rule (PF 0.655); governed losers confirmed; forward entrants recommended (ichimoku, dow_reversal, best-per-class sleeve)"
+    next_action: "Owner decision on forward entrants (TASK-STR-FWD-002 proposed); SMT-v2 removal dispatched separately under the owner's PF<1.2 rule"
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
