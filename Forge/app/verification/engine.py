@@ -29,6 +29,7 @@ from app.verification.evidence import (
     VerificationReport,
     VerificationStageResult,
 )
+from app.verification.security_gate import OutputSecurityGateChecker
 from app.verification.source_integrity import project_snapshot
 from app.verification.expanded_battery import (
     AccessibilityChecker,
@@ -71,6 +72,7 @@ class VerificationEngine:
             RuntimeChecker(),
             SecurityChecker(),
             SecurityVulnerabilityChecker(),
+            OutputSecurityGateChecker(),
             FeaturePresenceChecker(),
             PerformanceSanityChecker(),
             CodeQualityComplexityChecker(),
