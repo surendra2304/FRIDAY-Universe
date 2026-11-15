@@ -163,6 +163,112 @@ DOW_EFFECT_STRATEGY = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-003 (2026-11-15): the FORWARD-TEST lane.
+# Owner directive 2026-11-15 ~11:47 IST: "Create more and more strategies
+# and test them in my demo account — no money will be lost on demo."
+# TASK-STR-RD-002's four WATCHLIST configurations passed the mechanical
+# bar (expectancy>0, PF>=1.2, >=200 OOS trades, >=80% folds, holdout)
+# but failed Bonferroni multiple-testing significance at N=1,557. They
+# were NOT promoted; instead they forward-test with real demo orders
+# under a governance classification DISTINCT from the VALIDATED
+# entrants: FORWARD_TEST — executable on DEMO venues only (fail-closed
+# in strategies/strategy_registry.py; the daemon attests which venues
+# are demo from the venue adapters' base URLs, and a FORWARD_TEST
+# strategy can never execute without that attestation), same phase-3
+# protections (1% risk cap, 3% daily breaker, kill criteria via
+# measurement/forward_guard.py), and every fill tagged FORWARD_TEST in
+# the Phase-2 ledger so scorecards never blend this lane with the
+# passed entrants (ichimoku/dow/sleeve).
+#
+# HOW TO ADD A FUTURE LANE CANDIDATE (the reusable pattern — e.g.
+# TASK-STR-RD-003 near-bar passers):
+#   1. Port the judged signal logic line-faithfully into a production
+#      module Stratex/strategy_<key>.py (get_signal +
+#      entries_for_frame), parameters read from a <KEY>_STRATEGY dict
+#      below whose values ARE the judged configuration.
+#   2. Equivalence-test the module against the research harness on
+#      fixed historical slices (the test_fwd002/test_fwd003 standard:
+#      identical entry lists and bracket distances).
+#   3. Add a registry entry below with status "FORWARD_TEST",
+#      forward_protocol: True, forward_lane: "FORWARD_TEST",
+#      lane_assets = the judged universe, and the RD evidence
+#      (oos_win_rate_prior / expected_net_edge_bps from the judged
+#      pooled OOS row — never invented).
+#   4. Add the module name to STRATEX_STRATEGY_ALLOWLIST in the
+#      Server-1 Stratex/.env at deploy time.
+# A candidate whose judged universe cannot be traded faithfully on a
+# demo venue is registered with lane_assets = [] and
+# forward_protocol: False, its exclusion reason recorded, and NO
+# module is written (see tsmom2_dual below) — never substituted.
+# ==============================================================================
+
+BOLLINGER_TREND_STRATEGY = {
+    "NAME": "Bollinger Trend (close crosses SMA(50) +/- 2.0 sd band)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-003)",
+    "TIMEFRAME": "1d",
+    "SMA_PERIOD": 50,
+    "SD_MULT": 2.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (420 trades, 5/5 folds,
+    # Bonferroni FAIL — watchlist, not a promotion):
+    "OOS_WIN_RATE": 0.3929,
+    "OOS_PROFIT_FACTOR": 1.456,
+    "OOS_EXPECTANCY_PCT": 3.545,
+}
+
+SHOCK_BREAKOUT_STRATEGY = {
+    "NAME": "Shock Breakout (one-bar close move > 1.0 x ATR(14))",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-003)",
+    "TIMEFRAME": "1d",
+    "SHOCK_K": 1.0,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (732 trades, 4/5 folds,
+    # Bonferroni FAIL — watchlist, not a promotion):
+    "OOS_WIN_RATE": 0.3893,
+    "OOS_PROFIT_FACTOR": 1.318,
+    "OOS_EXPECTANCY_PCT": 2.696,
+}
+
+ADX_EMA_BARE_STRATEGY = {
+    "NAME": "ADX+EMA Bare (production module signals, NO downstream filter)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-003)",
+    "TIMEFRAME": "4h",
+    "WINDOW": 500,          # judged gov2/module_eval sliding window
+    "SL_ATR": 3.0,          # module bracket (ADX_EMA_STRATEGY_V2)
+    "TP_ATR": 3.0,          # module bracket (ADX_EMA_STRATEGY_V2)
+    "WARMUP_BARS": 260,     # judged WARMUP_BARS (module_eval)
+    # TASK-STR-RD-002 pooled OOS evidence for the BARE configuration
+    # (837 trades, 4/5 folds, holdout expectancy +0.9428%,
+    # Bonferroni FAIL — watchlist, not a promotion):
+    "OOS_WIN_RATE": 0.5699,
+    "OOS_PROFIT_FACTOR": 1.233,
+    "OOS_EXPECTANCY_PCT": 0.796,
+}
+
+TSMOM2_DUAL_STRATEGY = {
+    "NAME": "Dual Momentum (ROC(30) sign cross + EMA(200) gate) — EXCLUDED, see registry",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-003)",
+    "TIMEFRAME": "4h",
+    "ROC_LOOKBACK": 30,
+    "EMA_PERIOD": 200,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.5,          # judged bracket (families2 build_configs)
+    "TP_ATR": 5.0,          # judged bracket (families2 build_configs)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h")
+    # TASK-STR-RD-002 pooled OOS evidence (205 trades, 4/5 folds,
+    # Bonferroni FAIL — watchlist, not a promotion):
+    "OOS_WIN_RATE": 0.3951,
+    "OOS_PROFIT_FACTOR": 1.203,
+    "OOS_EXPECTANCY_PCT": 0.558,
+}
+
+# ==============================================================================
 # PRODUCTION STRATEGY REGISTRY
 # Explicit classification of all candidate strategies
 # ==============================================================================
@@ -239,6 +345,88 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "validated_assets": CRYPTO30_SYMBOLS,
         "forward_protocol": True,
         "reason": "TASK-STR-RD-002 winner: dow_effect/reversal @ CRYPTO30 1d passed the full bar (expectancy>0, PF 1.257 >= 1.2, 3,660 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.206). Calendar effect — flagged in RD-002 as most prone to era decay; the forward window is the arbiter. Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Time exit (max_bars=5) enforced by the daemon (no broker-native equivalent). Phase-3 protocol as for ichimoku_trend. DEMO venue only; live trading prohibited.",
+    },
+    # ------------------------------------------------------------------
+    # TASK-STR-FWD-003: FORWARD-TEST lane (see the lane block above).
+    # These are WATCHLIST configurations, not winners: mechanical bar
+    # passed, Bonferroni failed. FORWARD_TEST != VALIDATED — demo
+    # venues only, forward evidence decides them.
+    # ------------------------------------------------------------------
+    "bollinger_trend": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-003)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: close crosses above SMA(50) + 2.0 x rolling-std(50). SHORT: close crosses below SMA(50) - 2.0 x rolling-std(50). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_bollinger_trend(df, 50, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3929,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 354.5,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 WATCHLIST: bollinger_trend/p50_sd2.0 @ CRYPTO30 1d passed the mechanical bar (expectancy +3.5448%/trade, PF 1.4562, 420 OOS trades, 5/5 positive folds, holdout) but FAILED Bonferroni significance at N=1,557 — not a promotion. Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane: DEMO venues only, phase-3 protocol (1% risk cap, 3% daily breaker, kill criteria expectancy<0 or PF<1.0 after >=50 closed trades or drawdown >5% of equity), fills tagged FORWARD_TEST, never blended with the VALIDATED entrants' scorecards.",
+    },
+    "shock_breakout": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-003)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: one-bar close rise (close - close[-1]) > 1.0 x ATR(14) at the signal bar. SHORT: one-bar close fall > 1.0 x ATR(14). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_shock(df, 1.0, warmup), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3893,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 269.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 WATCHLIST: shock_breakout/k1.0 @ CRYPTO30 1d passed the mechanical bar (expectancy +2.6957%/trade, PF 1.3179, 732 OOS trades, 4/5 positive folds, holdout) but FAILED Bonferroni significance at N=1,557 — not a promotion. Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane terms as for bollinger_trend.",
+    },
+    "adx_ema_bare": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-003)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "The production strategy_adx_ema module's OWN signals (EMA20/50 cross + EMA200 trend gate + ADX(14) > 20, plus the qualified-retest entry), evaluated exactly as the judged harness did (module.add_features over the frame, get_signal on trailing <=500-bar windows), with NO downstream filter. The PRODUCTION configuration adds rd/stage2 LONG_ONLY + BTC-regime filtering and is a different judged object; it remains OBSERVE_ONLY under its own phase-3 measurement and its records are never blended with this lane's.",
+        "sl_method": "3.0 * ATR(14) (module bracket, ADX_EMA_STRATEGY_V2)",
+        "tp_method": "3.0 * ATR(14) (module bracket, ADX_EMA_STRATEGY_V2)",
+        "rr_ratio": 1.0,
+        "oos_win_rate_prior": 0.5699,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 79.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": CRYPTO30_SYMBOLS,
+        "validated_assets": [],
+        "forward_protocol": True,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "TASK-STR-RD-002 WATCHLIST: adx_ema BARE @ CRYPTO30 4h passed the mechanical bar (expectancy +0.7955%/trade, PF 1.2332, 837 OOS trades, 4/5 positive folds, untouched-holdout expectancy +0.9428%) but FAILED Bonferroni significance at N=1,557 — not a promotion. (The production configuration measured PF 1.197, sub-bar, and was not a candidate.) Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane terms as for bollinger_trend. Judged geometry is RR 1.0 by construction (3.0x/3.0x ATR bracket); forward-protocol strategies are exempt from the daemon's generic min-RR pre-filter for exactly this reason — the expectancy gate and kill criteria still apply.",
+    },
+    "tsmom2_dual": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-003)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: ROC(30) crosses up through 0 AND close > EMA(200). SHORT: ROC(30) crosses down AND close < EMA(200). Judged: rigorous_backtest/rd2/families2.py sig_dual_momentum(df, 30, warmup) on the COMM7 Yahoo-futures panel (GOLD, SILVER, WTI, BRENT, NATGAS, COPPER, PLATINUM), warmup 260 bars.",
+        "sl_method": "2.5 * ATR(14) at signal bar (judged bracket)",
+        "tp_method": "5.0 * ATR(14) at signal bar (judged bracket)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.3951,
+        "total_friction_bps": 12.0,
+        "expected_net_edge_bps": 55.8,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": [],
+        "validated_assets": [],
+        "forward_protocol": False,
+        "forward_lane": "FORWARD_TEST",
+        "reason": "EXCLUDED from the lane (TASK-STR-FWD-003): the judged universe is Yahoo continuous FUTURES series (GC/SI/CL/BZ/NG/HG/PL). Neither demo venue can trade it — demo-fapi is crypto perpetuals only, and the OANDA practice account's own instrument list (queried live 2026-11-15) contains 68 instruments, ALL FX pairs: no metals, energy or commodity instruments exist on the account at all (and spot CFDs, where offered elsewhere, would still be different instruments from the judged futures series — substitution prohibited). No production module exists for this entry and lane_assets is empty: the registration is documentary, preserving the RD-002 evidence (+0.5581%/trade, PF 1.2026, 205 OOS trades, 4/5 folds, Bonferroni FAIL) and the exclusion reason. It can only join the lane if a demo venue offers the judged futures series themselves.",
     }
 }
 
@@ -246,8 +434,13 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
 # explicitly promoted after a reproducible validation review. This also keeps
 # stale metrics from disabled or observe-only candidates out of accidental
 # direct callers that inspect the registry without applying governance.
+# TASK-STR-FWD-003: FORWARD_TEST lane entries keep their (judged, disclosed)
+# priors and edge estimates for the same reason VALIDATED entries do — the
+# daemon's expectancy gate reads them — but their tradable universe lives
+# under "lane_assets", never "validated_assets": the lane is not a
+# validation, and nothing may mistake it for one.
 for _strategy_entry in PRODUCTION_STRATEGY_REGISTRY.values():
-    if _strategy_entry.get("status") != "VALIDATED":
+    if _strategy_entry.get("status") not in ("VALIDATED", "FORWARD_TEST"):
         _strategy_entry["oos_win_rate_prior"] = None
         _strategy_entry["expected_net_edge_bps"] = None
         _strategy_entry["validated_assets"] = []
