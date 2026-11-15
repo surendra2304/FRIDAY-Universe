@@ -861,6 +861,210 @@ button {
   line-height: 1.6;
 }
 
+/* -------------------------------------------------- life (IG-WEB-02) */
+
+.life-modes {
+  display: flex;
+  gap: 8px;
+  margin: 2px 0 16px;
+}
+
+.life-chip {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  padding: 7px 14px;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.life-chip.is-on {
+  color: var(--ink);
+  border-color: rgba(56, 189, 248, 0.55);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.life-stats {
+  gap: 18px;
+}
+
+.life-stats b {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--ink);
+  margin-right: 5px;
+}
+
+.life-canvas-wrap {
+  width: 100%;
+}
+
+.life-canvas {
+  display: block;
+  cursor: crosshair;
+}
+
+.life-readout {
+  min-height: 22px;
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--dim);
+}
+
+.life-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.life-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.life-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.life-dot.is-lived {
+  background: var(--glow-a);
+}
+
+.life-dot.is-now {
+  background: var(--glow-c);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
+}
+
+.life-dot.is-future {
+  background: rgba(142, 160, 201, 0.35);
+}
+
+.life-dot.is-marked {
+  background: transparent;
+  border: 1.5px solid var(--warn);
+}
+
+.life-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  max-width: 260px;
+  margin-top: 16px;
+}
+
+.life-field-inline {
+  margin-top: 20px;
+}
+
+.life input[type="date"],
+.life input[type="text"] {
+  background: var(--void-raise);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 11px;
+  color-scheme: dark;
+}
+
+.life-marks {
+  margin-top: 24px;
+  border-top: 1px solid var(--hair-soft);
+  padding-top: 16px;
+}
+
+.life-marks-head {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--glow-a);
+}
+
+.life-mark-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.life-mark-form input[type="text"] {
+  flex: 1 1 180px;
+}
+
+.life-btn {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  color: var(--ink);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.12);
+  border-radius: 10px;
+  padding: 9px 16px;
+  transition: background 0.2s ease;
+}
+
+.life-btn:hover {
+  background: rgba(56, 189, 248, 0.22);
+}
+
+.life-mark-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.life-mark-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.life-mark-date {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--warn);
+  flex: none;
+}
+
+.life-mark-label {
+  color: var(--ink);
+  flex: 1;
+}
+
+.life-mark-remove {
+  color: var(--faint);
+  font-size: 17px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+
+.life-mark-remove:hover {
+  color: var(--bad);
+}
+
 /* ----------------------------------------------------------------- fleet */
 
 .fleet-grid {
