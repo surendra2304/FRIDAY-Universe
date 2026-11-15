@@ -7263,6 +7263,38 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "SERVER-SIDE PROBES (2026-11-15 ~15:00 IST, read-only ss/systemctl/stat/pip-list on both hosts): all live .env files mode 600 EXCEPT Server 1's stale VyralX/.env at 664 (F-11, world-readable; VyralX runs on S2); credentials.md/CREDENTIALS.md 600 on both; credentials.md.bak-* = 0 (corrects the pre-probe expectation); ~25 stale .env.bak-* copies, all 600. Shared venv is IDENTICAL on both servers and CURRENT on every flagged package (PyJWT 2.15.1, Pillow 12.3.0, pypdf 6.21.2, python-multipart 0.0.32, aiohttp 3.14.5, starlette 1.7.0) — production runtime is NOT at the vulnerable pins/floors today; the manifests have drifted BEHIND the venv (S2 venv lacks dnspython/WeasyPrint entirely), so F-02's risk is rebuild regression. Listeners: S1 adds rpcbind 111 (both servers, 0.0.0.0) + undocumented 8081/8089/8765 (all externally filtered); Redis on S2 is loopback-only (correct); ufw ACTIVE both; sshd PasswordAuthentication no both; docker+containerd run on both hosts though the documented stack is systemd+Caddy (F-12). Identification read (later): 8081/8089 are python processes (PIDs 2546442/2544072, cmdlines not captured); S1 ufw rules captured — 22/80/443 ALLOW, 10000 ALLOW with comment 'FRIDAY Gateway' (deliberate at host level, undocumented in repo), 8765 ALLOW on docker_gwbridge, Swarm 2377/7946/4789 ALLOW from 10.0.0.0/16 only; docker ps EMPTY."
     blockers: []
     next_action: "Coordinator: review + merge this PR (fixes F-02 + F-05 partially). Follow-ups NOT in this PR (server-side change windows): (1) chmod/remove Server 1's stale VyralX/.env (F-11, one command); (2) close OCI ingress for S1:10000 and rebind agents (127.0.0.1 on S1, 10.0.0.120 on S2) in live units + deploy/setup_fleet.sh; (3) regenerate pinned manifests from the live venv under change control (production venv verified current on all flagged packages; manifests drifted behind it — S2 venv lacks dnspython/WeasyPrint) and raise F-04 floors; (4) VyralX Pillow ceiling raise after compatibility check; (5) SHA-pin GitHub Actions; (6) untrack FRIDAY/.data/**; (7) prune .env.bak-* copies + cap retention; (8) disable rpcbind / identify S1 8081+8089+8765 / explain Docker on both hosts (F-12)."
+  - id: TASK-INT-009
+    title: "IntelX verification pass (INT-005 RESULTS §6): verbatim quote gate with live re-verification (Bruker lesson), entailment/coverage screen, boilerplate exclusion, single_source flags, re-audit hook"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-int-009-verification-pass
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T16:41:02+05:30"
+    updated_at: "2026-11-15T16:41:02+05:30"
+    files:
+      - "IntelX/intelx/api/grounded_live_research.py"
+      - "IntelX/intelx/api/live_research_task.py"
+      - "IntelX/scripts/reaudit_live_research.py"
+      - "IntelX/tests/test_int005_verification_pass.py"
+      - "IntelX/tests/test_int009_verification_gaps.py"
+      - "IntelX/FACT_CHECK_AUDIT_INT005.md"
+      - "IntelX/docs/RESULTS_INT-009_VERIFICATION_PASS.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893325230"
+    defect: "INT-005 measured IntelX stored live research at 65.7% VERIFIED (23/35) against a pre-declared 90% standard — zero fabricated facts, all defects citation hygiene. Worst mode (Bruker, coordinator-verified live 2026-11-15): a stored claim's quote does not exist on the live cited page, yet the run recorded quotes_verified=true because the gate checked the fetched snapshot, never the source as retrieved. Boilerplate counted as findings, claims extended beyond their quotes, single-source claims unflagged."
+    acceptance:
+      - "Verbatim quote gate: non-matching quote downgrades the claim (never presented as grounded); snapshot-vs-live divergence is a first-class failure — synthesized findings are re-verified against a fresh live retrieval of each cited URL, fail-closed (unretrievable source also downgrades)."
+      - "Coverage: deterministic entailment screen (numbers/entities/content coverage vs cited source text) fails closed; entailment flags truthful per finding."
+      - "Boilerplate findings excluded from accuracy denominators and labelled NON_CLAIM/boilerplate in audit output."
+      - "Single-source claims flagged single_source=true in report output."
+      - "Re-audit hook re-runs the stored-findings audit against live sources and reports the AFTER partition."
+    evidence:
+      - "Adopted the INT-005 crew's staged pass as base (statement_support screen, chrome filter, their 8 tests, FACT_CHECK_AUDIT_INT005.md) — re-verified in the INT-009 clone: 8/8 pass. Gaps implemented by INT-009: live re-verification wired into collect_live_brief (partial downgrade ships survivors with quotes_verified=false + downgraded_findings + live_reverification partition; total downgrade falls back to unsynthesised findings, DEGRADED), shared is_boilerplate_text predicate, single_source/independently_verified flags, reaudit_finding classifier + scripts/reaudit_live_research.py (SELECT-only)."
+      - "Tests: test_int009_verification_gaps.py 14/14 pass (Bruker-shaped fixtures at unit, pipeline and re-audit level); neighbour ring test_rel038 + test_citation_validation 20 passed, identical to the pristine-main baseline — no regressions."
+      - "citation_integrity.py reuse decision: the module is NOT on main (exists only in the INT-008 crew workspace; its wiring is a separate queued delivery) — not duplicated here; live path uses statement_support, claims path stays INT-008's. Mapping documented in IntelX/docs/RESULTS_INT-009_VERIFICATION_PASS.md."
+    next_action: "Coordinator: review + merge the INT-009 PR (if PR #322 lands first, rebase the live_research_task.py hunks — disjoint regions), set pr number on this entry, deploy via Fleet CD, then run IntelX/scripts/reaudit_live_research.py against production live_research_runs for the AFTER partition; flip VERIFIED with that output."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
