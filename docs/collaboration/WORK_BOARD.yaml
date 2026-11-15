@@ -5190,6 +5190,38 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "PR opened from fresh main a5612c63 (branch claude/task-fut-009-scenario, git-data API — local git ref-writes are blocked in this sandbox); coordinator merges — this crew does not merge. No production deploy in this task; deployment rides the normal Fleet CD on merge, after which the endpoint should be probed live before any VERIFIED claim."
     blockers: []
     next_action: "Coordinator: review + merge the PR; after Fleet CD, probe POST /v1/scenarios/what-if live on Server 1 and flip this entry to VERIFIED with the probe evidence. Follow-ups if the prototype is accepted: FRIDAY task-envelope exposure and ScenarioRepository persistence (both deliberately out of prototype scope)."
+  - id: TASK-STR-RD-011
+    title: "Stratex position sizing & portfolio optimisation (owner's 'other than strategies' avenue #3): fixed-1% vs vol-targeted vs fractional-Kelly sizing and equal vs risk-parity combination on the RD-002 winners/watchlist/sleeve OOS streams"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-011
+    prs: [296]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:51:00+05:30"
+    updated_at: "2026-11-15T13:10:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD11.md"
+      - "Stratex/rigorous_backtest/results_rd11/synthesis_rd11.json"
+      - "Stratex/rigorous_backtest/results_rd11/streams/"
+      - "Stratex/rigorous_backtest/rd11/sim_rd011.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890995669"
+    defect: "Owner question 2026-11-15 ~12:33 IST (Wave 4): is there anything other than strategies to make profits? Avenue #3 = sizing & portfolio construction. Open questions on the RD-002 evidence: (a) whether fixed 1% per-trade risk (the standing rule), volatility-targeted sizing, or capped fractional Kelly changes compounded return, max drawdown or phase-3 kill-criteria survival (5% strategy-DD line) on the two winners (ichimoku tk_cloud @crypto30/4h, dow reversal @crypto30/1d), the 4 watchlist configs and the Stage-C sleeve; (b) whether equal vs risk-parity combination weights across the uncorrelated set deepen the edge. Research only — no production/governance changes."
+    acceptance:
+      - "Integrity gate before any number is trusted: git-shipped streams proven identical to the RD-002 full backup; the stripped dow_effect stream recovered and proven against its published pooled OOS metrics; Stage-C sleeve replicated exactly with RD-002's own combine()."
+      - "Every sizing multiplier causal (trailing data only); kill simulation applies the phase-3 5% DD rule; expectancy/PF sizing-invariance stated, not hidden."
+      - "RESULTS_RD11.md + synthesis_rd11.json + reproducible script on main via PR; board entry added from a fresh-main checkout with the full task-id set diffed."
+    evidence:
+      - "INTEGRITY: 5 git streams byte-identical (canonical-JSON SHA-256) to ~/workspace/str-rd2/results_full_backup; dow_effect recovered stream reproduces published pooled_oos EXACTLY (3,660 trades, win rate 0.5226775956, expectancy 0.0087767851, PF 1.2574511877); Stage-C best-per-class replicated to 0.00e+00 on both weightings (equal +18.83%/DD -11.54%; inv-vol +16.13%/DD -8.34%) using rd2/combo.py imported unchanged; OOS counts match published pooled counts for all 6 configs (2302/3660/420/732/837/205). The 5 recovered rows ship in results_rd11/streams/ with SHA-256 provenance in the synthesis; rd11/sim_rd011.py regenerates synthesis_rd11.json identically (verified in-repo)."
+      - "FINDING 1 (the standing rule kills everything): at a literal fixed 1% per-trade risk, ALL six streams breach the 5% DD kill line — ichimoku day 2 (max DD -75.0%), dow day 4 (-87.8%), bollinger day 14, shock day 10, adx_ema day 36, tsmom2 2025-06-11. Mechanism: 1%/trade x avg concurrency 3.3-23.9 = 3.3-23.9% portfolio heat. Not a window-edge artefact (winners' max DDs unchanged excluding the first 90 days) and not a calibration artefact (first-fold-calibrated multipliers 0.20-0.64, 3-6x smaller: all six still breach). Even unit exposure (m=1) breaches on all six."
+      - "FINDING 2 (vol-targeting): at equal average risk it raises Sharpe on 5 of 6 configs (ichimoku 1.12->1.24, shock 0.75->1.04) and at portfolio level (ALL6 1.44->1.55), but max DDs barely move — nothing survives the 5% line — and it DESTROYS dow_effect (-54.2% total vs +131.5% fixed): contraindicated for the calendar entrant."
+      - "FINDING 3 (fractional Kelly, causal, capped at 2x m_fixed): delays kills (ichimoku killed day ~262 while UP +7.6% at Kelly25 / +21.5% at Kelly50; bollinger Kelly25 survives 678 days, killed at +20.5%) but every config still breaches; Kelly goes NEGATIVE on adx_ema bare (-11.8%/-19.7% vs +43.2% fixed) and on the risk-parity sleeve (-11.5%/-12.1%). Recommendation on record: do not adopt Kelly sizing on these streams."
+      - "FINDING 4 (survivable size, dd-capped diagnostic — fitted on the judged window, an upper bound): largest constant exposure with full-window max DD <= 5% implies per-trade risk of 0.030% (dow) to 0.414% (tsmom2) solo — never near 1%. At survivable size: ichimoku +14.2%, dow +11.9%, bollinger +4.6%, shock +9.3%, adx_ema +10.5%, tsmom2 +10.9% over the 28-month OOS window."
+      - "FINDING 5 (combination is the lever): WIN2 winners' book — unit max DD -15.5% vs -43.3%/-44.2% solo, Sharpe 1.40; at survivable size +51.8% (equal) / +52.9% (risk-parity) vs +14.2%/+11.9% solo. ALL6 at survivable size +28.6% — the watchlist members DILUTE the winners' book. SLEEVE4: risk-parity halves unit DD (-11.5% equal -> -6.0%) and lifts survivable return +7.9% -> +13.0% (inv-vol +9.4%); equal vs risk-parity is a wash for WIN2."
+      - "DIRECT ANSWERS: (1) sizing/combination does NOT turn any watchlist config into a bar-passer — the promotion bar's core (expectancy, PF, significance, holdout) is sizing-invariant, and on kill-survival the watchlist breaches exactly like the winners; its route to promotion stays forward evidence (TASK-STR-FWD-003). (2) The winners' edge is deepened by COMBINATION (+51.8% at the 5% cap vs ~+13% solo average), not by any sizing scheme. (3) STRUCTURAL: the phase-3 rule pair (1% per-trade cap + 5% strategy-DD kill) is arithmetically inconsistent for pooled multi-symbol books — flagged to the coordinator in the PR; candidate fixes (portfolio-heat cap ~2% aggregate / concurrency cap / restated DD line) are a coordinator/owner decision, and what the live FWD-002 daemon actually implements is an open question for that crew. 96 sizing trials disclosed in RESULTS_RD11.md, deliberately NOT added to the 1,557 promotion counter (no promotion claimed)."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-011 crew): PR #296 carries RESULTS_RD11.md + synthesis + recovered streams + reproducible script. COORDINATOR/OWNER DECISION FLAGGED: the forward protocol's sizing basis (heat cap vs concurrency cap vs restated DD line) should be settled before TASK-STR-FWD-002's window produces its first kill decision, and FWD-002 should confirm what sizing the live daemon implements. No production, registry, daemon or governance state was changed by this task."
 task_id_warnings:
 task_id_warnings:
 task_id_warnings:

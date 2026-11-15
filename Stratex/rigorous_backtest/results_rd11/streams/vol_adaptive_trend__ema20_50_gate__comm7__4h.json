@@ -1,0 +1,1438 @@
+{
+  "family": "vol_adaptive_trend",
+  "variant": "ema20_50_gate",
+  "panel": "comm7",
+  "timeframe": "4h",
+  "asset_class": "comm",
+  "status": "EVALUATED",
+  "error": null,
+  "spec": {
+    "type": "bracket",
+    "sl_atr": 2.5,
+    "tp_atr": 5.0
+  },
+  "costs_rt_bps": {
+    "BRENT": 12.0,
+    "COPPER": 12.0,
+    "GOLD": 10.0,
+    "NATGAS": 20.0,
+    "PLATINUM": 14.0,
+    "SILVER": 14.0,
+    "WTI": 12.0
+  },
+  "symbols": [
+    "BRENT",
+    "COPPER",
+    "GOLD",
+    "NATGAS",
+    "PLATINUM",
+    "SILVER",
+    "WTI"
+  ],
+  "report": {
+    "per_fold": {
+      "W2": {
+        "oos_start": "2025-01-01",
+        "oos_end": "2025-07-01",
+        "trades": 30,
+        "wins": 10,
+        "win_rate": 0.3333333333333333,
+        "expectancy_net": 0.0022564511853592306,
+        "profit_factor_net": 1.0954235476558098,
+        "avg_win_net": 0.07770942780792349,
+        "avg_loss_net": -0.0354700371259229,
+        "total_return_net": 0.020519454326463293,
+        "max_drawdown_net": -0.2989550507566956
+      },
+      "W3": {
+        "oos_start": "2025-07-01",
+        "oos_end": "2026-01-01",
+        "trades": 31,
+        "wins": 9,
+        "win_rate": 0.2903225806451613,
+        "expectancy_net": -0.0027933558720232452,
+        "profit_factor_net": 0.8902242424189801,
+        "avg_win_net": 0.078025835235008,
+        "avg_loss_net": -0.035855752233990575,
+        "total_return_net": -0.12429503850180668,
+        "max_drawdown_net": -0.37624387645958934
+      },
+      "W4": {
+        "oos_start": "2026-01-01",
+        "oos_end": "2026-07-01",
+        "trades": 27,
+        "wins": 13,
+        "win_rate": 0.48148148148148145,
+        "expectancy_net": 0.019982742026998967,
+        "profit_factor_net": 1.6461981444812792,
+        "avg_win_net": 0.10572845715901744,
+        "avg_loss_net": -0.05963827916701821,
+        "total_return_net": 0.530567456326485,
+        "max_drawdown_net": -0.27254376409562997
+      },
+      "W5": {
+        "oos_start": "2026-07-01",
+        "oos_end": "2026-11-01",
+        "trades": 29,
+        "wins": 12,
+        "win_rate": 0.41379310344827586,
+        "expectancy_net": 0.01071210169729738,
+        "profit_factor_net": 1.469431974323946,
+        "avg_win_net": 0.08103418290756983,
+        "avg_loss_net": -0.038927014451130226,
+        "total_return_net": 0.2918008108893755,
+        "max_drawdown_net": -0.3092073161613207
+      }
+    },
+    "pooled_oos": {
+      "trades": 117,
+      "wins": 44,
+      "win_rate": 0.37606837606837606,
+      "expectancy_net": 0.007104995619475661,
+      "profit_factor_net": 1.2775646122922062,
+      "avg_win_net": 0.08695924848073572,
+      "avg_loss_net": -0.041026334872242734,
+      "total_return_net": 0.7669616600873539,
+      "max_drawdown_net": -0.4728747647072331
+    },
+    "per_symbol_oos": {
+      "BRENT": {
+        "trades": 15,
+        "wins": 5,
+        "win_rate": 0.3333333333333333,
+        "expectancy_net": -0.009747116269958823,
+        "profit_factor_net": 0.7513893767481429,
+        "avg_win_net": 0.08837771520032581,
+        "avg_loss_net": -0.05880953200510114,
+        "total_return_net": -0.17138824229895533,
+        "max_drawdown_net": -0.36675006613817407
+      },
+      "COPPER": {
+        "trades": 20,
+        "wins": 8,
+        "win_rate": 0.4,
+        "expectancy_net": 0.0009415461841732351,
+        "profit_factor_net": 1.048541672116604,
+        "avg_win_net": 0.0508455089864074,
+        "avg_loss_net": -0.03232776235064954,
+        "total_return_net": 0.0019800407868160175,
+        "max_drawdown_net": -0.1673742010356919
+      },
+      "GOLD": {
+        "trades": 14,
+        "wins": 4,
+        "win_rate": 0.2857142857142857,
+        "expectancy_net": -0.0028184168611088928,
+        "profit_factor_net": 0.8451957569774894,
+        "avg_win_net": 0.05385768981925333,
+        "avg_loss_net": -0.025488859533253787,
+        "total_return_net": -0.04793162020519459,
+        "max_drawdown_net": -0.15526429681534681
+      },
+      "NATGAS": {
+        "trades": 15,
+        "wins": 6,
+        "win_rate": 0.4,
+        "expectancy_net": 0.011694144956015,
+        "profit_factor_net": 1.359931936174577,
+        "avg_win_net": 0.11046005920565294,
+        "avg_loss_net": -0.05414979787707698,
+        "total_return_net": 0.13382849063451463,
+        "max_drawdown_net": -0.23164590924847628
+      },
+      "PLATINUM": {
+        "trades": 16,
+        "wins": 6,
+        "win_rate": 0.375,
+        "expectancy_net": 0.009111451828050482,
+        "profit_factor_net": 1.3488751614012444,
+        "avg_win_net": 0.09394161514812788,
+        "avg_loss_net": -0.04178664616399595,
+        "total_return_net": 0.11442185886597134,
+        "max_drawdown_net": -0.1614927486383163
+      },
+      "SILVER": {
+        "trades": 15,
+        "wins": 6,
+        "win_rate": 0.4,
+        "expectancy_net": 0.020038000931353262,
+        "profit_factor_net": 1.8538200940386957,
+        "avg_win_net": 0.10876661556182947,
+        "avg_loss_net": -0.03911440882229755,
+        "total_return_net": 0.2875151728704255,
+        "max_drawdown_net": -0.14458424286124016
+      },
+      "WTI": {
+        "trades": 22,
+        "wins": 9,
+        "win_rate": 0.4090909090909091,
+        "expectancy_net": 0.017106942106398324,
+        "profit_factor_net": 1.7426630732653672,
+        "avg_win_net": 0.09812375405431205,
+        "avg_loss_net": -0.038981620011388114,
+        "total_return_net": 0.37404032726170144,
+        "max_drawdown_net": -0.19129986338791471
+      }
+    },
+    "fold_profile": [
+      "W2",
+      "W3",
+      "W4",
+      "W5"
+    ]
+  },
+  "holdout": {
+    "symbols_active_min20": 2,
+    "symbols_positive": 2,
+    "breadth_positive_share": 1.0,
+    "max_symbol_profit_share": 0.3700802118192998,
+    "max_share_cap": 0.5,
+    "untouched_subset": [
+      "GOLD",
+      "SILVER"
+    ],
+    "untouched_trades": 29,
+    "untouched_expectancy": 0.00900386820395774,
+    "passes": false
+  },
+  "bar": {
+    "bar": {
+      "expectancy_net_gt": 0.0,
+      "profit_factor_net_gte": 1.2,
+      "min_oos_trades": 200,
+      "min_positive_fold_share": 0.8,
+      "positive_folds_needed": 4,
+      "positive_folds": 3,
+      "folds_with_trades": 4
+    },
+    "checks": {
+      "expectancy_net_gt_0": true,
+      "profit_factor_net_gte_1.2": true,
+      "min_oos_trades_200": false,
+      "positive_folds": false,
+      "holdout_passes": false
+    },
+    "passes_bar": false
+  },
+  "trade_stats": {
+    "n": 121,
+    "sharpe_per_trade": 0.13785732914045556,
+    "t_stat": 1.516430620545011,
+    "p_one_sided": 0.06470525061903676,
+    "skew": 0.7195732246644462,
+    "kurtosis": 2.4643911017423212
+  },
+  "seconds": 0.06,
+  "trades": [
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-02-27T16:00:00+00:00",
+      "exit_time": "2025-03-04T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 2884.300048828125,
+      "exit_price": 2931.9501907832814,
+      "net_return": -0.01753755087822462,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-03-06T08:00:00+00:00",
+      "exit_time": "2025-03-14T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 2917.10009765625,
+      "exit_price": 3008.4934623769554,
+      "net_return": 0.03029939727619457,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-05-01T12:00:00+00:00",
+      "exit_time": "2025-05-05T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3212.89990234375,
+      "exit_price": 3299.5143609107595,
+      "net_return": -0.027985815382794807,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-05-06T08:00:00+00:00",
+      "exit_time": "2025-05-08T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 3378.800048828125,
+      "exit_price": 3296.0425639472064,
+      "net_return": -0.02546817775648714,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-05-12T12:00:00+00:00",
+      "exit_time": "2025-05-21T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3228.300048828125,
+      "exit_price": 3322.281812156677,
+      "net_return": -0.030141469392822574,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-06-24T08:00:00+00:00",
+      "exit_time": "2025-07-21T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3343.89990234375,
+      "exit_price": 3407.1215988570616,
+      "net_return": -0.019925991946850147,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-08-15T00:00:00+00:00",
+      "exit_time": "2025-08-26T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3380.89990234375,
+      "exit_price": 3430.336027004652,
+      "net_return": -0.015637309071848755,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-11-11T00:00:00+00:00",
+      "exit_time": "2025-11-14T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 4126.89990234375,
+      "exit_price": 4047.109531855808,
+      "net_return": -0.020314390816382793,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2025-11-18T16:00:00+00:00",
+      "exit_time": "2025-11-25T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4053.39990234375,
+      "exit_price": 4159.313702151099,
+      "net_return": -0.02715626310225448,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2026-02-20T16:00:00+00:00",
+      "exit_time": "2026-03-02T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 5062.2998046875,
+      "exit_price": 5401.2998046875,
+      "net_return": 0.06589917870661521,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2026-03-06T12:00:00+00:00",
+      "exit_time": "2026-03-19T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 5086.2998046875,
+      "exit_price": 4722.931443523715,
+      "net_return": 0.07051158619133974,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2026-04-02T04:00:00+00:00",
+      "exit_time": "2026-05-18T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 4703.60009765625,
+      "exit_price": 4504.567549759172,
+      "net_return": -0.04327214475356008,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2026-07-07T16:00:00+00:00",
+      "exit_time": "2026-07-08T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 4150.39990234375,
+      "exit_price": 4040.512066791905,
+      "net_return": -0.027449482231312453,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2026-07-30T04:00:00+00:00",
+      "exit_time": "2026-08-05T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 4115.60009765625,
+      "exit_price": 4320.4328655793815,
+      "net_return": 0.048720597102863805,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GOLD",
+      "entry_time": "2026-11-12T04:00:00+00:00",
+      "exit_time": "2026-11-13T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3988.0,
+      "exit_price": 3878.5,
+      "net_return": 0.02648434297389427,
+      "exit_reason": "END_OF_DATA"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-04-16T08:00:00+00:00",
+      "exit_time": "2025-05-01T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 32.900001525878906,
+      "exit_price": 31.80799187611485,
+      "net_return": -0.03454436582532153,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-05-06T12:00:00+00:00",
+      "exit_time": "2025-05-15T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 33.27000045776367,
+      "exit_price": 31.991783511997472,
+      "net_return": -0.039764775908124335,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-05-15T04:00:00+00:00",
+      "exit_time": "2025-05-20T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 31.989999771118164,
+      "exit_price": 33.07104195302579,
+      "net_return": -0.03524145298629972,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-08-07T16:00:00+00:00",
+      "exit_time": "2025-08-19T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 38.31999969482422,
+      "exit_price": 37.51403089835642,
+      "net_return": -0.02240218446055436,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-08-19T16:00:00+00:00",
+      "exit_time": "2025-08-22T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 37.435001373291016,
+      "exit_price": 38.19245265232195,
+      "net_return": -0.021663099714609772,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-08-22T16:00:00+00:00",
+      "exit_time": "2025-08-29T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 38.95000076293945,
+      "exit_price": 40.654596980806744,
+      "net_return": 0.04230345477418951,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-11-10T04:00:00+00:00",
+      "exit_time": "2025-11-12T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 49.130001068115234,
+      "exit_price": 52.40160125835824,
+      "net_return": 0.06509849779351709,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-11-21T12:00:00+00:00",
+      "exit_time": "2025-11-24T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 48.400001525878906,
+      "exit_price": 50.751387077204,
+      "net_return": -0.050051388183057856,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2025-11-25T12:00:00+00:00",
+      "exit_time": "2025-12-01T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 50.88999938964844,
+      "exit_price": 57.70500183105469,
+      "net_return": 0.13232996720287735,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2026-02-24T00:00:00+00:00",
+      "exit_time": "2026-03-03T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 87.94499969482422,
+      "exit_price": 82.10390471701047,
+      "net_return": -0.06772369162024497,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2026-03-05T08:00:00+00:00",
+      "exit_time": "2026-03-19T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 83.7249984741211,
+      "exit_price": 67.03361635013732,
+      "net_return": 0.19823791728419637,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2026-05-18T16:00:00+00:00",
+      "exit_time": "2026-06-08T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 77.21499633789062,
+      "exit_price": 66.35743326101965,
+      "net_return": 0.13941071171411193,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2026-09-10T00:00:00+00:00",
+      "exit_time": "2026-09-10T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 67.81999969482422,
+      "exit_price": 65.11317468033283,
+      "net_return": -0.041255082650532404,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2026-09-21T00:00:00+00:00",
+      "exit_time": "2026-09-24T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 66.83499908447266,
+      "exit_price": 64.29274054528013,
+      "net_return": -0.039383638051932984,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "SILVER",
+      "entry_time": "2026-09-24T04:00:00+00:00",
+      "exit_time": "2026-10-07T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 64.62000274658203,
+      "exit_price": 59.675736861006015,
+      "net_return": 0.0752191446020846,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-03-24T04:00:00+00:00",
+      "exit_time": "2025-03-31T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 68.05999755859375,
+      "exit_price": 71.43840712309267,
+      "net_return": 0.04837988537873061,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-04-22T12:00:00+00:00",
+      "exit_time": "2025-04-23T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 63.91999816894531,
+      "exit_price": 61.587349574706394,
+      "net_return": -0.03764876668278478,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-04-24T16:00:00+00:00",
+      "exit_time": "2025-05-01T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 62.29999923706055,
+      "exit_price": 57.105576384882575,
+      "net_return": 0.0822769676178017,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-05-12T08:00:00+00:00",
+      "exit_time": "2025-05-22T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 62.7400016784668,
+      "exit_price": 60.428615847610544,
+      "net_return": -0.03799580209730292,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-05-23T08:00:00+00:00",
+      "exit_time": "2025-05-29T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 60.75,
+      "exit_price": 62.63579833826857,
+      "net_return": -0.032279941088464326,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-05-30T08:00:00+00:00",
+      "exit_time": "2025-06-02T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 61.06999969482422,
+      "exit_price": 63.02491448507138,
+      "net_return": -0.033250206369050926,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-07-16T00:00:00+00:00",
+      "exit_time": "2025-07-18T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 66.86000061035156,
+      "exit_price": 68.87430585751727,
+      "net_return": -0.03136410431234488,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-07-18T16:00:00+00:00",
+      "exit_time": "2025-07-23T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 67.75,
+      "exit_price": 65.25,
+      "net_return": -0.038055395544960936,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-07-30T00:00:00+00:00",
+      "exit_time": "2025-08-01T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 69.16999816894531,
+      "exit_price": 67.16479647357473,
+      "net_return": -0.030153985495110825,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-08-05T08:00:00+00:00",
+      "exit_time": "2025-09-05T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 65.98999786376953,
+      "exit_price": 61.58333814190025,
+      "net_return": 0.06565715244331538,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-09-24T16:00:00+00:00",
+      "exit_time": "2025-09-30T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 64.7300033569336,
+      "exit_price": 62.91474377551051,
+      "net_return": -0.0292092060010457,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-10-01T00:00:00+00:00",
+      "exit_time": "2025-10-10T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 62.5099983215332,
+      "exit_price": 58.929960776914854,
+      "net_return": 0.05613948537625231,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2025-11-06T16:00:00+00:00",
+      "exit_time": "2025-11-11T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 59.11000061035156,
+      "exit_price": 60.814712991816435,
+      "net_return": -0.030075009838940975,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-01-05T08:00:00+00:00",
+      "exit_time": "2026-01-05T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 56.7599983215332,
+      "exit_price": 58.23045479120523,
+      "net_return": -0.027138389923722084,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-02-18T00:00:00+00:00",
+      "exit_time": "2026-02-18T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 62.18000030517578,
+      "exit_price": 64.31328466965202,
+      "net_return": -0.03555012268568294,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-02-19T00:00:00+00:00",
+      "exit_time": "2026-03-02T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 65.0199966430664,
+      "exit_price": 71.98999786376953,
+      "net_return": 0.1058699689385187,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-04-10T12:00:00+00:00",
+      "exit_time": "2026-04-17T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 98.11000061035156,
+      "exit_price": 79.53183468921623,
+      "net_return": 0.1883872215597441,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-05-07T08:00:00+00:00",
+      "exit_time": "2026-05-12T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 93.33000183105467,
+      "exit_price": 101.46074218334435,
+      "net_return": -0.0884235098745649,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-05-22T04:00:00+00:00",
+      "exit_time": "2026-06-12T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 97.4800033569336,
+      "exit_price": 85.05159711505382,
+      "net_return": 0.12644934988659595,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-07-09T12:00:00+00:00",
+      "exit_time": "2026-07-17T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 73.94999694824219,
+      "exit_price": 81.87669710827784,
+      "net_return": 0.10586216852527121,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-08-11T16:00:00+00:00",
+      "exit_time": "2026-09-02T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 83.26000213623047,
+      "exit_price": 92.03704610083034,
+      "net_return": 0.10409158676257849,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-09-22T00:00:00+00:00",
+      "exit_time": "2026-10-16T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 92.26000213623048,
+      "exit_price": 97.27439228748044,
+      "net_return": -0.05561662023406916,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "WTI",
+      "entry_time": "2026-11-03T16:00:00+00:00",
+      "exit_time": "2026-11-09T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 95.72000122070312,
+      "exit_price": 85.59161344640312,
+      "net_return": 0.1047389892117598,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2025-02-24T00:00:00+00:00",
+      "exit_time": "2025-03-04T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 74.44999694824219,
+      "exit_price": 70.84832101411179,
+      "net_return": 0.04723448021015027,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2025-03-21T00:00:00+00:00",
+      "exit_time": "2025-04-03T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 72.41999816894531,
+      "exit_price": 69.73878775594017,
+      "net_return": -0.038177945959680805,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2025-04-22T08:00:00+00:00",
+      "exit_time": "2025-04-28T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 67.19000244140625,
+      "exit_price": 64.52317890325043,
+      "net_return": -0.0408424590608004,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2025-06-03T08:00:00+00:00",
+      "exit_time": "2025-06-13T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 65.0999984741211,
+      "exit_price": 70.65559506295625,
+      "net_return": 0.08403780099100834,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2025-07-29T16:00:00+00:00",
+      "exit_time": "2025-08-04T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 70.26000213623047,
+      "exit_price": 68.12418437126455,
+      "net_return": -0.031561595485167224,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2025-08-05T12:00:00+00:00",
+      "exit_time": "2025-09-26T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 68.19000244140625,
+      "exit_price": 70.56334738723785,
+      "net_return": -0.03604739273796362,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2025-10-23T16:00:00+00:00",
+      "exit_time": "2025-11-06T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 65.4800033569336,
+      "exit_price": 63.13132557255948,
+      "net_return": -0.037024890401237825,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2025-11-06T16:00:00+00:00",
+      "exit_time": "2026-01-13T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 62.869998931884766,
+      "exit_price": 65.51539673851329,
+      "net_return": -0.04332851166533922,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2026-04-08T16:00:00+00:00",
+      "exit_time": "2026-04-23T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 94.72000122070312,
+      "exit_price": 105.01236196867083,
+      "net_return": -0.10999209356372057,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2026-04-24T00:00:00+00:00",
+      "exit_time": "2026-05-07T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 106.1500015258789,
+      "exit_price": 96.58466447110219,
+      "net_return": -0.09120272269165203,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2026-05-07T16:00:00+00:00",
+      "exit_time": "2026-05-12T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 99.13999938964844,
+      "exit_price": 107.89828316824563,
+      "net_return": -0.0896493797308922,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2026-07-09T04:00:00+00:00",
+      "exit_time": "2026-07-14T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 78.83000183105469,
+      "exit_price": 86.46762764724399,
+      "net_return": 0.09557182173507134,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2026-08-11T16:00:00+00:00",
+      "exit_time": "2026-09-08T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 88.8499984741211,
+      "exit_price": 98.62572089782991,
+      "net_return": 0.10869378382018295,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2026-09-21T16:00:00+00:00",
+      "exit_time": "2026-09-24T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 96.18000030517578,
+      "exit_price": 102.814956167621,
+      "net_return": -0.07026832875455759,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2026-10-02T16:00:00+00:00",
+      "exit_time": "2026-10-22T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 101.4000015258789,
+      "exit_price": 112.31866315246015,
+      "net_return": 0.10635068924521619,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "BRENT",
+      "entry_time": "2026-11-03T04:00:00+00:00",
+      "exit_time": "2026-11-04T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 104.7699966430664,
+      "exit_price": 95.10475989780227,
+      "net_return": 0.09116200079101366,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-03-14T04:00:00+00:00",
+      "exit_time": "2025-04-09T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4.0329999923706055,
+      "exit_price": 3.446409273289614,
+      "net_return": 0.14373692088092574,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-05-01T08:00:00+00:00",
+      "exit_time": "2025-05-09T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 3.3929998874664307,
+      "exit_price": 3.8094536136761077,
+      "net_return": 0.12049585730565453,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-05-16T04:00:00+00:00",
+      "exit_time": "2025-05-29T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3.364000082015991,
+      "exit_price": 3.555834643792962,
+      "net_return": -0.05914189803865959,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-06-12T16:00:00+00:00",
+      "exit_time": "2025-06-16T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3.5,
+      "exit_price": 3.6832443335768015,
+      "net_return": -0.05446234174470982,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-06-25T04:00:00+00:00",
+      "exit_time": "2025-06-26T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3.562999963760376,
+      "exit_price": 3.20902746362044,
+      "net_return": 0.09754364980865388,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-07-22T04:00:00+00:00",
+      "exit_time": "2025-08-04T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3.312000036239624,
+      "exit_price": 2.9704300556415157,
+      "net_return": 0.10133549819068446,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-08-29T08:00:00+00:00",
+      "exit_time": "2025-09-22T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 2.9790000915527344,
+      "exit_price": 2.8345174436190907,
+      "net_return": -0.05040148198555631,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-10-13T04:00:00+00:00",
+      "exit_time": "2025-10-20T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 3.125,
+      "exit_price": 3.2981265733300424,
+      "net_return": -0.05751341738646547,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-10-21T08:00:00+00:00",
+      "exit_time": "2025-10-24T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 3.400000095367432,
+      "exit_price": 3.2370602129106736,
+      "net_return": -0.04982574425825086,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2025-12-10T16:00:00+00:00",
+      "exit_time": "2025-12-15T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4.644000053405762,
+      "exit_price": 4.037508213351486,
+      "net_return": 0.12885631646132162,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2026-03-19T12:00:00+00:00",
+      "exit_time": "2026-03-23T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 3.1730000972747803,
+      "exit_price": 2.9672549867459894,
+      "net_return": -0.06671089991541199,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2026-03-23T12:00:00+00:00",
+      "exit_time": "2026-05-21T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 2.970000028610229,
+      "exit_price": 3.1821220470766325,
+      "net_return": -0.07356654244798307,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2026-09-16T00:00:00+00:00",
+      "exit_time": "2026-09-21T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 2.944000005722046,
+      "exit_price": 2.8391244361993104,
+      "net_return": -0.037550321197001794,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2026-09-21T16:00:00+00:00",
+      "exit_time": "2026-09-22T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 2.845999956130981,
+      "exit_price": 2.9487441323352663,
+      "net_return": -0.03817553391965389,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2026-10-06T12:00:00+00:00",
+      "exit_time": "2026-10-08T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 3.068000078201294,
+      "exit_price": 3.291767242681089,
+      "net_return": 0.07079211258667754,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NATGAS",
+      "entry_time": "2026-11-09T12:00:00+00:00",
+      "exit_time": "2026-11-10T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 3.0199999809265137,
+      "exit_price": 3.3032053451001278,
+      "net_return": 0.09159124339114492,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2025-02-25T00:00:00+00:00",
+      "exit_time": "2025-02-26T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4.500500202178955,
+      "exit_price": 4.659999847412109,
+      "net_return": -0.0366837006660581,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2025-04-03T04:00:00+00:00",
+      "exit_time": "2025-04-04T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4.9085001945495605,
+      "exit_price": 4.600633800487348,
+      "net_return": 0.061595662029788376,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2025-04-21T00:00:00+00:00",
+      "exit_time": "2025-05-09T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 4.693999767303467,
+      "exit_price": 4.489532035378582,
+      "net_return": -0.04470642314563641,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2025-06-13T12:00:00+00:00",
+      "exit_time": "2025-06-23T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 4.748000144958496,
+      "exit_price": 4.892472205219662,
+      "net_return": -0.03166523736564649,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2025-08-29T08:00:00+00:00",
+      "exit_time": "2025-09-24T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 4.577499866485596,
+      "exit_price": 4.771767452908414,
+      "net_return": 0.04118949308380502,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2025-10-23T08:00:00+00:00",
+      "exit_time": "2025-11-04T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 5.070499897003174,
+      "exit_price": 4.920268715436524,
+      "net_return": -0.030792223001179526,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-01-21T16:00:00+00:00",
+      "exit_time": "2026-01-26T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 5.821499824523926,
+      "exit_price": 6.026954484340864,
+      "net_return": -0.03653548975722546,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-02-12T00:00:00+00:00",
+      "exit_time": "2026-02-12T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 5.985499858856201,
+      "exit_price": 5.7672912609958,
+      "net_return": -0.037611762212435146,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-02-13T00:00:00+00:00",
+      "exit_time": "2026-02-24T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 5.770500183105469,
+      "exit_price": 5.982854731488143,
+      "net_return": -0.038044931519933566,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-03-05T12:00:00+00:00",
+      "exit_time": "2026-03-19T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 5.829500198364258,
+      "exit_price": 5.465829574193554,
+      "net_return": 0.06125871494470917,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-04-02T00:00:00+00:00",
+      "exit_time": "2026-04-10T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 5.625500202178955,
+      "exit_price": 5.933506620037342,
+      "net_return": 0.05348688448377016,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-05-06T08:00:00+00:00",
+      "exit_time": "2026-05-11T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 6.118000030517578,
+      "exit_price": 6.410159841201741,
+      "net_return": 0.046497585812893844,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-05-20T04:00:00+00:00",
+      "exit_time": "2026-05-20T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 6.171999931335449,
+      "exit_price": 6.346541320472845,
+      "net_return": -0.029514227641225875,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-05-22T08:00:00+00:00",
+      "exit_time": "2026-06-02T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 6.355500221252441,
+      "exit_price": 6.6868635100959315,
+      "net_return": 0.05087622579334763,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-07-10T08:00:00+00:00",
+      "exit_time": "2026-08-04T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 6.2855000495910645,
+      "exit_price": 6.60061761429508,
+      "net_return": 0.04887464334389326,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-08-19T00:00:00+00:00",
+      "exit_time": "2026-08-24T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 6.457499980926514,
+      "exit_price": 6.619672636308825,
+      "net_return": -0.026344720414104655,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-09-02T16:00:00+00:00",
+      "exit_time": "2026-09-08T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 6.605999946594238,
+      "exit_price": 6.796500205993652,
+      "net_return": -0.030072806186900777,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-09-21T00:00:00+00:00",
+      "exit_time": "2026-10-01T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 6.7129998207092285,
+      "exit_price": 6.572464652630592,
+      "net_return": -0.02210895282120898,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-10-09T16:00:00+00:00",
+      "exit_time": "2026-10-15T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 6.695499897003174,
+      "exit_price": 6.543641985985873,
+      "net_return": -0.023852673476239455,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "COPPER",
+      "entry_time": "2026-10-15T12:00:00+00:00",
+      "exit_time": "2026-11-04T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 6.572000026702881,
+      "exit_price": 6.281960631383742,
+      "net_return": 0.042984862399051665,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2025-02-19T16:00:00+00:00",
+      "exit_time": "2025-03-14T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 985.9000244140624,
+      "exit_price": 1015.9627976336905,
+      "net_return": -0.03193642022273843,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2025-04-16T00:00:00+00:00",
+      "exit_time": "2025-05-20T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 970.2000122070312,
+      "exit_price": 1031.303974164835,
+      "net_return": 0.06149365658032681,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2025-07-29T04:00:00+00:00",
+      "exit_time": "2025-07-30T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1424.5,
+      "exit_price": 1323.8951310169334,
+      "net_return": 0.06932265178910933,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2025-08-25T16:00:00+00:00",
+      "exit_time": "2025-09-02T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1334.9000244140625,
+      "exit_price": 1404.0,
+      "net_return": -0.053237659128031065,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2025-11-11T12:00:00+00:00",
+      "exit_time": "2025-11-14T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1619.5999755859375,
+      "exit_price": 1560.6727198937194,
+      "net_return": -0.03773195235358513,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2025-11-17T12:00:00+00:00",
+      "exit_time": "2025-11-27T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1558.5,
+      "exit_price": 1626.7887583104095,
+      "net_return": -0.04527934420390507,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-03-04T16:00:00+00:00",
+      "exit_time": "2026-03-23T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 2170.199951171875,
+      "exit_price": 1790.1037247803686,
+      "net_return": 0.17398780487595186,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-05-18T04:00:00+00:00",
+      "exit_time": "2026-06-05T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1973.300048828125,
+      "exit_price": 1786.103196794109,
+      "net_return": 0.0935967928754323,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-07-16T00:00:00+00:00",
+      "exit_time": "2026-07-17T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1685.199951171875,
+      "exit_price": 1611.895105626008,
+      "net_return": -0.04483736193380644,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-07-20T04:00:00+00:00",
+      "exit_time": "2026-07-22T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1606.800048828125,
+      "exit_price": 1679.3824546354629,
+      "net_return": -0.04663628697680725,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-07-22T04:00:00+00:00",
+      "exit_time": "2026-07-23T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1675.0,
+      "exit_price": 1609.7269148509085,
+      "net_return": -0.04031350829910821,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-07-24T04:00:00+00:00",
+      "exit_time": "2026-07-27T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1592.199951171875,
+      "exit_price": 1654.3785464479477,
+      "net_return": -0.04050769353453623,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-07-31T04:00:00+00:00",
+      "exit_time": "2026-08-05T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1643.5,
+      "exit_price": 1783.923649501378,
+      "net_return": 0.08392327557915241,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-09-01T16:00:00+00:00",
+      "exit_time": "2026-09-08T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1781.0999755859375,
+      "exit_price": 1849.2960559607563,
+      "net_return": -0.039743366123800646,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-09-08T16:00:00+00:00",
+      "exit_time": "2026-09-11T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1844.4000244140625,
+      "exit_price": 1777.458216976145,
+      "net_return": -0.037642868863640974,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "PLATINUM",
+      "entry_time": "2026-09-14T00:00:00+00:00",
+      "exit_time": "2026-10-07T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1788.199951171875,
+      "exit_price": 1640.4754052520404,
+      "net_return": 0.08132550918879446,
+      "exit_reason": "TP"
+    }
+  ]
+}
