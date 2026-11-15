@@ -27,7 +27,8 @@ echo "host context: $(date '+%Y-%m-%d %H:%M:%S %Z') | $(uptime)"
 systemctl is-active FRIDAY-Voice || { echo "FATAL: FRIDAY-Voice not active"; exit 2; }
 "${VENV_PY}" -c "import livekit, httpx, edge_tts" \
   || { echo "FATAL: fleet venv lacks livekit/httpx/edge_tts"; exit 2; }
-command -v ffmpeg >/dev/null || { echo "FATAL: ffmpeg missing"; exit 2; }
+"${VENV_PY}" -c "import av" 2>/dev/null || command -v ffmpeg >/dev/null \
+  || { echo "FATAL: need PyAV or an ffmpeg binary for mp3 decoding"; exit 2; }
 
 echo "-- utterances --"
 "${VENV_PY}" "${HARNESS_HOME}/make_utterances.py" \

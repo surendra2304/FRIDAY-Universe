@@ -9,7 +9,8 @@ battery (same texts, voice, rate, battery_version) the existing
 WAVs are reused untouched, so every acceptance run speaks
 byte-identical prompts and runs are comparable.
 
-Requires: edge-tts and ffmpeg on PATH (both present on Server 1).
+Requires: edge-tts, and PyAV (bundled with livekit-agents on
+Server 1) or an ffmpeg binary for the mp3 -> WAV conversion.
 Run: /opt/friday_universe/venv/bin/python make_utterances.py \
          --battery battery.json --out-dir /tmp/frd005/utterances
 """
@@ -20,6 +21,7 @@ import json
 import os
 import subprocess
 import sys
+import wave
 
 import edge_tts
 
@@ -49,6 +51,33 @@ async def render_one(text, voice, rate, mp3_path):
 
 
 def convert(mp3_path, wav_path, sample_rate):
+    """Decode mp3 to WAV at the battery sample rate, mono s16.
+
+    Prefers PyAV (its bundled ffmpeg libraries are present wherever
+    livekit-agents is installed — Server 1 has no ffmpeg binary);
+    falls back to an ffmpeg binary when PyAV is unavailable.
+    """
+    try:
+        import av
+        from av.audio.resampler import AudioResampler
+    except ImportError:
+        av = None
+    if av is not None:
+        resampler = AudioResampler(
+            format="s16", layout="mono", rate=sample_rate)
+        pcm = bytearray()
+        with av.open(mp3_path) as container:
+            for frame in container.decode(audio=0):
+                for out in resampler.resample(frame):
+                    pcm.extend(out.to_ndarray().tobytes())
+            for out in resampler.resample(None):
+                pcm.extend(out.to_ndarray().tobytes())
+        with wave.open(wav_path, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(sample_rate)
+            w.writeframes(bytes(pcm))
+        return
     subprocess.run(
         [
             "ffmpeg", "-y", "-v", "error", "-i", mp3_path,

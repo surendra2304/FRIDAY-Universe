@@ -43,7 +43,14 @@ TOKEN_URL = "http://127.0.0.1:10000/api/livekit/token"
 IDENTITY = "muse-frd005"
 SAMPLE_RATE = 24000
 
-GREETING_WAIT_S = 90.0      # max wait for FRIDAY to speak first
+GREETING_WAIT_S = 240.0     # max wait for FRIDAY to speak first; the
+                            # session build (key probe + recall) can
+                            # take minutes on a loaded host — if no
+                            # audio arrives in this window the run is
+                            # INVALID (exit 2), never a battery played
+                            # into an unready session (run 1 lesson:
+                            # a 90 s cap made the participant talk
+                            # over the pending greeting).
 END_SILENCE_S = 2.0         # continuous silence that ends a reply
 MIN_SPEECH_S = 0.8          # speech required before a reply can end
 CLUSTER_GAP_S = 0.35        # frame gaps below this merge into one cluster
@@ -118,10 +125,17 @@ async def main():
             agent_joined.set()
 
     async def drain(track):
-        stream = rtc.AudioStream(track)
-        async for ev in stream:
-            native_rate[0] = ev.frame.sample_rate
-            frames.append((time.time(), bytes(ev.frame.data)))
+        # Any stream failure MUST be visible in the timeline: run 1
+        # lost agent audio after the first burst with no trace of
+        # why, which made later turns unmeasurable.
+        try:
+            stream = rtc.AudioStream(track)
+            async for ev in stream:
+                native_rate[0] = ev.frame.sample_rate
+                frames.append((time.time(), bytes(ev.frame.data)))
+            log("agent_stream_ended", track.sid)
+        except Exception as exc:  # noqa: BLE001 - must not kill the run
+            log("agent_stream_error", f"{type(exc).__name__}: {exc}")
 
     @room.on("track_subscribed")
     def _on_track(track, pub, participant):
@@ -173,6 +187,33 @@ async def main():
     g_first, g_last, g_speech = await wait_reply_end(
         greet_start_idx, GREETING_WAIT_S
     )
+    if g_first is None:
+        # The session never became ready. Playing the battery now
+        # would talk over a pending greeting and corrupt every later
+        # measurement — declare the run invalid instead.
+        log("session_not_ready",
+            f"no agent audio within {GREETING_WAIT_S:.0f}s of connect")
+        timeline = {
+            "task": "TASK-FRD-005",
+            "room": room_name,
+            "battery_version": battery["battery_version"],
+            "started_ts": connected_ts,
+            "events": events,
+            "fatal": "session_not_ready",
+            "greeting": {"connected_ts": connected_ts,
+                         "first_audio_ts": None, "gap_s": None,
+                         "speech_s": 0.0, "reply_end_ts": None},
+            "turns": [],
+            "audio_frames": len(frames),
+            "native_rate": native_rate[0],
+        }
+        with open(
+            os.path.join(args.out_dir, f"{room_name}_timeline.json"), "w"
+        ) as fh:
+            json.dump(timeline, fh, indent=1)
+        await room.disconnect()
+        print("FATAL: session not ready; run invalid", file=sys.stderr)
+        return 2
     greeting = {
         "id": battery["greeting"]["id"],
         "connected_ts": connected_ts,
@@ -215,6 +256,8 @@ async def main():
             "gap_s": (first - utt_end) if first else None,
             "agent_end_ts": last,
             "speech_s": speech_s,
+            "frames_at_start": before,
+            "frames_at_end": len(frames),
         }
         turns.append(record)
         log("turn_done", f"{turn['id']} gap={record['gap_s']}")

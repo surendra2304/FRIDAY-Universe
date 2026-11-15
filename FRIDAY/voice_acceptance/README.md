@@ -36,7 +36,9 @@ FAIL, whatever the latencies say.
 
 - `battery.json` — prompts, thresholds, content checks (the contract).
 - `make_utterances.py` — renders the prompts once with edge-tts
-  (voice/rate pinned), converts to 24 kHz mono WAV, writes a sha256
+  (voice/rate pinned), converts to 24 kHz mono WAV (via PyAV —
+  present wherever livekit-agents is installed; Server 1 has no
+  ffmpeg binary — with an ffmpeg fallback), writes a sha256
   manifest; re-runs reuse byte-identical WAVs.
 - `participant.py` — the LiveKit participant. Reply-end detection
   requires ≥0.8 s of speech **and** ≥2.0 s of continuous silence:
@@ -69,3 +71,29 @@ Report the table with the run's host context (load average is in
 the runner output) — a slow run under a loaded 956 MB host is a
 different fact from a slow run on an idle one, and both are
 reported, never hidden.
+
+## Run 1 lessons (2026-11-15, room friday-frd005-20261115-160000)
+
+The first measured run (against the freshly deployed TASK-VOI-009
+build, host load ≈4.3) failed overall and taught the harness three
+things, all fixed in the code:
+
+1. **Session readiness is a phase, not a hope.** FRIDAY's session
+   was not ready until ~149 s after connect (job dispatch + key
+   probe + recall under load). The participant's original 90 s
+   greeting cap expired first and it talked over the pending
+   greeting. The greeting wait is now 240 s, and if no agent audio
+   arrives the run aborts as INVALID (exit 2) instead of playing
+   the battery into an unready session.
+2. **Audio collection must fail loudly.** After the first burst,
+   the participant received no further audio while FRIDAY kept
+   answering in the journal — with no trace of why. The drain loop
+   now logs stream end/error events into the timeline, and every
+   turn records its frame counts.
+3. **Answers can arrive out of order.** The delegation's answer
+   was logged after the follow-up had already been transcribed;
+   naive order-based alignment shifted every answer one turn. The
+   scorer now aligns on the interleaved journal stream (windows
+   between user finals), detects the out-of-order shape, marks the
+   affected content UNVERIFIED, and lists answers in journal order
+   for human attribution.

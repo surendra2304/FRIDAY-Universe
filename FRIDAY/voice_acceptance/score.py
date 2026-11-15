@@ -43,60 +43,89 @@ SERVING_CONTEXT_RE = re.compile(
 
 
 def parse_journal(text):
-    """Extract ordered assistant answers, user finals, contamination."""
+    """Extract ordered journal evidence.
+
+    Returns (assistant, user_finals, contamination, serving_hits,
+    stream) where stream is the interleaved [(kind, text)] sequence
+    of user finals and assistant items in journal order — alignment
+    needs the interleaving, not two separate lists.
+    """
     assistant, user_finals, contamination, serving_hits = [], [], [], []
+    stream = []
     for line in text.splitlines():
         if line.lstrip().startswith("{"):
             continue  # JSON duplicate of the plain log line
         m = ASSISTANT_RE.search(line)
         if m:
             assistant.append(m.group(1))
+            stream.append(("assistant", m.group(1)))
         m = USER_FINAL_RE.search(line)
         if m:
             user_finals.append(m.group(1))
+            stream.append(("user_final", m.group(1)))
         if CONTAMINATION_RE.search(line):
             contamination.append(line.strip()[:240])
             if SERVING_CONTEXT_RE.search(line):
                 serving_hits.append(line.strip()[:240])
-    return assistant, user_finals, contamination, serving_hits
+    return assistant, user_finals, contamination, serving_hits, stream
 
 
-def align_answers(assistant, user_finals, n_turns):
-    """Assign assistant items to turns.
+def align_answers(stream, n_turns):
+    """Assign assistant items to turns using the interleaved stream.
 
-    The greeting consumes every assistant item before the first user
-    final (a session may emit a fixed greeting line AND a generated
-    greeting). Each turn then takes the assistant items that follow
-    its user final, up to the next user final. If user finals are
-    missing (STT gaps), fall back to plain order and say so.
-    Returns (greeting_texts, per_turn_texts, alignment_note).
+    The greeting takes every assistant item before the first user
+    final. Each turn then takes the assistant items inside its
+    window: after its own user final, before the next turn's. If the
+    user finals don't line up with the battery (STT gaps), fall back
+    to plain order and say so.
+
+    Out-of-order answers (run 1, 2026-11-15: the delegation's answer
+    was logged only after the follow-up had already been transcribed)
+    leave an early window empty while later windows fill. That is
+    detected and reported as degraded: the empty turn's content
+    verdict becomes UNVERIFIED rather than a confidently wrong
+    attribution, and the caller lists the answers in journal order
+    for human attribution.
+    Returns (greeting_texts, per_turn_texts, note, degraded).
     """
-    if len(user_finals) >= n_turns and assistant:
-        # We cannot see interleaving from separated lists alone, so
-        # this path is only used when counts line up exactly with a
-        # single greeting item; otherwise prefer the degraded path.
-        pass
-    # Order-based assignment (journal lists were extracted in order;
-    # the runner guarantees the window holds only this run's call).
-    if not assistant:
-        return [], [""] * n_turns, "no assistant items in journal window"
-    greeting = [assistant[0]]
-    rest = assistant[1:]
+    finals = [i for i, (k, _) in enumerate(stream) if k == "user_final"]
+    if len(finals) != n_turns:
+        assistant = [t for k, t in stream if k == "assistant"]
+        if not assistant:
+            return [], [""] * n_turns, (
+                f"no assistant items in journal window "
+                f"({len(finals)} user finals for {n_turns} turns)"), False
+        greeting = [assistant[0]]
+        rest = assistant[1:]
+        per_turn = [rest[i] if i < len(rest) else "" for i in range(n_turns)]
+        note = (f"order-based fallback ({len(finals)} user finals "
+                f"for {n_turns} turns)")
+        if len(rest) > n_turns:
+            extra = len(rest) - n_turns
+            greeting = assistant[: 1 + extra]
+            rest2 = assistant[1 + extra:]
+            per_turn = [rest2[i] if i < len(rest2) else ""
+                        for i in range(n_turns)]
+            note += f"; {extra} extra item(s) folded into greeting"
+        return greeting, per_turn, note, False
+
+    greeting = [t for k, t in stream[: finals[0]] if k == "assistant"]
     per_turn = []
     for i in range(n_turns):
-        per_turn.append(rest[i] if i < len(rest) else "")
-    note = "order-based"
-    if len(rest) > n_turns:
-        # Extra assistant items (e.g. fixed greeting line + generated
-        # greeting): fold leading extras into the greeting.
-        extra = len(rest) - n_turns
-        greeting = assistant[: 1 + extra]
-        per_turn = []
-        rest2 = assistant[1 + extra:]
-        for i in range(n_turns):
-            per_turn.append(rest2[i] if i < len(rest2) else "")
-        note = f"order-based; {extra} extra assistant item(s) folded into greeting"
-    return greeting, per_turn, note
+        lo = finals[i] + 1
+        hi = finals[i + 1] if i + 1 < n_turns else len(stream)
+        per_turn.append(
+            " ".join(t for k, t in stream[lo:hi] if k == "assistant"))
+    degraded = any(
+        per_turn[i] == "" and any(per_turn[j] != "" for j in range(i + 1, n_turns))
+        for i in range(n_turns)
+    )
+    note = "windowed by user finals"
+    if degraded:
+        note += "; DEGRADED — answers arrived out of order (an early " \
+                "turn's window is empty while later windows filled); " \
+                "empty-window content is UNVERIFIED, see journal order"
+    return greeting, per_turn, note, degraded
 
 
 def extract_closed_trade_count(text):
@@ -205,12 +234,11 @@ def main():
         except (OSError, ValueError) as exc:
             status_note = f"status file unreadable: {exc}"
 
-    assistant, user_finals, contamination, serving_hits = parse_journal(
-        journal_text
-    )
+    assistant, user_finals, contamination, serving_hits, stream = \
+        parse_journal(journal_text)
     turns_cfg = battery["turns"]
-    greeting_texts, per_turn_texts, align_note = align_answers(
-        assistant, user_finals, len(turns_cfg)
+    greeting_texts, per_turn_texts, align_note, degraded = align_answers(
+        stream, len(turns_cfg)
     )
 
     results = {
@@ -218,6 +246,7 @@ def main():
         "room": timeline.get("room"),
         "battery_version": battery["battery_version"],
         "alignment": align_note,
+        "journal_order_answers": assistant,
         "turns": [],
     }
     reasons = []
@@ -248,11 +277,18 @@ def main():
         answer = per_turn_texts[idx] if idx < len(per_turn_texts) else ""
         heard = user_finals[idx] if idx < len(user_finals) else ""
         lat_v, _ = latency_verdict(tl.get("gap_s"), cfg["threshold_s"])
-        con_v, con_d = content_check(
-            cfg["content_check"], answer,
-            {"speech_s": tl.get("speech_s", 0),
-             "delegation_count": delegation_count},
-        )
+        if degraded and not answer.strip():
+            # The answer may exist but sit in a later turn's window;
+            # never present a guessed attribution as a content FAIL.
+            con_v, con_d = "UNVERIFIED", (
+                "no answer inside this turn's journal window; "
+                "answers arrived out of order")
+        else:
+            con_v, con_d = content_check(
+                cfg["content_check"], answer,
+                {"speech_s": tl.get("speech_s", 0),
+                 "delegation_count": delegation_count},
+            )
         if cfg["id"] == "delegation_stratex":
             delegation_count = extract_closed_trade_count(answer)
         verdict = "PASS" if (lat_v == "PASS" and con_v == "PASS") else (

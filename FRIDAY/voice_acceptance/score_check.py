@@ -132,6 +132,33 @@ def main():
     run_case("wrong recall fails", make_timeline(good_gaps),
              make_journal(no_teal), good_status, 1, "FAIL")
 
+    # Run 1's real shape (2026-11-15): the delegation's answer was
+    # logged only AFTER the follow-up had been transcribed. The
+    # scorer must flag degraded alignment, leave the delegation's
+    # content UNVERIFIED (not a guessed FAIL), and keep the answers
+    # available in journal order for human attribution.
+    ooo_lines = [
+        "x friday.voice VOICE user_input_transcribed final=True "
+        f"text='{PROMPTS[0]}'",
+        "x friday.voice VOICE user_input_transcribed final=True "
+        f"text='{PROMPTS[1]}'",
+        "x friday.voice VOICE conversation_item_added role=assistant "
+        "text='Stratex could not answer that: ReadTimeout.'",
+    ]
+    for prompt, ans in zip(PROMPTS[2:], ANSWERS[2:]):
+        ooo_lines.append(
+            "x friday.voice VOICE user_input_transcribed final=True "
+            f"text='{prompt}'")
+        ooo_lines.append(
+            "x friday.voice VOICE conversation_item_added role=assistant "
+            f"text='{ans}'")
+    r = run_case("out-of-order answers degrade, not mis-attribute",
+                 make_timeline(good_gaps), "\n".join(ooo_lines) + "\n",
+                 good_status, 3, "UNVERIFIED")
+    assert "DEGRADED" in r["alignment"], r["alignment"]
+    assert r["turns"][0]["content"] == "UNVERIFIED"
+    assert r["journal_order_answers"][0].startswith("Stratex could not")
+
     run_case("missing status is unverified, never a pass",
              make_timeline(good_gaps), make_journal(), None, 3, "UNVERIFIED")
 
