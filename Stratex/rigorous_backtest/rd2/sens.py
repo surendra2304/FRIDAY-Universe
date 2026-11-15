@@ -38,10 +38,11 @@ def main() -> int:
     if kind == "family":
         _k, family, variant, panel, tf = sys.argv[1:6]
         from .families2 import build_configs
+        from .families3 import build_configs3
         from .grid import eval_single, eval_xs, eval_pairs
         from .panels import load_panel, fold_profile
         from .stats2 import fold_report
-        cfg = next(c for c in build_configs()
+        cfg = next(c for c in build_configs() + build_configs3()
                    if c["family"] == family and c["variant"] == variant)
         datasets = load_panel(panel, tf)
         aux = None

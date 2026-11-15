@@ -1,0 +1,4639 @@
+{
+  "family": "ensemble",
+  "variant": "vote2_of3",
+  "panel": "forex12",
+  "timeframe": "4h",
+  "status": "EVALUATED",
+  "report": {
+    "per_fold": {
+      "W2": {
+        "oos_start": "2025-01-01",
+        "oos_end": "2025-07-01",
+        "trades": 107,
+        "wins": 33,
+        "win_rate": 0.308411214953271,
+        "expectancy_net": -0.000985843741065732,
+        "profit_factor_net": 0.819049553045809,
+        "avg_win_net": 0.014468664250520534,
+        "avg_loss_net": -0.00787771892650285,
+        "total_return_net": -0.10605086736286717,
+        "max_drawdown_net": -0.18593768792523135
+      },
+      "W3": {
+        "oos_start": "2025-07-01",
+        "oos_end": "2026-01-01",
+        "trades": 131,
+        "wins": 43,
+        "win_rate": 0.3282442748091603,
+        "expectancy_net": -0.0005875135865022608,
+        "profit_factor_net": 0.8500358888980521,
+        "avg_win_net": 0.010145435144990174,
+        "avg_loss_net": -0.005832022625754245,
+        "total_return_net": -0.07775123303822018,
+        "max_drawdown_net": -0.1706326863854397
+      },
+      "W4": {
+        "oos_start": "2026-01-01",
+        "oos_end": "2026-07-01",
+        "trades": 118,
+        "wins": 45,
+        "win_rate": 0.3813559322033898,
+        "expectancy_net": -0.0003244547136166949,
+        "profit_factor_net": 0.9155063848731662,
+        "avg_win_net": 0.009218517124043315,
+        "avg_loss_net": -0.006207108586146838,
+        "total_return_net": -0.041067884536027055,
+        "max_drawdown_net": -0.1420567509175924
+      },
+      "W5": {
+        "oos_start": "2026-07-01",
+        "oos_end": "2026-11-01",
+        "trades": 73,
+        "wins": 27,
+        "win_rate": 0.3698630136986301,
+        "expectancy_net": -7.546195606894109e-05,
+        "profit_factor_net": 0.9780355266779527,
+        "avg_win_net": 0.00908491756835834,
+        "avg_loss_net": -0.005452206459537127,
+        "total_return_net": -0.007420204582711087,
+        "max_drawdown_net": -0.044299782059628035
+      }
+    },
+    "pooled_oos": {
+      "trades": 429,
+      "wins": 148,
+      "win_rate": 0.34498834498834496,
+      "expectancy_net": -0.0005273751494769981,
+      "profit_factor_net": 0.874315180105144,
+      "avg_win_net": 0.010634092408306617,
+      "avg_loss_net": -0.006406012866743814,
+      "total_return_net": -0.21528096948873765,
+      "max_drawdown_net": -0.24840325427215826
+    },
+    "per_symbol_oos": {
+      "AUDJPY": {
+        "trades": 31,
+        "wins": 12,
+        "win_rate": 0.3870967741935484,
+        "expectancy_net": -0.0001328653966803741,
+        "profit_factor_net": 0.9742140602430646,
+        "avg_win_net": 0.01296772421444748,
+        "avg_loss_net": -0.008406921993182175,
+        "total_return_net": -0.0058508024508261425,
+        "max_drawdown_net": -0.07552509871716862
+      },
+      "AUDUSD": {
+        "trades": 35,
+        "wins": 15,
+        "win_rate": 0.42857142857142855,
+        "expectancy_net": 0.0012326332358545558,
+        "profit_factor_net": 1.2852481841643424,
+        "avg_win_net": 0.012959097857592427,
+        "avg_loss_net": -0.007562215230448852,
+        "total_return_net": 0.04168686231335905,
+        "max_drawdown_net": -0.07378501287459516
+      },
+      "EURCHF": {
+        "trades": 30,
+        "wins": 7,
+        "win_rate": 0.23333333333333334,
+        "expectancy_net": -0.0017887196538716422,
+        "profit_factor_net": 0.5385464252776396,
+        "avg_win_net": 0.008946653681677987,
+        "avg_loss_net": -0.005056007190778053,
+        "total_return_net": -0.05283167824524371,
+        "max_drawdown_net": -0.06370972941987696
+      },
+      "EURGBP": {
+        "trades": 30,
+        "wins": 14,
+        "win_rate": 0.4666666666666667,
+        "expectancy_net": 0.0009745078787211238,
+        "profit_factor_net": 1.4579773570998933,
+        "avg_win_net": 0.006647913293393343,
+        "avg_loss_net": -0.003989721859117067,
+        "total_return_net": 0.02918806753476888,
+        "max_drawdown_net": -0.022514099796681508
+      },
+      "EURJPY": {
+        "trades": 28,
+        "wins": 9,
+        "win_rate": 0.32142857142857145,
+        "expectancy_net": -0.0014538512381824709,
+        "profit_factor_net": 0.675414262236928,
+        "avg_win_net": 0.009411877945573355,
+        "avg_loss_net": -0.006600775588382598,
+        "total_return_net": -0.040741754728947144,
+        "max_drawdown_net": -0.05437489050062405
+      },
+      "EURUSD": {
+        "trades": 34,
+        "wins": 10,
+        "win_rate": 0.29411764705882354,
+        "expectancy_net": -0.0011642807723349548,
+        "profit_factor_net": 0.6826291171327558,
+        "avg_win_net": 0.008514406315455086,
+        "avg_loss_net": -0.005197067058914139,
+        "total_return_net": -0.03950743580127558,
+        "max_drawdown_net": -0.03950743580127558
+      },
+      "GBPJPY": {
+        "trades": 37,
+        "wins": 12,
+        "win_rate": 0.32432432432432434,
+        "expectancy_net": -0.00047803357251848764,
+        "profit_factor_net": 0.8934290836287155,
+        "avg_win_net": 0.012356636245692797,
+        "avg_loss_net": -0.006638675085259905,
+        "total_return_net": -0.019081993687611765,
+        "max_drawdown_net": -0.05358228354330674
+      },
+      "GBPUSD": {
+        "trades": 45,
+        "wins": 18,
+        "win_rate": 0.4,
+        "expectancy_net": 0.00033136642313473974,
+        "profit_factor_net": 1.0939832469729431,
+        "avg_win_net": 0.009642923797448593,
+        "avg_loss_net": -0.005876338493074495,
+        "total_return_net": 0.013606419574894169,
+        "max_drawdown_net": -0.03953253719209893
+      },
+      "NZDUSD": {
+        "trades": 41,
+        "wins": 13,
+        "win_rate": 0.3170731707317073,
+        "expectancy_net": -0.0008572819270837719,
+        "profit_factor_net": 0.8362037074464334,
+        "avg_win_net": 0.013802958868424588,
+        "avg_loss_net": -0.007663822296426938,
+        "total_return_net": -0.03681319033721797,
+        "max_drawdown_net": -0.0780755769104221
+      },
+      "USDCAD": {
+        "trades": 33,
+        "wins": 13,
+        "win_rate": 0.3939393939393939,
+        "expectancy_net": -0.0003625761482288797,
+        "profit_factor_net": 0.891363598940862,
+        "avg_win_net": 0.007551780242243221,
+        "avg_loss_net": -0.005506907802035745,
+        "total_return_net": -0.012615997027372927,
+        "max_drawdown_net": -0.03593066860907901
+      },
+      "USDCHF": {
+        "trades": 42,
+        "wins": 16,
+        "win_rate": 0.38095238095238093,
+        "expectancy_net": 0.00019646246286679958,
+        "profit_factor_net": 1.04928174037448,
+        "avg_win_net": 0.010980319336235087,
+        "avg_loss_net": -0.006439757151513685,
+        "total_return_net": 0.00673208777354195,
+        "max_drawdown_net": -0.043045026476443926
+      },
+      "USDJPY": {
+        "trades": 43,
+        "wins": 9,
+        "win_rate": 0.20930232558139536,
+        "expectancy_net": -0.002765340448761256,
+        "profit_factor_net": 0.5087573146719871,
+        "avg_win_net": 0.013683245591925366,
+        "avg_loss_net": -0.00711937793011948,
+        "total_return_net": -0.11373950047031323,
+        "max_drawdown_net": -0.15661285331978336
+      }
+    },
+    "fold_profile": [
+      "W2",
+      "W3",
+      "W4",
+      "W5"
+    ]
+  },
+  "holdout": {
+    "symbols_active_min20": 12,
+    "symbols_positive": 4,
+    "breadth_positive_share": 0.3333333333333333,
+    "max_symbol_profit_share": 0.45155978986808376,
+    "max_share_cap": 0.5,
+    "untouched_subset": [
+      "EURCHF",
+      "EURUSD",
+      "NZDUSD",
+      "USDJPY"
+    ],
+    "untouched_trades": 148,
+    "untouched_expectancy": -0.0016709819877209892,
+    "passes": false
+  },
+  "bar": {
+    "bar": {
+      "expectancy_net_gt": 0.0,
+      "profit_factor_net_gte": 1.2,
+      "min_oos_trades": 200,
+      "min_positive_fold_share": 0.8,
+      "positive_folds_needed": 4,
+      "positive_folds": 0,
+      "folds_with_trades": 4
+    },
+    "checks": {
+      "expectancy_net_gt_0": false,
+      "profit_factor_net_gte_1.2": false,
+      "min_oos_trades_200": true,
+      "positive_folds": false,
+      "holdout_passes": false
+    },
+    "passes_bar": false
+  },
+  "trade_stats": {
+    "n": 438,
+    "sharpe_per_trade": -0.04711475748341685,
+    "t_stat": -0.9860388244140686,
+    "p_one_sided": 0.8379429692729061,
+    "skew": 0.9013083319177033,
+    "kurtosis": 3.0907862687808128
+  },
+  "trades": [
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-02-03T04:00:00+00:00",
+      "exit_time": "2025-02-03T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.022599458694458,
+      "exit_price": 1.0313340506989896,
+      "net_return": -0.009146863956617629,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-02-27T16:00:00+00:00",
+      "exit_time": "2025-03-03T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.041775107383728,
+      "exit_price": 1.0473002906734783,
+      "net_return": -0.0059069870177950136,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-03-04T12:00:00+00:00",
+      "exit_time": "2025-03-05T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.054741144180298,
+      "exit_price": 1.067366185354252,
+      "net_return": 0.011362800813414987,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-03-20T12:00:00+00:00",
+      "exit_time": "2025-04-03T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.0853049755096436,
+      "exit_price": 1.0915993006298181,
+      "net_return": -0.0064032519929497845,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-05-29T00:00:00+00:00",
+      "exit_time": "2025-05-29T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.12296462059021,
+      "exit_price": 1.1297645854826566,
+      "net_return": -0.006659183134778446,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-06-24T00:00:00+00:00",
+      "exit_time": "2025-06-30T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1602274179458618,
+      "exit_price": 1.1754777543578414,
+      "net_return": 0.012536560554357354,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-07-22T16:00:00+00:00",
+      "exit_time": "2025-07-28T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.174812078475952,
+      "exit_price": 1.1689760805499525,
+      "net_return": -0.0055644416170976705,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-08-06T20:00:00+00:00",
+      "exit_time": "2025-08-11T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1661807298660278,
+      "exit_price": 1.159427868147693,
+      "net_return": -0.006386925811793399,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-08-21T16:00:00+00:00",
+      "exit_time": "2025-08-22T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1607661247253418,
+      "exit_price": 1.1656922818563202,
+      "net_return": -0.004846611447245968,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-10-07T20:00:00+00:00",
+      "exit_time": "2025-10-14T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1653653383255005,
+      "exit_price": 1.1548180619089337,
+      "net_return": 0.00845586986820014,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-10-17T00:00:00+00:00",
+      "exit_time": "2025-10-20T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1702749729156494,
+      "exit_price": 1.1652599377523347,
+      "net_return": -0.004882597316292602,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-10-28T04:00:00+00:00",
+      "exit_time": "2025-10-29T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1663167476654053,
+      "exit_price": 1.162539890184393,
+      "net_return": -0.0038361553408682463,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-10-29T20:00:00+00:00",
+      "exit_time": "2025-11-04T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1603620052337646,
+      "exit_price": 1.1502410779107786,
+      "net_return": 0.008127270220998082,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-11-19T16:00:00+00:00",
+      "exit_time": "2025-11-26T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.155001163482666,
+      "exit_price": 1.159212602324319,
+      "net_return": -0.004248632191101561,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2025-11-27T00:00:00+00:00",
+      "exit_time": "2025-12-10T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.160496711730957,
+      "exit_price": 1.1698626622701696,
+      "net_return": 0.00746597846111322,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-01-02T12:00:00+00:00",
+      "exit_time": "2026-01-09T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1724703311920166,
+      "exit_price": 1.164530104871169,
+      "net_return": 0.006176103895303267,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-02-09T16:00:00+00:00",
+      "exit_time": "2026-02-11T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1914690732955933,
+      "exit_price": 1.185670990957786,
+      "net_return": -0.005463231670466943,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-03-02T08:00:00+00:00",
+      "exit_time": "2026-03-03T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.172195553779602,
+      "exit_price": 1.160761700978934,
+      "net_return": 0.009159893795582144,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-03-27T08:00:00+00:00",
+      "exit_time": "2026-04-01T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1522064208984375,
+      "exit_price": 1.1584701553099177,
+      "net_return": -0.0060397381629272535,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-04-01T16:00:00+00:00",
+      "exit_time": "2026-04-02T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1617100238800049,
+      "exit_price": 1.1555274478384912,
+      "net_return": -0.00591858935217894,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-04-23T04:00:00+00:00",
+      "exit_time": "2026-04-27T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1700011491775513,
+      "exit_price": 1.174269837818244,
+      "net_return": -0.0042508180260165404,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-05-01T16:00:00+00:00",
+      "exit_time": "2026-05-04T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1759172677993774,
+      "exit_price": 1.1711561931423626,
+      "net_return": -0.004646209199932376,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-05-14T16:00:00+00:00",
+      "exit_time": "2026-05-19T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1680878400802612,
+      "exit_price": 1.1608896841491472,
+      "net_return": 0.0055658597536019875,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-06-05T16:00:00+00:00",
+      "exit_time": "2026-06-11T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.15340256690979,
+      "exit_price": 1.1582496934683286,
+      "net_return": -0.0048051609049021594,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-06-15T04:00:00+00:00",
+      "exit_time": "2026-06-17T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1607661247253418,
+      "exit_price": 1.1559517133996953,
+      "net_return": -0.004744947519969777,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-06-17T20:00:00+00:00",
+      "exit_time": "2026-06-23T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1500862836837769,
+      "exit_price": 1.13965369754362,
+      "net_return": 0.008476397693554336,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-07-02T16:00:00+00:00",
+      "exit_time": "2026-07-08T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.145081877708435,
+      "exit_price": 1.1400313322148987,
+      "net_return": -0.005007815825576104,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-07-08T12:00:00+00:00",
+      "exit_time": "2026-07-09T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1402509212493896,
+      "exit_price": 1.1442137588722314,
+      "net_return": -0.004077674318695733,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-07-13T16:00:00+00:00",
+      "exit_time": "2026-07-14T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1405109167099,
+      "exit_price": 1.1449955336196544,
+      "net_return": -0.0045346522468107,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-07-15T20:00:00+00:00",
+      "exit_time": "2026-07-20T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.1467890739440918,
+      "exit_price": 1.1419764377612374,
+      "net_return": -0.004793921285361454,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-07-23T16:00:00+00:00",
+      "exit_time": "2026-07-27T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.1376564502716064,
+      "exit_price": 1.1410589838025214,
+      "net_return": -0.003592802003164624,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-07-29T20:00:00+00:00",
+      "exit_time": "2026-08-03T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.145081877708435,
+      "exit_price": 1.1547259862494514,
+      "net_return": 0.007817328098425351,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-08-28T16:00:00+00:00",
+      "exit_time": "2026-09-03T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.160092830657959,
+      "exit_price": 1.1632304282373012,
+      "net_return": -0.0033064123656546722,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURUSD",
+      "entry_time": "2026-10-15T04:00:00+00:00",
+      "exit_time": "2026-10-27T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.123090744018555,
+      "exit_price": 1.1173975642609204,
+      "net_return": -0.005665986705741733,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-02-03T04:00:00+00:00",
+      "exit_time": "2025-02-03T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.2266477346420288,
+      "exit_price": 1.235873472733088,
+      "net_return": -0.0081257922850931,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-02-05T08:00:00+00:00",
+      "exit_time": "2025-02-06T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.2504063844680786,
+      "exit_price": 1.241626810304575,
+      "net_return": -0.007616985119553584,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-02-28T04:00:00+00:00",
+      "exit_time": "2025-03-03T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.2585740089416504,
+      "exit_price": 1.264443676435242,
+      "net_return": -0.0052667235462687265,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-03-21T16:00:00+00:00",
+      "exit_time": "2025-03-24T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.2890584468841553,
+      "exit_price": 1.2948277693515213,
+      "net_return": -0.005078475909095411,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-04-02T16:00:00+00:00",
+      "exit_time": "2025-04-03T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.2973365783691406,
+      "exit_price": 1.3098617308902643,
+      "net_return": 0.009048901713499287,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-04-07T00:00:00+00:00",
+      "exit_time": "2025-04-11T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.2907888889312744,
+      "exit_price": 1.3018830580558272,
+      "net_return": -0.009200213505472503,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-04-11T08:00:00+00:00",
+      "exit_time": "2025-04-21T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3058750629425049,
+      "exit_price": 1.331948161125183,
+      "net_return": 0.019354201394901197,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-05-05T16:00:00+00:00",
+      "exit_time": "2025-05-06T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3281093835830688,
+      "exit_price": 1.3353791984870782,
+      "net_return": -0.006077272672913381,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-05-06T12:00:00+00:00",
+      "exit_time": "2025-05-07T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.337005615234375,
+      "exit_price": 1.3296273884683467,
+      "net_return": -0.006114981002921465,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-05-08T20:00:00+00:00",
+      "exit_time": "2025-05-14T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3243980407714844,
+      "exit_price": 1.3335454222203673,
+      "net_return": -0.007511147333493003,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-05-19T08:00:00+00:00",
+      "exit_time": "2025-05-23T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3367911577224731,
+      "exit_price": 1.3517919757662782,
+      "net_return": 0.010614961077467013,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-06-04T16:00:00+00:00",
+      "exit_time": "2025-06-10T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3568521738052368,
+      "exit_price": 1.3500673861435875,
+      "net_return": -0.005597208966979081,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-06-10T08:00:00+00:00",
+      "exit_time": "2025-06-11T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3474364280700684,
+      "exit_price": 1.3540089199559635,
+      "net_return": -0.005480882718296663,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-06-24T12:00:00+00:00",
+      "exit_time": "2025-07-11T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3612109422683716,
+      "exit_price": 1.3521947539704091,
+      "net_return": -0.007219499581680674,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-07-22T20:00:00+00:00",
+      "exit_time": "2025-07-25T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3531616926193235,
+      "exit_price": 1.347637515510513,
+      "net_return": -0.004679793368859603,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-07-28T08:00:00+00:00",
+      "exit_time": "2025-07-30T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3409138917922974,
+      "exit_price": 1.3297353240672436,
+      "net_return": 0.0077413524984465505,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-08-07T20:00:00+00:00",
+      "exit_time": "2025-08-13T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3444474935531616,
+      "exit_price": 1.358177063263654,
+      "net_return": 0.0096061080354683,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-08-21T16:00:00+00:00",
+      "exit_time": "2025-08-22T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.341219782829285,
+      "exit_price": 1.3467233103989364,
+      "net_return": -0.004706017700929558,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-08-28T04:00:00+00:00",
+      "exit_time": "2025-08-29T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3508766889572144,
+      "exit_price": 1.3450586709590386,
+      "net_return": -0.004904082820405785,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-09-02T08:00:00+00:00",
+      "exit_time": "2025-09-05T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3405544757843018,
+      "exit_price": 1.3471934541507773,
+      "net_return": -0.005555564612322591,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-09-08T08:00:00+00:00",
+      "exit_time": "2025-09-16T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3515522480010986,
+      "exit_price": 1.3650152830192075,
+      "net_return": 0.009355370090989832,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-09-19T08:00:00+00:00",
+      "exit_time": "2025-09-25T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3492727279663086,
+      "exit_price": 1.3349440470447453,
+      "net_return": 0.01002575228188945,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-10-01T08:00:00+00:00",
+      "exit_time": "2025-10-02T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.34689199924469,
+      "exit_price": 1.341658905279026,
+      "net_return": -0.004482800318096928,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-10-17T00:00:00+00:00",
+      "exit_time": "2025-10-21T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3444656133651731,
+      "exit_price": 1.338009287498473,
+      "net_return": -0.00539908986708062,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-10-22T08:00:00+00:00",
+      "exit_time": "2025-10-29T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3320190906524658,
+      "exit_price": 1.3198651189413146,
+      "net_return": 0.008529768884322421,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-11-19T00:00:00+00:00",
+      "exit_time": "2025-11-25T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3147515058517456,
+      "exit_price": 1.3206878375911069,
+      "net_return": -0.00511806391330635,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-11-26T16:00:00+00:00",
+      "exit_time": "2025-12-10T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.322873830795288,
+      "exit_price": 1.3391042585325656,
+      "net_return": 0.01166188777002278,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2025-12-17T08:00:00+00:00",
+      "exit_time": "2025-12-17T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3323917388916016,
+      "exit_price": 1.3387111755700984,
+      "net_return": -0.005345953608274396,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-02-05T04:00:00+00:00",
+      "exit_time": "2026-02-11T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3625091314315796,
+      "exit_price": 1.3701602143123945,
+      "net_return": -0.00621898636624084,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-02-17T16:00:00+00:00",
+      "exit_time": "2026-02-17T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3503658771514893,
+      "exit_price": 1.3570758294252474,
+      "net_return": -0.005572150663521675,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-03-23T20:00:00+00:00",
+      "exit_time": "2026-03-27T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3430570363998413,
+      "exit_price": 1.3304166227559215,
+      "net_return": -0.010005847741526063,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-04-07T20:00:00+00:00",
+      "exit_time": "2026-04-08T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3286616802215576,
+      "exit_price": 1.3422979300334532,
+      "net_return": 0.009657170659803439,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-04-08T08:00:00+00:00",
+      "exit_time": "2026-04-14T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3424152135849,
+      "exit_price": 1.3585349568087646,
+      "net_return": 0.011400993193351415,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-05-12T08:00:00+00:00",
+      "exit_time": "2026-05-14T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.351807951927185,
+      "exit_price": 1.3391108432578895,
+      "net_return": 0.008798144021937175,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-05-25T20:00:00+00:00",
+      "exit_time": "2026-05-26T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.350858449935913,
+      "exit_price": 1.345717573447101,
+      "net_return": -0.004403174053244465,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-05-28T00:00:00+00:00",
+      "exit_time": "2026-05-29T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.341579556465149,
+      "exit_price": 1.3460650524005249,
+      "net_return": -0.003945630585771686,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-06-05T16:00:00+00:00",
+      "exit_time": "2026-06-10T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3356306552886963,
+      "exit_price": 1.3415131167682366,
+      "net_return": -0.005007081012961788,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-06-15T04:00:00+00:00",
+      "exit_time": "2026-06-17T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.34442937374115,
+      "exit_price": 1.3381694486571807,
+      "net_return": -0.00525322199354295,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-06-17T20:00:00+00:00",
+      "exit_time": "2026-06-24T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.328762412071228,
+      "exit_price": 1.3155836281703055,
+      "net_return": 0.00932386161390028,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-06-29T20:00:00+00:00",
+      "exit_time": "2026-07-02T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3261016607284546,
+      "exit_price": 1.336695922287024,
+      "net_return": 0.007384414655603569,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-07-21T12:00:00+00:00",
+      "exit_time": "2026-07-27T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.340644359588623,
+      "exit_price": 1.3299578843455115,
+      "net_return": 0.007375752545798161,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-07-30T16:00:00+00:00",
+      "exit_time": "2026-08-19T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.346329927444458,
+      "exit_price": 1.3605888395343297,
+      "net_return": 0.009984776646991043,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-08-28T16:00:00+00:00",
+      "exit_time": "2026-09-14T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3552706241607666,
+      "exit_price": 1.3473196201612558,
+      "net_return": 0.005270068951378724,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-10-14T16:00:00+00:00",
+      "exit_time": "2026-10-14T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.315028190612793,
+      "exit_price": 1.3205142438280124,
+      "net_return": -0.004774498045158486,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-10-16T04:00:00+00:00",
+      "exit_time": "2026-10-30T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3303710222244265,
+      "exit_price": 1.3424034131048426,
+      "net_return": 0.008439142318304031,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPUSD",
+      "entry_time": "2026-11-10T16:00:00+00:00",
+      "exit_time": "2026-11-13T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3334755897521973,
+      "exit_price": 1.3205955165121277,
+      "net_return": 0.009064641486149914,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-02-17T04:00:00+00:00",
+      "exit_time": "2025-02-20T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 151.6179962158203,
+      "exit_price": 149.28162163215703,
+      "net_return": 0.014818681080116003,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-03-03T12:00:00+00:00",
+      "exit_time": "2025-03-03T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 151.2050018310547,
+      "exit_price": 149.85224371829668,
+      "net_return": -0.009540970709994177,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-03-18T00:00:00+00:00",
+      "exit_time": "2025-03-20T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 149.39500427246094,
+      "exit_price": 148.26350063813518,
+      "net_return": -0.008169182505303439,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-04-03T00:00:00+00:00",
+      "exit_time": "2025-04-03T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 147.88099670410156,
+      "exit_price": 145.18541081618017,
+      "net_return": 0.017638834998080836,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-04-23T20:00:00+00:00",
+      "exit_time": "2025-05-12T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 143.39199829101562,
+      "exit_price": 146.48386025010248,
+      "net_return": 0.02094955114599379,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-05-20T00:00:00+00:00",
+      "exit_time": "2025-05-23T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 144.9739990234375,
+      "exit_price": 142.77878587539732,
+      "net_return": 0.01455102420317516,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-05-28T16:00:00+00:00",
+      "exit_time": "2025-05-29T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 145.0399932861328,
+      "exit_price": 143.90686410270365,
+      "net_return": -0.008407663147213269,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-05-30T12:00:00+00:00",
+      "exit_time": "2025-06-06T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 143.8459930419922,
+      "exit_price": 145.02922602522824,
+      "net_return": -0.008830809987004452,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-06-13T00:00:00+00:00",
+      "exit_time": "2025-06-13T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 143.08999633789062,
+      "exit_price": 144.12171377788817,
+      "net_return": -0.007814777039459157,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-06-26T08:00:00+00:00",
+      "exit_time": "2025-07-03T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 144.06100463867188,
+      "exit_price": 145.13404047803638,
+      "net_return": -0.008053132758084013,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-07-03T16:00:00+00:00",
+      "exit_time": "2025-07-09T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 144.9669952392578,
+      "exit_price": 147.04656449792412,
+      "net_return": 0.013736697633309064,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-07-22T16:00:00+00:00",
+      "exit_time": "2025-07-25T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 146.36399841308594,
+      "exit_price": 147.35483846871927,
+      "net_return": -0.007373941011770849,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-07-28T08:00:00+00:00",
+      "exit_time": "2025-07-31T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 148.29200744628906,
+      "exit_price": 150.30823849261802,
+      "net_return": 0.012988381395401438,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-08-05T00:00:00+00:00",
+      "exit_time": "2025-08-11T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 146.7899932861328,
+      "exit_price": 148.05948668878108,
+      "net_return": -0.009253735373629715,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-08-13T08:00:00+00:00",
+      "exit_time": "2025-08-21T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 147.52699279785156,
+      "exit_price": 148.4215610060324,
+      "net_return": -0.006667578929304359,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-08-22T16:00:00+00:00",
+      "exit_time": "2025-08-25T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 146.82699584960938,
+      "exit_price": 147.833655294126,
+      "net_return": -0.007460387304106019,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-09-02T08:00:00+00:00",
+      "exit_time": "2025-09-04T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 148.656005859375,
+      "exit_price": 147.78845906954484,
+      "net_return": -0.006432254558433158,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-09-05T16:00:00+00:00",
+      "exit_time": "2025-09-08T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 146.83900451660156,
+      "exit_price": 148.31500244140625,
+      "net_return": -0.010658023977576356,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-09-09T12:00:00+00:00",
+      "exit_time": "2025-09-11T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 146.72500610351562,
+      "exit_price": 147.78665820306753,
+      "net_return": -0.007840181674577756,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-10-01T12:00:00+00:00",
+      "exit_time": "2025-10-03T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 147.0,
+      "exit_price": 147.78200995890404,
+      "net_return": -0.005923168528052987,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-10-06T04:00:00+00:00",
+      "exit_time": "2025-10-08T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 150.0570068359375,
+      "exit_price": 152.26920467208794,
+      "net_return": 0.014133719966191149,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-10-17T08:00:00+00:00",
+      "exit_time": "2025-10-20T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 149.697998046875,
+      "exit_price": 150.91299438476562,
+      "net_return": -0.008721367847573994,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-10-23T04:00:00+00:00",
+      "exit_time": "2025-10-29T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 152.46400451660156,
+      "exit_price": 151.56320635571913,
+      "net_return": -0.006504543906248235,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-12-01T12:00:00+00:00",
+      "exit_time": "2025-12-02T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 155.09800720214844,
+      "exit_price": 155.8908452135794,
+      "net_return": -0.0057150997831750885,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-12-09T16:00:00+00:00",
+      "exit_time": "2025-12-10T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 156.86199951171875,
+      "exit_price": 156.05191713563954,
+      "net_return": -0.005761022097466395,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-12-15T12:00:00+00:00",
+      "exit_time": "2025-12-18T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 154.91700744628906,
+      "exit_price": 155.7637513638442,
+      "net_return": -0.006069251076828399,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2025-12-19T08:00:00+00:00",
+      "exit_time": "2025-12-23T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 156.7259979248047,
+      "exit_price": 155.8682813055884,
+      "net_return": -0.006069251768808381,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-01-26T04:00:00+00:00",
+      "exit_time": "2026-02-03T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 154.20700073242188,
+      "exit_price": 155.6747449775974,
+      "net_return": -0.010123905624324431,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-02-11T08:00:00+00:00",
+      "exit_time": "2026-02-11T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 153.0989990234375,
+      "exit_price": 154.344591551756,
+      "net_return": -0.008740926342753334,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-02-19T20:00:00+00:00",
+      "exit_time": "2026-02-23T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 155.07899475097656,
+      "exit_price": 154.02436934989686,
+      "net_return": -0.007396309915858189,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-04-01T00:00:00+00:00",
+      "exit_time": "2026-04-02T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 158.58700561523438,
+      "exit_price": 159.37609168547445,
+      "net_return": -0.005578896064809382,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-04-08T08:00:00+00:00",
+      "exit_time": "2026-04-09T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 158.21200561523438,
+      "exit_price": 159.01884244104536,
+      "net_return": -0.005702960149883591,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-04-17T16:00:00+00:00",
+      "exit_time": "2026-04-20T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 158.09800720214844,
+      "exit_price": 159.1510009765625,
+      "net_return": -0.007264563615330042,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-04-30T12:00:00+00:00",
+      "exit_time": "2026-05-05T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 156.35499572753906,
+      "exit_price": 157.67913794709852,
+      "net_return": -0.009074082260614765,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-06-11T20:00:00+00:00",
+      "exit_time": "2026-06-12T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 159.79400634765625,
+      "exit_price": 160.25628656664097,
+      "net_return": -0.0034948923209151715,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-07-02T08:00:00+00:00",
+      "exit_time": "2026-07-06T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 161.4320068359375,
+      "exit_price": 162.0480924615912,
+      "net_return": -0.004418848978725137,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-07-20T16:00:00+00:00",
+      "exit_time": "2026-07-23T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 162.56300354003906,
+      "exit_price": 163.51069549896093,
+      "net_return": 0.005226373444259659,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-07-30T16:00:00+00:00",
+      "exit_time": "2026-07-31T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 159.46299743652344,
+      "exit_price": 160.8628247559603,
+      "net_return": -0.009383832000798427,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-08-19T16:00:00+00:00",
+      "exit_time": "2026-08-20T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 158.4499969482422,
+      "exit_price": 159.13095127658022,
+      "net_return": -0.004900356997321161,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-08-25T08:00:00+00:00",
+      "exit_time": "2026-09-02T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 159.43800354003906,
+      "exit_price": 158.7853875210681,
+      "net_return": -0.004690592343612036,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-09-02T16:00:00+00:00",
+      "exit_time": "2026-09-03T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 158.79299926757812,
+      "exit_price": 157.25265880863958,
+      "net_return": 0.009105946460801212,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-10-15T04:00:00+00:00",
+      "exit_time": "2026-10-19T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 157.67799377441406,
+      "exit_price": 158.40384932445278,
+      "net_return": -0.005206347196788355,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDJPY",
+      "entry_time": "2026-10-28T16:00:00+00:00",
+      "exit_time": "2026-10-30T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 158.23500061035156,
+      "exit_price": 157.56745425947312,
+      "net_return": -0.004815991827718089,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-02-04T20:00:00+00:00",
+      "exit_time": "2025-02-10T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9049100279808044,
+      "exit_price": 0.9111096617891453,
+      "net_return": -0.00745539716188365,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-03-25T08:00:00+00:00",
+      "exit_time": "2025-03-25T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.884630024433136,
+      "exit_price": 0.8802198854949577,
+      "net_return": -0.005582121724364595,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-04-03T00:00:00+00:00",
+      "exit_time": "2025-04-03T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8768500089645386,
+      "exit_price": 0.8672812746162826,
+      "net_return": 0.010318993366601635,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-04-25T04:00:00+00:00",
+      "exit_time": "2025-04-28T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8321599960327148,
+      "exit_price": 0.8237010889230586,
+      "net_return": -0.010758723783843809,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-05-20T08:00:00+00:00",
+      "exit_time": "2025-05-27T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8315600156784058,
+      "exit_price": 0.8187718456395738,
+      "net_return": 0.014787579100057022,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-06-12T08:00:00+00:00",
+      "exit_time": "2025-06-13T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8149999976158142,
+      "exit_price": 0.8057723485176901,
+      "net_return": 0.01072888421109905,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-06-23T16:00:00+00:00",
+      "exit_time": "2025-06-26T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8133299946784973,
+      "exit_price": 0.8020469197027911,
+      "net_return": 0.013280836170791102,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-07-15T16:00:00+00:00",
+      "exit_time": "2025-07-16T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8004000186920166,
+      "exit_price": 0.7960418117470214,
+      "net_return": -0.006041590048177346,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-07-22T16:00:00+00:00",
+      "exit_time": "2025-07-25T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7926200032234192,
+      "exit_price": 0.7974657302767778,
+      "net_return": -0.006717405637984371,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-07-28T20:00:00+00:00",
+      "exit_time": "2025-07-30T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8031600117683411,
+      "exit_price": 0.8125274128473197,
+      "net_return": 0.01105636574558768,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-08-11T16:00:00+00:00",
+      "exit_time": "2025-08-12T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.812690019607544,
+      "exit_price": 0.8079830215040746,
+      "net_return": -0.006388219859710943,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-08-13T08:00:00+00:00",
+      "exit_time": "2025-08-14T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8036500215530396,
+      "exit_price": 0.8084077950782494,
+      "net_return": -0.006523939051472941,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-08-20T16:00:00+00:00",
+      "exit_time": "2025-08-21T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8043799996376038,
+      "exit_price": 0.8082596133398544,
+      "net_return": -0.005426185388262276,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-08-22T16:00:00+00:00",
+      "exit_time": "2025-08-25T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.801580011844635,
+      "exit_price": 0.8063449789585913,
+      "net_return": -0.006548216284615382,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-09-05T16:00:00+00:00",
+      "exit_time": "2025-09-11T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.795799970626831,
+      "exit_price": 0.800451920232745,
+      "net_return": -0.006449315245128787,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-10-15T16:00:00+00:00",
+      "exit_time": "2025-10-17T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7971299886703491,
+      "exit_price": 0.7878356476898037,
+      "net_return": 0.011066573663441891,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-11-11T16:00:00+00:00",
+      "exit_time": "2025-11-13T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7997099757194519,
+      "exit_price": 0.7915845261461033,
+      "net_return": 0.009566413527360679,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-11-20T00:00:00+00:00",
+      "exit_time": "2025-12-01T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.805400013923645,
+      "exit_price": 0.8005688428212023,
+      "net_return": -0.006594696122596417,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-12-02T20:00:00+00:00",
+      "exit_time": "2025-12-08T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8032199740409851,
+      "exit_price": 0.8069940943307943,
+      "net_return": -0.005301738236800909,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-12-08T16:00:00+00:00",
+      "exit_time": "2025-12-10T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8078399896621704,
+      "exit_price": 0.8041992020393257,
+      "net_return": -0.00510393454692655,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2025-12-10T20:00:00+00:00",
+      "exit_time": "2025-12-11T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8011000156402588,
+      "exit_price": 0.7938755884283785,
+      "net_return": 0.008423366354502082,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-01-05T04:00:00+00:00",
+      "exit_time": "2026-01-06T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.7949000000953674,
+      "exit_price": 0.7907070035824899,
+      "net_return": -0.0058715290349626555,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-01-19T16:00:00+00:00",
+      "exit_time": "2026-01-20T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7970399856567383,
+      "exit_price": 0.7886574622447393,
+      "net_return": 0.009923199683879943,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-02-09T20:00:00+00:00",
+      "exit_time": "2026-02-11T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7659599781036377,
+      "exit_price": 0.7710418950633976,
+      "net_return": -0.007238865064092976,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-02-19T12:00:00+00:00",
+      "exit_time": "2026-02-27T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.7740700244903564,
+      "exit_price": 0.7701339871615386,
+      "net_return": -0.005681629567644594,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-02-27T16:00:00+00:00",
+      "exit_time": "2026-03-02T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7689499855041504,
+      "exit_price": 0.7731845018281556,
+      "net_return": -0.006110366511023927,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-03-02T16:00:00+00:00",
+      "exit_time": "2026-03-10T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.7802199721336365,
+      "exit_price": 0.7748406783726446,
+      "net_return": -0.007490270625270822,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-03-12T20:00:00+00:00",
+      "exit_time": "2026-03-27T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.785860002040863,
+      "exit_price": 0.7963769798656681,
+      "net_return": 0.012774915272031699,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-04-08T00:00:00+00:00",
+      "exit_time": "2026-04-14T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.790369987487793,
+      "exit_price": 0.7793341083379833,
+      "net_return": 0.013371128117050202,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-05-01T16:00:00+00:00",
+      "exit_time": "2026-05-04T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7795400023460388,
+      "exit_price": 0.7845449939563504,
+      "net_return": -0.007024475781464205,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-05-12T16:00:00+00:00",
+      "exit_time": "2026-05-19T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.7816600203514099,
+      "exit_price": 0.7892982470209835,
+      "net_return": 0.009166120264427952,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-05-25T12:00:00+00:00",
+      "exit_time": "2026-05-26T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7813500165939331,
+      "exit_price": 0.785244183440343,
+      "net_return": -0.005587066807617043,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-05-29T12:00:00+00:00",
+      "exit_time": "2026-06-01T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7821000218391418,
+      "exit_price": 0.785970856673204,
+      "net_return": -0.005552434143990403,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-06-17T20:00:00+00:00",
+      "exit_time": "2026-06-23T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8005399703979492,
+      "exit_price": 0.8102653511575716,
+      "net_return": 0.011541419160316351,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-07-08T00:00:00+00:00",
+      "exit_time": "2026-07-09T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8089900016784668,
+      "exit_price": 0.8052206766659722,
+      "net_return": -0.005256322715260542,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-07-13T00:00:00+00:00",
+      "exit_time": "2026-07-15T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8094300031661987,
+      "exit_price": 0.8049852994008831,
+      "net_return": -0.006087679072660445,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-07-20T16:00:00+00:00",
+      "exit_time": "2026-07-27T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8102899789810181,
+      "exit_price": 0.8188120065627404,
+      "net_return": 0.009911128025849099,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-07-30T16:00:00+00:00",
+      "exit_time": "2026-07-31T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8057000041007996,
+      "exit_price": 0.8120612713716083,
+      "net_return": -0.008500248496545987,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-08-19T16:00:00+00:00",
+      "exit_time": "2026-08-26T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.799809992313385,
+      "exit_price": 0.8049614514256058,
+      "net_return": -0.0070448993808152754,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-08-31T00:00:00+00:00",
+      "exit_time": "2026-09-11T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8088499903678894,
+      "exit_price": 0.8163467150613454,
+      "net_return": 0.008662995173643322,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-10-12T16:00:00+00:00",
+      "exit_time": "2026-10-15T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8346999883651733,
+      "exit_price": 0.8309444274158636,
+      "net_return": -0.0050964156462389686,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-10-15T04:00:00+00:00",
+      "exit_time": "2026-11-02T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8284500241279602,
+      "exit_price": 0.8187585253901206,
+      "net_return": 0.011105191543121699,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCHF",
+      "entry_time": "2026-11-10T16:00:00+00:00",
+      "exit_time": "2026-11-13T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8259999752044678,
+      "exit_price": 0.8381259461651426,
+      "net_return": 0.014071727069390841,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-02-05T12:00:00+00:00",
+      "exit_time": "2025-02-20T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6282472610473633,
+      "exit_price": 0.6399033053754137,
+      "net_return": 0.01794232651979049,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-03-21T16:00:00+00:00",
+      "exit_time": "2025-03-25T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6263466477394104,
+      "exit_price": 0.6308572801097182,
+      "net_return": -0.007805997436733487,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-04-04T08:00:00+00:00",
+      "exit_time": "2025-04-04T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6213186979293823,
+      "exit_price": 0.606800156804973,
+      "net_return": 0.022781145683675872,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-04-14T00:00:00+00:00",
+      "exit_time": "2025-06-26T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6310979723930359,
+      "exit_price": 0.6555002212416694,
+      "net_return": 0.03804332721828106,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-06-26T16:00:00+00:00",
+      "exit_time": "2025-07-07T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6554583311080933,
+      "exit_price": 0.650674612809206,
+      "net_return": -0.007893722201259275,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-07-07T08:00:00+00:00",
+      "exit_time": "2025-07-08T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6507366299629211,
+      "exit_price": 0.6546071675341156,
+      "net_return": -0.006551682416598164,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-07-10T16:00:00+00:00",
+      "exit_time": "2025-07-15T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.657280683517456,
+      "exit_price": 0.6531341762985038,
+      "net_return": -0.0069046151965877645,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-07-17T04:00:00+00:00",
+      "exit_time": "2025-07-18T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6489798426628113,
+      "exit_price": 0.6536833163230256,
+      "net_return": -0.00785201791076593,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-07-23T04:00:00+00:00",
+      "exit_time": "2025-07-28T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.656396210193634,
+      "exit_price": 0.6527744816650562,
+      "net_return": -0.006114105613476063,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-07-29T12:00:00+00:00",
+      "exit_time": "2025-08-01T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.649966835975647,
+      "exit_price": 0.6423688476209408,
+      "net_return": 0.011096645222238565,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-08-07T08:00:00+00:00",
+      "exit_time": "2025-08-07T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6539409756660461,
+      "exit_price": 0.650300415323608,
+      "net_return": -0.006163589257513526,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-08-27T20:00:00+00:00",
+      "exit_time": "2025-09-05T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6511688828468323,
+      "exit_price": 0.657740018399741,
+      "net_return": 0.009485419316355548,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-09-22T08:00:00+00:00",
+      "exit_time": "2025-09-24T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6583278179168701,
+      "exit_price": 0.6618605551572909,
+      "net_return": -0.005969628864540115,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-10-27T04:00:00+00:00",
+      "exit_time": "2025-10-29T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6532531976699829,
+      "exit_price": 0.6601974645716862,
+      "net_return": 0.01002408751494865,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-11-04T12:00:00+00:00",
+      "exit_time": "2025-11-10T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6499415040016174,
+      "exit_price": 0.6535753042864288,
+      "net_return": -0.006194500768844032,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-11-13T04:00:00+00:00",
+      "exit_time": "2025-11-14T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6559097170829773,
+      "exit_price": 0.6526320649316361,
+      "net_return": -0.005593931384455813,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-11-17T20:00:00+00:00",
+      "exit_time": "2025-11-26T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6485084295272827,
+      "exit_price": 0.6528443770991591,
+      "net_return": -0.007290224043555029,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-11-27T04:00:00+00:00",
+      "exit_time": "2025-12-04T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6533812284469604,
+      "exit_price": 0.6608948111534119,
+      "net_return": 0.010892820967729224,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2025-12-22T12:00:00+00:00",
+      "exit_time": "2025-12-23T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6644960045814514,
+      "exit_price": 0.6701595311939895,
+      "net_return": 0.007918108536519737,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-01-05T20:00:00+00:00",
+      "exit_time": "2026-01-08T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6719075441360474,
+      "exit_price": 0.6690204877716508,
+      "net_return": -0.004894048739572118,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-01-19T16:00:00+00:00",
+      "exit_time": "2026-01-21T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6713212132453918,
+      "exit_price": 0.6771425456991788,
+      "net_return": 0.008066434768673823,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-02-06T00:00:00+00:00",
+      "exit_time": "2026-02-06T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6918500065803528,
+      "exit_price": 0.6988226881744901,
+      "net_return": -0.01068454283813767,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-03-03T12:00:00+00:00",
+      "exit_time": "2026-03-10T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7026913166046143,
+      "exit_price": 0.7098085213238139,
+      "net_return": -0.010734752881702772,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-03-10T08:00:00+00:00",
+      "exit_time": "2026-03-13T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.7112375497817993,
+      "exit_price": 0.7034247316550034,
+      "net_return": -0.011578053478527753,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-03-13T16:00:00+00:00",
+      "exit_time": "2026-03-16T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7006235718727112,
+      "exit_price": 0.7077210646783193,
+      "net_return": -0.010736511265712548,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-04-01T12:00:00+00:00",
+      "exit_time": "2026-04-02T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6955747604370117,
+      "exit_price": 0.6894225424815391,
+      "net_return": -0.009439312343645631,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-04-08T00:00:00+00:00",
+      "exit_time": "2026-04-13T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.7075889110565186,
+      "exit_price": 0.7018554484723691,
+      "net_return": -0.00869777558830247,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-05-15T04:00:00+00:00",
+      "exit_time": "2026-05-18T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7195280194282532,
+      "exit_price": 0.7125174255087344,
+      "net_return": 0.009148990720083967,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-06-05T16:00:00+00:00",
+      "exit_time": "2026-06-23T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.705865740776062,
+      "exit_price": 0.6976383739863915,
+      "net_return": 0.01106252606069607,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-06-23T04:00:00+00:00",
+      "exit_time": "2026-06-23T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6980315446853638,
+      "exit_price": 0.6912346409788538,
+      "net_return": 0.009142908384213574,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-07-29T04:00:00+00:00",
+      "exit_time": "2026-07-29T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6946856379508972,
+      "exit_price": 0.6978161959005883,
+      "net_return": -0.005109323005884391,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-07-30T16:00:00+00:00",
+      "exit_time": "2026-08-17T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.7025925517082214,
+      "exit_price": 0.7112624013449917,
+      "net_return": 0.011732575537211505,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-09-14T04:00:00+00:00",
+      "exit_time": "2026-09-16T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.715103030204773,
+      "exit_price": 0.7086626035679982,
+      "net_return": 0.008411517254183166,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-10-14T16:00:00+00:00",
+      "exit_time": "2026-10-19T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6957489848136902,
+      "exit_price": 0.698833329567133,
+      "net_return": -0.005035969373162448,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-10-20T08:00:00+00:00",
+      "exit_time": "2026-10-29T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6999370455741882,
+      "exit_price": 0.7064065625308606,
+      "net_return": 0.008637634159285186,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDUSD",
+      "entry_time": "2026-11-02T20:00:00+00:00",
+      "exit_time": "2026-11-05T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.7003781795501709,
+      "exit_price": 0.693594441938141,
+      "net_return": 0.009091454086264914,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-02-04T16:00:00+00:00",
+      "exit_time": "2025-03-03T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.432770013809204,
+      "exit_price": 1.450334706408283,
+      "net_return": -0.012866792565333109,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-03-07T08:00:00+00:00",
+      "exit_time": "2025-03-07T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.4299999475479126,
+      "exit_price": 1.440720691841822,
+      "net_return": -0.008101703875183636,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-03-17T16:00:00+00:00",
+      "exit_time": "2025-03-20T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.4299399852752686,
+      "exit_price": 1.4380887450329038,
+      "net_return": -0.006302272844391012,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-03-31T08:00:00+00:00",
+      "exit_time": "2025-04-02T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.4337999820709229,
+      "exit_price": 1.4268704218409731,
+      "net_return": -0.005429924550676203,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-04-03T00:00:00+00:00",
+      "exit_time": "2025-04-03T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.4216099977493286,
+      "exit_price": 1.4036910865475565,
+      "net_return": 0.012012045382813342,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-04-23T16:00:00+00:00",
+      "exit_time": "2025-04-29T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.389299988746643,
+      "exit_price": 1.3806335318706873,
+      "net_return": -0.006834080927431411,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-04-30T20:00:00+00:00",
+      "exit_time": "2025-05-01T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3784600496292114,
+      "exit_price": 1.386007908950409,
+      "net_return": -0.006079039885930716,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-05-08T08:00:00+00:00",
+      "exit_time": "2025-05-12T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3862899541854858,
+      "exit_price": 1.4007319938002947,
+      "net_return": 0.00981169374675488,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-05-21T00:00:00+00:00",
+      "exit_time": "2025-05-23T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3908799886703491,
+      "exit_price": 1.3786883953760691,
+      "net_return": 0.00817046194584727,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-06-19T16:00:00+00:00",
+      "exit_time": "2025-06-26T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3736300468444824,
+      "exit_price": 1.3666837718325102,
+      "net_return": -0.005653661525249589,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-07-22T16:00:00+00:00",
+      "exit_time": "2025-07-25T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3616100549697876,
+      "exit_price": 1.3673639049349868,
+      "net_return": -0.0048284855737707804,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-07-29T08:00:00+00:00",
+      "exit_time": "2025-07-31T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3755199909210205,
+      "exit_price": 1.3863889168027914,
+      "net_return": 0.0072971255038837175,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-08-11T16:00:00+00:00",
+      "exit_time": "2025-08-21T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.378100037574768,
+      "exit_price": 1.3884087882847982,
+      "net_return": 0.006876101166331726,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-08-27T20:00:00+00:00",
+      "exit_time": "2025-09-04T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.378600001335144,
+      "exit_price": 1.3838985524790774,
+      "net_return": -0.004445915744942229,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-09-04T20:00:00+00:00",
+      "exit_time": "2025-09-05T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3825199604034424,
+      "exit_price": 1.3777349744135352,
+      "net_return": -0.004058805093126908,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-09-08T00:00:00+00:00",
+      "exit_time": "2025-09-15T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3834999799728394,
+      "exit_price": 1.3778303449637563,
+      "net_return": -0.0046953996205385895,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-09-16T12:00:00+00:00",
+      "exit_time": "2025-09-18T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3750499486923218,
+      "exit_price": 1.3804049745997584,
+      "net_return": -0.004496940235179558,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-09-23T08:00:00+00:00",
+      "exit_time": "2025-09-25T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3842400312423706,
+      "exit_price": 1.394228328615991,
+      "net_return": 0.006611578234788098,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-10-22T16:00:00+00:00",
+      "exit_time": "2025-10-24T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3974000215530396,
+      "exit_price": 1.402756779792099,
+      "net_return": -0.004435855720137744,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-11-11T20:00:00+00:00",
+      "exit_time": "2025-11-18T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.400979995727539,
+      "exit_price": 1.4058705654696042,
+      "net_return": -0.004093095712626827,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2025-11-28T16:00:00+00:00",
+      "exit_time": "2025-12-01T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3940500020980835,
+      "exit_price": 1.399533138142823,
+      "net_return": -0.004535782726352086,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-01-05T04:00:00+00:00",
+      "exit_time": "2026-01-07T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3767900466918943,
+      "exit_price": 1.3854172293188403,
+      "net_return": 0.005662578407214775,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-01-20T04:00:00+00:00",
+      "exit_time": "2026-01-23T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3854199647903442,
+      "exit_price": 1.3762409230838306,
+      "net_return": 0.006029254354091799,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-02-09T16:00:00+00:00",
+      "exit_time": "2026-02-17T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3571799993515017,
+      "exit_price": 1.3645502092309587,
+      "net_return": -0.006033971692519779,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-02-17T08:00:00+00:00",
+      "exit_time": "2026-03-06T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3647600412368774,
+      "exit_price": 1.3591131998335797,
+      "net_return": -0.004734945749389976,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-03-13T12:00:00+00:00",
+      "exit_time": "2026-03-25T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.366559982299805,
+      "exit_price": 1.378948509416124,
+      "net_return": 0.008460225893270662,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-04-08T00:00:00+00:00",
+      "exit_time": "2026-04-14T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3841999769210815,
+      "exit_price": 1.3738929026899722,
+      "net_return": 0.006850521075468276,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-05-06T20:00:00+00:00",
+      "exit_time": "2026-05-14T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3635499477386477,
+      "exit_price": 1.3736610872109367,
+      "net_return": 0.006811037630271538,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-07-27T20:00:00+00:00",
+      "exit_time": "2026-07-29T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.4120999574661257,
+      "exit_price": 1.4071895973197706,
+      "net_return": -0.004075080277539607,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-07-29T20:00:00+00:00",
+      "exit_time": "2026-08-07T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.4057300090789795,
+      "exit_price": 1.3947577194654137,
+      "net_return": 0.007209907866161355,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-08-28T16:00:00+00:00",
+      "exit_time": "2026-08-31T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.389680027961731,
+      "exit_price": 1.3849535864708775,
+      "net_return": -0.003998880543750886,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-09-03T04:00:00+00:00",
+      "exit_time": "2026-09-11T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 1.3829599618911743,
+      "exit_price": 1.3882636678453615,
+      "net_return": -0.004437521176644249,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-09-14T00:00:00+00:00",
+      "exit_time": "2026-09-16T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.3867900371551514,
+      "exit_price": 1.396462364458101,
+      "net_return": 0.006370611942264426,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "USDCAD",
+      "entry_time": "2026-11-06T08:00:00+00:00",
+      "exit_time": "2026-11-10T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 1.4056999683380127,
+      "exit_price": 1.4176681200253525,
+      "net_return": 0.00790908883081221,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-01-20T16:00:00+00:00",
+      "exit_time": "2025-02-03T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.565514862537384,
+      "exit_price": 0.5569168925285339,
+      "net_return": -0.01579449192425172,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-02-05T12:00:00+00:00",
+      "exit_time": "2025-02-10T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5686988234519958,
+      "exit_price": 0.5637725221988097,
+      "net_return": -0.009257032194880855,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-02-14T00:00:00+00:00",
+      "exit_time": "2025-02-20T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5682141184806824,
+      "exit_price": 0.5760337574698268,
+      "net_return": 0.013153707636879954,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-03-24T04:00:00+00:00",
+      "exit_time": "2025-04-02T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5723443031311035,
+      "exit_price": 0.5764345331590535,
+      "net_return": -0.007750919355585738,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-04-03T12:00:00+00:00",
+      "exit_time": "2025-04-04T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5826826691627502,
+      "exit_price": 0.577301611875084,
+      "net_return": -0.009829251279938653,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-04-04T16:00:00+00:00",
+      "exit_time": "2025-04-10T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.55953449010849,
+      "exit_price": 0.5671653270578099,
+      "net_return": -0.014246196448772916,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-04-10T04:00:00+00:00",
+      "exit_time": "2025-04-14T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5687958598136902,
+      "exit_price": 0.5880897432856715,
+      "net_return": 0.03330041019746633,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-05-01T16:00:00+00:00",
+      "exit_time": "2025-05-02T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5898312926292419,
+      "exit_price": 0.5941798523092524,
+      "net_return": -0.007977153187127207,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-05-05T04:00:00+00:00",
+      "exit_time": "2025-05-08T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5970861911773682,
+      "exit_price": 0.5922379502430067,
+      "net_return": -0.00871478391316825,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-05-09T00:00:00+00:00",
+      "exit_time": "2025-05-14T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5902142524719238,
+      "exit_price": 0.5949763591652983,
+      "net_return": -0.008673459875488478,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-05-21T04:00:00+00:00",
+      "exit_time": "2025-05-22T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5949193835258484,
+      "exit_price": 0.59109329041507,
+      "net_return": -0.007027242406135156,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-06-19T08:00:00+00:00",
+      "exit_time": "2025-06-24T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5970861911773682,
+      "exit_price": 0.6019712167426687,
+      "net_return": -0.008786531593263674,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-06-26T00:00:00+00:00",
+      "exit_time": "2025-07-07T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6055101752281189,
+      "exit_price": 0.6007927971464148,
+      "net_return": -0.008385896484412646,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-07-07T12:00:00+00:00",
+      "exit_time": "2025-07-10T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6001319885253906,
+      "exit_price": 0.6037389815242159,
+      "net_return": -0.006614120175665609,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-07-23T08:00:00+00:00",
+      "exit_time": "2025-07-28T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.6032090783119202,
+      "exit_price": 0.5994763168970106,
+      "net_return": -0.006784280076031174,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-07-29T08:00:00+00:00",
+      "exit_time": "2025-08-01T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5949901938438416,
+      "exit_price": 0.5884008394408435,
+      "net_return": 0.010481194513662915,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-08-12T12:00:00+00:00",
+      "exit_time": "2025-08-12T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5920312404632568,
+      "exit_price": 0.5949947254677919,
+      "net_return": -0.005608807008912649,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-08-29T08:00:00+00:00",
+      "exit_time": "2025-09-02T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5897617340087891,
+      "exit_price": 0.5868242807143135,
+      "net_return": -0.005577578327866806,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-09-04T16:00:00+00:00",
+      "exit_time": "2025-09-05T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5837711691856384,
+      "exit_price": 0.5868431397364509,
+      "net_return": -0.005865623858908891,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-09-18T00:00:00+00:00",
+      "exit_time": "2025-09-19T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5935422778129578,
+      "exit_price": 0.586139139132882,
+      "net_return": 0.011880113554627364,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-10-08T04:00:00+00:00",
+      "exit_time": "2025-10-08T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5750100612640381,
+      "exit_price": 0.578472286540436,
+      "net_return": -0.006624949824715116,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-10-31T08:00:00+00:00",
+      "exit_time": "2025-11-04T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.572049617767334,
+      "exit_price": 0.5652566445631327,
+      "net_return": 0.011281744170938803,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-11-26T04:00:00+00:00",
+      "exit_time": "2025-12-03T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5692815780639648,
+      "exit_price": 0.577417315125391,
+      "net_return": 0.013682843212294042,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-12-23T04:00:00+00:00",
+      "exit_time": "2025-12-31T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5815644264221191,
+      "exit_price": 0.5785994774259626,
+      "net_return": -0.005694991673265021,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2025-12-31T08:00:00+00:00",
+      "exit_time": "2026-01-06T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5775672793388367,
+      "exit_price": 0.5800656856342628,
+      "net_return": -0.004928516991512361,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-01-19T12:00:00+00:00",
+      "exit_time": "2026-01-20T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5784024596214294,
+      "exit_price": 0.5837256732479383,
+      "net_return": 0.008597963544146332,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-02-18T04:00:00+00:00",
+      "exit_time": "2026-03-03T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.6002040505409241,
+      "exit_price": 0.5918422982743086,
+      "net_return": 0.013339697252713405,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-03-12T20:00:00+00:00",
+      "exit_time": "2026-03-26T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5856172442436218,
+      "exit_price": 0.5759785860132621,
+      "net_return": 0.015868670984060432,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-04-08T00:00:00+00:00",
+      "exit_time": "2026-04-14T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5811588168144226,
+      "exit_price": 0.5906004264731879,
+      "net_return": 0.01563661329081592,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-04-23T20:00:00+00:00",
+      "exit_time": "2026-04-27T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5858573913574219,
+      "exit_price": 0.5897445030215976,
+      "net_return": -0.007239073218874259,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-04-29T16:00:00+00:00",
+      "exit_time": "2026-04-30T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5839757323265076,
+      "exit_price": 0.5875713121281358,
+      "net_return": -0.0067609459861461005,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-05-01T16:00:00+00:00",
+      "exit_time": "2026-05-04T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5918911099433899,
+      "exit_price": 0.5881454885528338,
+      "net_return": -0.006924251404354138,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-05-15T04:00:00+00:00",
+      "exit_time": "2026-05-19T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5884429812431335,
+      "exit_price": 0.5823936734001195,
+      "net_return": 0.009686183637729768,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-06-03T16:00:00+00:00",
+      "exit_time": "2026-06-05T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5870267152786255,
+      "exit_price": 0.5799762464461249,
+      "net_return": 0.011417501934983107,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-07-02T16:00:00+00:00",
+      "exit_time": "2026-07-10T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5706785321235657,
+      "exit_price": 0.5773661258068038,
+      "net_return": 0.011111821359201262,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-07-23T16:00:00+00:00",
+      "exit_time": "2026-07-27T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5776006579399109,
+      "exit_price": 0.580603078327729,
+      "net_return": -0.005801390162334829,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-07-30T16:00:00+00:00",
+      "exit_time": "2026-08-13T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5879586338996887,
+      "exit_price": 0.5838403689722704,
+      "net_return": -0.007599963384185094,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-08-19T16:00:00+00:00",
+      "exit_time": "2026-09-01T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5930494666099548,
+      "exit_price": 0.5897745057600274,
+      "net_return": -0.0061187466309572044,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-10-14T16:00:00+00:00",
+      "exit_time": "2026-10-14T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5571961998939514,
+      "exit_price": 0.5600348949941469,
+      "net_return": -0.005697843729602483,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-10-16T04:00:00+00:00",
+      "exit_time": "2026-10-28T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.5653230547904968,
+      "exit_price": 0.5617268028003858,
+      "net_return": -0.0069574148055017125,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "NZDUSD",
+      "entry_time": "2026-10-28T04:00:00+00:00",
+      "exit_time": "2026-11-05T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.5616084337234497,
+      "exit_price": 0.565394428416493,
+      "net_return": -0.0073455683780955395,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-01-27T04:00:00+00:00",
+      "exit_time": "2025-02-03T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8404200077056885,
+      "exit_price": 0.8337100148200989,
+      "net_return": 0.007388706488334364,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-03-04T20:00:00+00:00",
+      "exit_time": "2025-03-05T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8289499878883362,
+      "exit_price": 0.8346281619870528,
+      "net_return": 0.006245910447174933,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-04-03T12:00:00+00:00",
+      "exit_time": "2025-04-04T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8415600061416626,
+      "exit_price": 0.8516125985126564,
+      "net_return": 0.011338202845364936,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-04-25T04:00:00+00:00",
+      "exit_time": "2025-05-12T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8523799777030945,
+      "exit_price": 0.84375777189319,
+      "net_return": 0.009521339586908996,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-05-22T16:00:00+00:00",
+      "exit_time": "2025-05-30T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8402299880981445,
+      "exit_price": 0.8436401620004643,
+      "net_return": -0.004661235561449544,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-06-10T08:00:00+00:00",
+      "exit_time": "2025-06-12T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8455299735069275,
+      "exit_price": 0.8512922242825807,
+      "net_return": 0.006211049628372532,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-06-30T08:00:00+00:00",
+      "exit_time": "2025-07-02T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8556200265884399,
+      "exit_price": 0.8618299103437388,
+      "net_return": 0.006653585370892784,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-07-24T16:00:00+00:00",
+      "exit_time": "2025-07-28T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8698899745941162,
+      "exit_price": 0.8670226156898038,
+      "net_return": -0.003894074601838181,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-07-29T12:00:00+00:00",
+      "exit_time": "2025-08-01T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8650400042533875,
+      "exit_price": 0.8687284697711402,
+      "net_return": -0.004866663965788202,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-08-01T16:00:00+00:00",
+      "exit_time": "2025-08-07T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8714799880981445,
+      "exit_price": 0.8673649769866464,
+      "net_return": -0.00531885307995847,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-08-11T20:00:00+00:00",
+      "exit_time": "2025-08-29T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8642200231552124,
+      "exit_price": 0.8674280201818568,
+      "net_return": -0.004314422164207035,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-09-02T08:00:00+00:00",
+      "exit_time": "2025-09-09T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8689299821853638,
+      "exit_price": 0.8656911136789747,
+      "net_return": -0.004325006011965986,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-09-16T16:00:00+00:00",
+      "exit_time": "2025-09-22T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8676999807357788,
+      "exit_price": 0.8731523613104298,
+      "net_return": 0.005680127218597485,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-10-01T12:00:00+00:00",
+      "exit_time": "2025-10-24T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8703500032424927,
+      "exit_price": 0.8730518747012029,
+      "net_return": -0.0037063937128848858,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-11-21T16:00:00+00:00",
+      "exit_time": "2025-12-04T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8790500164031982,
+      "exit_price": 0.8723038742892094,
+      "net_return": 0.007078781197298009,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-12-12T16:00:00+00:00",
+      "exit_time": "2025-12-16T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8789100050926208,
+      "exit_price": 0.8764426364998613,
+      "net_return": -0.0034054413363778712,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2025-12-22T12:00:00+00:00",
+      "exit_time": "2026-01-05T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8730700016021729,
+      "exit_price": 0.8672452239868862,
+      "net_return": 0.0060754284538183,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-01-19T04:00:00+00:00",
+      "exit_time": "2026-01-20T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8682299852371216,
+      "exit_price": 0.8726420668941625,
+      "net_return": 0.004478828779803033,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-02-05T16:00:00+00:00",
+      "exit_time": "2026-02-06T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8715900182723999,
+      "exit_price": 0.8678282104599898,
+      "net_return": -0.004913260233228664,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-02-17T08:00:00+00:00",
+      "exit_time": "2026-02-27T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.872439980506897,
+      "exit_price": 0.8781724376698934,
+      "net_return": 0.005966842235957224,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-03-03T20:00:00+00:00",
+      "exit_time": "2026-03-11T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8694499731063843,
+      "exit_price": 0.8625221840999703,
+      "net_return": 0.007372615554255026,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-03-20T16:00:00+00:00",
+      "exit_time": "2026-03-23T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8676900267601013,
+      "exit_price": 0.8643993895943904,
+      "net_return": -0.0043899562479287405,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-05-12T08:00:00+00:00",
+      "exit_time": "2026-05-12T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8689900040626526,
+      "exit_price": 0.8662207628924974,
+      "net_return": -0.003784643942438426,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-05-20T16:00:00+00:00",
+      "exit_time": "2026-05-28T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8644199967384338,
+      "exit_price": 0.867178333719516,
+      "net_return": -0.0037930637104959678,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-05-28T16:00:00+00:00",
+      "exit_time": "2026-06-01T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8669099807739258,
+      "exit_price": 0.8648409484888051,
+      "net_return": -0.0029850633709630867,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-06-02T00:00:00+00:00",
+      "exit_time": "2026-06-18T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8644099831581116,
+      "exit_price": 0.8666166947609444,
+      "net_return": -0.00315456520705976,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-07-21T16:00:00+00:00",
+      "exit_time": "2026-07-29T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8529599905014038,
+      "exit_price": 0.8585301307458592,
+      "net_return": 0.005926628108445111,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-08-19T12:00:00+00:00",
+      "exit_time": "2026-09-02T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8560900092124939,
+      "exit_price": 0.8592873345679748,
+      "net_return": 0.003132740192284061,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-09-14T08:00:00+00:00",
+      "exit_time": "2026-09-16T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8556200265884399,
+      "exit_price": 0.8574454877749659,
+      "net_return": -0.002734955696426394,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-09-17T16:00:00+00:00",
+      "exit_time": "2026-09-18T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8600800037384033,
+      "exit_price": 0.8575084296650299,
+      "net_return": -0.00358795090286186,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-11-10T16:00:00+00:00",
+      "exit_time": "2026-11-13T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.8368499875068665,
+      "exit_price": 0.8345167726776153,
+      "net_return": -0.0033862397887240666,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURGBP",
+      "entry_time": "2026-11-13T16:00:00+00:00",
+      "exit_time": "2026-11-13T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.8341100215911865,
+      "exit_price": 0.8344299793243408,
+      "net_return": -0.0009840020404647905,
+      "exit_reason": "END_OF_DATA"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-01-22T12:00:00+00:00",
+      "exit_time": "2025-01-27T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 162.77000427246094,
+      "exit_price": 161.55485942728365,
+      "net_return": -0.008060752320704362,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-01-29T20:00:00+00:00",
+      "exit_time": "2025-02-03T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 161.70799255371094,
+      "exit_price": 159.18699645996094,
+      "net_return": 0.014998981777665633,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-02-12T08:00:00+00:00",
+      "exit_time": "2025-02-19T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 159.4499969482422,
+      "exit_price": 158.18011391793647,
+      "net_return": -0.00855918884224346,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-03-03T12:00:00+00:00",
+      "exit_time": "2025-03-03T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 158.05099487304688,
+      "exit_price": 156.30597778322684,
+      "net_return": -0.011634046032604473,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-04-01T12:00:00+00:00",
+      "exit_time": "2025-04-02T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 160.85000610351562,
+      "exit_price": 162.09737525678338,
+      "net_return": -0.00835969358832281,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-04-23T20:00:00+00:00",
+      "exit_time": "2025-05-12T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 162.4250030517578,
+      "exit_price": 164.79223572000282,
+      "net_return": 0.013965749963978643,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-08-12T04:00:00+00:00",
+      "exit_time": "2025-08-14T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 172.4669952392578,
+      "exit_price": 171.61808662393028,
+      "net_return": -0.005519018778001092,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-10-06T04:00:00+00:00",
+      "exit_time": "2025-10-17T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 175.93299865722656,
+      "exit_price": 174.8455459474617,
+      "net_return": -0.006777174172407203,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-11-10T08:00:00+00:00",
+      "exit_time": "2025-11-14T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 178.18800354003906,
+      "exit_price": 179.9478041709025,
+      "net_return": 0.009270345345556411,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2025-12-05T08:00:00+00:00",
+      "exit_time": "2025-12-08T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 180.33599853515625,
+      "exit_price": 181.09876071461073,
+      "net_return": -0.004832390928717138,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-01-09T16:00:00+00:00",
+      "exit_time": "2026-01-13T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 183.7760009765625,
+      "exit_price": 185.22947087871657,
+      "net_return": 0.007304357172857469,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-01-20T08:00:00+00:00",
+      "exit_time": "2026-01-23T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 185.11300659179688,
+      "exit_price": 186.83436991946587,
+      "net_return": 0.008693588610802777,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-01-26T00:00:00+00:00",
+      "exit_time": "2026-02-04T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 184.0059967041016,
+      "exit_price": 185.27683184839367,
+      "net_return": -0.00751081284302506,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-02-11T04:00:00+00:00",
+      "exit_time": "2026-02-24T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 182.906005859375,
+      "exit_price": 184.07709234319378,
+      "net_return": -0.007006691098102977,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-03-03T16:00:00+00:00",
+      "exit_time": "2026-03-10T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 182.6649932861328,
+      "exit_price": 183.74918813035382,
+      "net_return": -0.006539169987581849,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-03-13T08:00:00+00:00",
+      "exit_time": "2026-03-17T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 182.677001953125,
+      "exit_price": 183.47734013447376,
+      "net_return": -0.004983975057216191,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-03-23T00:00:00+00:00",
+      "exit_time": "2026-03-30T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 183.9969940185547,
+      "exit_price": 183.03981148910566,
+      "net_return": -0.005798863643120034,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-04-30T12:00:00+00:00",
+      "exit_time": "2026-05-01T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 183.04299926757807,
+      "exit_price": 184.41349956724983,
+      "net_return": -0.00809198718186488,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-05-25T12:00:00+00:00",
+      "exit_time": "2026-06-02T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 185.06100463867188,
+      "exit_price": 186.14564952049207,
+      "net_return": 0.005257677003189887,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-06-05T16:00:00+00:00",
+      "exit_time": "2026-06-10T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 184.82000732421875,
+      "exit_price": 185.51788677036882,
+      "net_return": -0.0043784414532205985,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-06-15T04:00:00+00:00",
+      "exit_time": "2026-06-17T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 185.72900390625,
+      "exit_price": 185.08743057593284,
+      "net_return": -0.004052099925635776,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-06-17T20:00:00+00:00",
+      "exit_time": "2026-06-24T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 184.73899841308597,
+      "exit_price": 183.3377219666094,
+      "net_return": 0.006989540994025461,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-06-29T16:00:00+00:00",
+      "exit_time": "2026-07-02T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 184.98199462890625,
+      "exit_price": 184.25006006148928,
+      "net_return": -0.004554234859882518,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-07-30T16:00:00+00:00",
+      "exit_time": "2026-07-31T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 183.7209930419922,
+      "exit_price": 185.1094759285948,
+      "net_return": -0.008162278447523982,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-09-02T16:00:00+00:00",
+      "exit_time": "2026-09-03T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 184.06700134277344,
+      "exit_price": 182.54920515765002,
+      "net_return": 0.007650658635378333,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-09-28T08:00:00+00:00",
+      "exit_time": "2026-10-01T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 178.96800231933594,
+      "exit_price": 176.9690230898333,
+      "net_return": 0.01057600200670558,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-10-16T12:00:00+00:00",
+      "exit_time": "2026-10-19T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 177.86099243164062,
+      "exit_price": 177.03476380755262,
+      "net_return": -0.005242395271298297,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURJPY",
+      "entry_time": "2026-10-22T08:00:00+00:00",
+      "exit_time": "2026-11-03T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 176.6439971923828,
+      "exit_price": 177.48278975463373,
+      "net_return": -0.005351521747796682,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-01-24T12:00:00+00:00",
+      "exit_time": "2025-01-27T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 193.7910003662109,
+      "exit_price": 192.23720326658332,
+      "net_return": -0.008612911983087335,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-01-31T00:00:00+00:00",
+      "exit_time": "2025-01-31T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 191.4040069580078,
+      "exit_price": 192.80043190879746,
+      "net_return": -0.007900252186250022,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-02-12T08:00:00+00:00",
+      "exit_time": "2025-02-20T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 191.4320068359375,
+      "exit_price": 189.7689474266164,
+      "net_return": -0.009282077009900533,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-02-20T04:00:00+00:00",
+      "exit_time": "2025-02-21T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 189.41900634765625,
+      "exit_price": 190.76383358485393,
+      "net_return": -0.007704189317013707,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-03-03T12:00:00+00:00",
+      "exit_time": "2025-03-03T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 191.43800354003903,
+      "exit_price": 189.41616135711288,
+      "net_return": -0.011154826918209867,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-04-01T12:00:00+00:00",
+      "exit_time": "2025-04-02T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 192.3280029296875,
+      "exit_price": 193.8316705320506,
+      "net_return": -0.008423118215631476,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-04-03T00:00:00+00:00",
+      "exit_time": "2025-04-04T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 192.9080047607422,
+      "exit_price": 189.10450308536315,
+      "net_return": 0.019128314188305167,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-04-23T20:00:00+00:00",
+      "exit_time": "2025-05-02T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 190.2220001220703,
+      "exit_price": 193.48318424760794,
+      "net_return": 0.016533992017216496,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-05-27T08:00:00+00:00",
+      "exit_time": "2025-06-02T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 194.4040069580078,
+      "exit_price": 193.19853713680376,
+      "net_return": -0.006796949295723408,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-06-03T00:00:00+00:00",
+      "exit_time": "2025-06-03T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 193.08200073242188,
+      "exit_price": 194.21057371514058,
+      "net_return": -0.006448733132132183,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-06-13T04:00:00+00:00",
+      "exit_time": "2025-06-13T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 194.47799682617188,
+      "exit_price": 195.68316275034002,
+      "net_return": -0.006800826195982862,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-07-07T16:00:00+00:00",
+      "exit_time": "2025-07-22T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 198.91000366210935,
+      "exit_price": 197.7389238050267,
+      "net_return": -0.006483774598007931,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-08-08T08:00:00+00:00",
+      "exit_time": "2025-09-15T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 198.0269927978516,
+      "exit_price": 200.50937342281722,
+      "net_return": 0.011928227805722365,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-09-19T16:00:00+00:00",
+      "exit_time": "2025-09-24T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 199.31399536132807,
+      "exit_price": 200.23839322210088,
+      "net_return": -0.005240861027040746,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-09-26T16:00:00+00:00",
+      "exit_time": "2025-09-29T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 200.3780059814453,
+      "exit_price": 199.59225670683725,
+      "net_return": -0.004518802891393991,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-10-06T04:00:00+00:00",
+      "exit_time": "2025-10-08T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 201.8560028076172,
+      "exit_price": 204.4591494960141,
+      "net_return": 0.012288502476058864,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-10-29T04:00:00+00:00",
+      "exit_time": "2025-10-30T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 201.4969940185547,
+      "exit_price": 202.60173941451302,
+      "net_return": -0.0060861598697148425,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-12-01T12:00:00+00:00",
+      "exit_time": "2025-12-03T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 205.25999450683597,
+      "exit_price": 206.37378558961018,
+      "net_return": -0.006029682089442297,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2025-12-19T08:00:00+00:00",
+      "exit_time": "2026-01-05T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 209.47000122070312,
+      "exit_price": 211.7961637397615,
+      "net_return": 0.010498510144053484,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-01-22T20:00:00+00:00",
+      "exit_time": "2026-01-23T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 213.697998046875,
+      "exit_price": 212.5627913756437,
+      "net_return": -0.005908834466255448,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-01-26T12:00:00+00:00",
+      "exit_time": "2026-01-28T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 210.09800720214844,
+      "exit_price": 211.93899068954116,
+      "net_return": -0.009367937699566955,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-02-02T20:00:00+00:00",
+      "exit_time": "2026-02-10T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 212.5679931640625,
+      "exit_price": 211.0595421400819,
+      "net_return": -0.007691885996585044,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-02-10T16:00:00+00:00",
+      "exit_time": "2026-02-17T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 210.86099243164065,
+      "exit_price": 207.30339099352494,
+      "net_return": 0.01628173157168695,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-03-06T00:00:00+00:00",
+      "exit_time": "2026-03-11T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 210.4279937744141,
+      "exit_price": 213.12845671507907,
+      "net_return": 0.012225674788358372,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-03-30T04:00:00+00:00",
+      "exit_time": "2026-03-31T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 212.0570068359375,
+      "exit_price": 209.94086017397288,
+      "net_return": 0.009384949711682558,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-04-08T00:00:00+00:00",
+      "exit_time": "2026-04-10T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 212.68899536132807,
+      "exit_price": 214.5328267969108,
+      "net_return": 0.008064123585323827,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-04-27T00:00:00+00:00",
+      "exit_time": "2026-04-30T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 215.6300048828125,
+      "exit_price": 214.88232090562317,
+      "net_return": -0.004065179625588154,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-04-30T12:00:00+00:00",
+      "exit_time": "2026-04-30T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 211.36199951171875,
+      "exit_price": 212.96132095400978,
+      "net_return": -0.008171462152111198,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-05-28T04:00:00+00:00",
+      "exit_time": "2026-05-28T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 213.3789978027344,
+      "exit_price": 214.10474599311326,
+      "net_return": -0.004003438000884532,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-06-05T16:00:00+00:00",
+      "exit_time": "2026-06-10T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 214.07899475097656,
+      "exit_price": 214.94896076406474,
+      "net_return": -0.004666380712093205,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-06-17T20:00:00+00:00",
+      "exit_time": "2026-06-22T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 213.5240020751953,
+      "exit_price": 214.43097840822998,
+      "net_return": -0.004850384589896023,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-06-29T20:00:00+00:00",
+      "exit_time": "2026-07-06T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 214.73699951171875,
+      "exit_price": 216.4496796421467,
+      "net_return": 0.0073711064022473575,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-07-30T08:00:00+00:00",
+      "exit_time": "2026-07-30T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 218.38800048828125,
+      "exit_price": 217.59525201898452,
+      "net_return": -0.004227642833145835,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-07-30T16:00:00+00:00",
+      "exit_time": "2026-08-03T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 214.62399291992188,
+      "exit_price": 211.21143757371436,
+      "net_return": 0.015309520662126812,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-09-25T16:00:00+00:00",
+      "exit_time": "2026-10-01T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 208.218994140625,
+      "exit_price": 209.383952201717,
+      "net_return": -0.006198407297861036,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-10-14T16:00:00+00:00",
+      "exit_time": "2026-10-15T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 208.86700439453125,
+      "exit_price": 209.8547658329673,
+      "net_return": -0.005332159027978972,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "GBPJPY",
+      "entry_time": "2026-10-29T16:00:00+00:00",
+      "exit_time": "2026-11-04T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 211.07899475097656,
+      "exit_price": 213.16249689294122,
+      "net_return": 0.009264981595531302,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-01-22T16:00:00+00:00",
+      "exit_time": "2025-01-27T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 98.10099792480467,
+      "exit_price": 97.31942221406464,
+      "net_return": -0.008562092838953273,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-02-12T04:00:00+00:00",
+      "exit_time": "2025-02-19T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 96.7770004272461,
+      "exit_price": 95.94371129703443,
+      "net_return": -0.009205059966401481,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-02-20T04:00:00+00:00",
+      "exit_time": "2025-02-21T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 95.65799713134766,
+      "exit_price": 96.38411128302987,
+      "net_return": -0.008195467146587919,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-03-17T08:00:00+00:00",
+      "exit_time": "2025-03-20T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 94.33000183105467,
+      "exit_price": 93.41641518669134,
+      "net_return": -0.010279016905991109,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-05-20T08:00:00+00:00",
+      "exit_time": "2025-05-28T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 92.58599853515624,
+      "exit_price": 93.40374751640745,
+      "net_return": -0.009437799033394065,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-05-29T00:00:00+00:00",
+      "exit_time": "2025-05-29T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 93.58799743652344,
+      "exit_price": 92.86492278722459,
+      "net_return": -0.008321333008824087,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-06-04T12:00:00+00:00",
+      "exit_time": "2025-06-04T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 93.53199768066406,
+      "exit_price": 92.8043458831595,
+      "net_return": -0.008374863412374917,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-06-23T08:00:00+00:00",
+      "exit_time": "2025-07-09T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 94.61699676513672,
+      "exit_price": 96.15981764965957,
+      "net_return": 0.015696358458678047,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-07-30T20:00:00+00:00",
+      "exit_time": "2025-07-31T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 96.09400177001952,
+      "exit_price": 96.6258652506548,
+      "net_return": -0.006138326917349857,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-08-01T16:00:00+00:00",
+      "exit_time": "2025-08-08T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 95.73699951171876,
+      "exit_price": 96.46328641798284,
+      "net_return": -0.008191005052555584,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-08-08T12:00:00+00:00",
+      "exit_time": "2025-08-14T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 96.40599822998048,
+      "exit_price": 95.78174951496415,
+      "net_return": -0.007071142270160733,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-08-25T16:00:00+00:00",
+      "exit_time": "2025-09-03T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 95.91999816894533,
+      "exit_price": 97.06788229514788,
+      "net_return": 0.011360100965441567,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-09-24T08:00:00+00:00",
+      "exit_time": "2025-09-30T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 98.00499725341795,
+      "exit_price": 97.43232734681283,
+      "net_return": -0.006439587655128818,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-10-01T08:00:00+00:00",
+      "exit_time": "2025-10-06T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 97.25599670410156,
+      "exit_price": 98.6259994506836,
+      "net_return": -0.014695197753286291,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-10-06T04:00:00+00:00",
+      "exit_time": "2025-10-09T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 99.16300201416016,
+      "exit_price": 100.6371045336592,
+      "net_return": 0.014256712052979311,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-10-23T08:00:00+00:00",
+      "exit_time": "2025-10-30T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 99.19499969482422,
+      "exit_price": 100.8785875876628,
+      "net_return": 0.016362507162451703,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-11-10T08:00:00+00:00",
+      "exit_time": "2025-11-20T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 100.56800079345705,
+      "exit_price": 102.4304816738194,
+      "net_return": 0.01790868873901643,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2025-12-19T12:00:00+00:00",
+      "exit_time": "2026-01-06T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 103.91600036621094,
+      "exit_price": 105.2973553449118,
+      "net_return": 0.01268520255483331,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-03-19T16:00:00+00:00",
+      "exit_time": "2026-03-20T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 111.28299713134766,
+      "exit_price": 112.23347916823283,
+      "net_return": -0.009146431698576781,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-04-07T16:00:00+00:00",
+      "exit_time": "2026-04-07T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 111.01399993896484,
+      "exit_price": 112.29238658317104,
+      "net_return": 0.01090881708153686,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-04-30T12:00:00+00:00",
+      "exit_time": "2026-04-30T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 111.85399627685548,
+      "exit_price": 112.85888450940054,
+      "net_return": -0.00958949988064078,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-05-19T16:00:00+00:00",
+      "exit_time": "2026-05-20T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 112.96900177001952,
+      "exit_price": 113.69552508368442,
+      "net_return": -0.007035213975502544,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-06-05T16:00:00+00:00",
+      "exit_time": "2026-06-23T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 113.1050033569336,
+      "exit_price": 111.7945343541456,
+      "net_return": 0.01099307825664282,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-07-06T20:00:00+00:00",
+      "exit_time": "2026-07-07T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 112.7239990234375,
+      "exit_price": 112.15077024883587,
+      "net_return": -0.005682011472405563,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-07-30T16:00:00+00:00",
+      "exit_time": "2026-07-31T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 111.95099639892578,
+      "exit_price": 112.9647232532345,
+      "net_return": -0.009660709263889483,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-08-11T20:00:00+00:00",
+      "exit_time": "2026-08-21T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 112.46900177001952,
+      "exit_price": 113.69053267344017,
+      "net_return": 0.010254710398634246,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-09-02T16:00:00+00:00",
+      "exit_time": "2026-09-03T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 113.83499908447266,
+      "exit_price": 112.660422304769,
+      "net_return": 0.009724252209444529,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-09-03T08:00:00+00:00",
+      "exit_time": "2026-09-07T20:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 112.68000030517578,
+      "exit_price": 111.12088277858014,
+      "net_return": 0.01324480817470077,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-09-18T04:00:00+00:00",
+      "exit_time": "2026-09-23T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 112.03299713134766,
+      "exit_price": 111.3065274565595,
+      "net_return": -0.007080356523586657,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-09-25T16:00:00+00:00",
+      "exit_time": "2026-09-30T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 110.51699829101562,
+      "exit_price": 109.10128147780704,
+      "net_return": 0.012217454519010155,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-10-15T04:00:00+00:00",
+      "exit_time": "2026-10-19T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 109.62799835205078,
+      "exit_price": 110.28824485485885,
+      "net_return": -0.006626403094851386,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-11-04T04:00:00+00:00",
+      "exit_time": "2026-11-04T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 109.69000244140624,
+      "exit_price": 110.45625430236089,
+      "net_return": -0.007589985259349298,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "AUDJPY",
+      "entry_time": "2026-11-05T16:00:00+00:00",
+      "exit_time": "2026-11-13T16:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 109.86799621582033,
+      "exit_price": 108.25399780273438,
+      "net_return": 0.014098978557817615,
+      "exit_reason": "END_OF_DATA"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-02-11T20:00:00+00:00",
+      "exit_time": "2025-02-13T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9458799958229064,
+      "exit_price": 0.9414088493164335,
+      "net_return": -0.005323954873270728,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-03-03T12:00:00+00:00",
+      "exit_time": "2025-03-04T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9423199892044068,
+      "exit_price": 0.9363757437621862,
+      "net_return": -0.006904132848636682,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-04-02T16:00:00+00:00",
+      "exit_time": "2025-04-02T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9583399891853333,
+      "exit_price": 0.9532480572676219,
+      "net_return": -0.005909916400020144,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-04-03T16:00:00+00:00",
+      "exit_time": "2025-04-07T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9492499828338624,
+      "exit_price": 0.9348518749697129,
+      "net_return": 0.014576801333221454,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-04-23T00:00:00+00:00",
+      "exit_time": "2025-05-05T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.937720000743866,
+      "exit_price": 0.9310618479026527,
+      "net_return": -0.00769592458661403,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-05-13T16:00:00+00:00",
+      "exit_time": "2025-05-15T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.939989984035492,
+      "exit_price": 0.9343492940119835,
+      "net_return": -0.006597018662752309,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-05-28T00:00:00+00:00",
+      "exit_time": "2025-05-30T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.93791002035141,
+      "exit_price": 0.933039803537291,
+      "net_return": -0.005789332325729212,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-06-13T04:00:00+00:00",
+      "exit_time": "2025-06-13T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.933430016040802,
+      "exit_price": 0.9384372298496921,
+      "net_return": -0.005967715865640823,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-06-24T00:00:00+00:00",
+      "exit_time": "2025-06-24T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9425299763679504,
+      "exit_price": 0.9373490704301873,
+      "net_return": -0.006093330559014551,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-06-24T16:00:00+00:00",
+      "exit_time": "2025-06-26T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9343199729919434,
+      "exit_price": 0.9397982090151068,
+      "net_return": -0.0064670394914768115,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-07-22T08:00:00+00:00",
+      "exit_time": "2025-07-24T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9318100214004515,
+      "exit_price": 0.9350876156618301,
+      "net_return": -0.0041197401926272165,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-07-24T16:00:00+00:00",
+      "exit_time": "2025-07-25T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9361799955368042,
+      "exit_price": 0.9326258995846197,
+      "net_return": -0.004393923913382953,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-08-04T08:00:00+00:00",
+      "exit_time": "2025-08-11T20:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9347500205039978,
+      "exit_price": 0.9436603406598406,
+      "net_return": 0.008926764992063609,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-09-01T12:00:00+00:00",
+      "exit_time": "2025-09-08T04:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9377400279045104,
+      "exit_price": 0.9339849447246216,
+      "net_return": -0.00460181495024436,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-09-08T08:00:00+00:00",
+      "exit_time": "2025-10-01T12:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.933650016784668,
+      "exit_price": 0.9371442875347425,
+      "net_return": -0.004345017925623501,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-10-06T04:00:00+00:00",
+      "exit_time": "2025-10-16T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9329000115394592,
+      "exit_price": 0.9262896747537998,
+      "net_return": 0.006489866141860354,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-11-12T04:00:00+00:00",
+      "exit_time": "2025-11-14T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9268800020217896,
+      "exit_price": 0.9207889881864475,
+      "net_return": 0.005975287673263059,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2025-12-11T12:00:00+00:00",
+      "exit_time": "2025-12-16T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9328200221061708,
+      "exit_price": 0.9364354337945359,
+      "net_return": -0.004478293195476713,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-01-19T04:00:00+00:00",
+      "exit_time": "2026-01-26T00:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.92875999212265,
+      "exit_price": 0.9218206956486336,
+      "net_return": 0.00687587550419113,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-03-16T16:00:00+00:00",
+      "exit_time": "2026-03-19T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9059600234031676,
+      "exit_price": 0.913904217773335,
+      "net_return": 0.008163733610611231,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-04-28T08:00:00+00:00",
+      "exit_time": "2026-04-30T08:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9236299991607666,
+      "exit_price": 0.9201111491305142,
+      "net_return": -0.00440733968482373,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-05-12T08:00:00+00:00",
+      "exit_time": "2026-05-14T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9172199964523317,
+      "exit_price": 0.9143635559006876,
+      "net_return": -0.003712189182829315,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-05-19T16:00:00+00:00",
+      "exit_time": "2026-05-22T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.916159987449646,
+      "exit_price": 0.9131082832080494,
+      "net_return": -0.00392879513472682,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-05-28T12:00:00+00:00",
+      "exit_time": "2026-05-28T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9164199829101562,
+      "exit_price": 0.9133963404427111,
+      "net_return": -0.0038972479608490973,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-06-17T08:00:00+00:00",
+      "exit_time": "2026-06-18T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9183599948883056,
+      "exit_price": 0.9215480517049491,
+      "net_return": -0.004073730995380832,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-07-08T16:00:00+00:00",
+      "exit_time": "2026-07-10T00:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9236000180244446,
+      "exit_price": 0.9205945368625843,
+      "net_return": -0.0038519620584980844,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-08-19T16:00:00+00:00",
+      "exit_time": "2026-08-25T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9328600168228148,
+      "exit_price": 0.9370204478317049,
+      "net_return": -0.0050627231382144285,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-08-27T08:00:00+00:00",
+      "exit_time": "2026-08-27T12:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9392899870872498,
+      "exit_price": 0.9361898496437395,
+      "net_return": -0.003898351882806177,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-09-21T16:00:00+00:00",
+      "exit_time": "2026-09-28T04:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9419299960136414,
+      "exit_price": 0.9458540661680582,
+      "net_return": -0.004768669559256671,
+      "exit_reason": "SL"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-10-01T16:00:00+00:00",
+      "exit_time": "2026-10-19T08:00:00+00:00",
+      "side": "SHORT",
+      "entry_price": 0.9336599707603456,
+      "exit_price": 0.9222589576264258,
+      "net_return": 0.011618246516535074,
+      "exit_reason": "TP"
+    },
+    {
+      "symbol": "EURCHF",
+      "entry_time": "2026-11-10T12:00:00+00:00",
+      "exit_time": "2026-11-13T16:00:00+00:00",
+      "side": "LONG",
+      "entry_price": 0.9208499789237976,
+      "exit_price": 0.9253100156784058,
+      "net_return": 0.004240666058999101,
+      "exit_reason": "END_OF_DATA"
+    }
+  ]
+}
