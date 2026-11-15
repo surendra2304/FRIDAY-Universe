@@ -69,6 +69,10 @@ from friday.tools.builtin.file_and_command import ExecuteCommandTool, FileOperat
 from friday.tools.builtin.file_listing import FileListingTool
 from friday.tools.builtin.file_reader import FileReaderTool
 from friday.tools.builtin.git_tools import GitCommitTool, GitPushTool, GitStatusTool
+from friday.tools.builtin.workflow_template_tools import (
+    WorkflowTemplateListTool,
+    WorkflowTemplateRunTool,
+)
 from friday.tools.builtin.github_tools import (
     CreateGitHubIssueTool,
     ListGitHubIssuesTool,
@@ -189,6 +193,8 @@ __all__ = [
     "GitPushTool",
     "GitStatusTool",
     "HealthCheckTool",
+    "WorkflowTemplateListTool",
+    "WorkflowTemplateRunTool",
     "KillProcessTool",
     "LaunchApplicationTool",
     "LaptopClickTool",

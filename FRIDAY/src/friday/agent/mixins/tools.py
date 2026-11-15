@@ -72,6 +72,8 @@ from friday.tools.builtin import (
     GitPushTool,
     GitStatusTool,
     HealthCheckTool,
+    WorkflowTemplateListTool,
+    WorkflowTemplateRunTool,
     KillProcessTool,
     LaptopClickTool,
     LaptopListDevicesTool,
@@ -207,6 +209,9 @@ class ToolExecutionMixin:
             registry.register(LaptopRunCommandTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
+            # TASK-IG-FRD-005: ready-made workflow templates.
+            registry.register(WorkflowTemplateListTool())
+            registry.register(WorkflowTemplateRunTool())
             registry.register(WriteCodeFileTool())
             registry.register(ReplaceFileContentTool())
             registry.register(RunTestsTool())
