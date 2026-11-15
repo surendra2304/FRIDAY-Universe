@@ -5324,15 +5324,37 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "DEPLOYED + FINGERPRINT-VERIFIED: Fleet CD deployed merge 5213d239 to Server 1; sha256 of all 6 changed FRIDAY code files on Server 1 byte-identical to the merged blobs (remote/laptop_bridge.py ab4c6e55a6e3, tools/builtin/laptop_control.py 9791a6d740ba, scripts/laptop_bridge_client.py ec745372d03a, remote/__init__.py 7dcdce3c5794, tools/builtin/__init__.py debfaf32c3cd, agent/mixins/tools.py 5e9bf3025420); FRIDAY.service active (restarted 2026-11-15 16:41:47 IST); GET 127.0.0.1:10000/api/laptop/devices -> 200 {\"devices\": []} — the route is live on the new code and the registry is empty, as expected until the owner connects his machine."
     blockers: []
     next_action: "Done as groundwork + first slice. The OWNER's computer is NOT connected — production /api/laptop/devices still shows [] and will until he runs the steps in FRIDAY/docs/LAPTOP_CONTROL.md (install Python + pip packages, copy the one client file, set FRIDAY_API_KEY to the Server 1 FRIDAY env value, run the client). Five-state honesty: implemented + tested + merged + deployed + protocol production-verified IN THE SANDBOX PROOF; his-machine-connected is a separate state that only his run of the steps can flip. Follow-ups (not this task): route the chat fast-path screenshot through screenshot_data so FRIDAY sees the screen in chat too; OCR on the FRIDAY host depends on tesseract availability there; proactive initiation is TASK-PRO-001's lane."
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
+  - id: TASK-FRG-007
+    title: "Forge build-time optimisation: parallel verification battery + post-repair early exit (Wave 5)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frg-007-build-time
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-15T13:37:00+05:30"
+    updated_at: "2026-11-15T15:15:00+05:30"
+    files:
+      - "Forge/app/verification/engine.py"
+      - "Forge/app/core/orchestrator.py"
+      - "Forge/tests/unit/test_frg007_build_time.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891497592"
+    defect: "A standard Forge build (185-260s end-to-end in the TASK-REL-026 live proofs) spends its verification time serially: VerificationEngine ran its 10 checkers strictly one-after-another, and a build pays that serial sum on EVERY verify_task() call (initial battery, post-repair re-verify, post-peer-review re-verify). Separately, OrchestratorCore._verify_and_repair ran the peer-review collaboration loop (up to 2 LLM rounds, plus a possible third battery) even when the post-repair re-verification was already fully green -- although the first-pass path in the same function treats a green battery as 'verification complete' and returns immediately. Profiling (code inspection + local battery A/B): planning is deterministic (no LLM), generation is one LLM call per DAG node with waves already parallel, terminal commands pay no per-command environment setup (CommandPolicy is in-memory; no venv/pip per command) -- the removable serial dead time is the battery's checker serialisation and the redundant peer review on green builds."
+    acceptance:
+      - "Read-only battery checkers run concurrently; checkers that execute/import the generated project (TestChecker, RuntimeChecker, BrowserChecker) stay serialised after them in original relative order; evidence order and per-checker exception isolation unchanged."
+      - "No quality regression: identical battery verdict vector before/after on the same fixture; Forge test suites' pass/fail sets unchanged apart from pre-existing environment failures (proven identical on pristine main)."
+      - "Post-repair early exit: peer review skipped if and only if the post-repair re-verification is fully green; it still runs whenever the battery stays red."
+      - "Before/after timings reported in five states; server end-to-end A/B on the standard goal explicitly marked pending while the bridge is degraded (staging preserved on Server 1 /var/tmp/frg007)."
+    evidence:
+      - "Implemented: VerificationEngine._run_checkers (two-phase: concurrent read-only phase, serial executor phase, order-preserving results) used by both verify and baseline capture; _EXECUTING_CHECKERS = {TestChecker, RuntimeChecker, BrowserChecker} -- executors stay serial because executing a generated program can materialise files in the workspace (TASK-REL-028 shape) and the Project Source Integrity evidence still catches any mid-battery mutation exactly as under the serial loop."
+      - "Implemented: OrchestratorCore._verify_and_repair returns the green post-repair report immediately, skipping AgentCoordinator.review_and_repair; the still-red path is byte-identical to before."
+      - "Tested (local, ti-venv, sandbox): Forge/tests/unit/test_frg007_build_time.py 5/5 pass -- evidence order + exception isolation, statics overlap while executors stay serial and last (timing-asserted), real battery still 11/11 on a clean workspace, early exit fires iff post-repair battery green."
+      - "Tested (local A/B, same fixture = deterministic synthesis of the standard string-utils goal, 4 files): pristine serial battery wall 8.88s vs optimised 5.71s; per-checker verdict vector IDENTICAL (10/11 both; sole failure Ruff on the fixture under both). Static checkers' serial sum ~1.12s collapses to ~the slowest static (Ruff ~0.63s). Pytest subprocess dominates small-project batteries (4.9-7.7s, contention-variable) and is deliberately untouched -- it is the test evidence itself."
+      - "Regression sweep (local): test_regression_checker + test_build_checker_missing_workspace + test_task_forge_002_truthful_completion + test_gate_blocked_rel026 + test_repair = 16/16 pass. test_recovery.py::test_patch_applicator_and_recovery_flow fails IDENTICALLY on pristine main (DatabaseManager db_path TypeError, pre-existing environment drift) -- not a regression."
+      - "NOT YET DONE (honest state): server end-to-end before/after on Server 1 is pending -- the bridge was degraded for most of this session (initialize timeouts under Wave-5 load); a baseline tree is staged at Server 1 /var/tmp/frg007/base/ and the profiling driver is in the crew workspace (~/workspace/frg-007/profile_driver.py) for the coordinator to run when the bridge recovers. Merged / deployed / production-verified are the coordinator's steps after PR review."
+    blockers: []
+    next_action: "Coordinator: review + merge the PR (branch claude/task-frg-007-build-time), insert this entry into WORK_BOARD.yaml after TASK-VOI-009 (it is delivered as board_entry.yaml in the crew workspace and summarised in the completion comment, per the TASK-STR-RD-008 precedent, to avoid a stale-base board edit), then run the staged Server-1 end-to-end A/B (upload ~/workspace/frg-007/profile_driver.py, run it against /var/tmp/frg007/base/ and the deployed tree) to production-verify the timings."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
