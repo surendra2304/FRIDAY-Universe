@@ -8448,6 +8448,176 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "AGENTS.yaml v3.0.0 facts (10 agents, names, ports) read from the file on 2026-11-15 before writing"
     blockers: []
     next_action: "Coordinator: merge PR #519 on green CI (docs-only; no deploy impact) -> board may flip straight to VERIFIED on merge since the deliverable is the note itself."
+  - id: TASK-IG-WEB-01
+    title: "IG corpus DcOGDRgkhj6 — scroll-driven motion layer for Halo (scroll progress, reveal-on-scroll, parallax) in the existing stack, no new dependency"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-web-01
+    pr: 482
+    contributors: []
+    priority: P2
+    created_at: "2026-11-15T22:46:00+05:30"
+    updated_at: "2026-11-15T22:46:00+05:30"
+    files:
+      - "FRIDAY/ui/components/stage/motion.tsx"
+      - "FRIDAY/ui/components/stage/Sheet.tsx"
+      - "FRIDAY/ui/components/stage/FleetSheet.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898250168"
+    acceptance:
+      - "Motion primitives (Reveal / ScrollProgress / Parallax / usePrefersReducedMotion) live in components/stage/motion.tsx on IntersectionObserver + rAF + CSS transform/opacity — zero new dependencies."
+      - "Every summoned sheet shows a scroll-progress hairline; Fleet cards reveal staggered; prefers-reduced-motion degrades all of it to instant/static."
+      - "tsc + eslint + next build green on the branch; rebuilt static export shipped (production serves FRIDAY/ui/out directly)."
+    next_action: "Coordinator: review + merge PR #482, splice this entry, then Fleet CD and a production spot-check (open The Fleet, scroll — progress hairline fills, cards reveal; with reduced-motion on, everything is static)."
+  - id: TASK-IG-WEB-02
+    title: "IG corpus DTjp4aaE_bT — Life-in-weeks dot-grid planning layer (52x90 weeks + year-in-days), localStorage-only data, no backend surface"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-web-02
+    pr: 490
+    contributors: []
+    priority: P2
+    created_at: "2026-11-15T23:00:00+05:30"
+    updated_at: "2026-11-15T23:05:00+05:30"
+    files:
+      - "FRIDAY/ui/components/stage/LifeSheet.tsx"
+      - "FRIDAY/ui/components/stage/Stage.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898437511"
+    acceptance:
+      - "Summoned via the veil as 'See your life in weeks'; stage, conversation and any live call never unmount."
+      - "Birth date and milestone marks persist only in browser localStorage; the layer performs zero network calls."
+      - "tsc + eslint + next build green on the branch; rebuilt static export shipped."
+    next_action: "Coordinator: review + merge PR #490, splice this entry, Fleet CD, production spot-check of the layer (grid renders, mark persists across reload)."
+  - id: TASK-IG-WEB-03
+    title: "IG corpus DfJ8UlUApUN — Memory Galaxy summoned layer: Memora memories as a starfield via the existing /api/memory/browser endpoint, honest thread labelling"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-web-03
+    pr: 501
+    contributors: []
+    priority: P2
+    created_at: "2026-11-15T23:08:00+05:30"
+    updated_at: "2026-11-15T23:12:00+05:30"
+    files:
+      - "FRIDAY/ui/components/stage/GalaxySheet.tsx"
+      - "FRIDAY/ui/components/stage/Stage.tsx"
+      - "FRIDAY/ui/lib/wire.ts"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898491044"
+    acceptance:
+      - "Summoned via the veil as 'Wander the memory galaxy'; stars are the endpoint's real memories (tier colours, score sizes), never sample data."
+      - "Threads are labelled in-layer as category/layout neighbours; no fabricated graph edges or connection counts."
+      - "Endpoint unreachable renders an honest empty state; tsc + eslint + next build green; rebuilt export shipped."
+    next_action: "Coordinator: review + merge PR #501, splice this entry, Fleet CD, production spot-check — confirm the galaxy renders real memories (if it shows 'didn't answer', align the /api/memory/browser gate with the sibling UI endpoints as a follow-up)."
+  - id: TASK-IG-WEB-04
+    title: "IG corpus DaLGg9yMmn6 — opt-in ambient sky background layer for the stage (canvas motes, pointer parallax, off by default, reduced-motion/low-power renders nothing)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-web-04
+    pr: 506
+    contributors: []
+    priority: P3
+    created_at: "2026-11-15T23:14:00+05:30"
+    updated_at: "2026-11-15T23:20:00+05:30"
+    files:
+      - "FRIDAY/ui/components/stage/Ambience.tsx"
+      - "FRIDAY/ui/components/stage/Stage.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898562798"
+    acceptance:
+      - "Default home rendering is unchanged; the layer appears only after the owner's veil toggle and persists via localStorage."
+      - "Reduced-motion and low-power probes render nothing; canvas is pointer-events none and pauses when the tab hides."
+      - "tsc + eslint + next build green on the branch; rebuilt static export shipped."
+    next_action: "Coordinator: review + merge PR #506, splice this entry, Fleet CD, production spot-check of the veil toggle."
+  - id: TASK-IG-WEB-05
+    title: "IG corpus DePJT2NJvz_ — Showcase summoned layer: Netflix-style billboard + crew/ledger/rooms rows over live fleet data, cards summon the real layers"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-web-05
+    pr: 515
+    contributors: []
+    priority: P3
+    created_at: "2026-11-15T23:22:00+05:30"
+    updated_at: "2026-11-15T23:27:00+05:30"
+    files:
+      - "FRIDAY/ui/components/stage/ShowcaseSheet.tsx"
+      - "FRIDAY/ui/components/stage/Stage.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898604367"
+    acceptance:
+      - "Billboard features only agents the fleet endpoint reports; rows render the endpoint's real fleet/timeline data or an honest empty note."
+      - "Cards navigate via onSummon to the existing Fleet/Chronicle/Pulse layers; no duplicated data surfaces."
+      - "Rotation pauses on hidden tab and under reduced motion; tsc + eslint + next build green; rebuilt export shipped."
+    next_action: "Coordinator: review + merge PR #515, splice this entry, Fleet CD, production spot-check (billboard rotates, room cards open their layers)."
+  - id: TASK-IG-WEB-06
+    title: "IG corpus DcBGh30yOLW — Guided Tour summoned layer: cinematic serif hero + five-chapter scroll narrative with live fact chips and onSummon CTAs"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-web-06
+    pr: 520
+    contributors: []
+    priority: P3
+    created_at: "2026-11-15T23:30:00+05:30"
+    updated_at: "2026-11-15T23:33:00+05:30"
+    files:
+      - "FRIDAY/ui/components/stage/TourSheet.tsx"
+      - "FRIDAY/ui/components/stage/Stage.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898681549"
+    acceptance:
+      - "The tour is a summoned layer; the voice-first home is unchanged."
+      - "Fact chips render only from answered endpoints (fleet/live/telemetry/autonomy); no invented figures."
+      - "tsc + eslint + next build green on the branch; rebuilt static export shipped."
+    next_action: "Coordinator: review + merge PR #520, splice this entry, Fleet CD, production spot-check of the tour; after PR #482 lands, swap TourSheet's local Reveal for motion.tsx (follow-up noted in the PR)."
+  - id: TASK-IG-WEB-07
+    title: "IG corpus Dc8xeYzoOLh — City summoned layer: ten agents as explorable skyline districts, windows lit by live fleet status, camera fly-to + district panel"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-web-07
+    pr: 521
+    contributors: []
+    priority: P3
+    created_at: "2026-11-15T23:36:00+05:30"
+    updated_at: "2026-11-15T23:40:00+05:30"
+    files:
+      - "FRIDAY/ui/components/stage/CitySheet.tsx"
+      - "FRIDAY/ui/components/stage/Stage.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898720832"
+    acceptance:
+      - "District lighting is driven only by the fleet/live endpoints; unreachable renders a dark city with an honest note."
+      - "Camera fly-to is instant under reduced motion; districts are keyboard-operable."
+      - "tsc + eslint + next build green on the branch; rebuilt static export shipped."
+    next_action: "Coordinator: review + merge PR #521, splice this entry, Fleet CD, production spot-check of the city (lighting matches live fleet state)."
+  - id: TASK-IG-WEB-08
+    title: "IG corpus DfcHcbDOyJm — Editorial Edition summoned layer: NOOLAM masthead/spec-sidebar/spotlight FRONT-BACK/tilted roster patterns over live fleet data, palette scoped to the layer"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-ig-web-08
+    pr: 522
+    contributors: []
+    priority: P3
+    created_at: "2026-11-15T23:43:00+05:30"
+    updated_at: "2026-11-15T23:47:00+05:30"
+    files:
+      - "FRIDAY/ui/components/stage/EditorialSheet.tsx"
+      - "FRIDAY/ui/components/stage/Stage.tsx"
+      - "FRIDAY/ui/app/globals.css"
+      - "FRIDAY/ui/out/** (rebuilt static export)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6898759890"
+    acceptance:
+      - "Editorial palette exists only inside the layer; Halo's home and tokens are unchanged outside it."
+      - "Every figure is live fleet/live data labelled as what it is; no prices or invented specs."
+      - "tsc + eslint + next build green on the branch; rebuilt static export shipped."
+    next_action: "Coordinator: review + merge PR #522, splice this entry, Fleet CD, production spot-check of the edition."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
