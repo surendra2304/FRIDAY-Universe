@@ -5004,6 +5004,30 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "MEASUREMENTS (fixed render renders/remix-1e06e9e0b37a-c4f678.mp4, 54,143,027 bytes, 1080x1920): durations source 153.325s / narration 47.184s / render 47.18s (video stream 47.10s); beats 20.88/19.39/6.91s at retime factor 0.5, each segment retimed to its beat audio; caption-vs-audio (faster-whisper transcript of the render's own audio vs .ass cues, difflib-aligned, 111 matched of 126 whisper / 132 caption words): word-start offset vs containing-cue start mean +0.288s, max |offset| 1.18s (multi-word cues — later words sit inside their cue by construction; cue-initial words cluster at ~0.0s); speech spans the full timeline (first word 0.0s, last word ends 46.14s, last cue ends 46.2s). Runtime 47.18s satisfies the <60s hard rule. Measurement JSON: Server 2 VyralX/renders/measure_remix-1e06e9e0b37a-c4f678.json. NOT uploaded — YouTube OAuth is dead (invalid_grant, VYR-003); --with-db deliberately not used for the proof, so the production DB was not touched."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-VYR-004 crew). Owner actions outstanding (NOT this task; both already deferred by the owner 2026-11-15 ~12:28 IST): (1) supply a valid YouTube Data API v3 key — unlocks YouTube-CC discovery at scale (keyless Commons/Archive/NASA discovery works without it); (2) re-auth YouTube OAuth and publish the consent screen out of Testing — required before anything can upload; the flow holds everything in the review queue until then. Possible follow-ups for the coordinator: wire produce_remix_short into the autopilot cadence once OAuth returns; Lane-2/Lane-3 format variants."
+  - id: TASK-FRD-002
+    title: "FRIDAY tool-use reliability — inventory all 90 exposed tools, exercise each end-to-end live, catalogue failures, fix the ungated process-termination bypass"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/src/friday/tools/builtin/system_control.py"
+      - "FRIDAY/tests/test_futuristic_tools.py"
+      - "FRIDAY/tests/test_frd002_tool_gates.py"
+      - "FRIDAY/docs/tool_reliability_frd002.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891586665"
+    defect: "FRIDAY exposes 90 tools to the LLM, but no crew had exercised them end-to-end against the live system. Live exercise (Server 1, deployed head 56e28e63, real FridayAgent + production DefaultSecureAuthorizer) found: production runs with autonomous_mode=true and full_access_mode=true, so SAFE tools are auto-approved unconditionally and SENSITIVE tools under autonomous mode — yet the SAFE-classified system_control tool carried a working terminate_process action (real psutil terminate calls, only a six-name Windows-era protected list), an ungated duplicate of the DANGEROUS kill_process tool: an LLM tool call from web chat could terminate arbitrary Server 1 processes with no authorization anywhere. Also: ai_universe_query rejects its own answers below a 0.70 confidence gate (35.1s to fail); stratex_portfolio ReadTimeout under load (honest error, no fabrication); intelx_research 85.9s for one headline; futuris_forecast returns is_error=false on a BLOCKED 0.0 forecast."
+    acceptance:
+      - "Inventory: all 90 register() calls in agent/mixins/tools.py resolved to LLM-facing names and confirmed against the live registry (90 tools, 90 schemas, 90 unique names — no silent overwrite)."
+      - "Every tool exercised end-to-end on the live system through the production authorizer + registry path, or recorded verdict-only with the reason (real sends, host power, self-modification, process kills never executed by the harness); per-tool pass/fail table in FRIDAY/docs/tool_reliability_frd002.md."
+      - "D1 fix: system_control no longer offers terminate_process (schema + execution branch removed); process termination exists only via kill_process (DANGEROUS, authorization-gated). Pinned by FRIDAY/tests/test_frd002_tool_gates.py; test_futuristic_tools.py assertion updated to the new contract."
+      - "Catalogue states plainly what was NOT fixed and why (futuris success-flag on BLOCKED forecasts, delegation latency under load, system_power_control classification) as follow-ups for the coordinator."
+    evidence:
+      - "Live harness on Server 1 (deployed head 56e28e63): HEADER agent_mode=friday-agent, authorizer=DefaultSecureAuthorizer, autonomous_mode=true, full_access_mode=true, registry_tools=90, schemas=90, memory=OracleConversationMemory; batch A 21 probes recorded with per-tool verdicts, latencies and outputs (full table in the results doc)."
+      - "Fix verified locally by direct assertions (schema enum, terminate attempt -> Unknown action error, system_status unaffected, kill_process still DANGEROUS); pytest files ship in the PR for CI/server-venv runs."
+    next_action: "Coordinator: review + merge the fix PR, deploy via Fleet CD, then production-probe system_control (terminate_process must return Unknown action) and mark VERIFIED. Follow-ups D2/D3/D4 to be triaged by the coordinator (FRD-001/003 and Futuris crews)."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
