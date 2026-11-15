@@ -5153,6 +5153,29 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "TRIAL ACCOUNTING: RD-007 adds 45 trials; global counter 1,557 -> 1,602 (declared lower bound; sibling Wave-4 crews raise the final N — with zero passers there is nothing to re-gate)."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-007 crew): gold & commodities intraday is a closed, negative result — nothing to wire into any forward lane, and the owner's removal rule is not triggered (these were research configurations, never production strategies). Coordinator: merge declaration PR #290 and the results PR, then re-gate any future revival of these mechanisms only as a NEW pre-declared round (e.g. if a provenanced long 15m series becomes obtainable); re-tuning on this data is prohibited by the trial-counter rule."
+  - id: TASK-PHONE-001
+    title: "FRIDAY phone control — reverse-tunnel phone bridge (pairing + allowlisted commands), FRIDAY phone_* tools, Termux agent, companion-app scaffold, mock round-trip harness"
+    owner: muse_ai
+    status: IN_PROGRESS
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-phone-001-phone-control"
+    pr: null
+    defect: "FRIDAY's android_* tools speak ADB (devices/android_controller.py) — sound code that needs the phone attached to the machine FRIDAY runs on. FRIDAY runs on Oracle Server 1; the owner's phone is in his hand, so on the server those tools can only ever answer 'no device connected'. The phone-side executor and the network path to it did not exist."
+    acceptance:
+      - "Server bridge (friday/remote/phone_bridge.py): phone dials OUT over WSS, registry + command/result correlation + bounded evidence records, mirroring the proven laptop bridge; rides inside the existing FRIDAY process (<5MB, no new service)."
+      - "Pairing: control-authenticated 6-digit code (10-min TTL, single-use, attempt-limited) exchanged for a per-device token; server stores only the SHA-256 hash (persisted state file); per-device revoke; FRIDAY_PHONE_ENABLED=false kill switch."
+      - "FRIDAY tools phone_status/open_app/close_app/open_url/make_call/send_sms/send_whatsapp/read_notifications/set_alarm/media_control/set_volume/find/tap/swipe/type_text/press_key/screenshot registered; call/SMS/WhatsApp are SENSITIVE (owner confirmation); offline or unsupported commands return precise honest errors, never fabricated success."
+      - "Capability gating: each executor advertises what it can honestly do (hello frame); the bridge refuses the rest (e.g. Termux agent: no tap/swipe/type/screenshot — Android reserves those for accessibility/MediaProjection)."
+      - "Mock round trip proven by FRIDAY/tests/test_phone_bridge.py: pairing lifecycle, full command round trip bridge->protocol->mock executor->evidence, capability refusal, offline/timeout/disconnect honesty, sync tool layer hopping threads onto the server loop."
+      - "Phone executors shipped: Termux agent (scripts/phone_agent_termux.py — calls/SMS/notifications/media/volume/alarm/find-phone today) + Kotlin companion-app scaffold (FRIDAY/android-companion/ — full set incl. accessibility tap/type/screenshot; NOT compiled in the sandbox, no JDK/Android SDK there — stated, not hidden) + mock device (scripts/phone_mock_device.py)."
+      - "Owner step list published in docs/PHONE_CONTROL.md (Termux path: install 2 F-Droid apps, paste 1 setup command, type 1 pairing code, allow permissions)."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6890754744 (2026-11-15) before editing — architecture + audit (ADB controller and laptop bridge) recorded there."
+    blockers: []
+    next_action: "Crew: finish tests, ship PR, merge, fingerprint-verify the Fleet CD deploy, then board VERIFIED via fresh-main board PR. Production (real-phone) verification is the owner's 4-step setup in docs/PHONE_CONTROL.md and is NOT claimed by this task."
+task_id_warnings:
 task_id_warnings:
 task_id_warnings:
 task_id_warnings:
