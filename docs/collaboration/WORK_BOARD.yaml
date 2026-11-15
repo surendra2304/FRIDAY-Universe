@@ -2726,6 +2726,30 @@ tasks:
       - "docs/collaboration/FILE_OWNERSHIP.yaml"
       - "docs/handoff.md"
     defect: "Two registry defects on main HEAD (993a6d6): (1) merge commit 2d5e2a6 committed unresolved conflict markers into docs/collaboration/ACTIVITY_LOG.md lines 569-613 (Arena Agent 1's WF011/WF012/WF013 entries vs ZAI Agent 2's TASK-STRATEX-TG409 entry). (2) WORK_BOARD.yaml carried a DUPLICATE top-level '(TASK-REL-017: IntelX threat-intel honesty — fabricators admit no source, simulations labelled, real engines mounted)
+  - id: TASK-FRD-002
+    title: "FRIDAY tool-use reliability — inventory all 90 exposed tools, exercise each end-to-end live, catalogue failures, fix the ungated process-termination bypass"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/src/friday/tools/builtin/system_control.py"
+      - "FRIDAY/tests/test_futuristic_tools.py"
+      - "FRIDAY/tests/test_frd002_tool_gates.py"
+      - "FRIDAY/docs/tool_reliability_frd002.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891586665"
+    defect: "FRIDAY exposes 90 tools to the LLM, but no crew had exercised them end-to-end against the live system. Live exercise (Server 1, deployed head 56e28e63, real FridayAgent + production DefaultSecureAuthorizer) found: production runs with autonomous_mode=true and full_access_mode=true, so SAFE tools are auto-approved unconditionally and SENSITIVE tools under autonomous mode — yet the SAFE-classified system_control tool carried a working terminate_process action (real psutil terminate calls, only a six-name Windows-era protected list), an ungated duplicate of the DANGEROUS kill_process tool: an LLM tool call from web chat could terminate arbitrary Server 1 processes with no authorization anywhere. Also: ai_universe_query rejects its own answers below a 0.70 confidence gate (35.1s to fail); stratex_portfolio ReadTimeout under load (honest error, no fabrication); intelx_research 85.9s for one headline; futuris_forecast returns is_error=false on a BLOCKED 0.0 forecast."
+    acceptance:
+      - "Inventory: all 90 register() calls in agent/mixins/tools.py resolved to LLM-facing names and confirmed against the live registry (90 tools, 90 schemas, 90 unique names — no silent overwrite)."
+      - "Every tool exercised end-to-end on the live system through the production authorizer + registry path, or recorded verdict-only with the reason (real sends, host power, self-modification, process kills never executed by the harness); per-tool pass/fail table in FRIDAY/docs/tool_reliability_frd002.md."
+      - "D1 fix: system_control no longer offers terminate_process (schema + execution branch removed); process termination exists only via kill_process (DANGEROUS, authorization-gated). Pinned by FRIDAY/tests/test_frd002_tool_gates.py; test_futuristic_tools.py assertion updated to the new contract."
+      - "Catalogue states plainly what was NOT fixed and why (futuris success-flag on BLOCKED forecasts, delegation latency under load, system_power_control classification) as follow-ups for the coordinator."
+    evidence:
+      - "Live harness on Server 1 (deployed head 56e28e63): HEADER agent_mode=friday-agent, authorizer=DefaultSecureAuthorizer, autonomous_mode=true, full_access_mode=true, registry_tools=90, schemas=90, memory=OracleConversationMemory; batch A 21 probes recorded with per-tool verdicts, latencies and outputs (full table in the results doc)."
+      - "Fix verified locally by direct assertions (schema enum, terminate attempt -> Unknown action error, system_status unaffected, kill_process still DANGEROUS); pytest files ship in the PR for CI/server-venv runs."
+    next_action: "Coordinator: review + merge the fix PR, deploy via Fleet CD, then production-probe system_control (terminate_process must return Unknown action) and mark VERIFIED. Follow-ups D2/D3/D4 to be triaged by the coordinator (FRD-001/003 and Futuris crews)."
 task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale IN_PROGRESS copies of TASK-WF-005 and TASK-WF-006, silently dropped by every YAML parser (shadowed by the real warnings section at line 2428) while the live DEPLOYED/VERIFIED records existed under tasks:."
     acceptance:
       - "All three ACTIVITY_LOG conflict markers removed; BOTH sides retained (append-only log; no entries deleted); chronological order preserved (2026-11-12 Arena entries before the 2026-11-13 01:20 IST ZAI Agent 2 TG409 entry)."
@@ -4930,14 +4954,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
 
   - id: TASK-WEB-002
     title: "Website rebuilt genuinely from scratch — empty scaffold, React Bits foundation, summoned-layer navigation (Arc dock banned), settings surface deleted (owner mandate 2026-11-15)"
-    status: VERIFIED
+    status: IN_PROGRESS
     owner: muse_ai
     branch: claude/task-web-002-halo
-    pr: 282
     contributors: []
     priority: P1
     created_at: "2026-11-15T12:05:00+05:30"
-    updated_at: "2026-11-15T15:10:00+05:30"
+    updated_at: "2026-11-15T12:45:00+05:30"
     files:
       - "FRIDAY/ui/app/page.tsx"
       - "FRIDAY/ui/app/layout.tsx"
@@ -4966,12 +4989,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Shipped via PR on green CI, merged, deployed via Fleet CD; production verification = served bytes hash-equal to the merged build, chat round-trip 200, history restores through the new UI contract, fleet endpoints 200 and rendering, status page contract intact. Rollback point: 802e5b3 (FRIDAY - Arc, tag ARC-20261115-0255)."
     evidence:
       - "Claim: issue #35 comment 6890028406 (2026-11-15) - includes the design-vs-plumbing distinction and the navigation-model paragraph, posted before building."
-      - "Shipped: PR #282 merged 2026-11-15 (merge commit 56e28e63); all 10 check-runs green on head 2ee58bd8, including the two monorepo/fleet pytest jobs that the lib/api.ts deletion initially broke - fixed by repointing tests/test_gitignore_bridge_source.py D12 to lib/wire.ts (disclosed in the test) and rebuilding the branch head as a true merge of current main."
-      - "Deployed: Fleet CD Deploy Core Fleet (Server 1) completed SUCCESS on merge commit 56e28e63."
-      - "Production-verified 2026-11-15 ~15:00 IST via bridge run_shell on Server 1: GET / on port 10000 -> 200, sha256 58c0ab6009807438e82973fa4207c37482a201bf54ae3efe2145a2a81cba694f == merged build index.html (BUILD_TAG HALO-20261115-1245); POST /api/chat -> 200 (provider gemini, model gemini-3.6-flash, reply confirmed probe HALO-VERIFY-ZX43); GET /api/v1/conversation/history -> 200 with probe marker HALO-VERIFY-ZX42 present; GET /api/livekit/token -> 200 (LiveKit Cloud wss URL + JWT issued); GET /api/agents/status -> 200; GET /api/voice/diagnostics -> 200 (worker registered)."
-      - "Local gates before shipping: tsc --noEmit clean, eslint 0 errors, next build OK, runtime-audit harness 9/9 scenarios passed; bundle: first-load JS 239,198 B gzip, CSS 37,640 B raw, index.html 10,495 B."
     blockers: []
-    next_action: "Complete and production-verified 2026-11-15. Halo is the live site. Remaining human check is the owner verdict on the new design in his own hands; rollback point remains 802e5b3 (Arc, tag ARC-20261115-0255)."
+    next_action: "Crew: finish local gates (tsc, eslint, production build, harness), ship the PR, merge, Fleet CD deploy, run the production probes, then flip this entry VERIFIED via a fresh-main board PR with the full task-id set diffed."
   - id: TASK-REL-044
     title: "FRIDAY routing policy (owner decision 2026-11-15): chat/talk on FRIDAY's own env keys; complex tasks escalate to Inference for more usage"
     owner: muse_ai
