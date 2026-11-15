@@ -47,10 +47,10 @@ def _load_rows(d: Path, src: str) -> list[dict]:
 
 
 def _oos_windows(panel: str, tf: str):
-    prof = fold_profile(panel, tf)
-    from ..rd2.stats2 import PROFILES
-    return [(pd.Timestamp(s, tz="UTC"), pd.Timestamp(e, tz="UTC"))
-            for (_f, s, e) in PROFILES[prof]]
+    from ..rd2.stats2 import FOLD_BOUNDS
+    return [(pd.Timestamp(FOLD_BOUNDS[f][0], tz="UTC"),
+             pd.Timestamp(FOLD_BOUNDS[f][1], tz="UTC"))
+            for f in fold_profile(panel, tf)]
 
 
 def _pf(returns: list[float]):
