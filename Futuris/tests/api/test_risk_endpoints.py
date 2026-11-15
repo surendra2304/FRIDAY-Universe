@@ -129,7 +129,12 @@ async def test_stratex_trade_pairs_endpoint():
         resp = await client.get("/v1/risk/stratex/pairs")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["source"] == "stratex"
+        # TASK-FUT-005: this test previously asserted source == "stratex"
+        # in an environment where Stratex is not configured at all -- the
+        # pairs are the built-in core watchlist, and the endpoint now says
+        # so instead of presenting the fallback as a live Stratex discovery.
+        assert data["source"] == "core_watchlist"
+        assert data["pair_discovery_status"] == "not_configured"
         assert isinstance(data["active_pairs"], list)
         assert len(data["active_pairs"]) >= 3
         assert "BTCUSDT" in data["active_pairs"]

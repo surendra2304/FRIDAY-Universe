@@ -6915,6 +6915,61 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     files:
       - Inference/docs/CORPUS_DISPOSITIONS.md
     next_action: "Merge on green CI → VERIFIED (record is the deliverable; token-compression candidate needs its own task + IG-INF-03 evidence if pursued)"
+  - id: TASK-FUT-005
+    title: 'Futuris data-provenance audit: every forecast input traced (series/source/cadence), risk surfaces'' synthetic-returns fallback and watchlist pairs mislabel
+      fixed with provenance labels'
+    status: IN_PROGRESS
+    owner: muse_ai
+    branch: claude/task-fut-005-futuris-provenance
+    pr: null
+    contributors: []
+    priority: P1
+    created_at: '2026-11-15T13:30:00+05:30'
+    updated_at: '2026-11-15T14:05:00+05:30'
+    files:
+    - Futuris/futuris/api/routers/risk.py
+    - Futuris/futuris/infra/scheduler.py
+    - Futuris/tests/test_fut005_risk_provenance.py
+    - Futuris/tests/api/test_risk_endpoints.py
+    - Futuris/docs/audit/PROVENANCE_AUDIT_FUT005.md
+    - docs/collaboration/WORK_BOARD.yaml
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891486210
+    defect: 'Audit of all 19 Futuris input classes (full table: Futuris/docs/audit/PROVENANCE_AUDIT_FUT005.md). Three synthetic-as-live defects, all production-verified
+      2026-11-15 ~13:47 IST: (F1) the tail-risk surfaces (GET /v1/risk/audit, POST /v1/risk/stream-update, GET /v1/risk/portfolio + the 5-min risk pulse) fall back
+      to _generate_calibrated_returns — Student-t draws from hardcoded per-asset volatilities — with NO provenance label; live portfolio payload returned sample_size=100
+      invented returns per asset with full VaR/CVaR/Kupiec numbers while Stratex was unauthorized. (F2) GET /v1/risk/stratex/pairs hardcoded source=''stratex'' for
+      the built-in core watchlist (same-minute portfolio payload said pair_discovery_status=unauthorized / pair_discovery_source=core_watchlist). (F3) the risk-pulse
+      fan chart broadcasts hardcoded fallback prices (BTC 67000 / ETH 2600 / 170) as ''current_price'' with no label — the live path whenever no verified position price
+      exists. Everything else traced is honestly labelled (REL-018 provenance fail-closed to synthetic; market router 503-or-live with model_version heuristic:telemetry_vol_rule@v2;
+      statsforecast absent -> explicit 503/skips, never a substitute model; caller-supplied data labelled synthetic; legacy predict/* routers unmounted).'
+    acceptance:
+    - Per-input provenance table (series, source, refresh cadence, real?, label, verdict) published in Futuris/docs/audit/PROVENANCE_AUDIT_FUT005.md covering every
+      connector, scheduler job, serving router and stored-data path.
+    - Risk audit / stream-update / portfolio payloads carry returns_source + evidence_class naming the actual return-series origin (stored_observations / stratex_ticker_telemetry
+      / caller_supplied / synthetic_calibrated_simulation); portfolio asset rows carry per-asset returns_source plus synthetic_return_assets / measured_return_assets
+      lists.
+    - GET /v1/risk/stratex/pairs returns the connector's real pair source + discovery status instead of a hardcoded 'stratex'.
+    - Risk-pulse fan chart carries price_source + evidence_class so a hardcoded fallback price is never presented as a live current price.
+    - New tests Futuris/tests/test_fut005_risk_provenance.py pass (6/6); neighbouring risk-endpoint suite failure set identical to clean base except the one assertion
+      that encoded the F2 mislabel, updated with disclosure. No behaviour change to any computed number — labels only.
+    evidence:
+    - 'LIVE PROBES (batched bridge oracle_curl_health, 2026-11-15 08:17 UTC): /futuris/health 200 storage ready 12/12; /futuris/trends rows evidence_class=synthetic,
+      evidence_source=telemetry:synthetic, input_telemetry_verified=false (honest); /futuris/v1/risk/stratex/pairs -> {source: stratex, active_pairs: [BTCUSDT, ETHUSDT,
+      SOLUSDT]} while /futuris/v1/risk/portfolio seconds later -> pair_discovery_status=unauthorized, pair_discovery_source=core_watchlist, positions_data_status=unauthorized,
+      positions=[], and every asset sample_size=100 (the synthetic generator''s exact size) with NO returns label — F1+F2 proven live; /futuris/v1/futuris/accuracy
+      -> insufficient_data (honest).'
+    - 'TESTS (sandbox venv, statsforecast absent by design, base 337a1e3): tests/test_fut005_risk_provenance.py 6/6 pass with the fix. tests/api/test_risk_endpoints.py
+      on clean base: 1 pre-existing failure (test_portfolio_tail_risk_endpoint asserts >=1 position, sandbox has no Stratex). With the fix: same single failure only,
+      after updating test_stratex_trade_pairs_endpoint''s source assertion from the false ''stratex'' label to the honest core_watchlist/not_configured contract (disclosed
+      in the test and the PR body).'
+    - 'FLAGGED, NOT FIXED (documented in the audit doc): F4 Futuris''s Stratex credential is unauthorized against Stratex''s positions/telemetry APIs in production
+      (ops/credential pairing, not labelling); F5 DemoSeeder registers invented benchmark scores for auto_arima@v1 in the model registry (demo scope only); F6 the /api/v1/futuris/*
+      extra routers return simulation outputs with no evidence labels (the FUT-002 retire-or-label residual; they consume no live inputs). Staleness note: newest stored
+      forecasts are from 2026-11-14 because the refresh job honestly skips while statsforecast is absent (post-ARM owner decision).'
+    blockers: []
+    next_action: 'Coordinator: merge this PR, deploy via Fleet CD, fingerprint-verify risk.py + scheduler.py on Server 1, then re-probe GET /v1/risk/portfolio (expect
+      per-asset returns_source=synthetic_calibrated_simulation + synthetic_return_assets listing all pairs while Stratex stays unauthorized), GET /v1/risk/stratex/pairs
+      (expect source=core_watchlist until the F4 credential pairing is fixed), and flip this entry to VERIFIED. F4/F5/F6 are follow-ups for the coordinator to schedule.'
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

@@ -491,9 +491,21 @@ class ForecastScheduler:
             matching_pos = next(
                 (p for p in positions if p.get("symbol") == highest_risk), None
             )
+            # TASK-FUT-005: the fallback constants below are stale hardcoded
+            # estimates, not a price feed. When no verified position carries
+            # a current price the fan chart must say so: broadcasting 67000
+            # as "current_price" for BTC presented an invented price as live
+            # (production positions were unauthorized on 2026-11-15, so this
+            # fallback was the live path).
+            has_verified_price = bool(
+                matching_pos and float(matching_pos.get("current_price", 0.0)) > 0
+            )
+            price_source = (
+                "verified_position_price" if has_verified_price else "hardcoded_fallback_estimate"
+            )
             base_price = (
                 float(matching_pos.get("current_price", 0.0))
-                if matching_pos and float(matching_pos.get("current_price", 0.0)) > 0
+                if has_verified_price
                 else (
                     67000.0
                     if "BTC" in highest_risk
@@ -531,6 +543,8 @@ class ForecastScheduler:
                 "target": f"trading:{highest_risk}:price",
                 "asset": highest_risk,
                 "current_price": round(base_price, 2),
+                "price_source": price_source,
+                "evidence_class": "live" if has_verified_price else "synthetic",
                 "horizon_hours": 24,
                 "quantiles": {
                     "p10": p10,

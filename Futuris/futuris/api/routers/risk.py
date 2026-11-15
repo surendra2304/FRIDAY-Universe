@@ -42,6 +42,31 @@ class RiskStreamUpdateRequest(BaseModel):
     )
 
 
+
+# TASK-FUT-005: provenance labels for the return series a risk number was
+# computed from. The calibrated generator below invents a Student-t return
+# distribution from a hardcoded per-asset volatility profile; before this
+# labelling, a payload computed from those invented returns was identical
+# in shape to one computed from measured prices, so synthetic risk numbers
+# were presented as if they were live measurements (production-verified:
+# GET /v1/risk/portfolio on 2026-11-15 returned sample_size=100 synthetic
+# returns per asset with no source label while Stratex positions/telemetry
+# were unauthorized).
+RETURNS_SOURCE_STORED = "stored_observations"
+RETURNS_SOURCE_STRATEX = "stratex_ticker_telemetry"
+RETURNS_SOURCE_CALLER = "caller_supplied"
+RETURNS_SOURCE_SYNTHETIC = "synthetic_calibrated_simulation"
+
+
+def _returns_evidence_class(returns_source: str) -> str:
+    """Evidence class for a returns source: measured -> live, caller -> derived."""
+    if returns_source == RETURNS_SOURCE_SYNTHETIC:
+        return "synthetic"
+    if returns_source == RETURNS_SOURCE_CALLER:
+        return "derived"
+    return "live"
+
+
 def _generate_calibrated_returns(target: str, sample_size: int = 250) -> list[float]:
     """Generate high-fidelity calibrated financial returns based on target volatility profile."""
     target_clean = target.upper().replace("-", "").replace("/", "")
@@ -95,6 +120,7 @@ async def audit_tail_risk(
     start_dt = now - timedelta(days=window_days)
 
     returns: list[float] = []
+    returns_source = RETURNS_SOURCE_SYNTHETIC
 
     # 1. Check database observations for target series
     possible_series = [
@@ -115,6 +141,7 @@ async def audit_tail_risk(
                     (prices[i] - prices[i - 1]) / prices[i - 1]
                     for i in range(1, len(prices))
                 ]
+                returns_source = RETURNS_SOURCE_STORED
                 break
 
     # 2. Try fetching from Stratex connector if returns still sparse
@@ -129,6 +156,7 @@ async def audit_tail_risk(
                         (prices[i] - prices[i - 1]) / prices[i - 1]
                         for i in range(1, len(prices))
                     ]
+                    returns_source = RETURNS_SOURCE_STRATEX
         except Exception as exc:
             logger.debug("trading_bot_fetch_fallback", error=str(exc))
 
@@ -144,6 +172,8 @@ async def audit_tail_risk(
     payload = {
         "target": target,
         "sample_size": len(returns),
+        "returns_source": returns_source,
+        "evidence_class": _returns_evidence_class(returns_source),
         "lookback_window_days": window_days,
         "confidence_level": confidence_level,
         "basel_traffic_light": report.basel_traffic_light,
@@ -182,8 +212,10 @@ async def stream_risk_update(
     """Calculate and broadcast real-time tail risk metrics to all connected SSE/WS subscribers."""
     now = datetime.now(UTC)
     returns = req.returns
+    returns_source = RETURNS_SOURCE_CALLER
     if len(returns) < 10:
         returns = _generate_calibrated_returns(req.target, sample_size=req.sample_size)
+        returns_source = RETURNS_SOURCE_SYNTHETIC
 
     engine = RiskCalibrationEngine()
     report = engine.audit_risk_calibration(returns)
@@ -191,6 +223,8 @@ async def stream_risk_update(
     payload = {
         "target": req.target,
         "sample_size": len(returns),
+        "returns_source": returns_source,
+        "evidence_class": _returns_evidence_class(returns_source),
         "basel_traffic_light": report.basel_traffic_light,
         "metrics_95": asdict(report.metrics_95),
         "metrics_99": asdict(report.metrics_99),
@@ -219,8 +253,15 @@ async def get_stratex_trade_pairs(
     """Discover all active market assets/pairs currently monitored or traded by Stratex."""
     connector = TradingBotConnector()
     pairs = await connector.discover_active_trade_pairs()
+    # TASK-FUT-005: the pair list is the built-in core watchlist unless
+    # Stratex's positions API actually answered; labelling watchlist pairs
+    # as "stratex" presented a fallback as a live discovery (production-
+    # verified 2026-11-15: this endpoint said source=stratex while the
+    # portfolio payload reported pair_discovery_status=unauthorized /
+    # pair_discovery_source=core_watchlist for the same pairs).
     return {
-        "source": "stratex",
+        "source": connector.last_pairs_source,
+        "pair_discovery_status": connector.last_pairs_discovery_status,
         "active_pairs": pairs,
         "count": len(pairs),
         "timestamp": datetime.now(UTC).isoformat(),
@@ -285,6 +326,7 @@ async def calculate_portfolio_risk_payload(
 
     for pair in pairs:
         returns: list[float] = []
+        pair_returns_source = RETURNS_SOURCE_SYNTHETIC
 
         if obs_repo is not None:
             try:
@@ -301,6 +343,7 @@ async def calculate_portfolio_risk_payload(
                             (prices[i] - prices[i - 1]) / prices[i - 1]
                             for i in range(1, len(prices))
                         ]
+                        pair_returns_source = RETURNS_SOURCE_STORED
             except Exception as obs_err:
                 logger.debug("obs_repo_list_failed", pair=pair, error=str(obs_err))
 
@@ -336,6 +379,7 @@ async def calculate_portfolio_risk_payload(
             {
                 "symbol": pair,
                 "sample_size": len(returns),
+                "returns_source": pair_returns_source,
                 "basel_traffic_light": report.basel_traffic_light,
                 "var_95": round(float(report.metrics_95.var_historical), 4),
                 "var_99": round(float(report.metrics_99.var_historical), 4),
@@ -360,6 +404,12 @@ async def calculate_portfolio_risk_payload(
 
     portfolio_payload = {
         "active_pairs": pairs,
+        "synthetic_return_assets": [
+            a["symbol"] for a in asset_reports if a["returns_source"] == RETURNS_SOURCE_SYNTHETIC
+        ],
+        "measured_return_assets": [
+            a["symbol"] for a in asset_reports if a["returns_source"] != RETURNS_SOURCE_SYNTHETIC
+        ],
         "pair_discovery_status": pair_discovery_status,
         "pair_discovery_source": pair_discovery_source,
         "positions": positions,
