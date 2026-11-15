@@ -358,6 +358,30 @@ TSMOM2_DUAL_STRATEGY = {
 }
 
 # ==============================================================================
+# FX MEAN REVERSION v4 — OANDA PRACTICE VENUE (TASK-STR-FWD-004, 2026-11-15)
+# Connors RSI(2) reversion behind an EMA(200) regime gate. The runtime
+# parameters live in oanda_demo/strategy.py (MeanReversionConfig) — the SAME
+# code path powers oanda_demo/backtest.py, so what was validated is what
+# trades. This block is the governance record of that configuration, not a
+# second source of runtime truth.
+# ==============================================================================
+FX_MR_V4_STRATEGY = {
+    "NAME": "FX Mean Reversion v4 (Connors RSI-2, EMA200 regime gate)",
+    "VERSION": "FX-MR-v4 (oanda_demo)",
+    "TIMEFRAME": "1d",
+    "RSI_PERIOD": 2,
+    "RSI_BUY": 10.0,            # long when RSI(2) < 10 (oversold dip)
+    "RSI_SELL": 90.0,           # short when RSI(2) > 90 (overbought pop)
+    "EMA_REGIME_PERIOD": 200,   # only revert WITH the long-term trend
+    "EMA_EXIT_PERIOD": 5,       # rule exit: close re-crosses EMA(5)
+    "ATR_PERIOD": 14,
+    "SL_ATR_MULTIPLIER": 4.0,   # disaster stop only (not the exit)
+    "MAX_HOLD_BARS": 10,        # time stop
+    "MIN_BARS": 260,
+    "MAX_SPREAD_FRAC_ATR": 0.15,
+}
+
+# ==============================================================================
 # PRODUCTION STRATEGY REGISTRY
 # Explicit classification of all candidate strategies
 # ==============================================================================
@@ -434,6 +458,24 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "validated_assets": CRYPTO30_SYMBOLS,
         "forward_protocol": True,
         "reason": "TASK-STR-RD-002 winner: dow_effect/reversal @ CRYPTO30 1d passed the full bar (expectancy>0, PF 1.257 >= 1.2, 3,660 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.206). Calendar effect — flagged in RD-002 as most prone to era decay; the forward window is the arbiter. Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Time exit (max_bars=5) enforced by the daemon (no broker-native equivalent). Phase-3 protocol as for ichimoku_trend. DEMO venue only; live trading prohibited.",
+    },
+    "fx_mr_v4": {
+        "status": "VALIDATED",
+        "version": "FX-MR-v4 (oanda_demo, TASK-STR-FWD-004)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "venue": "oanda_practice",
+        "engine": "oanda_demo",
+        "entry_conditions": "LONG: RSI(2) < 10 AND close > EMA(200). SHORT: RSI(2) > 90 AND close < EMA(200). Spread <= 15% of ATR(14); >= 260 daily bars. Watchlist (the practice account's FX basket): EURUSD, GBPUSD, USDJPY, AUDUSD, USDCAD, NZDUSD, EURJPY, EURGBP. Signal code: oanda_demo/strategy.py MeanReversionStrategy — the identical code path oanda_demo/backtest.py validates.",
+        "sl_method": "4.0 * ATR(14) disaster stop (broker-native SL attached on fill). Exits are engine-managed: EMA(5) re-cross rule exit or the 10-bar time stop. No take-profit.",
+        "tp_method": "none (rule exit / time stop)",
+        "oos_win_rate_prior": None,
+        "total_friction_bps": None,
+        "expected_net_edge_bps": None,
+        "minimum_required_edge": 0.0005,
+        "validated_assets": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "NZDUSD", "EURJPY", "EURGBP"],
+        "forward_protocol": True,
+        "reason": "OANDA venue activation (TASK-STR-FWD-004; owner directive 2026-11-15: Stratex must take trades on each and every venue — OANDA unpaused under measurement). Evidence state, stated plainly: backtest-validated in the oanda_demo programme on real OANDA practice data (2026-11-13 — the strategy class that survived when every trend variant measured net-negative on the FX basket), but it has NO forward record: 0 closed trades. The OANDA engine's 19-trade / -$167.00 lifetime record belongs to SMT-v2 (deleted by TASK-STR-CLEANUP-002), not to this strategy, and must never be attributed to it. The phase-3 forward window is therefore the arbiter: 1% per-trade risk cap, the engine's -3% day-start-NAV daily breaker, max 4 open trades, and the kill criteria (expectancy<0 or PF<1.0 after >=50 closed trades, or strategy drawdown >5% of equity) auto-pause via measurement/forward_guard.py, evaluated by the OANDA engine on its own scan cadence. Entries additionally require this registry entry: the OANDA engine fails closed for any unregistered or non-VALIDATED configuration. PRACTICE account only; live trading prohibited.",
     },
     "sleeve_shock_breakout": {
         "status": "VALIDATED",
