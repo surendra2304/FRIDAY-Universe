@@ -73,6 +73,13 @@ from friday.tools.builtin import (
     GitStatusTool,
     HealthCheckTool,
     KillProcessTool,
+    LaptopClickTool,
+    LaptopListDevicesTool,
+    LaptopOpenAppTool,
+    LaptopOpenUrlTool,
+    LaptopRunCommandTool,
+    LaptopScreenshotTool,
+    LaptopTypeTextTool,
     LaunchApplicationTool,
     ListSkillsTool,
     ListGitHubIssuesTool,
@@ -190,6 +197,14 @@ class ToolExecutionMixin:
             registry.register(GetSystemResourcesTool())
             registry.register(KillProcessTool())
             registry.register(LaunchApplicationTool())
+            # TASK-LAP-001: the owner's own laptop, via the reverse tunnel.
+            registry.register(LaptopListDevicesTool())
+            registry.register(LaptopOpenAppTool())
+            registry.register(LaptopOpenUrlTool())
+            registry.register(LaptopScreenshotTool())
+            registry.register(LaptopTypeTextTool())
+            registry.register(LaptopClickTool())
+            registry.register(LaptopRunCommandTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
             registry.register(WriteCodeFileTool())

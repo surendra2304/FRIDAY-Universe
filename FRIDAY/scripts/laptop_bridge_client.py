@@ -33,6 +33,18 @@ Environment:
 ``FRIDAY_LAPTOP_ALLOW_SHELL``
     ``run_shell`` is refused unless this is ``true`` on the laptop *and* on the
     cloud host.
+
+Commands (TASK-LAP-001 additions marked *): ``screenshot`` (saves a PNG on the
+laptop and returns its path), ``screenshot_data`` * (returns the image itself
+as a base64 JPEG attachment so FRIDAY can actually see the screen),
+``open_url``, ``open_app`` * (launch an application by name), ``type_text`` *
+and ``click`` * (keyboard/mouse via pyautogui, or xdotool on Linux),
+``list_files``, ``read_file``, ``run_shell``, ``system_info``, ``notify``.
+
+Optional laptop-side dependencies: Pillow (screenshots), pyautogui
+(type/click; xdotool is the Linux fallback), plyer or win10toast (notify),
+psutil (richer system_info). Every command degrades to an honest error naming
+the missing dependency instead of failing silently.
 """
 
 from __future__ import annotations
@@ -64,9 +76,16 @@ if str(_REPO_SRC) not in sys.path:
 
 import websockets  # noqa: E402
 
-from friday.core.logging import get_logger  # noqa: E402
+try:
+    from friday.core.logging import get_logger  # noqa: E402
 
-logger = get_logger("scripts.laptop_bridge_client")
+    logger = get_logger("scripts.laptop_bridge_client")
+except Exception:  # standalone copy outside a repo checkout (owner's laptop)
+    logging.basicConfig(
+        level=os.getenv("FRIDAY_LAPTOP_LOG_LEVEL", "INFO").upper(),
+        format="[%(asctime)s] [%(levelname)s] [laptop-bridge]: %(message)s",
+    )
+    logger = logging.getLogger("scripts.laptop_bridge_client")
 
 DEFAULT_BRIDGE_URL = (
     "wss://friday-universe.duckdns.org/friday/api/laptop/connect/{laptop_id}"
@@ -81,7 +100,11 @@ SHELL_COMMAND = "run_shell"
 ALLOWED_COMMANDS = frozenset(
     {
         "screenshot",
+        "screenshot_data",
         "open_url",
+        "open_app",
+        "type_text",
+        "click",
         "list_files",
         "read_file",
         SHELL_COMMAND,
@@ -168,7 +191,7 @@ def _connect(uri: str, api_key: str, control_token: str | None = None) -> Any:
             "ping_interval": 20,
             "ping_timeout": 20,
             "open_timeout": 20,
-            "max_size": 2**20,
+            "max_size": 2**22,
         }
     else:
         connect_kwargs = {
@@ -176,7 +199,7 @@ def _connect(uri: str, api_key: str, control_token: str | None = None) -> Any:
             "ping_interval": 20,
             "ping_timeout": 20,
             "open_timeout": 20,
-            "max_size": 2**20,
+            "max_size": 2**22,
         }
     return websockets.connect(uri, **connect_kwargs)
 
@@ -200,6 +223,165 @@ def _cmd_screenshot(args: dict[str, Any], timeout: float) -> tuple[bool, Any, st
         return True, str(target), None
     except Exception as exc:
         return False, "", f"screenshot failed: {type(exc).__name__}: {exc}"
+
+
+def _cmd_screenshot_data(args: dict[str, Any], timeout: float):
+    """Capture the screen and return the image itself as an attachment.
+
+    The plain ``screenshot`` command only returns a laptop-local path, which
+    the cloud can never see. This variant downscales to at most ``max_width``
+    pixels wide, JPEG-encodes, and ships base64 in the result frame's
+    ``attachment`` field — the one channel the server registry passes through
+    outside the 16 KB evidence bound (see friday.remote.laptop_bridge).
+    """
+    try:
+        from PIL import ImageGrab
+    except ImportError:
+        return False, "", "Pillow is not installed; screenshot capture is unavailable", None
+    try:
+        import base64
+        import io
+
+        image = ImageGrab.grab().convert("RGB")
+        max_width = _clamp_int(args.get("max_width"), default=1280, low=320, high=1920)
+        if image.width > max_width:
+            height = max(1, round(image.height * max_width / image.width))
+            image = image.resize((max_width, height))
+        buffer = io.BytesIO()
+        image.save(buffer, format="JPEG", quality=72)
+        payload = buffer.getvalue()
+        attachment = {
+            "kind": "image",
+            "format": "jpeg",
+            "width": image.width,
+            "height": image.height,
+            "base64": base64.b64encode(payload).decode("ascii"),
+        }
+        summary = json.dumps(
+            {"width": image.width, "height": image.height, "format": "jpeg", "bytes": len(payload)}
+        )
+        return True, summary, None, attachment
+    except Exception as exc:
+        return False, "", f"screenshot_data failed: {type(exc).__name__}: {exc}", None
+
+
+def _cmd_open_app(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    app = str(args.get("app") or args.get("application") or args.get("name") or "").strip()
+    if not app:
+        return False, "", "open_app requires an 'app' argument"
+    import shutil
+
+    try:
+        if os.name == "nt":
+            # App Paths / protocol URIs (ms-settings:, etc.) resolve via the shell.
+            try:
+                os.startfile(app)  # type: ignore[attr-defined]
+                return True, f"Launch requested for '{app}' via Windows shell.", None
+            except OSError:
+                resolved = shutil.which(app)
+                if resolved:
+                    subprocess.Popen([resolved])
+                    return True, f"Launched '{app}' ({resolved}).", None
+                raise
+        if sys.platform == "darwin":
+            completed = subprocess.run(
+                ["open", "-a", app], capture_output=True, timeout=max(1.0, timeout), check=False
+            )
+            if completed.returncode == 0:
+                return True, f"Launched '{app}' via open -a.", None
+            detail = completed.stderr.decode("utf-8", errors="replace").strip()
+            return False, "", f"open -a {app} failed: {detail or 'application not found'}"
+        # Linux / other POSIX: resolve on PATH, or an explicit path.
+        resolved = shutil.which(app)
+        if resolved:
+            subprocess.Popen([resolved], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True, f"Launched '{app}' ({resolved}).", None
+        if "/" in app and Path(app).exists():
+            subprocess.Popen([app], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True, f"Launched '{app}'.", None
+        return False, "", f"open_app: '{app}' was not found on PATH on this laptop"
+    except Exception as exc:
+        return False, "", f"open_app failed: {type(exc).__name__}: {exc}"
+
+
+def _input_backend() -> tuple[Any | None, str | None]:
+    """Return (pyautogui module, xdotool path) — either may be None."""
+    try:
+        import pyautogui
+
+        pyautogui.FAILSAFE = False
+        return pyautogui, None
+    except ImportError:
+        pass
+    import shutil
+
+    return None, shutil.which("xdotool")
+
+
+_NO_INPUT_BACKEND = (
+    "no input backend on this laptop: install pyautogui (pip install pyautogui) "
+    "or, on Linux, xdotool"
+)
+
+
+def _cmd_type_text(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    text = str(args.get("text") or "")
+    if not text:
+        return False, "", "type_text requires a 'text' argument"
+    if len(text) > 4096:
+        return False, "", "type_text is limited to 4096 characters per call"
+    pyautogui, xdotool = _input_backend()
+    try:
+        if pyautogui is not None:
+            pyautogui.write(text, interval=0.01)
+            return True, f"Typed {len(text)} characters via pyautogui.", None
+        if xdotool:
+            completed = subprocess.run(
+                [xdotool, "type", "--clearmodifiers", "--", text],
+                capture_output=True,
+                timeout=max(1.0, timeout),
+                check=False,
+            )
+            if completed.returncode == 0:
+                return True, f"Typed {len(text)} characters via xdotool.", None
+            detail = completed.stderr.decode("utf-8", errors="replace").strip()
+            return False, "", f"xdotool type failed: {detail or 'unknown error'}"
+    except Exception as exc:
+        return False, "", f"type_text failed: {type(exc).__name__}: {exc}"
+    return False, "", _NO_INPUT_BACKEND
+
+
+def _cmd_click(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    if args.get("x") is None or args.get("y") is None:
+        return False, "", "click requires 'x' and 'y' arguments"
+    x = _clamp_int(args.get("x"), default=-1, low=0, high=20000)
+    y = _clamp_int(args.get("y"), default=-1, low=0, high=20000)
+    if x < 0 or y < 0:
+        return False, "", "click 'x' and 'y' must be non-negative integers"
+    button = str(args.get("button") or "left").strip().lower()
+    if button not in {"left", "right", "middle"}:
+        return False, "", "click 'button' must be left, right or middle"
+    clicks = _clamp_int(args.get("clicks"), default=1, low=1, high=3)
+    pyautogui, xdotool = _input_backend()
+    try:
+        if pyautogui is not None:
+            pyautogui.click(x=x, y=y, button=button, clicks=clicks)
+            return True, f"Clicked {button} x{clicks} at ({x}, {y}) via pyautogui.", None
+        if xdotool:
+            button_number = {"left": "1", "middle": "2", "right": "3"}[button]
+            completed = subprocess.run(
+                [xdotool, "mousemove", str(x), str(y), "click", "--repeat", str(clicks), button_number],
+                capture_output=True,
+                timeout=max(1.0, timeout),
+                check=False,
+            )
+            if completed.returncode == 0:
+                return True, f"Clicked {button} x{clicks} at ({x}, {y}) via xdotool.", None
+            detail = completed.stderr.decode("utf-8", errors="replace").strip()
+            return False, "", f"xdotool click failed: {detail or 'unknown error'}"
+    except Exception as exc:
+        return False, "", f"click failed: {type(exc).__name__}: {exc}"
+    return False, "", _NO_INPUT_BACKEND
 
 
 def _cmd_open_url(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
@@ -358,7 +540,11 @@ def _cmd_notify(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | 
 
 _COMMANDS = {
     "screenshot": _cmd_screenshot,
+    "screenshot_data": _cmd_screenshot_data,
     "open_url": _cmd_open_url,
+    "open_app": _cmd_open_app,
+    "type_text": _cmd_type_text,
+    "click": _cmd_click,
     "list_files": _cmd_list_files,
     "read_file": _cmd_read_file,
     SHELL_COMMAND: _cmd_run_shell,
@@ -377,9 +563,10 @@ def _evidence_record(
     error: str | None,
     started_at: str | None = None,
     finished_at: str | None = None,
+    attachment: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     now = _now_iso()
-    return {
+    record = {
         "request_id": request_id,
         "laptop_id": laptop_id,
         "command": command,
@@ -389,6 +576,11 @@ def _evidence_record(
         "output": _bounded(output),
         "error": None if error is None else _bounded(error, 2048),
     }
+    if attachment is not None:
+        # Attachments travel outside the bounded evidence text; the server
+        # registry validates and caps them (friday.remote.laptop_bridge).
+        record["attachment"] = attachment
+    return record
 
 
 def _execute_command(
@@ -399,12 +591,17 @@ def _execute_command(
     ok = False
     output: Any = ""
     error: str | None = None
+    attachment: dict[str, Any] | None = None
     handler = _COMMANDS.get(command)
     if handler is None:
         error = f"unsupported command: {command}"
     else:
         try:
-            ok, output, error = handler(args, timeout)
+            outcome = handler(args, timeout)
+            if len(outcome) == 4:
+                ok, output, error, attachment = outcome
+            else:
+                ok, output, error = outcome
         except Exception as exc:
             ok, output, error = False, "", f"{type(exc).__name__}: {exc}"
     return _evidence_record(
@@ -415,6 +612,7 @@ def _execute_command(
         output=output,
         error=error,
         started_at=started_at,
+        attachment=attachment,
     )
 
 

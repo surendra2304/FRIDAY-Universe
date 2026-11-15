@@ -55,6 +55,15 @@ from friday.tools.builtin.github_tools import (
     ListGitHubIssuesTool,
 )
 from friday.tools.builtin.health_monitor import HealthCheckTool
+from friday.tools.builtin.laptop_control import (
+    LaptopClickTool,
+    LaptopListDevicesTool,
+    LaptopOpenAppTool,
+    LaptopOpenUrlTool,
+    LaptopRunCommandTool,
+    LaptopScreenshotTool,
+    LaptopTypeTextTool,
+)
 from friday.tools.builtin.launch_application import LaunchApplicationTool
 from friday.tools.builtin.location_maps import LocationMapsTool
 from friday.tools.builtin.media_control import MediaControlTool
@@ -146,6 +155,13 @@ __all__ = [
     "HealthCheckTool",
     "KillProcessTool",
     "LaunchApplicationTool",
+    "LaptopClickTool",
+    "LaptopListDevicesTool",
+    "LaptopOpenAppTool",
+    "LaptopOpenUrlTool",
+    "LaptopRunCommandTool",
+    "LaptopScreenshotTool",
+    "LaptopTypeTextTool",
     "ListGitHubIssuesTool",
     "LocationMapsTool",
     "LookupWebAppTemplateTool",
