@@ -21,6 +21,7 @@ const FleetSheet = dynamic(() => import("./FleetSheet").then((m) => m.FleetSheet
 const ChronicleSheet = dynamic(() => import("./ChronicleSheet").then((m) => m.ChronicleSheet), { ssr: false });
 const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet), { ssr: false });
 const LifeSheet = dynamic(() => import("./LifeSheet").then((m) => m.LifeSheet), { ssr: false });
+const GalaxySheet = dynamic(() => import("./GalaxySheet").then((m) => m.GalaxySheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -37,13 +38,14 @@ const LifeSheet = dynamic(() => import("./LifeSheet").then((m) => m.LifeSheet), 
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse" | "life";
+type SheetKind = "fleet" | "chronicle" | "pulse" | "life" | "galaxy";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
   chronicle: { kicker: "Everything asked, everything done", title: "The Chronicle" },
   pulse: { kicker: "The box underneath it all", title: "Machine Pulse" },
   life: { kicker: "Your time, as a grid of dots", title: "Life in Weeks" },
+  galaxy: { kicker: "What FRIDAY remembers, as a sky", title: "Memory Galaxy" },
 };
 
 export function Stage() {
@@ -153,6 +155,13 @@ export function Stage() {
         run: () => openSheet("life"),
       },
       {
+        id: "galaxy",
+        label: "Wander the memory galaxy",
+        hint: "FRIDAY's memories as stars — pinned, ordinary, and trivial",
+        keys: "memory galaxy memories remember stars memora sky brain",
+        run: () => openSheet("galaxy"),
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -248,6 +257,7 @@ export function Stage() {
           {sheet === "chronicle" && <ChronicleSheet />}
           {sheet === "pulse" && <PulseSheet />}
           {sheet === "life" && <LifeSheet />}
+          {sheet === "galaxy" && <GalaxySheet />}
         </Sheet>
       )}
     </main>
