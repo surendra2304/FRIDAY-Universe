@@ -1,0 +1,2432 @@
+{
+ "task": "TASK-STR-RD-013",
+ "family": "cross_asset_momentum_rotation",
+ "claim_comment": "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890930042",
+ "trials_this_task": 48,
+ "global_trial_floor": "1557 (through RD-002) + >=207 (RD-003 counted at declaration) + 48 (RD-013) = >=1812; Bonferroni judged at N=2000",
+ "bonferroni_threshold_p": 2.5e-05,
+ "verdict": "ZERO of 48 configurations pass the pre-declared bar. No forward entrant.",
+ "provenance": {
+  "BTCUSDT": {
+   "source": "binance_vision_futures_um_monthly_klines",
+   "csv_sha256": "cbd726f60c714420781961a447577b43659780e66f6e94e27ee1db5a2ebc640e",
+   "base_rows": 42360,
+   "daily_bars": 1765,
+   "incomplete_days_dropped": 0
+  },
+  "ETHUSDT": {
+   "source": "binance_vision_futures_um_monthly_klines",
+   "csv_sha256": "5d861191ad4d68e922b741c33e99192d6082016b92eaf265dd76e7949d01c88c",
+   "base_rows": 42360,
+   "daily_bars": 1765,
+   "incomplete_days_dropped": 0
+  },
+  "SOLUSDT": {
+   "source": "binance_vision_futures_um_monthly_klines",
+   "csv_sha256": "281fbff59b203575c1acf24b0a15cafdb53cae6a3814df2d95c099d0de056196",
+   "base_rows": 42240,
+   "daily_bars": 1760,
+   "incomplete_days_dropped": 5
+  },
+  "BNBUSDT": {
+   "source": "binance_vision_futures_um_monthly_klines",
+   "csv_sha256": "5461c517e9a18ffdfb0ec7fdad845fd864465a377351208c934f0cb3af745549",
+   "base_rows": 42360,
+   "daily_bars": 1765,
+   "incomplete_days_dropped": 0
+  },
+  "GOLD": {
+   "source": "yahoo_finance_chart_api",
+   "csv_sha256": "4933b83b0672551656e0c4c7068f9087b232274ab954e64164b9360ca3560dd4",
+   "base_rows": 2232,
+   "daily_bars": 2232,
+   "incomplete_days_dropped": 0
+  },
+  "SPX": {
+   "source": "yahoo_finance_chart_api",
+   "csv_sha256": "ab1482ee3b03fa53fa80ffc818cd86f4c60feb8c85265b4ca808e0b60b4673bb",
+   "base_rows": 2230,
+   "daily_bars": 2230,
+   "incomplete_days_dropped": 0
+  },
+  "NDX": {
+   "source": "yahoo_finance_chart_api",
+   "csv_sha256": "4dd2893217154491dc5732eae71883a71d4a234ff87b46d4b32cb964ed6ea581",
+   "base_rows": 2230,
+   "daily_bars": 2230,
+   "incomplete_days_dropped": 0
+  }
+ },
+ "rows": [
+  {
+   "lookback_days": 21,
+   "top_k": 1,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": -0.039780748899020946,
+   "oos_max_drawdown": -0.5762952287526084,
+   "oos_period_pf": 1.0908276082823565,
+   "oos_mean_period_return": 0.002134114149671937,
+   "t_stat_one_sided_p": 0.3683022009579716,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.30463497643216686
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.04313294914232102
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.7161500467642374
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.11810186425662683
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.04647455803359679
+    }
+   },
+   "folds_positive": 1,
+   "total_turnover_cost_frac": 0.0648,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.01521110016112126,
+    "ETHUSDT": 0.030498516441206713,
+    "SOLUSDT": -0.13101831527377017,
+    "BNBUSDT": -0.03299239890446426,
+    "GOLD": 0.3249122662018197,
+    "SPX": -0.004307020995661048,
+    "NDX": 0.12285777862972413
+   },
+   "max_asset_profit_share": 0.6584106531518304,
+   "is_compounded": 3.969602747245764,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 1,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": -0.2070317691574285,
+   "oos_max_drawdown": -0.6033641067140025,
+   "oos_period_pf": 1.0221647711272959,
+   "oos_mean_period_return": 0.0005155868237240614,
+   "t_stat_one_sided_p": 0.4672739852864772,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.32495706038221395
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.14894896725535323
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.7161500467642374
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.16679921093623984
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.03469655330096999
+    }
+   },
+   "folds_positive": 1,
+   "total_turnover_cost_frac": 0.0654,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.01521110016112126,
+    "ETHUSDT": 0.030498516441206713,
+    "SOLUSDT": -0.13101831527377017,
+    "BNBUSDT": -0.03299239890446426,
+    "GOLD": 0.13809889092845673,
+    "SPX": -0.033213457126367474,
+    "NDX": 0.14171725626815268
+   },
+   "max_asset_profit_share": 0.4353488172926462,
+   "is_compounded": 3.862982267409383,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 1,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.021216431364099675,
+   "oos_max_drawdown": -0.5651575313920729,
+   "oos_period_pf": 1.0472633495159898,
+   "oos_mean_period_return": 0.0004055916234594631,
+   "t_stat_one_sided_p": 0.334955877567528,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": -0.1799681093823602
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.14184822534761532
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.5796697289935282
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.15910287553541136
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.09248072567468024
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.21,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.1800252921834703,
+    "ETHUSDT": 0.2775011994041925,
+    "SOLUSDT": 0.02153535850645949,
+    "BNBUSDT": -0.0893242438598042,
+    "GOLD": 0.10438631901598283,
+    "SPX": 0.0064241718065923825,
+    "NDX": 0.05542155775402868
+   },
+   "max_asset_profit_share": 0.43003846770569404,
+   "is_compounded": 5.74895981214849,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 1,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": -0.09780800672010903,
+   "oos_max_drawdown": -0.5953606295327338,
+   "oos_period_pf": 1.0302690744325895,
+   "oos_mean_period_return": 0.0002536103920551858,
+   "t_stat_one_sided_p": 0.39400037334579946,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": -0.1985563370798279
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.21138686168788345
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.5955550018035323
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.18571260275633006
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.0986831604701317
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.209,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.1800252921834703,
+    "ETHUSDT": 0.3118037321702314,
+    "SOLUSDT": -0.040216746678944704,
+    "BNBUSDT": -0.12137138142150117,
+    "GOLD": 0.04366130604825924,
+    "SPX": -0.025010215168500993,
+    "NDX": 0.07643767729005935
+   },
+   "max_asset_profit_share": 0.5095431623504972,
+   "is_compounded": 5.8967481526812895,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.3975186152049801,
+   "oos_max_drawdown": -0.3144409386185907,
+   "oos_period_pf": 1.2584629379813395,
+   "oos_mean_period_return": 0.004334048072472495,
+   "t_stat_one_sided_p": 0.1999247194720994,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.0015983654630599142
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": 0.09679577193413214
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.3862239789833988
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.14973195485654556
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.08277267122815668
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.06068825351167741,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.08989218325491005,
+    "ETHUSDT": 0.29514825710765924,
+    "SOLUSDT": -0.22343230112261014,
+    "BNBUSDT": 0.16472678294857185,
+    "GOLD": 0.17887007099487928,
+    "SPX": 0.07442977308414456,
+    "NDX": 0.009807352085767163
+   },
+   "max_asset_profit_share": 0.36309207183311804,
+   "is_compounded": 2.184673468350733,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.0890195221242509,
+   "oos_max_drawdown": -0.3921920885093525,
+   "oos_period_pf": 1.1367678388618465,
+   "oos_mean_period_return": 0.0022180958832043497,
+   "t_stat_one_sided_p": 0.3297234582546016,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.07572137850853655
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.039615843316557764
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.36865577844841857
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.20494891086314426
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.1274531336861875
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.059695885355595446,
+   "contrib_by_asset": {
+    "BTCUSDT": -0.016233703279628753,
+    "ETHUSDT": 0.29514825710765924,
+    "SOLUSDT": -0.22343230112261014,
+    "BNBUSDT": 0.16472678294857185,
+    "GOLD": 0.11736215090042684,
+    "SPX": 0.006670674431722534,
+    "NDX": -0.01393827787961538
+   },
+   "max_asset_profit_share": 0.505470596651998,
+   "is_compounded": 1.764348271503919,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 2,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.4994220162627989,
+   "oos_max_drawdown": -0.40121843214544406,
+   "oos_period_pf": 1.104085655227392,
+   "oos_mean_period_return": 0.0007135750724910265,
+   "t_stat_one_sided_p": 0.17141581740057482,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.00013984966755109518
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": 0.018964246877472668
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.5485051828008098
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.12036505185877888
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.08016242803111662
+    }
+   },
+   "folds_positive": 4,
+   "total_turnover_cost_frac": 0.16876728780762107,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.06947693332169769,
+    "ETHUSDT": 0.45621528116652993,
+    "SOLUSDT": 0.110920713223562,
+    "BNBUSDT": -0.11921641893296347,
+    "GOLD": 0.1867098932998978,
+    "SPX": 0.02798226087704503,
+    "NDX": 0.04535816168669754
+   },
+   "max_asset_profit_share": 0.5087922187457791,
+   "is_compounded": 3.397335382686351,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 2,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 0.3460967271672235,
+   "oos_max_drawdown": -0.3855154187030353,
+   "oos_period_pf": 1.089111404617565,
+   "oos_mean_period_return": 0.0005726420012405238,
+   "t_stat_one_sided_p": 0.21613899791878655,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": -0.0458571371334654
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.041765448299070584
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.5284876850331419
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.17334997200019542
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.16521859609006428
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.16612081009647064,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.05024288311463798,
+    "ETHUSDT": 0.4733665475495494,
+    "SOLUSDT": 0.04573711632740607,
+    "BNBUSDT": -0.11807770469705803,
+    "GOLD": 0.17622674310457853,
+    "SPX": -0.016667003904666078,
+    "NDX": 0.04375585566018936
+   },
+   "max_asset_profit_share": 0.5997074225555853,
+   "is_compounded": 3.58187711683727,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.34004190724377303,
+   "oos_max_drawdown": -0.2890348003552984,
+   "oos_period_pf": 1.2465236969958955,
+   "oos_mean_period_return": 0.0037508212215618857,
+   "t_stat_one_sided_p": 0.21522452072806203,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.050659489128540125
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": 0.08010717966400449
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.3899407966499773
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.1784497909022128
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.03409187869188357
+    }
+   },
+   "folds_positive": 4,
+   "total_turnover_cost_frac": 0.047990478815336086,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.040250827884297215,
+    "ETHUSDT": 0.19604715006719542,
+    "SOLUSDT": -0.07094468855494954,
+    "BNBUSDT": 0.042191034518707066,
+    "GOLD": 0.19328892744898504,
+    "SPX": 0.07028997974981557,
+    "NDX": 0.03446743673183563
+   },
+   "max_asset_profit_share": 0.34004358603619395,
+   "is_compounded": 1.9738590457946938,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.20537168581179133,
+   "oos_max_drawdown": -0.33247826570741024,
+   "oos_period_pf": 1.2026080984840923,
+   "oos_mean_period_return": 0.0028060557171273866,
+   "t_stat_one_sided_p": 0.27194295349077136,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.0442888967970273
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.0019290988779112617
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.4160155206826308
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.17754893316167675
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.08506280965240975
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.046019401652756614,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.02067770300610727,
+    "ETHUSDT": 0.19604715006719542,
+    "SOLUSDT": -0.05417564745393203,
+    "BNBUSDT": 0.06040235768789666,
+    "GOLD": 0.16979859786528928,
+    "SPX": 0.008462840737907226,
+    "NDX": -0.012854802768165977
+   },
+   "max_asset_profit_share": 0.4305051308169983,
+   "is_compounded": 1.6671854853953083,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 3,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.30665625792819773,
+   "oos_max_drawdown": -0.31031622703474626,
+   "oos_period_pf": 1.080877802870459,
+   "oos_mean_period_return": 0.0004926984104186439,
+   "t_stat_one_sided_p": 0.22473391051670594,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.035421294112148116
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": 0.03687712085433681
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.3932702854497192
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.16222165016395085
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.04268340347803434
+    }
+   },
+   "folds_positive": 4,
+   "total_turnover_cost_frac": 0.13682716941558684,
+   "contrib_by_asset": {
+    "BTCUSDT": -0.015291061032210335,
+    "ETHUSDT": 0.2957630681647874,
+    "SOLUSDT": 0.11979058867693847,
+    "BNBUSDT": -0.05027226873201501,
+    "GOLD": 0.10005046341063914,
+    "SPX": 0.043700554763096,
+    "NDX": 0.06335756825145453
+   },
+   "max_asset_profit_share": 0.47499759518581114,
+   "is_compounded": 2.0830124616059833,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 21,
+   "top_k": 3,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 0.22351434730522146,
+   "oos_max_drawdown": -0.31817490572409113,
+   "oos_period_pf": 1.0733278289789803,
+   "oos_mean_period_return": 0.0003976348855316784,
+   "t_stat_one_sided_p": 0.259987108670115,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": -0.036075922925956405
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": 0.001427882872566455
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.35095736410958844
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.15800597018756513
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.11428402329986675
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.12811122321447954,
+   "contrib_by_asset": {
+    "BTCUSDT": -0.0038338821002754176,
+    "ETHUSDT": 0.30455708694808625,
+    "SOLUSDT": 0.07101452355770661,
+    "BNBUSDT": -0.10359846633279607,
+    "GOLD": 0.13851431321794636,
+    "SPX": 0.0045854713080164845,
+    "NDX": 0.05605473397431704
+   },
+   "max_asset_profit_share": 0.529916897070236,
+   "is_compounded": 2.132695210093972,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 1,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.8933620570323619,
+   "oos_max_drawdown": -0.39974286821868743,
+   "oos_period_pf": 1.4104631243693715,
+   "oos_mean_period_return": 0.008311546034462752,
+   "t_stat_one_sided_p": 0.12733413391371087,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.0015741276642307067
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.0661578296709362
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.6430249508981654
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": 0.04863653479247598
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.17862383127687687
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0382,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.08408775763735243,
+    "ETHUSDT": 0.7924119664945142,
+    "SOLUSDT": -0.23995090542891573,
+    "BNBUSDT": -0.0394055641272526,
+    "GOLD": 0.3788145187506179,
+    "SPX": 0.07397897002785137,
+    "NDX": 0.0022718728502880703
+   },
+   "max_asset_profit_share": 0.5950981855624942,
+   "is_compounded": 0.7496207799334833,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 1,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.7252862320648255,
+   "oos_max_drawdown": -0.39974286821868743,
+   "oos_period_pf": 1.3720888640413031,
+   "oos_mean_period_return": 0.00753724324127796,
+   "t_stat_one_sided_p": 0.15045018992038553,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": -0.0015741276642307067
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.0661578296709362
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.6430249508981654
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.019530330209691527
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.14866536463032953
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.0382,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.08408775763735243,
+    "ETHUSDT": 0.7924119664945142,
+    "SOLUSDT": -0.23995090542891573,
+    "BNBUSDT": -0.0394055641272526,
+    "GOLD": 0.3518818841278829,
+    "SPX": 0.0064466638820416255,
+    "NDX": 0.0022718728502880703
+   },
+   "max_asset_profit_share": 0.6405398703591517,
+   "is_compounded": 1.0244971057769692,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 1,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 1.3973151009433629,
+   "oos_max_drawdown": -0.34756591988598373,
+   "oos_period_pf": 1.187633268472442,
+   "oos_mean_period_return": 0.0013636942086365116,
+   "t_stat_one_sided_p": 0.06424913341288734,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.05653732844752102
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.10761183113783113
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.8953123825101301
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.1267903872609617
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.19059084363472256
+    }
+   },
+   "folds_positive": 4,
+   "total_turnover_cost_frac": 0.1038,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.05357959919439037,
+    "ETHUSDT": 0.768986082232295,
+    "SOLUSDT": 0.15469159330770954,
+    "BNBUSDT": -0.03770185404394988,
+    "GOLD": 0.31406714462827,
+    "SPX": 0.007805185385698965,
+    "NDX": 0.005603409262530223
+   },
+   "max_asset_profit_share": 0.5893819455586139,
+   "is_compounded": 2.235960865454959,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 1,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 1.479522639486523,
+   "oos_max_drawdown": -0.34756591988598373,
+   "oos_period_pf": 1.1964237123964927,
+   "oos_mean_period_return": 0.0014008161201164448,
+   "t_stat_one_sided_p": 0.058561794915487825,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.05653732844752102
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.10761183113783113
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.8953123825101301
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.17389869783600131
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.18200144546048924
+    }
+   },
+   "folds_positive": 4,
+   "total_turnover_cost_frac": 0.10300000000000001,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.05357959919439037,
+    "ETHUSDT": 0.768986082232295,
+    "SOLUSDT": 0.15469159330770954,
+    "BNBUSDT": -0.03770185404394988,
+    "GOLD": 0.35752333781592593,
+    "SPX": -0.004786017309574064,
+    "NDX": 0.005603409262530223
+   },
+   "max_asset_profit_share": 0.573705796039147,
+   "is_compounded": 2.5239392454362903,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.6728858390751198,
+   "oos_max_drawdown": -0.24493477191032653,
+   "oos_period_pf": 1.3745833064863042,
+   "oos_mean_period_return": 0.005856243296430338,
+   "t_stat_one_sided_p": 0.1374614050086543,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.18898736916679848
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.13152828826542917
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.4092401546477211
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": 0.030477963038556544
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.11560298780014744
+    }
+   },
+   "folds_positive": 4,
+   "total_turnover_cost_frac": 0.03514458764332279,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.3909493142388227,
+    "ETHUSDT": 0.30859942920581757,
+    "SOLUSDT": -0.18425683699141276,
+    "BNBUSDT": 0.020645265271604207,
+    "GOLD": 0.22016860754397616,
+    "SPX": -0.05470267568310344,
+    "NDX": 0.04820316622211951
+   },
+   "max_asset_profit_share": 0.3954712181693449,
+   "is_compounded": 0.9702525839157714,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.504816254219747,
+   "oos_max_drawdown": -0.2667364696610188,
+   "oos_period_pf": 1.3328751042922478,
+   "oos_mean_period_return": 0.004916476399283667,
+   "t_stat_one_sided_p": 0.17477028813619389,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.14287792241384278
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.13573793567248105
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.4092401546477211
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.012419873576384077
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.09466398156871336
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.03383534534927526,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.3480583623260794,
+    "ETHUSDT": 0.30859942920581757,
+    "SOLUSDT": -0.18425683699141276,
+    "BNBUSDT": -0.01686163593929907,
+    "GOLD": 0.20670229023260867,
+    "SPX": -0.043130504650623236,
+    "NDX": 0.014534361878712043
+   },
+   "max_asset_profit_share": 0.3964694899783791,
+   "is_compounded": 1.0670966612726018,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 2,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.5841628748343017,
+   "oos_max_drawdown": -0.3241224023358308,
+   "oos_period_pf": 1.122680543660308,
+   "oos_mean_period_return": 0.0007633943015044307,
+   "t_stat_one_sided_p": 0.14671421638844548,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.212385310554418
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.10837654729053803
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.32323464357237763
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.016130599196013118
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.125649974178059
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.10014683227232413,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.21506762708362132,
+    "ETHUSDT": 0.23710876460729408,
+    "SOLUSDT": 0.04783832268540977,
+    "BNBUSDT": 0.10652190976023046,
+    "GOLD": 0.2098195804500947,
+    "SPX": -0.02458980973681013,
+    "NDX": -0.040444223394236645
+   },
+   "max_asset_profit_share": 0.2904476786911303,
+   "is_compounded": 1.884781155192396,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 2,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 0.637038550847199,
+   "oos_max_drawdown": -0.2909747026581013,
+   "oos_period_pf": 1.1347886137550385,
+   "oos_mean_period_return": 0.0007937293970864263,
+   "t_stat_one_sided_p": 0.13290723926785772,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.18064738790645674
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.08448647957327626
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.306955085643454
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.005664633322856716
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.1654144108073332
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.09589827110022363,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.15770559490996944,
+    "ETHUSDT": 0.2591230962833653,
+    "SOLUSDT": 0.04783832268540977,
+    "BNBUSDT": 0.12197496883356662,
+    "GOLD": 0.23154767704392265,
+    "SPX": -0.015205204542976969,
+    "NDX": -0.030035008398311636
+   },
+   "max_asset_profit_share": 0.3167029712408817,
+   "is_compounded": 2.115299776919106,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.5362976275982285,
+   "oos_max_drawdown": -0.27306852559382777,
+   "oos_period_pf": 1.3237856936545356,
+   "oos_mean_period_return": 0.004718045640003284,
+   "t_stat_one_sided_p": 0.14873301720531143,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.19566771777989977
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.11113740087983759
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.36636362761862307
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.04550179333394788
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.1083803405806103
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.029809128889085105,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.22827793214551564,
+    "ETHUSDT": 0.13465916806346478,
+    "SOLUSDT": -0.0010680757008820346,
+    "BNBUSDT": 0.05782023921263073,
+    "GOLD": 0.1850220425529087,
+    "SPX": -0.016585052764694738,
+    "NDX": 0.0172844434605429
+   },
+   "max_asset_profit_share": 0.3663796914964811,
+   "is_compounded": 0.9094394909943682,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.546843695188189,
+   "oos_max_drawdown": -0.20964654109709213,
+   "oos_period_pf": 1.375224964605897,
+   "oos_mean_period_return": 0.004671728933864031,
+   "t_stat_one_sided_p": 0.14076016661915108,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.1398059237782785
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.06398061179371373
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.3683851873253774
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.07210164548308629
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": 0.1418837912059021
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.027990308819020114,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.1996839642036867,
+    "ETHUSDT": 0.13241338271967862,
+    "SOLUSDT": 0.04281054334899373,
+    "BNBUSDT": 0.029194655417336204,
+    "GOLD": 0.16475632296617862,
+    "SPX": -0.016225618587332662,
+    "NDX": 0.04530798868189077
+   },
+   "max_asset_profit_share": 0.32512982720894257,
+   "is_compounded": 0.9629234211838309,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 3,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.5363843553891519,
+   "oos_max_drawdown": -0.3391030182892717,
+   "oos_period_pf": 1.1174342374120592,
+   "oos_mean_period_return": 0.0006784997248231425,
+   "t_stat_one_sided_p": 0.14546566290460797,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.15941954664953184
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.16276505833642907
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.39877619483000415
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.022152069871797964
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.15715719420182728
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0720555356068916,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.2394197578029694,
+    "ETHUSDT": 0.21236641850312904,
+    "SOLUSDT": 0.06605432196826382,
+    "BNBUSDT": 0.0010194482130888914,
+    "GOLD": 0.16488189814026538,
+    "SPX": -0.02540194453079745,
+    "NDX": -0.0075240992158868095
+   },
+   "max_asset_profit_share": 0.3501610435051384,
+   "is_compounded": 2.0612759504137084,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 63,
+   "top_k": 3,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 0.539535764879419,
+   "oos_max_drawdown": -0.2779711307818433,
+   "oos_period_pf": 1.1287319597617806,
+   "oos_mean_period_return": 0.000667581042012394,
+   "t_stat_one_sided_p": 0.13984894956073152,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.1405087949424173
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.11815407680829271
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.3683231620694183
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": -0.054571057423444924
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.18326184462875528
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0673309031533786,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.20411723590710062,
+    "ETHUSDT": 0.22952276200751245,
+    "SOLUSDT": 0.05277089909576509,
+    "BNBUSDT": 0.020203446446151175,
+    "GOLD": 0.160561299153427,
+    "SPX": -0.02556715697034937,
+    "NDX": -0.0048309536496561525
+   },
+   "max_asset_profit_share": 0.3440214950138638,
+   "is_compounded": 2.2030737578211923,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 1,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.16658038784486262,
+   "oos_max_drawdown": -0.3336349580459411,
+   "oos_period_pf": 1.152103198996775,
+   "oos_mean_period_return": 0.0029440421777708454,
+   "t_stat_one_sided_p": 0.28983872254178866,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.055756662938682755
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.18060506352189598
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.3176797117329382
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": 0.14576386764765203
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.10679204445502999
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0258,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.05584608677447478,
+    "ETHUSDT": 0.5901196842505733,
+    "SOLUSDT": -0.33950351534728085,
+    "BNBUSDT": -0.28757453183237247,
+    "GOLD": 0.36765441432760493,
+    "SPX": -0.03139828990908744,
+    "NDX": 0.029829297424130874
+   },
+   "max_asset_profit_share": 0.5655469612962687,
+   "is_compounded": 3.8199543188848617,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 1,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.16658038784486262,
+   "oos_max_drawdown": -0.3336349580459411,
+   "oos_period_pf": 1.152103198996775,
+   "oos_mean_period_return": 0.0029440421777708454,
+   "t_stat_one_sided_p": 0.28983872254178866,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.055756662938682755
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.18060506352189598
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.3176797117329382
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": 0.14576386764765203
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.10679204445502999
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0258,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.05584608677447478,
+    "ETHUSDT": 0.5901196842505733,
+    "SOLUSDT": -0.33950351534728085,
+    "BNBUSDT": -0.28757453183237247,
+    "GOLD": 0.36765441432760493,
+    "SPX": -0.03139828990908744,
+    "NDX": 0.029829297424130874
+   },
+   "max_asset_profit_share": 0.5655469612962687,
+   "is_compounded": 3.8199543188848617,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 1,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.16788979999092968,
+   "oos_max_drawdown": -0.3451245943095552,
+   "oos_period_pf": 1.0655649749392617,
+   "oos_mean_period_return": 0.00046571045652662416,
+   "t_stat_one_sided_p": 0.28454209996553004,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.06164812565137412
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.22218911903475735
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.284007461525807
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.17758240485510068
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.0646193135942037
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0686,
+   "contrib_by_asset": {
+    "BTCUSDT": -0.09608498077072103,
+    "ETHUSDT": 0.5092210075908224,
+    "SOLUSDT": 0.12482609368285613,
+    "BNBUSDT": -0.4606776221794753,
+    "GOLD": 0.3184212053041886,
+    "SPX": 0.002073676264298552,
+    "NDX": 0.06807163952524087
+   },
+   "max_asset_profit_share": 0.4979603209391518,
+   "is_compounded": 6.240445043725575,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 1,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 0.16788979999092968,
+   "oos_max_drawdown": -0.3451245943095552,
+   "oos_period_pf": 1.0655649749392617,
+   "oos_mean_period_return": 0.00046571045652662416,
+   "t_stat_one_sided_p": 0.28454209996553004,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.06164812565137412
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.22218911903475735
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.284007461525807
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.17758240485510068
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.0646193135942037
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0686,
+   "contrib_by_asset": {
+    "BTCUSDT": -0.09608498077072103,
+    "ETHUSDT": 0.5092210075908224,
+    "SOLUSDT": 0.12482609368285613,
+    "BNBUSDT": -0.4606776221794753,
+    "GOLD": 0.3184212053041886,
+    "SPX": 0.002073676264298552,
+    "NDX": 0.06807163952524087
+   },
+   "max_asset_profit_share": 0.4979603209391518,
+   "is_compounded": 6.240445043725575,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.2041131851210558,
+   "oos_max_drawdown": -0.3339723384396943,
+   "oos_period_pf": 1.1751380226171684,
+   "oos_mean_period_return": 0.0027982847809916163,
+   "t_stat_one_sided_p": 0.2729767736665668,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.15057979093614615
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.12470194195944173
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.16474715841402765
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": 0.12163826171355807
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.08481239389775719
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.021741856032370915,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.2573169681198402,
+    "ETHUSDT": 0.0840067680002064,
+    "SOLUSDT": -0.2760460495077087,
+    "BNBUSDT": 0.018205242121573983,
+    "GOLD": 0.20188439404294156,
+    "SPX": 0.08214917662426235,
+    "NDX": -0.004383900087767623
+   },
+   "max_asset_profit_share": 0.3998321042082501,
+   "is_compounded": 2.7640507243969483,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.17938310529320622,
+   "oos_max_drawdown": -0.32601960916957506,
+   "oos_period_pf": 1.1661586026562893,
+   "oos_mean_period_return": 0.0025869981356633335,
+   "t_stat_one_sided_p": 0.28527837451009075,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.1330872843727977
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.12358773151455227
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.16474715841402765
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": 0.11414392928336814
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.08481239389775719
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.02204518260103668,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.2573169681198402,
+    "ETHUSDT": 0.0840067680002064,
+    "SOLUSDT": -0.2760460495077087,
+    "BNBUSDT": 0.02888461752697641,
+    "GOLD": 0.20188439404294156,
+    "SPX": 0.04599615705747523,
+    "NDX": -0.004383900087767623
+   },
+   "max_asset_profit_share": 0.4163106086251195,
+   "is_compounded": 2.690121525247708,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 2,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.2790257782417287,
+   "oos_max_drawdown": -0.39497587906871623,
+   "oos_period_pf": 1.0817714091473467,
+   "oos_mean_period_return": 0.0005113447332379675,
+   "t_stat_one_sided_p": 0.2397923144858225,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.10989729580464758
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.133590364908305
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.22419016218289278
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.1403336715418182
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.04722051459729337
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.05809825331449427,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.2576539063022353,
+    "ETHUSDT": 0.14354487742734928,
+    "SOLUSDT": -0.011983670778042466,
+    "BNBUSDT": -0.17047212198809636,
+    "GOLD": 0.15215006147094035,
+    "SPX": 0.08918090680656071,
+    "NDX": 0.03420135152553372
+   },
+   "max_asset_profit_share": 0.38073306363081333,
+   "is_compounded": 3.342699882788165,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 2,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 0.2599928074170803,
+   "oos_max_drawdown": -0.3667539288871058,
+   "oos_period_pf": 1.0795409433487941,
+   "oos_mean_period_return": 0.0004891990485682065,
+   "t_stat_one_sided_p": 0.24714603834688542,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.09080577519317057
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.11997127438972377
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.22419016218289278
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.1253367612133951
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.04722051459729337
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.059501936074935056,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.22962895929252286,
+    "ETHUSDT": 0.14354487742734928,
+    "SOLUSDT": -0.011983670778042466,
+    "BNBUSDT": -0.11896675484187347,
+    "GOLD": 0.15215006147094035,
+    "SPX": 0.04821390040718504,
+    "NDX": 0.03420135152553372
+   },
+   "max_asset_profit_share": 0.3778413143959011,
+   "is_compounded": 3.300099821560565,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.036477900488302906,
+   "oos_max_drawdown": -0.3992621837936624,
+   "oos_period_pf": 1.0961490054353638,
+   "oos_mean_period_return": 0.0016041210762580186,
+   "t_stat_one_sided_p": 0.3665112209944509,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.2336447938331585
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.27453814088274076
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.09254118313392912
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": 0.07261152645280933
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.011731266405374585
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0230387836223972,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.12350401411805369,
+    "ETHUSDT": -0.04179466849244283,
+    "SOLUSDT": -0.052016043625930444,
+    "BNBUSDT": 0.00802644182826661,
+    "GOLD": 0.09436292294516321,
+    "SPX": 0.06536048463641823,
+    "NDX": 0.021298403516346907
+   },
+   "max_asset_profit_share": 0.3951467550883865,
+   "is_compounded": 1.8278192103130628,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": -0.044440888014033675,
+   "oos_max_drawdown": -0.37176631568994967,
+   "oos_period_pf": 1.0552101957761093,
+   "oos_mean_period_return": 0.0008428460560558512,
+   "t_stat_one_sided_p": 0.4262486972324898,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.20644376660366448
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.2802665224821105
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.09254118313392912
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": 0.06246839947675964
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.05196377566530108
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.01988861228812218,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.10168343813830998,
+    "ETHUSDT": -0.04179466849244283,
+    "SOLUSDT": -0.05381416130579741,
+    "BNBUSDT": -0.01717161346600342,
+    "GOLD": 0.10852139415998904,
+    "SPX": 0.02209797399719042,
+    "NDX": 0.0031934680956901764
+   },
+   "max_asset_profit_share": 0.4608200042253138,
+   "is_compounded": 1.5176824767929133,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 3,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.1000353938545,
+   "oos_max_drawdown": -0.42403169077216607,
+   "oos_period_pf": 1.050481502264167,
+   "oos_mean_period_return": 0.000299097791015976,
+   "t_stat_one_sided_p": 0.32560266659771775,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.18185317560376246
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.23013503492774778
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.14802266227067307
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.050089931272192745
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": 0.002886119875469051
+    }
+   },
+   "folds_positive": 4,
+   "total_turnover_cost_frac": 0.06869367952307898,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.1427934274535063,
+    "ETHUSDT": -0.07005864267325457,
+    "SOLUSDT": 0.047147354949981055,
+    "BNBUSDT": -0.002215442567765378,
+    "GOLD": 0.09022795849562404,
+    "SPX": 0.06638739817612885,
+    "NDX": 0.04954204142548632
+   },
+   "max_asset_profit_share": 0.36050008427959535,
+   "is_compounded": 2.2592855307589956,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 126,
+   "top_k": 3,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 0.048292263445035566,
+   "oos_max_drawdown": -0.39371491672262227,
+   "oos_period_pf": 1.0414417539900471,
+   "oos_mean_period_return": 0.00022981663314367262,
+   "t_stat_one_sided_p": 0.359387011062439,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.15685609214127938
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.2522502801535522
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.14802266227067307
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.06747773042165406
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.011133877095050537
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.058096205540399445,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.1241266305830459,
+    "ETHUSDT": -0.060811121054260085,
+    "SOLUSDT": 0.051987926888062516,
+    "BNBUSDT": -0.020143309139524623,
+    "GOLD": 0.12548272016910247,
+    "SPX": 0.02842116412176501,
+    "NDX": 0.005065782043761145
+   },
+   "max_asset_profit_share": 0.3744811341576328,
+   "is_compounded": 2.299204521821796,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 1,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.2928922165699992,
+   "oos_max_drawdown": -0.4538874541445208,
+   "oos_period_pf": 1.2122974437799676,
+   "oos_mean_period_return": 0.004649136238208425,
+   "t_stat_one_sided_p": 0.24035659345052018,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.5777190410327142
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": 0.03247336965301062
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": -0.0660472072443774
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.0581707189871129
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.09768810677335016
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.024,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.26605634299885295,
+    "ETHUSDT": -0.024304742369621324,
+    "SOLUSDT": 0.45551585504423586,
+    "BNBUSDT": -0.2083908840264762,
+    "GOLD": 0.1291610304427815,
+    "SPX": 0.0,
+    "NDX": -0.026842981028345037
+   },
+   "max_asset_profit_share": 0.5354391245008263,
+   "is_compounded": 2.597707972473952,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 1,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.2928922165699992,
+   "oos_max_drawdown": -0.4538874541445208,
+   "oos_period_pf": 1.2122974437799676,
+   "oos_mean_period_return": 0.004649136238208425,
+   "t_stat_one_sided_p": 0.24035659345052018,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.5777190410327142
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": 0.03247336965301062
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": -0.0660472072443774
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.0581707189871129
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.09768810677335016
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.024,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.26605634299885295,
+    "ETHUSDT": -0.024304742369621324,
+    "SOLUSDT": 0.45551585504423586,
+    "BNBUSDT": -0.2083908840264762,
+    "GOLD": 0.1291610304427815,
+    "SPX": 0.0,
+    "NDX": -0.026842981028345037
+   },
+   "max_asset_profit_share": 0.5354391245008263,
+   "is_compounded": 2.4988383853879945,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 1,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": 0.272086496107641,
+   "oos_max_drawdown": -0.43450972230499696,
+   "oos_period_pf": 1.0775193537664438,
+   "oos_mean_period_return": 0.0006125042225520839,
+   "t_stat_one_sided_p": 0.24389116605120925,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.5621298742860401
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": 0.05909014253728362
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": -0.1514449436784444
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.02021667839954855
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.11183402051733993
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0468,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.2271901819844092,
+    "ETHUSDT": 0.026623317629622223,
+    "SOLUSDT": 0.3774686334718982,
+    "BNBUSDT": -0.1131623278090631,
+    "GOLD": 0.08451254829871468,
+    "SPX": 0.0,
+    "NDX": -0.03336625173865382
+   },
+   "max_asset_profit_share": 0.5273420483395002,
+   "is_compounded": 1.785398351395017,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 1,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": 0.272086496107641,
+   "oos_max_drawdown": -0.43450972230499696,
+   "oos_period_pf": 1.0775193537664438,
+   "oos_mean_period_return": 0.0006125042225520839,
+   "t_stat_one_sided_p": 0.24389116605120925,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.5621298742860401
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": 0.05909014253728362
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": -0.1514449436784444
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.02021667839954855
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.11183402051733993
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.0468,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.2271901819844092,
+    "ETHUSDT": 0.026623317629622223,
+    "SOLUSDT": 0.3774686334718982,
+    "BNBUSDT": -0.1131623278090631,
+    "GOLD": 0.08451254829871468,
+    "SPX": 0.0,
+    "NDX": -0.03336625173865382
+   },
+   "max_asset_profit_share": 0.5273420483395002,
+   "is_compounded": 1.7088427993207893,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.22862132964319493,
+   "oos_max_drawdown": -0.42957897284436797,
+   "oos_period_pf": 1.1915268682041258,
+   "oos_mean_period_return": 0.003550964264335292,
+   "t_stat_one_sided_p": 0.2630411132065974,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.4339739069623101
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.018909078395734413
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": -0.028037341612160316
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.04543609296176021
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.05873273477352492
+    }
+   },
+   "folds_positive": 1,
+   "total_turnover_cost_frac": 0.02494071200715501,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.186425395512948,
+    "ETHUSDT": -0.021606810902701057,
+    "SOLUSDT": 0.19235114553783073,
+    "BNBUSDT": -0.08448581340600819,
+    "GOLD": 0.12100767637667353,
+    "SPX": 0.034065219875557384,
+    "NDX": 0.03040153926176037
+   },
+   "max_asset_profit_share": 0.3408964335496384,
+   "is_compounded": 2.0212382333608008,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 2,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.22862132964319493,
+   "oos_max_drawdown": -0.42957897284436797,
+   "oos_period_pf": 1.1915268682041258,
+   "oos_mean_period_return": 0.003550964264335292,
+   "t_stat_one_sided_p": 0.2630411132065974,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.4339739069623101
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.018909078395734413
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": -0.028037341612160316
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.04543609296176021
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.05873273477352492
+    }
+   },
+   "folds_positive": 1,
+   "total_turnover_cost_frac": 0.02494071200715501,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.186425395512948,
+    "ETHUSDT": -0.021606810902701057,
+    "SOLUSDT": 0.19235114553783073,
+    "BNBUSDT": -0.08448581340600819,
+    "GOLD": 0.12100767637667353,
+    "SPX": 0.034065219875557384,
+    "NDX": 0.03040153926176037
+   },
+   "max_asset_profit_share": 0.3408964335496384,
+   "is_compounded": 1.92064488272846,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 2,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": -0.03620557732751606,
+   "oos_max_drawdown": -0.385208649201249,
+   "oos_period_pf": 1.0274281894750148,
+   "oos_mean_period_return": 0.00019014521848850029,
+   "t_stat_one_sided_p": 0.39841281381254856,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.14481135059763695
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.0032824028939922867
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": -0.08741179507883079
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.02374149426733685
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.09590680890466408
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.07314999571541751,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.17200072717866893,
+    "ETHUSDT": -0.05535455762407948,
+    "SOLUSDT": 0.021895023297509197,
+    "BNBUSDT": -0.12011784051880725,
+    "GOLD": 0.12257035747305833,
+    "SPX": 0.06547292135590171,
+    "NDX": 0.028877235923856714
+   },
+   "max_asset_profit_share": 0.4186804217276871,
+   "is_compounded": 2.0759490874237043,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 2,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": -0.03620557732751606,
+   "oos_max_drawdown": -0.385208649201249,
+   "oos_period_pf": 1.0274281894750148,
+   "oos_mean_period_return": 0.00019014521848850029,
+   "t_stat_one_sided_p": 0.39841281381254856,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.14481135059763695
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.0032824028939922867
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": -0.08741179507883079
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.02374149426733685
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.09590680890466408
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.07314999571541751,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.17200072717866893,
+    "ETHUSDT": -0.05535455762407948,
+    "SOLUSDT": 0.021895023297509197,
+    "BNBUSDT": -0.12011784051880725,
+    "GOLD": 0.12257035747305833,
+    "SPX": 0.06547292135590171,
+    "NDX": 0.028877235923856714
+   },
+   "max_asset_profit_share": 0.4186804217276871,
+   "is_compounded": 1.9824399584819945,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_only",
+   "oos_periods": 122,
+   "oos_compounded": 0.17992253976131667,
+   "oos_max_drawdown": -0.27977512315968456,
+   "oos_period_pf": 1.1644158497147783,
+   "oos_mean_period_return": 0.0026694886478122026,
+   "t_stat_one_sided_p": 0.28314283950584046,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.31166552653515955
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.13630142464593575
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.19830961923095747
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.025235390279731873
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.10833978135343814
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.019005631201960634,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.09262723136302625,
+    "ETHUSDT": -0.02667659518193255,
+    "SOLUSDT": 0.018686769566911274,
+    "BNBUSDT": 0.08148497808763701,
+    "GOLD": 0.12857485895780194,
+    "SPX": 0.030625278781133684,
+    "NDX": 0.019360724660471656
+   },
+   "max_asset_profit_share": 0.3462271484908125,
+   "is_compounded": 1.9326064278535742,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 3,
+   "cadence": "weekly",
+   "mode": "long_flat",
+   "oos_periods": 122,
+   "oos_compounded": 0.1563914707327665,
+   "oos_max_drawdown": -0.27977512315968456,
+   "oos_period_pf": 1.1564639647321273,
+   "oos_mean_period_return": 0.002473300333465674,
+   "t_stat_one_sided_p": 0.2953241570815578,
+   "folds": {
+    "W1": {
+     "periods": 27,
+     "compounded": 0.31166552653515955
+    },
+    "W2": {
+     "periods": 26,
+     "compounded": -0.15103326668299388
+    },
+    "W3": {
+     "periods": 26,
+     "compounded": 0.19830961923095747
+    },
+    "W4": {
+     "periods": 26,
+     "compounded": -0.052451912726757866
+    },
+    "W5": {
+     "periods": 17,
+     "compounded": -0.08542190027435825
+    }
+   },
+   "folds_positive": 2,
+   "total_turnover_cost_frac": 0.020220697748840867,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.09262723136302625,
+    "ETHUSDT": -0.02667659518193255,
+    "SOLUSDT": 0.06016015149754966,
+    "BNBUSDT": 0.06377948072903766,
+    "GOLD": 0.10007699538761909,
+    "SPX": 0.030625278781133684,
+    "NDX": 0.0013707958552192194
+   },
+   "max_asset_profit_share": 0.28704972018076175,
+   "is_compounded": 1.7005906103706945,
+   "is_periods": 78,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 3,
+   "cadence": "daily",
+   "mode": "long_only",
+   "oos_periods": 853,
+   "oos_compounded": -0.056386363448507115,
+   "oos_max_drawdown": -0.3776435173041217,
+   "oos_period_pf": 1.0172888149779395,
+   "oos_mean_period_return": 0.00010797269437506114,
+   "t_stat_one_sided_p": 0.43322821696443226,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.05581437298556047
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.1332369310438395
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.09117294910626383
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.031137965375309662
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.08357722962678582
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.05165554669798834,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.12378414576171562,
+    "ETHUSDT": -0.1507824353143322,
+    "SOLUSDT": -0.08129425343610461,
+    "BNBUSDT": 0.021641468734500832,
+    "GOLD": 0.15699141216944484,
+    "SPX": 0.01733360691424849,
+    "NDX": 0.056082310170442545
+   },
+   "max_asset_profit_share": 0.4177159420961422,
+   "is_compounded": 1.6246246136341722,
+   "is_periods": 546,
+   "mechanical_bar": false
+  },
+  {
+   "lookback_days": 252,
+   "top_k": 3,
+   "cadence": "daily",
+   "mode": "long_flat",
+   "oos_periods": 853,
+   "oos_compounded": -0.09603356650372818,
+   "oos_max_drawdown": -0.37718785159486945,
+   "oos_period_pf": 1.0089321872689114,
+   "oos_mean_period_return": 5.533239157438246e-05,
+   "t_stat_one_sided_p": 0.4654296497818421,
+   "folds": {
+    "W1": {
+     "periods": 184,
+     "compounded": 0.05581437298556047
+    },
+    "W2": {
+     "periods": 181,
+     "compounded": -0.14689262517542467
+    },
+    "W3": {
+     "periods": 184,
+     "compounded": 0.09117294910626383
+    },
+    "W4": {
+     "periods": 181,
+     "compounded": 0.02456324441908664
+    },
+    "W5": {
+     "periods": 123,
+     "compounded": -0.10230527037144699
+    }
+   },
+   "folds_positive": 3,
+   "total_turnover_cost_frac": 0.05395727608262346,
+   "contrib_by_asset": {
+    "BTCUSDT": 0.12223970477252388,
+    "ETHUSDT": -0.1507824353143322,
+    "SOLUSDT": -0.07819000500315244,
+    "BNBUSDT": 0.0055240529952841205,
+    "GOLD": 0.14037475460769996,
+    "SPX": 0.01733360691424849,
+    "NDX": 0.044656127123299805
+   },
+   "max_asset_profit_share": 0.42521279573291393,
+   "is_compounded": 1.4527598710919642,
+   "is_periods": 546,
+   "mechanical_bar": false
+  }
+ ],
+ "benchmarks_oos": {
+  "BTCUSDT": {
+   "compounded_net": 0.2308227238898537,
+   "max_drawdown_daily": -0.5297592444745785
+  },
+  "GOLD": {
+   "compounded_net": 0.6653132519858282,
+   "max_drawdown_daily": -0.2669035849249404
+  },
+  "SPX": {
+   "compounded_net": 0.38335734837399205,
+   "max_drawdown_daily": -0.18902206184283998
+  },
+  "EQUAL_WEIGHT_ALL7": {
+   "compounded_net_mean_of_legs": 0.17617891609969144,
+   "note": "mean of the 7 single-asset net buy-hold legs; drift ignored, context only"
+  }
+ }
+}
