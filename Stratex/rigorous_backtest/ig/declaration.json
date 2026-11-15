@@ -1,0 +1,33 @@
+{
+ "data_plan": "RD programme panels (crypto30 and forex_cross41), timeframes 1h and 4h, walk-forward folds per rd programme convention. The run is a separate, later step and is NOT part of the declaring PR.",
+ "declared_on": "2026-11-15",
+ "demo_only": true,
+ "evaluation_bar": {
+  "costs": "programme cost model AND a 2x-cost shadow run, both must pass",
+  "expectancy_net_gt": 0.0,
+  "holdout": "rd.common.holdout_check must pass",
+  "judgement": "OOS only; parameters selected on in-sample folds only (here: none \u2014 parameters are frozen by this declaration)",
+  "min_oos_trades": 200,
+  "multiple_testing": "Bonferroni against the programme trial floor at run time (floor >= 1980 trials as of 2026-11-15 and rising; the run must state the floor it used)",
+  "positive_folds": ">= 4 of 5",
+  "profit_factor_net_gte": 1.2,
+  "source": "Stratex/rigorous_backtest/rd/common.py PROMOTION_BAR + programme practice"
+ },
+ "family": "fib_bos_confluence",
+ "hypothesis": "After an impulsive leg, a retracement into the 0.500-0.618 Fibonacci zone that holds (no close beyond the leg origin) and then breaks the leg's extreme (break of structure) continues in the leg's direction often enough, and far enough toward the 1.272/1.618 extensions, to clear the programme bar net of costs.",
+ "promotion_path": "Passing the bar makes this a forward-test CANDIDATE only, under the Phase-3 forward protocol (>=100 trades AND >=8 weeks on demo). Nothing here authorises live trading.",
+ "rules": {
+  "confirmation": "first close above H (long) / below L (short) after the zone touch; entry at that close",
+  "invalidation_before_entry": "any close below L (long) / above H (short) before confirmation kills the leg",
+  "leg": "swing low L followed by swing high H > L (long); mirror for short",
+  "one_signal_per_leg": true,
+  "parameters_fixed": "FIB_ZONE=(0.500, 0.618), EXTENSIONS=(1.272, 1.618), SWING_WINDOW=2 \u2014 no other variants are authorised under this declaration; trying variants means new declarations and a higher trial count",
+  "retracement_zone": "a candle whose range intersects [H - 0.618R, H - 0.500R] where R = H - L (long); mirror for short",
+  "stop": "leg origin (L for long, H for short)",
+  "swing_definition": "fractal window 2 (strictly greater/lower than the 2 candles on each side; ties are not swings)",
+  "targets": "extensions of the leg from its origin: T1 = 1.272R, T2 = 1.618R"
+ },
+ "source": "IG corpus item DYeU6nSBl9K (SK-System Fib/BOS confluence model)",
+ "status": "DECLARED \u2014 not yet run. No backtest of this family has been executed anywhere at declaration time.",
+ "task": "TASK-IG-STR-06"
+}
