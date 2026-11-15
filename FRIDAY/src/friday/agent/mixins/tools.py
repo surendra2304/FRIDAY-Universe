@@ -72,6 +72,7 @@ from friday.tools.builtin import (
     GitPushTool,
     GitStatusTool,
     HealthCheckTool,
+    LifeCalendarTool,
     KillProcessTool,
     LaptopClickTool,
     LaptopListDevicesTool,
@@ -207,6 +208,8 @@ class ToolExecutionMixin:
             registry.register(LaptopRunCommandTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
+            # TASK-IG-FRD-009: life-in-weeks dot-grid calendar computation.
+            registry.register(LifeCalendarTool())
             registry.register(WriteCodeFileTool())
             registry.register(ReplaceFileContentTool())
             registry.register(RunTestsTool())

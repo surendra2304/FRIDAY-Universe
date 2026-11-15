@@ -84,6 +84,7 @@ from friday.tools.builtin.laptop_control import (
     LaptopTypeTextTool,
 )
 from friday.tools.builtin.launch_application import LaunchApplicationTool
+from friday.tools.builtin.life_calendar import LifeCalendarTool
 from friday.tools.builtin.location_maps import LocationMapsTool
 from friday.tools.builtin.media_control import MediaControlTool
 from friday.tools.builtin.memory_search import MemorySearchTool
@@ -189,6 +190,7 @@ __all__ = [
     "GitPushTool",
     "GitStatusTool",
     "HealthCheckTool",
+    "LifeCalendarTool",
     "KillProcessTool",
     "LaunchApplicationTool",
     "LaptopClickTool",
