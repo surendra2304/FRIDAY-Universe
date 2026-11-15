@@ -244,6 +244,49 @@ class ToolExecutionMixin:
                 registry.register(AndroidDeviceInfoTool())
             except ImportError:
                 pass
+            # FRIDAY Phone Control Tools (TASK-PHONE-001): the owner's phone
+            # over the reverse tunnel in friday.remote.phone_bridge. Separate
+            # from the ADB tools above — those need a phone plugged into this
+            # machine; these reach the phone in the owner's hand.
+            try:
+                from friday.tools.builtin.phone_control import (
+                    PhoneCloseAppTool,
+                    PhoneFindMyPhoneTool,
+                    PhoneMakeCallTool,
+                    PhoneMediaControlTool,
+                    PhoneOpenAppTool,
+                    PhoneOpenUrlTool,
+                    PhonePressKeyTool,
+                    PhoneReadNotificationsTool,
+                    PhoneScreenshotTool,
+                    PhoneSendSmsTool,
+                    PhoneSendWhatsAppTool,
+                    PhoneSetAlarmTool,
+                    PhoneSetVolumeTool,
+                    PhoneStatusTool,
+                    PhoneSwipeTool,
+                    PhoneTapTool,
+                    PhoneTypeTextTool,
+                )
+                registry.register(PhoneStatusTool())
+                registry.register(PhoneOpenAppTool())
+                registry.register(PhoneCloseAppTool())
+                registry.register(PhoneOpenUrlTool())
+                registry.register(PhoneMakeCallTool())
+                registry.register(PhoneSendSmsTool())
+                registry.register(PhoneSendWhatsAppTool())
+                registry.register(PhoneReadNotificationsTool())
+                registry.register(PhoneSetAlarmTool())
+                registry.register(PhoneMediaControlTool())
+                registry.register(PhoneSetVolumeTool())
+                registry.register(PhoneFindMyPhoneTool())
+                registry.register(PhoneTapTool())
+                registry.register(PhoneSwipeTool())
+                registry.register(PhoneTypeTextTool())
+                registry.register(PhonePressKeyTool())
+                registry.register(PhoneScreenshotTool())
+            except ImportError:
+                pass
             # The skill layer (24 registered skills) had no caller in the running
             # agent: `FridayAgent.skill_registry` was a lazy property nothing read,
             # so every skill was unreachable in production while its unit tests
