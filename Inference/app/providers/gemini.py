@@ -91,6 +91,78 @@ class GeminiProvider(BaseLLMProvider):
             estimated_cost_usd=round(cost, 6),
         )
 
+    # TASK-INF-009: Gemini thinking models (the 2.5/3.x families and the
+    # -latest aliases, which resolve to current thinking models) reason
+    # before answering, and the API charges those hidden thought tokens
+    # against maxOutputTokens — that ceiling is on thoughts + visible
+    # output COMBINED (usageMetadata.thoughtsTokenCount +
+    # candidatesTokenCount). Passing a caller's max_tokens verbatim as
+    # maxOutputTokens therefore lets the reasoning burn consume the
+    # entire visible budget (TASK-INF-005 measured finish_reason
+    # MAX_TOKENS with 0-15 visible tokens on 14/17 served calls). The
+    # adapter now accounts thinking separately: maxOutputTokens =
+    # declared budget + thinking allowance, with the allowance
+    # hard-capped via thinkingConfig.thinkingBudget.
+    DEFAULT_THINKING_TOKEN_ALLOWANCE = 1024
+    MAX_OUTPUT_TOKENS_CEILING = 65536  # documented per-response output cap
+    _THINKING_FAMILIES = ("gemini-3", "gemini-2.5")
+    _THINKING_ALIASES = {"gemini-flash-latest", "gemini-pro-latest"}
+
+    def _thinks_by_default(self, model: str) -> bool:
+        """True for models that reason before answering unless told not to.
+
+        Flash-Lite models do not think by default (thinking starts only
+        when a thinkingConfig explicitly enables it), so they are
+        excluded even though their family names match.
+        """
+        name = (model or "").lower()
+        if "lite" in name:
+            return False
+        return name in self._THINKING_ALIASES or any(f in name for f in self._THINKING_FAMILIES)
+
+    def _thinking_plan(self, request: ProviderRequest, model: str) -> dict[str, Any] | None:
+        """Resolve how this request's thinking is budgeted.
+
+        Returns None when no thinking accounting applies (the model does
+        not think by default and the caller configured nothing), else a
+        dict with:
+          allowance       — tokens reserved for thinking ON TOP OF the
+                            caller's declared visible budget;
+          thinking_config — the thinkingConfig object to send;
+          explicit        — True when the caller configured thinking
+                            via extra_params (such a configuration is
+                            honoured even with no declared budget).
+        A caller's explicit extra_params win: "thinking_budget" (int,
+        hard cap on thought tokens) or "thinking_level" (str, the
+        Gemini 3 knob — a level is not a token cap, so the allowance
+        still reserves the visible budget on top).
+        """
+        extra = request.extra_params or {}
+        budget = extra.get("thinking_budget")
+        level = extra.get("thinking_level")
+        if budget is not None:
+            try:
+                allowance = max(0, int(budget))
+            except (TypeError, ValueError):
+                allowance = self.DEFAULT_THINKING_TOKEN_ALLOWANCE
+            # Gemini 2.5 Pro cannot think below a 128-token budget.
+            if "pro" in (model or "").lower() and allowance < 128:
+                allowance = 128
+            return {"allowance": allowance, "thinking_config": {"thinkingBudget": allowance}, "explicit": True}
+        if level is not None:
+            return {
+                "allowance": self.DEFAULT_THINKING_TOKEN_ALLOWANCE,
+                "thinking_config": {"thinkingLevel": str(level)},
+                "explicit": True,
+            }
+        if not self._thinks_by_default(model):
+            return None
+        return {
+            "allowance": self.DEFAULT_THINKING_TOKEN_ALLOWANCE,
+            "thinking_config": {"thinkingBudget": self.DEFAULT_THINKING_TOKEN_ALLOWANCE},
+            "explicit": False,
+        }
+
     def _convert_messages(self, messages: list[ProviderMessage]) -> list[dict[str, Any]]:
         """Converts standardized ProviderMessages to Gemini contents structure."""
         contents: list[dict[str, Any]] = []
@@ -99,9 +171,10 @@ class GeminiProvider(BaseLLMProvider):
             contents.append({"role": role, "parts": [{"text": msg.content}]})
         return contents
 
-    def _build_payload(self, request: ProviderRequest) -> dict[str, Any]:
+    def _build_payload(self, request: ProviderRequest, model: str | None = None) -> dict[str, Any]:
         """Constructs the JSON payload for the Gemini generateContent API."""
         contents = self._convert_messages(request.messages)
+        effective_model = model or request.model or self.default_model
 
         payload: dict[str, Any] = {
             "contents": contents,
@@ -110,8 +183,25 @@ class GeminiProvider(BaseLLMProvider):
             },
         }
 
+        plan = self._thinking_plan(request, effective_model)
         if request.max_tokens:
-            payload["generationConfig"]["maxOutputTokens"] = request.max_tokens
+            if plan is None:
+                payload["generationConfig"]["maxOutputTokens"] = request.max_tokens
+            else:
+                # The declared budget buys VISIBLE output; thinking is
+                # reserved on top of it and hard-capped by
+                # thinkingConfig, because the API charges thoughts
+                # against the same maxOutputTokens ceiling.
+                payload["generationConfig"]["maxOutputTokens"] = min(
+                    request.max_tokens + plan["allowance"],
+                    self.MAX_OUTPUT_TOKENS_CEILING,
+                )
+                if plan["thinking_config"] is not None:
+                    payload["generationConfig"]["thinkingConfig"] = plan["thinking_config"]
+        elif plan is not None and plan["explicit"] and plan["thinking_config"] is not None:
+            # No declared budget to protect, but honour a caller's
+            # explicit thinking configuration.
+            payload["generationConfig"]["thinkingConfig"] = plan["thinking_config"]
 
         if request.response_schema:
             payload["generationConfig"]["responseMimeType"] = "application/json"
@@ -128,7 +218,7 @@ class GeminiProvider(BaseLLMProvider):
 
         model = request.model or self.default_model
         url = f"{self.BASE_URL}/models/{model}:generateContent"
-        payload = self._build_payload(request)
+        payload = self._build_payload(request, model)
         max_attempts = min(3, len(self.api_keys)) if self.api_keys else 1
 
         for attempt in range(max_attempts):
@@ -196,11 +286,48 @@ class GeminiProvider(BaseLLMProvider):
                 generated_text = "".join(part.get("text", "") for part in content_parts)
                 finish_reason = candidates[0].get("finishReason", "stop")
 
-                # Extract token usage metadata
+                # Extract token usage metadata. TASK-INF-009: also read
+                # the hidden reasoning burn (thoughtsTokenCount). It is
+                # included in totalTokenCount but NOT in
+                # candidatesTokenCount; until now it was never read, so
+                # the gateway's own accounting could not see the tokens
+                # that were consuming callers' visible budgets.
                 usage = data.get("usageMetadata", {})
                 prompt_tokens = usage.get("promptTokenCount", 0)
                 completion_tokens = usage.get("candidatesTokenCount", 0)
+                thoughts_tokens = usage.get("thoughtsTokenCount")
                 total_tokens = usage.get("totalTokenCount", prompt_tokens + completion_tokens)
+
+                # Honest accounting, carried on raw_response alongside
+                # the gateway's fallback_provenance convention: if a
+                # model still truncates (e.g. it ignored the thinking
+                # cap), the split says so — truncated + how much of the
+                # ceiling the thinking ate — instead of the truncated
+                # text passing as a normal answer.
+                plan = self._thinking_plan(request, model)
+                accounting = {
+                    "declared_max_tokens": request.max_tokens,
+                    "effective_max_output_tokens": payload["generationConfig"].get("maxOutputTokens"),
+                    "thinking_budget": plan["allowance"] if plan else None,
+                    "thoughts_tokens": thoughts_tokens or 0,
+                    "visible_tokens": completion_tokens,
+                    "truncated": finish_reason == "MAX_TOKENS",
+                    "thinking_overflow": bool(
+                        plan and thoughts_tokens is not None and thoughts_tokens > plan["allowance"]
+                    ),
+                }
+                if accounting["truncated"]:
+                    logger.warning(
+                        "Gemini %s truncated at MAX_TOKENS: %s thought tokens vs %s visible "
+                        "(declared budget %s, thinking allowance %s) — answer is incomplete",
+                        model,
+                        thoughts_tokens,
+                        completion_tokens,
+                        request.max_tokens,
+                        accounting["thinking_budget"],
+                    )
+                raw = dict(data)
+                raw["token_accounting"] = accounting
 
                 return ProviderResponse(
                     content=generated_text,
@@ -209,9 +336,10 @@ class GeminiProvider(BaseLLMProvider):
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
                     total_tokens=total_tokens,
+                    reasoning_tokens=thoughts_tokens,
                     latency_seconds=round(latency, 4),
                     finish_reason=finish_reason,
-                    raw_response=data,
+                    raw_response=raw,
                 )
 
             except httpx.TimeoutException as exc:
@@ -236,7 +364,7 @@ class GeminiProvider(BaseLLMProvider):
 
         model = request.model or self.default_model
         url = f"{self.BASE_URL}/models/{model}:streamGenerateContent?alt=sse"
-        payload = self._build_payload(request)
+        payload = self._build_payload(request, model)
         max_attempts = min(3, len(self.api_keys)) if self.api_keys else 1
 
         for attempt in range(max_attempts):
