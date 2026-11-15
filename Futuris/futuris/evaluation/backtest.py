@@ -89,7 +89,14 @@ def validate_backtest_leakage(
 
 @dataclass
 class HorizonMetrics:
-    """Evaluation metrics for a specific forecast horizon."""
+    """Evaluation metrics for a specific forecast horizon.
+
+    Metrics are computed ONLY over scored origins (forecasts whose expiry
+    had a genuinely observed actual). ``sample_count`` is the scored count;
+    ``unscored_count`` reports how many issued forecasts were excluded
+    because no observation existed at their expiry. When no origin is
+    scored, every metric is NaN — never 0.0, which would read as perfect.
+    """
 
     horizon_hours: int
     mae: float
@@ -100,6 +107,7 @@ class HorizonMetrics:
     interval_coverage: float
     interval_width: float
     sample_count: int
+    unscored_count: int = 0
 
 
 @dataclass
@@ -115,6 +123,8 @@ class BacktestReport:
     calibration_curves: dict[str, ReliabilityCurve]
     coverage_table: dict[str, float]
     summary_text: str
+    scored_forecasts: int = 0
+    unscored_forecasts: int = 0
 
 
 class BacktestEngine:
@@ -158,7 +168,9 @@ class BacktestEngine:
         obs_map = {obs.observed_at: obs.value for obs in full_observations}
 
         forecasts: list[Forecast] = []
+        scored: list[Forecast] = []
         outcomes: list[Outcome] = []
+        unscored_count = 0
         current_time = start_date
 
         while current_time <= end_date:
@@ -179,7 +191,14 @@ class BacktestEngine:
                 target_expiry = f.expires_at
                 actual_val = obs_map.get(target_expiry)
                 if actual_val is None:
-                    actual_val = f.prediction
+                    # No observation exists at this forecast's expiry, so the
+                    # origin CANNOT be scored. It must never be graded against
+                    # its own prediction (the pre-FUT-010 behaviour fabricated
+                    # a perfect zero-error sample and persisted it as a real
+                    # outcome). The forecast stays on record as issued; the
+                    # origin is counted and reported as unscored instead.
+                    unscored_count += 1
+                    continue
 
                 window_keys = [t for t in obs_map if f.as_of < t <= target_expiry]
                 window_max = max([obs_map[k] for k in window_keys]) if window_keys else actual_val
@@ -195,26 +214,35 @@ class BacktestEngine:
                     ambiguity_note=None,
                     resolution_rule_version="backtest:v1.0",
                 )
+                scored.append(f)
                 outcomes.append(outcome)
                 if self.outcome_repo:
                     await self.outcome_repo.record_outcome(outcome)
 
             current_time += timedelta(hours=stride_hours)
 
-        predictions = [f.prediction for f in forecasts]
+        # Metrics are computed ONLY over scored (forecast, observed actual)
+        # pairs. Unscored origins contribute to no metric and no outcome.
+        predictions = [f.prediction for f in scored]
         actuals = [o.observed_value for o in outcomes]
-        probabilities = [f.probability or 0.0 for f in forecasts]
+        probabilities = [f.probability or 0.0 for f in scored]
         event_actuals = [o.event_occurred or False for o in outcomes]
-        lowers = [f.range_lower for f in forecasts]
-        uppers = [f.range_upper for f in forecasts]
+        lowers = [f.range_lower for f in scored]
+        uppers = [f.range_upper for f in scored]
 
-        global_mae = mae(actuals, predictions)
-        global_rmse = rmse(actuals, predictions)
-        global_mape = mape(actuals, predictions)
-        global_brier = brier_score(event_actuals, probabilities)
-        global_ece = calibration_error(event_actuals, probabilities)
-        global_cov = interval_coverage(actuals, lowers, uppers)
-        global_width = interval_width(lowers, uppers)
+        if outcomes:
+            global_mae = mae(actuals, predictions)
+            global_rmse = rmse(actuals, predictions)
+            global_mape = mape(actuals, predictions)
+            global_brier = brier_score(event_actuals, probabilities)
+            global_ece = calibration_error(event_actuals, probabilities)
+            global_cov = interval_coverage(actuals, lowers, uppers)
+            global_width = interval_width(lowers, uppers)
+        else:
+            # Nothing was genuinely observed: metrics are undefined (NaN),
+            # never 0.0 — a zero would read as a perfect backtest.
+            global_mae = global_rmse = global_mape = float("nan")
+            global_brier = global_ece = global_cov = global_width = float("nan")
 
         horizon_hr = int(horizon.total_seconds() // 3600)
         h_metrics = HorizonMetrics(
@@ -226,7 +254,8 @@ class BacktestEngine:
             calibration_error=round(global_ece, 4),
             interval_coverage=round(global_cov, 4),
             interval_width=round(global_width, 4),
-            sample_count=len(forecasts),
+            sample_count=len(outcomes),
+            unscored_count=unscored_count,
         )
 
         model_name = forecasts[0].model_version.split("@")[0] if forecasts else "unknown"
@@ -243,11 +272,21 @@ class BacktestEngine:
             probabilities, event_actuals
         )
 
-        summary = (
-            f"Backtest for {target} ({start_date.date()} to {end_date.date()}): "
-            f"{len(forecasts)} forecasts. MAE: {global_mae:.2f}, RMSE: {global_rmse:.2f}, "
-            f"Coverage: {global_cov * 100:.1f}%, ECE: {global_ece:.4f}"
-        )
+        if outcomes:
+            summary = (
+                f"Backtest for {target} ({start_date.date()} to {end_date.date()}): "
+                f"{len(forecasts)} forecasts, {len(outcomes)} scored, "
+                f"{unscored_count} unscored (no observation at expiry; excluded "
+                f"from all metrics). MAE: {global_mae:.2f}, RMSE: {global_rmse:.2f}, "
+                f"Coverage: {global_cov * 100:.1f}%, ECE: {global_ece:.4f}"
+            )
+        else:
+            summary = (
+                f"Backtest for {target} ({start_date.date()} to {end_date.date()}): "
+                f"{len(forecasts)} forecasts, 0 scored, {unscored_count} unscored "
+                f"(no observation at expiry). Metrics unavailable: no origin had "
+                f"a genuinely observed actual, so nothing could be graded."
+            )
 
         return BacktestReport(
             target=target,
@@ -259,4 +298,6 @@ class BacktestEngine:
             calibration_curves={model_name: cal_curve},
             coverage_table={f"{horizon_hr}h": round(global_cov, 4)},
             summary_text=summary,
+            scored_forecasts=len(outcomes),
+            unscored_forecasts=unscored_count,
         )
