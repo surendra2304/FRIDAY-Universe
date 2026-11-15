@@ -81,6 +81,7 @@ from friday.tools.builtin import (
     HealthCheckTool,
     WorkflowTemplateListTool,
     WorkflowTemplateRunTool,
+    LifeCalendarTool,
     KillProcessTool,
     LaptopBrowserTaskTool,
     LaptopClickTool,
@@ -252,6 +253,8 @@ class ToolExecutionMixin:
             # TASK-IG-FRD-005: ready-made workflow templates.
             registry.register(WorkflowTemplateListTool())
             registry.register(WorkflowTemplateRunTool())
+            # TASK-IG-FRD-009: life-in-weeks dot-grid calendar computation.
+            registry.register(LifeCalendarTool())
             registry.register(WriteCodeFileTool())
             registry.register(ReplaceFileContentTool())
             registry.register(RunTestsTool())
