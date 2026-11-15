@@ -105,6 +105,43 @@ _Stage-2 results: filled in at synthesis (Stage 3)._
 
 ---
 
+## Stage 2B — forex-native families (owner scope extension, 2026-11-15)
+
+Added by owner directive ~12:19 IST: *"Stratex should also take
+trades in OANDA and it should create strategies using that also."*
+Declared in `results_rd3/stage2b_declaration.json`, in
+`rd3/families_fx.py` and here, shipped in a dedicated PR merged
+**before the first Stage-2B cell ran**. Venue design is OANDA
+(instruments, session structure, RD-002's OANDA-modelled costs:
+majors 6 bps RT, minors 10, GOLD 10). Data is RD-002's provenanced
+Yahoo FX/commodity series — the OANDA practice price API is not
+reachable from the research sandbox (no venue credentials in this
+environment), stated plainly; TASK-STR-FWD-004's forward lane
+supplies live OANDA evidence for any survivor. SMT-v2 (deleted) and
+FX-MR-v4 (incumbent, under FWD-004 measurement) are NOT re-tested.
+
+1. **london_drive** (forex12, comm7 @ 1h; 4 cells) — Asia-range →
+   London expansion: a 07:00 UTC close outside the 00:00–07:00 Asia
+   range, held to 17:00 (bracket_time 2.0/4.0, 9 bars). `drive_narrow`
+   additionally requires Asia width < 1.0×ATR(14).
+2. **monday_gap_fade** (forex28, comm7 @ 1d; 4 cells) — fade
+   Friday→Monday gaps beyond 0.5× / 1.0× ATR% over ≤ 3 days
+   (bracket_time 2.0/3.0). **Declared deviation:** entries are
+   decided at Monday's open from the gap itself and filled at that
+   open (open-auction semantics) — the only family in the programme
+   using open-known information.
+3. **trend_pullback** (forex28 1d, forex12 4h, comm7 1d; 6 cells) —
+   retracement entries no judged family uses: inside an EMA100/200
+   trend (10-bar slope), buy the first EMA20 touch-and-reclaim bar;
+   exit trail 2.0/3.0 ATR.
+
+Counting: 14 cells + 7 wf-select procedures = **21 Stage-2B trials**,
+joining the same global counter and final-N Bonferroni gate.
+
+_Stage-2B results: filled in at synthesis (Stage 3)._
+
+---
+
 ## Stage 3 — synthesis
 
 _Filled in when all stages complete: one ranked table at the final
