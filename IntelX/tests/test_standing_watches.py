@@ -1,0 +1,258 @@
+"""Tests for IntelX standing research watches (TASK-INT-007).
+
+The watch engine is standard-library only, so these tests import it
+directly and drive it with a fake fetcher — no network, no database.
+The live-fire proof against the real feeds is recorded on issue #35.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
+from intelx.watches.engine import (
+    WATCH_AI_MODEL_RELEASES,
+    FeedSource,
+    WatchService,
+    normalize_url,
+    parse_feed,
+    score_item,
+    url_fingerprint,
+    with_overrides,
+)
+
+NOW = datetime(2026, 11, 15, 8, 0, tzinfo=UTC)
+
+RSS_FEED = b"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<title>Example RSS</title>
+<item><title>Introducing GPT-9 Turbo for developers via the API</title>
+<link>https://example.com/gpt9-turbo</link>
+<description>The newest model is here.</description>
+<pubDate>Sat, 15 Nov 2026 06:00:00 GMT</pubDate></item>
+<item><title>Claude Opus 9.1 is now available in the API</title>
+<link>https://example.com/claude-opus-91</link>
+<description>Our most capable model yet.</description>
+<pubDate>Sat, 15 Nov 2026 05:00:00 GMT</pubDate></item>
+<item><title>Our podcast: a conversation about AI safety</title>
+<link>https://example.com/podcast-12</link>
+<description>Listen in.</description>
+<pubDate>Sat, 15 Nov 2026 04:00:00 GMT</pubDate></item>
+<item><title>How we built our new office</title>
+<link>https://example.com/office</link>
+<description>Desks and plants.</description>
+<pubDate>Sat, 15 Nov 2026 03:00:00 GMT</pubDate></item>
+<item><title>Weekly research notes</title>
+<link>https://example.com/notes-oct</link>
+<description>Old post from October.</description>
+<pubDate>Wed, 01 Oct 2026 03:00:00 GMT</pubDate></item>
+</channel></rss>"""
+
+ATOM_FEED = b"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Example Atom</title>
+<entry><title>Gemini 9 now available to developers everywhere</title>
+<link href="https://example.org/gemini-9"/>
+<summary>Try it in the API today.</summary>
+<published>2026-11-15T04:00:00Z</published></entry>
+</feed>"""
+
+CROSSPOST_RSS = b"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<title>Syndication</title>
+<item><title>Introducing GPT-9 Turbo for developers via the API</title>
+<link>https://mirror.example.net/story/12345</link>
+<description>Same announcement, syndicated.</description>
+<pubDate>Sat, 15 Nov 2026 07:00:00 GMT</pubDate></item>
+</channel></rss>"""
+
+
+class FakeFetcher:
+    def __init__(self, mapping: dict[str, tuple[int, bytes]]) -> None:
+        self.mapping = mapping
+
+    async def fetch(self, url: str) -> tuple[int, bytes]:
+        return self.mapping.get(url, (404, b""))
+
+
+def fixture_watch(fetcher_map_extra: dict | None = None):
+    return with_overrides(
+        WATCH_AI_MODEL_RELEASES,
+        sources=(
+            FeedSource("https://feed.example/rss.xml", "Example RSS"),
+            FeedSource("https://feed.example/atom.xml", "Example Atom"),
+        ),
+    )
+
+
+def fixture_fetcher() -> FakeFetcher:
+    return FakeFetcher(
+        {
+            "https://feed.example/rss.xml": (200, RSS_FEED),
+            "https://feed.example/atom.xml": (200, ATOM_FEED),
+        }
+    )
+
+
+def make_service(tmp_path: Path, fetcher: FakeFetcher) -> WatchService:
+    return WatchService(
+        state_path=tmp_path / "state.json",
+        outbox_path=tmp_path / "outbox.jsonl",
+        fetcher=fetcher,
+    )
+
+
+def poll(service: WatchService, watch, now: datetime = NOW):
+    return asyncio.run(service.poll_once(watch, now=now))
+
+
+# --- parsing -----------------------------------------------------------------
+
+
+def test_parse_rss_items() -> None:
+    items = parse_feed(RSS_FEED, FeedSource("https://feed.example/rss.xml", "Example RSS"))
+    assert len(items) == 5
+    assert items[0].title.startswith("Introducing GPT-9")
+    assert items[0].published_at == datetime(2026, 11, 15, 6, 0, tzinfo=UTC)
+    assert items[0].publisher == "Example RSS"
+
+
+def test_parse_atom_items() -> None:
+    items = parse_feed(ATOM_FEED, FeedSource("https://feed.example/atom.xml", "Example Atom"))
+    assert len(items) == 1
+    assert items[0].url == "https://example.org/gemini-9"
+    assert items[0].published_at == datetime(2026, 11, 15, 4, 0, tzinfo=UTC)
+
+
+def test_parse_garbage_returns_empty() -> None:
+    assert parse_feed(b"not xml at all", FeedSource("https://x", "X")) == []
+
+
+# --- fingerprints --------------------------------------------------------------
+
+
+def test_normalize_url_strips_tracking_and_fragment() -> None:
+    messy = "HTTPS://Example.COM/Post/?utm_source=tw&ref=hn&keep=1#frag"
+    assert normalize_url(messy) == "https://example.com/Post?keep=1"
+
+
+def test_fingerprint_stable_across_tracking_params() -> None:
+    a = url_fingerprint("https://example.com/gpt9-turbo?utm_campaign=x")
+    b = url_fingerprint("https://example.com/gpt9-turbo/")
+    assert a == b
+
+
+# --- scoring -------------------------------------------------------------------
+
+
+def _item(title: str, summary: str = ""):
+    from intelx.watches.engine import FeedItem
+
+    return FeedItem(
+        url="https://example.com/x",
+        title=title,
+        summary=summary,
+        published_at=NOW,
+        publisher="Test",
+        source_feed="https://feed.example/rss.xml",
+    )
+
+
+def test_score_release_title_passes() -> None:
+    score, reasons, excluded = score_item(
+        WATCH_AI_MODEL_RELEASES, _item("Introducing GPT-9 Turbo for developers via the API")
+    )
+    assert not excluded and score >= WATCH_AI_MODEL_RELEASES.min_score
+    assert any(r.startswith("release_language") for r in reasons)
+
+
+def test_score_podcast_is_excluded() -> None:
+    _, _, excluded = score_item(
+        WATCH_AI_MODEL_RELEASES, _item("Our podcast: a conversation about AI safety")
+    )
+    assert excluded
+
+
+def test_score_plain_post_below_threshold() -> None:
+    score, _, excluded = score_item(
+        WATCH_AI_MODEL_RELEASES, _item("How we built our new office", "Desks and plants.")
+    )
+    assert not excluded and score < WATCH_AI_MODEL_RELEASES.min_score
+
+
+# --- poll semantics --------------------------------------------------------------
+
+
+def test_first_poll_alerts_once_suppresses_rest(tmp_path: Path) -> None:
+    service = make_service(tmp_path, fixture_fetcher())
+    result = poll(service, fixture_watch())
+    assert result.fetched == 6
+    assert len(result.alerted) == 1  # per-poll cap is 1
+    assert result.alerted[0]["title"].startswith("Introducing GPT-9")
+    assert len(result.suppressed_budget) == 2  # Claude + Gemini wait, counted
+    assert result.baselined == 1  # the October post, silently recorded
+    assert result.below_threshold == 2  # podcast (excluded) + office post
+    env = result.alerted[0]
+    assert env["schema"] == "intelx.watch_alert/1"
+    assert env["dedupe_key"].startswith("intelx.watch:ai_model_releases:")
+    assert env["quiet_hours_exempt"] is False
+    assert env["severity"] == "info"
+    assert env["score"] >= WATCH_AI_MODEL_RELEASES.min_score
+
+
+def test_second_poll_is_silent_and_state_persists(tmp_path: Path) -> None:
+    fetcher = fixture_fetcher()
+    poll(make_service(tmp_path, fetcher), fixture_watch())
+    # A brand-new service over the same state file must see the same world.
+    result = poll(make_service(tmp_path, fetcher), fixture_watch())
+    assert result.alerted == []
+    assert result.suppressed_budget == []
+    assert result.duplicates == 6
+
+
+def test_title_fingerprint_catches_crosspost(tmp_path: Path) -> None:
+    fetcher = fixture_fetcher()
+    poll(make_service(tmp_path, fetcher), fixture_watch())
+    fetcher.mapping["https://feed.example/rss.xml"] = (200, CROSSPOST_RSS)
+    result = poll(make_service(tmp_path, fetcher), fixture_watch())
+    assert result.alerted == []
+    assert result.duplicates >= 1  # same long title, different URL/publisher
+
+
+def test_daily_budget_blocks_later_polls(tmp_path: Path) -> None:
+    watch = with_overrides(
+        fixture_watch(), max_alerts_per_poll=5, max_alerts_per_day=1
+    )
+    fetcher = fixture_fetcher()
+    service = make_service(tmp_path, fetcher)
+    first = poll(service, watch)
+    assert len(first.alerted) == 1  # daily cap, not the per-poll cap of 5
+    extra = RSS_FEED.replace(b"gpt9-turbo", b"gpt10-ultra").replace(
+        b"Introducing GPT-9 Turbo", b"Introducing GPT-10 Ultra"
+    )
+    fetcher.mapping["https://feed.example/rss.xml"] = (200, extra)
+    second = poll(service, watch)
+    assert second.alerted == []
+    assert any("GPT-10" in s["title"] for s in second.suppressed_budget)
+
+
+def test_feed_error_does_not_kill_poll(tmp_path: Path) -> None:
+    fetcher = fixture_fetcher()
+    fetcher.mapping["https://feed.example/atom.xml"] = (500, b"")
+    result = poll(make_service(tmp_path, fetcher), fixture_watch())
+    assert any("HTTP 500" in e for e in result.errors)
+    assert result.fetched == 5  # the healthy feed still processed
+
+
+def test_outbox_is_jsonl(tmp_path: Path) -> None:
+    service = make_service(tmp_path, fixture_fetcher())
+    poll(service, fixture_watch())
+    lines = (tmp_path / "outbox.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1
+    envelope = json.loads(lines[0])
+    assert envelope["watch_id"] == "ai_model_releases"
+    state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
+    seen = state["watches"]["ai_model_releases"]["seen"]
+    assert sum(1 for r in seen.values() if r["status"] == "alerted") == 1

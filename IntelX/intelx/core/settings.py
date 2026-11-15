@@ -411,6 +411,10 @@ class Settings(BaseSettings):
         default=False,
         description="Enable autonomous research generation loop in this process",
     )
+    ENABLE_STANDING_WATCHES: bool = Field(
+        default=False,
+        description="Enable IntelX standing research watches loop in this process (TASK-INT-007)",
+    )
 
     # Auth & Storage
     SESSION_TTL_SECONDS: int = Field(
