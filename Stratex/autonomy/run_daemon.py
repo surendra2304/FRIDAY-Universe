@@ -1073,7 +1073,7 @@ class StratexTradingEngine:
             try:
                 from config_strategy import PRODUCTION_STRATEGY_REGISTRY
 
-                sleeve_map: Dict[str, List[str]] = {}
+                sleeve_map: Dict[str, list] = {}
                 for key, entry in PRODUCTION_STRATEGY_REGISTRY.items():
                     if entry.get("sleeve"):
                         sleeve_map.setdefault(entry["sleeve"], []).append(
