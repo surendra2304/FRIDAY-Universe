@@ -7178,6 +7178,67 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "STATES at delivery: items 1, 2, 4, 5 implemented + tested (local suites + A/B where applicable), NOT merged / deployed / production-verified. Item 3 implemented repo-side only, NOT deployed, NOT production-verified (deploy note + matrix checklist in PR #363). No server was modified by this crew; no credential values appear in any artifact."
     blockers: []
     next_action: "Merge-runner: (1) merge PR #363 (items 1-4 + this entry); (2) merge COR-002 (item 50) and PR #317 (COR-003), then PR #361 (item 5, resolve the small scoring-site overlap if COR-002 landed first); (3) fleet-CD deploy; (4) execute docs/verification/ENV_FLAG_FLIP_REL047.md on Server 1 (Memora + Stratex env flips) and re-run the MEM-005 auth matrix cell-for-cell — item 3 stays not-production-verified until that passes, any changed cell is reported before acceptance; (5) production probes for items 1/2 (oversized prompt routes off Groq; no NVIDIA attempts in gateway logs), 4 (IntelX call >45s completes), 5 (incomplete matrix -> 422 from the live route); then board VERIFIED."
+  - id: TASK-INF-009
+    title: 'Fix the Inference Gemini route''s token accounting: hidden thinking tokens burn the caller''s visible budget'
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-inf-009
+    pr: 374
+    contributors: []
+    priority: P1
+    created_at: '2026-11-15T12:00:09Z'
+    updated_at: '2026-11-15T12:00:09Z'
+    files:
+    - Inference/app/providers/gemini.py
+    - Inference/app/providers/base.py
+    - Inference/app/providers/unified_manager.py
+    - Inference/app/api/v1_core_routes.py
+    - Inference/tests/test_gemini_token_accounting.py
+    dependencies:
+    - TASK-INF-005 (finding 2 — the measured truncation evidence this task fixes)
+    - TASK-REL-043 (best-suitable policy; its gemini-3.6-flash rows were scored through this route)
+    acceptance:
+    - 'Root cause established with file+line evidence — done: v1_core_routes passes max_tokens through unified_manager into GeminiProvider._build_payload, which set
+      generationConfig.maxOutputTokens = max_tokens verbatim with no thinkingConfig anywhere in the tree; Gemini charges hidden thoughts against that same ceiling (thoughts+visible
+      combined), and the adapter never read usageMetadata.thoughtsTokenCount, so the burn was invisible in the gateway''s own accounting.'
+    - 'Fix so the declared budget buys visible output, per documented Gemini API semantics — done: for thinking-by-default models (3.x/2.5 families + -latest aliases;
+      Flash-Lite excluded), maxOutputTokens = declared + thinking allowance (default 1024, clamped to the 65536 ceiling) with the allowance hard-capped via thinkingConfig.thinkingBudget;
+      caller control via extra_params thinking_budget (0 disables on Flash; Pro floored at 128) / thinking_level; non-thinking models and budget-less requests keep
+      the exact old payload.'
+    - 'Honest degradation instead of silent truncation — done: thoughtsTokenCount is parsed into ProviderResponse.reasoning_tokens (new optional field; other providers
+      untouched), surfaced in unified token_usage and as usage.completion_tokens_details.reasoning_tokens on the v1 route; every Gemini response carries a token_accounting
+      block (declared/effective budgets, thinking budget, thoughts vs visible, truncated, thinking_overflow) and a MAX_TOKENS finish logs a warning with the split.'
+    - 'Regression tests fail-on-main / pass-on-fix — done: tests/test_gemini_token_accounting.py (fake transport reproducing the API''s documented accounting): 6 defect
+      tests failed on pristine main, all 8 pass with the fix (2 guards pass on both by design: Flash-Lite payload unchanged, no-budget payload unchanged). Neighbour
+      suites identical before/after; full Inference suite failure sets byte-identical pristine vs patched (40 pre-existing sandbox-environment failures: venv lacks
+      oracledb/aiosqlite).'
+    - 'Live proof against the real Gemini API — done pre-merge at the adapter level: patched gemini.py+base.py in a scratch copy of the DEPLOYED tree on Server 1 (deployed
+      tree untouched, keys from the deployment .env on-host, scratch deleted after): INF-005''s 9 summarise/code/extract items, gemini-3.6-flash, temp 0 — 9/9 finish
+      STOP and 9/9 score 1.0 with INF-005''s own checkers, vs 1/9 STOP and type scores 0.33/0.33/0.00 in INF-005''s live-gateway run. Summarise items burned 460-498
+      reasoning tokens against their 200-token declared budgets (the defect itself), now reserved on top (effective ceiling 1224) and reported per call.'
+    evidence:
+    - 'Claim: issue #35 comment 6893702141.'
+    - 'INF-005 raw-record signature: on MAX_TOKENS calls total-prompt ~= declared budget (45-47 at 50, 196 at 200, 396 at 400) with 0-15 visible tokens — the gap is
+      thoughtsTokenCount.'
+    - 'Google API semantics verified 2026-11-15 (thinking guide + API reference + Google AI forum staff answers): thinking is on by default for Gemini 3.x/2.5 thinking
+      models; maxOutputTokens is a hard ceiling on thoughtsTokenCount + candidatesTokenCount; thinkingConfig.thinkingBudget is the documented cap and was accepted by
+      the real API on gemini-3.6-flash in the live proof (9/9 calls succeeded).'
+    - 'Live proof detail (patched adapter, 2026-11-15): sum1 STOP 1.0 (53 visible / 461 reasoning / total 679), sum2 STOP 1.0 (49/498/687), sum3 STOP 1.0 (47/460/646),
+      cod1 STOP 1.0 (40 visible), cod2 STOP 1.0 (33/198/299), cod3 STOP 1.0 (24 visible), ext1 STOP 1.0 (complete JSON, fields exact), ext2 STOP 1.0, ext3 STOP 1.0
+      (37/312/435). Where the model used no measurable thinking the API omitted thoughtsTokenCount and reasoning_tokens is null (not an invented zero).'
+    risk_flags:
+    - thinkingBudget acceptance is verified live for gemini-3.6-flash; other Gemini models inherit the same documented semantics but were not individually probed —
+      if a future model rejected thinkingConfig the gateway ladder would fail over loudly (HTTP error), not truncate silently.
+    - The default 1024-token thinking allowance raises worst-case per-call token consumption on the Gemini route (thoughts are billed as output); it is a cap, and observed
+      burns were 0-498. Callers can set extra_params thinking_budget per request.
+    - Local full-suite comparison ran in the sandbox venv (Python 3.12, missing oracledb/aiosqlite) against a base tree whose touched files are byte-identical to current
+      main; repo CI on the PR is the definitive full-suite gate.
+    blockers: []
+    next_action: 'Coordinator: merge PR 374 and Fleet CD Inference; then re-run the INF-005 gemini-3.6-flash subset against the DEPLOYED gateway (POST /v1/chat/completions,
+      cache-busted) — expect STOP finishes, type scores at the adapter-proof levels, and usage.completion_tokens_details.reasoning_tokens present — then flip this entry
+      to VERIFIED. (The adapter-level live proof is done; the deployed-gateway re-check is the only outstanding verification.)'
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893702141
+    last_update_comment_url: null
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

@@ -309,6 +309,17 @@ class UnifiedProviderManager:
                     namespace="provider.unified",
             )
 
+            token_usage = {
+                "prompt_tokens": resp.prompt_tokens or 0,
+                "completion_tokens": resp.completion_tokens or 0,
+                "total_tokens": resp.total_tokens or 0,
+            }
+            # TASK-INF-009: surface the hidden reasoning burn when the
+            # provider reports it (Gemini thoughtsTokenCount), so the
+            # gap total - prompt - completion is explained, not silent.
+            if resp.reasoning_tokens is not None:
+                token_usage["reasoning_tokens"] = resp.reasoning_tokens
+
             return UnifiedExecutionResponse(
                 provider_used=actual_provider,
                 model_used=resp.model or (target_model or "default"),
@@ -316,11 +327,7 @@ class UnifiedProviderManager:
                 content=resp.content,
                 latency_ms=elapsed_ms,
                 timestamp=time.time(),
-                token_usage={
-                    "prompt_tokens": resp.prompt_tokens or 0,
-                    "completion_tokens": resp.completion_tokens or 0,
-                    "total_tokens": resp.total_tokens or 0,
-                },
+                token_usage=token_usage,
                 status="success",
                 finish_reason=resp.finish_reason,
                 served_by_provider=actual_provider if actual_provider != target_provider else None,
