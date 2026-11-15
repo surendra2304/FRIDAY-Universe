@@ -75,6 +75,7 @@ from cortex_api.config import (  # noqa: E402 - deliberate late import (avoids a
 from cortex_api.db_models import ApiKeyModel  # noqa: E402
 from cortex_api.events_router import router as events_router  # noqa: E402
 from cortex_api.friday_router import FridayTaskEnvelope, process_task_envelope  # noqa: E402
+from cortex_api.cognitive_planner import build_decomposition, build_plan  # noqa: E402  (TASK-COR-005)
 from cortex_api.friday_router import router as friday_router  # noqa: E402
 from cortex_api.landing_page import FALLBACK_WEBSITE_HTML  # noqa: E402
 from cortex_api.production_router import router as production_router  # noqa: E402
@@ -440,32 +441,16 @@ async def plan_task(body: CognitivePlanRequest, auth: dict = Depends(verify_frid
     priority = payload.get("priority", "NORMAL")
     plan_id = payload.get("plan_id") or f"plan_{uuid.uuid4().hex[:12]}"
 
-    steps = [
-        {
-            "step_id": 1,
-            "action": "analyze_context_and_constraints",
-            "capability": "reasoning",
-            "description": f"Evaluate operational state for goal: '{goal}'",
-            "estimated_duration_sec": 2,
-            "dependencies": [],
-        },
-        {
-            "step_id": 2,
-            "action": "synthesize_execution_graph",
-            "capability": "planning",
-            "description": "Construct dependency-ordered subtask tree with rollback guards",
-            "estimated_duration_sec": 3,
-            "dependencies": [1],
-        },
-        {
-            "step_id": 3,
-            "action": "dispatch_mesh_actions",
-            "capability": "execution",
-            "description": "Execute discrete actions across FRIDAY mesh agents with telemetry verification",
-            "estimated_duration_sec": 5,
-            "dependencies": [2],
-        },
-    ]
+    # TASK-COR-005: goal-aware deterministic planner (see
+    # cortex_api/cognitive_planner.py and
+    # docs/PLAN_QUALITY_REVIEW_COR005.md). The previous implementation
+    # returned the same fixed 3-step template for every goal.
+    plan = build_plan(
+        goal,
+        context=payload.get("context") or {},
+        constraints=constraints,
+        priority=priority,
+    )
 
     return {
         "plan_id": plan_id,
@@ -473,9 +458,17 @@ async def plan_task(body: CognitivePlanRequest, auth: dict = Depends(verify_frid
         "status": "planned",
         "priority": priority,
         "constraints": constraints,
-        "steps": steps,
-        "estimated_duration_sec": sum(s["estimated_duration_sec"] for s in steps),
-        "required_capabilities": ["reasoning", "planning", "execution"],
+        "steps": plan["steps"],
+        "estimated_duration_sec": plan["estimated_duration_sec"],
+        "required_capabilities": plan["required_capabilities"],
+        "operation": plan["operation"],
+        "operation_source": plan["operation_source"],
+        "impact_category": plan["impact_category"],
+        "is_high_impact": plan["is_high_impact"],
+        "plannable": plan["plannable"],
+        "unplannable_reason": plan["unplannable_reason"],
+        "planner": plan["planner"],
+        "estimate_basis": plan["estimate_basis"],
         "observed_at": datetime.now(UTC).isoformat(),
     }
 
@@ -491,36 +484,27 @@ async def decompose_task(body: TaskDecompositionRequest, auth: dict = Depends(ve
     max_subtasks = int(payload.get("max_subtasks", 5))
     decomp_id = f"decomp_{uuid.uuid4().hex[:12]}"
 
-    subtasks = [
-        {
-            "id": "subtask_1",
-            "description": f"Signal ingestion and verification for '{goal}'",
-            "required_capability": "analytics",
-            "dependencies": [],
-            "status": "pending",
-        },
-        {
-            "id": "subtask_2",
-            "description": "Policy and safety boundary verification",
-            "required_capability": "policy_engine",
-            "dependencies": ["subtask_1"],
-            "status": "pending",
-        },
-        {
-            "id": "subtask_3",
-            "description": "Logic execution and state update",
-            "required_capability": "execution",
-            "dependencies": ["subtask_2"],
-            "status": "pending",
-        },
-    ]
+    # TASK-COR-005: subtasks are derived from the same goal-aware plan
+    # phases as /plan (see cortex_api/cognitive_planner.py). The
+    # previous implementation returned the same fixed 3 subtasks for
+    # every goal and silently truncated the chain at small caps.
+    decomp = build_decomposition(
+        goal,
+        context=payload.get("context") or {},
+        max_subtasks=max_subtasks,
+    )
 
     return {
         "decomposition_id": decomp_id,
         "goal": goal,
         "status": "decomposed",
-        "subtasks": subtasks[:max_subtasks],
-        "total_subtasks": min(len(subtasks), max_subtasks),
+        "subtasks": decomp["subtasks"],
+        "total_subtasks": decomp["total_subtasks"],
+        "phases_total": decomp["phases_total"],
+        "cap_applied": decomp["cap_applied"],
+        "operation": decomp["operation"],
+        "plannable": decomp["plannable"],
+        "planner": decomp["planner"],
         "observed_at": datetime.now(UTC).isoformat(),
     }
 
