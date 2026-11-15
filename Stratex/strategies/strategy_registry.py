@@ -163,7 +163,31 @@ class UnifiedStrategyRegistry:
         self._health: dict[str, StrategyHealth] = {}
         self._get_signal_fns: dict[str, Callable] = {}
         self._lock = threading.RLock()
+        # TASK-STR-FWD-003: venues attested DEMO by the hosting daemon
+        # (from the venue adapters' base URLs at startup). FORWARD_TEST
+        # strategies may execute ONLY on an attested demo venue, and
+        # only when the caller passes the venue explicitly. The set
+        # starts EMPTY — fail-closed: until a daemon attests its demo
+        # venues, nothing in the FORWARD_TEST lane can execute anywhere.
+        self._demo_venues: set[str] = set()
         self._discover_strategies()
+
+    def set_demo_venues(self, venues) -> None:
+        """Attest which venue names are demo venues (TASK-STR-FWD-003).
+
+        Called once by the daemon at startup with the venues whose
+        adapters point at demo endpoints (demo-fapi / testnet /
+        practice hosts). Replaces any previous attestation.
+        """
+        self._demo_venues = {str(v) for v in (venues or ())}
+        logger.info(
+            "Demo venues attested for FORWARD_TEST lane: %s",
+            sorted(self._demo_venues),
+        )
+
+    def demo_venues(self) -> frozenset:
+        """The currently attested demo venue names (may be empty)."""
+        return frozenset(self._demo_venues)
 
     def _discover_strategies(self) -> None:
         """Auto-discover all strategy modules and register them."""
@@ -238,6 +262,16 @@ class UnifiedStrategyRegistry:
                     timeframes = tuple(gov_tfs)
                 if status == "VALIDATED" and gov_entry.get("validated_assets"):
                     symbols = tuple(gov_entry["validated_assets"])
+                if status == "FORWARD_TEST":
+                    # The lane's judged universe binds the strategy
+                    # exactly as validated_assets binds a VALIDATED
+                    # entrant — under its own key, so the lane can
+                    # never be mistaken for a validation. An empty
+                    # lane_assets (excluded candidate) leaves the spec
+                    # unable to match any scanned symbol set through
+                    # the daemon's governed path and, combined with
+                    # forward_protocol=False, keeps it inert.
+                    symbols = tuple(gov_entry.get("lane_assets") or ())
 
             spec = StrategySpec(
                 name=module_name,
@@ -279,9 +313,11 @@ class UnifiedStrategyRegistry:
     def governance_status(self, name: str) -> str:
         """The strategy's governance status (from config_strategy).
 
-        VALIDATED strategies may execute; OBSERVE_ONLY strategies may be
-        evaluated for logging/evidence only; DISABLED and UNREGISTERED
-        strategies must never reach order placement.
+        VALIDATED strategies may execute; FORWARD_TEST strategies may
+        execute on attested demo venues only (TASK-STR-FWD-003);
+        OBSERVE_ONLY strategies may be evaluated for logging/evidence
+        only; DISABLED and UNREGISTERED strategies must never reach
+        order placement.
         """
         spec = self.get(name)
         if spec is not None:
@@ -289,15 +325,33 @@ class UnifiedStrategyRegistry:
         return governance_status_for(name)
 
     def _check(
-        self, name: str, timeframe: str, symbol: str, *, for_execution: bool
+        self,
+        name: str,
+        timeframe: str,
+        symbol: str,
+        *,
+        for_execution: bool,
+        venue: str | None = None,
     ) -> tuple[bool, str]:
         spec = self.get(name)
         if spec is None:
             return False, "UNREGISTERED"
         if for_execution:
-            if spec.status != "VALIDATED":
+            if spec.status == "FORWARD_TEST":
+                # TASK-STR-FWD-003 lane rule: a FORWARD_TEST strategy
+                # may place orders ONLY on a venue the host daemon has
+                # attested as a demo venue, and only when the caller
+                # names the venue. No venue (or an unattested one) is a
+                # hard block — the lane can never reach a live venue
+                # through this registry, and the live-trading gates in
+                # the engines stay untouched as a second wall.
+                if venue is None:
+                    return False, "FORWARD_TEST_REQUIRES_VENUE"
+                if venue not in self._demo_venues:
+                    return False, "FORWARD_TEST_DEMO_VENUE_ONLY"
+            elif spec.status != "VALIDATED":
                 return False, f"STATUS_{spec.status}"
-        elif spec.status not in ("VALIDATED", "OBSERVE_ONLY"):
+        elif spec.status not in ("VALIDATED", "OBSERVE_ONLY", "FORWARD_TEST"):
             return False, f"STATUS_{spec.status}"
         if timeframe not in spec.timeframes:
             return False, "TIMEFRAME_NOT_VALIDATED"
@@ -308,9 +362,17 @@ class UnifiedStrategyRegistry:
             return False, "STRATEGY_UNHEALTHY"
         return True, "OK"
 
-    def executable(self, name: str, timeframe: str, symbol: str) -> tuple[bool, str]:
-        """True only when the strategy may place orders for tf/symbol."""
-        return self._check(name, timeframe, symbol, for_execution=True)
+    def executable(
+        self, name: str, timeframe: str, symbol: str, venue: str | None = None
+    ) -> tuple[bool, str]:
+        """True only when the strategy may place orders for tf/symbol.
+
+        VALIDATED strategies ignore ``venue`` (their own governance +
+        the engines' live-trading gates bind them). FORWARD_TEST
+        strategies additionally require ``venue`` to be an attested
+        demo venue (see set_demo_venues).
+        """
+        return self._check(name, timeframe, symbol, for_execution=True, venue=venue)
 
     def evaluable(self, name: str, timeframe: str, symbol: str) -> tuple[bool, str]:
         """True when the strategy may be evaluated (signal generation only).
@@ -346,22 +408,26 @@ class UnifiedStrategyRegistry:
         timeframe: str = "5m",
         symbol: str = "EURUSD",
         allow_observe: bool = False,
+        venue: str | None = None,
     ) -> dict[str, Any]:
         """Execute a strategy on market data and return a signal.
 
         With allow_observe=True an OBSERVE_ONLY strategy may be evaluated
         (its result is tagged ``observe_only``); callers must never route
         such a result to order placement. DISABLED and UNREGISTERED
-        strategies are blocked on every path.
+        strategies are blocked on every path. FORWARD_TEST strategies
+        execute only when ``venue`` names an attested demo venue; their
+        results are tagged ``forward_test``.
         """
         if allow_observe:
             ok, reason = self.evaluable(name, timeframe, symbol)
         else:
-            ok, reason = self.executable(name, timeframe, symbol)
+            ok, reason = self.executable(name, timeframe, symbol, venue=venue)
         if not ok:
             return {"status": "BLOCKED", "reason": reason, "strategy": name}
         spec = self.get(name)
         observe_only = bool(spec is not None and spec.status == "OBSERVE_ONLY")
+        forward_test = bool(spec is not None and spec.status == "FORWARD_TEST")
 
         get_signal = self._get_signal_fns.get(name)
         if get_signal is None:
@@ -414,8 +480,14 @@ class UnifiedStrategyRegistry:
                     "sl_dist": sl_dist,
                     "tp_dist": tp_dist,
                     "observe_only": observe_only,
+                    "forward_test": forward_test,
                 }
-            return {"status": "NO_SIGNAL", "strategy": name, "observe_only": observe_only}
+            return {
+                "status": "NO_SIGNAL",
+                "strategy": name,
+                "observe_only": observe_only,
+                "forward_test": forward_test,
+            }
         except Exception as e:
             health = self._health.get(name)
             if health:
