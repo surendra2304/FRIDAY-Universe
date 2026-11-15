@@ -6040,6 +6040,37 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "RD-017B (comment 6894666865): sim migrated to Server 1 as systemd rd17-carry-sim.service (rest transport, active); migrated-state report identical to sandbox baseline (33 rows, SIM_START preserved); hash-chain continuity proven across migration (seq 34 prev_hash == sandbox seq-33 row_hash); sandbox daemon stopped after server verification, sandbox ledger archived intact"
     running_instance: "Server 1: /home/ubuntu/rd17-carry-sim/ code, state /var/lib/rd17-carry-sim/, systemd rd17-carry-sim.service (rest transport, 300s polls)"
     next_action: "Verify FUNDING rows for the 2026-11-15T16:00Z settlement booked (30 symbols, from published prints) via: cd /home/ubuntu/rd17-carry-sim && python3 carry_paper_sim.py report --state-dir /var/lib/rd17-carry-sim — expect 30 FUNDING rows and a non-empty T1 identity. Then the long judgement window: no evaluation before 2027-05-15 AND >=2 confirmed regime turns."
+  - id: TASK-SEN-005
+    title: Sentinel secrets-hygiene verification round 2 - repo (tree + history) and deployed-fleet scan, counts/locations only
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: claude/task-sen-005-secrets-hygiene
+    pr: 348
+    evidence:
+    - 'CLAIM: GitHub issue #35 comment 6891593876 (2026-11-15) by the original SEN-005 crew; that crew died on a database transport failure and a finisher crew completed
+      the task from its preserved scan state plus a fresh re-scan at main b34e2d34.'
+    - 'REPO (main b34e2d34, 5,915 tracked files, 9 pattern classes): ZERO confirmed real secrets in the tree or in the 1,121-commit history window (2026-10-24 to 2026-11-15).
+      All strong-pattern hits triaged structurally, values never read out: test fixtures, scanner-tooling pattern data, dummy-marked placeholders, prose mentions, and
+      32 branch-name false positives (sk- inside claude/task-* names) in the collaboration docs.'
+    - 'SENSITIVE-NAMED TRACKED FILES: 11 only - nine .env.example templates, .github/workflows/sync-credentials.yml (secrets-context references, zero embedded values),
+      Stratex/oanda_demo/credentials.py (env-read only). The same 11 are the only sensitive-named paths that ever existed in the history window; no .env, dossier, .pem
+      or .key was ever tracked.'
+    - 'FLEET (read-only probes, both servers): every designated store git-ignored in both deployed checkouts; every live .env/dossier mode 600 EXCEPT VyralX/data/credentials/client_secrets.json
+      and token.json at 664 inside a 775 directory on Server 2 (F-2) and VyralX/.env at 664 on Server 1 (F-3). 27 .env.bak* copies fleet-wide (17 S1 + 10 S2), all 600
+      (F-4). THIRD_PARTY_* auxiliary set still separately named in Inference/.env. Split dossiers: Server 2 holds CREDENTIALS.md (16,951 B) and credentials.md (1,298
+      B); Server 1 holds credentials.md only (F-8).'
+    - 'HEADLINE FINDING F-1 (HIGH): a GitHub token sits in plaintext in 5 Forge build-workspace terminal logs on Server 1 (Forge/workspaces/task*/logs/terminal.log,
+      2026-11-12) - logged git remote set-url commands with the token embedded as x-access-token; masked-context verified, 1 match per file; 93 log files swept on Server
+      1, 1 on Server 2 (clean). The token must be treated as exposed.'
+    - 'Full report: Sentinel/docs/SECRETS_HYGIENE_AUDIT_SEN005.md (this PR) - findings F-1..F-8 with severities and recommendations. No cleanup or permission change
+      was performed by this audit.'
+    blockers: []
+    next_action: 'Coordinator: merge this PR, then dispatch remediation follow-ups - F-1 revoke/rotate the exposed GitHub token, purge/redact the 5 Forge logs and add
+      credential redaction to Forge terminal logging; F-2/F-3 permission fixes (dir 700, files 600); F-4 env-backup retention limit; F-5 verify the rotate_gateway_secret.py
+      literal is a placeholder and move it to env.'
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
