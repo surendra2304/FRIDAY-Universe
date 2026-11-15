@@ -50,6 +50,7 @@ class DecisionResult:
     confidence: float  # 0.0 to 1.0
     reasoning: str
     timestamp: float = field(default_factory=time.time)
+    decider: str = "cortex_decision_engine"
 
 
 class DecisionEngine:
@@ -187,7 +188,8 @@ class DecisionEngine:
 
     def decide(
         self, question: str, options: list[dict[str, Any]],
-        criteria: list[dict[str, Any]]
+        criteria: list[dict[str, Any]],
+        decider: str = "cortex_decision_engine",
     ) -> DecisionResult:
         """Make a real decision using multi-criteria analysis."""
         if self._detect_fatigue():
@@ -235,21 +237,86 @@ class DecisionEngine:
             risk_level=risk_level,
             confidence=confidence,
             reasoning=reasoning,
+            decider=decider,
         )
 
-        # Save to history
+        # Save to history as a COMPLETE provenance record (TASK-COR-003).
+        # Before this fix the persisted record kept only six summary fields
+        # (decision_id, question, best_option, risk_level, confidence,
+        # timestamp): the inputs considered, the options weighed, the
+        # reasoning and the decider were all computed and then thrown away,
+        # so no stored decision could ever be audited after the fact.
+        # The legacy summary keys are kept at top level for existing readers
+        # (get_decision_patterns); the full record travels alongside them.
         self._history.append({
             "decision_id": decision_id,
             "question": question,
             "best_option": best_option,
             "risk_level": risk_level,
             "confidence": confidence,
-            "timestamp": time.time(),
+            "timestamp": result.timestamp,
+            "decider": decider,
+            "inputs": {
+                "criteria": [
+                    {"name": c.name, "weight": c.weight, "description": c.description}
+                    for c in criteria_objs
+                ],
+                "options": [
+                    {
+                        "name": o.name,
+                        "scores": dict(o.scores),
+                        "risks": list(o.risks),
+                        "benefits": list(o.benefits),
+                    }
+                    for o in option_objs
+                ],
+            },
+            "options_weighed": {
+                "ranking": ranking,
+                "total_scores": total_scores,
+            },
+            "reasoning": reasoning,
+            "outcome": {
+                "status": "decided",
+                "selected": best_option,
+                "observed_result": None,
+                "success": None,
+                "recorded_at": None,
+            },
         })
         self._recent_decisions.append(time.time())
         self._save_history()
 
         return result
+
+    def record_outcome(
+        self, decision_id: str, observed_result: Any, success: bool | None = None
+    ) -> bool:
+        """Record the observed outcome of a past decision (feedback loop).
+
+        The module docstring has always claimed a feedback loop; until
+        TASK-COR-003 no outcome could ever be attached to a stored decision.
+        Returns True when the decision was found and updated.
+        """
+        for record in self._history:
+            if record.get("decision_id") == decision_id:
+                outcome = record.get("outcome")
+                if not isinstance(outcome, dict):
+                    outcome = {
+                        "status": "decided",
+                        "selected": record.get("best_option"),
+                        "observed_result": None,
+                        "success": None,
+                        "recorded_at": None,
+                    }
+                    record["outcome"] = outcome
+                outcome["observed_result"] = observed_result
+                outcome["success"] = success
+                outcome["recorded_at"] = time.time()
+                outcome["status"] = "outcome_recorded"
+                self._save_history()
+                return True
+        return False
 
     def get_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent decision history."""

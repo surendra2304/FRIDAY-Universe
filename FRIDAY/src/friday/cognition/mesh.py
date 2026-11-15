@@ -286,6 +286,22 @@ class PeerContract:
     health_path: str = "/health"
     auth_style: str = "bearer"  # bearer | x-friday-api-key | x-api-key | cortex
     capability_prefix: str = ""
+    #: Fleet-generic actions this peer declares it serves, in the assistance
+    #: broker's generic vocabulary (e.g. ``memory_recall``). The broker's
+    #: fan-out (``recall_from_peers`` / ``request_help_from_peers``) sends a
+    #: generic action ONLY to peers that declare it: a generic action sprayed
+    #: at every peer is received by agents whose contracts cannot serve it —
+    #: TASK-COR-009 proved Cortex correctly 403s ``memory_recall`` and
+    #: ``source_repair`` at its property-scope gate, ~2 avoidable 403s per
+    #: unrepaired fault episode. An empty tuple is the honest default: the
+    #: peer serves its own native actions through its own routes, and no
+    #: generic fleet action at all. Declarations are added only on evidence
+    #: the peer serves the action (see build_contracts).
+    declared_actions: tuple[str, ...] = ()
+
+    def supports(self, action: str) -> bool:
+        """Whether this peer declares the fleet-generic ``action``."""
+        return action in self.declared_actions
 
     def headers(self, *, agent: str = "friday") -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
@@ -318,6 +334,7 @@ class PeerContract:
             "task_path": self.task_path,
             "health_path": self.health_path,
             "has_key": bool(self.api_key),
+            "declared_actions": list(self.declared_actions),
         }
 
 
@@ -358,6 +375,10 @@ def build_contracts(fleet: Any | None = None, settings: Any | None = None) -> di
             health_path="/health",
             auth_style="bearer",
             capability_prefix="memora",
+            # Memora is the fleet's memory — the one peer a fleet memory
+            # question belongs to (FRD-001/COR-009: memory belongs to Memora
+            # alone). It is the only peer that declares `memory_recall`.
+            declared_actions=("memory_recall",),
         ),
         "stratex": PeerContract(
             name="stratex",

@@ -47,6 +47,11 @@ def _mesh(*, answer: bool = True) -> tuple[Mesh, ContractTransport]:
     contracts = build_contracts()
     for contract in contracts.values():
         contract.api_key = contract.api_key or "peer-key"
+    # TASK-FRD-006: the ladder's work request is routed by declaration — it
+    # reaches only peers whose contract declares the capability. Forge
+    # stands in as the declaring peer for source_repair in this suite; the
+    # fleet's real contracts declare it for nobody (see test_frd006).
+    contracts["forge"].declared_actions = ("source_repair",)
     mesh, harness = Mesh.in_process(contracts, backoff_seconds=0.0)
     if not answer:
         for peer in contracts:
@@ -103,8 +108,11 @@ def test_when_no_local_fix_exists_the_peers_are_asked(tmp_path: Path) -> None:
     delegation = outcome.evidence["delegation"]
     assert delegation["performed"] is True
     assert delegation["completed_by"] in delegation["asked"]
-    # The peers that did not answer first are reported as they answered, not hidden.
-    assert len(delegation["attempts"]) == len(delegation["asked"]) >= 2
+    # FRD-006 routing: only the peer that declares the capability was asked
+    # to do the work (Forge, per _mesh); every other peer was skipped, and
+    # the recall question went to Memora alone.
+    assert delegation["asked"] == ["forge"], delegation
+    assert len(delegation["attempts"]) == len(delegation["asked"]) >= 1
 
 
 def test_a_peer_that_answers_without_a_receipt_never_counts_as_help(tmp_path: Path) -> None:

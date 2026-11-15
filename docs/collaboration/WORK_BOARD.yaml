@@ -4744,6 +4744,42 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-FUT-003 crew): PR #259 merged and deployed, fingerprint-verified on Server 1, live acceptance passed end-to-end (see evidence). This also completes TASK-FUT-002's follow-up — its entry is flipped to VERIFIED in the same board PR. Residuals unchanged: extra /api/v1/futuris routers retire-or-label; real forecasts wait for ARM + statsforecast (owner decision, do not re-raise)."
 
+  - id: "TASK-FUT-006"
+    title: "Futuris forecast-vs-actual tracker: live scoring store - every resolved forecast scored (point error, interval hit, Winkler) with a rolling calibration report (empirical coverage vs nominal level)"
+    status: "IN_PROGRESS"
+    owner: "muse_ai"
+    branch: "claude/task-fut-006-futuris-forecast-tracker"
+    pr: 318
+    contributors: []
+    priority: "P2"
+    created_at: "2026-11-15T08:02:00Z"
+    updated_at: "2026-11-15T10:05:02Z"
+    files:
+      - "Futuris/futuris/services/forecast_tracker.py"
+      - "Futuris/futuris/storage/score_repository.py"
+      - "Futuris/futuris/storage/models.py (ForecastScoreModel appended)"
+      - "Futuris/futuris/infra/scheduler.py (forecast_scoring_job, 30 min)"
+      - "Futuris/alembic/versions/0005_forecast_scores.py"
+      - "Futuris/scripts/run_forecast_tracker.py"
+      - "Futuris/tests/test_fut006_forecast_tracker.py"
+    dependencies:
+      - "TASK-FUT-004 (shared scoring schema: nominal level 0.90, coverage_90 / coverage_gap_vs_nominal / winkler_90 keys, futuris.evaluation.metrics functions)"
+    acceptance:
+      - "Every forecast Futuris issues is in the issuance store (forecasts table, pre-existing) and every resolved forecast with a numeric actual gets exactly one forecast_scores row (issuance snapshot + signed/abs error + interval hit + width + Winkler); the scoring sweep is idempotent"
+      - "Rolling calibration report: MAE/RMSE, empirical coverage vs nominal level (coverage_90, coverage_gap_vs_nominal), mean interval width, Winkler; broken down per nominal level, per target and per evidence class; insufficient_data with null metrics below 30 scored forecasts"
+      - "Event-only outcomes are never scored as zero error and no actual is ever substituted anywhere in the path"
+    evidence:
+      - "Claim: issue #35 comment 6891421086. FUT-004 coordination (shared schema): issue #35 comment 6892057935."
+      - "Tests: Futuris/tests/test_fut006_forecast_tracker.py - 8 passed / 1 skipped in the crew sandbox (borrowed venv lacks apscheduler; the scheduler-wiring test importorskips locally and runs in CI). Neighbour ring: test_fut003_oracle_json_reads 4/4 passed against the modified models.py; py_compile clean on all touched files."
+      - "Synthetic pipeline proof (evidence_class=synthetic, in-memory store): 100 forecasts issued + resolved -> score_resolved scored 100; report status measured, coverage_90 0.80 (constructed ground truth 0.80), coverage_gap_vs_nominal -0.10, MAE 6.0, RMSE 13.416408, winkler_90 100.0, verdict overconfident - every figure matches hand computation."
+      - "LIVE STATE (honest): production Futuris currently resolves ~0 numeric forecasts (statsforecast post-ARM; the calibration sweep's resolved_count was 0 per TASK-FUT-003), so the live store starts empty and the production report will read insufficient_data until real forecasts resolve. The first scoring pass backfills all historically resolved forecasts."
+      - "Defect caught by the new tests pre-merge: event-only outcomes would have been re-considered and re-skipped on every sweep forever; fixed by keeping them out of the work queue and reporting their count separately (event_only_resolved)."
+    risk_flags:
+      - "New table forecast_scores: created on Oracle by ensure_schema create_all at service startup (the repo bootstrap path); alembic 0005 is the managed-migration equivalent - model and migration must stay in step."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #318, then Fleet CD deploy. Production verification after deploy: Futuris journal shows forecast_scoring_job_completed; run scripts/run_forecast_tracker.py on Server 1 - expect status insufficient_data with the true scored count (0 until real forecasts resolve post-ARM); flip this entry to VERIFIED with that output."
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891421086"
+    last_update_comment_url: null
   - id: TASK-STR-RD-003
     title: "Stratex strategy-discovery continuation (RD-003): RD-002 deferred cells for surviving modules + new pre-declared families, judged at the running global trial count"
     status: IN_PROGRESS
@@ -5039,6 +5075,23 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "MEASUREMENTS (fixed render renders/remix-1e06e9e0b37a-c4f678.mp4, 54,143,027 bytes, 1080x1920): durations source 153.325s / narration 47.184s / render 47.18s (video stream 47.10s); beats 20.88/19.39/6.91s at retime factor 0.5, each segment retimed to its beat audio; caption-vs-audio (faster-whisper transcript of the render's own audio vs .ass cues, difflib-aligned, 111 matched of 126 whisper / 132 caption words): word-start offset vs containing-cue start mean +0.288s, max |offset| 1.18s (multi-word cues — later words sit inside their cue by construction; cue-initial words cluster at ~0.0s); speech spans the full timeline (first word 0.0s, last word ends 46.14s, last cue ends 46.2s). Runtime 47.18s satisfies the <60s hard rule. Measurement JSON: Server 2 VyralX/renders/measure_remix-1e06e9e0b37a-c4f678.json. NOT uploaded — YouTube OAuth is dead (invalid_grant, VYR-003); --with-db deliberately not used for the proof, so the production DB was not touched."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-VYR-004 crew). Owner actions outstanding (NOT this task; both already deferred by the owner 2026-11-15 ~12:28 IST): (1) supply a valid YouTube Data API v3 key — unlocks YouTube-CC discovery at scale (keyless Commons/Archive/NASA discovery works without it); (2) re-auth YouTube OAuth and publish the consent screen out of Testing — required before anything can upload; the flow holds everything in the review queue until then. Possible follow-ups for the coordinator: wire produce_remix_short into the autopilot cadence once OAuth returns; Lane-2/Lane-3 format variants."
+  - id: TASK-VYR-006
+    title: "VyralX lane-1 source catalogue — stocked inventory of public-domain space & science footage (NASA/NOAA and other PD feeds) with per-clip licence/provenance, measured duration + resolution and topic tags, stored where the TASK-VYR-004 remix pipeline consumes it"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-vyr-006-lane1-catalog"
+    pr: 357
+    defect: "TASK-VYR-004 built the remix pipeline (licence gate, provenance registry, keyless discovery) but VyralX had no stocked shelf of lane-1 footage: discovery returned a handful of candidates per run (5 PD candidates in the proof run) with no persistent, rights-verified inventory the pipeline could plan edits against. Without a catalogue, every production run re-discovers from zero and provenance quality depends on per-run luck."
+    evidence:
+      - "Claim: GitHub issue #35 comment by Muse (TASK-VYR-006 crew) before any editing; PR #357 is the only PR on branch claude/task-vyr-006-lane1-catalog (verified via pulls?head query); completion comment posted on issue #35 (single copy verified)."
+      - "CATALOGUE (PR #357): VyralX/app/data/source_catalog_lane1.json — 66 clips, ~215 minutes: NASA Image & Video Library 44, Internet Archive NASA collection 18, Wikimedia Commons PD-USGov-NOAA 4. Per clip: direct media source_url, provenance page_url, license_name + permission_reference + rights_basis, creator, measured duration_seconds + width/height (ffprobe for NASA assets; archive/Commons metadata elsewhere), topic_tags, lane. Gates enforced at harvest: public-domain basis only, >=640px wide, 20-1200s; 47 clips HD or better (>=1280 wide), 6 at 4K; two talking-head/dated Commons items manually excluded and named in the builder. Sampled media URLs across all three platforms verified live (HTTP 206 ranged GET)."
+      - "LOADER + BUILDER + TESTS (PR #357): VyralX/app/services/source_catalog.py (stdlib-only; load_clips with tag/platform/min_duration/min_width filters; as_source_rows() maps records onto app.models.Source fields so remix_flow can register them unchanged and the rights gate sees meaningful licence + provenance on every row; catalogue_stats()). VyralX/scripts/build_lane1_catalog.py regenerates the catalogue from the three PD feeds with the same gates. VyralX/tests/test_source_catalog.py: 7 tests, all passing against the shipped JSON in a staged tree (licence/provenance meaningfulness, measurement sanity, id/URL uniqueness, loader mapping, stats)."
+      - "COORDINATION: TASK-VYR-004 owns the remix pipeline; this task stocks its shelves. No uploads attempted (YouTube OAuth dead, TASK-VYR-003); nothing deployed — catalogue is data + loader, consumed at VyralX's next deploy."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #357, then flip this entry to VERIFIED and read back. Follow-ups (new task ids): lane-2 (history/facts) and lane-3 (tech & AI) catalogues via the same builder pattern; optionally have remix_flow discovery fall back to this catalogue when live adapters return few candidates."
   - id: TASK-FRD-002
     title: "FRIDAY tool-use reliability — inventory all 90 exposed tools, exercise each end-to-end live, catalogue failures, fix the ungated process-termination bypass"
     owner: muse_ai
@@ -5190,12 +5243,600 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "PR opened from fresh main a5612c63 (branch claude/task-fut-009-scenario, git-data API — local git ref-writes are blocked in this sandbox); coordinator merges — this crew does not merge. No production deploy in this task; deployment rides the normal Fleet CD on merge, after which the endpoint should be probed live before any VERIFIED claim."
     blockers: []
     next_action: "Coordinator: review + merge the PR; after Fleet CD, probe POST /v1/scenarios/what-if live on Server 1 and flip this entry to VERIFIED with the probe evidence. Follow-ups if the prototype is accepted: FRIDAY task-envelope exposure and ScenarioRepository persistence (both deliberately out of prototype scope)."
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
-task_id_warnings:
+  - id: TASK-PHONE-001
+    title: "FRIDAY phone control — reverse-tunnel phone bridge (pairing + allowlisted commands), FRIDAY phone_* tools, Termux agent, companion-app scaffold, mock round-trip harness"
+    owner: muse_ai
+    status: IN_PROGRESS
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-phone-001-phone-control"
+    pr: null
+    defect: "FRIDAY's android_* tools speak ADB (devices/android_controller.py) — sound code that needs the phone attached to the machine FRIDAY runs on. FRIDAY runs on Oracle Server 1; the owner's phone is in his hand, so on the server those tools can only ever answer 'no device connected'. The phone-side executor and the network path to it did not exist."
+    acceptance:
+      - "Server bridge (friday/remote/phone_bridge.py): phone dials OUT over WSS, registry + command/result correlation + bounded evidence records, mirroring the proven laptop bridge; rides inside the existing FRIDAY process (<5MB, no new service)."
+      - "Pairing: control-authenticated 6-digit code (10-min TTL, single-use, attempt-limited) exchanged for a per-device token; server stores only the SHA-256 hash (persisted state file); per-device revoke; FRIDAY_PHONE_ENABLED=false kill switch."
+      - "FRIDAY tools phone_status/open_app/close_app/open_url/make_call/send_sms/send_whatsapp/read_notifications/set_alarm/media_control/set_volume/find/tap/swipe/type_text/press_key/screenshot registered; call/SMS/WhatsApp are SENSITIVE (owner confirmation); offline or unsupported commands return precise honest errors, never fabricated success."
+      - "Capability gating: each executor advertises what it can honestly do (hello frame); the bridge refuses the rest (e.g. Termux agent: no tap/swipe/type/screenshot — Android reserves those for accessibility/MediaProjection)."
+      - "Mock round trip proven by FRIDAY/tests/test_phone_bridge.py: pairing lifecycle, full command round trip bridge->protocol->mock executor->evidence, capability refusal, offline/timeout/disconnect honesty, sync tool layer hopping threads onto the server loop."
+      - "Phone executors shipped: Termux agent (scripts/phone_agent_termux.py — calls/SMS/notifications/media/volume/alarm/find-phone today) + Kotlin companion-app scaffold (FRIDAY/android-companion/ — full set incl. accessibility tap/type/screenshot; NOT compiled in the sandbox, no JDK/Android SDK there — stated, not hidden) + mock device (scripts/phone_mock_device.py)."
+      - "Owner step list published in docs/PHONE_CONTROL.md (Termux path: install 2 F-Droid apps, paste 1 setup command, type 1 pairing code, allow permissions)."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6890754744 (2026-11-15) before editing — architecture + audit (ADB controller and laptop bridge) recorded there."
+    blockers: []
+    next_action: "Crew: finish tests, ship PR, merge, fingerprint-verify the Fleet CD deploy, then board VERIFIED via fresh-main board PR. Production (real-phone) verification is the owner's 4-step setup in docs/PHONE_CONTROL.md and is NOT claimed by this task."
+  - id: TASK-COR-003
+    title: "Cortex decision-log completeness audit — sampled decision records scored against the 4-element provenance bar (inputs considered / options weighed / decider / outcome + timestamp); logging-path gaps closed"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "Cortex/apps/api/src/cortex_api/real_decision_engine.py"
+      - "Cortex/apps/api/src/cortex_api/decision_recommendation_system.py"
+      - "Cortex/packages/core/src/cortex_core/governed_operations.py"
+      - "Cortex/tests/unit/test_cor003_decision_log_completeness.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891568871"
+    defect: "Cortex's decision logs cannot support after-the-fact audit: across every decision-recording path, 0% of sampled records carry a complete provenance record. The persisted real_decision_engine log drops inputs/options/reasoning at write time (six summary fields kept); the live decision_recommendation_system record has no timestamp, no decider and no input snapshot (criteria/alternatives are mutable global state); the governed_operations engine discards its Observation inputs, keeping only an id; the lead_scores table has a near-complete schema but its write path 500s on every call (ORA-01400, TASK-COR-002), so the persisted log received zero writes in the sampled window."
+    evidence:
+      - "Claim: issue #35 comment 6891568871 (Muse, TASK-COR-003 crew). Fresh-main base 7bce776 (Merge PR #294); PR built on current main at delivery (target files byte-identical between the two — sha256-verified via the GitHub API)."
+      - "COMPLETENESS RATE: 0% of sampled decision records complete (bar: inputs considered / options weighed / decider / outcome / timestamp, all in the stored record). Per-element presence across the 3 record-retaining paths: inputs 0/3, options weighed 1/3 full (2/3 partial), decider 1/3, outcome 1/3 full (2/3 partial), timestamp 2/3. Full audit: crew workspace ~/workspace/cor-003/AUDIT.md."
+      - "SAMPLED EVIDENCE: code audit at 7bce776 of all record schemas (decision_recommendation_system Recommendation + DecisionHistory aggregate — whose success_rate/avg_risk_level fields are never updated; real_decision_engine persisted record — module has ZERO importers repo-wide, no live path writes it; governed_operations chain; LeadScoreHistoryModel). Production sample: TASK-COR-002's journal census 2026-11-08 to 15 (8,175 lines; zero organic decision traffic, all crew probes) + its 13 controlled live probes (~/workspace/cor-002/AUDIT.md, probe2_out.txt, logs_cortex.txt); deployed sha256 == fresh main for decision_recommendation_system.py (3e4580de) and enhanced_crm.py (6527c203), both verified by COR-002 against production today."
+      - "LIMITATION (plain): this crew's own extra production probes (deployed fingerprints for real_decision_engine.py/governed_operations.py, decision_history.json file check, approval_queue/workflow_runs row sampling) could not run — the Server 2 bridge timed out on nearly every call during the task (6 attempts ~13:20–14:10 IST; the claim POST succeeded). Those re-verifications remain owed when the bridge recovers; no live figure in this entry rests on them."
+      - "FIX (logging path only): real_decision_engine persists the full record (inputs incl. criteria weights + option scores/risks/benefits, full ranking, reasoning, decider via new decide(decider=...), outcome block) + record_outcome() implements the feedback loop its docstring always claimed; legacy 6-field records still load. decision_recommendation_system: Recommendation gains created_at, decider (route records caller: payload decider, default api_caller), inputs_snapshot incl. defaulted_cells naming every 0.5-defaulted score cell, outcome block + record_outcome(). governed_operations: engine retains Observations; new decision_record(id) assembles the complete chain (inputs -> option -> decider -> executions -> measurements)."
+      - "TESTS: Cortex/tests/unit/test_cor003_decision_log_completeness.py — 7 tests, 7 FAILED on clean main / 7 PASSED with the fix (ti-venv: fastapi 0.162.7, pytest 8.4.2). Neighbouring suites unchanged: test_approval_decisions 6/6, test_friday_task_routing + test_rel020_analytics_honesty 11/11."
+      - "COORDINATION: follows TASK-COR-002 (output-side provenance blocks; claim 6890984834). One route line touched in COR-002's file set (decision recommend route passes the decider) — flagged in the claim before editing; diff confined to record-keeping. The lead-score NULL-id write bug is COR-002's fix; this audit confirms its log-side consequence (zero rows written). Adjacent, non-overlapping: TASK-COR-005 (plan quality), TASK-COR-006 (failure recovery)."
+    blockers: []
+    next_action: "Awaiting coordinator merge (PR from branch claude/task-cor-003-decision-log-completeness). RESIDUALS for the coordinator: (1) decision_recommendation_system + governed_operations logs are still in-memory — a Cortex restart still erases them; durable DB-backed decision log (lead_scores-style schema) is a follow-up decision; (2) real_decision_engine still has no live caller — wire it or retire it as a separate decision; (3) governed_operations measure() invents default observed telemetry when none is supplied (COR-002-class honesty issue, observed, not fixed here); (4) production re-verification owed when the bridge recovers (deployed fingerprints for the two unfingerprinted files, decision_history.json existence, approval_queue/workflow_runs row sampling)."
+
+  - id: TASK-STR-RD-011
+    title: "Stratex position sizing & portfolio optimisation (owner's 'other than strategies' avenue #3): fixed-1% vs vol-targeted vs fractional-Kelly sizing and equal vs risk-parity combination on the RD-002 winners/watchlist/sleeve OOS streams"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-011
+    prs: [296]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:51:00+05:30"
+    updated_at: "2026-11-15T13:10:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD11.md"
+      - "Stratex/rigorous_backtest/results_rd11/synthesis_rd11.json"
+      - "Stratex/rigorous_backtest/results_rd11/streams/"
+      - "Stratex/rigorous_backtest/rd11/sim_rd011.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890995669"
+    defect: "Owner question 2026-11-15 ~12:33 IST (Wave 4): is there anything other than strategies to make profits? Avenue #3 = sizing & portfolio construction. Open questions on the RD-002 evidence: (a) whether fixed 1% per-trade risk (the standing rule), volatility-targeted sizing, or capped fractional Kelly changes compounded return, max drawdown or phase-3 kill-criteria survival (5% strategy-DD line) on the two winners (ichimoku tk_cloud @crypto30/4h, dow reversal @crypto30/1d), the 4 watchlist configs and the Stage-C sleeve; (b) whether equal vs risk-parity combination weights across the uncorrelated set deepen the edge. Research only — no production/governance changes."
+    acceptance:
+      - "Integrity gate before any number is trusted: git-shipped streams proven identical to the RD-002 full backup; the stripped dow_effect stream recovered and proven against its published pooled OOS metrics; Stage-C sleeve replicated exactly with RD-002's own combine()."
+      - "Every sizing multiplier causal (trailing data only); kill simulation applies the phase-3 5% DD rule; expectancy/PF sizing-invariance stated, not hidden."
+      - "RESULTS_RD11.md + synthesis_rd11.json + reproducible script on main via PR; board entry added from a fresh-main checkout with the full task-id set diffed."
+    evidence:
+      - "INTEGRITY: 5 git streams byte-identical (canonical-JSON SHA-256) to ~/workspace/str-rd2/results_full_backup; dow_effect recovered stream reproduces published pooled_oos EXACTLY (3,660 trades, win rate 0.5226775956, expectancy 0.0087767851, PF 1.2574511877); Stage-C best-per-class replicated to 0.00e+00 on both weightings (equal +18.83%/DD -11.54%; inv-vol +16.13%/DD -8.34%) using rd2/combo.py imported unchanged; OOS counts match published pooled counts for all 6 configs (2302/3660/420/732/837/205). The 5 recovered rows ship in results_rd11/streams/ with SHA-256 provenance in the synthesis; rd11/sim_rd011.py regenerates synthesis_rd11.json identically (verified in-repo)."
+      - "FINDING 1 (the standing rule kills everything): at a literal fixed 1% per-trade risk, ALL six streams breach the 5% DD kill line — ichimoku day 2 (max DD -75.0%), dow day 4 (-87.8%), bollinger day 14, shock day 10, adx_ema day 36, tsmom2 2025-06-11. Mechanism: 1%/trade x avg concurrency 3.3-23.9 = 3.3-23.9% portfolio heat. Not a window-edge artefact (winners' max DDs unchanged excluding the first 90 days) and not a calibration artefact (first-fold-calibrated multipliers 0.20-0.64, 3-6x smaller: all six still breach). Even unit exposure (m=1) breaches on all six."
+      - "FINDING 2 (vol-targeting): at equal average risk it raises Sharpe on 5 of 6 configs (ichimoku 1.12->1.24, shock 0.75->1.04) and at portfolio level (ALL6 1.44->1.55), but max DDs barely move — nothing survives the 5% line — and it DESTROYS dow_effect (-54.2% total vs +131.5% fixed): contraindicated for the calendar entrant."
+      - "FINDING 3 (fractional Kelly, causal, capped at 2x m_fixed): delays kills (ichimoku killed day ~262 while UP +7.6% at Kelly25 / +21.5% at Kelly50; bollinger Kelly25 survives 678 days, killed at +20.5%) but every config still breaches; Kelly goes NEGATIVE on adx_ema bare (-11.8%/-19.7% vs +43.2% fixed) and on the risk-parity sleeve (-11.5%/-12.1%). Recommendation on record: do not adopt Kelly sizing on these streams."
+      - "FINDING 4 (survivable size, dd-capped diagnostic — fitted on the judged window, an upper bound): largest constant exposure with full-window max DD <= 5% implies per-trade risk of 0.030% (dow) to 0.414% (tsmom2) solo — never near 1%. At survivable size: ichimoku +14.2%, dow +11.9%, bollinger +4.6%, shock +9.3%, adx_ema +10.5%, tsmom2 +10.9% over the 28-month OOS window."
+      - "FINDING 5 (combination is the lever): WIN2 winners' book — unit max DD -15.5% vs -43.3%/-44.2% solo, Sharpe 1.40; at survivable size +51.8% (equal) / +52.9% (risk-parity) vs +14.2%/+11.9% solo. ALL6 at survivable size +28.6% — the watchlist members DILUTE the winners' book. SLEEVE4: risk-parity halves unit DD (-11.5% equal -> -6.0%) and lifts survivable return +7.9% -> +13.0% (inv-vol +9.4%); equal vs risk-parity is a wash for WIN2."
+      - "DIRECT ANSWERS: (1) sizing/combination does NOT turn any watchlist config into a bar-passer — the promotion bar's core (expectancy, PF, significance, holdout) is sizing-invariant, and on kill-survival the watchlist breaches exactly like the winners; its route to promotion stays forward evidence (TASK-STR-FWD-003). (2) The winners' edge is deepened by COMBINATION (+51.8% at the 5% cap vs ~+13% solo average), not by any sizing scheme. (3) STRUCTURAL: the phase-3 rule pair (1% per-trade cap + 5% strategy-DD kill) is arithmetically inconsistent for pooled multi-symbol books — flagged to the coordinator in the PR; candidate fixes (portfolio-heat cap ~2% aggregate / concurrency cap / restated DD line) are a coordinator/owner decision, and what the live FWD-002 daemon actually implements is an open question for that crew. 96 sizing trials disclosed in RESULTS_RD11.md, deliberately NOT added to the 1,557 promotion counter (no promotion claimed)."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-011 crew): PR #296 carries RESULTS_RD11.md + synthesis + recovered streams + reproducible script. COORDINATOR/OWNER DECISION FLAGGED: the forward protocol's sizing basis (heat cap vs concurrency cap vs restated DD line) should be settled before TASK-STR-FWD-002's window produces its first kill decision, and FWD-002 should confirm what sizing the live daemon implements. No production, registry, daemon or governance state was changed by this task."
+  - id: TASK-LAP-001
+    title: "FRIDAY computer/laptop control groundwork + first working slice — audit the never-connected laptop bridge, close the gaps (open_app, type_text, click, screenshot image handoff), bind agent tools, owner pairing steps"
+    owner: muse_ai
+    status: VERIFIED
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-lap-001-laptop-control"
+    pr: 337
+    defect: "Owner roadmap 2026-11-15: computer/laptop control starts now, in parallel with phone control. Audit found the reverse tunnel ALREADY BUILT on both sides and LIVE in production (client FRIDAY/scripts/laptop_bridge_client.py; server registry FRIDAY/src/friday/remote/laptop_bridge.py; routes WS /api/laptop/connect/{id}, GET /api/laptop/devices, POST /api/laptop/{id}/command; control-key / 20-min HMAC-token auth, fail-closed) — production probe 2026-11-15: GET 127.0.0.1:10000/api/laptop/devices -> 200 {\"devices\": []}: the route works and NO laptop has ever connected. Gaps: G1 no open_app (open_url only; the local open_application tool acts on headless Server 1). G2 no type_text/click. G3 screenshot returned only a laptop-local PATH — the image never crossed the tunnel, no OCR handoff on the bridge path. G4 no agent tools bound to the bridge (the LLM loop could not call it). G5 no owner setup docs/requirements anywhere; the client hard-imported friday.core.logging and died outside a full repo checkout. G6 run_shell needs FRIDAY_LAPTOP_ALLOW_SHELL=true on BOTH ends, undocumented."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6890753587 (2026-11-15) before editing. Fix shipped as PR #337 (branch claude/task-lap-001-laptop-control, created from main b34e2d34; all 5 pre-existing files blob-verified identical between main and the crew branch base before writing — no drift; PR verified at merge time: changed_files=8, commits=8, +1197/-7; all 8 CI check runs completed green — test, contracts, fleet layout, monorepo policy, secrets scan, detect-voice-changes success; docker + voice-regressions skipped), merged 5213d239943bb561bfb7a3a9feee3fcf2f889954 under the owner's blanket authority."
+      - "FIX: server allowlist += open_app, type_text, click, screenshot_data (FRIDAY/src/friday/remote/laptop_bridge.py) with a validated result-frame attachment channel (screenshot_data only, image kind, jpeg/png, <= 2.5 MB cap outside the 16 KB evidence bound; invalid/oversize/wrong-command attachments dropped + logged). Client (FRIDAY/scripts/laptop_bridge_client.py): _cmd_open_app (Windows shell / macOS open -a / Linux PATH), _cmd_type_text (<=4096 chars) + _cmd_click via pyautogui with xdotool fallback and honest no-backend errors, _cmd_screenshot_data (PIL ImageGrab, downscale <=1280px, JPEG q72, base64 attachment), stdlib-logging fallback so the single file runs standalone on the owner's machine, websockets max_size raised to 2**22. NEW agent tools (FRIDAY/src/friday/tools/builtin/laptop_control.py, registered in the default registry): laptop_list_devices (SAFE), laptop_open_app (SAFE), laptop_open_url (SAFE), laptop_screenshot (SAFE — saves the image on the FRIDAY host, OCR text via the existing screen_ocr helper, honest note when OCR is unavailable), laptop_type_text (SENSITIVE), laptop_click (SENSITIVE), laptop_run_command (DANGEROUS — surfaces the double FRIDAY_LAPTOP_ALLOW_SHELL gate refusals verbatim). Pairing/auth design unchanged (already sound): the laptop presents the shared control key (X-FRIDAY-Api-Key / Bearer) or a 20-min control token on the tunnel upgrade; revoke = rotate FRIDAY_API_KEY. FRIDAY/docs/LAPTOP_CONTROL.md documents the protocol, gates and the exact owner step list."
+      - "TESTS: FRIDAY/tests/test_laptop_bridge_lap001.py — 15 tests PASS (allowlist parity client==server; attachment passthrough / oversize-drop / wrong-command-drop / unknown-command refusal; client handlers incl. real JPEG capture path and fake pyautogui; tools against a stub registry — device selection honesty, screenshot save + OCR, shell-gate refusal surfacing; registration + OpenAI-schema sanity for all 7 tools). Neighbour suites unchanged: test_remote_control_auth.py + test_control_session_hardening.py + test_computer_control.py — 27 PASS. Server import check: real friday.api.server:app imports with all 3 laptop routes mounted and all 7 laptop_* tools present in the agent's default registry."
+      - "END-TO-END PROTOCOL PROOF (sandbox, 2026-11-15): REAL friday.api.server:app under uvicorn + the REAL client against a virtual X display (Xvfb; real ImageGrab + pyautogui on the framebuffer — only the physical hardware is absent), driven over the production HTTP surface POST /api/laptop/{id}/command with the control key, effects verified out-of-band. FULL PASS: server_start 50.66s (import-bound, sandbox shared with ~80 crews); tunnel_connect 5.38s; system_info 0.30s; open_app targetapp 0.08s with target-window heartbeat in its state file; screenshot_data 0.70s -> JPEG 1280x800, 21,962 bytes, luminance range (0, 255); click at the entry centre (360, 181) 1.74s; type_text 'hello friday' 0.44s with the entry content verified from the state file; screenshot_data after typing 0.23s -> JPEG 1280x800, 23,897 bytes, visually confirmed to show the target window with 'hello friday' in the entry; run_shell echo 0.01s (double gate open in the proof env only). Proof harness kept in the crew workspace (~/workspace/lap-001/proof_e2e.py; screenshots proofwork/proof_screenshot.jpg + proof_screenshot2.jpg)."
+      - "DEPLOYED + FINGERPRINT-VERIFIED: Fleet CD deployed merge 5213d239 to Server 1; sha256 of all 6 changed FRIDAY code files on Server 1 byte-identical to the merged blobs (remote/laptop_bridge.py ab4c6e55a6e3, tools/builtin/laptop_control.py 9791a6d740ba, scripts/laptop_bridge_client.py ec745372d03a, remote/__init__.py 7dcdce3c5794, tools/builtin/__init__.py debfaf32c3cd, agent/mixins/tools.py 5e9bf3025420); FRIDAY.service active (restarted 2026-11-15 16:41:47 IST); GET 127.0.0.1:10000/api/laptop/devices -> 200 {\"devices\": []} — the route is live on the new code and the registry is empty, as expected until the owner connects his machine."
+    blockers: []
+    next_action: "Done as groundwork + first slice. The OWNER's computer is NOT connected — production /api/laptop/devices still shows [] and will until he runs the steps in FRIDAY/docs/LAPTOP_CONTROL.md (install Python + pip packages, copy the one client file, set FRIDAY_API_KEY to the Server 1 FRIDAY env value, run the client). Five-state honesty: implemented + tested + merged + deployed + protocol production-verified IN THE SANDBOX PROOF; his-machine-connected is a separate state that only his run of the steps can flip. Follow-ups (not this task): route the chat fast-path screenshot through screenshot_data so FRIDAY sees the screen in chat too; OCR on the FRIDAY host depends on tesseract availability there; proactive initiation is TASK-PRO-001's lane."
+  - id: TASK-FRG-007
+    title: "Forge build-time optimisation: parallel verification battery + post-repair early exit (Wave 5)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frg-007-build-time
+    pr: null
+    contributors: []
+    priority: P2
+    created_at: "2026-11-15T13:37:00+05:30"
+    updated_at: "2026-11-15T15:15:00+05:30"
+    files:
+      - "Forge/app/verification/engine.py"
+      - "Forge/app/core/orchestrator.py"
+      - "Forge/tests/unit/test_frg007_build_time.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891497592"
+    defect: "A standard Forge build (185-260s end-to-end in the TASK-REL-026 live proofs) spends its verification time serially: VerificationEngine ran its 10 checkers strictly one-after-another, and a build pays that serial sum on EVERY verify_task() call (initial battery, post-repair re-verify, post-peer-review re-verify). Separately, OrchestratorCore._verify_and_repair ran the peer-review collaboration loop (up to 2 LLM rounds, plus a possible third battery) even when the post-repair re-verification was already fully green -- although the first-pass path in the same function treats a green battery as 'verification complete' and returns immediately. Profiling (code inspection + local battery A/B): planning is deterministic (no LLM), generation is one LLM call per DAG node with waves already parallel, terminal commands pay no per-command environment setup (CommandPolicy is in-memory; no venv/pip per command) -- the removable serial dead time is the battery's checker serialisation and the redundant peer review on green builds."
+    acceptance:
+      - "Read-only battery checkers run concurrently; checkers that execute/import the generated project (TestChecker, RuntimeChecker, BrowserChecker) stay serialised after them in original relative order; evidence order and per-checker exception isolation unchanged."
+      - "No quality regression: identical battery verdict vector before/after on the same fixture; Forge test suites' pass/fail sets unchanged apart from pre-existing environment failures (proven identical on pristine main)."
+      - "Post-repair early exit: peer review skipped if and only if the post-repair re-verification is fully green; it still runs whenever the battery stays red."
+      - "Before/after timings reported in five states; server end-to-end A/B on the standard goal explicitly marked pending while the bridge is degraded (staging preserved on Server 1 /var/tmp/frg007)."
+    evidence:
+      - "Implemented: VerificationEngine._run_checkers (two-phase: concurrent read-only phase, serial executor phase, order-preserving results) used by both verify and baseline capture; _EXECUTING_CHECKERS = {TestChecker, RuntimeChecker, BrowserChecker} -- executors stay serial because executing a generated program can materialise files in the workspace (TASK-REL-028 shape) and the Project Source Integrity evidence still catches any mid-battery mutation exactly as under the serial loop."
+      - "Implemented: OrchestratorCore._verify_and_repair returns the green post-repair report immediately, skipping AgentCoordinator.review_and_repair; the still-red path is byte-identical to before."
+      - "Tested (local, ti-venv, sandbox): Forge/tests/unit/test_frg007_build_time.py 5/5 pass -- evidence order + exception isolation, statics overlap while executors stay serial and last (timing-asserted), real battery still 11/11 on a clean workspace, early exit fires iff post-repair battery green."
+      - "Tested (local A/B, same fixture = deterministic synthesis of the standard string-utils goal, 4 files): pristine serial battery wall 8.88s vs optimised 5.71s; per-checker verdict vector IDENTICAL (10/11 both; sole failure Ruff on the fixture under both). Static checkers' serial sum ~1.12s collapses to ~the slowest static (Ruff ~0.63s). Pytest subprocess dominates small-project batteries (4.9-7.7s, contention-variable) and is deliberately untouched -- it is the test evidence itself."
+      - "Regression sweep (local): test_regression_checker + test_build_checker_missing_workspace + test_task_forge_002_truthful_completion + test_gate_blocked_rel026 + test_repair = 16/16 pass. test_recovery.py::test_patch_applicator_and_recovery_flow fails IDENTICALLY on pristine main (DatabaseManager db_path TypeError, pre-existing environment drift) -- not a regression."
+      - "NOT YET DONE (honest state): server end-to-end before/after on Server 1 is pending -- the bridge was degraded for most of this session (initialize timeouts under Wave-5 load); a baseline tree is staged at Server 1 /var/tmp/frg007/base/ and the profiling driver is in the crew workspace (~/workspace/frg-007/profile_driver.py) for the coordinator to run when the bridge recovers. Merged / deployed / production-verified are the coordinator's steps after PR review."
+    blockers: []
+    next_action: "Coordinator: review + merge the PR (branch claude/task-frg-007-build-time), insert this entry into WORK_BOARD.yaml after TASK-VOI-009 (it is delivered as board_entry.yaml in the crew workspace and summarised in the completion comment, per the TASK-STR-RD-008 precedent, to avoid a stale-base board edit), then run the staged Server-1 end-to-end A/B (upload ~/workspace/frg-007/profile_driver.py, run it against /var/tmp/frg007/base/ and the deployed tree) to production-verify the timings."
+  - id: "TASK-INF-003-W5"
+    title: "Wave 5: Inference key-pool health monitor — per-key live/dead/exhausted probing, third-party pool separate, fingerprints only"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/ta***REDACTED***"
+    pr: null  # set by coordinator from the PR created at delivery
+    evidence:
+      - "Claim: issue #35 comment 6891480367 (2026-11-15)."
+      - "18/18 tests passed (bucket separation, classification matrix, fake-transport probe, no-key-leak assertions)."
+      - "Live sweep on Server 1 against deployed Inference .env (2026-11-15): 45 keys probed, 45 live, 0 dead/exhausted/transient/unknown, no cross-pool duplicates; pools gemini 11+4tp, groq 14+1tp, openrouter 14+1tp; sweep exit 0."
+    next_action: "Coordinator: merge the code PR, set pr number here, then run python -m app.core.key_pool_health on Server 1 post-deploy and mark VERIFIED."
+  - id: TASK-SEN-006
+    title: "Sentinel alerting-path drill: approval alerts never reached a human (Telegram credentials invisible to the process) — dispatcher credential resolution fixed"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/ta***REDACTED***"
+    pr: <this PR>
+    defect: "Live drill 2026-11-15 13:40 IST: synthetic approval request appr_1d6ad2cccd50 returned 200/PENDING but the dispatcher logged [SENTINEL APPROVAL QUEUED] — Telegram credentials invisible to the Sentinel process (not in the unit environment, not in Sentinel/.env; the fleet pair sits in <repo>/.env which nothing loads). Alert landed only in the in-memory pending dict + journal. Prior 14 days of journal: zero approval dispatches. Detection-side AlertEngine alerts are in-memory only and never dispatched (separate gap)."
+    evidence:
+      - "Drill: POST /api/v1/approvals/request 13:40:00 IST -> 200 in 1.96s; journal 13:40:02 IST [SENTINEL APPROVAL QUEUED]; pending list showed the request; denied at cleanup. No Telegram/Discord delivery occurred."
+      - "Fix PR: dispatcher resolves credentials env-first, then fleet .env candidates ($SENTINEL_ENV_FILE, ./.env, Sentinel/.env, <repo>/.env). 6 new tests pass locally; production-layout simulation passes."
+    next_action: "Coordinator: merge this PR, deploy Sentinel to Server 2, re-run one synthetic approval request and confirm a Telegram delivery replaces the QUEUED journal line; then mark VERIFIED. Follow-ups: (1) wire operations AlertEngine alerts into a real dispatch channel (separate task); (2) document TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID / DISCORD_WEBHOOK_URL in Sentinel/.env.example."
+  - id: "TASK-INF-007"
+    title: "Inference quota accounting: per-provider daily usage vs free-tier limits, warning before exhaustion"
+    status: "IN_REVIEW"
+    owner: "claude"
+    branch: "claude/task-inf-007"
+    pr: 314
+    evidence:
+      - "Claimed on issue #35 (comment 6891494266); PR #314 based on main b00f46fb."
+      - "NEW Inference/app/providers/quota_ledger.py: every gateway attempt recorded (provider, model, outcome, provider-reported tokens; keys only as sha256 fingerprints). Gemini per key+model per Pacific day vs 20 requests/day; Groq fleet rolling-60s vs 8,000 tokens/minute; warning at 80%; a provider 429 marks a Gemini bucket exhausted until the Pacific-midnight reset; fleet exhausted only when every model has every key exhausted."
+      - "Persistence: append-only JSONL per Pacific day under Inference/app/.data/ (no SQLite per house rule), replayed on startup; GET /v1/quota serves limits, buckets, warnings, reset countdown, coverage and an honesty block. Gateway hooks cover execute(), the fallback ladder, the local tier and stream(); accounting can never break serving."
+      - "Tests: Inference/tests/test_quota_ledger.py 20/20 green; neighbouring gateway suites 47/47 green."
+    next_action: "Coordinator: merge PR #314, deploy Inference to Server 1, production-verify GET /v1/quota; then wire snapshot warnings into the proactive/briefing path."
+  - id: TASK-VYR-008
+    title: "VyralX packaging research + generator — 3 scored title/thumbnail/hook variants per video from public Shorts research (R1-R10)"
+    owner: muse_ai
+    status: IN_REVIEW
+    branch: "claude/task-vyr-008-packaging-generator"
+    pr: PRNUM
+    evidence:
+      - "Research (docs/PACKAGING_RESEARCH.md): SubSub 120,703-video title study (top Shorts titles ~49 chars; 57% of top Shorts use 1-2 emoji vs 17% of low), x20 18,000-Shorts thumbnail analysis (3-word text max, high contrast, top-two-thirds subject), vidIQ/Zebracat (50-60% of drop-off in first 3s), Galloway 3.3B-Shorts VVSA bands, 50-video hook-type test (in-media-res 85% vs no-hook 62% 3s retention). Ten findings encoded as rule ids R1-R10."
+      - "Generator (app/services/packaging_generator.py): deterministic, no network/randomness; proposes exactly 3 variants (fact_first / curiosity_gap / scale_or_story), scores 0-100 (title 40 + thumbnail 25 + hook 35) with rule citations; scores labelled research priors, NOT predicted CTR (channel has no metrics — VYR-005 autopsy VIDEO_METRICS=0 rows). Never invents facts: missing required slots fail, missing optional slots leave the variant ungenerated at 0."
+      - "Coordination: TASK-VYR-005 owns the autopsy + packaging rules (packaging.py); this task consumes their findings and composes their lints when importable (mirrored otherwise) — no duplicated autopsy, no duplicated lint ownership. Tests test_vyr008_packaging_generator.py 8/8 locally, standalone and with packaging.py present. Samples: Space/Venus curiosity_gap 76; History/Titanic scale_or_story 79 (hook 35/35); Tech/AI-exam fact_first 80."
+    next_action: "Coordinator: merge the code PR, then this board PR (fresh-main, insertion-only). Follow-up once uploads resume and a VIDEO_METRICS job exists: refit the R-rule weights on the channel's own CTR/retention data and A/B the generator's top-2 variants per video."
+  - id: TASK-REL-046
+    title: "Local staging fleet + local-first pipeline — 10-agent replica on Muse's side under production memory caps, one-command smoke gate as the pre-merge gate, collaboration docs amended (owner direction 2026-11-15: Oracle/bridge is the bottleneck; test locally, push only proven work)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ta***REDACTED***
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T15:35:00+05:30"
+    updated_at: "2026-11-15T16:10:00+05:30"
+    files:
+      - "staging/fleet_manifest.yaml"
+      - "staging/staging_fleet.py"
+      - "staging/smoke_gate.py"
+      - "staging/requirements-staging.txt"
+      - "staging/.gitignore"
+      - "staging/README.md"
+      - "staging/RESULTS_REL046.md"
+      - "docs/collaboration/LOCAL_FIRST_PIPELINE.md"
+      - "docs/collaboration/README.md (one section added)"
+      - "docs/collaboration/WORK_BOARD.yaml (this entry — delivered via the completion comment, INF-003 precedent: the ~600 KB board file cannot transit the crew sandbox; coordinator applies it as a single-entry board PR with the full task-id set diffed)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6892676297"
+    acceptance:
+      - "Staging fleet: local replica of all 10 agents from the repo, production boot recipes (deploy/setup_fleet.sh) and production memory caps (AGENTS.yaml v3.0.0), dummy credentials ONLY (every value a literal staging-dummy placeholder; production secrets never copied), health endpoints answering for every agent that can boot in the sandbox; start/stop/smoke documented in staging/README.md."
+      - "Smoke gate: one script (staging/smoke_gate.py) boots the fleet, enforces caps via a watchdog, runs health + one representative read-only probe per agent, prints a pass/fail/exempt table, exit 0 only when every non-exempt agent passes; designated the pre-merge gate in docs/collaboration/LOCAL_FIRST_PIPELINE.md."
+      - "Pipeline doc: local-first rule (build/test locally → staging smoke gate → PR → merge → Fleet CD → production probe) plus the explicit never-stageable list (live demo-trading credentials/sessions, LiveKit Cloud voice with real keys, production data volumes, owner's phone/laptop) which still needs the bridge, batched and sparingly."
+      - "Proof: the gate run once end-to-end with the real output table in staging/RESULTS_REL046.md; any agent that cannot boot in the sandbox is staging-exempt with the reason — never a faked pass."
+    evidence:
+      - "PROOF RUN (2026-11-15, main 56e28e6 tree, cap enforcement live throughout; full table in staging/RESULTS_REL046.md): 3 PASS (Inference 108M/180M, /v1/models 200; Cortex 124M/200M, probe 200; FRIDAY 189M/200M, /api/tools 200), 2 OOM-KILLED (Stratex — boots and answers health 200 but RSS peak 234 MB / steady ~199 MB vs 180 MB cap, dedicated 110 s RSS-curve diagnostic; Futuris — health 200 but ~194 MB steady vs 180 MB cap, killed in the probe phase), 5 EXEMPT (Memora, IntelX, Forge, Sentinel, VyralX — each connects to Oracle during startup and aborts when unreachable, oracledb DPY-6005; no Oracle instance exists in the sandbox). Gate exit code 1 — the fleet is honestly RED against its own gate today on two footprint findings."
+      - "An earlier full run printed 5 PASS / exit 0 and is INVALID (disclosed in RESULTS_REL046.md): a dict-mutation race crashed the watchdog thread seconds in, so caps were unenforced while Stratex 'passed' at 225 MB. Fixed (snapshot iteration + watchdog error logging) and re-run; the re-run is the proof. A leftover-process false PASS during development likewise produced three gate safety rails: pre-flight port check, post-probe liveness re-check, teardown verification."
+      - "Boot-class map is architectural and code-evidenced: lazy-pool agents (Inference, Futuris, Cortex, FRIDAY, Stratex dashboard) boot degraded against a dummy Oracle DSN on a dead local port; eager agents fail closed at startup (Memora storage/relational/session.py create_db_engine, exit 3, 'refusing to open a local SQLite fallback'). The fleet is Oracle-only by design (repo AGENTS.md); a local Oracle was considered and rejected for the sandbox (no container runtime, multi-GB image, ~1–1.5 GB free RAM)."
+      - "Staging-config fixes from the shake-out (no agent code changed): dummy DATABASE_URL fleet-wide; NO_PROXY sanitised for staging agents (the sandbox value's bracketed IPv6 literals crash httpx's proxy parser — production unaffected); PYTHONPATH mirrors production (<agent>:<repo root>, which carries the shared mesh package); FRIDAY's second src root; Stratex health path /api/v1/health; dummy Sentinel audit signing keys (Sentinel refuses to boot without one, by design)."
+      - "Environment caveat, stated in both docs: staging is Python 3.12 + system library builds vs production's 3.10 venv, so absolute RSS deltas (Stratex/Futuris over cap here, within cap in production) are footprint-risk signals with the version delta as first suspect — not proof of a production breach. Caps were NOT raised to make the table green."
+    blockers: []
+    next_action: "Coordinator: (1) apply this board entry via a single-entry board PR from fresh main (full task-id set diffed — the crew sandbox could not transit the ~600 KB board file; INF-003 precedent), (2) review and merge the TASK-REL-046 PR (staging/ + pipeline docs + collaboration README section), (3) decide the Stratex/Futuris footprint question (footprint work vs closing the Python 3.12→3.10 staging delta) as its own task, (4) the five exempt agents keep the bridge-probe path until a local Oracle or lazy-boot mode exists."
+  - id: "TASK-INT-005"
+    title: "IntelX fact-check sampling — measured accuracy of stored research claims"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-int-005-fact-check"
+    pr: null
+    merge_note: "Census audit complete (PR open, coordinator merges): all 39 findings stored in IntelX production live_research_runs verified (35 CLAIMs + 4 NON_CLAIM boilerplate). Accuracy 65.7% VERIFIED (23/35 claims; 10 PARTIAL, 2 UNVERIFIABLE, 0 UNSUPPORTED, 0 CONTRADICTED) — BELOW the pre-declared >=90% standard; zero fabricated facts found (all defects are citation hygiene). Deliverables: IntelX/docs/RESULTS_INT-005_FACT_CHECK.md + IntelX/docs/results_int-005_fact_check.json. Population caveat: 8/10 runs are crew test probes (REL-038/INT-003, 2026-11-14/15); production claims/evidence tables are empty."
+    blockers: []
+    next_action: "Coordinator: merge the audit PR, then dispatch the verification-pass follow-up specified in RESULTS section 6 (verbatim quote gate, statement-coverage check, degraded-mode boilerplate filter, visible corroboration flag, re-audit hook). Also: live-browser re-check of the Northwell page (2 UNVERIFIABLE claims) and the TechTarget/USENIX quotes (2 PARTIALs)."
+  - id: TASK-FRG-011
+    title: "Forge verdict-surface consistency: one authoritative verdict derivation (Forge/app/verification/verdict.py) settled at finalization via OrchestratorCore.apply_final_verdict and stamped on task record + verification manifest; delegate execute_now/status/verify and read surfaces derive from it (stricter verdict wins; battery PARTIAL never surfaces as SUCCESS; FAILED reconciles to SUCCESS only when the failure is positively identified as superseded gate verdicts — REL-019 unexplained-failure guard preserved; FORGE-002 demotion preserved)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: "#407"
+    evidence: "PR #407 CI green (8 check runs: 7 success, 1 skipped, 0 failures), head 3b1fd31c0d34 parented on main f313c31f335b; base verified by blob SHA at the PR base (orchestrator 5c2edaa6b023, delegate 88eba62cffd0, evidence b0c0c4505c93 identical to validated base 99ba9da83d0e; both new files absent). Divergence reproduced on pristine main with a standalone driver (R5 shape: gate-latched FAILED + final battery 11/11 all_passed -> store FAILED, status endpoint FAILED embedding an all_passed/PASSED manifest). New suite Forge/tests/test_frg011_verdict_consistency.py 9/9 on the fix tree, collection-errors on main; neighbour batch 71/71; full Forge suite excl. integration failure sets byte-identical fix-tree vs pristine main (100 pre-existing sandbox-env failures both sides). Claim comment 6894711637; completion comment is this one."
+    next_action: "Merge PR #407 -> Fleet CD -> post-deploy drill on Server 1: run one delegate build whose in-graph gate fails transiently but whose final battery passes (R5 shape) and confirm delegate response, status endpoint and task record all read SUCCESS with the gate named in verdict_superseded; then flip VERIFIED. Residuals (advisory CLI/delivery battery re-runs for display; legacy unstamped records) documented in the completion comment."
+  - id: TASK-FRD-006
+    title: "Stop FRIDAY peer-escalation broadcasting memory_recall/source_repair to peers that cannot serve them"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frd-006
+    pr: 411
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6895109264
+    summary: "ReflexBrain peer escalation now routes by PeerContract.declared_actions: memory_recall only to Memora (sole declarer), source_repair only to declaring peers (none today, so the fault stays local and surfaces unrepaired instead of broadcasting). Skipped peers are reported with reasons; Cortex untouched; escalation via verified receipts preserved for declared actions. Fail-on-main 15 / pass-on-fix 30/30; neighbours 159 passed (2 pre-existing sandbox failures, identical on main)."
+    next_action: "Merge-runner: merge PR #411 on green CI. Post-deploy (coordinator): the next unrepaired FRIDAY fault episode should produce ZERO POST /v1/task/execute 403s in Cortex's journal (and, once COR-009's PR #406 is deployed, zero task_execute_rejected lines for memory_recall/source_repair) -> flip VERIFIED. Follow-up candidate: align the memory_recall action name with Memora's served vocabulary (recall)."
+    files:
+      - FRIDAY/src/friday/cognition/assistance.py
+      - FRIDAY/src/friday/cognition/mesh.py
+      - FRIDAY/src/friday/cognition/reflex.py
+      - FRIDAY/tests/test_fleet_memory_recall.py
+      - FRIDAY/tests/test_frd006_peer_routing.py
+      - FRIDAY/tests/test_reflex_asks_for_help.py
+  - id: TASK-VYR-010
+    title: "VyralX publish-priority model — ranks the ready pool (29 unlisted + 17 upload-failed) from stored production data so the strongest videos publish first when the owner's YouTube re-auth lands"
+    owner: muse_ai
+    status: IN_PROGRESS
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/ta***REDACTED***"
+    pr: 335
+    evidence:
+      - "Claim: GitHub issue #35 comment 6892002123 by Muse (TASK-VYR-010 crew) before any editing. READ-ONLY against production (SELECT probes only); nothing uploaded, published, or privacy-flipped."
+      - "MODEL (VyralX/app/services/publish_priority.py, stdlib-only, model vyr010-1): five stated-weight metadata components — duration_fit 0.30, title_strength 0.30 (TASK-VYR-005 PACKAGING rules as scores), source_signal 0.20 (labelled proxy: the source's virality was never recorded, only its title markers are read), format_fit 0.10, freshness 0.10 (narrow tiebreak) — renormalised over present components; engagement component (views/likes, weight 0.35) implemented but INACTIVE for this pool. Deterministic; missing inputs reported per row, never invented."
+      - "DATA HONESTY (own read-only SELECT probe, VyralX production DB on Server 2, 2026-11-15; confirms TASK-VYR-005): VIDEO_METRICS = 0 rows, CONTENT_PACKS = 0 rows, publish_jobs = 46, trend_score 0.0 / trend_query NULL / trend_source_video_id NULL for all 46, exactly ONE distinct SOURCES licence (the blanket string) x46. There is NO performance data — the ranking is a heuristic ordering, NOT a performance prediction; stated in the module docstring, docs/PUBLISH_PRIORITY.md, and every output row (METRICS_NO_DATA flag)."
+      - "FLAGS: all 46 rows carry HOLD_PROVENANCE (blanket licence the VYR-005 prepublish checklist rejects — ranking orders the queue, it does not clear the hold) and SYNC_UNVERIFIED (all legacy renders predate the VYR-003 sync fix; no per-video sync measurement stored); the 17 upload-failed rows carry NOT_UPLOADED."
+      - "RANKING (full 46-row table with per-component breakdown in VyralX/docs/PUBLISH_PRIORITY.md; exact input committed as VyralX/docs/publish_priority_input_2026-11-15.json): #1 job 61 (85.5), #2 job 1 (85.0), #3 job 661 (84.8, not uploaded), #4 job 301 (84.4), #5 job 641 (84.0, not uploaded); bottom job 581 (68.4). Scores cluster 68.4-85.5 (formula-identical pool) — order is the deliverable, adjacent ranks are effectively tied."
+      - "TESTS: VyralX/tests/test_vyr010_publish_priority.py — 15 tests, all pass locally (manual runner; sandbox python tempfile is broken in this environment — real pytest runs in CI). Shipped via the git-data API (local git writes are EPERM-blocked in the crew sandbox, same as TASK-STR-RD-008); branch built on fresh main, board id-set diffed (only TASK-VYR-010 added)."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #335 (code+docs) and the board PR, then flip to VERIFIED. NOT deployed (library + docs; reaches production with the next VyralX deploy). Follow-ups: the ranking becomes actionable only when (1) the owner re-auths YouTube OAuth + a valid Data API key exists (deferred owner actions, carried in the daily briefing) and (2) per-source provenance is resolved for whichever legacy videos are kept — most of this pool is expected to retire under the researched-lane direction; (3) once VIDEO_METRICS populates, re-validate the heuristic against real outcomes or replace it."
+  - id: "TASK-INT-010"
+    title: "IntelX persists nothing to the canonical research store: root-cause and fix"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-int-010"
+    pr: "https://github.com/surendra2304/FRIDAY-Universe/pull/365"
+    merge_note: null
+    milestone: "Wave 5 (owner parallelism directive 2026-11-15)"
+    files:
+      - "IntelX/intelx/db/models.py"
+      - "IntelX/intelx/db/repos.py"
+      - "IntelX/intelx/agents/retriever.py"
+      - "IntelX/tests/test_int010_canonical_store.py"
+    acceptance:
+      - "Root cause of the seven empty canonical tables established with deployed-store and journal evidence, classified (never-called / silently-failing / wrong-store / by-design)."
+      - "Persistence-layer defects that would break the canonical path on Oracle are repaired with fail-on-main tests."
+      - "Retire-vs-wire recommendation delivered with the smallest wiring change specified; INT-008 checker implications addressed."
+    evidence:
+      - "Claim: issue #35 comment 6893630695."
+      - "INT-008 census (deployed settings, Server 1): 0 rows in research_runs/sources/documents/chunks/claims/evidence/findings; live_research_runs holds the live route's runs (9 crew-probe rows per INT-009)."
+      - "Journal 2026-11-15 (IntelX.service, 300 lines): 10x 'live research persisted' (SUCCESS/DEGRADED), zero /v1/research/jobs traffic, zero ORA/TypeError lines."
+      - "Code trace: only POST /v1/research/jobs creates classic runs (no production caller); embedded worker gated off in production (RUN_EMBEDDED_WORKER default None -> not is_production()); friday-mesh endpoint bypasses DB persistence by its own docstring."
+      - "Latent defects: 15 classic-model columns on stock JSON (Oracle read TypeError, REL-038 precedent) and retriever CLOB-equality on Source.location; both repaired in this PR."
+      - "Tests: test_int010_canonical_store.py 4/4 pass on fix; 3 fail on unpatched tree as designed (CLOB semantics test passes on both — Oracle-only failure, disclosed). Neighbour ring 25 passed / 0 failed combined (20 sandbox setup errors); clean rerun of affected files 20 passed / 0 errors."
+      - "PR #365 verified after ship: 4 files (models.py +44/-38, repos.py +25/-0, retriever.py +4/-2, new test file +195), base main e102db0a."
+    blockers: []
+    next_action: "Coordinator: merge via queue; decide Option W (wire projection after INT-009 PR #355) vs Option R (staged retirement); if W, dispatch as a follow-up task — the projection seam and Degradations surfacing are specified in the INT-010 completion comment."
+  - id: TASK-FUT-011
+    title: "Self-graded backtest outcomes census + annotation: production outcomes table is EMPTY (zero tainted rows ever persisted — nightly job dies on missing statsforecast); guarded marker script shipped as the standing guard for the pre-PR-#362 window"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ta***REDACTED***
+    pr: 370
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T17:00:00+05:30"
+    updated_at: "2026-11-15T17:25:00+05:30"
+    files:
+      - "Futuris/scripts/annotate_self_graded_outcomes.py"
+      - "Futuris/tests/evaluation/test_annotate_self_graded_outcomes.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893755948"
+    defect: "TASK-FUT-010 fixed the BacktestEngine forecast-as-actual substitution (PR #362) but left its historical product unexamined: any production outcomes rows written pre-fix under resolution_rule_version 'backtest:v1.0' with observed_value == the linked forecast's prediction are fabricated ground truth that every calibration/accuracy surface over the outcomes table inherits. FUT-010 ran no production query, so the count was unknown and the coordinator decision (RD-010 precedent) was: enumerate, then MARK — never delete, never rewrite observed_value."
+    acceptance:
+      - "Read-only production census with the exact write-path signature (version 'backtest:v1.0' AND observed_value == round(prediction, 2)), reporting total/tainted/near-miss counts, date range, targets, horizons and writer attribution — or an explicit UNVERIFIED with the query pack if access fails. No invented counts."
+      - "Every reader of the outcomes table identified with file/line evidence, and each reader's headline figure stated as-is AND with tainted rows excluded."
+      - "Annotation mechanism is non-destructive (ambiguity_note marker; observed_value untouchable), shipped as an isolated-branch PR plus a guarded, idempotent, dry-run-first migration script with the verified row-id set as its baseline; the script is NOT executed against production by the crew."
+    evidence:
+      - "CENSUS (2026-11-15, Server 1, deployed app's own session factory, SELECT-only): total outcomes 0; backtest:v1.0 rows 0; tainted 0; near-miss 0; forecasts 11 (API/delegation path, 2026-11-14, none resolved); schema = 12 tables, OUTCOMES the only outcome store, EVALUATION_RUNS also 0."
+      - "ROOT CAUSE of the empty table (journal, Server 1): backtest_nightly_job started 2026-11-15 02:00:00 IST and crashed 02:01:27 with StatsForecastUnavailableError (statsforecast not importable) inside ForecastEngine.orchestrate (core/engine.py:453 -> models/adapters.py:59), before persisting anything. CLI backtest never persists (BacktestEngine() with no repositories, cli.py); app-startup seed passes backtest_days=0. Nothing deletes outcome rows, so an empty table proves no self-graded row was ever persisted in this store."
+      - "LIVE CORROBORATION: GET /futuris/v1/evaluation/calibration returned sample_count 0, data_freshness insufficient_data, ECE 0.0 on 2026-11-15."
+      - "READER MAP: evaluation.py:45 (calibration), friday.py:1235 (calibration report), friday.py:1124 (resolve-time metrics), market.py:152 (meta-confidence), market.py:623 (market accuracy), infra/scheduler.py:343 (hourly calibration sweep driving overconfidence penalty), forecasts.py:538 (single-outcome fetch). Drift monitor is in-process only (scheduler.py:280-284), not a table reader. With the tainted set empty, every surface's as-is figure equals its exclusion figure (enumerated in the completion comment)."
+      - "GUARD SHIPPED (PR #370, 2 files, additions only, base e102db0a): Futuris/scripts/annotate_self_graded_outcomes.py — live signature re-derivation, dry-run default, --apply appends TAINT[TASK-FUT-011] marker to ambiguity_note only, idempotent, post-apply verification asserts observed_value unchanged; dry-run executed against production: 0 rows, matches census baseline, exit 0, no writes. Tests Futuris/tests/evaluation/test_annotate_self_graded_outcomes.py 10/10 pass. Rationale: the deployed engine is still pre-fix (PR #362 undeployed); only the statsforecast crash currently prevents self-graded writes, so the guard covers the window between a statsforecast provisioning and the PR #362 deploy."
+    next_action: "Coordinator: merge PR #370 on green CI -> board VERIFIED (census evidence is production-grade; no annotation execution is owed — zero rows). Standing instruction: if statsforecast is provisioned before PR #362 deploys, run Futuris/scripts/annotate_self_graded_outcomes.py dry-run after the first successful nightly backtest, then --apply --expected-count <dry-run count> if rows appear."
+  - id: TASK-SEN-013
+    title: "Direct-port exposure: consumer map + hardening proposal (READ-ONLY) — follow-up to TASK-SEN-002 F-01/F-12"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ta***REDACTED***
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T17:15:00+05:30"
+    updated_at: "2026-11-15T18:00:00+05:30"
+    files:
+      - "docs/TASK-SEN-013_FINDINGS.md (full report, via PR #372)"
+      - "docs/collaboration/WORK_BOARD.yaml (this entry, spliced by coordinator from the completion comment)"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893677520"
+    defect: "SEN-002 F-01/F-12 mapped and dispositioned (full report in docs/TASK-SEN-013_FINDINGS.md). F-01: FRIDAY :10000's public exposure serves NO configured consumer — repo code, live .env files on both servers, Caddy live config, units/timers/cron all use 127.0.0.1, 10.0.0.121 (VPC) or Caddy HTTPS; website/laptop/phone consumers are external-legitimate VIA CADDY only. The direct-vs-proxied split of public-IP log lines is UNVERIFIABLE from existing logs (uvicorn XFF trust; Caddy has no access logging) — P9 fixes visibility. F-12: 8081 = FRIDAY-Voice LiveKit worker health port (production); 8089 = orphaned VOI-009 drill process (session scope, deleted cwd, safe to terminate); 8765 = oracle-cloud-mcp gateway (root, token-gated, Dokploy-era; NOT Docker — the docker_gwbridge ufw rule is stale, interface DOWN; downstreams dead; dormancy confirmation owed before any change). rpcbind: ZERO consumers on both hosts. Docker/Swarm: swarm inactive, 0 containers both hosts, units disabled-but-active. S2 ufw rule 1 allows ANY port from the whole VPC (SEN-002 S7 gap closed). CORRECTION to SEN-002's rebind advice: S2 agents call S1 agents via 10.0.0.121 by live config, so loopback-only binds on S1 would break cross-server mesh calls — P2 uses VPC bind + repointing."
+    evidence:
+      - "CONSUMER MAP (repo @ b34e2d34 + live probes 2026-11-15 ~16:47-17:50 IST, all read-only): Caddy live config proxies /friday* + root to 127.0.0.1:10000; voice brain_bridge + preflight use 127.0.0.1:10000; S1 live .env tokens: 127.0.0.1:10000 x7, S2 live .env tokens: 10.0.0.121:10000 in each of Cortex/Sentinel/VyralX; ZERO public-IP or public-hostname :10000 references in any live .env on either server; website apiBase = window.location.origin (Caddy); laptop client default wss://friday-universe.duckdns.org/friday/... (Caddy); phone bridge (PR #303, unmerged) https://friday-universe.duckdns.org/friday (Caddy); bridge MCP code contains zero :10000 targets and held zero established :10000 connections at probe time."
+      - "FRIDAY JOURNAL (~21.8h window): 127.0.0.1 x637 (327 health, 213 POST /api/chat, 20 livekit token); Cloudflare-egress 104.29.200.107 x1,838 with the six-endpoint UI polling signature (website via Caddy); ~25-IP public long tail (614x 200) indistinguishable between Caddy-proxied visitors and direct callers because uvicorn trusts XFF from 127.0.0.1 and Caddy has no access-log directive (9 proxied error entries in Caddy's journal prove some log traffic is Caddy-borne; no census possible). Connection snapshots: zero established :10000 connections on S1 (~16:49 IST) and zero on any S2 agent port (~17:22 IST)."
+      - "LISTENERS (ss + /proc + systemctl, live): 8081 pid 2564631 livekit_worker.py start, FRIDAY-Voice.service; 8089 pid 2544072 /tmp/voi009/drill_launch.py, etime 3h12m, cwd deleted, session-15952.scope (not a service); 8765 pid 1550481 /usr/bin/python3 /opt/oracle_mcp/server.py, oracle-cloud-mcp.service, root, up 24d15h, token-gated fail-closed, repo source scripts/oracle_cloud_mcp.py (HOST 0.0.0.0 PORT 8765), designed Traefik ingress gone, Dokploy/ngrok downstreams dead, zero established connections."
+      - "RPCBIND/DOCKER (both hosts, live): rpcbind.service+socket enabled+active; /etc/exports empty, no NFS fstab/mounts, nfs-common masked, reverse dependencies = multi-user.target only, zero repo references. docker+containerd disabled-but-active; swarm inactive; containers 0/0; images S1 = dokploy-mcp + traefik leftovers, S2 = none; networks default only; docker0 + docker_gwbridge interfaces DOWN on S1 (the 8765-on-gwbridge ufw rule is stale twice over). S2 ufw captured live: rule 1 = Anywhere ALLOW IN from 10.0.0.0/16; Swarm rules redundant under it."
+      - "PROPOSAL P1-P10 in the findings doc, ordered by risk-reduction vs breakage-risk, each with exact change + consumer-map evidence + breakage analysis + verification probe. NOT verified: fresh external probe from the crew sandbox (egress cannot reach S1; SEN-002's calibrated external series stands, and the 10000 ALLOW ufw rules were confirmed still live today); oracle-mcp consumer liveness (human confirmation, P6); the 7 FRIDAY-log hits from S1's own public IP (consumer unidentified, immaterial)."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #372. Then schedule the change window: P1 (close OCI + ufw ingress for S1:10000; announce on this issue first), P3 (terminate drill leftover pid 2544072 if still running), P4 (disable rpcbind both hosts), P5 (remove Swarm ufw rules) as one low-risk batch; P2 (agent rebind VPC + repoint consumers; narrow S2 ufw rule 1) as a separate planned change; P6 only after a collaborator confirms the oracle-cloud-mcp gateway (8765) is unused; P9/P10 with the next Caddy/deploy-docs touch."
+  - id: TASK-COR-009
+    title: "Cortex /v1/task/execute 403 wall — caller/auth investigation (FRIDAY reflex broadcast vs property-scope gate) + rejection attribution logging"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-009
+    prs: [406]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T18:35:00+05:30"
+    updated_at: "2026-11-15T19:10:00+05:30"
+    files:
+      - "Cortex/apps/api/src/cortex_api/friday_router.py"
+      - "Cortex/apps/api/src/cortex_api/auth.py"
+      - "Cortex/tests/unit/test_task_execute_rejection_attribution.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6894723475"
+    defect: "COR-005/-007 found POST /v1/task/execute took 179 calls, ALL 403, gate unknown. COR-009 verdict: caller is FRIDAY's ReflexBrain peer-escalation (reflex.py ~L994/L1005) broadcasting generic actions memory_recall + source_repair to every mesh peer via AssistanceBroker; Cortex authenticates FRIDAY successfully every time (retained journal: 113 auth-success lines, 0 invalid-key warnings, 54 execute POSTs 100% 403 all from 10.0.0.121, ~27 fault episodes x 2 actions, Forge memory_recall receipts at identical seconds) and its property-scope gate (friday_router.py process_task_envelope) rejects both actions — neither is a website operation on the default property site_storefront. Not an auth defect; not dead callers. Cortex-side defect: the gates logged nothing, so the 403 was unattributable from Cortex's logs."
+    acceptance:
+      - "403 traffic characterised from the Server 2 journal + deployed code (sha-verified == main): caller FRIDAY.service/ReflexBrain on Server 1, fault-driven cadence ~27 episodes in the retained window, actions memory_recall + source_repair, valid FRIDAY service key, gate = property-scope validation in process_task_envelope (OperationNotAllowedError -> 403); crew probes distinguished (none in this traffic)."
+      - "Credential matrix reproduced locally on main's code: none -> 401; wrong/other-agent key -> 403 Invalid FRIDAY service token; Bearer-only and public-key classes -> 401; valid key + memory_recall/source_repair -> 403 scope gate (production signature); valid key + health_summary -> 200."
+      - "PR #406: structured task_execute_rejected WARNINGs at the scope/approval/Sentinel gates in process_task_envelope + client/path attribution in verify_friday_token's invalid-key warning. Wire behaviour unchanged. New tests 6/6 pass on the fix, 4 fail / 2 pass (guards) on pristine main; neighbour ring 32/32; full unit sweep 471 passed with the same 10 pre-existing failures as pristine main (zero regressions)."
+    evidence:
+      - "Journal census (Server 2, retained window 2026-11-14 20:00 -> 2026-11-15 ~18:45 IST): 54x POST /v1/task/execute 403 — the only 403s on the service — all from 10.0.0.121; 113 auth-success lines; 0 invalid-key warnings; per-request auth-success immediately precedes each sampled 403 (13:12-13:13 burst, 18:11 pair)."
+      - "Caller cross-proof: Forge journal (Server 1) 'Received action memory_recall from friday' x27 at matching seconds; FRIDAY code path reflex.py AssistanceBroker escalation -> assistance.py recall_from_peers (action memory_recall to all peers) + request_help_from_peers (action = capability 'source_repair') -> mesh.py PeerContract auth_style 'cortex' (X-Friday-Api-Key only)."
+      - "Local reproduction + test outputs preserved in the crew workspace (~/workspace/cor-009/: repro.py, repro_main.txt, repro_fixed.txt, failed_fixed.txt); deployed files sha256 == main for auth.py/friday_router.py/main.py/web_property.py."
+    blockers: []
+    next_action: "Merge-runner: merge PR #406 on green CI. Post-deploy (coordinator): next FRIDAY fault episode should show task_execute_rejected gate=property_scope lines in Cortex's journal -> flip VERIFIED. FRIDAY-lane follow-up (separate task): assistance.py should not broadcast memory_recall/source_repair to Cortex (memory questions only to Memora; source_repair only to peers that can repair source) — until then ~2 attributed 403s per unrepaired FRIDAY fault are expected and correct."
+  - id: TASK-SEN-016
+    title: "Network hardening phase 2: P2 (VPC binding + S2 rule narrowing) + P9 (Caddy access logging) + tcp/3000 OCI residue"
+    status: VERIFIED
+    owner: muse_ai
+    evidence: "Completion comment on issue #35 (this comment): OCI tcp/3000 rule removed (snapshot /home/ubuntu/sen016_oci_rollback.json on S2; read-back byte-identical otherwise); Caddy access logging live (/var/log/caddy/friday-access.log, JSON, 10mb x5/168h rotation; entries verified; repo mirror PR #385); P2 bind review = all 10 agents documented exceptions (9x uvicorn single --host + Stratex Werkzeug single host; verified loopback consumers for every agent incl. Caddy 127.0.0.1 upstreams and S2 mutual .env entries) — zero rebinds, zero restarts; S2 ufw rule 1 (Anywhere from 10.0.0.0/16) replaced by 8008/8009/8010/8011 tcp from 10.0.0.121 only, auto-rollback armed and cancelled unused, fresh-bridge + mesh + Caddy-route verification all 200, watcher success both hosts. 8765/8081 untouched (same PIDs)."
+    next_action: "Coordinator: flip to VERIFIED on read-back; merge PR #385. Follow-up candidates: delete S2's stale Swarm ufw trio (2377/7946/4789) for symmetry with S1; revisit P2 rebinds only if a launcher gains dual-bind support or loopback consumers are repointed."
+    files:
+      - deploy/Caddyfile
+  - id: TASK-SEN-015
+    title: "Execute low-risk network-hardening window P1+P3+P4+P5 (from TASK-SEN-013)"
+    status: VERIFIED
+    owner: muse_ai
+    evidence: "Completion comment on issue #35 (this comment): P3 drill PID 2544072 terminated, 8089 free; P1 OCI tcp/10000 rule removed (snapshot /home/ubuntu/sen015_oci_rollback.json on S2) + S1 ufw 10000 v4/v6 rules deleted, public probe 200 -> timeout, Caddy/mesh/voice all 200; P4 rpcbind masked+inactive both hosts, :111 closed, journals clean; P5 five stale S1 ufw rules (2377/7946/4789 + docker_gwbridge v4/v6) deleted, diff-verified, docker swarm inactive 0 containers. 8765 dormancy question posted #issuecomment-6893986337; 8765 listener NOT touched."
+    next_action: "Coordinator: flip to VERIFIED on read-back. Sequenced follow-ups remain: P2 (VPC bind + S2 ufw rule-1 narrowing), P9 (Caddy access logging), P6 (8765 retire/bind after dormancy replies), and a new small item for the OCI tcp/3000 public rule observed during P1."
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-SEN-017
+    title: "Micro-cleanup: remove Server 2's stale Docker/Swarm ufw rules (2377/tcp, 7946, 4789/udp from 10.0.0.0/16)"
+    status: VERIFIED
+    owner: muse_ai
+    evidence: "Completion comment on issue #35 (this comment): S2 ufw 9 -> 6 rules; deleted exactly 2377/tcp, 7946, 4789/udp (all ALLOW IN from 10.0.0.0/16, v4 only) after re-verifying no listeners on those ports, Swarm.LocalNodeState=inactive, 0 containers. Before/after captures on S2 (/home/ubuntu/sen017_ufw_before.txt, sen017_ufw_after.txt); diff = only the intended deletions, SEN-016 mesh rules byte-identical. Post: S2 local health 8008/8009/8010 200, Caddy routes /sentinel|/cortex|/vyralx/health 200, S1->S2 mesh 200 + :8011 open, fleet-health-watcher post-change run Result=success (2026-11-15 18:09 IST). Zero rollbacks."
+    next_action: "Coordinator: flip to VERIFIED on read-back. No follow-up: stale Swarm ufw rules now removed on both hosts (S1 via TASK-SEN-015, S2 via this task)."
+    files:
+      - docs/collaboration/WORK_BOARD.yaml
+  - id: TASK-FRG-003
+    title: "Forge build reliability round 2: 5-goal acceptance battery, grounded test synthesis, sys.modules impersonation guard, unparseable-module regeneration"
+    status: VERIFIED
+    owner: muse_ai
+    pr: "#344 (merged 1bd472dd)"
+    evidence: "Pre-fix battery 0/5 SUCCESS (3 proven failure modes: invented test contracts R1/R2, phantom-module fabrication R3/R5, unrecoverable unparseable module R4). Post-fix verbatim re-runs: 1/5 full SUCCESS (R2 11/11), 3 PARTIAL (R1 one-space header assertion; R3 honest FAILED with fabrication eliminated, zero sys.modules; R4 drill: sabotage healed by the new regenerate route, Forge journal 2026-11-15 17:25:48 IST, then honest semantic failures 33/41), 1 FAILED-with-green-deliverable (R5: battery 11/11 all_passed + repro 13/13, state FAILED on the in-graph gate — verdict divergence). Deployed fingerprints verified on Server 1. Regression suite Forge/tests/test_frg003_build_reliability.py: 10F/2P on main, 12/12 on fix."
+    next_action: "Two follow-ups: (1) module-completeness gate (goal/architect-named modules must exist as real files before the tester gate; mandatory create-route coverage for omissions) — R3/R2/R4 layouts prove the gap; (2) verdict-surface consistency task (in-graph gate vs final battery vs task store vs delegate response — 3 divergence instances in this battery, incl. a green deliverable branded FAILED in R5)."
+  - id: TASK-VYR-011
+    title: "VyralX lane-2 source catalogue — stocked inventory of history / did-you-know footage (Universal Newsreels + Prelinger Archives via Internet Archive, Wikimedia Commons, Library of Congress) with per-clip licence/provenance, measured duration + resolution and topic tags, stored where the TASK-VYR-004 remix pipeline consumes it"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/ta***REDACTED***"
+    pr: 389
+    defect: "TASK-VYR-004 built the remix pipeline but VyralX had no stocked shelf of lane-2 (history / did-you-know) footage — the same gap TASK-VYR-006 closed for lane 1: without a persistent, rights-verified inventory there was nothing to plan lane-2 Shorts against."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6893968920 by Muse (TASK-VYR-011 crew) before any editing; PR #389 is the only PR on branch claude/ta***REDACTED***; completion comment posted on issue #35."
+      - "CATALOGUE (PR #389): VyralX/app/data/source_catalog_lane2.json — 61 clips, 385.1 minutes: Internet Archive 42 (Universal Newsreels + Prelinger Archives), Wikimedia Commons 13, Library of Congress 6. Rights gate identical to the remix flow's: public domain / CC0 / CC BY / CC BY-SA only (this build: 59 public domain + 2 CC BY 3.0), every record carrying license_name + permission_reference + rights_basis + provenance page_url. Measured duration + resolution on every record with measurement_source labelled (archive_metadata / commons_metadata / loc_metadata); 26 clips HD or better (>=1280 wide), all >=640 wide and 20-1200s. Harvest accounting (builder prints per-gate counts): 64 accepted pre-dedupe; rejected — duration 15, width 9, curated out 3 (atrocity / home-movie / drone patterns named in the builder), title-stem duplicate scans removed 3, lane-1 overlap 0, licence rejections 0 (PD-focused feeds)."
+      - "LOADER + BUILDER + TESTS (PR #389): VyralX/app/services/source_catalog_lane2.py mirrors the lane-1 loader (stdlib-only; load_clips() filters; as_source_rows() row shape identical for remix_flow; catalogue_stats()). VyralX/scripts/build_lane2_catalog.py regenerates from the four feeds with the same gates. Tests: VyralX/tests/test_source_catalog_lane2.py — 7/7 PASS, run on Server 2 against a sparse clone of the PR branch itself."
+      - "SAMPLE VERIFICATION (live, from Server 2): HTTP 206 ranged GET on 6 sampled media URLs across all three platforms. ffprobe cross-checks of feed metadata: Internet Archive exact (640x480, 134.13s = record); Library of Congress width exact (1920), duration within the feed's whole-second rounding (30.87s probed vs 30.0s recorded); Wikimedia Commons widths exact on partial-file probes (854x480 AV1, 1920x1080 VP8)."
+      - "COORDINATION: TASK-VYR-004 owns the remix pipeline; this task stocks its lane-2 shelf. No uploads attempted (YouTube OAuth dead, TASK-VYR-003); nothing deployed; production untouched."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #389, then flip this entry to VERIFIED and read back. Follow-up (new task id): optionally have remix_flow discovery fall back to the lane catalogues when live adapters return few candidates."
+  - id: TASK-VYR-012
+    title: "VyralX lane-3 source catalogue — stocked inventory of tech & AI explainer footage (NASA/Wikimedia Commons/Internet Archive Prelinger) with per-clip licence/provenance, measured duration + resolution and topic tags, stored where the TASK-VYR-004 remix pipeline consumes it"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/ta***REDACTED***"
+    pr: 395
+    defect: "TASK-VYR-004 built the remix pipeline (licence gate, provenance registry, keyless discovery) and TASK-VYR-006 stocked lane-1, but VyralX had no stocked shelf of lane-3 (tech & AI explainers) footage: without a persistent, rights-verified inventory the pipeline re-discovers from zero on every run and provenance quality depends on per-run luck."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6893867639 by Muse (TASK-VYR-012 crew) before any editing (single copy verified); PR #395 is the only PR on branch claude/ta***REDACTED***."
+      - "CATALOGUE (PR #395): VyralX/app/data/source_catalog_lane3.json — 65 clips, 263.2 minutes: NASA Image & Video Library 20, Wikimedia Commons 33, Internet Archive Prelinger collection 12. Per clip: direct media source_url, provenance page_url, license_name + permission_reference + rights_basis, creator, measured duration_seconds + width/height with measurement_source labelled (ffprobe for NASA assets; platform metadata elsewhere), topic_tags, lane. Licence gate = TASK-VYR-004's exactly (CC0 / public domain / CC BY / CC BY-SA pass; NC/ND/GFDL/unknown/ARR rejected at harvest); quality gates >=640px wide, 20-1200s, topical title screen, financial/trading content excluded, no overlap with the lane-1 catalogue; 43 clips HD or better (>=1280 wide), 12 at 4K; 47 items manually excluded and named in the builder (talking heads, lectures, finished explainers, political footage, duplicate cuts, promo reels, a sex-robot product clip, cricket matches, TV-ad compilations). Sampled media URLs across all three platforms verified live (9/9 HTTP 206 ranged GET)."
+      - "LOADER + BUILDER + TESTS (PR #395): VyralX/app/services/source_catalog_lane3.py (stdlib-only; interface identical to the lane-1 loader — load_clips with tag/platform/min_duration/min_width filters; as_source_rows() maps records onto app.models.Source fields so remix_flow can register them unchanged and the rights gate sees meaningful licence + provenance on every row; catalogue_stats()). VyralX/scripts/build_lane3_catalog.py regenerates the catalogue from the three keyless feeds with the same gates (chunked resilient write for filesystems that intermittently refuse large writes). VyralX/tests/test_source_catalog_lane3.py: 8 tests, all passing against the shipped JSON in a staged tree (licence/provenance meaningfulness + pass-licence shape, measurement sanity + labelled source, id/URL uniqueness, no financial content, loader mapping, stats)."
+      - "COORDINATION: TASK-VYR-004 owns the remix pipeline; TASK-VYR-006 stocked lane-1 (PR #357), TASK-VYR-011 stocks lane-2; this task stocks lane-3. No uploads attempted (YouTube OAuth dead, TASK-VYR-003); nothing deployed — catalogue is data + loader, consumed at VyralX's next deploy."
+    blockers: []
+    next_action: "Coordinator: review/merge PR #395, then flip this entry to VERIFIED and read back. Follow-ups (new task ids): optionally have remix_flow discovery fall back to the lane catalogues when live adapters return few candidates."
+  - id: TASK-STR-RD-012
+    title: "Stratex research RD-012: order-flow proxy families from OHLCV only (windowed-CVD proxies, volume-confirmed momentum, exhaustion reversals), crypto30 at 15m/1h, judged at the running global trial count"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-012
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T12:53:51+05:30"
+    updated_at: "2026-11-15T16:03:10+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD12.md"
+      - "Stratex/rigorous_backtest/results_rd12/"
+      - "Stratex/rigorous_backtest/rd12/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890924249"
+    defect: "Owner Wave-4 directive 2026-11-15 ~12:33 IST: strategy finding never stops; any configuration passing the full bar is added to demo trading. RD-001/002/003 never tested order-flow constructions. No L2/trade-level data exists in this programme, so this round pre-declared OHLCV-only flow proxies (CLV/sign-weighted volume, windowed CVD, volume z-scores) across 4 families, 10 variants, {crypto30 15m, crypto30 1h} = 20 cells + 8 wf-select procedures = 28 trials, judged at global N = 1,792 (RD-002 final 1,557 + RD-003 declared 207 + 28). Proxies that cannot be computed identically in the live daemon (true trade-level delta, taker-buy/quote-volume CVD, infinite-history CVD) were excluded by construction as unmappable. Research only: no production code, registry or daemon changes."
+    acceptance:
+      - "Pre-declaration before first execution: formulas, grid, exits, cells and trial count frozen in declaration PR #287 (OPEN before the first cell ran; declared 2026-11-15T07:23:51Z, base main 337a1e3f)."
+      - "Sanity anchor re-verified before any RD-012 number is trusted: RD-001 ts_momentum roc42_4h cell (BTC/ETH/SOL) reproduced bit-identically (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518)."
+      - "Every declared cell evaluated and rowed (20/20 EVALUATED, none BROKEN/NO_TRADES), each counting once in the global trial counter whatever its outcome; wf-select procedures run per family x timeframe (8/8)."
+      - "RESULTS_RD12.md + results_rd12/{synthesis.json, coverage.json, wf_select.json, rows/*.json} on main via PR: per-config PASS/FAIL against the full bar and a named passer list (or zero passers stated plainly)."
+      - "Board entry VERIFIED via a fresh-main PR with the full task-id set diffed; completion comment on issue #35 leading with the passer list and the new global trial count."
+    evidence:
+      - "Declaration: PR #287 (branch claude/task-str-rd-012-declaration) OPEN before first execution; 5 files blob-verified byte-identical to local commit a0711dc8."
+      - "RESULT: zero passers of 28 trials. Best cell vol_confirmed_momentum/vcm_b @1h: 11,498 trades, expectancy -0.0084%, PF 0.9952, p = 0.5897 - no cell reaches PF 1.0. 15m momentum cells: breadth 0.000 in all six (no symbol positive). Reversal families worst (PF 0.72-0.82). All 8 wf-select procedures FAIL."
+      - "Data: Binance Vision via harness data_feed contract. 1h: RD-002 verified cache (11 symbols carry the known shared 120-bar hole). 15m: all 30 series 108,192 rows, 0 missing bars; the two independent 15m runs produced byte-identical CSV SHA-256 for all 30 series (cross-checked)."
+      - "Disclosure: sandbox exec file-write fault (EPERM, 0-byte writes) destroyed 4 fresh 15m cache CSVs mid-round; AAVE/MANA/SAND/VET were loaded via in-memory fetch from the same source, pinned by per-zip + canonical CSV SHA-256 in coverage.json and the two-run hash cross-check. Shipped rows carry per_symbol_oos reduced to 4 fields (noted in each file)."
+      - "2x-cost gate: NOT TRIGGERED for any trial - no cell reached pooled PF 1.0, and doubling strictly-adverse costs cannot flip a FAIL; no PASS exists to stress. Recorded explicitly in RESULTS_RD12.md."
+    blockers: []
+    next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-STR-RD-012 crew): zero passers; nothing forwarded to forward demo trading; the OHLCV order-flow-proxy track is closed at 15m/1h for the declared constructions. Global trial counter stands at 1,792 after this round (parallel Wave-4 rounds add theirs as they land; any future passer anywhere is re-checked at the final N by the coordinator)."
+  - id: TASK-STR-RD-016
+    title: "Stratex research round RD-016: RD-003's forex-native families (london_drive, monday_gap_fade, trend_pullback) on the TASK-STR-DATA-001 forex_cross41 panel — 12 pre-declared trials, judgement identical to RD-002/RD-003"
+    status: VERIFIED
+    owner: muse_ai
+    branch: claude/task-str-rd-016
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T15:53:21+05:30"
+    updated_at: "2026-11-15T16:45:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD16.md"
+      - "Stratex/rigorous_backtest/results_rd16/"
+      - "Stratex/rigorous_backtest/rd16/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: ""
+    defect: "RD-003's forex-native families were judged only on the majors-heavy forex28/forex12 panels and comm7. DATA-001 then provenance-verified 41 additional FX crosses/minors/exotics — the operative universe of the owner's OANDA practice account (68 FX pairs, verified) — but no strategy family had ever been honestly judged on them. Whether the FX session/gap/pullback mechanisms transfer to crosses was unknown; assuming transfer without a pre-declared, multiple-testing-corrected round would invite exactly the overfitting the programme exists to prevent."
+    acceptance:
+      - "Declaration frozen and SHA-256 hashed BEFORE any cell runs (hash in the claim comment): families, variants, cells, exit specs, the full RD-002/RD-003 promotion bar, and the Bonferroni gate at the running global counter (state the N used)."
+      - "Walk-forward / out-of-sample only, on hash-manifested data only (every series verified against DATA-001's manifests.json before use); every variant tried disclosed; UNCOVERED stated plainly where data blocks a cell."
+      - "Sanity anchor: one RD-001/RD-002 published row reproduced bit-identically through the crew's harness before any RD-016 number is trusted."
+      - "Verdict reported plainly: passers with full metrics, near-misses, total trials added to the global counter. A passer is only a CANDIDATE for the coordinator's forward-lane decision — no registration, no trading."
+    evidence:
+      - "COMPLETE 2026-11-15: ZERO of 8 cells pass the bar; ZERO near-misses (programme definition). 7 of 8 cells lose money pooled OOS net of 10 bps RT; the only positive cell (monday_gap_fade/gap_1.0 @1d: 167 trades, expectancy +0.0061%, PF 1.016, p=0.513) fails PF/trades/folds/holdout and drops to PF 0.785 at 2x costs. london_drive/drive_plain @1h: 5,052 trades, expectancy -0.1115%, PF 0.423, negative on 0/41 symbols positive — decisively rejected on crosses. trend_pullback loses at both timeframes (PF 0.50-0.67). wf-select procedures (4) rescue nothing. Full table: RESULTS_RD16.md."
+      - "Trials: 12 added (8 cells + 4 wf-select procedures); global counter 1,934 -> 1,946; Bonferroni alpha used 2.569e-05. DSR non-computable in-round (8 cells < the >=10 qualifying rows the dispersion estimator needs) — disclosed, never gating, per the frozen declaration."
+      - "Sanity anchor PASSED bit-identically: RD-001 ts_momentum/roc42_4h reproduced exactly (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518) via RD-001's own load_timeframe construction (results_rd16/anchor.json)."
+      - "Data: 82/82 series FULL_MATCH against DATA-001's manifests.json (csv_sha256 + rows + first/last). Disclosed episode: Yahoo's chart API serves two near-identical 1h FX variants (the non-manifest one differs only in ~0.5% null-bar coverage and <=5-pip revisions on ~1% of bars); the crew re-fetched until the manifest variant was served per symbol and judged ONLY on hash-verified files. UNCOVERED: none — all 8 cells ran on the full 41-symbol panel. Declared load rule applied: in-progress 2026-11-15 daily bar dropped at load (28 stub bars)."
+      - "Declaration frozen 2026-11-15T15:53:21+05:30, sha256 379b6b7135fef2715f5a10be62cf1a388c18c29a0b5e2d292fdd5de6e8654a64 (results_rd16/declaration.json). Signal code rd3/families_fx.py byte-identical to main (PR #294); nothing re-tuned after the freeze."
+    blockers: []
+    next_action: "Done — research only, nothing registered or traded, no candidate forwarded to the forward lane. Coordinator: verify RESULTS_RD16.md + results_rd16/synthesis.json and flip this entry to VERIFIED. The forex_cross41 panel (hash-verified, reusable) and the documented Yahoo-1h two-variant behaviour are the round's durable assets for future RD rounds."
+  - id: TASK-FRD-005
+    title: "Repeatable voice acceptance harness for FRIDAY voice — fixed battery, per-turn latency + transcript + provider, SPEED-first verdicts (Wave 5, FRIDAY agent)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/voice_acceptance/battery.json"
+      - "FRIDAY/voice_acceptance/participant.py"
+      - "FRIDAY/voice_acceptance/make_utterances.py"
+      - "FRIDAY/voice_acceptance/score.py"
+      - "FRIDAY/voice_acceptance/score_check.py"
+      - "FRIDAY/voice_acceptance/run_acceptance.sh"
+      - "FRIDAY/voice_acceptance/README.md"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891373113"
+    defect: "Every voice fix so far (VOI-003..008) was accepted by a one-off, hand-run call: VOI-004's machine pass did not reproduce in the owner's hands, VOI-007's participant talked over FRIDAY and truncated the Stratex answer, and no two runs are comparable because prompts, thresholds and scoring were re-invented each time. There is no repeatable instrument that can prove — run after run, especially after TASK-VOI-009 removes Groq from voice — that FRIDAY answers fast, in context, and served by Gemini Live only."
+    acceptance:
+      - "Fixed battery (battery.json v1): greeting (FRIDAY speaks first), Stratex delegation, context follow-up whose closed-trade count must match the delegation answer, Tokyo clock, memory remember/recall pair (teal), goodbye. Utterances rendered once via edge-tts (voice/rate pinned) with a sha256 manifest — every run speaks byte-identical prompts."
+      - "Per-turn evidence: silence gap (utterance end -> first agent audio) from the participant timeline, transcript of what FRIDAY heard (user_input_transcribed final) and answered (conversation_item_added) from the FRIDAY-Voice journal, and the serving provider from the worker status file."
+      - "Owner's criterion enforced mechanically: SPEED first — a turn FAILs if its silence gap exceeds the pre-declared threshold (greeting 8s, delegation 12s, simple turns 4-6s, calibrated on VOI-005/006/007/008 measurements) even when the answer is correct. Thresholds are versioned in battery.json and never tuned after seeing results."
+      - "Provider contract: any journal evidence of a Groq/Whisper/Orpheus SERVING path is an automatic FAIL (the post-TASK-VOI-009 Gemini-only rule); missing evidence scores UNVERIFIED, never PASS."
+      - "Talk-over proofing: reply-end detection requires >=0.8s of agent speech AND >=2.0s of continuous silence — the VOI-007 failure mode (fragment + 0.10s dip mistaken for a complete reply) cannot recur in the harness itself."
+      - "Scorer logic covered by offline checks (score_check.py): clean PASS, slow-delegation FAIL (18.6s), slow-greeting FAIL, Groq-serving FAIL, count-mismatch FAIL, wrong-recall FAIL, missing-status UNVERIFIED, no-reply FAIL."
+      - "Measured acceptance run executed AFTER TASK-VOI-009 is merged AND deployed, reported as a per-turn table in five states; a pre-VOI-009 rehearsal run, if performed, is labelled rehearsal and never reported as the acceptance result."
+    evidence:
+      - "Harness code merged via PR #312 (de07f28d0fafef0cf77b5ba86d540f0f877b9484); this entry replaces the stale claim entry from PR #310 (closed as superseded — its base went conflicted; entry text carried verbatim except status/next_action/evidence updated by the merge-runner per item 67)."
+      - "First measured post-VOI-009 run FAILED the owner's SPEED criterion on every turn while PASSING the Gemini-only provider contract (completion comment 6893276215) — the FAIL is the run result, not a harness defect."
+    blockers: []
+    next_action: "Re-run the acceptance battery after TASK-VOI-010 deploys and Server-1 load settles (VOI-010's session-build fix targets the greeting latency that dominated the first run); flip VERIFIED with a passing run's per-turn table."
+  - id: TASK-VYR-009
+    title: "VyralX compliance-gate automation — the per-video compliance checklist as an enforced gate at ready-to-upload (Wave 5, VyralX crew)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-vyr-009-compliance-gate"
+    defect: "TASK-VYR-004's compliance checklist (remix_flow.compliance_checklist, mirroring REMIX_POLICY.md §5) was advisory: produce_remix_short stored checklist_passed on the review-queue entry but queued the render pending_review and created its pending_approval publish job regardless of the outcome. Two checklist items were also asserted by construction ('the TASK-VYR-003 path was used, therefore sync passes') with no measurement ever consulted — the same failure mode TASK-VYR-003 fixed in production. Nothing in code prevented a non-compliant video from being marked ready to upload."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6891543290 (2026-11-15) before editing."
+      - "GATE (new VyralX/app/services/compliance_gate.py): evaluate_compliance_gate over the render's measured production record — 9 fail-closed checks: provenance record present/complete/licence-allowed (fields mirror ProvenanceRecord.require_candidate + media_url); original commentary is the main content (original script, no source narration, narration >= 60% of runtime); sync MEASURED inside the TASK-VYR-003 thresholds (per-beat |rendered segment - voice-over| <= 0.50s, caption word-match >= 0.70, max caption offset <= 0.50s — unmeasured sync FAILS); render < 60s whenever the material is possibly claimed (owner-only material exempt); excluded categories by lane + token scan of lane/format/category; financial advice by lane AND a prescriptive-marker scan of the script itself; attribution present; English; declared format recorded. assert_ready_to_upload raises ComplianceGateError on a failed verdict. Helpers beat_deviations_from_tracks / caption_sync_metrics implement the TASK-VYR-003 measurement recipe (segment_timing landed length; difflib word matching against a Whisper transcript)."
+      - "WIRING (VyralX/app/services/remix_flow.py): produce_remix_short assembles the gate input from the finished render's own artifacts (scene tracks, caption cues, a Whisper transcript of the narration, an ffprobe of the render) and evaluates the gate on every render. PASS: unchanged behaviour (pending_review entry + pending_approval publish job when db given). FAIL: result status BLOCKED_COMPLIANCE, queue entry status blocked_compliance, NO publish job created — the render cannot be marked ready to upload. The advisory compliance_checklist is still computed and stored alongside the gate verdict."
+      - "PROOF (gate verdicts, also pinned as tests): the gate ACCEPTS the TASK-VYR-003 proof render (vyr003-proof) on its real measured record — per-beat deviations 0.00s x3, captions 83/90 words matched, max offset 0.413s, render 30.99s == narration 30.99s (TASK-VYR-003 crew measurement JSONs, ~/workspace/vyr-003/). Its provenance is recorded as the channel's own media-library clip Bqf5iKfRPnc.mp4 (the render predates the VYR-004 registry; NO external licence is claimed for the clip — none was ever recorded — and possibly_claimed is set True explicitly; at 30.99s it satisfies the <60s rule regardless). The gate REJECTS a deliberately non-compliant sample on 7 independent checks: provenance_record, commentary_main_content, sync_measurements, claimed_short_duration, excluded_categories, finance_advice, attribution_present."
+      - "TESTS: VyralX/tests/test_vyr009_compliance_gate.py — 16 tests (per-check failures one at a time, measurement helpers against the proof render's real beat data, both headline samples, wiring pass/block with the heavy pipeline stages stubbed at the module boundary). All pass; test_vyr004_remix_flow.py (23 tests) still passes unchanged. Docs: REMIX_POLICY.md §5/§6 now document the gate enforcement and the blocked_compliance queue status."
+      - "No uploads (YouTube OAuth dead, TASK-VYR-003). No deploy in this task: the gate ships with the next VyralX deploy of remix_flow after merge."
+    blockers: []
+    next_action: "Coordinator: review and merge the PR (branch claude/task-vyr-009-compliance-gate); mark VERIFIED after merge. Note: the legacy viral_remix.produce_viral_short path has no gate — closing that is a separate task if wanted; the VYR-004 remix flow inherits the gate automatically via produce_remix_short."
+  - id: TASK-COR-004
+    title: "Cortex routing-accuracy test — labelled set through AgentRegistry.route_for_event, confusion-pair breakdown, routing-signal fix for the worst pairs"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P2
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-cor-004"
+    defect: "Cortex's AgentRegistry.route_for_event (the routing the Orchestrator applies to every cognitive-loop event) had never been measured. On a 103-case labelled set grounded in each specialist agent's declared domain + capabilities, the unmodified cascade scored 57/103 = 55.3%: 39 of 46 misses fell through to the reliability default (whole event classes had no keyword — payments/billing for revops, rate-limit/circuit/attack for mitigation, cancellation/downgrade/usage-drop for churn_risk, demo/intent for qualification, audit/KYC for compliance, signup/conversion for growth, complaint/refund for support); the substring 'cro' fired inside cross_sell/microservice/microtransaction (3 misses); rule order let 'score' steal churn_score_computed and 'lead' steal lead_scoring/lead.qualified ('score' does not substring-match 'scoring'; 'qualify' does not match 'qualified'); error.payment_declined routed to support instead of revops."
+    evidence:
+      - "Claim: GitHub issue #35 comment 6891642291 (2026-11-15, Muse, TASK-COR-004 crew) — posted before editing; TASK-COR-004 confirmed unclaimed (COR-003/005/006 held by sibling Wave-5 crews)."
+      - "MEASUREMENT (harness run against fresh main dda26887, then against the fixed code): BEFORE 57/103 = 55.3% (per-agent recall: qualification 1/10, churn_risk 3/10, mitigation 5/11, revops 6/13, growth 6/11, compliance 5/9, support 7/10, sales 6/9, competitive 5/6, reliability 7/8, cro 6/6); AFTER 103/103 = 100%. Confusion pairs before: ->reliability 39 (qualification 7, mitigation 6, churn_risk 6, revops 5, growth 5, compliance 4, support 3, sales 2, competitive 1), ->cro 3 (substring trap), qualification->sales 2, churn_risk->qualification 1, revops->support 1. Full table: Cortex/docs/ROUTING_ACCURACY_COR004.md."
+      - "FIX (Cortex/packages/agents/src/cortex_agents/__init__.py, route_for_event only + one re import): vocabulary added for each agent's OWN declared signals (revops payment/billing/quote/past_due/transaction; mitigation rate_limit/circuit/attack/fraud/security/stuffing; compliance audit/masking/kyc/erasure; churn cancellation/downgrade/winback/win_back/usage_drop/session_decline/inactive; qualification scoring/demo/qualified/high_intent/mql/prospect; growth signup/conversion/campaign/referral/seo; sales cross_sell/upsell/purchase; support complaint/refund/bug_report; competitive win_loss); 'cro' matched as a whole token instead of a substring; churn rule moved before qualification so a churn score is not stolen by 'score'."
+      - "REGRESSION GATE: Cortex/tests/unit/test_routing_accuracy_cor004.py ships the 103-case labelled set (plus 6 documented unscored AMBIGUOUS cases). All 14 pre-existing route_for_event assertions in the repo are a subset of the set and pass after the fix. Sandbox disclosure: the shared sandbox intermittently denied temp-file creation during this run (fleet-wide load; /tmp at 100%), so the pytest runner could not execute here — the module's assertions were executed directly against both code states (before 57/103, after 103/103, every parametrized case + aggregate called); CI runs the module normally."
+    blockers: []
+    next_action: "Coordinator: review + merge the PR for branch claude/task-cor-004, then mark this entry VERIFIED. No deploy step (repo-only routing change; Cortex picks it up on its next Fleet CD deploy). Follow-up if wanted: grow the labelled set from production event logs (COR-003's decision-log audit can supply real event types)."
+    files:
+      - "Cortex/packages/agents/src/cortex_agents/__init__.py"
+      - "Cortex/tests/unit/test_routing_accuracy_cor004.py"
+      - "Cortex/docs/ROUTING_ACCURACY_COR004.md"
+  - id: "TASK-MEM-005-W5"
+    title: "Memora cross-agent sharing audit — verified access matrix (Wave 5; plain TASK-MEM-005 id is the historical B9/B10 checklist task above)"
+    status: IN_REVIEW
+    owner: "muse_ai"
+    branch: "claude/task-mem-005-sharing-audit"
+    pr: null
+    milestone: "Wave 5 — Memora deep-dive (sharing matrix)"
+    files:
+      - "Memora/MEMORA_SHARING_AUDIT_MEM005.md"
+    claim: "Issue #35 comment 6891420156 (TASK-MEM-005 claim, muse_ai Memora crew). Empirical phase completed by the MEM-005 finisher crew after the original crew's live probes were halted by a safety classifier before any probe ran."
+    defect: "Memora's per-agent scope enforcement is CORRECT (verified live on v1 + legacy: PRIVATE/SHARED boundaries hold for every agent's own key; denials hide existence with 404; keys are identity-bound; body-selector spoofs 403; cross-mutations fail) — but the credential layer defeats it: the operative master key (Memora env MEMORA_API_KEY value, fp sha256[:8] 60c2827d; MEMORA_MASTER_KEY unset) authenticates as ANY claimed X-Agent-Name (dependencies.py master branch), and a copy of that master value sits in EVERY agent's .env on both servers (all nine verified by fingerprint). Proven live from Server 2: VyralX's env MEMORA_API_KEY value, presented as friday, read friday's PRIVATE probe record (search 200/found, get-by-id 200/found); as stratex it read stratex's PRIVATE. FRIDAY's env additionally holds the fleet's per-agent keys (STRATEX_API_KEY fp 0956dda8 and INTELX_API_KEY fp e407691c byte-equal to Memora's copies; the STRATEX one proven live: write+read as stratex) — load-bearing for FRIDAY's on-behalf-of MemoraClient design, so remediation must replace the mechanism, not just delete keys. Secondary: UNIVERSAL records are unreadable by every non-memora agent on all tested surfaces (under-read/intent mismatch); sharing to a not-yet-registered recipient 403s; ENVIRONMENT=development drift in Memora env (harmless today, fail-closed verified)."
+    acceptance:
+      - "Verified access matrix (agent x scope x surface x evidence) published in Memora/MEMORA_SHARING_AUDIT_MEM005.md, from production probes with synthetic token-tagged records only."
+      - "The three decisive cells answered with live evidence: (a) FRIDAY-env STRATEX_API_KEY authenticates as stratex — YES (write 201 + readback); (b) a non-Friday agent's env MEMORA_API_KEY (VyralX, Server 2) authenticates as friday — YES (read friday PRIVATE); (c) cross-scope reads denied on BOTH v1 and legacy surfaces with own keys — YES (404/search-empty/query-empty/list-clean)."
+      - "Probe hygiene: only HTTP statuses, booleans and sha256[:8] fingerprints recorded — never key values; every probe record hard-deleted and absence verified (search as memora + owner, GET by id 404); production memory left exactly as found; NO env file or key changed by this task."
+    evidence: "Finisher runs MEM005F-80f08d28 (fingerprints + plant + Server-2 cell) and MEM005F-2cf90132 (full Server-1 matrix, result persisted server-side): writes 7x201 + UNIVERSAL-by-friday 403 + SHARED-to-unregistered 403 + wildcard 403; read matrix 7 records x 5 readers exactly per scope; auth negatives 401/401/401/503; cross-mutations 404/404/422 with target intact; master-as-friday read friday PRIVATE (scope of claimed identity still applies: master-as-stratex could NOT read friday PRIVATE, master-as-friday could NOT read stratex PRIVATE — impersonation, not scope bypass); cleanup 8x DELETE 200 with triple absence verification. Deployed Memora code byte-identical to repo main for all five core files (sha256[:16] recorded in the audit doc). Full matrix + findings F1-F5: Memora/MEMORA_SHARING_AUDIT_MEM005.md."
+    blockers: []
+    next_action: "Coordinator: verify + merge this PR, then the remediation DECISION (owner/coordinator — this task changed nothing): (1) stop distributing the master key (per-agent keys already exist; check each agent's client credential chain first), (2) split MEMORA_MASTER_KEY from the memora identity, (3) replace FRIDAY's on-behalf-of key-holding with explicit delegation policy, (4) decide UNIVERSAL semantics + share-recipient auto-registration, (5) rotate distributed keys last. Until then the measured state stands: any single agent .env read yields full Memora impersonation."
+  - id: TASK-INT-003
+    title: "IntelX research depth: fixed-set rubric scoring (source diversity, primary-source ratio, contradiction handling, citation verifiability), fix the weakest proven link, re-score"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: "claude/task-int-003-intelx-depth"
+    pr: 322
+    defect: "Candidate supply was the depth ceiling of the live research pipeline (IntelX/intelx/api/live_research_task.py collect_live_brief): the pool was capped at 15 candidates (min(15, max_sources*3) requested, loop sliced results[:15]) against a measured 59/~74 fetch-failure rate (45x HTTP 403, IP-level bot management — identical under the production and a plain Chrome user-agent, so not a UA problem). Baseline on the fixed six-question set: Q1 (Artemis II) exhausted all 15 candidates (7 of them documented-dead news.google.com redirectors) and returned ZERO sources while nasa.gov answered HTTP 200 from the same host but never entered the pool. No final-URL dedupe existed either: the widened-pool probe held the same document twice among five sources via a tracking-parameter variant."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6891008025 (2026-11-15) before editing; no prior TASK-INT-003 claim existed (board + issue scanned)."
+      - "RUBRIC PRE-DECLARED before measurement; full score sheet in PR #322 at IntelX/evals/INT003_DEPTH_RUBRIC_AND_SCORES.md. Baseline = production service, envelopes persisted via TASK-REL-038 (run_ids lr_d0601f5a5b494ac4b8f229d9, lr_6205335738fb4b6cba960733, lr_5cd766e6f64b4947aeb6ae12, lr_948f7587aae74c2188a5c845, lr_f21218f875f34354ba4d0a19, lr_6e43c4106e8e46a19b7af72a; verbatim copies Server 1 /tmp/int003/before/)."
+      - "SCORES before: D1 mean 2.17, D2 mean 1.83, D3 mean 3.0 (Q3 4 / Q4 2), D4 mean 2.8 (17/27 = 63% independently verified). Envelope SUCCESS 3/6."
+      - "FIX (PR #322, live_research_task.py only): pool widened to min(30, max_sources*6) and fully iterated; news.google.com redirectors demoted to last-resort (never dropped); final-URL dedupe recorded as duplicate_final_url. Tests: 5 new + 22 contract + 8 grounded = 35 passed locally."
+      - "AFTER = candidate probe on Server 1 with the exact PR file (fingerprint chain: deployed blob 52d81b1d == pre-fix HEAD; candidate blob 3de00dce == PR file byte-identical; production code untouched, service never restarted; envelopes /tmp/int003/after/). SCORES after: D1 mean 2.17 (distribution improved — Q1 0->4 domains incl. nasa.gov reached, no zero-source question; Q2/Q4/Q5 fell on this run set), D2 mean 0.17 (REGRESSED on the probe run set — the fix widens but does not prefer primary sources; named follow-up, not hidden), D3 mean 4.0, D4 mean 2.8 with verified fraction 63% -> 77% (30/39; Q5-after not scoreable, refetch refused). Envelope SUCCESS 4/6; fetch failures absorbed 45 vs 59 baseline."
+    blockers: []
+    next_action: "Coordinator: merge PR #322, deploy via Fleet CD, then re-run the fixed six-question set against the deployed service and flip this entry VERIFIED via a fresh-main board PR (production-verified state is still owed). Follow-ups named in the score doc: primary-source preference in candidate ordering (the D2 lever), synthesis quote-gate flakiness (now the weakest link), passage-level near-duplicate dedupe, wiring intelx/core/contradiction.py into the live path."
 task_id_warnings:
 task_id_warnings:
   - id: "WARN-TASK-ID-001"

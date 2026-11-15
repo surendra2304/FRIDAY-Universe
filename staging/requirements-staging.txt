@@ -1,0 +1,52 @@
+# Staging venv packages — mirrors the production shared venv installed by
+# deploy/setup_fleet.sh on the Oracle VMs (same package set, unpinned the
+# way production installs it), plus PyYAML for the fleet manifest.
+# Create with:
+#   python3 -m venv --system-site-packages staging/.venv
+#   staging/.venv/bin/pip install -r staging/requirements-staging.txt
+# (--system-site-packages reuses the sandbox's numpy/pandas where present;
+# on a clean machine it is harmless.)
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+oracledb
+sqlalchemy
+httpx
+requests
+python-dotenv
+cryptography
+rich
+psutil
+aiohttp
+aiosqlite
+asyncpg
+jinja2
+python-multipart
+aiofiles
+structlog
+flask
+flask-cors
+alembic
+apscheduler
+prometheus-client
+websockets
+beautifulsoup4
+pypdf
+python-docx
+pandas
+numpy
+scipy
+python-binance
+ccxt
+openai
+anthropic
+google-genai
+pyjwt
+google-api-python-client
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+redis
+sse-starlette
+pyyaml

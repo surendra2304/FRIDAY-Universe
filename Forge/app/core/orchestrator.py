@@ -715,21 +715,204 @@ class OrchestratorCore:
 
         final_report = await self._verify_and_repair(task_id)
         task = await self.store.get_task(task_id) or task
-        # TASK-FORGE-002 (GAP 5): verification is a truthfulness gate, not only
-        # a reporting gate. When the battery ran and still fails after every
-        # repair and peer-review route, a COMPLETED task is demoted to FAILED --
-        # the owner must never hear "completed" about a build whose tests fail.
-        # A battery that crashed instead of reporting leaves the task state
-        # untouched (see the except branch of _verify_and_repair).
-        if (
-            final_report is not None
-            and not final_report.all_passed
+        # TASK-FRG-011: settle the terminal state through the ONE
+        # authoritative verdict derivation (app/verification/verdict.py),
+        # implemented in apply_final_verdict below. It subsumes the
+        # TASK-FORGE-002 (GAP 5) demotion -- a failing final battery still
+        # demotes COMPLETED -> FAILED, so the owner never hears "completed"
+        # about a build whose tests fail -- and adds the half that was
+        # missing: a passing final battery reconciles a task the in-graph
+        # gates failed mid-build (TASK-FRG-003's R5, where a tester-gate
+        # exit_code=2 latched FAILED while the final battery passed 11/11
+        # over the settled files and the deliverable reproduced green).
+        settled = await self.apply_final_verdict(task_id, final_report)
+        if settled is not None:
+            task = settled
+        return task
+
+    async def _verdict_failure_inputs(
+        self, task_id: str, graph: TaskGraph | None
+    ) -> tuple[list[str], list[str]]:
+        """Compute the (hard, gate) failure reasons for verdict settling.
+
+        Hard reasons name failures the verification battery does not
+        measure (a failed non-gate DAG node; the fallback-stub marker);
+        gate reasons name in-graph verification-gate verdicts, which the
+        final battery re-judges and may supersede. See
+        app/verification/verdict.py for the precedence rules.
+        """
+        from app.verification.verdict import failure_reasons_from_graph
+
+        hard: list[str] = []
+        gate: list[str] = []
+        if graph is not None:
+            hard, gate = failure_reasons_from_graph(graph)
+        # The fallback-stub marker is the one hard failure that can live
+        # outside the graph: stub-generated code can pass shallow checks
+        # while being no build at all. step_task already fails such tasks;
+        # settling must never resurrect one on a green battery.
+        has_fallback_stub = False
+        try:
+            paths = self.wm.get_workspace_paths(task_id)
+            if paths and (paths.state / "FALLBACK_STUB.json").exists():
+                has_fallback_stub = True
+        except Exception:
+            pass
+        if not has_fallback_stub and graph is not None:
+            for n in graph.nodes.values():
+                if n.result and isinstance(n.result, dict) and n.result.get("fallback_stub"):
+                    has_fallback_stub = True
+                    break
+        if has_fallback_stub:
+            hard.append(
+                "TASK FAILED: Fell back to stub generation. "
+                "Please check API keys and try again."
+            )
+        return hard, gate
+
+    async def apply_final_verdict(
+        self,
+        task_id: str,
+        final_report: "Any | None",
+        extra_hard_failure_reasons: list[str] | tuple[str, ...] = (),
+    ) -> TaskEntity | None:
+        """Settle a task's terminal state from the authoritative verdict.
+
+        TASK-FRG-011: a build's verdict is derived ONCE, here, by
+        app.verification.verdict.derive_build_verdict, from the final
+        battery report plus the named failure inputs; the stored state is
+        reconciled with the derivation (COMPLETED -> FAILED demotion on a
+        failing battery, TASK-FORGE-002 GAP 5; FAILED -> COMPLETED
+        reconciliation when the only failures were in-graph gate verdicts
+        the final battery superseded, TASK-FRG-003 R5), and the decision
+        is stamped onto the task record and the saved verification
+        manifest so the delegate responses, the status endpoint and the
+        tasks API all report the same verdict.
+
+        ``final_report`` is the last VerificationReport the battery
+        produced, or None when the battery could not run: a crashed
+        battery settles nothing by itself (the state execution left is
+        kept; read surfaces derive DEGRADED for an unevidenced
+        COMPLETED). Callers that run their own battery after run_task
+        (the delegate execute_now path) call this again with their
+        report, so state and manifest are re-settled from the freshest
+        run instead of drifting apart.
+
+        Returns the (possibly re-read) task, or None if it vanished.
+        """
+        from app.verification.verdict import derive_build_verdict
+
+        task = await self.store.get_task(task_id)
+        if task is None:
+            return None
+        if task.state not in (TaskState.COMPLETED, TaskState.FAILED):
+            # Not in a final build state (RUNNING / BLOCKED / CANCELLED /
+            # ...): nothing to settle -- the verdict surfaces report
+            # those states directly.
+            return task
+
+        graph = None
+        try:
+            graph = await self.store.get_latest_task_graph_for_project(task_id)
+        except Exception:
+            graph = None
+        hard, gate = await self._verdict_failure_inputs(task_id, graph)
+        hard.extend(r for r in extra_hard_failure_reasons if r)
+
+        battery_all_passed = None
+        battery_partial = None
+        battery_reasons: tuple[str, ...] = ()
+        battery_passed_count = 0
+        battery_total_count = 0
+        if final_report is not None:
+            # getattr throughout: a report-shaped stub (tests, embedders)
+            # must not crash settling -- missing counts degrade the
+            # PARTIAL distinction, never the pass/fail fact.
+            battery_all_passed = bool(getattr(final_report, "all_passed", False))
+            battery_reasons = tuple(
+                (getattr(final_report, "failure_reasons", None) or [])[:10]
+            )
+            passed_checks = getattr(final_report, "passed_checks", None)
+            failed_checks = getattr(final_report, "failed_checks", None)
+            if passed_checks is not None and failed_checks is not None:
+                battery_partial = bool(passed_checks and failed_checks)
+                battery_passed_count = int(passed_checks)
+                battery_total_count = int(passed_checks) + int(failed_checks)
+            else:
+                battery_partial = False if battery_all_passed else None
+
+        decision = derive_build_verdict(
+            task_state=task.state,
+            battery_all_passed=battery_all_passed,
+            battery_partial_failure=battery_partial,
+            battery_failure_reasons=battery_reasons,
+            hard_failure_reasons=hard,
+            gate_failure_reasons=gate,
+            recorded_error=getattr(task, "error_message", None),
+        )
+        if decision is None:
+            return task
+        verdict_value = decision.verdict.value
+
+        if verdict_value == "SUCCESS" and task.state == TaskState.FAILED:
+            # Reconciliation: the final battery -- the full checker suite
+            # over the settled workspace, run after every repair route --
+            # supersedes the in-graph gate verdict(s) that latched this
+            # task FAILED mid-build. FAILED -> COMPLETED is not a legal
+            # lifecycle edge, so pass through RUNNING; the transitions and
+            # the superseded gate names are all in the audit trail.
+            superseded = list(decision.superseded or gate)
+            reason = (
+                "Verdict reconciliation (TASK-FRG-011): final verification "
+                f"battery passed ({battery_passed_count}/"
+                f"{battery_total_count} checks); superseding "
+                "in-graph gate verdict(s): " + "; ".join(superseded)
+            )
+            await self.lifecycle.transition(
+                task_id=task_id,
+                to_state=TaskState.RUNNING,
+                reason="TASK-FRG-011 verdict reconciliation",
+            )
+            task = await self.lifecycle.transition(
+                task_id=task_id,
+                to_state=TaskState.COMPLETED,
+                reason=reason,
+                progress_percentage=100,
+            )
+            await self.store.record_event(
+                task_id=task_id,
+                event_type="task.verdict_reconciled",
+                payload={
+                    "from_state": TaskState.FAILED.value,
+                    "to_state": TaskState.COMPLETED.value,
+                    "superseded": superseded,
+                    "battery": {
+                        "passed_checks": battery_passed_count,
+                        "total_checks": battery_total_count,
+                    },
+                },
+            )
+            await self.store.record_event(task_id=task_id, event_type="task.completed")
+            production_monitor.record_task_event("completed")
+            await _finalize_tracker(task_id, success=True)
+        elif (
+            verdict_value in ("FAILED", "PARTIAL_FAILURE")
             and task.state == TaskState.COMPLETED
         ):
-            demote_reason = (
-                "Objective verification failed after repair attempts: "
-                f"{final_report.passed_checks}/{final_report.total_checks} checks passed"
-            )
+            # TASK-FORGE-002 (GAP 5) demotion, preserved: a build whose
+            # final battery still fails after every repair route must
+            # never be reported completed. The lifecycle state is FAILED;
+            # the stamp below keeps the PARTIAL/FAILED distinction for
+            # the verdict surfaces.
+            if final_report is not None:
+                demote_reason = (
+                    "Objective verification failed after repair attempts: "
+                    f"{battery_passed_count}/{battery_total_count} checks passed"
+                )
+            else:
+                demote_reason = (
+                    "; ".join(decision.reasons) or "Objective verification failed"
+                )
             task = await self.lifecycle.transition(
                 task_id=task_id,
                 to_state=TaskState.FAILED,
@@ -743,12 +926,69 @@ class OrchestratorCore:
                 payload={
                     "reason": demote_reason,
                     "verification_gate": True,
-                    "failed_checks": final_report.failure_reasons[:10],
+                    "build_verdict": verdict_value,
+                    "failed_checks": list(battery_reasons),
                 },
             )
             production_monitor.record_task_event("failed")
             await _finalize_tracker(task_id, success=False)
-        return task
+
+        # Stamp the settled verdict on the task record and on the saved
+        # verification manifest, so every read surface reports THIS
+        # decision instead of deriving a competing one.
+        task = await self.store.get_task(task_id) or task
+        metadata = dict(getattr(task, "metadata", None) or {})
+        metadata["build_verdict"] = verdict_value
+        metadata["verdict_reasons"] = list(decision.reasons)
+        if decision.superseded:
+            metadata["verdict_superseded"] = list(decision.superseded)
+        task.metadata = metadata
+        try:
+            await self.store.save_task(task)
+        except Exception:
+            logger.warning(f"Could not stamp verdict on task {task_id}", exc_info=True)
+        self._stamp_manifest_verdict(task_id, decision)
+        await self.store.record_event(
+            task_id=task_id,
+            event_type="task.verdict_settled",
+            payload={
+                "verdict": verdict_value,
+                "reasons": list(decision.reasons),
+                "superseded": list(decision.superseded),
+            },
+        )
+        return await self.store.get_task(task_id) or task
+
+    def _stamp_manifest_verdict(self, task_id: str, decision: Any) -> None:
+        """Write the settled verdict into artifacts/verification_manifest.json.
+
+        Best effort: a stamp failure must not fail the build. The task
+        record carries a second copy of the stamp, and read surfaces
+        trust the verdict only when both copies agree (a later battery
+        re-run regenerates the manifest unstamped, superseding it).
+        """
+        try:
+            paths = self.wm.get_workspace_paths(task_id)
+            if not paths:
+                return
+            manifest_file = paths.artifacts / "verification_manifest.json"
+            if not manifest_file.exists():
+                return
+            import json
+
+            data = json.loads(manifest_file.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                return
+            data["build_verdict"] = decision.verdict.value
+            data["verdict_reasons"] = list(decision.reasons)
+            data["superseded_checks"] = list(decision.superseded)
+            self.wm.save_artifact(
+                task_id, "verification_manifest.json", json.dumps(data, indent=2)
+            )
+        except Exception:
+            logger.debug(
+                f"Could not stamp verdict into manifest for {task_id}", exc_info=True
+            )
 
     async def _run_verify_only(self, task: TaskEntity) -> TaskEntity:
         """TASK-REL-019: verify_only execution — run ONLY the verification
@@ -810,6 +1050,12 @@ class OrchestratorCore:
             )
             production_monitor.record_task_event("failed")
             await _finalize_tracker(task_id, success=False)
+        # TASK-FRG-011: stamp the settled verdict like every other build,
+        # so verify_only outcomes read identically on every surface. The
+        # state already follows this battery, so settling only stamps.
+        settled = await self.apply_final_verdict(task_id, report)
+        if settled is not None:
+            task = settled
         return task
 
     def _rescue_unparseable_files(self, task_id: str) -> list[str]:

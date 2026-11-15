@@ -824,6 +824,37 @@ class FridayTaskResponse(BaseModel):
     receipt: dict[str, Any] | None = None
 
 
+def _log_task_rejection(
+    envelope: FridayTaskEnvelope,
+    *,
+    gate: str,
+    status_code: int,
+    reason: str,
+    property_id: str | None = None,
+    operation: str | None = None,
+) -> None:
+    """Attribute a task-execute rejection in the service log (TASK-COR-009).
+
+    The scope/approval/Sentinel gates raised bare HTTPExceptions, so the
+    journal showed an unexplained 403 beside a *successful* FRIDAY auth and
+    nobody could tell caller, action or gate apart from the logs. One
+    structured WARNING per rejection keeps the wire behaviour identical and
+    makes every future rejection on this route attributable.
+    """
+    logger.warning(
+        "task_execute_rejected source_agent=%s task_id=%s action=%s property_id=%s "
+        "operation=%s gate=%s status=%s reason=%s",
+        envelope.source_agent,
+        envelope.task_id,
+        envelope.action,
+        property_id,
+        operation,
+        gate,
+        status_code,
+        reason,
+    )
+
+
 async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession | None = None) -> FridayTaskResponse:
     """Core executor for FridayTaskEnvelope adhering to 5-phase governed operations."""
     import time
@@ -855,17 +886,34 @@ async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession |
             property_id=property_id, operation=op_on_prop, environment=envelope.payload.get("environment")
         )
     except UnauthorizedPropertyError as exc:
+        _log_task_rejection(
+            envelope, gate="property_scope", status_code=404, reason=str(exc),
+            property_id=property_id, operation=op_on_prop,
+        )
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except OperationNotAllowedError as exc:
         if op_on_prop:
             cat, is_high = classify_action_impact(op_on_prop)
             if is_high and not envelope.payload.get("approved", False):
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"High-impact operation '{op_on_prop}' in category '{cat.value}' requires explicit supervisor approval before execution.",
-                ) from exc
+                detail = (
+                    f"High-impact operation '{op_on_prop}' in category '{cat.value}' "
+                    "requires explicit supervisor approval before execution."
+                )
+                _log_task_rejection(
+                    envelope, gate="property_scope_approval", status_code=403, reason=detail,
+                    property_id=property_id, operation=op_on_prop,
+                )
+                raise HTTPException(status_code=403, detail=detail) from exc
+        _log_task_rejection(
+            envelope, gate="property_scope", status_code=403, reason=str(exc),
+            property_id=property_id, operation=op_on_prop,
+        )
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except EnvironmentMismatchError as exc:
+        _log_task_rejection(
+            envelope, gate="property_scope", status_code=400, reason=str(exc),
+            property_id=property_id, operation=op_on_prop,
+        )
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # 3. Action Routing
@@ -976,6 +1024,11 @@ async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession |
         if is_high_impact and not is_approved:
             task.update_progress(TaskState.BLOCKED, 0.5, f"High-impact operation '{op}' blocked pending approval")
             global_task_manager.finalize_task(task.task_id)
+            _log_task_rejection(
+                envelope, gate="approval", status_code=403,
+                reason=f"High-impact operation '{op}' in category '{cat.value}' requires explicit supervisor approval before execution.",
+                property_id=property_id, operation=op,
+            )
             raise HTTPException(
                 status_code=403,
                 detail=f"High-impact operation '{op}' in category '{cat.value}' requires explicit supervisor approval before execution.",
@@ -988,6 +1041,11 @@ async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession |
         ):
             task.update_progress(TaskState.BLOCKED, 0.5, f"Production action '{op}' blocked by Sentinel security gate")
             global_task_manager.finalize_task(task.task_id)
+            _log_task_rejection(
+                envelope, gate="sentinel", status_code=403,
+                reason=f"Production operation '{op}' on '{property_id}' blocked by Sentinel security gate.",
+                property_id=property_id, operation=op,
+            )
             raise HTTPException(
                 status_code=403,
                 detail=f"Production operation '{op}' on '{property_id}' blocked by Sentinel security gate.",

@@ -1,0 +1,1792 @@
+{
+ "configs": {
+  "ichimoku_tk_cloud__crypto30__4h": {
+   "n_trades": 2302,
+   "expectancy_pct": 0.8937174793676826,
+   "pf": 1.2783439563615404,
+   "win_rate": 0.4009556907037359,
+   "avg_concurrency": 11.853629976580796,
+   "m_fixed1pct": 2.2115250197112735,
+   "schemes": {
+    "unit": {
+     "total_return": 2.4605690285032797,
+     "max_dd": -0.4328641772106061,
+     "sharpe_ann": 1.1219619425740708,
+     "calmar": 5.6843905272071344,
+     "killed": true,
+     "kill_date": "2024-07-06",
+     "days_to_kill": 5,
+     "return_at_kill": -0.010005698408383945,
+     "worst_day": -0.10586264504580252,
+     "days_beyond_3pct_loss": 34,
+     "avg_multiplier": 1.0
+    },
+    "fixed1pct": {
+     "total_return": 7.157107761645735,
+     "max_dd": -0.7504335277182611,
+     "sharpe_ann": 1.1219619425740706,
+     "calmar": 9.537297438465146,
+     "killed": true,
+     "kill_date": "2024-07-03",
+     "days_to_kill": 2,
+     "return_at_kill": -0.06752257998249211,
+     "worst_day": -0.23411788817160598,
+     "days_beyond_3pct_loss": 117,
+     "avg_multiplier": 2.211525019711274
+    },
+    "voltarget": {
+     "total_return": 12.548101575547284,
+     "max_dd": -0.7181941791902519,
+     "sharpe_ann": 1.2402759145859992,
+     "calmar": 17.471739453103048,
+     "killed": true,
+     "kill_date": "2024-07-03",
+     "days_to_kill": 2,
+     "return_at_kill": -0.06752257998249211,
+     "worst_day": -0.25254687036289925,
+     "days_beyond_3pct_loss": 136,
+     "avg_multiplier": 2.5520862556207766
+    },
+    "kelly25": {
+     "total_return": 0.5260871664116304,
+     "max_dd": -0.32949843203468254,
+     "sharpe_ann": 0.6429458774803604,
+     "calmar": 1.5966302575796636,
+     "killed": true,
+     "kill_date": "2025-03-20",
+     "days_to_kill": 262,
+     "return_at_kill": 0.07583890681438721,
+     "worst_day": -0.06651688871398527,
+     "days_beyond_3pct_loss": 12,
+     "avg_multiplier": 0.37436617054411775
+    },
+    "kelly50": {
+     "total_return": 0.9736108175260738,
+     "max_dd": -0.5776815792591623,
+     "sharpe_ann": 0.6429458774803604,
+     "calmar": 1.6853762565437245,
+     "killed": true,
+     "kill_date": "2025-03-18",
+     "days_to_kill": 260,
+     "return_at_kill": 0.21536866217761474,
+     "worst_day": -0.13303377742797054,
+     "days_beyond_3pct_loss": 34,
+     "avg_multiplier": 0.7487323410882355
+    }
+   },
+   "folds": {
+    "fixed1pct": {
+     "W1": {
+      "total_return": 3.5663054738610747,
+      "max_dd": -0.3459510090305161
+     },
+     "W2": {
+      "total_return": 0.1397009075548672,
+      "max_dd": -0.5344091223637659
+     },
+     "W3": {
+      "total_return": -0.4235823060691234,
+      "max_dd": -0.7224422396101511
+     },
+     "W4": {
+      "total_return": 0.3292731728006817,
+      "max_dd": -0.5135555306907185
+     },
+     "W5": {
+      "total_return": 0.9656656569868887,
+      "max_dd": -0.2173634111596049
+     }
+    },
+    "voltarget": {
+     "W1": {
+      "total_return": 3.6318601330632,
+      "max_dd": -0.41791992154276036
+     },
+     "W2": {
+      "total_return": 0.4082929508906048,
+      "max_dd": -0.4388944162395
+     },
+     "W3": {
+      "total_return": -0.362660031953254,
+      "max_dd": -0.7181941791902517
+     },
+     "W4": {
+      "total_return": 0.3259474412668779,
+      "max_dd": -0.5883020846730587
+     },
+     "W5": {
+      "total_return": 1.3719434659557148,
+      "max_dd": -0.37918876293948367
+     }
+    },
+    "kelly25": {
+     "W1": null,
+     "W2": {
+      "total_return": 0.38730870560228947,
+      "max_dd": -0.2413058623195823
+     },
+     "W3": {
+      "total_return": -0.09211396114935344,
+      "max_dd": -0.20160441789393713
+     },
+     "W4": {
+      "total_return": -0.05177104343228245,
+      "max_dd": -0.11500840920270927
+     },
+     "W5": {
+      "total_return": 0.24259652896693185,
+      "max_dd": -0.07485734238230624
+     }
+    }
+   },
+   "dd_capped": {
+    "m": 0.09,
+    "total_return": 0.14176206157684756,
+    "max_dd": -0.04584688722492114,
+    "sharpe_ann": 1.1219619425740706,
+    "calmar": 3.0920760417468323,
+    "killed": false,
+    "kill_date": null,
+    "days_to_kill": null,
+    "return_at_kill": null,
+    "worst_day": -0.009527638054122227,
+    "days_beyond_3pct_loss": 0
+   },
+   "fixed1pct_firstfold_cal": {
+    "m": 0.5054885616211232,
+    "total_return": 0.9944089779322043,
+    "max_dd": -0.239798677101569,
+    "sharpe_ann": 1.121961942574071,
+    "calmar": 4.1468493068917684,
+    "killed": true,
+    "kill_date": "2024-07-08",
+    "days_to_kill": 7,
+    "return_at_kill": -0.04601302587068379,
+    "worst_day": -0.05351235617361024,
+    "days_beyond_3pct_loss": 9
+   },
+   "class": "WINNER",
+   "source": "git"
+  },
+  "dow_reversal__crypto30__1d": {
+   "n_trades": 3660,
+   "expectancy_pct": 0.87767850641235,
+   "pf": 1.2574511877169774,
+   "win_rate": 0.5226775956284153,
+   "avg_concurrency": 21.278688524590162,
+   "m_fixed1pct": 2.979312877580862,
+   "schemes": {
+    "unit": {
+     "total_return": 1.545156712799801,
+     "max_dd": -0.4415153851817315,
+     "sharpe_ann": 0.8101665353112856,
+     "calmar": 3.4996667492431803,
+     "killed": true,
+     "kill_date": "2024-09-28",
+     "days_to_kill": 89,
+     "return_at_kill": 0.30370513408378597,
+     "worst_day": -0.1753653075417801,
+     "days_beyond_3pct_loss": 30,
+     "avg_multiplier": 1.0
+    },
+    "fixed1pct": {
+     "total_return": 1.3145664505557981,
+     "max_dd": -0.8780195343238847,
+     "sharpe_ann": 0.8101665353112856,
+     "calmar": 1.4971949930112598,
+     "killed": true,
+     "kill_date": "2024-07-05",
+     "days_to_kill": 4,
+     "return_at_kill": -0.10219988145006198,
+     "worst_day": -0.5224681190401537,
+     "days_beyond_3pct_loss": 62,
+     "avg_multiplier": 2.979312877580862
+    },
+    "voltarget": {
+     "total_return": -0.5419230277471865,
+     "max_dd": -0.9919133264274776,
+     "sharpe_ann": 0.8138739232001067,
+     "calmar": -0.5463411099627045,
+     "killed": true,
+     "kill_date": "2024-07-05",
+     "days_to_kill": 4,
+     "return_at_kill": -0.10219988145006198,
+     "worst_day": -0.9057964122408544,
+     "days_beyond_3pct_loss": 75,
+     "avg_multiplier": 3.3874209609511965
+    },
+    "kelly25": {
+     "total_return": 0.07387484769121988,
+     "max_dd": -0.1532020318608388,
+     "sharpe_ann": 0.2248463480252932,
+     "calmar": 0.48220540415759083,
+     "killed": true,
+     "kill_date": "2025-04-26",
+     "days_to_kill": 299,
+     "return_at_kill": 0.047251434495084954,
+     "worst_day": -0.07102630774122225,
+     "days_beyond_3pct_loss": 8,
+     "avg_multiplier": 0.22338763430082606
+    },
+    "kelly50": {
+     "total_return": 0.088000728289239,
+     "max_dd": -0.29278540765757977,
+     "sharpe_ann": 0.2248463480252932,
+     "calmar": 0.300563914688529,
+     "killed": true,
+     "kill_date": "2025-04-26",
+     "days_to_kill": 299,
+     "return_at_kill": 0.08764130045643403,
+     "worst_day": -0.1420526154824445,
+     "days_beyond_3pct_loss": 13,
+     "avg_multiplier": 0.4467752686016521
+    }
+   },
+   "folds": {
+    "fixed1pct": {
+     "W1": {
+      "total_return": -0.1414974408141949,
+      "max_dd": -0.7635504897721278
+     },
+     "W2": {
+      "total_return": 1.8640591736905958,
+      "max_dd": -0.45354893548524267
+     },
+     "W3": {
+      "total_return": 0.2756467643369356,
+      "max_dd": -0.40903633355663627
+     },
+     "W4": {
+      "total_return": -0.729112321315557,
+      "max_dd": -0.8357786900835866
+     },
+     "W5": {
+      "total_return": 1.7241209716410841,
+      "max_dd": -0.2314526033653591
+     }
+    },
+    "voltarget": {
+     "W1": {
+      "total_return": 0.5183566521277714,
+      "max_dd": -0.6877316003149148
+     },
+     "W2": {
+      "total_return": 2.0456828787813195,
+      "max_dd": -0.5557725614957054
+     },
+     "W3": {
+      "total_return": 0.7013948863491846,
+      "max_dd": -0.5265107990821748
+     },
+     "W4": {
+      "total_return": -0.9813735972369811,
+      "max_dd": -0.9910218271283052
+     },
+     "W5": {
+      "total_return": 2.125689752687665,
+      "max_dd": -0.34916735840623625
+     }
+    },
+    "kelly25": {
+     "W1": null,
+     "W2": {
+      "total_return": 0.10469005898286188,
+      "max_dd": -0.0585543012871107
+     },
+     "W3": {
+      "total_return": 0.06562994430639124,
+      "max_dd": -0.07453378424329782
+     },
+     "W4": {
+      "total_return": -0.05575616201003786,
+      "max_dd": -0.08089018139200732
+     },
+     "W5": {
+      "total_return": -0.033898737765186815,
+      "max_dd": -0.0739675864820305
+     }
+    }
+   },
+   "dd_capped": {
+    "m": 0.09,
+    "total_return": 0.11943659370072979,
+    "max_dd": -0.04762622788350512,
+    "sharpe_ann": 0.8101665353112855,
+    "calmar": 2.5077903291622112,
+    "killed": false,
+    "kill_date": null,
+    "days_to_kill": null,
+    "return_at_kill": null,
+    "worst_day": -0.01578287767876021,
+    "days_beyond_3pct_loss": 0
+   },
+   "fixed1pct_firstfold_cal": {
+    "m": 0.6428176162314779,
+    "total_return": 0.9719309141769377,
+    "max_dd": -0.3049295436408229,
+    "sharpe_ann": 0.8101665353112855,
+    "calmar": 3.187395037464054,
+    "killed": true,
+    "kill_date": "2024-10-18",
+    "days_to_kill": 109,
+    "return_at_kill": 0.17810398662927462,
+    "worst_day": -0.1127279089637071,
+    "days_beyond_3pct_loss": 19
+   },
+   "class": "WINNER",
+   "source": "bak"
+  },
+  "bollinger_p50sd2__crypto30__1d": {
+   "n_trades": 420,
+   "expectancy_pct": 3.544830323866597,
+   "pf": 1.4562452015985088,
+   "win_rate": 0.39285714285714285,
+   "avg_concurrency": 15.187353629976581,
+   "m_fixed1pct": 1.1867953969481697,
+   "schemes": {
+    "unit": {
+     "total_return": 0.42514397086340905,
+     "max_dd": -0.43297163019279683,
+     "sharpe_ann": 0.48151549158511286,
+     "calmar": 0.981921080312116,
+     "killed": true,
+     "kill_date": "2024-07-15",
+     "days_to_kill": 14,
+     "return_at_kill": -0.09551928472643445,
+     "worst_day": -0.1799803977379056,
+     "days_beyond_3pct_loss": 16,
+     "avg_multiplier": 1.0
+    },
+    "fixed1pct": {
+     "total_return": 0.4723302514706109,
+     "max_dd": -0.49515774500315146,
+     "sharpe_ann": 0.4815154915851131,
+     "calmar": 0.9538985429130362,
+     "killed": true,
+     "kill_date": "2024-07-15",
+     "days_to_kill": 14,
+     "return_at_kill": -0.11284034282636324,
+     "worst_day": -0.21359990757624717,
+     "days_beyond_3pct_loss": 24,
+     "avg_multiplier": 1.1867953969481697
+    },
+    "voltarget": {
+     "total_return": 1.8892091333978076,
+     "max_dd": -0.468695269342025,
+     "sharpe_ann": 0.7821250921472294,
+     "calmar": 4.030783447099781,
+     "killed": true,
+     "kill_date": "2024-07-15",
+     "days_to_kill": 14,
+     "return_at_kill": -0.11284034282636324,
+     "worst_day": -0.1691295671781328,
+     "days_beyond_3pct_loss": 37,
+     "avg_multiplier": 1.689317317106349
+    },
+    "kelly25": {
+     "total_return": 0.25321042434320806,
+     "max_dd": -0.15298904080942122,
+     "sharpe_ann": 0.5000118554314653,
+     "calmar": 1.655088645588888,
+     "killed": true,
+     "kill_date": "2026-05-10",
+     "days_to_kill": 678,
+     "return_at_kill": 0.20528477758140018,
+     "worst_day": -0.08508262976209212,
+     "days_beyond_3pct_loss": 6,
+     "avg_multiplier": 0.44552740657639
+    },
+    "kelly50": {
+     "total_return": 0.5256261178820709,
+     "max_dd": -0.26430191921758683,
+     "sharpe_ann": 0.5651706873151747,
+     "calmar": 1.9887336400661875,
+     "killed": true,
+     "kill_date": "2025-11-07",
+     "days_to_kill": 494,
+     "return_at_kill": -0.049519402284944336,
+     "worst_day": -0.13959426937742048,
+     "days_beyond_3pct_loss": 11,
+     "avg_multiplier": 0.7990989412264266
+    }
+   },
+   "folds": {
+    "fixed1pct": {
+     "W1": {
+      "total_return": -0.23683534355949076,
+      "max_dd": -0.3645432320090579
+     },
+     "W2": {
+      "total_return": -0.03877679667128375,
+      "max_dd": -0.1926219849565144
+     },
+     "W3": {
+      "total_return": 0.10720112477141419,
+      "max_dd": -0.18153338847570066
+     },
+     "W4": {
+      "total_return": 0.785724225020958,
+      "max_dd": -0.10469445253532517
+     },
+     "W5": {
+      "total_return": 0.015130395615497783,
+      "max_dd": -0.14707315468869153
+     }
+    },
+    "voltarget": {
+     "W1": {
+      "total_return": -0.10365450017668654,
+      "max_dd": -0.331409721498362
+     },
+     "W2": {
+      "total_return": 0.17200529925707397,
+      "max_dd": -0.14963811598539967
+     },
+     "W3": {
+      "total_return": 0.2645362019430435,
+      "max_dd": -0.33414142548645
+     },
+     "W4": {
+      "total_return": 1.2012316158254985,
+      "max_dd": -0.18389506192984384
+     },
+     "W5": {
+      "total_return": -0.01195448225198037,
+      "max_dd": -0.2212461826218618
+     }
+    },
+    "kelly25": {
+     "W1": null,
+     "W2": {
+      "total_return": 0.0005662714836547345,
+      "max_dd": -0.004148610725864588
+     },
+     "W3": {
+      "total_return": -0.017606530191487724,
+      "max_dd": -0.04352163436242429
+     },
+     "W4": {
+      "total_return": 0.3951632352360699,
+      "max_dd": -0.08226997622537247
+     },
+     "W5": {
+      "total_return": -0.08616529071185786,
+      "max_dd": -0.15298904080942122
+     }
+    }
+   },
+   "dd_capped": {
+    "m": 0.09,
+    "total_return": 0.04584958083321622,
+    "max_dd": -0.04647282129727215,
+    "sharpe_ann": 0.481515491585113,
+    "calmar": 0.9865891407782357,
+    "killed": false,
+    "kill_date": null,
+    "days_to_kill": null,
+    "return_at_kill": null,
+    "worst_day": -0.016198235796411505,
+    "days_beyond_3pct_loss": 0
+   },
+   "fixed1pct_firstfold_cal": {
+    "m": 0.19669262478946473,
+    "total_return": 0.09913387981226918,
+    "max_dd": -0.09953515632400656,
+    "sharpe_ann": 0.48151549158511286,
+    "calmar": 0.9959684946851226,
+    "killed": true,
+    "kill_date": "2024-08-27",
+    "days_to_kill": 57,
+    "return_at_kill": -0.053411696024935784,
+    "worst_day": -0.035400816841720494,
+    "days_beyond_3pct_loss": 1
+   },
+   "class": "WATCHLIST",
+   "source": "git"
+  },
+  "shock_k1.0__crypto30__1d": {
+   "n_trades": 732,
+   "expectancy_pct": 2.69571038076148,
+   "pf": 1.3178769620471877,
+   "win_rate": 0.38934426229508196,
+   "avg_concurrency": 23.884074941451992,
+   "m_fixed1pct": 1.7198504724760268,
+   "schemes": {
+    "unit": {
+     "total_return": 0.6742484726850604,
+     "max_dd": -0.296065985927926,
+     "sharpe_ann": 0.7491107414175521,
+     "calmar": 2.2773587805834565,
+     "killed": true,
+     "kill_date": "2024-07-14",
+     "days_to_kill": 13,
+     "return_at_kill": -0.08044844956482722,
+     "worst_day": -0.10557597786906488,
+     "days_beyond_3pct_loss": 3,
+     "avg_multiplier": 1.0
+    },
+    "fixed1pct": {
+     "total_return": 1.1799829489261788,
+     "max_dd": -0.4610775542211726,
+     "sharpe_ann": 0.7491107414175522,
+     "calmar": 2.559185408449003,
+     "killed": true,
+     "kill_date": "2024-07-11",
+     "days_to_kill": 10,
+     "return_at_kill": -0.051330421804033244,
+     "worst_day": -0.18157489542022978,
+     "days_beyond_3pct_loss": 24,
+     "avg_multiplier": 1.7198504724760264
+    },
+    "voltarget": {
+     "total_return": 4.222248301983687,
+     "max_dd": -0.5134200178667846,
+     "sharpe_ann": 1.039899228116299,
+     "calmar": 8.223770314852079,
+     "killed": true,
+     "kill_date": "2024-07-11",
+     "days_to_kill": 10,
+     "return_at_kill": -0.051330421804033244,
+     "worst_day": -0.14570548894165686,
+     "days_beyond_3pct_loss": 40,
+     "avg_multiplier": 2.3466586615329796
+    },
+    "kelly25": {
+     "total_return": 0.5230559033449533,
+     "max_dd": -0.15987830650371437,
+     "sharpe_ann": 0.672937741714081,
+     "calmar": 3.271587714326968,
+     "killed": true,
+     "kill_date": "2025-04-25",
+     "days_to_kill": 298,
+     "return_at_kill": 0.05051138224333207,
+     "worst_day": -0.05680030366257123,
+     "days_beyond_3pct_loss": 7,
+     "avg_multiplier": 0.8239599226542582
+    },
+    "kelly50": {
+     "total_return": 1.0387211284298363,
+     "max_dd": -0.29491434559717056,
+     "sharpe_ann": 0.6774737471247121,
+     "calmar": 3.522111229708189,
+     "killed": true,
+     "kill_date": "2025-04-20",
+     "days_to_kill": 293,
+     "return_at_kill": 0.1403615228428945,
+     "worst_day": -0.0979084394763419,
+     "days_beyond_3pct_loss": 24,
+     "avg_multiplier": 1.6229746352435646
+    }
+   },
+   "folds": {
+    "fixed1pct": {
+     "W1": {
+      "total_return": -0.09314304123218342,
+      "max_dd": -0.4610775542211726
+     },
+     "W2": {
+      "total_return": 0.2341177793182827,
+      "max_dd": -0.17393908379654743
+     },
+     "W3": {
+      "total_return": 0.14547285773788854,
+      "max_dd": -0.19146301270631705
+     },
+     "W4": {
+      "total_return": 0.7846526582532307,
+      "max_dd": -0.1257580836293054
+     },
+     "W5": {
+      "total_return": -0.027557220603192878,
+      "max_dd": -0.16665033760936898
+     }
+    },
+    "voltarget": {
+     "W1": {
+      "total_return": -0.008310644093548203,
+      "max_dd": -0.5134200178667846
+     },
+     "W2": {
+      "total_return": 0.35208462644426275,
+      "max_dd": -0.26088808120061124
+     },
+     "W3": {
+      "total_return": 0.5153841319189443,
+      "max_dd": -0.32827576908479494
+     },
+     "W4": {
+      "total_return": 1.7570330144822215,
+      "max_dd": -0.11901705559739117
+     },
+     "W5": {
+      "total_return": -0.03626657704753922,
+      "max_dd": -0.23726179912592815
+     }
+    },
+    "kelly25": {
+     "W1": null,
+     "W2": {
+      "total_return": 0.019505864302036047,
+      "max_dd": -0.12228551551655042
+     },
+     "W3": {
+      "total_return": 0.15350807541024802,
+      "max_dd": -0.15987830650371437
+     },
+     "W4": {
+      "total_return": 0.41538688700502635,
+      "max_dd": -0.08997243157799861
+     },
+     "W5": {
+      "total_return": -0.06722369594478417,
+      "max_dd": -0.13963593199229118
+     }
+    }
+   },
+   "dd_capped": {
+    "m": 0.15000000000000002,
+    "total_return": 0.09313472209241036,
+    "max_dd": -0.04987042858608759,
+    "sharpe_ann": 0.7491107414175521,
+    "calmar": 1.867534022324249,
+    "killed": false,
+    "kill_date": null,
+    "days_to_kill": null,
+    "return_at_kill": null,
+    "worst_day": -0.015836396680359733,
+    "days_beyond_3pct_loss": 0
+   },
+   "fixed1pct_firstfold_cal": {
+    "m": 0.4362105696070253,
+    "total_return": 0.2803895762014619,
+    "max_dd": -0.13950742267809224,
+    "sharpe_ann": 0.749110741417552,
+    "calmar": 2.0098541770673344,
+    "killed": true,
+    "kill_date": "2024-07-15",
+    "days_to_kill": 14,
+    "return_at_kill": -0.06497486693033039,
+    "worst_day": -0.04605335744308349,
+    "days_beyond_3pct_loss": 2
+   },
+   "class": "WATCHLIST",
+   "source": "git"
+  },
+  "adx_ema_bare__crypto30__4h": {
+   "n_trades": 837,
+   "expectancy_pct": 0.795479356781474,
+   "pf": 1.2331594654324856,
+   "win_rate": 0.5698924731182796,
+   "avg_concurrency": 5.331381733021077,
+   "m_fixed1pct": 0.6721109321528109,
+   "schemes": {
+    "unit": {
+     "total_return": 0.5684579279549162,
+     "max_dd": -0.33692033540039745,
+     "sharpe_ann": 0.5414439127991082,
+     "calmar": 1.6872176245442667,
+     "killed": true,
+     "kill_date": "2024-07-30",
+     "days_to_kill": 29,
+     "return_at_kill": 0.14461304967535016,
+     "worst_day": -0.21839094094980865,
+     "days_beyond_3pct_loss": 39,
+     "avg_multiplier": 1.0
+    },
+    "fixed1pct": {
+     "total_return": 0.43226698988275536,
+     "max_dd": -0.22307751559619327,
+     "sharpe_ann": 0.5414439127991081,
+     "calmar": 1.9377434284557356,
+     "killed": true,
+     "kill_date": "2024-08-06",
+     "days_to_kill": 36,
+     "return_at_kill": 0.08209383945732429,
+     "worst_day": -0.1467829388955054,
+     "days_beyond_3pct_loss": 22,
+     "avg_multiplier": 0.6721109321528109
+    },
+    "voltarget": {
+     "total_return": 0.6533637541922699,
+     "max_dd": -0.2142395263510085,
+     "sharpe_ann": 0.6493211330915263,
+     "calmar": 3.049688193960079,
+     "killed": true,
+     "kill_date": "2024-08-06",
+     "days_to_kill": 36,
+     "return_at_kill": 0.08209383945732429,
+     "worst_day": -0.17237297095982465,
+     "days_beyond_3pct_loss": 27,
+     "avg_multiplier": 0.774024470448559
+    },
+    "kelly25": {
+     "total_return": -0.11751037274137144,
+     "max_dd": -0.2053327994242139,
+     "sharpe_ann": -0.3016106418815501,
+     "calmar": -0.5722922644160571,
+     "killed": true,
+     "kill_date": "2025-07-04",
+     "days_to_kill": 368,
+     "return_at_kill": -0.021018606100984827,
+     "worst_day": -0.04775803496417618,
+     "days_beyond_3pct_loss": 9,
+     "avg_multiplier": 0.22592746469023323
+    },
+    "kelly50": {
+     "total_return": -0.19702914696956286,
+     "max_dd": -0.3402433473514689,
+     "sharpe_ann": -0.22945298309114387,
+     "calmar": -0.5790830254383584,
+     "killed": true,
+     "kill_date": "2025-04-26",
+     "days_to_kill": 299,
+     "return_at_kill": -0.017384084122650245,
+     "worst_day": -0.08834259125960475,
+     "days_beyond_3pct_loss": 17,
+     "avg_multiplier": 0.4332503866902334
+    }
+   },
+   "folds": {
+    "fixed1pct": {
+     "W1": {
+      "total_return": 0.023659785883956008,
+      "max_dd": -0.19285743783479836
+     },
+     "W2": {
+      "total_return": 0.15348031782614857,
+      "max_dd": -0.14550926855160662
+     },
+     "W3": {
+      "total_return": 0.10889717962455614,
+      "max_dd": -0.10840068400008784
+     },
+     "W4": {
+      "total_return": 0.050390431285573634,
+      "max_dd": -0.19405531305439194
+     },
+     "W5": {
+      "total_return": 0.03309405231292506,
+      "max_dd": -0.09762132009242819
+     }
+    },
+    "voltarget": {
+     "W1": {
+      "total_return": 0.033346220819524985,
+      "max_dd": -0.19809832893037604
+     },
+     "W2": {
+      "total_return": 0.12710525161694464,
+      "max_dd": -0.13413029843714463
+     },
+     "W3": {
+      "total_return": 0.1551922999852342,
+      "max_dd": -0.1112220030423996
+     },
+     "W4": {
+      "total_return": 0.1567223026624911,
+      "max_dd": -0.21005753066806887
+     },
+     "W5": {
+      "total_return": 0.05402935764397254,
+      "max_dd": -0.17731765461856352
+     }
+    },
+    "kelly25": {
+     "W1": null,
+     "W2": {
+      "total_return": -0.005750288211715748,
+      "max_dd": -0.04610953563953135
+     },
+     "W3": {
+      "total_return": -0.01024221280810933,
+      "max_dd": -0.10230065080433148
+     },
+     "W4": {
+      "total_return": -0.10666927426297579,
+      "max_dd": -0.18205150263153647
+     },
+     "W5": {
+      "total_return": -0.0015609462930006313,
+      "max_dd": -0.05765850873030254
+     }
+    }
+   },
+   "dd_capped": {
+    "m": 0.15000000000000002,
+    "total_return": 0.10512610878643946,
+    "max_dd": -0.04746567152890624,
+    "sharpe_ann": 0.5414439127991081,
+    "calmar": 2.2147818707761977,
+    "killed": false,
+    "kill_date": null,
+    "days_to_kill": null,
+    "return_at_kill": null,
+    "worst_day": -0.032758641142471304,
+    "days_beyond_3pct_loss": 1
+   },
+   "fixed1pct_firstfold_cal": {
+    "m": 0.27164775898445254,
+    "total_return": 0.18855544362785892,
+    "max_dd": -0.08687924963715676,
+    "sharpe_ann": 0.5414439127991082,
+    "calmar": 2.170316208016799,
+    "killed": true,
+    "kill_date": "2024-08-06",
+    "days_to_kill": 36,
+    "return_at_kill": 0.03727063135807618,
+    "worst_day": -0.059325409691521426,
+    "days_beyond_3pct_loss": 4
+   },
+   "class": "WATCHLIST",
+   "source": "git"
+  },
+  "tsmom2_dual__comm7__4h": {
+   "n_trades": 205,
+   "expectancy_pct": 0.558057993698191,
+   "pf": 1.202620199516571,
+   "win_rate": 0.3951219512195122,
+   "avg_concurrency": 3.30327868852459,
+   "m_fixed1pct": 0.725464966673545,
+   "schemes": {
+    "unit": {
+     "total_return": 0.3797000428390589,
+     "max_dd": -0.1564847775813032,
+     "sharpe_ann": 0.7614963750001951,
+     "calmar": 2.4264343708561813,
+     "killed": true,
+     "kill_date": "2025-04-01",
+     "days_to_kill": 274,
+     "return_at_kill": -0.03496347354795104,
+     "worst_day": -0.06466653589445742,
+     "days_beyond_3pct_loss": 4,
+     "avg_multiplier": 1.0
+    },
+    "fixed1pct": {
+     "total_return": 0.2709034195036546,
+     "max_dd": -0.11526783533773055,
+     "sharpe_ann": 0.761496375000195,
+     "calmar": 2.350208266772057,
+     "killed": true,
+     "kill_date": "2025-06-11",
+     "days_to_kill": 345,
+     "return_at_kill": -0.03465034372471487,
+     "worst_day": -0.046913306307566155,
+     "days_beyond_3pct_loss": 1,
+     "avg_multiplier": 0.7254649666735452
+    },
+    "voltarget": {
+     "total_return": 0.2810056622068098,
+     "max_dd": -0.0914512073767011,
+     "sharpe_ann": 0.7603632418113614,
+     "calmar": 3.072738679647014,
+     "killed": true,
+     "kill_date": "2025-02-24",
+     "days_to_kill": 238,
+     "return_at_kill": -0.05575773562841413,
+     "worst_day": -0.04410955751913664,
+     "days_beyond_3pct_loss": 1,
+     "avg_multiplier": 0.8721951110993746
+    },
+    "kelly25": {
+     "total_return": 0.05756050211689856,
+     "max_dd": -0.20702279790967038,
+     "sharpe_ann": 0.184987566175182,
+     "calmar": 0.27803943670983405,
+     "killed": true,
+     "kill_date": "2025-05-20",
+     "days_to_kill": 323,
+     "return_at_kill": -0.038944910430768975,
+     "worst_day": -0.09382661261513231,
+     "days_beyond_3pct_loss": 9,
+     "avg_multiplier": 0.6385008060533764
+    },
+    "kelly50": {
+     "total_return": 0.11661314457952465,
+     "max_dd": -0.22136919192064952,
+     "sharpe_ann": 0.2762913733381386,
+     "calmar": 0.5267812723521392,
+     "killed": true,
+     "kill_date": "2025-05-15",
+     "days_to_kill": 318,
+     "return_at_kill": -0.036369872552383775,
+     "worst_day": -0.09382661261513231,
+     "days_beyond_3pct_loss": 14,
+     "avg_multiplier": 0.8046101016687751
+    }
+   },
+   "folds": {
+    "fixed1pct": {
+     "W1": null,
+     "W2": {
+      "total_return": 0.03957445054053621,
+      "max_dd": -0.06098908000541681
+     },
+     "W3": {
+      "total_return": 0.05794890720908885,
+      "max_dd": -0.05499230579065395
+     },
+     "W4": {
+      "total_return": 0.13662112608615073,
+      "max_dd": -0.11526783533773055
+     },
+     "W5": {
+      "total_return": 0.0408561792084956,
+      "max_dd": -0.05374856854956522
+     }
+    },
+    "voltarget": {
+     "W1": null,
+     "W2": {
+      "total_return": 0.042127589693195855,
+      "max_dd": -0.06707442729524904
+     },
+     "W3": {
+      "total_return": 0.05487572635966376,
+      "max_dd": -0.05840613173528575
+     },
+     "W4": {
+      "total_return": 0.12692185861030136,
+      "max_dd": -0.09145120737670098
+     },
+     "W5": {
+      "total_return": 0.062055583368544553,
+      "max_dd": -0.05761422539900651
+     }
+    },
+    "kelly25": {
+     "W1": null,
+     "W2": {
+      "total_return": -0.018800275634513253,
+      "max_dd": -0.05080174547172667
+     },
+     "W3": {
+      "total_return": -0.040394964807685785,
+      "max_dd": -0.1258273948447557
+     },
+     "W4": {
+      "total_return": 0.24820574458784206,
+      "max_dd": -0.2070227979096706
+     },
+     "W5": {
+      "total_return": -0.0812904217142223,
+      "max_dd": -0.1013220322782955
+     }
+    }
+   },
+   "dd_capped": {
+    "m": 0.3,
+    "total_return": 0.10865832763768557,
+    "max_dd": -0.04879212061750282,
+    "sharpe_ann": 0.7614963750001951,
+    "calmar": 2.226964646392258,
+    "killed": false,
+    "kill_date": null,
+    "days_to_kill": null,
+    "return_at_kill": null,
+    "worst_day": -0.019399960768337225,
+    "days_beyond_3pct_loss": 0
+   },
+   "fixed1pct_firstfold_cal": {
+    "m": 0.37497838648860937,
+    "total_return": 0.13660188066823964,
+    "max_dd": -0.060737836743895324,
+    "sharpe_ann": 0.7614963750001951,
+    "calmar": 2.2490409272267886,
+    "killed": true,
+    "kill_date": "2026-04-17",
+    "days_to_kill": 655,
+    "return_at_kill": 0.057336166532799604,
+    "worst_day": -0.024248553289511386,
+    "days_beyond_3pct_loss": 0
+   },
+   "class": "WATCHLIST",
+   "source": "git"
+  }
+ },
+ "portfolios": {
+  "WIN2_winners": {
+   "members": [
+    "dow_reversal__crypto30__1d",
+    "ichimoku_tk_cloud__crypto30__4h"
+   ],
+   "weightings": {
+    "equal": {
+     "m_fixed1pct": 2.606404373158147,
+     "schemes": {
+      "unit": {
+       "total_return": 2.4903190141246685,
+       "max_dd": -0.15487226620648908,
+       "sharpe_ann": 1.3970871240361182,
+       "calmar": 16.07982549183054,
+       "killed": true,
+       "kill_date": "2024-08-08",
+       "days_to_kill": 38,
+       "return_at_kill": 0.037708583803591766,
+       "worst_day": -0.06651496462116621,
+       "days_beyond_3pct_loss": 18
+      },
+      "fixed1pct": {
+       "total_return": 14.055346064045686,
+       "max_dd": -0.3862870753946216,
+       "sharpe_ann": 1.397087124036118,
+       "calmar": 36.385752874820064,
+       "killed": true,
+       "kill_date": "2024-07-08",
+       "days_to_kill": 7,
+       "return_at_kill": -0.07989977045151686,
+       "worst_day": -0.17336489466906704,
+       "days_beyond_3pct_loss": 88
+      },
+      "voltarget": {
+       "total_return": 23.316802023996633,
+       "max_dd": -0.5340043093774947,
+       "sharpe_ann": 1.4209175355341268,
+       "calmar": 43.664070897064015,
+       "killed": true,
+       "kill_date": "2024-07-08",
+       "days_to_kill": 7,
+       "return_at_kill": -0.07989977045151686,
+       "worst_day": -0.18944771398332377,
+       "days_beyond_3pct_loss": 87
+      },
+      "kelly25": {
+       "total_return": 1.14135203052395,
+       "max_dd": -0.1971268426210251,
+       "sharpe_ann": 0.9606676731207924,
+       "calmar": 5.789937155936652,
+       "killed": true,
+       "kill_date": "2025-03-27",
+       "days_to_kill": 269,
+       "return_at_kill": 0.1295062529784905,
+       "worst_day": -0.12130128595652909,
+       "days_beyond_3pct_loss": 11
+      },
+      "kelly50": {
+       "total_return": 2.7078462974671615,
+       "max_dd": -0.38233719749686945,
+       "sharpe_ann": 0.9606676731207924,
+       "calmar": 7.082351168537121,
+       "killed": true,
+       "kill_date": "2025-03-19",
+       "days_to_kill": 261,
+       "return_at_kill": 0.31373173084583295,
+       "worst_day": -0.24260257191305817,
+       "days_beyond_3pct_loss": 40
+      }
+     },
+     "dd_capped": {
+      "m": 0.31,
+      "total_return": 0.5181280188473414,
+      "max_dd": -0.04972269198480117,
+      "sharpe_ann": 1.3970871240361185,
+      "calmar": 10.420353326922013,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.020619639032561525,
+      "days_beyond_3pct_loss": 0
+     }
+    },
+    "riskparity": {
+     "m_fixed1pct": 2.606404373158147,
+     "schemes": {
+      "unit": {
+       "total_return": 2.5700305407629713,
+       "max_dd": -0.15698735479630999,
+       "sharpe_ann": 1.4205188572529628,
+       "calmar": 16.370939838419268,
+       "killed": true,
+       "kill_date": "2024-08-08",
+       "days_to_kill": 38,
+       "return_at_kill": 0.037708583803591766,
+       "worst_day": -0.06487557479666274,
+       "days_beyond_3pct_loss": 14
+      },
+      "fixed1pct": {
+       "total_return": 14.98692500176045,
+       "max_dd": -0.42077856039904626,
+       "sharpe_ann": 1.4205188572529623,
+       "calmar": 35.61713074817207,
+       "killed": true,
+       "kill_date": "2024-07-08",
+       "days_to_kill": 7,
+       "return_at_kill": -0.07989977045151686,
+       "worst_day": -0.16909198186117022,
+       "days_beyond_3pct_loss": 93
+      },
+      "voltarget": {
+       "total_return": 25.99978927034971,
+       "max_dd": -0.5174829671750814,
+       "sharpe_ann": 1.4683118023929829,
+       "calmar": 50.24279236142111,
+       "killed": true,
+       "kill_date": "2024-07-08",
+       "days_to_kill": 7,
+       "return_at_kill": -0.07989977045151686,
+       "worst_day": -0.1859262597531272,
+       "days_beyond_3pct_loss": 97
+      },
+      "kelly25": {
+       "total_return": 1.2865498004398406,
+       "max_dd": -0.19753651771933023,
+       "sharpe_ann": 1.0166464229455041,
+       "calmar": 6.512971957255189,
+       "killed": true,
+       "kill_date": "2025-03-27",
+       "days_to_kill": 269,
+       "return_at_kill": 0.12691322582690168,
+       "worst_day": -0.11848772108969476,
+       "days_beyond_3pct_loss": 10
+      },
+      "kelly50": {
+       "total_return": 3.193007889528637,
+       "max_dd": -0.38434065882274016,
+       "sharpe_ann": 1.0166464229455041,
+       "calmar": 8.307754634414747,
+       "killed": true,
+       "kill_date": "2025-03-19",
+       "days_to_kill": 261,
+       "return_at_kill": 0.3072669655929019,
+       "worst_day": -0.2369754421793895,
+       "days_beyond_3pct_loss": 42
+      }
+     },
+     "dd_capped": {
+      "m": 0.31,
+      "total_return": 0.5287266979146821,
+      "max_dd": -0.04921700477394997,
+      "sharpe_ann": 1.4205188572529628,
+      "calmar": 10.742764626638381,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.02011142818696545,
+      "days_beyond_3pct_loss": 0
+     }
+    },
+    "invvol": {
+     "m_fixed1pct": 2.606404373158147,
+     "schemes": {
+      "unit": {
+       "total_return": 2.5025580372475615,
+       "max_dd": -0.15597790451268567,
+       "sharpe_ann": 1.4031403312819268,
+       "calmar": 16.044311180267385,
+       "killed": true,
+       "kill_date": "2024-08-08",
+       "days_to_kill": 38,
+       "return_at_kill": 0.037708583803591766,
+       "worst_day": -0.06516031068131022,
+       "days_beyond_3pct_loss": 15
+      },
+      "fixed1pct": {
+       "total_return": 14.236782889462658,
+       "max_dd": -0.406692810647748,
+       "sharpe_ann": 1.4031403312819273,
+       "calmar": 35.00623201769277,
+       "killed": true,
+       "kill_date": "2024-07-08",
+       "days_to_kill": 7,
+       "return_at_kill": -0.07989977045151686,
+       "worst_day": -0.16983411871611045,
+       "days_beyond_3pct_loss": 91
+      },
+      "voltarget": {
+       "total_return": 24.257629743381067,
+       "max_dd": -0.5229404542454106,
+       "sharpe_ann": 1.442578587482415,
+       "calmar": 46.38698258367521,
+       "killed": true,
+       "kill_date": "2024-07-08",
+       "days_to_kill": 7,
+       "return_at_kill": -0.07989977045151686,
+       "worst_day": -0.18972761673636904,
+       "days_beyond_3pct_loss": 95
+      },
+      "kelly25": {
+       "total_return": 1.1923172114683633,
+       "max_dd": -0.1969596841947765,
+       "sharpe_ann": 0.9856928899590195,
+       "calmar": 6.053610495685311,
+       "killed": true,
+       "kill_date": "2025-03-27",
+       "days_to_kill": 269,
+       "return_at_kill": 0.1267219427108892,
+       "worst_day": -0.11915313437963995,
+       "days_beyond_3pct_loss": 10
+      },
+      "kelly50": {
+       "total_return": 2.8837232830545405,
+       "max_dd": -0.381844358432354,
+       "sharpe_ann": 0.9856928899590195,
+       "calmar": 7.552090843749913,
+       "killed": true,
+       "kill_date": "2025-03-19",
+       "days_to_kill": 261,
+       "return_at_kill": 0.3067891603073134,
+       "worst_day": -0.2383062687592799,
+       "days_beyond_3pct_loss": 42
+      }
+     },
+     "dd_capped": {
+      "m": 0.31,
+      "total_return": 0.5195611446428787,
+      "max_dd": -0.04885787465780356,
+      "sharpe_ann": 1.4031403312819273,
+      "calmar": 10.634133152165157,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.020199696311206168,
+      "days_beyond_3pct_loss": 0
+     }
+    }
+   }
+  },
+  "ALL6_winners_plus_watchlist": {
+   "members": [
+    "adx_ema_bare__crypto30__4h",
+    "bollinger_p50sd2__crypto30__1d",
+    "dow_reversal__crypto30__1d",
+    "ichimoku_tk_cloud__crypto30__4h",
+    "shock_k1.0__crypto30__1d",
+    "tsmom2_dual__comm7__4h"
+   ],
+   "weightings": {
+    "equal": {
+     "m_fixed1pct": 1.7733911246758505,
+     "schemes": {
+      "unit": {
+       "total_return": 1.1794804641131953,
+       "max_dd": -0.15447723723767903,
+       "sharpe_ann": 1.4371960430899706,
+       "calmar": 7.6353026840999485,
+       "killed": true,
+       "kill_date": "2024-07-30",
+       "days_to_kill": 29,
+       "return_at_kill": -0.030067372584607233,
+       "worst_day": -0.04307415114244162,
+       "days_beyond_3pct_loss": 3
+      },
+      "fixed1pct": {
+       "total_return": 2.7382034430000792,
+       "max_dd": -0.2610406090168832,
+       "sharpe_ann": 1.4371960430899708,
+       "calmar": 10.489568857935746,
+       "killed": true,
+       "kill_date": "2024-07-18",
+       "days_to_kill": 17,
+       "return_at_kill": -0.012151993336282363,
+       "worst_day": -0.07638731733895211,
+       "days_beyond_3pct_loss": 12
+      },
+      "voltarget": {
+       "total_return": 5.70416452326457,
+       "max_dd": -0.2347750534107409,
+       "sharpe_ann": 1.5538510463183368,
+       "calmar": 24.296297414892233,
+       "killed": true,
+       "kill_date": "2024-07-18",
+       "days_to_kill": 17,
+       "return_at_kill": -0.012151993336282363,
+       "worst_day": -0.07852472129542695,
+       "days_beyond_3pct_loss": 17
+      },
+      "kelly25": {
+       "total_return": 2.570669303369763,
+       "max_dd": -0.17180172193690157,
+       "sharpe_ann": 1.3872889918328621,
+       "calmar": 14.963000803413978,
+       "killed": true,
+       "kill_date": "2025-04-26",
+       "days_to_kill": 299,
+       "return_at_kill": 0.17162982355039125,
+       "worst_day": -0.10142094731426168,
+       "days_beyond_3pct_loss": 10
+      },
+      "kelly50": {
+       "total_return": 5.338618125697672,
+       "max_dd": -0.29388439086327856,
+       "sharpe_ann": 1.3695520435310014,
+       "calmar": 18.165708325017214,
+       "killed": true,
+       "kill_date": "2025-03-25",
+       "days_to_kill": 267,
+       "return_at_kill": 0.15570150634481594,
+       "worst_day": -0.15277463467790423,
+       "days_beyond_3pct_loss": 33
+      }
+     },
+     "dd_capped": {
+      "m": 0.31,
+      "total_return": 0.28619339214467643,
+      "max_dd": -0.0499671396667456,
+      "sharpe_ann": 1.4371960430899706,
+      "calmar": 5.72763208087225,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.013352986854156902,
+      "days_beyond_3pct_loss": 0
+     }
+    },
+    "riskparity": {
+     "m_fixed1pct": 1.7733911246758505,
+     "schemes": {
+      "unit": {
+       "total_return": 0.7086000170079569,
+       "max_dd": -0.10912105898406599,
+       "sharpe_ann": 1.2335107200694617,
+       "calmar": 6.493705464418447,
+       "killed": true,
+       "kill_date": "2024-07-30",
+       "days_to_kill": 29,
+       "return_at_kill": -0.030067372584607233,
+       "worst_day": -0.03639849015830144,
+       "days_beyond_3pct_loss": 1
+      },
+      "fixed1pct": {
+       "total_return": 1.4856181990434045,
+       "max_dd": -0.18757027842564378,
+       "sharpe_ann": 1.2335107200694615,
+       "calmar": 7.920328377783639,
+       "killed": true,
+       "kill_date": "2024-07-18",
+       "days_to_kill": 17,
+       "return_at_kill": -0.012151993336282252,
+       "worst_day": -0.06454875939833307,
+       "days_beyond_3pct_loss": 7
+      },
+      "voltarget": {
+       "total_return": 2.5459448214793055,
+       "max_dd": -0.26280448150315505,
+       "sharpe_ann": 1.2003094123686116,
+       "calmar": 9.687600481229772,
+       "killed": true,
+       "kill_date": "2024-07-18",
+       "days_to_kill": 17,
+       "return_at_kill": -0.012151993336282252,
+       "worst_day": -0.06454875939833307,
+       "days_beyond_3pct_loss": 9
+      },
+      "kelly25": {
+       "total_return": 1.7935951714609457,
+       "max_dd": -0.2338257029297297,
+       "sharpe_ann": 1.27681468604689,
+       "calmar": 7.670650185108027,
+       "killed": true,
+       "kill_date": "2025-05-22",
+       "days_to_kill": 325,
+       "return_at_kill": 0.018632033281755556,
+       "worst_day": -0.06673485644301069,
+       "days_beyond_3pct_loss": 10
+      },
+      "kelly50": {
+       "total_return": 3.2119489705319593,
+       "max_dd": -0.34093948230793525,
+       "sharpe_ann": 1.3171419298818872,
+       "calmar": 9.420877126900015,
+       "killed": true,
+       "kill_date": "2025-04-26",
+       "days_to_kill": 299,
+       "return_at_kill": -0.04304387349748584,
+       "worst_day": -0.07712514305849642,
+       "days_beyond_3pct_loss": 20
+      }
+     },
+     "dd_capped": {
+      "m": 0.44,
+      "total_return": 0.27513016370464527,
+      "max_dd": -0.04929660314247386,
+      "sharpe_ann": 1.2335107200694615,
+      "calmar": 5.581118092649951,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.016015335669652634,
+      "days_beyond_3pct_loss": 0
+     }
+    },
+    "invvol": {
+     "m_fixed1pct": 1.7733911246758505,
+     "schemes": {
+      "unit": {
+       "total_return": 1.0985970078029,
+       "max_dd": -0.2100740503506191,
+       "sharpe_ann": 1.4494410863495006,
+       "calmar": 5.229570268052207,
+       "killed": true,
+       "kill_date": "2024-07-30",
+       "days_to_kill": 29,
+       "return_at_kill": -0.030067372584607233,
+       "worst_day": -0.06214017538655146,
+       "days_beyond_3pct_loss": 3
+      },
+      "fixed1pct": {
+       "total_return": 2.5184681583250765,
+       "max_dd": -0.3469640692111081,
+       "sharpe_ann": 1.4494410863495009,
+       "calmar": 7.25858491356559,
+       "killed": true,
+       "kill_date": "2024-07-18",
+       "days_to_kill": 17,
+       "return_at_kill": -0.012151993336282252,
+       "worst_day": -0.1101988355163111,
+       "days_beyond_3pct_loss": 13
+      },
+      "voltarget": {
+       "total_return": 4.922367664488349,
+       "max_dd": -0.26345202731574713,
+       "sharpe_ann": 1.6061029888387361,
+       "calmar": 18.68411382004244,
+       "killed": true,
+       "kill_date": "2024-07-18",
+       "days_to_kill": 17,
+       "return_at_kill": -0.012151993336282252,
+       "worst_day": -0.08020525636525007,
+       "days_beyond_3pct_loss": 18
+      },
+      "kelly25": {
+       "total_return": 2.3378755161705294,
+       "max_dd": -0.2615496684084353,
+       "sharpe_ann": 1.4470865914551831,
+       "calmar": 8.938552781950802,
+       "killed": true,
+       "kill_date": "2025-04-03",
+       "days_to_kill": 276,
+       "return_at_kill": 0.014275706920166664,
+       "worst_day": -0.05412010337884525,
+       "days_beyond_3pct_loss": 9
+      },
+      "kelly50": {
+       "total_return": 4.383166866097727,
+       "max_dd": -0.3381174922367829,
+       "sharpe_ann": 1.4585424169141672,
+       "calmar": 12.96344308335342,
+       "killed": true,
+       "kill_date": "2025-03-25",
+       "days_to_kill": 267,
+       "return_at_kill": 0.06429815075139778,
+       "worst_day": -0.08020525636525007,
+       "days_beyond_3pct_loss": 24
+      }
+     },
+     "dd_capped": {
+      "m": 0.22,
+      "total_return": 0.18572501864785584,
+      "max_dd": -0.0496455736357041,
+      "sharpe_ann": 1.4494410863495009,
+      "calmar": 3.7410186859898853,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.013670838585041322,
+      "days_beyond_3pct_loss": 0
+     }
+    }
+   }
+  },
+  "SLEEVE4_best_per_class": {
+   "members": [
+    "keltner_m2.0__idx7__1d",
+    "shock_k1.0__crypto30__1wk",
+    "tsmom2_roc90__forex28__1d",
+    "vol_adaptive_gate__comm7__4h"
+   ],
+   "weightings": {
+    "equal": {
+     "m_fixed1pct": 1.0330250115214146,
+     "schemes": {
+      "unit": {
+       "total_return": 0.18831658063926393,
+       "max_dd": -0.11536722202508587,
+       "sharpe_ann": 0.5927670017169374,
+       "calmar": 1.6323230925879075,
+       "killed": true,
+       "kill_date": "2024-10-30",
+       "days_to_kill": 121,
+       "return_at_kill": -0.040707373964127935,
+       "worst_day": -0.03942001474898809,
+       "days_beyond_3pct_loss": 2
+      },
+      "fixed1pct": {
+       "total_return": 0.19453808393399452,
+       "max_dd": -0.11903692755710416,
+       "sharpe_ann": 0.5927670017169374,
+       "calmar": 1.6342666761175526,
+       "killed": true,
+       "kill_date": "2024-10-29",
+       "days_to_kill": 120,
+       "return_at_kill": -0.04034758503502389,
+       "worst_day": -0.04072186119024775,
+       "days_beyond_3pct_loss": 2
+      },
+      "voltarget": {
+       "total_return": 0.31695655459410266,
+       "max_dd": -0.1610592695824148,
+       "sharpe_ann": 0.6709247848276113,
+       "calmar": 1.9679497828090826,
+       "killed": true,
+       "kill_date": "2024-10-15",
+       "days_to_kill": 106,
+       "return_at_kill": -0.042049857371332044,
+       "worst_day": -0.06410908488756671,
+       "days_beyond_3pct_loss": 4
+      },
+      "kelly25": {
+       "total_return": 0.0898249209976889,
+       "max_dd": -0.2153625437491996,
+       "sharpe_ann": 0.2538440845896507,
+       "calmar": 0.4170870172405397,
+       "killed": true,
+       "kill_date": "2025-05-22",
+       "days_to_kill": 325,
+       "return_at_kill": 0.01102126570559081,
+       "worst_day": -0.04695265640535953,
+       "days_beyond_3pct_loss": 2
+      },
+      "kelly50": {
+       "total_return": 0.1422135863273395,
+       "max_dd": -0.22903379259488532,
+       "sharpe_ann": 0.35099185669797894,
+       "calmar": 0.6209283997618932,
+       "killed": true,
+       "kill_date": "2025-05-22",
+       "days_to_kill": 325,
+       "return_at_kill": 0.05825600332246195,
+       "worst_day": -0.04695265640535953,
+       "days_beyond_3pct_loss": 2
+      }
+     },
+     "dd_capped": {
+      "m": 0.42000000000000004,
+      "total_return": 0.07886999847665055,
+      "max_dd": -0.04944829158916486,
+      "sharpe_ann": 0.5927670017169375,
+      "calmar": 1.594999461901179,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.016556406194574998,
+      "days_beyond_3pct_loss": 0
+     }
+    },
+    "riskparity": {
+     "m_fixed1pct": 1.0330250115214146,
+     "schemes": {
+      "unit": {
+       "total_return": 0.15671396833227003,
+       "max_dd": -0.059946001259091664,
+       "sharpe_ann": 0.6224533218813474,
+       "calmar": 2.6142522443647085,
+       "killed": true,
+       "kill_date": "2025-02-26",
+       "days_to_kill": 240,
+       "return_at_kill": -0.05004381218569354,
+       "worst_day": -0.03160005588854672,
+       "days_beyond_3pct_loss": 1
+      },
+      "fixed1pct": {
+       "total_return": 0.16195699428066068,
+       "max_dd": -0.06189099108744378,
+       "sharpe_ann": 0.6224533218813473,
+       "calmar": 2.6168104829964167,
+       "killed": true,
+       "kill_date": "2025-02-26",
+       "days_to_kill": 240,
+       "return_at_kill": -0.051682110966453365,
+       "worst_day": -0.03264364809834332,
+       "days_beyond_3pct_loss": 1
+      },
+      "voltarget": {
+       "total_return": 0.28946069013444564,
+       "max_dd": -0.07820493024129882,
+       "sharpe_ann": 0.7311683408572512,
+       "calmar": 3.7013099972255445,
+       "killed": true,
+       "kill_date": "2024-10-15",
+       "days_to_kill": 106,
+       "return_at_kill": -0.04206053034192936,
+       "worst_day": -0.03264364809834332,
+       "days_beyond_3pct_loss": 1
+      },
+      "kelly25": {
+       "total_return": -0.11471580942237747,
+       "max_dd": -0.1412067182554264,
+       "sharpe_ann": -0.9543161311119105,
+       "calmar": -0.8123962573428696,
+       "killed": true,
+       "kill_date": "2025-05-29",
+       "days_to_kill": 332,
+       "return_at_kill": -0.048786348182839445,
+       "worst_day": -0.022113128128762916,
+       "days_beyond_3pct_loss": 0
+      },
+      "kelly50": {
+       "total_return": -0.121022899177751,
+       "max_dd": -0.14744587715102708,
+       "sharpe_ann": -0.9954125869174805,
+       "calmar": -0.8207954099237964,
+       "killed": true,
+       "kill_date": "2025-05-29",
+       "days_to_kill": 332,
+       "return_at_kill": -0.048651568810730406,
+       "worst_day": -0.022113128128762916,
+       "days_beyond_3pct_loss": 0
+      }
+     },
+     "dd_capped": {
+      "m": 0.8300000000000001,
+      "total_return": 0.12978088289681322,
+      "max_dd": -0.04989875230554852,
+      "sharpe_ann": 0.6224533218813472,
+      "calmar": 2.600884328772729,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.026228046387493778,
+      "days_beyond_3pct_loss": 0
+     }
+    },
+    "invvol": {
+     "m_fixed1pct": 1.0330250115214146,
+     "schemes": {
+      "unit": {
+       "total_return": 0.16131102852215373,
+       "max_dd": -0.083416151240292,
+       "sharpe_ann": 0.6660644486370048,
+       "calmar": 1.9338104926164064,
+       "killed": true,
+       "kill_date": "2024-09-18",
+       "days_to_kill": 79,
+       "return_at_kill": -0.04221919946193775,
+       "worst_day": -0.03160005588854672,
+       "days_beyond_3pct_loss": 1
+      },
+      "fixed1pct": {
+       "total_return": 0.1667509175243227,
+       "max_dd": -0.08607766652855875,
+       "sharpe_ann": 0.6660644486370049,
+       "calmar": 1.937214660309109,
+       "killed": true,
+       "kill_date": "2024-09-10",
+       "days_to_kill": 71,
+       "return_at_kill": -0.04106267977483491,
+       "worst_day": -0.03264364809834332,
+       "days_beyond_3pct_loss": 1
+      },
+      "voltarget": {
+       "total_return": 0.2963516068049472,
+       "max_dd": -0.11457198502505239,
+       "sharpe_ann": 0.7789450567672362,
+       "calmar": 2.5865974718003426,
+       "killed": true,
+       "kill_date": "2024-09-10",
+       "days_to_kill": 71,
+       "return_at_kill": -0.040384089101236365,
+       "worst_day": -0.03264364809834332,
+       "days_beyond_3pct_loss": 1
+      },
+      "kelly25": {
+       "total_return": 0.06970221968864343,
+       "max_dd": -0.15481138687896845,
+       "sharpe_ann": 0.22868253647902523,
+       "calmar": 0.4502396179884147,
+       "killed": true,
+       "kill_date": "2025-05-29",
+       "days_to_kill": 332,
+       "return_at_kill": 0.1519629565323075,
+       "worst_day": -0.021256379333548264,
+       "days_beyond_3pct_loss": 0
+      },
+      "kelly50": {
+       "total_return": 0.08461087610502238,
+       "max_dd": -0.15322838766384028,
+       "sharpe_ann": 0.2633392295617572,
+       "calmar": 0.5521879946335123,
+       "killed": true,
+       "kill_date": "2025-05-29",
+       "days_to_kill": 332,
+       "return_at_kill": 0.1658345432684163,
+       "worst_day": -0.021256379333548264,
+       "days_beyond_3pct_loss": 0
+      }
+     },
+     "dd_capped": {
+      "m": 0.59,
+      "total_return": 0.09432813630967107,
+      "max_dd": -0.049881437087517244,
+      "sharpe_ann": 0.6660644486370048,
+      "calmar": 1.8910468867240504,
+      "killed": false,
+      "kill_date": null,
+      "days_to_kill": null,
+      "return_at_kill": null,
+      "worst_day": -0.018644032974242563,
+      "days_beyond_3pct_loss": 0
+     }
+    }
+   }
+  }
+ },
+ "stream_provenance": {
+  "dow_effect__reversal__crypto30__1d.json": {
+   "file_sha256": "04b019ce1c8383ec2c62a1b51f408f9e7be448285af2112c36e0ff104d4d8249",
+   "trades_sha256": "ac5aad5039de99cbcb63f220a6c7917755de7ec81d77b6c687ebbca44e5fa68f",
+   "n_trades_total": 6208
+  },
+  "gov_rows/strategy_adx_ema__bare__crypto30__4h.json": {
+   "file_sha256": "5f10c02b5b54f76f0fb3a11d1337b953b24f7084e9d5027131e61f442bb89827",
+   "trades_sha256": "041b7681ec45ad3efa3e73843ed85ad8cd7298996a2b49aeb0b0cb4235add7f2",
+   "n_trades_total": 1604
+  },
+  "grid_rows/bollinger_trend__p50_sd2.0__crypto30__1d.json": {
+   "file_sha256": "49f6a51204d06822a0e6ef3c46bb2a944d395b5b0992ab1c9376a2b2ee38b2bb",
+   "trades_sha256": "d3ed264edb9592b47c3a7bf45911afa7321f9e3d9ed28836686cce93c67094ae",
+   "n_trades_total": 828
+  },
+  "grid_rows/ichimoku_trend__tk_cloud__crypto30__4h.json": {
+   "file_sha256": "e092a70db48922b3768af23eb0d487de9496d66986c57a2a7af9062385103e5c",
+   "trades_sha256": "a8cc5888f98987fa6142bf91e5673f47dc3889c58f9f6a728f374fe606299f9a",
+   "n_trades_total": 4378
+  },
+  "grid_rows/shock_breakout__k1.0__crypto30__1d.json": {
+   "file_sha256": "2917027ab33225b736f3cba58ebf9d82ed2f302303c72e5e31b5fc63c81bb49b",
+   "trades_sha256": "01dc6f4e14d25b5bf6f0c747024d9cdc35db3d635ddd7795a522e6a92c0bc63d",
+   "n_trades_total": 1381
+  },
+  "grid_rows/tsmom2_dual__roc30_ema200__comm7__4h.json": {
+   "file_sha256": "ea3706376d264ca02b1a26ec1e48a026ba9e38a30ee1ee00a8f575ae27ebd421",
+   "trades_sha256": "8562de4b78cd3de08daa7017a8257e40a4c1156130deb0df5eda4a2ec382dc8d",
+   "n_trades_total": 211
+  },
+  "keltner_breakout__ema20_m2.0__idx7__1d.json": {
+   "file_sha256": "152e130802313a13a920986b4e9ebdfa273021b02e04ea83b7be2371a04afb26",
+   "trades_sha256": "99a7fc861cd0bf5cdb5afd601a1878bcf273579d838bd9230828d8ad058faa97",
+   "n_trades_total": 433
+  },
+  "shock_breakout__k1.0__crypto30__1wk.json": {
+   "file_sha256": "a31d60e9cf7fc4f4b142d9f40a9d22632bf14c10045108707af75b31b2d41edb",
+   "trades_sha256": "9e210213acd1c11dc21066950d7415984bbfa4b3c0a9a6ffcbcf453fb748ef3b",
+   "n_trades_total": 150
+  },
+  "tsmom2_dual__roc90_ema200__forex28__1d.json": {
+   "file_sha256": "99fbd9767797c424bddba2cd4f78b598981cb4110e52d9bc153d55b4c3f40c09",
+   "trades_sha256": "4b51d8f899ff6c7d9b628a62878e3731f4227f9e60f644fc8cfce48798204dd6",
+   "n_trades_total": 501
+  },
+  "vol_adaptive_trend__ema20_50_gate__comm7__4h.json": {
+   "file_sha256": "1844bcda3af644e0239d7d6c63cf0a254f69f2134671ea178fa1322f78162fd5",
+   "trades_sha256": "47312445f0770ee378808017ee404f78d87f199e2d6d1503a9ff6cb4813e27ba",
+   "n_trades_total": 121
+  }
+ }
+}

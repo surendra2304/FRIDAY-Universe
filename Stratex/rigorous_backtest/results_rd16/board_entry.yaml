@@ -1,0 +1,30 @@
+  - id: TASK-STR-RD-016
+    title: "Stratex research round RD-016: RD-003's forex-native families (london_drive, monday_gap_fade, trend_pullback) on the TASK-STR-DATA-001 forex_cross41 panel — 12 pre-declared trials, judgement identical to RD-002/RD-003"
+    status: DONE
+    owner: muse_ai
+    branch: claude/task-str-rd-016
+    prs: []
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T15:53:21+05:30"
+    updated_at: "2026-11-15T16:45:00+05:30"
+    files:
+      - "Stratex/rigorous_backtest/RESULTS_RD16.md"
+      - "Stratex/rigorous_backtest/results_rd16/"
+      - "Stratex/rigorous_backtest/rd16/"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: ""
+    defect: "RD-003's forex-native families were judged only on the majors-heavy forex28/forex12 panels and comm7. DATA-001 then provenance-verified 41 additional FX crosses/minors/exotics — the operative universe of the owner's OANDA practice account (68 FX pairs, verified) — but no strategy family had ever been honestly judged on them. Whether the FX session/gap/pullback mechanisms transfer to crosses was unknown; assuming transfer without a pre-declared, multiple-testing-corrected round would invite exactly the overfitting the programme exists to prevent."
+    acceptance:
+      - "Declaration frozen and SHA-256 hashed BEFORE any cell runs (hash in the claim comment): families, variants, cells, exit specs, the full RD-002/RD-003 promotion bar, and the Bonferroni gate at the running global counter (state the N used)."
+      - "Walk-forward / out-of-sample only, on hash-manifested data only (every series verified against DATA-001's manifests.json before use); every variant tried disclosed; UNCOVERED stated plainly where data blocks a cell."
+      - "Sanity anchor: one RD-001/RD-002 published row reproduced bit-identically through the crew's harness before any RD-016 number is trusted."
+      - "Verdict reported plainly: passers with full metrics, near-misses, total trials added to the global counter. A passer is only a CANDIDATE for the coordinator's forward-lane decision — no registration, no trading."
+    evidence:
+      - "COMPLETE 2026-11-15: ZERO of 8 cells pass the bar; ZERO near-misses (programme definition). 7 of 8 cells lose money pooled OOS net of 10 bps RT; the only positive cell (monday_gap_fade/gap_1.0 @1d: 167 trades, expectancy +0.0061%, PF 1.016, p=0.513) fails PF/trades/folds/holdout and drops to PF 0.785 at 2x costs. london_drive/drive_plain @1h: 5,052 trades, expectancy -0.1115%, PF 0.423, negative on 0/41 symbols positive — decisively rejected on crosses. trend_pullback loses at both timeframes (PF 0.50-0.67). wf-select procedures (4) rescue nothing. Full table: RESULTS_RD16.md."
+      - "Trials: 12 added (8 cells + 4 wf-select procedures); global counter 1,934 -> 1,946; Bonferroni alpha used 2.569e-05. DSR non-computable in-round (8 cells < the >=10 qualifying rows the dispersion estimator needs) — disclosed, never gating, per the frozen declaration."
+      - "Sanity anchor PASSED bit-identically: RD-001 ts_momentum/roc42_4h reproduced exactly (303 trades, expectancy 0.0024275740638451445, PF 1.0969220482985518) via RD-001's own load_timeframe construction (results_rd16/anchor.json)."
+      - "Data: 82/82 series FULL_MATCH against DATA-001's manifests.json (csv_sha256 + rows + first/last). Disclosed episode: Yahoo's chart API serves two near-identical 1h FX variants (the non-manifest one differs only in ~0.5% null-bar coverage and <=5-pip revisions on ~1% of bars); the crew re-fetched until the manifest variant was served per symbol and judged ONLY on hash-verified files. UNCOVERED: none — all 8 cells ran on the full 41-symbol panel. Declared load rule applied: in-progress 2026-11-15 daily bar dropped at load (28 stub bars)."
+      - "Declaration frozen 2026-11-15T15:53:21+05:30, sha256 379b6b7135fef2715f5a10be62cf1a388c18c29a0b5e2d292fdd5de6e8654a64 (results_rd16/declaration.json). Signal code rd3/families_fx.py byte-identical to main (PR #294); nothing re-tuned after the freeze."
+    blockers: []
+    next_action: "Done — research only, nothing registered or traded, no candidate forwarded to the forward lane. Coordinator: verify RESULTS_RD16.md + results_rd16/synthesis.json and flip this entry to VERIFIED. The forex_cross41 panel (hash-verified, reusable) and the documented Yahoo-1h two-variant behaviour are the round's durable assets for future RD rounds."

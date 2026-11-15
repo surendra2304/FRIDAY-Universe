@@ -1,0 +1,218 @@
+# FRIDAY Universe — local staging fleet manifest (TASK-REL-046)
+#
+# One entry per agent. Boot recipes mirror production exactly
+# (deploy/setup_fleet.sh systemd ExecStart lines + Dockerfiles), with three
+# staging differences: bind to 127.0.0.1, dummy credentials only, and a
+# per-agent memory cap enforced by the staging watchdog.
+#
+# mem_cap_mb values are the production memory_limit values from AGENTS.yaml
+# (the "~200MB class" budgets the 956MB Oracle VMs actually enforce via
+# systemd). A staging process whose RSS exceeds its cap on two consecutive
+# watchdog polls (2s apart) is killed and reported as OOM — a change that
+# would OOM in production fails here first.
+#
+# health_path / probe_path: probe_path is one representative READ-ONLY
+# request per agent. Where a domain route needs a key, the gate sends the
+# staging dummy key (staging credentials are ours, they are not secrets).
+
+common_env:
+  # The whole fleet is Oracle-only BY DESIGN (repo AGENTS.md: Oracle
+  # Autonomous Database is the only supported backend; Inference's
+  # app/memory/factory.py, Memora's storage/relational/session.py and
+  # Futuris' futuris/infra/config.py all fail closed without an
+  # oracle+oracledb DATABASE_URL, and SQLite/PostgreSQL are deliberately
+  # not selectable). Staging points every agent at a dummy DSN on a dead
+  # local port: pools are lazy, so apps boot and serve; database-backed
+  # paths fail honestly against the dummy, exactly like a production DB
+  # outage — which is what staging can truthfully reproduce.
+  DATABASE_URL: "oracle+oracledb://staging_dummy:staging_dummy_pw@127.0.0.1:1521/?service_name=STAGINGDUMMY"
+  # Sandbox quirk: the Muse sandbox exports a NO_PROXY containing
+  # bracketed IPv6 literals ([::1], [fd8b:...]) that crash httpx's proxy
+  # pattern parser at client construction (httpx.InvalidURL ':1]').
+  # Staging agents only talk to 127.0.0.1 peers, so NO_PROXY is sanitised
+  # to the two entries staging actually needs. Production is unaffected
+  # (the Oracle VMs do not carry those NO_PROXY entries).
+  NO_PROXY: "localhost,127.0.0.1"
+  no_proxy: "localhost,127.0.0.1"
+  ENVIRONMENT: "staging"
+  STAGING_MODE: "true"
+  LOG_LEVEL: "INFO"
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  # Dummy provider keys — obviously fake, never valid anywhere.
+  GEMINI_API_KEY: "staging-dummy-key-not-a-real-secret-000000"
+  GOOGLE_API_KEY: "staging-dummy-key-not-a-real-secret-000000"
+  GROQ_API_KEY: "staging-dummy-key-not-a-real-secret-000000"
+  OPENAI_API_KEY: "staging-dummy-key-not-a-real-secret-000000"
+  ANTHROPIC_API_KEY: "staging-dummy-key-not-a-real-secret-000000"
+  OPENROUTER_API_KEY: "staging-dummy-key-not-a-real-secret-000000"
+  # Dummy mesh keys (each >= 32 chars; some agents validate key length).
+  FRIDAY_API_KEY: "staging-dummy-friday-key-0000000000000000"
+  INFERENCE_API_KEY: "staging-dummy-inference-key-000000000000"
+  MEMORA_API_KEY: "staging-dummy-memora-key-000000000000000"
+  MEMORA_MASTER_KEY: "staging-dummy-memora-master-00000000000"
+  STRATEX_API_KEY: "staging-dummy-stratex-key-00000000000000"
+  FUTURIS_API_KEY: "staging-dummy-futuris-key-00000000000000"
+  INTELX_API_KEY: "staging-dummy-intelx-key-0000000000000000"
+  FORGE_API_KEY: "staging-dummy-forge-key-00000000000000000"
+  SENTINEL_API_KEY: "staging-dummy-sentinel-key-0000000000000"
+  CORTEX_API_KEY: "staging-dummy-cortex-key-0000000000000000"
+  VYRALX_API_KEY: "staging-dummy-vyralx-key-0000000000000000"
+  AI_UNIVERSE_API_KEY: "staging-dummy-universe-key-000000000000"
+  # Inter-agent URLs point at the staging fleet itself.
+  FRIDAY_URL: "http://127.0.0.1:10000"
+  INFERENCE_URL: "http://127.0.0.1:8001"
+  MEMORA_URL: "http://127.0.0.1:8002"
+  STRATEX_URL: "http://127.0.0.1:8003"
+  FUTURIS_URL: "http://127.0.0.1:8004"
+  INTELX_URL: "http://127.0.0.1:8005"
+  FORGE_URL: "http://127.0.0.1:8006"
+  SENTINEL_URL: "http://127.0.0.1:8008"
+  CORTEX_URL: "http://127.0.0.1:8009"
+  VYRALX_URL: "http://127.0.0.1:8010"
+
+agents:
+  - name: Inference
+    dir: Inference
+    pythonpath: Inference
+    argv: ["-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8001", "--workers", "1"]
+    port: 8001
+    mem_cap_mb: 180
+    health_path: /health
+    probe_path: /v1/models
+
+  - name: Memora
+    dir: Memora
+    pythonpath: Memora
+    argv: ["-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8002", "--workers", "1"]
+    port: 8002
+    mem_cap_mb: 200
+    health_path: /health
+    probe_path: /openapi.json
+    # STAGING-EXEMPT (verified 2026-11-15, TASK-REL-046): Memora creates its
+    # SQLAlchemy engine EAGERLY at startup (storage/relational/session.py
+    # create_db_engine) and fails closed when Oracle is unreachable —
+    # "Memora Oracle database is unavailable; refusing to open a local
+    # SQLite fallback" (exit 3). Unlike Inference (lazy pool, degrades),
+    # Memora cannot boot at all without a REACHABLE Oracle Autonomous DB,
+    # and no Oracle instance exists in the Muse sandbox. Memora changes
+    # therefore still need a production-side probe via the bridge until a
+    # local Oracle (or a lazy-boot mode) exists. Never fake this as a pass.
+    staging_exempt: "requires a reachable Oracle Autonomous DB at startup (eager engine creation, fails closed, no local fallback by design); no Oracle instance exists in the Muse sandbox"
+
+  - name: Stratex
+    dir: Stratex
+    pythonpath: Stratex
+    # Production runs ONLY dashboard.py under systemd (the trading bot is a
+    # separate supervisor concern and is NEVER started in staging).
+    argv: ["dashboard.py"]
+    port: 8003
+    mem_cap_mb: 180
+    health_path: /api/v1/health
+    probe_path: /
+    env:
+      PORT: "8003"
+      FLASK_DEBUG: "0"
+      STRATEX_TRADING_ENABLED: "false"
+      TRADING_ENABLED: "false"
+      BINANCE_API_KEY: "staging-dummy-key-not-a-real-secret-000000"
+      BINANCE_API_SECRET: "staging-dummy-key-not-a-real-secret-000000"
+      BINANCE_TESTNET_API_KEY: "staging-dummy-key-not-a-real-secret-000000"
+      BINANCE_TESTNET_API_SECRET: "staging-dummy-key-not-a-real-secret-000000"
+
+  - name: Futuris
+    dir: Futuris
+    pythonpath: Futuris
+    argv: ["-m", "uvicorn", "futuris.api.app:app", "--host", "127.0.0.1", "--port", "8004", "--workers", "1"]
+    port: 8004
+    mem_cap_mb: 180
+    health_path: /health
+    probe_path: /openapi.json
+
+  - name: IntelX
+    dir: IntelX
+    pythonpath: IntelX
+    argv: ["-m", "uvicorn", "intelx.app.main:app", "--host", "127.0.0.1", "--port", "8005", "--workers", "1"]
+    port: 8005
+    mem_cap_mb: 180
+    health_path: /health
+    probe_path: /openapi.json
+    # STAGING-EXEMPT (verified 2026-11-15, TASK-REL-046): IntelX connects to
+    # Oracle during application startup and aborts when it is unreachable
+    # (sqlalchemy/oracledb DPY-6005 -> "Application startup failed", exit 3).
+    # No Oracle instance exists in the Muse sandbox. See Memora's note.
+    staging_exempt: "connects to Oracle during application startup and aborts when unreachable (DPY-6005); no Oracle instance exists in the Muse sandbox"
+
+  - name: Forge
+    dir: Forge
+    pythonpath: Forge
+    argv: ["-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8006", "--workers", "1"]
+    port: 8006
+    mem_cap_mb: 180
+    health_path: /health
+    probe_path: /openapi.json
+    # STAGING-EXEMPT (verified 2026-11-15, TASK-REL-046): Forge connects to
+    # Oracle during application startup and aborts when it is unreachable
+    # (sqlalchemy/oracledb DPY-6005 -> "Application startup failed", exit 3).
+    # No Oracle instance exists in the Muse sandbox. See Memora's note.
+    staging_exempt: "connects to Oracle during application startup and aborts when unreachable (DPY-6005); no Oracle instance exists in the Muse sandbox"
+    env:
+      FORGE_ENV: "development"
+      API_KEY_REQUIRED: "false"
+
+  - name: Sentinel
+    dir: Sentinel
+    pythonpath: Sentinel
+    argv: ["-m", "uvicorn", "sentinel.apps.api.main:app", "--host", "127.0.0.1", "--port", "8008", "--workers", "1"]
+    port: 8008
+    mem_cap_mb: 200
+    health_path: /health
+    probe_path: /openapi.json
+    env:
+      # Sentinel refuses to boot without an audit signing key (by design —
+      # sentinel/audit/audit_logger.py: "Refusing to use a built-in key").
+      # Staging supplies throwaway dummies, never the production key.
+      SENTINEL_AUDIT_SIGNING_KEY: "staging-dummy-audit-signing-key-not-a-secret-0000"
+      SENTINEL_AUDIT_HMAC_KEY: "staging-dummy-audit-hmac-key-not-a-secret-000000"
+    # STAGING-EXEMPT (verified 2026-11-15, TASK-REL-046): with the signing
+    # key present, Sentinel proceeds to connect to Oracle during startup
+    # and aborts when it is unreachable (DPY-6005, exit 3) — same eager
+    # class as Memora/IntelX/Forge. No Oracle instance exists in the
+    # Muse sandbox.
+    staging_exempt: "connects to Oracle during application startup and aborts when unreachable (DPY-6005); no Oracle instance exists in the Muse sandbox"
+
+  - name: Cortex
+    dir: Cortex
+    pythonpath: Cortex
+    argv: ["-m", "uvicorn", "apps.api.src.cortex_api.main:app", "--host", "127.0.0.1", "--port", "8009", "--workers", "1"]
+    port: 8009
+    mem_cap_mb: 200
+    health_path: /health
+    probe_path: /openapi.json
+
+  - name: VyralX
+    dir: VyralX
+    pythonpath: VyralX
+    argv: ["-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8010", "--workers", "1"]
+    port: 8010
+    mem_cap_mb: 250
+    health_path: /health
+    probe_path: /openapi.json
+    env:
+      YOUTUBE_UPLOAD_ENABLED: "false"
+      AUTONOMOUS_PUBLISH_ENABLED: "false"
+    # STAGING-EXEMPT (verified 2026-11-15, TASK-REL-046): VyralX connects to
+    # Oracle during startup and aborts when it is unreachable (DPY-6005,
+    # exit 1) — same eager class as Memora/IntelX/Forge/Sentinel. No Oracle
+    # instance exists in the Muse sandbox.
+    staging_exempt: "connects to Oracle during application startup and aborts when unreachable (DPY-6005); no Oracle instance exists in the Muse sandbox"
+
+  # FRIDAY boots last: it reaches out to the rest of the mesh.
+  - name: FRIDAY
+    dir: FRIDAY
+    pythonpath: FRIDAY/src:FRIDAY/apps/core/src
+    argv: ["-m", "uvicorn", "friday.api.server:app", "--host", "127.0.0.1", "--port", "10000", "--workers", "1"]
+    port: 10000
+    mem_cap_mb: 200
+    health_path: /api/health
+    probe_path: /api/tools

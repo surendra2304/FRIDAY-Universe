@@ -1,0 +1,2401 @@
+{
+ "task": "TASK-SEN-004",
+ "title": "Dependency vulnerability scan \u2014 FRIDAY Universe fleet",
+ "date": "2026-11-15",
+ "base_main_at_scan": "217a2de71d6040e20467446561577ba9614cd779",
+ "database": "OSV (api.osv.dev), the upstream pip-audit queries via PyPI",
+ "target": "CPython 3.11 (latest patch), Linux x86_64 \u2014 matches repo base image python:3.11-slim",
+ "method": "Per-agent manifests (requirements*.txt + pyproject.toml) resolved against PyPI as a fresh install (max satisfying version, transitive requires_dist closure with marker evaluation, pip yanked-file semantics, bounded backtracking), then every resolved (name, version) queried against OSV; GHSA/PYSEC twins deduplicated by CVE.",
+ "totals": {
+  "agent_package_resolutions": 832,
+  "unique_vulnerabilities": 85,
+  "by_severity": {
+   "critical": 9,
+   "high": 50,
+   "medium": 26,
+   "low": 0,
+   "unscored": 0
+  }
+ },
+ "per_agent": {
+  "FRIDAY": {
+   "packages_resolved": 166,
+   "unresolved": [
+    "python-dateutil"
+   ],
+   "resolver_backtracks": [
+    {
+     "package": "livekit-api",
+     "forbidden_version": "2.0.0",
+     "reason": "constraint conflict on livekit-protocol"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.3.0",
+     "reason": "constraint conflict on python-dateutil"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.2.2",
+     "reason": "constraint conflict on python-dateutil"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.2.0",
+     "reason": "constraint conflict on python-dateutil"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.1.3",
+     "reason": "constraint conflict on python-dateutil"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.1.2",
+     "reason": "constraint conflict on python-dateutil"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.1.1",
+     "reason": "constraint conflict on python-dateutil"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.1.0",
+     "reason": "constraint conflict on python-dateutil"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.0.3",
+     "reason": "constraint conflict on python-dateutil"
+    },
+    {
+     "package": "icalendar",
+     "forbidden_version": "7.0.2",
+     "reason": "constraint conflict on python-dateutil"
+    }
+   ],
+   "findings_by_severity": {
+    "critical": 2,
+    "high": 2,
+    "medium": 0,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.163.1",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.3",
+    "pydantic-settings": "2.16.3",
+    "httpx": "0.28.1",
+    "google-genai": "3.3.0",
+    "openai": "3.51.0",
+    "websockets": "17.4",
+    "livekit-api": "1.2.3",
+    "livekit-agents": "1.8.12",
+    "livekit-plugins-google": "1.8.12",
+    "livekit-plugins-groq": "1.8.12",
+    "edge-tts": "7.3.1",
+    "static-ffmpeg": "3.0",
+    "python-dotenv": "1.2.4",
+    "duckduckgo-search": "8.1.1",
+    "beautifulsoup4": "4.15.0",
+    "rich": "15.0.0",
+    "pillow": "13.0.0",
+    "psutil": "7.2.2",
+    "icalendar": "7.0.1",
+    "recurring-ical-events": "3.8.2",
+    "chromadb": "1.5.9",
+    "pygithub": "2.10.0",
+    "numpy": "2.4.6",
+    "pytesseract": "0.3.13",
+    "sqlalchemy": "2.1.8",
+    "oracledb": "26.1.0",
+    "sounddevice": "0.5.6",
+    "pywinauto": "0.6.9",
+    "pycaw": "20260927",
+    "starlette": "1.10.0",
+    "anyio": "4.16.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "pyyaml": "6.0.3",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "google-auth": "2.62.2",
+    "httpx2": "2.16.0",
+    "requests": "2.34.2",
+    "tenacity": "9.1.4",
+    "distro": "1.9.0",
+    "sniffio": "1.3.1",
+    "jiter": "0.19.0",
+    "aiohttp": "3.14.5",
+    "livekit-protocol": "1.1.32",
+    "multidict": "7.2.1",
+    "protobuf": "7.36.2",
+    "pyjwt": "2.15.1",
+    "types-protobuf": "7.35.1.20260906",
+    "aiofiles": "25.1.0",
+    "av": "18.1.0",
+    "colorama": "0.4.6",
+    "docstring-parser": "0.18.0",
+    "eval-type-backport": "0.4.0",
+    "json-repair": "0.63.5",
+    "livekit-blingfire": "1.2.0",
+    "livekit-local-inference": "0.3.1",
+    "livekit": "1.2.1",
+    "nest-asyncio": "1.6.0",
+    "opentelemetry-exporter-otlp": "1.45.2",
+    "opentelemetry-sdk": "1.45.2",
+    "prometheus-client": "0.26.0",
+    "typer": "0.29.1",
+    "google-cloud-speech": "2.41.0",
+    "google-cloud-texttospeech": "2.38.0",
+    "tabulate": "0.10.0",
+    "filelock": "4.2.10",
+    "progress": "1.6.1",
+    "twine": "7.0.0",
+    "primp": "2.0.1",
+    "lxml": "6.1.3",
+    "soupsieve": "4.1.1",
+    "markdown-it-py": "4.3.0",
+    "pygments": "2.21.0",
+    "tzdata": "2026.6",
+    "x-wr-timezone": "2.0.1",
+    "build": "1.6.1",
+    "pybase64": "1.5.2",
+    "onnxruntime": "1.32.0",
+    "opentelemetry-exporter-otlp-proto-grpc": "1.45.2",
+    "tokenizers": "0.23.3",
+    "pypika": "0.51.1",
+    "tqdm": "4.70.1",
+    "overrides": "7.7.0",
+    "importlib-resources": "7.1.0",
+    "grpcio": "1.85.1",
+    "bcrypt": "5.0.0",
+    "kubernetes": "37.0.2",
+    "mmh3": "5.3.1",
+    "orjson": "3.13.0",
+    "jsonschema": "4.26.0",
+    "pynacl": "1.6.2",
+    "urllib3": "2.8.0",
+    "packaging": "26.3",
+    "greenlet": "3.5.6",
+    "cryptography": "50.0.2",
+    "cffi": "2.1.1",
+    "six": "1.17.0",
+    "python-xlib": "0.33",
+    "comtypes": "1.5.0",
+    "pyasn1-modules": "0.4.2",
+    "httpcore2": "2.16.0",
+    "truststore": "0.10.5",
+    "charset-normalizer": "3.5.2",
+    "aiohappyeyeballs": "2.7.1",
+    "aiosignal": "1.4.0",
+    "attrs": "26.1.0",
+    "frozenlist": "1.8.0",
+    "propcache": "0.5.4",
+    "yarl": "1.25.1",
+    "opentelemetry-exporter-otlp-proto-http": "1.45.2",
+    "opentelemetry-semantic-conventions": "0.66b2",
+    "shellingham": "1.5.4",
+    "google-api-core": "2.44.0",
+    "proto-plus": "1.29.0",
+    "readme-renderer": "46.0",
+    "requests-toolbelt": "1.0.0",
+    "keyring": "25.7.0",
+    "rfc3986": "2.0.0",
+    "id": "1.6.1",
+    "mdurl": "0.1.2",
+    "pyproject-hooks": "1.3.3",
+    "flatbuffers": "25.12.19",
+    "googleapis-common-protos": "1.76.0",
+    "opentelemetry-exporter-otlp-common": "0.66b2",
+    "opentelemetry-exporter-otlp-proto-common": "1.45.2",
+    "opentelemetry-proto": "1.45.2",
+    "huggingface-hub": "2.4.0",
+    "websocket-client": "1.9.2",
+    "requests-oauthlib": "2.0.0",
+    "oauthlib": "4.0.1",
+    "durationpy": "0.11",
+    "aiohttp-retry": "2.9.1",
+    "jsonschema-specifications": "2025.9.1",
+    "referencing": "0.37.0",
+    "rpds-py": "2026.9.1",
+    "pycparser": "3.12",
+    "pyasn1": "0.6.5",
+    "opentelemetry-exporter-http-transport": "0.66b2",
+    "grpcio-status": "1.85.1",
+    "nh3": "0.3.7",
+    "docutils": "0.23",
+    "secretstorage": "3.5.0",
+    "jeepney": "0.9.0",
+    "importlib-metadata": "10.2.0",
+    "jaraco-classes": "3.4.0",
+    "jaraco-functools": "4.6.0",
+    "jaraco-context": "6.1.2",
+    "fsspec": "2026.9.0",
+    "hf-xet": "1.8.0",
+    "zipp": "4.1.2",
+    "lazy-importer": "0.1.0",
+    "more-itertools": "11.2.1",
+    "backports-tarfile": "1.2.0"
+   }
+  },
+  "Inference": {
+   "packages_resolved": 32,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.163.1",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.3",
+    "pydantic-settings": "2.16.3",
+    "httpx": "0.28.1",
+    "python-dotenv": "1.2.4",
+    "sqlalchemy": "2.1.8",
+    "rich": "15.0.0",
+    "typer": "0.29.1",
+    "prometheus-client": "0.26.0",
+    "starlette": "1.10.0",
+    "anyio": "4.16.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "pyyaml": "6.0.3",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "websockets": "17.4",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "markdown-it-py": "4.3.0",
+    "pygments": "2.21.0",
+    "shellingham": "1.5.4",
+    "mdurl": "0.1.2"
+   }
+  },
+  "Memora": {
+   "packages_resolved": 52,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.163.1",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.3",
+    "pydantic-settings": "2.16.3",
+    "sqlalchemy": "2.1.8",
+    "greenlet": "3.5.6",
+    "alembic": "1.20.1",
+    "oracledb": "26.1.0",
+    "redis": "8.1.0",
+    "qdrant-client": "1.20.0",
+    "python-multipart": "0.0.33",
+    "pytest": "9.2.0",
+    "pytest-asyncio": "1.5.0",
+    "httpx": "0.28.1",
+    "requests": "2.34.2",
+    "pyyaml": "6.0.3",
+    "python-dotenv": "1.2.4",
+    "starlette": "1.10.0",
+    "anyio": "4.16.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "websockets": "17.4",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "mako": "1.4.3",
+    "cryptography": "50.0.2",
+    "grpcio": "1.85.1",
+    "numpy": "2.4.6",
+    "portalocker": "4.4.2",
+    "protobuf": "7.36.2",
+    "urllib3": "2.8.0",
+    "iniconfig": "2.3.1",
+    "packaging": "26.3",
+    "pluggy": "1.7.0",
+    "pygments": "2.21.0",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "h2": "4.4.1",
+    "charset-normalizer": "3.5.2",
+    "markupsafe": "3.0.4",
+    "cffi": "2.1.1",
+    "hyperframe": "6.1.0",
+    "hpack": "4.2.0",
+    "pycparser": "3.12"
+   }
+  },
+  "Stratex": {
+   "packages_resolved": 88,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "python-binance": "1.0.37",
+    "pandas": "3.1.1",
+    "numpy": "2.4.6",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.17.1",
+    "xgboost": "3.2.0",
+    "requests": "2.34.2",
+    "flask": "3.1.3",
+    "flask-cors": "6.0.5",
+    "python-dotenv": "1.2.4",
+    "simplefix": "1.0.17",
+    "statsmodels": "0.15.0",
+    "pyyaml": "6.0.3",
+    "pytest": "9.2.0",
+    "pytest-asyncio": "1.5.0",
+    "pytest-mock": "3.17.0",
+    "optuna": "5.0.0",
+    "ccxt": "4.5.92",
+    "psutil": "7.2.2",
+    "gunicorn": "27.0.1",
+    "httpx": "0.28.1",
+    "google-genai": "2.34.0",
+    "oracledb": "26.1.0",
+    "six": "1.17.0",
+    "dateparser": "1.5.0",
+    "aiohttp": "3.14.5",
+    "websockets": "17.4",
+    "pycryptodome": "4.4.0",
+    "python-dateutil": "4.0.0",
+    "joblib": "1.6.0",
+    "narwhals": "2.28.0",
+    "threadpoolctl": "3.8.0",
+    "nvidia-nccl-cu12": "2.32.6",
+    "charset-normalizer": "3.4.7",
+    "idna": "3.18",
+    "urllib3": "2.8.0",
+    "certifi": "2026.10.23",
+    "blinker": "1.9.0",
+    "click": "8.5.1",
+    "itsdangerous": "2.2.0",
+    "jinja2": "3.1.6",
+    "markupsafe": "3.0.4",
+    "werkzeug": "3.1.9",
+    "patsy": "1.0.3",
+    "packaging": "26.3",
+    "formulaic": "1.2.2",
+    "iniconfig": "2.3.1",
+    "pluggy": "1.7.0",
+    "pygments": "2.21.0",
+    "typing-extensions": "4.16.0",
+    "alembic": "1.20.1",
+    "colorlog": "6.12.0",
+    "sqlalchemy": "2.1.8",
+    "tqdm": "4.70.1",
+    "cryptography": "50.0.2",
+    "yarl": "1.25.1",
+    "aiohttp-fast-zlib": "0.3.0",
+    "zlib-ng": "1.0.0",
+    "uvloop": "0.22.1",
+    "aiohappyeyeballs": "2.7.1",
+    "aiosignal": "1.4.0",
+    "attrs": "26.1.0",
+    "frozenlist": "1.8.0",
+    "multidict": "6.9.1",
+    "propcache": "0.5.2",
+    "cffi": "2.0.0",
+    "pycparser": "3.0",
+    "anyio": "4.16.0",
+    "httpcore": "1.0.9",
+    "google-auth": "2.62.2",
+    "pydantic": "2.14.3",
+    "tenacity": "9.1.4",
+    "distro": "1.9.0",
+    "sniffio": "1.3.1",
+    "pytz": "2026.6",
+    "regex": "2026.11.9",
+    "tzlocal": "5.4.5",
+    "tzdata": "2026.6",
+    "cloudpickle": "3.1.2",
+    "interface-meta": "2.0.1",
+    "wrapt": "2.5.2",
+    "mako": "1.4.3",
+    "h11": "0.16.0",
+    "pyasn1-modules": "0.4.2",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "typing-inspection": "0.4.5",
+    "pyasn1": "0.6.5"
+   }
+  },
+  "Stratex-mt5-windows": {
+   "packages_resolved": 9,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "flask": "3.1.3",
+    "metatrader5": "5.0.6231",
+    "blinker": "1.9.0",
+    "click": "8.5.1",
+    "itsdangerous": "2.2.0",
+    "jinja2": "3.1.6",
+    "markupsafe": "3.0.4",
+    "werkzeug": "3.1.9",
+    "numpy": "2.4.6"
+   }
+  },
+  "Futuris": {
+   "packages_resolved": 69,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.163.1",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.3",
+    "pydantic-settings": "2.16.3",
+    "sqlalchemy": "2.1.8",
+    "oracledb": "26.1.0",
+    "alembic": "1.20.1",
+    "apscheduler": "3.11.3",
+    "structlog": "26.1.0",
+    "httpx": "0.28.1",
+    "redis": "6.4.0",
+    "statsforecast": "2.1.1",
+    "pandas": "2.3.3",
+    "pyarrow": "26.0.1",
+    "numpy": "2.4.6",
+    "python-dotenv": "1.2.4",
+    "prometheus-client": "0.26.0",
+    "typer": "0.29.1",
+    "rich": "15.0.0",
+    "starlette": "1.10.0",
+    "anyio": "4.16.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "pyyaml": "6.0.3",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "websockets": "17.4",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "greenlet": "3.5.6",
+    "cryptography": "50.0.2",
+    "mako": "1.4.3",
+    "tzlocal": "5.4.5",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "cloudpickle": "3.1.2",
+    "coreforecast": "0.0.20",
+    "scipy": "1.17.1",
+    "statsmodels": "0.15.0",
+    "tqdm": "4.70.1",
+    "fugue": "0.9.9",
+    "utilsforecast": "0.2.17",
+    "threadpoolctl": "3.8.0",
+    "python-dateutil": "4.0.0",
+    "pytz": "2026.6",
+    "tzdata": "2026.6",
+    "shellingham": "1.5.4",
+    "markdown-it-py": "4.3.0",
+    "pygments": "2.21.0",
+    "cffi": "2.1.1",
+    "markupsafe": "3.0.4",
+    "patsy": "1.0.3",
+    "packaging": "26.3",
+    "formulaic": "1.2.2",
+    "triad": "1.0.4",
+    "adagio": "0.2.6",
+    "narwhals": "2.28.0",
+    "mdurl": "0.1.2",
+    "pycparser": "3.12",
+    "interface-meta": "2.0.1",
+    "wrapt": "2.5.2",
+    "six": "1.17.0",
+    "fsspec": "2026.9.0"
+   }
+  },
+  "IntelX": {
+   "packages_resolved": 41,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.163.1",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.3",
+    "pydantic-settings": "2.16.3",
+    "sqlalchemy": "2.1.8",
+    "oracledb": "26.1.0",
+    "alembic": "1.20.1",
+    "httpx": "0.28.1",
+    "beautifulsoup4": "4.15.0",
+    "pypdf": "7.1.0",
+    "python-docx": "1.2.0",
+    "python-multipart": "0.0.33",
+    "prometheus-client": "0.26.0",
+    "jinja2": "3.1.6",
+    "python-dotenv": "1.2.4",
+    "starlette": "1.10.0",
+    "anyio": "4.16.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "pyyaml": "6.0.3",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "websockets": "17.4",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "greenlet": "3.5.6",
+    "cryptography": "50.0.2",
+    "mako": "1.4.3",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "soupsieve": "4.1.1",
+    "lxml": "6.1.3",
+    "markupsafe": "3.0.4",
+    "cffi": "2.1.1",
+    "pycparser": "3.12"
+   }
+  },
+  "CI-tooling": {
+   "packages_resolved": 121,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "pyyaml": "6.0.3",
+    "pytest": "8.4.2",
+    "pytest-asyncio": "1.5.0",
+    "reportlab": "4.5.1",
+    "pypdf": "6.21.4",
+    "fastapi": "0.163.1",
+    "starlette": "1.10.0",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.3",
+    "pydantic-settings": "2.16.3",
+    "httpx": "0.28.1",
+    "python-multipart": "0.0.33",
+    "sse-starlette": "3.7.0",
+    "requests": "2.34.2",
+    "beautifulsoup4": "4.15.0",
+    "pyjwt": "2.15.1",
+    "redis": "6.4.0",
+    "prometheus-client": "0.26.0",
+    "structlog": "25.5.0",
+    "sqlalchemy": "2.1.8",
+    "greenlet": "3.5.6",
+    "oracledb": "4.0.2",
+    "aiosqlite": "0.22.1",
+    "openai": "2.54.0",
+    "anthropic": "0.125.0",
+    "google-genai": "2.34.0",
+    "google-api-python-client": "2.202.0",
+    "flask": "3.1.3",
+    "flask-cors": "6.0.5",
+    "gunicorn": "23.0.0",
+    "numpy": "2.4.6",
+    "pandas": "3.1.1",
+    "scipy": "1.17.1",
+    "scikit-learn": "1.9.1",
+    "statsmodels": "0.15.0",
+    "xgboost": "3.2.0",
+    "optuna": "4.9.0",
+    "ccxt": "4.5.92",
+    "python-binance": "1.0.37",
+    "simplefix": "1.0.17",
+    "psutil": "7.2.2",
+    "python-dotenv": "1.2.4",
+    "pytest-mock": "3.17.0",
+    "aiofiles": "24.1.0",
+    "iniconfig": "2.3.1",
+    "packaging": "26.3",
+    "pluggy": "1.7.0",
+    "pygments": "2.21.0",
+    "typing-extensions": "4.16.0",
+    "pillow": "13.0.0",
+    "charset-normalizer": "3.4.7",
+    "anyio": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.18",
+    "urllib3": "2.8.0",
+    "soupsieve": "4.1.1",
+    "cryptography": "50.0.2",
+    "distro": "1.9.0",
+    "jiter": "0.19.0",
+    "sniffio": "1.3.1",
+    "tqdm": "4.70.1",
+    "docstring-parser": "0.18.0",
+    "google-auth": "2.62.2",
+    "tenacity": "9.1.4",
+    "websockets": "17.4",
+    "httplib2": "0.32.1",
+    "google-auth-httplib2": "0.4.4",
+    "google-api-core": "2.44.0",
+    "uritemplate": "4.2.0",
+    "blinker": "1.9.0",
+    "itsdangerous": "2.2.0",
+    "jinja2": "3.1.6",
+    "markupsafe": "3.0.4",
+    "werkzeug": "3.1.9",
+    "python-dateutil": "4.0.0",
+    "joblib": "1.6.0",
+    "narwhals": "2.28.0",
+    "threadpoolctl": "3.8.0",
+    "patsy": "1.0.3",
+    "formulaic": "1.2.2",
+    "nvidia-nccl-cu12": "2.32.6",
+    "alembic": "1.20.1",
+    "colorlog": "6.12.0",
+    "aiohttp": "3.14.5",
+    "yarl": "1.25.1",
+    "aiohttp-fast-zlib": "0.3.0",
+    "zlib-ng": "1.0.0",
+    "uvloop": "0.22.1",
+    "aiohappyeyeballs": "2.7.1",
+    "aiosignal": "1.4.0",
+    "attrs": "26.1.0",
+    "frozenlist": "1.8.0",
+    "multidict": "6.9.1",
+    "propcache": "0.5.2",
+    "cffi": "2.0.0",
+    "pycparser": "3.0",
+    "six": "1.17.0",
+    "dateparser": "1.5.0",
+    "pycryptodome": "4.4.0",
+    "pyasn1-modules": "0.4.2",
+    "pyparsing": "3.3.3",
+    "googleapis-common-protos": "1.76.0",
+    "protobuf": "7.36.2",
+    "proto-plus": "1.29.0",
+    "tzdata": "2026.6",
+    "cloudpickle": "3.1.2",
+    "interface-meta": "2.0.1",
+    "wrapt": "2.5.2",
+    "mako": "1.4.3",
+    "pytz": "2026.6",
+    "regex": "2026.11.9",
+    "tzlocal": "5.4.5",
+    "pyasn1": "0.6.5"
+   }
+  },
+  "Forge": {
+   "packages_resolved": 51,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.163.1",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.3",
+    "pydantic-settings": "2.16.3",
+    "sqlalchemy": "2.1.8",
+    "greenlet": "3.5.6",
+    "oracledb": "26.1.0",
+    "httpx": "0.28.1",
+    "redis": "6.4.0",
+    "python-dotenv": "1.2.4",
+    "rich": "15.0.0",
+    "openai": "3.51.0",
+    "anthropic": "1.17.0",
+    "psutil": "7.2.2",
+    "beautifulsoup4": "4.15.0",
+    "pytest": "8.4.2",
+    "ruff": "0.14.14",
+    "starlette": "1.10.0",
+    "anyio": "4.16.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "pyyaml": "6.0.3",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "websockets": "17.4",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "cryptography": "50.0.2",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "markdown-it-py": "4.3.0",
+    "pygments": "2.21.0",
+    "httpx2": "2.16.0",
+    "jiter": "0.19.0",
+    "sniffio": "1.3.1",
+    "docstring-parser": "0.18.0",
+    "soupsieve": "4.1.1",
+    "iniconfig": "2.3.1",
+    "packaging": "26.3",
+    "pluggy": "1.7.0",
+    "cffi": "2.1.1",
+    "mdurl": "0.1.2",
+    "httpcore2": "2.16.0",
+    "truststore": "0.10.5",
+    "pycparser": "3.12"
+   }
+  },
+  "Sentinel": {
+   "packages_resolved": 67,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 1,
+    "high": 10,
+    "medium": 8,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.141.1",
+    "uvicorn": "0.52.4",
+    "pydantic": "2.13.4",
+    "pydantic-settings": "2.15.0",
+    "cryptography": "50.0.0",
+    "pyjwt": "2.13.0",
+    "sqlalchemy": "2.0.52",
+    "oracledb": "2.5.0",
+    "alembic": "1.19.1",
+    "minio": "7.2.20",
+    "aiofiles": "25.1.0",
+    "typer": "0.27.1",
+    "rich": "15.0.0",
+    "httpx": "0.28.1",
+    "redis": "6.4.0",
+    "sse-starlette": "3.4.8",
+    "structlog": "26.1.0",
+    "reportlab": "5.0.1",
+    "weasyprint": "69.0",
+    "jinja2": "3.1.6",
+    "dnspython": "2.8.0",
+    "dpkt": "1.9.8",
+    "psutil": "7.2.2",
+    "python-dotenv": "1.2.2",
+    "pyyaml": "6.0.3",
+    "asyncpg": "0.32.0",
+    "starlette": "1.10.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "websockets": "17.4",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.46.4",
+    "cffi": "2.1.1",
+    "greenlet": "3.5.6",
+    "mako": "1.4.3",
+    "argon2-cffi": "25.1.0",
+    "certifi": "2026.10.23",
+    "pycryptodome": "4.4.0",
+    "urllib3": "2.8.0",
+    "shellingham": "1.5.4",
+    "markdown-it-py": "4.3.0",
+    "pygments": "2.21.0",
+    "anyio": "4.16.0",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "pillow": "13.0.0",
+    "charset-normalizer": "3.5.2",
+    "pydyf": "0.13.0",
+    "tinyhtml5": "2.1.0",
+    "tinycss2": "1.5.1",
+    "cssselect2": "0.10.1",
+    "pyphen": "0.18.1",
+    "fonttools": "4.68.0",
+    "markupsafe": "3.0.4",
+    "async-timeout": "5.0.1",
+    "pycparser": "3.12",
+    "argon2-cffi-bindings": "26.2.0",
+    "mdurl": "0.1.2",
+    "webencodings": "0.6.1",
+    "brotli": "1.2.1",
+    "zopfli": "0.4.3"
+   }
+  },
+  "Cortex": {
+   "packages_resolved": 58,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.163.1",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.3",
+    "pydantic-settings": "2.16.3",
+    "redis": "7.4.1",
+    "sqlalchemy": "2.1.8",
+    "oracledb": "26.1.0",
+    "alembic": "1.20.1",
+    "httpx": "0.28.1",
+    "sendgrid": "6.12.5",
+    "twilio": "9.13.0",
+    "hubspot-api-client": "13.0.0",
+    "stripe": "17.0.0",
+    "pyjwt": "2.15.1",
+    "aiohttp": "3.14.5",
+    "python-dotenv": "1.2.4",
+    "prometheus-client": "0.26.0",
+    "jinja2": "3.1.6",
+    "starlette": "1.10.0",
+    "anyio": "4.16.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "pyyaml": "6.0.3",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "websockets": "17.4",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "greenlet": "3.5.6",
+    "cryptography": "50.0.2",
+    "mako": "1.4.3",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "python-http-client": "3.3.7",
+    "werkzeug": "3.1.9",
+    "requests": "2.34.2",
+    "aiohttp-retry": "2.9.1",
+    "urllib3": "2.8.0",
+    "six": "1.17.0",
+    "python-dateutil": "4.0.0",
+    "aiohappyeyeballs": "2.7.1",
+    "aiosignal": "1.4.0",
+    "attrs": "26.1.0",
+    "frozenlist": "1.8.0",
+    "multidict": "7.2.1",
+    "propcache": "0.5.4",
+    "yarl": "1.25.1",
+    "markupsafe": "3.0.4",
+    "cffi": "2.1.1",
+    "charset-normalizer": "3.5.2",
+    "tzdata": "2026.6",
+    "pycparser": "3.12"
+   }
+  },
+  "VyralX": {
+   "packages_resolved": 78,
+   "unresolved": [],
+   "resolver_backtracks": [],
+   "findings_by_severity": {
+    "critical": 6,
+    "high": 38,
+    "medium": 16,
+    "low": 0,
+    "unscored": 0
+   },
+   "resolved_versions": {
+    "fastapi": "0.163.1",
+    "uvicorn": "0.54.0",
+    "pydantic-settings": "2.16.3",
+    "sqlalchemy": "2.1.8",
+    "oracledb": "26.1.0",
+    "httpx": "0.28.1",
+    "python-multipart": "0.0.33",
+    "google-api-python-client": "2.202.0",
+    "google-auth": "2.62.2",
+    "google-auth-oauthlib": "1.5.0",
+    "google-auth-httplib2": "0.4.4",
+    "pillow": "11.3.0",
+    "aiosqlite": "0.22.1",
+    "edge-tts": "7.3.1",
+    "yt-dlp": "2026.10.26",
+    "faster-whisper": "1.2.1",
+    "numpy": "2.4.6",
+    "opencv-python-headless": "5.0.0.93",
+    "starlette": "1.10.0",
+    "anyio": "4.16.0",
+    "pydantic": "2.14.3",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.5",
+    "annotated-doc": "0.0.6",
+    "opentelemetry-api": "1.45.2",
+    "click": "8.5.1",
+    "h11": "0.16.0",
+    "httptools": "0.9.0",
+    "python-dotenv": "1.2.4",
+    "pyyaml": "6.0.3",
+    "uvloop": "0.23.0",
+    "watchfiles": "1.3.0",
+    "websockets": "17.4",
+    "cryptography": "50.0.2",
+    "certifi": "2026.10.23",
+    "httpcore": "1.0.9",
+    "idna": "3.20",
+    "httplib2": "0.32.1",
+    "google-api-core": "2.44.0",
+    "uritemplate": "4.2.0",
+    "pyasn1-modules": "0.4.2",
+    "requests-oauthlib": "2.0.0",
+    "aiohttp": "3.14.5",
+    "tabulate": "0.10.0",
+    "ctranslate2": "4.9.0",
+    "huggingface-hub": "2.4.0",
+    "tokenizers": "0.23.3",
+    "onnxruntime": "1.32.0",
+    "av": "18.1.0",
+    "tqdm": "4.70.1",
+    "annotated-types": "0.8.0",
+    "pydantic-core": "2.50.4",
+    "cffi": "2.1.1",
+    "pyparsing": "3.3.3",
+    "googleapis-common-protos": "1.76.0",
+    "protobuf": "7.36.2",
+    "proto-plus": "1.29.0",
+    "requests": "2.34.2",
+    "pyasn1": "0.6.5",
+    "oauthlib": "4.0.1",
+    "aiohappyeyeballs": "2.7.1",
+    "aiosignal": "1.4.0",
+    "attrs": "26.1.0",
+    "frozenlist": "1.8.0",
+    "multidict": "7.2.1",
+    "propcache": "0.5.4",
+    "yarl": "1.25.1",
+    "filelock": "4.2.10",
+    "fsspec": "2026.9.0",
+    "hf-xet": "1.8.0",
+    "httpx2": "2.16.0",
+    "packaging": "26.3",
+    "flatbuffers": "25.12.19",
+    "pycparser": "3.12",
+    "charset-normalizer": "3.5.2",
+    "urllib3": "2.8.0",
+    "httpcore2": "2.16.0",
+    "truststore": "0.10.5"
+   }
+  }
+ },
+ "findings_deduped": [
+  {
+   "agent": "CI-tooling",
+   "package": "pytest",
+   "version": "8.4.2",
+   "cve": "CVE-2025-71176",
+   "advisory_ids": [
+    "GHSA-6w46-j5rx-g56g",
+    "PYSEC-2026-1845"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.8,
+   "fixed_versions": [
+    "9.0.3"
+   ],
+   "summary": "pytest has vulnerable tmpdir handling"
+  },
+  {
+   "agent": "FRIDAY",
+   "package": "chromadb",
+   "version": "1.5.9",
+   "cve": "CVE-2026-45829",
+   "advisory_ids": [
+    "GHSA-f4j7-r4q5-qw2c",
+    "PYSEC-2026-311"
+   ],
+   "severity": "critical",
+   "cvss_score": 10.0,
+   "fixed_versions": [],
+   "summary": "ChromaDB Python project has a pre-authentication code injection vulnerability"
+  },
+  {
+   "agent": "FRIDAY",
+   "package": "chromadb",
+   "version": "1.5.9",
+   "cve": "CVE-2026-45833",
+   "advisory_ids": [
+    "GHSA-36p7-vc44-83pf",
+    "PYSEC-2026-3814"
+   ],
+   "severity": "critical",
+   "cvss_score": null,
+   "fixed_versions": [],
+   "summary": "ChromaDB has a code injection vulnerability"
+  },
+  {
+   "agent": "FRIDAY",
+   "package": "chromadb",
+   "version": "1.5.9",
+   "cve": "CVE-2026-45830",
+   "advisory_ids": [
+    "GHSA-2wm9-hf6c-p5cr",
+    "PYSEC-2026-3813"
+   ],
+   "severity": "high",
+   "cvss_score": 8.8,
+   "fixed_versions": [],
+   "summary": "ChromaDB allows any authenticated users to arbitrarily read, write, update, or delete data in any tenant's collection"
+  },
+  {
+   "agent": "FRIDAY",
+   "package": "chromadb",
+   "version": "1.5.9",
+   "cve": "CVE-2026-45831",
+   "advisory_ids": [
+    "GHSA-xph7-9rjv-w5fr",
+    "PYSEC-2026-3815"
+   ],
+   "severity": "high",
+   "cvss_score": 8.8,
+   "fixed_versions": [],
+   "summary": "ChromaDB's SimpleRBACAuthorizationProvider doesn't check which tenant, database, or collection a permission applies to"
+  },
+  {
+   "agent": "Forge",
+   "package": "pytest",
+   "version": "8.4.2",
+   "cve": "CVE-2025-71176",
+   "advisory_ids": [
+    "GHSA-6w46-j5rx-g56g",
+    "PYSEC-2026-1845"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.8,
+   "fixed_versions": [
+    "9.0.3"
+   ],
+   "summary": "pytest has vulnerable tmpdir handling"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102268",
+   "advisory_ids": [
+    "GHSA-ffc3-869f-jxw9",
+    "PYSEC-2026-4145"
+   ],
+   "severity": "critical",
+   "cvss_score": 9.1,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: Asymmetric-PEM detection bypass: whitespace/line-ending-mutated public keys skip the HS/asymmetric confusion guard"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "dnspython",
+   "version": "2.8.0",
+   "cve": "CVE-2026-114605",
+   "advisory_ids": [
+    "GHSA-45c3-73f7-pv4m"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "2.9.0"
+   ],
+   "summary": "dnspython dns.name.from_wire_parser() excessive CPU use"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "dnspython",
+   "version": "2.8.0",
+   "cve": "CVE-2026-128089",
+   "advisory_ids": [
+    "GHSA-vvf4-9x63-8xvv"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "2.9.2"
+   ],
+   "summary": "dnspython has excessive memory and CPU use"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102266",
+   "advisory_ids": [
+    "GHSA-9j54-fg26-wv3r",
+    "PYSEC-2026-4143"
+   ],
+   "severity": "high",
+   "cvss_score": 7.4,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: PyJWK accepts empty HMAC keys, bypassing PyJWT's empty-key validation"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102267",
+   "advisory_ids": [
+    "GHSA-9v7f-9g4p-ffgj",
+    "PYSEC-2026-4144"
+   ],
+   "severity": "high",
+   "cvss_score": 7.4,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: PyJWKClient follows redirects when fetching JWKS"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102271",
+   "advisory_ids": [
+    "GHSA-p4g4-x82p-q773",
+    "PYSEC-2026-4149"
+   ],
+   "severity": "high",
+   "cvss_score": 7.4,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: Public keys in DER form are accepted as HMAC secrets, bypassing the CVE-2022-29217 guard"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102272",
+   "advisory_ids": [
+    "GHSA-r6x4-923q-g947",
+    "PYSEC-2026-4150"
+   ],
+   "severity": "high",
+   "cvss_score": 7.4,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT BOM Bypass"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102273",
+   "advisory_ids": [
+    "GHSA-w2cx-738m-mc7w",
+    "PYSEC-2026-4151"
+   ],
+   "severity": "high",
+   "cvss_score": 7.4,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT accepts public JWK containers as HMAC secrets"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102275",
+   "advisory_ids": [
+    "GHSA-x33g-cr3x-6449",
+    "PYSEC-2026-4183"
+   ],
+   "severity": "high",
+   "cvss_score": 8.2,
+   "fixed_versions": [
+    "2.15.0"
+   ],
+   "summary": "PyJWT accepts inconsistent OKP x/d JWKs, causing public/private key identity confusion"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "GHSA-pxh4-856f-4h89",
+   "advisory_ids": [
+    "GHSA-pxh4-856f-4h89"
+   ],
+   "severity": "high",
+   "cvss_score": 7.4,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: HS256/384/512 verify accepts empty HMAC key via oct JWK (PyJWK/PyJWKClient) enabling token forgery"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "weasyprint",
+   "version": "69.0",
+   "cve": "CVE-2026-106443",
+   "advisory_ids": [
+    "GHSA-r543-q48m-4c9j",
+    "PYSEC-2026-4311"
+   ],
+   "severity": "high",
+   "cvss_score": 8.8,
+   "fixed_versions": [
+    "70.0"
+   ],
+   "summary": "WeasyPrint: EPS images reach the Ghostscript interpreter resulting in RCE"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-101917",
+   "advisory_ids": [
+    "GHSA-2gx3-rcp4-g85q",
+    "PYSEC-2026-4140"
+   ],
+   "severity": "medium",
+   "cvss_score": 5.3,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: PyJWKClient still amplifies unauthenticated JWKS fetches on unknown kid values (incomplete fix of CVE-2026-48524)"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-101918",
+   "advisory_ids": [
+    "GHSA-42vr-xj54-vc7v",
+    "PYSEC-2026-4141"
+   ],
+   "severity": "medium",
+   "cvss_score": 5.3,
+   "fixed_versions": [
+    "2.15.0"
+   ],
+   "summary": "PyJWT: Unauthenticated RecursionError DoS in pre-verification payload parse (PyJWKClient.get_signing_key_from_jwt / verify_signature=False)"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102265",
+   "advisory_ids": [
+    "GHSA-8wjv-2p76-3863",
+    "PYSEC-2026-4142"
+   ],
+   "severity": "medium",
+   "cvss_score": 5.3,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: Uncaught RecursionError in jwt.decode() on deeply nested token header"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102269",
+   "advisory_ids": [
+    "GHSA-hxm8-2xgr-2p9m",
+    "PYSEC-2026-4147"
+   ],
+   "severity": "medium",
+   "cvss_score": 4.8,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: Non-canonical signature segments enable raw-token revocation bypass"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102270",
+   "advisory_ids": [
+    "GHSA-jwrc-g2q2-pq5p",
+    "PYSEC-2026-4148"
+   ],
+   "severity": "medium",
+   "cvss_score": 4.4,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: ReDoS vulnerability when calling the `is_pem_format` function."
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-102274",
+   "advisory_ids": [
+    "GHSA-w6j9-cwv2-h6wq",
+    "PYSEC-2026-4152"
+   ],
+   "severity": "medium",
+   "cvss_score": 5.9,
+   "fixed_versions": [
+    "2.14.0"
+   ],
+   "summary": "PyJWT: Malformed RSA JWK aborts parsing of an entire JWK Set"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "pyjwt",
+   "version": "2.13.0",
+   "cve": "CVE-2026-103001",
+   "advisory_ids": [
+    "GHSA-gvp8-978c-rx2q",
+    "PYSEC-2026-4146"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.5,
+   "fixed_versions": [],
+   "summary": "PyJWT.decode() reintroduces options-dict mutation, enabling silent claim-verification bypass on dict reuse"
+  },
+  {
+   "agent": "Sentinel",
+   "package": "weasyprint",
+   "version": "69.0",
+   "cve": "CVE-2026-55073",
+   "advisory_ids": [
+    "GHSA-jf6q-chmf-3h3v",
+    "PYSEC-2026-3940"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.2,
+   "fixed_versions": [
+    "70.0"
+   ],
+   "summary": "weasyprint Has Server-Side Request Forgery (SSRF)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112393",
+   "advisory_ids": [
+    "GHSA-332p-7hrc-92wf"
+   ],
+   "severity": "critical",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Heap buffer overflow in _tiffWriteProc when saving TIFF to BytesIO"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112398",
+   "advisory_ids": [
+    "GHSA-5x8w-8jj5-q52h",
+    "PYSEC-2026-4330"
+   ],
+   "severity": "critical",
+   "cvss_score": 9.8,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Heap buffer overflow in FlashPix (FPX) JPEG decoding leads to code execution"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112403",
+   "advisory_ids": [
+    "GHSA-8g5g-8vmr-9782",
+    "PYSEC-2026-4332"
+   ],
+   "severity": "critical",
+   "cvss_score": 9.8,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Heap buffer overflow in ImagingJpegDecode"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112900",
+   "advisory_ids": [
+    "GHSA-w889-685w-c8fh"
+   ],
+   "severity": "critical",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Argument Injection in Ghostscript call, potentially leading into RCE"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112902",
+   "advisory_ids": [
+    "GHSA-xvh5-g6gv-559v",
+    "PYSEC-2026-4363"
+   ],
+   "severity": "critical",
+   "cvss_score": 9.1,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": " Pillow: Memory disclosure and segfault in libtiff encoder via crafted TIFF tags"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96639",
+   "advisory_ids": [
+    "GHSA-v9pv-5gc8-w2m6",
+    "PYSEC-2026-4339"
+   ],
+   "severity": "critical",
+   "cvss_score": 9.8,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow multi-frame loaders can reuse stale native image storage after mode transitions"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112390",
+   "advisory_ids": [
+    "GHSA-22hg-r758-rrw9"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Infinite loop in MIC n_frames when the embedded TIFF"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112392",
+   "advisory_ids": [
+    "GHSA-27h8-gf7j-v5hc",
+    "PYSEC-2026-4326"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: NULL dereference in ImagingExpand via rank filters on zero-size images"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112394",
+   "advisory_ids": [
+    "GHSA-4558-3h8r-v8xp",
+    "PYSEC-2026-4327"
+   ],
+   "severity": "high",
+   "cvss_score": 8.2,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: P;2L and P;4L decoders may read 1 to 3 bytes past the passed buffer size"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112396",
+   "advisory_ids": [
+    "GHSA-4rr5-89j8-mwwm",
+    "PYSEC-2026-4328"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Heap use-after-free when encoding TIFF to an in-memory buffer"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112397",
+   "advisory_ids": [
+    "GHSA-58r4-6rv3-gfh8",
+    "PYSEC-2026-4329"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Out-of-bounds access in _imagingmorph on a zero-width image"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112399",
+   "advisory_ids": [
+    "GHSA-5xm2-6676-qcp9"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: APNG background disposal allocates full canvas before decompression bomb check"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112400",
+   "advisory_ids": [
+    "GHSA-65qm-jvmh-6pqg"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: GIF seek keeps rejected size after DecompressionBombError, allowing DoS"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112402",
+   "advisory_ids": [
+    "GHSA-7mwm-ghpf-9vrm",
+    "PYSEC-2026-4331"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Double free in ImagingScaleAffine on calloc failure via Image.transform"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112404",
+   "advisory_ids": [
+    "GHSA-c6hw-5grf-ff96"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: OOB read in TiffDecode.c tile and RGBA paths leaks heap memory into pixels"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112406",
+   "advisory_ids": [
+    "GHSA-f2g6-542v-9j58"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Infinite loop in PdfParser.rewrite_pages on page tree Parent cycle"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112892",
+   "advisory_ids": [
+    "GHSA-gg2r-wvfm-q9rx"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: MSP RLE decoder expands a tiny file into unbounded memory"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112893",
+   "advisory_ids": [
+    "GHSA-j4m9-6w36-pw47"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Invalid free in FreeType glyph rendering when a stroker is active"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112894",
+   "advisory_ids": [
+    "GHSA-jg86-v3jv-hrpm"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Quadratic-time DoS in PDF save_all (PdfParser.next_object_id)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112895",
+   "advisory_ids": [
+    "GHSA-p4wg-p73j-c528"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Unbounded recursion parsing a PDF page tree or trailer chain (incomplete fix for CVE-2026-42310)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112896",
+   "advisory_ids": [
+    "GHSA-pchr-8j38-3x4p",
+    "PYSEC-2026-4334"
+   ],
+   "severity": "high",
+   "cvss_score": 7.1,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: TIFF encoder ColorMap plane-size mismatch causes a heap out-of-bounds read"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112897",
+   "advisory_ids": [
+    "GHSA-q45j-58j2-45rg"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: TiffDecode returns uninitialized memory as pixels for short JPEG strips"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112901",
+   "advisory_ids": [
+    "GHSA-xgh8-jp6q-p5x8",
+    "PYSEC-2026-4335"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: ReDoS in XbmImagePlugin: 512-byte file stalls Image.open() for minutes"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-128067",
+   "advisory_ids": [
+    "GHSA-xcvg-w56q-r89m"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Heap buffer overflow saving TIFF with libtiff when tags override image size"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-25990",
+   "advisory_ids": [
+    "GHSA-cfh3-3jmp-rvhc",
+    "PYSEC-2026-2249"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.1.1"
+   ],
+   "summary": "Pillow affected by out-of-bounds write when loading PSD images"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-40192",
+   "advisory_ids": [
+    "GHSA-whj4-6x5x-4v2j",
+    "PYSEC-2026-2250"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.2.0"
+   ],
+   "summary": "FITS GZIP decompression bomb in Pillow"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-42311",
+   "advisory_ids": [
+    "GHSA-pwv6-vv43-88gr",
+    "PYSEC-2026-2252"
+   ],
+   "severity": "high",
+   "cvss_score": 7.8,
+   "fixed_versions": [
+    "12.2.0"
+   ],
+   "summary": "Pillow has an OOB Write with Invalid PSD Tile Extents (Integer Overflow)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-54058",
+   "advisory_ids": [
+    "GHSA-62p4-gmf7-7g93",
+    "PYSEC-2026-3493"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow: Out-of-bounds read via attacker-controlled row stride on Pillow's mmap path (McIdas AREA files)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-54059",
+   "advisory_ids": [
+    "GHSA-8v84-f9pq-wr9x",
+    "PYSEC-2026-2253"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow `PcfFontFile._load_bitmaps()`: `Image.frombytes()` called without `_decompression_bomb_check()` \u2014 bomb protection bypass via PCF font loading"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-54060",
+   "advisory_ids": [
+    "GHSA-5x94-69rx-g8h2",
+    "PYSEC-2026-2254"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow: `FontFile.compile()`: `Image.new()` called without `_decompression_bomb_check()`"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-55379",
+   "advisory_ids": [
+    "GHSA-45hq-cxwh-f6vc",
+    "PYSEC-2026-2255"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow `BdfFontFile`: `Image.new()` called without `_decompression_bomb_check()` \u2014 bomb protection bypass via font loading"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-55380",
+   "advisory_ids": [
+    "GHSA-phj9-mv4w-65pm",
+    "PYSEC-2026-2256"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow `GdImageFile._open()`: image dimensions accepted without `_decompression_bomb_check()`"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-59197",
+   "advisory_ids": [
+    "GHSA-xj96-63gp-2gmr",
+    "PYSEC-2026-3454"
+   ],
+   "severity": "high",
+   "cvss_score": 8.2,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow: Heap out-of-bounds write in `ImageFilter.RankFilter` via integer overflow in `ImagingExpand`"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-59199",
+   "advisory_ids": [
+    "GHSA-6r8x-57c9-28j4",
+    "PYSEC-2026-3451"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow: Heap out-of-bounds write `Image.paste()` / `Image.crop()` via signed coordinate overflow"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-59200",
+   "advisory_ids": [
+    "GHSA-jjj6-mw9f-p565",
+    "PYSEC-2026-3495"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow: Decompression Bomb DoS via PdfParser.PdfStream.decode()"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-59204",
+   "advisory_ids": [
+    "GHSA-vjc4-5qp5-m44j",
+    "PYSEC-2026-3496"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow JPEG2000 tiled decode retains a growing scratch buffer and can be used for denial of service"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-59205",
+   "advisory_ids": [
+    "GHSA-9hw9-ch79-4vh6",
+    "PYSEC-2026-3453"
+   ],
+   "severity": "high",
+   "cvss_score": 7.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow: Controlled heap out-of-bounds write in Pillow `ImageCmsTransform.apply()` via output mode mismatch"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96637",
+   "advisory_ids": [
+    "GHSA-g842-9rc4-69pw",
+    "PYSEC-2026-4338"
+   ],
+   "severity": "high",
+   "cvss_score": 6.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Decompression bomb check bypass in SpiderImagePlugin.seek() leads to unbounded allocation DoS"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96640",
+   "advisory_ids": [
+    "GHSA-mrfp-p49p-3hf2"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow PDF append accepts malformed shared page-tree DAG causing resource exhaustion"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96642",
+   "advisory_ids": [
+    "GHSA-3j72-p6qg-6xp7",
+    "PYSEC-2026-4341"
+   ],
+   "severity": "high",
+   "cvss_score": 6.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: TarIO negative size field causes infinite CPU-spin loop"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96643",
+   "advisory_ids": [
+    "GHSA-g4qv-2jxx-769h",
+    "PYSEC-2026-4342"
+   ],
+   "severity": "high",
+   "cvss_score": 6.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: PNG eXIf chunk makes EXIF parsing run in quadratic time"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96644",
+   "advisory_ids": [
+    "GHSA-9v9v-9qvf-h2hj",
+    "PYSEC-2026-4343"
+   ],
+   "severity": "high",
+   "cvss_score": 8.1,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Heap over-read in WMF/EMF rendering via 16-bit dimension truncation (Windows builds)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96778",
+   "advisory_ids": [
+    "GHSA-g7cr-3p24-7wf7"
+   ],
+   "severity": "high",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Heap buffer overflow writing JPEG comment after ICC profile fills buffer"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "GHSA-78g4-xqwv-q3g8",
+   "advisory_ids": [
+    "GHSA-78g4-xqwv-q3g8"
+   ],
+   "severity": "high",
+   "cvss_score": 8.1,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Bundled libopenjp2 2.5.4 in all wheels since 11.1.0 carries OSV-2025-219 heap-buffer-overflow write reachable from Image.open().load()"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112391",
+   "advisory_ids": [
+    "GHSA-254f-3936-288h"
+   ],
+   "severity": "medium",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: PdfParser can recurse without limit in get_value() and linearize_page_tree()"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112395",
+   "advisory_ids": [
+    "GHSA-462x-pgg6-55fp"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow tiled-TIFF decoder reads past tile buffer in copy4 (Unpack.c:1290)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112401",
+   "advisory_ids": [
+    "GHSA-74r2-7ff9-mjj2"
+   ],
+   "severity": "medium",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Quadratic GIF comment concatenation allows DoS in Image.open()"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112891",
+   "advisory_ids": [
+    "GHSA-fc9g-5qg7-mf45"
+   ],
+   "severity": "medium",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Quadratic GIF comment copying during save"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112898",
+   "advisory_ids": [
+    "GHSA-rfgq-q3w2-pmv2"
+   ],
+   "severity": "medium",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Image.quantize() with empty palette leaks uninitialized stack memory"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-112899",
+   "advisory_ids": [
+    "GHSA-vx6w-vv9f-6gvg"
+   ],
+   "severity": "medium",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: EPS load(scale) lets Ghostscript render past the decompression bomb limit"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-114501",
+   "advisory_ids": [
+    "GHSA-654x-cwwv-5j9c",
+    "PYSEC-2026-4336"
+   ],
+   "severity": "medium",
+   "cvss_score": 5.3,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Arrow export leaks stale heap memory when PILLOW_ALIGNMENT > 1"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-128066",
+   "advisory_ids": [
+    "GHSA-wqgw-9xfh-qf2g"
+   ],
+   "severity": "medium",
+   "cvss_score": null,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Memory DoS in TIFF and EXIF IFD parsing via overlapping tag data"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-42308",
+   "advisory_ids": [
+    "GHSA-wjx4-4jcj-g98j",
+    "PYSEC-2026-165"
+   ],
+   "severity": "medium",
+   "cvss_score": 5.5,
+   "fixed_versions": [
+    "12.2.0"
+   ],
+   "summary": "Pillow has an integer overflow when processing fonts"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-42309",
+   "advisory_ids": [
+    "GHSA-5xmw-vc9v-4wf2",
+    "PYSEC-2026-2251"
+   ],
+   "severity": "medium",
+   "cvss_score": 5.5,
+   "fixed_versions": [
+    "12.2.0"
+   ],
+   "summary": "Pillow has a heap buffer overflow with nested list coordinates"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-42310",
+   "advisory_ids": [
+    "GHSA-r73j-pqj5-w3x7",
+    "PYSEC-2026-2874"
+   ],
+   "severity": "medium",
+   "cvss_score": 5.5,
+   "fixed_versions": [
+    "12.2.0"
+   ],
+   "summary": "Pillow has a PDF Parsing Trailer Infinite Loop (DoS)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-55798",
+   "advisory_ids": [
+    "GHSA-4x4j-2g7c-83w6",
+    "PYSEC-2026-2257"
+   ],
+   "severity": "medium",
+   "cvss_score": 4.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow: WindowsViewer.get_command() OS command injection via unescaped shell path"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-59198",
+   "advisory_ids": [
+    "GHSA-fj7v-r99m-22gq",
+    "PYSEC-2026-3494"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.5,
+   "fixed_versions": [
+    "12.3.0"
+   ],
+   "summary": "Pillow TGA RLE encoder can serialize up to ~57 KB of adjacent heap data into generated images"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96636",
+   "advisory_ids": [
+    "GHSA-p8hx-v2p6-rp84",
+    "PYSEC-2026-4337"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Decompression-bomb protection bypass via multi-frame seek() in MPO and DCX (MpoImageFile.seek / DcxImageFile.seek)"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96638",
+   "advisory_ids": [
+    "GHSA-24rc-8hj2-v98c"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: BMP RLE decoder memory-amplification DoS via unbounded delta escape / absolute mode"
+  },
+  {
+   "agent": "VyralX",
+   "package": "pillow",
+   "version": "11.3.0",
+   "cve": "CVE-2026-96641",
+   "advisory_ids": [
+    "GHSA-4rm8-3hmm-39fg",
+    "PYSEC-2026-4340"
+   ],
+   "severity": "medium",
+   "cvss_score": 6.5,
+   "fixed_versions": [
+    "13.0.0"
+   ],
+   "summary": "Pillow: Reachable undefined behavior in native integer operations, potentially leading to denial of service or logic integrity compromise"
+  }
+ ],
+ "note": "advisory_details (full OSV records for all 143 advisories) omitted from this repo copy for size; per-finding summaries, CVSS scores, advisory ids and fixed versions are in findings_deduped. Full evidence retained by the TASK-SEN-004 crew."
+}

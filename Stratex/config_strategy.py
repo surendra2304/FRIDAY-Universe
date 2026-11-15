@@ -289,6 +289,27 @@ FOREX28_SYMBOLS = [
 # demo venue is registered with lane_assets = [] and
 # forward_protocol: False, its exclusion reason recorded, and NO
 # module is written (see tsmom2_dual below) — never substituted.
+#
+# RD-003 ADDITIONS (2026-11-15, coordinator handoff from
+# TASK-STR-RD-003, RESULTS_RD3.md merged via PR #294): four more comm7
+# 1d cells join the lane as DOCUMENTARY registrations —
+# vol_regime_switch/switch_a (151 OOS trades, +1.173%/trade, PF 1.372,
+# 5 positive folds), vol_regime_switch/switch_b (124, +0.793%, PF
+# 1.237, 5 folds), trend_pullback/pb_ema100 (113, +0.766%, PF 1.217,
+# 3 folds) and trend_pullback/pb_ema200 (109, +0.642%, PF 1.182,
+# 3 folds). Each failed ONLY the >=200-trade floor — a data-span
+# limit of the Yahoo comm7 history, not a performance failure — and
+# each carries the lane note "entered sample-starved; forward
+# evidence is the settler". They share tsmom2_dual's exclusion: the
+# judged comm7 universe (Yahoo continuous futures GOLD/SILVER/WTI/
+# BRENT/NATGAS/COPPER/PLATINUM) cannot be traded faithfully on either
+# demo venue (demo-fapi is crypto-only; the OANDA practice account
+# holds 68 FX-only instruments, verified live 2026-11-15), so no
+# module is written and nothing is substituted. RD-003 also confirmed
+# tsmom2_dual @ comm7 4h as the programme's only "mechanical bar
+# passed, significance pending" configuration, reproduced
+# bit-identically, and recorded its 2x-cost PF of 1.149 — below the
+# 1.2 sensitivity line — as COST-FRAGILE in its registry entry below.
 # ==============================================================================
 
 BOLLINGER_TREND_STRATEGY = {
@@ -355,6 +376,51 @@ TSMOM2_DUAL_STRATEGY = {
     "OOS_WIN_RATE": 0.3951,
     "OOS_PROFIT_FACTOR": 1.203,
     "OOS_EXPECTANCY_PCT": 0.558,
+}
+
+# TASK-STR-RD-003 comm7 1d near-miss cells (RESULTS_RD3.md SS2/SS3/SS5
+# watchlist). Documentary only — no production module exists for these
+# entries (judged universe unmappable on the demo venues; see the
+# registry reasons). Win rates were not published for these cells, so
+# no win-rate figure is recorded — never invented.
+VOL_REGIME_SWITCH_A_STRATEGY = {
+    "NAME": "Vol-Regime Switch A @ comm7 1d — EXCLUDED (unmappable), see registry",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-003 RD-003 additions)",
+    "TIMEFRAME": "1d",
+    "OOS_TRADES": 151,
+    "OOS_PROFIT_FACTOR": 1.372,
+    "OOS_EXPECTANCY_PCT": 1.173,
+    "OOS_POSITIVE_FOLDS": 5,
+}
+
+VOL_REGIME_SWITCH_B_STRATEGY = {
+    "NAME": "Vol-Regime Switch B @ comm7 1d — EXCLUDED (unmappable), see registry",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-003 RD-003 additions)",
+    "TIMEFRAME": "1d",
+    "OOS_TRADES": 124,
+    "OOS_PROFIT_FACTOR": 1.237,
+    "OOS_EXPECTANCY_PCT": 0.793,
+    "OOS_POSITIVE_FOLDS": 5,
+}
+
+TREND_PULLBACK_EMA100_STRATEGY = {
+    "NAME": "Trend Pullback EMA100 @ comm7 1d — EXCLUDED (unmappable), see registry",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-003 RD-003 additions)",
+    "TIMEFRAME": "1d",
+    "OOS_TRADES": 113,
+    "OOS_PROFIT_FACTOR": 1.217,
+    "OOS_EXPECTANCY_PCT": 0.766,
+    "OOS_POSITIVE_FOLDS": 3,
+}
+
+TREND_PULLBACK_EMA200_STRATEGY = {
+    "NAME": "Trend Pullback EMA200 @ comm7 1d — EXCLUDED (unmappable), see registry",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-003 RD-003 additions)",
+    "TIMEFRAME": "1d",
+    "OOS_TRADES": 109,
+    "OOS_PROFIT_FACTOR": 1.182,
+    "OOS_EXPECTANCY_PCT": 0.642,
+    "OOS_POSITIVE_FOLDS": 3,
 }
 
 # ==============================================================================
@@ -603,7 +669,76 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "validated_assets": [],
         "forward_protocol": False,
         "forward_lane": "FORWARD_TEST",
-        "reason": "EXCLUDED from the lane (TASK-STR-FWD-003): the judged universe is Yahoo continuous FUTURES series (GC/SI/CL/BZ/NG/HG/PL). Neither demo venue can trade it — demo-fapi is crypto perpetuals only, and the OANDA practice account's own instrument list (queried live 2026-11-15) contains 68 instruments, ALL FX pairs: no metals, energy or commodity instruments exist on the account at all (and spot CFDs, where offered elsewhere, would still be different instruments from the judged futures series — substitution prohibited). No production module exists for this entry and lane_assets is empty: the registration is documentary, preserving the RD-002 evidence (+0.5581%/trade, PF 1.2026, 205 OOS trades, 4/5 folds, Bonferroni FAIL) and the exclusion reason. It can only join the lane if a demo venue offers the judged futures series themselves. (sleeve_tsmom2_dual is a different judged object — the sleeve's forex component — and is unaffected by this exclusion.)",
+        "cost_fragile": True,
+        "reason": "EXCLUDED from the lane (TASK-STR-FWD-003): the judged universe is Yahoo continuous FUTURES series (GC/SI/CL/BZ/NG/HG/PL). Neither demo venue can trade it — demo-fapi is crypto perpetuals only, and the OANDA practice account's own instrument list (queried live 2026-11-15) contains 68 instruments, ALL FX pairs: no metals, energy or commodity instruments exist on the account at all (and spot CFDs, where offered elsewhere, would still be different instruments from the judged futures series — substitution prohibited). No production module exists for this entry and lane_assets is empty: the registration is documentary, preserving the RD-002 evidence (+0.5581%/trade, PF 1.2026, 205 OOS trades, 4/5 folds, Bonferroni FAIL) and the exclusion reason. It can only join the lane if a demo venue offers the judged futures series themselves. (sleeve_tsmom2_dual is a different judged object — the sleeve's forex component — and is unaffected by this exclusion.) RD-003 CONFIRMATION (RESULTS_RD3.md SS4, PR #294): this is the programme's only 'mechanical bar passed, significance pending' configuration, re-run deterministically and reproduced BIT-IDENTICALLY (205 trades, expectancy +0.558%, PF 1.203); its 2x-cost PF is 1.149 — BELOW the 1.2 sensitivity line — recorded here as COST-FRAGILE.",
+    },
+    "vol_regime_switch_a": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-003 RD-003 additions)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Judged: TASK-STR-RD-003 vol_regime_switch/switch_a on the COMM7 Yahoo-futures panel (GOLD, SILVER, WTI, BRENT, NATGAS, COPPER, PLATINUM) at 1d. No production module exists (unmappable universe — see reason).",
+        "oos_win_rate_prior": None,
+        "total_friction_bps": 12.0,
+        "expected_net_edge_bps": 117.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": [],
+        "validated_assets": [],
+        "forward_protocol": False,
+        "forward_lane": "FORWARD_TEST",
+        "lane_note": "entered sample-starved; forward evidence is the settler",
+        "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell vol_regime_switch/switch_a @ comm7 1d — 151 OOS trades, expectancy +1.173%/trade, PF 1.372, 5 positive folds, max symbol profit share 0.39. It failed ONLY the >=200-trade floor (a data-span limit of the Yahoo comm7 history, not a performance failure) and failed Bonferroni significance. Entered sample-starved; forward evidence is the settler. The judged universe cannot be traded faithfully on either demo venue — demo-fapi is crypto perpetuals only, and the OANDA practice account's instrument list (queried live 2026-11-15) contains 68 instruments, ALL FX pairs: no metals, energy or commodity instruments exist on the account (spot CFDs, where offered elsewhere, would still differ from the judged futures series — substitution prohibited). Documentary registration only: no module, lane_assets empty; it can join the executable lane only if a demo venue offers the judged futures series themselves.",
+    },
+    "vol_regime_switch_b": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-003 RD-003 additions)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Judged: TASK-STR-RD-003 vol_regime_switch/switch_b on the COMM7 Yahoo-futures panel (GOLD, SILVER, WTI, BRENT, NATGAS, COPPER, PLATINUM) at 1d. No production module exists (unmappable universe — see reason).",
+        "oos_win_rate_prior": None,
+        "total_friction_bps": 12.0,
+        "expected_net_edge_bps": 79.3,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": [],
+        "validated_assets": [],
+        "forward_protocol": False,
+        "forward_lane": "FORWARD_TEST",
+        "lane_note": "entered sample-starved; forward evidence is the settler",
+        "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell vol_regime_switch/switch_b @ comm7 1d — 124 OOS trades, expectancy +0.793%/trade, PF 1.237, 5 positive folds, max symbol profit share 0.32. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
+    },
+    "trend_pullback_ema100": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-003 RD-003 additions)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Judged: TASK-STR-RD-003 trend_pullback/pb_ema100 on the COMM7 Yahoo-futures panel (GOLD, SILVER, WTI, BRENT, NATGAS, COPPER, PLATINUM) at 1d. No production module exists (unmappable universe — see reason).",
+        "oos_win_rate_prior": None,
+        "total_friction_bps": 12.0,
+        "expected_net_edge_bps": 76.6,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": [],
+        "validated_assets": [],
+        "forward_protocol": False,
+        "forward_lane": "FORWARD_TEST",
+        "lane_note": "entered sample-starved; forward evidence is the settler",
+        "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema100 @ comm7 1d — 113 OOS trades, expectancy +0.766%/trade, PF 1.217, 3 positive folds, max symbol profit share 0.41. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
+    },
+    "trend_pullback_ema200": {
+        "status": "FORWARD_TEST",
+        "version": "v1.0.0 (TASK-STR-FWD-003 RD-003 additions)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Judged: TASK-STR-RD-003 trend_pullback/pb_ema200 on the COMM7 Yahoo-futures panel (GOLD, SILVER, WTI, BRENT, NATGAS, COPPER, PLATINUM) at 1d. No production module exists (unmappable universe — see reason).",
+        "oos_win_rate_prior": None,
+        "total_friction_bps": 12.0,
+        "expected_net_edge_bps": 64.2,
+        "minimum_required_edge": 0.0005,
+        "lane_assets": [],
+        "validated_assets": [],
+        "forward_protocol": False,
+        "forward_lane": "FORWARD_TEST",
+        "lane_note": "entered sample-starved; forward evidence is the settler",
+        "reason": "EXCLUDED from live lane execution (TASK-STR-FWD-003, RD-003 additions): TASK-STR-RD-003 watchlist cell trend_pullback/pb_ema200 @ comm7 1d — 109 OOS trades, expectancy +0.642%/trade, PF 1.182, 3 positive folds, max symbol profit share 0.37. It failed ONLY the >=200-trade floor (a data-span limit, not a performance failure) and failed Bonferroni significance; its PF of 1.182 is also marginally below the 1.2 line, recorded exactly as measured. Entered sample-starved; forward evidence is the settler. Unmappable-universe exclusion exactly as for vol_regime_switch_a: demo-fapi is crypto-only and the OANDA practice account holds 68 FX-only instruments (verified live 2026-11-15); substitution prohibited. Documentary registration only.",
     }
 }
 

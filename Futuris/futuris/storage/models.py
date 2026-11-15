@@ -360,6 +360,74 @@ class ApiKeyModel(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
 
+class ForecastScoreModel(Base):
+    """TASK-FUT-006: one forecast-vs-actual score row per resolved forecast.
+
+    Written by ``futuris.services.forecast_tracker.ForecastTracker`` when a
+    forecast's outcome lands. The issuance fields (target, horizon,
+    prediction, interval bounds, confidence, model, provenance) are
+    snapshotted from the forecast at scoring time, so calibration aggregates
+    never join back through mutable forecast state. ``forecast_id`` is
+    unique: a forecast is scored exactly once, which is what makes the
+    scoring sweep idempotent. Event-only outcomes (no numeric
+    ``observed_value``) never produce a row -- they are not zero-error
+    forecasts, and the tracker counts them as skipped instead.
+    """
+
+    __tablename__ = "forecast_scores"
+
+    score_id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+
+    forecast_id: Mapped[UUID] = mapped_column(
+        ForeignKey("forecasts.forecast_id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    target: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+
+    model_version: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    evidence_class: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+
+    confidence: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    as_of: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+
+    horizon_seconds: Mapped[float] = mapped_column(Float, nullable=False)
+
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+
+    prediction: Mapped[float] = mapped_column(Float, nullable=False)
+
+    range_lower: Mapped[float] = mapped_column(Float, nullable=False)
+
+    range_upper: Mapped[float] = mapped_column(Float, nullable=False)
+
+    nominal_level: Mapped[float] = mapped_column(Float, nullable=False)
+
+    nominal_level_source: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    observed_value: Mapped[float] = mapped_column(Float, nullable=False)
+
+    resolved_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+
+    signed_error: Mapped[float] = mapped_column(Float, nullable=False)
+
+    abs_error: Mapped[float] = mapped_column(Float, nullable=False)
+
+    pct_error: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    interval_hit: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    interval_width: Mapped[float] = mapped_column(Float, nullable=False)
+
+    winkler: Mapped[float] = mapped_column(Float, nullable=False)
+
+    scored_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, index=True)
+
+
 class AuditLogModel(Base):
     """Append-only audit trail for all mutating system actions."""
 

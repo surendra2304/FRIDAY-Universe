@@ -1,4 +1,12 @@
 friday-universe.duckdns.org {
+    log {
+        output file /var/log/caddy/friday-access.log {
+            roll_size 10mb
+            roll_keep 5
+            roll_keep_for 168h
+        }
+        format json
+    }
     # 1. FRIDAY Orchestrator Command Center
     handle_path /friday* {
         reverse_proxy 127.0.0.1:10000 {

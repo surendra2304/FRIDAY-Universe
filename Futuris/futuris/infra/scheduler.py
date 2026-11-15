@@ -427,6 +427,34 @@ class ForecastScheduler:
         logger.info("calibration_sweep_job_completed", metrics=metrics)
         return metrics
 
+    async def forecast_scoring_job(self) -> dict[str, Any]:
+        """TASK-FUT-006: score resolved forecasts into the live tracker store.
+
+        Runs alongside the calibration sweep, which records outcomes: every
+        resolved forecast with a numeric actual gets exactly one
+        forecast-vs-actual score row (point error, interval hit, Winkler)
+        in ``forecast_scores``, which is what the live calibration report
+        aggregates. Scoring is idempotent, so cadence overlaps are
+        harmless; a scoring failure is logged and reported, never raised
+        into the scheduler.
+        """
+        logger.info("forecast_scoring_job_started")
+        if not self.outcome_repo:
+            return {"scored": 0, "status": "no_storage"}
+        try:
+            from futuris.services.forecast_tracker import ForecastTracker
+
+            tracker = ForecastTracker(self.outcome_repo.session)
+            result: dict[str, Any] = dict(await tracker.score_resolved())
+            report = await tracker.calibration_report()
+            result["report_status"] = report["status"]
+            result["n_scored_total"] = report["n_scored"]
+            logger.info("forecast_scoring_job_completed", metrics=result)
+            return result
+        except Exception as exc:
+            logger.warning("forecast_scoring_job_failed", error=str(exc))
+            return {"scored": 0, "status": "error", "error": str(exc)}
+
     async def stream_risk_pulse_job(self) -> dict[str, Any]:
         """Periodic pulse computing portfolio tail-risk and forward Monte Carlo fan charts.
 
@@ -534,6 +562,9 @@ class ForecastScheduler:
         )
         self.scheduler.add_job(
             self.calibration_sweep_job, "interval", minutes=30, id="calibration_sweep_job"
+        )
+        self.scheduler.add_job(
+            self.forecast_scoring_job, "interval", minutes=30, id="forecast_scoring_job"
         )
         self.scheduler.add_job(
             self.stream_risk_pulse_job, "interval", minutes=5, id="stream_risk_pulse_job"

@@ -1,4 +1,5 @@
 import abc
+import re
 from datetime import datetime, timezone
 UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from typing import Any, Literal, Optional
@@ -774,26 +775,70 @@ class AgentRegistry:
         return self._agents.get(identifier)
 
     def route_for_event(self, event_type: str) -> SpecialistAgent:
+        # TASK-COR-004: routing signals repaired against a 103-case labelled
+        # set (tests/unit/test_routing_accuracy_cor004.py). Before: 55.3%.
+        # Three defect classes were measured: (1) whole event classes fell
+        # through to the reliability default because the cascade had no
+        # keyword for them (39 of 46 misses); (2) the substring "cro" fired
+        # inside cross_sell / microservice / microtransaction; (3) rule order
+        # let "score" steal churn scores and "lead" steal lead scoring.
         e = event_type.lower()
-        if "compliance" in e or "privacy" in e or "gdpr" in e or "consent" in e or "pii" in e:
+        tokens = set(re.split(r"[^a-z0-9]+", e))
+        if (
+            "compliance" in e or "privacy" in e or "gdpr" in e or "consent" in e or "pii" in e
+            or "audit" in e or "masking" in e or "kyc" in e or "erasure" in e
+        ):
             return self._agents.get("agent_compliance", self._agents["reliability"])
-        if "experiment" in e or "cro" in e or "ab_test" in e or "variant" in e or "split_test" in e:
+        # "cro" must be a whole token: as a substring it also matches
+        # cross_sell, microservice and microtransaction, none of which are
+        # conversion-rate experiments.
+        if "experiment" in e or "cro" in tokens or "ab_test" in e or "variant" in e or "split_test" in e:
             return self._agents.get("agent_cro", self._agents["growth"])
-        if "deal" in e or "contract" in e or "invoice" in e or "acv" in e or "revops" in e:
+        if (
+            "deal" in e or "contract" in e or "invoice" in e or "acv" in e or "revops" in e
+            or "payment" in e or "billing" in e or "quote" in e or "past_due" in e or "transaction" in e
+        ):
             return self._agents.get("agent_revops", self._agents["sales"])
-        if "mitigat" in e or "ddos" in e or "throttle" in e or "brute_force" in e or "threat" in e or "anomaly" in e:
+        if (
+            "mitigat" in e or "ddos" in e or "throttle" in e or "brute_force" in e or "threat" in e
+            or "anomaly" in e or "rate_limit" in e or "circuit" in e or "attack" in e or "fraud" in e
+            or "security" in e or "stuffing" in e
+        ):
             return self._agents.get("agent_mitigation", self._agents["reliability"])
-        if "competitor" in e or "intelx" in e or "battlecard" in e or "vs_" in e:
+        if "competitor" in e or "intelx" in e or "battlecard" in e or "vs_" in e or "win_loss" in e:
             return self._agents.get("agent_competitive", self._agents["growth"])
-        if "qualify" in e or "score" in e:
-            return self._agents["qualification"]
-        if "churn" in e or "engage" in e or "retention" in e:
+        # Churn is checked before qualification: a churn *score* belongs to
+        # churn_risk, not to lead scoring. ChurnRiskAgent's own signals
+        # (cancellation, downgrade, usage drop, session decline, inactivity,
+        # win-back) are named here explicitly.
+        if (
+            "churn" in e or "engage" in e or "retention" in e or "cancellation" in e
+            or "downgrade" in e or "winback" in e or "win_back" in e or "usage_drop" in e
+            or "session_decline" in e or "inactive" in e
+        ):
             return self._agents["churn_risk"]
-        if "pricing" in e or "funnel" in e or "exit" in e or "banner" in e:
+        # "scoring" is not covered by the substring "score" (scor+ing), and
+        # demo/intent events are QualificationAgent's declared behavioural
+        # signals — both previously fell through or were stolen by "lead".
+        if (
+            "qualify" in e or "score" in e or "scoring" in e or "demo" in e
+            or "qualified" in e or "high_intent" in e or "mql" in e or "prospect" in e
+        ):
+            return self._agents["qualification"]
+        if (
+            "pricing" in e or "funnel" in e or "exit" in e or "banner" in e
+            or "signup" in e or "conversion" in e or "campaign" in e or "referral" in e or "seo" in e
+        ):
             return self._agents["growth"]
-        if "checkout" in e or "lead" in e or "sales" in e or "enterprise" in e:
+        if (
+            "checkout" in e or "lead" in e or "sales" in e or "enterprise" in e
+            or "cross_sell" in e or "upsell" in e or "purchase" in e
+        ):
             return self._agents["sales"]
-        if "error" in e or "issue" in e or "help" in e or "ticket" in e:
+        if (
+            "error" in e or "issue" in e or "help" in e or "ticket" in e
+            or "complaint" in e or "refund" in e or "bug_report" in e
+        ):
             return self._agents["support"]
         return self._agents["reliability"]
 

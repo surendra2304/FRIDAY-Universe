@@ -112,8 +112,30 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
     if direct_urls:
         results = [SimpleNamespace(url=u.rstrip(".,;"), title=u.rstrip(".,;")) for u in direct_urls[:max_sources]]
     else:
-        results = await search.fetch(query, max_results=min(15, max_sources * 3))
+        # TASK-INT-003 (2026-11-15): the candidate pool is the depth ceiling.
+        # Baseline measurement on the fixed six-question set: 59 of ~74
+        # candidate fetches failed (45x HTTP 403 — IP-level bot management,
+        # identical under the production and a plain Chrome user-agent), and
+        # one question exhausted all 15 candidates with zero sources while
+        # its primary source (nasa.gov, HTTP 200 from the same host) never
+        # entered the pool. The pool is therefore widened (15 -> 30
+        # candidates requested) and fully iterated below instead of being
+        # sliced at 15, so a high fetch-failure rate no longer caps how many
+        # sources a brief can reach. max_sources still bounds accepted
+        # sources, and every failure is still recorded per candidate.
+        results = await search.fetch(query, max_results=min(30, max_sources * 6))
+        # TASK-INT-003: news.google.com RSS article URLs are redirectors
+        # that refuse automated fetches (TASK-REL-038 finding; INT-003
+        # baseline: 7 of one question's 15 slots, every one HTTP 403).
+        # They are demoted to last-resort — tried only after every direct
+        # article URL — never dropped: if nothing else succeeds they are
+        # still attempted and their failure recorded, exactly as before.
+        def _is_news_redirector(candidate):
+            host = urlsplit(str(getattr(candidate, "url", "") or "")).hostname or ""
+            return host == "news.google.com" or host.endswith(".news.google.com")
+        results = sorted(results, key=_is_news_redirector)
     findings, sources, failures, seen = [], [], [], set()
+    seen_final_urls = set()
     source_documents = []
     topical_query = re.sub(r"https?://[^\s]+", " ", query.lower())
     def normalized_words(text):
@@ -126,7 +148,7 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
         "cite", "actual", "source", "sources", "urls", "not", "build", "code",
         "publish", "anything", "please", "tell", "about", "this", "that", "only", "directly", "relevant", "passages",
         "excerpts", "answer", "question", "using", "based"}
-    for candidate in results[:15]:
+    for candidate in results:
         if len(sources) >= max_sources:
             break
         url = str(getattr(candidate, "url", ""))
@@ -153,6 +175,18 @@ async def collect_live_brief(query: str, search, fetch, max_sources: int = 5, sy
             final_url = str(document.final_url or url)
             if not public_source({"url": final_url}):
                 continue
+            # TASK-INT-003: candidate URLs are deduped above, final URLs
+            # were not — the widened pool surfaces URL variants of one
+            # document (tracking parameters, redirect targets) that resolve
+            # to the same final URL, and each one consumed a source slot
+            # and synthesis budget (candidate probe: one brief held the
+            # same document twice among five sources). A duplicate final
+            # URL is now skipped and recorded, freeing the slot for a
+            # distinct document.
+            if final_url in seen_final_urls:
+                failures.append({"url": url, "reason": "duplicate_final_url"})
+                continue
+            seen_final_urls.add(final_url)
             text = document.content.decode("utf-8", "replace")
             if "text/html" in content_type:
                 parser = DocumentText()

@@ -726,3 +726,66 @@ def test_entrant_fill_has_no_lane_tag(monkeypatch, tmp_path):
     assert "lane" not in fill_rows[0]
     assert len(legacy_rows) == 1
     assert "lane" not in legacy_rows[0]
+
+
+# ---------------------------------------------------------------------------
+# RD-003 additions (coordinator handoff from TASK-STR-RD-003,
+# RESULTS_RD3.md SS2/SS3/SS5): four comm7 1d near-miss cells join the
+# lane as documentary registrations — each failed ONLY the >=200-trade
+# floor. Same unmappable-universe exclusion as tsmom2_dual.
+# ---------------------------------------------------------------------------
+
+RD3_ADDITIONS = {
+    # key: (oos trades, expectancy bps, judged PF)
+    "vol_regime_switch_a": (151, 117.3, 1.372),
+    "vol_regime_switch_b": (124, 79.3, 1.237),
+    "trend_pullback_ema100": (113, 76.6, 1.217),
+    "trend_pullback_ema200": (109, 64.2, 1.182),
+}
+
+
+def test_rd3_additions_registered_documentary_only():
+    import config_strategy as cs
+
+    for key, (trades, edge_bps, _pf) in RD3_ADDITIONS.items():
+        entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
+        assert entry["status"] == "FORWARD_TEST"
+        assert entry["forward_lane"] == "FORWARD_TEST"
+        # Documentary only: never in the executable forward protocol.
+        assert entry["forward_protocol"] is False
+        assert entry["lane_assets"] == []
+        assert entry["validated_assets"] == []
+        # The mandated lane note, verbatim.
+        assert entry["lane_note"] == (
+            "entered sample-starved; forward evidence is the settler"
+        )
+        assert str(trades) in entry["reason"]
+        assert entry["expected_net_edge_bps"] == edge_bps
+        # No win rate was published for these cells — none is recorded.
+        assert entry["oos_win_rate_prior"] is None
+        # No production module may exist for an excluded entry.
+        assert not os.path.exists(
+            os.path.join(os.path.dirname(__file__), "..", f"strategy_{key}.py")
+        )
+
+
+def test_rd3_additions_do_not_expand_the_executable_lane():
+    import config_strategy as cs
+
+    protocol = {
+        key
+        for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
+        if entry.get("status") == "FORWARD_TEST"
+        and entry.get("forward_protocol") is True
+    }
+    assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+
+
+def test_tsmom2_cost_fragile_recorded():
+    import config_strategy as cs
+
+    entry = cs.PRODUCTION_STRATEGY_REGISTRY["tsmom2_dual"]
+    assert entry["cost_fragile"] is True
+    assert "1.149" in entry["reason"]
+    assert "COST-FRAGILE" in entry["reason"]
+    assert "BIT-IDENTICALLY" in entry["reason"]

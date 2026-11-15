@@ -1,0 +1,26 @@
+{
+  "anchor": "ts_momentum/roc42_4h (RD-001 published row)",
+  "expected": {
+    "trades": 303,
+    "expectancy_net": 0.0024275740638451445,
+    "profit_factor_net": 1.0969220482985518
+  },
+  "attempts": [
+    {
+      "construction": "rd.common.load_timeframe over RD-001 cache (stratex-rd/cache)",
+      "pooled_oos": {
+        "trades": 303,
+        "wins": 109,
+        "win_rate": 0.35973597359735976,
+        "expectancy_net": 0.0024275740638451445,
+        "profit_factor_net": 1.0969220482985518,
+        "avg_win_net": 0.07637334313714501,
+        "avg_loss_net": -0.039119275570122305,
+        "total_return_net": 0.24063590210877916,
+        "max_drawdown_net": -0.8126976916568602
+      },
+      "bit_identical": true
+    }
+  ],
+  "anchor_passed": true
+}
