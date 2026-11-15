@@ -1,4 +1,13 @@
-"""System Control tool for process inspection, termination, and service status."""
+"""System Control tool for process inspection and service status.
+
+TASK-FRD-002 (2026-11-15): process termination was removed from this
+SAFE-classified tool. It previously exposed a working ``terminate_process``
+action (real ``psutil`` terminate calls behind only a small protected-name
+list) that the headless production authorizer auto-approved with no
+confirmation — while the dedicated ``kill_process`` tool is classified
+DANGEROUS and always requires explicit authorization. Termination now lives
+only in ``kill_process``, behind that gate.
+"""
 
 import os
 from typing import Any
@@ -11,16 +20,15 @@ from friday.tools.base import BaseTool
 
 logger = get_logger("tools.system_control")
 
-_PROTECTED_PROCESSES = {"system", "smss.exe", "csrss.exe", "wininit.exe", "services.exe", "lsass.exe"}
-
 
 class SystemControlTool(BaseTool):
-    """System control tool for listing processes, checking resources, and terminating tasks."""
+    """System control tool for listing processes and checking resources."""
 
     name = "system_control"
     description = (
-        "Perform system diagnostics and process management. Actions: 'list_processes' (top processes by memory/cpu), "
-        "'terminate_process' (close task by name or pid), 'system_status' (CPU, RAM, battery, disk telemetry)."
+        "Perform system diagnostics. Actions: 'list_processes' (top processes by memory/cpu), "
+        "'system_status' (CPU, RAM, battery, disk telemetry). Process termination is not offered "
+        "here; use the 'kill_process' tool, which requires explicit authorization."
     )
     safety_level = SafetyLevel.SAFE
     parameters = {
@@ -28,12 +36,8 @@ class SystemControlTool(BaseTool):
         "properties": {
             "action": {
                 "type": "string",
-                "enum": ["list_processes", "terminate_process", "system_status"],
+                "enum": ["list_processes", "system_status"],
                 "description": "System control action to execute.",
-            },
-            "process_name": {
-                "type": "string",
-                "description": "Process name (e.g. 'notepad.exe') or PID for termination.",
             },
             "limit": {
                 "type": "integer",
@@ -90,33 +94,7 @@ class SystemControlTool(BaseTool):
             except Exception as e:
                 return ToolResult(name=self.name, content=f"Failed to list processes: {e}", is_error=True, safety_level=self.safety_level)
 
-        if act == "terminate_process":
-            target = (process_name or "").strip()
-            if not target:
-                return ToolResult(name=self.name, content="No process name or PID specified to terminate.", is_error=True, safety_level=self.safety_level)
-            if target.lower() in _PROTECTED_PROCESSES:
-                return ToolResult(name=self.name, content=f"Cannot terminate critical system process '{target}'.", is_error=True, safety_level=self.safety_level)
-
-            killed = 0
-            try:
-                if target.isdigit():
-                    pid = int(target)
-                    p = psutil.Process(pid)
-                    p.terminate()
-                    killed += 1
-                else:
-                    target_lower = target.lower()
-                    for p in psutil.process_iter(["pid", "name"]):
-                        try:
-                            if p.info["name"] and p.info["name"].lower() == target_lower:
-                                p.terminate()
-                                killed += 1
-                        except (psutil.NoSuchProcess, psutil.AccessDenied):
-                            continue
-                if killed > 0:
-                    return ToolResult(name=self.name, content=f"Successfully terminated {killed} instance(s) of '{target}'.", is_error=False, safety_level=self.safety_level)
-                return ToolResult(name=self.name, content=f"No running process matching '{target}' found.", is_error=False, safety_level=self.safety_level)
-            except Exception as e:
-                return ToolResult(name=self.name, content=f"Error terminating process '{target}': {e}", is_error=True, safety_level=self.safety_level)
-
+        # 'terminate_process' intentionally falls through to the unknown-action
+        # error below (TASK-FRD-002): termination is only available via the
+        # DANGEROUS-classified 'kill_process' tool, behind its authorization gate.
         return ToolResult(name=self.name, content=f"Unknown action '{action}'.", is_error=True, safety_level=self.safety_level)

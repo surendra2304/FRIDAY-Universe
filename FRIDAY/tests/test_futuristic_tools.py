@@ -472,9 +472,11 @@ def test_system_control_tool():
     res = _ok(tool.execute(action="list_processes", limit=5))
     assert "PID" in res.content
 
-    # Protected process termination refusal
+    # TASK-FRD-002: process termination is no longer offered by this
+    # SAFE-classified tool — it lives only in the DANGEROUS 'kill_process'
+    # tool, behind its authorization gate.
     res = _err(tool.execute(action="terminate_process", process_name="csrss.exe"))
-    assert "critical system process" in res.content
+    assert "Unknown action" in res.content
 
 
 def test_health_monitor_tool(tmp_path):
