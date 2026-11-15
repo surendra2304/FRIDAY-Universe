@@ -1,0 +1,4 @@
+# TASK-STR-FWD-002 equivalence fixtures: real historical OHLCV slices
+# (RD-002 cache, harness-resampled). The root *.csv rule must not
+# swallow them — the equivalence tests need them in the repo.
+!*.csv

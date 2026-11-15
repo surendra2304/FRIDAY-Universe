@@ -109,6 +109,60 @@ TESTNET_RISK = {
 }
 
 # ==============================================================================
+# TASK-STR-FWD-002 (2026-11-15): phase-3 forward entrants.
+# The two TASK-STR-RD-002 winners, approved for governed DEMO trading by
+# the owner 2026-11-15. The parameter sets below ARE the judged
+# configurations (rigorous_backtest/rd2) — the production modules
+# strategy_ichimoku_trend.py / strategy_dow_effect.py read them from
+# here, and tests/test_fwd002_forward_strategies.py proves the modules
+# reproduce the judged harness entry-for-entry on real historical data.
+# ==============================================================================
+
+# The judged CRYPTO30 panel (rigorous_backtest/rd2/panels.py CRYPTO30).
+CRYPTO30_SYMBOLS = [
+    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT",
+    "ADAUSDT", "LTCUSDT", "LINKUSDT", "DOTUSDT", "TRXUSDT", "AVAXUSDT",
+    "NEARUSDT", "ATOMUSDT", "UNIUSDT", "ETCUSDT", "BCHUSDT", "FILUSDT",
+    "APTUSDT", "ARBUSDT", "OPUSDT", "INJUSDT", "SUIUSDT", "XLMUSDT",
+    "HBARUSDT", "ALGOUSDT", "VETUSDT", "SANDUSDT", "MANAUSDT", "AAVEUSDT",
+]
+
+ICHIMOKU_TREND_STRATEGY = {
+    "NAME": "Ichimoku Trend (TK cross + cloud filter)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-002)",
+    "TIMEFRAME": "4h",
+    "TENKAN_PERIOD": 9,
+    "KIJUN_PERIOD": 26,
+    "SENKOU_B_PERIOD": 52,
+    "CLOUD_SHIFT": 26,
+    "ATR_PERIOD": 14,
+    "SL_ATR": 2.0,          # judged bracket BR24 (families3)
+    "TP_ATR": 4.0,          # judged bracket BR24 (families3)
+    "WARMUP_BARS": 260,     # judged warmup_for("4h")
+    # TASK-STR-RD-002 pooled OOS evidence (2,302 trades, 26/30 breadth):
+    "OOS_WIN_RATE": 0.4010,
+    "OOS_PROFIT_FACTOR": 1.278,
+    "OOS_EXPECTANCY_PCT": 0.894,
+}
+
+DOW_EFFECT_STRATEGY = {
+    "NAME": "Dow Effect (Monday reversal of trailing 5-day move)",
+    "VERSION": "v1.0.0 (TASK-STR-FWD-002)",
+    "TIMEFRAME": "1d",
+    "ROC_LOOKBACK": 5,
+    "ENTRY_WEEKDAY": 0,     # Monday, UTC bar open
+    "ATR_PERIOD": 14,
+    "SL_ATR": 3.0,          # judged bracket_time spec (families2)
+    "TP_ATR": 6.0,          # judged bracket_time spec (families2)
+    "MAX_BARS": 5,          # judged bracket_time max_bars (time exit)
+    "WARMUP_BARS": 260,     # judged warmup_for("1d")
+    # TASK-STR-RD-002 pooled OOS evidence (3,660 trades, 27/30 breadth):
+    "OOS_WIN_RATE": 0.5227,
+    "OOS_PROFIT_FACTOR": 1.257,
+    "OOS_EXPECTANCY_PCT": 0.878,
+}
+
+# ==============================================================================
 # PRODUCTION STRATEGY REGISTRY
 # Explicit classification of all candidate strategies
 # ==============================================================================
@@ -150,6 +204,41 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "timeframe": "15m",
         "execution_model": "PROBABILISTIC",
         "reason": "Disabled: Requires trained model artifacts with calibrated predict_proba >= 43.0%."
+    },
+    "ichimoku_trend": {
+        "status": "VALIDATED",
+        "version": "v1.0.0 (TASK-STR-FWD-002)",
+        "timeframe": "4h",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "LONG: Tenkan(9) crosses above Kijun(26) (windows include current bar) AND close above the cloud (max of span A/B, both shifted 26). SHORT: cross down AND close below the cloud. Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families3.py sig_ichimoku(cloud=True), warmup 260 bars.",
+        "sl_method": "2.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "tp_method": "4.0 * ATR(14) at signal bar (judged bracket BR24)",
+        "rr_ratio": 2.0,
+        "oos_win_rate_prior": 0.4010,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 89.4,
+        "minimum_required_edge": 0.0005,
+        "validated_assets": CRYPTO30_SYMBOLS,
+        "forward_protocol": True,
+        "reason": "TASK-STR-RD-002 winner: ichimoku_trend/tk_cloud @ CRYPTO30 4h passed the full bar (expectancy>0, PF 1.278 >= 1.2, 2,302 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.222). Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Phase-3 protocol: 1% risk cap, 3% daily breaker, kill criteria (expectancy<0 or PF<1.0 after >=50 closed trades, or strategy drawdown >5% of equity) auto-pause via measurement/forward_guard.py. DEMO venue only; live trading prohibited.",
+    },
+    "dow_effect": {
+        "status": "VALIDATED",
+        "version": "v1.0.0 (TASK-STR-FWD-002)",
+        "timeframe": "1d",
+        "execution_model": "RULE_BASED",
+        "entry_conditions": "Monday bars only (UTC bar open): SHORT if trailing 5-bar return (close/close[-5]-1) > 0, LONG otherwise (reversal). Signal on close of bar i, entry at open of bar i+1. Judged: rigorous_backtest/rd2/families2.py sig_dow(kind='reversal'), warmup 260 bars.",
+        "sl_method": "3.0 * ATR(14) at signal bar (judged bracket_time)",
+        "tp_method": "6.0 * ATR(14) at signal bar (judged bracket_time)",
+        "rr_ratio": 2.0,
+        "max_bars": 5,
+        "oos_win_rate_prior": 0.5227,
+        "total_friction_bps": 16.0,
+        "expected_net_edge_bps": 87.8,
+        "minimum_required_edge": 0.0005,
+        "validated_assets": CRYPTO30_SYMBOLS,
+        "forward_protocol": True,
+        "reason": "TASK-STR-RD-002 winner: dow_effect/reversal @ CRYPTO30 1d passed the full bar (expectancy>0, PF 1.257 >= 1.2, 3,660 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.206). Calendar effect — flagged in RD-002 as most prone to era decay; the forward window is the arbiter. Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Time exit (max_bars=5) enforced by the daemon (no broker-native equivalent). Phase-3 protocol as for ichimoku_trend. DEMO venue only; live trading prohibited.",
     }
 }
 
