@@ -96,6 +96,7 @@ from friday.tools.builtin import (
     LaptopRunCommandTool,
     LaptopScreenshotTool,
     LaptopTypeTextTool,
+    LaptopDescribeScreenTool,
     LaunchApplicationTool,
     ListSkillsTool,
     ListGitHubIssuesTool,
@@ -229,6 +230,8 @@ class ToolExecutionMixin:
             registry.register(LaptopOpenAppTool())
             registry.register(LaptopOpenUrlTool())
             registry.register(LaptopScreenshotTool())
+            # TASK-IG-FRD-008: vision-model description of the laptop screen.
+            registry.register(LaptopDescribeScreenTool())
             registry.register(LaptopTypeTextTool())
             registry.register(LaptopDictateTool())
             registry.register(LaptopPcHealthTool())
