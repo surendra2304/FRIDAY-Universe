@@ -721,6 +721,17 @@ class RecoveryEngine:
             if "project/" in target_file:
                 target_file = target_file.split("project/")[-1]
 
+            # TASK-FRG-005: same phantom-target fallback as the synthesis
+            # route -- if the diagnosed file does not exist but the
+            # classifier named the importing file, escalate against the
+            # importer, where the fix must land.
+            try:
+                self.exec_engine.fs.read_file(task_id, target_file, role="debugger")
+            except Exception:
+                importing = getattr(diagnosis, "importing_file", None)
+                if importing and importing != target_file:
+                    target_file = importing
+
             try:
                 before = self.exec_engine.fs.read_file(
                     task_id, target_file, role="debugger"
@@ -927,6 +938,22 @@ class RecoveryEngine:
             current_content = self.exec_engine.fs.read_file(task_id, target_file, role="debugger")
         except Exception:
             current_content = ""
+            # TASK-FRG-005: the diagnosed target may be a module that does
+            # not exist on disk (an import of a name that was never a
+            # project file). No route can patch a phantom; when the
+            # classifier identified the importing file, aim there instead --
+            # the import statement that must change lives in it. The create
+            # route runs earlier in the ladder and keeps first claim on
+            # genuinely missing project modules.
+            importing = getattr(diagnosis, "importing_file", None)
+            if importing and importing != target_file:
+                try:
+                    current_content = self.exec_engine.fs.read_file(
+                        task_id, importing, role="debugger"
+                    )
+                    target_file = importing
+                except Exception:
+                    current_content = ""
 
         # 1. LLM-driven patch synthesis if provider is assigned
         if self.provider:
