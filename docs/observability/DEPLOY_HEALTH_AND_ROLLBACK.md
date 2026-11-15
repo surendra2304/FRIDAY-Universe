@@ -25,6 +25,16 @@ Every fleet unit runs with `Restart=always`. That keeps services alive, but it a
 | One-click workflow | `.github/workflows/rollback-deploy.yml` | `workflow_dispatch` with `target_sha` + typed confirmation (`rollback`) + optional dry-run; runs the script on BOTH servers via the existing CI SSH secret, then re-probes all ten agents through the public gateway. |
 | Guard tests | `tests/test_rollback_deploy.py` | 8 tests against a throwaway git fixture: rejects non-commit / same-HEAD / forward / sideways targets, accepts true ancestors, dry-run changes nothing, unconfirmed run aborts, affected-service detection from the folder diff. |
 
+### 2.3 Is the watcher itself alive? (TASK-SEN-010)
+
+The watcher service is a **timer-triggered oneshot**: between runs, `systemctl status fleet-health-watcher.service` shows `inactive (dead)` — that is its normal resting state, **not** an outage. (A 2026-11-15 fleet inventory misread exactly this and reported the watcher dead on both hosts; it had in fact been cycling every ~5 minutes throughout the retained journal window, catching real incidents.) Judge watcher liveness by, in order:
+
+1. `systemctl is-active fleet-health-watcher.timer` → `active`, and `systemctl list-timers fleet-health-watcher.timer` shows a recent last trigger with `Result=success`.
+2. `python3 scripts/fleet_health_watcher.py --status` — reads the state file and exits 0 (a cycle completed within 15 minutes), 1 (stale), or 2 (no state file: the watcher has never completed a cycle on this host). It also prints any genuinely open alerts.
+3. The state file's `last_cycle` timestamp directly: `/var/lib/friday-universe/fleet-health-state.json`.
+
+If the timer is genuinely stopped: `sudo systemctl enable --now fleet-health-watcher.timer` (unit files live in `/etc/systemd/system/`; reinstall them from `deploy/` per §3 if missing). There is no watcher *service* to restart — the timer is the unit that runs.
+
 ## 3. Server activation (owner action, 2 commands per server)
 
 ```bash

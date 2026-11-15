@@ -6117,6 +6117,59 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       truncation (Inference gateway, not the models).'
     claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891501628
     last_update_comment_url: null
+  - id: TASK-SEN-010
+    title: 'fleet-health-watcher ''dead on both servers'' (REL-045) — diagnosed live: the watcher never died; a timer-triggered oneshot''s resting state was misread.
+      Real defect found and fixed: RECOVERED self-trigger via the '':last'' state key, plus a --status liveness mode'
+    owner: muse_ai
+    status: DONE
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    branch: claude/task-sen-010-watcher-recovered-fix
+    pr: 358
+    merge_note: 'Live diagnosis 2026-11-15 (bridge run_shell, read-only, both hosts): fleet-health-watcher.timer is enabled+active on Server 1 AND Server 2, firing
+      the oneshot every ~5 min with Result=success (S1: 251 starts in the retained journal window 2026-11-14 18:57 IST -> probe time, 0 unit failures; S2: 277 starts
+      in 24h, 0 failures); watcher state files fresh on both hosts at probe time; deployed script and unit files byte-identical to main (script md5 f428f7e6f53c505a3f7f5fde8c3ff7d2
+      on both hosts). REL-045''s ''inactive (dead)'' reading is the NORMAL resting state of a Type=oneshot service between timer runs — the watcher was not dead in
+      any window the journals retain (S1 ~21h, S2 ~26h). Continuity for 2026-11-10..14 can neither be proven nor refuted from retained logs (journald retention) and
+      is stated as such; indirect evidence (unit files untouched since 2026-11-10 23:07, enable symlinks present, hosts up 32/23 days) is consistent with uninterrupted
+      operation. REAL DEFECT, proven live on both hosts: after a service''s first-ever alert, evaluate() counts the ''<service>:last'' bookkeeping key as an open alert,
+      so every later healthy cycle emits a spurious [RECOVERED] line and open_alerts never empties (S1: 8 spurious lines/cycle, S2: 3/cycle, ~2,100 junk lines/day into
+      a 220MB journald; the control case confirms the mechanism — VyralX-Daemon, which never alerted, has no '':last'' key and no spam). Detection itself was never
+      impaired: the watcher caught real events throughout the retained window (2026-11-14 21:37 IST S1 fleet-wide HEALTH_UNREACHABLE episode; 2026-11-15 S2 Cortex SERVICE_DOWN
+      caught mid-restart). This PR: evaluate() counts only real alert keys; new --status mode (state-file freshness: exit 0 fresh / 1 stale / 2 missing) as the canonical
+      is-the-watcher-alive check; the oneshot resting-state trap documented in the runbook and the unit file; regression tests for the self-trigger (fail on main, pass
+      on fix).'
+    files:
+    - scripts/fleet_health_watcher.py
+    - tests/test_fleet_health_watcher.py
+    - deploy/fleet-health-watcher.service
+    - docs/observability/DEPLOY_HEALTH_AND_ROLLBACK.md
+    - docs/collaboration/WORK_BOARD.yaml
+    acceptance:
+    - Root cause of the reported watcher death established with evidence; watcher verified reporting real cycles on both hosts; the defect actually found is fixed with
+      regression tests.
+    evidence:
+    - 'S1 probe 2026-11-15 16:24 IST: timer enabled/active/waiting, LastTrigger 16:22:23 IST Result=success, next elapse 16:27:24; service ExecMainStatus=0; state file
+      last_cycle 2026-11-15T10:52:29Z with all 8 services tracked; journal 251 starts from 2026-11-14T18:57:37 IST, cycles print ''[CYCLE ...] 8/8 healthy'', real HEALTH_UNREACHABLE
+      alerts 2026-11-14 21:37 IST followed by RECOVERED closures.'
+    - 'S2 probe 2026-11-15 16:26 IST: timer enabled/active, LastTrigger 16:25:35 IST Result=success; drop-in server2.conf carries the correct S2 fleet map; state file
+      last_cycle 2026-11-15T10:55:50Z, 4 services; journal 277 starts/24h, 0 failures/24h, real SERVICE_DOWN (Cortex, deactivating) and HEALTH_UNREACHABLE alerts with
+      genuine RECOVERED closures — interleaved with the spurious per-cycle [RECOVERED] lines the fix removes.'
+    - 'TESTS: suite tests/test_fleet_health_watcher.py — 32 tests on the fixed tree (26 pre-existing + 6 new). Sandbox run (write gate intermittently denies python
+      file writes fleet-wide): 25 passed, 7 errors — all 7 errors are tmp_path fixture setups failing on the sandbox write denial (EPERM), including the 3 new TestStateStatus
+      tests whose logic is instead verified end-to-end via the --status CLI against a fixture state file (fresh -> exit 0 with age_s and only real open alerts reported;
+      stale -> exit 1; missing -> exit 2) and an in-process harness (11/11 checks on the fixed tree). Fail-on-main, harness against the pristine module: the two behavioural
+      regression tests fail for exactly the production reason ('':last''-only state emits a spurious RECOVERED; the third consecutive healthy cycle repeats RECOVERED),
+      while crash-loop / service-down / genuine-recovery checks pass on both versions. Repo CI on the PR is the definitive full-suite gate.'
+    blockers: []
+    next_action: 'Coordinator: merge this PR; Fleet CD redeploys scripts/fleet_health_watcher.py to both servers (no unit reinstall and NO restart/enable needed — the
+      timers never stopped, and each cycle executes the script from the checkout; the unit-file change is comments only). Post-deploy verification per host: ''journalctl
+      -u fleet-health-watcher.service -n 30'' shows cycles WITHOUT the per-cycle spurious [RECOVERED] lines, the state file''s open_alerts holds only '':last'' keys
+      after a healthy cycle, and ''python3 scripts/fleet_health_watcher.py --status'' exits 0. Then move TASK-OBS-001 to VERIFIED — its requested ''next real alert+recovery
+      observation'' has occurred repeatedly in the retained journal. Boundary: alert FORWARDING (FLEET_ALERT_COMMAND to Telegram) is still unconfigured — that was OBS-001''s
+      recorded phasing and belongs to the SEN-006/SEN-008 alert-channel line, not this task; SEN-009 owns backup-freshness alerting. Neither overlaps this watcher''s
+      crash-loop/health sensing.'
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
