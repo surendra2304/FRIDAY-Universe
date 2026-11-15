@@ -4790,6 +4790,33 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "SCOPE: live conversation test only — no production code or config was changed. Observed, not patched: greeting latency unchanged (host-bound, VOI-005 residual (2)); delegation gap varies with host load (10.5 s VOI-006 vs 18.6 s here)."
     next_action: "Done — VERIFIED 2026-11-15 (Muse, TASK-VOI-007 crew): the owner-requested live Muse<->FRIDAY voice conversation completed on the first attempt, Gemini Live throughout, with substance and exact figures on every turn. OPEN RESIDUALS (unchanged, coordinator-owned): (1) greeting connect->first-word 25.6 s — host-bound job spawn, expected to improve with ARM capacity; (2) the owner's own phone-side voice re-test remains the final judge of voice overall."
 
+  - id: TASK-VOI-009
+    title: "Remove Groq from FRIDAY's voice completely — Gemini Live is the only voice AI (owner directive 2026-11-15)"
+    owner: muse_ai
+    status: IN_PROGRESS
+    priority: P0
+    created: 2026-11-15
+    updated_at: 2026-11-15
+    files:
+      - "FRIDAY/src/friday/voice/livekit_worker.py"
+      - "FRIDAY/src/friday/voice/audio/"
+      - "FRIDAY/tests/test_voice_recovery_ladder.py"
+      - "FRIDAY/tests/test_voice_session_pinning.py"
+      - "FRIDAY/tests/test_voice_key_resolution.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890265430"
+    defect: "Owner directive 2026-11-15 ~11:40 IST, verbatim: 'What is the use of groq. Gemini is the only AI for voice and remove groq.' The voice worker still carries a full Groq modular pipeline (Whisper STT whisper-large-v3-turbo -> groq LLM openai/gpt-oss-120b -> EdgeTTS, or Groq Orpheus TTS when its terms probe passes) as provider path 2, and the TASK-VOI-004 recovery ladder's final rung fails over to it. That pipeline is what served the owner in his failed live voice test #2 (2026-11-15 02:30 IST) — his verdict: it felt 'like Google voice search' (one-shot STT + flat answer, not a conversation). The owner has ruled Groq is for TEXT (chat failover / Inference pool — untouched by this task); voice is Gemini-only."
+    acceptance:
+      - "Static proof: grep of the deployed FRIDAY/src/friday/voice/livekit_worker.py and its import graph returns ZERO groq/whisper/edgetts/orpheus serving references (historical comments explicitly marked as removed history are the only permitted mentions; no code path in the worker can invoke any of them)."
+      - "Recovery ladder is Gemini-only: _ladder_plan returns pinned Gemini rebuilds and nothing else; when the ladder is exhausted the turn fails honestly with the existing 'unconfirmed' outcome — there is no failover rung to any second provider."
+      - "Unavailable path: when Gemini cannot serve a call (no resolvable valid key / provider unreachable), the participant hears the shipped pre-recorded static notice (FRIDAY/src/friday/voice/audio/voice_unavailable.wav — a recording, not a synthesized pipeline), the status file records state 'unavailable' with the plain cause, and the journal logs the unavailability plainly. Proven in an isolated drill (separate room, worker env override with an empty key set — production keys untouched): notice heard, plain log present, ZERO Groq/Whisper/EdgeTTS activity."
+      - "Live acceptance on the deployed build: server-side participant call served by gemini-realtime:gemini-3.8-live end-to-end, conversational turns including one Stratex delegation, per-turn silence gaps reported; VOI-005 key keeper + session pinning behaviour unchanged."
+      - "Tests: existing voice suites updated ONLY where they pinned Groq-path behaviour (ladder plan, failover instructions, fallback STT language, orpheus fallback) — every such change disclosed in the PR and converted to the Gemini-only contract, never a deleted assertion; new tests cover the notice path; neighbouring suites' pass/fail sets unchanged."
+      - "The Orpheus model-terms owner item (Groq org admin acceptance) is CLOSED as MOOT by this removal — Orpheus no longer exists anywhere in the voice path."
+    evidence: []
+    blockers: []
+    next_action: "Claimed 2026-11-15 (Muse, TASK-VOI-009 crew; issue #35 comment 6890265430). Building the removal on branch claude/task-voi-009 from main 597d3619. SEQUENCING: TASK-VOI-008 is concurrently modifying the same worker (warm-process fix + greeting re-measurement) and has no PR open yet; this crew rebases onto VOI-008's merge before merging its code PR and composes with (never overwrites) the warm-process changes."
+
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
