@@ -55,4 +55,8 @@ def test_default_registry_tool_names_are_unique():
         f"duplicate tool names registered: {sorted(n for n in set(names) if names.count(n) > 1)}"
     )
     # The full production surface as inventoried by TASK-FRD-002.
-    assert len(names) == 90
+    # 90 at inventory time; 96 since the IG implementation wave registered
+    # the six export-only tools (lead_generate, escrcpy_launch_plan,
+    # escrcpy_automation, meeting_followup_create/list/decide) — see
+    # test_ig_tool_registry_wiring.py.
+    assert len(names) == 96
