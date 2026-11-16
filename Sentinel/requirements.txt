@@ -1,19 +1,23 @@
+# TASK-SEN-012 (2026-11-15): fleet-shared dependency floors/pins reconciled
+# with the versions SEN-002 probed live in the production venv, so a
+# manifest-driven rebuild cannot regress below the running set.
+# See docs/DEPENDENCY_LOCKS.md.
 # ==============================================================================
 # SENTINEL Enterprise Hardened Dependencies (Python 3.11+)
 # Cryptographic signing gatekeeper (HMAC-SHA256 & ECDSA) & security watchdog
 # ==============================================================================
 
 # Framework & ASGI Runtime
-fastapi==0.141.1
-uvicorn[standard]==0.52.4
+fastapi==0.161.1
+uvicorn[standard]==0.54.0
 
 # Data Validation & Typed Settings
 pydantic==2.13.4
 pydantic-settings==2.15.0
 
 # Cryptography & Security Signatures (Pinned & Secure)
-cryptography==50.0.0
-pyjwt==2.14.0
+cryptography==50.0.2
+pyjwt==2.15.1
 
 # Database & Object Storage Persistence
 sqlalchemy[asyncio]==2.0.52
@@ -45,5 +49,5 @@ dpkt==1.9.8
 psutil==7.2.2
 
 # Configuration & Parsers
-python-dotenv==1.2.2
+python-dotenv==1.2.4
 pyyaml==6.0.3
