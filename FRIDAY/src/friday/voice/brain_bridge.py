@@ -7,11 +7,16 @@ boss_verified=False. Transport uncertainty is never reported as non-execution.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import itertools
+import logging
 import os
 import time
 from typing import Any
 
 import httpx
+
+logger = logging.getLogger("friday.voice.brain_bridge")
 
 try:  # TASK-IG-VOI-01: the confirmation gate is pure stdlib; if it
     # ever fails to import, the bridge degrades to ungated (its pre-
@@ -26,17 +31,44 @@ BRAIN_ORIGIN = "http://127.0.0.1:10000"
 # TASK-VOI-003: a voice turn cannot wait out the old 230 s budget — while
 # the tool call is pending, the caller's turn never completes and every
 # later utterance queues behind it (the 2026-11-14 call wedged exactly
-# this way). 60 s covers the worst measured brain call that evening
-# (~26 s under swap load) with headroom; on timeout the bridge returns
-# "unconfirmed" and the model SPEAKS that, completing the turn honestly.
+# this way). VOI-003 set 60 s from that evening's worst measured brain
+# call (~26 s under swap load) with headroom; on timeout the bridge
+# returns "unconfirmed" and the model SPEAKS that, completing the turn
+# honestly.
+#
+# TASK-FRD-012: 60 s is empirically BELOW the brain's real completion
+# envelope, so it manufactured the stranding it was meant to prevent.
+# Measured /api/chat turn times (journal + live probes, 2026-11-16):
+# healthy pool — 1.4-9.4 s (delegation 9.38 s, remember 9.19 s, recall
+# 2.14 s); degraded pool (Gemini-pool exhaustion → failover cascade,
+# FRD-011 journal-proven) — 76 s (FRD-005 re-run #3 delegation) and
+# 77.48 s (re-run #2 follow-up). At 60 s the bridge hung up on turns
+# the brain went on to COMPLETE, and the finished answer was discarded
+# into a closed stream (defect D6). The foreground budget is therefore
+# 105 s — the worst measured degraded turn plus ~35% — and a hard
+# transport cap of 240 s behind it leashes the TASK-FRD-012 background
+# continuation: on a foreground timeout the honest "unconfirmed" still
+# returns at the budget (the VOI-003 contract is unchanged), but the
+# brain's eventual answer is no longer thrown away — it is filed as a
+# late result for in-session delivery (see _dispatch).
 def _brain_timeout_s() -> float:
     try:
-        return float(os.getenv("FRIDAY_VOICE_BRAIN_TIMEOUT_S", "60") or 60)
+        return float(os.getenv("FRIDAY_VOICE_BRAIN_TIMEOUT_S", "105") or 105)
     except ValueError:
-        return 60.0
+        return 105.0
 
 
 BRAIN_TIMEOUT_S = _brain_timeout_s()
+
+
+def _brain_hard_timeout_s() -> float:
+    try:
+        return float(os.getenv("FRIDAY_VOICE_BRAIN_HARD_TIMEOUT_S", "240") or 240)
+    except ValueError:
+        return 240.0
+
+
+BRAIN_HARD_TIMEOUT_S = _brain_hard_timeout_s()
 
 
 # TASK-FRD-011: one voice conversation must not race itself. In FRD-005
@@ -63,10 +95,50 @@ DEDUPE_WINDOW_S = _dedupe_window_s()
 _CACHEABLE_STATES = {"answered", "failed"}
 
 
+# TASK-FRD-012: every bridge call carries a turn id (process-monotonic
+# sequence + a short request hash) and every hop — send, gate verdict,
+# cache reuse, result, foreground timeout, late landing — is journaled
+# under it. In FRD-005 re-run #3 the bridge logged NOTHING, so a
+# completed brain answer that never reached the voice session could
+# not be attributed to any hop (defect D6's instrumentation gap).
+_TURN_COUNTER = itertools.count(1)
+
+
+def _new_turn_id(text: str) -> str:
+    digest = hashlib.sha1(text.encode("utf-8", "replace")).hexdigest()[:6]
+    return f"b{next(_TURN_COUNTER)}-{digest}"
+
+
+# TASK-FRD-012: settled results that land AFTER their foreground call
+# already returned (foreground timeout or caller cancellation) are
+# filed here instead of being discarded. The worker drains the
+# registry on its watchdog pass and delivers each entry into the live
+# session. Module-level on purpose: a watchdog session rebuild creates
+# a fresh bridge, and a result earned by the old bridge must survive it.
+_LATE_RESULTS: list[dict[str, Any]] = []
+# States worth delivering late: a settled outcome the owner has not
+# heard. A late "unconfirmed" adds nothing — the owner already heard
+# the foreground one — so it is journaled only, never filed.
+_LATE_DELIVERABLE_STATES = {"answered", "failed", "refused"}
+
+
+def pop_late_results() -> list[dict[str, Any]]:
+    """Drain the late-result registry (each entry is delivered once)."""
+    drained = list(_LATE_RESULTS)
+    _LATE_RESULTS.clear()
+    return drained
+
+
 class VoiceBrainBridge:
     def __init__(self, client: httpx.AsyncClient | None = None,
-                 confirmation_gate: Any = None) -> None:
+                 confirmation_gate: Any = None,
+                 result_observer: Any = None) -> None:
         self.client = client
+        # TASK-FRD-012: the worker observes every foreground result so
+        # its delivery watch can catch a settled result the model
+        # never verbalized (defect D7). Observer failures must never
+        # break a call — every notification is guarded.
+        self._observer = result_observer
         # TASK-IG-VOI-01: one gate per bridge (i.e. per session build).
         # A watchdog rebuild creates a fresh bridge, so a confirmation
         # earned before a rebuild is asked again — fail-closed.
@@ -81,6 +153,7 @@ class VoiceBrainBridge:
         self._last_key = ""
         self._last_result: dict[str, Any] | None = None
         self._last_ts = 0.0
+        self._last_turn_id = ""
 
     def _cached_result(self, key: str) -> dict[str, Any] | None:
         if (
@@ -91,44 +164,190 @@ class VoiceBrainBridge:
             return dict(self._last_result)
         return None
 
+    def _notify_observer(self, turn_id: str, text: str,
+                         result: dict[str, Any]) -> None:
+        if self._observer is None:
+            return
+        try:
+            self._observer({
+                "turn_id": turn_id,
+                "request": text[:120],
+                "state": result.get("state"),
+                "spoken_reply": result.get("spoken_reply") or "",
+                "late_pending": bool(result.get("late_pending")),
+                "ts": time.time(),
+            })
+        except Exception:  # the watch is advisory; the call is not
+            logger.warning("VOICE brain bridge: result observer failed "
+                           "for turn %s", turn_id, exc_info=True)
+
+    def _settle(self, turn_id: str, text: str, result: dict[str, Any],
+                started: float) -> dict[str, Any]:
+        """Journal + observe + return one foreground outcome."""
+        result = dict(result)
+        result.setdefault("turn_id", turn_id)
+        logger.info(
+            "VOICE brain bridge result turn=%s state=%s elapsed=%.2fs "
+            "reply_chars=%d", turn_id, result.get("state"),
+            time.monotonic() - started,
+            len(result.get("spoken_reply") or ""),
+        )
+        self._notify_observer(turn_id, text, result)
+        return result
+
     async def execute(self, request: str) -> dict[str, Any]:
         text = (request or "").strip()
+        turn_id = _new_turn_id(text)
+        started = time.monotonic()
         if not text or len(text) > 4000:
-            return {"state": "refused", "spoken_reply": "Please give me a request between 1 and 4000 characters. Nothing was submitted."}
+            return self._settle(turn_id, text, {"state": "refused", "spoken_reply": "Please give me a request between 1 and 4000 characters. Nothing was submitted."}, started)
         if self._gate is not None:
             # The gate runs BEFORE anything is submitted: a gated
             # request has caused no side effect anywhere when the
             # owner hears the confirmation question.
             decision = self._gate.check(text)
             if decision.verdict == _confirmation_policy.CONFIRM:
-                return {
+                logger.info(
+                    "VOICE brain bridge gate turn=%s "
+                    "verdict=confirmation_required (nothing submitted)",
+                    turn_id,
+                )
+                return self._settle(turn_id, text, {
                     "state": "confirmation_required",
                     "spoken_reply": decision.question,
                     "confirmation_required": True,
                     "action_summary": decision.classification.action_summary,
                     "completion_verified": False,
-                }
+                }, started)
         # TASK-FRD-011: the gate above has run for THIS call; only the
         # send is serialized/reused, so a confirmed re-issue still passes
         # the gate on its own merits before it can reuse or send.
         key = " ".join(text.split()).casefold()
         cached = self._cached_result(key)
         if cached is not None:
-            return cached
+            logger.info(
+                "VOICE brain bridge reuse turn=%s — settled result of "
+                "turn=%s served from the reuse window", turn_id,
+                self._last_turn_id or "?",
+            )
+            return self._settle(turn_id, text, cached, started)
         async with self._send_lock:
             # A concurrent identical call may have completed while this
             # one waited for the lock — reuse its result, never re-send.
             cached = self._cached_result(key)
             if cached is not None:
-                return cached
-            result = await self._dispatch(text)
+                logger.info(
+                    "VOICE brain bridge reuse turn=%s — settled result "
+                    "of turn=%s served from the reuse window", turn_id,
+                    self._last_turn_id or "?",
+                )
+                return self._settle(turn_id, text, cached, started)
+            result = await self._dispatch(text, turn_id)
             if result.get("state") in _CACHEABLE_STATES:
                 self._last_key = key
                 self._last_result = result
                 self._last_ts = time.monotonic()
-            return result
+                self._last_turn_id = turn_id
+            return self._settle(turn_id, text, result, started)
 
-    async def _dispatch(self, text: str) -> dict[str, Any]:
+    async def _dispatch(self, text: str, turn_id: str) -> dict[str, Any]:
+        """Send one brain request under the foreground budget.
+
+        TASK-FRD-012: the HTTP exchange runs as its own shielded task.
+        If the foreground budget expires — or the caller is cancelled
+        (the realtime SDK cancels a tool call on interruption) — the
+        exchange is NOT torn down: it continues in the background
+        under the hard transport cap, and a settled outcome is filed
+        as a late result instead of being discarded (defect D6: the
+        76 s delegation turn of FRD-005 re-run #3 completed 16 s after
+        the old 60 s budget hung up on it, into a closed stream).
+        The foreground still returns the honest "unconfirmed" at the
+        budget — the continuation adds the follow-through, it does
+        not soften the timeout.
+        """
+        logger.info(
+            "VOICE brain bridge send turn=%s chars=%d budget=%.0fs "
+            "request=%r", turn_id, len(text), BRAIN_TIMEOUT_S, text[:80],
+        )
+        started = time.monotonic()
+        task = asyncio.ensure_future(self._send_guarded(text))
+
+        def _arm_late_filing() -> None:
+            # Registered ONLY at the moment the foreground abandons
+            # the wait (below), never before: a callback registered
+            # up front races the awaiting coroutine's resumption and
+            # files results the foreground is about to return itself.
+            def _file(done_task: "asyncio.Task[dict[str, Any]]") -> None:
+                try:
+                    result = done_task.result()
+                except Exception:
+                    logger.warning(
+                        "VOICE brain bridge late result turn=%s — the "
+                        "background send failed outright", turn_id,
+                        exc_info=True,
+                    )
+                    return
+                self._file_late_result(turn_id, text, result,
+                                       time.monotonic() - started)
+
+            task.add_done_callback(_file)
+
+        try:
+            return await asyncio.wait_for(
+                asyncio.shield(task), timeout=BRAIN_TIMEOUT_S)
+        except asyncio.TimeoutError:
+            _arm_late_filing()
+            logger.error(
+                "VOICE brain bridge timeout turn=%s after %.2fs "
+                "(budget %.0fs) — honest unconfirmed returned; "
+                "background continuation armed", turn_id,
+                time.monotonic() - started, BRAIN_TIMEOUT_S,
+            )
+            return {"state": "unconfirmed",
+                    "spoken_reply": "I lost contact with FRIDAY's brain. The outcome is unconfirmed. Please check the task history before repeating an action.",
+                    "late_pending": True}
+        except asyncio.CancelledError:
+            _arm_late_filing()
+            logger.warning(
+                "VOICE brain bridge send turn=%s caller cancelled "
+                "after %.2fs — background continuation armed", turn_id,
+                time.monotonic() - started,
+            )
+            raise
+
+    def _file_late_result(self, turn_id: str, text: str,
+                          result: dict[str, Any], brain_elapsed: float) -> None:
+        state = result.get("state")
+        if state in _CACHEABLE_STATES:
+            # A verbatim re-issue inside the window now reuses the
+            # landed answer instead of re-running the brain turn
+            # (TASK-FRD-011 semantics, extended to late landings).
+            self._last_key = " ".join(text.split()).casefold()
+            self._last_result = result
+            self._last_ts = time.monotonic()
+            self._last_turn_id = turn_id
+        if state in _LATE_DELIVERABLE_STATES:
+            logger.error(
+                "VOICE brain bridge late result turn=%s state=%s "
+                "brain_elapsed=%.2fs — filed for in-session delivery",
+                turn_id, state, brain_elapsed,
+            )
+            _LATE_RESULTS.append({
+                "turn_id": turn_id,
+                "state": state,
+                "spoken_reply": result.get("spoken_reply") or "",
+                "request": text[:120],
+                "landed_ts": time.time(),
+            })
+        else:
+            logger.error(
+                "VOICE brain bridge late result turn=%s state=%s "
+                "brain_elapsed=%.2fs — nothing new to deliver (the "
+                "foreground outcome already said it)", turn_id, state,
+                brain_elapsed,
+            )
+
+    async def _send_guarded(self, text: str) -> dict[str, Any]:
         try:
             if self.client is None:
                 async with httpx.AsyncClient(trust_env=False, follow_redirects=False) as client:
@@ -140,8 +359,12 @@ class VoiceBrainBridge:
     async def _send(self, client: httpx.AsyncClient, text: str) -> dict[str, Any]:
         # The same endpoint used by chat performs memory retrieval, authorization,
         # task dispatch and conversation persistence. No control token is passed.
+        # TASK-FRD-012: the transport timeout is the HARD cap, not the
+        # foreground budget — the foreground wait lives in _dispatch,
+        # and this exchange may legitimately outlive it as a
+        # background continuation.
         async with client.stream("POST", BRAIN_URL, json={"message": text},
-                                 headers={"Origin": BRAIN_ORIGIN}, timeout=BRAIN_TIMEOUT_S) as response:
+                                 headers={"Origin": BRAIN_ORIGIN}, timeout=BRAIN_HARD_TIMEOUT_S) as response:
             content = bytearray()
             async for chunk in response.aiter_bytes():
                 content.extend(chunk)
@@ -174,11 +397,12 @@ class VoiceBrainBridge:
                 "task_id": meta.get("task_id"), "completion_verified": False}
 
 
-def build_voice_tools(bridge: VoiceBrainBridge | None = None) -> list:
+def build_voice_tools(bridge: VoiceBrainBridge | None = None,
+                      result_observer: Any = None) -> list:
     """Register against the real LiveKit SDK; defer SDK import for light tests."""
     from livekit.agents import function_tool
 
-    brain = bridge or VoiceBrainBridge()
+    brain = bridge or VoiceBrainBridge(result_observer=result_observer)
 
     @function_tool(name="execute_friday_task", description=(
         "Send the user's complete request to FRIDAY's canonical brain. REQUIRED for "

@@ -184,7 +184,10 @@ def test_try_gemini_realtime_returns_none_pair_when_no_key(monkeypatch):
 
 def test_turn_wedged_only_when_stuck_thinking_or_speaking():
     now = 1000.0
-    base = {"pending_since": now - 90.0, "state": "thinking"}
+    # TASK-FRD-012: the threshold is the aligned bridge budget (105 s)
+    # plus generation headroom = 140 s, so the wedged case sits beyond
+    # it and the old 90 s case is now a legitimate in-budget turn.
+    base = {"pending_since": now - 150.0, "state": "thinking"}
     assert worker._turn_wedged(base, now) is True
     assert worker._turn_wedged({**base, "state": "speaking"}, now) is True
     # responsive again -> not wedged, whatever the clock says
@@ -193,6 +196,9 @@ def test_turn_wedged_only_when_stuck_thinking_or_speaking():
     assert worker._turn_wedged({"pending_since": None, "state": "thinking"}, now) is False
     # a slow-but-legitimate turn inside the threshold -> not wedged
     assert worker._turn_wedged({"pending_since": now - 30.0, "state": "thinking"}, now) is False
+    # a degraded brain turn inside its aligned budget (90 s) must NOT
+    # be torn down by the watchdog — that was the D6 stranding shape
+    assert worker._turn_wedged({"pending_since": now - 90.0, "state": "thinking"}, now) is False
 
 
 def test_context_block_carries_transcript_and_forbids_greeting():
@@ -224,7 +230,13 @@ def test_context_block_limits_to_recent_items():
 def test_brain_bridge_timeout_is_voice_sized():
     from friday.voice import brain_bridge
 
-    assert brain_bridge.BRAIN_TIMEOUT_S == 60.0
+    # TASK-FRD-012: VOI-003's 60 s sat below the brain's measured
+    # degraded completion envelope (76-77.5 s, FRD-005 re-runs #2/#3)
+    # and stranded completed answers (D6). The foreground budget is
+    # now 105 s; the hard transport cap leashes the background
+    # continuation behind it.
+    assert brain_bridge.BRAIN_TIMEOUT_S == 105.0
+    assert brain_bridge.BRAIN_HARD_TIMEOUT_S > brain_bridge.BRAIN_TIMEOUT_S
 
 
 def test_brain_bridge_passes_the_budget_to_the_http_call():
@@ -254,6 +266,11 @@ def test_brain_bridge_passes_the_budget_to_the_http_call():
     bridge = VoiceBrainBridge(client=_Client())
     result = _run(bridge.execute("Remember that my favourite colour is teal."))
     assert result["state"] == "answered"
-    assert seen["timeout"] == 60.0
+    # TASK-FRD-012: the HTTP call carries the HARD cap (240 s), not the
+    # foreground budget — the foreground wait lives in _dispatch, and
+    # the exchange must be able to outlive it as a continuation.
+    from friday.voice import brain_bridge
+
+    assert seen["timeout"] == brain_bridge.BRAIN_HARD_TIMEOUT_S
     # httpx import kept for parity with the module's own dependency
     assert httpx.TimeoutException is not None
