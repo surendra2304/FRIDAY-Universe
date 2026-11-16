@@ -884,31 +884,117 @@ class MemoryService:
             vec_ok = False
         tombstone.vector_deleted = bool(vec_ok)
 
-        # 2. Graph relationship deletion (Requirement 9: multi-store convergence)
-        try:
-            # TASK-SEN-003: same SAVEPOINT isolation as the vector step —
-            # a DatabaseError from this delete must degrade the
-            # tombstone flag, not poison the caller's transaction.
-            with db.begin_nested():
-                from storage.relational.models import MemoryRelationship
-                db.query(MemoryRelationship).filter(
-                    or_(
-                        MemoryRelationship.source_memory_id == memory_id,
-                        MemoryRelationship.target_memory_id == memory_id
-                    )
-                ).delete(synchronize_session=False)
-            tombstone.graph_deleted = True
-        except Exception:
-            tombstone.graph_deleted = False
+        # 2. Graph relationships — deliberately NOT deleted before the
+        # parent row (TASK-SEN-003 fix-3). Production evidence
+        # (2026-11-16): a hard delete whose transaction first deleted the
+        # record's memory_relationships rows — the bulk DELETE this step
+        # used to run inside a SAVEPOINT — then failed deterministically
+        # at the parent DELETE FROM memory_records with ORA-12860
+        # ("deadlock detected while waiting for a sibling row lock"),
+        # for every record with >= 1 relationship in either direction.
+        # Records with zero relationships erased cleanly on the same
+        # code, and a record with a superseded child (the unindexed
+        # self-FK) but no relationships also erased cleanly, isolating
+        # the in-transaction graph pre-delete as the trigger: the erase
+        # held memory_relationships row locks when the parent DELETE's
+        # FK maintenance re-engaged that table. So no statement in this
+        # transaction touches the child tables before the parent DELETE
+        # (step 3); on an FK-enforcing backend the schema's own actions
+        # remove the children inside the parent statement, and step 4
+        # cleans up whatever a non-enforcing backend leaves behind.
 
-        # 3. Cache eviction — performed, not asserted (TASK-MEM-006).
+        # 3. Relational deletion — a Core DELETE, not db.delete(record).
+        # The ORM unit-of-work would otherwise load the record's
+        # delete-orphan collections (outgoing/incoming relationships,
+        # shared agents) at flush and delete those child rows itself,
+        # ahead of the parent statement — re-introducing exactly the
+        # in-transaction child-row locks fix-3 removes. A Core DELETE
+        # leaves every child to the schema's FK actions, executed inside
+        # the parent statement: relationships and shared-agent rows are
+        # removed by ON DELETE CASCADE; audit_logs.memory_id and
+        # superseded_by_id children are cleared by ON DELETE SET NULL.
+        # Cache eviction first — performed, not asserted (TASK-MEM-006);
+        # it touches no database table.
         tombstone.cache_deleted = MemoryService._evict_memory_from_cache(
             tenant_id, memory_id
         )
+        from sqlalchemy import delete as sa_delete
 
-        # 4. Relational deletion
-        db.delete(record)
-        tombstone.relational_deleted = True
+        result = db.execute(
+            sa_delete(MemoryRecord).where(
+                MemoryRecord.id == memory_id,
+                MemoryRecord.tenant_id == tenant_id,
+            )
+        )
+        tombstone.relational_deleted = result.rowcount == 1
+        # The row is gone inside this transaction but the ORM object was
+        # not deleted through the unit-of-work; expunge it so no caller
+        # can act on its stale state afterwards.
+        db.expunge(record)
+        db.flush()
+
+        # 4. Child cleanup — AFTER the parent delete, so its locks can
+        # never deadlock a parent statement that has already run. On an
+        # FK-enforcing backend (production Oracle) every statement here
+        # matches zero rows: the cascade / SET NULL actions in step 3
+        # already did the work. On a backend that does not enforce FK
+        # actions (the SQLite test harness runs without PRAGMA
+        # foreign_keys) they complete the erasure explicitly, mirroring
+        # the schema's actions one-for-one. SAVEPOINT-isolated per the
+        # original TASK-SEN-003 lesson: a failure here degrades the
+        # tombstone flags instead of poisoning the caller's commit.
+        cleanup_ok = True
+        try:
+            with db.begin_nested():
+                from sqlalchemy import update as sa_update
+
+                from storage.relational.models import (
+                    AuditLog,
+                    MemoryRelationship,
+                    MemorySharedAgent,
+                )
+
+                db.query(MemoryRelationship).filter(
+                    or_(
+                        MemoryRelationship.source_memory_id == memory_id,
+                        MemoryRelationship.target_memory_id == memory_id,
+                    )
+                ).delete(synchronize_session=False)
+                db.query(MemorySharedAgent).filter(
+                    MemorySharedAgent.memory_id == memory_id
+                ).delete(synchronize_session=False)
+                db.execute(
+                    sa_update(AuditLog)
+                    .where(AuditLog.memory_id == memory_id)
+                    .values(memory_id=None)
+                )
+                db.execute(
+                    sa_update(MemoryRecord)
+                    .where(MemoryRecord.superseded_by_id == memory_id)
+                    .values(superseded_by_id=None)
+                )
+        except Exception:
+            cleanup_ok = False
+
+        # 5. Graph convergence check — the proof half: no relationship
+        # row may still reference the erased id, however it was removed.
+        try:
+            from storage.relational.models import MemoryRelationship
+
+            remaining_edges = (
+                db.query(MemoryRelationship)
+                .filter(
+                    or_(
+                        MemoryRelationship.source_memory_id == memory_id,
+                        MemoryRelationship.target_memory_id == memory_id,
+                    )
+                )
+                .count()
+            )
+            tombstone.graph_deleted = cleanup_ok and remaining_edges == 0
+        except Exception:
+            tombstone.graph_deleted = False
+
         tombstone.status = "CONVERGED" if tombstone.is_converged() else "PENDING_RETRY"
         db.flush()
         return tombstone
