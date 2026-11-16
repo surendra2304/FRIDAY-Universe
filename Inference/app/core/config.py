@@ -443,6 +443,22 @@ from typing import Anyfrom pydantic import AliasChoices, Field, field_validato
             "when it is needed."
         ),
     )
+    PRIMARY_ATTEMPT_MAX_SECONDS: float = Field(
+        default=15.0,
+        gt=0,
+        description=(
+            "Absolute cap in seconds on a single primary provider attempt, applied on top of "
+            "PRIMARY_ATTEMPT_FRACTION: the primary slice is min(fraction x request budget, this cap). "
+            "TASK-INF-010 measured the failure this prevents \u2014 a degraded provider that HANGS (Gemini "
+            "from Server 1, 2026-11-16: 11/11 gateway attempts timed out, zero 429s, quota buckets "
+            "<=10% used \u2014 not quota) held requests for the full 36s slice (0.6 x 60s) before failover "
+            "even started; callers saw 24.3s-to-503, a 43.9s repro, and 38-67s INF-009 probe "
+            "latencies. A non-streaming primary silent for this long is degraded for this fleet's "
+            "purposes, so the ladder gets the remaining budget instead. Small explicit budgets are "
+            "unaffected (the fraction governs below the cap). Raise this if a deployment's primaries "
+            "legitimately take longer than this to produce one non-streamed completion."
+        ),
+    )
 
     def get_peer_config(self, peer: str) -> tuple[str, str | None]:
         """Returns (url, api_key) for a given peer agent with private VCN fallback in production."""

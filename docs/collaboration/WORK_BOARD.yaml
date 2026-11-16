@@ -7387,6 +7387,46 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Post-merge: coordinator: merge PR 374 and Fleet CD Inference; then re-run the INF-005 gemini-3.6-flash subset against the DEPLOYED gateway (POST /v1/chat/completions, cache-busted) — expect STOP finishes, type scores at the adapter-proof levels, and usage.completion_tokens_details.reasoning_tokens present — then flip this entry to VERIFIED. (The adapter-level live proof is done; the deployed-gateway re-check is the only outstanding verification.)"
     claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893702141
     last_update_comment_url: null
+  - id: TASK-INF-010
+    title: 'Inference degraded-provider latency: cap the primary slice, one end-to-end route deadline, skip the redundant adapter cooldown (24.3s-to-503)'
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-inf-010-degraded-latency
+    pr: 818
+    contributors: []
+    priority: P1
+    created_at: '2026-11-16T18:56:45Z'
+    updated_at: '2026-11-16T18:56:45Z'
+    files:
+    - Inference/app/core/config.py
+    - Inference/app/providers/base.py
+    - Inference/app/providers/gateway.py
+    - Inference/app/providers/openai_compatible.py
+    - Inference/app/providers/unified_manager.py
+    - Inference/app/api/v1_core_routes.py
+    - Inference/tests/test_inf010_degraded_latency.py
+    dependencies:
+    - TASK-INF-009
+    - TASK-REL-043
+    acceptance:
+    - 'Root cause established with file+line evidence — done: gateway primary slice was PRIMARY_ATTEMPT_FRACTION (0.6) x REQUEST_TIMEOUT (60s) = 36s with no absolute cap; the v1 chat route ran its policy retry as a second full gateway execution (UnifiedExecutionRequest had no timeout field, so the gateway fell back to the full 60s default) — worst case ~120s per chat request; OpenAICompatibleProvider slept a redundant 2.0s transient cooldown on every 429/503 inside every ladder rung.'
+    - 'Incident decomposed from the production journal — done: FRD-005 re-run 20261116-103839 (2026-11-16 ~10:46 IST) 24.3s-to-503 = attempt-1 ladder ~15s (Groq size-guard 10:46:44) + route-retry ladder ~7s (size-guard 10:46:59, fast-fail stacking) + 503 at 10:47:06; live repro 2026-11-16 23:54 IST against the deployed gateway (incident-shaped ~24k-token prompt): 503 in 43.89s = attempt 1 ~4s (non-catalogue dynamic-rung serve rejected by REL-043) + retry primary (gemini-3.8-flash) hung the full 36.1s slice (journal: timed out after 36.1s) + ladder ~2s; healthy-path baseline 200 in 0.32s.'
+    - 'Mechanism is the provider HANG, not quota — INF-007 quota-ledger snapshot 2026-11-16T18:25:57Z: 11 Gemini attempts from S1 in the INF-009 probe window, 11 timeouts, 0 successes, 0 rate-limited, 10 distinct gemini-3.6-flash keys (+1 gemini-3.8-flash), daily quota buckets <=10% used. The hang itself is provider-side and not code-fixable; this task bounds its blast radius.'
+    - 'Fix — done: gateway primary slice = min(fraction x budget, PRIMARY_ATTEMPT_MAX_SECONDS, new setting default 15.0s); every gateway-paced ProviderRequest carries deadline_monotonic (primary, ladder rungs, local tier); the adapter 2.0s cooldown is skipped on gateway-governed calls and kept for direct calls; the v1 chat route holds ONE end-to-end deadline (REQUEST_TIMEOUT) across attempt + policy retry, threading each attempt''s remaining budget via the new UnifiedExecutionRequest.timeout, and skips the retry when <2s remain; custom-endpoint path threaded identically; streaming path unchanged.'
+    - 'Regression tests fail-on-main / pass-on-fix — done: tests/test_inf010_degraded_latency.py, 7 tests: 5 fail on pristine main 0206c62a (cap by timing, deadline-marking, cooldown skip, retry remaining-budget, retry skip), 2 guards pass on both by design (fraction governs below the cap; direct adapter calls keep the cooldown). Neighbour ring A/B (INF-008, REL-043, REL-047, REL-030, IG-INF-02, Gemini token accounting): 83/83 pass on both trees.'
+    evidence:
+    - 'Claim: issue #35 comment 6924639360.'
+    - 'Production journal (S1, 2026-11-16): two 200s at 10:46:21; Groq size-guard warnings (~23,605 tok > 7,000) at 10:46:44 and 10:46:59; 503 provider_degraded at 10:47:06. Repro journal 23:54 IST: ''Provider gemini timed out after 36.1s'' inside the route retry.'
+    - 'INF-009 probe latencies via the deployed gateway: 9 requests served by Groq substitution at 38.3-66.8s each (vs INF-005 live median 7.7s) — the caller-visible cost of the uncapped slices plus the stacked retry budget.'
+    - 'Production config (S1 Inference/.env): no REQUEST_TIMEOUT / PRIMARY_ATTEMPT_* / LITELLM / LOCAL overrides — code defaults govern (60s budget, 36s slice, local + LiteLLM tiers disabled).'
+    risk_flags:
+    - The 15s default cap is a judgement call from the measured distribution (healthy Gemini serves land in 1-8s); a legitimately slow-but-alive primary slower than 15s now fails over earlier — the ladder still serves the request, and the cap is a single settings constant.
+    - The route retry skip (<2s remaining) changes one edge behaviour: a first attempt that consumes nearly the whole budget no longer gets a speculative second ladder pass; its result (usually the 503) stands — that is the deadline contract working as intended.
+    - Gemini adapter internal sleeps (0.3s key rotation, in-adapter timeout retries) deliberately untouched — bounded by the rung wait_for; revisit only if post-deploy journals show them dominating.
+    blockers: []
+    next_action: 'Coordinator: review + merge PR 818, Fleet CD Inference; then production-verify from the S1 journal (primary timeouts at <=15s; one shared deadline per chat request; no second full-budget retry) and re-run the incident-shaped probe — expect failover completes inside one 60s envelope. INF-009 close-out probe stays gated on Gemini serving from S1 again. Then flip this entry to VERIFIED.'
+    claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6924639360
+    last_update_comment_url: null
   - id: TASK-SEN-002
     title: "Fleet security sweep (Wave-4, READ-ONLY): ports vs documented, dependency vulns, env hygiene, tracked-secrets scan, stale credential surfaces — bridge explicitly excluded (owner-closed topic)"
     status: IN_REVIEW

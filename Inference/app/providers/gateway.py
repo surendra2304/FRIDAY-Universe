@@ -447,7 +447,20 @@ class ModelGateway:
         # remaining, and re-raises the original error — so the ladder is unreachable
         # precisely when it is needed. The reservation is what turns "fallbacks are
         # configured" into "fallbacks actually run".
-        primary_deadline = time.monotonic() + (timeout_budget * settings.PRIMARY_ATTEMPT_FRACTION)
+        #
+        # TASK-INF-010: the fraction alone lets a HANGING primary hold the request
+        # for 0.6 x budget (36s at the 60s default) before the ladder starts —
+        # measured live 2026-11-16, when Gemini's failure mode from Server 1 was
+        # the hang (11/11 gateway attempts timed out, zero 429s, quota buckets
+        # <=10% used): a 24.3s-to-503 incident, a 43.9s repro whose journal line
+        # reads "timed out after 36.1s", and 38-67s INF-009 probe latencies. The
+        # absolute cap bounds any single primary attempt; the ladder keeps the
+        # rest of the budget either way.
+        primary_slice = min(
+            timeout_budget * settings.PRIMARY_ATTEMPT_FRACTION,
+            settings.PRIMARY_ATTEMPT_MAX_SECONDS,
+        )
+        primary_deadline = time.monotonic() + primary_slice
 
         # TASK-IG2-INF-04: rule-based token compression (OmniRoute pattern),
         # applied once here — the gateway every path traverses — so every rung
@@ -460,6 +473,13 @@ class ModelGateway:
             request = compress_provider_request(request)
         except Exception:  # noqa: BLE001 - compression must never break serving
             logger.warning("GATEWAY: Token compression failed; sending the original prompt.")
+
+        # TASK-INF-010: mark the call as gateway-governed (set after compression,
+        # which may return a copied request) so adapters skip their own pacing
+        # sleeps — under a deadline the gateway owns pacing (key quarantine +
+        # its inter-key sleep), and an adapter-level sleep is paid a second
+        # time inside every fallback rung.
+        request.deadline_monotonic = deadline
 
         prov_name = provider_name.lower().strip()
         if prov_name == "litellm":
@@ -645,7 +665,7 @@ class ModelGateway:
                 # The primary slice is spent. Escalate to the ladder rather than
                 # raising: the fallback budget is still intact by construction.
                 last_error = last_error or TemporaryUnavailableError(
-                    f"Primary attempt slice ({timeout_budget * settings.PRIMARY_ATTEMPT_FRACTION:.1f}s of "
+                    f"Primary attempt slice ({primary_slice:.1f}s of "
                     f"{timeout_budget:.1f}s) exhausted for provider '{prov_name}' before a call could be made.",
                     provider=prov_name,
                 )
@@ -833,6 +853,7 @@ class ModelGateway:
                 temperature=request.temperature,
                 max_tokens=request.max_tokens or 1024,
                 response_schema=request.response_schema,
+                deadline_monotonic=deadline,
             )
             acquire_timeout = (deadline - time.monotonic()) if deadline else remaining
             if acquire_timeout <= 0:
@@ -1012,6 +1033,7 @@ class ModelGateway:
                     max_tokens=request.max_tokens or 1024,
                     response_schema=request.response_schema,
                     extra_params=request.extra_params,
+                    deadline_monotonic=deadline,
                 )
 
                 openrouter_limiter = self.rate_limiters.get("openrouter")
@@ -1132,6 +1154,7 @@ class ModelGateway:
                         model=sec_model,
                         temperature=request.temperature,
                         max_tokens=request.max_tokens or 1024,
+                        deadline_monotonic=deadline,
                     )
                     acquire_timeout = (deadline - time.monotonic()) if deadline else 60.0
                     if acquire_timeout <= 0:
