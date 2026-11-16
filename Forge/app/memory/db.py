@@ -21,6 +21,7 @@ Oracle differences handled here:
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import AsyncGenerator, Mapping, Sequence
 from contextlib import asynccontextmanager
 from typing import Any
@@ -333,9 +334,68 @@ class AsyncDbConnectionWrapper:
 
         stmt = text(query)
         if clob_params:
-            stmt = stmt.bindparams(*(bindparam(name, type_=CLOB) for name in clob_params))
+            query, param_dict, typed_clobs = self._chunk_clob_params(
+                query, param_dict, clob_params
+            )
+            stmt = text(query)
+            if typed_clobs:
+                stmt = stmt.bindparams(
+                    *(bindparam(name, type_=CLOB) for name in typed_clobs)
+                )
         result = await self._conn.execute(stmt, param_dict)
         return AsyncCursorWrapper(result)
+
+    # TASK-FRG-012: string values bound through SQLAlchemy's
+    # ``type_=CLOB`` bindparam path are silently corrupted once a value
+    # passes the async oracledb driver's direct-bind boundary (~32.7K
+    # chars): production ``task_graphs`` rows were found storing binary
+    # garbage instead of the JSON text (Oracle-side ``IS JSON`` = 0 for
+    # every stored value >= 32,538 chars, valid for every value <=
+    # 8,016), and the garbage later loaded as an empty task graph that
+    # fake-completed builds after a single DAG node. Plain VARCHAR
+    # binds are the path every small production write already proves
+    # good, so string CLOB values are bound as a concatenation of small
+    # plain chunks seeded with ``TO_CLOB`` (``TO_CLOB(:name__c0) ||
+    # :name__c1 || ...``), which Oracle assembles into the CLOB column
+    # natively -- no temp-LOB bind path is involved at any size. (The
+    # TO_CLOB seed matters: a VARCHAR2 || VARCHAR2 concatenation is
+    # itself capped at 4,000 bytes in SQL, while a CLOB-seeded one is
+    # not.) Non-string values keep the legacy typed bind. The chunk
+    # size stays well under the 4,000-byte VARCHAR2 SQL limit even for
+    # 4-byte UTF-8 characters.
+    _CLOB_CHUNK_CHARS = 800
+
+    @classmethod
+    def _chunk_clob_params(
+        cls,
+        query: str,
+        param_dict: dict[str, Any],
+        clob_params: Sequence[str],
+    ) -> tuple[str, dict[str, Any], list[str]]:
+        """Rewrite string ``clob_params`` into chunked plain binds.
+
+        Returns ``(query, param_dict, typed)`` where ``typed`` lists the
+        clob params whose values are not strings and must keep the
+        legacy ``type_=CLOB`` bind.
+        """
+        typed: list[str] = []
+        for name in clob_params:
+            value = param_dict.get(name)
+            if not isinstance(value, str):
+                typed.append(name)
+                continue
+            chunks = [
+                value[i : i + cls._CLOB_CHUNK_CHARS]
+                for i in range(0, len(value), cls._CLOB_CHUNK_CHARS)
+            ] or [""]
+            expression = f"TO_CLOB(:{name}__c0)" + "".join(
+                f" || :{name}__c{index}" for index in range(1, len(chunks))
+            )
+            query = re.sub(rf":{name}\b", expression, query)
+            del param_dict[name]
+            for index, chunk in enumerate(chunks):
+                param_dict[f"{name}__c{index}"] = chunk
+        return query, param_dict, typed
 
     async def executescript(self, script: str) -> None:
         for stmt in script.split(";"):
