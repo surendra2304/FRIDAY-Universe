@@ -78,17 +78,25 @@ def test_prewarm_hook_is_throttled(monkeypatch):
 
 
 def test_warm_steps_survive_failures(monkeypatch):
-    def _boom():
-        raise RuntimeError("memora unreachable")
+    recall_calls = []
+
+    def _recording_recall():
+        recall_calls.append(1)
+        return ""
 
     def _boom_preload():
         raise RuntimeError("fixed-line wav unreadable")
 
-    monkeypatch.setattr(worker, "_owner_memory_lines", _boom)
-    # TASK-VOI-009: the warm thread's second step was an EdgeTTS
-    # synthesis when VOI-008 landed; the greeting is a shipped WAV
-    # since the Groq removal, so the step is now the fixed-line
-    # preload. The contract is unchanged: a failed step only logs.
+    # TASK-VOI-014: the warm no longer runs the owner-memory recall
+    # at all. FRD-005 re-run #3 proved the discarded recall ran
+    # DURING the live call (the pool creates the replacement
+    # executor at job launch, so its prewarm fires at call arrival)
+    # and cost 21.0 s of that call's first minute. The remaining
+    # step is the fixed-line preload (TASK-VOI-009: the greeting is
+    # a shipped WAV, so the warm pays its read/parse cost), and a
+    # failed step only ever logs.
+    monkeypatch.setattr(worker, "_owner_memory_lines", _recording_recall)
     monkeypatch.setattr(worker, "_preload_fixed_lines", _boom_preload)
-    # must not raise even when every warm step fails
+    # must not raise even when the remaining warm step fails
     worker._executor_warm_steps()
+    assert recall_calls == []
