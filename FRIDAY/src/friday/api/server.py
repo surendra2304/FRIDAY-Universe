@@ -3674,6 +3674,12 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 if isinstance(_draws[0], BaseException):
                     raise _draws[0]
                 _hits = _draws[0] or []
+                _primary_n = len(_hits)
+                logger.info(
+                    "memory recall: primary draw "
+                    f"{raw_cmd[:200]!r} returned {_primary_n} hits "
+                    f"for {raw_cmd[:60]!r}"
+                )
                 if isinstance(_draws[1], BaseException):
                     logger.debug(f"Memora variant recall skipped in memory fast-path: {_draws[1]}")
                 else:
@@ -3683,14 +3689,29 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                         if str(_h.get("content_text", "")) not in _seen_texts
                     ]
                     _variant_drawn = True
+                    logger.info(
+                        "memory recall: primary variant draw "
+                        f"{_variant[:200]!r} added {len(_hits) - _primary_n} new hits "
+                        f"(merged {len(_hits)} hits) for {raw_cmd[:60]!r}"
+                    )
             else:
                 _hits = await asyncio.to_thread(_memora.recall_memories, "friday", raw_cmd[:200], limit=10) or []
+                logger.info(
+                    "memory recall: primary draw "
+                    f"{raw_cmd[:200]!r} returned {len(_hits)} hits "
+                    f"for {raw_cmd[:60]!r}"
+                )
             if not _hits and _q_personal:
                 # Generic personal question ("what do you remember about me")
                 # has no subject words for search — probe owner facts directly.
                 _hits = (
                     await asyncio.to_thread(_memora.recall_memories, "friday", "my favorite preference boss surendra", limit=10)
                     or []
+                )
+                logger.info(
+                    "memory recall: owner-fact probe draw "
+                    f"{'my favorite preference boss surendra'!r} returned {len(_hits)} hits "
+                    f"for {raw_cmd[:60]!r}"
                 )
             # Memory-hygiene fix (2026-11-13): stored monitor-spam lines
             # ("RAM usage is at 9%…", dialogue dumps) never reach a recall
@@ -3725,6 +3746,11 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                     _memora.recall_memories, "friday", "my favorite preference boss surendra", limit=10
                 ) or []
                 _hits = [h for h in _probe_hits if not _is_unpresentable(h)]
+                logger.info(
+                    "memory recall: owner-fact probe draw "
+                    f"{'my favorite preference boss surendra'!r} returned {len(_probe_hits)} hits "
+                    f"({len(_hits)} presentable) for {raw_cmd[:60]!r}"
+                )
             except Exception as _e2:
                 logger.debug(f"Memora recall fallback probe skipped in memory fast-path: {_e2}")
         if len(_q_words) >= 2 and not _mem_error:
@@ -3808,6 +3834,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                         await asyncio.to_thread(_memora_v.recall_memories, "friday", _rq, limit=10)
                         or []
                     )
+                    _before_retry = len(_hits)
                     _seen_texts = {
                         str(_h.get("content_text", "")) for _h in _hits
                     }
@@ -3816,9 +3843,20 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                         if str(_h.get("content_text", "")) not in _seen_texts
                         and not _is_unpresentable_v(_h)
                     ]
+                    # FRD-017 observability follow-up (2026-11-17): the
+                    # old line logged only the merged total, so the
+                    # journal could not distinguish "the subject draw
+                    # ran and missed" from "it never ran" — FRD-005
+                    # re-run #7 needed a full harness reproduction to
+                    # settle which. The draw's query, its raw return
+                    # count and the NEW hits it added now ride the same
+                    # line; the original wording stays as the prefix so
+                    # existing greps keep matching.
                     logger.info(
                         "memory recall: full-match retry merged "
-                        f"{len(_hits)} hits for {raw_cmd[:60]!r}"
+                        f"{len(_hits)} hits for {raw_cmd[:60]!r} "
+                        f"(draw {_rq[:60]!r} returned {len(_more)} hits, "
+                        f"added {len(_hits) - _before_retry} new)"
                     )
                 except Exception as _e3:
                     logger.debug(f"Memora full-match retry skipped: {_e3}")
