@@ -2408,3 +2408,7 @@ app.include_router(retention_router, prefix="/api/v1")
 # --- Real Media & Growth Engines (ClaudeAds, TopRank, OpenHiggsfield, Hyperframes) ---
 from app.services.real_media_routes import router as real_media_router
 app.include_router(real_media_router, prefix="/api/v1/vyralx")
+
+# --- IG Corpus Channel Strategy Integration (TASK-IG3-VYR-01) ---
+from app.services.channel_strategy import router as channel_strategy_router
+app.include_router(channel_strategy_router, prefix="/api/v1", tags=["IG Corpus Strategy"])

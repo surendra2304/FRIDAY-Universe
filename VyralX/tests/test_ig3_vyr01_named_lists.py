@@ -131,3 +131,63 @@ def test_doc_names_the_recorded_lists():
                    "free_generator_shortlist", "faceless_idea_examples",
                    "free_route_alternatives", "listicle_tool_patterns"):
         assert marker in doc
+
+
+# --- Production wiring (AUDIT-2: the data must be reachable from
+# --- the app path, not only from tests) ---------------------------
+
+_MAIN = (Path(__file__).resolve().parent.parent / "app" / "main.py")
+
+
+def test_loader_serves_every_reference_section():
+    from app.services import channel_strategy as cs
+
+    data = cs.load_strategy()
+    sections = cs.reference_sections(data)
+    assert set(sections) == {
+        "creator_tools_reference", "teaching_channel_watchlist",
+        "browser_toolkit_reference", "free_generator_shortlist",
+        "faceless_idea_examples", "free_route_alternatives",
+        "listicle_tool_patterns"}
+    # Serving a name never upgrades its recorded status.
+    for section in sections.values():
+        assert section["status"] in _REFERENCE_STATUSES
+    with __import__("pytest").raises(KeyError):
+        cs.get_reference(data, "no_such_section")
+
+
+def test_strategy_routes_answer_and_404():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.services import channel_strategy as cs
+
+    app = FastAPI()
+    app.include_router(cs.router, prefix="/api/v1")
+    client = TestClient(app)
+
+    res = client.get("/api/v1/strategy/references")
+    assert res.status_code == 200
+    body = res.json()
+    assert "unverified" in body["honesty_note"].casefold()
+    assert body["sections"]["teaching_channel_watchlist"]["channels"][0] \
+        == "Make Money Matt"
+
+    res = client.get("/api/v1/strategy/references/free_generator_shortlist")
+    assert res.status_code == 200
+    assert res.json()["section"]["tools"][-1] == "VEED.IO"
+
+    res = client.get("/api/v1/strategy/lanes")
+    assert res.status_code == 200
+    assert {e["lane"] for e in res.json()["lanes"]} == {
+        "space_science", "history", "tech_ai"}
+
+    res = client.get("/api/v1/strategy/references/nope")
+    assert res.status_code == 404
+
+
+def test_main_mounts_the_strategy_router():
+    main_src = _MAIN.read_text(encoding="utf-8")
+    assert "from app.services.channel_strategy import router as " \
+        "channel_strategy_router" in main_src
+    assert "app.include_router(channel_strategy_router" in main_src
