@@ -60,7 +60,7 @@ Make Stratex auditable, reproducible, resilient, and safe to operate as the quan
 ### 7. AI advisor and FRIDAY Universe integrations
 - [ ] Validate Gemini, Inference, and OpenRouter provider routing with timeouts, retry policy, response-schema validation, provider attribution, and redaction tests.
 - [ ] Treat model output as advisory only: deterministic execution/risk policy remains authoritative.
-- [~] Reject missing responses, malformed JSON, non-finite/out-of-range confidence, unexpected verdicts, invalid types, and inconsistent verdict fields; regression tests added, CI pending.
+- [x] Reject missing responses, malformed JSON, non-finite/out-of-range confidence, unexpected verdicts, invalid types, and inconsistent verdict fields; regression tests added and passing (strict fail-closed parsing in autonomy/ai_advisor.py — the fail-open STRATEX_AI_ADVISOR_STRICT branch and forgiving normalization removed).
 - [ ] Contract-test Sentinel, Futuris, IntelX, Inference, Memora, and FRIDAY clients for unavailable, malformed, stale, and standby responses.
 
 ### 8. Static analysis, tests, and continuous delivery
