@@ -302,6 +302,10 @@ class WebhookBreachAlertSink:
     configured URL is a Telegram ``sendMessage`` URL the payload is
     translated to ``{chat_id, text}`` first (see
     ``cortex_core.resilience.telegram_delivery_payload``).
+    Delivery records name the channel by its redacted descriptor
+    (kind + host, via ``cortex_core.resilience.channel_descriptor``),
+    never the URL itself: the records persist in the budget store and
+    are endpoint-exposed, and a Telegram URL carries the bot token.
     """
 
     def __init__(
@@ -316,7 +320,13 @@ class WebhookBreachAlertSink:
 
     @property
     def channel(self) -> str:
-        return self.webhook_url or "none"
+        # Redacted descriptor only — the full URL (a Telegram one carries
+        # the bot token) must never reach a persisted, endpoint-exposed
+        # delivery record. Lazy import keeps this module's top level
+        # stdlib-only.
+        from cortex_core.resilience import channel_descriptor
+
+        return channel_descriptor(self.webhook_url)
 
     def __call__(self, alert: dict[str, Any]) -> dict[str, Any]:
         record: dict[str, Any] = {
@@ -376,9 +386,13 @@ class WebhookBreachAlertSink:
                 ),
             })
         except Exception as exc:  # noqa: BLE001 - delivery failure is data
+            detail = f"{type(exc).__name__}: {exc}"
+            if self.webhook_url and self.webhook_url in detail:
+                # Transport errors can embed the URL; the record must not.
+                detail = detail.replace(self.webhook_url, self.channel)
             record.update({
                 "delivered": False,
-                "detail": f"{type(exc).__name__}: {exc}",
+                "detail": detail,
             })
         return record
 
