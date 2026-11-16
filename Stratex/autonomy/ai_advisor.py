@@ -177,24 +177,12 @@ class StratexAIAdvisor:
     def _fail_closed_verdict(symbol: str, reason: str) -> AITradeVerdict:
         """Verdict when AI evidence is absent or invalid.
 
-        The AI advisor is an *enhancer*, not a single point of failure. Unless
-        STRATEX_AI_ADVISOR_STRICT is set, an LLM outage degrades to a
-        deterministic-quant decision at reduced size instead of blocking every
-        trade in the book.
+        Fail closed, unconditionally: without a valid, schema-compliant AI
+        verdict there is no approval. Absence of evidence (provider outage,
+        malformed output, schema-inconsistent fields) must never be
+        reinterpreted as an approval — see STRATEX_MASTER_UPGRADE_PLAN.md
+        §5/§7 and Engineering rule 3 (model output is untrusted input).
         """
-        strict = os.getenv("STRATEX_AI_ADVISOR_STRICT", "false").lower() in {"1", "true", "yes"}
-        if not strict:
-            return AITradeVerdict(
-                approved=True,
-                verdict="DAMPENED",
-                confidence=0.55,
-                thesis=(
-                    f"AI advisor unavailable for {symbol} ({reason}); "
-                    "proceeding on deterministic quant gates at 0.7x size."
-                ),
-                risk_factors=[reason, "AI review skipped: provider unavailable."],
-                model_used="unavailable-fail-open",
-            )
         return AITradeVerdict(
             approved=False,
             verdict="REJECTED",
@@ -281,53 +269,43 @@ class StratexAIAdvisor:
             if not isinstance(parsed, dict):
                 raise ValueError("response must be a JSON object")
 
-            # Extract fields with forgiving normalization
+            # Strict validation: model output is untrusted input. Every
+            # field must be present and schema-exact; any violation raises
+            # into the fail-closed path below. Fields are never coerced,
+            # substituted, reconciled, or defaulted (plan §5/§7).
             approved_raw = parsed.get("approved")
+            if type(approved_raw) is not bool:
+                raise ValueError("approved must be a boolean")
+            approved = approved_raw
+
             verdict_raw = parsed.get("verdict")
+            if not isinstance(verdict_raw, str) or verdict_raw not in {"APPROVED", "DAMPENED", "REJECTED"}:
+                raise ValueError("verdict must be one of APPROVED, DAMPENED, REJECTED")
+            verdict = verdict_raw
 
-            if isinstance(verdict_raw, str):
-                verdict = verdict_raw.strip().upper()
-            else:
-                verdict = "APPROVED" if approved_raw is True else "REJECTED"
+            if (verdict in {"APPROVED", "DAMPENED"}) != approved:
+                raise ValueError("approved and verdict are inconsistent")
 
-            if verdict not in {"APPROVED", "DAMPENED", "REJECTED"}:
-                verdict = "APPROVED" if approved_raw is True else "REJECTED"
+            if "confidence" not in parsed:
+                raise ValueError("confidence is required")
+            confidence_raw = parsed["confidence"]
+            if isinstance(confidence_raw, bool) or not isinstance(confidence_raw, (int, float)):
+                raise ValueError("confidence must be a number")
+            confidence = float(confidence_raw)
+            if not math.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
+                raise ValueError("confidence must be finite and within [0.0, 1.0]")
 
-            if type(approved_raw) is bool:
-                approved = approved_raw
-            elif isinstance(approved_raw, str):
-                approved = approved_raw.strip().lower() in {"true", "yes", "1"}
-            else:
-                approved = verdict in {"APPROVED", "DAMPENED"}
-
-            # Reconcile boolean approved with verdict
-            if verdict in {"APPROVED", "DAMPENED"}:
-                approved = True
-            elif verdict == "REJECTED":
-                approved = False
-
-            confidence_val = parsed.get("confidence", 0.85)
-            try:
-                confidence = float(confidence_val)
-                if not math.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
-                    confidence = 0.85 if approved else 0.15
-            except Exception:
-                confidence = 0.85 if approved else 0.15
-
-            thesis_val = parsed.get("thesis")
-            thesis = str(thesis_val).strip() if thesis_val else ("AI approved trade thesis." if approved else "AI rejected trade thesis.")
+            thesis_raw = parsed.get("thesis")
+            if not isinstance(thesis_raw, str) or not thesis_raw.strip():
+                raise ValueError("thesis must be a non-empty string")
+            thesis = thesis_raw.strip()
             if len(thesis) > 2000:
                 thesis = thesis[:1997] + "..."
 
-            factors_val = parsed.get("risk_factors") or []
-            if isinstance(factors_val, list):
-                risk_factors = [str(f).strip()[:500] for f in factors_val if str(f).strip()]
-            elif isinstance(factors_val, str):
-                risk_factors = [factors_val.strip()[:500]]
-            else:
-                risk_factors = []
-            if not risk_factors:
-                risk_factors = ["Market volatility", "Execution slippage"]
+            factors_raw = parsed.get("risk_factors")
+            if not isinstance(factors_raw, list) or not all(isinstance(f, str) for f in factors_raw):
+                raise ValueError("risk_factors must be a list of strings")
+            risk_factors = list(factors_raw)
 
             return AITradeVerdict(
                 approved=approved,
