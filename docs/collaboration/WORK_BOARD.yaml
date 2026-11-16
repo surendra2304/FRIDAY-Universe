@@ -6626,8 +6626,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: "#488"
     branch: "claude/task-ig-sen-04"
-    evidence: "PR #488: Sentinel/docs/SECURITY_REFERENCE_IG.md (docs only). Corpus sources DV9IyW1jCeJ, DZZ_-xxzaOR, DeU2IZOukqT; PentAGI card verdict reference-only honoured (role design only, no adoption). Registry grounded in the live adapter inventory on main (recon x5, network x5, wireless x3)."
-    next_action: "Coordinator: merge on green CI (docs-only) -> flip VERIFIED at merge; registry/compartmentalisation sections are maintained by follow-up PRs as adapters land."
+    evidence: "PR #488: Sentinel/docs/SECURITY_REFERENCE_IG.md (docs only). Corpus sources DV9IyW1jCeJ, DZZ_-xxzaOR, DeU2IZOukqT; PentAGI card verdict reference-only honoured (role design only, no adoption). Registry grounded in the live adapter inventory on main (recon x5, network x5, wireless x3). Follow-up PR #776 MERGED 2026-11-16 -> 7dcbe5281db45aa502e2aad1c687865764545ced (docs only, SECURITY_REFERENCE_IG.md): SE-02 adds the three missing learning-resource names to section 1 (Cybrary, Professor Messer - previously absent from the entire Sentinel tree - and SANS Cyber Aces); SE-03 adds section 5, the family-secret-phrase anti-impersonation practice (a second corpus source for it was watched 2026-11-16); SE-05 adds section 6, the seven-step footprint cleanup, reference-only by audit classification. Supervisor review CONFIRMED; CI green except the validate pair."
+    next_action: "PR #488 merged (wave 1); the follow-up sections landed via PR #776 (merged 2026-11-16). Docs-only reference - no deploy surface; coordinator may flip VERIFIED on read-back. Sections are maintained by follow-up PRs as adapters land."
     files:
       - Sentinel/docs/SECURITY_REFERENCE_IG.md
   - id: TASK-IG-FRG-04
@@ -6903,7 +6903,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     contributors: [muse_ai]
     priority: P2
     created_at: "2026-11-15"
-    updated_at: "2026-11-15"
+    updated_at: "2026-11-16"
     files:
       - Futuris/futuris/market_data/
       - Futuris/futuris/api/routers/market_data.py
@@ -6915,7 +6915,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Measured OpenBB 5.0.0 in isolated venv 2026-11-15: install tree ~1.1 GB (27 openbb-* packages); 'from openbb import obb' 210.9 s import, 995.6 MB peak RSS vs 956 MB total Server-1 RAM and Futuris MemoryMax 180 MB (TASK-REL-048) -- full SDK cannot run in-process on the current fleet; adapter-over-data-model delivered per the repo card's adapt verdict."
       - "Local pytest (Python 3.12 venv, mock Oracle URL): 39 passed across tests/market_data/ (21 new), tests/connectors/test_provenance.py, tests/test_fut002_hardening.py. Pre-existing failure on fresh main, unrelated: tests/api/test_health.py imports install_sqlite_pragmas from futuris.storage.db (removed by the Oracle-only sweep)."
       - "PR #496 verified via API after shipping: open, base main, head 6a5acc3d23, 16 changed files, +1373/-0."
-    next_action: "Coordinator: merge PR #496 on green CI (incl. the Python 3.10 import gate), then Fleet CD, then probe GET /v1/market-data/ohlcv?symbol=BTCUSDT on the deployed Futuris and record the live provider/status. Post-ARM: install the OpenBB SDK and add openbb_sdk to FUTURIS_MARKET_DATA_PROVIDERS."
+      - "ARM-READY FOLLOW-UP MERGED 2026-11-16: PR #778 -> d94a6bdcde7bcef0fd7879e0672dc4fbee2d289d (head cfc82af31480f32d86dbec64ad2bb7becf15696e): OpenBB is now an env flip - FUTURIS_OPENBB_PROVIDER threaded through build_provider/from_settings; sdk_available() find-spec probe that never imports the SDK; frame standardization tolerates intraday timestamp columns and drops NaN-close rows; ProviderStatus + GET /v1/market-data/providers reports the SDK honestly unavailable on this fleet; the measured v5 dependency set declared as the openbb optional extra in pyproject.toml only (requirements.txt untouched). +13 tests exercise the SDK-present path through a fake openbb module. Supervisor review CONFIRMED against the AUDIT-2 8-point checklist (one minor correction: the post-probe sys.modules regression assertion is still owed as a small follow-up). CI green except the validate pair. The SDK itself remains ARM-gated by measurement (995.6MB import vs the 956MB host and the 180MB service cap)."
+    next_action: "ARM day (once the second tenancy's A1 is allocated): follow the lane's ARM-day runbook - re-measure the SDK on the production interpreter, install the openbb extra and pin the resolved set, flip FUTURIS_OPENBB_PROVIDER with openbb_sdk ordered last for week 1, verify via GET /v1/market-data/providers then a forced SDK-only fetch with provider/evidence labels, pass the FUT-004/FUT-006 scorecard gate before any forecast consumes SDK data, co-verify statsforecast; rollback = env revert + restart. The SDK path is production-verifiable only on ARM. Small follow-ups owed: the post-probe sys.modules regression test, and land the runbook under Futuris/docs/."
   - id: TASK-IG-FUT-02
     title: "IG corpus: geopolitical/event context in Futuris market outlooks (cited IntelX events)"
     status: IN_REVIEW
@@ -7013,7 +7014,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     priority: P1
     created: 2026-11-15
-    updated_at: 2026-11-15
+    updated_at: 2026-11-16
     branch: "claude/task-ig-int-01"
     pr: 465
     defect: "IntelX had RSS news ingestion (news_ingester) but no standing real-time headline watch: no impact classification, no deduped pre-trade headline feed, and the real-time X wires traders actually watch (FinancialJuice, DeltaOne, Unusual Whales) were not represented at all."
@@ -7021,15 +7022,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "CLAIM: GitHub issue #35 comment 6898207093 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-01 claim."
       - "FinancialJuice public RSS verified live from the sandbox 2026-11-15 (HTTP 200, real-time items); FXStreet + Investing.com RSS likewise 200. X/Twitter accounts have no keyless feed — registered inactive with explicit unavailable_reason; source_report() surfaces the gap; nothing fabricates X content."
       - "Tests: IntelX/tests/test_ig_headline_watch.py 12/12 passed locally (hermetic, injected fetch): RSS/Atom parsing, classifier tiers incl. word-boundary regression ('war' must not match 'award'), dedupe across sweeps, per-source error isolation, X-account non-fabrication."
+      - "WIRING MERGED 2026-11-16: PR #760 -> 110651a7b8caf6db246e30a64b8d0768b6b497a9 (head ddba4fe696f2f9f74960c8ffa948c3e6afb174f4): First Squawk added as an inactive X source (first_squawk_x, active=False with the shared X_ACCOUNT_REASON - unusual_whales_x was already registered since PR #465 and is untouched); new ingestion/feed_service.py process-wide singletons; lifespan hooks behind ENABLE_HEADLINE_WATCH / ENABLE_AI_RADAR (default False); five /feeds routes on the v1 router; StrateX delivery subscriber opt-in HEADLINE_STRATEX_DELIVERY (default False) with score floor 35 enforced in the delivery function. Supervisor review CONFIRMED with explicit CI PASS; 7 consumer-path tests."
     blockers: []
-    next_action: "Coordinator: merge PR #465 on green CI -> Fleet CD -> production probe: run one poll sweep on Server 1 and confirm FinancialJuice headlines land in the watch buffer with impact tiers; then flip VERIFIED. Follow-up (separate task if wanted): wire HeadlineWatch.run() into the INT-007 standing-watch engine once INT-007 lands, and add an X API adapter if credentials are ever provisioned."
+    next_action: "Fleet CD deploy -> production-running verification: the lifespan hooks and the StrateX delivery are default-off by design - enabling them is a separate coordinator decision; when enabled, run one poll sweep on the deployed service and confirm headlines land in the watch buffer with impact tiers (the PR #465 probe), then flip VERIFIED."
   - id: TASK-IG-INT-02
     title: "IntelX social-link reader (Agent Reach pattern): read public Instagram/YouTube/Reddit links as research sources, read-only — IG corpus item DerbBtfzj8p"
     owner: muse_ai
     status: IN_REVIEW
     priority: P1
     created: 2026-11-15
-    updated_at: 2026-11-15
+    updated_at: 2026-11-16
     branch: "claude/task-ig-int-02"
     pr: 483
     defect: "IntelX research could search and fetch ordinary web pages but had no reader for social links: YouTube videos, Reddit threads and Instagram posts pasted into a research question were opaque, and the Agent Reach pattern (read-only, no-login) was not implemented anywhere in the fleet."
@@ -7037,15 +7039,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "CLAIM: GitHub issue #35 comment 6898212245 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-02 claim."
       - "Repo card ~/workspace/ig-references/repos/agent-reach.md verified the upstream (MIT, Python 3.10+) with fit=adapt and the care note 'use no-login channels by default' — adopted as a binding constraint."
       - "Tests: IntelX/tests/test_ig_social_links.py 10/10 passed locally (hermetic): verbatim YouTube description extraction, Reddit read + honest 403, Instagram OpenGraph + honest login-wall, generic web, read-only URL spy, scheme rejection."
+      - "CONSUMER WIRING MERGED 2026-11-16: PR #775 -> 1f4ad3590b59c16c2f26d9b5b16bb655568e0770: the retriever's social seam (_social_ingest_plan) routes social links through SocialLinkReader before the generic fetch (falls back cleanly, never raises), and GET /osint/social-link exposes it (422 with the reader's reason). Supervisor review CONFIRMED with explicit CI PASS; tests drive the retriever end-to-end."
     blockers: []
-    next_action: "Coordinator: merge PR #483 on green CI -> Fleet CD -> production probe: read one public YouTube link and one Reddit link through the deployed IntelX and confirm verbatim documents return (a Reddit 403 from the server IP, if it occurs, is an acceptable honest outcome — record it, do not work around it with accounts); then flip VERIFIED. Follow-up (separate task if wanted): wire SocialLinkReader into collect_live_brief as a candidate source type."
+    next_action: "Fleet CD deploy -> production probe: read one public YouTube link and one Reddit link through the deployed IntelX (the PR #483 probe) and confirm verbatim documents return; then flip VERIFIED."
   - id: TASK-IG-INT-03
     title: "IntelX live tracking data layer (God's-Eye pattern): flights/satellites/ships/events from public feeds, normalised snapshots with per-layer scope labels — IG corpus items Dcto0vKzJxJ, DccLLkoPCT1"
     owner: muse_ai
     status: IN_REVIEW
     priority: P1
     created: 2026-11-15
-    updated_at: 2026-11-15
+    updated_at: 2026-11-16
     branch: "claude/task-ig-int-03"
     pr: 498
     defect: "IntelX had no live world-tracking data layer: the God's-Eye-style corpus ideas (real-time flights, ships, satellites, events) had no normalised, honestly-scoped data service behind them — and naive implementations of this pattern routinely present regional AIS coverage as if it were global."
@@ -7053,15 +7056,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "CLAIM: GitHub issue #35 comment 6898213412 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-03 claim."
       - "All four feeds verified live from the build sandbox 2026-11-15: OpenSky states/all 200 with real state vectors over India; wheretheiss.at ISS position JSON; USGS 2.5_day GeoJSON 200; Digitraffic AIS 200 with the provider-documented Accept/gzip/Digitraffic-User headers."
       - "Tests: IntelX/tests/test_ig_tracking.py 8/8 passed locally (hermetic): OpenSky parsing + honest 429, satellite unit normalisation + bbox filter, AIS parsing + regional scope label assertion, USGS parsing, snapshot failure isolation, kind filtering."
+      - "CONSUMER WIRING MERGED 2026-11-16: PR #775 -> 1f4ad3590b59c16c2f26d9b5b16bb655568e0770: TrackingService exposed at GET /tracking/snapshot (kinds filter; layers fail independently and self-report). Supervisor review CONFIRMED with explicit CI PASS."
     blockers: []
-    next_action: "Coordinator: merge PR #498 on green CI -> Fleet CD -> production probe on Server 1: one TrackingService snapshot (flights over India bbox + satellites + events) and confirm real counts per layer with the ships layer's Baltic scope note present in the payload; then flip VERIFIED. Follow-up (owner-gated): if the owner picks the gods-eye-map design candidate, wire it to this service; the service is UI-agnostic until then."
+    next_action: "Fleet CD deploy -> production probe on Server 1: one TrackingService snapshot via GET /tracking/snapshot (flights over India bbox + satellites + events) with real counts per layer and the ships layer's Baltic scope note present in the payload; then flip VERIFIED."
   - id: TASK-IG-INT-04
     title: "IntelX OSINT public-footprint lookups (username/phone/email) + footprint-audit report type with named blind spots — IG corpus items DaLZEXNjZQ5, DaLY8BGDYWp, DaIzCa0Dbgq, Dc-9-4kyO-o; DaiasjkJSVn scoped out with reason"
     owner: muse_ai
     status: IN_REVIEW
     priority: P1
     created: 2026-11-15
-    updated_at: 2026-11-15
+    updated_at: 2026-11-16
     branch: "claude/task-ig-int-04"
     pr: 504
     defect: "IntelX's named OSINT capabilities lived in the legacy layer that falls back to synthetic findings when upstreams fail (repo AGENTS.md caveat); there was no fail-closed, keyless public-footprint toolkit (username presence, email public profile, phone format) and no footprint-audit report type that states its own coverage limits."
@@ -7069,8 +7073,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "CLAIM: GitHub issue #35 comment 6898214491 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-04 claim."
       - "Keyless signals verified live 2026-11-15: Gravatar avatar ?d=404 returns 404 for an unknown email; GitHub profile URLs return 200/404 as documented."
       - "Tests: IntelX/tests/test_ig_osint.py 12/12 passed locally (hermetic): three-state username verdicts incl. marker-in-200 and 403-is-unknown, Gravatar found/absent with verbatim fields, E.164 parsing incl. 00-prefix, audit composition asserting dark_web_search / breach_database_check / carrier_line_type_lookup are named unavailable in every report."
+      - "CONSUMER WIRING MERGED 2026-11-16: PR #775 -> 1f4ad3590b59c16c2f26d9b5b16bb655568e0770: FootprintAudit exposed at POST /osint/footprint-audit (422 on no identifier). The C48 HIBP email leg is untouched - breach_check.py and osint/audit.py are blob-identical across base and branch; without a paid key the email leg still returns unavailable/checked=False (free-only rule honoured, no workaround). Supervisor review CONFIRMED with explicit CI PASS."
     blockers: []
-    next_action: "Coordinator: merge PR #504 on green CI -> Fleet CD -> production probe: run one FootprintAudit for a throwaway username/email from Server 1 and confirm found/unknown verdicts return with the unavailable sections intact; then flip VERIFIED. Separate owner decision if ever wanted: a paid HIBP key would enable the breach section — do not enable by default."
+    next_action: "Fleet CD deploy -> production probe: run one FootprintAudit for a throwaway username/email via POST /osint/footprint-audit and confirm found/unknown verdicts return with the unavailable sections intact; then flip VERIFIED. A paid HIBP key stays the owner's decision - do not enable by default."
   - id: TASK-IG-INT-05
     title: "IntelX named research/archive source utilities: working Archive.org connector, fail-closed WolframAlpha adapter, honest seed-site registry (OpenCulture/AlternativeTo/JustWatch) — IG corpus item DZ7MtMhjAZI"
     owner: muse_ai
@@ -7093,7 +7098,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     priority: P2
     created: 2026-11-15
-    updated_at: 2026-11-15
+    updated_at: 2026-11-16
     branch: "claude/task-ig-int-06"
     pr: 518
     defect: "The corpus repo pass produced 32 verified spec cards with binding fit verdicts, but they lived only in the coordinator's workspace (~/workspace/ig-references/repos/); the fleet itself had no registry an agent could query when deciding whether a scouted repo is adopt/adapt/reference/reject for its domain."
@@ -7101,8 +7106,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "CLAIM: GitHub issue #35 comment 6898216643 (2026-11-15) before editing; board + issue scanned, no prior TASK-IG-INT-06 claim."
       - "Registry generated by script from the 32 cards + INDEX.md; card-by-card diff vs the index table showed zero fit mismatches and only parenthetical repo-name annotations in the index. Fit counts from the cards: adopt=2, adapt=15, reference-only=13, reject=2 — the roll-up summary's adapt/reference-only counts are transposed against its own cards (flagged in the completion comment)."
       - "Tests: IntelX/tests/test_ig_scouted_repos.py 5/5 passed locally; PR #518 file list verified via the public GitHub API after push (exactly 3 added files)."
+      - "REGISTRY EXPANSION MERGED 2026-11-16: PR #771 -> 79a5358a042730366d6235fd78464a4d9ac0d0c0: registry regenerated 32 -> 102 entries by the shipped generator (scripts/generate_scouted_repos.py) from the wave 1+2+2b verified cards; fit counts now adopt 6 / adapt 40 / reference-only 46 / reject 10; all 32 wave-1 entries reproduce field-for-field. Supervisor review CONFIRMED: the reviewer re-ran the generator against the live cards and got JSON-equal output (generated, not hand-edited); explicit CI PASS."
     blockers: []
-    next_action: "Coordinator: merge PR #518 on green CI -> Fleet CD (data file deploys with the package) -> production probe: intelx.scouted_repos.summary() on Server 1 returns count 32; then flip VERIFIED. Also correct the ROLLUP.md / briefing fit counts to adapt=15, reference-only=13 per the cards."
+    next_action: "Fleet CD deploy (data file deploys with the package) -> production probe: intelx.scouted_repos.summary() on the deployed service returns count 102; then flip VERIFIED."
   - id: TASK-IG-INF-06
     title: "Prompt-engineering discipline: versioned prompts, changelog, bench-before/after admission (INF-005 standard applied to the prompt layer)"
     owner: muse_ai
@@ -9108,8 +9114,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 703
     branch: claude/ig2-task-ig2-cor-01
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #703 -> 5011fdd594a703b32b20a2a718dee359ed0578e6. CI green except the validate pair (proven flake family)."
-    next_action: "Fleet CD deploy -> production probe"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #703 -> 5011fdd594a703b32b20a2a718dee359ed0578e6. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #770 -> 5fc497c70c655a45328d29e119f66fef8cc934f3 (head e207158fc6496efe487cf7de2ea8ed7f632d9ed6): all three audit gaps closed - (1) production caller: process_task_envelope (POST /v1/friday/task) charges every executed envelope and returns HTTP 429 on breach before any task is created; (2) durable store: DatabaseBudgetStore persists usage/pauses/alerts/deliveries in the new agent_budget_state table (alembic 009), production default, loud degradation; (3) alert dispatch: exactly once per agent/day into the operator escalation channel, every outcome persisted in alert_deliveries. Supervisor review CONFIRMED against the AUDIT-2 pre-registered bars (incl. a mutation test: neutralising the gate fails 5 of 11 wiring tests); A/B failure sets byte-identical to clean main; CI green except the validate pair."
+    next_action: "Fleet CD deploy -> configure SELF_HEALING_ESCALATION_WEBHOOK on Server 2 (verified UNSET 2026-11-16 - coordinator decision on the target; do not enable silently) -> live breach drill: only then is gap 3 production-verified. Follow-up (non-blocking): pin test for _build_production_ledger() default store selection."
   - id: TASK-IG2-FRD-01
     title: "Agentic inbox for FRIDAY (agentic-inbox ADAPT)"
     status: IN_REVIEW
@@ -9220,7 +9226,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 722
     branch: claude/ig2-task-ig2-int-04
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #722 -> 4e81960d8d05bfcf886068cf9166a6e23da91460. CI green except the validate pair (proven flake family)."
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #722 -> 4e81960d8d05bfcf886068cf9166a6e23da91460. CI green except the validate pair (proven flake family). CONSUMER WIRING MERGED 2026-11-16: PR #775 -> 1f4ad3590b59c16c2f26d9b5b16bb655568e0770: untrusted_ingest wired into POST /research/investigations with the production connectors injected exactly as the module prescribes (WebSearchConnector as SearchFn; HttpFetchConnector + normalize_text_content as FetchFn; robots refusal = dropped, never bypassed; refuses MOCK_MODE with 503). Supervisor review CONFIRMED with explicit CI PASS."
     next_action: "Fleet CD deploy -> production probe"
   - id: TASK-IG2-INT-05
     title: "AI-trending Radar feed for IntelX (BUILD, cluster #45)"
@@ -9308,7 +9314,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 717
     branch: claude/ig2-task-ig2-sen-05
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #717 -> 4087b305a8da319a0ab0f1ca5dc93cb402766b0d. CI green except the validate pair (proven flake family)."
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #717 -> 4087b305a8da319a0ab0f1ca5dc93cb402766b0d. CI green except the validate pair (proven flake family). SE-04 RESIDUE MERGED 2026-11-16: PR #767 -> 28794323195f6f2865590d5d68f37e8cac575f91 - exactly one verbatim line ('Report to IT or security if it is a work device') added to ESCALATION_STEPS in compromised_host_triage.py (the SE-04 corpus item is the same source as this task; the supervisor audit proved a full build would duplicate it). Supervisor review CONFIRMED; 8/8 tests pass; CI green except the validate pair."
     next_action: "Fleet CD deploy -> production probe"
   - id: TASK-IG2-SEN-06
     title: "extortion-mail triage for Sentinel (IG cluster #80)"
@@ -9316,7 +9322,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 721
     branch: claude/ig2-task-ig2-sen-06
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #721 -> 94bfb2ec93dfe3a89aeaf4ad4fcf1fbd5226a4fd. CI green except the validate pair (proven flake family)."
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #721 -> 94bfb2ec93dfe3a89aeaf4ad4fcf1fbd5226a4fd. CI green except the validate pair (proven flake family). SE-01 TRACKING PIXEL MERGED 2026-11-16: PR #774 -> b8a702ce77b0fdf40b746bbe434405b806e8e6b3 - tracking-pixel detection + awareness in extortion_mail_triage.py (signal tracking_pixel_present; a pixel alone never changes the verdict category - verified structurally and by tests). Supervisor review CONFIRMED; 9/9 tests pass; CI green except the validate pair."
     next_action: "Fleet CD deploy -> production probe"
   - id: TASK-IG2-STR-01
     title: "vectorized parameter-sweep harness for Stratex RD (vectorbt pattern)"
@@ -9662,10 +9668,12 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Owner in-hands voice re-test is the final acceptance."
   - id: TASK-OBS-004
     title: "Deploy watchdog: periodic deployed-HEAD-vs-main divergence check across both servers"
-    status: AVAILABLE
+    status: IN_REVIEW
     owner: muse_ai
-    evidence: "Created by merge runner 13 as the D9 follow-up. D9 root cause (proven 2026-11-16, closed same day): Fleet CD's concurrency group keeps only ONE pending run per ref \u2014 PR #703's deploy run was cancelled with zero jobs 36s after creation when PR #716's push landed, and #716's run skipped Server 2 via its paths-filter (#716 touched only FRIDAY/**), so Cortex's 3 merged files were silently stranded on S2; no later S2-touching push ever healed it. Repair: S2 fast-forwarded to main, whole-tree diff vs main EMPTY, fleet 10/10 health. The systemic class fix \u2014 a standing deployed-HEAD-vs-main divergence check \u2014 is this task."
-    next_action: "Design + implement a periodic check (e.g. inside Sentinel's existing probe cycle, or a small scheduled script on each server) that compares each server's deployed HEAD against origin/main and alerts via Sentinel's existing alert path when divergence persists beyond one Fleet CD cycle; prove it by staging a harmless divergence on one server and observing the alert land."
+    pr: 754
+    branch: claude/task-obs-004-deploy-watchdog
+    evidence: "Created by merge runner 13 as the D9 follow-up. D9 root cause (proven 2026-11-16, closed same day): Fleet CD's concurrency group keeps only ONE pending run per ref \u2014 PR #703's deploy run was cancelled with zero jobs 36s after creation when PR #716's push landed, and #716's run skipped Server 2 via its paths-filter (#716 touched only FRIDAY/**), so Cortex's 3 merged files were silently stranded on S2; no later S2-touching push ever healed it. Repair: S2 fast-forwarded to main, whole-tree diff vs main EMPTY, fleet 10/10 health. The systemic class fix \u2014 a standing deployed-HEAD-vs-main divergence check \u2014 is this task. IMPLEMENTED + MERGED 2026-11-16: PR #754 -> 2d9833280d70050b03396d1a69f13c5d3710beea (head 6eae1deba918af83fba2925cae90be987807d421). Supervisor review CONFIRMED all five design conditions in code; the staged-divergence proof was EXECUTED twice on Server 2 with the real AlertEngine + dispatcher (alerts ALT-1794844105-1 and ALT-1794844804-1 fired naming the moved main; heal -> recovery). Proof run 1 exposed the stale shared Telegram credential (HTTP 401) - fixed and drill-verified separately (alert ALT-1794845331-1). Minor review correction: the PR body's claimed 2 operations-route tests do not exist (claim inaccuracy, not a functional gap). CI on head: test/py310/secrets/detect-voice SUCCESS; only the validate pair red (flake family)."
+    next_action: "Activation (coordinator): set the watchdog env flags and install the Server-1 reporter timer -> production verification: first real divergence-or-clean cycle observed end-to-end via the Sentinel alert path. The merged code deploys via Fleet CD."
   - id: TASK-FRD-015
     title: "Voice model acts on split-STT fragments (defect D11)"
     status: VERIFIED
