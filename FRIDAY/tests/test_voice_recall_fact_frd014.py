@@ -133,6 +133,32 @@ def test_recall_spelling_variant_retry_recovers_a_missed_fact(monkeypatch):
     assert "teal" in result["reply"]
 
 
+def test_recall_second_draw_recovers_a_sparse_first_draw(monkeypatch):
+    # The search is non-deterministically sparse under load (live:
+    # the identical US question drew 17 hits, then 2). A full-match
+    # miss with no spelling variant still earns one second draw.
+    from friday.api.server import _dispatch_command
+    import friday.memory.memora_client as module
+
+    class _SparseThenRich:
+        def __init__(self):
+            self.calls = 0
+
+        def recall_memories(self, agent_name, query, limit=10):
+            self.calls += 1
+            if self.calls == 1:
+                return _hits(CHAI, ZQ)
+            return _hits(TEAL_CLEAN)
+
+    fake = _SparseThenRich()
+    monkeypatch.setattr(module, "memora_client", fake)
+    result = asyncio.run(_dispatch_command("What is my favorite color?"))
+    assert fake.calls == 2
+    assert result["metadata"].get("spoken_summary") == (
+        "Your favorite color is teal."
+    )
+
+
 def test_recall_browsing_question_keeps_the_list(monkeypatch):
     result = _dispatch(
         monkeypatch,

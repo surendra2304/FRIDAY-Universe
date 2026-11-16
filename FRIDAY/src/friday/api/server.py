@@ -3688,30 +3688,42 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 logger.debug(f"Memora recall fallback probe skipped in memory fast-path: {_e2}")
         if len(_q_words) >= 2 and not _mem_error:
             # TASK-FRD-014: if NO presentable hit matches every question
-            # content word, the spelling-sensitive search may have
-            # missed the fact entirely (live 2026-11-16: "What is my
-            # favourite colour?" returned a sparse set — in one probe
-            # every hit filtered out as unpresentable, in another 5
-            # hits with no teal record — while the US-spelled query
-            # returns the fact). Retry ONCE with the canonicalized
-            # spelling variant of the question and merge. Runs after
-            # the FRD-001 probe so the filtered-to-empty shape is
-            # covered too; the same fallback idiom as that probe,
-            # keyed on the miss shape.
-            _any_full = any(
-                all(
-                    _w in _canon_line(str(_h.get("content_text", "")).lower())
-                    for _w in _q_words
+            # content word, the search may have missed the fact
+            # entirely — it is both spelling-sensitive and, under host
+            # load, non-deterministically sparse (live 2026-11-16, the
+            # same questions within minutes: "favourite colour" drew a
+            # set whose hits ALL filtered out as unpresentable, then a
+            # 5-hit set with no teal record; "favorite color" drew 17
+            # hits with teal on top, then a 2-hit set with none).
+            # Retry with the canonicalized spelling variant first (it
+            # changes the draw AND the spelling), then once more with
+            # the original query (a second draw), stopping as soon as
+            # a full match lands; merged hits are deduped and filtered
+            # like the primary set. Runs after the FRD-001 probe so
+            # the filtered-to-empty shape is covered too; the same
+            # fallback idiom as that probe, keyed on the miss shape.
+            def _has_full_match(_hit_list: list[dict[str, Any]]) -> bool:
+                return any(
+                    all(
+                        _w in _canon_line(str(_h.get("content_text", "")).lower())
+                        for _w in _q_words
+                    )
+                    for _h in _hit_list
                 )
-                for _h in _hits
-            )
+
+            _retry_queries: list[str] = []
             _variant = _canon_line(raw_cmd[:200].lower())
-            if not _any_full and _variant != raw_cmd[:200].lower():
+            if _variant != raw_cmd[:200].lower():
+                _retry_queries.append(_variant)
+            _retry_queries.append(raw_cmd[:200])
+            for _rq in _retry_queries:
+                if _has_full_match(_hits):
+                    break
                 try:
                     from friday.memory.memora_client import memora_client as _memora_v
                     from friday.memory.hygiene import is_unpresentable_recall_hit as _is_unpresentable_v
                     _more = (
-                        await asyncio.to_thread(_memora_v.recall_memories, "friday", _variant, limit=10)
+                        await asyncio.to_thread(_memora_v.recall_memories, "friday", _rq, limit=10)
                         or []
                     )
                     _seen_texts = {
@@ -3723,11 +3735,12 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                         and not _is_unpresentable_v(_h)
                     ]
                     logger.info(
-                        "memory recall: spelling-variant retry merged "
+                        "memory recall: full-match retry merged "
                         f"{len(_hits)} hits for {raw_cmd[:60]!r}"
                     )
                 except Exception as _e3:
-                    logger.debug(f"Memora spelling-variant retry skipped: {_e3}")
+                    logger.debug(f"Memora full-match retry skipped: {_e3}")
+                    break
         # Rank client-side so the answer leads with what he actually asked
         # about: question-word overlap wins, personal facts beat agent logs
         # (question words + spelling canonicalization are computed above,
