@@ -415,6 +415,30 @@ class Settings(BaseSettings):
         default=False,
         description="Enable IntelX standing research watches loop in this process (TASK-INT-007)",
     )
+    ENABLE_HEADLINE_WATCH: bool = Field(
+        default=False,
+        description="Enable the standing financial-headline watch loop in this process (TASK-IG-INT-01 wiring)",
+    )
+    HEADLINE_WATCH_INTERVAL_S: float = Field(
+        default=60.0,
+        description="Seconds between headline-watch sweeps when ENABLE_HEADLINE_WATCH is on",
+    )
+    HEADLINE_STRATEX_DELIVERY: bool = Field(
+        default=False,
+        description="Forward market-moving headlines to StrateX via the IntelX signal webhook (opt-in: each delivery also publishes a Memora research notice)",
+    )
+    HEADLINE_STRATEX_MIN_SCORE: int = Field(
+        default=35,
+        description="Minimum deterministic impact score for a headline to be delivered to StrateX",
+    )
+    ENABLE_AI_RADAR: bool = Field(
+        default=False,
+        description="Enable the AI-trending radar polling loop in this process (TASK-IG2-INT-05 wiring)",
+    )
+    AI_RADAR_INTERVAL_S: float = Field(
+        default=900.0,
+        description="Seconds between AI-radar sweeps when ENABLE_AI_RADAR is on",
+    )
 
     # Auth & Storage
     SESSION_TTL_SECONDS: int = Field(
