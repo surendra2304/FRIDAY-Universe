@@ -182,6 +182,189 @@ def _spoken_fact_form(fact: str) -> str:
     return text
 
 
+# TASK-FRD-015 (D11): a remember request composed from a PARTIAL turn
+# must never reach the brain. FRD-005 re-run #5 (production run
+# 20261116-175800): Gemini's activity detection (silence 500 ms, end-of-
+# speech HIGH — pinned for speed in TASK-VOI-012) split one utterance
+# into two finals 2.6 s apart; the model acted on the first fragment
+# alone ("Please remember this for me.") and, lacking the fact, composed
+# the payload from the PREVIOUS turn's content ("Please remember that
+# the current time in Tokyo is 9:29 PM."). The brain's remember gate
+# stores any payload unconditionally, so a junk fact was written and
+# the spoken confirmation named the junk. Nothing in the dispatch path
+# compared the composed payload with what the user actually said in
+# the current turn — the guard below is that comparison, placed here
+# for the same reason as the recall fact guard above: the bridge is
+# the last deterministic checkpoint before the brain.
+#
+# Scope, evidence-picked: REMEMBER-class requests only — the one class
+# whose gate performs an unconditional state write. Forget is excluded
+# (its gate no-ops on a non-matching subject and answers honestly), and
+# reads/delegations corrupt nothing: their results are spoken, so the
+# owner hears and corrects them. A memory write is silent and durable.
+#
+# Grounding rule: the fact the brain WOULD store (extracted with a
+# mirror of the brain's own classification + payload extraction) must
+# be grounded in the current turn's user transcript, supplied by the
+# worker (user segments since the last assistant item plus the latest
+# STT final): at least one content token present AND at least half of
+# the fact's content tokens present. The D11 junk scores 0%; a faithful
+# composition scores ~100%; the half threshold leaves room for the
+# model's sanctioned normalizations (fleet-name corrections, spelling
+# variants, light paraphrase). Grounded requests dispatch immediately
+# — the check is a token-set comparison, so the normal remember pays
+# ~0 ms. Only an UNGROUNDED remember pays: a settle window (default
+# 3.5 s, the D11 split gap was 2.6 s) waits for the continuation
+# segment; if it grounds the payload the request dispatches, if it
+# arrives without grounding it the call returns "superseded" (nothing
+# submitted), and if no continuation arrives the write is refused with
+# a spoken request to state the fact. Deliberate cost: a remember
+# whose fact was stated in an EARLIER turn ("remember that", pointing
+# back) is refused the same way — a memory write must be grounded in
+# the turn that requests it.
+def _fragment_settle_s() -> float:
+    try:
+        return float(os.getenv("FRIDAY_VOICE_FRAGMENT_SETTLE_S", "3.5") or 3.5)
+    except ValueError:
+        return 3.5
+
+
+FRAGMENT_SETTLE_S = _fragment_settle_s()
+_FRAGMENT_POLL_S = 0.15
+
+# Mirrors of the brain's memory-gate patterns (api/server.py
+# _dispatch_command): recall is checked first there ("do you remember"
+# is a question, not a store command), so it is checked first here —
+# a recall-shaped request is never treated as a write.
+_RECALL_PATTERNS = (
+    "what do you remember", "do you remember", "you remember",
+    "what do you know about me", "what do you know about my",
+    "do you have memory", "do you have any memory", "your memory",
+    "what did i say", "what did i tell you", "what have i told you",
+    "my preferences", "recall my", "recall what",
+    "what was my", "what is my", "what's my", "what did you store",
+    "what did you save", "what have you stored", "what have you saved",
+)
+_REMEMBER_PATTERNS = (
+    "remember this", "remember that", "remember:", "remember ,",
+    "note that", "don't forget", "dont forget", "keep in mind",
+    "memorize this", "memorise this", "store this", "remember it",
+)
+_REMEMBER_PREFIXES = (
+    "remember this", "remember that", "remember it", "remember",
+    "note that", "don't forget that", "dont forget that",
+    "don't forget", "dont forget", "keep in mind that", "keep in mind",
+    "memorize this", "memorise this", "store this",
+)
+# FRD-014's spelling canonicalization, mirrored (matching only).
+_FRAGMENT_SPELLING = {"favourite": "favorite", "colour": "color"}
+_FRAGMENT_STOPWORDS = _FACT_STOPWORDS | {
+    "please", "remember", "that", "this", "with", "from", "have",
+    "what", "when", "your", "yours", "mine", "about", "called",
+    "just", "will", "would", "there", "their", "them", "then",
+    "than", "into", "onto", "over", "under", "again", "once",
+    "the", "and", "but", "for", "are", "was", "were", "been",
+    "has", "had", "not", "all", "any", "can", "could", "should",
+}
+
+
+def _content_tokens(text: str) -> set[str]:
+    """Content tokens of a text: punctuation-stripped (the FRD-014
+    lesson), spelling-canonicalized, length >= 3, stopwords removed."""
+    import re as _re
+
+    tokens = set()
+    for raw in _re.findall(r"[a-z0-9]+", (text or "").lower()):
+        tok = _FRAGMENT_SPELLING.get(raw, raw)
+        if len(tok) >= 3 and tok not in _FRAGMENT_STOPWORDS:
+            tokens.add(tok)
+    return tokens
+
+
+def _remember_fact_payload(request: str) -> "str | None":
+    """The fact the brain's remember gate WOULD store for this
+    request, or None when the request is not remember-class.
+
+    Mirrors api/server.py's classification (recall wins) and payload
+    extraction (vocative strip, earliest/longest command-phrase cut,
+    "boss / for me" residue, trailing meta-instruction drop). An empty
+    string means remember-class with NO fact stated — ungrounded by
+    construction."""
+    import re as _re
+
+    raw_cmd = (request or "").strip()
+    cmd = raw_cmd.lower()
+    if any(p in cmd for p in _RECALL_PATTERNS):
+        return None
+    is_remember = cmd.startswith("remember ") or any(
+        cmd.startswith(p) or f" {p} " in f" {cmd} " or f" {p}:" in f" {cmd}"
+        for p in _REMEMBER_PATTERNS
+    )
+    if not is_remember:
+        return None
+    payload = raw_cmd
+    voc = _re.match(r"^\s*(?:hey\s+|ok\s+|okay\s+)?friday[\s,:\-]+",
+                    raw_cmd, flags=_re.IGNORECASE)
+    if voc:
+        payload = raw_cmd[voc.end():]
+    low_payload = payload.lower()
+    cut, cut_len = -1, 0
+    for pfx in _REMEMBER_PREFIXES:
+        idx = low_payload.find(pfx)
+        if idx >= 0 and (cut < 0 or idx < cut
+                         or (idx == cut and len(pfx) > cut_len)):
+            cut, cut_len = idx, len(pfx)
+    if cut >= 0:
+        payload = payload[cut + cut_len:]
+    payload = payload.strip().lstrip(":, -–").strip()
+    residue = _re.match(r"^(?:boss|for me)(?:[\s,:\-]+|\.\s*)",
+                        payload, flags=_re.IGNORECASE)
+    if residue:
+        payload = payload[residue.end():]
+    sentences = _re.split(r"(?<=[.!?])\s+", payload)
+    if len(sentences) > 1 and _re.match(
+        r"^(?:please\s+)?(?:confirm|acknowledge|let me know|tell me when|verify)\b",
+        sentences[-1].strip(), flags=_re.IGNORECASE,
+    ):
+        payload = " ".join(sentences[:-1]).strip()
+    return " ".join(payload.split()).strip()
+
+
+def _payload_grounded(payload: str, turn_text: str) -> bool:
+    """True when the fact payload is grounded in the current turn's
+    user transcript: at least one of its content tokens was actually
+    said this turn AND at least half of them were."""
+    tokens = _content_tokens(payload)
+    if not tokens:
+        # No checkable content (a bare short value): require the
+        # payload itself, normalized, inside the turn text.
+        needle = " ".join((payload or "").lower().split()).strip(" .")
+        hay = " ".join((turn_text or "").lower().split())
+        return bool(needle) and needle in hay
+    heard = _content_tokens(turn_text)
+    present = tokens & heard
+    return bool(present) and len(present) / len(tokens) >= 0.5
+
+
+def consolidate_turn_text(transcript_items, pending_text: str) -> str:
+    """The current turn's user text from the worker's records: user
+    items since the last assistant item (the accumulated segments of
+    the turn in progress), plus the latest STT final when it is newer
+    than the last committed item. Pure helper — the worker's provider
+    closure feeds it the shared turn dict's contents."""
+    segments: list[str] = []
+    for role, text in reversed(list(transcript_items or [])):
+        if role == "assistant":
+            break
+        if role == "user" and text:
+            segments.append(text)
+    segments.reverse()
+    pending = (pending_text or "").strip()
+    if pending and (not segments or segments[-1].strip() != pending):
+        segments.append(pending)
+    return " ".join(segments)
+
+
 def _recall_fact_guard(meta: dict[str, Any], state: str, spoken: str) -> str:
     """Return the spoken_reply for a brain result, enforcing the
     recall-fact contract: for an answered memory_recall result whose
@@ -209,8 +392,16 @@ def _recall_fact_guard(meta: dict[str, Any], state: str, spoken: str) -> str:
 class VoiceBrainBridge:
     def __init__(self, client: httpx.AsyncClient | None = None,
                  confirmation_gate: Any = None,
-                 result_observer: Any = None) -> None:
+                 result_observer: Any = None,
+                 turn_transcript_provider: Any = None) -> None:
         self.client = client
+        # TASK-FRD-015: the worker supplies a callable returning
+        # (current-turn user text, version) so the fragment guard can
+        # ground remember payloads in what the user actually said this
+        # turn. Absent (non-voice callers, tests) the guard is inert —
+        # the pre-FRD-015 behaviour — mirroring how the confirmation
+        # gate degrades instead of taking the path down.
+        self._turn_provider = turn_transcript_provider
         # TASK-FRD-012: the worker observes every foreground result so
         # its delivery watch can catch a settled result the model
         # never verbalized (defect D7). Observer failures must never
@@ -272,6 +463,100 @@ class VoiceBrainBridge:
         self._notify_observer(turn_id, text, result)
         return result
 
+    def _turn_snapshot(self) -> "tuple[str, Any] | None":
+        """(current-turn user text, version) from the worker's
+        provider, or None when there is no provider or it fails —
+        the guard degrades open, never breaks a call."""
+        if self._turn_provider is None:
+            return None
+        try:
+            text, version = self._turn_provider()
+            return str(text or ""), version
+        except Exception:
+            logger.warning("VOICE brain bridge fragment guard: turn "
+                           "transcript provider failed; guard inert "
+                           "for this call", exc_info=True)
+            return None
+
+    async def _fragment_guard(self, text: str,
+                              turn_id: str) -> "dict[str, Any] | None":
+        """TASK-FRD-015 (D11): the split-final guard for remember-class
+        requests. Returns None when the request may dispatch (not
+        remember-class, no provider, or the payload is grounded in
+        the current turn's transcript), else the settled result to
+        return WITHOUT dispatching: "superseded" when the turn
+        continued under this call, "refused" when the settle window
+        expired with the payload still ungrounded."""
+        payload = _remember_fact_payload(text)
+        if payload is None:
+            return None
+        snapshot = self._turn_snapshot()
+        if snapshot is None:
+            return None
+        turn_text, version = snapshot
+        if _payload_grounded(payload, turn_text):
+            return None
+        logger.info(
+            "VOICE brain bridge fragment guard turn=%s: remember "
+            "payload %r is NOT grounded in the current turn %r — "
+            "holding for end-of-turn consolidation (settle %.1fs)",
+            turn_id, payload[:120], turn_text[:120], FRAGMENT_SETTLE_S,
+        )
+        deadline = time.monotonic() + FRAGMENT_SETTLE_S
+        while time.monotonic() < deadline:
+            await asyncio.sleep(_FRAGMENT_POLL_S)
+            current = self._turn_snapshot()
+            if current is None:
+                return None
+            new_text, new_version = current
+            if new_version == version:
+                continue
+            # The turn continued. If the consolidated turn grounds
+            # THIS payload after all, it may dispatch; otherwise this
+            # call was composed from a fragment and is abandoned —
+            # the model hears the complete turn and re-issues.
+            if _payload_grounded(payload, new_text):
+                logger.info(
+                    "VOICE brain bridge fragment guard turn=%s: the "
+                    "consolidated turn grounds the payload — "
+                    "dispatching", turn_id,
+                )
+                return None
+            logger.info(
+                "VOICE brain bridge fragment guard turn=%s: turn "
+                "continued (now %r) without grounding the payload — "
+                "superseded, nothing submitted", turn_id,
+                new_text[:120],
+            )
+            return {
+                "state": "superseded",
+                "spoken_reply": "",
+                "fragment_guard": True,
+                "model_note": (
+                    "This request was NOT submitted: it was composed "
+                    "from an incomplete user turn, and the fact it "
+                    "carries was not in what the user said. The user "
+                    "has continued speaking. Say nothing about this "
+                    "result; listen to the complete request and, if "
+                    "it is still a remember request, call again with "
+                    "the fact exactly as the user stated it."
+                ),
+            }
+        logger.info(
+            "VOICE brain bridge fragment guard turn=%s: settle window "
+            "expired, payload still ungrounded — refused, nothing "
+            "submitted", turn_id,
+        )
+        return {
+            "state": "refused",
+            "spoken_reply": (
+                "I haven't stored that, Boss — I didn't hear the fact "
+                "itself in what you just said. Tell me the fact and "
+                "I'll lock it in."
+            ),
+            "fragment_guard": True,
+        }
+
     async def execute(self, request: str) -> dict[str, Any]:
         text = (request or "").strip()
         turn_id = _new_turn_id(text)
@@ -296,6 +581,13 @@ class VoiceBrainBridge:
                     "action_summary": decision.classification.action_summary,
                     "completion_verified": False,
                 }, started)
+        # TASK-FRD-015: the split-final guard runs after the
+        # confirmation gate (gate semantics unchanged) and before the
+        # reuse window: a superseded/refused outcome is never cached,
+        # and a grounded request still reaches the reuse check below.
+        guard_result = await self._fragment_guard(text, turn_id)
+        if guard_result is not None:
+            return self._settle(turn_id, text, guard_result, started)
         # TASK-FRD-011: the gate above has run for THIS call; only the
         # send is serialized/reused, so a confirmed re-issue still passes
         # the gate on its own merits before it can reuse or send.
@@ -477,11 +769,17 @@ class VoiceBrainBridge:
 
 
 def build_voice_tools(bridge: VoiceBrainBridge | None = None,
-                      result_observer: Any = None) -> list:
+                      result_observer: Any = None,
+                      turn_transcript_provider: Any = None) -> list:
     """Register against the real LiveKit SDK; defer SDK import for light tests."""
     from livekit.agents import function_tool
 
-    brain = bridge or VoiceBrainBridge(result_observer=result_observer)
+    brain = bridge or VoiceBrainBridge(
+        result_observer=result_observer,
+        turn_transcript_provider=turn_transcript_provider)
+    if (bridge is not None and turn_transcript_provider is not None
+            and brain._turn_provider is None):
+        brain._turn_provider = turn_transcript_provider
 
     @function_tool(name="execute_friday_task", description=(
         "Send the user's complete request to FRIDAY's canonical brain. REQUIRED for "
@@ -491,7 +789,12 @@ def build_voice_tools(bridge: VoiceBrainBridge | None = None,
         "publish automatically; approval remains a separate owner action. "
         "If the result state is confirmation_required, nothing was submitted: ask "
         "its spoken_reply as a question and re-issue the SAME request only after "
-        "the user clearly confirms or supplies the missing detail."))
+        "the user clearly confirms or supplies the missing detail. "
+        "If the result state is superseded, nothing was submitted and nothing is "
+        "wrong: the request was composed from an incomplete turn. Say nothing, "
+        "listen to the user's complete request, and call again with it whole — "
+        "for a remember request, the fact must be exactly what the user stated, "
+        "never filled in from earlier conversation."))
     async def execute_friday_task(request: str) -> dict[str, Any]:
         return await brain.execute(request)
 
