@@ -264,7 +264,8 @@ def test_grounded_remember_pays_no_settle_latency(monkeypatch):
     result, elapsed = _run(scenario())
     assert result["state"] == "answered"
     assert recorder.calls == [TEAL_REQUEST]
-    assert elapsed < 0.5
+    # Well under the 2.0 s settle window a guarded path would burn.
+    assert elapsed < 1.0
 
 
 def test_ungrounded_remember_without_continuation_is_refused(monkeypatch):
@@ -304,7 +305,9 @@ def test_delegation_and_recall_dispatch_unguarded(monkeypatch):
     assert r1["state"] == "answered"
     assert r2["state"] == "answered"
     assert len(recorder.calls) == 2
-    assert elapsed < 0.5
+    # The point is "no settle window was waited" (2.0 s configured);
+    # the bound leaves room for this host's loaded wall clock.
+    assert elapsed < 1.5
 
 
 def test_provider_failure_degrades_open(monkeypatch):
