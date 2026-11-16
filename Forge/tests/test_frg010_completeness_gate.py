@@ -236,6 +236,62 @@ def test_expected_modules_filters_tests_docs_and_assets():
     assert expected_modules("", [], manifest) == ["main.py", "pkg/__init__.py", "pkg/core.py"]
 
 
+# FRG-003's R2 goal, verbatim (the two-module temperature project the
+# production acceptance battery drove on 2026-11-16): the goal and its
+# requirements state exactly two paths, so FRG-004's architect-side
+# extraction (which engages at >=3 stated paths) yields nothing, and
+# when the plan's DAG produces no FILE_MANIFEST.json either, the gate
+# must still know what the build owes.
+R2_GOAL = (
+    "Create a small Python project with exactly two modules: a module temperature.py "
+    "with functions c_to_f(c: float) -> float, f_to_c(f: float) -> float, "
+    "c_to_k(c: float) -> float and k_to_c(k: float) -> float for temperature "
+    "conversion (Kelvin conversions must raise ValueError for results below "
+    "absolute zero), and a main.py command-line demo that imports those functions "
+    "from temperature.py and prints a small conversion table. The conversion "
+    "functions must live in temperature.py, not in main.py."
+)
+R2_REQUIREMENTS = [
+    "conversion functions defined in temperature.py and imported by main.py",
+    "Kelvin functions raise ValueError below absolute zero",
+    "celsius-fahrenheit conversions round-trip within floating tolerance",
+]
+
+
+def test_expected_modules_two_module_goal_without_manifest():
+    from app.execution.completeness import expected_modules
+
+    # Two stated paths are below FRG-004's layout threshold, but the
+    # gate demands whatever the goal actually states: both modules are
+    # owed even with no manifest at all.
+    assert expected_modules(R2_GOAL, R2_REQUIREMENTS, []) == [
+        "temperature.py",
+        "main.py",
+    ]
+    assert expected_modules(R2_GOAL, R2_REQUIREMENTS, None) == [
+        "temperature.py",
+        "main.py",
+    ]
+
+
+def test_expected_modules_single_stated_module():
+    from app.execution.completeness import expected_modules
+
+    goal = (
+        "Create temperature.py with functions c_to_f(c: float) -> float "
+        "and f_to_c(f: float) -> float for converting temperatures."
+    )
+    assert expected_modules(goal, [], []) == ["temperature.py"]
+
+
+def test_expected_modules_quiet_when_nothing_is_stated():
+    from app.execution.completeness import expected_modules
+
+    # Nothing stated, no manifest: the gate invents no expectations.
+    assert expected_modules("Create a temperature converter", [], []) == []
+    assert expected_modules("Create a temperature converter", [], None) == []
+
+
 # ---------------------------------------------------------------------------
 # The gate itself (create step injected)
 # ---------------------------------------------------------------------------
@@ -345,6 +401,60 @@ async def test_gate_is_quiet_when_project_is_complete(fs_tool: FilesystemTool):
     )
     assert report.complete
     assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_gate_fires_for_two_module_goal_on_empty_project(fs_tool: FilesystemTool):
+    # The production R2 shape: the goal states two modules, the plan
+    # produced no manifest, and the project directory is EMPTY. Before
+    # the fix the gate computed an empty expected set and stayed silent
+    # while the verification battery passed vacuously over zero files.
+    task_id = "frg010twomodule"
+    _plant_project(fs_tool, task_id, {}, None)
+    store = _StubStore(R2_GOAL, R2_REQUIREMENTS)
+
+    async def create(task_id_, target):
+        fs_tool.create_file(
+            task_id=task_id_,
+            relative_path=target,
+            content="# created by the gate\nVALUE = 1\n",
+            role="debugger",
+        )
+        return True, "created"
+
+    report = await _gate(fs_tool, create_module=create, store=store).ensure_complete(
+        task_id, R2_GOAL, R2_REQUIREMENTS
+    )
+    assert report.expected == ["temperature.py", "main.py"]
+    assert report.healed == ["temperature.py", "main.py"]
+    assert report.missing == []
+    assert report.complete
+    assert [event for event, _ in store.events] == ["module_completeness.healed"]
+
+
+@pytest.mark.asyncio
+async def test_gate_fails_two_module_goal_it_cannot_create(fs_tool: FilesystemTool):
+    # Same empty-project shape, but the create route cannot produce the
+    # modules: the gate must surface the failure by name instead of
+    # letting the build proceed over zero files.
+    task_id = "frg010twomodulefail"
+    _plant_project(fs_tool, task_id, {}, None)
+    store = _StubStore(R2_GOAL, R2_REQUIREMENTS)
+
+    async def create(task_id_, target):
+        return False, "provider below the confidence bar"
+
+    report = await _gate(fs_tool, create_module=create, store=store).ensure_complete(
+        task_id, R2_GOAL, R2_REQUIREMENTS
+    )
+    assert not report.complete
+    assert report.expected == ["temperature.py", "main.py"]
+    assert report.healed == []
+    assert report.missing == ["temperature.py", "main.py"]
+    message = report.failure_message()
+    assert "temperature.py" in message
+    assert "main.py" in message
+    assert [event for event, _ in store.events] == ["module_completeness.failed"]
 
 
 # ---------------------------------------------------------------------------

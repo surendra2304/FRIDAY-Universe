@@ -122,3 +122,22 @@ def test_urls_versions_and_dotted_modules_are_not_paths():
         "https://example.com/docs for the spec"
     )
     assert explicit_layout_from_goal(goal) == []
+
+
+def test_min_paths_override_returns_small_layouts_for_the_gate():
+    # The default threshold serves the architect: a two-path statement
+    # is not a layout, so the keyword templates still engage (pinned by
+    # test_two_file_mentions_are_not_a_layout above). The TASK-FRG-010
+    # completeness gate reads the same extraction with min_paths=1 --
+    # the modules a goal names are owed to the build however few they
+    # are -- so the override returns them verbatim, in stated order.
+    goal = "Create main.py and a test_main.py for a small calculator"
+    assert explicit_layout_from_goal(goal, min_paths=1) == ["main.py", "test_main.py"]
+    assert explicit_layout_from_goal(goal) == []
+
+    package_goal = "Create a package with pkg/core.py and a main.py entry point"
+    assert explicit_layout_from_goal(package_goal, min_paths=1) == [
+        "pkg/core.py",
+        "main.py",
+    ]
+    assert explicit_layout_from_goal(package_goal) == []

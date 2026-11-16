@@ -37,6 +37,17 @@ would judge an incomplete file set.
 Only importable source modules are gated. Test files belong to the
 Tester role, README/docs to the Release role and the architect; demanding
 them before the tester gate would manufacture failures, not catch them.
+
+The expected set is the manifest union the modules the goal and its
+requirements state, read with ``min_paths=1`` (see expected_modules):
+FRG-004's extraction returns nothing below three stated paths -- the
+right rule for the architect's manifest-or-template choice, but as the
+gate's only goal-side source it left one- and two-module goals with an
+empty expected set whenever the plan produced no manifest, and the gate
+never engaged. The 2026-11-16 production acceptance battery's
+two-module case completed over an empty project directory, judged
+vacuously by the verification battery; it is pinned in
+tests/test_frg010_completeness_gate.py.
 """
 
 from __future__ import annotations
@@ -126,12 +137,28 @@ def expected_modules(
     layout when no model manifest exists, but a model-produced manifest
     can still drop a goal-named module, so the gate checks the union --
     in manifest order, goal-stated extras appended in stated order.
+
+    The goal is read with ``min_paths=1``, not the architect-side
+    default of three: that threshold decides whether a stated layout
+    replaces the architect's keyword templates, while the gate's
+    question is which modules the build owes. A goal stating two
+    modules owes both, however few they are; with the default, such a
+    goal (and no manifest) computed an empty expected set here and the
+    gate never engaged -- the 2026-11-16 production acceptance battery
+    watched a two-module build complete over an empty directory. Only
+    paths the goal or requirements state verbatim are returned, and
+    ``_is_expected_module`` still restricts the set to importable source
+    modules, so nothing is invented: when nothing is stated and no
+    manifest exists, the expected set is empty and the gate stays
+    silent, exactly as before.
     """
     from app.agents.roles import explicit_layout_from_goal
 
     ordered: list[str] = []
     candidates = [str(x) for x in (manifest_files or [])]
-    candidates += explicit_layout_from_goal(goal or "", list(requirements or []))
+    candidates += explicit_layout_from_goal(
+        goal or "", list(requirements or []), min_paths=1
+    )
     for raw in candidates:
         path = _normalize(raw)
         if path and _is_expected_module(path) and path not in ordered:
