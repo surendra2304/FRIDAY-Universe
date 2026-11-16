@@ -32,6 +32,7 @@ from apps.api.routers import (
     v1_task_router,
     v1_capture_router,
     v1_skills_router,
+    v1_user_model_router,
     v1_events_router,
     mesh_events_router,
     v1_resilience_router,
@@ -275,6 +276,7 @@ app.include_router(v1_namespaces_router)
 app.include_router(v1_task_router)
 app.include_router(v1_capture_router)  # session capture → compress → inject (/v1/capture/*)
 app.include_router(v1_skills_router)  # Hermes skill-learning loop (/v1/skills/*)
+app.include_router(v1_user_model_router)  # structured user model (/v1/user-model/*)
 app.include_router(v1_events_router)
 app.include_router(mesh_events_router)
 app.include_router(audit_router)
