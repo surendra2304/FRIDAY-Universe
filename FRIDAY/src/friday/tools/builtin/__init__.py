@@ -42,6 +42,7 @@ from friday.tools.builtin.escrcpy_control import (
     EscrcpyLaunchPlanTool,
 )
 from friday.tools.builtin.lead_gen_tools import LeadGenerateTool
+from friday.tools.builtin.local_business_tools import LocalBusinessTool
 from friday.tools.builtin.meeting_followup_tools import (
     MeetingFollowUpCreateTool,
     MeetingFollowUpDecideTool,
@@ -216,6 +217,7 @@ __all__ = [
     "EscrcpyAutomationTool",
     "EscrcpyLaunchPlanTool",
     "LeadGenerateTool",
+    "LocalBusinessTool",
     "MeetingFollowUpCreateTool",
     "MeetingFollowUpDecideTool",
     "MeetingFollowUpListTool",
