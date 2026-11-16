@@ -67,7 +67,11 @@ def test_server_app_health_routes() -> None:
     assert data.get("service") == "friday_core"
     assert data.get("evidence_class") == "process_liveness"
     assert "observed_at" in data
-    assert data.get("peers_mesh") == "connected"
+    # TASK-OBS-003: peers_mesh is now derived from observed mesh outcomes,
+    # not a hardcoded "connected" — a fresh process has none, so the honest
+    # value here is one of the non-claiming states (or "connected" only if
+    # this process has actually completed a peer call).
+    assert data.get("peers_mesh") in {"connected", "configured_unverified", "unavailable"}
 
 
 def test_windows_friday_non_windows_safety() -> None:

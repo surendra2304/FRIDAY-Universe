@@ -207,6 +207,10 @@ async def status_probe():
         "status": "operational",
         "service": "cortex",
         "version": "2.1.0",
+        # TASK-OBS-003: this probe measures uptime only; label its evidence
+        # class like the fleet convention instead of letting "operational"
+        # read as a dependency verdict (that is /ready's job).
+        "evidence_class": "process_liveness",
         "uptime_seconds": round(uptime, 2),
         "environment": settings.app_env,
         "observed_at": datetime.now(UTC).isoformat(),

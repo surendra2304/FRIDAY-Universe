@@ -426,6 +426,8 @@ def test_f6_status_probe_contract(client):
     assert data["status"] == "operational"
     assert data["service"] == "cortex"
     assert data["version"] == "2.1.0"
+    # TASK-OBS-003: /status measures uptime only and must say so.
+    assert data["evidence_class"] == "process_liveness"
     assert "uptime_seconds" in data
     assert data["uptime_seconds"] >= 0
 
