@@ -788,26 +788,40 @@ class MemoraClient:
         # skipped so every twin id reaches the resolver (REL-014 groups
         # identical-text twins into one target and deletes them all).
         # Display recall keeps the dedupe, so chat surfaces are unchanged.
-        remote_results: List[Dict[str, Any]] = []
-        remote_answered = False
-        if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
-            try:
-                encoded_q = urllib.parse.quote(query)
-                url = f"{self.base_url}/v1/memories/search?q={encoded_q}&limit={limit}&min_score=0"
-                headers = self._remote_headers(agent_name)
-                req = urllib.request.Request(url, headers=headers, method="GET")
-                # Read-only hybrid search measured 11.2s on the loaded host.
-                # Give it a separate bounded budget; mutation timeout/retry
-                # semantics are deliberately unchanged.
-                with urllib.request.urlopen(req, timeout=getattr(self, "recall_timeout", self.timeout)) as resp:
-                    if resp.status == 200:
-                        results = json.loads(resp.read().decode("utf-8"))
-                        if not isinstance(results, list) or not all(isinstance(row, dict) for row in results):
-                            raise ValueError("invalid memory search response")
-                        remote_results = results
-                        remote_answered = True
-            except Exception as e:
-                logger.debug(f"Memora remote recall error: {type(e).__name__}")
+        # TASK-FRD-016 (2026-11-16): the remote and local legs are
+        # independent reads of two stores; running them serially stacked
+        # their latencies on every recall. Measured on the loaded host:
+        # the remote hybrid search alone consumed the full 15s recall
+        # budget while the ~0.1s local leg waited behind it, so a
+        # distressed Memora taxed every recall by the whole timeout even
+        # when the local store already held the answer. Run the remote
+        # leg on a worker thread and the local leg on the calling thread;
+        # the merge below is byte-for-byte the old one — same request,
+        # same error tolerance, same merge order and dedupe.
+        _remote_box: Dict[str, Any] = {"results": [], "answered": False}
+
+        def _remote_leg() -> None:
+            if self.remote_enabled and self.base_url and not self.base_url.startswith("http://localhost"):
+                try:
+                    encoded_q = urllib.parse.quote(query)
+                    url = f"{self.base_url}/v1/memories/search?q={encoded_q}&limit={limit}&min_score=0"
+                    headers = self._remote_headers(agent_name)
+                    req = urllib.request.Request(url, headers=headers, method="GET")
+                    # Read-only hybrid search measured 11.2s on the loaded host.
+                    # Give it a separate bounded budget; mutation timeout/retry
+                    # semantics are deliberately unchanged.
+                    with urllib.request.urlopen(req, timeout=getattr(self, "recall_timeout", self.timeout)) as resp:
+                        if resp.status == 200:
+                            results = json.loads(resp.read().decode("utf-8"))
+                            if not isinstance(results, list) or not all(isinstance(row, dict) for row in results):
+                                raise ValueError("invalid memory search response")
+                            _remote_box["results"] = results
+                            _remote_box["answered"] = True
+                except Exception as e:
+                    logger.debug(f"Memora remote recall error: {type(e).__name__}")
+
+        _remote_thread = threading.Thread(target=_remote_leg, daemon=True)
+        _remote_thread.start()
 
         # TASK-BRAIN-002 (2026-11-11 IST): production runs the ORACLE local
         # fallback (local_db_path is None there), and os.path.exists(None)
@@ -821,6 +835,10 @@ class MemoraClient:
                 local_results = self._recall_locally(agent_name, query, limit)
             except Exception as e:
                 logger.debug(f"Memora local recall error: {type(e).__name__}")
+
+        _remote_thread.join()
+        remote_results = _remote_box["results"]
+        remote_answered = bool(_remote_box["answered"])
 
         if not remote_answered:
             return local_results

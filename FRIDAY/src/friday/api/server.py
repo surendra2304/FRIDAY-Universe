@@ -3637,13 +3637,54 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             return low
 
         _q_words = {_canon_word(_w) for _w in _q_words}
+        # TASK-FRD-016 (2026-11-16): the FRD-014 canonical-spelling variant
+        # of the question, computed here because the search block below
+        # fires it CONCURRENTLY with the primary draw when it differs.
+        _variant = _canon_line(raw_cmd[:200].lower())
+        _want_variant = len(_q_words) >= 2 and _variant != raw_cmd[:200].lower()
+        _variant_drawn = False
         try:
             from friday.memory.memora_client import memora_client as _memora
             from friday.memory.hygiene import is_unpresentable_recall_hit as _is_unpresentable
             # Search with the owner's own words — appending generic terms
             # ("preferences facts…") buried the real subject (live lesson:
             # "do you remember my chai preference" returned research junk).
-            _hits = await asyncio.to_thread(_memora.recall_memories, "friday", raw_cmd[:200], limit=10) or []
+            if _want_variant:
+                # TASK-FRD-016 (2026-11-16): fire the primary draw and the
+                # FRD-014 canonical-spelling variant draw CONCURRENTLY.
+                # They are independent reads of the same store; the old
+                # serial order (primary here, variant later inside the
+                # full-match retry loop) stacked two full Memora searches
+                # on every spelling-variant recall — and on the loaded
+                # host each draw can consume the whole 15s recall budget,
+                # so a UK-spelled question paid ~2x the recall latency of
+                # the US form for the same answer (measured 2026-11-16:
+                # one draw 3.5s calm / 15s+ distressed, local leg 0.1s).
+                # The variant hits merge with the retry loop's exact
+                # dedupe rule and pass through the same unpresentable
+                # filter below; the retry loop still runs as the safety
+                # net and now usually exits on its first full-match check.
+                # A variant failure degrades to the old primary-only set;
+                # a primary failure keeps the old error semantics.
+                _draws = await asyncio.gather(
+                    asyncio.to_thread(_memora.recall_memories, "friday", raw_cmd[:200], limit=10),
+                    asyncio.to_thread(_memora.recall_memories, "friday", _variant, limit=10),
+                    return_exceptions=True,
+                )
+                if isinstance(_draws[0], BaseException):
+                    raise _draws[0]
+                _hits = _draws[0] or []
+                if isinstance(_draws[1], BaseException):
+                    logger.debug(f"Memora variant recall skipped in memory fast-path: {_draws[1]}")
+                else:
+                    _seen_texts = {str(_h.get("content_text", "")) for _h in _hits}
+                    _hits = _hits + [
+                        _h for _h in (_draws[1] or [])
+                        if str(_h.get("content_text", "")) not in _seen_texts
+                    ]
+                    _variant_drawn = True
+            else:
+                _hits = await asyncio.to_thread(_memora.recall_memories, "friday", raw_cmd[:200], limit=10) or []
             if not _hits and _q_personal:
                 # Generic personal question ("what do you remember about me")
                 # has no subject words for search — probe owner facts directly.
@@ -3713,7 +3754,10 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
 
             _retry_queries: list[str] = []
             _variant = _canon_line(raw_cmd[:200].lower())
-            if _variant != raw_cmd[:200].lower():
+            # TASK-FRD-016: when the variant was already drawn
+            # concurrently with the primary (above), don't pay for the
+            # same draw twice — the original-query second draw remains.
+            if _variant != raw_cmd[:200].lower() and not _variant_drawn:
                 _retry_queries.append(_variant)
             _retry_queries.append(raw_cmd[:200])
             for _rq in _retry_queries:
