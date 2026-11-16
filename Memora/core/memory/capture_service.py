@@ -202,6 +202,58 @@ class SessionCaptureService:
         return "\n".join(lines)[:_MAX_DIGEST_CHARS]
 
     @classmethod
+    def _attempt_promotion(
+        cls,
+        db: Session,
+        *,
+        digest_id: str,
+        actor_name: str,
+        event_ids: List[str],
+    ) -> bool:
+        """Best-effort evidence-checked promotion of a session digest.
+
+        A denied or failed promotion is not a failed compression: the
+        digest stays EPISODIC (still searchable) and the caller reports
+        ``promoted_to_semantic: False``. This helper therefore NEVER
+        raises. Two disciplines make that true even when the promotion
+        dies mid-flush (the 2026-11-16 compress HTTP 500):
+
+        - ``digest_id`` arrives as a plain string captured before the
+          attempt, so the failure path never touches an ORM object;
+        - on failure the session is rolled back FIRST. A failed flush
+          leaves the transaction poisoned, and any ORM access before a
+          rollback raises ``PendingRollbackError`` — which is what
+          escaped the old inline handler (it formatted
+          ``result.record.id`` in its log line) and became the 500. The
+          digest row itself is already committed by the write pipeline,
+          so the rollback discards only the failed promotion attempt.
+        """
+        try:
+            from core.memory.service import MemoryService
+
+            MemoryService.promote_to_semantic(
+                db,
+                digest_id,
+                actor_name=actor_name,
+                verification_evidence=event_ids[:32],
+                target_confidence=0.85,
+            )
+            return True
+        except Exception as exc:
+            try:
+                db.rollback()
+            except Exception:  # pragma: no cover - rollback must never mask the outcome
+                logger.warning(
+                    "[CAPTURE] rollback after failed promotion of %s failed",
+                    digest_id, exc_info=True,
+                )
+            logger.info(
+                "[CAPTURE] digest %s stays EPISODIC (promotion not granted: %s)",
+                digest_id, exc,
+            )
+            return False
+
+    @classmethod
     def compress_session(
         cls,
         db: Session,
@@ -217,10 +269,28 @@ class SessionCaptureService:
         event_ids = [e.id for e in events]
         existing = cls._existing_compression(db, session_id=session_id, event_ids=event_ids, tenant_id=tenant_id)
         if existing is not None:
+            # Idempotent per event set — but promotion is part of the
+            # compress outcome, and a digest whose promotion was denied
+            # or crashed on its first compress would otherwise stay
+            # EPISODIC forever: repeat calls took this path and never
+            # retried (and the response did not even carry the outcome).
+            # Retry the promotion for a not-yet-SEMANTIC digest so
+            # compress heals itself; the attempt is policy-checked again
+            # inside promote_to_semantic and degrades to
+            # promoted_to_semantic: False, never to an exception.
+            promoted = existing.memory_type == MemoryType.SEMANTIC
+            if not promoted:
+                promoted = cls._attempt_promotion(
+                    db,
+                    digest_id=existing.id,
+                    actor_name=actor_name,
+                    event_ids=event_ids,
+                )
             return {
                 "compressed": True,
                 "id": existing.id,
                 "already_existed": True,
+                "promoted_to_semantic": promoted,
                 "event_count": len(events),
                 "session_id": session_id,
             }
@@ -244,34 +314,33 @@ class SessionCaptureService:
                 allow_duplicates=True,
             )
         except Exception as exc:
+            # A pipeline failure can leave the transaction poisoned;
+            # roll back before returning so callers that reuse the
+            # session (handoff builds its context pack on it next) are
+            # not handed a dead session.
+            try:
+                db.rollback()
+            except Exception:  # pragma: no cover - the refusal result stands either way
+                logger.warning("[CAPTURE] rollback after refused compression write failed", exc_info=True)
             logger.warning("[CAPTURE] compression write refused for %s: %s", actor_name, exc)
             return {"compressed": False, "reason": f"pipeline_refused: {type(exc).__name__}", "session_id": session_id}
         # The pipeline deliberately restricts DIRECT semantic writes to
         # the memora service identity; everyone else promotes through
         # the evidence-checked workflow. The digest's evidence is
         # exactly the events it compresses, so promote with those refs.
-        # A denied promotion is not a failed compression: the digest
-        # stays EPISODIC (still searchable) and the result says so.
-        promoted = False
-        try:
-            from core.memory.service import MemoryService
-
-            MemoryService.promote_to_semantic(
-                db,
-                result.record.id,
-                actor_name=actor_name,
-                verification_evidence=event_ids[:32],
-                target_confidence=0.85,
-            )
-            promoted = True
-        except Exception as exc:
-            logger.info(
-                "[CAPTURE] digest %s stays EPISODIC (promotion not granted: %s)",
-                result.record.id, exc,
-            )
+        # Capture the id as a plain string NOW: after the pipeline's
+        # commit the record is expired, and the promotion failure path
+        # must never reach for an ORM attribute (see _attempt_promotion).
+        digest_id = result.record.id
+        promoted = cls._attempt_promotion(
+            db,
+            digest_id=digest_id,
+            actor_name=actor_name,
+            event_ids=event_ids,
+        )
         return {
             "compressed": True,
-            "id": result.record.id,
+            "id": digest_id,
             "already_existed": False,
             "promoted_to_semantic": promoted,
             "event_count": len(events),
