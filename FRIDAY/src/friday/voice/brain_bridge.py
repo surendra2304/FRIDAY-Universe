@@ -129,6 +129,83 @@ def pop_late_results() -> list[dict[str, Any]]:
     return drained
 
 
+# TASK-FRD-014 (D10): a recall result's spoken form must carry the
+# recalled fact itself. The brain's recall gate normally sets
+# spoken_summary to the direct answer; this guard is the bridge-side
+# enforcement for any recall result that arrives without one (or with
+# a summary that lost the fact): the spoken_reply is replaced with a
+# templated direct answer built from metadata.fact, the way the fixed
+# greeting line is templated — never left for the voice model to mine
+# out of a bullet list (FRD-005 re-run #4: the spoken recall answer
+# was "I have your favorite color safely recorded in my memory" and
+# never stated 'teal').
+_FACT_STOPWORDS = {
+    "your", "yours", "that", "this", "with", "from", "have", "what",
+    "when", "boss", "mine", "called", "about", "favorite", "favourite",
+}
+
+
+def _fact_value_tokens(fact: str) -> list[str]:
+    """The value-bearing tokens of a stored fact: the words after the
+    last copula ("my favorite color is teal." -> ["teal"]), falling
+    back to all distinctive tokens when there is no copula."""
+    import re as _re
+
+    low = fact.lower()
+    parts = _re.split(r"\b(?:is|are|was|were)\b", low)
+    tail = parts[-1] if len(parts) > 1 else low
+    tokens = [
+        t for t in _re.findall(r"[a-z0-9]+", tail)
+        if len(t) >= 3 and t not in _FACT_STOPWORDS
+    ]
+    if not tokens:
+        tokens = [
+            t for t in _re.findall(r"[a-z0-9]+", low)
+            if len(t) >= 4 and t not in _FACT_STOPWORDS
+        ]
+    return tokens
+
+
+def _spoken_fact_form(fact: str) -> str:
+    """The templated spoken form of a stored fact: only the leading
+    first-person possessive is rewritten ("my favorite color is
+    teal." -> "Your favorite color is teal."); the fact stays
+    verbatim. Mirrors the brain-side transform in the recall gate."""
+    text = fact.strip()
+    low = text.lower()
+    if low.startswith("my "):
+        return "Your " + text[3:]
+    if low.startswith("i'm "):
+        return "You're " + text[4:]
+    if low.startswith("i "):
+        return "You " + text[2:]
+    return text
+
+
+def _recall_fact_guard(meta: dict[str, Any], state: str, spoken: str) -> str:
+    """Return the spoken_reply for a brain result, enforcing the
+    recall-fact contract: for an answered memory_recall result whose
+    metadata carries the recalled fact, the spoken form must contain
+    the fact's value tokens; if it does not, it is replaced with the
+    templated direct answer built from the fact."""
+    if state != "answered" or not meta.get("memory_recall"):
+        return spoken
+    fact = str(meta.get("fact") or "").strip()
+    if not fact:
+        return spoken
+    tokens = _fact_value_tokens(fact)
+    low_spoken = spoken.lower()
+    if tokens and all(t in low_spoken for t in tokens):
+        return spoken
+    guarded = _spoken_fact_form(fact)
+    logger.info(
+        "VOICE brain bridge recall fact guard: spoken_reply did not "
+        "carry the recalled fact; replaced with the templated direct "
+        "answer %r", guarded[:120],
+    )
+    return guarded
+
+
 class VoiceBrainBridge:
     def __init__(self, client: httpx.AsyncClient | None = None,
                  confirmation_gate: Any = None,
@@ -392,6 +469,8 @@ class VoiceBrainBridge:
         spoken = meta.get("spoken_summary") if state == "answered" else None
         if not isinstance(spoken, str) or not spoken.strip():
             spoken = body["reply"]
+        # TASK-FRD-014: a recall's spoken form must carry the fact.
+        spoken = _recall_fact_guard(meta, state, spoken)
         return {"state": state, "spoken_reply": spoken[:6000],
                 "full_reply": body["reply"], "task_state": task_state,
                 "task_id": meta.get("task_id"), "completion_verified": False}
