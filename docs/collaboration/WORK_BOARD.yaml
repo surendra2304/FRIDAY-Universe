@@ -9177,29 +9177,29 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     owner: muse_ai
     branch: claude/ig2-task-ig2-frg-07
-    evidence: "app/templates/agent_creation.py: deterministic generation of exactly the ONE_PROMPT_AGENT manifest; system prompt = owner prompt verbatim + fleet rules + SkillRegistry fragments of the keyword-derived specialist; checks EXECUTE (manifest exactness, py_compile, subprocess import + tool behaviour incl. path-traversal guard, dead-gateway loud-failure probe — the probe caught httpx 0.28 InvalidURL escaping the HTTPError catch, fixed in the generated code); JSON registry records every attempt as tested/failed with per-file sha256; rebuild-from-stored-prompt is byte-identical. 9/9 new tests pass locally; additive files only."
-    next_action: "Coordinator merge queue"
+    evidence: "app/templates/agent_creation.py: deterministic generation of exactly the ONE_PROMPT_AGENT manifest; system prompt = owner prompt verbatim + fleet rules + SkillRegistry fragments of the keyword-derived specialist; checks EXECUTE (manifest exactness, py_compile, subprocess import + tool behaviour incl. path-traversal guard, dead-gateway loud-failure probe \u2014 the probe caught httpx 0.28 InvalidURL escaping the HTTPError catch, fixed in the generated code); JSON registry records every attempt as tested/failed with per-file sha256; rebuild-from-stored-prompt is byte-identical. 9/9 new tests pass locally; additive files only. MERGED: PR #762 -> merge 0f861910b9b8729e660aae1e84cd3c6a2523497f (2026-11-16, Merge Runner C). Supervisor review CONFIRMED (real end-to-end creation; forced-failure recorded; byte-identical rebuild)."
+    next_action: "Fleet CD deploy -> production probe of the one-prompt creation flow on the live Forge."
   - id: TASK-IG2-FRG-08
     title: "Claudex Loop: build/audit role-swap loop until cross-model agreement (package G-13)"
     status: IN_REVIEW
     owner: muse_ai
     branch: claude/ig2-task-ig2-frg-08
-    evidence: "app/verification/claudex_loop.py composes FRG-01's cross_model_audit per round: builder/auditor swap every round, findings fed to the next builder as data, AGREED only on a real audit PASS, UNAVAILABLE stops the loop immediately (never loop past an audit that did not happen), round cap = EXHAUSTED (never reported as AGREED), unparseable/empty/raising build = BUILD_FAILED, same-model configuration refused with ValueError. Default audit path is cross_model_audit itself. 9/9 new tests pass locally incl. swap + findings-feed-forward + default-audit composition; additive files only."
-    next_action: "Coordinator merge queue"
+    evidence: "app/verification/claudex_loop.py composes FRG-01's cross_model_audit per round: builder/auditor swap every round, findings fed to the next builder as data, AGREED only on a real audit PASS, UNAVAILABLE stops the loop immediately (never loop past an audit that did not happen), round cap = EXHAUSTED (never reported as AGREED), unparseable/empty/raising build = BUILD_FAILED, same-model configuration refused with ValueError. Default audit path is cross_model_audit itself. 9/9 new tests pass locally incl. swap + findings-feed-forward + default-audit composition; additive files only. MERGED via union-rebase replacement PR #788 -> merge ecb07dd9a5f62366a53c3cc0f4770801e34a400f (2026-11-16, Merge Runner C; original PR #765 closed as superseded: board-anchor conflict only, both code files blob-identical to the reviewed head c54e14c9; roster validator green on the union). Supervisor review CONFIRMED."
+    next_action: "Fleet CD deploy -> production probe of the Claudex Loop on the live Forge."
   - id: TASK-IG2-FRG-10
     title: "C-2 wiring: independent review passes inside the verification battery (production caller)"
     status: IN_REVIEW
     owner: muse_ai
     branch: claude/ig2-task-ig2-frg-10
-    evidence: "app/verification/engine.py: VerificationEngine gains an 'Independent Review Passes' stage in _verify_task_uncoordinated (after source-integrity, over the settled workspace) calling TASK-IG-FRG-01's run_review_passes; FINDINGS -> failed evidence (named hard failure via report.failure_reasons); configured-but-UNAVAILABLE -> failed evidence (fail closed); unconfigured -> deterministic security review still runs, audit absence disclosed in the evidence stdout as a gate result, never counted as an audit pass. Full ReviewReport persisted as review_passes_report.json artifact. Reviewer models from FORGE_REVIEW_AUTHOR_MODEL/FORGE_REVIEW_REVIEWER_MODEL env or constructor; review_fn built lazily from app.providers for the reviewer model. Production caller: app/api/delegate.py -> verification_engine.verify_task (delegate.py:316/:424). 5/5 new tests exercise the stage THROUGH verify_task (supervisor C-2 bar), incl. |safe template FINDINGS failing the battery and same-model config refused. review_passes.py docstring updated to record the wiring."
-    next_action: "Coordinator merge queue; fleet env decision (set the two FORGE_REVIEW_* models) activates the cross-model leg in production"
+    evidence: "app/verification/engine.py: VerificationEngine gains an 'Independent Review Passes' stage in _verify_task_uncoordinated (after source-integrity, over the settled workspace) calling TASK-IG-FRG-01's run_review_passes; FINDINGS -> failed evidence (named hard failure via report.failure_reasons); configured-but-UNAVAILABLE -> failed evidence (fail closed); unconfigured -> deterministic security review still runs, audit absence disclosed in the evidence stdout as a gate result, never counted as an audit pass. Full ReviewReport persisted as review_passes_report.json artifact. Reviewer models from FORGE_REVIEW_AUTHOR_MODEL/FORGE_REVIEW_REVIEWER_MODEL env or constructor; review_fn built lazily from app.providers for the reviewer model. Production caller: app/api/delegate.py -> verification_engine.verify_task (delegate.py:316/:424). 5/5 new tests exercise the stage THROUGH verify_task (supervisor C-2 bar), incl. |safe template FINDINGS failing the battery and same-model config refused. review_passes.py docstring updated to record the wiring. MERGED via union-rebase replacement PR #789 -> merge 2b076252c134c96cd2b2b55145796177ff378d85 (2026-11-16, Merge Runner C; original PR #768 closed as superseded: board-anchor conflict only, all three code files blob-identical to the reviewed head cc2f5024, whose stage-order fix restored the contracts suite \u2014 contracts SUCCESS on both the original and the replacement head). Supervisor review: wiring substance CONFIRMED."
+    next_action: "Fleet CD deploy -> production probe. SEPARATE coordinator decision (not taken by the merge runner): set FORGE_REVIEW_AUTHOR_MODEL + FORGE_REVIEW_REVIEWER_MODEL in Forge's production env to activate the cross-model review leg; until then the deterministic review runs and gates with the audit absence disclosed."
   - id: TASK-IG2-FRG-09
     title: "G-08..G-12 agent-infra evaluation with self-verification against the actual repos"
     status: IN_REVIEW
     owner: muse_ai
     branch: claude/ig2-task-ig2-frg-09
-    evidence: "Forge/docs/IG2_EVALUATION_NOTES.md: every named item verified against the actual project 2026-11-16 before verdict (identities corroborated by supervisor round-2 audit). Verdicts: Browser Use reference-only (FRIDAY lane; needs Python 3.11+, fleet is 3.10); agentmemory reference-only (Memora's remit); Scientific Agent Skills reference-only (SKILL.md format noted); Diagram Design reference-only (pattern already in VyralX); Anthropic Cybersecurity Skills reference-only (Sentinel's lane; COMMUNITY project not Anthropic PBC; dual-use caution); Awesome Harness Engineering reference-only — B10 gap closed by cross-check, no pattern family missing from Forge; OpenViking reference-only (pattern already in Memora; AGPL caution); affaan-m/ECC already implemented (#734); JCode reference-only (1jehuang/jcode; wave-1 ruling stands); OmniRoute = inference lane I-12; Karpathy/Graphify already implemented (#674/#676); MausBot REJECT as a Forge component; Swiggy Builders Club reference-only (verified real: mcp.swiggy.com, OAuth 2.1+PKCE, app-gated prod; external commerce platform, owner-decision territory). No code adoption resulted — stated plainly in the doc."
-    next_action: "Coordinator merge queue"
+    evidence: "Forge/docs/IG2_EVALUATION_NOTES.md: every named item verified against the actual project 2026-11-16 before verdict (identities corroborated by supervisor round-2 audit). Verdicts: Browser Use reference-only (FRIDAY lane; needs Python 3.11+, fleet is 3.10); agentmemory reference-only (Memora's remit); Scientific Agent Skills reference-only (SKILL.md format noted); Diagram Design reference-only (pattern already in VyralX); Anthropic Cybersecurity Skills reference-only (Sentinel's lane; COMMUNITY project not Anthropic PBC; dual-use caution); Awesome Harness Engineering reference-only \u2014 B10 gap closed by cross-check, no pattern family missing from Forge; OpenViking reference-only (pattern already in Memora; AGPL caution); affaan-m/ECC already implemented (#734); JCode reference-only (1jehuang/jcode; wave-1 ruling stands); OmniRoute = inference lane I-12; Karpathy/Graphify already implemented (#674/#676); MausBot REJECT as a Forge component; Swiggy Builders Club reference-only (verified real: mcp.swiggy.com, OAuth 2.1+PKCE, app-gated prod; external commerce platform, owner-decision territory). No code adoption resulted \u2014 stated plainly in the doc. MERGED via union-rebase replacement PR #790 -> merge 708f632bc30e5b9343dd2603ce37a171835e346f (2026-11-16, Merge Runner C; original PR #773 closed as superseded: board-anchor conflict only, the evaluation doc is blob-identical to the reviewed head a6f72f33 including the section 1.6 wording fix). Supervisor review CONFIRMED with that minor correction."
+    next_action: "Fleet CD deploy (docs ship with the tree); no production behaviour to probe \u2014 evaluation record complete. Revisit only if a G-08..G-12 disposition changes."
   - id: TASK-IG2-INF-02
     title: "encrypted-at-rest key vault for Inference provider keys"
     status: IN_REVIEW
@@ -9278,8 +9278,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 716
     branch: claude/ig2-task-ig2-lap-01
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #716 -> fcc7bbc1395b35de1c866da224368db6c7e8022f. CI green except the validate pair (proven flake family)."
-    next_action: "Fleet CD deploy -> production probe"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #716 -> fcc7bbc1395b35de1c866da224368db6c7e8022f. CI green except the validate pair (proven flake family). Production-registry wiring MERGED: PR #772 -> merge 10260843c485cbbc114f5aab4ce9723f2aaabdd7 (2026-11-16, Merge Runner C): EscrcpyLaunchPlanTool + EscrcpyAutomationTool are registered in the production _create_default_registry() as escrcpy_launch_plan / escrcpy_automation (registry total 96 after this PR; 97 with Cluster C)."
+    next_action: "Fleet CD deploy -> production probe: escrcpy_launch_plan / escrcpy_automation answer through the live agent's production registry."
   - id: TASK-IG2-MEM-01
     title: "BM25 hybrid recall + capture-compress-inject for Memora (agentmemory ADAPT)"
     status: IN_REVIEW
@@ -9582,16 +9582,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 690
     branch: claude/ig2-task-ig2-web-02
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #690 -> 6c5a2a01f2974dc047ee7aa8e3ae2f4173f80e6c. CI green except the validate pair (proven flake family)."
-    next_action: "Fleet CD deploy -> production probe"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #690 -> 6c5a2a01f2974dc047ee7aa8e3ae2f4173f80e6c. CI green except the validate pair (proven flake family). Mounting MERGED: PR #757 (IG FRIDAY Cluster A) -> merge 26412a56fa082f75648bab942b2ca13214de5e8e (2026-11-16, Merge Runner C): RankBoard is now a summoned stage sheet fed by measured fleet latencies from /api/agents/status; unmeasured agents are excluded and counted on the board, never scored."
+    next_action: "Fleet CD deploy -> production verification: the RankBoard sheet renders on the live site with real fleet latencies (post-deploy probe)."
   - id: TASK-IG2-WEB-03
     title: "ULTRON orb visual as an optional website component (orb UI only)"
     status: IN_REVIEW
     owner: muse_ai
     pr: 694
     branch: claude/ig2-task-ig2-web-03
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #694 -> 1a6de78658ed1609ebf334df7092c247025fdd3f. CI green except the validate pair (proven flake family)."
-    next_action: "Fleet CD deploy -> production probe"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #694 -> 1a6de78658ed1609ebf334df7092c247025fdd3f. CI green except the validate pair (proven flake family). Mounting MERGED: PR #757 (IG FRIDAY Cluster A) -> merge 26412a56fa082f75648bab942b2ca13214de5e8e (2026-11-16, Merge Runner C): the Orb is now a summoned stage sheet driven by the stage's real voice phase; the Halo remains the stage's face."
+    next_action: "Fleet CD deploy -> production verification: the Orb sheet renders on the live site and follows the real voice phase (post-deploy probe)."
   - id: TASK-IG2-WEB-04
     title: "live sector heatmap tile view for the Stratex dashboard (OpenTerminal pattern)"
     status: IN_REVIEW
@@ -9622,8 +9622,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 720
     branch: claude/ig2-task-ig2-web-07
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #720 -> 6075867095d2e5131ebe637b03630cff550a8712. CI green except the validate pair (proven flake family)."
-    next_action: "Fleet CD deploy -> production probe"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #720 -> 6075867095d2e5131ebe637b03630cff550a8712. CI green except the validate pair (proven flake family). Mounting MERGED: PR #757 (IG FRIDAY Cluster A) -> merge 26412a56fa082f75648bab942b2ca13214de5e8e (2026-11-16, Merge Runner C): GlassStartPage is now served at the /start route, with a Veil command routing to it; no design candidate was forced live."
+    next_action: "Fleet CD deploy -> production verification: /start serves the glass start page on the live site (post-deploy probe). Halo stays the default stage until the owner picks a design candidate."
   - id: TASK-VOI-014
     title: "production greeting path \u2014 greeting settles before session start, one greeting owner (D5+D8)"
     status: IN_REVIEW
@@ -9654,16 +9654,16 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 736
     branch: claude/ig2-frd-03-fix
-    evidence: "IG Repo Wave 2 implementation. Original #724 HELD: py310 gate + contracts, one root cause \u2014 its builtin/__init__.py carried LAP-01's escrcpy registration without the module in its base (ModuleNotFoundError). Replacement #736 from main fcfd2dca (escrcpy merged via #716) adds only the LeadGenerateTool registration; plus a real dedupe fix: dedupe_leads merged on a single fallback key so relisted businesses duplicated \u2014 the PR's own pagination test failed deterministically (never in a CI selection); now merges on any shared email/phone/name key, 6/6 task tests pass. MERGED #736 -> 90aa4f039010b2d5e9a8aa45fe70d337e57739de (merge runner 12; CI re-verified on head 0548bf64: py310 gate, contracts, test, secrets all pass; only the validate pair red, proven flake family). #724 closed as superseded."
-    next_action: "Fleet CD deploy -> production probe (deploy verification with the wave)"
+    evidence: "IG Repo Wave 2 implementation. Original #724 HELD: py310 gate + contracts, one root cause \u2014 its builtin/__init__.py carried LAP-01's escrcpy registration without the module in its base (ModuleNotFoundError). Replacement #736 from main fcfd2dca (escrcpy merged via #716) adds only the LeadGenerateTool registration; plus a real dedupe fix: dedupe_leads merged on a single fallback key so relisted businesses duplicated \u2014 the PR's own pagination test failed deterministically (never in a CI selection); now merges on any shared email/phone/name key, 6/6 task tests pass. MERGED #736 -> 90aa4f039010b2d5e9a8aa45fe70d337e57739de (merge runner 12; CI re-verified on head 0548bf64: py310 gate, contracts, test, secrets all pass; only the validate pair red, proven flake family). #724 closed as superseded. Production-registry wiring MERGED: PR #772 -> merge 10260843c485cbbc114f5aab4ce9723f2aaabdd7 (2026-11-16, Merge Runner C): LeadGenerateTool is registered in the production _create_default_registry() as lead_generate (registry total 96 after this PR; 97 with Cluster C)."
+    next_action: "Fleet CD deploy -> production probe: lead_generate answers through the live agent's production registry."
   - id: TASK-IG2-FRD-04
     title: "post-meeting follow-up automation"
     status: IN_REVIEW
     owner: muse_ai
     pr: 740
     branch: claude/ig2-frd-04-rebased
-    evidence: "IG Repo Wave 2 implementation. Original #728 HELD: py310 gate + contracts, one root cause \u2014 its builtin/__init__.py carried escrcpy + lead_gen + meeting_followup registrations while escrcpy_control.py and lead_gen_tools.py were absent from its base (ModuleNotFoundError). Replacement #737 from main fcfd2dca added only its own MeetingFollowUp* registration, but conflicted with #736 on builtin/__init__.py once #736 merged first (both register at the same anchors). Merge runner 12 built replacement #740 (branch claude/ig2-frd-04-rebased, head ada1ea49) with union resolution: __init__.py carries BOTH the LeadGenerateTool and MeetingFollowUp* registrations; other files byte-identical to #737 head blobs. MERGED #740 -> beb4b3cf41d4a1accb004726b4a080eb304ca837 (CI on ada1ea49: secrets scan, py310 gate, test pass; only the validate pair red, proven flake family). #737 and #728 closed as superseded."
-    next_action: "Fleet CD deploy -> production probe (deploy verification with the wave)"
+    evidence: "IG Repo Wave 2 implementation. Original #728 HELD: py310 gate + contracts, one root cause \u2014 its builtin/__init__.py carried escrcpy + lead_gen + meeting_followup registrations while escrcpy_control.py and lead_gen_tools.py were absent from its base (ModuleNotFoundError). Replacement #737 from main fcfd2dca added only its own MeetingFollowUp* registration, but conflicted with #736 on builtin/__init__.py once #736 merged first (both register at the same anchors). Merge runner 12 built replacement #740 (branch claude/ig2-frd-04-rebased, head ada1ea49) with union resolution: __init__.py carries BOTH the LeadGenerateTool and MeetingFollowUp* registrations; other files byte-identical to #737 head blobs. MERGED #740 -> beb4b3cf41d4a1accb004726b4a080eb304ca837 (CI on ada1ea49: secrets scan, py310 gate, test pass; only the validate pair red, proven flake family). #737 and #728 closed as superseded. Production-registry wiring MERGED: PR #772 -> merge 10260843c485cbbc114f5aab4ce9723f2aaabdd7 (2026-11-16, Merge Runner C): MeetingFollowUpCreateTool/ListTool/DecideTool are registered in the production _create_default_registry() as meeting_followup_create/list/decide (registry total 96 after this PR; 97 with Cluster C)."
+    next_action: "Fleet CD deploy -> production probe: meeting_followup_create/list/decide answer through the live agent's production registry."
   - id: TASK-FRD-012
     title: "Brain-to-voice result delivery \u2014 no completed answer strands (FRD-005 D6 + D7)"
     status: IN_REVIEW
@@ -9750,6 +9750,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig3-inf-02-route-evaluations
     evidence: "PR #751 MERGED -> 257ec6aad2fb13c03a1c71506a65c6683910aeaa (head 4646ed397674e6b846d4d8e3696340e9f34a75f2; exactly 1 file modified: Inference/docs/CORPUS_DISPOSITIONS.md, +30/-2). Verdicts: NO adapter for any of the three, each with evidence. FreeLLMAPI (I-11): verified externally as self-hosted MIT software (tashfeenahmed/freellmapi), not a hosted route - it pools the user's own first-party free-tier keys behind one OpenAI-compatible /v1 endpoint; the '4B tokens/month' figure is an aggregate of listed free tiers, not a grant; its pattern IS Inference's native baseline (KeyPool/ModelGateway, quota ledger, failover ladder), and any self-hosted instance is already consumable via TASK-IG-INF-02 custom endpoints with zero new code. OmniRoute (I-12): also self-hosted gateway software; security evidence CVE-2026-88062 / GHSA-hf57-cqmx-p4gr (unauthenticated RCE via the custom ACP agent endpoint when requireLogin is off); its one transferable idea, token compression, is already implemented natively (TASK-IG2-INF-04). Codex model-router (I-12): the GitHub URL is truncated in-frame and was never recovered, so the project cannot be identified and cannot become a candidate spec. The PR also corrected the dispositions doc's stale token-compression line. Inference supervisor AUDIT-2 reviewed the PR CONFIRMED as claimed (issue #35 comment 6920528733). CI on head: test / secrets-scan / py310 / detect-voice-changes SUCCESS; only the validate pair red (proven flake family). Board entry added by merge runner 15 (finisher) after the merge."
     next_action: "Closed on merge \u2014 no adapter work follows."
+  - id: TASK-IG2-FRD-05
+    title: "Opt-in browser wake word for the FRIDAY stage (multi-word phrases, this tab only)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ig-friday-wake-word
+    evidence: "PR #769 (IG FRIDAY Cluster B), supervisor-CONFIRMED: WakeListener (lib/wakeWord.ts) mounts only when the wake word is armed and no call is live; bare 'friday' cannot fire (multi-word phrases with word-boundary matching); a refused microphone disarms with a stated reason. MERGED via union-rebase replacement PR #786 -> merge 46fd35c9fe1c5ce0d59da0b3276f8c2dd077c4f6 (2026-11-16, Merge Runner C; #769 closed as superseded: Stage.tsx union with #757, both sides' regions preserved, other four files blob-identical). This board entry was created by Merge Runner C: the implementing PR carried no board entry."
+    next_action: "Fleet CD deploy -> production verification MUST include (1) a successful production next build (never run by the implementing crew) and (2) hearing the wake word actually work in a real browser tab. Not production-verified until both pass."
+  - id: TASK-IG2-FRD-06
+    title: "Local-business patterns F-30/F-35 (prospect qualification + website/appointment prompt building; generation only, no outreach)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ig-friday-local-business
+    evidence: "PR #777 (IG FRIDAY Cluster C), supervisor-CONFIRMED: workflows/local_business.py (stdlib-only; missing data -> insufficient_data, never guessed; the appointment-agent prompt builder refuses without a services text and never invents services/prices) plus LocalBusinessTool registered in the production registry. MERGED via union-rebase replacement PR #785 -> merge 5e7338d6f5d6806df77108145c54d5a99a52b3fd (2026-11-16, Merge Runner C; #777 closed as superseded: tools.py + FRD-002 pin union with #772, registry total 97; four non-shared files blob-identical). This board entry was created by Merge Runner C: the implementing PR carried no board entry."
+    next_action: "Fleet CD deploy -> production probe: local_business answers through the live agent's production registry."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
