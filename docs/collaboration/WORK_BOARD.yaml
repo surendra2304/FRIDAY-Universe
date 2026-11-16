@@ -8700,6 +8700,343 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Exchange evidence: /fapi/v1/commissionRate (taker 0.0400%, PAXG 0.0500%, maker 0.0200%); 115 userTrades fills 2026-11-01..15, 115/115 maker=false, 115/115 commission == taker x notional."
     blockers: []
     next_action: "Code merged (PR #615, 813240b5); this board entry was owed from round 1 (missed batch 13) and is added by merge-runner round 2 with status IN_REVIEW (crew draft said DONE, which the board validator rejects — round-1 precedent). Remaining: deploy with the fleet (no .env change needed — the STRATEX_FEE_ROUNDTRIP line becomes documentation-only for the gate); annotate the 3 production legacy rows fees_scope=exit_only via the approved annotation mechanism. Owner was told the corrected figures 2026-11-15 (legacy +$186.34, ledger net +185.69, PF 5.554). Follow-ups owned elsewhere: record a signal reference price at entry so entry slippage becomes measurable (forward-entry path owner); OANDA cost measurement once TASK-STR-FWD-004 ledger rows exist."
+  - id: TASK-SEN-003
+    title: "Sentinel log-anomaly review (Wave 5): 7-day fleet journal sweep both servers — 12 findings; Memora hard-delete session-poisoning fixed"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-16
+    branch: "claude/task-sen-003-hard-delete-session-isolation"
+    pr: 633
+    defect: "Log sweep (retained journal: S1 ~21h, S2 >=2d — 220MB journald cap rotates faster; a true 7-day trail does not exist on S1) found 12 evidenced incidents, incl.: Memora event-feed ORA-00904 CLOUD_SYNCED 500-storm x462 (2026-11-14 17:50-19:29 IST, self-resolved by REL-015 startup repair at the 19:30 restart); Memora hard DELETE 500s (7 vs 75 OK on 2026-11-15) — sub-store flush-time DatabaseError on the shared session poisons the transaction, commit raises PendingRollbackError; Stratex Telegram 409 dual-poller x323 (ongoing at sweep time); unauthenticated local poller GET /api/v1/positions 401 x474 + SECURITY/WEBHOOK secret CRITICALs x28 each; OANDA 401 storm >=150 (known, still firing); Cortex ab/experiments/None/participants 401 x1100; Sentinel TLS&DNS monitoring cycle failing since 2026-11-13 (x17, still firing); Inference dead NVIDIA function 404 x62 + Groq oversize x68 + OpenRouter fallback fail x78; Futuris self-healing TimeoutError x151; voice VAD slower-than-realtime (7-11s delays)."
+    evidence:
+      - "Claim: issue #35 comment 6891611280 (TASK-SEN-003 crew) before any server access; finisher rebase claim + this completion posted 2026-11-16."
+      - "Full report with timestamps/counts/samples: docs/verification/SEN003_LOG_ANOMALY_REVIEW.md in this task's PR."
+      - "FIX (Finding 2): sub-store steps in MemoryService._hard_erase_record (shared by delete_memory/forget_memory/retention sweep since TASK-MEM-006) wrapped in db.begin_nested() savepoints; a sub-store DatabaseError degrades the tombstone flag (PENDING_RETRY) instead of poisoning the delete. Original delivery aborted on its blob gate when MEM-006 moved service.py (0620c89b -> 660f3372); finisher re-anchored the identical patch into the helper."
+      - "TESTS (finisher re-run 2026-11-16): Memora/tests/test_sen003_hard_delete_session_isolation.py — 2 tests FAIL on clean main with PendingRollbackError (production signature), PASS on the branch. Regression ring (deep-upgrade + lifecycle + tombstone suites): 20 passed / 1 failed / 1 error IDENTICALLY with and without the patch (pre-existing local-harness failures)."
+    blockers: []
+    next_action: "Coordinator: merge the fix PR; post-deploy verify a previously-failing hard DELETE succeeds (or a clean Memora journal window). Route remaining findings: Stratex 401 poller (Stratex ops), Cortex None-experiment caller (Cortex crew), Sentinel TLS/DNS cycle (Sentinel crew), journald retention raise on S1 (coordinator decision)."
+  - id: TASK-FRG-006
+    title: "Forge pattern library — mine verified successful builds into starting templates (project skeletons, test layouts, manifest shapes)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-16
+    files:
+      - "Forge/app/agents/pattern_library.py"
+      - "Forge/app/agents/roles.py"
+      - "Forge/tests/test_frg006_pattern_library.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6903579073"
+    defect: "Every Forge build started from a blank page: the Architect re-derived the file manifest per task via an LLM call, and when that produced no parseable manifest the generic fallback lists silently dropped goal-named modules ([main.py, README.md] for a goal naming a module file) — the manifest-missing-module failure shape that cost TASK-REL-028 five acceptance runs. The verified shapes from successful builds (REL-028 run 6; the deterministic synthesizer's compile-checked CLI/API generators) existed only as history, never as reusable starting templates."
+    acceptance:
+      - "Pattern library at Forge/app/agents/pattern_library.py with provenance-carrying patterns: python-single-module (TASK-REL-028 run 6, task19414112026204733: SUCCESS, first battery 11/11, 69 pytest), python-two-module (REL-028 intended layout + TASK-FRG-003 run-1 shape; rules encode PRs #210/#211/#213), python-cli-crud and fastapi-crud (app/agents/synthesis.py compile-checked generators). Matcher is conservative: web goals and vague goals match nothing and keep prior behaviour."
+      - "Wiring: ArchitectRole seeds its prompt with the matched pattern's starting shape and uses the pattern manifest in place of the generic fallback lists (result gains pattern_id); DeveloperRole's no-manifest fallback starts from the pattern manifest. Fallback precedence on the composed tree: model manifest -> TASK-FRG-004 explicit goal-stated layout -> pattern -> keyword templates. The crew's third wiring item (TesterRole test synthesis from all implementation files instead of main.py only) is met by TASK-FRG-003's merged _implementation_sources (PR #344, production-verified: actual workspace implementation files, 12k/file + 48k total bounds, both test-generation paths); the finisher composition keeps FRG-003's Tester code byte-identical and supersedes the crew's competing Tester hunk rather than merging it."
+      - "Tests: Forge/tests/test_frg006_pattern_library.py — 14 tests (matcher, provenance discipline, role integration), 14/14 passed on the composed tree (finisher-run); fail on clean main (module absent). Regression: TASK-FRG-003 suite 12/12 on the composed tree, identical to its pristine-main baseline; TASK-FRG-004 explicit-layout suite 8/8 (combined 34/34). Composed roles.py diff vs main = exactly 5 hunks (Architect x4, Developer x1), no Tester change."
+      - "Measurement (deterministic level, executed): for a fresh two-module goal (module caesar.py + main.py), the pristine fallback manifest is [main.py, README.md] (caesar.py ABSENT) vs the library's [caesar.py, main.py, test_main.py, README.md]. The live with/without first-battery comparison is NOT YET RUN (bridge outage during the original crew's window); the ready-to-run two-arm protocol is in the PR body and running it is the next action."
+    evidence:
+      - "Matcher probe (8 goals) run locally: palindrome -> python-single-module [main.py, test_main.py, README.md]; roman two-module -> python-two-module [roman.py, main.py, test_main.py, README.md]; library-only module -> [textstats.py, test_textstats.py, README.md]; CLI CRUD -> python-cli-crud; FastAPI -> fastapi-crud; website/vague/empty -> no match."
+      - "Finisher pytest (sandbox, composed tree built on main 7a25173b; roles.py verified byte-identical on the PR's base main 240bad36): test_frg006_pattern_library.py 14 passed; test_frg003_build_reliability.py 12 passed (pristine-main baseline also 12 passed); test_frg004_explicit_layout.py 8 passed. Original crew's wider regression comparison (roles-touching unit set + top-level chunk, failure sets identical to pristine main) stands for the unchanged library/matcher code."
+      - "PR #637 (finisher): OPEN, mergeable=True, 3 files +624/-1, branch blob SHAs verified identical to the composed local files; CI in progress at completion-post time (2/8 checks success, rest running)."
+    blockers:
+      - "Live A/B battery comparison still owed post-merge (bridge outage in the original crew's window); it is the next action, not a merge blocker."
+    next_action: "Coordinator: merge the FRG-006 finisher PR #637 (branch claude/task-frg-006), then run the live two-arm A/B from the PR body when the bridge is healthy (Arm A: production delegate build of the caesar goal; Arm B: same goal against a scratch Server-1 instance carrying this branch's Forge code; compare first verification battery stages + pytest evidence). If FRG-003/FRG-004 have completed by then, mine any newly verified shapes into the library as a follow-up."
+  - id: TASK-INF-008
+    title: "Inference failover drill: per-provider failure simulation (503 / quota / timeout / malformed / empty) against the gateway ladder and the FRIDAY-facing endpoints, with the three measured gaps fixed"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-inf-008
+    prs: [640]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:29:48+05:30"
+    updated_at: "2026-11-16"
+    files:
+      - "Inference/app/providers/gateway.py"
+      - "Inference/app/api/friday_routes.py"
+      - "Inference/tests/test_inf008_failover_drill.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891410395"
+    defect: "Drill-measured (isolated harness, scripted fake providers, zero live calls; 22 gateway scenarios + 8 route scenarios). PASSING before the fix: every single-provider 503/429/timeout/garbage/conn-refused case is absorbed by the ladder (~1s); a total outage raises typed errors inside the request budget (all-hang hit a 6s budget at exactly 6.00s); /v1/friday/ask fast lane and /v1/chat/completions answer total outages with honest 503s; both streaming surfaces terminate with a clean error event; all-keys-quarantined fails closed without hammering. THREE GAPS: (G1) gateway.py's OpenRouter fallback rung awaited model discovery (get_best_free_model) with NO deadline bound — an 8s request budget blew past 38s when discovery hung (production bound would be the adapter's own 60s HTTP timeout, ~12x FRIDAY's 5s SLA). (G2) a structural empty completion — adapters return finish_reason='empty' exactly when the upstream body has no candidates/choices (gemini.py, openai_compatible.py) — was treated as a successful answer and stopped the ladder: /v1/friday/ask returned HTTP 200 with answer='' and confidence 0.7, /v1/chat/completions returned 200 with empty content. (G3) /v1/friday/ask on the DAG path (fast_lane=false) returned HTTP 500 for a total provider outage while the fast-lane path and /debate returned 503 for the identical condition. OBSERVATION (not fixed; routing policy belongs to TASK-REL-043/044): ladder breadth is exactly {OpenRouter rung, waterfall groq/openrouter/gemini, local tier, LiteLLM} — measured: with those three down, healthy second-tier providers are never attempted; in production only gemini/groq/openrouter hold keys so the ladder matches the configured fleet, but NVIDIA NIM (2 production keys) is never a ladder rung."
+    acceptance:
+      - "Drill runs fully isolated: scripted fake providers only, no live provider calls, no production quota consumed, production never touched."
+      - "Per-scenario results reported for: each provider as a failing primary (503), quota exhaustion (429), primary hang, all-providers 503 / hang / 401 / conn-refused, malformed exception, all-keys-quarantined, OpenRouter discovery hang/raise, empty completions, and the FRIDAY-facing routes (ask fast lane, ask DAG path, chat completions, both streaming surfaces)."
+      - "FRIDAY-facing endpoints never hard-fail: no hangs beyond the request deadline, no unhandled 500 for a provider outage, no fabricated or empty 200 answer."
+      - "Fixes land via an isolated branch + PR from fresh main; coordinator merges; the drill becomes a permanent regression suite in Inference/tests/."
+      - "No routing-policy change (which provider/model serves is TASK-REL-043/044 territory); failure behaviour only."
+    evidence:
+      - "PRE-FIX DRILL (scripted fakes, gateway level): S1 primary-503 x8 providers all served by the ladder ~1.0s; S2 429 -> keys quarantined + served; S3 primary hang served at 3.61s of a 6s budget; S4 all-503 -> TemporaryUnavailableError in 1.02s; S5 all-hang -> TimeoutError at exactly 6.00s; S8 garbage exception -> served; S9 all-keys-quarantined -> fail-closed (primary never called) + served in 0.05s; S11 all-401 -> AuthenticationError in 0.01s; S12 all-conn-refused -> GatewayError in 0.03s; S13 primary+OpenRouter 503 -> waterfall served. G1 measured: discovery-hang scenario exceeded a 38s outer guard on an 8s budget (killed by the guard, still running). G2 measured: primary-empty returned content='' as success in 0.00s without consulting the ladder."
+      - "PRE-FIX DRILL (route level, TestClient): R1 ask fast-lane all-503 -> 503 honest (1.52s); R3 chat all-503 -> 503 provider_degraded retryable (2.68s); R5 chat stream fail -> error chunk + [DONE] (0.69s); R6 friday stream mid-fail -> error event done=true (0.44s); R9 groq+openrouter down -> Gemini served 200 (1.40s). G2 at routes: R7 ask all-empty -> HTTP 200 answer='' confidence 0.7; R8 chat all-empty -> HTTP 200 content=''. G3: R2 ask DAG-path all-503 -> HTTP 500 INTERNAL_SERVER_ERROR (4.21s) vs 503 on the sibling surfaces for the identical outage."
+      - "FIX (this PR): gateway.py — (1) OpenRouter model discovery is awaited under asyncio.wait_for with a budget of half the remaining request budget when >2s remains (the waterfall keeps its share; same reservation doctrine as PRIMARY_ATTEMPT_FRACTION), converting timeout to the typed ProviderTimeoutError so the rung fails and the ladder continues; (2) a new _is_empty_completion() check (finish_reason='empty' AND blank content) is applied on every rung — primary loop (recorded as failure, no key quarantine: emptiness is not a credential fault), OpenRouter rung, waterfall rungs, local tier (returns None per its contract), LiteLLM rungs, and the speculative race (an instant empty 'win' no longer beats racers still producing a real answer); if every rung is empty the caller receives the typed TemporaryUnavailableError and the existing degraded -> 503 path. friday_routes.py — (3) the outage classification /debate already used is extracted to _is_provider_unavailable()/_UNAVAILABLE_MARKERS and applied in /ask's DAG-path handler too (503 with correlation id; raw reasons stay in the server log)."
+      - "POST-FIX DRILL (same harness): S6 discovery-hang -> SERVED by the waterfall at 4.51s of an 8s budget; S7 primary-empty -> ladder served a real answer; S7b all-empty -> typed TemporaryUnavailableError naming the empty completion; R2 ask DAG-path all-503 -> HTTP 503; R7 ask all-empty -> HTTP 503; R8 chat all-empty -> HTTP 503 provider_degraded; R9 mixed outage unchanged (200, Gemini, 1.29s); S14 ladder-breadth contract unchanged (trio down -> typed failure, second tier untouched, by policy)."
+      - "TESTS (crew, pre-rebase): new Inference/tests/test_inf008_failover_drill.py — 32/32 pass (24 gateway/unified incl. the 8-provider 503 matrix, 8 route-level). Neighbouring suites: gateway fallback/streaming/local-tier/hedging 40/40 pass; cache-namespaces + declared-modes + no-fabricated-measurements 33/33 pass; declared-paths 3/3 pass."
+      - "FINISHER REBASE (2026-11-16): the merge queue's freshness guard aborted the original delivery because gateway.py moved on main (TASK-REL-047 #550 Groq prompt guard + NVIDIA rung gate; TASK-INF-007 quota ledger). Three-way merge onto current main: friday_routes.py unmoved; gateway.py's single conflict (both sides added helpers after provider_has_credentials) resolved by union — REL-047 guards + INF-007 quota intact. Re-run on the rebased tree against the CURRENT gateway: drill 32/32 pass; test_rel047_gateway_guards.py 10/10 pass; 7-suite neighbour ring (139 tests) has exactly 1 failure (test_degradation_and_resource_bounds.py::test_no_module_attributes_work_to_a_bare_race_winner) which reproduces identically on clean main — pre-existing; the same ring on clean main fails 2, i.e. the G3 fix also repairs test_friday_debate_reports_a_provider_outage_as_unavailable on main."
+    blockers: []
+    next_action: "Coordinator: review + merge this PR, then deploy Inference to Server 1 and production-verify (all-provider drill is harness-only by design; production verification = fleet health + a live /v1/friday/ask and /v1/chat/completions sanity call post-deploy). Follow-ups owned elsewhere: ladder breadth / NVIDIA-as-rung is a routing-policy question for TASK-REL-043/044; the pre-existing test failure in test_degradation_and_resource_bounds.py predates this task (fails on pristine main) and belongs to a CI-hygiene follow-up."
+  - id: TASK-IG-FRD-010
+    title: "Lock the owner's laptop screen from FRIDAY (lock_screen tool + bridge command; unlock refused by design) (IG corpus)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: "2026-11-15"
+    source: "IG corpus Dblc-pWumPj (rollup FRIDAY idea 10)"
+    files:
+      - "FRIDAY/scripts/laptop_bridge_client.py"
+      - "FRIDAY/src/friday/agent/mixins/tools.py"
+      - "FRIDAY/src/friday/remote/laptop_bridge.py"
+      - "FRIDAY/src/friday/tools/builtin/__init__.py"
+      - "FRIDAY/src/friday/tools/builtin/laptop_control.py"
+      - "FRIDAY/tests/test_ig_frd_010_lock_screen.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6903529841"
+    evidence:
+      - "Replacement PR #636 open, mergeable=True; supersedes #513 (held by merge runner: laptop_bridge_client.py conflicts non-insertionally with current main)"
+      - "Branch-head compare vs main 7a25173b: exactly 6 files, +211/-0, additions only; registration audit zero removals on all 8 surfaces (registry 131->132, __all__ 143->144, allowlists 16->17)"
+      - "Local pytest on composed tree: FRD-010 suite 8/8; neighbour ring 65/65; registry smoke 138 tools with laptop_lock_screen and all 16 laptop tools, no unlock tool"
+      - "CI: test/contracts/py310-import-gate/secrets SUCCESS; validate pair red identically on clean main (pre-existing flake family, zero new failures)"
+    blockers: []
+    next_action: "Coordinator: merge PR #636 on this CI state -> close #513 as superseded -> Fleet CD -> production proof with the owner's laptop connected (ask FRIDAY to lock the laptop; screen locks) -> then VERIFIED (LAP entries flip on the owner's first live proof)."
+  - id: TASK-STR-FWD-006
+    title: "Stratex decided sizing package (TASK-STR-RD-011 settlement): 0.1% per-trade on venue equity, 2% heat cap per strategy, 5% DD kill mark-to-market on scan cadence, sleeve under the same package"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: "claude/task-str-fwd-006"
+    prs: [642]
+    contributors: []
+    issue_35_comments: []
+    result: "Decided package implemented in code + protocol doc + registry, rebased onto fresh main by the finisher crew after the base-divergence abort (trader.py hand-resolved: FWD-004 governance gate and ledger wiring intact, FWD-006 sizing layered on top; run_daemon/multi_venue_engine/config_strategy unions preserve RD-010 + RISK-001 changes verbatim). Daemon sizes on VENUE equity at 0.1% per trade (was 1% of composite), 2% heat cap per strategy at entry (was none), forward_guard DD kill mark-to-market on scan cadence (was closed-only/daily), sleeve judged MTM both legs combined, sleeve OANDA leg and FX-MR-v4 trader aligned to 0.1%/2%. Unchanged: 5% DD value, 3% daily breaker, leverage 3x, performance kills. Vol-targeting banned for dow_effect (doc + registry)."
+    evidence:
+      - "REBASED TESTS (finisher, 2026-11-16): Stratex/tests/test_fwd006_sizing.py 11/11 pass on the rebased tree (original crew evidence reproduced). Regression rings (fwd002 strategies+sleeve, fwd003 lane, daemon governance, oanda demo): 120 passed / 1 failed — test_fwd003_forward_test_lane.py::test_config_registry_lane_entries fails identically on pristine main (known FWD-003 registry null-out follow-up, unrelated). Wider 12-file sweep: failure set byte-identical to pure main. Five stale tests encoding the replaced 1% sizing law aligned to the decided package (itemized in PR body; no production behaviour changed)."
+      - "PROTOCOL DOC: Stratex/docs/PHASE3_FORWARD_PROTOCOL.md — the 8-row decided table, venue-equity basis, MTM + scan-cadence kill computation, measurement-phase rationale, enforcement map, before/after live values."
+      - "REGISTRY: config_strategy.py governed entries carry risk_per_trade_pct: 0.001 + max_heat_pct: 0.02; stale '1% risk cap' statements rewritten; dow vol-targeting ban recorded."
+    next_action: "Coordinator merges PR #642, Fleet CD deploys, then execute the Server-1 deploy runbook in ~/workspace/fwd-006/HANDOFF_STATE.md (env alignment STRATEX_RISK_PER_TRADE_PCT 0.01->0.001 + add STRATEX_MAX_HEAT_PCT_PER_STRATEGY=0.02, daemon-only restart, config read-back, sizing computation on the current book, sleeve state unrealized-field check). TASK-STR-RISK-001 independently verifies the end state."
+  - id: "TASK-OBS-003"
+    title: "Fleet health & metrics honesty sweep — every agent's /health vs an independent functional probe, every self-reported number traced to source"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-obs-003-honesty-fixes"
+    pr: 643
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T13:05:00+05:30"
+    updated_at: "2026-11-16T06:15:00+05:30"
+    files:
+      - "docs/observability/HONESTY_SCORECARD_2026-11-15.md"   # NEW — per-agent scorecard with file/line + live-probe evidence
+      - "FRIDAY/src/friday/api/server.py"                      # /health: status := report verdict (was constant "healthy"); peers_mesh derived from mesh outcomes (was constant "connected")
+      - "FRIDAY/tests/test_obs003_health_honesty.py"           # NEW — 5 tests pinning the honest contract
+      - "FRIDAY/tests/test_container_compatibility.py"         # peers_mesh assertion updated from the fabricated constant to the honest value set
+      - "FRIDAY/tests/test_tier1_resilience_and_contracts.py"  # same assertion update
+      - "Futuris/futuris/api/app.py"                           # /status: verdict from verify_schema() (was constant "healthy"); port from PORT env (was hardcoded 8000; live proof: answered on 8004 reporting 8000)
+      - "Futuris/tests/api/test_obs003_status_honesty.py"      # NEW — PORT reflection + degraded-on-storage-failure
+      - "VyralX/app/main.py"                                   # /health gains evidence_class: process_liveness + observed_at (was the fleet's only unlabelled health)
+      - "VyralX/tests/test_obs003_health_labelling.py"         # NEW
+      - "Cortex/apps/api/src/cortex_api/production_router.py"  # /status gains evidence_class: process_liveness (value unchanged)
+      - "Cortex/tests/e2e/test_e2e_tier1.py"                   # F6.4 asserts the new label
+    defect: "Fleet-wide re-probe of the REL-020/030/032 honesty pattern found no fabricated rates/balances/counts, but three constant-or-unlabelled headline fields: (1) FRIDAY /health overwrote its computed report — status hardcoded 'healthy', peers_mesh hardcoded 'connected' with no probe (live contradiction: mesh status said CONFIGURED-BUT-UNVERIFIED the same minute); (2) Futuris /status constant 'healthy' + hardcoded port 8000 while production binds 8004; (3) VyralX /health the fleet's only unlabelled liveness payload; Cortex /status claimed 'operational' measuring only uptime (label added, value kept)."
+    acceptance:
+      - "Per-agent honesty scorecard delivered with file/line evidence and live-probe transcripts for all 10 agents."
+      - "FRIDAY /health status always equals the health report's computed overall; peers_mesh claims 'connected' only with a completed mesh outcome on record."
+      - "Futuris /status verdict derives from the measured storage check and reports the actually bound port."
+      - "Every agent's /health and /status payloads carry an evidence_class label."
+      - "Findings that belong to active crews are flagged, not fixed: Inference active_specialist_agents label (INF-002), Sentinel status vs audit_chain_valid (SEN-002+), VyralX /ready media-URL exposure (SEN-002), FRIDAY mesh live_verification canned string."
+    evidence:
+      - "Claim: issue #35 comment 6891046935 (TASK-OBS-001/002 already existed as MERGED 2026-11-10 ZAI tasks; this sweep took the next free OBS number)."
+      - "Live probes 2026-11-15 ~13:17 IST (read-only, server-side): all 10 agents' /health + /ready captured; Futuris /status live on 8004 reporting port 8000; FRIDAY /api/mesh/status state_counts {UNVERIFIED 12, DEGRADED 4, REFUSED 4, PENDING 4, COMPLETED 12} vs /health peers_mesh 'connected'; Inference key pools live-matched the verified layout (15/15/15/2); Sentinel chain valid 150 entries; Memora metrics real counters (172 writes, 5,799 policy evaluations)."
+      - "Tests: FRIDAY test_obs003_health_honesty.py 5/5 passed + test_health_endpoint_contract + F7.1 pass locally; Futuris/VyralX/Cortex handlers verified by direct invocation (sandbox sqlite restriction blocks the file-backed pytest suites locally, incl. pre-existing ones; CI runs the canonical configuration); ruff F821 clean on all modified files."
+    blockers: []
+    next_action: "Post-deploy health probes (after PR #643 merges + Fleet CD): FRIDAY /health — status == the report's overall verdict and peers_mesh reflects recorded mesh outcomes (connected only with a COMPLETED/SUCCESS outcome on record); Futuris /status on 8004 — port == 8004 and status tracks verify_schema; VyralX /health — evidence_class == process_liveness + observed_at present; Cortex /status — evidence_class == process_liveness present. Then move this entry to VERIFIED. Flagged follow-ups for owning crews (Inference active_specialist_agents label, Sentinel status vs audit_chain_valid, VyralX /ready media-URL exposure, FRIDAY mesh live_verification canned string) are listed in the scorecard."
+  - id: "TASK-INF-006"
+    title: "Inference safe response cache: exact + template match, per-class TTLs, context-fingerprint binding"
+    status: "IN_REVIEW"
+    owner: "muse_ai"
+    branch: "claude/task-inf-006-fix"
+    pr: 644
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6903567213"
+    files:
+      - "Inference/app/inference_runtime/response_cache.py"
+      - "Inference/app/inference_runtime/contracts.py"
+      - "Inference/app/inference_runtime/config.py"
+      - "Inference/app/inference_runtime/gateway.py"
+      - "Inference/app/providers/unified_manager.py"
+      - "Inference/tests/test_inf006_response_cache.py"
+      - "Inference/tests/test_unified_manager_cache_scope.py"
+      - "Inference/scripts/replay_response_cache.py"
+      - "Inference/scripts/replay_sample_log.jsonl"
+      - "Inference/docs/RESPONSE_CACHE.md"
+    defect: "Inference's caches did not enforce the rule that a personalised/contextual answer must never be served to the wrong context: TenantCache keyed by tenant only with one flat TTL; MultiLevelCache (performance_cache) stores every answer under shared (any mode/caller) and punctuation-stripped keys, so within a namespace an answer produced under one caller's context can be served to another whose recorded extra matches, and distinct questions can collide after punctuation stripping. No template matching with declared semantics, no per-class TTLs, no generation invalidation, no latency-saved measurement existed. Finisher addendum: the first integration also referenced the module-level response_cache binding as a bare name inside UnifiedProviderManager.execute(), breaking the offline explicit-model contract harness (NameError, 15/17 root contract tests) — fixed in PR #644 by globals() resolution with an identical-pair perf_cache fallback."
+    acceptance:
+      - "SafeResponseCache: context classes public/contextual/personalised; personalised answers never stored by default and, if storage is enabled, bound to the principal fingerprint with the shortest TTL; contextual entries keyed by the exact context fingerprint."
+      - "Exact match over the full request fingerprint; task-template match only for pre-registered templates with declared invariant slots; stochastic requests exact-match only with a capped TTL and never template-match."
+      - "Per-class TTLs and generation-based invalidation (namespace/template), context/principal invalidation, policy_version keying; LRU-bounded store; stats with hit-rate and latency saved."
+      - "HardenedGateway completions and the UnifiedProviderManager path run on the safe cache; the explicit-model contract (finish_reason survival through response + cache) holds — root contract suite 17/17."
+      - "Replay harness measures hit-rate and latency saving on a request log, with a safety audit (personalised hits and cross-principal violations must be zero)."
+    evidence:
+      - "PR #644 (finisher replacement for #333/#434): root contract suite 17/17 on the PR tree (was 15 failed / 2 passed on #434; 17/17 on clean main); Inference/tests/test_inf006_response_cache.py 24/24; affected suites 56/56; neighbour batch failure set identical to clean main (4 pre-existing sandbox failures, 133 passed both trees)."
+      - "Production-path probe (real imports, stubbed gateway): finish_reason 'length' and None survive response + SafeResponseCache hit; speculative path likewise; failed provider returns finish_reason None; transport spy confirms the safe cache is the production transport (perf_cache untouched when bound)."
+      - "Replay measurement on the committed synthetic sample log (240 requests; scripts/replay_response_cache.py): hit rate 52.1% (125 hits = 90 exact + 35 template), latency saved 524,116 ms of 853,595 ms provider latency (61.4%), personalised 40 requests with 0 hits and 0 cross-principal violations. Sample log is synthetic and labelled as such."
+    blockers: []
+    next_action: "Coordinator merges PR #644 (close #333/#434 as superseded), Fleet CD, flip VERIFIED. Follow-up recommended: migrate friday/agent/instant perf_cache call sites onto SafeResponseCache classes."
+  - id: TASK-SEN-012
+    title: "Dependency-manifest hardening (SEN-002 F-02..F-07, repo-side only): reconcile all 10 agents' manifests with the SEN-002-probed live venv, VyralX Pillow 13.x compatibility verdict for PR #347, per-agent pip-resolve lock snapshots, SHA-pin all GitHub Actions, untrack FRIDAY/.data/**"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-sen-012-dependency-manifest-hardening
+    contributors: []
+    priority: P1
+    created_at: "2026-11-15T16:42:07+05:30"
+    updated_at: "2026-11-15T18:04:34+05:30"
+    files:
+      - "PR #386 (79 files): 23 manifests amended (9x requirements.txt, Cortex apps/api+worker requirements, 9x pyproject.toml, Forge/requirements-verification.txt, Stratex/mt5_bridge/requirements-windows.txt, requirements-ci.txt)"
+      - "10x requirements.lock added (FRIDAY/Inference/Memora/Stratex/Futuris/IntelX/Forge/Sentinel/Cortex/VyralX — 665 pins total, real pip resolves)"
+      - "docs/DEPENDENCY_LOCKS.md (lock discipline + regeneration + exclusions)"
+      - "35 workflow files: 88 uses: refs SHA-pinned with tag comments"
+      - "FRIDAY/.data/** (9 files) removed from git index; .gitignore already carried **/.data/"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6893456670"
+    defect: "SEN-002 F-02/F-04: fleet manifests drifted BEHIND the live venvs — rebuild from manifest would silently regress security fixes (Sentinel pins blocked 18 CVE fixes; pypdf floor carried 67 CVEs, aiohttp floor 46, python-multipart 7). F-03: VyralX Pillow ceiling blocked fixes (live 12.3.0 itself carries 42 CVEs fixed only in 13.0.0, per SEN-004). F-05: no lockfiles anywhere; Stratex/requirements.txt referenced a requirements.lock that did not exist. F-06: all GitHub Actions tag-pinned (appleboy/ssh-action x13 on deploy/credential paths). F-07: FRIDAY/.data/** runtime state tracked in the public repo."
+    evidence:
+      - "MANIFESTS: every amended spec traces to SEN-002's probed live venv versions (aiohttp 3.14.5, cryptography 50.0.2, fastapi 0.161.1, Flask 3.1.3, Jinja2 3.1.6, pyarrow 25.0.1, PyJWT 2.15.1, pypdf 6.21.2, python-dotenv 1.2.4, python-multipart 0.0.32, requests 2.34.2, starlette 1.7.0, urllib3 2.8.0, uvicorn 0.54.0) or, where SEN-002 was silent on a live version, to the max OSV fixed version (dnspython 2.9.2, WeasyPrint 70.0, gunicorn 22.0.0, flask-cors 6.0.0, qdrant-client 1.9.0) and is labelled UNVERIFIED-live in the PR body; pytest >=9.0.3 everywhere (sole fix for CVE-2025-71176)."
+      - "PILLOW VERDICT (evidence for PR #347): VyralX PIL usage = Image.open/new, ImageDraw.Draw, ImageEnhance.Contrast/Color/Sharpness, ImageFilter.GaussianBlur, ImageFont.truetype/load_default in 8 of 254 .py files; NONE of Pillow 13.0.0's removed/changed APIs are used -> COMPATIBLE. VyralX lock resolved against Pillow>=13.0,<14.0 pins pillow==13.0.0. UNVERIFIED caveat: production venv Python version not probed by this crew; Pillow 13 needs >=3.11 (pyproject declares >=3.11) — confirm before #347 deploys."
+      - "LOCKS: 10/10 agents resolved via pip --dry-run --ignore-installed --only-binary=:all: targeting CPython 3.11 — FRIDAY 133, Inference 32, Memora 52, Stratex 90, Futuris 69, IntelX 41, Forge 46, Sentinel 66, Cortex 58, VyralX 78 (665 pins). Sentinel lock spot-verified to the live pins (pyjwt==2.15.1, fastapi==0.161.1, cryptography==50.0.2, uvicorn==0.54.0, weasyprint==70.0, dnspython==2.9.2). FRIDAY lock EXCLUDES chromadb>=0.4.0 by design (TASK-SEN-014 / PR #368 removal; coordinator steer — not pinned anywhere in this PR)."
+      - "ACTIONS: 88 uses: refs in 35 workflow files SHA-pinned (git ls-remote 2026-11-15), tag as comment; every file YAML-parsed post-edit; CI workflow-syntax validation passes; CI annotations prove pinned actions resolved and ran (setup-node@49933ea5...)."
+      - ".DATA: all 9 tracked FRIDAY/.data files re-scanned against 10 credential-shape pattern classes — ZERO hits (SEN-002 F-08 claim re-verified on the current tree) — then removed from the index in PR #386."
+      - "CI (PR #386 head 47e65d18): 10/12 check-runs green/skipped incl. main test job under pytest 9; voice-regressions + voice-startup-regressions FAIL at their test-execution steps only (setup/install/lint pass; jobs are path-filtered and skipped on base main and 7/7 other recent PRs sampled — no recent green baseline; PR diff contains zero code/test changes; voice surface independently broken, TASK-VOI-005 open). Full job logs auth-gated from crew sandbox — transitive-effect exclusion bounded accordingly."
+    blockers:
+      - "CI: two voice jobs red on PR #386 (analysis in completion comment) — coordinator decision: accept as pre-existing voice-surface red or hold for post-VOI-005 re-run."
+      - "Pre-merge check: confirm Fleet CD pull will not delete untracked FRIDAY/.data files from server checkouts when the untrack lands."
+    next_action: "Coordinator: (1) decide the voice-CI question above; (2) run the Fleet CD .data check; (3) merge #386 in sequence with #345 (first) / #341 (close as superseded) / #347 / #368; (4) before #347 deploys, confirm the production venv Python version is >=3.11 for Pillow 13. Post-merge: regenerate locks per docs/DEPENDENCY_LOCKS.md whenever manifests change."
+  - id: TASK-IG-FRD-001
+    title: "Goal-loop autonomy: goal + success criteria worked in cycles, completion report (IG corpus DdckMRAjAsD)"
+    owner: muse_ai
+    status: IN_REVIEW
+    pr: "#645 (replacement for #451)"
+    files:
+      - FRIDAY/src/friday/autonomous/goal_loop.py
+      - FRIDAY/src/friday/tools/builtin/goal_loop_tools.py
+      - FRIDAY/src/friday/tools/builtin/__init__.py
+      - FRIDAY/src/friday/agent/mixins/tools.py
+      - FRIDAY/tests/test_ig_frd_001_goal_loop.py
+    next_action: "Merge via queue (supersedes #451 — close it on merge). Post-merge: Fleet CD, then verify start_goal_loop end-to-end on production (register a small goal, confirm a completion report with per-criterion verdicts) before flipping VERIFIED."
+  - id: TASK-FRG-009
+    title: "Wire Forge agent roles to a real model provider via the fleet Inference gateway (fail-closed; mock builds labelled degraded)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-frg-009-port
+    pr: 638
+    contributors: []
+    created_at: "2026-11-15T16:22:00+05:30"
+    updated_at: "2026-11-16T06:00:00+05:30"
+    files:
+      - "Forge/app/agents/provider_wiring.py (NEW — single provider resolution point: per-role forge-<role> alias into Inference best-suitable routing)"
+      - "Forge/app/providers/inference.py (rewritten onto /v1/chat/completions; fail-closed; legacy fallback explicit + marked degraded)"
+      - "Forge/app/core/config.py (Settings.role_provider default 'inference' + role_models)"
+      - "Forge/app/agents/base.py (default provider via wiring; prompt_model records degraded/served-model in scratchpad)"
+      - "Forge/app/agents/registry.py (create_agent via wiring; per-provider preferred model kept as hint)"
+      - "Forge/app/agents/roles.py (DeveloperRole authors manifest files through a real provider with per-file corrective retry + provider_failed_files; ArchitectRole manifest-only rescue call)"
+      - "Forge/app/core/orchestrator.py (node-result provider stamps + task.provider_degraded event)"
+      - "Forge/app/api/delegate.py (provider summary in task results; mock-degraded summary suffix — ported onto FRG-011's derived-verdict response shapes by the finisher, PR #638)"
+      - "Forge/app/main.py (startup wiring report + gateway health probe)"
+      - "Forge/tests/test_frg009_provider_wiring.py (NEW — 26 tests)"
+      - "Forge/tests/unit/test_inference_provider.py (updated to the new transport)"
+      - "Forge/tests/conftest.py (FORGE_ROLE_PROVIDER=direct hermeticity pin)"
+    defect: "FRG-004 battery: 0/34 requested layout files from the deployed Forge. Roles ran on the deterministic DirectProvider mock in production (nothing called set_provider(); BaseAgent defaulted to it), the Architect fell back to keyword templates, and the old InferenceProvider silently fell back to the mock on any error — mock output was indistinguishable from model output in task results."
+    acceptance:
+      - "Roles obtain a real provider at startup from Forge's own configuration, calling the fleet Inference gateway with per-role best-suitable routing; keys only from Forge's env."
+      - "Fail-closed honesty: no silent mock fallback anywhere; mock-built tasks are labelled provider: mock/direct + generation degraded in task output; DirectProvider only as explicitly configured test/dev mode."
+      - "FRG-004's explicit-layout manifest behaviour intact; the provider consumes the manifest and generates real per-file contents."
+      - "Acceptance battery: FRG-004's G5 shape + G1 shape through the delegate path against the local build; stated files, generated tests actually run, verification result reported honestly."
+      - "Provider-selection + manifest-consumption tests; no neighbour regressions beyond pre-existing failures on clean main."
+    evidence:
+      - "Replacement PR #638 (branch claude/task-frg-009-port @ f82ea720 on main 240bad36; all 12 blob SHAs verified against the tested tree) — supersedes PR #400, held by the merge runner for the delegate.py collision with FRG-011"
+      - "Finisher port: #400's 3 commits cherry-picked onto fresh main; the single delegate.py conflict resolved by dropping the pre-FRG-011 partial-failure block (not resurrecting it) and stamping FRG-011's three derived-verdict response shapes with the provider summary (disclosure only, never a verdict input); orchestrator.py/roles.py auto-merges audited semantically"
+      - "Sandbox on the ported tree: FRG-009 suite 26/26; test_inference_provider 7/7; FRG-011 verdict consistency 9/9; FRG-010 completeness 14/14; FRG-003 suite 12/12; neighbours 61/61 incl. the four delegate suites (43 tests)"
+      - "Local e2e (stub gateway, real orchestrator): G1 COMPLETED, 5/5 files, tests 9/9, verification 11/11, provider stamps on every node (original crew, PR #400)"
+      - "Real-gateway battery (S1 staging, prod env; original crew, PR #400): G1 run 2: 5/5 stated files, all nodes served by openai/gpt-oss-120b, produced suite 12/16 (model case-normalisation deviation), gate FAILED the task honestly. G5 runs 1-2: gateway 503 during a fleet deploy window -> fail-closed task failure with the verbatim gateway error; run 4: 3/10 stated files after the gateway served the Architect a free nemotron VL model — structural fix is FRG-004's deterministic layout extraction (merged, PR #554)"
+    blockers: []
+    next_action: "Coordinator: review + merge PR #638, then close PR #400. Post-merge via Fleet CD: production-verify on the deployed Forge (a delegate build shows provider: inference:forge-* stamps + a real served model, or fails closed), re-run the G1/G5 shapes against production, then flip this entry to VERIFIED. Follow-up candidate: repair-loop/cross-file consistency (the G1 case-normalisation class) — model-output quality, separate task."
+  - id: TASK-IG-INF-01
+    title: "IG corpus (Deov8pzsfin): long-context routing respects declared context windows — fit filtering + overflow disclosure in v1 selection"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/repl-pr447
+    pr: 635
+    contributors: []
+    priority: P2
+    created_at: "2026-11-15T22:50:00+05:30"
+    updated_at: "2026-11-16T06:15:00+05:30"
+    files:
+      - "Inference/app/api/v1_core_routes.py   # MODEL_CONTEXT_WINDOWS + _estimate_context_tokens + fit filter in _ranked_suitable_models/_select_best_suitable + provenance propagation"
+      - "Inference/tests/test_ig_inf01_long_context_routing.py   # NEW — 12 tests"
+    defect: "REL-043 selection ranked by task type only; no context-window knowledge, so an oversized long-document or large-codebase request could be ranked onto a 131k-window model and fail or be silently truncated at the provider."
+    acceptance:
+      - "Every verified-catalogue model declares a context window; unknown capacity is treated as window 0, never assumed to fit."
+      - "Requests estimated above 131,072 tokens are routed only to models whose window holds prompt + reserved output, preserving REL-043 ranking order among fitting models."
+      - "When no catalogue window fits, the largest holder is chosen and context_overflow=true is disclosed in response provenance."
+      - "Below the fit floor, REL-043 behaviour is unchanged (no fit fields in the selection record)."
+    evidence:
+      - "PR #447 (2 files) — new suite 12/12 passed locally; REL-043 suite at pristine-main baseline 12 passed / 3 pre-existing sandbox failures (ladder-breach family, identical on unmodified main)."
+    blockers: []
+    next_action: "PR #635 (replacement for #447) merged 42be2200 -> Fleet CD -> production probe (oversized long-document request to /v1/chat/completions shows provenance estimated_context_tokens/context_window/context_overflow) -> flip VERIFIED."
+  - id: TASK-IG-INF-02
+    title: "Custom/third-party inference endpoints (INFERENCE_CUSTOM_ENDPOINTS, custom-<name> providers)"
+    owner: muse_ai
+    agent: Inference
+    status: IN_REVIEW
+    pr: 641
+    branch: claude/repl-pr480
+    source: "IG corpus Dctokdztllm"
+    next_action: "PR #641 (replacement for #480) merged da765a9d → set INFERENCE_CUSTOM_ENDPOINTS on Server 1 only when an endpoint is actually wanted (no-op unset) → restart Inference → probe /v1/models lists custom models → VERIFIED"
+  - id: TASK-REL-049
+    title: "Model-level servability tracking in Inference routing: per-model serve/substitute/fail tracking, quarantine after 10 consecutive non-serves with probe-back, disclosed in routing provenance (INF-005 follow-up)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-16
+    pr: 646
+    branch: "claude/repl-pr371"
+    defect: "TASK-INF-005 measured gemini-3.8-flash serving 0 of 20 requests across a full day on the production gateway (substituted every time, ~40.7s median cascade) while the Gemini provider stayed healthy. All gateway outcome recording is provider-granular (ProviderHealthTracker, circuit breaker, key pools) and REL-043 selection filters on provider health, so the never-serving model kept its #1 chat ranking; per-model outcomes existed only transiently in response bodies and were aggregated nowhere."
+    evidence:
+      - "CLAIM: GitHub issue #35 comment 6893650116 (2026-11-15) before editing."
+      - "MAP: ProviderHealthTracker.record_success/record_failure keyed by provider (app/providers/health.py, fed from gateway.py per-provider rungs); governance/circuit_breaker.py and optimization.py likewise provider-keyed; KeyPool quarantine is per-key. Search found no model-keyed stats/health/servability structure anywhere in Inference/app."
+      - "LIVE (read-only bridge probes, Server 1, 2026-11-15): Inference.service journal for today = 2,864 lines with ZERO structured served_by_model/model_used fields (no production per-model serve aggregation exists); gemini-3.8-flash still failing live — repeated 'Provider gemini timed out after 36.0s (TimeoutError, model=gemini-3.8-flash). Escalating to the fallback ladder' at 16:10-16:30 IST plus a 503-high-demand failover line."
+      - "IMPLEMENTED (PR #371): app/providers/model_servability.py (tracker + singleton; declared rule 10 consecutive non-serves -> quarantine; 900s probe-back; env knobs); v1_core_routes.py overlay in _ranked_suitable_models + selection/provenance disclosure + named-quarantined redirect + outcome recording with cache-replay guard; docs/MODEL_SERVABILITY.md. MODEL_SUITABILITY rankings and FRIDAY/REL-044 code untouched."
+      - "TESTED: tests/test_rel049_model_servability.py 12/12 locally (tracker units, route behaviour, INF-005 day replay latching at the 10th non-serve); combined with rel043 + rel030 = 33 passed; route tests 6/6 FAIL on main's routes file (swap-verified); wider 5-file ring identical before/after (160 passed, 8 pre-existing sandbox aiosqlite failures both runs). Sandbox pytest needs --capture=no (tempfile broken in sandbox); CI is the remaining gate."
+    blockers: []
+    next_action: "PR #646 (replacement for #371) merged 0de2456c -> Fleet CD -> production probe (name gemini-3.8-flash in /v1/chat/completions; after 10 fresh non-serves expect redirect with provenance.servability.redirected_from_quarantined, or a served probe) -> flip VERIFIED. Follow-ups recorded in docs/MODEL_SERVABILITY.md: streaming outcomes unrecorded (served model unobservable in chunk protocol); INF-005 benchmark re-run after INF-006 lands will also exercise this overlay."
+  - id: TASK-INT-006
+    title: "IntelX owner-briefing format: headline answer first, evidence with citations, what would change the conclusion, confidence stated plainly"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-int-006-fix
+    pr: 648
+    contributors: []
+    priority: P2
+    created_at: "2026-11-15T13:20:00+05:30"
+    updated_at: "2026-11-16T06:20:00+05:30"
+    files:
+      - "IntelX/intelx/core/owner_briefing.py"
+      - "IntelX/intelx/api/live_research_task.py"
+      - "IntelX/intelx/core/report.py"
+      - "IntelX/tests/test_owner_briefing.py"
+      - "IntelX/docs/owner_briefing_examples.md"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6904277649"
+    defect: "IntelX's delivered briefings opened with process narration, not the answer: the live brief's text_response led with a disclaimer header ('Source-attributed model draft — quotations checked, claims not independently verified.' / 'Retrieved-source excerpts — …'), and the stored export (export_text_citations, used by FRIDAY delegation and the router) led with a bare findings list. Neither stated a headline answer, neither stated confidence in plain words with its basis, and neither said what would change the conclusion — the owner had to read the whole evidence block to learn what IntelX actually found and how far to trust it."
+    acceptance:
+      - "Every delivered briefing (live brief text_response and stored-research export) opens with the headline answer — the lead finding's own statement, never formatter-invented prose."
+      - "Confidence is stated on one plain line with its measured basis (source/domain counts, quote verification, synthesis status, disputed/inference shares), and caps at Moderate by design because the pipeline verifies attribution, not truth."
+      - "A 'what would change this conclusion' section closes each briefing, derived mechanically from the evidence state (single-domain dependence, disputed findings, excerpts-only, synthesis failure) — never invented."
+      - "Citation integrity is preserved: the stored export's [C:]/[S:] tokens and headings are byte-identical in structure and still pass CitationValidator; the live brief keeps title + URL (+ verbatim quote) per finding."
+      - "No padding: the retired disclaimer headers' honesty content is relocated into the confidence basis and change conditions, not dropped; question_answered / independently_verified semantics, retrieval, synthesis and grounding gates unchanged; spoken_summary and summary unchanged."
+      - "Before/after examples on the same research topic ship in the PR (IntelX/docs/owner_briefing_examples.md), rendered by the actual pre-change and post-change code."
+    evidence:
+      - "Claim: issue #35 (TASK-INT-006, Wave 5 IntelX; checked newest comments first — INT-004 claimed 2026-11-15T08:09:15Z and INT-005 at 08:15:58Z, no INT-006 claim present)."
+      - "Implementation: new shared deterministic formatter IntelX/intelx/core/owner_briefing.py wired into collect_live_brief (live brief + a structured 'briefing' block in the envelope) and export_text_citations (stored path used by intelx/api/v1/friday.py and intelx/api/router.py)."
+      - "Tests: IntelX/tests/test_owner_briefing.py — 10/10 PASS in the crew venv (Moderate/Low mapping per evidence state, headline-first ordering, retired headers absent, REL-016 synthesis-failure path keeps excerpts and states no conclusion, stored export tokens still validate via CitationValidator, empty-findings export stays valid)."
+      - "Regression ring (test_rel038 + test_api_router_coverage + test_friday_delegation_e2e + test_citation_validation + test_prompt6): 28 passed, 4 failed, 7 errors. test_citation_validation passed in full. All 7 errors are sqlite disk I/O at the conftest DB fixture (sandbox subprocess write denial — environmental). The 4 failures are delegation-contract tests (HTTP 201/422 query_scope validation; sources-array serialization shape) whose assertions do not intersect this task's changed lines; a baseline rerun in a pristine sibling tree was attempted 6x and blocked by the same write denial, so repo CI on the PR is the definitive check."
+      - "Coordination: TASK-INT-003's pre-declared rubric (D1 source diversity, D2 primary-source ratio, D3 contradiction handling, D4 citation verifiability) is the measurement frame — the confidence basis prints the D1/D2 inputs, attributed positions stay separate evidence lines (D3), citations stay machine-verifiable (D4); noted in the claim and completion comments on issue #35."
+      - "FINISHER 2026-11-16: root cause reproduced — INT-006 replaced the REL-016 status label as the live brief's first line in all three paths; the contract pins text_response.startswith(label) (file lines 149/177/206) and every other assertion in the trio already passed with INT-006 in place. Fix in INT-006's own code only: label line restored (verbatim unsynthesised/excerpts; pinned prefix for draft, disclaimer tail staying relocated in the confidence basis), headline block immediately after; contract file untouched (byte-identical to main)."
+      - "COMPLETION CREW 2026-11-16 (finisher ended without a report; ground truth re-established + gates re-run in a clean venv with IntelX's full CI dependency set): control on pristine main contracts 22/22; PR #648 tree contracts 22/22; INT-006 suite test_owner_briefing.py 10/10; the two pre-existing files are byte-identical on current main to the composition base and the three new files are absent on main, so the change set applies to current main exactly. Shipped as PR #648 (branch claude/task-int-006-fix, head 26802621) — this crew does not merge."
+    blockers: []
+    next_action: "Coordinator: merge PR #648, then close #331 and #423 as superseded; Fleet CD; then VERIFIED after the post-deploy production probe (one live research brief via FRIDAY chat or /v1/research/live showing the REL-016 label line first with the owner-briefing headline block immediately after it and the briefing envelope block present)."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
