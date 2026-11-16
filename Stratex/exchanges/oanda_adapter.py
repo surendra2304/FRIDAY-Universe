@@ -452,8 +452,6 @@ class OandaExchangeAdapter(BaseExchange):
         trades: List[Dict[str, Any]] = []
         for t in data["trades"]:
             try:
-                sl_info = t.get("stopLoss") or {}
-                tp_info = t.get("takeProfit") or {}
                 trades.append({
                     "id": str(t.get("id", "")),
                     "instrument": self.normalize_symbol(t.get("instrument", "")),
@@ -461,13 +459,41 @@ class OandaExchangeAdapter(BaseExchange):
                     "price": float(t.get("price", 0) or 0),
                     "unrealized_pl": float(t.get("unrealizedPL", 0) or 0),
                     "open_time": t.get("openTime", ""),
-                    "stop_loss": float(sl_info.get("price", 0) or 0) if sl_info else 0.0,
-                    "take_profit": float(tp_info.get("price", 0) or 0) if tp_info else 0.0,
+                    "stop_loss": self._attached_order_price(
+                        t.get("stopLossOrder") or t.get("stopLoss")
+                    ),
+                    "take_profit": self._attached_order_price(
+                        t.get("takeProfitOrder") or t.get("takeProfit")
+                    ),
                     "financing": float(t.get("financing", 0) or 0),
                 })
             except (KeyError, ValueError):
                 continue
         return trades
+
+    @staticmethod
+    def _attached_order_price(info: Any) -> float:
+        """Price of a trade-attached SL/TP order from a v20 trade record.
+
+        TASK-STR-FWD-007: the current OANDA API exposes the attached
+        orders as ``stopLossOrder`` / ``takeProfitOrder`` objects; the
+        legacy ``stopLoss`` / ``takeProfit`` fields are null there, so
+        reading only the legacy fields reported SL/TP as 0.0 for trades
+        that ARE protected (live evidence 2026-11-16: trade 470 carries
+        stopLossOrder @157.543 and takeProfitOrder @163.838, both
+        PENDING, while the legacy fields read null). A terminal-state
+        order (e.g. CANCELLED after being replaced) is not live
+        protection and must not be reported as such.
+        """
+        if not isinstance(info, dict):
+            return 0.0
+        state = str(info.get("state") or "PENDING").upper()
+        if state != "PENDING":
+            return 0.0
+        try:
+            return float(info.get("price") or 0)
+        except (TypeError, ValueError):
+            return 0.0
 
     def close_trade(self, trade_id: str, units: Optional[float] = None) -> bool:
         """Close a trade fully (or partially when units is given)."""

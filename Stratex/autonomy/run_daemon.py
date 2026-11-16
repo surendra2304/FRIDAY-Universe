@@ -748,6 +748,22 @@ class StratexTradingEngine:
                         continue
 
                     opened_at = self.engine.position_opened_at.get(key)
+                    # TASK-STR-FWD-007: attribution decides who books this
+                    # close. Positions the daemon itself opened always
+                    # carry an entry in position_strategy (set by
+                    # place_order at open). Positions adopted at startup
+                    # (adopt_existing_positions) or detected untracked
+                    # never do — they belong to another engine sharing
+                    # the venue (e.g. the OANDA sleeve runner, the
+                    # FX-MR-v4 trader), and that engine books its own
+                    # closes from broker truth. Booking them here as
+                    # well — strategy "unknown", PnL possibly from a
+                    # ticker estimate — double-counted the close in the
+                    # ledgers and in the daemon's realized_pnl.
+                    strat_attribution = self.engine.position_strategy.get(key)
+                    daemon_opened = strat_attribution not in (
+                        None, "", "unknown", "UNATTRIBUTED",
+                    )
                     pnl_info: Optional[dict] = None
                     if hasattr(adapter, "get_realized_pnl"):
                         try:
@@ -785,12 +801,13 @@ class StratexTradingEngine:
                     self.engine.positions.pop(key, None)
                     self.engine.position_opened_at.pop(key, None)
 
-                    self.engine.realized_pnl += net
-                    self.engine.daily_realized_pnl += net
-                    # Route through the breaker check instead of mutating the
-                    # counters directly: broker-side losses must count toward
-                    # the daily loss limit too.
-                    self.engine._check_daily_loss_limit()
+                    if daemon_opened:
+                        self.engine.realized_pnl += net
+                        self.engine.daily_realized_pnl += net
+                        # Route through the breaker check instead of mutating the
+                        # counters directly: broker-side losses must count toward
+                        # the daily loss limit too.
+                        self.engine._check_daily_loss_limit()
                     self.engine.save_state()
 
                     # Write per-strategy ledger entry for analytics and auto-pruning.
@@ -803,77 +820,89 @@ class StratexTradingEngine:
                     # the lane with the VALIDATED entrants.
                     lane = self._lane_for_strategy(strat)
                     entry_price = pos.entry_price
-                    try:
-                        risk_per_unit = abs(entry_price - pos.mark_price) if pos.mark_price else 0.0
-                        r_multiple = round(net / risk_per_unit, 2) if risk_per_unit > 0 else 0.0
-                        ledger_entry = {
-                            "symbol": symbol,
-                            "strategy": strat,
-                            "timeframe": tf,
-                            "side": pos.side,
-                            "quantity": pos.quantity,
-                            "entry_price": entry_price,
-                            "exit_price": exit_price,
-                            "gross_pnl": gross,
-                            "fees": fees,
-                            "net_pnl": net,
-                            "r_multiple": r_multiple,
-                            "trades": trades,
-                            "exit_reason": "SL_TP_BROKER",
-                            "source": "MULTI_VENUE_RECONCILIATION",
-                            # BUGFIX (TASK-STR-PHASE2-001): this used to read
-                            # position_opened_at AFTER it was popped above,
-                            # so entry_timestamp was always 0. Use the value
-                            # captured before the pop.
-                            "entry_timestamp": (opened_at or 0) / 1000.0,
-                            "exit_timestamp": time.time(),
-                            "timestamp": time.time(),
-                        }
-                        if lane:
-                            ledger_entry["lane"] = lane
-                        ledger_path = os.path.join(
-                            os.path.dirname(os.path.dirname(__file__)), "testnet_trade_ledger.jsonl"
+                    if not daemon_opened:
+                        # TASK-STR-FWD-007: not the daemon's trade — the
+                        # owning engine books this close itself. No ledger
+                        # rows from here (either ledger), no realized_pnl
+                        # accrual above; tracking cleanup below still runs.
+                        logger.info(
+                            f"[STRATEX] Position closed at broker: {key} — "
+                            f"not opened by the daemon (attribution: "
+                            f"{strat_attribution or 'none'}); leaving the "
+                            f"close booking to the owning engine"
                         )
-                        with open(ledger_path, "a", encoding="utf-8") as fh:
-                            fh.write(json.dumps(ledger_entry) + "\n")
-                    except Exception as e:
-                        logger.warning(f"Ledger write failed for {key}: {e}")
+                    if daemon_opened:
+                        try:
+                            risk_per_unit = abs(entry_price - pos.mark_price) if pos.mark_price else 0.0
+                            r_multiple = round(net / risk_per_unit, 2) if risk_per_unit > 0 else 0.0
+                            ledger_entry = {
+                                "symbol": symbol,
+                                "strategy": strat,
+                                "timeframe": tf,
+                                "side": pos.side,
+                                "quantity": pos.quantity,
+                                "entry_price": entry_price,
+                                "exit_price": exit_price,
+                                "gross_pnl": gross,
+                                "fees": fees,
+                                "net_pnl": net,
+                                "r_multiple": r_multiple,
+                                "trades": trades,
+                                "exit_reason": "SL_TP_BROKER",
+                                "source": "MULTI_VENUE_RECONCILIATION",
+                                # BUGFIX (TASK-STR-PHASE2-001): this used to read
+                                # position_opened_at AFTER it was popped above,
+                                # so entry_timestamp was always 0. Use the value
+                                # captured before the pop.
+                                "entry_timestamp": (opened_at or 0) / 1000.0,
+                                "exit_timestamp": time.time(),
+                                "timestamp": time.time(),
+                            }
+                            if lane:
+                                ledger_entry["lane"] = lane
+                            ledger_path = os.path.join(
+                                os.path.dirname(os.path.dirname(__file__)), "testnet_trade_ledger.jsonl"
+                            )
+                            with open(ledger_path, "a", encoding="utf-8") as fh:
+                                fh.write(json.dumps(ledger_entry) + "\n")
+                        except Exception as e:
+                            logger.warning(f"Ledger write failed for {key}: {e}")
 
-                    # TASK-STR-PHASE2-001: the measurement fill ledger is
-                    # the source of truth for performance (the legacy write
-                    # above is kept for the auto-pruner). Broker figures
-                    # when the adapter reported realized PnL; otherwise the
-                    # row is labelled fees_source=estimate. append_fill
-                    # itself latches a reconciliation alert on failure.
-                    try:
-                        from measurement import fill_ledger as _fl
+                        # TASK-STR-PHASE2-001: the measurement fill ledger is
+                        # the source of truth for performance (the legacy write
+                        # above is kept for the auto-pruner). Broker figures
+                        # when the adapter reported realized PnL; otherwise the
+                        # row is labelled fees_source=estimate. append_fill
+                        # itself latches a reconciliation alert on failure.
+                        try:
+                            from measurement import fill_ledger as _fl
 
-                        fill_row = {
-                            "strategy": strat,
-                            "engine": "daemon",
-                            "venue": venue,
-                            "symbol": symbol,
-                            "side": pos.side,
-                            "qty": pos.quantity,
-                            "entry_price": entry_price,
-                            "exit_price": exit_price,
-                            "entry_time": (opened_at or 0) / 1000.0,
-                            "exit_time": time.time(),
-                            "gross_pnl": gross,
-                            "fees": fees,
-                            "fees_source": "broker" if pnl_info else "estimate",
-                            "net_pnl": net,
-                            "exit_reason": "SL_TP_BROKER",
-                            "order_id": str(getattr(pos, "position_id", "") or ""),
-                        }
-                        if lane:
-                            fill_row["lane"] = lane
-                        _fl.append_fill(fill_row)
-                        _fl.append_equity_snapshot(
-                            self.engine.equity_snapshot(trigger="fill")
-                        )
-                    except Exception as e:
-                        logger.warning(f"Fill ledger write failed for {key}: {e}")
+                            fill_row = {
+                                "strategy": strat,
+                                "engine": "daemon",
+                                "venue": venue,
+                                "symbol": symbol,
+                                "side": pos.side,
+                                "qty": pos.quantity,
+                                "entry_price": entry_price,
+                                "exit_price": exit_price,
+                                "entry_time": (opened_at or 0) / 1000.0,
+                                "exit_time": time.time(),
+                                "gross_pnl": gross,
+                                "fees": fees,
+                                "fees_source": "broker" if pnl_info else "estimate",
+                                "net_pnl": net,
+                                "exit_reason": "SL_TP_BROKER",
+                                "order_id": str(getattr(pos, "position_id", "") or ""),
+                            }
+                            if lane:
+                                fill_row["lane"] = lane
+                            _fl.append_fill(fill_row)
+                            _fl.append_equity_snapshot(
+                                self.engine.equity_snapshot(trigger="fill")
+                            )
+                        except Exception as e:
+                            logger.warning(f"Fill ledger write failed for {key}: {e}")
 
                     # Protective orders outlive a broker-side SL/TP hit; clear them.
                     if hasattr(adapter, "cancel_protective_orders"):
@@ -929,18 +958,27 @@ class StratexTradingEngine:
             try:
                 from measurement import fill_ledger as _fl
 
+                # TASK-STR-FWD-007: track sweep completeness so a CLEAN
+                # sweep can clear the latched alert. A venue whose read
+                # failed (live is None) makes the sweep incomplete — it
+                # cannot prove the venue clean and must not clear. An
+                # empty list is a successful read of a flat venue.
+                sweep_complete = True
+                untracked_found = 0
                 for venue, adapter in self.engine.venues.items():
                     try:
                         getter = getattr(adapter, "get_positions_or_none", None)
                         live = getter() if callable(getter) else adapter.get_positions()
                     except Exception:
                         live = None
-                    if not live:
+                    if live is None:
+                        sweep_complete = False
                         continue
                     for p in live:
                         k = f"{venue}:{p.symbol}"
                         if k in self.engine.positions:
                             continue
+                        untracked_found += 1
                         _fl.raise_alert(
                             "untracked_position",
                             f"{k} open at broker but not tracked by the daemon",
@@ -956,6 +994,13 @@ class StratexTradingEngine:
                             "entry_price": p.entry_price,
                             "note": "untracked_detected",
                         })
+                if sweep_complete and untracked_found == 0:
+                    # The condition this sweep raises on is gone; clear
+                    # the latch. Before this, nothing ever called
+                    # clear_alert for this kind, so the alert stayed
+                    # ACTIVE forever (live evidence 2026-11-16: frozen
+                    # at its last raise while the position was tracked).
+                    _fl.clear_alert("untracked_position")
             except Exception as e:
                 logger.debug(f"Untracked-position sweep failed: {e}")
 
