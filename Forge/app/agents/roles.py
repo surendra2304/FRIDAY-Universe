@@ -411,6 +411,24 @@ class ArchitectRole(BaseAgent):
         except Exception:
             pass
 
+        # TASK-FRG-006: when the goal matches a mined, verified build
+        # pattern, seed the prompt with that pattern's starting shape so
+        # the build begins from a proven manifest/layout instead of a
+        # blank page. No match -> prompt unchanged.
+        pattern_match = None
+        pattern_info = ""
+        try:
+            from app.agents.pattern_library import match_pattern
+
+            pattern_match = match_pattern(
+                goal, list(context.get("requirements", []) or [])
+            )
+            if pattern_match is not None:
+                pattern_info = f"\n{pattern_match.guidance}"
+        except Exception:
+            pattern_match = None
+            pattern_info = ""
+
         prompt = (
             f"Objective: {goal}\n"
             f"Stage: {node_title}\n"
@@ -419,6 +437,7 @@ class ArchitectRole(BaseAgent):
             f"{consensus_info}\n"
             f"{research_info}\n"
             f"{futuris_info}\n"
+            f"{pattern_info}"
             f"Please synthesize the complete Architecture Specification and File Manifest for this project. "
             f"Define system modules, interfaces, schema definitions, and file layout.\n\n"
             f"Format your output as:\n"
@@ -497,7 +516,16 @@ class ArchitectRole(BaseAgent):
             goal_lower = goal.lower()
             is_static_web = is_web_studio_goal(goal)
 
-            if any(k in goal_lower for k in ["full-stack", "fullstack"]):
+            if pattern_match is not None:
+                # TASK-FRG-006: the mined pattern's manifest replaces the
+                # generic fallback lists below -- its shapes are the ones
+                # earlier verified builds actually passed the battery
+                # with (e.g. the two-module shape names the module file
+                # the old else-branch silently dropped). Runs after
+                # TASK-FRG-004's explicit-layout step above: a layout the
+                # goal itself states outranks a mined template.
+                manifest_files = pattern_match.manifest
+            elif any(k in goal_lower for k in ["full-stack", "fullstack"]):
                 manifest_files = [
                     "main.py",
                     "test_main.py",
@@ -555,6 +583,7 @@ class ArchitectRole(BaseAgent):
             "file_manifest": manifest_files,
             "files_written": written,
             "agent": self.role_name,
+            "pattern_id": pattern_match.pattern.id if pattern_match else None,
         }
 
 
@@ -720,7 +749,20 @@ class DeveloperRole(BaseAgent):
             elif any(k in goal_lower for k in ["full-stack", "fullstack"]):
                 file_manifest = ["main.py", "index.html", "style.css", "app.js"]
             else:
+                # TASK-FRG-006: no manifest reached this role at all; start
+                # from the mined pattern's manifest when the goal matches
+                # one, instead of the bare ["main.py"] page.
                 file_manifest = ["main.py"]
+                try:
+                    from app.agents.pattern_library import match_pattern
+
+                    pm = match_pattern(
+                        goal, list(context.get("requirements", []) or [])
+                    )
+                    if pm is not None:
+                        file_manifest = pm.manifest
+                except Exception:
+                    pass
 
         written: list[str] = []
         fallback_files: list[str] = []
