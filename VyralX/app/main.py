@@ -2408,3 +2408,7 @@ app.include_router(retention_router, prefix="/api/v1")
 # --- Real Media & Growth Engines (ClaudeAds, TopRank, OpenHiggsfield, Hyperframes) ---
 from app.services.real_media_routes import router as real_media_router
 app.include_router(real_media_router, prefix="/api/v1/vyralx")
+
+# --- IG Corpus Idea Generator Integration (TASK-IG3-VYR-08) ---
+from app.services.idea_generator import router as idea_generator_router
+app.include_router(idea_generator_router, prefix="/api/v1", tags=["IG Corpus Idea Generator"])
