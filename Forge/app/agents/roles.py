@@ -475,6 +475,72 @@ class ArchitectRole(BaseAgent):
             )
             written.append("docs/ARCHITECTURE_SPEC.md")
 
+        # TASK-FRG-009: with a real model, the combined spec+manifest
+        # completion can exhaust its token budget on the specification
+        # alone, so the manifest block is never emitted (proven in the
+        # FRG-009 real-gateway battery: the spec ended mid-section and the
+        # manifest fell back to keyword templates). When no manifest was
+        # extracted, make a second, manifest-ONLY call with its own
+        # budget; if the delimited block still does not appear, rescue a
+        # bare JSON array of file paths from the response text. Only when
+        # all of that fails does the template fallback below run.
+        if "docs/FILE_MANIFEST.json" not in written:
+            try:
+                from app.agents.provider_wiring import is_mock_provider
+
+                if not is_mock_provider(self.provider):
+                    manifest_prompt = (
+                        f"Objective: {goal}\n\n"
+                        "Return ONLY the project file manifest for this "
+                        "objective — every file the project needs, including "
+                        "package files, modules, the entry point and tests, "
+                        "using the exact layout the objective states. No "
+                        "explanation, no specification. Format exactly:\n"
+                        "### File: docs/FILE_MANIFEST.json\n"
+                        "```json\n"
+                        "[\"path/one.py\", \"path/two.py\"]\n"
+                        "```"
+                    )
+                    manifest_resp = await self.prompt_model(manifest_prompt)
+                    extra = self.apply_extracted_files(
+                        task_id=task_id,
+                        response_text=manifest_resp.content,
+                        engine=engine,
+                        default_filename="docs/FILE_MANIFEST.json",
+                    )
+                    for p in extra:
+                        if p not in written:
+                            written.append(p)
+                    if "docs/FILE_MANIFEST.json" not in written:
+                        import json as _json
+                        import re as _re
+
+                        m = _re.search(
+                            r"\[\s*\"[^\"]+\"(?:\s*,\s*\"[^\"]+\")*\s*\]",
+                            manifest_resp.content,
+                        )
+                        if m:
+                            rescued = [
+                                str(x)
+                                for x in _json.loads(m.group(0))
+                                if isinstance(x, str)
+                                and _re.search(
+                                    r"\.(py|md|txt|toml|html|css|js|json)$", x
+                                )
+                            ]
+                            if len(rescued) >= 2:
+                                engine.fs.create_file(
+                                    task_id=task_id,
+                                    relative_path="docs/FILE_MANIFEST.json",
+                                    content=_json.dumps(rescued, indent=2),
+                                    role=self.role_name,
+                                )
+                                written.append("docs/FILE_MANIFEST.json")
+            except Exception:
+                # A failed rescue must not break architecture; the
+                # template fallback below remains the last resort.
+                pass
+
         # Parse or generate File Manifest
         manifest_files: list[str] = []
         if "docs/FILE_MANIFEST.json" in written:
@@ -850,6 +916,11 @@ class DeveloperRole(BaseAgent):
             # Filter remaining non-web files to process if any
             file_manifest = [f for f in file_manifest if f not in studio_files]
 
+        # TASK-FRG-009: manifest files the wired provider could not author
+        # (after one corrective retry) — named in the node result so the
+        # gap is visible in task output, never silently dropped.
+        provider_failed_files: list[str] = []
+
         # 2. Iterate through each implementation file in File Manifest and synthesize code
         for filename in file_manifest:
             if not filename or not isinstance(filename, str):
@@ -875,6 +946,37 @@ class DeveloperRole(BaseAgent):
                     default_filename=filename,
                 )
                 written.extend(w)
+                continue
+            # TASK-FRG-009: a real model provider is wired into this role —
+            # author the file through it, consuming the manifest entry
+            # directly (see _author_manifest_file_via_provider). A provider
+            # TRANSPORT failure raises (the Inference provider is
+            # fail-closed): the node fails honestly instead of silently
+            # degrading to mock output. A per-file CONTENT failure (empty,
+            # unparseable, refused by the write-boundary guard) is retried
+            # once inside the helper and then recorded in
+            # provider_failed_files — one bad file must not kill a
+            # multi-file build; the verification battery judges the gap.
+            from app.agents.provider_wiring import is_mock_provider
+
+            if not is_mock_provider(self.provider):
+                authored = await self._author_manifest_file_via_provider(
+                    task_id=task_id,
+                    filename=filename,
+                    goal=goal,
+                    node_title=node_title,
+                    context=context,
+                    file_manifest=file_manifest,
+                    written=written,
+                    engine=engine,
+                    is_web_3d=is_web_3d,
+                )
+                if authored:
+                    for p in authored:
+                        if p not in written:
+                            written.append(p)
+                else:
+                    provider_failed_files.append(filename)
                 continue
             try:
                 from app.integrations.ai_universe_client import get_ai_universe_client
@@ -1225,9 +1327,138 @@ class DeveloperRole(BaseAgent):
             "fallback_stub": bool(fallback_files),
             "fallback_files": fallback_files,
         }
+        if provider_failed_files:
+            ret["provider_failed_files"] = provider_failed_files
         if last_run_id is not None:
             ret["ai_universe_run_id"] = last_run_id
         return ret
+
+    async def _author_manifest_file_via_provider(
+        self,
+        *,
+        task_id: str,
+        filename: str,
+        goal: str,
+        node_title: str,
+        context: dict[str, Any],
+        file_manifest: list[str],
+        written: list[str],
+        engine: Any,
+        is_web_3d: bool,
+    ) -> list[str]:
+        """TASK-FRG-009: author ONE manifest file through the wired model
+        provider and write it into the workspace.
+
+        The prompt carries the goal, the requirements, the architecture
+        spec excerpt and the sibling files already written, so cross-file
+        imports and interfaces line up. One corrective retry: when the
+        first response cannot be turned into a writable file (empty,
+        unparseable, or refused by the write-boundary compile gate — the
+        FRG-009 G5 battery produced exactly that on security.py), the
+        model is told its output was rejected and asked once more for
+        ONLY the file. Returns the written paths, [] when both attempts
+        failed. Provider transport failures propagate (fail-closed): a
+        dead gateway is a node failure, not a per-file defect.
+        """
+        arch_spec = ""
+        try:
+            arch_spec = engine.fs.read_file(
+                task_id, "docs/ARCHITECTURE_SPEC.md", role=self.role_name
+            )[:3000]
+        except Exception:
+            pass
+        sibling_block = ""
+        for w_file in written:
+            try:
+                sibling_block += (
+                    f"\n--- File: {w_file} ---\n"
+                    + engine.fs.read_file(task_id, w_file, role=self.role_name)[:2000]
+                )
+            except Exception:
+                pass
+        req_block = "\n".join(f"- {r}" for r in context.get("requirements", []))
+        base_prompt = (
+            f"Project goal: {goal}\n"
+            f"Implementation task: {node_title}\n"
+            f"Requirements:\n{req_block}\n\n"
+            f"Architecture specification:\n{arch_spec}\n\n"
+            f"Files in this project (the manifest — implement exactly "
+            f"the requested file, consistent with the others): "
+            f"{', '.join(file_manifest)}\n"
+            f"{sibling_block}\n\n"
+            f"Write the COMPLETE contents of the file '{filename}' now. "
+            f"No placeholders, no TODOs, no truncation. Honour every "
+            f"interface the goal and the architecture spec define for "
+            f"this file, and match the sibling files exactly.\n"
+            f"Output the file delimited exactly as:\n"
+            f"### File: {filename}\n```\n<complete file contents>\n```"
+        )
+        last_error: str | None = None
+        for attempt in range(2):
+            prompt = base_prompt
+            if attempt == 1:
+                prompt += (
+                    f"\n\nYour previous output for '{filename}' was rejected"
+                    f" ({last_error}). Return ONLY the complete file — no "
+                    "prose, no explanation — delimited exactly as shown."
+                )
+            resp = await self.prompt_model(prompt)
+            try:
+                extracted = self.apply_extracted_files(
+                    task_id=task_id,
+                    response_text=resp.content,
+                    engine=engine,
+                    default_filename=filename,
+                )
+                if extracted:
+                    for p in extracted:
+                        try:
+                            ext_c = engine.fs.read_file(
+                                task_id, p, role=self.role_name
+                            )
+                            sanitized = _sanitize_web_asset(
+                                p, ext_c, goal or node_title, is_web_3d
+                            )
+                            if sanitized != ext_c:
+                                engine.fs.create_file(
+                                    task_id=task_id,
+                                    relative_path=p,
+                                    content=sanitized,
+                                    role=self.role_name,
+                                )
+                        except Exception:
+                            pass
+                    return list(extracted)
+                # The model returned raw code without the file delimiter:
+                # strip any code fence and store it as the requested file.
+                clean_code = resp.content.strip()
+                if clean_code.startswith("```"):
+                    lines = clean_code.splitlines()
+                    if lines and lines[0].startswith("```"):
+                        lines = lines[1:]
+                    if lines and lines[-1].startswith("```"):
+                        lines = lines[:-1]
+                    clean_code = "\n".join(lines).strip()
+                if clean_code:
+                    clean_code = _sanitize_web_asset(
+                        filename, clean_code, goal or node_title, is_web_3d
+                    )
+                    engine.fs.create_file(
+                        task_id=task_id,
+                        relative_path=filename,
+                        content=clean_code,
+                        role=self.role_name,
+                    )
+                    return [filename]
+                last_error = "the response contained no usable file content"
+            except Exception as exc:
+                last_error = str(exc)[:200]
+        logger.error(
+            f"[Task {task_id}] Role provider could not author manifest file "
+            f"'{filename}' after a corrective retry ({last_error}); the file "
+            "was not written and verification will judge the gap."
+        )
+        return []
 
 
 class FrontendEngineerRole(BaseAgent):

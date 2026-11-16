@@ -2,6 +2,7 @@
 Pytest fixtures and configuration for FORGE test suite.
 """
 
+import os
 import shutil
 import sys
 import tempfile
@@ -11,6 +12,13 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+
+# TASK-FRG-009: production roles resolve to the fleet Inference gateway by
+# default (Settings.role_provider). The test suite must stay hermetic, so it
+# explicitly configures the deterministic mock provider — the only mode in
+# which DirectProvider may serve roles — before any app module reads the
+# settings. Tests for the real wiring override this per-test.
+os.environ.setdefault("FORGE_ROLE_PROVIDER", "direct")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
