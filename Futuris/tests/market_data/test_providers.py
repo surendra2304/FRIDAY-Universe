@@ -227,6 +227,17 @@ def test_openbb_sdk_available_probe(monkeypatch):
     assert sdk_available() is True
 
 
+def test_openbb_sdk_available_probe_does_not_import_openbb(monkeypatch):
+    from futuris.market_data.providers.openbb_sdk import sdk_available
+
+    # Regression: the probe exists to avoid importing the SDK (measured
+    # at ~996 MB peak RSS), so it must use find_spec only -- calling it
+    # must never leave ``openbb`` loaded in sys.modules as a side effect.
+    monkeypatch.delitem(sys.modules, "openbb", raising=False)
+    sdk_available()
+    assert "openbb" not in sys.modules
+
+
 async def test_openbb_sdk_present_standardizes_bars(monkeypatch):
     seen: dict = {}
 
