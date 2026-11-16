@@ -7756,8 +7756,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: MERGED
     owner: muse_ai
     branch: claude/task-frg-004
-    prs: [329]
-    pr: 329
+    prs: [554]
+    pr: 554
     contributors: []
     priority: P1
     created_at: "2026-11-15T13:47:00+05:30"
@@ -7776,14 +7776,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Repair rounds: no self-repair or peer-review activity appears in any battery task's terminal log or the Forge journal for its window -- failed verification stages (lint/pytest/runtime) ended every task without a recorded repair attempt (reported as observed; journal grep method in the crew's completion comment on issue #35)."
       - "Honest scope limit: the fix makes the manifest truthful and gives synthesis the requested path set; it does not wire a real LLM provider into the roles (set_provider has no production caller), and deterministic synthesis still cannot author true package contents for arbitrary layouts. That wiring is a separate coordinator decision, reported -- not bundled into this PR."
     evidence:
-      - "Landed on origin/main via replacement/rebase direct commit on main (see landing commit): 70718ef150654b433dfbe4956f6d8673a088aa0b TASK-FRG-004: Forge architect honours explicit file layouts (multi-file battery fix) (replacement for #329, rebased on 1b2bf42c) (board hygiene 2026-11-16, audit §2B: original PR #None was not itself merged — content landed via this vehicle)."
-    merge_note: "Board hygiene 2026-11-16 (§2B): status IN_REVIEW -> MERGED; content landed via replacement/rebase direct commit on main (see landing commit) 70718ef150654b433dfbe4956f6d8673a088aa0b, not via merge of original PR #None."
-    next_action: "Post-merge: coordinator: merge the FRG-004 fix PR (claude/task-frg-004), deploy Forge via Fleet CD, then re-run one battery goal (G5 taskboard shape) as the production-verification probe -- expect docs/FILE_MANIFEST.json to list the 10 stated files. Separately decide on wiring a real provider into Forge roles (evidence: FRG-003 + FRG-004)."
+      - "Landed on origin/main via replacement/rebase direct commit on main (see landing commit): 70718ef150654b433dfbe4956f6d8673a088aa0b TASK-FRG-004: Forge architect honours explicit file layouts (multi-file battery fix) (replacement for #329, rebased on 1b2bf42c) (board hygiene 2026-11-16, audit §2B: original PR #329 was not itself merged — content landed via this vehicle)."
+    merge_note: "Board hygiene 2026-11-16 (§2B): status IN_REVIEW -> MERGED; content landed via replacement/rebase direct commit on main (see landing commit) 70718ef150654b433dfbe4956f6d8673a088aa0b, not via merge of original PR #329."
+    next_action: "Post-merge: deploy Forge via Fleet CD, then re-run one battery goal (G5 taskboard shape) as the production-verification probe -- expect docs/FILE_MANIFEST.json to list the 10 stated files. Separately decide on wiring a real provider into Forge roles (evidence: FRG-003 + FRG-004)."
   - id: TASK-FRG-010
     title: "Forge module-completeness gate: goal/manifest modules must exist as real files before the tester gate; create-route healing; honest FAILED naming the rest"
     status: MERGED
     owner: muse_ai
-    pr: 392
+    pr: 589
     evidence:
       - "PR #392 head 3ba7d5da CI 9/9 check-runs green (test, contracts, secrets scan, layout, monorepo policy, image build). Gate wired in orchestrator step_task (tester gate intercepted; tester never invoked on unhealable omissions) + run_task backstop demoting COMPLETED to FAILED naming missing modules; healing only via RecoveryEngine.create_missing_module (create route: 0.70 bar, compile gate, guarded write; manifest added as a naming source); gate re-reads disk after healing. Suite Forge/tests/test_frg010_completeness_gate.py: 14 tests, imports symbols absent on main (fails there by construction), green in CI. Finisher-verified: shipped blobs byte-identical to crew sources (completeness ddf9c754, test d4eab20e, roles carry 1c99cc7d). Acceptance battery NOT run to completion by the original crew (scratch env staged on S1 /tmp/frg010, zero run artifacts) — outcomes not claimed."
       - "Landed on origin/main via replacement/rebase direct commit on main (see landing commit): 3c55b6cff02cbd62e0588151f32340c800b2af82 TASK-FRG-010: Forge module completeness gate (stacked on PR #329) (replacement for #392, rebased on 1ab2160f) (board hygiene 2026-11-16, audit §2B: original PR #392 was not itself merged — content landed via this vehicle)."
@@ -8645,7 +8645,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Landed on origin/main via combined-export direct commit (rebuilt on current main): cfcfb84c72aa855788c243cea41988014345df2d TASK-IG-WEB-02: life-in-weeks sheet (rebuilt on current main, combined export) (board hygiene 2026-11-16, audit §2B: original PR #490 was not itself merged — content landed via this vehicle)."
     merge_note: "Board hygiene 2026-11-16 (§2B): status IN_REVIEW -> MERGED; content landed via combined-export direct commit (rebuilt on current main) cfcfb84c72aa855788c243cea41988014345df2d, not via merge of original PR #490."
-    next_action: "Post-merge: coordinator: review + merge PR #490, splice this entry, Fleet CD, production spot-check of the layer (grid renders, mark persists across reload)."
+    next_action: "Post-merge: Fleet CD, production spot-check of the layer (grid renders, mark persists across reload)."
   - id: TASK-IG-WEB-03
     title: "IG corpus DfJ8UlUApUN — Memory Galaxy summoned layer: Memora memories as a starfield via the existing /api/memory/browser endpoint, honest thread labelling"
     status: MERGED
@@ -8670,7 +8670,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Landed on origin/main via combined-export direct commit (rebuilt on current main): 9e0981715429a23deb9c74d2a53ca8d6963e00b6 TASK-IG-WEB-03: Memory Galaxy sheet (rebuilt on current main, combined export) (board hygiene 2026-11-16, audit §2B: original PR #501 was not itself merged — content landed via this vehicle)."
     merge_note: "Board hygiene 2026-11-16 (§2B): status IN_REVIEW -> MERGED; content landed via combined-export direct commit (rebuilt on current main) 9e0981715429a23deb9c74d2a53ca8d6963e00b6, not via merge of original PR #501."
-    next_action: "Post-merge: coordinator: review + merge PR #501, splice this entry, Fleet CD, production spot-check — confirm the galaxy renders real memories (if it shows 'didn't answer', align the /api/memory/browser gate with the sibling UI endpoints as a follow-up)."
+    next_action: "Post-merge: Fleet CD, production spot-check — confirm the galaxy renders real memories (if it shows 'didn't answer', align the /api/memory/browser gate with the sibling UI endpoints as a follow-up)."
   - id: TASK-IG-WEB-04
     title: "IG corpus DaLGg9yMmn6 — opt-in ambient sky background layer for the stage (canvas motes, pointer parallax, off by default, reduced-motion/low-power renders nothing)"
     status: IN_REVIEW
@@ -8715,7 +8715,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Landed on origin/main via combined-export direct commit (rebuilt on current main): b08b084cb2e0f42c3143e684d5ce005774456aed TASK-IG-WEB-05: showcase sheet (rebuilt on current main, combined export) (board hygiene 2026-11-16, audit §2B: original PR #515 was not itself merged — content landed via this vehicle)."
     merge_note: "Board hygiene 2026-11-16 (§2B): status IN_REVIEW -> MERGED; content landed via combined-export direct commit (rebuilt on current main) b08b084cb2e0f42c3143e684d5ce005774456aed, not via merge of original PR #515."
-    next_action: "Post-merge: coordinator: review + merge PR #515, splice this entry, Fleet CD, production spot-check (billboard rotates, room cards open their layers)."
+    next_action: "Post-merge: Fleet CD, production spot-check (billboard rotates, room cards open their layers)."
   - id: TASK-IG-WEB-06
     title: "IG corpus DcBGh30yOLW — Guided Tour summoned layer: cinematic serif hero + five-chapter scroll narrative with live fact chips and onSummon CTAs"
     status: MERGED
@@ -8739,7 +8739,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Landed on origin/main via combined-export direct commit (rebuilt on current main): 94bb776c40e02cbf332e4405485019ac71b4ef2e TASK-IG-WEB-06: cinematic tour sheet (rebuilt on current main, combined export) (board hygiene 2026-11-16, audit §2B: original PR #520 was not itself merged — content landed via this vehicle)."
     merge_note: "Board hygiene 2026-11-16 (§2B): status IN_REVIEW -> MERGED; content landed via combined-export direct commit (rebuilt on current main) 94bb776c40e02cbf332e4405485019ac71b4ef2e, not via merge of original PR #520."
-    next_action: "Post-merge: coordinator: review + merge PR #520, splice this entry, Fleet CD, production spot-check of the tour; after PR #482 lands, swap TourSheet's local Reveal for motion.tsx (follow-up noted in the PR)."
+    next_action: "Post-merge: Fleet CD, production spot-check of the tour; after PR #482 lands, swap TourSheet's local Reveal for motion.tsx (follow-up noted in the PR)."
   - id: TASK-IG-WEB-07
     title: "IG corpus Dc8xeYzoOLh — City summoned layer: ten agents as explorable skyline districts, windows lit by live fleet status, camera fly-to + district panel"
     status: IN_REVIEW
@@ -8784,7 +8784,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Landed on origin/main via combined-export direct commit (rebuilt on current main): 37e5ba7462a88f2afd8f659df8fbca6226351d28 TASK-IG-WEB-08: NOOLAM editorial sheet (rebuilt on current main, combined export) (board hygiene 2026-11-16, audit §2B: original PR #522 was not itself merged — content landed via this vehicle)."
     merge_note: "Board hygiene 2026-11-16 (§2B): status IN_REVIEW -> MERGED; content landed via combined-export direct commit (rebuilt on current main) 37e5ba7462a88f2afd8f659df8fbca6226351d28, not via merge of original PR #522."
-    next_action: "Post-merge: coordinator: review + merge PR #522, splice this entry, Fleet CD, production spot-check of the edition."
+    next_action: "Post-merge: Fleet CD, production spot-check of the edition."
   - id: TASK-STR-RD-010
     title: "Stratex execution-quality audit (fees / slippage / timing vs RD-002 cost model) + proven-leak fixes"
     owner: muse_ai
@@ -9446,34 +9446,28 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Post-merge: fleet CD deploy -> production probe: escrcpy_launch_plan / escrcpy_automation answer through the live agent's production registry."
   - id: TASK-IG2-MEM-01
     title: "BM25 hybrid recall + capture-compress-inject for Memora (agentmemory ADAPT)"
-    status: MERGED
+    status: IN_REVIEW
     owner: muse_ai
     pr: 709
     branch: claude/ig2-task-ig2-mem-01
-    evidence:
-      - "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #709 -> 3bbd3a1d364cb0bc04f9c56635d5e6e60f8d2047. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #755 -> 61b1ba444f20a7baff9f73c3194948bb2056d8a3 (v1_capture router mounted on the production app: POST /v1/capture/events, POST /v1/capture/compress, GET /v1/capture/context, POST /v1/capture/handoff). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair."
-      - "MERGED on origin/main: 3bbd3a1d364cb0bc04f9c56635d5e6e60f8d2047 Merge pull request #709 from surendra2304/claude/ig2-task-ig2-mem-01 (board hygiene 2026-11-16, audit §2A: PR #709 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: fleet CD deploy -> production probe of the new /v1/capture routes (events, compress, context, handoff) on the live Memora service"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #709 -> 3bbd3a1d364cb0bc04f9c56635d5e6e60f8d2047. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #755 -> 61b1ba444f20a7baff9f73c3194948bb2056d8a3 (v1_capture router mounted on the production app: POST /v1/capture/events, POST /v1/capture/compress, GET /v1/capture/context, POST /v1/capture/handoff). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair. PRODUCTION PROBES 2026-11-16 (memora-probes rounds 1+2; S1 deployed HEAD 708f632b, deployed v1_capture.py hash-identical to the main blob): VERIFIED — POST /v1/capture/events -> 200 {stored:true} with a memory id; GET /v1/capture/context -> 200 in 3.5s, injection pack led by the just-written probe event (capture->inject loop works end-to-end in production; re-confirmed round 2). BROKEN IN PRODUCTION — POST /v1/capture/compress: the FIRST compress of a session returns HTTP 500 (the digest persists as EPISODIC, but semantic promotion dies — TypeError: Object of type Decimal is not JSON serializable in the new provenance; the error handler then raises sqlalchemy PendingRollbackError on the poisoned session); repeat compress -> 200 already_existed:true. POST /v1/capture/handoff fails identically (500 after its digest persisted). All probe records cleaned up (hard deletes, GET-after 404)."
+    next_action: "Fix PR: capture compress/handoff — make the promotion provenance JSON-safe (Decimal from Oracle numerics) and roll back the session in the compress error handler, so a denied promotion is not a failed compression. Then re-probe compress/handoff end-to-end (first compress 200 with promotion landed; handoff 200 with context pack) and flip VERIFIED only with those outcomes recorded."
   - id: TASK-IG2-MEM-02
     title: "Skill-learning loop for Memora (Hermes pattern)"
-    status: MERGED
+    status: IN_REVIEW
     owner: muse_ai
     pr: 711
     branch: claude/ig2-task-ig2-mem-02
-    evidence:
-      - "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #711 -> ec24563566207ad2bb85a7759ebe40c0f091bc33. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #758 union-rebased as PR #779 -> 18c624f2b0709728043df7bff43786c4d26fc98c (v1_skills router mounted: /v1/skills/* outcomes/evaluate/stats/drafts/review/active, plus run_evaluation_pass wired into the existing background worker; drafts only, activation stays behind the admin review gate). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair."
-      - "MERGED on origin/main: ec24563566207ad2bb85a7759ebe40c0f091bc33 Merge pull request #711 from surendra2304/claude/ig2-task-ig2-mem-02 (board hygiene 2026-11-16, audit §2A: PR #711 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: fleet CD deploy -> production probe of the new /v1/skills routes and the background evaluation pass on the live Memora service"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #711 -> ec24563566207ad2bb85a7759ebe40c0f091bc33. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #758 union-rebased as PR #779 -> 18c624f2b0709728043df7bff43786c4d26fc98c (v1_skills router mounted: /v1/skills/* outcomes/evaluate/stats/drafts/review/active, plus run_evaluation_pass wired into the existing background worker; drafts only, activation stays behind the admin review gate). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair. PRODUCTION PROBES 2026-11-16 (memora-probes rounds 1+2; S1 deployed HEAD 708f632b, deployed v1_skills.py hash-identical to the main blob): VERIFIED — GET /v1/skills/{stats,drafts,active} -> 200 (honestly empty at baseline; stats tallies correct after outcome writes); POST /v1/skills/outcomes -> 200 stored:true for success and corrected outcomes; the review endpoint's admin gate fires in production (non-admin -> 403 with the restriction message; admin reaches the service). BROKEN IN PRODUCTION — POST /v1/skills/evaluate runs (200, patterns_seen correct) but its drafting step is REFUSED by the production write policy for BOTH triggers (pipeline_refused: PermissionDeniedError — direct PROCEDURAL writes require verified/operator-confirmed trust + at least one evidence reference; SkillLearningService supplies neither), so no skill draft can ever be created in production and the approve->active / reject flows cannot be exercised end-to-end. All probe records cleaned up (hard deletes, GET-after 404)."
+    next_action: "Fix PR: SkillLearningService evidence-carrying draft writes — supply the outcome evidence references / verified-trust path the production write policy requires, instead of a bare direct PROCEDURAL write. Then re-probe the full loop (outcomes -> evaluate drafts a pending_review draft -> non-admin review 403 -> admin approve -> active; plus the reject flow) and flip VERIFIED only with those outcomes recorded."
   - id: TASK-IG2-MEM-03
     title: "Structured user-model profile in Memora (Hermes pattern)"
-    status: MERGED
+    status: IN_REVIEW
     owner: muse_ai
     pr: 712
     branch: claude/ig2-task-ig2-mem-03
-    evidence:
-      - "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #712 -> 6ed5fdce0c6f28b7f17783b54ee6beaaf1576a35. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #761 union-rebased as PR #781 -> 92142b94ed71257008d5ac068152f13eaa89a431 (v1_user_model router mounted: /v1/user-model profile/consult/render/field/corrections). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair."
-      - "MERGED on origin/main: 6ed5fdce0c6f28b7f17783b54ee6beaaf1576a35 Merge pull request #712 from surendra2304/claude/ig2-task-ig2-mem-03 (board hygiene 2026-11-16, audit §2A: PR #712 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: fleet CD deploy -> production probe of the new /v1/user-model routes (profile, consult, render, field, corrections) on the live Memora service"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #712 -> 6ed5fdce0c6f28b7f17783b54ee6beaaf1576a35. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #761 union-rebased as PR #781 -> 92142b94ed71257008d5ac068152f13eaa89a431 (v1_user_model router mounted: /v1/user-model profile/consult/render/field/corrections). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair. PRODUCTION PROBES 2026-11-16 (memora-probes round 1; S1 deployed HEAD 708f632b, deployed v1_user_model.py hash-identical to the main blob): VERIFIED — GET /v1/user-model/profile and GET /v1/user-model/consult -> 200; POST /v1/user-model/corrections persisted on the probe subject as a standing_rule at confidence 1.0 and read back via profile + consult; probe records hard-deleted afterwards (GET-after 404, profile baseline restored to exists:false); owner profile untouched. NOT exercised (round 2 covered capture + skills only): PUT /v1/user-model/field, GET /v1/user-model/render. Entry stays IN_REVIEW until those two routes are probed — round 2 surfaced production-broken sub-paths in both sibling entries, so unprobed routes are not assumed good."
+    next_action: "Production-probe the two unexercised routes (PUT /v1/user-model/field, GET /v1/user-model/render) on the live service; flip VERIFIED only with those outcomes recorded."
   - id: TASK-IG2-SEN-01
     title: "Defensive-only skill pack for Sentinel (Anthropic-Cybersecurity-Skills ADAPT)"
     status: MERGED
@@ -9985,7 +9979,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "FRD-005 re-run #5 decomposition (production run 20261116-175800, 2026-11-16; issue #35 comment 6916834339): delegation bridge turn 16.30s (end-to-end 19.39s vs bar 12.0); recall brain 4.41s (end-to-end 6.80s vs bar 5.0). Every other segment is exonerated in the measured path: connect segment ~3.4s (TASK-VOI-015 + MemorySwapMax interim), Stratex hop 0.03s (snapshot keeper), STT and bridge budgets within bounds. FRD-003's live cognitive-turn median was 20.47s - the cognitive turn is the residual speed debt. MERGED as PR #747 -> b9eecd1c7f1738ab1c0aba1a9bb8c93cb58cb219 (merge runner 14, 2026-11-16; head 9ae71cb01d4488e3772c3700dd222980fccf9799; crew completion comment 6918920469). Crew decomposition refined the diagnosis: neither failing leg reaches the LLM loop - recall time was serial Memora draws, and the delegation dispatch is a deterministic fast path dominated by Stratex task execution under host contention. Shipped: recall draws run concurrently - memora_client remote+local legs in parallel (memory/memora_client.py) and the recall gate's primary + FRD-014 spelling-variant draws in parallel (api/server.py) + new tests (tests/test_voice_recall_concurrency_frd016.py); staging recall (US) draws 6.89/2.48s -> 1.68/1.41s. The 145-tool payload's isolated effect was not provably material, so no tool scoping shipped. CI on head: py310/secrets/contracts/test/detect-voice-changes SUCCESS; only the validate pair red (proven flake family); voice-regressions = exactly the 1 known pre-existing failure (job 133356562013: 1 failed / 292 passed). RE-RUN #6 VERDICT (production run 20261116-200627, 2026-11-16; issue #35 comment 6920046514): NOT proven. Recall leg HARD FAIL - brain turn 53.59s and the participant heard ZERO audio in the full 60s recall window; the concurrent draws did not full-match promptly (~32s draw phase under Memora distress), the FRD-014 full-match retry merged 2 hits and the deterministic direct answer was bypassed (see TASK-FRD-017), followed by ~21s of cognitive composition (205-char reply). Delegation 23.88s vs the 12.0s bar (content receipt-exact PASS; STT finalization 6.99s + the same persist/Stratex-execution class this task decomposed). The recall concurrency shipped here did not get recall onto its fast path under production Memora distress."
       - "MERGED on origin/main: b9eecd1c7f1738ab1c0aba1a9bb8c93cb58cb219 Merge pull request #747 from surendra2304/claude/task-frd-016 (board hygiene 2026-11-16, audit §2A: PR #747 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: tASK-FRD-017 (deterministic-answer bypass) + TASK-FRD-018 (verbatim watch) fixes, then FRD-005 re-run #7."
+    next_action: "Post-merge: TASK-FRD-017 (deterministic-answer bypass) + TASK-FRD-018 (verbatim watch) fixes, then FRD-005 re-run #7."
   - id: TASK-FRD-017
     title: "Recall: full-match-retry merged hits bypass the deterministic direct answer"
     status: MERGED
