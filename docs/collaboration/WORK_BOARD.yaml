@@ -9166,6 +9166,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig2-task-ig2-frg-06
     evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #719 -> 0f866128d79cb41600468fa0e71f1cd483b041c8. CI green except the validate pair (proven flake family)."
     next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRG-08
+    title: "Claudex Loop: build/audit role-swap loop until cross-model agreement (package G-13)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ig2-task-ig2-frg-08
+    evidence: "app/verification/claudex_loop.py composes FRG-01's cross_model_audit per round: builder/auditor swap every round, findings fed to the next builder as data, AGREED only on a real audit PASS, UNAVAILABLE stops the loop immediately (never loop past an audit that did not happen), round cap = EXHAUSTED (never reported as AGREED), unparseable/empty/raising build = BUILD_FAILED, same-model configuration refused with ValueError. Default audit path is cross_model_audit itself. 9/9 new tests pass locally incl. swap + findings-feed-forward + default-audit composition; additive files only."
+    next_action: "Coordinator merge queue"
   - id: TASK-IG2-INF-02
     title: "encrypted-at-rest key vault for Inference provider keys"
     status: IN_REVIEW
