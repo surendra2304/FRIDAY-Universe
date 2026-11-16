@@ -17,21 +17,56 @@ if [[ "$SERVER_ROLE" != "1" && "$SERVER_ROLE" != "2" ]]; then
 fi
 
 REPO_DIR="/opt/friday_universe"
-VENV_DIR="/opt/friday_universe/venv"
+# Fleet Python 3.12 upgrade (work item W4): the fleet interpreter is
+# CPython 3.12 and the shared venv lives beside the retired 3.10 one
+# (/opt/friday_universe/venv, kept untouched for rollback). Both are
+# overridable for a deliberate, explicit rollback rebuild only:
+#   FLEET_PYTHON=python3.10 VENV_DIR=/opt/friday_universe/venv \
+#     FLEET_LOCK_FILE=<3.10-era lock> bash deploy/setup_fleet.sh [1|2]
+# Never rely on the host's bare `python3` here: on the Ubuntu 22.04
+# hosts that is still 3.10, and creating the fleet venv from it was
+# exactly how a rebuild would silently regress the fleet.
+FLEET_PYTHON="${FLEET_PYTHON:-python3.12}"
+VENV_DIR="${VENV_DIR:-/opt/friday_universe/venv312}"
+# Packages install from this server's union lock (work item W5) — the
+# single source of package truth for the shared venv. If the lock is
+# missing the setup FAILS: the pre-upgrade behaviour (unpinned package
+# subsets installed with `|| true`) let the live venvs drift ahead of
+# every manifest, and a silent fallback would recreate that drift.
+LOCK_FILE="${FLEET_LOCK_FILE:-$REPO_DIR/deploy/requirements-server${SERVER_ROLE}.lock}"
 
-echo "=== [1/4] Ensuring Python Virtual Environment ==="
+if [ ! -f "$LOCK_FILE" ]; then
+    echo "ERROR: union lock not found: $LOCK_FILE" >&2
+    echo "Fleet packages install from the per-server union locks" >&2
+    echo "(deploy/requirements-server1.lock / requirements-server2.lock)." >&2
+    echo "Commit the lock (work item W5) or set FLEET_LOCK_FILE explicitly." >&2
+    exit 1
+fi
+
+echo "=== [1/4] Ensuring Python Virtual Environment ($FLEET_PYTHON -> $VENV_DIR) ==="
 if [ ! -d "$VENV_DIR" ]; then
-    python3 -m venv "$VENV_DIR"
+    "$FLEET_PYTHON" -m venv "$VENV_DIR"
+fi
+
+# Guard: never install a lock into a venv built by another interpreter
+# line (e.g. VENV_DIR pointed at the retired 3.10 venv during the
+# cutover) — pip would happily place pure-Python wheels there and the
+# fleet would boot a mixed, unplanned environment.
+VENV_PY_VER="$("$VENV_DIR/bin/python" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+WANT_PY_VER="$("$FLEET_PYTHON" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+if [ "$VENV_PY_VER" != "$WANT_PY_VER" ]; then
+    echo "ERROR: $VENV_DIR runs Python $VENV_PY_VER but FLEET_PYTHON is $WANT_PY_VER." >&2
+    echo "Refusing to install $LOCK_FILE into a mismatched venv." >&2
+    exit 1
 fi
 
 "$VENV_DIR/bin/pip" install --upgrade --no-cache-dir pip setuptools wheel
-"$VENV_DIR/bin/pip" install --no-cache-dir \
-    fastapi uvicorn pydantic pydantic-settings oracledb sqlalchemy httpx requests python-dotenv \
-    cryptography rich psutil aiohttp aiosqlite asyncpg jinja2 python-multipart aiofiles
+"$VENV_DIR/bin/pip" install --no-cache-dir -r "$LOCK_FILE"
 
-# Compatibility patch for Python 3.10
-echo "UTC = timezone.utc" | sudo tee -a /usr/lib/python3.10/datetime.py 2>/dev/null || true
-echo "class StrEnum(str, Enum): pass" | sudo tee -a /usr/lib/python3.10/enum.py 2>/dev/null || true
+# The Python 3.10 stdlib compatibility patch that used to be appended
+# here (UTC/StrEnum backports into /usr/lib/python3.10) is retired:
+# REL-050's code-level shims made it redundant, and on 3.11+ the native
+# names exist. It must never run again.
 
 echo "=== [2/4] Configuring Canonical Databases (Oracle Autonomous 23ai) ==="
 # TASK-DATA-001 remediation (2026-11-10): this section previously constructed
@@ -51,9 +86,13 @@ sudo rm -f /etc/default/friday_universe.env
 find "$REPO_DIR" -maxdepth 3 \( -name "*.db" -o -name "*.sqlite" -o -name "*.sqlite3" \) -delete 2>/dev/null || true
 
 if [ "$SERVER_ROLE" = "1" ]; then
-    echo "=== [3/4] Installing Server 1 Packages & Registering Isolated Services ==="
-    "$VENV_DIR/bin/pip" install --no-cache-dir structlog flask flask-cors alembic apscheduler prometheus-client websockets beautifulsoup4 pypdf python-docx pandas numpy scipy python-binance ccxt openai anthropic google-genai || true
-    "$VENV_DIR/bin/pip" install -e "$REPO_DIR/FRIDAY" --no-deps 2>/dev/null || true
+    echo "=== [3/4] Registering Server 1 Isolated Services ==="
+    # Server packages were installed from the union lock in step [1/4].
+    # FRIDAY's editable install is interpreter-scoped (its .pth/egg-link
+    # lives in the venv), so it is (re)done here for this venv — and it
+    # is strict: a failed editable install means FRIDAY cannot boot
+    # from this venv, which setup must surface, not swallow.
+    "$VENV_DIR/bin/pip" install -e "$REPO_DIR/FRIDAY" --no-deps
 
     # 1. FRIDAY (Port 10000)
     sudo tee /etc/systemd/system/FRIDAY.service > /dev/null << EOF
@@ -224,8 +263,8 @@ EOF
     done
 
 elif [ "$SERVER_ROLE" = "2" ]; then
-    echo "=== [3/4] Installing Server 2 Packages & Registering Isolated Services ==="
-    "$VENV_DIR/bin/pip" install --no-cache-dir pyjwt google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2 redis sse-starlette structlog pyyaml || true
+    echo "=== [3/4] Registering Server 2 Isolated Services ==="
+    # Server packages were installed from the union lock in step [1/4].
 
     # 1. VyralX (Port 8010)
     sudo tee /etc/systemd/system/VyralX.service > /dev/null << EOF
