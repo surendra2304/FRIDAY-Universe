@@ -2421,3 +2421,6 @@ app.include_router(reddit_trends_router, prefix="/api/v1", tags=["IG Corpus Redd
 # --- IG Corpus Competitor-Ad Intelligence Integration (TASK-IG3-VYR-04) ---
 from app.services.competitor_ads import router as competitor_ads_router
 app.include_router(competitor_ads_router, prefix="/api/v1", tags=["IG Corpus Competitor Ads"])
+# --- IG Corpus Take Verification Integration (TASK-IG3-VYR-05) ---
+from app.services.take_verification import router as take_verification_router
+app.include_router(take_verification_router, prefix="/api/v1", tags=["IG Corpus Take Verification"])
