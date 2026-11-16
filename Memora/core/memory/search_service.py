@@ -18,6 +18,102 @@ from core.memory.graph_service import GraphService
 from core.memory.retrieval_config import get_retrieval_config
 from core.metrics.collector import metrics_collector
 
+def _to_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def _passes_retrieval_filters(
+    record: MemoryRecord,
+    db: Session,
+    *,
+    actor,
+    trust_level: Optional[str],
+    include_expired: bool,
+    purpose: Optional[str],
+    now_utc: datetime,
+) -> bool:
+    """Per-record admissibility checks every recall path applies.
+
+    Extracted from the hybrid fusion loop so the lexical fast lane and the
+    fusion path share ONE implementation: trust level, temporal validity,
+    cryptographic provenance (Safety Invariant 2) and the policy gate. The
+    scope filters (tenant, lifecycle, actor visibility, caller identity
+    fields, namespace, memory types) are NOT here — they live in the query
+    construction of each path.
+    """
+    # Provenance Trust Level Filter
+    if trust_level:
+        record_trust = (record.provenance or {}).get("trust_level")
+        if record_trust != trust_level:
+            return False
+    # Temporal validity filter: valid_from <= now <= valid_until and expires_at > now
+    if not include_expired:
+        exp = _to_utc(record.expires_at)
+        v_from = _to_utc(record.valid_from)
+        v_until = _to_utc(record.valid_until)
+        if exp and now_utc > exp:
+            return False
+        if v_from and now_utc < v_from:
+            return False
+        if v_until and now_utc > v_until:
+            return False
+    # Cryptographic Provenance Verification (Safety Invariant 2)
+    if record.provenance and isinstance(record.provenance, dict) and "hmac_signature" in record.provenance:
+        from core.security.provenance import verify_memory_signature
+        if not verify_memory_signature(record):
+            import logging
+            logging.getLogger(__name__).warning("MemoryRecord %s failed cryptographic provenance verification; discarding tampered record.", record.id)
+            return False
+    # Policy Gate Check
+    if actor:
+        decision = PolicyEngine.evaluate_access(
+            db,
+            actor=actor,
+            namespace=record.namespace,
+            action="read",
+            purpose=purpose,
+            memory_id=record.id,
+            log_audit=False,
+            allow_expired=include_expired,
+        )
+        if not decision.allowed:
+            return False
+    return True
+
+
+#: Words that carry no fact content for the lexical fast lane: interrogatives,
+#: auxiliaries and articles. Possessives (my/your/his/her/our/their) are NOT
+#: stopwords here — they discriminate whose fact a record states.
+_FAST_LANE_STOPWORDS = frozenset({
+    "what", "which", "who", "whom", "whose", "when", "where", "why", "how",
+    "is", "are", "was", "were", "do", "does", "did",
+    "can", "could", "shall", "should", "will", "would",
+    "the", "a", "an", "please", "tell", "me",
+})
+
+
+def _fast_lane_content_tokens(query_text: str) -> List[str]:
+    """The query's content tokens for the lexical fast lane.
+
+    Uses the BM25 tokeniser (lowercase alphanumeric tokens) so the lane's
+    notion of a token is identical on the query side and the record side,
+    then drops the stopwords above. "What is my favorite color?" reduces
+    to [my, favorite, color] — the subject-shaped form FRIDAY's recall
+    gate builds by hand (TASK-FRD-017) — while a paraphrase such as "what
+    does the boss enjoy munching" keeps [boss, enjoy, munching] and so
+    cannot full-match the snack fact: it stays on the hybrid path.
+    """
+    from core.memory.bm25 import tokenize
+
+    return list(dict.fromkeys(
+        token for token in tokenize(query_text) if token not in _FAST_LANE_STOPWORDS
+    ))
+
+
 class SearchResultItem:
     def __init__(
         self,
@@ -131,45 +227,7 @@ class SearchService:
         resolved_tenant: str = str(tenant_id or (getattr(actor, "tenant_id", "default") if actor else "default"))
 
         # -------------------------------------------------------------
-        # 1. SEMANTIC VECTOR SEARCH (STRICT TENANT ISOLATION WITH FAIL-SOFT)
-        # -------------------------------------------------------------
-        vector_hits = []
-        try:
-            query_vector = EmbeddingGenerator.generate_embedding(query_text)
-            # The vector leg must query the same store the write pipeline
-            # upserts into (TASK-REL-013). On the Oracle backend the write
-            # path stores embeddings in the native 23ai vector table via the
-            # Oracle adapter, so the search leg must read from that adapter;
-            # querying the Qdrant adapter unconditionally searched an empty
-            # in-memory mock in production and silently reduced all recall
-            # to lexical matching. The branch mirrors write_service.py and
-            # storage/vector/hybrid.py.
-            from storage.vector.oracle_vector_adapter import oracle_vector_adapter
-            if oracle_vector_adapter.is_oracle_backend():
-                vector_hits = oracle_vector_adapter.search_similarity(
-                    query_vector=query_vector,
-                    limit=limit * 3,
-                    tenant_id=resolved_tenant,
-                    score_threshold=0.30,
-                    db=db
-                )
-            else:
-                vector_hits = vector_adapter.search_similarity(
-                    query_vector=query_vector,
-                    tenant_id=resolved_tenant,
-                    limit=limit * 3,
-                    score_threshold=0.30,
-                    fail_soft=True
-                )
-        except Exception as exc:
-            import logging
-            logging.getLogger(__name__).warning("Vector search unavailable (%s); failing soft to relational search.", exc)
-            vector_hits = []
-
-        vector_ranks = {hit.memory_id: (rank + 1, hit.score) for rank, hit in enumerate(vector_hits)}
-
-        # -------------------------------------------------------------
-        # 2. KEYWORD / FULL-TEXT SEARCH (STRICT TENANT ISOLATION)
+        # 1. KEYWORD / FULL-TEXT SEARCH (STRICT TENANT ISOLATION)
         # -------------------------------------------------------------
         allowed_states = [LifecycleState.ACTIVE, LifecycleState.VERIFIED, LifecycleState.CANDIDATE]
         if include_superseded:
@@ -279,6 +337,161 @@ class SearchService:
         # the id remains the final deterministic key.
         lexical_matches.sort(key=lambda item: (-item[1], -item[2], item[0]))
 
+        # -------------------------------------------------------------
+        # 2. LEXICAL FAST LANE (TASK-MEM-002 follow-up)
+        # -------------------------------------------------------------
+        # The hybrid draw below costs seconds on this fleet (MEM-002 AFTER
+        # benchmark: p50 ~3.9s per search in production), and under load a
+        # single draw has taken ~32s (FRD-005 re-run #6) — FRD-016's
+        # concurrency on the caller side cannot help when the draw itself
+        # stalls. But the voice-recall class of query does not need the
+        # hybrid machinery: when a record contains EVERY content token of
+        # the query (an exact / subject-shaped full match — the same test
+        # FRIDAY's recall gate applies to the hits it is given), the
+        # lexical evidence is already decisive. Serve those records here,
+        # ranked by BM25 over the full-match set with the fusion path's
+        # keyword-only score math, WITHOUT the embedding call, the vector
+        # store round-trip or graph expansion.
+        #
+        # Safety parity: candidates come from the scoped keyword query
+        # above (tenant, lifecycle states, actor visibility and every
+        # caller identity filter already applied), and each full match
+        # must still pass _passes_retrieval_filters — the same trust /
+        # temporal / provenance / policy checks the fusion loop applies.
+        # Anything that is not a full match, and any full match the
+        # filters reject, falls through to the unchanged hybrid path.
+        # The lane is bounded by the candidate scan above: a full match
+        # that never enters the bounded window cannot fire it (at the
+        # production corpus size, ~450 records against a >=500 window,
+        # that bound does not bite). Kill switch: retrieval config key
+        # "lexical_fast_lane": false.
+        if retrieval_cfg.get("lexical_fast_lane", True) and limit > 0 and lexical_candidates:
+            content_tokens = _fast_lane_content_tokens(query_text)
+            if content_tokens:
+                from core.memory.bm25 import BM25Index, tokenize as _bm25_tokenize
+
+                full_matches = []
+                for record in lexical_candidates:
+                    record_tokens = set(_bm25_tokenize(record.content_text))
+                    if all(token in record_tokens for token in content_tokens):
+                        full_matches.append(record)
+                if full_matches:
+                    fast_now_utc = datetime.now(timezone.utc)
+                    admissible = [
+                        record
+                        for record in full_matches
+                        if _passes_retrieval_filters(
+                            record,
+                            db,
+                            actor=actor,
+                            trust_level=trust_level,
+                            include_expired=include_expired,
+                            purpose=purpose,
+                            now_utc=fast_now_utc,
+                        )
+                    ]
+                    if admissible:
+                        fast_bm25 = BM25Index().build(
+                            (record.id, record.content_text) for record in admissible
+                        ).score(query_text)
+                        fast_best = max(fast_bm25.values(), default=0.0)
+                        admissible.sort(
+                            key=lambda record: (
+                                -fast_bm25.get(record.id, 0.0),
+                                -(record.created_at.timestamp() if record.created_at else 0.0),
+                                record.id,
+                            )
+                        )
+                        fast_query_lower = query_text.lower()
+                        fast_results: List[SearchResultItem] = []
+                        for rank, record in enumerate(admissible, start=1):
+                            k_score = (
+                                (fast_bm25.get(record.id, 0.0) / fast_best)
+                                if fast_best > 0
+                                else 1.0
+                            )
+                            entity_boost = 0.0
+                            reasons = [
+                                "Lexical fast lane: full content-token match",
+                                f"Keyword match (rank {rank}, bm25 {k_score:.2f})",
+                            ]
+                            if record.entities:
+                                for ent in record.entities:
+                                    if ent.lower() in fast_query_lower:
+                                        entity_boost += entity_boost_weight
+                                        reasons.append(f"Entity match boost: '{ent}' (+{entity_boost_weight:.2f})")
+                                        break
+                            # Same normalisation the fusion path applies to
+                            # a keyword-only hit, so scores stay comparable
+                            # across the two paths.
+                            fast_final = min(
+                                1.0,
+                                (keyword_weight * (1.0 / (rrf_k + rank))) * (rrf_k / 2)
+                                + entity_boost,
+                            )
+                            if fast_final >= min_score:
+                                fast_results.append(
+                                    SearchResultItem(
+                                        record=record,
+                                        final_score=fast_final,
+                                        semantic_score=0.0,
+                                        keyword_score=k_score,
+                                        graph_boost=0.0,
+                                        match_reasons=reasons,
+                                    )
+                                )
+                        fast_results = fast_results[:limit]
+                        if fast_results:
+                            fast_ages_days = []
+                            for result in fast_results:
+                                created_at = _to_utc(result.record.created_at)
+                                if created_at is not None:
+                                    fast_ages_days.append(max(0.0, (fast_now_utc - created_at).total_seconds() / 86400.0))
+                            metrics_collector.record_retrieval(
+                                relevance_scores=[result.final_score for result in fast_results],
+                                ages_days=fast_ages_days,
+                                latency_ms=(time.perf_counter() - started_at) * 1000,
+                            )
+                            return fast_results
+
+        # -------------------------------------------------------------
+        # 3. SEMANTIC VECTOR SEARCH (STRICT TENANT ISOLATION WITH FAIL-SOFT)
+        # -------------------------------------------------------------
+        vector_hits = []
+        try:
+            query_vector = EmbeddingGenerator.generate_embedding(query_text)
+            # The vector leg must query the same store the write pipeline
+            # upserts into (TASK-REL-013). On the Oracle backend the write
+            # path stores embeddings in the native 23ai vector table via the
+            # Oracle adapter, so the search leg must read from that adapter;
+            # querying the Qdrant adapter unconditionally searched an empty
+            # in-memory mock in production and silently reduced all recall
+            # to lexical matching. The branch mirrors write_service.py and
+            # storage/vector/hybrid.py.
+            from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+            if oracle_vector_adapter.is_oracle_backend():
+                vector_hits = oracle_vector_adapter.search_similarity(
+                    query_vector=query_vector,
+                    limit=limit * 3,
+                    tenant_id=resolved_tenant,
+                    score_threshold=0.30,
+                    db=db
+                )
+            else:
+                vector_hits = vector_adapter.search_similarity(
+                    query_vector=query_vector,
+                    tenant_id=resolved_tenant,
+                    limit=limit * 3,
+                    score_threshold=0.30,
+                    fail_soft=True
+                )
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning("Vector search unavailable (%s); failing soft to relational search.", exc)
+            vector_hits = []
+
+        vector_ranks = {hit.memory_id: (rank + 1, hit.score) for rank, hit in enumerate(vector_hits)}
+
         # BM25 ranking (TASK-IG2-MEM-01, agentmemory pattern): the
         # retrieval config has always NAMED this leg "bm25"
         # (retrieval_config maps the "bm25" method onto keyword_weight),
@@ -320,7 +533,7 @@ class SearchService:
             }
 
         # -------------------------------------------------------------
-        # 3. GRAPH RELATIONSHIP EXPANSION
+        # 4. GRAPH RELATIONSHIP EXPANSION
         # -------------------------------------------------------------
         # Expansion seeds keep the historical relevance order (overlap
         # ratio, then id): seed choice decides which records RECEIVE graph
@@ -338,7 +551,7 @@ class SearchService:
         )
 
         # -------------------------------------------------------------
-        # 4. RECIPROCAL RANK FUSION (RRF) & SCORE MERGE
+        # 5. RECIPROCAL RANK FUSION (RRF) & SCORE MERGE
         # -------------------------------------------------------------
         all_candidate_ids = set(vector_ranks.keys()) | set(keyword_ranks.keys()) | set(graph_boosts.keys())
         if not all_candidate_ids:
@@ -379,54 +592,22 @@ class SearchService:
         record_map = {r.id: r for r in records}
 
         now_utc = datetime.now(timezone.utc)
-        def _to_utc(dt: Optional[datetime]) -> Optional[datetime]:
-            if dt is None:
-                return None
-            if dt.tzinfo is None:
-                return dt.replace(tzinfo=timezone.utc)
-            return dt.astimezone(timezone.utc)
 
         scored_results: List[SearchResultItem] = []
         for mem_id, record in record_map.items():
-            # Provenance Trust Level Filter
-            if trust_level:
-                record_trust = (record.provenance or {}).get("trust_level")
-                if record_trust != trust_level:
-                    continue
-            # Temporal validity filter: valid_from <= now <= valid_until and expires_at > now
-            if not include_expired:
-                exp = _to_utc(record.expires_at)
-                v_from = _to_utc(record.valid_from)
-                v_until = _to_utc(record.valid_until)
-                if exp and now_utc > exp:
-                    continue
-                if v_from and now_utc < v_from:
-                    continue
-                if v_until and now_utc > v_until:
-                    continue
-
-            # Cryptographic Provenance Verification (Safety Invariant 2)
-            if record.provenance and isinstance(record.provenance, dict) and "hmac_signature" in record.provenance:
-                from core.security.provenance import verify_memory_signature
-                if not verify_memory_signature(record):
-                    import logging
-                    logging.getLogger(__name__).warning("MemoryRecord %s failed cryptographic provenance verification; discarding tampered record.", record.id)
-                    continue
-
-            # Policy Gate Check
-            if actor:
-                decision = PolicyEngine.evaluate_access(
-                    db,
-                    actor=actor,
-                    namespace=record.namespace,
-                    action="read",
-                    purpose=purpose,
-                    memory_id=record.id,
-                    log_audit=False,
-                    allow_expired=include_expired,
-                )
-                if not decision.allowed:
-                    continue
+            # Trust / temporal / provenance / policy admissibility — the
+            # shared helper, so the fusion path and the lexical fast lane
+            # apply byte-identical checks (see _passes_retrieval_filters).
+            if not _passes_retrieval_filters(
+                record,
+                db,
+                actor=actor,
+                trust_level=trust_level,
+                include_expired=include_expired,
+                purpose=purpose,
+                now_utc=now_utc,
+            ):
+                continue
 
             v_rank, v_score = vector_ranks.get(mem_id, (None, 0.0))
             k_rank, k_score = keyword_ranks.get(mem_id, (None, 0.0))
