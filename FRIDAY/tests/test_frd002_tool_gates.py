@@ -58,5 +58,6 @@ def test_default_registry_tool_names_are_unique():
     # 90 at inventory time; 96 since the IG implementation wave registered
     # the six export-only tools (lead_generate, escrcpy_launch_plan,
     # escrcpy_automation, meeting_followup_create/list/decide) — see
-    # test_ig_tool_registry_wiring.py.
-    assert len(names) == 96
+    # test_ig_tool_registry_wiring.py; 97 with local_business (IG
+    # F-30/F-35) also registered.
+    assert len(names) == 97
