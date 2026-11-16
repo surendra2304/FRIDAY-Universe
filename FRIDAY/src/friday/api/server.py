@@ -503,6 +503,16 @@ async def lifespan(_: FastAPI):
     telegram_task = asyncio.create_task(
         asyncio.to_thread(telegram_gateway.start), name="friday-telegram-gateway"
     )
+    # TASK-IG2-FRD-02: WhatsApp channel gateway (OpenClaw channel-gateway
+    # pattern — the same brain and the same owner-only gate as Telegram).
+    # The Cloud API is push-only, so there is no polling task: inbound
+    # arrives via POST /whatsapp-webhook below. Inert and silent until the
+    # owner completes the one-time Meta app setup and the WHATSAPP_* lines
+    # land in the root .env (see proactive/whatsapp_gateway.py).
+    from friday.proactive.whatsapp_gateway import whatsapp_gateway
+
+    whatsapp_gateway.set_brain(_run_brain_sync)
+    whatsapp_gateway.start()
     # Checklists G7/G8: daily self-report (21:00 IST) + Sunday weekly summary,
     # delivered through the same owner Telegram channel.
     report_task = asyncio.create_task(_daily_report_loop(), name="friday-daily-self-report")
@@ -535,6 +545,7 @@ async def lifespan(_: FastAPI):
         except Exception as e:
             logger.debug(f"Exception during background task cancellation: {e}")
         telegram_gateway.stop()
+        whatsapp_gateway.stop()
 
         try:
             await asyncio.wait_for(fleet_client.aclose(), timeout=3.0)
@@ -999,6 +1010,71 @@ async def telegram_webhook(request: Request) -> JSONResponse:
             status_code=400, content={"ok": False, "error": "invalid JSON body"}
         )
     telegram_gateway.process_webhook_update(update)
+    return JSONResponse(status_code=200, content={"ok": True})
+
+
+@app.get("/whatsapp-webhook")
+async def whatsapp_webhook_verify(request: Request) -> Response:
+    """Meta's one-time webhook subscription handshake (TASK-IG2-FRD-02).
+
+    When the owner registers this URL in the Meta app, Meta GETs it with
+    ``hub.mode`` / ``hub.verify_token`` / ``hub.challenge``; the challenge
+    is echoed as plain text ONLY when the token matches
+    ``WHATSAPP_VERIFY_TOKEN`` (403 otherwise, 404 while unconfigured).
+    """
+    from friday.proactive.whatsapp_gateway import whatsapp_gateway
+
+    if not whatsapp_gateway.is_configured():
+        return JSONResponse(
+            status_code=404, content={"ok": False, "error": "whatsapp gateway not configured"}
+        )
+    params = request.query_params
+    challenge = whatsapp_gateway.verify_subscription(
+        params.get("hub.mode", ""),
+        params.get("hub.verify_token", ""),
+        params.get("hub.challenge", ""),
+    )
+    if challenge is None:
+        return JSONResponse(
+            status_code=403, content={"ok": False, "error": "verify token mismatch"}
+        )
+    return Response(content=challenge, media_type="text/plain")
+
+
+@app.post("/whatsapp-webhook")
+async def whatsapp_webhook(request: Request) -> JSONResponse:
+    """Inbound WhatsApp Cloud API messages (TASK-IG2-FRD-02).
+
+    Like /telegram-webhook this route is deliberately NOT behind the
+    dashboard control gate: Meta's servers cannot hold a control token.
+    The credential is the ``X-Hub-Signature-256`` HMAC over the raw body
+    (verified against WHATSAPP_APP_SECRET; fails closed when no secret is
+    configured — 403 on mismatch, 400 on a malformed body, 404 while the
+    gateway is unconfigured) — and the gateway's owner-number gate still
+    applies to every message. Handling runs through the gateway's own
+    dispatch on its thread, so Meta gets its fast 200.
+    """
+    from friday.proactive.whatsapp_gateway import whatsapp_gateway
+
+    if not whatsapp_gateway.is_configured():
+        return JSONResponse(
+            status_code=404, content={"ok": False, "error": "whatsapp gateway not configured"}
+        )
+    raw_body = await request.body()
+    if not whatsapp_gateway.signature_matches(raw_body, request.headers.get("x-hub-signature-256")):
+        logger.warning("[WA-WEBHOOK] rejected POST with a bad or missing signature")
+        return JSONResponse(
+            status_code=403, content={"ok": False, "error": "signature mismatch"}
+        )
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = None
+    if not isinstance(payload, dict):
+        return JSONResponse(
+            status_code=400, content={"ok": False, "error": "invalid JSON body"}
+        )
+    whatsapp_gateway.process_webhook_payload(payload)
     return JSONResponse(status_code=200, content={"ok": True})
 
 
