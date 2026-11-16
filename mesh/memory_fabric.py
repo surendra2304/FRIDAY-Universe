@@ -126,7 +126,11 @@ class UniversalMemoryFabric:
         timeout: float = 5.0,
     ):
         self.base_url = (base_url or os.getenv("MEMORA_URL", "http://memora:8000")).rstrip("/")
-        self.api_key = api_key or os.getenv("MEMORA_API_KEY", "memora_api")
+        # TASK-MEM-005-R1: no ambient shared-key default. MEMORA_API_KEY is
+        # Memora's own key and the old "memora_api" literal was a placeholder
+        # credential; an explicitly passed key wins, otherwise
+        # _dispatch_to_cloud resolves the presented owner's own credential.
+        self.api_key = api_key
         self.timeout = timeout
 
         # Local storage setup
@@ -370,9 +374,18 @@ class UniversalMemoryFabric:
             "importance": entry.importance,
             "metadata": entry.metadata,
         }
+        # TASK-MEM-005-R1: the credential must belong to the identity being
+        # presented (entry.owner_agent): the fabric's explicitly passed key
+        # wins, otherwise the owner's own {OWNER}_MEMORA_API_KEY ->
+        # {OWNER}_API_KEY chain. No resolvable key -> stay local (the
+        # existing graceful-degrade path).
+        owner = (entry.owner_agent or "").upper()
+        key = self.api_key or os.getenv(f"{owner}_MEMORA_API_KEY") or os.getenv(f"{owner}_API_KEY")
+        if not key:
+            return False
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {key}",
             "X-Agent-Name": entry.owner_agent.lower(),
         }
         try:

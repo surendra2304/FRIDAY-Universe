@@ -115,6 +115,13 @@ class Settings(BaseSettings):
     intelx_api_key: str = ""
     memora_url: str = ""
     memora_api_key: str = ""
+    # TASK-MEM-005-R1: VyralX authenticates to Memora with its OWN keys —
+    # the dedicated VYRALX_MEMORA_API_KEY, else its per-agent VYRALX_API_KEY.
+    # memora_api_key above binds env MEMORA_API_KEY (Memora's own key) and
+    # is no longer presented to Memora; it is retained only so existing
+    # deployments keep parsing.
+    vyralx_memora_api_key: str = ""
+    vyralx_api_key: str = ""
     memora_write_enabled: bool = False
     memora_read_enabled: bool = False
     sentinel_url: str = ""

@@ -92,8 +92,10 @@ class Settings(BaseSettings):
     )
     MEMORA_API_KEY: str | None = Field(
         default=None,
+        # TASK-MEM-005-R1: MEMORA_API_KEY dropped — Futuris authenticates to
+        # Memora with its own dedicated/per-agent key only.
         validation_alias=AliasChoices(
-            "FUTURIS_MEMORA_API_KEY", "FUTURIS_API_KEY", "MEMORA_API_KEY"
+            "FUTURIS_MEMORA_API_KEY", "FUTURIS_API_KEY"
         ),
         description="Live Memora Cloud Memory API Key",
     )

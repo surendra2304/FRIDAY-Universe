@@ -26,7 +26,9 @@ def configured_peers() -> dict[str, Peer]:
         "friday": (settings.friday_url, settings.friday_api_key),
         "inference": (settings.inference_url, settings.inference_api_key),
         "intelx": (settings.intelx_url, settings.intelx_api_key),
-        "memora": (settings.memora_url, settings.memora_api_key),
+        # TASK-MEM-005-R1: present VyralX's own Memora credential, never
+        # MEMORA_API_KEY (Memora's own key).
+        "memora": (settings.memora_url, settings.vyralx_memora_api_key or settings.vyralx_api_key),
         "stratex": (getattr(settings, "stratex_url", ""), getattr(settings, "stratex_api_key", "")),
         "forge": (getattr(settings, "forge_url", ""), getattr(settings, "forge_api_key", "")),
         "cortex": (getattr(settings, "cortex_url", ""), getattr(settings, "cortex_api_key", "")),

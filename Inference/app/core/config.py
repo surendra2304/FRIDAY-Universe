@@ -1,6 +1,6 @@
 """Application configuration settings for Inference."""
 
-from typing import Anyfrom pydantic import Field, field_validatorfrom pydantic_settings import BaseSettings, SettingsConfigDictclass Settings(BaseSettings):
+from typing import Anyfrom pydantic import AliasChoices, Field, field_validatorfrom pydantic_settings import BaseSettings, SettingsConfigDictclass Settings(BaseSettings):
     """Application settings loaded from environment variables and .env file."""
 
     model_config = SettingsConfigDict(
@@ -69,7 +69,13 @@ from typing import Anyfrom pydantic import Field, field_validatorfrom pydanti
     FRIDAY_API_KEY: str | None = Field(default=None)
 
     MEMORA_URL: str = Field(default="http://memora:8000", description="Memora Agent 3 URL")
-    MEMORA_API_KEY: str | None = Field(default=None)
+    # TASK-MEM-005-R1: this field carries Inference's OWN Memora credential.
+    # MEMORA_API_KEY (Memora's own key) is never read here; get_peer_config
+    # presents Inference's dedicated/per-agent key to Memora as "Inference".
+    MEMORA_API_KEY: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("INFERENCE_MEMORA_API_KEY", "INFERENCE_API_KEY"),
+    )
 
     STRATEX_URL: str = Field(default="http://stratex:8000", description="Stratex Agent 7 URL")
     STRATEX_API_KEY: str | None = Field(default=None)

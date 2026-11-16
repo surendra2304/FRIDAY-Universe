@@ -196,7 +196,9 @@ class Settings(BaseSettings):
     )
     memora_api_key: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("FORGE_API_KEY", "FORGE_MEMORA_API_KEY", "MEMORA_API_KEY", "memora_api_key"),
+        # TASK-MEM-005-R1: MEMORA_API_KEY dropped — Forge's Memora credential
+        # is its own dedicated/per-agent key only.
+        validation_alias=AliasChoices("FORGE_MEMORA_API_KEY", "FORGE_API_KEY", "memora_api_key"),
         description="Forge's named agent credential for Memora Cloud",
     )
     sentinel_url: str = Field(

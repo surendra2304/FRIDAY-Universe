@@ -23,7 +23,9 @@ class MemoraClient:
 
     def _get_headers(self, agent_name: str) -> dict[str, str] | None:
         agent = agent_name.strip().lower()
-        key = self.api_key or os.getenv(f"{agent.upper()}_API_KEY")
+        # TASK-MEM-005-R1: the agent's dedicated Memora key wins over its
+        # per-agent key; MEMORA_API_KEY is never consulted.
+        key = self.api_key or os.getenv(f"{agent.upper()}_MEMORA_API_KEY") or os.getenv(f"{agent.upper()}_API_KEY")
         if not key:
             self.last_error = f"{agent.upper()}_API_KEY is not configured"
             return None

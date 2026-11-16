@@ -17,6 +17,18 @@ import urllib.error
 
 logger = logging.getLogger("memora_client")
 
+
+def _agent_memora_key(agent_name: str) -> Optional[str]:
+    """Resolve an agent's OWN Memora credential (TASK-MEM-005-R1).
+
+    The dedicated {AGENT}_MEMORA_API_KEY wins; the agent's per-agent
+    {AGENT}_API_KEY is the transition fallback. MEMORA_API_KEY — Memora's
+    own key — is never an agent credential.
+    """
+    agent = agent_name.upper()
+    return os.getenv(f"{agent}_MEMORA_API_KEY") or os.getenv(f"{agent}_API_KEY")
+
+
 class MemoraClient:
     """
     Universal client for connecting any agent to the Memora Memory Fabric.
@@ -32,7 +44,11 @@ class MemoraClient:
         timeout: float = 4.0
     ):
         self.base_url = (base_url or os.getenv("MEMORA_URL", "http://memora:8000")).rstrip("/")
-        self.api_key = api_key or os.getenv("MEMORA_API_KEY")
+        # TASK-MEM-005-R1: no ambient default. MEMORA_API_KEY is Memora's own
+        # key and must never become an SDK caller's credential; per-agent
+        # requests resolve {AGENT}_API_KEY / {AGENT}_MEMORA_API_KEY in
+        # _headers, and administrative callers pass api_key explicitly.
+        self.api_key = api_key
         self.timeout = timeout
         
         # Legacy private helpers may still be used explicitly by offline tools,
@@ -46,7 +62,7 @@ class MemoraClient:
             headers["Content-Type"] = "application/json"
         # Agent routes authenticate the agent's own identity; MEMORA_API_KEY is
         # for service-to-service administration and must never impersonate an agent.
-        credential = api_key or os.getenv(f"{agent.upper()}_API_KEY")
+        credential = api_key or _agent_memora_key(agent)
         if credential:
             headers["Authorization"] = f"Bearer {credential}"
         return headers
@@ -69,7 +85,7 @@ class MemoraClient:
         if event_type:
             params["event_type"] = event_type
         url = f"{self.base_url}/v1/events?{urllib.parse.urlencode(params)}"
-        agent_key = os.getenv(f"{agent_name.upper()}_API_KEY")
+        agent_key = _agent_memora_key(agent_name)
         if not agent_key:
             return {"status": "error", "error": f"{agent_name.upper()}_API_KEY is not configured"}
         headers = self._headers(agent_name, api_key=agent_key)
@@ -115,7 +131,7 @@ class MemoraClient:
         if event_type:
             params["event_type"] = event_type
         url = f"{self.base_url}/v1/events/poll?{urllib.parse.urlencode(params)}"
-        agent_key = os.getenv(f"{agent_name.upper()}_API_KEY")
+        agent_key = _agent_memora_key(agent_name)
         if not agent_key:
             return {"status": "error", "error": f"{agent_name.upper()}_API_KEY is not configured"}
         headers = self._headers(agent_name, api_key=agent_key)
@@ -135,7 +151,7 @@ class MemoraClient:
     def read_event_cursor(self, agent_name: str, consumer_id: str = "default") -> Dict[str, Any]:
         """Read the server-persisted cursor owned only by this agent."""
         agent = agent_name.lower().strip()
-        key = os.getenv(f"{agent.upper()}_API_KEY")
+        key = _agent_memora_key(agent)
         if not key:
             return {"status": "error", "error": f"{agent.upper()}_API_KEY is not configured"}
         try:
@@ -154,7 +170,7 @@ class MemoraClient:
     def acknowledge_event(self, agent_name: str, event_id: int, consumer_id: str = "default") -> Dict[str, Any]:
         """Persist acknowledgement only after the caller has handled an event."""
         agent = agent_name.lower().strip()
-        key = os.getenv(f"{agent.upper()}_API_KEY")
+        key = _agent_memora_key(agent)
         if not key:
             return {"status": "error", "error": f"{agent.upper()}_API_KEY is not configured"}
         try:
@@ -184,7 +200,7 @@ class MemoraClient:
     ) -> Dict[str, Any]:
         """Sign and persist one idempotent agent notification through Memora."""
         source = source_agent.lower().strip()
-        key = os.getenv(f"{source.upper()}_API_KEY")
+        key = _agent_memora_key(source)
         if not key:
             return {"status": "error", "error": f"{source.upper()}_API_KEY is not configured"}
         if not (1 <= ttl <= 86400):
