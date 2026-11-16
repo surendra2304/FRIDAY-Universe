@@ -207,6 +207,16 @@ from typing import Anyfrom pydantic import AliasChoices, Field, field_validato
     # 7 Active Cloud Provider API Keys (Supports single or comma-separated lists)
     GEMINI_API_KEY: str | None = Field(default=None)
     GEMINI_API_KEYS: str | None = Field(default=None)
+    #: TASK-INF-011: default thinking budget (tokens) for Gemini Flash
+    #: generation models. Measured on S1 (gemini-egress-diag, 2026-11-17):
+    #: gemini-3.6-flash tiny-prompt TTFB was 45.3s with default thinking
+    #: vs 22.6s with thinkingBudget=0, so the measured default is 0
+    #: (thinking disabled). Raise it only deliberately: every budget
+    #: token is latency before the first visible token. Applies to
+    #: Flash models only — the Pro family keeps its own allowance
+    #: (it cannot go below a 128-token budget) and a caller's explicit
+    #: thinking_budget extra_param always wins over this default.
+    GEMINI_FLASH_THINKING_BUDGET: int = Field(default=0, description="Default thinking token budget for Gemini Flash models (0 = thinking disabled, TASK-INF-011)")
 
     GROQ_API_KEY: str | None = Field(default=None)
     GROQ_API_KEYS: str | None = Field(default=None)
