@@ -393,6 +393,7 @@ class VoiceBrainBridge:
     def __init__(self, client: httpx.AsyncClient | None = None,
                  confirmation_gate: Any = None,
                  result_observer: Any = None,
+                 dispatch_observer: Any = None,
                  turn_transcript_provider: Any = None) -> None:
         self.client = client
         # TASK-FRD-015: the worker supplies a callable returning
@@ -407,6 +408,11 @@ class VoiceBrainBridge:
         # never verbalized (defect D7). Observer failures must never
         # break a call — every notification is guarded.
         self._observer = result_observer
+        # Dropped-fragment observability: notified when a substantive
+        # call STARTS, so the worker can pair start/settle and know
+        # which calls are in flight when a user STT final lands.
+        # Guarded exactly like the result observer.
+        self._dispatch_observer = dispatch_observer
         # TASK-IG-VOI-01: one gate per bridge (i.e. per session build).
         # A watchdog rebuild creates a fresh bridge, so a confirmation
         # earned before a rebuild is asked again — fail-closed.
@@ -448,6 +454,20 @@ class VoiceBrainBridge:
         except Exception:  # the watch is advisory; the call is not
             logger.warning("VOICE brain bridge: result observer failed "
                            "for turn %s", turn_id, exc_info=True)
+
+    def _notify_dispatch(self, turn_id: str, text: str) -> None:
+        """Tell the worker a substantive bridge call has STARTED
+        (dropped-fragment observability). Best-effort exactly like
+        the result observer — a failing observer must never break a
+        turn."""
+        if self._dispatch_observer is None:
+            return
+        try:
+            self._dispatch_observer(
+                {"turn_id": turn_id, "request": text})
+        except Exception:  # observers never break a turn
+            logger.warning("VOICE brain bridge: dispatch observer "
+                           "failed for turn %s", turn_id, exc_info=True)
 
     def _settle(self, turn_id: str, text: str, result: dict[str, Any],
                 started: float) -> dict[str, Any]:
@@ -563,6 +583,10 @@ class VoiceBrainBridge:
         started = time.monotonic()
         if not text or len(text) > 4000:
             return self._settle(turn_id, text, {"state": "refused", "spoken_reply": "Please give me a request between 1 and 4000 characters. Nothing was submitted."}, started)
+        # Every substantive call from here settles through the result
+        # observer on every exit path (gate, guard, reuse, dispatch),
+        # so dispatch start/settle pair 1:1 by turn_id.
+        self._notify_dispatch(turn_id, text)
         if self._gate is not None:
             # The gate runs BEFORE anything is submitted: a gated
             # request has caused no side effect anywhere when the
@@ -770,16 +794,21 @@ class VoiceBrainBridge:
 
 def build_voice_tools(bridge: VoiceBrainBridge | None = None,
                       result_observer: Any = None,
+                      dispatch_observer: Any = None,
                       turn_transcript_provider: Any = None) -> list:
     """Register against the real LiveKit SDK; defer SDK import for light tests."""
     from livekit.agents import function_tool
 
     brain = bridge or VoiceBrainBridge(
         result_observer=result_observer,
+        dispatch_observer=dispatch_observer,
         turn_transcript_provider=turn_transcript_provider)
     if (bridge is not None and turn_transcript_provider is not None
             and brain._turn_provider is None):
         brain._turn_provider = turn_transcript_provider
+    if (bridge is not None and dispatch_observer is not None
+            and brain._dispatch_observer is None):
+        brain._dispatch_observer = dispatch_observer
 
     @function_tool(name="execute_friday_task", description=(
         "Send the user's complete request to FRIDAY's canonical brain. REQUIRED for "

@@ -461,7 +461,8 @@ async def _inject_memory_block(sess, agent, block: str, instructions: str) -> "s
     return None
 
 
-def _voice_tools(result_observer=None, turn_transcript_provider=None) -> list:
+def _voice_tools(result_observer=None, turn_transcript_provider=None,
+                 dispatch_observer=None) -> list:
     """The execute_friday_task bridge: voice requests hit the SAME brain as
     chat (memory recall, fleet dispatch, research) instead of the voice LLM
     guessing. Import failures degrade to no tools — never a dead worker.
@@ -469,13 +470,16 @@ def _voice_tools(result_observer=None, turn_transcript_provider=None) -> list:
     watch (a settled result the model never verbalizes gets delivered,
     not stranded). TASK-FRD-015: the turn transcript provider feeds
     the bridge's split-final guard (a remember composed from a partial
-    turn never reaches the brain)."""
+    turn never reaches the brain). The dispatch observer feeds the
+    dropped-fragment tracker (finals that land mid-flight and are
+    never dispatched leave a journal line, not silence)."""
     try:
         from friday.voice.brain_bridge import build_voice_tools
 
         return build_voice_tools(
             result_observer=result_observer,
-            turn_transcript_provider=turn_transcript_provider)
+            turn_transcript_provider=turn_transcript_provider,
+            dispatch_observer=dispatch_observer)
     except Exception as exc:
         logger.warning("voice brain bridge unavailable: %s", exc)
         return []
@@ -1303,16 +1307,35 @@ _VERBALIZED_STOPWORDS = frozenset({
 })
 
 
+def _figure_key(token: str) -> str:
+    """Canonical form of one figure token: commas removed and the
+    decimal part normalized, so the same quantity transcribed with
+    different grouping or trailing zeros still compares equal
+    ('10,792.80' and '10792.8' are the same figure)."""
+    text = (token or "").replace(",", "")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text
+
+
 def _distinctive_tokens(text: str) -> "tuple[set[str], set[str]]":
     """(number tokens, content-word tokens) worth matching on."""
     numbers = {
-        n.replace(",", "") for n in re.findall(r"\d[\d,]*(?:\.\d+)?", text or "")
+        _figure_key(n) for n in re.findall(r"\d[\d,]*(?:\.\d+)?", text or "")
     }
     words = {
         w for w in re.findall(r"[a-z]{5,}", (text or "").lower())
         if w not in _VERBALIZED_STOPWORDS
     }
     return numbers, words
+
+
+def _distinctive_figures(numbers) -> "set[str]":
+    """The figures in a settled reply that ARE its payload: four or
+    more digits (a balance, a long count, an identifier). A one- or
+    two-digit figure — a clock time, a small count — is incidental:
+    sharing one says nothing about whether THIS result was spoken."""
+    return {n for n in numbers if len(re.sub(r"\D", "", n)) >= 4}
 
 
 # How long a settled result may sit unverbalized before the watch
@@ -1324,11 +1347,13 @@ _DELIVERY_GRACE_S = 12.0
 _DELIVERY_EXPIRE_S = 150.0
 
 
-def _result_verbalized(spoken_reply: str, assistant_texts) -> bool:
-    """True when a later assistant item demonstrably carries the
-    result's substance: any one of its figures, or at least two of
-    its content words (a reply with fewer than two distinctive tokens
-    in total is judged on the single token it has)."""
+def _result_verbalized_loose(spoken_reply: str, assistant_texts) -> bool:
+    """The original FRD-012 substance check, unchanged: a later
+    assistant item carries the result's substance when it shares any
+    one of its figures, or at least two of its content words (a reply
+    with fewer than two distinctive tokens in total is judged on the
+    single token it has). Kept as the LOOSE leg of the tightened
+    check below and as the substitute detector's topic test."""
     want_numbers, want_words = _distinctive_tokens(spoken_reply)
     if not want_numbers and not want_words:
         return True  # nothing distinctive to check — nothing to strand
@@ -1344,6 +1369,123 @@ def _result_verbalized(spoken_reply: str, assistant_texts) -> bool:
     if len(want_words) + len(want_numbers) <= 1:
         return bool(overlap)
     return len(overlap) >= 2
+
+
+def _result_verbalized(spoken_reply: str, assistant_texts) -> bool:
+    """True when the model demonstrably verbalized the result itself.
+
+    TASK-FRD-018 (silent-path follow-up): the loose check alone waved
+    through re-run #7's improvised memory dump. The settled reply was
+    itself composed from the recall gate's merged memory bullets, and
+    the dump paraphrased those same bullets — sharing an incidental
+    figure (the '9' of a morning review) and several content words —
+    so the record closed as 'own-verbalized' and, the close being
+    unjournaled, FRD-018's guarantee left no trace. The tightening is
+    a DISTINCTIVE-FIGURE GATE on top of the loose check: when the
+    settled reply carries payload figures (>=4 digits — a balance, a
+    long count, an identifier), at least one of them must actually
+    be spoken. The dump dropped the reply's distinctive figure (a
+    10-digit memory marker) and kept only the incidental one, so it
+    no longer passes; the proven healthy paraphrase of a Stratex
+    snapshot still passes, because it carries the balance — the
+    payload's head figure — even when it drops a tail figure."""
+    want_numbers, _want_words = _distinctive_tokens(spoken_reply)
+    distinctive = _distinctive_figures(want_numbers)
+    if distinctive:
+        got_numbers: set = set()
+        for text in assistant_texts:
+            numbers, _words = _distinctive_tokens(text)
+            got_numbers |= numbers
+        if not (distinctive & got_numbers):
+            return False
+    return _result_verbalized_loose(spoken_reply, assistant_texts)
+
+
+# ---- Dropped-fragment suspects (delegation-split observability) ----
+# The delegation-split assessment (FRD-015 scope review) recommended
+# NO guard for non-remember turns — but a dropped fragment 2 should
+# not be invisible either: in re-run #7 the delegation utterance
+# split, fragment 1 dispatched alone, fragment 2 (the balance /
+# positions / ledger specifics) never dispatched at all, and nothing
+# in the journal recorded that. These pure helpers track the shape:
+# a user STT final that lands while a bridge call is in flight is a
+# SUSPECT; it clears if a bridge call started after it carries its
+# substance (the model acted on it after all), and it is reported —
+# by the caller, as a journal line — once two further finals have
+# landed without such a call (one final of grace: a split turn's
+# second half must not convict its first half, and the model needs a
+# turn to compose the follow-up call), or at the session-end flush.
+# Log-only: nothing here delays, holds, or alters a dispatch.
+
+def _new_fragment_watch() -> dict:
+    return {"in_flight": {}, "suspects": [], "dispatches": [],
+            "final_seq": 0}
+
+
+def _fragment_flight_started(state: dict, turn_id, request,
+                             now: float) -> None:
+    """A bridge call (execute_friday_task) has begun."""
+    state["in_flight"][turn_id] = now
+    state["dispatches"].append(
+        {"ts": now, "turn_id": turn_id, "request": request or ""})
+    if len(state["dispatches"]) > 20:
+        del state["dispatches"][:-20]
+
+
+def _fragment_flight_settled(state: dict, turn_id) -> None:
+    """A bridge call settled (the result observer fired)."""
+    state["in_flight"].pop(turn_id, None)
+
+
+def _dispatch_followed(state: dict, suspect: dict) -> bool:
+    """A bridge call started after the suspect final landed and its
+    composed request carries the final's substance (a shared figure,
+    or at least two shared content words) — the model acted on the
+    fragment after all, so it was not dropped."""
+    s_numbers, s_words = _distinctive_tokens(suspect.get("text"))
+    for dispatch in state["dispatches"]:
+        if dispatch["ts"] < suspect["ts"]:
+            continue
+        d_numbers, d_words = _distinctive_tokens(dispatch["request"])
+        if s_numbers and (s_numbers & d_numbers):
+            return True
+        if len(s_words & d_words) >= 2:
+            return True
+    return False
+
+
+def _fragment_user_final(state: dict, text, now: float) -> list:
+    """One user STT final landed. Returns the dropped-fragment
+    suspects this final proves (suspects from two or more finals ago
+    that no later bridge call picked up); the caller journals them.
+    The final itself becomes a suspect when a bridge call is in
+    flight at its landing."""
+    state["final_seq"] += 1
+    seq = state["final_seq"]
+    dropped = []
+    remaining = []
+    for suspect in state["suspects"]:
+        if seq - suspect["seq"] < 2:
+            remaining.append(suspect)
+        elif not _dispatch_followed(state, suspect):
+            dropped.append(suspect)
+        # else: a bridge call picked it up — resolved, no trace owed.
+    state["suspects"] = remaining
+    if state["in_flight"]:
+        state["suspects"].append({
+            "ts": now, "seq": seq, "text": text or "",
+            "during": sorted(state["in_flight"], key=str),
+        })
+    return dropped
+
+
+def _fragment_flush(state: dict) -> list:
+    """Session end: the suspects no bridge call ever followed.
+    Clears the list either way, so a second flush is a no-op."""
+    dropped = [s for s in state["suspects"]
+               if not _dispatch_followed(state, s)]
+    state["suspects"] = []
+    return dropped
 
 
 # ---- TASK-FRD-018: verbatim-delivery gate + verification ----
@@ -1437,7 +1579,14 @@ def _delivery_action(record, later_texts, now: float) -> str:
       "close"              — not a watchable outcome (state filter or
                              a late result still pending); drop it.
       "own-verbalized"     — the model spoke the result itself
-                             (substance check); nothing to deliver.
+                             (tightened substance check); nothing to
+                             deliver.
+      "substitute"         — the session spoke this result's topic
+                             but not its payload (loose substance
+                             match, tightened check failed) at/past
+                             the grace: a non-verbatim substitute —
+                             journaled as a failed delivery, never
+                             fired.
       "verified"           — a watch-fired delivery was spoken
                              verbatim (strict check); delivered.
       "mismatch"           — a watch-fired delivery was followed by
@@ -1485,6 +1634,23 @@ def _delivery_action(record, later_texts, now: float) -> str:
     if _result_verbalized(settled, later_texts):
         return "own-verbalized"
     age = now - float(record.get("ts") or now)
+    if (
+        age >= _DELIVERY_GRACE_S
+        and later_texts
+        and _result_verbalized_loose(settled, later_texts)
+    ):
+        # TASK-FRD-018 (silent-path follow-up): the session spoke
+        # about this result's topic but dropped its distinctive
+        # payload figures — re-run #7's improvised memory dump,
+        # which the pre-fix substance check waved through as an
+        # own-verbalization and the watch then closed in silence.
+        # That is a substitution, not a verbalization: journal it
+        # as one and never fire — a verbatim blast after an
+        # improvisation would double-speak the turn. Speech that
+        # shares NO substance with the result (a stall filler, a
+        # newer turn's own answer) does not land here; it keeps the
+        # fire path below, the proven late-delivery pattern.
+        return "substitute"
     if age > _DELIVERY_EXPIRE_S:
         return "expire"
     if age >= _DELIVERY_GRACE_S:
@@ -1931,13 +2097,64 @@ async def entrypoint(ctx: JobContext):
     # plus {"nudged": bool, "done": bool} watch bookkeeping.
     bridge_results: list = []
 
+    # Dropped-fragment tracker (delegation-split observability):
+    # job-level like bridge_results, fed by the bridge's dispatch
+    # observer, the result observer below, and the STT-final handler.
+    fragment_watch = _new_fragment_watch()
+
+    def _observe_dispatch(info: dict) -> None:
+        _fragment_flight_started(
+            fragment_watch, info.get("turn_id"),
+            info.get("request") or "", time.time())
+
     def _observe_bridge_result(record: dict) -> None:
         record = dict(record)
         record["nudged"] = False
         record["done"] = False
         bridge_results.append(record)
+        _fragment_flight_settled(fragment_watch, record.get("turn_id"))
         if len(bridge_results) > 20:
+            # TASK-FRD-018 (silent-path follow-up): eviction used to
+            # be silent — an unresolved record past the cap vanished
+            # with no trace. Journal the unresolved ones.
+            for evicted in bridge_results[: len(bridge_results) - 20]:
+                if not evicted.get("done"):
+                    logger.error(
+                        "VOICE delivery watch: result turn=%s "
+                        "state=%s dropped from the watch list "
+                        "unresolved (list cap); its delivery was "
+                        "never verified",
+                        evicted.get("turn_id"), evicted.get("state"),
+                    )
             del bridge_results[: len(bridge_results) - 20]
+
+    def _flush_watch_on_stop() -> None:
+        """TASK-FRD-018 (silent-path follow-up): when the watch stops
+        (the session is closing), every still-pending record and
+        every unresolved dropped-fragment suspect leaves its journal
+        line — pre-fix the loop simply exited and pending records
+        vanished with the job. Idempotent: flushed records are
+        marked done and the suspect list is cleared, so the second
+        call site (session close + loop exit) is a no-op."""
+        for record in bridge_results:
+            if record.get("done"):
+                continue
+            record["done"] = True
+            logger.error(
+                "VOICE delivery watch: result turn=%s state=%s was "
+                "still pending when the watch stopped (session "
+                "closing); the settled reply was NOT delivered",
+                record.get("turn_id"), record.get("state"),
+            )
+        for suspect in _fragment_flush(fragment_watch):
+            logger.error(
+                "VOICE dropped-fragment suspect: user final %r "
+                "landed while bridge turn(s) %s were in flight and "
+                "the session ended before any bridge call followed "
+                "it; it was never dispatched",
+                (suspect.get("text") or "")[:200],
+                ", ".join(suspect.get("during") or []) or "?",
+            )
 
     def _turn_transcript_snapshot():
         """TASK-FRD-015: (current-turn user text, version) for the
@@ -1980,7 +2197,8 @@ async def entrypoint(ctx: JobContext):
         agent = Agent(instructions=instr,
                       tools=_voice_tools(
                           result_observer=_observe_bridge_result,
-                          turn_transcript_provider=_turn_transcript_snapshot))
+                          turn_transcript_provider=_turn_transcript_snapshot,
+                          dispatch_observer=_observe_dispatch))
         model = artifacts.get("model")
         if model is None:
             model = _build_realtime_model(pinned["key"], instr)
@@ -2278,6 +2496,21 @@ async def entrypoint(ctx: JobContext):
                     )
                 turn["pending_since"] = time.time()
                 turn["pending_text"] = corrected
+                # Dropped-fragment observability: a final that lands
+                # while a bridge call is in flight is a suspect; this
+                # final may also prove older suspects dropped (no
+                # bridge call ever followed them). Log-only — the
+                # finals themselves are never held or altered.
+                for suspect in _fragment_user_final(
+                        fragment_watch, corrected, time.time()):
+                    logger.error(
+                        "VOICE dropped-fragment suspect: user final "
+                        "%r landed while bridge turn(s) %s were in "
+                        "flight and no bridge call followed it; it "
+                        "was never dispatched",
+                        (suspect.get("text") or "")[:200],
+                        ", ".join(suspect.get("during") or []) or "?",
+                    )
 
         @sess.on("conversation_item_added")
         def _on_item_added(ev):
@@ -2720,6 +2953,20 @@ async def entrypoint(ctx: JobContext):
         realtime model declares supports_say, which Google's does
         not, and the worker carries no TTS — VOI-009.)
 
+        TASK-FRD-018 (silent-path follow-up): re-run #7's recall
+        record escaped even this discipline — the session spoke an
+        improvised memory dump over the pending result and the loose
+        substance check closed the record as own-verbalized, a close
+        this step did not journal, so the run's journal holds zero
+        watch lines. Now: the substance check is tightened with a
+        distinctive-figure gate (_result_verbalized); topic-only
+        speech at/past the grace is a "substitute" and is journaled
+        as a NON-VERBATIM failure, never fired on; and EVERY close
+        of a record — close, own-verbalized, substitute, verified,
+        mismatch, expire, silent-unavailable — leaves its journal
+        line, with the watch-stop flush (see _flush_watch_on_stop)
+        covering records still pending when the session ends.
+
         Participant rule, deliberately different from the recovery
         triggers in _watch_turns: delivering a settled result is safe
         for ANY listener in the room, so presence here means any
@@ -2801,7 +3048,54 @@ async def entrypoint(ctx: JobContext):
                 if ts >= float(since)
             ]
             action = _delivery_action(record, later_texts, now)
-            if action in ("close", "own-verbalized"):
+            if action == "close":
+                # TASK-FRD-018 (silent-path follow-up): EVERY record
+                # close journals its reason. Pre-fix, this branch and
+                # own-verbalized below dropped records with no line
+                # at all, so a record the session improvised over
+                # could leave the watch without a trace (re-run #7:
+                # zero 'VOICE delivery watch:' lines for the run).
+                if state not in ("answered", "failed", "refused",
+                                 "unconfirmed"):
+                    reason = ("state %s is not a watchable outcome"
+                              % (state,))
+                else:
+                    reason = ("the real answer is still pending via "
+                              "the late-result channel")
+                logger.error(
+                    "VOICE delivery watch: result turn=%s closed "
+                    "without delivery — %s",
+                    record.get("turn_id"), reason,
+                )
+                record["done"] = True
+                continue
+            if action == "own-verbalized":
+                logger.error(
+                    "VOICE delivery watch: result turn=%s state=%s "
+                    "verbalized by the model itself (substance "
+                    "verified against the settled reply); no watch "
+                    "delivery needed",
+                    record.get("turn_id"), state,
+                )
+                record["done"] = True
+                continue
+            if action == "substitute":
+                # TASK-FRD-018 (silent-path follow-up): the session
+                # spoke this result's topic but not its payload —
+                # re-run #7's improvised memory dump, absorbed
+                # silently by the pre-fix substance check. Record
+                # the failure as a failure, exactly like the fired
+                # mismatch below — and never fire: a verbatim blast
+                # after an improvisation would double-speak.
+                logger.error(
+                    "VOICE delivery watch: result turn=%s state=%s "
+                    "— the session spoke a NON-VERBATIM substitute "
+                    "while the settled reply was pending (it carried "
+                    "the result's topic but not its distinctive "
+                    "payload); the settled reply was NOT delivered "
+                    "and will not be re-attempted",
+                    record.get("turn_id"), state,
+                )
                 record["done"] = True
                 continue
             if action == "verified":
@@ -2888,6 +3182,26 @@ async def entrypoint(ctx: JobContext):
                         "VOICE delivery watch: nudge failed for "
                         "turn=%s: %s", record.get("turn_id"), exc,
                     )
+            if (
+                action == "fire"
+                and not record.get("nudged")
+                and not record.get("fire_due_noted")
+            ):
+                # TASK-FRD-018 (silent-path follow-up): the fire was
+                # due but this pass could not take it (no live
+                # session, nobody present, or the session is not
+                # listening): say so ONCE — pre-fix, a due fire
+                # blocked until expiry left no trace of why the
+                # delivery never happened.
+                record["fire_due_noted"] = True
+                logger.error(
+                    "VOICE delivery watch: result turn=%s state=%s "
+                    "delivery is due but could not fire this pass "
+                    "(session=%s, humans=%s, turn state=%s); the "
+                    "result stays under watch until expiry",
+                    record.get("turn_id"), state, sess is not None,
+                    humans_present, turn.get("state"),
+                )
         bridge_results[:] = [r for r in bridge_results if not r.get("done")]
 
     async def _watch_turns() -> None:
@@ -3007,6 +3321,11 @@ async def entrypoint(ctx: JobContext):
                 raise
             except Exception as exc:
                 logger.warning("VOICE turn watchdog error: %s", exc)
+        # The loop only exits when the session is closing: journal
+        # whatever the watch still holds before the job ends (the
+        # session-close path flushes first; this is the backstop,
+        # and the flush is idempotent).
+        _flush_watch_on_stop()
 
     async def _deliver_memory_when_ready() -> None:
         """TASK-VOI-010: the decoupled recall's landing.
@@ -3074,6 +3393,10 @@ async def entrypoint(ctx: JobContext):
             # Mark closing FIRST so the watchdog stops even when there is
             # no live session left to close (TASK-VOI-003).
             live["closing"] = True
+            # Journal the watch's pending records + fragment suspects
+            # BEFORE the watchdog task is cancelled below — a record
+            # still pending at session end must not vanish silently.
+            _flush_watch_on_stop()
             for task_key in (
                 "greeting_task", "early_greeting_task", "watchdog_task", "memory_task"
             ):
