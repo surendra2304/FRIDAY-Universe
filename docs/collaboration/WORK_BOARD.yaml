@@ -9038,6 +9038,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "COMPLETION CREW 2026-11-16 (finisher ended without a report; ground truth re-established + gates re-run in a clean venv with IntelX's full CI dependency set): control on pristine main contracts 22/22; PR #648 tree contracts 22/22; INT-006 suite test_owner_briefing.py 10/10; the two pre-existing files are byte-identical on current main to the composition base and the three new files are absent on main, so the change set applies to current main exactly. Shipped as PR #648 (branch claude/task-int-006-fix, head 26802621) — this crew does not merge."
     blockers: []
     next_action: "Coordinator: merge PR #648, then close #331 and #423 as superseded; Fleet CD; then VERIFIED after the post-deploy production probe (one live research brief via FRIDAY chat or /v1/research/live showing the REL-016 label line first with the owner-briefing headline block immediately after it and the briefing envelope block present)."
+  - id: TASK-STR-FWD-007
+    title: "Forward-ledger booking integrity — sleeve book-first-then-pop, reconciler skips adopted positions, sweep clears stale alert, adapter reads linked SL/TP orders"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 652
+    branch: claude/task-str-fwd-007
+    next_action: "merge -> Fleet CD -> watch trade 470's close land exactly once, under sleeve:best_per_class (one fill-ledger row, engine=oanda_sleeve; no daemon/unknown row, no realized_pnl jump in the daemon heartbeat) -> VERIFIED"
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
