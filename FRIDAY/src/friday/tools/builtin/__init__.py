@@ -91,6 +91,10 @@ from friday.tools.builtin.github_tools import (
     CreateGitHubIssueTool,
     ListGitHubIssuesTool,
 )
+from friday.tools.builtin.goal_loop_tools import (
+    GoalLoopStatusTool,
+    StartGoalLoopTool,
+)
 from friday.tools.builtin.errand_tools import (
     ErrandApproveTool,
     ErrandCreateTool,
@@ -229,6 +233,8 @@ __all__ = [
     "GitCommitTool",
     "GitPushTool",
     "GitStatusTool",
+    "GoalLoopStatusTool",
+    "StartGoalLoopTool",
     "ErrandApproveTool",
     "ErrandCreateTool",
     "ErrandRunTool",
