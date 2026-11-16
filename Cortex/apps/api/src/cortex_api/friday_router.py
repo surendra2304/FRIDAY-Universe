@@ -89,6 +89,7 @@ def _utcnow() -> datetime:
     return datetime.now(UTC)
 
 
+from cortex_api.agent_budgets import ledger as agent_budget_ledger
 from cortex_api.auth import verify_friday_token
 from cortex_api.config import get_db_session
 from cortex_api.db_models import AuditRecordModel, EventModel, LeadModel, ProfileModel
@@ -858,6 +859,13 @@ def _log_task_rejection(
     )
 
 
+# Envelope actions the agent-budget gate never blocks (TASK-IG2-COR-01):
+# read-only status and task-control actions are not billable work, and an
+# operator must always be able to inspect or stop work — especially while
+# an agent is budget-paused.
+_BUDGET_EXEMPT_ACTIONS = frozenset({"health_summary", "status", "cancel", "rollback"})
+
+
 async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession | None = None) -> FridayTaskResponse:
     """Core executor for FridayTaskEnvelope adhering to 5-phase governed operations."""
     import time
@@ -918,6 +926,43 @@ async def process_task_envelope(envelope: FridayTaskEnvelope, db: AsyncSession |
             property_id=property_id, operation=op_on_prop,
         )
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    # 2b. Agent-budget gate (TASK-IG2-COR-01): this executor is Cortex's
+    # dispatch path, so every envelope it executes is a unit of Cortex
+    # work charged to the Cortex line of the shared budget ledger
+    # (cortex_api.agent_budgets). The charge is recorded up front via
+    # record_usage — the ledger's enforcement point — so a breach pauses
+    # Cortex and denies the envelope here instead of the budget existing
+    # only for callers who opt in. The envelope executor meters no LLM
+    # tokens (its engines are deterministic governed operations), so the
+    # task-count line is the operative budget on this path; token usage
+    # is reported through POST /api/v1/cortex/budgets/usage. Dry runs and
+    # read-only/control actions are never charged or blocked.
+    if not envelope.dry_run and action_norm not in _BUDGET_EXEMPT_ACTIONS:
+        critical = (envelope.priority or "").strip().upper() == "CRITICAL"
+        budget_decision = agent_budget_ledger.record_usage(
+            "Cortex", tokens=0, tasks=1, critical=critical
+        )
+        if not budget_decision.allowed:
+            _log_task_rejection(
+                envelope, gate="agent_budget", status_code=429,
+                reason=budget_decision.reason,
+                property_id=property_id, operation=op_on_prop,
+            )
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    f"Cortex has exhausted its daily agent budget "
+                    f"({budget_decision.reason}); non-critical work is "
+                    "auto-paused until UTC day rollover."
+                ),
+            )
+        if budget_decision.critical_override:
+            logger.warning(
+                "task executed under agent-budget critical_override "
+                "task_id=%s action=%s",
+                envelope.task_id, envelope.action,
+            )
 
     # 3. Action Routing
     if action_norm == "health_summary":
