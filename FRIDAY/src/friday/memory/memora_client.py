@@ -167,10 +167,13 @@ class MemoraClient:
             self.remote_enabled = (
                 configured.lower() in ("true", "1", "yes")
                 if configured is not None
-                else bool(os.getenv("FRIDAY_API_KEY"))
+                else bool(os.getenv("FRIDAY_MEMORA_API_KEY") or os.getenv("FRIDAY_API_KEY"))
             )
         self.base_url = (base_url or os.getenv("MEMORA_URL", "http://memora:8000")).rstrip("/")
-        self.api_key = api_key or os.getenv("MEMORA_API_KEY")
+        # TASK-MEM-005-R1: FRIDAY's Memora credential is its own dedicated
+        # key. MEMORA_API_KEY (Memora's own key / the former master fallback)
+        # is never read here.
+        self.api_key = api_key or os.getenv("FRIDAY_MEMORA_API_KEY")
         self.timeout = 3.5 if timeout is None else timeout
         # Distinguish defaults from an explicitly configured transport budget.
         # Never silently override a caller's chosen timeout (WF015 CI contract).
@@ -222,21 +225,33 @@ class MemoraClient:
             self._ensure_tables()
 
     def _remote_headers(self, agent_name: str, *, json_body: bool = False, api_key: Optional[str] = None) -> dict[str, str]:
-        headers = {"X-Agent-Name": agent_name.lower()}
+        # TASK-MEM-005-R1 scoped delegation: FRIDAY always authenticates as
+        # itself, with its OWN key. Access to another agent's namespace is
+        # requested via X-On-Behalf-Of and granted (or denied) by Memora's
+        # MEMORA_DELEGATIONS policy — the target agent's key is never used.
+        target = agent_name.lower().strip()
+        headers = {"X-Agent-Name": "friday"}
+        if target != "friday":
+            headers["X-On-Behalf-Of"] = target
         if json_body:
             headers["Content-Type"] = "application/json"
-        credential = api_key or self._agent_api_key(agent_name)
+        credential = api_key or self._own_api_key()
         if credential:
             headers["Authorization"] = f"Bearer {credential}"
         return headers
 
-    def _agent_api_key(self, agent_name: str) -> Optional[str]:
-        agent = agent_name.lower().strip()
+    def _own_api_key(self) -> Optional[str]:
+        """FRIDAY's own Memora credential — never another agent's key.
+
+        FRIDAY_MEMORA_API_KEY is the dedicated Memora credential; FRIDAY_API_KEY
+        is FRIDAY's per-agent key (accepted by Memora's registry); both live
+        only in FRIDAY's environment. MEMORA_API_KEY is deliberately absent.
+        """
         return (
-            os.getenv(f"{agent.upper()}_API_KEY")
-            or (os.getenv("FRIDAY_MEMORA_API_KEY") if agent == "friday" else None)
-            or (os.getenv("FRIDAY_UNIVERSE_API_KEY") if agent == "friday" else None)
-            or (self.api_key if agent == "friday" else None)
+            os.getenv("FRIDAY_MEMORA_API_KEY")
+            or os.getenv("FRIDAY_API_KEY")
+            or os.getenv("FRIDAY_UNIVERSE_API_KEY")
+            or self.api_key
         )
 
     def poll_events(self, agent_name: str = "friday", after_id: int = 0, limit: int = 100) -> Dict[str, Any]:
@@ -246,9 +261,9 @@ class MemoraClient:
         if not self.remote_enabled:
             return {"status": "disabled", "events": [], "next_after_id": after_id}
         agent = agent_name.lower().strip()
-        agent_key = self._agent_api_key(agent)
+        agent_key = self._own_api_key()
         if not agent_key:
-            return {"status": "error", "error": f"{agent.upper()}_API_KEY is not configured"}
+            return {"status": "error", "error": "FRIDAY_MEMORA_API_KEY/FRIDAY_API_KEY is not configured"}
         query = urllib.parse.urlencode({"after_id": after_id, "limit": limit})
         url = f"{self.base_url}/v1/events?{query}"
         try:
@@ -315,9 +330,9 @@ class MemoraClient:
     def read_event_cursor(self, agent_name: str = "friday", consumer_id: str = "default") -> Dict[str, Any]:
         """Read FRIDAY's independent server-persisted feed cursor."""
         agent = agent_name.lower().strip()
-        key = self._agent_api_key(agent)
+        key = self._own_api_key()
         if not self.remote_enabled or not key:
-            return {"status": "error", "error": f"{agent.upper()}_API_KEY is not configured or Memora remote is disabled"}
+            return {"status": "error", "error": "FRIDAY_MEMORA_API_KEY/FRIDAY_API_KEY is not configured or Memora remote is disabled"}
         try:
             req = urllib.request.Request(
                 f"{self.base_url}/v1/events/cursor?{urllib.parse.urlencode({'consumer_id': consumer_id})}",
@@ -334,9 +349,9 @@ class MemoraClient:
     def acknowledge_event(self, agent_name: str, event_id: int, consumer_id: str = "default") -> Dict[str, Any]:
         """Persist an event acknowledgement after successful local handling."""
         agent = agent_name.lower().strip()
-        key = self._agent_api_key(agent)
+        key = self._own_api_key()
         if not self.remote_enabled or not key:
-            return {"status": "error", "error": f"{agent.upper()}_API_KEY is not configured or Memora remote is disabled"}
+            return {"status": "error", "error": "FRIDAY_MEMORA_API_KEY/FRIDAY_API_KEY is not configured or Memora remote is disabled"}
         try:
             req = urllib.request.Request(
                 f"{self.base_url}/v1/events/ack",
@@ -356,7 +371,7 @@ class MemoraClient:
 
     def persist_event_notice(self, event: Dict[str, Any], message: str, consumer_id: str) -> bool:
         """Durably archive an untrusted event notice in Memora before its cursor advances."""
-        if not self.remote_enabled or not self._agent_api_key("friday"):
+        if not self.remote_enabled or not self._own_api_key():
             logger.warning("Memora event notice was not persisted: remote memory is not configured")
             return False
         event_id = event.get("id")
@@ -413,9 +428,14 @@ class MemoraClient:
     ) -> Dict[str, Any]:
         """Sign and persist an idempotent agent notification through Memora."""
         source = source_agent.lower().strip()
-        key = self._agent_api_key(source)
+        if source != "friday":
+            # TASK-MEM-005-R1: an envelope signature proves the publisher's
+            # identity, so it cannot be delegated — only FRIDAY's own events
+            # are signed here, with FRIDAY's own key.
+            return {"status": "error", "error": "publish_event source_agent must be 'friday': envelope signatures cannot be delegated (TASK-MEM-005-R1)"}
+        key = self._own_api_key()
         if not key:
-            return {"status": "error", "error": f"{source.upper()}_API_KEY is not configured"}
+            return {"status": "error", "error": "FRIDAY_MEMORA_API_KEY/FRIDAY_API_KEY is not configured"}
         if not (1 <= ttl <= 86400):
             return {"status": "error", "error": "ttl must be in the range 1..86400 seconds"}
         envelope = {

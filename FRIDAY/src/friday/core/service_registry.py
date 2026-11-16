@@ -80,7 +80,7 @@ class ServiceRegistry:
 
         # 2. Memora
         memora_url = (os.getenv("FRIDAY_MEMORA_URL") or os.getenv("MEMORA_URL") or "http://memora:8000").rstrip("/")
-        memora_key = os.getenv("FRIDAY_MEMORA_API_KEY") or os.getenv("MEMORA_API_KEY", "")
+        memora_key = os.getenv("FRIDAY_MEMORA_API_KEY") or os.getenv("FRIDAY_API_KEY", "")
 
         # 3. Stratex
         stratex_url = (os.getenv("FRIDAY_STRATEX_URL") or os.getenv("STRATEX_URL") or "http://stratex:8000").rstrip("/")
