@@ -31,6 +31,11 @@ _FALLBACK: Dict[str, Any] = {
     "entity_boost_weight": 0.10,
     "rrf_k": 60,
     "ranking_factors": {},
+    # TASK-MEM-002 follow-up: the lexical fast lane in
+    # SearchService.hybrid_search serves exact / subject-shaped full
+    # matches without the embedding/vector/graph legs. On by default;
+    # set "lexical_fast_lane": false in retrieval_config.json to disable.
+    "lexical_fast_lane": True,
 }
 
 #: Maps the config file's method names onto the search service's weights.
@@ -46,6 +51,9 @@ _cached: Optional[Dict[str, Any]] = None
 
 def _parse(raw: Dict[str, Any]) -> Dict[str, Any]:
     resolved = dict(_FALLBACK)
+
+    if isinstance(raw.get("lexical_fast_lane"), bool):
+        resolved["lexical_fast_lane"] = raw["lexical_fast_lane"]
 
     for method in raw.get("retrieval_methods", []) or []:
         if not isinstance(method, dict):

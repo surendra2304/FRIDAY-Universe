@@ -1,4 +1,5 @@
 {
+  "lexical_fast_lane": true,
   "retrieval_methods": [
     {
       "name": "dense_vector",
