@@ -157,13 +157,26 @@ class DatabaseBudgetStore:
     """Durable ``BudgetStore`` backed by Cortex's own database.
 
     Persists the ledger state dict as the single row of
-    ``agent_budget_state`` (``cortex_api.db_models.AgentBudgetStateModel``)
-    through the app's async session factory, so the state lives in the
-    same database as every other Cortex table (Oracle in production).
+    ``agent_budget_state`` (``cortex_api.db_models.AgentBudgetStateModel``),
+    so the state lives in the same database as every other Cortex table
+    (Oracle in production).
 
     The ``BudgetStore`` protocol is synchronous while the engine is
     async, so all I/O runs on a dedicated daemon thread with its own
     event loop; callers block on the result with a bounded timeout.
+
+    The store owns its engine: on the default path it builds a private
+    ``NullPool`` engine from the app's DSN instead of borrowing the app's
+    pooled ``AsyncSessionLocal``. A pooled engine's connections carry
+    futures bound to the loop that opened them — the app's loop — so
+    driving it from this store's loop fails every save with
+    ``RuntimeError: got Future attached to a different loop``
+    (TASK-COR-012: production saves failed exactly this way and
+    ``agent_budget_state`` stayed empty). ``NullPool`` opens a fresh
+    connection per session on the calling loop — this store's loop —
+    which is the same pattern the budget wiring tests use for injected
+    factories. An explicitly injected ``session_factory`` is used as-is;
+    its engine's pooling is then the caller's responsibility.
 
     Degradation is honest, never silent: any failure (database
     unreachable, table not yet migrated, timeout) is logged, counted in
@@ -179,10 +192,12 @@ class DatabaseBudgetStore:
         session_factory: Any = None,
         timeout_seconds: float = 10.0,
     ) -> None:
-        # session_factory: an async_sessionmaker; None resolves lazily to
-        # cortex_api.config.AsyncSessionLocal (imported on first use so
-        # importing this module never touches the database).
+        # session_factory: an async_sessionmaker; None means the store
+        # builds its own (see _factory) lazily on first use, so importing
+        # this module never touches the database.
         self._session_factory = session_factory
+        self._own_engine: Any = None
+        self._own_factory: Any = None
         self._timeout = timeout_seconds
         self._mirror: dict[str, Any] = {}
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -196,9 +211,35 @@ class DatabaseBudgetStore:
     def _factory(self) -> Any:
         if self._session_factory is not None:
             return self._session_factory
-        from cortex_api.config import AsyncSessionLocal
+        if self._own_factory is None:
+            # TASK-COR-012: never borrow the app's pooled session factory
+            # (cortex_api.config.AsyncSessionLocal). Its connections are
+            # bound to the app event loop; this store runs its I/O on its
+            # own thread's loop, so every save through the borrowed pool
+            # died with "got Future attached to a different loop" and
+            # agent_budget_state stayed empty in production. A private
+            # NullPool engine opens each connection fresh on the calling
+            # loop — always this store's loop, since _factory is only
+            # called from the _load_async/_save_async coroutines.
+            from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+            from sqlalchemy.pool import NullPool
 
-        return AsyncSessionLocal
+            from cortex_api.config import settings
+
+            engine_kwargs: dict[str, Any] = {"poolclass": NullPool}
+            if "sqlite" in settings.postgres_dsn:
+                # Mirror the app engine's SQLite connect args (config.py).
+                engine_kwargs["connect_args"] = {
+                    "check_same_thread": False,
+                    "timeout": 30,
+                }
+            self._own_engine = create_async_engine(
+                settings.postgres_dsn, **engine_kwargs
+            )
+            self._own_factory = async_sessionmaker(
+                bind=self._own_engine, expire_on_commit=False
+            )
+        return self._own_factory
 
     def _ensure_loop(self) -> asyncio.AbstractEventLoop:
         if self._loop is None:
