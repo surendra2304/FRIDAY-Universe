@@ -67,7 +67,12 @@ def build_supervisor(registry: Any, max_collaboration_rounds: int = 3) -> SelfHe
     health = global_health_registry
     # Escalations go to an operator channel when one is configured; otherwise the supervisor
     # records that it could not notify anyone instead of pretending it did.
-    notifier = EscalationNotifier(webhook_url=os.getenv("SELF_HEALING_ESCALATION_WEBHOOK", ""))
+    notifier = EscalationNotifier(
+        webhook_url=os.getenv("SELF_HEALING_ESCALATION_WEBHOOK", ""),
+        # Only used when the escalation webhook is a Telegram sendMessage
+        # URL: Telegram cannot deliver without a recipient chat id.
+        telegram_chat_id=os.getenv("SELF_HEALING_TELEGRAM_CHAT_ID", ""),
+    )
     if notifier.webhook_url is None:
         logger.info("self-healing: no SELF_HEALING_ESCALATION_WEBHOOK configured; escalations stay in-process")
     supervisor = SelfHealingSupervisor(health, notifier=notifier)

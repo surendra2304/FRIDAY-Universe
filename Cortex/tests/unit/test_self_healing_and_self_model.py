@@ -8,6 +8,7 @@ probes never running on CLOSED circuits, and a reset erasing the evidence histor
 from __future__ import annotations
 
 import asyncio
+import json
 
 import pytest
 from cortex_core.resilience import (
@@ -17,6 +18,7 @@ from cortex_core.resilience import (
     SelfHealingLoop,
     SelfHealingSupervisor,
     SubsystemCircuit,
+    format_escalation_text,
 )
 from cortex_core.self_model import SelfModel, SelfModificationAlreadyApplied, SelfModificationEngine
 
@@ -267,8 +269,14 @@ def test_background_loop_survives_a_failing_cycle():
 
 
 class _FakeResponse:
-    def __init__(self, status_code: int):
+    def __init__(self, status_code: int, json_body=None):
         self.status_code = status_code
+        self._json_body = json_body
+
+    def json(self):
+        if self._json_body is None:
+            raise ValueError("response has no JSON body")
+        return self._json_body
 
 
 class _FakeClient:
@@ -276,6 +284,7 @@ class _FakeClient:
 
     calls: list[dict] = []
     status_code = 204
+    json_body = None
     raise_on_post: Exception | None = None
 
     def __init__(self, *args, **kwargs):
@@ -291,7 +300,7 @@ class _FakeClient:
         if _FakeClient.raise_on_post is not None:
             raise _FakeClient.raise_on_post
         _FakeClient.calls.append({"url": url, "json": json})
-        return _FakeResponse(_FakeClient.status_code)
+        return _FakeResponse(_FakeClient.status_code, _FakeClient.json_body)
 
 
 @pytest.fixture()
@@ -300,10 +309,12 @@ def fake_http(monkeypatch):
 
     _FakeClient.calls = []
     _FakeClient.status_code = 204
+    _FakeClient.json_body = None
     _FakeClient.raise_on_post = None
     monkeypatch.setattr(httpx, "AsyncClient", _FakeClient)
     yield _FakeClient
     _FakeClient.calls = []
+    _FakeClient.json_body = None
     _FakeClient.raise_on_post = None
 
 
@@ -337,6 +348,96 @@ def test_notifier_reports_a_failing_channel_and_a_transport_error(fake_http):
     errored = _run(notifier.deliver({"subsystem": "schema", "reason": "missing table"}))
     assert errored["delivered"] is False
     assert "ConnectionError" in errored["detail"]
+
+
+# ── escalation delivery: Telegram channel ───────────────────────────────────
+
+_TELEGRAM_URL = "https://api.telegram.org/bot123456:SECRET-TOKEN/sendMessage"
+_TELEGRAM_ESCALATION = {
+    "subsystem": "redis",
+    "reason": "3 repair attempts did not restore health",
+    "at": "2026-11-16T00:00:00+00:00",
+}
+
+
+def test_notifier_telegram_mode_posts_chat_id_and_text(fake_http):
+    fake_http.status_code = 200
+    fake_http.json_body = {"ok": True, "result": {"message_id": 1}}
+    notifier = EscalationNotifier(webhook_url=_TELEGRAM_URL, telegram_chat_id="4242", dedupe_window_seconds=0)
+
+    record = _run(notifier.deliver(dict(_TELEGRAM_ESCALATION)))
+
+    assert record["delivered"] is True and record["status_code"] == 200
+    assert len(fake_http.calls) == 1
+    assert fake_http.calls[0]["url"] == _TELEGRAM_URL
+    assert fake_http.calls[0]["json"] == {
+        "chat_id": "4242",
+        "text": (
+            "🚨 Cortex escalation\n"
+            "Subsystem: redis\n"
+            "Reason: 3 repair attempts did not restore health\n"
+            "At: 2026-11-16T00:00:00+00:00"
+        ),
+    }
+
+
+def test_notifier_telegram_ok_false_is_not_delivered(fake_http):
+    notifier = EscalationNotifier(webhook_url=_TELEGRAM_URL, telegram_chat_id="4242", dedupe_window_seconds=0)
+
+    # Telegram can answer HTTP 200 with ok:false — that is not a delivery.
+    fake_http.status_code = 200
+    fake_http.json_body = {"ok": False, "error_code": 400, "description": "Bad Request: chat not found"}
+    record = _run(notifier.deliver(dict(_TELEGRAM_ESCALATION)))
+    assert record["delivered"] is False
+    assert "chat not found" in record["detail"]
+
+    # …and the plain 400 + ok:false shape is not a delivery either.
+    fake_http.status_code = 400
+    record = _run(notifier.deliver(dict(_TELEGRAM_ESCALATION)))
+    assert record["delivered"] is False and record["status_code"] == 400
+    assert "chat not found" in record["detail"]
+
+
+def test_notifier_non_telegram_payload_is_identical_to_the_escalation(fake_http):
+    """Regression guard: generic-webhook mode must not translate anything."""
+    escalation = {"subsystem": "redis", "reason": "down", "at": "2026-11-16T00:00:00+00:00"}
+    notifier = EscalationNotifier(webhook_url="http://ops.local/alerts", dedupe_window_seconds=0)
+
+    record = _run(notifier.deliver(escalation))
+
+    assert record["delivered"] is True
+    assert fake_http.calls[0]["json"] == escalation
+    assert json.dumps(fake_http.calls[0]["json"], sort_keys=True) == json.dumps(escalation, sort_keys=True)
+
+
+def test_notifier_telegram_status_never_leaks_the_bot_token(fake_http):
+    fake_http.status_code = 200
+    fake_http.json_body = {"ok": True, "result": {"message_id": 1}}
+    notifier = EscalationNotifier(webhook_url=_TELEGRAM_URL, telegram_chat_id="4242", dedupe_window_seconds=0)
+    _run(notifier.deliver(dict(_TELEGRAM_ESCALATION)))
+
+    status = notifier.status()
+    blob = json.dumps(status)
+    assert "SECRET-TOKEN" not in blob
+    assert "123456" not in blob
+    assert status["channel"] == "https://api.telegram.org/bot***/sendMessage"
+    assert status["delivered"] == 1
+
+
+def test_notifier_telegram_without_a_chat_id_fails_honestly(fake_http):
+    notifier = EscalationNotifier(webhook_url=_TELEGRAM_URL, dedupe_window_seconds=0)
+
+    record = _run(notifier.deliver(dict(_TELEGRAM_ESCALATION)))
+
+    assert record["delivered"] is False
+    assert "SELF_HEALING_TELEGRAM_CHAT_ID" in record["detail"]
+    assert fake_http.calls == [], "no chat id must mean no HTTP call"
+
+
+def test_format_escalation_text_truncates_at_4096_chars():
+    text = format_escalation_text({"subsystem": "redis", "reason": "x" * 5000})
+    assert len(text) == 4096
+    assert text.startswith("🚨 Cortex escalation\nSubsystem: redis\nReason: ")
 
 
 def test_supervisor_records_escalation_delivery_in_the_cycle(fake_http):

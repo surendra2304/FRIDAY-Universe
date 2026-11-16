@@ -314,3 +314,87 @@ async def test_breach_on_the_envelope_path_dispatches_the_alert(monkeypatch):
         await fr.process_task_envelope(_envelope("wiring_alert_2"))
 
     assert len(sent) == 1 and sent[0]["agent"] == "Cortex"
+
+
+# ── Gap 3b: the production sink speaks Telegram when the channel is Telegram ──
+
+_TELEGRAM_URL = "https://api.telegram.org/bot123456:SECRET-TOKEN/sendMessage"
+
+
+class _FakeSyncResponse:
+    def __init__(self, status_code: int, body):
+        self.status_code = status_code
+        self._body = body
+
+    def json(self):
+        return self._body
+
+
+def _capture_httpx_post(monkeypatch, status_code: int = 200, body=None):
+    """Stand in for the sync ``httpx.post`` the sink uses; records calls."""
+    import httpx
+
+    calls: list[dict] = []
+
+    def _post(url, json=None, timeout=None, trust_env=None):
+        calls.append({"url": url, "json": json})
+        return _FakeSyncResponse(status_code, {"ok": True, "result": {}} if body is None else body)
+
+    monkeypatch.setattr(httpx, "post", _post)
+    return calls
+
+
+def test_production_sink_telegram_mode_posts_chat_id_and_text(monkeypatch):
+    calls = _capture_httpx_post(monkeypatch, status_code=200, body={"ok": True, "result": {"message_id": 7}})
+    sink = WebhookBreachAlertSink(webhook_url=_TELEGRAM_URL, telegram_chat_id="4242")
+    ledger = _ledger(task_budget=1, sink=sink)
+    ledger.record_usage("Cortex", tokens=0, tasks=1)
+    ledger.record_usage("Cortex", tokens=0, tasks=1)
+
+    assert len(calls) == 1
+    assert calls[0]["url"] == _TELEGRAM_URL
+    body = calls[0]["json"]
+    assert set(body) == {"chat_id", "text"}
+    assert body["chat_id"] == "4242"
+    assert "Subsystem: agent_budgets (agent: Cortex)" in body["text"]
+    assert "exhausted its daily budget" in body["text"]
+
+    deliveries = ledger.alert_deliveries()
+    assert deliveries[0]["delivered"] is True
+    # The delivery record must never carry the bot token.
+    assert "SECRET-TOKEN" not in json.dumps(deliveries)
+    assert deliveries[0]["channel"] == "https://api.telegram.org/bot***/sendMessage"
+
+
+def test_production_sink_telegram_ok_false_is_not_delivered(monkeypatch):
+    calls = _capture_httpx_post(
+        monkeypatch,
+        status_code=400,
+        body={"ok": False, "error_code": 400, "description": "Bad Request: chat not found"},
+    )
+    sink = WebhookBreachAlertSink(webhook_url=_TELEGRAM_URL, telegram_chat_id="4242")
+    ledger = _ledger(task_budget=1, sink=sink)
+    ledger.record_usage("Cortex", tokens=0, tasks=1)
+    ledger.record_usage("Cortex", tokens=0, tasks=1)
+
+    assert len(calls) == 1
+    deliveries = ledger.alert_deliveries()
+    assert deliveries[0]["delivered"] is False
+    assert deliveries[0]["status_code"] == 400
+    assert "chat not found" in deliveries[0]["detail"]
+
+
+def test_production_sink_non_telegram_payload_is_unchanged(monkeypatch):
+    """Regression guard: generic-webhook mode keeps today's payload shape."""
+    calls = _capture_httpx_post(monkeypatch, status_code=200)
+    sink = WebhookBreachAlertSink(webhook_url="http://ops.local/alerts")
+    ledger = _ledger(task_budget=1, sink=sink)
+    ledger.record_usage("Cortex", tokens=0, tasks=1)
+    ledger.record_usage("Cortex", tokens=0, tasks=1)
+
+    assert len(calls) == 1
+    payload = calls[0]["json"]
+    assert set(payload) == {"subsystem", "reason", "agent", "message", "alert"}
+    assert payload["subsystem"] == "agent_budgets"
+    assert payload["agent"] == "Cortex"
+    assert ledger.alert_deliveries()[0]["delivered"] is True

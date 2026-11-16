@@ -58,6 +58,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
+from cortex_core.resilience import format_escalation_text, is_telegram_webhook_url, redact_webhook_url
+
 logger = logging.getLogger("cortex-agent-budgets")
 
 # The 10 fleet agents (AGENTS.yaml v3.0.0).
@@ -299,21 +301,39 @@ class WebhookBreachAlertSink:
     wherever Cortex escalations already go. Mirrors the notifier's
     honesty rule: with no channel configured the delivery record says
     ``delivered: False`` with the reason instead of pretending.
+
+    When the channel is a Telegram ``sendMessage`` URL the breach is
+    translated exactly like a self-healing escalation (shared
+    ``format_escalation_text`` helper, recipient from
+    ``SELF_HEALING_TELEGRAM_CHAT_ID``) and counts as delivered only on
+    HTTP 200 with ``ok: true``.
     """
 
     def __init__(
         self,
         webhook_url: str | None = None,
         timeout_seconds: float = 5.0,
+        telegram_chat_id: str | None = None,
     ) -> None:
         if webhook_url is None:
             webhook_url = os.environ.get("SELF_HEALING_ESCALATION_WEBHOOK", "")
         self.webhook_url = webhook_url.strip() or None
         self.timeout_seconds = timeout_seconds
+        if telegram_chat_id is None:
+            telegram_chat_id = os.environ.get("SELF_HEALING_TELEGRAM_CHAT_ID", "")
+        self.telegram_chat_id = telegram_chat_id.strip() or None
+
+    @property
+    def telegram_mode(self) -> bool:
+        """True when the configured channel is a Telegram sendMessage endpoint."""
+        return is_telegram_webhook_url(self.webhook_url)
 
     @property
     def channel(self) -> str:
-        return self.webhook_url or "none"
+        if self.webhook_url is None:
+            return "none"
+        # Redacted: a Telegram URL embeds the full bot token.
+        return redact_webhook_url(self.webhook_url)
 
     def __call__(self, alert: dict[str, Any]) -> dict[str, Any]:
         record: dict[str, Any] = {
@@ -331,6 +351,15 @@ class WebhookBreachAlertSink:
                 ),
             })
             return record
+        if self.telegram_mode and self.telegram_chat_id is None:
+            record.update({
+                "delivered": False,
+                "detail": (
+                    "telegram chat id not configured "
+                    "(SELF_HEALING_TELEGRAM_CHAT_ID is unset)"
+                ),
+            })
+            return record
         payload = {
             "subsystem": "agent_budgets",
             "reason": alert.get("reason"),
@@ -341,24 +370,48 @@ class WebhookBreachAlertSink:
         try:
             import httpx
 
+            if self.telegram_mode:
+                wire_payload: dict[str, Any] = {
+                    "chat_id": self.telegram_chat_id,
+                    "text": format_escalation_text(payload),
+                }
+            else:
+                wire_payload = payload
             # trust_env=False: the escalation webhook is a configured
             # operator endpoint — ambient HTTP(S)_PROXY variables (CI
             # sandboxes, egress gateways) must not intercept or break
             # alert delivery.
             response = httpx.post(
                 self.webhook_url,
-                json=payload,
+                json=wire_payload,
                 timeout=self.timeout_seconds,
                 trust_env=False,
             )
-            delivered = 200 <= response.status_code < 300
+            if self.telegram_mode:
+                # Only HTTP 200 with ok:true is a delivery (see
+                # EscalationNotifier); surface Telegram's description.
+                body: Any = None
+                try:
+                    body = response.json()
+                except Exception:  # noqa: BLE001 - a non-JSON body is a failed delivery
+                    body = None
+                delivered = response.status_code == 200 and isinstance(body, dict) and body.get("ok") is True
+                if delivered:
+                    detail = "delivered"
+                elif isinstance(body, dict) and body.get("description"):
+                    detail = f"channel returned {response.status_code}: {body['description']}"
+                else:
+                    detail = f"channel returned {response.status_code}"
+            else:
+                delivered = 200 <= response.status_code < 300
+                detail = (
+                    "delivered" if delivered
+                    else f"channel returned {response.status_code}"
+                )
             record.update({
                 "delivered": delivered,
                 "status_code": response.status_code,
-                "detail": (
-                    "delivered" if delivered
-                    else f"channel returned {response.status_code}"
-                ),
+                "detail": detail,
             })
         except Exception as exc:  # noqa: BLE001 - delivery failure is data
             record.update({
