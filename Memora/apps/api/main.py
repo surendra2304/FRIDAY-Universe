@@ -30,6 +30,7 @@ from apps.api.routers import (
     v1_metrics_router,
     v1_namespaces_router,
     v1_task_router,
+    v1_capture_router,
     v1_events_router,
     mesh_events_router,
     v1_resilience_router,
@@ -256,6 +257,7 @@ app.include_router(v1_context_router)
 app.include_router(v1_metrics_router)
 app.include_router(v1_namespaces_router)
 app.include_router(v1_task_router)
+app.include_router(v1_capture_router)  # session capture → compress → inject (/v1/capture/*)
 app.include_router(v1_events_router)
 app.include_router(mesh_events_router)
 app.include_router(audit_router)
