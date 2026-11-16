@@ -9772,6 +9772,36 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig-friday-local-business
     evidence: "PR #777 (IG FRIDAY Cluster C), supervisor-CONFIRMED: workflows/local_business.py (stdlib-only; missing data -> insufficient_data, never guessed; the appointment-agent prompt builder refuses without a services text and never invents services/prices) plus LocalBusinessTool registered in the production registry. MERGED via union-rebase replacement PR #785 -> merge 5e7338d6f5d6806df77108145c54d5a99a52b3fd (2026-11-16, Merge Runner C; #777 closed as superseded: tools.py + FRD-002 pin union with #772, registry total 97; four non-shared files blob-identical). This board entry was created by Merge Runner C: the implementing PR carried no board entry."
     next_action: "Fleet CD deploy -> production probe: local_business answers through the live agent's production registry."
+  - id: TASK-INF-011
+    title: "Gemini Flash thinking disabled by default in Inference (thinkingBudget=0): measured TTFB mitigation from the Gemini egress diagnosis"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-inf-011-gemini-flash-thinking-budget
+    pr: 834
+    contributors: []
+    priority: P1
+    created_at: "2026-11-17T01:19:00+05:30"
+    updated_at: "2026-11-17T01:19:00+05:30"
+    files:
+      - "Inference/app/providers/gemini.py"
+      - "Inference/app/core/config.py"
+      - "Inference/tests/test_gemini_thinking_budget_default.py"
+      - "Inference/tests/test_gemini_token_accounting.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6927200446"
+    defect: "Inference's native Gemini adapter (the sole generateContent builder on the live serving path) defaulted every thinking model to thinkingConfig.thinkingBudget=1024 (TASK-INF-009 allowance). The Gemini egress diagnosis (2026-11-17) measured the cost: a tiny prompt to gemini-3.6-flash from S1 took 45.3s to first byte with default thinking vs 22.6s with thinkingBudget=0 — the default reasoning burn adds ~13-23s before any visible token, most of why Gemini blew the gateway's primary slice, was logged as a timeout, and failed over to Groq (14 timeouts / 1 success on Pacific 2026-11-16). A ~22s Google-side floor remains even with thinking off, so this is a mitigation, not a cure."
+    acceptance:
+      - "Flash generation models (gemini-3.x/2.5 Flash + gemini-flash-latest) send generationConfig.thinkingConfig.thinkingBudget == GEMINI_FLASH_THINKING_BUDGET by default — a new named Settings field (app/core/config.py, env-tunable) with the measured default 0 — including on requests with no declared max_tokens; with budget 0 no allowance is added to maxOutputTokens."
+      - "Scope guards against an unsupported field (a Google 400 would be worse than the status quo): Pro models (gemini-2.5-pro, gemini-pro-latest) keep the INF-009 1024 allowance, never 0 (adapter-verified: 2.5 Pro cannot think below a 128-token budget); Flash-Lite keeps NO thinkingConfig; non-thinking/unknown models (incl. gemini-1.5-flash) get NO thinkingConfig at all."
+      - "A caller's explicit extra_params thinking_budget / thinking_level still wins over the default, unchanged; no routing order, gateway deadline math (PR #818 owns it), FRIDAY-side Gemini, or Live voice changes."
+      - "Proof: Inference/tests/test_gemini_thinking_budget_default.py (12 request-construction tests) + the INF-009 accounting suite (2 tests that encoded the old default re-pointed at an explicit budget; allowance machinery still covered) green — 27 passed locally across the new + accounting + providers suites on a scratch tree from main."
+    evidence:
+      - "CLAIM: issue #35 comment 6927200446. Diagnosis: ~/workspace/gemini-egress-diag/STATE.md (probe D: thinkingBudget=0 -> TTFB 22.6s vs 45.3s default on gemini-3.6-flash, same key/host; Google-side floor ~22s remains)."
+      - "LIVE PATH verified by git grep on main 9def8a7a: Inference/app/providers/gemini.py is the only generateContent builder; providers/__init__.py maps 'gemini' to GeminiProvider; OpenAICompatibleProvider serves custom-* endpoints only; INFERENCE_LITELLM_ENABLED defaults False."
+      - "IMPLEMENTATION (PR #834): config.py +10 (GEMINI_FLASH_THINKING_BUDGET int default 0, measured-basis comment); gemini.py _is_flash_model/_flash_thinking_budget helpers + _thinking_plan Flash default branch (flagged default_minimal) + _build_payload sends thinkingConfig for explicit OR default_minimal plans. Fresh-interpreter proof: gemini-3.6-flash payload = maxOutputTokens 200 verbatim + thinkingConfig {thinkingBudget: 0}; gemini-2.5-pro = 1224 + {thinkingBudget: 1024} (unchanged)."
+      - "TESTS: 27 passed locally (12 new + 8 INF-009 accounting + 7 providers) on a scratch tree built from origin/main 9def8a7a plus this change; A/B on pristine main: the new suite errors on the missing setting (the setting is part of the change)."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #834 (Fleet CD then deploys). Production proof after deploy: Inference journal/quota ledger shows Flash Gemini attempts with thoughtsTokenCount ~0 and the token_accounting thinking_budget=0; INF-009's close-out gate probe re-runs on the first Gemini-served gate. Flip to VERIFIED via a fresh-main board PR with that evidence."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
