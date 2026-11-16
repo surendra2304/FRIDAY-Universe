@@ -71,6 +71,7 @@ from friday.tools.builtin.dev_tools import (
 from friday.tools.builtin.dictionary_tool import DictionaryTool
 from friday.tools.builtin.email_tools import DraftEmailTool, SendEmailTool
 from friday.tools.builtin.gmail_tools import DraftGmailTool, ReadGmailInboxTool, SendGmailTool
+from friday.tools.builtin.agentic_inbox_tools import InboxDraftsTool, TriageInboxTool
 from friday.tools.builtin.whatsapp_tools import OpenWhatsAppTool, SendWhatsAppMessageTool
 from friday.tools.builtin.execute_computer_action import ExecuteComputerActionTool
 from friday.tools.builtin.face_auth import EnrollFaceIdentityTool, VerifyFaceIdentityTool
@@ -276,6 +277,8 @@ __all__ = [
     "ProposeComputerActionTool",
     "ReadActiveWindowTextTool",
     "ReadGmailInboxTool",
+    "TriageInboxTool",
+    "InboxDraftsTool",
     "ReadOwnCodebaseTool",
     "ReadScreenTextTool",
     "RememberFactTool",

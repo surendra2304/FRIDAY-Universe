@@ -117,6 +117,8 @@ from friday.tools.builtin import (
     ProposeComputerActionTool,
     ReadActiveWindowTextTool,
     ReadGmailInboxTool,
+    InboxDraftsTool,
+    TriageInboxTool,
     ReadOwnCodebaseTool,
     ReadScreenTextTool,
     RememberFactTool,
@@ -280,6 +282,8 @@ class ToolExecutionMixin:
             registry.register(ReadGmailInboxTool())
             registry.register(DraftGmailTool())
             registry.register(SendGmailTool())
+            registry.register(TriageInboxTool())
+            registry.register(InboxDraftsTool())
             registry.register(SendWhatsAppMessageTool())
             registry.register(OpenWhatsAppTool())
             registry.register(ReadOwnCodebaseTool())
