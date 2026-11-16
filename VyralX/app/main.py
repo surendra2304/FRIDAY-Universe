@@ -2412,3 +2412,6 @@ app.include_router(real_media_router, prefix="/api/v1/vyralx")
 # --- IG Corpus Channel Strategy Integration (TASK-IG3-VYR-01) ---
 from app.services.channel_strategy import router as channel_strategy_router
 app.include_router(channel_strategy_router, prefix="/api/v1", tags=["IG Corpus Strategy"])
+# --- IG Corpus Stick-Figure Explainer Integration (TASK-IG3-VYR-02) ---
+from app.services.stick_figure import router as stick_figure_router
+app.include_router(stick_figure_router, prefix="/api/v1", tags=["IG Corpus Stick Figure"])
