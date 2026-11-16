@@ -8671,6 +8671,35 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Every figure is live fleet/live data labelled as what it is; no prices or invented specs."
       - "tsc + eslint + next build green on the branch; rebuilt static export shipped."
     next_action: "Coordinator: review + merge PR #522, splice this entry, Fleet CD, production spot-check of the edition."
+  - id: TASK-STR-RD-010
+    title: "Stratex execution-quality audit (fees / slippage / timing vs RD-002 cost model) + proven-leak fixes"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    updated_at: 2026-11-16
+    files:
+      - "Stratex/measurement/EXECUTION_AUDIT_RD010.md"
+      - "Stratex/autonomy/multi_venue_engine.py"
+      - "Stratex/autonomy/run_daemon.py"
+      - "Stratex/measurement/import_legacy_closes.py"
+      - "Stratex/measurement/scorecard.py"
+      - "Stratex/tests/test_execution_quality_rd010.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6890900568"
+    defect: "Owner's 'other than strategies' profit avenue #2: execution quality had never been measured against the RD-002 backtest cost model (crypto 5bps fee + 3bps slippage per side = 16bps RT). Audit found: (1) the 3 LEGACY ledger rows book exit-side fees only — entry commissions $9.37 (SOL 4.41769956 / UNI 4.41956800 / PAXG 0.53000094) never booked, so the reported legacy net +$195.71 / ledger net +195.06 / PF 6.445 were overstated; corrected +186.34 / +185.69 / PF 5.554 (arithmetic-exact vs userTrades). (2) MultiVenueEngine.close_position booked fees=0, net=gross on the engine/API close path — phantom ~8bps-of-notional per close. (3) The daemon expectancy gate charged fees-only 8bps while entrants were judged at 16bps friction. Measured non-leaks: demo taker is 4bps/side (115/115 fills taker, commission exact) so RD-002's fee assumption is realistic; close slippage mean 1.27bps/side (n=3) inside the 3bps allowance; daemon loop runs saturated at 20.75s/cycle but worst-case signal-to-fill ~21s is noise at 4h/1d. OANDA execution cost remains unmeasured (engine writes no ledger rows; TASK-STR-FWD-004)."
+    acceptance:
+      - "Measured cost report in-repo (EXECUTION_AUDIT_RD010.md): fee schedule from live commissionRate + 115 userTrades fills; slippage from recorded close references + real/demo book spread snapshot; timing from daemon heartbeat (scan_count vs wall clock)."
+      - "RD-002 cost-model verdict per component: fee REALISTIC (keep), slippage ADEQUATE as universe average (ATOM/ADA thin), FX rows UNVERIFIED (no OANDA ledger rows exist)."
+      - "Fix A: close_position books broker round-trip fees via get_realized_pnl or a labelled taker-schedule estimate — never zero; net (not gross) to the breaker; real entry_time."
+      - "Fix B: expectancy gate charges STRATEX_FRICTION_ROUNDTRIP (default 0.0016 = judged friction); fees-only attribute kept as fallback for manually built engines."
+      - "Fix C: legacy importer stamps fees_scope and warns on exit-only records; scorecard counts exit_only_fee_fills."
+      - "Tests: Stratex/tests/test_execution_quality_rd010.py (8 tests) + neighbouring suites (measurement phase-2, daemon governance) green server-side; nothing deployed by the crew."
+    evidence:
+      - "PR #615 (https://github.com/surendra2304/FRIDAY-Universe/pull/615, branch claude/task-str-rd-010-execution-audit): report + 3 fixes + 8 tests. MERGED 813240b5."
+      - "Tests per PR #615: 8 tests in Stratex/tests/test_execution_quality_rd010.py; neighbouring measurement phase-2 + daemon governance suites re-run (results in the crew's completion comment on issue #35)."
+      - "Exchange evidence: /fapi/v1/commissionRate (taker 0.0400%, PAXG 0.0500%, maker 0.0200%); 115 userTrades fills 2026-11-01..15, 115/115 maker=false, 115/115 commission == taker x notional."
+    blockers: []
+    next_action: "Code merged (PR #615, 813240b5); this board entry was owed from round 1 (missed batch 13) and is added by merge-runner round 2 with status IN_REVIEW (crew draft said DONE, which the board validator rejects — round-1 precedent). Remaining: deploy with the fleet (no .env change needed — the STRATEX_FEE_ROUNDTRIP line becomes documentation-only for the gate); annotate the 3 production legacy rows fees_scope=exit_only via the approved annotation mechanism. Owner was told the corrected figures 2026-11-15 (legacy +$186.34, ledger net +185.69, PF 5.554). Follow-ups owned elsewhere: record a signal reference price at entry so entry slippage becomes measurable (forward-entry path owner); OANDA cost measurement once TASK-STR-FWD-004 ledger rows exist."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
