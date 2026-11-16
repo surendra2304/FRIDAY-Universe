@@ -10242,6 +10242,32 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "TESTS: 27 passed locally (12 new + 8 INF-009 accounting + 7 providers) on a scratch tree built from origin/main 9def8a7a plus this change; A/B on pristine main: the new suite errors on the missing setting (the setting is part of the change)."
     blockers: []
     next_action: "Production proof (owed): Inference journal/quota ledger shows Flash Gemini attempts with thoughtsTokenCount ~0 and token_accounting thinking_budget=0; INF-009's close-out gate probe re-runs on the first Gemini-served gate. Flip VERIFIED with that evidence."
+  - id: TASK-INF-012
+    title: "Inference selection goes Groq-guard-aware: over-guard prompts skip Groq candidates, ending the REL-047 guard + catalogue-blind ladder + REL-043 containment 503 composition"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-inf-012-groq-guard-selection
+    contributors: []
+    priority: P1
+    created_at: "2026-11-17T04:54:00+05:30"
+    updated_at: "2026-11-17T04:54:00+05:30"
+    files:
+      - "Inference/app/api/v1_core_routes.py"
+      - "Inference/tests/test_inf012_groq_guard_selection.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6932341660"
+    defect: "Forge's G5 'taskboard' architect call 503'd twice on 2026-11-17 ('The request could only be served by a model outside the verified catalogue') while G1's architect call served on openai/gpt-oss-120b. Root cause, proven from code on main + the S1 Inference journal + the quota ledger: the only material difference is prompt size — G5's architect prompt estimated ~7,082/~7,095 tokens (7,143/7,157 actual), just over the gateway's TASK-REL-047 Groq prompt guard (GROQ_PROMPT_TOKEN_LIMIT=7000, gateway.py). Task-type inference checks code hints before the size rule, so both shapes classify 'code', whose suitability ranking is Groq-topped; selection picked gpt-oss-120b, the gateway diverted the over-guard prompt to its catalogue-blind dynamic fallback ladder, the ladder served non-catalogue nvidia/nemotron-3.5-super-vl:free, TASK-REL-043 containment rejected the serve, and the bounded retry picked the other Groq model (qwen/qwen3.8-27b) and repeated the cycle — a 503 despite four verified catalogue models being able to serve the prompt. Census of the retained Inference journal (~26h, 2026-11-16 02:27 IST to 2026-11-17 04:47 IST): 6 chat-completion 503s, 4 attributable to this exact class — a recurring tax on any >7,000-token prompt whose ranking is Groq-topped, not a G5 anomaly."
+    acceptance:
+      - "Selection mirrors the gateway's estimator (message chars // 4) and, when the estimate exceeds GROQ_PROMPT_TOKEN_LIMIT (imported from app.providers.gateway — single source of truth), _ranked_suitable_models drops Groq-routed candidates after the health/servability overlays and before the context-fit filter; never-empty discipline: if dropping Groq would empty the pool, the pool is kept."
+      - "The selection record discloses the guard (groq_size_guard: {prompt_tokens_estimate, limit}) whenever it shaped the pick; under-guard selection is unchanged (top code pick remains openai/gpt-oss-120b, groq_size_guard null)."
+      - "Initial, bounded-retry, and streaming selection call sites all inherit the behaviour (the fix lives inside _select_best_suitable/_ranked_suitable_models); named-model requests are untouched except that their existing bounded retry now also lands on a servable model."
+      - "Tests: Inference/tests/test_inf012_groq_guard_selection.py (5 tests) — over-guard code request selects a non-Groq catalogue model with the disclosure; under-guard unchanged; retry-exclusion shape stays non-Groq; Groq-only ranking never empties; end-to-end G5-shaped POST serves in-catalogue on the first attempt with exactly one execute call. Neighbour suites (REL-043/REL-030/REL-049/REL-047) identical before/after."
+    evidence:
+      - "DIAGNOSIS: ~/workspace/inf-architect-503/STATE.md — full evidence chain (alias resolution path, verified-catalogue contents, G1 vs G5 request comparison, quota-ledger rows pt=7143/7157 served by nvidia/nemotron-3.5-super-vl:free, journal census of the 503 class)."
+      - "A/B: new suite 5/5 pass on the branch; on pristine main 8646e42d, 4/5 fail (the never-empty pin passes on both by design — it guards the fix's own fallback). Neighbour suites: 43 passed on the branch and 43 passed on pristine main — identical."
+      - "CLAIM: issue #35 comment 6932341660."
+    blockers: []
+    next_action: "Merge via the coordinator's queue. Post-deploy proof owed: a G5-shaped Forge build (or an equivalent >7,000-token architect-class request) completes its architect node in production served by a verified catalogue model, and the Inference journal shows no new size-guard-diversion 503s. Flip VERIFIED with that evidence."
   - id: TASK-COR-011
     title: "Cortex escalation redaction"
     status: VERIFIED
