@@ -36,6 +36,7 @@ from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.gateway import model_gateway
 from app.providers.http_client import http_client_pool
 from app.routers.admin_analytics import analytics_router
+from app.routers.admin_dashboard import admin_dashboard_router
 from app.routers.multi_model_deliberation import router as deliberation_router
 from app.routers.self_evolving_reasoning import router as evolving_reasoning_router
 from services.reasoning_chain_optimizer import router as reasoning_optimizer_router
@@ -359,6 +360,10 @@ app.include_router(providers_router, dependencies=[Depends(require_inference_api
 app.include_router(forge_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(batch_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(analytics_router, dependencies=[Depends(require_inference_api_key)])
+# TASK-IG2-INF-03: read-only admin dashboard (provider health, quota burn,
+# per-key usage, recent failovers). It exposes audit data, so it sits behind
+# the same fail-closed API-key boundary as the other audit surfaces.
+app.include_router(admin_dashboard_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(nexus_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(debate_router, dependencies=[Depends(require_inference_api_key)])
 app.include_router(governance_router, dependencies=[Depends(require_inference_api_key)])
