@@ -2418,3 +2418,6 @@ app.include_router(stick_figure_router, prefix="/api/v1", tags=["IG Corpus Stick
 # --- IG Corpus Reddit Story Sourcing Integration (TASK-IG3-VYR-03) ---
 from app.services.reddit_trends import router as reddit_trends_router
 app.include_router(reddit_trends_router, prefix="/api/v1", tags=["IG Corpus Reddit Trends"])
+# --- IG Corpus Competitor-Ad Intelligence Integration (TASK-IG3-VYR-04) ---
+from app.services.competitor_ads import router as competitor_ads_router
+app.include_router(competitor_ads_router, prefix="/api/v1", tags=["IG Corpus Competitor Ads"])
