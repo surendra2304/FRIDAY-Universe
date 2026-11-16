@@ -2408,3 +2408,7 @@ app.include_router(retention_router, prefix="/api/v1")
 # --- Real Media & Growth Engines (ClaudeAds, TopRank, OpenHiggsfield, Hyperframes) ---
 from app.services.real_media_routes import router as real_media_router
 app.include_router(real_media_router, prefix="/api/v1/vyralx")
+
+# --- IG Corpus Motion Templates Integration (TASK-IG3-VYR-07) ---
+from app.services.motion_templates import router as motion_templates_router
+app.include_router(motion_templates_router, prefix="/api/v1", tags=["IG Corpus Motion Templates"])
