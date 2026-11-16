@@ -258,6 +258,7 @@ class SearchService:
                     .limit(min(max(limit * 100, 500), 5000))
                     .all()
                 )
+            lexical_texts: dict = {}
             for record in lexical_candidates:
                 text_lower = record.content_text.lower()
                 matched_count = sum(1 for token in scorable_tokens if token in text_lower)
@@ -269,6 +270,7 @@ class SearchService:
                             record.created_at.timestamp() if record.created_at else 0.0,
                         )
                     )
+                    lexical_texts[record.id] = record.content_text
 
         # Equal-overlap records rank newest-first (TASK-MEM-002): the old
         # id-only tie-break made which version of a fact FRIDAY recalls an
@@ -276,10 +278,46 @@ class SearchService:
         # correction indefinitely. Recency decides only exact relevance ties;
         # the id remains the final deterministic key.
         lexical_matches.sort(key=lambda item: (-item[1], -item[2], item[0]))
-        keyword_ranks = {
-            item[0]: (rank + 1, item[1])
-            for rank, item in enumerate(lexical_matches[:limit * 3])
-        }
+
+        # BM25 ranking (TASK-IG2-MEM-01, agentmemory pattern): the
+        # retrieval config has always NAMED this leg "bm25"
+        # (retrieval_config maps the "bm25" method onto keyword_weight),
+        # but the ranking above was substring-overlap counting — a record
+        # mentioning a rare query term once scored exactly like one
+        # stuffed with common words, and term frequency / document
+        # length played no part. Rank the SAME bounded candidate set
+        # with real Okapi BM25 (core/memory/bm25.py, keyless, stdlib
+        # only). The reported keyword_score is the raw BM25 score
+        # normalised by the candidate set's best, preserving the
+        # historical contract that the top lexical match scores 1.0.
+        # Candidates BM25 scores at zero (substring hit but no shared
+        # token after tokenisation) keep a place at the tail under the
+        # historical overlap/recency keys. The overlap ordering itself
+        # is untouched above: graph-seed selection below consumes it
+        # and TASK-MEM-002 pinned that order.
+        keyword_ranks = {}
+        if lexical_matches:
+            from core.memory.bm25 import BM25Index
+
+            bm25_scores = BM25Index().build(
+                (item[0], lexical_texts.get(item[0], "")) for item in lexical_matches
+            ).score(query_text)
+            best_bm25 = max(bm25_scores.values(), default=0.0)
+            bm25_ordered = sorted(
+                lexical_matches,
+                key=lambda item: (
+                    -bm25_scores.get(item[0], 0.0),
+                    -item[2],
+                    item[0],
+                ),
+            )
+            keyword_ranks = {
+                item[0]: (
+                    rank + 1,
+                    (bm25_scores.get(item[0], 0.0) / best_bm25) if best_bm25 > 0 else 0.0,
+                )
+                for rank, item in enumerate(bm25_ordered[: limit * 3])
+            }
 
         # -------------------------------------------------------------
         # 3. GRAPH RELATIONSHIP EXPANSION
@@ -403,7 +441,7 @@ class SearchService:
                 reasons.append(f"Semantic match (rank {v_rank}, sim {v_score:.2f})")
             if k_rank:
                 rrf_score += keyword_weight * (1.0 / (rrf_k + k_rank))
-                reasons.append(f"Keyword match (rank {k_rank}, overlap {k_score:.2f})")
+                reasons.append(f"Keyword match (rank {k_rank}, bm25 {k_score:.2f})")
             if g_boost > 0:
                 # Graph connectivity is a secondary signal, not query
                 # evidence. get_graph_neighbors accumulates weight * 0.15 per
