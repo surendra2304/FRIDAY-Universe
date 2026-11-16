@@ -8,6 +8,7 @@ model (`llama-3.3-70b-versatile`), the exact same prompt is retried once with
 
 import ast
 import json
+import re
 import uuid
 from typing import Any
 
@@ -27,6 +28,18 @@ GROQ_DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_DEFAULT_MODEL = "openai/gpt-oss-120b"
 GROQ_FALLBACK_MODEL = "openai/gpt-oss-20b"
 GROQ_UNIVERSAL_FALLBACK_MODEL = "openai/gpt-oss-120b"
+
+# Groq's OpenAI-compatible API accepts at most 128 function tools per
+# request ("A max of 128 functions are supported" — Groq API schema);
+# a longer tools array is a request-validation HTTP 400 before the model
+# is ever consulted. FRIDAY's production registry sends 149 schemas on a
+# tool turn (measured 2026-11-17 via the production-registry harness;
+# FRD-016 measured 145 earlier), so EVERY tool turn that failed over to
+# Groq died on that 400 (TASK-REL-051): the error is neither TPM-shaped
+# nor tool_use_failed, so no existing recovery engaged. The provider
+# therefore scopes the tool set deterministically BEFORE the first
+# request (see scope_tools_for_groq) instead of burning the turn.
+GROQ_MAX_TOOLS = 128
 
 # TASK-REL-039: appended to the last-resort text-only TPM retry. When a
 # request is too large to carry its tools, the model must not improvise
@@ -166,6 +179,146 @@ def _extract_failed_tool_call(error: Exception) -> tuple[str, dict[str, Any]] | 
     if not isinstance(arguments, dict):
         return None
     return name, arguments
+
+
+def _tool_schema_name(schema: Any) -> str | None:
+    """Best-effort function name of an OpenAI-shaped tool schema."""
+    if not isinstance(schema, dict):
+        return None
+    fn = schema.get("function")
+    if isinstance(fn, dict) and isinstance(fn.get("name"), str):
+        return fn["name"]
+    if isinstance(schema.get("name"), str):
+        return schema["name"]
+    return None
+
+
+def scope_tools_for_groq(
+    tools: list[dict[str, Any]] | None,
+    messages: list[Message],
+    limit: int = GROQ_MAX_TOOLS,
+) -> list[dict[str, Any]] | None:
+    """Deterministically scope a tool list to Groq's per-request cap.
+
+    TASK-REL-051: the production registry's 149 schemas exceed Groq's
+    128-tool validation cap, so an unscoped failover request is a
+    guaranteed 400. Scoping keeps the turn's tool discipline — the model
+    still gets real tools — instead of dying or degrading to text-only.
+
+    Priority (deterministic; ties broken by the caller's list order):
+    1. Tools already exercised in this conversation (assistant tool
+       calls and tool-role results) — dropping one mid-conversation
+       would strand the model's own context.
+    2. Tools named verbatim in the most recent user message.
+    3. The remaining tools in the caller's original order, filling up
+       to ``limit``.
+
+    At or under the cap the list is returned unchanged. When scoping
+    drops tools, the drop is logged with the dropped names — never
+    silent.
+    """
+    if not tools or len(tools) <= limit:
+        return tools
+
+    priority: list[str] = []
+    seen: set[str] = set()
+
+    def _prioritise(name: str | None) -> None:
+        if name and name not in seen:
+            seen.add(name)
+            priority.append(name)
+
+    for m in messages:
+        for tc in m.tool_calls or []:
+            _prioritise(getattr(tc, "name", None))
+        if m.role == Role.TOOL:
+            _prioritise(m.name)
+    for m in reversed(messages):
+        if m.role == Role.USER:
+            content = m.content or ""
+            for schema in tools:
+                name = _tool_schema_name(schema)
+                if name and name in content:
+                    _prioritise(name)
+            break
+
+    by_name: dict[str, dict[str, Any]] = {}
+    for schema in tools:
+        name = _tool_schema_name(schema)
+        if name and name not in by_name:
+            by_name[name] = schema
+
+    scoped: list[dict[str, Any]] = []
+    included: set[str] = set()
+    for name in priority:
+        if len(scoped) >= limit:
+            break
+        schema = by_name.get(name)
+        if schema is not None:
+            scoped.append(schema)
+            included.add(name)
+    for schema in tools:
+        if len(scoped) >= limit:
+            break
+        name = _tool_schema_name(schema)
+        if name is not None:
+            if name in included:
+                continue
+            included.add(name)
+        scoped.append(schema)
+
+    dropped = [
+        name
+        for name in (_tool_schema_name(s) for s in tools)
+        if name is not None and name not in included
+    ]
+    logger.warning(
+        f"Groq tool cap: scoped {len(tools)} tools to {len(scoped)} "
+        f"(limit {limit}); dropped {len(dropped)}: {', '.join(dropped)}"
+    )
+    return scoped
+
+
+def _is_tool_count_error(error: Exception) -> bool:
+    """Detect Groq's request-validation rejection for too many tools.
+
+    Distinct from tool_use_failed (a generation problem) and from TPM
+    (a size/rate problem): this is the API refusing the request shape
+    itself because the tools array exceeds the per-request maximum.
+    """
+    body = _error_body_dict(error)
+    if body is not None:
+        err = body.get("error") or {}
+        if isinstance(err, dict):
+            if err.get("param") == "tools" or err.get("code") == "too_many_tools":
+                return True
+            msg = str(err.get("message") or "").lower()
+            if "tool" in msg and (
+                "maximum" in msg or "too many" in msg or "at most" in msg
+            ):
+                return True
+    text = str(error).lower()
+    return "too many tools" in text or (
+        "tools" in text and "maximum of 128" in text
+    )
+
+
+def _tool_cap_from_error(error: Exception) -> int | None:
+    """Extract the tool maximum a too-many-tools rejection names, if any."""
+    body = _error_body_dict(error)
+    texts: list[str] = []
+    if body is not None:
+        err = body.get("error") or {}
+        if isinstance(err, dict):
+            texts.append(str(err.get("message") or ""))
+    texts.append(str(error))
+    for text in texts:
+        match = re.search(
+            r"(?:maximum of|max of|at most|maximum is)\s*(\d+)", text.lower()
+        )
+        if match:
+            return int(match.group(1))
+    return None
 
 
 def compact_messages_and_tools(
@@ -332,7 +485,13 @@ class GroqLLMProvider(BaseLLMProvider):
         tools: list[dict[str, Any]] | None,
     ) -> Message:
         client = self._get_client_for_key(api_key)
-        
+
+        # TASK-REL-051: scope the tool set to Groq's 128-tool validation
+        # cap BEFORE the first request. The production registry sends
+        # 149 schemas; unscoped, every failover tool turn was a
+        # guaranteed 400 that no recovery handler recognised.
+        tools = scope_tools_for_groq(tools, messages)
+
         # Check if messages + tools are excessively large
         total_est_chars = sum(len(m.content or "") for m in messages)
         should_compact = total_est_chars > 8000
@@ -357,6 +516,23 @@ class GroqLLMProvider(BaseLLMProvider):
             response = client.chat.completions.create(**kwargs)
         except Exception as e:
             err_text = str(e).lower()
+            # TASK-REL-051 defence in depth: if a too-many-tools 400
+            # still lands (the server-side cap is lower than the
+            # documented 128, or scoping was bypassed), rescope to the
+            # cap the error names and retry ONCE. Checked before the
+            # TPM ladder: this is a request-shape rejection, not a
+            # size/rate problem, and the ladder would resend the same
+            # oversized tool array. An unshrinkable rejection falls
+            # through to the shared handlers below unchanged.
+            if _is_tool_count_error(e) and active_tools:
+                outcome = self._tool_count_retry(
+                    client, model, messages, active_tools, kwargs, e
+                )
+                if isinstance(outcome, Message):
+                    return outcome
+                e = outcome
+                err_text = str(e).lower()
+
             # If rate limit is due to TPM / Request too large, climb the
             # TASK-REL-039 retry ladder (compact with tools retained first;
             # text-only only as the last resort) instead of disarming the
@@ -388,6 +564,43 @@ class GroqLLMProvider(BaseLLMProvider):
             raise LLMProviderError(f"Groq API request failed: {err_msg}") from e
 
         return self._parse_response(response)
+
+    def _tool_count_retry(
+        self,
+        client: Any,
+        model: str,
+        messages: list[Message],
+        active_tools: list[dict[str, Any]],
+        kwargs: dict[str, Any],
+        error: Exception,
+    ) -> Message | Exception:
+        """Retry a too-many-tools 400 once, rescoped to the named cap.
+
+        TASK-REL-051: pre-flight scoping (scope_tools_for_groq) already
+        caps at the documented 128, so this only fires when the live cap
+        is lower than documented or scoping was bypassed. Returns the
+        parsed Message on success; returns the exception (the retry's,
+        or the original when no shrink is possible) so the caller's
+        shared handlers can judge it — the same contract as the TPM
+        ladder.
+        """
+        cap = _tool_cap_from_error(error)
+        if cap is None:
+            cap = GROQ_MAX_TOOLS
+        if len(active_tools) <= cap:
+            return error
+        reduced = scope_tools_for_groq(active_tools, messages, limit=cap)
+        logger.warning(
+            f"Groq rejected {len(active_tools)} tools (cap {cap}); "
+            f"retrying once scoped to {len(reduced)} tools..."
+        )
+        retry_kwargs = dict(kwargs)
+        retry_kwargs["tools"] = reduced
+        retry_kwargs["tool_choice"] = "auto"
+        try:
+            return self._parse_response(client.chat.completions.create(**retry_kwargs))
+        except Exception as retry_error:
+            return retry_error
 
     def _tpm_retry_ladder(
         self,
