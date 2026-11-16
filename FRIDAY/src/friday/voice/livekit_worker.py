@@ -249,6 +249,65 @@ def _memory_block_now(memory_task) -> "tuple[str, bool]":
         return "", False
 
 
+# ---- TASK-VOI-011: session-build overlap + early greeting helpers ----
+# Production segmentation (2026-11-16, drill + FRD-005 jobs): of the
+# 11–24 s key-to-session-started, model + AgentSession construction is
+# 1.1–5.1 s of purely local work that needs the verified key and the
+# instructions but NOT the room, and the tail inside sess.start() is
+# loop contention with the Gemini connect on a 1.5-vCPU host. The
+# fixed-line greeting needs only the room (it publishes the shipped
+# WAV on its own track — see _play_fixed_line), never the session.
+# So the entrypoint now (a) starts key + memory resolution BEFORE
+# ctx.connect() and builds the provider model + first session in a
+# task concurrent with the connect, and (b) plays the fixed greeting
+# line as soon as the room is up and a probe-verified key exists, in
+# parallel with the session start. Both degrade to the pre-VOI-011
+# serial behaviour on any failure.
+
+
+def _early_greeting_warranted(greeting_enabled: bool, plugin_available: bool,
+                              verified_key) -> bool:
+    """May the fixed greeting line play before the session starts?
+
+    Only when the greeting is enabled, the Gemini Live plugin exists,
+    and a probe-verified key is in hand — i.e. a session is plausibly
+    seconds behind the line. With no key/plugin the job takes the
+    recorded-notice path instead, and the notice must keep today's
+    exact shape (no greeting first)."""
+    return bool(greeting_enabled and plugin_available and verified_key)
+
+
+def _new_greeting_state() -> dict:
+    """Per-job fixed-line coordination between the early greeting task
+    and the post-start greeting path. ``attempted`` is set the moment
+    the early task reaches the play call, so the line is attempted
+    exactly once per job (today's semantics) whichever path runs;
+    ``played`` records that the whole line was queued for playout."""
+    return {"attempted": False, "played": False}
+
+
+async def _wait_for_remote_participant(room, timeout_s: float = 10.0,
+                                       poll_s: float = 0.2) -> bool:
+    """Bounded wait for a remote participant, mirroring the greeting
+    path's long-standing semantics: room-state read errors count as
+    'present' (proceed — playback surfaces real failures), and the
+    wait never hangs a job. Returns True when a participant is (or
+    must be assumed) present, False only when the window expires
+    with the room still empty."""
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        try:
+            if len(room.remote_participants) > 0:
+                return True
+        except Exception:  # room state is best-effort, never fatal
+            return True
+        await asyncio.sleep(poll_s)
+    try:
+        return len(room.remote_participants) > 0
+    except Exception:
+        return True
+
+
 def _injection_mechanisms(sess, agent) -> list:
     """Ordered (name, apply) live-session memory-injection surfaces
     available on this livekit-agents API generation. Pure capability
@@ -1224,7 +1283,127 @@ async def _announce_unavailable(room) -> None:
 
 
 async def entrypoint(ctx: JobContext):
-    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    # ---- TASK-VOI-011: resolution + construction overlap the connect ----
+    # Owner-memory recall (thread, ≤7s since TASK-VOI-003) and the
+    # Gemini key resolution START before the room connect and run
+    # concurrently with it; the provider model and the first
+    # AgentSession are CONSTRUCTED in the same window (they need the
+    # key + instructions, not the room — production segmentation
+    # 2026-11-16 priced that serial construction at 1.1–5.1 s of the
+    # 11–24 s key-to-session-started). Only sess.start() waits for
+    # both legs. TASK-VOI-010's rule is unchanged: only the key gates
+    # session construction — a recall that has landed is used exactly
+    # as before, a pending one joins asynchronously via
+    # _deliver_memory_when_ready. Key resolution is cached +
+    # single-flight (see _resolve_gemini_key_sync), so on a warm
+    # worker the gating leg is a dict read.
+    async def _key_after_warmup() -> "str | None":
+        # TASK-VOI-003 follow-up: if this process's boot warm-up is
+        # still resolving, let its round land first (bounded 20 s) —
+        # the first production acceptance run lost Gemini because the
+        # entrypoint's own round raced the warm-up's probe on a
+        # saturated host and both starved. The resolver is
+        # single-flight, so waiting can only share work.
+        if _WARMUP_STARTED.is_set() and not _WARMUP_DONE.is_set():
+            await asyncio.to_thread(_WARMUP_DONE.wait, 20.0)
+        return await _gemini_best_key()
+
+    _memory_task = asyncio.ensure_future(_owner_memory_lines_async())
+    _key_task = asyncio.ensure_future(_key_after_warmup())
+
+    greeting_enabled = (os.getenv("FRIDAY_VOICE_GREETING") or "1").strip().lower() not in (
+        "0", "false", "no",
+    )
+    greeting_state = _new_greeting_state()
+    _key_ready_at: dict = {"ts": None}
+
+    # ---------------- provider selection (pinned for this job) ----------------
+    # TASK-VOI-003 pinning: the provider is chosen ONCE, here. ``pinned``
+    # remembers everything needed to build an equivalent session later
+    # (same provider, same verified Gemini key, same base instructions)
+    # — nothing after this block ever re-resolves a provider or
+    # re-probes a key, so a live session's binding cannot be torn down
+    # by a background probe failure.
+    pinned: dict = {"kind": None, "key": None, "instructions": ""}
+
+    async def _make_session(instr: str, artifacts: "dict | None" = None):
+        """Build (not start) a Gemini Live AgentSession on the pin.
+
+        Used for the first session AND for watchdog rebuilds, so a
+        rebuilt session is identical in shape to the original — only
+        the instructions differ (they gain the conversation context
+        block). Rebuilds construct a fresh realtime model on the PINNED
+        verified key; they never re-run provider selection. Since
+        TASK-VOI-009 there is exactly one provider to build, so the
+        TASK-VOI-004 per-rung ``kind`` branch is gone.
+        """
+        artifacts = artifacts or {}
+        agent = Agent(instructions=instr, tools=_voice_tools())
+        model = artifacts.get("model")
+        if model is None:
+            model = _build_realtime_model(pinned["key"], instr)
+        if model is None:
+            return None, None
+        session = _build_session(
+            llm=model,
+            turn_detection="realtime_llm",
+            min_endpointing_delay=0.5,
+            max_endpointing_delay=3.0,
+            allow_interruptions=True,
+            min_interruption_duration=0.8,
+            resume_false_interruption=True,
+            false_interruption_timeout=1.0,
+        )
+        return session, agent
+
+    async def _build_first_session() -> dict:
+        """TASK-VOI-011 build task: awaits ONLY the key, builds the
+        realtime model on it, then constructs (does not start) the
+        first session — all concurrently with ctx.connect(). Returns
+        the outcome as a dict; every status write and the unavailable
+        notice stay in the main flow below, in today's order and
+        wording. A build exception propagates at the main flow's
+        await, exactly where the serial code would have raised it."""
+        verified_key = await _key_task
+        _key_ready_at["ts"] = time.time()
+        memory_block, memory_pending = _memory_block_now(_memory_task)
+        instructions = _instructions(memory_block=memory_block)
+        pinned["instructions"] = instructions
+        # Gemini Live is the only provider (TASK-VOI-009). If it cannot
+        # serve this job, the honest replacement for the deleted
+        # fallback pipeline is the recorded notice, played by the main
+        # flow: the participant HEARS that voice is unavailable, the
+        # status file and the journal say why, plainly, and the job
+        # leaves. No silent rescue by any other provider, ever.
+        model, used_key = await _try_gemini_realtime(
+            instructions, verified_key=verified_key
+        )
+        if model is None:
+            return {
+                "stage": "model", "verified_key": verified_key,
+                "memory_pending": memory_pending,
+            }
+        pinned.update(kind="gemini", key=used_key, instructions=instructions)
+        session, agent = await _make_session(instructions, {"model": model})
+        if session is None:
+            return {
+                "stage": "session", "verified_key": verified_key,
+                "memory_pending": memory_pending,
+            }
+        return {
+            "stage": "ready", "verified_key": verified_key,
+            "memory_pending": memory_pending,
+            "session": session, "agent": agent,
+        }
+
+    _build_task = asyncio.ensure_future(_build_first_session())
+
+    try:
+        await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    except BaseException:
+        for _pending_task in (_build_task, _key_task, _memory_task):
+            _pending_task.cancel()
+        raise
     _t_connected = time.time()  # TASK-VOI-010: greeting-timing evidence base
     # Heartbeat truth: a job that hangs anywhere below this line must never
     # read as 'waiting for the first job' again (live lesson 2026-11-13).
@@ -1246,70 +1425,42 @@ async def entrypoint(ctx: JobContext):
     def _on_participant_connected(participant):
         logger.info("VOICE participant_connected %s", participant.identity)
 
-    # ---- CONCURRENT resolution (2026-11-13, ZAI Agent 1) ----
-    # Owner-memory recall (thread, ≤7s since TASK-VOI-003) and the Gemini
-    # key resolution START at the same time. TASK-VOI-010: only the key
-    # gates session construction — the pre-fix gather below waited for
-    # BOTH budgets to return (max, not sum), so a recall that burned
-    # its whole 7 s budget under load still delayed the first word by
-    # the full recall even when the key was a cached dict read
-    # (VOI-008's 47.4 s greeting hit exactly this). The recall keeps
-    # running; _deliver_memory_when_ready folds its block into the
-    # pinned instructions and injects it into the live session when it
-    # lands. Key resolution itself is cached + single-flight (see
-    # _resolve_gemini_key_sync), so on a warm worker the one gating leg
-    # is a dict read.
-    async def _key_after_warmup() -> "str | None":
-        # TASK-VOI-003 follow-up: if this process's boot warm-up is
-        # still resolving, let its round land first (bounded 20 s) —
-        # the first production acceptance run lost Gemini because the
-        # entrypoint's own round raced the warm-up's probe on a
-        # saturated host and both starved. The resolver is
-        # single-flight, so waiting can only share work.
-        if _WARMUP_STARTED.is_set() and not _WARMUP_DONE.is_set():
-            await asyncio.to_thread(_WARMUP_DONE.wait, 20.0)
-        return await _gemini_best_key()
-
-    _memory_task = asyncio.ensure_future(_owner_memory_lines_async())
-    _key_task = asyncio.ensure_future(_key_after_warmup())
-
     ctx.room.on("track_subscribed", _on_track_subscribed)
     ctx.room.on("participant_connected", _on_participant_connected)
 
-    # TASK-VOI-010: the key alone gates the session. A recall that has
-    # already landed is used exactly as before; a pending one joins
-    # asynchronously via _deliver_memory_when_ready (defined below).
-    _verified_key = await _key_task
-    _t_key_ready = time.time()
-    _memory_block, _memory_pending = _memory_block_now(_memory_task)
-    instructions = _instructions(memory_block=_memory_block)
-
-    # ---------------- provider selection (pinned for this job) ----------------
-    # TASK-VOI-003 pinning: the provider is chosen ONCE, here. ``pinned``
-    # remembers everything needed to build an equivalent session later
-    # (same provider, same verified Gemini key, same base instructions)
-    # — nothing after this block ever re-resolves a provider or
-    # re-probes a key, so a live session's binding cannot be torn down
-    # by a background probe failure.
-    pinned: dict = {"kind": None, "key": None, "instructions": instructions}
+    _built = await _build_task
+    _verified_key = _built["verified_key"]
+    _memory_pending = _built["memory_pending"]
+    # The session-build window opens when BOTH the key and the
+    # connection are in hand; on a warm worker the key now usually
+    # lands first, so the stamp is the later of the two.
+    _t_key_ready = max(_key_ready_at["ts"] or _t_connected, _t_connected)
     provider_name = "none"
-    first_artifacts: dict = {}
+    session = None
+    agent = None
 
-    # Gemini Live is the only provider (TASK-VOI-009). If it cannot
-    # serve this job, the honest replacement for the deleted fallback
-    # pipeline is the recorded notice: the participant HEARS that voice
-    # is unavailable, the status file and the journal say why, plainly,
-    # and the job leaves. No silent rescue by any other provider, ever.
-    realtime_model, _used_key = await _try_gemini_realtime(
-        instructions, verified_key=_verified_key
-    )
-    if realtime_model is not None:
+    if _built["stage"] == "ready":
         provider_name = f"gemini-realtime:{_voice_model()}"
-        pinned.update(kind="gemini", key=_used_key, instructions=instructions)
-        first_artifacts = {"model": realtime_model}
+        session = _built["session"]
+        agent = _built["agent"]
         _write_status(
             "ready", provider_name, model=_voice_model(), room=_room_name, job_id=_job_id
         )
+    elif _built["stage"] == "session":
+        # The verified key could not build a session: Gemini cannot
+        # serve this job. Same honest unavailable path as a failed key
+        # resolution (TASK-VOI-009) — notice, plain log, leave.
+        _write_status(
+            "unavailable", "none",
+            "voice unavailable: the Gemini session could not be built on the verified key",
+            room=_room_name, job_id=_job_id,
+        )
+        logger.error(
+            "VOICE job unavailable: pinned Gemini session build failed "
+            "— playing the recorded notice and leaving"
+        )
+        await _announce_unavailable(ctx.room)
+        return
     else:
         if not GOOGLE_PLUGIN_AVAILABLE:
             _cause = "the Gemini Live plugin is not importable on the voice host"
@@ -1358,6 +1509,9 @@ async def entrypoint(ctx: JobContext):
         "agent": None,
         "closing": False,
         "greeting_task": None,
+        # TASK-VOI-011: the early fixed-line greeting task, when the
+        # room + verified key allowed it to start before the session.
+        "early_greeting_task": None,
         "watchdog_task": None,
         # TASK-VOI-010: the async memory-delivery task, when the recall
         # was still pending at session start.
@@ -1374,36 +1528,6 @@ async def entrypoint(ctx: JobContext):
         "session_error": None,
         "recoveries": 0,
     }
-
-    async def _make_session(instr: str, artifacts: "dict | None" = None):
-        """Build (not start) a Gemini Live AgentSession on the pin.
-
-        Used for the first session AND for watchdog rebuilds, so a
-        rebuilt session is identical in shape to the original — only
-        the instructions differ (they gain the conversation context
-        block). Rebuilds construct a fresh realtime model on the PINNED
-        verified key; they never re-run provider selection. Since
-        TASK-VOI-009 there is exactly one provider to build, so the
-        TASK-VOI-004 per-rung ``kind`` branch is gone.
-        """
-        artifacts = artifacts or {}
-        agent = Agent(instructions=instr, tools=_voice_tools())
-        model = artifacts.get("model")
-        if model is None:
-            model = _build_realtime_model(pinned["key"], instr)
-        if model is None:
-            return None, None
-        session = _build_session(
-            llm=model,
-            turn_detection="realtime_llm",
-            min_endpointing_delay=0.5,
-            max_endpointing_delay=3.0,
-            allow_interruptions=True,
-            min_interruption_duration=0.8,
-            resume_false_interruption=True,
-            false_interruption_timeout=1.0,
-        )
-        return session, agent
 
     def _wire_session(sess) -> None:
         """Attach the evidence + turn-tracking handlers to a session.
@@ -1491,80 +1615,103 @@ async def entrypoint(ctx: JobContext):
             ),
         )
 
-    session, agent = await _make_session(pinned["instructions"], first_artifacts)
-    if session is None:
-        # The verified key could not build a session: Gemini cannot
-        # serve this job. Same honest unavailable path as a failed key
-        # resolution (TASK-VOI-009) — notice, plain log, leave.
-        _write_status(
-            "unavailable", "none",
-            "voice unavailable: the Gemini session could not be built on the verified key",
-            room=_room_name, job_id=_job_id,
-        )
-        logger.error(
-            "VOICE job unavailable: pinned Gemini session build failed "
-            "— playing the recorded notice and leaving"
-        )
-        await _announce_unavailable(ctx.room)
-        return
-    await _start(session, agent)
-    logger.info(
-        "VOICE job timing: connect-to-key %.2fs, key-to-session-started %.2fs, "
-        "recall %s at session start (TASK-VOI-010)",
-        _t_key_ready - _t_connected,
-        time.time() - _t_key_ready,
-        "pending - async delivery armed" if _memory_pending else "landed",
-    )
-
-    greeting_enabled = (os.getenv("FRIDAY_VOICE_GREETING") or "1").strip().lower() not in (
-        "0", "false", "no",
-    )
     # Honest greeting (remote main, 2026-11-13): a greeting must never
     # claim fleet health it has not probed. Since TASK-VOI-009 the fixed
     # line below is the shipped recording voice/audio/greeting.wav —
     # the text is kept here only as the line's documentation.
 
+    async def _play_early_greeting_line() -> None:
+        """TASK-VOI-011: the fixed greeting line, played as soon as the
+        room is connected and a probe-verified key exists — in parallel
+        with the session start instead of after it. The line is the
+        shipped recording on its own track (see _play_fixed_line); it
+        needs no session, so the participant hears FRIDAY after the
+        room connect + a 0.3 s settle instead of after the whole
+        session build. ``greeting_state['attempted']`` is set at the
+        play call so the line is attempted exactly once per job
+        (pre-VOI-011 semantics) whichever path runs; any failure is
+        logged and left for _greet_when_ready's fallback rules."""
+        try:
+            if not await _wait_for_remote_participant(ctx.room):
+                return
+            # Fast-greeting fix (2026-11-13, ZAI Agent 1): the job is
+            # dispatched BY the owner joining, so remote_participants
+            # is virtually always non-empty already; 0.3s is enough
+            # for the audio pipeline to settle.
+            await asyncio.sleep(0.3)
+            greeting_state["attempted"] = True
+            logger.info(
+                "VOICE job timing: first fixed-line audio starting %.2fs after connect",
+                time.time() - _t_connected,
+            )
+            if await _play_fixed_line(ctx.room, "greeting"):
+                greeting_state["played"] = True
+                logger.info("VOICE fixed-line greeting played (recorded line)")
+            else:
+                logger.error("VOICE fixed-line greeting could not be played")
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning(
+                "VOICE early greeting line failed (%s); the post-start "
+                "greeting path applies its fallback rules", exc,
+            )
+
     async def _greet_when_ready(sess) -> None:
         """Speak a greeting the owner can actually HEAR, in this order:
 
-        1. Play the honest fixed line — since TASK-VOI-009 that is the
+        1. The honest fixed line — since TASK-VOI-009 that is the
            shipped recording (voice/audio/greeting.wav), published into
            the room verbatim: no synthesis, no realtime-arming race, no
            dropped generations. Live lesson 2026-11-13: the 'speaking'
            agent-state fired while the realtime plugin DROPPED every
            audio chunk ('received server content but no active
            generation') — state is NOT proof of audible audio, so the
-           deterministic recording speaks first.
+           deterministic recording speaks first. TASK-VOI-011: this
+           step usually already ran in _play_early_greeting_line,
+           parallel to the session start; it runs here only when the
+           early task never attempted the line (no participant in its
+           window, or the gate stayed closed).
         2. Best-effort warm greeting through the realtime model (personal,
            bilingual) — dropped generations are non-fatal: the fixed line
            already played.
         """
         if not greeting_enabled:
             return
-        for _ in range(50):  # up to ~10s for the participant to join
+        early = live.get("early_greeting_task")
+        if early is not None:
+            # The early task is bounded (≤10 s participant wait + the
+            # line's real-time playback); the shield + timeout is a
+            # belt so a stalled playback can never wedge this path.
             try:
-                if len(ctx.room.remote_participants) > 0:
+                await asyncio.wait_for(asyncio.shield(early), timeout=30.0)
+            except Exception:
+                pass
+        if not greeting_state["attempted"]:
+            for _ in range(50):  # up to ~10s for the participant to join
+                try:
+                    if len(ctx.room.remote_participants) > 0:
+                        break
+                except Exception:  # room state is best-effort, never fatal
                     break
-            except Exception:  # room state is best-effort, never fatal
-                break
-            await asyncio.sleep(0.2)
-        # Fast-greeting fix (2026-11-13, ZAI Agent 1): the job is dispatched
-        # BY the owner joining, so remote_participants is virtually always
-        # non-empty already; the extra 1.0s pre-sleep only delayed the first
-        # audible word. 0.3s is enough for the audio pipeline to settle.
-        await asyncio.sleep(0.3)
+                await asyncio.sleep(0.2)
+            # Fast-greeting fix (2026-11-13, ZAI Agent 1): 0.3s is
+            # enough for the audio pipeline to settle.
+            await asyncio.sleep(0.3)
 
-        # 1) deterministic fixed line — the shipped recording. Playback
-        # paces in real time, so when it returns the line has played;
-        # the short settle lets it land before the warm greeting layers.
-        logger.info(
-            "VOICE job timing: first fixed-line audio starting %.2fs after connect",
-            time.time() - _t_connected,
-        )
-        if await _play_fixed_line(ctx.room, "greeting"):
-            logger.info("VOICE fixed-line greeting played (recorded line)")
-        else:
-            logger.error("VOICE fixed-line greeting could not be played")
+            # 1) deterministic fixed line — the shipped recording.
+            # Playback paces in real time, so when it returns the line
+            # has played; the short settle below lets it land before
+            # the warm greeting layers.
+            logger.info(
+                "VOICE job timing: first fixed-line audio starting %.2fs after connect",
+                time.time() - _t_connected,
+            )
+            if await _play_fixed_line(ctx.room, "greeting"):
+                greeting_state["played"] = True
+                logger.info("VOICE fixed-line greeting played (recorded line)")
+            else:
+                logger.error("VOICE fixed-line greeting could not be played")
         await asyncio.sleep(0.3)
 
         # 2) warm realtime greeting (best-effort)
@@ -1585,6 +1732,30 @@ async def entrypoint(ctx: JobContext):
             logger.info("VOICE warm greeting requested")
         except Exception as exc:
             logger.error("VOICE warm greeting generation failed: %s", exc)
+
+    # TASK-VOI-011: the first session was already CONSTRUCTED by the
+    # build task (concurrently with the room connect). With the room
+    # up and a probe-verified key in hand, the fixed greeting line no
+    # longer waits for sess.start() — it plays in parallel with it
+    # (see _play_early_greeting_line). Residual race, accepted and
+    # bounded: if sess.start() itself then fails, the participant has
+    # heard the greeting and the job ends — the same job failure as
+    # today, plus a greeting that claimed nothing false.
+    if _early_greeting_warranted(greeting_enabled, GOOGLE_PLUGIN_AVAILABLE, _verified_key):
+        live["early_greeting_task"] = asyncio.create_task(_play_early_greeting_line())
+
+    await _start(session, agent)
+    logger.info(
+        "VOICE job timing: connect-to-key %.2fs, key-to-session-started %.2fs, "
+        "recall %s at session start (TASK-VOI-010)",
+        _t_key_ready - _t_connected,
+        time.time() - _t_key_ready,
+        "pending - async delivery armed" if _memory_pending else "landed",
+    )
+
+    # (TASK-VOI-011: the greeting closures — _play_early_greeting_line
+    # and _greet_when_ready — are defined above the session start,
+    # because the early line launches before sess.start() runs.)
 
     async def _close_quietly(sess, why: str) -> None:
         """Best-effort session close (TASK-VOI-004: shared by every
@@ -1902,7 +2073,9 @@ async def entrypoint(ctx: JobContext):
             # Mark closing FIRST so the watchdog stops even when there is
             # no live session left to close (TASK-VOI-003).
             live["closing"] = True
-            for task_key in ("greeting_task", "watchdog_task", "memory_task"):
+            for task_key in (
+                "greeting_task", "early_greeting_task", "watchdog_task", "memory_task"
+            ):
                 task = live.get(task_key)
                 if task is not None and not task.done():
                     task.cancel()
