@@ -12,8 +12,10 @@
    competition ranking in lib/ranking.ts, and shows movement against the
    previous snapshot so a climb or a fall is visible at a glance.
 
-   Optional component: it is NOT mounted on the live stage and changes no
-   existing surface. A caller mounts it inside a sheet or page and feeds it
+   Mounted (IG implementation wave, 2026-11-16): components/stage/
+   RankSheet.tsx summons it over the live stage and feeds it the fleet's
+   measured response latencies; the stage itself and its design are
+   unchanged. A caller mounts it inside a sheet or page and feeds it
    measured entries; with no entries it renders an explicit empty state
    rather than inventing a board. Styles are inline and read the Halo CSS
    variables from app/globals.css, so the component carries no stylesheet

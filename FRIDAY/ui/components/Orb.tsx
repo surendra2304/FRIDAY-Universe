@@ -25,8 +25,10 @@
    VoicePhase union VoiceCall reports (resting / opening / listening /
    thinking / speaking / down) — plus an optional 0..1 level for live
    audio reactivity. Wire it as <Orb phase={phase} level={level} /> next
-   to a VoiceCall, or leave it unmounted: it is an optional component and
-   is NOT part of the live stage or its design.
+   to a VoiceCall. Mounted (IG implementation wave, 2026-11-16):
+   components/stage/OrbSheet.tsx summons it over the live stage, driven
+   by the stage's real voice phase. It remains a summoned layer, not
+   the stage's face — the Halo design is untouched.
 
    Accessibility: prefers-reduced-motion renders one static frame and no
    animation loop (repo design rule). The canvas is aria-hidden decoration;
