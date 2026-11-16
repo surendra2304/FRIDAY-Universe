@@ -2408,3 +2408,7 @@ app.include_router(retention_router, prefix="/api/v1")
 # --- Real Media & Growth Engines (ClaudeAds, TopRank, OpenHiggsfield, Hyperframes) ---
 from app.services.real_media_routes import router as real_media_router
 app.include_router(real_media_router, prefix="/api/v1/vyralx")
+
+# --- IG Corpus Competitor-Ad Intelligence Integration (TASK-IG3-VYR-04) ---
+from app.services.competitor_ads import router as competitor_ads_router
+app.include_router(competitor_ads_router, prefix="/api/v1", tags=["IG Corpus Competitor Ads"])
