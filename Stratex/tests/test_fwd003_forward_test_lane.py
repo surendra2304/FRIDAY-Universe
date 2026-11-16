@@ -209,7 +209,9 @@ def test_config_registry_lane_entries():
         assert entry["forward_lane"] == "FORWARD_TEST", key
         assert entry["lane_assets"] == CRYPTO30_SYMBOLS, key
         # Judged priors survive the registry's nulling loop (the
-        # daemon's expectancy gate reads them).
+        # daemon's expectancy gate reads them) — this entry is
+        # lane-executable, so the null-out stamp says so.
+        assert entry["runtime_priors_nulled"] is False, key
         assert entry["oos_win_rate_prior"] == pytest.approx(wr), key
         assert entry["expected_net_edge_bps"] > 0, key
         assert entry["rr_ratio"] == pytest.approx(rr), key
@@ -221,13 +223,16 @@ def test_config_registry_lane_entries():
     # the FWD-002 sleeve extension's components (sleeve_shock_breakout
     # with a daemon module; sleeve_tsmom2_dual registry-only, running
     # through the OANDA sleeve runner) — separate judged objects from
-    # this lane's shock_breakout / tsmom2_dual, with separate records.
+    # this lane's shock_breakout / tsmom2_dual, with separate records —
+    # and fx_mr_v4, the OANDA forward entrant registered by
+    # TASK-STR-FWD-004 after this lane landed.
     validated = {
         k for k, e in PRODUCTION_STRATEGY_REGISTRY.items() if e["status"] == "VALIDATED"
     }
     assert validated == {
         "ichimoku_trend",
         "dow_effect",
+        "fx_mr_v4",
         "sleeve_shock_breakout",
         "sleeve_tsmom2_dual",
     }
@@ -244,6 +249,13 @@ def test_tsmom2_registered_but_excluded():
     assert entry["forward_protocol"] is False
     assert entry["lane_assets"] == []
     assert "EXCLUDED" in entry["reason"]
+    # Null-out follow-up (2026-11-16): a registration that cannot trade
+    # carries NO live runtime claims in the registry — its judged
+    # numbers survive only in the TSMOM2_DUAL_STRATEGY config dict and
+    # in the reason text above, and the record is stamped as nulled.
+    assert entry["oos_win_rate_prior"] is None
+    assert entry["expected_net_edge_bps"] is None
+    assert entry["runtime_priors_nulled"] is True
     # No production module exists for it, so discovery finds nothing
     # and nothing can evaluate or execute it.
     reg = UnifiedStrategyRegistry()
@@ -755,7 +767,7 @@ RD3_ADDITIONS = {
 def test_rd3_additions_registered_documentary_only():
     import config_strategy as cs
 
-    for key, (trades, edge_bps, _pf) in RD3_ADDITIONS.items():
+    for key, (trades, edge_bps, pf) in RD3_ADDITIONS.items():
         entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
         assert entry["status"] == "FORWARD_TEST"
         assert entry["forward_lane"] == "FORWARD_TEST"
@@ -768,7 +780,18 @@ def test_rd3_additions_registered_documentary_only():
             "entered sample-starved; forward evidence is the settler"
         )
         assert str(trades) in entry["reason"]
-        assert entry["expected_net_edge_bps"] == edge_bps
+        # Null-out follow-up (2026-11-16): the registry copy of a
+        # non-tradable registration carries NO live runtime claims —
+        # prior and edge are withdrawn by the null-out block and the
+        # record is stamped. The judged evidence itself is preserved
+        # in the entry's *_STRATEGY config dict (and its reason text),
+        # which is where documentary numbers belong.
+        assert entry["expected_net_edge_bps"] is None
+        assert entry["runtime_priors_nulled"] is True
+        judged = getattr(cs, f"{key.upper()}_STRATEGY")
+        assert judged["OOS_TRADES"] == trades
+        assert judged["OOS_EXPECTANCY_PCT"] * 100 == pytest.approx(edge_bps)
+        assert judged["OOS_PROFIT_FACTOR"] == pytest.approx(pf)
         # No win rate was published for these cells — none is recorded.
         assert entry["oos_win_rate_prior"] is None
         # No production module may exist for an excluded entry.
@@ -787,6 +810,47 @@ def test_rd3_additions_do_not_expand_the_executable_lane():
         and entry.get("forward_protocol") is True
     }
     assert protocol == {"bollinger_trend", "shock_breakout", "adx_ema_bare"}
+
+
+def test_non_tradable_lane_registrations_are_nulled_not_counted():
+    """Null-out follow-up (2026-11-16): of the 8 FORWARD_TEST registry
+    entries only 3 can trade. The other 5 registrations must be visibly
+    nulled on the record itself — no runtime prior, no runtime edge,
+    runtime_priors_nulled stamped True — so no consumer counting
+    registry records can mistake them for live lane entrants. The 3
+    executable entrants keep their judged priors for the daemon's
+    expectancy gate and are stamped False."""
+    import config_strategy as cs
+
+    non_tradable = {
+        "tsmom2_dual",
+        "vol_regime_switch_a",
+        "vol_regime_switch_b",
+        "trend_pullback_ema100",
+        "trend_pullback_ema200",
+    }
+    forward_test = {
+        key
+        for key, entry in cs.PRODUCTION_STRATEGY_REGISTRY.items()
+        if entry.get("status") == "FORWARD_TEST"
+    }
+    assert forward_test == non_tradable | {
+        "bollinger_trend",
+        "shock_breakout",
+        "adx_ema_bare",
+    }
+    for key in non_tradable:
+        entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
+        assert entry["forward_protocol"] is False, key
+        assert entry["lane_assets"] == [], key
+        assert entry["oos_win_rate_prior"] is None, key
+        assert entry["expected_net_edge_bps"] is None, key
+        assert entry["runtime_priors_nulled"] is True, key
+    for key in ("bollinger_trend", "shock_breakout", "adx_ema_bare"):
+        entry = cs.PRODUCTION_STRATEGY_REGISTRY[key]
+        assert entry["runtime_priors_nulled"] is False, key
+        assert entry["oos_win_rate_prior"] is not None, key
+        assert entry["expected_net_edge_bps"] is not None, key
 
 
 def test_tsmom2_cost_fragile_recorded():
