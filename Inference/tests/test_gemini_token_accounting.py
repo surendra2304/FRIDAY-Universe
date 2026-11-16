@@ -146,11 +146,17 @@ async def test_modest_budget_completion_finishes_stop_with_full_answer(monkeypat
 async def test_payload_separates_thinking_from_visible_budget(monkeypatch):
     """The wire payload must reserve the declared budget for visible
     output: maxOutputTokens = declared + thinking allowance, with the
-    allowance hard-capped via thinkingConfig.thinkingBudget."""
+    allowance hard-capped via thinkingConfig.thinkingBudget.
+
+    TASK-INF-011 changed the DEFAULT Flash budget to 0 (thinking off),
+    so this INF-009 split is now exercised with an explicit caller
+    thinking_budget — the allowance machinery itself is unchanged."""
     fake = FakeGeminiClient(model="gemini-3.6-flash", thinking_demand=10, answer_words=ANSWER_WORDS)
     _install_fake(monkeypatch, fake)
 
-    await _provider().generate(_request(max_tokens=200))
+    await _provider().generate(
+        _request(max_tokens=200, extra_params={"thinking_budget": 1024})
+    )
 
     gen = fake.captured_payload["generationConfig"]
     assert gen["maxOutputTokens"] > 200
@@ -178,7 +184,11 @@ async def test_usage_reports_reasoning_tokens_and_accounting(monkeypatch):
     fake = FakeGeminiClient(model="gemini-3.6-flash", thinking_demand=300, answer_words=ANSWER_WORDS)
     _install_fake(monkeypatch, fake)
 
-    resp = await _provider().generate(_request(max_tokens=200))
+    # Explicit caller budget (TASK-INF-011 made 0 the Flash default):
+    # the accounting must still surface a real thinking burn.
+    resp = await _provider().generate(
+        _request(max_tokens=200, extra_params={"thinking_budget": 1024})
+    )
 
     assert getattr(resp, "reasoning_tokens", None) == 300
     assert resp.completion_tokens == len(ANSWER_WORDS)
