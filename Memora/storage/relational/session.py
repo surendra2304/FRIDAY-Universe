@@ -9,11 +9,15 @@ SQLite remains available only as an explicitly-passed test backend, and only
 inside a pytest run (``MEMORA_ENV=testing`` or an active pytest process).
 """
 import contextlib
+import json
 import os
 import logging
 import sys
+from datetime import date, datetime
+from decimal import Decimal
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
+from uuid import UUID
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi import HTTPException
@@ -187,8 +191,39 @@ def get_engine():
     return _engine
 
 
+def _json_default(value: Any) -> Any:
+    """Default handler for values Memora's JSON columns legitimately carry
+    that the stdlib JSON encoder cannot natively serialize.
+
+    Oracle's driver decodes stored JSON numbers back as ``Decimal`` (and
+    the contradiction detector computes in ``Decimal``), so a provenance
+    dict that has round-tripped the database can hold ``Decimal`` leaves.
+    Plain ``json.dumps`` raises ``TypeError`` on those — that is what
+    turned the first capture-compress of a session into an HTTP 500 when
+    ``promote_to_semantic`` flushed the copied provenance. ``Decimal``
+    becomes ``float`` so numbers stay numbers and stored scores /
+    confidences read back with the type they were written with;
+    datetimes/dates and UUIDs take their canonical string forms; anything
+    else falls back to ``str()``, matching the ``default=str`` convention
+    used at Memora's other JSON boundaries (v1_events signing, the SDK,
+    the export tooling).
+    """
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, UUID):
+        return str(value)
+    return str(value)
+
+
+def _json_dumps(value: Any) -> str:
+    """The one JSON serializer for Memora's ORM JSON columns."""
+    return json.dumps(value, default=_json_default)
+
+
 def _ensure_json_serializer(engine) -> None:
-    """Give the Oracle dialect the JSON serializer SQLAlchemy's JSON type expects.
+    """Give the dialect the JSON serializer SQLAlchemy's JSON type expects.
 
     ``sqlalchemy.sql.sqltypes.JSON`` looks up ``dialect._json_serializer`` when
     it builds a bind processor. The Oracle dialect in the installed SQLAlchemy
@@ -196,15 +231,20 @@ def _ensure_json_serializer(engine) -> None:
     with ``'OracleDialect_oracledb' object has no attribute '_json_serializer'``
     (this is what broke Memora's ``event_log`` writes). Supplying the two
     attributes is the documented extension point and keeps the JSON type usable.
+
+    The serializer installed is :func:`_json_dumps`, not plain
+    ``json.dumps``: JSON column values are assembled from database-loaded
+    rows, and on Oracle those carry ``Decimal`` leaves (see
+    :func:`_json_default`). It is installed on every dialect whose current
+    serializer is not already ours, so the test (SQLite) boundary behaves
+    exactly like the production (Oracle) one.
     """
     dialect = getattr(engine, "dialect", None)
     if dialect is None:
         return
-    if not hasattr(dialect, "_json_serializer"):
-        import json as _json
-
+    if getattr(dialect, "_json_serializer", None) is not _json_dumps:
         try:
-            dialect._json_serializer = _json.dumps
+            dialect._json_serializer = _json_dumps
         except Exception:  # pragma: no cover - defensive, dialect is a simple object
             pass
     import json as _json
