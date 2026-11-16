@@ -88,6 +88,7 @@ from cortex_api.understand_router import router as understand_router  # noqa: E4
 from cortex_api.advanced_operations_router import router as advanced_operations_router  # noqa: E402
 from cortex_api.marketing_platform_integrator import router as marketing_platform_router  # noqa: E402
 from cortex_api.predictive_demand_forecaster import router as demand_forecaster_router  # noqa: E402
+from cortex_api.agent_budgets import router as agent_budgets_router  # noqa: E402
 from cortex_api.multi_channel_attribution import router as attribution_router  # noqa: E402
 from cortex_api.ab_experiment_framework import router as ab_experiment_router  # noqa: E402
 from cortex_api.competitive_intelligence import router as competitive_intel_router
@@ -290,6 +291,7 @@ app.include_router(advanced_analytics_router)
 # These routers declare absolute /api/v1/cortex/... paths; mount at root.
 app.include_router(marketing_platform_router, dependencies=[Depends(require_cortex_route_access)])
 app.include_router(demand_forecaster_router, dependencies=[Depends(require_cortex_route_access)])
+app.include_router(agent_budgets_router, dependencies=[Depends(require_cortex_route_access)])
 app.include_router(attribution_router, dependencies=[Depends(require_cortex_route_access)])
 app.include_router(ab_experiment_router, dependencies=[Depends(require_cortex_route_access)])
 app.include_router(competitive_intel_router, dependencies=[Depends(require_cortex_route_access)])
