@@ -227,6 +227,27 @@ def test_openbb_sdk_available_probe(monkeypatch):
     assert sdk_available() is True
 
 
+def test_openbb_sdk_available_probe_does_not_import_openbb(monkeypatch):
+    """AUDIT-2 section C.2 regression: the probe must never import the SDK.
+
+    ``sdk_available()`` exists to check for the SDK WITHOUT paying its
+    import cost (~996 MB peak RSS, docs/DATA_BACKBONE_IGFUT01.md) --
+    that is the whole reason the provider-status surface can call it on
+    the current fleet. ``find_spec`` satisfies this by construction;
+    this test pins it, so a future rewrite to a plain ``import openbb``
+    fails loudly here instead of silently loading the SDK on the
+    status path. The probe's return value is deliberately NOT asserted:
+    it is False on this fleet and True post-ARM, and the non-import
+    property must hold either way.
+    """
+    from futuris.market_data.providers.openbb_sdk import sdk_available
+
+    monkeypatch.delitem(sys.modules, "openbb", raising=False)
+    assert "openbb" not in sys.modules
+    sdk_available()
+    assert "openbb" not in sys.modules
+
+
 async def test_openbb_sdk_present_standardizes_bars(monkeypatch):
     seen: dict = {}
 
