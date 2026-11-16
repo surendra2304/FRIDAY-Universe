@@ -388,3 +388,25 @@ tbody tr:hover td { background: rgba(180,244,107,.04); }
   .sidebar, .topbar, .page-heading, .metric-card { animation: none; }
   .live-dot, .engine-ring[data-state="online"] { animation: none; }
 }
+
+/* ===== Sector heatmap (TASK-IG2-WEB-04) ===== */
+.heatmap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 9px; }
+.heatmap-tile { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; min-width: 0; }
+.heatmap-sector { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+.heatmap-change { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--ink); }
+.heatmap-members { font-family: var(--mono); font-size: 9px; line-height: 1.5; color: var(--ink-dim); overflow-wrap: anywhere; }
+.heatmap-count { font-size: 9px; color: var(--ink-dim); }
+
+/* ===== Command palette (TASK-IG2-WEB-05) ===== */
+.palette-kbd { font-family: var(--mono); font-size: 9px; padding: 1px 5px; border: 1px solid var(--line-strong); border-radius: 4px; color: var(--ink-dim); }
+.palette-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(3, 4, 9, .62); display: flex; align-items: flex-start; justify-content: center; padding: 12vh 16px 16px; }
+.palette-overlay[hidden] { display: none; }
+.palette { width: min(560px, 100%); background: var(--surface-raised); border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, .45); }
+.palette-input { width: 100%; padding: 14px 16px; background: var(--surface); border: none; border-bottom: 1px solid var(--line); color: var(--ink); font: 500 14px var(--sans); outline: none; }
+.palette-list { list-style: none; margin: 0; padding: 6px; max-height: 320px; overflow-y: auto; }
+.palette-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--ink-soft); }
+.palette-item.active { background: var(--surface-soft); color: var(--ink); }
+.palette-item-hint { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim); }
+.palette-empty { padding: 12px 10px; font-size: 13px; color: var(--ink-dim); }
+.palette-foot { padding: 8px 16px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 9px; letter-spacing: .08em; color: var(--ink-dim); }
+
