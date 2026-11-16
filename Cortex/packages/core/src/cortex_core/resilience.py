@@ -32,6 +32,7 @@ from datetime import datetime, timezone
 UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from enum import Enum
 from typing import Any
+from urllib.parse import urlparse
 
 logger = logging.getLogger("cortex-core.resilience")
 
@@ -568,6 +569,27 @@ def telegram_delivery_payload(event: dict[str, Any]) -> tuple[dict[str, Any] | N
     return {"chat_id": chat_id, "text": format_escalation_text(event)}, None
 
 
+def channel_descriptor(webhook_url: str | None) -> str:
+    """Redacted label for an escalation channel, safe for persisted records.
+
+    Delivery records and status payloads are persisted and endpoint-exposed,
+    and a Telegram ``sendMessage`` URL embeds the bot token in its path — so
+    a record must never carry the URL itself. The descriptor keeps only the
+    channel kind and host: ``telegram:api.telegram.org`` for the Telegram
+    Bot API, ``webhook:<host>`` for any other webhook, ``none`` when no
+    channel is configured, and ``webhook:unknown`` when no host can be
+    parsed out (the raw value is never echoed back).
+    """
+    if not webhook_url:
+        return "none"
+    host = urlparse(webhook_url.strip()).hostname
+    if not host:
+        return "webhook:unknown"
+    if host == "api.telegram.org":
+        return "telegram:api.telegram.org"
+    return f"webhook:{host}"
+
+
 class EscalationNotifier:
     """Delivers escalations to an operator channel — or says plainly that it could not.
 
@@ -575,6 +597,10 @@ class EscalationNotifier:
     ``delivered: False`` with the reason. Repeated escalations for the same subsystem and
     reason are collapsed inside ``dedupe_window_seconds`` and counted, so a permanently
     broken dependency cannot spam an operator into ignoring the channel.
+
+    Delivery records name the channel by its redacted descriptor (see
+    ``channel_descriptor``), never the webhook URL: the records persist and
+    are endpoint-exposed, and a Telegram URL carries the bot token.
     """
 
     def __init__(
@@ -592,7 +618,9 @@ class EscalationNotifier:
 
     @property
     def channel(self) -> str:
-        return self.webhook_url or "none"
+        # Redacted descriptor only — the full URL (a Telegram one carries
+        # the bot token) must never reach a delivery record or status.
+        return channel_descriptor(self.webhook_url)
 
     def _recently_sent(self, key: tuple[str, str]) -> bool:
         last = self._last_sent.get(key)
@@ -644,7 +672,11 @@ class EscalationNotifier:
             if delivered:
                 self._last_sent[key] = time.monotonic()
         except Exception as exc:  # noqa: BLE001 - a notification failure is not a healing failure
-            record.update({"delivered": False, "detail": f"{type(exc).__name__}: {exc}"})
+            detail = f"{type(exc).__name__}: {exc}"
+            if self.webhook_url and self.webhook_url in detail:
+                # Transport errors can embed the URL; the record must not.
+                detail = detail.replace(self.webhook_url, self.channel)
+            record.update({"delivered": False, "detail": detail})
         self.deliveries.append(record)
         self.deliveries = self.deliveries[-50:]
         return record
