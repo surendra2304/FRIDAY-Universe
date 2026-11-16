@@ -355,6 +355,19 @@ class SearchService:
         # the id remains the final deterministic key.
         lexical_matches.sort(key=lambda item: (-item[1], -item[2], item[0]))
 
+        # Expansion seeds keep the historical relevance order (overlap
+        # ratio, then id): seed choice decides which records RECEIVE graph
+        # boosts (get_graph_neighbors excludes the seeds themselves), so it
+        # must not drift with the ranking tie-break above — otherwise a
+        # record promoted into the seed set by recency would silently lose
+        # the graph signal TASK-REL-024 pinned (TASK-MEM-002). Computed
+        # here because the lexical fast lane below expands the graph from
+        # the same seeds the fusion path uses.
+        keyword_seed_ids = [
+            item[0]
+            for item in sorted(lexical_matches, key=lambda item: (-item[1], item[0]))[:5]
+        ]
+
         # -------------------------------------------------------------
         # 2. LEXICAL FAST LANE (TASK-MEM-002 follow-up)
         # -------------------------------------------------------------
@@ -368,8 +381,17 @@ class SearchService:
         # FRIDAY's recall gate applies to the hits it is given), the
         # lexical evidence is already decisive. Serve those records here,
         # ranked by BM25 over the full-match set with the fusion path's
-        # keyword-only score math, WITHOUT the embedding call, the vector
-        # store round-trip or graph expansion.
+        # score math, WITHOUT the embedding call or the vector store
+        # round-trip — the two stall-prone external legs.
+        #
+        # The graph leg is KEPT (one relational query on the same
+        # session): TASK-REL-024 pins graph behaviour as recall
+        # semantics, not decoration — a graph-connected record must win
+        # an otherwise-tied direct comparison by the graph term, and a
+        # graph-only companion must still surface after the direct
+        # matches. The lane therefore expands the graph from the same
+        # keyword seeds the fusion path uses and applies the same
+        # graph-term math, so those guarantees hold on both paths.
         #
         # Safety parity: candidates come from the scoped keyword query
         # above (tenant, lifecycle states, actor visibility and every
@@ -423,45 +445,148 @@ class SearchService:
                                 record.id,
                             )
                         )
+                        # Graph expansion from the keyword seeds — the
+                        # same seeds and boost source the fusion path
+                        # uses, so REL-024's graph guarantees (tie-break
+                        # term on direct matches; companions surfacing
+                        # after them) hold on the lane too.
+                        fast_graph_boosts = GraphService.get_graph_neighbors(
+                            db, keyword_seed_ids, tenant_id=resolved_tenant
+                        )
                         fast_query_lower = query_text.lower()
-                        fast_results: List[SearchResultItem] = []
+
+                        def _fast_entity_boost(record, reasons):
+                            boost = 0.0
+                            if record.entities:
+                                for ent in record.entities:
+                                    if ent.lower() in fast_query_lower:
+                                        boost += entity_boost_weight
+                                        reasons.append(f"Entity match boost: '{ent}' (+{entity_boost_weight:.2f})")
+                                        break
+                            return boost
+
+                        def _fast_sort_key(item):
+                            # The fusion path's ordering: direct evidence
+                            # first (the caller splits the groups), then
+                            # score, confidence, recency, id.
+                            return (
+                                -round(item.final_score, 4),
+                                -round(item.record.confidence_score or 0.5, 4),
+                                -(item.record.created_at.timestamp() if item.record.created_at else 0.0),
+                                item.record.id,
+                            )
+
+                        fast_directs: List[SearchResultItem] = []
                         for rank, record in enumerate(admissible, start=1):
                             k_score = (
                                 (fast_bm25.get(record.id, 0.0) / fast_best)
                                 if fast_best > 0
                                 else 1.0
                             )
-                            entity_boost = 0.0
                             reasons = [
                                 "Lexical fast lane: full content-token match",
                                 f"Keyword match (rank {rank}, bm25 {k_score:.2f})",
                             ]
-                            if record.entities:
-                                for ent in record.entities:
-                                    if ent.lower() in fast_query_lower:
-                                        entity_boost += entity_boost_weight
-                                        reasons.append(f"Entity match boost: '{ent}' (+{entity_boost_weight:.2f})")
-                                        break
-                            # Same normalisation the fusion path applies to
-                            # a keyword-only hit, so scores stay comparable
-                            # across the two paths.
+                            entity_boost = _fast_entity_boost(record, reasons)
+                            g_boost = fast_graph_boosts.get(record.id, 0.0)
+                            if g_boost > 0:
+                                reasons.append(f"Graph connection boost (+{g_boost:.2f})")
+                            # The fusion path's score math for a record
+                            # with keyword + graph evidence, so scores
+                            # stay comparable across the two paths.
                             fast_final = min(
                                 1.0,
-                                (keyword_weight * (1.0 / (rrf_k + rank))) * (rrf_k / 2)
+                                (
+                                    keyword_weight * (1.0 / (rrf_k + rank))
+                                    + graph_weight
+                                    * (g_boost / (1.0 + g_boost))
+                                    * (1.0 / (rrf_k + 1))
+                                )
+                                * (rrf_k / 2)
                                 + entity_boost,
                             )
                             if fast_final >= min_score:
-                                fast_results.append(
+                                fast_directs.append(
                                     SearchResultItem(
                                         record=record,
                                         final_score=fast_final,
                                         semantic_score=0.0,
                                         keyword_score=k_score,
-                                        graph_boost=0.0,
+                                        graph_boost=g_boost,
                                         match_reasons=reasons,
                                     )
                                 )
-                        fast_results = fast_results[:limit]
+                        fast_directs.sort(key=_fast_sort_key)
+
+                        # Graph-only companions: boosted records that are
+                        # not themselves full matches. They go through
+                        # the same scope re-application the fusion path
+                        # applies to graph candidates, then the shared
+                        # admissibility filters, and surface AFTER every
+                        # direct match (REL-024).
+                        fast_companions: List[SearchResultItem] = []
+                        direct_ids = {record.id for record in admissible}
+                        companion_ids = [
+                            mem_id
+                            for mem_id in fast_graph_boosts
+                            if mem_id not in direct_ids
+                        ]
+                        if companion_ids and len(fast_directs) < limit:
+                            comp_q = db.query(MemoryRecord).join(Namespace).filter(
+                                MemoryRecord.id.in_(companion_ids),
+                                MemoryRecord.tenant_id == resolved_tenant,
+                                MemoryRecord.lifecycle_state.in_(allowed_states),
+                            )
+                            if actor is not None:
+                                comp_q = comp_q.filter(visible_memory_predicate(actor.name))
+                            if user_id:
+                                comp_q = comp_q.filter(MemoryRecord.user_id == user_id)
+                            if agent_id:
+                                comp_q = comp_q.filter(MemoryRecord.agent_id == agent_id)
+                            if workspace_id:
+                                comp_q = comp_q.filter(MemoryRecord.workspace_id == workspace_id)
+                            if task_id:
+                                comp_q = comp_q.filter(MemoryRecord.task_id == task_id)
+                            if namespace_path:
+                                comp_q = comp_q.filter(Namespace.path == namespace_path)
+                            if memory_types:
+                                comp_q = comp_q.filter(MemoryRecord.memory_type.in_(memory_types))
+                            for record in comp_q.all():
+                                if not _passes_retrieval_filters(
+                                    record,
+                                    db,
+                                    actor=actor,
+                                    trust_level=trust_level,
+                                    include_expired=include_expired,
+                                    purpose=purpose,
+                                    now_utc=fast_now_utc,
+                                ):
+                                    continue
+                                g_boost = fast_graph_boosts.get(record.id, 0.0)
+                                reasons = [f"Graph connection boost (+{g_boost:.2f})"]
+                                entity_boost = _fast_entity_boost(record, reasons)
+                                comp_final = min(
+                                    1.0,
+                                    graph_weight
+                                    * (g_boost / (1.0 + g_boost))
+                                    * (1.0 / (rrf_k + 1))
+                                    * (rrf_k / 2)
+                                    + entity_boost,
+                                )
+                                if comp_final >= min_score:
+                                    fast_companions.append(
+                                        SearchResultItem(
+                                            record=record,
+                                            final_score=comp_final,
+                                            semantic_score=0.0,
+                                            keyword_score=0.0,
+                                            graph_boost=g_boost,
+                                            match_reasons=reasons,
+                                        )
+                                    )
+                            fast_companions.sort(key=_fast_sort_key)
+
+                        fast_results = (fast_directs + fast_companions)[:limit]
                         if fast_results:
                             fast_ages_days = []
                             for result in fast_results:
@@ -556,16 +681,9 @@ class SearchService:
         # -------------------------------------------------------------
         # 4. GRAPH RELATIONSHIP EXPANSION
         # -------------------------------------------------------------
-        # Expansion seeds keep the historical relevance order (overlap
-        # ratio, then id): seed choice decides which records RECEIVE graph
-        # boosts (get_graph_neighbors excludes the seeds themselves), so it
-        # must not drift with the ranking tie-break above — otherwise a
-        # record promoted into the seed set by recency would silently lose
-        # the graph signal TASK-REL-024 pinned (TASK-MEM-002).
-        keyword_seed_ids = [
-            item[0]
-            for item in sorted(lexical_matches, key=lambda item: (-item[1], item[0]))[:5]
-        ]
+        # keyword_seed_ids is computed with the keyword leg above (its
+        # order is pinned there); the fusion seed set adds the vector
+        # leg's top ranks.
         candidate_seed_ids = list(set(list(vector_ranks.keys())[:5] + keyword_seed_ids))
         graph_boosts = GraphService.get_graph_neighbors(
             db, candidate_seed_ids, tenant_id=resolved_tenant
