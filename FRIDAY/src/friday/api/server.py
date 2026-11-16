@@ -3743,6 +3743,11 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             # like the primary set. Runs after the FRD-001 probe so
             # the filtered-to-empty shape is covered too; the same
             # fallback idiom as that probe, keyed on the miss shape.
+            # TASK-FRD-017 adds one last draw in the stored fact's own
+            # subject phrasing ("my favorite color") for the re-run #6
+            # shape, where the variant + identical re-draw both landed
+            # the same non-answering set — see the note at the retry
+            # query construction below.
             def _has_full_match(_hit_list: list[dict[str, Any]]) -> bool:
                 return any(
                     all(
@@ -3760,6 +3765,39 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             if _variant != raw_cmd[:200].lower() and not _variant_drawn:
                 _retry_queries.append(_variant)
             _retry_queries.append(raw_cmd[:200])
+            # TASK-FRD-017 (2026-11-16): a final SUBJECT-SHAPED draw.
+            # FRD-005 re-run #6 (production): the primary draw and the
+            # identical original-query re-draw BOTH returned the same
+            # sparse non-answering set ({chai line, ZQ-marker line} —
+            # the gate's 205-char reply was header + those two bullets
+            # only), so the merged set held no full match, the FRD-014
+            # direct answer never fired, and the voice bridge fell back
+            # to handing the realtime model the bullet list to compose
+            # from. Re-rolling the identical question-shaped query
+            # re-rolls the same dice: the question words consume the
+            # bounded lexical candidate set before the subject is
+            # ranked (memora_client's own note), and the hybrid draw
+            # is non-deterministically sparse under load. A query in
+            # the stored fact's own phrasing — "my " + the question's
+            # canonical content words in question order, e.g. "my
+            # favorite color" — is a materially different draw against
+            # both legs, the same idiom as the FRD-001 owner-fact
+            # probe. It runs LAST, only while no full match has
+            # landed, and merges with the same dedupe + filter; if it
+            # lands the fact, ranking and the FRD-014 composition emit
+            # spoken_summary + fact exactly as on the primary path.
+            # If it also misses, nothing changes — the honest list
+            # stands and no fact is templated from a non-matching
+            # line (FRD-014's pinned semantics).
+            _subject_words: list[str] = []
+            for _w in _clean_memory_line(cmd).split():
+                _cw = _canon_word(_w.strip("?!.,;:'\"()"))
+                if _cw in _q_words and _cw not in _subject_words:
+                    _subject_words.append(_cw)
+            if len(_subject_words) >= 2:
+                _subject_query = "my " + " ".join(_subject_words)
+                if _subject_query not in {q.lower() for q in _retry_queries}:
+                    _retry_queries.append(_subject_query)
             for _rq in _retry_queries:
                 if _has_full_match(_hits):
                     break
