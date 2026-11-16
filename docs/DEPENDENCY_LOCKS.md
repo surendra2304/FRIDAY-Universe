@@ -64,3 +64,24 @@ Notes:
   also excluded from the FRIDAY snapshot: TASK-SEN-014 verified it dead
   in production and PR #368 removes it from FRIDAY's manifests entirely,
   so SEN-012 deliberately does not pin it (coordinator steer 2026-11-15).
+
+## Per-server union locks (Python 3.12 cutover)
+
+The fleet runs ONE shared venv per server, so a from-scratch rebuild on
+Python 3.12 installs neither a single agent's manifest nor its cp311
+lock — it installs the **per-server union lock**:
+
+- `deploy/requirements-server1.lock` — FRIDAY, Inference, Memora,
+  Stratex, Futuris, IntelX, Forge (198 packages).
+- `deploy/requirements-server2.lock` — Sentinel, Cortex, VyralX
+  (123 packages).
+
+Each union lock is a real-install freeze of the server's manifest union
+resolved on CPython 3.12, proven by `pip check` and the REL-050 import
+gate (all entrypoints, zero stubs). The per-agent locks above remain
+the reference for spotting what a union resolution moved; the binding
+constraint behind every moved pin, the two documented input adjustments
+(Stratex per PR #835, VyralX Pillow per PR #347), and the full proof
+record live in `deploy/UNION_LOCKS_RESOLUTION.md`. At window build time
+the union lock is regenerated on the host interpreter and diffed
+before any unit flips; a delta re-runs the gate.
