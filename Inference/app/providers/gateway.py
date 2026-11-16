@@ -315,7 +315,32 @@ class ModelGateway:
         self.key_pools: dict[str, KeyPool] = {}
         self.rate_limiters: dict[str, ProviderRateLimiter] = {}
         self.health_tracker = provider_health_tracker
+        self._apply_key_vault()
         self._initialize_pools()
+
+    def _apply_key_vault(self) -> None:
+        """Fill still-empty key fields from the encrypted vault (TASK-IG2-INF-02).
+
+        Runs before pools are built so vault-stored keys are indistinguishable
+        from environment keys downstream. Environment values always win, and
+        each vault entry fills only its own settings field, so the FRIDAY /
+        Inference / THIRD_PARTY_* pools stay separate. A vault failure must
+        never break gateway startup: it is logged (entry names only, never
+        values) and serving continues with whatever the environment provided.
+        """
+        try:
+            from app.providers.key_vault import apply_vault_to_settings
+
+            report = apply_vault_to_settings(settings)
+            if report["applied"]:
+                logger.info(
+                    "GATEWAY: Loaded %d provider key field(s) from the encrypted key vault.",
+                    len(report["applied"]),
+                )
+            for err in report["errors"]:
+                logger.warning("GATEWAY: Key vault entry '%s' could not be applied: %s", err["name"], err["error"])
+        except Exception:  # noqa: BLE001 - vault must never break gateway startup
+            logger.warning("GATEWAY: Key vault application failed; continuing with environment keys only.")
 
     def _initialize_pools(self) -> None:
         """Initialize key pools and rate limiters for all known providers."""
