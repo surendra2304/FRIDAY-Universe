@@ -1,0 +1,179 @@
+<!doctype html>
+<!-- diagram-design (FRIDAY adoption, TASK-IG2-WEB-01) — minimal-dark Architecture diagram.
+     Self-contained: inline SVG, no JavaScript, no external images.
+     Geometry on the 4px grid; hairline borders; no shadows; accent on the focal node only.
+     Type: Architecture. Budget check: 9 nodes, 8 arrows, 1 accent element. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FRIDAY Universe — Fleet Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#030409; --paper-2:#0a0e1d; --ink:#eef1ff; --muted:#8b93b8; --soft:#5b6284;
+    --rule:rgba(148,163,255,.18); --rule-solid:rgba(148,163,255,.35);
+    --accent:#8f9bff; --accent-tint:rgba(99,102,241,.16); --link:#7dd3fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:Manrope,system-ui,sans-serif;padding:40px 24px}
+  .wrap{max-width:1000px;margin:0 auto}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;color:var(--muted);margin:0 0 8px}
+  h1{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:32px;margin:0 0 8px}
+  .lede{color:var(--muted);font-size:15px;margin:0 0 28px;max-width:640px}
+  .svg-scroll{overflow-x:auto}
+  svg{display:block;min-width:1000px}
+  .node-name{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:16px;fill:var(--ink)}
+  .node-sub{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;fill:var(--muted)}
+  .tag{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.1em;fill:var(--muted)}
+  .arrow-label{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.12em;fill:var(--muted)}
+  .legend{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;fill:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">FRIDAY UNIVERSE · ARCHITECTURE</p>
+  <h1>One voice, ten specialists</h1>
+  <p class="lede">FRIDAY orchestrates nine specialist agents across two Oracle Cloud servers. Every request enters through FRIDAY; specialists return results the same way.</p>
+  <div class="svg-scroll">
+  <svg viewBox="0 0 1000 496" role="img" aria-labelledby="fleet-title fleet-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="fleet-title">FRIDAY Universe fleet architecture</title>
+    <desc id="fleet-desc">The owner talks to FRIDAY, the orchestrator. FRIDAY routes language-model work to Inference, recalls memory from Memora, and delegates to Stratex, IntelX and Forge on server 1, to Sentinel, Cortex and VyralX on server 2, and operates the fleet through the Cloud Bridge.</desc>
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#8b93b8"/>
+      </marker>
+      <marker id="arr-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#8f9bff"/>
+      </marker>
+      <marker id="arr-link" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#7dd3fc"/>
+      </marker>
+    </defs>
+
+    <!-- arrows first: lines sit behind nodes -->
+    <!-- Owner -> FRIDAY -->
+    <path d="M192,72 H264" fill="none" stroke="#8f9bff" stroke-width="1.5" marker-end="url(#arr-accent)"/>
+    <rect x="196" y="64" width="64" height="16" fill="#030409"/>
+    <!-- FRIDAY -> Inference -->
+    <path d="M480,72 H552" fill="none" stroke="#7dd3fc" stroke-width="1" marker-end="url(#arr-link)"/>
+    <rect x="492" y="64" width="52" height="16" fill="#030409"/>
+    <!-- FRIDAY -> Memora (routed above) -->
+    <path d="M376,40 V24 H888 V32" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <rect x="600" y="16" width="56" height="16" fill="#030409"/>
+    <!-- FRIDAY -> Stratex -->
+    <path d="M360,104 V160" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <rect x="332" y="124" width="60" height="16" fill="#030409"/>
+    <!-- FRIDAY -> IntelX -->
+    <path d="M576,104 V160" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <rect x="556" y="124" width="44" height="16" fill="#030409"/>
+    <!-- FRIDAY -> Forge -->
+    <path d="M784,104 V160" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <rect x="764" y="124" width="44" height="16" fill="#030409"/>
+    <!-- FRIDAY -> Bridge (routed left, no transit behind boxes) -->
+    <path d="M272,72 H240 V328 H264" fill="none" stroke="#8b93b8" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arr)"/>
+    <rect x="228" y="188" width="28" height="16" fill="#030409"/>
+    <!-- FRIDAY -> Server 2 group (routed through the 448-496 gap, then below row 2) -->
+    <path d="M472,104 V264 H728 V288" fill="none" stroke="#8b93b8" stroke-width="1" marker-end="url(#arr)"/>
+    <rect x="572" y="256" width="64" height="16" fill="#030409"/>
+
+    <!-- arrow labels (on paper masks, beside their segments) -->
+    <text class="arrow-label" x="228" y="76" text-anchor="middle">VOICE</text>
+    <text class="arrow-label" x="518" y="76" text-anchor="middle">LLM</text>
+    <text class="arrow-label" x="628" y="28" text-anchor="middle">RECALL</text>
+    <text class="arrow-label" x="362" y="136" text-anchor="middle">TRADE</text>
+    <text class="arrow-label" x="578" y="136" text-anchor="middle">INTEL</text>
+    <text class="arrow-label" x="786" y="136" text-anchor="middle">BUILD</text>
+    <text class="arrow-label" x="242" y="200" text-anchor="middle">OPS</text>
+    <text class="arrow-label" x="604" y="268" text-anchor="middle">S2 PEERS</text>
+
+    <!-- nodes: opaque mask, hairline box rx=6, tag rx=2, name, mono sublabel -->
+    <!-- Owner -->
+    <rect x="40" y="40" width="152" height="64" fill="#030409"/>
+    <rect x="40" y="40" width="152" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="140" y="48" width="44" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="162" y="58" text-anchor="middle">USER</text>
+    <text class="node-name" x="56" y="76">Owner</text>
+    <text class="node-sub" x="56" y="94">VOICE · TEXT</text>
+
+    <!-- FRIDAY (focal) -->
+    <rect x="272" y="40" width="208" height="64" fill="#030409"/>
+    <rect x="272" y="40" width="208" height="64" rx="6" fill="rgba(99,102,241,.16)" stroke="#8f9bff"/>
+    <rect x="420" y="48" width="44" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.35)"/>
+    <text class="tag" x="442" y="58" text-anchor="middle">CORE</text>
+    <text class="node-name" x="288" y="76">FRIDAY</text>
+    <text class="node-sub" x="288" y="94">ORCHESTRATOR · :10000</text>
+
+    <!-- Inference -->
+    <rect x="560" y="40" width="176" height="64" fill="#030409"/>
+    <rect x="560" y="40" width="176" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="692" y="48" width="36" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="710" y="58" text-anchor="middle">S1</text>
+    <text class="node-name" x="576" y="76">Inference</text>
+    <text class="node-sub" x="576" y="94">LLM GATEWAY · :8001</text>
+
+    <!-- Memora -->
+    <rect x="816" y="40" width="144" height="64" fill="#030409"/>
+    <rect x="816" y="40" width="144" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="916" y="48" width="36" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="934" y="58" text-anchor="middle">S1</text>
+    <text class="node-name" x="832" y="76">Memora</text>
+    <text class="node-sub" x="832" y="94">MEMORY · :8002</text>
+
+    <!-- Stratex -->
+    <rect x="272" y="168" width="176" height="64" fill="#030409"/>
+    <rect x="272" y="168" width="176" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="404" y="176" width="36" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="422" y="186" text-anchor="middle">S1</text>
+    <text class="node-name" x="288" y="204">Stratex</text>
+    <text class="node-sub" x="288" y="222">TRADING · :8003</text>
+
+    <!-- IntelX -->
+    <rect x="496" y="168" width="160" height="64" fill="#030409"/>
+    <rect x="496" y="168" width="160" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="612" y="176" width="36" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="630" y="186" text-anchor="middle">S1</text>
+    <text class="node-name" x="512" y="204">IntelX</text>
+    <text class="node-sub" x="512" y="222">THREAT INTEL · :8005</text>
+
+    <!-- Forge -->
+    <rect x="704" y="168" width="160" height="64" fill="#030409"/>
+    <rect x="704" y="168" width="160" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="820" y="176" width="36" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="838" y="186" text-anchor="middle">S1</text>
+    <text class="node-name" x="720" y="204">Forge</text>
+    <text class="node-sub" x="720" y="222">CODE · :8006</text>
+
+    <!-- Bridge -->
+    <rect x="272" y="296" width="240" height="64" fill="#030409"/>
+    <rect x="272" y="296" width="240" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="456" y="304" width="44" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="478" y="314" text-anchor="middle">OPS</text>
+    <text class="node-name" x="288" y="332">Cloud Bridge</text>
+    <text class="node-sub" x="288" y="350">MCP · 31 TOOLS</text>
+
+    <!-- Server 2 group -->
+    <rect x="592" y="296" width="272" height="64" fill="#030409"/>
+    <rect x="592" y="296" width="272" height="64" rx="6" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <rect x="820" y="304" width="36" height="14" rx="2" fill="none" stroke="rgba(148,163,255,.18)"/>
+    <text class="tag" x="838" y="314" text-anchor="middle">S2</text>
+    <text class="node-name" x="608" y="332">Server 2</text>
+    <text class="node-sub" x="608" y="350">SENTINEL · CORTEX · VYRALX</text>
+
+    <!-- legend: horizontal bottom strip -->
+    <line x1="40" y1="408" x2="960" y2="408" stroke="rgba(148,163,255,.18)"/>
+    <rect x="40" y="428" width="16" height="10" rx="2" fill="rgba(99,102,241,.16)" stroke="#8f9bff"/>
+    <text class="legend" x="64" y="437">ORCHESTRATOR</text>
+    <rect x="196" y="428" width="16" height="10" rx="2" fill="#0a0e1d" stroke="rgba(148,163,255,.35)"/>
+    <text class="legend" x="220" y="437">AGENT / SERVICE</text>
+    <line x1="368" y1="433" x2="396" y2="433" stroke="#7dd3fc"/>
+    <text class="legend" x="404" y="437">API / LLM PATH</text>
+    <line x1="524" y1="433" x2="552" y2="433" stroke="#8b93b8" stroke-dasharray="5,4"/>
+    <text class="legend" x="560" y="437">OPS PATH (DASHED)</text>
+    <text class="legend" x="40" y="464">FUTURIS (:8004, S1) IS GROUPED INTO THE SERVER-1 ROW — OMITTED AS A NODE TO HOLD THE 9-NODE BUDGET</text>
+  </svg>
+  </div>
+</div>
+</body>
+</html>
