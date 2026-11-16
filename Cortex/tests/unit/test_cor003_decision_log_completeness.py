@@ -20,6 +20,8 @@ from __future__ import annotations
 import json
 
 import pytest
+from fastapi import HTTPException
+
 from cortex_api.decision_recommendation_system import DecisionRecommendationSystem
 from cortex_api.real_decision_engine import DecisionEngine
 from cortex_core.governed_operations import GovernedOperationsEngine
@@ -120,7 +122,10 @@ def _recommend_once(system: DecisionRecommendationSystem):
     system.score_alternative(alt_a.alternative_id, cost.criterion_id, 0.2)
     system.score_alternative(alt_a.alternative_id, quality.criterion_id, 0.9)
     system.score_alternative(alt_b.alternative_id, cost.criterion_id, 0.8)
-    # B is deliberately left unscored on quality: that cell defaults to 0.5.
+    system.score_alternative(alt_b.alternative_id, quality.criterion_id, 0.4)
+    # TASK-REL-047 ruling (2026-11-16): the matrix must be complete — an
+    # unscored cell is no longer defaulted to 0.5, it rejects the
+    # recommendation (see test_recommendation_rejection_is_logged below).
     rec = system.recommend("cor003: choose a vendor", decider="cor003-test")
     return rec, alt_b, quality
 
@@ -135,14 +140,53 @@ def test_recommendation_record_is_complete():
     assert {c["name"] for c in snapshot["criteria"]} == {"cost", "quality"}
     alternatives = {a["name"]: a for a in snapshot["alternatives"]}
     assert alternatives["A"]["criteria_scores"] != {}
-    # The one unscored cell is named in the record as defaulted.
-    assert snapshot["defaulted_cells"] == [
-        f"{alt_b.alternative_id}:{quality.criterion_id}"]
+    # No cell was defaulted: the matrix is complete, and since TASK-REL-047
+    # an incomplete one is rejected instead of defaulted (see below).
+    assert snapshot["defaulted_cells"] == []
     # Options weighed: full ranking present on the record.
     assert {r["name"] for r in rec.alternatives_ranking} == {"A", "B"}
     # Outcome slot: selection recorded, observed result awaited.
     assert rec.outcome["selected"] == rec.best_alternative
     assert rec.outcome["observed_result"] is None
+
+
+def test_recommendation_rejection_is_logged():
+    """TASK-REL-047 ruling (2026-11-16): an incomplete matrix is refused
+    with HTTP 422, and the refusal is itself a complete decision-log
+    record — timestamp, decider, input snapshot, and an outcome that
+    states the rejection and names the missing cells. No selection is
+    fabricated."""
+    system = DecisionRecommendationSystem()
+    cost = system.add_criterion("cost", weight=2.0, direction="minimize")
+    quality = system.add_criterion("quality", weight=1.0, direction="maximize")
+    alt_a = system.add_alternative("A", risk_score=0.2, return_projection=0.9)
+    alt_b = system.add_alternative("B", risk_score=0.8, return_projection=0.4)
+    system.score_alternative(alt_a.alternative_id, cost.criterion_id, 0.2)
+    system.score_alternative(alt_a.alternative_id, quality.criterion_id, 0.9)
+    system.score_alternative(alt_b.alternative_id, cost.criterion_id, 0.8)
+    # B is deliberately left unscored on quality: that cell used to default
+    # to 0.5; it now rejects the recommendation.
+
+    with pytest.raises(HTTPException) as excinfo:
+        system.recommend("cor003: choose a vendor", decider="cor003-test")
+    assert excinfo.value.status_code == 422
+    assert "B / quality" in excinfo.value.detail
+
+    (record,) = system._recommendations
+    assert record.created_at > 0
+    assert record.decider == "cor003-test"
+    assert record.best_alternative == ""
+    assert record.alternatives_ranking == []
+    # Outcome: the rejection, with the missing cells named — not a decision.
+    assert record.outcome["status"] == "rejected_incomplete"
+    assert record.outcome["selected"] == ""
+    assert record.outcome["missing_cells"] == ["B / quality"]
+    assert record.outcome["observed_result"] is None
+    snapshot = record.inputs_snapshot
+    assert {c["name"] for c in snapshot["criteria"]} == {"cost", "quality"}
+    assert snapshot["missing_cells"] == [
+        f"{alt_b.alternative_id}:{quality.criterion_id}"]
+    assert snapshot["defaulted_cells"] == []
 
 
 def test_recommendation_record_outcome_can_be_attached():
