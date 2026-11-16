@@ -29,6 +29,7 @@ from app.providers.errors import (
     normalize_provider_exception,
 )
 from app.providers.errors import TimeoutError as ProviderTimeoutError
+from app.providers.failover_log import failover_log
 from app.providers.health import provider_health_tracker
 from app.providers.quota_ledger import quota_ledger
 from app.security.prompt_isolation import scrub_credentials
@@ -833,6 +834,18 @@ class ModelGateway:
         which shortens the circuit breaker for the one provider that is supposed to
         keep the system alive — and adds a second round trip for nothing.
         """
+        # TASK-IG2-INF-03: every ladder escalation is recorded in the
+        # failover log served on the admin dashboard, so "what just failed
+        # over, from where, and why" is answerable without journal archaeology.
+        # The reason is credential-scrubbed here, exactly like the fallback
+        # provenance attached to responses; the log itself never sees a key.
+        failover_log.record(
+            from_provider=failed_provider,
+            reason=scrub_credentials(str(last_error)) if last_error else "primary_exhausted",
+            model=request.model,
+            capability=capability,
+            stage_name=stage_name,
+        )
         # 1. If failed provider is NOT openrouter, use OpenRouter with dynamic capability model discovery
         remaining = (deadline - time.monotonic()) if deadline else 60.0
         if remaining <= 0:
