@@ -6443,20 +6443,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - Stratex/rigorous_backtest/ig/CONFLUENCE_DECLARATION.md
       - Stratex/rigorous_backtest/ig/confluence.py
       - Stratex/rigorous_backtest/ig/declaration.json
+      - Stratex/rigorous_backtest/ig/CONFLUENCE_RESULTS.md
+      - Stratex/rigorous_backtest/ig/confluence_results.json
       - Stratex/rigorous_backtest/ig/tests/test_confluence.py
     title: "IG corpus: RD candidate family: Fib/BOS confluence (pre-declared)"
     owner: muse_ai
-    status: IN_REVIEW
+    status: VERIFIED
     priority: P2
     created: 2026-11-15
-    updated_at: 2026-11-15
+    updated_at: 2026-11-16
     branch: "claude/task-ig-str-06"
     pr: 466
     defect: "IG corpus item DYeU6nSBl9K (SK-System Fib/BOS confluence model) had no RD registration; unregistered ideas either get lost or, worse, get eyeballed instead of tested."
     evidence:
       - "PR #466: test_confluence.py — 5 passed locally (full ig suite 64 passed); blob-SHA-verified delivery from fresh main 6a8a921f."
+      - "COMPLETE 2026-11-16: the declared run was executed exactly as pre-declared (declaration.json sha256 43c025e1ce4dffd16d21d7cbd1218dc11006bdc85c77a933d66785cbdc280300 re-verified from main; confluence.py byte-identical, declaration tests 5/5). ZERO of 4 cells pass the bar: crypto30 1h — 18,466 OOS trades, expectancy -0.1641%, PF 0.818, folds 0/5, Bonferroni p ~= 1.0; crypto30 4h — 3,923 trades, expectancy +0.0694%, PF 1.041 (closest cell; folds 3/5, holdout2 untouched subset -0.117%, 2x-cost expectancy -0.0900%, p = 0.230); forex_cross41 1h — 14,047 trades, expectancy -0.1105%, PF 0.318, folds 0/4; forex_cross41 4h — 3,868 trades, expectancy -0.0994%, PF 0.572, folds 0/4. Full record: Stratex/rigorous_backtest/ig/CONFLUENCE_RESULTS.md + confluence_results.json; full results posted to issue #35 (comment 6924993040)."
+      - "Disclosed run-level freeze (not a declaration fact): the declaration names two targets (1.272R / 1.618R) with no exit split; resolved BEFORE any execution as a 50/50 scale-out, stop = leg origin throughout, no stop movement — the only split introducing no tunable number. Trial floor: coordinator reconciliation ledger entering N = 3,885 (superseding the declaration-era 1,980 the run design started from); Bonferroni recomputed exactly from the saved OOS trade lists at N_final = 3,889, alpha 1.2857e-05; no verdict changes at either floor. Data: crypto30 Binance Vision hash-sidecar caches (30/30 symbols, 1,320 gap-audited missing bars reported, never filled); forex_cross41 Yahoo 1h admitted only on FULL_MATCH / TRUNCATED_MATCH verification (41/41, UNCOVERED none)."
     blockers: []
-    next_action: "Merge on green CI. Next action: the declared RD run (crypto30 + forex_cross41 panels, 1h/4h, walk-forward, 2x-cost shadow, Bonferroni vs the then-current trial floor) as a separate PR with a RESULTS document — pass or fail, the family is judged at the bar and the verdict recorded either way."
+    next_action: "Done — research complete, zero passers: the fib_bos_confluence family is CLOSED per the declaration's own terms; NOTHING from this family is wired into any forward lane and no production state changes. Coordinator: verify Stratex/rigorous_backtest/ig/CONFLUENCE_RESULTS.md + confluence_results.json against issue #35 comment 6924993040 and flip this entry to VERIFIED. Global trial counter after this run: 3,889 (3,885 + 4 cells). A future Fib/BOS variant would require a NEW pre-declaration and would raise the trial count — no retune is authorised by this record."
   - id: TASK-IG-STR-07
     files:
       - Stratex/rigorous_backtest/ig/__init__.py

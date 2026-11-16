@@ -1,0 +1,528 @@
+{
+  "task": "TASK-IG-STR-06",
+  "family": "fib_bos_confluence",
+  "source_item": "IG reference corpus item DYeU6nSBl9K (SK-System Fib/BOS confluence model)",
+  "declaration": {
+    "file": "Stratex/rigorous_backtest/ig/declaration.json",
+    "sha256": "43c025e1ce4dffd16d21d7cbd1218dc11006bdc85c77a933d66785cbdc280300",
+    "declared": "2026-11-15",
+    "run_executed": "2026-11-16"
+  },
+  "run_level_freeze_disclosed": "The declaration names two targets (T1 = 1.272R, T2 = 1.618R) with no exit split. Frozen BEFORE any execution, at run level (not a declaration fact): 50/50 scale-out \u2014 50% of the position exits at T1, the remaining 50% at T2; the stop (leg origin) covers the whole position until T1 and the remainder after it; no stop movement (none declared). 50/50 is the only split introducing no tunable number.",
+  "trial_floor": {
+    "entering_n": 3885,
+    "trials_added": 4,
+    "n_final": 3889,
+    "bonferroni_alpha": 1.285677552069941e-05,
+    "note": "Entering floor from the RD reconciliation ledger (3,885 executed trials), superseding the declaration-era floor of 1,980 the run design started from. Bonferroni recomputed exactly from the saved OOS trade lists at N = 3,889. No verdict changes: every cell fails Bonferroni at either floor."
+  },
+  "cells": [
+    {
+      "panel": "crypto30",
+      "timeframe": "1h",
+      "fold_profile": [
+        "W1",
+        "W2",
+        "W3",
+        "W4",
+        "W5"
+      ],
+      "symbols_loaded": 30,
+      "uncovered_symbols": [],
+      "signals_generated": 113031,
+      "signals_skipped_position_open": 76174,
+      "provenance": {
+        "sources": [
+          "binance_vision_futures_um_monthly_klines"
+        ],
+        "rows_per_symbol_min": 30656,
+        "rows_per_symbol_max": 42360,
+        "missing_bars_total_gap_audited": 1320,
+        "span_first_bar_utc": "2022-01-01T00:00:00+00:00",
+        "span_last_bar_utc": "2026-10-31T23:00:00+00:00"
+      },
+      "programme_costs": {
+        "pooled_oos": {
+          "trades": 18466,
+          "wins": 11409,
+          "win_rate": 0.6178381891042998,
+          "expectancy_net": -0.0016413126591020735,
+          "profit_factor_net": 0.8182794018231424,
+          "avg_win_net": 0.011962281868204513,
+          "avg_loss_net": -0.02363414388512458
+        },
+        "per_fold": {
+          "W1": {
+            "oos_start": "2024-07-01",
+            "oos_end": "2025-01-01",
+            "trades": 4707,
+            "win_rate": 0.6320373911196091,
+            "expectancy_net": -0.0012668654078880899,
+            "profit_factor_net": 0.869502198195993
+          },
+          "W2": {
+            "oos_start": "2025-01-01",
+            "oos_end": "2025-07-01",
+            "trades": 4050,
+            "win_rate": 0.6372839506172839,
+            "expectancy_net": -0.0009204685271345837,
+            "profit_factor_net": 0.9022102489834146
+          },
+          "W3": {
+            "oos_start": "2025-07-01",
+            "oos_end": "2026-01-01",
+            "trades": 4383,
+            "win_rate": 0.6128222678530687,
+            "expectancy_net": -0.002073376239157376,
+            "profit_factor_net": 0.7665951279354856
+          },
+          "W4": {
+            "oos_start": "2026-01-01",
+            "oos_end": "2026-07-01",
+            "trades": 3490,
+            "win_rate": 0.6091690544412608,
+            "expectancy_net": -0.0018778974718891722,
+            "profit_factor_net": 0.7731359292517024
+          },
+          "W5": {
+            "oos_start": "2026-07-01",
+            "oos_end": "2026-11-01",
+            "trades": 1836,
+            "win_rate": 0.5669934640522876,
+            "expectancy_net": -0.002710226753831481,
+            "profit_factor_net": 0.6714531658683284
+          }
+        },
+        "holdout2": {
+          "symbols_active_min20": 30,
+          "symbols_positive": 1,
+          "breadth_positive_share": 0.03333333333333333,
+          "untouched_trades": 5779,
+          "untouched_expectancy": -0.0020497925360102947,
+          "passes": false
+        },
+        "bar_checks": {
+          "expectancy_net_gt_0": false,
+          "profit_factor_net_gte_1.2": false,
+          "min_oos_trades_200": true,
+          "positive_folds": false,
+          "holdout_passes": false
+        },
+        "passes_bar": false,
+        "holdout_check_rd_common": {
+          "symbols_positive_min20trades": [
+            "HBARUSDT"
+          ],
+          "max_symbol_profit_share": 1.0,
+          "passes": false
+        }
+      },
+      "costs_2x": {
+        "pooled_oos": {
+          "trades": 18466,
+          "wins": 10198,
+          "win_rate": 0.5522582042673021,
+          "expectancy_net": -0.003240269976863777,
+          "profit_factor_net": 0.6657879955515194,
+          "avg_win_net": 0.011688342676041637,
+          "avg_loss_net": -0.0216536700535848
+        },
+        "passes_bar": false,
+        "holdout_check_rd_common_passes": false
+      },
+      "trade_stats_oos": {
+        "n": 18466,
+        "t_stat": -7.937491268571121,
+        "p_one_sided": 0.999999999999999
+      },
+      "bonferroni_corrected_floor": {
+        "n_final": 3889,
+        "alpha": 1.285677552069941e-05,
+        "p_one_sided": 0.999999999999999,
+        "passes": false
+      },
+      "passes_all": false,
+      "verdict": "FAIL"
+    },
+    {
+      "panel": "crypto30",
+      "timeframe": "4h",
+      "fold_profile": [
+        "W1",
+        "W2",
+        "W3",
+        "W4",
+        "W5"
+      ],
+      "symbols_loaded": 30,
+      "uncovered_symbols": [],
+      "signals_generated": 28717,
+      "signals_skipped_position_open": 20260,
+      "provenance": {
+        "sources": [
+          "resampled_from:binance_vision_futures_um_monthly_klines"
+        ],
+        "rows_per_symbol_min": 7664,
+        "rows_per_symbol_max": 10590,
+        "missing_bars_total_gap_audited": 330,
+        "span_first_bar_utc": "2022-01-01T00:00:00+00:00",
+        "span_last_bar_utc": "2026-10-31T20:00:00+00:00"
+      },
+      "programme_costs": {
+        "pooled_oos": {
+          "trades": 3923,
+          "wins": 2618,
+          "win_rate": 0.6673464185572267,
+          "expectancy_net": 0.0006940055209774327,
+          "profit_factor_net": 1.0409666529317236,
+          "avg_win_net": 0.026425178278382352,
+          "avg_loss_net": -0.050926078983916115
+        },
+        "per_fold": {
+          "W1": {
+            "oos_start": "2024-07-01",
+            "oos_end": "2025-01-01",
+            "trades": 1227,
+            "win_rate": 0.680521597392013,
+            "expectancy_net": 0.00019424402429981004,
+            "profit_factor_net": 1.0104710760032742
+          },
+          "W2": {
+            "oos_start": "2025-01-01",
+            "oos_end": "2025-07-01",
+            "trades": 747,
+            "win_rate": 0.6680053547523427,
+            "expectancy_net": 0.001953385355255814,
+            "profit_factor_net": 1.1034531309522833
+          },
+          "W3": {
+            "oos_start": "2025-07-01",
+            "oos_end": "2026-01-01",
+            "trades": 974,
+            "win_rate": 0.6632443531827515,
+            "expectancy_net": 0.0028187447996224895,
+            "profit_factor_net": 1.1882126183214883
+          },
+          "W4": {
+            "oos_start": "2026-01-01",
+            "oos_end": "2026-07-01",
+            "trades": 634,
+            "win_rate": 0.6845425867507886,
+            "expectancy_net": -0.00246784350703872,
+            "profit_factor_net": 0.8576187536898757
+          },
+          "W5": {
+            "oos_start": "2026-07-01",
+            "oos_end": "2026-11-01",
+            "trades": 341,
+            "win_rate": 0.5982404692082112,
+            "expectancy_net": -0.00045682484095967027,
+            "profit_factor_net": 0.9612147114597135
+          }
+        },
+        "holdout2": {
+          "symbols_active_min20": 30,
+          "symbols_positive": 19,
+          "breadth_positive_share": 0.6333333333333333,
+          "untouched_trades": 1285,
+          "untouched_expectancy": -0.0011679717997472357,
+          "passes": false
+        },
+        "bar_checks": {
+          "expectancy_net_gt_0": true,
+          "profit_factor_net_gte_1.2": false,
+          "min_oos_trades_200": true,
+          "positive_folds": false,
+          "holdout_passes": false
+        },
+        "passes_bar": false,
+        "holdout_check_rd_common": {
+          "symbols_positive_min20trades": [
+            "ADAUSDT",
+            "APTUSDT",
+            "ATOMUSDT",
+            "AVAXUSDT",
+            "BNBUSDT",
+            "BTCUSDT",
+            "DOGEUSDT",
+            "DOTUSDT",
+            "ETCUSDT",
+            "FILUSDT",
+            "HBARUSDT",
+            "MANAUSDT",
+            "OPUSDT",
+            "SANDUSDT",
+            "SUIUSDT",
+            "TRXUSDT",
+            "UNIUSDT",
+            "VETUSDT",
+            "XLMUSDT"
+          ],
+          "max_symbol_profit_share": 0.1603088921559243,
+          "passes": true
+        }
+      },
+      "costs_2x": {
+        "pooled_oos": {
+          "trades": 3923,
+          "wins": 2509,
+          "win_rate": 0.6395615600305888,
+          "expectancy_net": -0.000899688043922169,
+          "profit_factor_net": 0.9485768778143142,
+          "avg_win_net": 0.02594918298814897,
+          "avg_loss_net": -0.048540294422611346
+        },
+        "passes_bar": false,
+        "holdout_check_rd_common_passes": true
+      },
+      "trade_stats_oos": {
+        "n": 3923,
+        "t_stat": 0.7382794179880683,
+        "p_one_sided": 0.2301723355094355
+      },
+      "bonferroni_corrected_floor": {
+        "n_final": 3889,
+        "alpha": 1.285677552069941e-05,
+        "p_one_sided": 0.2301723355094355,
+        "passes": false
+      },
+      "passes_all": false,
+      "verdict": "FAIL"
+    },
+    {
+      "panel": "forex_cross41",
+      "timeframe": "1h",
+      "fold_profile": [
+        "W2",
+        "W3",
+        "W4",
+        "W5"
+      ],
+      "symbols_loaded": 41,
+      "uncovered_symbols": [],
+      "signals_generated": 45608,
+      "signals_skipped_position_open": 30242,
+      "provenance": {
+        "sources": [
+          "yahoo_finance_chart_api"
+        ],
+        "rows_per_symbol_min": 12054,
+        "rows_per_symbol_max": 12361,
+        "missing_bars_total_gap_audited": 210391,
+        "span_first_bar_utc": "2024-11-18T00:00:00+00:00",
+        "span_last_bar_utc": "2026-11-13T23:00:00+00:00"
+      },
+      "programme_costs": {
+        "pooled_oos": {
+          "trades": 14047,
+          "wins": 5291,
+          "win_rate": 0.3766640563821457,
+          "expectancy_net": -0.0011053421432362133,
+          "profit_factor_net": 0.3175920652488029,
+          "avg_win_net": 0.0013657403009278497,
+          "avg_loss_net": -0.0025985464844961556
+        },
+        "per_fold": {
+          "W2": {
+            "oos_start": "2025-01-01",
+            "oos_end": "2025-07-01",
+            "trades": 4024,
+            "win_rate": 0.4341451292246521,
+            "expectancy_net": -0.0010626729666415144,
+            "profit_factor_net": 0.40678607593653
+          },
+          "W3": {
+            "oos_start": "2025-07-01",
+            "oos_end": "2026-01-01",
+            "trades": 3727,
+            "win_rate": 0.36007512744834985,
+            "expectancy_net": -0.0010833419441622259,
+            "profit_factor_net": 0.2756283927471875
+          },
+          "W4": {
+            "oos_start": "2026-01-01",
+            "oos_end": "2026-07-01",
+            "trades": 3716,
+            "win_rate": 0.3643702906350915,
+            "expectancy_net": -0.0011726234088606817,
+            "profit_factor_net": 0.2877514772578308
+          },
+          "W5": {
+            "oos_start": "2026-07-01",
+            "oos_end": "2026-11-01",
+            "trades": 2580,
+            "win_rate": 0.32868217054263565,
+            "expectancy_net": -0.001106767850796405,
+            "profit_factor_net": 0.25880111971362907
+          }
+        },
+        "holdout2": {
+          "symbols_active_min20": 41,
+          "symbols_positive": 0,
+          "breadth_positive_share": 0.0,
+          "untouched_trades": 4306,
+          "untouched_expectancy": -0.001125669835618306,
+          "passes": false
+        },
+        "bar_checks": {
+          "expectancy_net_gt_0": false,
+          "profit_factor_net_gte_1.2": false,
+          "min_oos_trades_200": true,
+          "positive_folds": false,
+          "holdout_passes": false
+        },
+        "passes_bar": false,
+        "holdout_check_rd_common": {
+          "symbols_positive_min20trades": [],
+          "max_symbol_profit_share": 1.0,
+          "passes": false
+        }
+      },
+      "costs_2x": {
+        "pooled_oos": {
+          "trades": 14047,
+          "wins": 2448,
+          "win_rate": 0.17427208656652665,
+          "expectancy_net": -0.0021050704810796433,
+          "profit_factor_net": 0.10634315333464972,
+          "avg_win_net": 0.001437399724467418,
+          "avg_loss_net": -0.002852718300993361
+        },
+        "passes_bar": false,
+        "holdout_check_rd_common_passes": false
+      },
+      "trade_stats_oos": {
+        "n": 14047,
+        "t_stat": -39.799475410320525,
+        "p_one_sided": 1.0
+      },
+      "bonferroni_corrected_floor": {
+        "n_final": 3889,
+        "alpha": 1.285677552069941e-05,
+        "p_one_sided": 1.0,
+        "passes": false
+      },
+      "passes_all": false,
+      "verdict": "FAIL"
+    },
+    {
+      "panel": "forex_cross41",
+      "timeframe": "4h",
+      "fold_profile": [
+        "W2",
+        "W3",
+        "W4",
+        "W5"
+      ],
+      "symbols_loaded": 41,
+      "uncovered_symbols": [],
+      "signals_generated": 11540,
+      "signals_skipped_position_open": 7276,
+      "provenance": {
+        "sources": [
+          "resampled_from:binance_vision_futures_um_monthly_klines"
+        ],
+        "rows_per_symbol_min": 2879,
+        "rows_per_symbol_max": 3017,
+        "missing_bars_total_gap_audited": 56079,
+        "span_first_bar_utc": "2024-11-18T00:00:00+00:00",
+        "span_last_bar_utc": "2026-11-13T20:00:00+00:00"
+      },
+      "programme_costs": {
+        "pooled_oos": {
+          "trades": 3868,
+          "wins": 2075,
+          "win_rate": 0.5364529472595657,
+          "expectancy_net": -0.0009942300219662682,
+          "profit_factor_net": 0.5718036891402376,
+          "avg_win_net": 0.0024749091944876555,
+          "avg_loss_net": -0.00500898957251947
+        },
+        "per_fold": {
+          "W2": {
+            "oos_start": "2025-01-01",
+            "oos_end": "2025-07-01",
+            "trades": 1065,
+            "win_rate": 0.5586854460093896,
+            "expectancy_net": -0.0010005957901199265,
+            "profit_factor_net": 0.6341305197014071
+          },
+          "W3": {
+            "oos_start": "2025-07-01",
+            "oos_end": "2026-01-01",
+            "trades": 1070,
+            "win_rate": 0.5271028037383177,
+            "expectancy_net": -0.001006186378368744,
+            "profit_factor_net": 0.5176158747088601
+          },
+          "W4": {
+            "oos_start": "2026-01-01",
+            "oos_end": "2026-07-01",
+            "trades": 1012,
+            "win_rate": 0.5296442687747036,
+            "expectancy_net": -0.0011137047601497251,
+            "profit_factor_net": 0.5500245801622309
+          },
+          "W5": {
+            "oos_start": "2026-07-01",
+            "oos_end": "2026-11-01",
+            "trades": 721,
+            "win_rate": 0.5270457697642164,
+            "expectancy_net": -0.000799387748074516,
+            "profit_factor_net": 0.5672669424889598
+          }
+        },
+        "holdout2": {
+          "symbols_active_min20": 41,
+          "symbols_positive": 0,
+          "breadth_positive_share": 0.0,
+          "untouched_trades": 1192,
+          "untouched_expectancy": -0.0008445605364088671,
+          "passes": false
+        },
+        "bar_checks": {
+          "expectancy_net_gt_0": false,
+          "profit_factor_net_gte_1.2": false,
+          "min_oos_trades_200": true,
+          "positive_folds": false,
+          "holdout_passes": false
+        },
+        "passes_bar": false,
+        "holdout_check_rd_common": {
+          "symbols_positive_min20trades": [],
+          "max_symbol_profit_share": 1.0,
+          "passes": false
+        }
+      },
+      "costs_2x": {
+        "pooled_oos": {
+          "trades": 3868,
+          "wins": 1442,
+          "win_rate": 0.37280248190279214,
+          "expectancy_net": -0.001993928227787903,
+          "profit_factor_net": 0.30461547680670326,
+          "avg_win_net": 0.002342921140850342,
+          "avg_loss_net": -0.004571725750284338
+        },
+        "passes_bar": false,
+        "holdout_check_rd_common_passes": false
+      },
+      "trade_stats_oos": {
+        "n": 3868,
+        "t_stat": -11.010434312464751,
+        "p_one_sided": 1.0
+      },
+      "bonferroni_corrected_floor": {
+        "n_final": 3889,
+        "alpha": 1.285677552069941e-05,
+        "p_one_sided": 1.0,
+        "passes": false
+      },
+      "passes_all": false,
+      "verdict": "FAIL"
+    }
+  ],
+  "verdict": "FAIL \u2014 0 of 4 cells pass the declared bar",
+  "disposition": "Family CLOSED per the declaration's own terms ('Failing it closes the family'). No forward-test candidate; nothing registered, nothing traded.",
+  "full_run_record": "Issue #35 comment 6924993040; crew artefacts (full trade legs per cell) in ~/workspace/str06-backtest/results/ (sandbox record)."
+}
