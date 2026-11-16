@@ -283,8 +283,13 @@ def _new_greeting_state() -> dict:
     and the post-start greeting path. ``attempted`` is set the moment
     the early task reaches the play call, so the line is attempted
     exactly once per job (today's semantics) whichever path runs;
-    ``played`` records that the whole line was queued for playout."""
-    return {"attempted": False, "played": False}
+    ``played`` records that the whole line was queued for playout.
+    ``user_spoke`` (TASK-VOI-014) is set by the session handlers the
+    moment a real user final transcript or user conversation item
+    lands: once the user has spoken, NO greeting stack may fire —
+    a greeting that answers over the user's first request is defect
+    D8's second half."""
+    return {"attempted": False, "played": False, "user_spoke": False}
 
 
 async def _wait_for_remote_participant(room, timeout_s: float = 10.0,
@@ -374,6 +379,35 @@ async def _settle_early_greeting(task, greeting_state: dict,
         await asyncio.wait_for(asyncio.shield(task), timeout=timeout_s)
     except Exception:
         pass
+
+
+async def _await_greeting_settled(task, timeout_s: float = 12.0) -> bool:
+    """TASK-VOI-014: bounded, NON-cancelling wait for the early greeting
+    task on the READY path, awaited BEFORE the session starts.
+
+    FRD-005 re-run #3 is the evidence: VOI-013's trigger fired the task
+    at room-up correctly, but sess.start() then executed on the same
+    job loop through a page-fault storm (the production worker sits
+    ~87% swapped: VmRSS 25 MB / VmSwap 166 MB) and the ready task got
+    no effective loop time for ~21 s — the line started 0.2 s before
+    session-started anyway. Structural independence (a task) did not
+    produce wall-clock independence on a shared, starved loop. So the
+    ready path now holds the session start until the greeting has
+    settled: in that window the loop serves only the line's publish +
+    real-time capture pacing. Unlike _settle_early_greeting (the
+    unavailable branches, where an unattempted line must be cancelled
+    so the notice keeps its shape), a timeout here NEVER cancels: the
+    session starts anyway and the task continues concurrently —
+    today's behaviour as the backstop. Returns True when the task
+    finished inside the bound (its own failures are logged inside it;
+    a finished-with-error task still counts as settled)."""
+    if task is None:
+        return True
+    try:
+        await asyncio.wait_for(asyncio.shield(task), timeout=timeout_s)
+    except Exception:
+        return task.done()
+    return True
 
 
 def _injection_mechanisms(sess, agent) -> list:
@@ -1605,6 +1639,19 @@ async def _announce_unavailable(room) -> None:
 
 
 async def entrypoint(ctx: JobContext):
+    # TASK-VOI-014: count this job as active in the process for its
+    # whole life, so the executor warm can never start while a call
+    # is live (see _start_executor_warm). The shutdown callback
+    # releases the count however the job ends.
+    _JOBS_ACTIVE[0] += 1
+
+    async def _voi014_job_finished() -> None:
+        _JOBS_ACTIVE[0] = max(0, _JOBS_ACTIVE[0] - 1)
+
+    try:
+        ctx.add_shutdown_callback(_voi014_job_finished)
+    except Exception:
+        pass
     # ---- TASK-VOI-011: resolution + construction overlap the connect ----
     # Owner-memory recall (thread, ≤7s since TASK-VOI-003) and the
     # Gemini key resolution START before the room connect and run
@@ -1937,6 +1984,9 @@ async def entrypoint(ctx: JobContext):
                 getattr(ev, "is_final", None), getattr(ev, "transcript", None),
             )
             if getattr(ev, "is_final", None):
+                # TASK-VOI-014: the user has spoken — no greeting
+                # stack may fire from here on (defect D8).
+                greeting_state["user_spoke"] = True
                 # TASK-VOI-012: the pending text is what the watchdog
                 # re-asks and what a rebuilt session is briefed with —
                 # store the fleet-term-corrected form (raw transcript
@@ -1969,6 +2019,11 @@ async def entrypoint(ctx: JobContext):
                     # this transcript — carry the corrected fleet names
                     # (the raw item text stays in the log line above).
                     if role == "user":
+                        # TASK-VOI-014: a real user item (the
+                        # synthetic greeting prompt is excluded by
+                        # the guard above) also marks the user as
+                        # having spoken, for the greeting gate.
+                        greeting_state["user_spoke"] = True
                         text = _correct_fleet_terms(text)
                     # TASK-FRD-011: deduped append (a byte-identical
                     # assistant item never enters the rebuild transcript
@@ -2033,23 +2088,27 @@ async def entrypoint(ctx: JobContext):
     # the build await — because the line must not wait for the build.)
 
     async def _greet_when_ready(sess) -> None:
-        """Speak a greeting the owner can actually HEAR, in this order:
+        """The post-start greeting path — since TASK-VOI-014 a
+        FALLBACK only. The fixed line is the ONE greeting owner:
 
-        1. The honest fixed line — since TASK-VOI-009 that is the
-           shipped recording (voice/audio/greeting.wav), published into
-           the room verbatim: no synthesis, no realtime-arming race, no
-           dropped generations. Live lesson 2026-11-13: the 'speaking'
-           agent-state fired while the realtime plugin DROPPED every
-           audio chunk ('received server content but no active
-           generation') — state is NOT proof of audible audio, so the
-           deterministic recording speaks first. TASK-VOI-011: this
-           step usually already ran in _play_early_greeting_line,
-           parallel to the session start; it runs here only when the
-           early task never attempted the line (no participant in its
-           window, or the gate stayed closed).
-        2. Best-effort warm greeting through the realtime model (personal,
-           bilingual) — dropped generations are non-fatal: the fixed line
-           already played.
+        - The early task (TASK-VOI-011/013/014) normally plays the
+          shipped recording (voice/audio/greeting.wav) before the
+          session starts. If it attempted the line, this path does
+          NOTHING more — in particular it no longer layers a model
+          greeting on top. Pre-VOI-014 that layering was unconditional
+          (the 2026-11-13 two-layer design), and FRD-005 re-run #3
+          showed the cost: this path's 30 s shield timed out while
+          the line was still playing, generate_reply fired anyway,
+          and the model spoke its greeting 39 s after the user's
+          first request, mid-delegation (defect D8).
+        - If the user has already spoken, NO greeting fires at all:
+          the conversation has started; a greeting now would talk
+          over the user's first request.
+        - Only when the line was never attempted does this path play
+          it here (no participant in the early window, or the gate
+          opened late) — and only when the line cannot be played at
+          all does the realtime model greet instead, as the last
+          audible resort, and only if the user still has not spoken.
         """
         if not greeting_enabled:
             return
@@ -2062,34 +2121,51 @@ async def entrypoint(ctx: JobContext):
                 await asyncio.wait_for(asyncio.shield(early), timeout=30.0)
             except Exception:
                 pass
-        if not greeting_state["attempted"]:
-            for _ in range(50):  # up to ~10s for the participant to join
-                try:
-                    if len(ctx.room.remote_participants) > 0:
-                        break
-                except Exception:  # room state is best-effort, never fatal
+        # ONE greeting owner (TASK-VOI-014): the early line was
+        # attempted — played or still playing — so it IS the job's
+        # greeting. Nothing else fires.
+        if greeting_state["attempted"]:
+            return
+        # The user spoke first: no greeting stack fires at all.
+        if greeting_state.get("user_spoke"):
+            logger.info("VOICE greeting skipped: the user spoke first")
+            return
+        for _ in range(50):  # up to ~10s for the participant to join
+            try:
+                if len(ctx.room.remote_participants) > 0:
                     break
-                await asyncio.sleep(0.2)
-            # Fast-greeting fix (2026-11-13, ZAI Agent 1): 0.3s is
-            # enough for the audio pipeline to settle.
-            await asyncio.sleep(0.3)
-
-            # 1) deterministic fixed line — the shipped recording.
-            # Playback paces in real time, so when it returns the line
-            # has played; the short settle below lets it land before
-            # the warm greeting layers.
-            logger.info(
-                "VOICE job timing: first fixed-line audio starting %.2fs after connect",
-                time.time() - _t_connected,
-            )
-            if await _play_fixed_line(ctx.room, "greeting"):
-                greeting_state["played"] = True
-                logger.info("VOICE fixed-line greeting played (recorded line)")
-            else:
-                logger.error("VOICE fixed-line greeting could not be played")
+            except Exception:  # room state is best-effort, never fatal
+                break
+            await asyncio.sleep(0.2)
+        # Fast-greeting fix (2026-11-13, ZAI Agent 1): 0.3s is
+        # enough for the audio pipeline to settle.
         await asyncio.sleep(0.3)
+        if greeting_state.get("user_spoke"):
+            logger.info("VOICE greeting skipped: the user spoke first")
+            return
 
-        # 2) warm realtime greeting (best-effort)
+        # The deterministic fixed line — the shipped recording.
+        # Playback paces in real time, so when it returns the line
+        # has played.
+        greeting_state["attempted"] = True
+        logger.info(
+            "VOICE job timing: first fixed-line audio starting %.2fs after connect",
+            time.time() - _t_connected,
+        )
+        if await _play_fixed_line(ctx.room, "greeting"):
+            greeting_state["played"] = True
+            logger.info("VOICE fixed-line greeting played (recorded line)")
+            return
+        logger.error("VOICE fixed-line greeting could not be played")
+
+        # Last resort ONLY (TASK-VOI-014): the recorded line could
+        # not be played at all and the user still has not spoken —
+        # the model's own warm greeting is the only audible greeting
+        # left. It never layers on top of a played line any more.
+        if greeting_state.get("user_spoke"):
+            logger.info("VOICE greeting skipped: the user spoke first")
+            return
+        await asyncio.sleep(0.3)
         _telugu_line = (
             " Add one short Telugu line "
             "(నమస్కారం, ఫ్రైడే సిద్ధంగా ఉంది) so the user knows Telugu works. "
@@ -2118,6 +2194,25 @@ async def entrypoint(ctx: JobContext):
     # — the same job failure as before, plus a greeting that claimed
     # nothing false.
     live["early_greeting_task"] = early_greeting["task"]
+
+    # TASK-VOI-014: the greeting SETTLES before the session starts.
+    # Re-run #3's lesson (see _await_greeting_settled): a concurrent
+    # task on this job's loop is not independent of sess.start() when
+    # the process is swap-starved — the line fired 0.2 s before
+    # session start despite launching at room-up. Holding the start
+    # gives the line a loop that serves nothing else until it has
+    # played (or the bound expires and the old concurrent behaviour
+    # resumes as backstop). The unavailable branches above never
+    # reach this line; their notice shape is untouched.
+    _greet_settle_started = time.time()
+    _greet_settled = await _await_greeting_settled(early_greeting["task"])
+    logger.info(
+        "VOICE job timing: greeting %s before session start "
+        "(attempted=%s played=%s, waited %.2fs) (TASK-VOI-014)",
+        "settled" if _greet_settled else "NOT settled - starting anyway",
+        greeting_state["attempted"], greeting_state["played"],
+        time.time() - _greet_settle_started,
+    )
 
     await _start(session, agent)
     logger.info(
@@ -2670,24 +2765,42 @@ def _warm_up_background() -> None:
 # calls arrive minutes to hours apart, so the thread is done long
 # before it matters. Every step is best-effort: a warm failure only
 # ever logs.
+#
+# (TASK-VOI-014 correction, FRD-005 re-run #3 evidence: the sentence
+# above is wrong for the REPLACEMENT executor. The pool creates it at
+# job launch — the moment a call arrives — so its prewarm thread ran
+# DURING the call, and its memory-recall step took 21.0 s of that
+# call's first minute on a process sitting ~87% in swap. The recall
+# step is removed and the warm now never starts while a job is live;
+# see _executor_warm_steps / _start_executor_warm.)
 # ---------------------------------------------------------------------------
 _EXECUTOR_WARM_LOCK = threading.Lock()
 _EXECUTOR_WARM_LAST = [0.0]
 _EXECUTOR_WARM_MIN_INTERVAL_S = 45.0
 
+# TASK-VOI-014: how many jobs are live in this process right now
+# (incremented by the entrypoint, released by its shutdown callback).
+# The executor warm never starts while a call is live — see
+# _start_executor_warm.
+_JOBS_ACTIVE = [0]
+
 
 def _executor_warm_steps() -> None:
-    """The warm thread's work: pay first-use costs, discard results."""
+    """The warm thread's work: pay first-use costs, discard results.
+
+    TASK-VOI-014: the owner-memory recall step is GONE. It was the
+    warm's whole cost (journal: 8.9-21.0 s per warm all day on
+    2026-11-16, once 736 s) and FRD-005 re-run #3 proved it ran
+    DURING the live call it existed to protect: the pool creates the
+    replacement executor at job launch, so its prewarm fires at call
+    arrival, and the discarded recall competed with the job on a
+    process sitting ~87% in swap. The job runs its own recall async,
+    off the greeting path (TASK-VOI-010), and the boot warm-up
+    already imports the memory chain and seeds the key — the recall
+    warmed nothing the job still needed. What remains is the
+    fixed-line preload (TASK-VOI-009): four small WAV reads."""
     started = time.time()
     try:
-        _owner_memory_lines()
-    except Exception as exc:
-        logger.info("VOICE executor warm: memory recall failed (non-fatal): %s", exc)
-    try:
-        # TASK-VOI-009: was a throwaway EdgeTTS synthesis of the
-        # greeting line (VOI-008); the greeting is a shipped recording
-        # now, so warm its real first-use cost — reading + parsing the
-        # fixed-line WAVs — instead.
         _preload_fixed_lines()
     except Exception as exc:
         logger.info("VOICE executor warm: fixed-line preload failed (non-fatal): %s", exc)
@@ -2695,7 +2808,13 @@ def _executor_warm_steps() -> None:
 
 
 def _start_executor_warm() -> None:
-    """Start the warm thread unless one ran very recently."""
+    """Start the warm thread unless one ran very recently — and never
+    while a job is live in this process (TASK-VOI-014: warm work must
+    not share the call it exists to protect; the pool fires prewarm
+    for the replacement executor at job launch, i.e. exactly while
+    the taken executor is starting the owner's call)."""
+    if _JOBS_ACTIVE[0] > 0:
+        return
     now = time.time()
     with _EXECUTOR_WARM_LOCK:
         if now - _EXECUTOR_WARM_LAST[0] < _EXECUTOR_WARM_MIN_INTERVAL_S:

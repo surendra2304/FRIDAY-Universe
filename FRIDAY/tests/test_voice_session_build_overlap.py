@@ -49,7 +49,9 @@ def test_early_greeting_warranted_only_with_all_three():
 def test_greeting_state_starts_unattempted_and_is_per_job():
     a = w._new_greeting_state()
     b = w._new_greeting_state()
-    assert a == {"attempted": False, "played": False}
+    # TASK-VOI-014: the state gained "user_spoke" (the D8 gate: once
+    # the user has spoken, no greeting stack may fire).
+    assert a == {"attempted": False, "played": False, "user_spoke": False}
     a["attempted"] = True
     assert b["attempted"] is False  # no shared mutable state across jobs
 
