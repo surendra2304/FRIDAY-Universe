@@ -103,6 +103,20 @@ def nvidia_rung_enabled() -> bool:
     return bool(settings.INFERENCE_NVIDIA_RUNG_ENABLED)
 
 
+def _is_empty_completion(resp: ProviderResponse) -> bool:
+    """Whether a response is a structural non-answer rather than an answer.
+
+    Adapters return ``finish_reason="empty"`` exactly when the upstream body
+    carried no candidates/choices at all (Gemini safety blocks and free-tier
+    OpenAI-compatible responses do this). That is a provider failure wearing a
+    success shape: the text is empty because nothing was generated. Treating
+    it as success stops the fallback ladder and lets the API layers present a
+    confident empty answer (TASK-INF-008 drill: /v1/friday/ask returned
+    HTTP 200, answer="", confidence 0.7, when every provider was empty).
+    """
+    return (resp.finish_reason or "").strip().lower() == "empty" and not (resp.content or "").strip()
+
+
 def _request_timeout_budget(request: ProviderRequest) -> float:
     """Validate the finite positive deadline shared by primary and fallback work."""
     value = request.extra_params.get("timeout", settings.REQUEST_TIMEOUT or 60.0)
@@ -373,6 +387,13 @@ class ModelGateway:
                 raise TimeoutError(f"Request deadline ({timeout_budget:.1f}s) exceeded before LiteLLM call.")
             try:
                 resp = await asyncio.wait_for(execute_via_litellm(request), timeout=remaining)
+                if _is_empty_completion(resp):
+                    raise TemporaryUnavailableError(
+                        "LiteLLM transport returned an empty completion "
+                        "(no candidates/choices in the upstream response).",
+                        provider="litellm",
+                        model=request.model,
+                    )
                 latency = time.perf_counter() - start_time
                 self.health_tracker.record_success("litellm", latency)
                 _quota_record("litellm", request.model, None, "success", resp)
@@ -556,6 +577,29 @@ class ModelGateway:
                     limiter.release()
 
                 latency = time.perf_counter() - start_time
+                if _is_empty_completion(resp):
+                    # A structural non-answer (no candidates/choices upstream).
+                    # Like a timeout, this is a property of the provider/model
+                    # response, not of the credential: do not quarantine the key
+                    # and do not retry the same provider — escalate to the ladder.
+                    self.health_tracker.record_failure(
+                        prov_name,
+                        "empty completion (no candidates/choices in upstream response)",
+                        is_503=True,
+                        latency_seconds=latency,
+                    )
+                    last_error = TemporaryUnavailableError(
+                        f"Provider '{prov_name}' returned an empty completion "
+                        "(no candidates/choices in the upstream response).",
+                        provider=prov_name,
+                        model=request.model,
+                    )
+                    logger.warning(
+                        "GATEWAY: Provider '%s' returned an empty completion; "
+                        "escalating to the fallback ladder instead of serving it.",
+                        prov_name,
+                    )
+                    break
                 self.health_tracker.record_success(prov_name, latency)
                 _quota_record(prov_name, request.model, current_key, "success", resp)
                 return resp
@@ -693,6 +737,17 @@ class ModelGateway:
             finally:
                 local_limiter.release()
 
+            if _is_empty_completion(resp):
+                # A structural non-answer from the local tier is a tier
+                # failure like any other: return None so the caller keeps
+                # climbing (or raises its original error) instead of serving
+                # an empty "answer" from the last-resort rung.
+                self.health_tracker.record_failure(
+                    "local", "empty completion (no candidates/choices in upstream response)"
+                )
+                logger.warning("GATEWAY: Self-hosted tier returned an empty completion; treating as failure.")
+                return None
+
             if not resp.raw_response:
                 resp.raw_response = {}
             resp.raw_response["fallback_provenance"] = {
@@ -782,11 +837,45 @@ class ModelGateway:
                     # Some free OpenRouter routes permit unauthenticated calls.
                     openrouter_prov = app.providers.get_provider("openrouter")
                 if hasattr(openrouter_prov, "get_best_free_model"):
-                    dynamic_model = await openrouter_prov.get_best_free_model(capability)
+                    discovery_coro = openrouter_prov.get_best_free_model(capability)
                 elif hasattr(openrouter_prov, "find_model_by_capability"):
-                    dynamic_model = await openrouter_prov.find_model_by_capability(capability)
+                    discovery_coro = openrouter_prov.find_model_by_capability(capability)
                 else:
+                    discovery_coro = None
+                if discovery_coro is None:
                     dynamic_model = "nvidia/nemotron-3.5-lightning:free"
+                else:
+                    # The discovery call is an upstream HTTP request like any
+                    # other and must live inside the same request deadline.
+                    # It was the one unbounded await in the ladder (TASK-INF-008
+                    # drill: a hung discovery blew an 8s request budget past
+                    # 38s; in production the only bound was the adapter's own
+                    # 60s HTTP timeout). On timeout the rung fails typed and
+                    # the waterfall below still gets its reserved budget.
+                    remaining = (deadline - time.monotonic()) if deadline else 60.0
+                    if remaining <= 0:
+                        discovery_coro.close()
+                        raise ProviderTimeoutError(
+                            "Request deadline exceeded before OpenRouter model discovery.",
+                            provider="openrouter",
+                            model=request.model,
+                        )
+                    # When there is real budget left, discovery gets at most
+                    # half of it: the waterfall below is the ladder's actual
+                    # answer path and must not be starved by a metadata call
+                    # (the same reservation doctrine as PRIMARY_ATTEMPT_FRACTION
+                    # for primaries). With a sliver left, discovery may use it
+                    # all — the waterfall would have no usable time anyway.
+                    discovery_budget = remaining / 2 if remaining > 2.0 else remaining
+                    try:
+                        dynamic_model = await asyncio.wait_for(discovery_coro, timeout=discovery_budget)
+                    except (asyncio.TimeoutError, TimeoutError) as exc:
+                        raise ProviderTimeoutError(
+                            f"OpenRouter model discovery exceeded the remaining request "
+                            f"budget ({discovery_budget:.1f}s).",
+                            provider="openrouter",
+                            model=request.model,
+                        ) from exc
 
                 logger.info(
                     "GATEWAY FALLBACK: Routed to OpenRouter (Dynamic Model: %s) for capability '%s'",
@@ -820,6 +909,17 @@ class ModelGateway:
                     resp = await asyncio.wait_for(openrouter_prov.generate(fallback_req), timeout=rem)
                 finally:
                     openrouter_limiter.release()
+
+                if _is_empty_completion(resp):
+                    # Same rule as the primary path: a structural non-answer
+                    # fails this rung (the except below records it) and the
+                    # waterfall still gets its turn.
+                    raise TemporaryUnavailableError(
+                        "OpenRouter returned an empty completion "
+                        "(no candidates/choices in the upstream response).",
+                        provider="openrouter",
+                        model=dynamic_model,
+                    )
 
                 # Attach fallback provenance
                 if not resp.raw_response:
@@ -924,6 +1024,16 @@ class ModelGateway:
                     finally:
                         sec_limiter.release()
 
+                    if _is_empty_completion(resp):
+                        # Structural non-answer: fail this rung (the except
+                        # below logs it) and let the next rung try.
+                        raise TemporaryUnavailableError(
+                            f"Waterfall provider '{sec_name}' returned an empty completion "
+                            "(no candidates/choices in the upstream response).",
+                            provider=sec_name,
+                            model=sec_model,
+                        )
+
                     if not resp.raw_response:
                         resp.raw_response = {}
                     clean_reason = scrub_credentials(str(last_error)) if last_error else "primary_exhausted"
@@ -977,6 +1087,13 @@ class ModelGateway:
                 from app.providers.gateway_litellm import execute_via_litellm
 
                 litellm_resp = await asyncio.wait_for(execute_via_litellm(request), timeout=remaining)
+                if _is_empty_completion(litellm_resp):
+                    raise TemporaryUnavailableError(
+                        "LiteLLM transport returned an empty completion "
+                        "(no candidates/choices in the upstream response).",
+                        provider="litellm",
+                        model=request.model,
+                    )
                 if not litellm_resp.raw_response:
                     litellm_resp.raw_response = {}
                 litellm_resp.raw_response["fallback_provenance"] = {
@@ -1067,6 +1184,21 @@ class ModelGateway:
             for d in done:
                 try:
                     winning_prov, winning_resp = d.result()
+                    if _is_empty_completion(winning_resp):
+                        # A racer that returns instantly with a structural
+                        # non-answer has not answered: keep the slower racers
+                        # running instead of crowning the empty response.
+                        logger.warning(
+                            "SPECULATIVE RACE: '%s' returned an empty completion; discarding it.",
+                            winning_prov,
+                        )
+                        if first_error is None:
+                            first_error = TemporaryUnavailableError(
+                                f"Provider '{winning_prov}' returned an empty completion "
+                                "(no candidates/choices in the upstream response).",
+                                provider=winning_prov,
+                            )
+                        continue
                     for p in pending:
                         p.cancel()
                     elapsed = time.monotonic() - start_time
