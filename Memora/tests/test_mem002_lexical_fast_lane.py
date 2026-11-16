@@ -25,9 +25,18 @@ Pins:
      served by it.
   9. The retrieval-config kill switch ("lexical_fast_lane": false)
      restores the pure hybrid path.
+ 10. The FRD-017 forensics named acceptance shapes — the exact client
+     draws that missed in FRD-005 re-run #7 ('What is my favorite
+     color' and 'my favorite color', limit 10, against a store
+     mirroring production's teal/chai/ZQ records) — return both teal
+     records on top, from the lane.
+ 11. Spelling variants canonicalise both directions (FRD-014's map):
+     UK-stored fact vs US query, UK query vs US-stored fact.
+ 12. The lane serves a full match even when the vector boundary is
+     broken (the distress shape): it never invokes it.
 
-On clean main (no lane) tests 1, 2, 5, 7 and 8 fail on the
-vector-leg-invocation assertions; 3, 4, 6 and 9 describe fallback
+On clean main (no lane) tests 1, 2, 5, 7, 8, 10, 11 and 12 fail on
+the vector-leg-invocation assertions; 3, 4, 6 and 9 describe fallback
 behaviour that must hold on both trees.
 """
 import importlib
@@ -287,6 +296,105 @@ def test_fast_lane_never_serves_tampered_provenance(test_db, monkeypatch):
     ids = [r.record.id for r in results]
     assert clean.id in ids
     assert tampered.id not in ids, "tampered-provenance record served by the fast lane"
+    assert embedding.calls == 0 and adapter.calls == 0
+
+
+def test_fast_lane_named_acceptance_shapes_from_frd017_forensics(test_db, monkeypatch):
+    """The exact draws that missed in FRD-005 re-run #7, as the client
+    sends them (memora_client strips the trailing '?'): 'What is my
+    favorite color' and 'my favorite color', limit 10. The store mirrors
+    production: the plain teal fact, the fragment-prefixed teal record
+    ('for me. My favorite color is teal.' — production record 65645084's
+    actual content), plus the chai and ZQ-marker records that were the
+    only hits the distressed draws merged. Both teal records must be
+    the lane's top results for both shapes."""
+    actor, ns = _actor_ns(test_db)
+    teal = _record(test_db, ns, actor.id, "my favorite color is teal.")
+    teal_prefixed = _record(test_db, ns, actor.id, "for me. My favorite color is teal.")
+    _record(test_db, ns, actor.id, "my favorite chai is masala chai and I review the fleet every morning at 9.")
+    _record(test_db, ns, actor.id, "My secret favorite number is owner favorite test marker ZQ1794340686.")
+    embedding, adapter = _instrument(monkeypatch)
+
+    for query in ("What is my favorite color", "my favorite color"):
+        results = SearchService.hybrid_search(
+            db=test_db, query_text=query, actor_name="friday", limit=10
+        )
+        ids = [r.record.id for r in results]
+        assert teal.id in ids and teal_prefixed.id in ids, (
+            f"shape {query!r}: a stored teal record missing from the lane's results"
+        )
+        assert set(ids[:2]) == {teal.id, teal_prefixed.id}, (
+            f"shape {query!r}: teal records not on top: {ids[:3]}"
+        )
+        assert all(_fast_lane_reasons(r) for r in results[:2])
+    assert embedding.calls == 0 and adapter.calls == 0
+
+
+def test_fast_lane_spelling_variants_match_both_directions(test_db, monkeypatch):
+    """FRD-014 canonicalisation inside the lane: a UK-spelled stored fact
+    full-matches a US-spelled query, and a UK-spelled query full-matches
+    the US-spelled fact."""
+    actor, ns = _actor_ns(test_db)
+    uk_fact = _record(test_db, ns, actor.id, "My favourite colour is teal.")
+    embedding, adapter = _instrument(monkeypatch)
+
+    results = SearchService.hybrid_search(
+        db=test_db,
+        query_text="What is my favorite color",
+        actor_name="friday",
+        limit=5,
+    )
+    assert [r.record.id for r in results] == [uk_fact.id]
+    assert _fast_lane_reasons(results[0])
+
+    us_fact = _record(test_db, ns, actor.id, "My favorite color is teal.")
+    results = SearchService.hybrid_search(
+        db=test_db,
+        query_text="What is my favourite colour",
+        actor_name="friday",
+        limit=5,
+    )
+    ids = [r.record.id for r in results]
+    assert us_fact.id in ids and uk_fact.id in ids
+    assert embedding.calls == 0 and adapter.calls == 0
+
+
+def test_fast_lane_serves_even_when_vector_leg_would_fail(test_db, monkeypatch):
+    """Distress shape: the embedding call is the stall-prone dependency
+    (external API + vector store). The lane never invokes it, so a full
+    match is served even with the vector boundary broken. The fakes
+    raise on any invocation AND count it, so a lane regression that
+    reached the vector leg could not hide behind the fail-soft catch."""
+    actor, ns = _actor_ns(test_db)
+    fact = _record(test_db, ns, actor.id, "my favorite color is teal.")
+
+    class ExplodingEmbedding:
+        def __init__(self):
+            self.calls = 0
+
+        def generate_embedding(self, text):
+            self.calls += 1
+            raise RuntimeError("embedding backend unavailable")
+
+    class ExplodingAdapter(StubOracleAdapter):
+        def __init__(self):
+            super().__init__([])
+            self.calls = 0
+
+        def search_similarity(self, *args, **kwargs):
+            self.calls += 1
+            raise RuntimeError("vector store unavailable")
+
+    embedding = ExplodingEmbedding()
+    adapter = ExplodingAdapter()
+    monkeypatch.setattr(search_service_module, "EmbeddingGenerator", embedding)
+    monkeypatch.setattr(oracle_module, "oracle_vector_adapter", adapter)
+
+    results = SearchService.hybrid_search(
+        db=test_db, query_text="my favorite color", actor_name="friday", limit=5
+    )
+    assert [r.record.id for r in results] == [fact.id]
+    assert _fast_lane_reasons(results[0])
     assert embedding.calls == 0 and adapter.calls == 0
 
 

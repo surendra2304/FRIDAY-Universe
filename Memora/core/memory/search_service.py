@@ -96,21 +96,39 @@ _FAST_LANE_STOPWORDS = frozenset({
 })
 
 
+#: Spelling variants canonicalised for the fast lane's full-match test,
+#: mirroring the correction map FRIDAY's recall gate already applies on
+#: its side (TASK-FRD-014): a fact stored in UK spelling is the same fact
+#: for a US-spelled query and vice versa. Applied symmetrically to query
+#: tokens and record tokens; the hybrid path's scoring is untouched.
+_FAST_LANE_TOKEN_CANON = {
+    "favourite": "favorite",
+    "colour": "color",
+}
+
+
+def _fast_lane_canon(token: str) -> str:
+    return _FAST_LANE_TOKEN_CANON.get(token, token)
+
+
 def _fast_lane_content_tokens(query_text: str) -> List[str]:
     """The query's content tokens for the lexical fast lane.
 
     Uses the BM25 tokeniser (lowercase alphanumeric tokens) so the lane's
     notion of a token is identical on the query side and the record side,
-    then drops the stopwords above. "What is my favorite color?" reduces
-    to [my, favorite, color] — the subject-shaped form FRIDAY's recall
-    gate builds by hand (TASK-FRD-017) — while a paraphrase such as "what
-    does the boss enjoy munching" keeps [boss, enjoy, munching] and so
-    cannot full-match the snack fact: it stays on the hybrid path.
+    then drops the stopwords above and canonicalises spelling variants.
+    "What is my favorite color?" reduces to [my, favorite, color] — the
+    subject-shaped form FRIDAY's recall gate builds by hand
+    (TASK-FRD-017) — while a paraphrase such as "what does the boss
+    enjoy munching" keeps [boss, enjoy, munching] and so cannot
+    full-match the snack fact: it stays on the hybrid path.
     """
     from core.memory.bm25 import tokenize
 
     return list(dict.fromkeys(
-        token for token in tokenize(query_text) if token not in _FAST_LANE_STOPWORDS
+        _fast_lane_canon(token)
+        for token in tokenize(query_text)
+        if token not in _FAST_LANE_STOPWORDS
     ))
 
 
@@ -372,7 +390,10 @@ class SearchService:
 
                 full_matches = []
                 for record in lexical_candidates:
-                    record_tokens = set(_bm25_tokenize(record.content_text))
+                    record_tokens = {
+                        _fast_lane_canon(token)
+                        for token in _bm25_tokenize(record.content_text)
+                    }
                     if all(token in record_tokens for token in content_tokens):
                         full_matches.append(record)
                 if full_matches:
