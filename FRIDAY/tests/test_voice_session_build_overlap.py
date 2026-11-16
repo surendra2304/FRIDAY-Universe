@@ -117,12 +117,19 @@ def test_entrypoint_build_task_starts_before_the_connect():
 
 def test_entrypoint_early_greeting_launches_before_session_start():
     src = inspect.getsource(w.entrypoint)
-    launch_at = src.index('live["early_greeting_task"] = asyncio.create_task(')
+    # TASK-VOI-013 superseded this test's original shape: the launch
+    # no longer sits between the unavailable returns and sess.start()
+    # — FRD-005 re-run #2 proved that position inherits the whole
+    # session build (the line fired 0.5 s before session start). The
+    # launch now happens at room-up, before the build is even
+    # awaited, into the early_greeting handle the live dict adopts;
+    # test_voice_greeting_trigger.py pins the new position and the
+    # settle discipline. The property THIS test always protected —
+    # the line launches before the session starts — still holds.
+    launch_at = src.index('early_greeting["task"] = asyncio.ensure_future(')
     start_at = src.index("await _start(session, agent)")
     assert launch_at < start_at
-    # …and only after every unavailable return: the notice path must
-    # never be preceded by a greeting.
-    assert src.rindex("await _announce_unavailable(ctx.room)") < launch_at
+    assert 'live["early_greeting_task"] = early_greeting["task"]' in src
 
 
 def test_greet_when_ready_respects_the_attempted_flag():

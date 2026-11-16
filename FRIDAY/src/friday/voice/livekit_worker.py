@@ -309,6 +309,73 @@ async def _wait_for_remote_participant(room, timeout_s: float = 10.0,
         return True
 
 
+# ---- TASK-VOI-013: the greeting trigger is room-up + verified-key ----
+# FRD-005 re-run #2 (run 20261116-103839, deployed VOI-011+VOI-012
+# worker) decomposed the 17.11 s participant-clock greeting: the early
+# line FIRED, but only at worker-connect+12.39 s — 0.5 s before the
+# session started. Two stacked causes, both structural: (1) the early
+# task was created only after ``_built = await _build_task`` resolved,
+# so it inherited the whole provider-model + AgentSession
+# construction; (2) created that late, its participant wait + settle
+# then ran on the job loop WHILE sess.start() was executing on it and
+# stretched to fill the start's whole 12.6 s (the room had the
+# participant from the start — RoomIO linked at +0.9 s). The trigger
+# below waits for exactly what the line needs — the room (the caller
+# creates the task the moment ctx.connect() returns) and the
+# probe-verified key — and for nothing else: not the build, not the
+# session, not sess.start().
+
+
+async def _greet_at_room_up(key_task, *, greeting_enabled: bool,
+                            plugin_available: bool, play_line) -> None:
+    """Play the fixed greeting line once the key leg resolves.
+
+    ``key_task`` is the entrypoint's key-resolution future — the same
+    one the session build awaits — shielded here so cancelling the
+    greeting task can never cancel the shared resolution. A keyless
+    job (or a failed resolution) returns WITHOUT any greeting
+    attempt: the recorded-notice path keeps its exact VOI-010 shape.
+    ``play_line`` is the entrypoint's line player (a callable
+    returning an awaitable); it is invoked at most once, and only
+    after the VOI-011 gate passes."""
+    try:
+        verified_key = await asyncio.shield(key_task)
+    except Exception:
+        return
+    if not _early_greeting_warranted(greeting_enabled, plugin_available,
+                                     verified_key):
+        return
+    await play_line()
+
+
+async def _settle_early_greeting(task, greeting_state: dict,
+                                 timeout_s: float = 15.0) -> None:
+    """Keep the unavailable notice and the early greeting line from
+    ever colliding (TASK-VOI-013): the greeting task now launches
+    before the build outcome is known, so a job that turns out
+    unavailable may have a greeting in flight. If the line has not
+    been attempted yet, cancel the task — the notice keeps its exact
+    pre-VOI-013 shape (no greeting first). If it has been attempted
+    (playing or played), wait for the task to finish — bounded, the
+    task is bounded by design — so the notice plays after the line,
+    never under it. Never raises."""
+    if task is None:
+        return
+    if not greeting_state.get("attempted"):
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            pass
+        return
+    try:
+        await asyncio.wait_for(asyncio.shield(task), timeout=timeout_s)
+    except Exception:
+        pass
+
+
 def _injection_mechanisms(sess, agent) -> list:
     """Ordered (name, apply) live-session memory-injection surfaces
     available on this livekit-agents API generation. Pure capability
@@ -1570,6 +1637,12 @@ async def entrypoint(ctx: JobContext):
         "0", "false", "no",
     )
     greeting_state = _new_greeting_state()
+    # TASK-VOI-013: the early greeting task's handle. It lives in a
+    # dict created before the connect because the task now launches
+    # BEFORE the build outcome is known; the ``live`` dict (which
+    # _greet_when_ready and the close path read) only exists after
+    # the build resolves, so it adopts this handle when it is built.
+    early_greeting: dict = {"task": None}
     _key_ready_at: dict = {"ts": None}
 
     # ---------------- provider selection (pinned for this job) ----------------
@@ -1683,6 +1756,65 @@ async def entrypoint(ctx: JobContext):
     ctx.room.on("track_subscribed", _on_track_subscribed)
     ctx.room.on("participant_connected", _on_participant_connected)
 
+    async def _play_early_greeting_line() -> None:
+        """TASK-VOI-011: the fixed greeting line, played as soon as the
+        room is connected and a probe-verified key exists — in parallel
+        with the session start instead of after it. The line is the
+        shipped recording on its own track (see _play_fixed_line); it
+        needs no session, so the participant hears FRIDAY after the
+        room connect + a 0.3 s settle instead of after the whole
+        session build. ``greeting_state['attempted']`` is set at the
+        play call so the line is attempted exactly once per job
+        (pre-VOI-011 semantics) whichever path runs; any failure is
+        logged and left for _greet_when_ready's fallback rules.
+
+        TASK-VOI-013: this def sits (and the task below launches)
+        BEFORE the build is awaited — previously it was defined and
+        launched only after ``_built`` resolved, which is why the
+        line fired 0.5 s before session start in FRD-005 re-run #2
+        instead of at room-up."""
+        try:
+            if not await _wait_for_remote_participant(ctx.room):
+                return
+            # Fast-greeting fix (2026-11-13, ZAI Agent 1): the job is
+            # dispatched BY the owner joining, so remote_participants
+            # is virtually always non-empty already; 0.3s is enough
+            # for the audio pipeline to settle.
+            await asyncio.sleep(0.3)
+            greeting_state["attempted"] = True
+            logger.info(
+                "VOICE job timing: first fixed-line audio starting %.2fs after connect",
+                time.time() - _t_connected,
+            )
+            if await _play_fixed_line(ctx.room, "greeting"):
+                greeting_state["played"] = True
+                logger.info("VOICE fixed-line greeting played (recorded line)")
+            else:
+                logger.error("VOICE fixed-line greeting could not be played")
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning(
+                "VOICE early greeting line failed (%s); the post-start "
+                "greeting path applies its fallback rules", exc,
+            )
+
+    # TASK-VOI-013: launch the early greeting NOW — the room is up
+    # (ctx.connect() has returned) and the task itself waits only for
+    # the probe-verified key (see _greet_at_room_up). It runs
+    # concurrently with the session build below and with sess.start()
+    # later; neither can delay it any more. The unavailable branches
+    # below settle this task before playing the recorded notice
+    # (_settle_early_greeting), so the notice keeps its exact shape.
+    early_greeting["task"] = asyncio.ensure_future(
+        _greet_at_room_up(
+            _key_task,
+            greeting_enabled=greeting_enabled,
+            plugin_available=GOOGLE_PLUGIN_AVAILABLE,
+            play_line=_play_early_greeting_line,
+        )
+    )
+
     _built = await _build_task
     _verified_key = _built["verified_key"]
     _memory_pending = _built["memory_pending"]
@@ -1714,6 +1846,7 @@ async def entrypoint(ctx: JobContext):
             "VOICE job unavailable: pinned Gemini session build failed "
             "— playing the recorded notice and leaving"
         )
+        await _settle_early_greeting(early_greeting["task"], greeting_state)
         await _announce_unavailable(ctx.room)
         return
     else:
@@ -1735,6 +1868,7 @@ async def entrypoint(ctx: JobContext):
         logger.error(
             "VOICE job unavailable: %s — playing the recorded notice and leaving", _cause
         )
+        await _settle_early_greeting(early_greeting["task"], greeting_state)
         await _announce_unavailable(ctx.room)
         return
 
@@ -1894,42 +2028,9 @@ async def entrypoint(ctx: JobContext):
     # line below is the shipped recording voice/audio/greeting.wav —
     # the text is kept here only as the line's documentation.
 
-    async def _play_early_greeting_line() -> None:
-        """TASK-VOI-011: the fixed greeting line, played as soon as the
-        room is connected and a probe-verified key exists — in parallel
-        with the session start instead of after it. The line is the
-        shipped recording on its own track (see _play_fixed_line); it
-        needs no session, so the participant hears FRIDAY after the
-        room connect + a 0.3 s settle instead of after the whole
-        session build. ``greeting_state['attempted']`` is set at the
-        play call so the line is attempted exactly once per job
-        (pre-VOI-011 semantics) whichever path runs; any failure is
-        logged and left for _greet_when_ready's fallback rules."""
-        try:
-            if not await _wait_for_remote_participant(ctx.room):
-                return
-            # Fast-greeting fix (2026-11-13, ZAI Agent 1): the job is
-            # dispatched BY the owner joining, so remote_participants
-            # is virtually always non-empty already; 0.3s is enough
-            # for the audio pipeline to settle.
-            await asyncio.sleep(0.3)
-            greeting_state["attempted"] = True
-            logger.info(
-                "VOICE job timing: first fixed-line audio starting %.2fs after connect",
-                time.time() - _t_connected,
-            )
-            if await _play_fixed_line(ctx.room, "greeting"):
-                greeting_state["played"] = True
-                logger.info("VOICE fixed-line greeting played (recorded line)")
-            else:
-                logger.error("VOICE fixed-line greeting could not be played")
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:
-            logger.warning(
-                "VOICE early greeting line failed (%s); the post-start "
-                "greeting path applies its fallback rules", exc,
-            )
+    # (TASK-VOI-013: _play_early_greeting_line is defined and its task
+    # launched much earlier — right after ctx.connect() returns, above
+    # the build await — because the line must not wait for the build.)
 
     async def _greet_when_ready(sess) -> None:
         """Speak a greeting the owner can actually HEAR, in this order:
@@ -2007,16 +2108,16 @@ async def entrypoint(ctx: JobContext):
         except Exception as exc:
             logger.error("VOICE warm greeting generation failed: %s", exc)
 
-    # TASK-VOI-011: the first session was already CONSTRUCTED by the
-    # build task (concurrently with the room connect). With the room
-    # up and a probe-verified key in hand, the fixed greeting line no
-    # longer waits for sess.start() — it plays in parallel with it
-    # (see _play_early_greeting_line). Residual race, accepted and
-    # bounded: if sess.start() itself then fails, the participant has
-    # heard the greeting and the job ends — the same job failure as
-    # today, plus a greeting that claimed nothing false.
-    if _early_greeting_warranted(greeting_enabled, GOOGLE_PLUGIN_AVAILABLE, _verified_key):
-        live["early_greeting_task"] = asyncio.create_task(_play_early_greeting_line())
+    # TASK-VOI-013: the early greeting task was launched at room-up
+    # (right after ctx.connect(), before the build was awaited) and
+    # has normally played the line already; hand its handle to the
+    # shared ``live`` dict, where _greet_when_ready and the close
+    # path look for it. Residual race, accepted and bounded (the
+    # VOI-011 reasoning, unchanged): if sess.start() itself then
+    # fails, the participant has heard the greeting and the job ends
+    # — the same job failure as before, plus a greeting that claimed
+    # nothing false.
+    live["early_greeting_task"] = early_greeting["task"]
 
     await _start(session, agent)
     logger.info(
@@ -2027,9 +2128,9 @@ async def entrypoint(ctx: JobContext):
         "pending - async delivery armed" if _memory_pending else "landed",
     )
 
-    # (TASK-VOI-011: the greeting closures — _play_early_greeting_line
-    # and _greet_when_ready — are defined above the session start,
-    # because the early line launches before sess.start() runs.)
+    # (TASK-VOI-013: _play_early_greeting_line is defined and launched
+    # above the build await; _greet_when_ready is defined above the
+    # session start, as before.)
 
     async def _close_quietly(sess, why: str) -> None:
         """Best-effort session close (TASK-VOI-004: shared by every
