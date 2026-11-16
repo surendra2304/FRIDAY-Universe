@@ -112,6 +112,7 @@ ALLOWED_COMMANDS = frozenset(
         SHELL_COMMAND,
         "system_info",
         "notify",
+        "lock_screen",
         "pc_health",
         "pc_cleanup",
         "hotkey",
@@ -543,6 +544,55 @@ def _cmd_notify(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | 
     # a toast the owner never saw.
     logger.info("FRIDAY notification (no desktop notifier): %s - %s", title, message)
     return True, "Notification written to the laptop bridge log (no desktop notifier installed).", None
+
+
+def _lock_argv(system: str) -> list[str] | None:
+    """The OS lock command for ``system`` (platform.system()), or None.
+
+    TASK-IG-FRD-010. Locking is the safe half of the voice-assistant
+    desktop pattern. There is deliberately NO unlock command anywhere
+    in this client: unlocking means handling the owner's OS credentials
+    at the secure-desktop boundary, which an agent must never do.
+    """
+    if system == "Windows":
+        return ["rundll32.exe", "user32.dll,LockWorkStation"]
+    if system == "Darwin":
+        # Sleeps the display; with "require password immediately after
+        # sleep" (the macOS default for lock) the Mac wakes locked.
+        return ["/usr/bin/pmset", "displaysleepnow"]
+    if system == "Linux":
+        return ["loginctl", "lock-session"]
+    return None
+
+
+def _cmd_lock_screen(args: dict[str, Any], timeout: float) -> tuple[bool, Any, str | None]:
+    system = platform.system()
+    argv = _lock_argv(system)
+    if argv is None:
+        return False, "", f"lock_screen is not supported on platform {system!r}"
+    candidates = [argv]
+    if system == "Linux":
+        candidates.append(["xdg-screensaver", "lock"])
+    last_error = ""
+    for candidate in candidates:
+        try:
+            completed = subprocess.run(
+                candidate, capture_output=True, timeout=max(1.0, timeout), check=False
+            )
+        except FileNotFoundError:
+            last_error = f"{candidate[0]} not found"
+            continue
+        except Exception as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
+            continue
+        if completed.returncode == 0:
+            note = f"Screen locked via {' '.join(candidate)}."
+            if system == "Darwin":
+                note += " (pmset sleeps the display; the Mac wakes locked when 'require password after sleep' is on.)"
+            return True, note, None
+        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        last_error = f"{' '.join(candidate)} exited {completed.returncode}: {detail or 'no detail'}"
+    return False, "", f"lock_screen failed on {system}: {last_error}"
 
 
 def _run_capture(argv: list[str], timeout: float) -> tuple[int | None, str, str]:
@@ -1056,6 +1106,7 @@ _COMMANDS = {
     SHELL_COMMAND: _cmd_run_shell,
     "system_info": _cmd_system_info,
     "notify": _cmd_notify,
+    "lock_screen": _cmd_lock_screen,
     "pc_health": _cmd_pc_health,
     "pc_cleanup": _cmd_pc_cleanup,
     "hotkey": _cmd_hotkey,
