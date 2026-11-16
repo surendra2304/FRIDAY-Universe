@@ -2,10 +2,12 @@
 
 This document banks three reference-class ideas from the owner's
 Instagram reference corpus (owner directive 2026-11-15) plus the
-PentAGI repo-card notes. It is a **reference**, not a feature: the
-code-bearing Sentinel ideas from the same corpus live in
-TASK-IG-SEN-01 (attacker-view audits), TASK-IG-SEN-02 (device &
-credential posture) and TASK-IG-SEN-03 (Telegram threat-intel watch).
+PentAGI repo-card notes, and — from the 2026-11-16 full re-watch —
+three further reference items (§1 additions, §5, §6). It is a
+**reference**, not a feature: the code-bearing Sentinel ideas from
+the same corpus live in TASK-IG-SEN-01 (attacker-view audits),
+TASK-IG-SEN-02 (device & credential posture) and TASK-IG-SEN-03
+(Telegram threat-intel watch).
 
 **Scope rule for everything below:** Sentinel is defensive and
 read-only. Every capability named here is used for monitoring and
@@ -20,6 +22,9 @@ Corpus provenance:
 | DZZ_-xxzaOR (@sanjaytechx) | OSINT/recon tool list: Shodan, Maltego, Nmap, Sherlock | §2 capability registry |
 | DeU2IZOukqT (@hackingwithranjith) | Qubes OS compartmentalisation explainer | §3 isolation assessment |
 | Deo925ayzJ9 → repo card `pentagi.md` | vxcontrol/pentagi, verdict **reference-only** | §4 role-design notes |
+| DVz69cgiqkR (full re-watch SE-02) | Creator free-resource list: Cybrary, Professor Messer, SANS Cyber Aces | §1 additions |
+| DfZrdfHnUf_ (full re-watch SE-03) | Family secret phrase as anti-impersonation verification | §5 practice |
+| Dc-9-4kyO-o (full re-watch SE-05) | Digital-footprint cleanup, 7 steps | §6 practice |
 
 ---
 
@@ -49,10 +54,17 @@ own rules and checks cite as their reference frame.
 3. TryHackMe / Hack The Box free tiers — guided SOC and blue-team
    rooms; useful for the defender's view of the techniques ATT&CK
    names.
-4. Android security — the official Android platform security model
+4. Cybrary (cybrary.it), Professor Messer (YouTube) and SANS Cyber
+   Aces — added by the full re-watch (SE-02, source DVz69cgiqkR):
+   Cybrary's free course library covers SOC/analyst tracks; Professor
+   Messer's free Security+ walkthroughs are the certification frame
+   several fleet checks cite; SANS Cyber Aces offers free
+   foundational tutorials (operating systems, networking, system
+   administration).
+5. Android security — the official Android platform security model
    documentation; the reference frame for TASK-IG-SEN-02's posture
    rules (dangerous permissions, sideloading, patch currency).
-5. OSINT tradecraft — read §2's ethics note first: the fleet's OSINT
+6. OSINT tradecraft — read §2's ethics note first: the fleet's OSINT
    is watchlist monitoring of public sources about the owner's own
    assets, not investigation of people.
 
@@ -159,9 +171,70 @@ kind; no tool sandbox fleet (hardware); no engagement with targets
 outside the owner's assets — PentAGI's own authorised-targets-only
 EULA underlines the same line Sentinel already holds.
 
+## 5. Family secret phrase — anti-impersonation verification (SE-03)
+
+Source: DfZrdfHnUf_ (full re-watch; a comment extending a family
+codeword practice to travel/anti-scam use). A **practice**, not a
+feature — banked here because it is the cheapest effective control
+against the impersonation scams Sentinel's triage modules see
+(§"extortion mail" family): a plea that arrives by message, call or
+voice note — "we're in trouble abroad, send money now" — is exactly
+the shape AI voice cloning now fakes convincingly.
+
+The practice, as adopted:
+
+1. Agree one secret phrase with family **offline** (in person). It is
+   never written into a chat, email or note — the moment it exists in
+   a message thread, it is not a secret.
+2. Any urgent request for money, credentials or secrecy — from any
+   channel, in any voice — must produce the phrase before anything
+   moves. No phrase, no transfer; verify instead by calling back on
+   a number you already trust.
+3. Agree the phrase **before** travel, when the "in trouble abroad"
+   plea is most plausible and hardest to check.
+4. If the phrase is ever spoken under pressure, demanded by a third
+   party, or suspected shared, treat it as burned and re-agree a new
+   one in person.
+
+Why it works where "recognise the voice" no longer does: it moves
+verification from biometrics (clonable) to a shared secret (not
+inferable from public audio/video of the family).
+
+## 6. Digital-footprint cleanup — the 7 steps (SE-05)
+
+Source: Dc-9-4kyO-o (full re-watch, FULL). Reference-only, as
+classified by the supervisor audit: a periodic (quarterly) owner
+practice, not Sentinel tooling. IntelX's FootprintAudit is the
+investigative counterpart; the HIBP password leg is already covered
+by IntelX cluster C48 — no duplicate candidate is created here.
+
+1. **Have I Been Pwned breach check** — check the owner's addresses
+   at haveibeenpwned.com (the manual web check is free). The HIBP
+   *API* needs a paid key: automated email-leg checks stay **off**
+   under the fleet's free-only rule (fail-closed); the password leg
+   via the free k-anonymity API is IntelX C48's, already live.
+2. **JustDeleteMe** — the account-deletion directory: work through
+   stale accounts and delete them, shrinking the breach surface.
+3. **Email aliases** — a distinct alias per service, so a leaked
+   address names its leaker and one breach cannot credential-stuff
+   the rest.
+4. **Google My Activity cleanup** — periodically review and delete
+   stored activity (searches, locations, voice) at myactivity.
+   google.com.
+5. **YourDigitalRights.org** — templates for data-access and
+   deletion requests to companies holding the owner's data.
+6. **ExifTool metadata stripping** — strip EXIF/metadata from photos
+   and files before sharing them (location and device data ride
+   along by default).
+7. **EFF Cover Your Tracks** — check the browser's fingerprint
+   uniqueness at coveryourtracks.eff.org; a near-unique fingerprint
+   is a tracking identifier even with cookies blocked.
+
 ---
 
 *Maintenance: when a new adapter lands, add its row to §2; when a
 compartmentalisation fact changes (new server, credential split),
 update §3's scorecard in the same PR. Corpus provenance for this doc:
-TASK-IG-SEN-04, claim on issue #35.*
+TASK-IG-SEN-04, claim on issue #35; §1 additions / §5 / §6 from the
+2026-11-16 full re-watch (SE-02 / SE-03 / SE-05), supervisor-audited
+(AUDIT-2, issue #35).*
