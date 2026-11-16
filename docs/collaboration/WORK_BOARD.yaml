@@ -1,9 +1,9 @@
 schema_version: 1
-snapshot_at: "2026-11-16T23:45:00+05:30"  # IST — board hygiene refresh by Muse (lead coordinator) 2026-11-16: 149 stale IN_REVIEW -> MERGED (audit §2A), 22 vehicle-stale -> MERGED (§2B), pr-field normalisation (§2D), TASK-SEN-008 -> VERIFIED, TASK-STR-BT-001 evidence backfill; main_head updated to 0206c62a.
+snapshot_at: "2026-11-17T04:30:00+05:30"  # IST — post-batch-2 board refresh by Muse (lead coordinator) 2026-11-17: VERIFIED flips on production evidence (REL-047, SEN-010, OBS-001, SEN-014, OBS-004, FRD-006, COR-009, COR-010, COR-011, FRD-001, FRD-002, INT-009, INT-011, FRG-011, IG2-MEM-01, IG2-MEM-02), batch-2 MERGED flips with replacement-PR backfills (MEM-005-R1, STR-FWD-008, PRO-002, REL-051, INF-010, INF-011, FRG-012, IG2-FRD-05), 9 new entries (COR-011, COR-012, STR-FWD-009, OBS-005, MEM-009, IG3-VYR-07..10), hygiene corrections (REL-021/022 prs lists re-verified in main's ancestry, ERRORHUNT-AGENT2/INF-003 landing commits backfilled, SEN-012/MEM-008 stale flips, ORCH-007 DEPLOYED->MERGED downgrade, 'PR #None' prose x3, IG2-MEM-01/02 VERIFIED after the MEM-009 remediation + full re-probe pass, COR-010/011 VERIFIED by the 2026-11-17 breach drill); records 447 -> 456; main_head updated to 2f840d52.
 repository: "surendra2304/FRIDAY-Universe"
 master_plan: "docs/MASTER_PLAN.md"
 claim_hub: "https://github.com/surendra2304/FRIDAY-Universe/issues/35"
-main_head_at_snapshot: "0206c62a"  # Merge PR #791 — head of origin/main at this snapshot (verified via git ls-remote 2026-11-16).
+main_head_at_snapshot: "2f840d52"  # Head of origin/main at this snapshot (merge batch 2 complete: 43 PRs merged; verified via git ls-remote 2026-11-17).
 warning: "Snapshot only. Refresh GitHub branches, PRs, workflows and runtime state before acting. NOTE (2026-11-10): the repository history was rewritten to purge leaked credentials; all pre-rewrite commit SHAs recorded anywhere in this registry are historical references only. The pre-rewrite bundle is preserved offline by ZAI. All collaborator branches were deleted after merge (single-branch main)."
 
 status_definitions:
@@ -424,10 +424,8 @@ tasks:
       - "Latest monorepo validator runs 42596903328 and 42596903017 are in progress on head 5920161f."
       - "Prior head 7ec4cdda runs 42564999230 and 42564999188 failed. Fleet regression suite on that prior head: 37 failed, 3272 passed, 73 skipped, 40 errors; dispatch failures used unresolved real agent hostnames, plus missing dependencies/database configuration and CPU-worker startup issues."
       - "Vercel v0 PR #36 remains open on v0/coordination-bootstrap, overlapping the same seven core registry files; no handoff response observed."
-    blockers:
-      - "PR #36 has seven overlapping coordination files and stale active assignments; review comments posted (#6732700925). Consolidation required before merge."
-      - "PR #30 full monorepo CI still fails; only the dedicated registry validator and FRIDAY CI pass."
-    next_action: "Wait for latest PR #30 full CI results, obtain Vercel v0 handoff on issue #35, and consolidate unique improvements from PR #36 into one registry. Keep both branches intact; do not merge duplicate snapshots."
+    blockers: []
+    next_action: "None — complete. The collaboration centre is live and in daily use: roster, work board, ownership register and the claim/handoff protocol all operate through GitHub issue #35. The PR #30/#36 registry overlap was resolved by the 2026-11-10 owner-directed mass merge (this entry's merge_note); the two pre-merge blockers recorded here earlier are cleared as resolved by that merge. Standing practice continues under the lead coordinator: claim on issue #35 before editing; board PRs built from fresh main."
 
   - id: "TASK-DOC-SYNC-001"
     title: "Synchronize Master Plan, handoff and as-built architecture"
@@ -775,7 +773,8 @@ tasks:
     pr: 38
     priority: "P1"
     depends_on:
-      - "TASK-MEM-001 / PR #37 — vector tenant ownership remediation"
+      - "TASK-MEM-001"
+    note: "Dependency detail (preserved verbatim from the original free-text depends_on entry; format fixed 2026-11-17): TASK-MEM-001 / PR #37 — vector tenant ownership remediation."
     claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6737168104"
     stacked_pr_rule: "PR #38 is based on PR #37 and must not merge before #37. After #37 merges, rebase/retarget #38 onto main and rerun all checks."
     files:
@@ -1228,7 +1227,7 @@ tasks:
 
   - id: "TASK-OBS-001"
     title: "Crash-loop and health alerting (Restart=always makes crash loops silent)"
-    status: "MERGED"
+    status: "VERIFIED"
     owner: "zai"
     branch: null
     pr: null
@@ -1245,8 +1244,9 @@ tasks:
       - "Crash-loop and health alerting."
     evidence:
       - "tests/test_fleet_health_watcher.py 26/26 green (2026-11-10). deploy-monorepo.yml health-gate added to both deploy-server jobs (YAML validated)."
+      - "PRODUCTION-VERIFIED 2026-11-17 (postdeploy-b, Step 6): genuine alert + recovery pairs are present in the current fleet-health-watcher journal on BOTH hosts — the acceptance condition this entry set for itself ('Status moves to DEPLOYED/VERIFIED at the next real alert+recovery observation') is met with live evidence."
     blockers: []
-    next_action: "ENABLED 2026-11-10 IST (ZAI, via bridge, both servers): unit files deployed, fleet-health-watcher.timer enabled+active on Server 1 (default map) and Server 2 (drop-in FLEET_WATCH_SERVICES=Sentinel:8008,Cortex:8009,VyralX:8010,VyralX-Daemon:-). First verified cycles: Server 1 8/8 healthy, Server 2 4/4 healthy. Watcher display timestamps now IST (D-026 patch 2026-11-10 IST; redeployed via bridge, timers restarted). Status moves to DEPLOYED/VERIFIED at the next real alert+recovery observation. FLEET_ALERT_COMMAND forwarding to the FRIDAY Universe Telegram bot is the next batch (D-025)."
+    next_action: "None — complete and production-verified. The watcher runs on both hosts and has produced real alert+recovery pairs in production (2026-11-17)."
 
   - id: "TASK-UI-002"
     title: "Keyless dark awwwards-level dashboard with continuous LiveKit voice (owner's four rejections of TASK-UI-001 addressed)"
@@ -1355,7 +1355,7 @@ tasks:
     owner: "zai"
     branch: null
     pr: null
-    merge_note: "2026-11-10: ZAI direct main commit. scripts/backup_fleet_databases.py: per-agent logical JSONL dumps (gzip, mode 600) + SHA-256 manifest with a self-verify pass + config snapshot (credential env files + systemd units, secrets never printed); --dry-run inventory, --verify checksum validation, --agents subset, --media (VyralX media schema), --keep retention pruning; credentials resolved by the shared scripts/oracle_db.py (never stored in repo). scripts/restore_fleet_database.py: --verify-only read-only drill (manifest vs LIVE row counts = drift report) and --apply destructive load (refuses non-empty tables without --replace; FK-deferred retry pass; per-table honest reporting). .github/workflows/fleet-backup.yml: weekly Sun 03:30 UTC backup on Server 1 + manual dispatch, with a 2 GB free-disk guard. Runbook: docs/observability/BACKUP_RESTORE_AND_LEDGER_DRILL.md. 14 backup + 11 restore unit tests (fake oracledb connection)."
+    merge_note: "2026-11-10: ZAI direct main commit — landed in tranche commit 18f31495 ('feat(M4): full hardening tranche — VAL-001/002, OBS-001/002, INF-003, DATA-003, ORCH-003 + VOI-001 readiness'), with the per-agent .env credential-source fix in follow-up commit b59722bd; both confirmed in main's ancestry 2026-11-17. No PR was opened, so pr stays null. scripts/backup_fleet_databases.py: per-agent logical JSONL dumps (gzip, mode 600) + SHA-256 manifest with a self-verify pass + config snapshot (credential env files + systemd units, secrets never printed); --dry-run inventory, --verify checksum validation, --agents subset, --media (VyralX media schema), --keep retention pruning; credentials resolved by the shared scripts/oracle_db.py (never stored in repo). scripts/restore_fleet_database.py: --verify-only read-only drill (manifest vs LIVE row counts = drift report) and --apply destructive load (refuses non-empty tables without --replace; FK-deferred retry pass; per-table honest reporting). .github/workflows/fleet-backup.yml: weekly Sun 03:30 UTC backup on Server 1 + manual dispatch, with a 2 GB free-disk guard. Runbook: docs/observability/BACKUP_RESTORE_AND_LEDGER_DRILL.md. 14 backup + 11 restore unit tests (fake oracledb connection)."
     milestone: "M4 (Master Plan v2)"
     files:
       - "scripts/backup_fleet_databases.py"
@@ -1549,7 +1549,7 @@ tasks:
 
   - id: "TASK-ORCH-007"
     title: "Delegation fast-path + phantom-XML redirect — 'assign a task to X' really dispatches"
-    status: "DEPLOYED"
+    status: "MERGED"
     owner: "zai"
     branch: null
     pr: null
@@ -1567,9 +1567,9 @@ tasks:
       - "Delegation phrasing with the word 'fleet' is a dispatch, not a status probe."
       - "Non-fleet recipients and empty tasks fall through to the model (no false positives)."
       - "Phantom delegation XML as text triggers at most one redirect toward the real tool."
-    evidence: "tests/test_delegation_fast_path.py 15/15 (7 phrasings x real dispatch, tail-strip, no-hijack, fall-throughs, redirect convergence, bounded phantom, angle-bracket-safe); full battery 131/131 green incl. boss contract, agent, multi-tool, intelx, memory guard, gemini tools; pre-existing pollution reproduced with intelx-before-boss on unchanged logic before fixing the helper."
+    evidence: "tests/test_delegation_fast_path.py 15/15 (7 phrasings x real dispatch, tail-strip, no-hijack, fall-throughs, redirect convergence, bounded phantom, angle-bracket-safe); full battery 131/131 green incl. boss contract, agent, multi-tool, intelx, memory guard, gemini tools; pre-existing pollution reproduced with intelx-before-boss on unchanged logic before fixing the helper. DOWNGRADE NOTE 2026-11-17 (board hygiene): this entry claimed DEPLOYED on test evidence alone — no live re-test of the probe phrasings was ever logged, and its own next_action treated that re-test as future work. Status corrected to MERGED until the live re-test is recorded; the code is on main and the test battery stands."
     blockers: []
-    next_action: "Live re-test of both probe phrasings on the deployed site after Fleet CD; tick checklist C6 on live success; C13 (status queries 'what happened to that task') is the next delegation item."
+    next_action: "Live re-test owed: run both probe phrasings ('assign a quick task to <agent>: <task>' and the phantom-XML shape) against production chat, record the real dispatch receipts, then restore DEPLOYED/VERIFIED with that evidence and tick checklist C6. (C13 was delivered separately as TASK-ORCH-008.)"
 
   - id: "TASK-ORCH-008"
     title: "C13 task-status queries from the real ledger + I8 contacts-hijack fix"
@@ -1836,7 +1836,7 @@ tasks:
     branch: null
     pr: null
     owner_directive: "Find errors and fix them and implement more in my Friday Universe (2026-11-12)."
-    merge_note: "Direct main commit per the batch discipline. All 10 fixes verified by the full test suite."
+    merge_note: "Direct main commit per the batch discipline — landed as commit 33dcc00a ('fix(friday): error-hunt pass — 10 real defects found and fixed (ZAI Agent 2)'), confirmed in main's ancestry 2026-11-17. No PR was ever opened for this work, so pr stays null. All 10 fixes verified by the full test suite."
     milestone: "10 defects fixed; full suite green; checklist recounted to a true 122/125 (98%)"
     files:
       - "FRIDAY/src/friday/api/server.py"
@@ -3520,6 +3520,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     branch: claude/task-rel-021-synthesis-truncation (+ follow-ups claude/task-rel-021-synthesis-prompt-budget, claude/task-rel-021-synthesis-model)
     pr: 164
+    prs: [164, 170, 175]
     contributors: []
     priority: P1
     created_at: "2026-11-14T19:47:00+05:30"
@@ -3538,6 +3539,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Claim: issue #35 comment 6878316081 (2026-11-14)."
       - "Diagnosis (live, 2026-11-14): Inference journal on Server 1 shows 'groq API error (404) model_not_found' for llama-3.3-70b-versatile at 19:13/19:14/19:24 and for llama-3.1-8b-instant at 19:27; direct probes of POST /v1/chat/completions with grounded-style payloads were served by nvidia/nemotron-3.5-super-vl:free (fallback) for every requested model tested (llama-3.3-70b-versatile, llama-3.1-8b-instant, openai/gpt-oss-120b, cerebras/llama-3.3-70b, gemini-2.5-flash, gemini-flash-latest, mistral-small-latest); direct Groq API check with a fleet pool key confirms openai/gpt-oss-120b, openai/gpt-oss-20b and qwen/qwen3.8-27b are served (content + stop) while llama models and groq/compound-mini return model_not_found."
+      - "Board re-verification 2026-11-17: all three merge commits (23b6a02a for PR #164, 9461c1d4 for PR #170, 1ca50a49 for PR #175) are confirmed in main's ancestry. The board-hygiene audit's 'no merge commit in main' finding was a subject-format miss — these merges read 'Merge PR #164 (...)', not 'Merge pull request #164'. The structured prs list now records all three landing PRs."
     blockers: []
     next_action: "None — complete. Residuals (catalogue still advertises retired llama models; other retired-model references in non-synthesis paths; research ephemerality) are recorded in the issue #35 completion comment for separate scheduling."
     verification: "VERIFIED 2026-11-14 (Muse, TASK-REL-021 crew). THREE production layers, each evidenced live before fixing: (1) retired model hint llama-3.3-70b-versatile -> Groq 404 -> OpenRouter free-model fallback lottery whose reasoning output truncated the draft (finish_reason length, ~9K chars) — fixed PR #164 (merge 23b6a02a): hint -> openai/gpt-oss-120b AND v1_core_routes routes openai/gpt-oss* to groq instead of the credential-less openai provider (both branches; regression test test_gpt_oss_models_route_to_groq_not_openai); the TASK-REL-007 ~125-char truncation was the same lottery with a different daily pick. (2) Prompt size vs Groq on-demand TPM: org cap 8,000 tokens/min (HTTP 413 rate_limit_exceeded observed with a 13,462-token request); synthesize_grounded supplied up to 36,000 chars (~9-10K tokens) — fixed PR #170 (merge 9461c1d4): budget 16,000 chars total / 6,000 per document (~3,812 prompt tokens measured through the production route; quote verification runs against exactly the supplied text, so grounding strength is unchanged). (3) Quote fidelity: gpt-oss-120b completes drafts but splices quotes (skips photo credits/clauses), failing the exact-substring grounding gate (synthesis_quote_unverified) — A/B on three real fetched document sets with the unchanged prompt: gpt-oss 0/3 quotes verified (1/2-3/3 with a strict prompt, still unreliable), qwen/qwen3.8-27b 9/9 — fixed PR #175 (merge 1ca50a49): synthesis hint -> qwen/qwen3.8-27b; the gate itself is unchanged and still fails closed to REL-016's labelled raw-findings path. All three PRs CI-green (contracts/test/roster/secrets/layout/policy success). Deploys: Fleet CD runs 43604086900 (23b6a02), 43605640901 (9461c1d), 43607756836 (1ca50a4) all success; Server 1 checkout and service restarts verified at each merge. PRODUCTION PROOF (IntelX POST /v1/task/execute, action research_live, deployed code at 1ca50a49, 2026-11-14 ~20:31 IST): 'What is the latest progress on solid-state batteries?' -> envelope SUCCESS, synthesis_status succeeded, answer_kind source_attributed_model_draft, 3 findings / 3 sources, receipt issued (pipeline friday.research), 56.0s; 'What is the current status of NASA's Artemis II mission?' -> SUCCESS, succeeded, 3 findings / 2 sources, receipt, 21.2s; 'What are the latest developments in fusion energy research?' -> SUCCESS, succeeded, 3 findings / 3 sources, receipt, 20.1s. REL-016 not regressed: 63 grounded/contract tests pass locally (incl. test_live_research_task_contract) and CI contracts/test green on all three PRs; the raw-findings fallback was itself observed live behaving exactly as designed during layers 2-3 diagnosis (DEGRADED, findings preserved and labelled, no receipt)."
@@ -3547,6 +3549,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     branch: claude/task-rel-022-memory-integrity
     pr: 178
+    prs: [178, 186]
     contributors: []
     priority: P1
     created_at: "2026-11-14T20:52:00+05:30"
@@ -3574,6 +3577,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "FOURTH DEFECT found by PR #178's own first live proof (2026-11-14 ~21:21 IST) and fixed in PR #186 (merge 41b8e04c1da2ae58eb0f2e938761ff57a3addabb; CI all green): a local_only-saved fact that later also landed in the shared store was text-shadowed in recall_memories' display merge, so forget's resolver never saw the local id — forget deleted only the shared copy, reported success, and local record 78fcbc98-342b-4a8a-97a7-caa8900539ae ('violet heron 4') resurfaced on the next recall. recall_memories(for_mutation=True) now skips the text shadowing for forget_fact/correct_fact; display recall unchanged; 4 new tests + 1 call-shape assertion updated."
       - "PRODUCTION-VERIFIED live (Server 1 at 41b8e04c, FRIDAY.service restarted 21:42:16 IST, for_mutation present x6 in the deployed file): cleanup through chat — 'forget violet heron' deleted the surviving local twin (local-backend wording), next ask shows it gone; 'forget copper lynx' deleted. TWO full lifecycles through production /api/chat: remember 'amber heron 5' -> 'What is my rel022 verification codeword?' answered with the exact value (fast_path, memory_recall) -> forget (deleted) -> ask again: no value, nothing invented; repeated identically with 'ivory lynx 3'. Failover proof on the real production provider stack (90 tool schemas, 21,433-char history): the TPM strip-retry trigger fired and the turn completed with an honest plain-text no-record answer — no 400. Journal since deploy: 20 TPM-strip events, 0 tool_use_failed, 0 raw-error markers."
       - "RESIDUALS (not REL-022; recorded for their owners): (a) hybrid recall ranking can crowd a fresh fact out of the merged window for some subjects — 'rel022 check codeword' facts (db6edb55/cf3bc395) were stored but unfindable by subject recall while value recall found them instantly; cleaned up by explicit id (delete receipts 'unconfirmed' under load, records absent from active recall after) — REL-024's surface. (b) gate recall replies can list unrelated '[FAILURE WARNING ...]' experience records under a confident header when only noise hits remain — recall-quality/cosmetics, REL-024. (c) one unexplained HTTP 403 on a chat forget during proof round 1 (21:2x IST) with no journal trace; did not recur in ~25 subsequent proof calls. (d) adjacent raw-error surfaces left untouched as out of scope: server.py fast-path f'Fast-path error: {e}' and agent.py tool-execution error text."
+      - "Board re-verification 2026-11-17: merge d730fcac (PR #178) and merge 41b8e04c (PR #186, the fourth-defect follow-up) are both confirmed in main's ancestry; the structured prs list now records both landing PRs."
     blockers: []
     next_action: "Complete — VERIFIED with live evidence above. Residuals (a)/(b) belong to TASK-REL-024's recall-ranking scope; (c)/(d) recorded for any future chat-hardening pass."
   - id: TASK-REL-015
@@ -4344,16 +4348,18 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "FRIDAY/ui/app/page.tsx"
       - "FRIDAY/ui/app/layout.tsx"
       - "FRIDAY/ui/app/globals.css"
-      - "FRIDAY/ui/components/Arc.tsx"
+      - "FRIDAY/ui/app/start/page.tsx"
       - "FRIDAY/ui/components/VoiceCall.tsx"
-      - "FRIDAY/ui/components/Conversation.tsx"
-      - "FRIDAY/ui/components/Crew.tsx"
-      - "FRIDAY/ui/components/Record.tsx"
-      - "FRIDAY/ui/components/Machine.tsx"
-      - "FRIDAY/ui/components/fx.tsx"
+      - "FRIDAY/ui/components/GlassStartPage.tsx"
+      - "FRIDAY/ui/components/Orb.tsx"
+      - "FRIDAY/ui/components/RankBoard.tsx"
+      - "FRIDAY/ui/components/stage/*.tsx (Stage, Halo, Conversation, sheets, WakeListener, motion)"
+      - "FRIDAY/ui/components/reactbits/* (Counter, Magnet, Orb, ShinyText, SplitText, SpotlightCard)"
       - "FRIDAY/ui/lib/build-info.ts"
+      - "FRIDAY/ui/lib/{fleetRank,glassWidgets,ranking,wakeWord,wire}.ts"
       - "FRIDAY/ui/public/status.html"
       - "FRIDAY/ui/out/** (rebuilt static export)"
+      # files list refreshed 2026-11-17 against the tree at main 2f840d52: the Arc-era components (Arc/Crew/Record/Machine/fx.tsx) and the top-level Conversation.tsx no longer exist — Conversation lives at components/stage/Conversation.tsx inside the Stage/Halo tree.
     claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6884271953"
     defect: "Owner verdict 2026-11-15 ~02:38 IST on rebuild #2 (Reactor Deck, PR #126): rejected as the same site with a new theme — he ordered the website forgotten and rebuilt completely from scratch: new architecture, layout and copy, no recycled headings or paragraphs. Owner design answers 2026-11-15: (1) home screen = voice first, the talk orb IS the home screen; (2) style = dark and cinematic, Jarvis-style glow on black; (3) home carries ONLY talk + chat — fleet, Stratex, activity and delegations are tucked into separate reachable views."
     acceptance:
@@ -4969,6 +4975,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "ACCEPTANCE 1 — LIVE CALL (deployed build, Server-1 participant, room friday-voi009a, job AJ_CAxE7NNzxaer, 2026-11-15 12:53 IST): status file state=ready provider=gemini-realtime:gemini-3.8-live. Journal: 'VOICE fixed-line greeting played (recorded line)' 12:53:53 + warm Gemini greeting requested. Stratex delegation answered with the real figures (balance 10,792.80, no open positions); ledger follow-up 'exactly nine closed trades' correct; Tokyo time correct (4:29 PM). Per-turn gaps (journal agent-state, peak-load day — Wave 4 launch storm): greeting ~24 s connect-to-first-speech, delegation ~17 s (incl. Stratex tool call), ledger ~0.2 s, Tokyo ~18.5 s (coincided with a key-keeper probe storm timing out on the saturated host; the pinned live session was unaffected), goodbye ~5 s. Comparable to VOI-007's quieter-day numbers (25.6 s / 18.6 s) — load-bound, not a removal regression."
       - "ACCEPTANCE 2 — UNAVAILABLE DRILL (isolated: staged copy of the deployed tree in /tmp, staged .env with FRIDAY_GEMINI_API_KEY blanked, env -i scrubbed process env, distinct agent name friday-voi009-drill, health port moved via harness launcher; production keys and worker untouched — production journal contains ZERO drill lines): drill job AJ_oBw5Q37ANU42 (and repeat AJ_fuPd9uRPBxy8) — staged status file state='unavailable', detail='voice unavailable: no Gemini keys are configured for the voice worker'; drill journal: 'VOICE job unavailable: no Gemini keys are configured for the voice worker — playing the recorded notice and leaving' + 'VOICE unavailable notice played (recorded line, no provider)'. Participant captured exactly 6.1 s of agent audio; FFT cross-correlation vs the shipped voice_unavailable.wav = 0.453 at the -0.21 s transport lag (zero-lag ~0 as expected post-Opus) — the caller heard the shipped recording verbatim. Drill worker's ENTIRE log: ZERO groq/whisper/edge-tts/orpheus mentions. Staging removed after the drill."
       - "ORPHEUS TERMS ITEM: CLOSED AS MOOT — Orpheus no longer exists anywhere in the voice path; no org-admin terms acceptance is needed or relevant. Groq TEXT roles (FRIDAY chat failover, Inference pool) untouched, per the owner's confirmed scope (2026-11-15 ~11:47 IST)."
+      - "RE-VERIFIED 2026-11-17 (postdeploy-c): the deployed livekit_worker.py is byte-identical to main 0206c62a, carries zero Groq serving tokens, and the production voice journal is Gemini-only — the Gemini-only contract still holds in production."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-VOI-009 crew). Board claim history: #274/#277 conflicted in sequence as other board PRs landed; claim landed via #279 (merge 8fd7506a); code via #284 (merge 59587634). Residuals for the coordinator: stale PRs #274/#277 were close-attempted repeatedly (bridge congestion) — close if still open; they are superseded by #279. Voice speed under load (greeting ~24 s on a peak day) remains the owner's standing VOI-008/VOI-005 thread, unchanged by this removal."
   - id: TASK-REL-043
@@ -5002,6 +5009,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "PR #291 (containment; branch claude/task-rel-043-containment; merged 217a2de7 2026-11-15 13:30 IST; Fleet CD Deploy Core Fleet success): _attempt_failed() — an attempt fails the policy when degraded OR when it served a model outside the verified catalogue; the bounded best-suitable retry fires on both; an uncontainable breach gets the honest 503 with a breach-specific message, never a silent serve. The auto path keeps its documented delegating contract. Deployed fingerprint byte-identical (sha256 13183c10...f4861)."
       - "TESTS: Inference/tests/test_rel043_best_suitable.py — 12 tests in #278 (11 fail on clean main, the catalogue-guard passes on both; 12/12 with the fix) + 3 containment tests in #291. Root contract test: extraction set extended with all 15 new module-level names; two assertions updated WITH DISCLOSURE in-file (verbatim-forwarding now covers catalogue ids; cache-isolation uses the two advertised Groq catalogue models). REL-030 substitution test updated WITH DISCLOSURE in #291 (its REL-032 serve-with-provenance contract for an out-of-catalogue substitute is superseded by the owner's never-outside-the-catalogue rule; the never-silent guarantee is preserved and strengthened). Fail-on-pre-fix for containment proven against the byte-exact #278 production file (reconstructed, hash-matched to c19950a5): exactly the 4 containment-sensitive tests fail there. CI: both Monorepo Structure and Safety CI jobs + engine test job + secret scan green on PR #278, PR #291, and on main's push runs for both merge commits."
       - "FINAL LIVE PROBES (2026-11-15, post-#291, production Inference on Server 1): GET /v1/models = exactly the 6 verified ids + auto. Retired llama-3.3-70b-versatile: HTTP 200 served by gemini-3.6-flash (in-catalogue, reached via the selected gemini-3.8-flash route), provenance selected_as=best_suitable_for_chat, selected_model=gemini-3.8-flash, served_by_model=gemini-3.6-flash, downgrade=false — the banned lightweight did not appear. gemini-3.8-flash request: 200 served in-catalogue by gemini-3.6-flash with provenance (previously breached to nemotron-super-vl). gemini-3.6-flash, openai/gpt-oss-120b, qwen/qwen3.8-27b, meta-llama/llama-3.3-70b-instruct, nvidia/nemotron-3.5-lightning:free: each HTTP 200 under its OWN name, no provenance block. REL-026 regression: POST /v1/forge/generate-tests HTTP 200 with a real 2,869-char pytest suite (def test_ present), model_used=openai/gpt-oss-120b — the ladder's declared models are catalogue ids, undisturbed."
+      - "SPLIT VERDICT on the honest-503 gate (recorded 2026-11-17): the DEGRADED variant of the gate fired live twice — 2026-11-15 16:29:56 IST (with response body) and 2026-11-16 23:54:53 IST (inferred from the journal shape) — while the BREACH/CONTAINMENT variant has never fired live. The containment path is merged, deployed and test-proven; its live-fire proof is outstanding by circumstance, not by defect. Status unchanged (VERIFIED on the selection + degraded-gate evidence)."
     blockers: []
     next_action: "Done. VERIFIED 2026-11-15 (Muse, TASK-REL-043 crew): PRs #278 + #291 merged, deployed, fingerprint-verified, live-probed as recorded in evidence. Residuals, stated plainly: (1) the streaming chat path has PR #278's up-front selection but no mid-stream containment is possible — a ladder breach mid-stream cannot be recalled; (2) the gateway ladder's best-free rung still exists for non-chat-completions execution paths (other agent roles/tasks via the unified manager) — route-level containment covers /v1/chat/completions, the surface the owner's complaint and this task specified; a gateway-level restriction is a separate future task if the owner wants it; (3) within-provider ladder moves inside the catalogue (e.g. selected gemini-3.8-flash served by gemini-3.6-flash) remain possible and are disclosed via served_by_model in provenance."
 
@@ -5108,7 +5116,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-FRD-002
     title: "FRIDAY tool-use reliability — inventory all 90 exposed tools, exercise each end-to-end live, catalogue failures, fix the ungated process-termination bypass"
     owner: muse_ai
-    status: IN_REVIEW
+    status: VERIFIED
     priority: P1
     created: 2026-11-15
     updated_at: 2026-11-15
@@ -5128,7 +5136,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "Live harness on Server 1 (deployed head 56e28e63): HEADER agent_mode=friday-agent, authorizer=DefaultSecureAuthorizer, autonomous_mode=true, full_access_mode=true, registry_tools=90, schemas=90, memory=OracleConversationMemory; batch A 21 probes recorded with per-tool verdicts, latencies and outputs (full table in the results doc)."
       - "Fix verified locally by direct assertions (schema enum, terminate attempt -> Unknown action error, system_status unaffected, kill_process still DANGEROUS); pytest files ship in the PR for CI/server-venv runs."
-    next_action: "Coordinator: review + merge the fix PR, deploy via Fleet CD, then production-probe system_control (terminate_process must return Unknown action) and mark VERIFIED. Follow-ups D2/D3/D4 to be triaged by the coordinator (FRD-001/003 and Futuris crews)."
+      - "D1 PROBE PASS IN PRODUCTION 2026-11-17 (postdeploy-a): terminate_process is absent from the live system_control schema (enum is [list_processes, system_status]); a terminate attempt returns 'Unknown action'; kill_process remains DANGEROUS-classified and is DENIED headless. All four acceptance items are complete — inventory, live exercise, D1 fix + production probe, and the honest catalogue of unfixed items."
+    next_action: "None for this task's acceptance — VERIFIED. Residuals D2/D3/D4 (futuris success-flag on BLOCKED forecasts, delegation latency under load, system_power_control classification) remain open as coordinator triage items for the FRD-001/003 and Futuris crews; they were follow-ups by this entry's own acceptance text, not acceptance items."
   - id: TASK-STR-RD-013
     title: "Stratex cross-asset rotation (RD-013): pre-declared momentum rotation over crypto majors + gold + index exposure, judged on compounded equity + max drawdown and per-period profit factor"
     status: VERIFIED
@@ -5259,7 +5268,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-PHONE-001
     title: "FRIDAY phone control — reverse-tunnel phone bridge (pairing + allowlisted commands), FRIDAY phone_* tools, Termux agent, companion-app scaffold, mock round-trip harness"
     owner: muse_ai
-    status: IN_PROGRESS
+    status: MERGED
     priority: P1
     created: 2026-11-15
     updated_at: 2026-11-15
@@ -5276,8 +5285,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Owner step list published in docs/PHONE_CONTROL.md (Termux path: install 2 F-Droid apps, paste 1 setup command, type 1 pairing code, allow permissions)."
     evidence:
       - "Claim: GitHub issue #35 comment 6890754744 (2026-11-15) before editing — architecture + audit (ADB controller and laptop bridge) recorded there."
+      - "MERGED + DEPLOYED: the phone-control code is fully on main (FRIDAY/src/friday/remote/phone_bridge.py, FRIDAY/src/friday/tools/builtin/phone_control.py, FRIDAY/tests/test_phone_bridge.py, docs/PHONE_CONTROL.md, scripts/phone_agent_termux.py) and the endpoints are verified live — loopback pairing surface answers; an external unauthenticated request to /friday/api/phone/devices returns 401."
     blockers: []
-    next_action: "Crew: finish tests, ship PR, merge, fingerprint-verify the Fleet CD deploy, then board VERIFIED via fresh-main board PR. Production (real-phone) verification is the owner's 4-step setup in docs/PHONE_CONTROL.md and is NOT claimed by this task."
+    next_action: "Owner pairing step only (nothing else owed): the 4-step Termux setup in docs/PHONE_CONTROL.md — install the 2 F-Droid apps, paste the 1 setup command, type the pairing code, allow permissions. Real-phone production verification happens at that pairing."
   - id: TASK-COR-003
     title: "Cortex decision-log completeness audit — sampled decision records scored against the 4-element provenance bar (inputs considered / options weighed / decider / outcome + timestamp); logging-path gaps closed"
     owner: muse_ai
@@ -5481,23 +5491,25 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Coordinator: merge the audit PR, then dispatch the verification-pass follow-up specified in RESULTS section 6 (verbatim quote gate, statement-coverage check, degraded-mode boilerplate filter, visible corroboration flag, re-audit hook). Also: live-browser re-check of the Northwell page (2 UNVERIFIABLE claims) and the TechTarget/USENIX quotes (2 PARTIALs)."
   - id: TASK-FRG-011
     title: "Forge verdict-surface consistency: one authoritative verdict derivation (Forge/app/verification/verdict.py) settled at finalization via OrchestratorCore.apply_final_verdict and stamped on task record + verification manifest; delegate execute_now/status/verify and read surfaces derive from it (stricter verdict wins; battery PARTIAL never surfaces as SUCCESS; FAILED reconciles to SUCCESS only when the failure is positively identified as superseded gate verdicts — REL-019 unexplained-failure guard preserved; FORGE-002 demotion preserved)"
-    status: MERGED
+    status: VERIFIED
     owner: muse_ai
     pr: 407
     evidence:
       - "PR #407 CI green (8 check runs: 7 success, 1 skipped, 0 failures), head 3b1fd31c0d34 parented on main f313c31f335b; base verified by blob SHA at the PR base (orchestrator 5c2edaa6b023, delegate 88eba62cffd0, evidence b0c0c4505c93 identical to validated base 99ba9da83d0e; both new files absent). Divergence reproduced on pristine main with a standalone driver (R5 shape: gate-latched FAILED + final battery 11/11 all_passed -> store FAILED, status endpoint FAILED embedding an all_passed/PASSED manifest). New suite Forge/tests/test_frg011_verdict_consistency.py 9/9 on the fix tree, collection-errors on main; neighbour batch 71/71; full Forge suite excl. integration failure sets byte-identical fix-tree vs pristine main (100 pre-existing sandbox-env failures both sides). Claim comment 6894711637; completion comment is this one."
       - "MERGED on origin/main: bf18001b7edfd57b30a8bccdb9bc9767e58f8721 Merge pull request #407 from surendra2304/claude/task-frg-011-verdict-consistency (board hygiene 2026-11-16, audit §2A: PR #407 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: merge PR #407 -> Fleet CD -> post-deploy drill on Server 1: run one delegate build whose in-graph gate fails transiently but whose final battery passes (R5 shape) and confirm delegate response, status endpoint and task record all read SUCCESS with the gate named in verdict_superseded; then flip VERIFIED. Residuals (advisory CLI/delivery battery re-runs for display; legacy unstamped records) documented in the completion comment."
+      - "PRODUCTION-VERIFIED 2026-11-17 (forge-acceptance): the original R5 record (task24715112026120605) reads SUCCESS in production, with the superseded gate named in verdict_superseded live — the verdict-consistency contract holds on the deployed service. Caveat: a fresh-build R5 shape is currently unproducible because of the FRG-012 DAG drain (fixed by PR #837 via replacement #855; its production re-probe is tracked on TASK-FRG-012)."
+    next_action: "None — complete and production-verified (original R5 record reads SUCCESS with the superseded gate named in verdict_superseded)."
   - id: TASK-FRG-012
     title: "Forge DAG drain: Oracle CLOB bind corruption of large task graphs + silent empty-graph load fake-completed builds after one node — chunked TO_CLOB binds in Forge/app/memory/db.py, strict nodes/edges parse in StateStore.get_task_graph, zero-node guard in OrchestratorCore.step_task"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
-    pr: "#837"
-    evidence: "Root cause proven against production 2026-11-16/17 (forge-dagdrain crew, ~/workspace/forge-dagdrain/STATE.md): stored task_graphs.nodes for acceptance tasks task25816112026182104 / task26116112026184724 is 32,767 chars of binary garbage (json.loads fails at char 0) while edges (726 chars) parse in the same rows; Oracle-side census of every task_graphs row: LENGTH <= 8,016 -> IS JSON = 1, >= 32,538 -> IS JSON = 0, 25 corrupt rows dating back to 2026-11-12; all affected builds planned 7 nodes / 6 edges (intake size exonerated — corruption lands on the post-wave save once a node result embeds, via the type_=CLOB bindparam path in db.py). Journal for task258: exactly one [Parallel Wave] dispatch (Requirements, 17.12s), then RUNNING -> COMPLETED in the same second; zero exceptions / CancelledError in the acceptance window; no step-loop flags exist in Forge's production env (names checked). Chain: CLOB bind corruption -> _loads silently returns {} -> graph loads with 0 nodes -> is_completed() True for the empty set -> fake COMPLETED; SQLite test backend has no CLOB path, explaining the staging divergence. PR #837 head verified by read-back (blobs match local hashes). New suite Forge/tests/test_frg012_dag_drain.py 9/9 on the fix tree; the 3 behavioural tests fail on pristine main (DID NOT RAISE — old code swallows the corruption); neighbour rings green (test_dag + frg009/010/011 + idempotency + forge002 x2 exit 0; frg003/frg004/budget + new suite 30 passed). Claim comment 6927315187."
-    next_action: "Merge PR #837 -> Fleet CD -> production re-probe (coordinator): re-run one FRG-004 delegate shape (G1 shortlink) and confirm the DAG runs past the planner wave with provider stamps AND the stored graph round-trips (LENGTH > 32.7K with IS JSON = 1); then flip VERIFIED. The 25 historical corrupt task_graphs rows stay corrupt (those builds already failed honestly via the FRG-010 gate); no data repair planned. The FRG-010 >=3-stated-path completeness-gate threshold gap is a separate follow-up task, not this PR."
+    pr: 855
+    merge_note: "Landed via union replacement PR #855 for original PR #837 (merge batch 2, 2026-11-17); shipped blobs verified by read-back at ship time."
+    evidence: "Root cause proven against production 2026-11-16/17 (forge-dagdrain crew, ~/workspace/forge-dagdrain/STATE.md): stored task_graphs.nodes for acceptance tasks task25816112026182104 / task26116112026184724 is 32,767 chars of binary garbage (json.loads fails at char 0) while edges (726 chars) parse in the same rows; Oracle-side census of every task_graphs row: LENGTH <= 8,016 -> IS JSON = 1, >= 32,538 -> IS JSON = 0, 25 corrupt rows dating back to 2026-11-12; all affected builds planned 7 nodes / 6 edges (intake size exonerated — corruption lands on the post-wave save once a node result embeds, via the type_=CLOB bindparam path in db.py). Journal for task258: exactly one [Parallel Wave] dispatch (Requirements, 17.12s), then RUNNING -> COMPLETED in the same second; zero exceptions / CancelledError in the acceptance window; no step-loop flags exist in Forge's production env (names checked). Chain: CLOB bind corruption -> _loads silently returns {} -> graph loads with 0 nodes -> is_completed() True for the empty set -> fake COMPLETED; SQLite test backend has no CLOB path, explaining the staging divergence. PR #837 head verified by read-back (blobs match local hashes). New suite Forge/tests/test_frg012_dag_drain.py 9/9 on the fix tree; the 3 behavioural tests fail on pristine main (DID NOT RAISE — old code swallows the corruption); neighbour rings green (test_dag + frg009/010/011 + idempotency + forge002 x2 exit 0; frg003/frg004/budget + new suite 30 passed). Claim comment 6927315187. FOLLOW-UP CLOSED 2026-11-17 (frg-outbox-clob census): the memora_outbox CLOB question raised alongside this fix is resolved with NO ACTION — census of 778 rows, MAX content 2,682 chars, zero corruption; producers spool one-line summaries only. Reopen only if a producer starts spooling bulk text or a single row exceeds ~8K chars."
+    next_action: "Production re-probe (coordinator): re-run one FRG-004 delegate shape (G1 shortlink) and confirm the DAG runs past the planner wave with provider stamps AND the stored graph round-trips (LENGTH > 32.7K with IS JSON = 1); then flip VERIFIED. The 25 historical corrupt task_graphs rows stay corrupt (those builds already failed honestly via the FRG-010 gate); no data repair planned. The FRG-010 >=3-stated-path completeness-gate threshold gap was closed by PR #836 (merged batch 2)."
   - id: TASK-FRD-006
     title: "Stop FRIDAY peer-escalation broadcasting memory_recall/source_repair to peers that cannot serve them"
-    status: MERGED
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-frd-006
     pr: 411
@@ -5505,7 +5517,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     summary: "ReflexBrain peer escalation now routes by PeerContract.declared_actions: memory_recall only to Memora (sole declarer), source_repair only to declaring peers (none today, so the fault stays local and surfaces unrepaired instead of broadcasting). Skipped peers are reported with reasons; Cortex untouched; escalation via verified receipts preserved for declared actions. Fail-on-main 15 / pass-on-fix 30/30; neighbours 159 passed (2 pre-existing sandbox failures, identical on main)."
     evidence:
       - "MERGED on origin/main: bf5cc6788572f0eb0effbf774a9513d35c3b8f60 Merge pull request #411 from surendra2304/claude/task-frd-006 (board hygiene 2026-11-16, audit §2A: PR #411 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-deploy (coordinator): the next unrepaired FRIDAY fault episode should produce ZERO POST /v1/task/execute 403s in Cortex's journal (and, once COR-009's PR #406 is deployed, zero task_execute_rejected lines for memory_recall/source_repair) -> flip VERIFIED. Follow-up candidate: align the memory_recall action name with Memora's served vocabulary (recall)."
+      - "PRODUCTION-VERIFIED 2026-11-17 (postdeploy-b): in the ~28h since PR #411 merged, Cortex's journal shows ZERO /v1/task/execute POSTs and ZERO 403s — against ~27 fault episodes in the ~23h before the fix. Caveat, stated plainly: the proof is the absence of the traffic (the fault-driven cadence means no unrepaired-fault episode is guaranteed inside the window); the coordinator accepts it, since the pre-fix cadence makes a silent 28h the expected signature of the fix working."
+    next_action: "None — complete and production-verified. Follow-up candidate (not owed): align the memory_recall action name with Memora's served vocabulary (recall)."
     files:
       - FRIDAY/src/friday/cognition/assistance.py
       - FRIDAY/src/friday/cognition/mesh.py
@@ -5610,7 +5623,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Coordinator: review + merge PR #372. Then schedule the change window: P1 (close OCI + ufw ingress for S1:10000; announce on this issue first), P3 (terminate drill leftover pid 2544072 if still running), P4 (disable rpcbind both hosts), P5 (remove Swarm ufw rules) as one low-risk batch; P2 (agent rebind VPC + repoint consumers; narrow S2 ufw rule 1) as a separate planned change; P6 only after a collaborator confirms the oracle-cloud-mcp gateway (8765) is unused; P9/P10 with the next Caddy/deploy-docs touch."
   - id: TASK-COR-009
     title: "Cortex /v1/task/execute 403 wall — caller/auth investigation (FRIDAY reflex broadcast vs property-scope gate) + rejection attribution logging"
-    status: MERGED
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-cor-009
     prs: [406]
@@ -5633,9 +5646,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Journal census (Server 2, retained window 2026-11-14 20:00 -> 2026-11-15 ~18:45 IST): 54x POST /v1/task/execute 403 — the only 403s on the service — all from 10.0.0.121; 113 auth-success lines; 0 invalid-key warnings; per-request auth-success immediately precedes each sampled 403 (13:12-13:13 burst, 18:11 pair)."
       - "Caller cross-proof: Forge journal (Server 1) 'Received action memory_recall from friday' x27 at matching seconds; FRIDAY code path reflex.py AssistanceBroker escalation -> assistance.py recall_from_peers (action memory_recall to all peers) + request_help_from_peers (action = capability 'source_repair') -> mesh.py PeerContract auth_style 'cortex' (X-Friday-Api-Key only)."
       - "Local reproduction + test outputs preserved in the crew workspace (~/workspace/cor-009/: repro.py, repro_main.txt, repro_fixed.txt, failed_fixed.txt); deployed files sha256 == main for auth.py/friday_router.py/main.py/web_property.py."
-      - "MERGED on origin/main: c6014812d044e894bb3b9117471ca8d8bf14af1a Merge pull request #406 from surendra2304/claude/task-cor-009 (board hygiene 2026-11-16, audit §2A: PR #None already merged — status was stale IN_REVIEW)."
+      - "MERGED on origin/main: c6014812d044e894bb3b9117471ca8d8bf14af1a Merge pull request #406 from surendra2304/claude/task-cor-009 (board hygiene 2026-11-16, audit §2A: PR #406 already merged — status was stale IN_REVIEW)."
+      - "VERIFIED 2026-11-17 — OVERTAKEN BY TASK-FRD-006 (postdeploy-b ruling): PR #411 (FRD-006) merged at 19:33, fourteen minutes BEFORE PR #406 (19:47), and removed the only traffic that ever triggered the property-scope gate. The rejection-attribution logging added here is merged and deployed, but it never had live traffic to attribute — the post-merge production census shows zero /v1/task/execute POSTs and zero 403s in ~28h, against ~27 fault episodes in the prior ~23h. Verified on the strength of the deployed code + the disappearance of the 403 wall it was built to explain."
     blockers: []
-    next_action: "Post-deploy (coordinator): next FRIDAY fault episode should show task_execute_rejected gate=property_scope lines in Cortex's journal -> flip VERIFIED. FRIDAY-lane follow-up (separate task): assistance.py should not broadcast memory_recall/source_repair to Cortex (memory questions only to Memora; source_repair only to peers that can repair source) — until then ~2 attributed 403s per unrepaired FRIDAY fault are expected and correct."
+    next_action: "None — complete. The FRIDAY-side fix lives in TASK-FRD-006 (VERIFIED). If a future peer again sends undeclared actions to Cortex, the attribution logging added here will name the gate in Cortex's journal."
   - id: TASK-SEN-016
     title: "Network hardening phase 2: P2 (VPC binding + S2 rule narrowing) + P9 (Caddy access logging) + tcp/3000 OCI residue"
     status: VERIFIED
@@ -5657,7 +5671,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: VERIFIED
     owner: muse_ai
     evidence: "Completion comment on issue #35 (this comment): S2 ufw 9 -> 6 rules; deleted exactly 2377/tcp, 7946, 4789/udp (all ALLOW IN from 10.0.0.0/16, v4 only) after re-verifying no listeners on those ports, Swarm.LocalNodeState=inactive, 0 containers. Before/after captures on S2 (/home/ubuntu/sen017_ufw_before.txt, sen017_ufw_after.txt); diff = only the intended deletions, SEN-016 mesh rules byte-identical. Post: S2 local health 8008/8009/8010 200, Caddy routes /sentinel|/cortex|/vyralx/health 200, S1->S2 mesh 200 + :8011 open, fleet-health-watcher post-change run Result=success (2026-11-15 18:09 IST). Zero rollbacks."
-    next_action: "Coordinator: flip to VERIFIED on read-back. No follow-up: stale Swarm ufw rules now removed on both hosts (S1 via TASK-SEN-015, S2 via this task)."
+    next_action: "None — complete. VERIFIED on read-back (done): stale Swarm ufw rules now removed on both hosts (S1 via TASK-SEN-015, S2 via this task); no follow-up."
     files:
       - docs/collaboration/WORK_BOARD.yaml
   - id: TASK-FRG-003
@@ -5796,8 +5810,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "First measured post-VOI-009 run FAILED the owner's SPEED criterion on every turn while PASSING the Gemini-only provider contract (completion comment 6893276215) — the FAIL is the run result, not a harness defect."
       - "FRD-005 re-run #5 (production run 20261116-175800, 2026-11-16; issue #35 comment 6916834339) - OVERALL FAIL on the SPEED-first bar: greeting PASS 4.89s vs bar 8.0 (first greeting pass; the TASK-VOI-015 MemorySwapMax=32M interim is production-proven on this leg, connect segment ~3.4s); delegation CONTENT PASS / latency FAIL 19.39s vs bar 12.0; recall CONTENT PASS (TASK-FRD-014 D10 fix proven live - the stored fact spoken verbatim) / latency FAIL 6.80s vs bar 5.0; forced-unverbalized verbatim-delivery leg PASS (first attempt, word-for-word in-session); follow-up / clock / goodbye / provider legs PASS. New defect D11 found (voice model acts on split-STT fragments) -> TASK-FRD-015; the residual latency is the brain/cognitive turn -> TASK-FRD-016."
       - "FRD-005 re-run #6 (production run 20261116-200627, 2026-11-16; issue #35 comment 6920046514) - OVERALL FAIL on the SPEED-first bar: greeting PASS 3.10s vs bar 8.0 (swap-cap win holds); TASK-FRD-015 PROVEN in production (induced split: junk remember held ungrounded then superseded before any dispatch, exactly one consolidated remember, confirmation named teal, zero junk in Memora); remember battery leg latency 6.99s vs bar 6.0 (miss by 0.99s - a battery-leg miss, distinct from the FRD-015 verdict); delegation FAIL latency 23.88s vs bar 12.0 / content receipt-exact PASS (10,792.80 / 0 open / 10 closed - trade 470 now counted closed); recall HARD FAIL (brain turn 53.59s, zero audio in the 60s window; full-match-retry merged hits bypassed the deterministic direct answer - TASK-FRD-017); verbatim watch FIRED in production at 25s unverbalized but delivered an improvised memory dump instead of the settled reply (production regression vs re-run #5's drill pass - TASK-FRD-018); goodbye latency FAIL 15.90s vs bar 4.0 as a downstream casualty of the stuck recall turn; follow-up PASS 1.71s; clock PASS 1.60s; provider PASS (Gemini Live); duplicates ZERO. Per-fix: FRD-015 PROVEN; FRD-016 NOT proven."
+      - "FRD-005 re-run #7 (production run 20261116-2330, 2026-11-16 ~23:55 IST; issue #35 comment 6924983808) - OVERALL FAIL on the SPEED-first bar: greeting PASS 6.00s vs bar 8.0; delegation FAIL 12.61s vs bar 12.0; recall-colour HARD FAIL (brain turn 52.20s, nothing heard in-turn). Forensics (~/workspace/frd017-forensics/) EXONERATED the FRD-017 branch logic: the subject-shaped draw ran and missed because Memora returned neither teal record during the distress window — the harness replay reproduces the exact production log signature, and with teal returned the direct answer fires end-to-end. FRD-018 proven on the drill path only. Fixes dispatched from this run — PR #806 (Memora lexical fast lane), PR #821 (per-draw logging), PR #823 (silent-path) — all merged in batch 2."
     blockers: []
-    next_action: "FRD-017 + FRD-018 fixes → re-run #7 → owner in-hands re-test remains final acceptance."
+    next_action: "Re-run #8 is the next acceptance attempt (the #7 fixes — PRs #806/#821/#823 — merged in batch 2; re-run #8 also waits on the TASK-MEM-009 migration remediation). The owner's in-hands re-test remains the final acceptance. NOTE: PR #312 delivered the harness only — this entry is the standing voice-acceptance tracker and flips only on a passing full re-run plus the owner's re-test."
   - id: TASK-VYR-009
     title: "VyralX compliance-gate automation — the per-video compliance checklist as an enforced gate at ready-to-upload (Wave 5, VyralX crew)"
     owner: muse_ai
@@ -5856,10 +5871,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Coordinator: verify + merge this PR, then the remediation DECISION (owner/coordinator — this task changed nothing): (1) stop distributing the master key (per-agent keys already exist; check each agent's client credential chain first), (2) split MEMORA_MASTER_KEY from the memora identity, (3) replace FRIDAY's on-behalf-of key-holding with explicit delegation policy, (4) decide UNIVERSAL semantics + share-recipient auto-registration, (5) rotate distributed keys last. Until then the measured state stands: any single agent .env read yields full Memora impersonation."
   - id: "TASK-MEM-005-R1"
     title: "Memora credential remediation build — master split, dedicated per-agent Memora keys, scoped delegation (executes TASK-MEM-005-W5 next_action items 1-3 + rotation-by-design)"
-    status: IN_REVIEW
+    status: MERGED
     owner: "muse_ai"
     branch: "claude/task-mem-005-r1-memora-server"
-    pr: null
+    pr: 807
     milestone: "Wave 5 — Memora deep-dive (remediation)"
     files:
       - "Memora/apps/api/dependencies.py"
@@ -5872,9 +5887,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "MEMORA_API_KEY presented as any other agent returns 401; as memora it authenticates memora alone; a distinct MEMORA_MASTER_KEY still authenticates as the claimed agent (break-glass preserved)."
       - "Delegation: without a policy grant X-On-Behalf-Of is 403; a read,learn grant allows search + learn-outcome as the target and denies write/mutate; delegation on unmapped routes is 403; the master credential cannot delegate; wrong-caller-key is 401 before delegation is considered."
       - "No client in the fleet resolves MEMORA_API_KEY (or another agent's key) to talk to Memora after the companion PRs; every chain is <OWN>_MEMORA_API_KEY then <OWN>_API_KEY."
-    evidence: "Code-verified per-agent credential-chain table (crew DESIGN.md, from main 0206c62a): FRIDAY _agent_api_key resolved any agent's key and its own chain ended at MEMORA_API_KEY; Stratex scoped client and Futuris/Forge alias chains fell back to MEMORA_API_KEY; VyralX peers presented the MEMORA_API_KEY env value as vyralx; IntelX already own-key; Cortex cross-agent helpers (record_security_decision/record_consultation) have zero callers in the deployed tree; Inference's memora client has no production callers. Local verification: 27/27 plain-python harness checks pass (master split, break-glass, per-agent auth, delegation allow/deny matrix, scope map, policy parser — sandbox pytest is tempfile-denied, CI is the operative gate); Memora FastAPI app constructs (46 routes) with the new dependency signatures; new pytest suite Memora/tests/test_mem005_remediation.py ships in this PR."
+    evidence: "Code-verified per-agent credential-chain table (crew DESIGN.md, from main 0206c62a): FRIDAY _agent_api_key resolved any agent's key and its own chain ended at MEMORA_API_KEY; Stratex scoped client and Futuris/Forge alias chains fell back to MEMORA_API_KEY; VyralX peers presented the MEMORA_API_KEY env value as vyralx; IntelX already own-key; Cortex cross-agent helpers (record_security_decision/record_consultation) have zero callers in the deployed tree; Inference's memora client has no production callers. Local verification: 27/27 plain-python harness checks pass (master split, break-glass, per-agent auth, delegation allow/deny matrix, scope map, policy parser — sandbox pytest is tempfile-denied, CI is the operative gate); Memora FastAPI app constructs (46 routes) with the new dependency signatures; new pytest suite Memora/tests/test_mem005_remediation.py ships in this PR. MERGED in batch 2 (2026-11-17): the trio landed in order — server PR #807 -> c25cccee, FRIDAY client PR #824 -> b8dfe66c, fleet clients PR #826 -> 43b86b08 — and is deployed fleet-wide (S1 == main 2f840d52)."
     blockers: []
-    next_action: "Coordinator: review + merge the three MEM-005-R1 PRs (server, FRIDAY client, fleet clients), then run the prepared serialized env pass (crew report ENV_CHANGE_SET: Memora env gains distinct MEMORA_MASTER_KEY + rotated dedicated registry values + MEMORA_DELEGATIONS; each agent env gains only its own <AGENT>_MEMORA_API_KEY and loses MEMORA_API_KEY), restart Memora then the agents, and re-run the MEM-005 access matrix (own-key cells identical to the audit; old service-key values 401 at Memora; delegation grants exercised allow+deny) before marking VERIFIED. F3/F4 decisions from the W5 entry remain open and are not part of this task."
+    next_action: "Coordinator's serialized live env pass (owed): apply the prepared ENV_CHANGE_SET — Memora's env gains the distinct MEMORA_MASTER_KEY + rotated dedicated registry values + MEMORA_DELEGATIONS + the re-signing step; each agent env gains only its own <AGENT>_MEMORA_API_KEY and loses MEMORA_API_KEY; FLEET_ORCHESTRATOR_MEMORA_API_KEY + FLEET_SUPERVISOR_MEMORA_API_KEY provisioned — Memora first, FRIDAY last, restarts in that order. Then re-run the MEM-005 access matrix (own-key cells identical to the audit; old distributed values 401 at Memora; delegation grants exercised allow+deny): VERIFIED only when the matrix passes. F3/F4 decisions from the W5 entry remain open and are not part of this task."
   - id: TASK-INT-003
     title: "IntelX research depth: fixed-set rubric scoring (source diversity, primary-source ratio, contradiction handling, citation verifiability), fix the weakest proven link, re-score"
     owner: muse_ai
@@ -6070,8 +6085,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Cleanup: runner hard-deleted 52/58 created records; the remainder (incl. one whose delete returned HTTP 500) were swept server-side and verified: zero token-carrying records remain in production."
       - "Full Memora suite is not green at baseline (wave-3: 55 failed / 608 passed / 2 skipped on an older main); a branch full-suite comparison was attempted twice and blocked by sandbox environment failures (shared /tmp exhaustion, sandbox write filter) — operative gate is the search-adjacent set above."
       - "MERGED on origin/main: 027b0ebaadc9caa6bd4271528fdb5cbb10416796 Merge pull request #311 from surendra2304/claude/task-mem-002-recall-benchmark (board hygiene 2026-11-16, audit §2A: PR #311 already merged — status was stale IN_REVIEW)."
+      - "LIVE AFTER (mem002-fastlane, 2026-11-17): the benchmark re-ran against production Memora — 9/9 PASS, every target at position 1. update_recency is fixed (the newer correction now outranks the stale version); graph_companion_guard improved from position 6 to position 1. Search latency improved: p50 4,101 -> 3,880 ms, p95 6,197 -> 5,711 ms. Cleanup verified (53 probe records deleted, absence confirmed). The benchmark leg of this task is production-verified; the FRD-017 lexical fast lane (PR #806) has also merged (batch 2) and deployed."
     blockers: []
-    next_action: "Post-merge: coordinator: merge the code PR, let Fleet CD deploy, then the crew re-runs benchmarks/recall_benchmark.py on Server 1 for the AFTER table and posts the board VERIFIED update via a fresh-main board PR."
+    next_action: "Flip VERIFIED with FRD-005 re-run #8's recall outcome — the fast lane's end-to-end production proof rides the voice acceptance run (re-run #8 itself waits on the TASK-MEM-009 migration remediation). Nothing else is owed on this entry."
   - id: TASK-STR-RD-017
     title: "Funding-carry forward paper simulation (RD-009 s7 forward test)"
     owner: muse_ai
@@ -6179,7 +6195,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     title: 'fleet-health-watcher ''dead on both servers'' (REL-045) — diagnosed live: the watcher never died; a timer-triggered oneshot''s resting state was misread.
       Real defect found and fixed: RECOVERED self-trigger via the '':last'' state key, plus a --status liveness mode'
     owner: muse_ai
-    status: MERGED
+    status: VERIFIED
     priority: P1
     created: 2026-11-15
     updated_at: 2026-11-15
@@ -6209,8 +6225,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       regression tests fail for exactly the production reason ('':last''-only state emits a spurious RECOVERED; the third consecutive healthy cycle repeats RECOVERED),
       while crash-loop / service-down / genuine-recovery checks pass on both versions. Repo CI on the PR is the definitive full-suite gate.'
     - "Landed on origin/main via replacement/rebase direct commit on main (see landing commit): c42c8a3baf3375403319b08393f8611649fc5330 TASK-SEN-010: fleet-health-watcher was never dead — fix RECOVERED self-trigger, add --status liveness check (replacement for #358, rebased on be6ba651) (board hygiene 2026-11-16, audit §2B: original PR #358 was not itself merged — content landed via this vehicle)."
+    - "PRODUCTION-VERIFIED 2026-11-17 (postdeploy-b): the fixed watcher is proven on BOTH hosts — post-deploy cycles run clean (no spurious per-cycle [RECOVERED] lines) and the --status liveness check reports healthy on Server 1 and Server 2."
     blockers: []
-    next_action: "Post-merge: fleet CD redeploys scripts/fleet_health_watcher.py to both servers (no unit reinstall and NO restart/enable needed — the timers never stopped, and each cycle executes the script from the checkout; the unit-file change is comments only). Post-deploy verification per host: 'journalctl -u fleet-health-watcher.service -n 30' shows cycles WITHOUT the per-cycle spurious [RECOVERED] lines, the state file's open_alerts holds only ':last' keys after a healthy cycle, and 'python3 scripts/fleet_health_watcher.py --status' exits 0. Then move TASK-OBS-001 to VERIFIED — its requested 'next real alert+recovery observation' has occurred repeatedly in the retained journal. Boundary: alert FORWARDING (FLEET_ALERT_COMMAND to Telegram) is still unconfigured — that was OBS-001's recorded phasing and belongs to the SEN-006/SEN-008 alert-channel line, not this task; SEN-009 owns backup-freshness alerting. Neither overlaps this watcher's crash-loop/health sensing."
+    next_action: "None — complete and production-verified on both hosts. (Alert FORWARDING to Telegram remains with the SEN-006/SEN-008 alert-channel line, per this entry's boundary note; it was never this task's scope.)"
   - id: TASK-FUT-010
     title: 'Futuris legacy BacktestEngine grades its own homework: forecast-as-actual substitution removed — missing actuals are now explicitly UNSCORED (fix, not retire:
       the engine has a live nightly production caller)'
@@ -7314,7 +7331,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-REL-047
     title: "Implement the five approved TASK-REL-045 TUNEs: (1) Inference Groq prompt guard on the gateway path every route traverses, (2) NVIDIA ladder rung disabled behind a config flag, (3) Memora + Stratex ENVIRONMENT/APP_ENV production flip (repo-side + deploy note; MEM-005 auth matrix is the post-deploy gate), (4) IntelX Inference timeout 45s -> 60s, (5) Cortex decision engine rejects incomplete matrices with HTTP 422 instead of inventing 0.5 scores"
     owner: muse_ai
-    status: MERGED
+    status: VERIFIED
     priority: P1
     created: 2026-11-15
     updated_at: 2026-11-16
@@ -7331,8 +7348,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "STATES at delivery: items 1, 2, 4, 5 implemented + tested (local suites + A/B where applicable), NOT merged / deployed / production-verified. Item 3 implemented repo-side only, NOT deployed, NOT production-verified (deploy note + matrix checklist in PR #363). No server was modified by this crew; no credential values appear in any artifact."
       - "ITEM 5 RULING COMPOSITION 2026-11-16 (finisher crew): the merge runner held PR #361 \u2014 its gate broke 5 merged-suite tests on composition (reproduced exactly by the finisher, incl. a decision-singleton bleed the gate exposes). Lead-coordinator ruling: the 422 gate WINS; rejections are logged as decision records (outcome=rejected_incomplete, missing cells listed, no selection, no confidence); COR-002/COR-003 tests updated to the new contract. Replacement PR #647: gate verbatim + _record_rejection logging + updated tests + singleton isolation in both route tests + route fix (stacked COR-002/COR-003 route edits invoked recommend() twice per request; now exactly one call = one log record). Suites: affected files 36/36; full Cortex unit 17F/748P vs baseline 17F/743P, failure sets byte-identical (all pre-existing, unrelated). PR #647 merged 36c8b4fd by merge-runner round 2; PR #361 closed as superseded."
       - "MERGED on origin/main: 36c8b4fd1e494a8dc61d87c58af46fe1d7ef711d Merge pull request #647 from surendra2304/claude/task-rel-047-cortex-422-ruling (board hygiene 2026-11-16, audit §2A: PR #647 already merged — status was stale IN_REVIEW)."
+      - "PRODUCTION-VERIFIED 2026-11-17 (postdeploy-b): item 5 proven live — the production Cortex route rejects an incomplete decision matrix with HTTP 422 naming the missing cells, and the rejection is recorded in the decision log (outcome=rejected_incomplete). Item 3's Server 1 env flip executed (Memora + Stratex development→production) with the MEM-005 auth-matrix re-run PASS. Items 1/2/4 deployed fleet-wide with main (S1 == main 2f840d52; fleet 10/10 /health 200)."
     blockers: []
-    next_action: "Post-merge: remaining REL-047 post-merge chain: Fleet CD -> ENV_FLAG_FLIP note on Server 1 (Memora + Stratex) + MEM-005 auth-matrix re-run -> production probes for items 1/2/4/5 (item 5 probe: incomplete matrix -> 422 from the live route + the rejection present in the decision log) -> board VERIFIED."
+    next_action: "None — complete and production-verified (all five items; item 5 probe and item 3 flip + matrix re-run evidenced 2026-11-17)."
   - id: TASK-INF-009
     title: 'Fix the Inference Gemini route''s token accounting: hidden thinking tokens burn the caller''s visible budget'
     status: MERGED
@@ -7396,7 +7414,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     last_update_comment_url: null
   - id: TASK-INF-010
     title: 'Inference degraded-provider latency: cap the primary slice, one end-to-end route deadline, skip the redundant adapter cooldown (24.3s-to-503)'
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/task-inf-010-degraded-latency
     pr: 818
@@ -7426,12 +7444,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     - 'Production journal (S1, 2026-11-16): two 200s at 10:46:21; Groq size-guard warnings (~23,605 tok > 7,000) at 10:46:44 and 10:46:59; 503 provider_degraded at 10:47:06. Repro journal 23:54 IST: ''Provider gemini timed out after 36.1s'' inside the route retry.'
     - 'INF-009 probe latencies via the deployed gateway: 9 requests served by Groq substitution at 38.3-66.8s each (vs INF-005 live median 7.7s) — the caller-visible cost of the uncapped slices plus the stacked retry budget.'
     - 'Production config (S1 Inference/.env): no REQUEST_TIMEOUT / PRIMARY_ATTEMPT_* / LITELLM / LOCAL overrides — code defaults govern (60s budget, 36s slice, local + LiteLLM tiers disabled).'
+    - 'MERGED in batch 2 (2026-11-17): PR #818 merged direct -> main 88b121c8; deployed fleet-wide (S1 == main 2f840d52).'
     risk_flags:
     - The 15s default cap is a judgement call from the measured distribution (healthy Gemini serves land in 1-8s); a legitimately slow-but-alive primary slower than 15s now fails over earlier — the ladder still serves the request, and the cap is a single settings constant.
     - The route retry skip (<2s remaining) changes one edge behaviour: a first attempt that consumes nearly the whole budget no longer gets a speculative second ladder pass; its result (usually the 503) stands — that is the deadline contract working as intended.
     - Gemini adapter internal sleeps (0.3s key rotation, in-adapter timeout retries) deliberately untouched — bounded by the rung wait_for; revisit only if post-deploy journals show them dominating.
     blockers: []
-    next_action: 'Coordinator: review + merge PR 818, Fleet CD Inference; then production-verify from the S1 journal (primary timeouts at <=15s; one shared deadline per chat request; no second full-budget retry) and re-run the incident-shaped probe — expect failover completes inside one 60s envelope. INF-009 close-out probe stays gated on Gemini serving from S1 again. Then flip this entry to VERIFIED.'
+    next_action: 'Post-merge production verification (owed): S1 journal proof that primary timeouts are <=15s with one shared deadline per chat request (no second full-budget retry), plus the incident-shaped probe re-run — expect failover to complete inside one 60s envelope. INF-009 close-out probe stays gated on Gemini serving from S1 again. Flip VERIFIED with that evidence.'
     claim_comment_url: https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6924639360
     last_update_comment_url: null
   - id: TASK-SEN-002
@@ -7460,10 +7479,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Coordinator: review + merge this PR (fixes F-02 + F-05 partially). Follow-ups NOT in this PR (server-side change windows): (1) chmod/remove Server 1's stale VyralX/.env (F-11, one command); (2) close OCI ingress for S1:10000 and rebind agents (127.0.0.1 on S1, 10.0.0.120 on S2) in live units + deploy/setup_fleet.sh; (3) regenerate pinned manifests from the live venv under change control (production venv verified current on all flagged packages; manifests drifted behind it — S2 venv lacks dnspython/WeasyPrint) and raise F-04 floors; (4) VyralX Pillow ceiling raise after compatibility check; (5) SHA-pin GitHub Actions; (6) untrack FRIDAY/.data/**; (7) prune .env.bak-* copies + cap retention; (8) disable rpcbind / identify S1 8081+8089+8765 / explain Docker on both hosts (F-12)."
   - id: TASK-INT-009
     title: "IntelX verification pass (INT-005 RESULTS §6): verbatim quote gate with live re-verification (Bruker lesson), entailment/coverage screen, boilerplate exclusion, single_source flags, re-audit hook"
-    status: IN_REVIEW
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-int-009-verification-pass
-    pr: null
+    pr: 556
     contributors: []
     priority: P1
     created_at: "2026-11-15T16:41:02+05:30"
@@ -7489,7 +7508,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Adopted the INT-005 crew's staged pass as base (statement_support screen, chrome filter, their 8 tests, FACT_CHECK_AUDIT_INT005.md) — re-verified in the INT-009 clone: 8/8 pass. Gaps implemented by INT-009: live re-verification wired into collect_live_brief (partial downgrade ships survivors with quotes_verified=false + downgraded_findings + live_reverification partition; total downgrade falls back to unsynthesised findings, DEGRADED), shared is_boilerplate_text predicate, single_source/independently_verified flags, reaudit_finding classifier + scripts/reaudit_live_research.py (SELECT-only)."
       - "Tests: test_int009_verification_gaps.py 14/14 pass (Bruker-shaped fixtures at unit, pipeline and re-audit level); neighbour ring test_rel038 + test_citation_validation 20 passed, identical to the pristine-main baseline — no regressions."
       - "citation_integrity.py reuse decision: the module is NOT on main (exists only in the INT-008 crew workspace; its wiring is a separate queued delivery) — not duplicated here; live path uses statement_support, claims path stays INT-008's. Mapping documented in IntelX/docs/RESULTS_INT-009_VERIFICATION_PASS.md."
-    next_action: "Coordinator: review + merge the INT-009 PR (if PR #322 lands first, rebase the live_research_task.py hunks — disjoint regions), set pr number on this entry, deploy via Fleet CD, then run IntelX/scripts/reaudit_live_research.py against production live_research_runs for the AFTER partition; flip VERIFIED with that output."
+      - "PRODUCTION-VERIFIED 2026-11-17 (intelx-proofs-b): the re-audit hook ran against production — AFTER partition: 106 claims, 93.4% VERIFIED against the pre-declared 90% bar (INT-005 BEFORE partition was 65.7%). Implementing PR #556 merged and the deployed code is byte-identical to main."
+    next_action: "None — complete and production-verified (AFTER partition 93.4% VERIFIED vs the 90% bar)."
   - id: "TASK-INT-008"
     title: "IntelX citation integrity: mechanical exists/retrieved/supports verification in the pipeline; unsupported claims labelled as inference"
     status: "IN_REVIEW"
@@ -7744,10 +7764,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Post-merge: decide F-1 token rotation (if rotated, refresh Forge/Sentinel .env + the 3 .bak copies carrying it, and strip the token from the 5 completed-workspace .git/config remote URLs); post-deploy, confirm a Forge build terminal.log shows a masked remote URL, then flip VERIFIED."
   - id: "TASK-INT-007"
     title: "IntelX standing research watches — design + v1 (AI model releases watch, end-to-end)"
-    status: "IN_REVIEW"
+    status: "MERGED"
     owner: "muse_ai"
     branch: "claude/task-int-007"
-    pr: null
+    pr: 600
     contributors: []
     priority: "P2"
     created_at: "2026-11-15T13:32:00+05:30"
@@ -7770,9 +7790,10 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Claim: issue #35 comment 6891415594 (2026-11-15). Live proof 2026-11-15 on the real feeds, final source list: poll 1 fetched 2,314 items -> exactly 1 alert ('Introducing Images 2.6', OpenAI Blog, published 2026-11-04, score 5), 3 suppressed over the per-poll cap, 2,186 baselined, 122 below threshold; poll 2 -> 0 alerts / 2,314 duplicates; poll 3 with a fresh outbox -> 0 alerts (dedupe lives in the seen-store). Proof used the documented baseline_max_age_hours override (30 days); all other production defaults untouched."
       - "14/14 unit tests pass via a direct harness in the crew sandbox (the sandbox cannot run the repo pytest harness: tests/conftest.py imports the full IntelX app stack, which is not installed there, and sandbox child-process restrictions break its startup; PR CI is the pytest authority)."
       - "Side finding: Anthropic has discontinued its public RSS — news/rss.xml, rss.xml, feed.xml and news/feed.xml all returned 404 when probed 2026-11-15. The news ingester's Anthropic entry carries the same dead URL. Watch v1 ships without Anthropic; the Claude-coverage gap is documented in the design doc section 5."
+      - "MERGED + DEPLOYED (intelx-proofs-b, Step 7): the watch engine merged via PR #600 and the deployed code is byte-identical to main. Enablement was correctly held OFF (the proofs' NO-GO): standing watches stay disabled until the TASK-PRO-002 outbox drainer exists — it has since merged (PR #805 via replacement #851, batch 2). Watch proofs: india_tech_regulatory PROVEN (1 alert + 1 cap-suppressed, dedupe exact, zero false positives); crypto_market_structure was NOT proven — two definition defects (etf_decision stem could not match approves/approved/rejected; exchange_structure blind to venue-first headlines), fixed by PR #817 (merged batch 2); its watch definition stays enabled=False."
     risk_flags: []
     blockers: []
-    next_action: "Coordinator: review and merge the PR (crew does not merge), then set ENABLE_STANDING_WATCHES=true for IntelX on Server 1 and wire TASK-PRO-001's drainer to the watch outbox (./data/watches/outbox.jsonl); flip to VERIFIED after the first production poll cycle matches the proof's behaviour."
+    next_action: "Enablement sequence (the PRO-002 drainer prerequisite is now satisfied): (1) set FRIDAY_PROACTIVE_INTELX_WATCH=on in FRIDAY's Server 1 env, restart FRIDAY, and verify the drainer runs clean against an empty/absent outbox; (2) only then flip INTELX_ENABLE_STANDING_WATCHES=true for IntelX on Server 1 — the correct variable is INTELX_ENABLE_STANDING_WATCHES (the bare ENABLE_STANDING_WATCHES named in this entry's earlier next_action is not read by the code and silently does nothing). Flip VERIFIED after the first production poll cycle matches the proof's behaviour."
     claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891415594"
     last_update_comment_url: null
   - id: TASK-SEN-008
@@ -7857,22 +7878,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "PR #392 head 3ba7d5da CI 9/9 check-runs green (test, contracts, secrets scan, layout, monorepo policy, image build). Gate wired in orchestrator step_task (tester gate intercepted; tester never invoked on unhealable omissions) + run_task backstop demoting COMPLETED to FAILED naming missing modules; healing only via RecoveryEngine.create_missing_module (create route: 0.70 bar, compile gate, guarded write; manifest added as a naming source); gate re-reads disk after healing. Suite Forge/tests/test_frg010_completeness_gate.py: 14 tests, imports symbols absent on main (fails there by construction), green in CI. Finisher-verified: shipped blobs byte-identical to crew sources (completeness ddf9c754, test d4eab20e, roles carry 1c99cc7d). Acceptance battery NOT run to completion by the original crew (scratch env staged on S1 /tmp/frg010, zero run artifacts) — outcomes not claimed."
       - "Landed on origin/main via replacement/rebase direct commit on main (see landing commit): 3c55b6cff02cbd62e0588151f32340c800b2af82 TASK-FRG-010: Forge module completeness gate (stacked on PR #329) (replacement for #392, rebased on 1ab2160f) (board hygiene 2026-11-16, audit §2B: original PR #392 was not itself merged — content landed via this vehicle)."
+      - "ACCEPTANCE RE-RUN 2026-11-17 (forge-acceptance) — FAIL, entry stays MERGED (not verified): R3 healed 4/4 but FAILED 11/13 (cross-file runtime); the R2 two-module goal's gate NEVER FIRED — a vacuous 12/13 over an empty project, because the >=3-stated-path threshold meant a two-module manifest never triggered the gate (fixed by PR #836, merged batch 2); R2X gate fired, healed 2/2, FAILED 12/13."
     merge_note: "Board hygiene 2026-11-16 (§2D): pr normalised to bare integer 392; original annotation '(open; stacked on PR #329 — merge #329 first)' moved here."
-    next_action: "Post-merge: deploy Forge, then run the acceptance battery against the deployed service — FRG-003's R3 inventory goal verbatim + the two-module temperature goal (driver preserved on S1 at /tmp/frg010/repo/Forge/battery.py and in the crew workspace) — and flip this entry to VERIFIED only with those outcomes recorded."
+    next_action: "Acceptance re-run owed on the post-fix build: PR #836 (gate threshold) and the FRG-012 DAG-drain fix (PR #837 via replacement #855) merged in batch 2 — re-run the R3 + two-module battery against the deployed Forge (driver preserved on S1 at /tmp/frg010/repo/Forge/battery.py) and flip VERIFIED only with passing outcomes recorded."
   - id: TASK-INT-011
     title: "Wire live IntelX research into the canonical store (Option W)"
     owner: muse_ai
-    status: MERGED
+    status: VERIFIED
     pr: 382
     branch: claude/task-int-011
     evidence:
       - "PR stacked on #365 head + #355 files by blob SHA (guards asserted at ship); projection reuses ingest_and_normalize + ClaimRepo span enforcement; INFERRED origin for synthesized statements; idempotency_key live:<run_id>; lookup census honesty fix. Local pytest sandbox-blocked (content-write EPERM); static + in-memory logic verification done; CI is the test gate."
       - "Landed on origin/main via replacement/rebase direct commit on main (see landing commit): f346da39218e0b41d73b75e6afe782e9b388b786 TASK-INT-011: wire live IntelX research into the canonical store (Option W) (replacement for #382, rebased on 1456ab49) (board hygiene 2026-11-16, audit §2B: original PR #382 was not itself merged — content landed via this vehicle)."
+      - "PRODUCTION PROOF PASS 2026-11-17 (intelx-proofs-a, Step F3): a live research call projected the canonical store's first-ever write — 1 run / 5 sources / 5 documents / 53 chunks / 3 claims / 3 evidence / 1 finding (run lr_07314234e9b4419e8b7049d0; canonical record c7ec6f945cb14c8c9a5e5214cf0ed9a3), confirmed by an independent database census."
     merge_note: "Board hygiene 2026-11-16 (§2B): status IN_REVIEW -> MERGED; content landed via replacement/rebase direct commit on main (see landing commit) f346da39218e0b41d73b75e6afe782e9b388b786, not via merge of original PR #382."
-    next_action: "Post-merge: Fleet CD, then production proof = one live research_live call with a census of the seven canonical tables before/after (expect +1 run/source/document, +claims/evidence/finding) — board VERIFIED only on that evidence. No test rows were written to production tables."
+    next_action: "None — complete and production-verified (canonical store's first write, census-confirmed 2026-11-17)."
   - id: TASK-SEN-014
     title: "chromadb exposure determination + dead-code removal (FRIDAY)"
-    status: MERGED
+    status: VERIFIED
     owner: muse_ai
     branch: "claude/task-sen-014-chromadb"
     pr: 368
@@ -7885,7 +7908,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "FRIDAY/tests/test_vector_memory_phase22.py"
     evidence:
       - "MERGED on origin/main: 3b7cf71c265862ec97d31a371bf283afff809d75 Merge pull request #368 from surendra2304/claude/task-sen-014-chromadb-removal (board hygiene 2026-11-16, audit §2A: PR #368 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: flip to VERIFIED. No deploy step beyond normal Fleet CD; no production probe owed (behaviour unchanged by design — chromadb was dead in production)."
+    next_action: "None — complete. Flipped to VERIFIED per this entry's own post-merge instruction: no deploy step beyond normal Fleet CD and no production probe owed (behaviour unchanged by design — chromadb was dead in production)."
   - id: TASK-PRO-001
     title: "Proactive FRIDAY v1: Stratex event alerts (open/close/kill-trip/breaker/measurement) + self-generated morning self-check, via the real NotificationManager path"
     status: IN_REVIEW
@@ -8374,7 +8397,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
   - id: TASK-FRD-001
     title: "FRIDAY chat quality - memory seam fixes (forget frame words, recall fallback probe) + retired-testnet heartbeat fallback removed"
     owner: muse_ai
-    status: IN_REVIEW
+    status: VERIFIED
     priority: P1
     created: 2026-11-15
     files:
@@ -8383,7 +8406,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - FRIDAY/src/friday/tools/builtin/stratex_portfolio.py
       - FRIDAY/tests/test_frd001_memory_mutation.py
       - FRIDAY/tests/test_frd001_stratex_fallback.py
-    next_action: "Post-deploy probes (coordinator): re-run audit prompts #18/#19/#6 against production chat after Fleet CD; then flip to VERIFIED."
+    evidence:
+      - "PRODUCTION-VERIFIED 2026-11-17 (postdeploy-a): audit prompts #18/#19/#6 ALL PASS against production chat — recall surfaces real facts, forget deletes, and the Stratex answer is receipt-exact. The one residual the probes found (the forget CONFIRMATION echoing the forgotten content verbatim — self-defeating) was fixed by PR #822, merged in batch 2."
+    next_action: "None — complete and production-verified."
   - id: TASK-COR-002
     title: "Cortex decision provenance: audit of production decision/recommendation outputs (0/11 traceable) + REL-032-pattern provenance block on all decision surfaces + fixes for hybrid-recommendations 500, lead-score 500 (ORA-01400) and decision-route KeyError 500s"
     status: IN_REVIEW
@@ -8420,11 +8445,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Coordinator/merge-runner: when the bridge recovers, either let the crew's push loop finish (branch claude/task-cor-002-decision-provenance, tree must equal local HEAD tree of 415af127) and the crew opens the PR with ~/workspace/cor-002/pr_body.md, or replicate commit 415af127 from ~/workspace/cor-002/repo directly. Then add this entry to WORK_BOARD.yaml via a fresh-main board PR (insertion-only; set pr: to the PR number), merge the code PR, deploy via Fleet CD, and production-verify: hybrid recommendations 200 for a profiled user, lead-score 200 + a LEAD_SCORES row with non-null ID, decision/recommend provenance shows defaults_applied for a partial matrix. Residuals: (1) LEAD_SCORES FK behaviour on production Oracle could not be re-verified live (bridge reads inconclusive); the route is correct under both variants (captured leads persist; uncaptured lead_ids get 404). (2) Seasonality statistic unchanged by design (basis disclosed)."
   - id: TASK-MEM-008
     title: "Memora write-path audit: trace every agent write path into the production Oracle store, plant/retrieve-verify each, fix silent-loss paths"
-    status: IN_REVIEW
+    status: MERGED
     owner: claude
     assigned_to: muse_ai
     branch: claude/task-mem-008-write-path-fixes
-    pr: null
+    pr: 625
     claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6891866751"
     files:
       - "Inference/app/memora_cloud_fallback.py"
@@ -8447,8 +8472,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Live probes 2026-11-15 (Server 1 localhost + public route), markers MEM008P/R/S: W1 create id 2186eccf-b098-494c-954f-5471f44ee072 (201, oracle, durable, GET+search verified; 12.69s latency noted); A1 inference semantic create -> 403 policy text verbatim; A2 inference episodic create id bd227982-2e54-45dd-9bf5-52f8792163a7 -> 201; A4 stratex record-interaction 201 durable; A5 inference learn-outcome 201 id b61ebffd-e517-4a5c-b49b-171878479751; W8 mesh envelope message_id mem008-64e8b4697a2e polled back from /v1/events."
       - "INCIDENT (crew-caused, disclosed): probe cleanup treated the hybrid semantic /v1/memories/search (min_score=0) as a literal marker match and hard-deleted its result sets. Memora journal tally for the window: 1,170 DELETE lines, 122 HTTP 200, 268 HTTP 500, 780 HTTP 404; 121 unique ids deleted of which only 6 are known probe ids — an estimated ~85-115 non-probe production memories were hard-deleted. No further deletes made after recognition. Recovery options for the coordinator: Oracle backup state (cf. TASK-MEM-007 backup work), FRIDAY's local-first Oracle fallback twins for friday-owned records."
     blockers: []
-    merge_note: "Board hygiene 2026-11-16 (§2D): pr field normalised — original value 'pending coordinator merge (fix PR + this board PR opened 2026-11-15)' was unparseable and named no PR number, so pr is null until the coordinator records the real PR number. Status unchanged (coordinator decision pending)."
-    next_action: "Coordinator: (1) review + merge the TASK-MEM-008 fix PR, then this board PR; (2) decide recovery for the ~85-115 hard-deleted non-probe memories (backup restore vs FRIDAY local-twin re-sync vs accept loss) — crew recommends checking the MEM-007 backup state first; (3) optional follow-ups: deployed-FRIDAY-client end-to-end probe (bridge transport failed 4x during this audit; endpoints + deployed config verified equivalent), Memora .env ENVIRONMENT=development vs MEMORA_ENV=production mismatch (mesh-envelope signature-required branch reads ENVIRONMENT), write-latency tail (one create took 12.69s vs the 5s fallback-client timeout — post-fix episodic writes from slow paths can still time out client-side; consider raising fallback timeouts in a follow-up)."
+    merge_note: "Fix PR #625 MERGED (merge def5d6db; content commit a8fdcf47 'TASK-MEM-008: fix fleet-wide silent memory-write loss (semantic-write 403) + FRIDAY write hardening'), confirmed in main's history 2026-11-17. Earlier board hygiene 2026-11-16 (§2D) had normalised the pr field to null because the original value named no PR number."
+    next_action: "Coordinator decision still owed: recovery for the ~85-115 non-probe production memories hard-deleted by this audit's probe cleanup (incident disclosed in the evidence above) — check the TASK-MEM-007 backup state first, then choose backup restore vs FRIDAY local-twin re-sync vs accept the loss. Optional follow-ups from the audit remain open: deployed-FRIDAY-client end-to-end probe, Memora .env ENVIRONMENT/MEMORA_ENV mismatch, fallback-client write-timeout raise."
   - id: TASK-STR-DATA-001
     title: "Stratex data supply: OANDA instrument expansion inventory — provenance-verified history (RD-002 cache contract) for every OANDA instrument beyond the RD-002 panels, feeding TASK-STR-RD-003's forex-native track"
     status: IN_REVIEW
@@ -8962,7 +8987,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "POST-FIX DRILL (same harness): S6 discovery-hang -> SERVED by the waterfall at 4.51s of an 8s budget; S7 primary-empty -> ladder served a real answer; S7b all-empty -> typed TemporaryUnavailableError naming the empty completion; R2 ask DAG-path all-503 -> HTTP 503; R7 ask all-empty -> HTTP 503; R8 chat all-empty -> HTTP 503 provider_degraded; R9 mixed outage unchanged (200, Gemini, 1.29s); S14 ladder-breadth contract unchanged (trio down -> typed failure, second tier untouched, by policy)."
       - "TESTS (crew, pre-rebase): new Inference/tests/test_inf008_failover_drill.py — 32/32 pass (24 gateway/unified incl. the 8-provider 503 matrix, 8 route-level). Neighbouring suites: gateway fallback/streaming/local-tier/hedging 40/40 pass; cache-namespaces + declared-modes + no-fabricated-measurements 33/33 pass; declared-paths 3/3 pass."
       - "FINISHER REBASE (2026-11-16): the merge queue's freshness guard aborted the original delivery because gateway.py moved on main (TASK-REL-047 #550 Groq prompt guard + NVIDIA rung gate; TASK-INF-007 quota ledger). Three-way merge onto current main: friday_routes.py unmoved; gateway.py's single conflict (both sides added helpers after provider_has_credentials) resolved by union — REL-047 guards + INF-007 quota intact. Re-run on the rebased tree against the CURRENT gateway: drill 32/32 pass; test_rel047_gateway_guards.py 10/10 pass; 7-suite neighbour ring (139 tests) has exactly 1 failure (test_degradation_and_resource_bounds.py::test_no_module_attributes_work_to_a_bare_race_winner) which reproduces identically on clean main — pre-existing; the same ring on clean main fails 2, i.e. the G3 fix also repairs test_friday_debate_reports_a_provider_outage_as_unavailable on main."
-      - "MERGED on origin/main: e7db33ea6e0b8e3696188a3310eb51562c4aeb17 Merge pull request #640 from surendra2304/claude/task-inf-008 (board hygiene 2026-11-16, audit §2A: PR #None already merged — status was stale IN_REVIEW)."
+      - "MERGED on origin/main: e7db33ea6e0b8e3696188a3310eb51562c4aeb17 Merge pull request #640 from surendra2304/claude/task-inf-008 (board hygiene 2026-11-16, audit §2A: PR #640 already merged — status was stale IN_REVIEW)."
     blockers: []
     next_action: "Post-merge: coordinator: review + merge this PR, then deploy Inference to Server 1 and production-verify (all-provider drill is harness-only by design; production verification = fleet health + a live /v1/friday/ask and /v1/chat/completions sanity call post-deploy). Follow-ups owned elsewhere: ladder breadth / NVIDIA-as-rung is a routing-policy question for TASK-REL-043/044; the pre-existing test failure in test_degradation_and_resource_bounds.py predates this task (fails on pristine main) and belongs to a CI-hygiene follow-up."
   - id: TASK-IG-FRD-010
@@ -9001,7 +9026,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "REBASED TESTS (finisher, 2026-11-16): Stratex/tests/test_fwd006_sizing.py 11/11 pass on the rebased tree (original crew evidence reproduced). Regression rings (fwd002 strategies+sleeve, fwd003 lane, daemon governance, oanda demo): 120 passed / 1 failed — test_fwd003_forward_test_lane.py::test_config_registry_lane_entries fails identically on pristine main (known FWD-003 registry null-out follow-up, unrelated). Wider 12-file sweep: failure set byte-identical to pure main. Five stale tests encoding the replaced 1% sizing law aligned to the decided package (itemized in PR body; no production behaviour changed)."
       - "PROTOCOL DOC: Stratex/docs/PHASE3_FORWARD_PROTOCOL.md — the 8-row decided table, venue-equity basis, MTM + scan-cadence kill computation, measurement-phase rationale, enforcement map, before/after live values."
       - "REGISTRY: config_strategy.py governed entries carry risk_per_trade_pct: 0.001 + max_heat_pct: 0.02; stale '1% risk cap' statements rewritten; dow vol-targeting ban recorded."
-      - "MERGED on origin/main: 3a67d4f44413eed4cd564f36c4fac8389584b5f4 Merge pull request #642 from surendra2304/claude/task-str-fwd-006 (board hygiene 2026-11-16, audit §2A: PR #None already merged — status was stale IN_REVIEW)."
+      - "MERGED on origin/main: 3a67d4f44413eed4cd564f36c4fac8389584b5f4 Merge pull request #642 from surendra2304/claude/task-str-fwd-006 (board hygiene 2026-11-16, audit §2A: PR #642 already merged — status was stale IN_REVIEW)."
     next_action: "Post-merge: coordinator merges PR #642, Fleet CD deploys, then execute the Server-1 deploy runbook in ~/workspace/fwd-006/HANDOFF_STATE.md (env alignment STRATEX_RISK_PER_TRADE_PCT 0.01->0.001 + add STRATEX_MAX_HEAT_PCT_PER_STRATEGY=0.02, daemon-only restart, config read-back, sizing computation on the current book, sleeve state unrealized-field check). TASK-STR-RISK-001 independently verifies the end state."
   - id: "TASK-OBS-003"
     title: "Fleet health & metrics honesty sweep — every agent's /health vs an independent functional probe, every self-reported number traced to source"
@@ -9073,9 +9098,11 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Post-merge: coordinator merges PR #644 (close #333/#434 as superseded), Fleet CD, flip VERIFIED. Follow-up recommended: migrate friday/agent/instant perf_cache call sites onto SafeResponseCache classes."
   - id: TASK-SEN-012
     title: "Dependency-manifest hardening (SEN-002 F-02..F-07, repo-side only): reconcile all 10 agents' manifests with the SEN-002-probed live venv, VyralX Pillow 13.x compatibility verdict for PR #347, per-agent pip-resolve lock snapshots, SHA-pin all GitHub Actions, untrack FRIDAY/.data/**"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/task-sen-012-dependency-manifest-hardening
+    pr: 386
+    merge_note: "PR #386's content landed on main as direct commit 252bcde2 (2026-11-16 05:42 IST, 'TASK-SEN-012: dependency-manifest hardening — live-aligned floors/pins, lock snapshots, SHA-pinned Actions, untrack FRIDAY/.data'), confirmed in main's ancestry 2026-11-17; the PR was not itself merge-committed, so the landing vehicle is recorded here."
     contributors: []
     priority: P1
     created_at: "2026-11-15T16:42:07+05:30"
@@ -9095,10 +9122,8 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "ACTIONS: 88 uses: refs in 35 workflow files SHA-pinned (git ls-remote 2026-11-15), tag as comment; every file YAML-parsed post-edit; CI workflow-syntax validation passes; CI annotations prove pinned actions resolved and ran (setup-node@49933ea5...)."
       - ".DATA: all 9 tracked FRIDAY/.data files re-scanned against 10 credential-shape pattern classes — ZERO hits (SEN-002 F-08 claim re-verified on the current tree) — then removed from the index in PR #386."
       - "CI (PR #386 head 47e65d18): 10/12 check-runs green/skipped incl. main test job under pytest 9; voice-regressions + voice-startup-regressions FAIL at their test-execution steps only (setup/install/lint pass; jobs are path-filtered and skipped on base main and 7/7 other recent PRs sampled — no recent green baseline; PR diff contains zero code/test changes; voice surface independently broken, TASK-VOI-005 open). Full job logs auth-gated from crew sandbox — transitive-effect exclusion bounded accordingly."
-    blockers:
-      - "CI: two voice jobs red on PR #386 (analysis in completion comment) — coordinator decision: accept as pre-existing voice-surface red or hold for post-VOI-005 re-run."
-      - "Pre-merge check: confirm Fleet CD pull will not delete untracked FRIDAY/.data files from server checkouts when the untrack lands."
-    next_action: "Coordinator: (1) decide the voice-CI question above; (2) run the Fleet CD .data check; (3) merge #386 in sequence with #345 (first) / #341 (close as superseded) / #347 / #368; (4) before #347 deploys, confirm the production venv Python version is >=3.11 for Pillow 13. Post-merge: regenerate locks per docs/DEPENDENCY_LOCKS.md whenever manifests change."
+    blockers: []
+    next_action: "Landed (see merge_note); the two pre-merge blockers (voice-CI question, Fleet CD .data check) were overtaken by the landing, and the fleet has run on the landed tree since (both servers at main). Standing discipline: regenerate locks per docs/DEPENDENCY_LOCKS.md whenever manifests change. PR #347 (VyralX Pillow 13) stays gated on the Python >=3.11 cutover — the production venv is Python 3.10.12 today; the 3.12 cutover (S2 2026-11-19, S1 2026-11-20) is the unblock, exactly the caveat this entry recorded at delivery."
   - id: TASK-IG-FRD-001
     title: "Goal-loop autonomy: goal + success criteria worked in cycles, completion report (IG corpus DdckMRAjAsD)"
     owner: muse_ai
@@ -9150,8 +9175,9 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Local e2e (stub gateway, real orchestrator): G1 COMPLETED, 5/5 files, tests 9/9, verification 11/11, provider stamps on every node (original crew, PR #400)"
       - "Real-gateway battery (S1 staging, prod env; original crew, PR #400): G1 run 2: 5/5 stated files, all nodes served by openai/gpt-oss-120b, produced suite 12/16 (model case-normalisation deviation), gate FAILED the task honestly. G5 runs 1-2: gateway 503 during a fleet deploy window -> fail-closed task failure with the verbatim gateway error; run 4: 3/10 stated files after the gateway served the Architect a free nemotron VL model — structural fix is FRG-004's deterministic layout extraction (merged, PR #554)"
       - "MERGED: PR #638 -> 9fc50f84 (2026-11-16 06:02 IST), 12 files +1585/-73 incl. provider_wiring.py and test_frg009_provider_wiring.py; PR #400 closed unmerged (no merge commit). Reconciled 2026-11-16 vs the IG Forge merges: #768's review stage resolves its model calls through this task's rewritten fail-closed Inference transport (engine.py _provider_review_fn -> app.providers get_provider); #762's generated agents honour the fail-closed principle with a standalone client (InferenceUnavailable) but do not consume provider_wiring."
+      - "ACCEPTANCE RE-RUN 2026-11-17 (forge-acceptance) — FAIL, entry stays MERGED (not verified): both verbatim shapes returned PARTIAL_FAILURE; the provider summary was {} (no inference:forge-* stamps on the task result), and the DAG drained after the single planner node — root cause is the FRG-012 CLOB corruption (fixed by PR #837 via replacement #855, merged batch 2), so the provider wiring could not be exercised end-to-end in production."
     blockers: []
-    next_action: "Production-verify on the deployed Forge (Fleet CD): one delegate build must show provider: inference:forge-* stamps + a real served model in the task result, or fail closed with the gateway error verbatim; re-run the G1/G5 shapes against production; then flip VERIFIED. Follow-up candidate unchanged: repair-loop/cross-file consistency (the G1 case-normalisation class) — model-output quality, separate task."
+    next_action: "Acceptance re-run owed on the post-fix build: re-run the G1/G5 shapes against the deployed Forge now that the FRG-012 DAG drain (PR #837 via #855) and the FRG-010 gate threshold (PR #836) are fixed — a passing run must show provider: inference:forge-* stamps + a real served model in the task result, or fail closed with the gateway error verbatim; flip VERIFIED only with that outcome. Follow-up candidate unchanged: repair-loop/cross-file consistency (the G1 case-normalisation class) — model-output quality, separate task."
   - id: TASK-IG-INF-01
     title: "IG corpus (Deov8pzsfin): long-context routing respects declared context windows — fit filtering + overflow disclosure in v1 selection"
     status: MERGED
@@ -9514,20 +9540,20 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Post-merge: fleet CD deploy -> production probe: escrcpy_launch_plan / escrcpy_automation answer through the live agent's production registry."
   - id: TASK-IG2-MEM-01
     title: "BM25 hybrid recall + capture-compress-inject for Memora (agentmemory ADAPT)"
-    status: IN_REVIEW
+    status: VERIFIED
     owner: muse_ai
     pr: 709
     branch: claude/ig2-task-ig2-mem-01
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #709 -> 3bbd3a1d364cb0bc04f9c56635d5e6e60f8d2047. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #755 -> 61b1ba444f20a7baff9f73c3194948bb2056d8a3 (v1_capture router mounted on the production app: POST /v1/capture/events, POST /v1/capture/compress, GET /v1/capture/context, POST /v1/capture/handoff). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair. PRODUCTION PROBES 2026-11-16 (memora-probes rounds 1+2; S1 deployed HEAD 708f632b, deployed v1_capture.py hash-identical to the main blob): VERIFIED — POST /v1/capture/events -> 200 {stored:true} with a memory id; GET /v1/capture/context -> 200 in 3.5s, injection pack led by the just-written probe event (capture->inject loop works end-to-end in production; re-confirmed round 2). BROKEN IN PRODUCTION — POST /v1/capture/compress: the FIRST compress of a session returns HTTP 500 (the digest persists as EPISODIC, but semantic promotion dies — TypeError: Object of type Decimal is not JSON serializable in the new provenance; the error handler then raises sqlalchemy PendingRollbackError on the poisoned session); repeat compress -> 200 already_existed:true. POST /v1/capture/handoff fails identically (500 after its digest persisted). All probe records cleaned up (hard deletes, GET-after 404)."
-    next_action: "Fix PR: capture compress/handoff — make the promotion provenance JSON-safe (Decimal from Oracle numerics) and roll back the session in the compress error handler, so a denied promotion is not a failed compression. Then re-probe compress/handoff end-to-end (first compress 200 with promotion landed; handoff 200 with context pack) and flip VERIFIED only with those outcomes recorded."
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #709 -> 3bbd3a1d364cb0bc04f9c56635d5e6e60f8d2047. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #755 -> 61b1ba444f20a7baff9f73c3194948bb2056d8a3 (v1_capture router mounted on the production app: POST /v1/capture/events, POST /v1/capture/compress, GET /v1/capture/context, POST /v1/capture/handoff). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair. PRODUCTION PROBES 2026-11-16 (memora-probes rounds 1+2; S1 deployed HEAD 708f632b, deployed v1_capture.py hash-identical to the main blob): VERIFIED — POST /v1/capture/events -> 200 {stored:true} with a memory id; GET /v1/capture/context -> 200 in 3.5s, injection pack led by the just-written probe event (capture->inject loop works end-to-end in production; re-confirmed round 2). BROKEN IN PRODUCTION — POST /v1/capture/compress: the FIRST compress of a session returns HTTP 500 (the digest persists as EPISODIC, but semantic promotion dies — TypeError: Object of type Decimal is not JSON serializable in the new provenance; the error handler then raises sqlalchemy PendingRollbackError on the poisoned session); repeat compress -> 200 already_existed:true. POST /v1/capture/handoff fails identically (500 after its digest persisted). All probe records cleaned up (hard deletes, GET-after 404). FIX MERGED + RE-PROBE ATTEMPTED 2026-11-17: PR #829 (JSON-safe promotion provenance + session rollback in the error handler) merged in batch 2 and deployed hash-verified (S1 == main 2f840d52), but the re-probes (2026-11-17 04:03 IST, ~/workspace/memora-reprobes/STATE.md) could NOT exercise it — every memory_records ORM query fails ORA-00904 because PR #831's dedupe_key migration never ran on the production DB (TASK-MEM-009): events refused (DatabaseError), compress/handoff/context HTTP 500. This entry stays IN_REVIEW — explicitly NOT verified on this evidence. REMEDIATION + FULL RE-PROBE PASS 2026-11-17 (~/workspace/memora-migration-fix/STATE.md; issue #35 comment 6931727394): the manual migration landed — alembic_version a1d4c7e9f2b3 -> c9d4e7a1b5f2 (head); DEDUPE_KEY column + UQ_MEMORY_DEDUPE_KEY verified by direct SELECT; ORA-00904 count 65 -> 0 after the 2026-11-17 04:13:52 IST Memora restart. The re-probes then ran verbatim and PASS: capture events stored:true; first compress 200 with promoted_to_semantic (PR #829 PROVEN in production); handoff 200; context read-back returns the injection pack; probe cleanup GET-after-404 verified (x11 across the combined re-probe set)."
+    next_action: "None — complete and production-verified (PR #829 proven by the 2026-11-17 re-probe pass, after the TASK-MEM-009 remediation)."
   - id: TASK-IG2-MEM-02
     title: "Skill-learning loop for Memora (Hermes pattern)"
-    status: IN_REVIEW
+    status: VERIFIED
     owner: muse_ai
     pr: 711
     branch: claude/ig2-task-ig2-mem-02
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #711 -> ec24563566207ad2bb85a7759ebe40c0f091bc33. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #758 union-rebased as PR #779 -> 18c624f2b0709728043df7bff43786c4d26fc98c (v1_skills router mounted: /v1/skills/* outcomes/evaluate/stats/drafts/review/active, plus run_evaluation_pass wired into the existing background worker; drafts only, activation stays behind the admin review gate). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair. PRODUCTION PROBES 2026-11-16 (memora-probes rounds 1+2; S1 deployed HEAD 708f632b, deployed v1_skills.py hash-identical to the main blob): VERIFIED — GET /v1/skills/{stats,drafts,active} -> 200 (honestly empty at baseline; stats tallies correct after outcome writes); POST /v1/skills/outcomes -> 200 stored:true for success and corrected outcomes; the review endpoint's admin gate fires in production (non-admin -> 403 with the restriction message; admin reaches the service). BROKEN IN PRODUCTION — POST /v1/skills/evaluate runs (200, patterns_seen correct) but its drafting step is REFUSED by the production write policy for BOTH triggers (pipeline_refused: PermissionDeniedError — direct PROCEDURAL writes require verified/operator-confirmed trust + at least one evidence reference; SkillLearningService supplies neither), so no skill draft can ever be created in production and the approve->active / reject flows cannot be exercised end-to-end. All probe records cleaned up (hard deletes, GET-after 404)."
-    next_action: "Fix PR: SkillLearningService evidence-carrying draft writes — supply the outcome evidence references / verified-trust path the production write policy requires, instead of a bare direct PROCEDURAL write. Then re-probe the full loop (outcomes -> evaluate drafts a pending_review draft -> non-admin review 403 -> admin approve -> active; plus the reject flow) and flip VERIFIED only with those outcomes recorded."
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #711 -> ec24563566207ad2bb85a7759ebe40c0f091bc33. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #758 union-rebased as PR #779 -> 18c624f2b0709728043df7bff43786c4d26fc98c (v1_skills router mounted: /v1/skills/* outcomes/evaluate/stats/drafts/review/active, plus run_evaluation_pass wired into the existing background worker; drafts only, activation stays behind the admin review gate). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair. PRODUCTION PROBES 2026-11-16 (memora-probes rounds 1+2; S1 deployed HEAD 708f632b, deployed v1_skills.py hash-identical to the main blob): VERIFIED — GET /v1/skills/{stats,drafts,active} -> 200 (honestly empty at baseline; stats tallies correct after outcome writes); POST /v1/skills/outcomes -> 200 stored:true for success and corrected outcomes; the review endpoint's admin gate fires in production (non-admin -> 403 with the restriction message; admin reaches the service). BROKEN IN PRODUCTION — POST /v1/skills/evaluate runs (200, patterns_seen correct) but its drafting step is REFUSED by the production write policy for BOTH triggers (pipeline_refused: PermissionDeniedError — direct PROCEDURAL writes require verified/operator-confirmed trust + at least one evidence reference; SkillLearningService supplies neither), so no skill draft can ever be created in production and the approve->active / reject flows cannot be exercised end-to-end. All probe records cleaned up (hard deletes, GET-after 404). FIX MERGED + RE-PROBE ATTEMPTED 2026-11-17: PR #819 (evidence-carrying draft writes) merged in batch 2 and deployed hash-verified (S1 == main 2f840d52), but the re-probes (2026-11-17 04:04 IST, ~/workspace/memora-reprobes/STATE.md) could NOT exercise it — the production memory_records ORM path is down with ORA-00904 (PR #831's dedupe_key migration never applied; TASK-MEM-009): baselines/evaluate/drafts/active/stats all HTTP 500, outcomes refused (DatabaseError), zero records created. This entry stays IN_REVIEW — explicitly NOT verified on this evidence. REMEDIATION + FULL RE-PROBE PASS 2026-11-17 (~/workspace/memora-migration-fix/STATE.md; issue #35 comment 6931727394): the manual migration landed — alembic_version a1d4c7e9f2b3 -> c9d4e7a1b5f2 (head); DEDUPE_KEY column + UQ_MEMORY_DEDUPE_KEY verified by direct SELECT; ORA-00904 count 65 -> 0 after the 2026-11-17 04:13:52 IST Memora restart. The skills re-probe then ran the full loop and PASS: outcomes stored; evaluate drafts a pending_review DRAFT (PR #819 PROVEN in production); admin approve -> active; reject -> not active; cleanup GET-after-404 x11 across the combined re-probe set. CAVEAT (not a blocker for this entry): FRIDAY's running process currently receives 401 on its remote Memora leg (post-#807 key presentation) and answers from its local store — closing that is the MEM-005 live env pass, tracked under TASK-MEM-005-R1's next_action."
+    next_action: "None — complete and production-verified (PR #819 proven by the 2026-11-17 re-probe pass, after the TASK-MEM-009 remediation). The FRIDAY remote-leg 401 caveat is owned by TASK-MEM-005-R1's env pass, not this entry."
   - id: TASK-IG2-MEM-03
     title: "Structured user-model profile in Memora (Hermes pattern)"
     status: IN_REVIEW
@@ -9535,7 +9561,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     pr: 712
     branch: claude/ig2-task-ig2-mem-03
     evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #712 -> 6ed5fdce0c6f28b7f17783b54ee6beaaf1576a35. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #761 union-rebased as PR #781 -> 92142b94ed71257008d5ac068152f13eaa89a431 (v1_user_model router mounted: /v1/user-model profile/consult/render/field/corrections). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair. PRODUCTION PROBES 2026-11-16 (memora-probes round 1; S1 deployed HEAD 708f632b, deployed v1_user_model.py hash-identical to the main blob): VERIFIED — GET /v1/user-model/profile and GET /v1/user-model/consult -> 200; POST /v1/user-model/corrections persisted on the probe subject as a standing_rule at confidence 1.0 and read back via profile + consult; probe records hard-deleted afterwards (GET-after 404, profile baseline restored to exists:false); owner profile untouched. NOT exercised (round 2 covered capture + skills only): PUT /v1/user-model/field, GET /v1/user-model/render. Entry stays IN_REVIEW until those two routes are probed — round 2 surfaced production-broken sub-paths in both sibling entries, so unprobed routes are not assumed good."
-    next_action: "Production-probe the two unexercised routes (PUT /v1/user-model/field, GET /v1/user-model/render) on the live service; flip VERIFIED only with those outcomes recorded."
+    next_action: "Production-probe the two unexercised routes (PUT /v1/user-model/field, GET /v1/user-model/render) on the live service; flip VERIFIED only with those outcomes recorded. NOTE 2026-11-17: those probes are gated on the TASK-MEM-009 remediation — the production memory_records ORM path is down (ORA-00904, PR #831's unapplied dedupe_key migration) until the manual migration lands."
   - id: TASK-IG2-SEN-01
     title: "Defensive-only skill pack for Sentinel (Anthropic-Cybersecurity-Skills ADAPT)"
     status: MERGED
@@ -9741,7 +9767,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     pr: 742
     branch: claude/ig2-task-ig2-str-14
     evidence: "IG re-watch Phase 1, Stratex lane (first item). Full browser-watch recovery of reel DZ_aHrWuF49: verbatim subtitle transcript + machine-heard audio cross-checked; all four extraction gaps resolved or declared as conventions in the declaration. Declaration frozen: Stratex/rigorous_backtest/ig/srs_declaration.json SHA-256 7a805046cab849bc15a8194c31ad9f6ff5cbc922c91e428110a7ff0c9791525b. Declaration + registration ONLY in PR #742 - no signal module, no backtest run, no live-trading code touched."
-    next_action: "Declared backtest STOPPED at the data gate 2026-11-16 (srs-backtest crew; issue #35 comment 6924898230): no free/keyless source yields multi-year TSLA 15m bars — Yahoo chart API hard-caps 15m history at ~60 days (maximum 39 qualifying OOS trades vs the declared >=200 bar; walk-forward folds W1-W4 structurally empty); Stooq bot-walled, Dukascopy 503, Binance Vision 404. Zero trials consumed, no P&L computed; SRS stays DECLARED — NOT RUN, and the family is NOT closed (a data stop is not a verdict). Any future run is governed by the pre-registered SRS TEMPORAL HOLDOUT v1 addendum (H1-H5, frozen JSON SHA 69d9dcef…, ~/workspace/fleet30/srs-runprep/), frozen before any data exists; entering trial floor 3,889, final N 3,890. Sole remaining unblock (owner-side data): the owner's free Alpaca Paper-Only signup + key pair supplied via the credential channel."
+    next_action: "Declared backtest STOPPED at the data gate 2026-11-16 (srs-backtest crew; issue #35 comment 6924898230): no free/keyless source yields multi-year TSLA 15m bars — Yahoo chart API hard-caps 15m history at ~60 days (maximum 39 qualifying OOS trades vs the declared >=200 bar; walk-forward folds W1-W4 structurally empty); Stooq bot-walled, Dukascopy 503, Binance Vision 404. Zero trials consumed, no P&L computed; SRS stays DECLARED — NOT RUN, and the family is NOT closed (a data stop is not a verdict). Any future run is governed by the pre-registered SRS TEMPORAL HOLDOUT v1 addendum (H1-H5, frozen JSON SHA 69d9dcef…, ~/workspace/fleet30/srs-runprep/), frozen before any data exists; entering trial floor 3,891, final N 3,892. Sole remaining unblock (owner-side data): the owner's free Alpaca Paper-Only signup + key pair supplied via the credential channel."
   - id: TASK-IG2-STR-16
     title: "RiskGovernor delta as a research module - per-engine trade-count cap + breach callback (IG item DZ-QETCTygV, package S-15)"
     status: MERGED
@@ -9899,7 +9925,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #694 -> 1a6de78658ed1609ebf334df7092c247025fdd3f. CI green except the validate pair (proven flake family). Mounting MERGED: PR #757 (IG FRIDAY Cluster A) -> merge 26412a56fa082f75648bab942b2ca13214de5e8e (2026-11-16, Merge Runner C): the Orb is now a summoned stage sheet driven by the stage's real voice phase; the Halo remains the stage's face."
       - "MERGED on origin/main: 1a6de78658ed1609ebf334df7092c247025fdd3f Merge pull request #694 from surendra2304/claude/ig2-task-ig2-web-03 (board hygiene 2026-11-16, audit §2A: PR #694 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: fleet CD deploy -> production verification: the Orb sheet renders on the live site and follows the real voice phase (post-deploy probe)."
+    next_action: "Deployed (mounting via PR #757; the follow-up gate fix PR #804 merged in batch 2). Production check owed: a remote render check that the Orb sheet / Memory Galaxy renders on the live site and follows the real voice phase; flip VERIFIED with that outcome."
   - id: TASK-IG2-WEB-04
     title: "live sector heatmap tile view for the Stratex dashboard (OpenTerminal pattern)"
     status: MERGED
@@ -9929,7 +9955,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence:
       - "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #708 -> 85227a153beaa76f8af8acf05715bc2f6ac423e5. CI green except the validate pair (proven flake family)."
       - "MERGED on origin/main: 85227a153beaa76f8af8acf05715bc2f6ac423e5 Merge pull request #708 from surendra2304/claude/ig2-task-ig2-web-06 (board hygiene 2026-11-16, audit §2A: PR #708 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: fleet CD deploy -> production probe"
+    next_action: "Deployed; the Reveal-visibility follow-up (PR #802) merged in batch 2 and rides the PR #833 regenerated export. Production probe owed: confirm persisted widget layouts survive a reload on the live Stratex dashboard and the Reveal surfaces are visible; flip VERIFIED with that outcome."
   - id: TASK-IG2-WEB-07
     title: "glass start-page dashboard (GNTD pattern) \u2014 toggleable widgets, additive component"
     status: MERGED
@@ -10026,14 +10052,15 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Owner in-hands voice re-test is the final acceptance."
   - id: TASK-OBS-004
     title: "Deploy watchdog: periodic deployed-HEAD-vs-main divergence check across both servers"
-    status: MERGED
+    status: VERIFIED
     owner: muse_ai
     pr: 754
     branch: claude/task-obs-004-deploy-watchdog
     evidence:
       - "Created by merge runner 13 as the D9 follow-up. D9 root cause (proven 2026-11-16, closed same day): Fleet CD's concurrency group keeps only ONE pending run per ref — PR #703's deploy run was cancelled with zero jobs 36s after creation when PR #716's push landed, and #716's run skipped Server 2 via its paths-filter (#716 touched only FRIDAY/**), so Cortex's 3 merged files were silently stranded on S2; no later S2-touching push ever healed it. Repair: S2 fast-forwarded to main, whole-tree diff vs main EMPTY, fleet 10/10 health. The systemic class fix — a standing deployed-HEAD-vs-main divergence check — is this task. IMPLEMENTED + MERGED 2026-11-16: PR #754 -> 2d9833280d70050b03396d1a69f13c5d3710beea (head 6eae1deba918af83fba2925cae90be987807d421). Supervisor review CONFIRMED all five design conditions in code; the staged-divergence proof was EXECUTED twice on Server 2 with the real AlertEngine + dispatcher (alerts ALT-1794844105-1 and ALT-1794844804-1 fired naming the moved main; heal -> recovery). Proof run 1 exposed the stale shared Telegram credential (HTTP 401) - fixed and drill-verified separately (alert ALT-1794845331-1). Minor review correction: the PR body's claimed 2 operations-route tests do not exist (claim inaccuracy, not a functional gap). CI on head: test/py310/secrets/detect-voice SUCCESS; only the validate pair red (flake family)."
       - "MERGED on origin/main: 2d9833280d70050b03396d1a69f13c5d3710beea Merge pull request #754 from surendra2304/claude/task-obs-004-deploy-watchdog (board hygiene 2026-11-16, audit §2A: PR #754 already merged — status was stale IN_REVIEW)."
-    next_action: "Post-merge: activation (coordinator): set the watchdog env flags and install the Server-1 reporter timer -> production verification: first real divergence-or-clean cycle observed end-to-end via the Sentinel alert path. The merged code deploys via Fleet CD."
+      - "ACTIVATION COMPLETE + LIVE CYCLE PROVEN 2026-11-17 (obs004-activation; s2-repair2 mechanism correction): the watchdog fired divergence alert ALT-1794854487-1 while Server 1's checkout lagged main, and Server 1 returned to main by FLEET CD's fast-forward (708f632b -> 0206c62a) — the heal was Fleet CD's, not the watchdog's: the watchdog is ALERT-ONLY by design (deploy_watchdog.py contains no git writes; rev-parse/status/ls-remote only), and its proven role is alerting + recovery tracking, completed with recovery alert ALT-1794855100-2. Caveat: the original alert record still reads status=open in the alert store; resolution is modelled as the separate recovery (resolved_finding) alert, not as a status change on the original record."
+    next_action: "None — complete and production-verified (alert + recovery tracking proven live 2026-11-17). The Fleet CD branch-state gap the same episode exposed on Server 2 is tracked separately as TASK-OBS-005."
   - id: TASK-FRD-015
     title: "Voice model acts on split-STT fragments (defect D11)"
     status: VERIFIED
@@ -10094,11 +10121,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Post-merge: deploy via Fleet CD if not already deployed, production-probe in the target environment, and flip to VERIFIED only with recorded production evidence."
   - id: TASK-IG2-FRD-05
     title: "Opt-in browser wake word for the FRIDAY stage (multi-word phrases, this tab only)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/ig-friday-wake-word
-    evidence: "PR #769 (IG FRIDAY Cluster B), supervisor-CONFIRMED: WakeListener (lib/wakeWord.ts) mounts only when the wake word is armed and no call is live; bare 'friday' cannot fire (multi-word phrases with word-boundary matching); a refused microphone disarms with a stated reason. MERGED via union-rebase replacement PR #786 -> merge 46fd35c9fe1c5ce0d59da0b3276f8c2dd077c4f6 (2026-11-16, Merge Runner C; #769 closed as superseded: Stage.tsx union with #757, both sides' regions preserved, other four files blob-identical). This board entry was created by Merge Runner C: the implementing PR carried no board entry."
-    next_action: "Fleet CD deploy -> production verification MUST include (1) a successful production next build (never run by the implementing crew) and (2) hearing the wake word actually work in a real browser tab. Not production-verified until both pass."
+    pr: 786
+    merge_note: "Implementing PR #769 landed via union-rebase replacement PR #786 (merge 46fd35c9, Merge Runner C); pr records the replacement."
+    evidence: "PR #769 (IG FRIDAY Cluster B), supervisor-CONFIRMED: WakeListener (lib/wakeWord.ts) mounts only when the wake word is armed and no call is live; bare 'friday' cannot fire (multi-word phrases with word-boundary matching); a refused microphone disarms with a stated reason. MERGED via union-rebase replacement PR #786 -> merge 46fd35c9fe1c5ce0d59da0b3276f8c2dd077c4f6 (2026-11-16, Merge Runner C; #769 closed as superseded: Stage.tsx union with #757, both sides' regions preserved, other four files blob-identical). This board entry was created by Merge Runner C: the implementing PR carried no board entry. PR #833 (TS5097 build fix + regenerated static export) merged in batch 2 (2026-11-17), satisfying the production-build leg of the original next_action; the code is deployed fleet-wide (S1 == main 2f840d52)."
+    next_action: "Real-tab wake-word hearing test (owed): arm the wake word in a real browser tab on the live site and confirm it fires on a multi-word phrase and stays inert on bare 'friday'; flip VERIFIED with that outcome."
   - id: TASK-IG2-FRD-06
     title: "Local-business patterns F-30/F-35 (prospect qualification + website/appointment prompt building; generation only, no outreach)"
     status: IN_REVIEW
@@ -10108,7 +10137,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     next_action: "Fleet CD deploy -> production probe: local_business answers through the live agent's production registry."
   - id: TASK-COR-010
     title: "Telegram-shaped payload mode for Cortex's escalation webhook (SELF_HEALING_ESCALATION_WEBHOOK -> FRIDAY bot sendMessage)"
-    status: IN_REVIEW
+    status: VERIFIED
     owner: muse_ai
     branch: claude/task-cor-010
     prs: [798]
@@ -10128,21 +10157,26 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "Tests: Cortex/tests/unit/test_escalation_telegram_mode.py — 20/20 pass on the branch; collection-errors on pristine main (new symbols absent). Neighbour A/B (budgets + budgets-wiring + resilience/cache, sandbox harness): branch 28 passed / 1 failed / 2 errors == pristine main, identical sets (the 1 failure is a sandbox proxy-env httpx quirk in an unrelated peer-transport test; the 2 errors are the conftest api_client fixture absent under --noconftest). Translated payload re-verified against the documented-behaviour stub: 200 ok:true."
     evidence:
       - "Compatibility investigation + drill staging: ~/workspace/cortex-drill/ (STATE.md, tmp/compat_test.py, tmp/compat_results.json) — wire payloads captured from the real classes; B1/B2 both HTTP 400 under documented sendMessage handling; controls prove the missing required fields (not the extra fields) cause the rejection."
+      - "MERGED in batch 2 (2026-11-17): PR #798 -> main dc0d2a24; deployed (S2 returned to main 2f840d52 in the 2026-11-17 repair; Cortex healthy)."
+      - "BREACH DRILL EXECUTED 2026-11-17 (~/workspace/cortex-drill-run2/STATE.md; issue #35 comment 6931766133): the webhook env was composed server-side and left set permanently; a controlled breach (POST /api/v1/cortex/budgets/usage {agent: Cortex, tokens: 750001}) returned HTTP 429 token_budget_exceeded and paused Cortex; the escalation dispatched synchronously and Telegram's API returned HTTP 200 with the delivery record delivered:true, the channel recorded as the redacted descriptor telegram:api.telegram.org. The budget store baseline re-confirmed durable=true / load_errors=0 across a cold restart — the migration-009 caveat is closed in practice. Delivery-proof caveat, stated honestly: the Bot API offers no outgoing-message read-back (getUpdates is incoming-only and 409s against the active production webhook), so the proof is Telegram's 200 acceptance + the independently verified bot identity (@fridayuniverse_bot) and chat reachability."
     blockers: []
-    next_action: "Merge via merge queue on green CI. THEN (coordinator, separate steps — NOT in this PR): (1) confirm the S2 deploy repair (deployed HEAD 0206c62a + Cortex healthy; PR #770 live), (2) set SELF_HEALING_ESCALATION_WEBHOOK to the FRIDAY bot sendMessage URL + SELF_HEALING_ESCALATION_TELEGRAM_CHAT_ID in Cortex's S2 env and restart Cortex, (3) run the staged live breach drill (~/workspace/cortex-drill/DRILL.md) — only then is COR-01 gap 3 production-verified."
+    next_action: "None — complete and production-verified (breach drill 2026-11-17). Two defects the drill exposed are tracked separately as TASK-COR-012 (budget-store cross-loop saves; bot token in the journal via httpx logging)."
   - id: TASK-STR-FWD-008
     title: "TASK-STR-FWD-003 follow-up: registry null-out covers non-tradable FORWARD_TEST registrations (visibly nulled/flagged, never silently counted)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/task-str-fwd-003-registry-null-out
+    pr: 850
+    merge_note: "Landed via union replacement PR #850 for original PR #800 (merge batch 2, 2026-11-17)."
     evidence: "Claim: issue #35 comment 6924642917 (2026-11-16). Ground truth on clean main 0206c62a: of the 8 FORWARD_TEST entries in Stratex/config_strategy.py PRODUCTION_STRATEGY_REGISTRY only 3 can trade (bollinger_trend, shock_breakout, adx_ema_bare — forward_protocol True, lane_assets CRYPTO30, production modules exist); the other 5 (tsmom2_dual, vol_regime_switch_a/b, trend_pullback_ema100/200) are documentary registrations (forward_protocol False, lane_assets [], no module) yet kept live-looking runtime claims (tsmom2_dual prior 0.3951 / edge 55.8 bps; RD-003 cells edges 117.3/79.3/76.6/64.2 bps) because the registry null-out block exempted the whole FORWARD_TEST label — and commit 4cba2c46 scoped the invariant TEST around the gap instead of fixing the block (flagged as the owed follow-up in TASK-STR-FWD-004's completion evidence; test_fwd003_forward_test_lane.py::test_config_registry_lane_entries also fails on clean main). FIX: the block's keep-priors rule is now VALIDATED or lane-executable FORWARD_TEST (forward_protocol True AND lane_assets non-empty); every other entry is nulled (oos_win_rate_prior None, expected_net_edge_bps None, validated_assets []); every FORWARD_TEST entry is stamped runtime_priors_nulled True/False so tradability is visible on the record itself. Judged evidence is NOT deleted — it stays in the *_STRATEGY config dicts and each entry's reason text. Consumer audit: the only production reader of registry priors is strategies/strategy_registry.py:257 (spec build for discovered modules; the 5 have no modules) and expected_net_edge_bps has no production reader, so the nulling is behaviour-safe; the daemon expectancy gate keeps reading the 3 executable entries' priors via their module specs. TESTS: branch tests + main config => exactly the 5 pinning tests fail; branch tests + branch config => 37/37 pass (test_oos_claims_are_not_runtime_priors + test_fwd003_forward_test_lane incl. new test_non_tradable_lane_registrations_are_nulled_not_counted); regression ring (fwd002 strategies, oanda forward activation/demo, daemon governance, governance enforcement, forward scorecard) failure sets byte-identical to clean main (105 passed, 1 pre-existing sandbox-only mocker-fixture error on both trees). One disclosed test-expectation correction: the lane test's VALIDATED set now includes fx_mr_v4 (TASK-STR-FWD-004 landed after the lane test was written). DEMO only: no daemon change, no restart, no live trading."
-    next_action: "Coordinator: review + merge via the merge queue -> Fleet CD deploy -> production probe: on Server 1, import config_strategy and confirm the 5 non-tradable FORWARD_TEST records read prior None / edge None / runtime_priors_nulled True and the 3 executable entrants keep their priors; then flip this entry VERIFIED."
+    next_action: "Production probe (owed): on Server 1, import config_strategy and confirm the 5 non-tradable FORWARD_TEST records read prior None / edge None / runtime_priors_nulled True and the 3 executable entrants keep their priors; then flip this entry VERIFIED."
   - id: TASK-PRO-002
     title: "IntelX standing-watch outbox drainer (PRO-001 extension): tail IntelX's watch outbox and deliver alert envelopes via the real NotificationManager path"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/task-pro-002-intelx-watch-drainer
-    pr: 805
+    pr: 851
+    merge_note: "Landed via union replacement PR #851 for original PR #805 (merge batch 2, 2026-11-17)."
     contributors: []
     priority: P1
     created_at: "2026-11-17T00:03:59+05:30"
@@ -10166,21 +10200,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "IMPLEMENTATION (PR #805): new FRIDAY/src/friday/proactive/intelx_watch.py (offset tail over complete lines; persisted delivered_keys + held queue in an atomically-replaced JSON state; family alert log; run_cycle never raises); api/server.py +56/-2 (interval constant, intelx_watch_state, _intelx_watch_loop, lifespan task + shutdown list). Branch blobs verified byte-identical to the reviewed local files (6f6c7bf0af / 0c5c5cd7d6 / 421f0a87ab at first commit 0bceb993)."
       - "TESTS: local pytest in the coordinator sandbox is blocked by the known sandbox write-denial (Python file writes EPERM, tempfile unusable — recorded for prior crews); syntax AST-verified locally. Operative gates: PR #805 CI + a server-side scratch run of the shipped suite on the fleet venv — results posted on issue #35 at completion."
     blockers: []
-    next_action: "Coordinator: review + merge PR #805 (Fleet CD then deploys; the drainer stays inert — FRIDAY_PROACTIVE_INTELX_WATCH default OFF and ENABLE_STANDING_WATCHES untouched). Enablement is a separate later step, in order: (1) set FRIDAY_PROACTIVE_INTELX_WATCH=on in FRIDAY's production env on Server 1 and restart FRIDAY.service, verify the drain cycle in the journal against an empty/absent outbox; (2) only then flip ENABLE_STANDING_WATCHES on IntelX and watch the first real envelope land as a notification; (3) flip this entry to VERIFIED via a fresh-main board PR with that evidence."
+    next_action: "Enablement (the drainer is merged and deployed; it stays inert — FRIDAY_PROACTIVE_INTELX_WATCH default OFF and INTELX_ENABLE_STANDING_WATCHES untouched). In order: (1) set FRIDAY_PROACTIVE_INTELX_WATCH=on in FRIDAY's production env on Server 1 and restart FRIDAY.service; verify the drain cycle in the journal against an empty/absent outbox; (2) only then flip INTELX_ENABLE_STANDING_WATCHES on IntelX and watch the first real envelope land as a notification; (3) flip this entry and TASK-INT-007 to VERIFIED via a fresh-main board PR with that evidence."
   - id: TASK-REL-051
     title: "Groq failover broken for tool turns: production registry sends 149 tools, Groq caps at 128 (instant 400)"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/groq-tool-cap-fix
+    pr: 853
+    merge_note: "Landed via union replacement PR #853 for original PR #812 (merge batch 2, 2026-11-17)."
     claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6924936329"
-    evidence: "Root cause confirmed from code + reproduction (crew workspace ~/workspace/groq-tools-fix/, repro.py): agent.py sends tools=self.tools.get_schemas() on every tool turn; the production registry measured 149 schemas on main 0206c62a via the production-registry stub harness (FRD-016 measured 145 earlier in November). On Gemini pool exhaustion, ExhaustionFailoverProvider hands the same messages+tools to GroqLLMProvider, which passed them verbatim; Groq's API schema caps tools at 128, so the first failover request is a request-validation HTTP 400. The 400 is neither TPM-shaped nor tool_use_failed, so no existing recovery engaged (REL-039 ladder / REL-022 recovery both bypassed) and the turn died with a generic LLMProviderError out of the fallback itself — reproduced in-memory with a Groq-emulating client: 145 tools sent verbatim on request #1, turn dies, exactly 1 request. FIX (this PR): groq_provider scopes the tool set deterministically BEFORE the first request (scope_tools_for_groq: conversation-exercised tools first, then tools named in the latest user message, then caller order, up to GROQ_MAX_TOOLS=128; drops logged with names) and recognises a residual too-many-tools 400 explicitly, retrying once rescoped to the cap the error names. Tests: new FRIDAY/tests/test_rel051_groq_tool_cap.py — 6 failed / 1 passed (guard) on clean main, 7/7 pass with the fix; REL-039 + groq/fallback blast radius 73 passed locally. Implemented + tested; NOT merged, NOT deployed, NOT production-verified."
-    next_action: "Coordinator: independent review -> merge -> Fleet CD deploy -> production verification = force a Gemini-pool-exhaustion failover on a tool turn (or the next natural exhaustion) and confirm the Groq-served turn executes its tool call instead of dying on a 400."
+    evidence: "Root cause confirmed from code + reproduction (crew workspace ~/workspace/groq-tools-fix/, repro.py): agent.py sends tools=self.tools.get_schemas() on every tool turn; the production registry measured 149 schemas on main 0206c62a via the production-registry stub harness (FRD-016 measured 145 earlier in November). On Gemini pool exhaustion, ExhaustionFailoverProvider hands the same messages+tools to GroqLLMProvider, which passed them verbatim; Groq's API schema caps tools at 128, so the first failover request is a request-validation HTTP 400. The 400 is neither TPM-shaped nor tool_use_failed, so no existing recovery engaged (REL-039 ladder / REL-022 recovery both bypassed) and the turn died with a generic LLMProviderError out of the fallback itself — reproduced in-memory with a Groq-emulating client: 145 tools sent verbatim on request #1, turn dies, exactly 1 request. FIX (this PR): groq_provider scopes the tool set deterministically BEFORE the first request (scope_tools_for_groq: conversation-exercised tools first, then tools named in the latest user message, then caller order, up to GROQ_MAX_TOOLS=128; drops logged with names) and recognises a residual too-many-tools 400 explicitly, retrying once rescoped to the cap the error names. Tests: new FRIDAY/tests/test_rel051_groq_tool_cap.py — 6 failed / 1 passed (guard) on clean main, 7/7 pass with the fix; REL-039 + groq/fallback blast radius 73 passed locally. Implemented + tested; merged in batch 2 via union replacement PR #853 for original PR #812 (2026-11-17) and deployed fleet-wide (S1 == main 2f840d52); NOT yet production-verified."
+    next_action: "Production verification (owed): force a Gemini-pool-exhaustion failover on a tool turn (or catch the next natural exhaustion) and confirm the Groq-served turn executes its tool call instead of dying on the 128-tool 400; flip VERIFIED with that evidence."
   - id: TASK-INF-011
     title: "Gemini Flash thinking disabled by default in Inference (thinkingBudget=0): measured TTFB mitigation from the Gemini egress diagnosis"
-    status: IN_REVIEW
+    status: MERGED
     owner: muse_ai
     branch: claude/task-inf-011-gemini-flash-thinking-budget
-    pr: 834
+    pr: 854
+    merge_note: "Landed via union replacement PR #854 for original PR #834 (merge batch 2, 2026-11-17)."
     contributors: []
     priority: P1
     created_at: "2026-11-17T01:19:00+05:30"
@@ -10204,7 +10241,97 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "IMPLEMENTATION (PR #834): config.py +10 (GEMINI_FLASH_THINKING_BUDGET int default 0, measured-basis comment); gemini.py _is_flash_model/_flash_thinking_budget helpers + _thinking_plan Flash default branch (flagged default_minimal) + _build_payload sends thinkingConfig for explicit OR default_minimal plans. Fresh-interpreter proof: gemini-3.6-flash payload = maxOutputTokens 200 verbatim + thinkingConfig {thinkingBudget: 0}; gemini-2.5-pro = 1224 + {thinkingBudget: 1024} (unchanged)."
       - "TESTS: 27 passed locally (12 new + 8 INF-009 accounting + 7 providers) on a scratch tree built from origin/main 9def8a7a plus this change; A/B on pristine main: the new suite errors on the missing setting (the setting is part of the change)."
     blockers: []
-    next_action: "Coordinator: review + merge PR #834 (Fleet CD then deploys). Production proof after deploy: Inference journal/quota ledger shows Flash Gemini attempts with thoughtsTokenCount ~0 and the token_accounting thinking_budget=0; INF-009's close-out gate probe re-runs on the first Gemini-served gate. Flip to VERIFIED via a fresh-main board PR with that evidence."
+    next_action: "Production proof (owed): Inference journal/quota ledger shows Flash Gemini attempts with thoughtsTokenCount ~0 and token_accounting thinking_budget=0; INF-009's close-out gate probe re-runs on the first Gemini-served gate. Flip VERIFIED with that evidence."
+  - id: TASK-COR-011
+    title: "Cortex escalation redaction"
+    status: VERIFIED
+    owner: muse_ai
+    pr: 841
+    merge_note: "Implementing PR #820 landed via union replacement PR #841 (merge batch 2, 2026-11-17); pr records the replacement."
+    evidence:
+      - "PR #820 (Cortex escalation redaction) merged in batch 2 via replacement PR #841; the code is on main 2f840d52 and deployed (S2 == main after the 2026-11-17 repair)."
+      - "PRODUCTION-VERIFIED 2026-11-17 (cortex-drill-run2; issue #35 comment 6931766133): during the TASK-COR-010 breach drill, the delivered escalation message text and all persisted records carried NO token/URL/key shapes — the channel is recorded only as the redacted descriptor telegram:api.telegram.org. (The journal log-line leak the same drill found is a different surface — httpx request logging — and is tracked as TASK-COR-012 F2.)"
+    next_action: "None — complete and production-verified."
+  - id: TASK-STR-FWD-009
+    title: "Forward bookkeeping follow-up (from PR #827's review): BUY/SELL <-> LONG/SHORT side-spelling normalisation in position_closed_in_ledger so the closed-guard fires for OANDA fills"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: null
+    evidence:
+      - "Raised by the PR #827 review (~/workspace/review-827/STATE.md) and scoped in ~/workspace/fwd-bookkeeping/STATE.md: PR #827 restored strategy attribution in the running daemon, but the review found the closed-guard in position_closed_in_ledger shadowed for OANDA fills whose side is spelled BUY/SELL while the ledger records LONG/SHORT — the dedupe guard delivered the correct outcome in the interim (no double-booking), but the guard itself must be made spelling-proof."
+    next_action: "Implement the side-spelling normalisation in position_closed_in_ledger as an isolated PR; post-deploy, read back the position tag/ledger files on Server 1 to confirm the guard fires for an OANDA-spelled close; flip VERIFIED with that evidence."
+  - id: TASK-OBS-005
+    title: "Fleet CD cannot heal a checkout parked on a non-main branch: assert main-branch state before fast-forward (the OBS-004 watchdog stays alert-only)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: null
+    evidence:
+      - "Episode (merge batch 2, 2026-11-17; ~/workspace/merge-batch2/STATE.md + ~/workspace/s2-repair2/STATE.md): after batch 2, Server 2's checkout sat on branch claude/task-rel-012-verified at c3c7b19d with a diverged fossil local main ref (tip 5bbf34ac, PR #128 era), stranding exactly PR #830's VyralX production-rules content. Mechanism, as corrected by the S2 repair crew: the OBS-004 deploy watchdog is ALERT-ONLY by design (deploy_watchdog.py contains no git writes — rev-parse/status/ls-remote only) and it alerted correctly throughout the episode and tracked recovery; automated healing is Fleet CD's job, and deploy-monorepo.yml fast-forwards into the CURRENT checkout with explicitly no branch switch. PR #849's Fleet CD run was cancelled in the concurrency slot and later successful runs skipped Server 2 via paths-filter, so no fast-forward path ever existed for the parked tree. Repaired by hand 2026-11-17: git checkout -B main origin/main -> 2f840d52 (51 untracked files preserved + hash-verified, incl. the bridge's live untracked code; the bridge was never restarted), VyralX restarted, PR #830's routes verified 200, fleet 10/10."
+    next_action: "Implement as a PR: (1) Fleet CD (deploy-monorepo.yml) must assert the checkout is on main before fast-forwarding — fail loudly if git branch --show-current != main; (2) the OBS-004 watchdog's divergence alerts must include the checked-out branch name; (3) re-sync the local main refs on both servers to origin/main as part of the fix (S2 done by hand in the repair; verify S1). Flip VERIFIED after a staged non-main parking is caught loudly."
+  - id: TASK-MEM-009
+    title: "Deploy path carries no database-migration step — PR #831's dedupe_key migration never applied, Memora ORM paths down until manually migrated"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: null
+    priority: P1
+    created_at: "2026-11-17T04:10:00+05:30"
+    defect: "PR #831 (merge batch 2) added the dedupe_key column to Memora's memory_records ORM model plus alembic revision c9d4e7a1b5f2 (column + unique index uq_memory_dedupe_key), but the migration never ran on the production database: Memora's systemd unit is uvicorn-direct (ExecStart=/opt/friday_universe/venv/bin/python -m uvicorn app.main:app) with NO alembic step in the unit or in Fleet CD (alembic appears only in deploy/setup_fleet.sh). The deploy path can therefore ship ORM/schema pairs that diverge silently — the same structural gap TASK-REL-015 recorded on 2026-11-14 ('production never runs alembic upgrade')."
+    evidence:
+      - "FOUND 2026-11-17 by the Memora re-probe crew (~/workspace/memora-reprobes/STATE.md; issue #35 comment 6931451433): every memory_records ORM query fails ORA-00904 — 'MEMORY_RECORDS.DEDUPE_KEY: invalid identifier' — first observed 2026-11-17 02:25:53 IST ([SKILL-LEARN] background pass), 59 ORA-00904 lines by 04:05 IST. Probe-proven blast radius: capture events refused (pipeline_refused: DatabaseError); compress/handoff/context HTTP 500; skills baselines/evaluate/drafts/active/stats HTTP 500; outcomes refused — and by construction /v1/memories writes + hybrid search, including FRIDAY's recall path."
+      - "Fail-soft invisibility: /health stayed HTTP 200 'healthy' throughout (~1.5h before discovery) because the health endpoint does not exercise the memory_records ORM path; background passes logged warnings only. The PR #829/#819 fixes are deployed (blob-hash verified against main 2f840d52) but cannot be exercised until the migration lands — TASK-IG2-MEM-01/02 stay IN_REVIEW on this evidence, explicitly not verified."
+      - "REMEDIATION COMPLETE 2026-11-17 (~/workspace/memora-migration-fix/STATE.md; issue #35 comment 6931727394) — supersedes the closing clause of the previous item: root cause confirmed and refined. The deploy path has no migration step, and Memora's boot-path convergence had advanced schema OBJECTS without advancing alembic_version, which lagged THREE revisions behind head (a1d4c7e9f2b3 -> c9d4e7a1b5f2): f8a2d6c14b93 was stamped-not-executed (its already-created path is not Oracle-case-safe), 08e9adb56879 executed as a convergent no-op, and c9d4e7a1b5f2 executed. After-state by direct SELECT: alembic_version = c9d4e7a1b5f2 (head), DEDUPE_KEY column + UQ_MEMORY_DEDUPE_KEY index present, memory_records rows untouched. Memora restarted 2026-11-17 04:13:52 IST; ORA-00904 count 65 -> 0; the full re-probe set passes and TASK-IG2-MEM-01/02 flipped VERIFIED on it. Acceptance item 3 (remediation applied + re-probe clean) is SATISFIED; items 1-2 (the systemic deploy-path fix) remain open. Minor follow-up: clean up the f8a2d6c14b93 revision's Oracle case-safety so its already-created path can execute honestly."
+    acceptance:
+      - "Alembic upgrade runs as part of Memora's start/deploy path (ExecStartPre or a Fleet CD step), so a merged migration can never again be silently unapplied."
+      - "A post-deploy memory-path smoke probe (capture -> search round-trip) gates the deploy health check: if the ORM path errors, the deploy fails loudly instead of reporting healthy."
+      - "The remediation migration (c9d4e7a1b5f2) is applied to the production DB and the memory paths re-probe clean."
+    next_action: "Systemic fix (this entry stays IN_REVIEW for it): implement the deploy-path migration step (ExecStartPre or a Fleet CD alembic upgrade) + the post-deploy capture->search smoke probe gating deploy health, as a PR. The one-off remediation is COMPLETE (see evidence) — do not re-run it. Minor follow-up: the f8a2d6c14b93 case-safety cleanup."
+  - id: TASK-IG3-VYR-07
+    title: "VyralX cluster-7 (B114): motion templates — the 12 source-named templates"
+    status: MERGED
+    owner: muse_ai
+    pr: 847
+    merge_note: "Implementing PR #828 landed via union replacement PR #847 (merge batch 2, 2026-11-17); pr records the replacement."
+    evidence:
+      - "IG full-watch implementation, VyralX lane: B114 motion templates — exactly the 12 source-named templates. Code on main 2f840d52 (PR #828 via replacement #847) and deployed (S2 == main after the 2026-11-17 repair)."
+    next_action: "Post-merge: production probe of the template set on the deployed VyralX; flip VERIFIED with that outcome."
+  - id: TASK-IG3-VYR-08
+    title: "VyralX cluster-7 (B125): idea generator over operator-supplied records only"
+    status: MERGED
+    owner: muse_ai
+    pr: 848
+    merge_note: "Implementing PR #825 landed via union replacement PR #848 (merge batch 2, 2026-11-17); pr records the replacement."
+    evidence:
+      - "IG full-watch implementation, VyralX lane: B125 idea generator — generates from operator-supplied records only. Code on main 2f840d52 (PR #825 via replacement #848) and deployed (S2 == main after the 2026-11-17 repair)."
+    next_action: "Post-merge: production probe on the deployed VyralX; flip VERIFIED with that outcome."
+  - id: TASK-IG3-VYR-09
+    title: "VyralX cluster-7 (B131): production rules"
+    status: MERGED
+    owner: muse_ai
+    pr: 849
+    merge_note: "Implementing PR #830 landed via union replacement PR #849 (merge batch 2, 2026-11-17); pr records the replacement. This is the PR whose VyralX content was stranded by Server 2's non-main checkout (TASK-OBS-005); its routes were verified 200 after the 2026-11-17 S2 repair."
+    evidence:
+      - "IG full-watch implementation, VyralX lane: B131 production rules. Code on main 2f840d52 (PR #830 via replacement #849); deployed and route-verified on Server 2 after the repair (fleet 10/10)."
+    next_action: "Post-merge: production probe on the deployed VyralX; flip VERIFIED with that outcome."
+  - id: TASK-IG3-VYR-10
+    title: "VyralX cluster-7 (B120): scene-assembly evaluation (documentation)"
+    status: MERGED
+    owner: muse_ai
+    pr: 832
+    merge_note: "PR #832 merged DIRECT to main (merge 1ccf7058, merge batch 2, 2026-11-17) — no replacement PR was involved."
+    evidence:
+      - "IG full-watch implementation, VyralX lane: B120 scene-assembly evaluation document. On main 2f840d52 via PR #832 (direct merge)."
+    next_action: "None — documentation deliverable, merged. Any scene-assembly build that follows from the evaluation gets its own task entry."
+  - id: TASK-COR-012
+    title: "Cortex budget-store saves fail across event loops + bot token leaks into journal via httpx request logging"
+    status: IN_PROGRESS
+    owner: muse_ai
+    pr: null
+    priority: P1
+    created_at: "2026-11-17T04:21:00+05:30"
+    defect: "Found by the 2026-11-17 Cortex breach drill (~/workspace/cortex-drill-run2/STATE.md; issue #35 comment 6931766133). (F1) DatabaseBudgetStore._save_async raises 'RuntimeError: got Future attached to a different loop' when saving from the request path — agent_budget_state has 0 rows in production: budget usage, pauses and alerts are in-process only and are lost on restart (loads work; saves do not). (F2) httpx INFO logging printed the full Telegram webhook URL — including the bot token — into Cortex's journal at delivery time: PR #820 (TASK-COR-011) redacted persisted records, not log lines."
+    evidence:
+      - "Drill record 2026-11-17: the TASK-COR-010 breach drill re-confirmed the budget-store baseline durable=true / load_errors=0 across a cold restart for LOADS, while the save path failed per F1 (agent_budget_state row count 0 in production) and the delivery journal line carried the unredacted webhook URL per F2."
+    next_action: "Fix PR (crew dispatched 2026-11-17): own engine/session factory for the budget-store thread (F1) + a telegram-URL log-redaction filter for httpx request logging (F2). Post-deploy proof: breach -> restart -> budget state survives with save_errors 0, and the delivery journal lines carry no token."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
