@@ -41,6 +41,15 @@ permissions:
   contents: read
   issues: write
 
+# TASK-SEN-009: the alert steps below run `gh issue ...` on the runner,
+# which has no checkout — without GH_REPO, gh cannot resolve the repo and
+# dies with "failed to run git: fatal: not a git repository" before doing
+# anything (proven by Backup Watchdog run 43872038804; zero [BACKUP-ALERT]
+# issues were ever created). Workflow-level env covers every gh call in
+# this file, current and future.
+env:
+  GH_REPO: surendra2304/FRIDAY-Universe
+
 jobs:
   backup:
     name: Backup fleet databases on Server 1
