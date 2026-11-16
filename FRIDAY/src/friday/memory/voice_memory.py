@@ -122,8 +122,11 @@ def handle_voice_memory(text: str) -> str | None:
             res = memora_client.forget_fact("friday", intent["query"]) or {}
             status = str(res.get("status", "error"))
             if status == "deleted":
-                gone = str(res.get("content_text", "")).strip()
-                return f"Done, Boss — I've forgotten {gone or 'it'}. Out of my active memory now."
+                # Never speak the deleted record's text back: this string
+                # is read aloud, and restating the content would keep it
+                # alive in the conversation the owner asked to clear it
+                # from (same defect as the chat fast path, fixed together).
+                return "Done, Boss — I've forgotten it. Out of my active memory now."
             if status == "not_found":
                 return "I checked, Boss, and I don't have a stored fact matching that — nothing to forget."
             return "I couldn't reach my memory store just now, so nothing was forgotten — say it again in a moment."
