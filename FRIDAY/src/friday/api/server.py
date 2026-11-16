@@ -3603,6 +3603,40 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _hits: list[dict[str, Any]] = []
         _mem_error = ""
         _q_personal = any(p in cmd for p in (" me", "my ", "myself", "i "))
+        # The question's content words, computed BEFORE the search: the
+        # ranking below keys on them, and so does the spelling-variant
+        # retry inside the search block. TASK-FRD-014: strip punctuation
+        # from the tokens — the old set kept "color?" verbatim (the
+        # token includes the question mark), so the subject word never
+        # substring-matched any stored line and ranking degenerated to
+        # (personal, length) among every "favorite"-bearing line; the
+        # asked-about fact could fall below the 4-line cap or sort last
+        # (proven live 2026-11-16: "What is my favorite color?" returned
+        # the teal fact LAST and cut its clean duplicate entirely,
+        # which is how the voice answer lost 'teal').
+        _q_words = {
+            _w.strip("?!.,;:'\"()")
+            for _w in _clean_memory_line(cmd).split()
+        }
+        _q_words = {_w for _w in _q_words if len(_w) > 3}
+        _stop = {"remember", "about", "what", "have", "tell", "does", "your", "you", "when", "where", "which"}
+        _q_words -= _stop
+        # TASK-FRD-014 (drill finding): the store holds the SAME fact in
+        # both spellings ("my favorite color is teal." / "My favourite
+        # colour is teal.") from different sessions, so overlap matching
+        # canonicalizes the owner's spelling variants on both sides.
+        # Matching only — stored text and the spoken form stay verbatim.
+        _SPELLING = {"favourite": "favorite", "colour": "color"}
+
+        def _canon_word(word: str) -> str:
+            return _SPELLING.get(word, word)
+
+        def _canon_line(low: str) -> str:
+            for _uk, _us in _SPELLING.items():
+                low = low.replace(_uk, _us)
+            return low
+
+        _q_words = {_canon_word(_w) for _w in _q_words}
         try:
             from friday.memory.memora_client import memora_client as _memora
             from friday.memory.hygiene import is_unpresentable_recall_hit as _is_unpresentable
@@ -3629,6 +3663,40 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             # store with nothing genuine for the question reaches the
             # honest not-found reply, never a dressed-up list.
             _hits = [h for h in _hits if not _is_unpresentable(h)]
+            if len(_q_words) >= 2 and _hits:
+                # TASK-FRD-014: if NO presentable hit matches every
+                # question content word, the spelling-sensitive search
+                # may have missed the fact entirely (live 2026-11-16:
+                # "What is my favourite colour?" returned 5 hits, none
+                # of them the teal fact the US-spelled query returns).
+                # Retry ONCE with the canonicalized spelling variant of
+                # the question and merge — the same fallback idiom as
+                # the owner-fact probe below, keyed on the miss shape.
+                _any_full = any(
+                    all(
+                        _w in _canon_line(str(_h.get("content_text", "")).lower())
+                        for _w in _q_words
+                    )
+                    for _h in _hits
+                )
+                _variant = _canon_line(raw_cmd[:200].lower())
+                if not _any_full and _variant != raw_cmd[:200].lower():
+                    _more = (
+                        await asyncio.to_thread(_memora.recall_memories, "friday", _variant, limit=10)
+                        or []
+                    )
+                    _seen_texts = {
+                        str(_h.get("content_text", "")) for _h in _hits
+                    }
+                    _hits = _hits + [
+                        _h for _h in _more
+                        if str(_h.get("content_text", "")) not in _seen_texts
+                        and not _is_unpresentable(_h)
+                    ]
+                    logger.info(
+                        "memory recall: spelling-variant retry merged "
+                        f"{len(_hits)} hits for {raw_cmd[:60]!r}"
+                    )
         except Exception as _e:
             _mem_error = f"{type(_e).__name__}"
             logger.debug(f"Memora recall skipped in memory fast-path: {_e}")
@@ -3653,39 +3721,9 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             except Exception as _e2:
                 logger.debug(f"Memora recall fallback probe skipped in memory fast-path: {_e2}")
         # Rank client-side so the answer leads with what he actually asked
-        # about: question-word overlap wins, personal facts beat agent logs.
-        # TASK-FRD-014: strip punctuation from the question tokens — the old
-        # set kept "color?" verbatim (the token includes the question mark),
-        # so the subject word never substring-matched any stored line and
-        # ranking degenerated to (personal, length) among every
-        # "favorite"-bearing line; the asked-about fact could fall below
-        # the 4-line cap or sort last (proven live 2026-11-16: "What is my
-        # favorite color?" returned the teal fact LAST and cut its clean
-        # duplicate entirely, which is how the voice answer lost 'teal').
-        _q_words = {
-            _w.strip("?!.,;:'\"()")
-            for _w in _clean_memory_line(cmd).split()
-        }
-        _q_words = {_w for _w in _q_words if len(_w) > 3}
-        _stop = {"remember", "about", "what", "have", "tell", "does", "your", "you", "when", "where", "which"}
-        _q_words -= _stop
-        # TASK-FRD-014 (drill finding): the store holds the SAME fact in
-        # both spellings ("my favorite color is teal." / "My favourite
-        # colour is teal.") from different sessions, so overlap matching
-        # canonicalizes the owner's spelling variants on both sides.
-        # Matching only — stored text and the spoken form stay verbatim.
-        _SPELLING = {"favourite": "favorite", "colour": "color"}
-
-        def _canon_word(word: str) -> str:
-            return _SPELLING.get(word, word)
-
-        def _canon_line(low: str) -> str:
-            for _uk, _us in _SPELLING.items():
-                low = low.replace(_uk, _us)
-            return low
-
-        _q_words = {_canon_word(_w) for _w in _q_words}
-
+        # about: question-word overlap wins, personal facts beat agent logs
+        # (question words + spelling canonicalization are computed above,
+        # before the search).
         def _is_agent_log(low: str) -> bool:
             return " executed " in low or "[agent task" in low or "bundle id" in low or "http 200" in low or "[memora response" in low
 

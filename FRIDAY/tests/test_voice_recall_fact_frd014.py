@@ -111,6 +111,28 @@ def test_recall_ranking_no_longer_degenerates_on_punctuation(monkeypatch):
     assert result["metadata"].get("spoken_summary") == "Your favorite color is teal."
 
 
+def test_recall_spelling_variant_retry_recovers_a_missed_fact(monkeypatch):
+    # Live shape (2026-11-16): the British query's search returned a
+    # sparse set with NO teal record at all; the US-spelled query
+    # returns it. When no presentable hit matches every content word,
+    # the gate retries once with the canonicalized variant and merges.
+    from friday.api.server import _dispatch_command
+    import friday.memory.memora_client as module
+
+    class _VariantMemora:
+        def recall_memories(self, agent_name, query, limit=10):
+            if "favourite" in query:
+                return _hits(CHAI, ZQ)  # sparse miss set
+            return _hits(TEAL_CLEAN)    # canonicalized variant finds it
+
+    monkeypatch.setattr(module, "memora_client", _VariantMemora())
+    result = asyncio.run(_dispatch_command("What is my favourite colour?"))
+    assert result["metadata"].get("spoken_summary") == (
+        "Your favorite color is teal."
+    )
+    assert "teal" in result["reply"]
+
+
 def test_recall_browsing_question_keeps_the_list(monkeypatch):
     result = _dispatch(
         monkeypatch,
