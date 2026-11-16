@@ -2427,3 +2427,6 @@ app.include_router(take_verification_router, prefix="/api/v1", tags=["IG Corpus 
 # --- IG Corpus Motion Templates Integration (TASK-IG3-VYR-07) ---
 from app.services.motion_templates import router as motion_templates_router
 app.include_router(motion_templates_router, prefix="/api/v1", tags=["IG Corpus Motion Templates"])
+# --- IG Corpus Idea Generator Integration (TASK-IG3-VYR-08) ---
+from app.services.idea_generator import router as idea_generator_router
+app.include_router(idea_generator_router, prefix="/api/v1", tags=["IG Corpus Idea Generator"])
