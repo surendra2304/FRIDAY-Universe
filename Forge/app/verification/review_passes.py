@@ -33,12 +33,16 @@ Honesty rules (FRG-009 / FRG-011 discipline, binding here):
   module performs no network I/O of its own, so a deployment wires it
   to Inference (via ``app.providers``) explicitly, and tests wire fakes.
 
-Integration point (deliberately not wired into ``engine.py`` by this
-task — TASK-FRG-008's queued work edits that file): a battery wiring
-step can call :func:`run_review_passes` over the settled workspace and
-feed a ``FINDINGS`` aggregate into ``app.verification.verdict`` as a
-named hard-failure reason, and an ``UNAVAILABLE`` aggregate as a named
-gate result. Until wired, the passes are callable from the CLI/tests.
+Integration point (wired by TASK-IG2-FRG-10): the verification
+battery (``app/verification/engine.py``) runs :func:`run_review_passes`
+over the settled workspace as its "Independent Review Passes" stage,
+reachable from the production path (``app/api/delegate.py`` ->
+``verification_engine.verify_task``). A FINDINGS aggregate becomes a
+failed battery evidence — a named hard failure in the report's
+failure_reasons; an UNAVAILABLE aggregate fails closed when a
+reviewer was configured, and is recorded as a disclosed gate result
+when none was. The full report is persisted as the
+``review_passes_report.json`` task artifact.
 """
 from __future__ import annotations
 

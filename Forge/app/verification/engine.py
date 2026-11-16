@@ -5,7 +5,9 @@ Orchestrates batteries of objective verification checks and compiles verifiable 
 
 import asyncio
 import json
+import os
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
 
 from mesh.heavy_task import HeavyTaskCoordinator, coordinator_from_environment
@@ -14,6 +16,7 @@ from app.core.logging import get_logger
 from app.core.workspace import WorkspaceManager, workspace_manager
 from app.execution.engine import ExecutionEngine, execution_engine
 from app.monitoring.production_monitor import production_monitor
+from app.verification.review_passes import ReviewStatus, run_review_passes
 from app.verification.checkers import (
     BaseChecker,
     BuildChecker,
@@ -57,9 +60,28 @@ class VerificationEngine:
         wm: WorkspaceManager | None = None,
         custom_checkers: list[BaseChecker] | None = None,
         heavy_task_coordinator: HeavyTaskCoordinator | None = None,
+        review_author_model: str | None = None,
+        review_reviewer_model: str | None = None,
+        review_fn: Callable[[str], Awaitable[str]] | None = None,
     ):
         self.engine = engine or execution_engine
         self.wm = wm or workspace_manager
+        # TASK-IG2-FRG-10: independent review passes (TASK-IG-FRG-01)
+        # configuration. Models default from the service environment so
+        # the production singleton below picks them up at startup; the
+        # review_fn is injectable for tests/deployments, otherwise one
+        # is built lazily from app.providers for the reviewer model.
+        self.review_author_model = (
+            review_author_model
+            if review_author_model is not None
+            else (os.environ.get("FORGE_REVIEW_AUTHOR_MODEL") or None)
+        )
+        self.review_reviewer_model = (
+            review_reviewer_model
+            if review_reviewer_model is not None
+            else (os.environ.get("FORGE_REVIEW_REVIEWER_MODEL") or None)
+        )
+        self.review_fn = review_fn
         self.heavy_task_coordinator = (
             heavy_task_coordinator
             if heavy_task_coordinator is not None
@@ -143,6 +165,144 @@ class VerificationEngine:
         for i in exec_idx:
             await run_one(i, self.checkers[i])
         return [r for r in results if r is not None]
+
+    def _provider_review_fn(self) -> Callable[[str], Awaitable[str]]:
+        """Build the review callable for the configured reviewer model
+        from the provider factory. Constructed lazily so importing this
+        module never touches provider configuration; any provider
+        failure inside the callable surfaces as the audit's UNAVAILABLE,
+        which the stage below treats fail-closed."""
+        reviewer_model = self.review_reviewer_model
+
+        async def review_fn(prompt: str) -> str:
+            from app.providers.factory import get_provider
+
+            provider = get_provider(model_name=reviewer_model)
+            response = await provider.generate(prompt)
+            return response.content
+
+        return review_fn
+
+    async def _run_review_stage(
+        self, task_id: str, project_dir: Path | None
+    ) -> VerificationEvidence | None:
+        """TASK-IG2-FRG-10: run the independent review passes
+        (TASK-IG-FRG-01's ``run_review_passes``) over the settled
+        workspace as a battery stage — the wiring its module docstring
+        named as the integration point, so the passes are reachable
+        from the production path (app/api/delegate.py ->
+        verification_engine.verify_task) instead of only from tests.
+
+        Outcome mapping (agreement, not inflation):
+        * FINDINGS -> failed evidence: a named hard failure in the
+          report's failure_reasons, so the build cannot surface as
+          SUCCESS anywhere (verdict rule 3).
+        * PASS -> passed evidence.
+        * UNAVAILABLE -> depends on configuration, honestly:
+          - reviewer models CONFIGURED but the audit did not run
+            (provider failure, same-model refusal, unparseable
+            verdict): failed evidence — a configured gate that could
+            not run fails closed, never silently green;
+          - reviewer NOT configured: the deterministic security review
+            still ran; if it passed, the stage records a passed
+            evidence whose stdout DISCLOSES that the cross-model audit
+            did not run (a named gate result, not an audit pass), and
+            if the security review itself could not run, failed
+            evidence — absence of evidence is not a pass.
+        The full ReviewReport is persisted as the
+        ``review_passes_report.json`` task artifact either way.
+        """
+        from app.verification.evidence import CheckCategory
+
+        if project_dir is None or not Path(project_dir).is_dir():
+            return None
+        review_fn = self.review_fn
+        if (
+            review_fn is None
+            and self.review_author_model
+            and self.review_reviewer_model
+        ):
+            review_fn = self._provider_review_fn()
+        report = await run_review_passes(
+            Path(project_dir),
+            author_model=self.review_author_model,
+            reviewer_model=self.review_reviewer_model,
+            review_fn=review_fn,
+        )
+        try:
+            self.wm.save_artifact(
+                task_id,
+                "review_passes_report.json",
+                json.dumps(report.to_dict(), indent=2),
+            )
+        except Exception as exc:  # artifact loss must not hide the outcome
+            logger.warning(f"Could not save review passes report for {task_id}: {exc}")
+
+        name = "Independent Review Passes"
+        command = "run_review_passes(settled workspace)"
+        issues = [i.to_dict() for i in report.all_issues]
+        per_pass = "; ".join(
+            f"{p.name}={p.status.value} ({p.detail})" for p in report.passes
+        )
+        overall = report.overall_status
+        if overall is ReviewStatus.FINDINGS:
+            return VerificationEvidence(
+                check_name=name,
+                category=CheckCategory.SECURITY,
+                command=command,
+                exit_code=1,
+                passed=False,
+                stderr=(
+                    f"Independent review found {len(issues)} issue(s). {per_pass}"
+                ),
+                issues=issues,
+                artifacts_inspected=sorted(
+                    {i["file_path"] for i in issues if i.get("file_path")}
+                ),
+            )
+        if overall is ReviewStatus.PASS:
+            return VerificationEvidence(
+                check_name=name,
+                category=CheckCategory.SECURITY,
+                command=command,
+                exit_code=0,
+                passed=True,
+                stdout=f"Independent review PASS. {per_pass}",
+                issues=[],
+            )
+        # UNAVAILABLE aggregate: at least one pass did not run.
+        configured = bool(self.review_author_model and self.review_reviewer_model)
+        security = next(
+            (p for p in report.passes if p.name == "security_review"), None
+        )
+        if not configured and security is not None and security.status is ReviewStatus.PASS:
+            return VerificationEvidence(
+                check_name=name,
+                category=CheckCategory.SECURITY,
+                command=command,
+                exit_code=0,
+                passed=True,
+                stdout=(
+                    "Deterministic security review PASS. Cross-model audit "
+                    "UNAVAILABLE: no reviewer configured (set "
+                    "FORGE_REVIEW_AUTHOR_MODEL and FORGE_REVIEW_REVIEWER_MODEL "
+                    "to enable it) — recorded as a gate result, NOT counted "
+                    f"as an audit pass. {per_pass}"
+                ),
+                issues=[],
+            )
+        return VerificationEvidence(
+            check_name=name,
+            category=CheckCategory.SECURITY,
+            command=command,
+            exit_code=1,
+            passed=False,
+            stderr=(
+                "Independent review UNAVAILABLE — a configured review pass "
+                f"did not run; failing closed. {per_pass}"
+            ),
+            issues=issues,
+        )
 
     async def _run_with_heavy_lease(
         self,
@@ -265,6 +425,20 @@ class VerificationEngine:
                         logger.debug(f"Could not load baseline report: {e}")
 
         evidence_list = await self._run_checkers(task_id)
+
+        # TASK-IG2-FRG-10: independent review passes over the settled
+        # workspace (see _run_review_stage). Runs BEFORE the source
+        # integrity stage: the integrity evidence is the battery's seal
+        # and must stay the final stage evidence (a source change made
+        # during ANY stage — review included — must not be stampable as
+        # passing). The review stage only reads the project tree (its
+        # report artifact lands outside it), so the before/after
+        # snapshot comparison below now also covers the review stage.
+        review_evidence = await self._run_review_stage(
+            task_id, paths.project if paths else None
+        )
+        if review_evidence is not None:
+            evidence_list.append(review_evidence)
 
         from app.verification.evidence import CheckCategory
         snapshot_stable = False
