@@ -1,0 +1,71 @@
+# Dependency set for scripts/check_py311_imports.py (fleet Python 3.12
+# upgrade, work item W3; supersedes scripts/requirements-py310-gate.txt
+# from TASK-REL-050).
+#
+# Frozen from the Python 3.12 staging union resolutions recorded in the
+# upgrade plan's evidence (freeze-venv-s1.txt / freeze-venv-s2.txt —
+# the same freezes the per-server union locks of work item W5 are
+# generated from). Rule: the Server 1 union version wins where both
+# servers resolved the package; the Server 2 version is used where
+# Server 1's union lacks it (aiosqlite, sse-starlette,
+# google-api-python-client). One deliberate deviation:
+# google-genai==3.3.0 — the staging S1 freeze still shows the pre-W1
+# resolution (2.34.0, governed by Stratex's retired <3.0.0 cap, which
+# breaks livekit.plugins.google); W1 raised the cap and 3.3.0 is the
+# resolved union version.
+#
+# The gate stubs-and-reports any other missing third-party package
+# instead of failing, so this file only needs updating when an
+# entrypoint graph gains a new dependency whose *real* import
+# behaviour matters to the check. asyncpg (pinned in the retired
+# 3.10 file) is dropped: it appears in neither 3.12 union freeze and
+# no entrypoint import graph reaches it (the staging gate imported
+# all ten entrypoints with zero stubs in the full union venvs).
+fastapi==0.163.1
+uvicorn==0.54.0
+pydantic==2.14.3
+pydantic-settings==2.16.3
+oracledb==26.1.0
+sqlalchemy==2.1.8
+# greenlet is in both union freezes (3.5.6) and declared by the Forge
+# and Memora manifests; SQLAlchemy 2.1's asyncio extension hard-fails
+# at import without it (six entrypoints). The retired 3.10 file could
+# omit it under SQLAlchemy 2.0; the 3.12 union cannot.
+greenlet==3.5.6
+httpx==0.28.1
+requests==2.34.2
+python-dotenv==1.2.4
+cryptography==50.0.2
+rich==15.0.0
+psutil==7.2.2
+aiohttp==3.14.5
+aiosqlite==0.22.1
+jinja2==3.1.6
+python-multipart==0.0.34
+aiofiles==25.1.0
+structlog==26.1.0
+flask==3.1.3
+flask-cors==6.0.5
+alembic==1.20.1
+apscheduler==3.11.3
+prometheus-client==0.26.0
+websockets==17.4
+beautifulsoup4==4.15.0
+pypdf==7.1.0
+python-docx==1.2.0
+pandas==2.3.3
+numpy==2.5.5
+scipy==1.18.1
+python-binance==1.0.37
+ccxt==4.5.92
+openai==3.51.0
+anthropic==1.17.0
+google-genai==3.3.0
+pyjwt==2.15.1
+google-api-python-client==2.202.0
+google-auth==2.62.2
+google-auth-oauthlib==1.5.0
+google-auth-httplib2==0.4.4
+redis==6.4.0
+sse-starlette==3.4.8
+pyyaml==6.0.3

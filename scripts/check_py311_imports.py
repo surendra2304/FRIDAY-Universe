@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
-"""Python 3.10 production-interpreter import gate (TASK-REL-050).
+"""Python 3.11+ production-interpreter import gate.
 
-Production runs Python 3.10.12 (verified on Server 1, TASK-REL-048),
-while development and CI run 3.11/3.12. Code that uses 3.11+/3.12-only
-constructs at import time (``from datetime import UTC``,
-``from enum import StrEnum``, ``import tomllib``, ...) imports fine
-everywhere except production — where the service fails to boot on
-deploy. This gate makes that class of failure visible before merge:
+Successor to the TASK-REL-050 Python 3.10 gate
+(``scripts/check_py310_imports.py``, retired by the fleet Python 3.12
+upgrade, work item W3). The fleet's production interpreter is CPython
+3.12 (manifests floor at >=3.11); before the upgrade, production ran
+3.10 and the gate's job was to catch 3.11+-only constructs that would
+have failed to boot there. The failure class is now inverted: code
+that breaks on the *production* interpreter — stdlib APIs removed in
+3.11/3.12 (``imp``, ``asyncore``/``asynchat``, ``distutils``,
+``configparser`` legacy helpers, ...), behaviour changes in stdlib
+modules the fleet imports at boot, or 3.13+-only syntax creeping in
+from a newer development machine — merges green everywhere except
+where it matters. This gate makes that class visible before merge:
 
-1. It refuses to run (exit 2) unless the interpreter is Python 3.10 —
-   a PASS under any other interpreter would be meaningless.
+1. It refuses to run (exit 2) unless the interpreter is Python 3.11
+   or 3.12 — below 3.11 is the retired production line (a PASS there
+   says nothing about the fleet), and 3.13+ is not the fleet target
+   (a PASS there would not prove the fleet interpreter either).
 2. It byte-compiles every ``.py`` under the ten agent directories and
-   ``mesh/`` with this 3.10 interpreter, catching 3.11+/3.12-only
-   *syntax* (``except*``, type-alias statements, 3.12 f-strings, ...).
+   ``mesh/`` with this interpreter, catching syntax the fleet
+   interpreter cannot parse (e.g. 3.13+-only constructs).
 3. It imports every agent's production entrypoint — the exact
    WorkingDirectory / PYTHONPATH / module from ``deploy/setup_fleet.sh``
    — in a subprocess with dummy credentials and no reachable services.
@@ -31,18 +39,24 @@ the gate's minimal environment, the import is retried with that package
 stubbed and the stub is reported — the gate never stubs away a
 *compatibility* failure: an ImportError naming a stdlib module, a
 SyntaxError, or any error raised by repository code fails the gate.
+Stdlib modules removed in 3.12 (``imp``, ``distutils``, ``asyncore``,
+``asynchat``, ``smtpd``) count as stdlib for this rule: they are absent
+from ``sys.stdlib_module_names`` on 3.12, and without the explicit
+list the stubber would mistake them for third-party packages and mask
+the exact failures this gate exists to catch.
+Each subprocess also reports its peak RSS, which the Python 3.12
+cutover uses as the MemoryMax budgeting input (plan item W6).
 
 What this gate does NOT cover (by design, stated honestly):
-- Runtime-only 3.11+ constructs that execute after import
-  (e.g. ``asyncio.timeout`` in shutdown paths — three known sites are
-  inventoried in docs/verification/PY310_IDIOM_SWEEP_REL050.md).
+- Runtime-only behaviour differences that execute after import.
+  Import smoke is a boot-level proof, not serving traffic; behaviour
+  is covered by the agents' own suites and post-flip health checks.
 - Test files (production never imports them).
-- Actually serving traffic: this is an import/boot gate, not a
-  functional test. Behaviour is covered by the agents' own suites.
 
-Usage:  python3.10 scripts/check_py310_imports.py [--root DIR]
-Exit:   0 = all ten entrypoints import on 3.10; 1 = a check failed;
-        2 = wrong interpreter / setup error.
+Usage:  python3.12 scripts/check_py311_imports.py [--root DIR]
+                [--agents Inference,Memora,...]
+Exit:   0 = all ten entrypoints import on 3.11/3.12; 1 = a check
+        failed; 2 = wrong interpreter / setup error.
 """
 
 from __future__ import annotations
@@ -187,10 +201,16 @@ AGENT_ENV = {
 # Subprocess runner: imports the target, retrying with stubs ONLY for
 # missing third-party packages. Prints one RESULT JSON line.
 RUNNER = r"""
-import importlib, importlib.util, json, sys, traceback, types
+import importlib, importlib.util, json, resource, sys, traceback, types
 
 root, mode, target = sys.argv[1], sys.argv[2], sys.argv[3]
 STDLIB = sys.stdlib_module_names
+# Stdlib modules removed in Python 3.12. On a 3.12 interpreter they are
+# absent from stdlib_module_names, so the stub logic below would
+# mistake them for missing third-party packages and stub them away —
+# masking exactly the failure class this gate exists to catch. They
+# are treated as stdlib: never stubbed, always a hard failure.
+REMOVED_STDLIB = {"imp", "distutils", "asyncore", "asynchat", "smtpd"}
 REPO_TOP = {"app", "apps", "friday", "futuris", "intelx", "sentinel",
             "mesh", "dashboard"}
 
@@ -261,16 +281,20 @@ for _try in range(60):
     try:
         attempt()
         print("RESULT " + json.dumps(
-            {"ok": True, "stubbed": stubbed}))
+            {"ok": True, "stubbed": stubbed,
+             "rss_mb": round(resource.getrusage(
+                 resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}))
         sys.exit(0)
     except ModuleNotFoundError as e:
         missing = (e.name or "").split(".")[0]
         full = e.name or ""
-        if (not full or missing in STDLIB or missing in REPO_TOP
-                or full in stubbed):
+        if (not full or missing in STDLIB or missing in REMOVED_STDLIB
+                or missing in REPO_TOP or full in stubbed):
             print("RESULT " + json.dumps({
                 "ok": False, "exc": type(e).__name__, "msg": str(e),
-                "stubbed": stubbed}))
+                "stubbed": stubbed,
+                "rss_mb": round(resource.getrusage(
+                    resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}))
             sys.exit(1)
         for m in set(sys.modules) - before:
             del sys.modules[m]
@@ -282,7 +306,9 @@ for _try in range(60):
                   if root in f.filename][-4:]
         print("RESULT " + json.dumps({
             "ok": False, "exc": type(e).__name__, "msg": str(e)[:400],
-            "frames": frames, "stubbed": stubbed}))
+            "frames": frames, "stubbed": stubbed,
+            "rss_mb": round(resource.getrusage(
+                resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}))
         sys.exit(1)
 print("RESULT " + json.dumps(
     {"ok": False, "exc": "StubLoopExhausted", "msg": "",
@@ -291,7 +317,7 @@ print("RESULT " + json.dumps(
 
 
 def compile_pass(root: Path) -> list[str]:
-    """Byte-compile every .py under the agent dirs + mesh on 3.10."""
+    """Byte-compile every .py under the agent dirs + mesh."""
     failures = []
     for top in AGENT_DIRS + ["mesh"]:
         base = root / top
@@ -314,6 +340,8 @@ def run_agent(root: Path, spec, extra_env) -> dict:
     env["PYTHONPATH"] = os.pathsep.join(
         str(root) if p == "." else str(root / p) for p in ppaths)
     tgt = target if mode == "module" else str(root / target)
+    import time as _time
+    _t0 = _time.monotonic()
     try:
         p = subprocess.run(
             [sys.executable, "-c", RUNNER, str(root), mode, tgt],
@@ -322,24 +350,32 @@ def run_agent(root: Path, spec, extra_env) -> dict:
     except subprocess.TimeoutExpired:
         return {"ok": False, "exc": "Timeout",
                 "msg": "import exceeded 180s"}
+    _wall = round(_time.monotonic() - _t0, 2)
     line = next((ln for ln in p.stdout.splitlines()
                  if ln.startswith("RESULT ")), None)
     if line is None:
         return {"ok": False, "exc": "RunnerError",
                 "msg": (p.stderr or p.stdout)[-300:]}
-    return json.loads(line[len("RESULT "):])
+    _r = json.loads(line[len("RESULT "):])
+    _r["wall_s"] = _wall
+    return _r
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--root", default=None,
                     help="repo root (default: parent of this script)")
+    ap.add_argument("--agents", default=None,
+                    help="comma-separated subset of agent names")
     args = ap.parse_args()
 
-    if sys.version_info[:2] != (3, 10):
-        print(f"REFUSED: this gate is only meaningful under Python 3.10 "
-              f"(running {sys.version.split()[0]}). A PASS here would "
-              f"not say anything about production's interpreter.")
+    if sys.version_info[:2] not in ((3, 11), (3, 12)):
+        print(f"REFUSED: this gate is only meaningful under Python "
+              f"3.11/3.12, the fleet interpreter line (running "
+              f"{sys.version.split()[0]}). Below 3.11 is the retired "
+              f"production line; 3.13+ is not the fleet target — a "
+              f"PASS under either would not say anything about "
+              f"production's interpreter.")
         return 2
     root = (Path(args.root).resolve() if args.root
             else Path(__file__).resolve().parent.parent)
@@ -348,7 +384,7 @@ def main() -> int:
     # than tempfile.mkdtemp: tempfile's usability probe writes to the
     # candidate file, which some sandboxed environments deny even for
     # otherwise-writable directories.
-    tmp = Path(os.environ.get("TMPDIR", "/tmp")) / f"py310-gate-{os.getpid()}"
+    tmp = Path(os.environ.get("TMPDIR", "/tmp")) / f"py311-gate-{os.getpid()}"
     tmp.mkdir(parents=True, exist_ok=True)
     extra_env = {
         "VyralX": {
@@ -365,20 +401,26 @@ def main() -> int:
     failures = compile_pass(root)
     if failures:
         print(f"COMPILE FAIL ({len(failures)} files do not compile "
-              f"under Python 3.10):")
+              f"under Python {sys.version.split()[0]}):")
         for f in failures[:20]:
             print(f"  {f}")
     else:
-        print("compile: all agent + mesh sources compile under 3.10")
+        print(f"compile: all agent + mesh sources compile under "
+              f"Python {sys.version.split()[0]}")
 
+    specs = AGENTS
+    if args.agents:
+        want = {a.strip() for a in args.agents.split(",")}
+        specs = [s for s in AGENTS if s[0] in want]
     results = {}
-    for spec in AGENTS:
+    for spec in specs:
         r = run_agent(root, spec, extra_env)
         results[spec[0]] = r
         if r.get("ok"):
             note = (f" (stubbed third-party: {', '.join(r['stubbed'])})"
                     if r.get("stubbed") else "")
-            print(f"{spec[0]:10s} PASS{note}")
+            print(f"{spec[0]:10s} PASS{note} "
+                  f"[rss={r.get('rss_mb')}MB wall={r.get('wall_s')}s]")
         else:
             frames = "; ".join(r.get("frames", [])[-2:])
             print(f"{spec[0]:10s} FAIL [{r.get('exc')}] "

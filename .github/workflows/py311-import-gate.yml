@@ -1,0 +1,41 @@
+name: Python 3.11+ Import Gate
+
+# Fleet Python 3.12 upgrade (work item W3): production runs CPython
+# 3.12 (manifest floor >=3.11). This job replaces the retired
+# TASK-REL-050 Python 3.10 gate: it imports every agent's production
+# entrypoint under 3.12 so code that breaks on the production
+# interpreter (removed stdlib APIs, newer-than-fleet syntax, ...)
+# fails before merge instead of at service boot after deploy. See
+# scripts/check_py311_imports.py for exactly what is and is not
+# covered.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: py311-import-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  py311-import-gate:
+    name: Import all agent entrypoints under Python 3.12
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install gate dependencies (fleet-pinned subset)
+        run: pip install -r scripts/requirements-py311-gate.txt
+
+      - name: Run the 3.11+ import gate
+        run: python scripts/check_py311_imports.py
