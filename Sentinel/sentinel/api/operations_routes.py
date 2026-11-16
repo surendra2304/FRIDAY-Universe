@@ -14,6 +14,7 @@ Mounts the operations modules in the live API (previously unreachable):
 
 from __future__ import annotations
 
+import os
 import secrets
 from datetime import datetime, timezone
 
@@ -27,6 +28,11 @@ from sentinel.core.models import SeverityLevel
 from sentinel.modules.operations.alerting import alert_engine
 from sentinel.modules.operations.baseline import BaselineDelta, ChangeType
 from sentinel.modules.operations.dashboard import dashboard_aggregator
+from sentinel.modules.operations.deploy_watchdog import (
+    DEFAULT_REPO_URL,
+    deploy_watchdog,
+    git_remote_main_head,
+)
 from sentinel.modules.operations.scheduler import assessment_scheduler
 
 operations_router = APIRouter(prefix="/operations", tags=["Operations Alerting"])
@@ -40,6 +46,11 @@ class DrillRequest(BaseModel):
     target_ref: str = "sen008-drill"
     severity: SeverityLevel = SeverityLevel.HIGH
     description: str | None = None
+
+
+class DeployWatchdogReport(BaseModel):
+    server: str
+    deployed_head: str
 
 
 @operations_router.get("/alerts")
@@ -120,3 +131,34 @@ async def fire_operations_drill(request: DrillRequest) -> dict[str, Any]:
         "dispatch_queued": alert.dispatch_queued,
         "cleanup": f"POST /operations/alerts/{alert.alert_id}/resolve",
     }
+
+
+@operations_router.get("/deploy-watchdog")
+async def get_deploy_watchdog_status() -> dict[str, Any]:
+    """Per-server deployed-HEAD divergence state (TASK-OBS-004)."""
+    servers = deploy_watchdog.status()
+    return {
+        "servers": [s.model_dump(mode="json") for s in servers],
+        "count": len(servers),
+        "grace_seconds": deploy_watchdog.grace_seconds,
+    }
+
+
+@operations_router.post("/deploy-watchdog/report")
+async def report_deployed_head(request: DeployWatchdogReport) -> dict[str, Any]:
+    """Ingress for per-server deploy reporters (TASK-OBS-004).
+
+    A server Sentinel does not run on posts its own checkout HEAD (see
+    scripts/deploy_watchdog_report.py); the watchdog compares it against
+    origin/main here, in the single state store, and alerts through the
+    operations alert path when divergence persists beyond the grace
+    window. The reporter is deliberately dumb — all decisions live in
+    the watchdog.
+    """
+    repo_url = os.getenv("SENTINEL_DEPLOY_WATCHDOG_REPO_URL", DEFAULT_REPO_URL)
+    state = deploy_watchdog.check_server(
+        request.server,
+        lambda: request.deployed_head,
+        lambda: git_remote_main_head(repo_url),
+    )
+    return state.model_dump(mode="json")

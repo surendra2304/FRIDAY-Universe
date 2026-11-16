@@ -90,6 +90,13 @@ from sentinel.core.security.crypto_gatekeeper import (
 )
 from sentinel.gatekeeper.approval_dispatcher import approval_dispatcher
 from sentinel.modules.operations.alerting import alert_engine as operations_alert_engine
+from sentinel.modules.operations.deploy_watchdog import (
+    DEFAULT_CHECKOUT_PATH,
+    DEFAULT_REPO_URL,
+    configure_deploy_watchdog,
+    deploy_watchdog,
+    run_deploy_watchdog,
+)
 from sentinel.modules.operations.dispatch import operations_dispatcher
 from sentinel.modules.operations.scheduler import assessment_scheduler
 from sentinel.integrations.friday.models import (
@@ -157,6 +164,7 @@ async def lifespan(app: FastAPI):
         await seed_sovereign_scope_into_database()
 
     memora_task = None
+    deploy_watchdog_task = None
     enabled = os.getenv("SENTINEL_MEMORA_EVENTS_ENABLED", "false").strip().lower() in {
         "1", "true", "yes", "on"
     }
@@ -201,6 +209,58 @@ async def lifespan(app: FastAPI):
         assessment_scheduler.start()
         logger.info("Operations alerting wired to the shared human channel; scheduler started")
 
+    # TASK-OBS-004: deploy watchdog — alert when a server's deployed HEAD
+    # stays diverged from origin/main beyond one Fleet CD cycle (defect
+    # class D9: a cancelled / paths-skipped deploy run silently stranding
+    # merged code). The in-process loop covers THIS server when a server
+    # name + checkout are configured; other servers report their HEAD
+    # via POST /operations/deploy-watchdog/report. Unconfigured = the
+    # watchdog stays dormant (endpoints still answer) rather than
+    # guessing a checkout path.
+    watchdog_enabled = os.getenv("SENTINEL_DEPLOY_WATCHDOG_ENABLED", "true").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+    watchdog_server = os.getenv("SENTINEL_DEPLOY_WATCHDOG_SERVER_NAME", "").strip()
+    if watchdog_enabled and not is_testing:
+        try:
+            watchdog_grace = max(
+                0, int(os.getenv("SENTINEL_DEPLOY_WATCHDOG_GRACE_SECONDS", "1800"))
+            )
+        except ValueError:
+            watchdog_grace = 1800
+        configure_deploy_watchdog(
+            grace_seconds=watchdog_grace,
+            state_path=os.getenv("SENTINEL_DEPLOY_WATCHDOG_STATE_PATH") or None,
+        )
+        if watchdog_server:
+            try:
+                watchdog_interval = max(
+                    30.0, float(os.getenv("SENTINEL_DEPLOY_WATCHDOG_INTERVAL_SECONDS", "600"))
+                )
+            except ValueError:
+                watchdog_interval = 600.0
+            deploy_watchdog_task = asyncio.create_task(
+                run_deploy_watchdog(
+                    deploy_watchdog,
+                    watchdog_server,
+                    os.getenv("SENTINEL_DEPLOY_WATCHDOG_CHECKOUT", DEFAULT_CHECKOUT_PATH),
+                    os.getenv("SENTINEL_DEPLOY_WATCHDOG_REPO_URL", DEFAULT_REPO_URL),
+                    watchdog_interval,
+                ),
+                name="sentinel_deploy_watchdog",
+            )
+            logger.info(
+                "Deploy watchdog local check started for %s (grace %ds)",
+                watchdog_server,
+                watchdog_grace,
+            )
+        else:
+            logger.info(
+                "Deploy watchdog configured (grace %ds); no local server name set — "
+                "remote servers report via /operations/deploy-watchdog/report",
+                watchdog_grace,
+            )
+
     # Clean signal handling for SIGTERM and SIGINT
     loop = asyncio.get_running_loop()
 
@@ -221,6 +281,11 @@ async def lifespan(app: FastAPI):
                 with suppress(asyncio.CancelledError):
                     await memora_task
                 logger.info("Memora security advisory consumer stopped cleanly.")
+            if deploy_watchdog_task:
+                deploy_watchdog_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await deploy_watchdog_task
+                logger.info("Deploy watchdog stopped cleanly.")
             if tls_dns_daemon.is_running:
                 await tls_dns_daemon.stop()
                 logger.info("Continuous TLS Certificate & DNS drift daemon stopped cleanly.")
