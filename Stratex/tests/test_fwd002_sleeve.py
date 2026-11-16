@@ -520,9 +520,12 @@ def test_runner_sizing_jpy_pair_uses_real_notional(tmp_path):
         "USDJPY", 2.098, pricing, equity=10_000.0,
         free_margin=10_000.0, margin_rate=0.02,
     )
-    # Notional per unit is $1 for USDJPY -> the 25% notional cap is
-    # 2,500 units (the raw-price formula would give 15).
-    assert units == 2500
+    # Notional per unit is $1 for USDJPY (the raw-price formula would
+    # give a wildly different size). TASK-STR-FWD-006 sizing: 0.1% of
+    # $10k = $10 risk over a 2.098 JPY stop (= $0.01314/unit) -> 761
+    # units; the 25% notional cap (2,500 units) no longer binds — it
+    # was the binding constraint under the old 1% law.
+    assert units == 761
 
 
 def test_runner_sizing_eurusd_sanity(tmp_path):
@@ -533,7 +536,10 @@ def test_runner_sizing_eurusd_sanity(tmp_path):
         "EURUSD", 0.02, pricing, equity=10_000.0,
         free_margin=10_000.0, margin_rate=0.02,
     )
-    assert units == int(2500 / 1.08)
+    # TASK-STR-FWD-006 sizing: 0.1% of $10k = $10 risk over a $0.02
+    # stop -> 500 units (under the old 1% law the 25% notional cap
+    # bound first at int(2500 / 1.08) = 2314 units).
+    assert units == 500
 
 
 def test_runner_failed_order_backs_off_instrument(tmp_path):

@@ -116,6 +116,21 @@ TESTNET_RISK = {
 # strategy_ichimoku_trend.py / strategy_dow_effect.py read them from
 # here, and tests/test_fwd002_forward_strategies.py proves the modules
 # reproduce the judged harness entry-for-entry on real historical data.
+#
+# TASK-STR-FWD-006 AMENDMENT (2026-11-15): the phase-3 SIZING package
+# was settled by TASK-STR-RD-011 and the coordinator's decision (owner
+# mandate: all risk parameters are the coordinator's to set). The
+# written "1% risk cap" the entrants launched with was arithmetically
+# inconsistent with the 5% drawdown kill on pooled multi-symbol books
+# (RD-011: 1% x concurrency 11.9-21.3 = 12-21% heat; the kill tripped
+# on day 2-4 of the judged OOS streams). The decided package — stated
+# in full in Stratex/docs/PHASE3_FORWARD_PROTOCOL.md and carried in
+# each governed entry below as risk_per_trade_pct / max_heat_pct — is:
+# 0.1% per-trade risk on VENUE equity, 2% aggregate heat cap per
+# strategy, 5% mark-to-market drawdown kill on venue equity evaluated
+# on the scan cadence, 3% daily breaker (pause, not kill), leverage
+# pinned at 3x, performance kills unchanged. Vol-targeting is BANNED
+# for dow_effect.
 # ==============================================================================
 
 # The judged CRYPTO30 panel (rigorous_backtest/rd2/panels.py CRYPTO30).
@@ -264,8 +279,10 @@ FOREX28_SYMBOLS = [
 # in strategies/strategy_registry.py; the daemon attests which venues
 # are demo from the venue adapters' base URLs, and a FORWARD_TEST
 # strategy can never execute without that attestation), same phase-3
-# protections (1% risk cap, 3% daily breaker, kill criteria via
-# measurement/forward_guard.py), and every fill tagged FORWARD_TEST in
+# protections (decided sizing package, TASK-STR-FWD-006 —
+# docs/PHASE3_FORWARD_PROTOCOL.md: 0.1% per-trade risk on venue
+# equity, 2% heat cap per strategy, 3% daily breaker, kill criteria
+# via measurement/forward_guard.py), and every fill tagged FORWARD_TEST in
 # the Phase-2 ledger so scorecards never blend this lane with the
 # passed entrants (ichimoku/dow/sleeve).
 #
@@ -505,7 +522,9 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "minimum_required_edge": 0.0005,
         "validated_assets": CRYPTO30_SYMBOLS,
         "forward_protocol": True,
-        "reason": "TASK-STR-RD-002 winner: ichimoku_trend/tk_cloud @ CRYPTO30 4h passed the full bar (expectancy>0, PF 1.278 >= 1.2, 2,302 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.222). Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Phase-3 protocol: 1% risk cap, 3% daily breaker, kill criteria (expectancy<0 or PF<1.0 after >=50 closed trades, or strategy drawdown >5% of equity) auto-pause via measurement/forward_guard.py. DEMO venue only; live trading prohibited.",
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "reason": "TASK-STR-RD-002 winner: ichimoku_trend/tk_cloud @ CRYPTO30 4h passed the full bar (expectancy>0, PF 1.278 >= 1.2, 2,302 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.222). Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Phase-3 protocol (TASK-STR-FWD-006 decided package, docs/PHASE3_FORWARD_PROTOCOL.md): 0.1% per-trade risk on VENUE equity, 2% aggregate heat cap per strategy, 3% daily breaker (pause, not kill), kill criteria (expectancy<0 or PF<1.0 after >=50 closed trades, or mark-to-market strategy drawdown >5% of venue equity, evaluated on the scan cadence) auto-pause via measurement/forward_guard.py. DEMO venue only; live trading prohibited.",
     },
     "dow_effect": {
         "status": "VALIDATED",
@@ -523,7 +542,9 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "minimum_required_edge": 0.0005,
         "validated_assets": CRYPTO30_SYMBOLS,
         "forward_protocol": True,
-        "reason": "TASK-STR-RD-002 winner: dow_effect/reversal @ CRYPTO30 1d passed the full bar (expectancy>0, PF 1.257 >= 1.2, 3,660 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.206). Calendar effect — flagged in RD-002 as most prone to era decay; the forward window is the arbiter. Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Time exit (max_bars=5) enforced by the daemon (no broker-native equivalent). Phase-3 protocol as for ichimoku_trend. DEMO venue only; live trading prohibited.",
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "reason": "TASK-STR-RD-002 winner: dow_effect/reversal @ CRYPTO30 1d passed the full bar (expectancy>0, PF 1.257 >= 1.2, 3,660 OOS trades, >=80% folds, untouched holdout), Bonferroni at N=1,557 and the 2x-cost stress (PF 1.206). Calendar effect — flagged in RD-002 as most prone to era decay; the forward window is the arbiter. Owner approved forward demo trading 2026-11-15 (TASK-STR-FWD-002). Time exit (max_bars=5) enforced by the daemon (no broker-native equivalent). Phase-3 protocol as for ichimoku_trend (TASK-STR-FWD-006 package). Vol-targeting is BANNED for dow_effect (TASK-STR-RD-011 settlement): no volatility-scaled position sizing may ever be applied to this strategy. DEMO venue only; live trading prohibited.",
     },
     "fx_mr_v4": {
         "status": "VALIDATED",
@@ -558,7 +579,9 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "minimum_required_edge": 0.0005,
         "validated_assets": CRYPTO30_SYMBOLS,
         "sleeve": SLEEVE_NAME,
-        "reason": "Crypto leg of the RD-002 Stage-C best-per-class sleeve (owner-approved third forward entrant 2026-11-15, TASK-STR-FWD-002 extension). As a standalone cell it did NOT pass the promotion bar (109 OOS trades, PF 1.575, 3/5 folds) — it trades ONLY as a sleeve component, judged on the sleeve's compounded equity + max drawdown, with the sleeve-level kill rule (combined sleeve DD > 5% of equity -> auto-pause all sleeve components). DEMO venue only; live trading prohibited.",
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "reason": "Crypto leg of the RD-002 Stage-C best-per-class sleeve (owner-approved third forward entrant 2026-11-15, TASK-STR-FWD-002 extension). As a standalone cell it did NOT pass the promotion bar (109 OOS trades, PF 1.575, 3/5 folds) — it trades ONLY as a sleeve component, judged on the sleeve's compounded equity + max drawdown, with the sleeve-level kill rule (combined sleeve MARK-TO-MARKET DD > 5% of the combined venue equity of the accounts the sleeve trades on -> auto-pause all sleeve components; TASK-STR-FWD-006). Sizing per the FWD-006 package: 0.1% per-trade risk on venue equity, 2% heat cap. DEMO venue only; live trading prohibited.",
     },
     "sleeve_tsmom2_dual": {
         "status": "VALIDATED",
@@ -575,7 +598,9 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "minimum_required_edge": 0.0005,
         "validated_assets": FOREX28_SYMBOLS,
         "sleeve": SLEEVE_NAME,
-        "reason": "Forex leg of the RD-002 Stage-C best-per-class sleeve (owner-approved 2026-11-15). Standalone cell: 127 OOS trades, PF 1.505, +0.62%/trade — sleeve component only, judged on the sleeve. All 28 FOREX28 instruments verified present on the OANDA practice account 2026-11-15. Production bars are OANDA UTC-midnight-aligned daily candles (dailyAlignment=0) vs Yahoo research bars — same alignment convention, venue-canonical price source (disclosed deviation). DEMO (practice) only; live trading prohibited.",
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
+        "reason": "Forex leg of the RD-002 Stage-C best-per-class sleeve (owner-approved 2026-11-15). Standalone cell: 127 OOS trades, PF 1.505, +0.62%/trade — sleeve component only, judged on the sleeve. All 28 FOREX28 instruments verified present on the OANDA practice account 2026-11-15. Production bars are OANDA UTC-midnight-aligned daily candles (dailyAlignment=0) vs Yahoo research bars — same alignment convention, venue-canonical price source (disclosed deviation). Sizing per the TASK-STR-FWD-006 package: 0.1% per-trade risk on account NAV, 2% aggregate heat cap across the leg's open trades; the sleeve is judged mark-to-market (closed + unrealized, both legs combined) by the daemon guard. DEMO (practice) only; live trading prohibited.",
     },
     "sleeve_vol_adaptive_trend": {
         "status": "DISABLED",
@@ -611,8 +636,10 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "lane_assets": CRYPTO30_SYMBOLS,
         "validated_assets": [],
         "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
         "forward_lane": "FORWARD_TEST",
-        "reason": "TASK-STR-RD-002 WATCHLIST: bollinger_trend/p50_sd2.0 @ CRYPTO30 1d passed the mechanical bar (expectancy +3.5448%/trade, PF 1.4562, 420 OOS trades, 5/5 positive folds, holdout) but FAILED Bonferroni significance at N=1,557 — not a promotion. Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane: DEMO venues only, phase-3 protocol (1% risk cap, 3% daily breaker, kill criteria expectancy<0 or PF<1.0 after >=50 closed trades or drawdown >5% of equity), fills tagged FORWARD_TEST, never blended with the VALIDATED entrants' scorecards.",
+        "reason": "TASK-STR-RD-002 WATCHLIST: bollinger_trend/p50_sd2.0 @ CRYPTO30 1d passed the mechanical bar (expectancy +3.5448%/trade, PF 1.4562, 420 OOS trades, 5/5 positive folds, holdout) but FAILED Bonferroni significance at N=1,557 — not a promotion. Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane: DEMO venues only, phase-3 protocol (TASK-STR-FWD-006 package: 0.1% per-trade risk on venue equity, 2% aggregate heat cap, 3% daily breaker, kill criteria expectancy<0 or PF<1.0 after >=50 closed trades or mark-to-market drawdown >5% of venue equity), fills tagged FORWARD_TEST, never blended with the VALIDATED entrants' scorecards.",
     },
     "shock_breakout": {
         "status": "FORWARD_TEST",
@@ -630,6 +657,8 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "lane_assets": CRYPTO30_SYMBOLS,
         "validated_assets": [],
         "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
         "forward_lane": "FORWARD_TEST",
         "reason": "TASK-STR-RD-002 WATCHLIST: shock_breakout/k1.0 @ CRYPTO30 1d passed the mechanical bar (expectancy +2.6957%/trade, PF 1.3179, 732 OOS trades, 4/5 positive folds, holdout) but FAILED Bonferroni significance at N=1,557 — not a promotion. Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane terms as for bollinger_trend. (Distinct from sleeve_shock_breakout, the sleeve's own component module/configuration — different judged object, different records.)",
     },
@@ -649,6 +678,8 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "lane_assets": CRYPTO30_SYMBOLS,
         "validated_assets": [],
         "forward_protocol": True,
+        "risk_per_trade_pct": 0.001,
+        "max_heat_pct": 0.02,
         "forward_lane": "FORWARD_TEST",
         "reason": "TASK-STR-RD-002 WATCHLIST: adx_ema BARE @ CRYPTO30 4h passed the mechanical bar (expectancy +0.7955%/trade, PF 1.2332, 837 OOS trades, 4/5 positive folds, untouched-holdout expectancy +0.9428%) but FAILED Bonferroni significance at N=1,557 — not a promotion. (The production configuration measured PF 1.197, sub-bar, and was not a candidate.) Owner directed 2026-11-15 (TASK-STR-FWD-003) that near-bar configurations be decided by real demo forward evidence. FORWARD_TEST lane terms as for bollinger_trend. Judged geometry is RR 1.0 by construction (3.0x/3.0x ATR bracket); forward-protocol strategies are exempt from the daemon's generic min-RR pre-filter for exactly this reason — the expectancy gate and kill criteria still apply.",
     },

@@ -24,6 +24,26 @@ from notifications.telegram_bot import get_telegram_bot
 logger = get_logger("stratex_daemon")
 
 
+def heat_capped_risk_amount(
+    equity: float,
+    risk_per_trade_pct: float,
+    open_risk_usd: float,
+    max_heat_pct: float,
+) -> float:
+    """Risk budget (USD) for a new trade under the aggregate heat cap.
+
+    TASK-STR-FWD-006: the budget is the per-trade risk
+    (``risk_per_trade_pct`` of venue equity) limited by the remaining
+    heat budget (``max_heat_pct`` of venue equity minus the strategy's
+    already-open stop-risk). A return value <= 0 means the strategy is
+    at its heat cap and must open nothing new.
+    """
+    equity = max(0.0, float(equity or 0.0))
+    per_trade = equity * float(risk_per_trade_pct)
+    remaining = equity * float(max_heat_pct) - float(open_risk_usd or 0.0)
+    return min(per_trade, remaining)
+
+
 class StratexTradingEngine:
     """Main trading engine that coordinates signal generation and execution.
     ALL RESTRICTIONS REMOVED FOR DEMO TESTING - UNLIMITED TRADING.
@@ -43,8 +63,20 @@ class StratexTradingEngine:
         self.min_rr = float(os.getenv("STRATEX_MIN_RR", "1.5"))
         # Risk per trade. The daemon sizes with this number; the ENGINE must
         # receive it too or it falls back to its own 0.02 default (4x larger).
-        self.risk_per_trade = float(os.getenv("STRATEX_RISK_PER_TRADE_PCT", "0.005"))
-        # No notional cap per position
+        # TASK-STR-FWD-006 (decided package, TASK-STR-RD-011 settlement):
+        # 0.1% of VENUE equity per trade for pooled multi-symbol books —
+        # the old 1%-of-composite figure was ~2% of the venue account a
+        # trade actually sits on. Sizing reads the venue equity at entry
+        # time (see the sizing block in _execute_signal).
+        self.risk_per_trade = float(os.getenv("STRATEX_RISK_PER_TRADE_PCT", "0.001"))
+        # Aggregate portfolio-heat cap per strategy (TASK-STR-FWD-006):
+        # the sum of stop-risk over all simultaneously open positions of
+        # one strategy may never exceed this fraction of venue equity.
+        # Stated next to the per-trade cap so the pair cannot drift apart
+        # again (the RD-011 finding was exactly that drift).
+        self.max_heat_pct = float(os.getenv("STRATEX_MAX_HEAT_PCT_PER_STRATEGY", "0.02"))
+        # Per-position notional cap, denominated on VENUE equity like
+        # every other sizing figure (TASK-STR-FWD-006).
         self.max_position_pct = float(os.getenv("STRATEX_MAX_POSITION_PCT", "0.10"))
         # No stop distance limits
         self.min_stop_pct = float(os.getenv("STRATEX_MIN_STOP_PCT", "0.005"))
@@ -234,6 +266,14 @@ class StratexTradingEngine:
         # have no broker-native equivalent; enforce them here, also before
         # the loss-limit gate so exits are never blocked by it.
         self._manage_forward_time_exits()
+
+        # TASK-STR-FWD-006: phase-3 kill criteria on the scan cadence,
+        # marked to market — evaluated here (after close reconciliation,
+        # before any entry decision) so a breached strategy is denylisted
+        # before it can open anything new this cycle. This previously ran
+        # once per UTC day in the auto-prune slot below, and not at all
+        # on days the daemon restarted.
+        self._maybe_apply_forward_guard()
 
         # Check daily loss limit. get_risk_summary() runs the daily reset and
         # seeds daily_start_equity on first call, so the breaker below has a
@@ -586,8 +626,10 @@ class StratexTradingEngine:
         if hasattr(self, "_last_prune_date"):
             if self._last_prune_date != today:
                 self._maybe_prune_strategies()
-                # TASK-STR-FWD-002: phase-3 kill criteria, same daily slot.
-                self._maybe_apply_forward_guard()
+                # TASK-STR-FWD-006: the phase-3 forward guard no longer
+                # runs in this daily slot — it is evaluated on the scan
+                # cadence at the top of scan_and_execute (marked to
+                # market). Only the legacy pruner remains daily.
                 self._last_prune_date = today
                 # Weekly scorecard (TASK-STR-PHASE2-001): regenerated from
                 # the fill ledger only, at most once a week.
@@ -1128,12 +1170,104 @@ class StratexTradingEngine:
             except Exception as e:
                 logger.warning(f"[STRATEX] Forward time exit check failed for {key}: {e}")
 
+    def _strategy_open_risk(
+        self, strategy_name: str, venue: Optional[str] = None
+    ) -> float:
+        """Aggregate stop-risk (USD) of a strategy's open positions.
+
+        Risk per position = qty x |entry - stop|. A position with no
+        recorded stop is charged at the daemon's max stop distance on
+        its notional — a conservative proxy, since such a position's
+        true risk is undefined, never zero. Used by the heat cap
+        (TASK-STR-FWD-006).
+        """
+        total = 0.0
+        try:
+            positions = getattr(self.engine, "positions", {}) or {}
+            attribution = getattr(self.engine, "position_strategy", {}) or {}
+            for key, pos in positions.items():
+                if attribution.get(key) != strategy_name:
+                    continue
+                if venue is not None and not str(key).startswith(f"{venue}:"):
+                    continue
+                qty = abs(float(getattr(pos, "quantity", 0) or 0))
+                entry = float(getattr(pos, "entry_price", 0) or 0)
+                stop = float(getattr(pos, "stop_loss", 0) or 0)
+                if qty <= 0 or entry <= 0:
+                    continue
+                if stop > 0:
+                    total += qty * abs(entry - stop)
+                else:
+                    total += qty * entry * self.max_stop_pct
+        except Exception as e:
+            logger.warning(
+                f"[STRATEX] Open-risk computation failed for {strategy_name}: {e}"
+            )
+        return total
+
+    def _open_unrealized_by_strategy(self) -> Dict[str, float]:
+        """Current unrealized PnL (USD) grouped by strategy attribution."""
+        out: Dict[str, float] = {}
+        try:
+            positions = getattr(self.engine, "positions", {}) or {}
+            attribution = getattr(self.engine, "position_strategy", {}) or {}
+            for key, pos in positions.items():
+                name = attribution.get(key)
+                if not name:
+                    continue
+                pnl = float(getattr(pos, "unrealized_pnl", 0) or 0)
+                if pnl == 0.0:
+                    entry = float(getattr(pos, "entry_price", 0) or 0)
+                    mark = float(getattr(pos, "mark_price", 0) or 0)
+                    qty = float(getattr(pos, "quantity", 0) or 0)
+                    if entry > 0 and mark > 0 and qty:
+                        sign = (
+                            -1.0
+                            if str(getattr(pos, "side", "LONG")).upper()
+                            in ("SHORT", "SELL")
+                            else 1.0
+                        )
+                        pnl = (mark - entry) * qty * sign
+                out[name] = out.get(name, 0.0) + pnl
+        except Exception as e:
+            logger.warning(f"[STRATEX] Unrealized aggregation failed: {e}")
+        return out
+
+    def _sleeve_runner_unrealized(self) -> float:
+        """The OANDA sleeve leg's last published unrealized PnL (USD).
+
+        The sleeve runner marks its own book to market every scan and
+        publishes the figure into its state file (TASK-STR-FWD-006);
+        the sleeve guard below consumes it. A missing field (a
+        pre-FWD-006 runner) reads as 0.0 — the closed-fills figure
+        then governs, exactly as it did before.
+        """
+        try:
+            state_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
+                "data", "sleeve_oanda", "sleeve_state.json",
+            )
+            with open(state_path, "r", encoding="utf-8") as fh:
+                state = json.load(fh)
+            return float(state.get("unrealized_pnl_usd", 0.0) or 0.0)
+        except Exception:
+            return 0.0
+
     def _maybe_apply_forward_guard(self) -> None:
         """Phase-3 kill criteria over the measurement fill ledger.
 
-        A breached forward-protocol strategy is auto-paused through the
-        persisted denylist (survives restarts; the scan loop honours it).
+        TASK-STR-FWD-006: evaluated on the scan cadence (throttled to
+        30s inside this continuous loop; previously once per UTC day
+        in the auto-prune slot and never on restart days) and marked
+        to market — the drawdown test sees closed fills PLUS each
+        book's current unrealized PnL, denominated on venue equity.
+        A breached strategy is auto-paused through the persisted
+        denylist (survives restarts; the scan loop honours it).
         """
+        now = time.time()
+        if now - getattr(self, "_last_forward_guard_ts", 0.0) < 30:
+            return
+        self._last_forward_guard_ts = now
         try:
             from measurement import fill_ledger, forward_guard
 
@@ -1143,11 +1277,32 @@ class StratexTradingEngine:
             risk = self.engine.get_risk_summary()
             equity = float(risk.get("total_equity") or 0.0)
             rows = fill_ledger.read_fills()
-            for decision in forward_guard.evaluate(rows, equity, sorted(entries)):
+            unrealized = self._open_unrealized_by_strategy()
+            # Venue basis: every daemon forward book trades on
+            # binance_futures; its DD limit is 5% of THAT account.
+            binance_equity = 0.0
+            try:
+                binance_equity = float(
+                    self.engine.get_venue_equity("binance_futures") or 0.0
+                )
+            except Exception:
+                binance_equity = 0.0
+            equity_by_strategy = {
+                name: (binance_equity if binance_equity > 0 else equity)
+                for name in entries
+            }
+            for decision in forward_guard.evaluate(
+                rows,
+                equity,
+                sorted(entries),
+                unrealized_by_strategy=unrealized,
+                equity_by_strategy=equity_by_strategy,
+            ):
                 logger.info(
                     "[STRATEX] Forward guard: "
                     f"{decision['strategy']} trades={decision['trades']} "
                     f"net=${decision['net_pnl']:.2f} "
+                    f"unrealized=${decision['unrealized_pnl']:.2f} "
                     f"pf={decision['profit_factor']:.3f} "
                     f"expectancy=${decision['expectancy']:.2f} "
                     f"dd=${decision['max_drawdown_usd']:.2f}/"
@@ -1175,11 +1330,44 @@ class StratexTradingEngine:
                         sleeve_map.setdefault(entry["sleeve"], []).append(
                             "strategy_" + key
                         )
-                for sd in forward_guard.evaluate_sleeves(rows, equity, sleeve_map):
+                # Sleeve basis (TASK-STR-FWD-006): the combined equity
+                # of the venue accounts the sleeve actually trades on
+                # (Binance daemon leg + OANDA runner leg), marked to
+                # market with BOTH legs' unrealized PnL — the daemon
+                # leg from live positions, the OANDA leg from the
+                # runner's published state.
+                oanda_equity = 0.0
+                try:
+                    oanda_equity = float(
+                        self.engine.get_venue_equity("oanda") or 0.0
+                    )
+                except Exception:
+                    oanda_equity = 0.0
+                sleeve_equity = (
+                    binance_equity + oanda_equity
+                    if binance_equity > 0 and oanda_equity > 0
+                    else equity
+                )
+                sleeve_unrealized: Dict[str, float] = {}
+                for comps in sleeve_map.values():
+                    for comp in comps:
+                        if comp == "strategy_sleeve_tsmom2_dual":
+                            sleeve_unrealized[comp] = (
+                                self._sleeve_runner_unrealized()
+                            )
+                        else:
+                            sleeve_unrealized[comp] = unrealized.get(comp, 0.0)
+                for sd in forward_guard.evaluate_sleeves(
+                    rows,
+                    sleeve_equity,
+                    sleeve_map,
+                    unrealized_by_component=sleeve_unrealized,
+                ):
                     logger.info(
                         "[STRATEX] Sleeve guard: "
                         f"{sd['sleeve']} components={sd['components']} "
                         f"trades={sd['trades']} net=${sd['net_pnl']:.2f} "
+                        f"unrealized=${sd['unrealized_pnl']:.2f} "
                         f"dd=${sd['max_drawdown_usd']:.2f}/"
                         f"${sd['drawdown_limit_usd']:.2f} breached={sd['breached']}"
                     )
@@ -1501,14 +1689,52 @@ class StratexTradingEngine:
                 )
                 return False
 
-            # Calculate position size based on risk
-            risk_summary = self.engine.get_risk_summary()
-            equity = float(risk_summary.get("total_equity", 0) or 0)
+            # Calculate position size based on risk.
+            # TASK-STR-FWD-006: sizing is denominated on the equity of
+            # the VENUE account this trade will sit on — never the
+            # composite cross-venue total (the pre-fix daemon sized a
+            # Binance trade off Binance+OANDA equity combined, doubling
+            # its true per-trade risk). A venue whose equity cannot be
+            # measured does not get entries (fail-closed, consistent
+            # with the engine's venue-health accounting).
+            equity = 0.0
+            try:
+                equity = float(self.engine.get_venue_equity(venue) or 0)
+            except Exception:
+                equity = 0.0
             if equity <= 0:
-                logger.warning(f"[STRATEX] Equity unavailable ({equity}); skipping {symbol}")
+                logger.warning(
+                    f"[STRATEX] Venue equity unavailable for {venue} "
+                    f"({equity}); skipping {symbol}"
+                )
                 return False
 
             risk_amount = equity * self.risk_per_trade
+            # Aggregate heat cap (TASK-STR-FWD-006): this strategy's
+            # already-open stop-risk plus the new trade's risk may not
+            # exceed max_heat_pct of venue equity. The new trade is
+            # resized down to the remaining budget; a strategy already
+            # at the cap opens nothing new.
+            open_risk = self._strategy_open_risk(strategy_name, venue)
+            capped = heat_capped_risk_amount(
+                equity, self.risk_per_trade, open_risk, self.max_heat_pct
+            )
+            if capped <= 0:
+                logger.info(
+                    f"[STRATEX] Skip {symbol}: {strategy_name} heat cap — "
+                    f"open risk ${open_risk:,.2f} already at "
+                    f"{self.max_heat_pct * 100:.1f}% of venue equity "
+                    f"(${equity * self.max_heat_pct:,.2f})"
+                )
+                return False
+            if capped < risk_amount:
+                logger.info(
+                    f"[STRATEX] Heat cap resizes {symbol} "
+                    f"({strategy_name}): risk ${risk_amount:,.2f} -> "
+                    f"${capped:,.2f} (open risk ${open_risk:,.2f} of "
+                    f"${equity * self.max_heat_pct:,.2f} cap)"
+                )
+                risk_amount = capped
             risk_per_unit = abs(current_price - stop_loss)
             if risk_per_unit <= 0:
                 logger.warning(f"[STRATEX] Invalid stop distance for {symbol}")
@@ -1517,8 +1743,9 @@ class StratexTradingEngine:
             position_size = risk_amount / risk_per_unit
 
             # Hard exposure cap: one position may never exceed max_position_pct of
-            # equity in notional terms. Without this a tight stop produces an
-            # enormous size (risk $53 with a 1% stop on BTC = $5,300 notional).
+            # VENUE equity in notional terms (TASK-STR-FWD-006 basis).
+            # Without this a tight stop produces an enormous size (risk
+            # $10 with a 0.5% stop on BTC = $2,000 notional).
             max_notional = equity * self.max_position_pct
             if current_price > 0:
                 position_size = min(position_size, max_notional / current_price)
@@ -1533,12 +1760,19 @@ class StratexTradingEngine:
                         bumped = adapter.round_quantity(
                             symbol, (min_notional / current_price) * 1.01
                         )
-                        if bumped * current_price <= max_notional:
+                        # The bump must respect BOTH caps: the notional
+                        # cap and the (possibly heat-capped) risk budget.
+                        if (
+                            bumped * current_price <= max_notional
+                            and bumped * risk_per_unit <= risk_amount + 1e-9
+                        ):
                             position_size = bumped
                         else:
                             logger.info(
                                 f"[STRATEX] Skip {symbol}: venue min notional "
-                                f"{min_notional:.2f} > exposure cap {max_notional:.2f}"
+                                f"{min_notional:.2f} cannot be met within the "
+                                f"exposure cap {max_notional:.2f} and risk "
+                                f"budget {risk_amount:.2f}"
                             )
                             return False
                 if position_size <= 0:
@@ -1802,7 +2036,7 @@ def main() -> None:
         starting_balance=float(os.getenv("STRATEX_INITIAL_BALANCE", "1000.0")),
         max_positions_per_venue=int(os.getenv("STRATEX_MAX_POSITIONS_PER_VENUE", "5")),
         max_total_positions=int(os.getenv("STRATEX_MAX_TOTAL_POSITIONS", "10")),
-        risk_per_trade_pct=float(os.getenv("STRATEX_RISK_PER_TRADE_PCT", "0.005")),
+        risk_per_trade_pct=float(os.getenv("STRATEX_RISK_PER_TRADE_PCT", "0.001")),
         max_daily_loss_pct=float(os.getenv("STRATEX_MAX_DAILY_LOSS_PCT", "0.03")),
         telegram_bot=telegram,
     )
@@ -1832,7 +2066,7 @@ def main() -> None:
             "• Balance: Real-time from venues\n"
             "• SL/TP: Native on orders\n"
             "• Strategies: 6 active (Trend, Mean Reversion, VWAP, Scalping, Pairs, ADX)\n"
-            "• Risk: 0.5% per trade, 3% daily loss limit\n\n"
+            "• Risk: 0.1% of venue equity per trade, 2% heat cap per strategy, 3% daily loss limit\n\n"
             "<i>Send /status, /positions, /balance, /scan for details.</i>"
         )
 

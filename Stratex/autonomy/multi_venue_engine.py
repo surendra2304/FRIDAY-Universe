@@ -288,6 +288,24 @@ class MultiVenueEngine:
                 total += equity
         return total
 
+    def get_venue_equity(self, venue_name: str) -> float:
+        """Equity (USD) of ONE venue account, 0.0 when unhealthy.
+
+        TASK-STR-FWD-006: position sizing and the phase-3 drawdown
+        limits are denominated on the equity of the venue account a
+        book actually trades on — never on the composite cross-venue
+        total (which silently doubled the true risk of a Binance trade
+        by folding the OANDA account into its sizing basis). An
+        unhealthy venue (auth failure / unreachable) yields 0.0 so
+        callers fail closed instead of sizing off a stale figure,
+        consistent with get_risk_summary's venue accounting.
+        """
+        venue = self.venues.get(venue_name)
+        if venue is None:
+            return 0.0
+        _summary, equity, healthy = self._venue_account(venue_name, venue)
+        return float(equity) if healthy else 0.0
+
     def equity_snapshot(self, trigger: str = "manual") -> Dict[str, Any]:
         """Per-venue equity snapshot for the measurement store.
 

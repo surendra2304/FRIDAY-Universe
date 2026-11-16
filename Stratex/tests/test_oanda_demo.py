@@ -292,9 +292,10 @@ class TestTraderRisk:
         units = trader._position_units(
             "EURUSD", signal, trader.adapter.pricing, equity=100000.0, free_margin=100000.0
         )
-        # 1% risk = $1000, sl_dist = 0.015 -> 66,666 units, but the 25%
-        # notional cap (25k / 1.085) binds first.
-        assert units == int(100000 * 0.25 / 1.0850)
+        # TASK-STR-FWD-006 sizing: 0.1% risk = $100, sl_dist = 0.015
+        # -> 6,666 units; the 25% notional cap (25k / 1.085 = 23,041)
+        # no longer binds (it did under the old 1% law).
+        assert units == int(100 / 0.015)
 
     def test_position_sizing_jpy_quote(self, tmp_path):
         trader = self._trader(tmp_path)
