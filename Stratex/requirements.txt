@@ -33,7 +33,13 @@ httpx>=0.27.0
 
 # Direct Gemini provider used by autonomy/ai_advisor.py. The AI-advisor test suite
 # patches google.genai.Client, so the SDK must be installed in CI and production.
-google-genai>=2.0.0,<3.0.0
+# Cap raised <3.0.0 -> <4.0.0 (fleet Python 3.12 upgrade, work item W1): the shared
+# S1 venv must resolve google-genai 3.3.0 (FRIDAY's lock version) because
+# livekit-plugins-google requires >=3.2.0 and FRIDAY-Voice cannot boot on 2.x.
+# ai_advisor behaviour proven identical on 3.3.0 vs 2.34.0 (A/B suite evidence
+# in the W1 PR); the SDK surface it uses (Client + models.generate_content)
+# is unchanged in 3.x.
+google-genai>=2.0.0,<4.0.0
 
 # Oracle Autonomous Database driver for the durable order-intent ledger.
 oracledb>=2.5.0,<27.0.0
