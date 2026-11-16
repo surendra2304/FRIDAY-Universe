@@ -102,9 +102,86 @@ class StandingWatchHook:
         await self._runner.stop()
 
 
+class HeadlineWatchHook:
+    """Hook managing the standing financial-headline watch (TASK-IG-INT-01).
+
+    Drives the shared HeadlineWatch from intelx.ingestion.feed_service —
+    the same instance the /api/v1/feeds routes read — so the standing
+    operation and the API surface never diverge.
+    """
+
+    def __init__(self) -> None:
+        self._task: asyncio.Task | None = None
+
+    async def start(self) -> None:
+        if self._task is not None:
+            return
+        from intelx.ingestion.feed_service import get_headline_watch
+
+        watch = get_headline_watch()
+        interval = float(get_settings().HEADLINE_WATCH_INTERVAL_S)
+
+        async def _loop() -> None:
+            while True:
+                try:
+                    await watch.poll_once()
+                except Exception:  # one bad sweep must not kill the watch
+                    logger.exception("headline watch sweep failed")
+                await asyncio.sleep(interval)
+
+        self._task = asyncio.create_task(_loop())
+
+    async def stop(self) -> None:
+        if self._task is None:
+            return
+        self._task.cancel()
+        try:
+            await self._task
+        except (asyncio.CancelledError, Exception):
+            pass
+        self._task = None
+
+
+class AiRadarHook:
+    """Hook managing the AI-trending radar polling loop (TASK-IG2-INT-05)."""
+
+    def __init__(self) -> None:
+        self._task: asyncio.Task | None = None
+
+    async def start(self) -> None:
+        if self._task is not None:
+            return
+        from intelx.ingestion.feed_service import get_ai_radar
+
+        radar = get_ai_radar()
+        interval = float(get_settings().AI_RADAR_INTERVAL_S)
+
+        async def _loop() -> None:
+            while True:
+                try:
+                    await radar.poll_once()
+                except Exception:  # one bad sweep must not kill the radar
+                    logger.exception("ai radar sweep failed")
+                await asyncio.sleep(interval)
+
+        self._task = asyncio.create_task(_loop())
+
+    async def stop(self) -> None:
+        if self._task is None:
+            return
+        self._task.cancel()
+        try:
+            await self._task
+        except (asyncio.CancelledError, Exception):
+            pass
+        self._task = None
+
+
 news_hook = NewsIngesterHook()
 auto_research_hook = AutonomousResearchHook()
 watch_hook = StandingWatchHook()
+headline_hook = HeadlineWatchHook()
+ai_radar_hook = AiRadarHook()
 
 
 @asynccontextmanager
@@ -204,6 +281,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await watch_hook.start()
         logger.info("IntelX standing watches started.")
 
+    if settings.ENABLE_HEADLINE_WATCH:
+        await headline_hook.start()
+        logger.info("IntelX headline watch started.")
+
+    if settings.ENABLE_AI_RADAR:
+        await ai_radar_hook.start()
+        logger.info("IntelX AI radar started.")
+
     yield
 
     # Shutdown sequence: abort active tasks gracefully and flush SQLite handles within 5s
@@ -212,6 +297,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         async with asyncio.timeout(5.0):
             await auto_research_hook.stop()
             await watch_hook.stop()
+            await headline_hook.stop()
+            await ai_radar_hook.stop()
             await news_hook.stop()
             await worker_hook.stop()
             await dispose_engine()

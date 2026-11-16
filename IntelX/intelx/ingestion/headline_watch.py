@@ -115,6 +115,17 @@ DEFAULT_SOURCES: list[HeadlineSource] = [
         active=False,
         unavailable_reason=X_ACCOUNT_REASON,
     ),
+    # X-02 (IG full re-watch package, item DaFMj_es1SH comments): First
+    # Squawk named as a headline-wire source alongside the accounts above.
+    # Same keyless-feed limit applies, so it registers inactive and honest.
+    HeadlineSource(
+        source_id="first_squawk_x",
+        name="First Squawk (@FirstSquawk)",
+        kind="x_account",
+        handle="FirstSquawk",
+        active=False,
+        unavailable_reason=X_ACCOUNT_REASON,
+    ),
 ]
 
 
