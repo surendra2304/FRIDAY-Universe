@@ -461,17 +461,21 @@ async def _inject_memory_block(sess, agent, block: str, instructions: str) -> "s
     return None
 
 
-def _voice_tools(result_observer=None) -> list:
+def _voice_tools(result_observer=None, turn_transcript_provider=None) -> list:
     """The execute_friday_task bridge: voice requests hit the SAME brain as
     chat (memory recall, fleet dispatch, research) instead of the voice LLM
     guessing. Import failures degrade to no tools — never a dead worker.
     TASK-FRD-012: the result observer feeds the watchdog's delivery
     watch (a settled result the model never verbalizes gets delivered,
-    not stranded)."""
+    not stranded). TASK-FRD-015: the turn transcript provider feeds
+    the bridge's split-final guard (a remember composed from a partial
+    turn never reaches the brain)."""
     try:
         from friday.voice.brain_bridge import build_voice_tools
 
-        return build_voice_tools(result_observer=result_observer)
+        return build_voice_tools(
+            result_observer=result_observer,
+            turn_transcript_provider=turn_transcript_provider)
     except Exception as exc:
         logger.warning("voice brain bridge unavailable: %s", exc)
         return []
@@ -1789,6 +1793,23 @@ async def entrypoint(ctx: JobContext):
         if len(bridge_results) > 20:
             del bridge_results[: len(bridge_results) - 20]
 
+    def _turn_transcript_snapshot():
+        """TASK-FRD-015: (current-turn user text, version) for the
+        bridge's split-final guard. Reads the shared ``turn`` dict at
+        call time (the session handlers populate it once they run;
+        the guard only calls this during tool execution, long after
+        the dict exists). The version bumps on every STT final and
+        every committed user item — exactly the continuation signal
+        the guard's settle window watches for."""
+        from friday.voice.brain_bridge import consolidate_turn_text
+
+        user_items = sum(
+            1 for role, _text in turn["transcript"] if role == "user")
+        return (
+            consolidate_turn_text(turn["transcript"], turn["pending_text"]),
+            (int(turn.get("user_final_seq") or 0), user_items),
+        )
+
     # ---------------- provider selection (pinned for this job) ----------------
     # TASK-VOI-003 pinning: the provider is chosen ONCE, here. ``pinned``
     # remembers everything needed to build an equivalent session later
@@ -1811,7 +1832,9 @@ async def entrypoint(ctx: JobContext):
         """
         artifacts = artifacts or {}
         agent = Agent(instructions=instr,
-                      tools=_voice_tools(result_observer=_observe_bridge_result))
+                      tools=_voice_tools(
+                          result_observer=_observe_bridge_result,
+                          turn_transcript_provider=_turn_transcript_snapshot))
         model = artifacts.get("model")
         if model is None:
             model = _build_realtime_model(pinned["key"], instr)
@@ -2030,6 +2053,10 @@ async def entrypoint(ctx: JobContext):
         "state": "initializing",
         "pending_since": None,
         "pending_text": "",
+        # TASK-FRD-015: count of STT finals this job — the version
+        # signal for the bridge fragment guard's settle window (a new
+        # final during the window means the turn was still going).
+        "user_final_seq": 0,
         "transcript": [],
         "spoke": False,
         # TASK-VOI-012: the pending_since value the dropped-turn guard
@@ -2089,6 +2116,10 @@ async def entrypoint(ctx: JobContext):
                 # TASK-VOI-014: the user has spoken — no greeting
                 # stack may fire from here on (defect D8).
                 greeting_state["user_spoke"] = True
+                # TASK-FRD-015: every final bumps the turn version the
+                # bridge fragment guard watches during its settle
+                # window (a bump = the user's turn was not over).
+                turn["user_final_seq"] = int(turn.get("user_final_seq") or 0) + 1
                 # TASK-VOI-012: the pending text is what the watchdog
                 # re-asks and what a rebuilt session is briefed with —
                 # store the fleet-term-corrected form (raw transcript
