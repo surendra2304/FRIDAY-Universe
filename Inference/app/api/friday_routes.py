@@ -27,6 +27,26 @@ from app.version import VERSION
 FRIDAY_ASK_NS = "friday.ask"
 FRIDAY_DEBATE_NS = "friday.debate"
 
+#: Substrings that mark "no provider could answer" inside an orchestration
+#: failure. That condition is an availability problem (503 — retry later), not
+#: an internal fault (500), and every FRIDAY surface must classify it the
+#: same way. /debate always did; /ask's DAG path returned 500 for the
+#: identical total outage until the TASK-INF-008 failover drill measured the
+#: divergence (fast-lane /ask: 503, DAG-path /ask: 500, same outage).
+_UNAVAILABLE_MARKERS = (
+    "no specialist produced output",
+    "no model provider produced output",
+    "ProviderUnconfiguredError",
+    "no configured credential",
+    "All speculative race candidates failed",
+)
+
+
+def _is_provider_unavailable(exc: Exception) -> bool:
+    """Whether an orchestration exception means no provider could answer."""
+    message = str(exc)
+    return any(marker in message for marker in _UNAVAILABLE_MARKERS)
+
 
 def _context_scope(context: dict[str, Any] | None) -> dict[str, Any]:
     """Cache scope for the caller's private context. The same question with a different context
@@ -312,6 +332,21 @@ async def friday_ask(request: FridayRequest) -> FridayResponse:
 
         return resp
     except Exception as exc:
+        # Same classification as /debate (shared helper): a total provider
+        # outage is 503, not 500 — 500 tells FRIDAY not to retry and reports
+        # an infrastructure outage as an internal fault.
+        if _is_provider_unavailable(exc):
+            reference = correlation_id("friday")
+            logger.error("FRIDAY ask orchestration unavailable [%s]: %s",
+                         reference, scrub_credentials(str(exc)))
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "FRIDAY ask degraded: no model provider produced output. No answer was "
+                    f"fabricated. Quote correlation id {reference} when reporting this; the "
+                    "per-provider reasons are in the server log."
+                ),
+            ) from exc
         detail, _ = internal_error(logger, exc, doing_what="FRIDAY task orchestration",
                                    prefix="friday")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
@@ -394,16 +429,7 @@ async def friday_debate(request: FridayRequest) -> FridayResponse:
         # endpoints report the same outage differently — 500 tells a client not to retry,
         # 503 tells it to retry later.
         message = str(exc)
-        unavailable = any(
-            marker in message
-            for marker in (
-                "no specialist produced output",
-                "no model provider produced output",
-                "ProviderUnconfiguredError",
-                "no configured credential",
-                "All speculative race candidates failed",
-            )
-        )
+        unavailable = _is_provider_unavailable(exc)
         # The raw ``message`` names the attempted provider/model pairs and configuration
         # variables. It is logged (scrubbed) under a correlation id and never returned: a 503
         # that carries it tells the caller which credentials are missing.
