@@ -55,6 +55,31 @@ free is not a licence. Any tool adopted later gets its own terms
 check, and any media from it enters through provenance
 (TASK-VYR-004/IG-VYR-07), not around it.
 
+## Named lists recorded (TASK-IG3-VYR-01)
+
+The full re-watch diff found the corpus's named lists were missing
+from the stored strategy data (clusters B129/B132/B136 and package
+entries V-04/V-06/V-07). They are now recorded in the JSON, every
+one as unverified reference, none as adoption:
+
+- `teaching_channel_watchlist` — the seven faceless-YouTube
+  teaching channels (cluster 132): a format-study watchlist.
+- `browser_toolkit_reference` — Photopea, Remove.bg,
+  Cleanup.pictures (cluster 129): asset-prep leads, terms check
+  before any use.
+- `free_generator_shortlist` — YesChat, Vidnoz, Clipfly, Canva,
+  VEED.IO (cluster 136): names recorded, corpus scores not.
+- `faceless_idea_examples` — the eight ideas named in the "100
+  faceless channel ideas" list: corpus examples only, explicitly
+  NOT adopted niches.
+- `free_route_alternatives` — the six free-for-paid tool swaps:
+  the $0 claims are disputed in the source post's own comments.
+- `listicle_tool_patterns` — the listicle tool set (Wireflo, ZSKY
+  AI, D-ID Studio, Steve AI, Pictory): pattern notes only.
+
+Unverified creator claims — the honesty rule above applies to
+every name on this page.
+
 ## What this document is not
 
 - Not a growth guarantee, in any lane, at any cadence.
