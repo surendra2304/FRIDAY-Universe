@@ -74,3 +74,28 @@ async def test_unavailable_response_is_explicit_and_bar_free(monkeypatch):
     assert response.evidence_class is None
     assert response.bars == []
     assert response.detail and "down" in response.detail
+
+
+async def test_providers_endpoint_reports_local_readiness(monkeypatch):
+    """GET /v1/market-data/providers: the data layer's absence is
+    reported, not discovered per fetch -- openbb_sdk shows unavailable
+    while the SDK is absent; network providers never guess."""
+    import sys
+
+    from futuris.market_data.service import provider_statuses
+
+    class _Settings:
+        FUTURIS_MARKET_DATA_PROVIDERS = "yahoo_chart,openbb_sdk"
+
+    monkeypatch.setitem(sys.modules, "openbb", None)
+    monkeypatch.setattr(
+        market_data_router,
+        "provider_statuses",
+        lambda: provider_statuses(_Settings()),
+    )
+    response = await market_data_router.get_providers(user=object())
+    by_name = {s.name: s for s in response}
+    assert by_name["openbb_sdk"].kind == "sdk"
+    assert by_name["openbb_sdk"].available is False
+    assert by_name["yahoo_chart"].kind == "http"
+    assert by_name["yahoo_chart"].available is None

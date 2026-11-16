@@ -28,7 +28,7 @@ UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from futuris.connectors.base import Observation
 from futuris.infra.logging import get_logger
 from futuris.market_data.base import MarketDataProvider
-from futuris.market_data.models import MarketDataResult
+from futuris.market_data.models import MarketDataResult, ProviderStatus
 
 logger = get_logger("futuris.market_data.backbone")
 
@@ -39,11 +39,28 @@ PROVIDER_REGISTRY: dict[str, tuple[str, str]] = {
     "openbb_sdk": ("futuris.market_data.providers.openbb_sdk", "OpenBBSDKProvider"),
 }
 
+#: Provider name -> status-surface kind (see ProviderStatus).
+_PROVIDER_KIND: dict[str, str] = {
+    "yahoo_chart": "http",
+    "stooq": "http",
+    "openbb_sdk": "sdk",
+}
+
 DEFAULT_PROVIDERS = "yahoo_chart,stooq"
 
+#: OpenBB provider extension used when settings do not name one (free,
+#: keyless -- the only class of extension the FREE-only rule allows by
+#: default).
+DEFAULT_OPENBB_PROVIDER = "yfinance"
 
-def build_provider(name: str) -> MarketDataProvider:
-    """Instantiate one registered provider by name (lazy import)."""
+
+def build_provider(name: str, *, obb_provider: str | None = None) -> MarketDataProvider:
+    """Instantiate one registered provider by name (lazy import).
+
+    ``obb_provider`` applies only to ``openbb_sdk``: it selects the
+    OpenBB provider extension the SDK routes through. It is a setting,
+    not a code edit, so the post-ARM adoption can change it by config.
+    """
     key = name.strip()
     if key not in PROVIDER_REGISTRY:
         raise ValueError(
@@ -52,7 +69,10 @@ def build_provider(name: str) -> MarketDataProvider:
         )
     module_path, class_name = PROVIDER_REGISTRY[key]
     module = importlib.import_module(module_path)
-    return getattr(module, class_name)()
+    provider_cls = getattr(module, class_name)
+    if key == "openbb_sdk" and obb_provider:
+        return provider_cls(obb_provider=obb_provider)
+    return provider_cls()
 
 
 class MarketDataBackbone:
@@ -74,7 +94,10 @@ class MarketDataBackbone:
             settings_obj, "FUTURIS_MARKET_DATA_PROVIDERS", DEFAULT_PROVIDERS
         )
         names = [n for n in (p.strip() for p in configured.split(",")) if n]
-        return cls([build_provider(n) for n in names])
+        obb_provider = getattr(
+            settings_obj, "FUTURIS_OPENBB_PROVIDER", DEFAULT_OPENBB_PROVIDER
+        )
+        return cls([build_provider(n, obb_provider=obb_provider) for n in names])
 
     async def get_ohlcv(
         self,
@@ -119,6 +142,71 @@ class MarketDataBackbone:
             fetched_at=datetime.now(UTC),
             attempts=attempts,
         )
+
+
+def provider_statuses(settings_obj=None) -> list[ProviderStatus]:
+    """Local readiness of every configured provider, in configured order.
+
+    The graceful-degradation surface for the data layer: an operator (or
+    the ARM-day runbook) can confirm which providers this host can
+    actually serve before any fetch is attempted. Only local
+    preconditions are checked -- for ``openbb_sdk`` that is whether the
+    SDK is installed (probed without importing it); network providers
+    honestly report ``available=None`` because their availability is a
+    per-fetch fact, never a guess. An unregistered configured name is
+    reported as unavailable rather than raising, so the status surface
+    itself can never take the service down.
+    """
+    if settings_obj is None:
+        from futuris.infra.config import settings
+
+        settings_obj = settings
+    configured = getattr(
+        settings_obj, "FUTURIS_MARKET_DATA_PROVIDERS", DEFAULT_PROVIDERS
+    )
+    names = [n for n in (p.strip() for p in configured.split(",")) if n]
+    statuses: list[ProviderStatus] = []
+    for name in names:
+        kind = _PROVIDER_KIND.get(name, "http")
+        if name not in PROVIDER_REGISTRY:
+            statuses.append(
+                ProviderStatus(
+                    name=name,
+                    kind=kind,  # type: ignore[arg-type]
+                    available=False,
+                    detail=(
+                        f"not a registered provider; registered: "
+                        f"{sorted(PROVIDER_REGISTRY)}"
+                    ),
+                )
+            )
+        elif name == "openbb_sdk":
+            from futuris.market_data.providers.openbb_sdk import sdk_available
+
+            installed = sdk_available()
+            statuses.append(
+                ProviderStatus(
+                    name=name,
+                    kind="sdk",
+                    available=installed,
+                    detail=None
+                    if installed
+                    else (
+                        "openbb SDK is not installed in this environment "
+                        "(post-ARM adoption path; see docs/DATA_BACKBONE_IGFUT01.md)"
+                    ),
+                )
+            )
+        else:
+            statuses.append(
+                ProviderStatus(
+                    name=name,
+                    kind=kind,  # type: ignore[arg-type]
+                    available=None,
+                    detail="network provider; availability is determined per fetch",
+                )
+            )
+    return statuses
 
 
 def to_observations(result: MarketDataResult) -> list[Observation]:
