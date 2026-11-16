@@ -9099,6 +9099,478 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/task-voi-013
     evidence: "FRD-005 re-run #2 greeting decomposed on one clock: dispatch +0.52s (LiveKit Cloud fast; the ~13.2s pre-worker segment was an 11.90s accept->launch OUTLIER vs 1.50-2.70s typical, split by DEBUG staging runs as assignment +0.00-0.20s in 11/12 jobs / launch <=~2s = transient host stall, no mitigation exists or is needed); scorer's 17.11s 'first audio' was first SILENCE frame (RMS 0) - true audible ~28.7s. D4 root cause: early greeting task created only after the session-build task resolved, then its wait ran on the job loop during sess.start() (fired connect+12.39s, 0.5s before session start). Fix: _greet_at_room_up launches the line at ctx.connect() return, gated only on the shielded verified-key future; _settle_early_greeting serializes the unavailable notice (keyless = 0 greeting attempts, notice played, verified in drill). Tests: 13 new incl. never-completing-build pin; full voice failure set identical to clean main. Drill (S1 staging, participant clock = connect -> first NON-SILENT frame): fixed worker warm under the 8.0s bar in 4 scored runs (e5 7.69s trig +3.90s, e6 3.20s trig +0.31s, e9 3.89s, e10 4.09s; loads 1.95-7.28) + warm-up w1 2.91s; e8 8.51s marginal (trigger +2.62s, transit-bound); e7 37.01s loop-stall + e4 cold-boot no-audible disclosed; deployed worker 5.01/5.89/7.30s in staging (fast builds mask its floor there; production run #2 is its bad case). Cold-boot-under-load and pytest-storm rounds disclosed in the completion comment; calm-host production-shaped >=3-run pass still unproven (FRD-005 re-run #3 is that gate) - remaining greeting risk is host contention (956MB swap-bound host), not a code segment. MERGED #666 -> 798d606556fa8de4d28501f2b59014cbfb5031dc (base == main 8f6157ec, no drift; exactly the 3 crew files +426/-53, verified via API paged file list). CI on head 48bd0427: test, contracts, detect-voice-changes, py310 import gate, secrets scan all pass; voice-regressions exactly the 1 known pre-existing failure (292 passed, job log 133126461152 read directly); validate pair = flake family only."
     next_action: "Fleet CD deploy -> FRD-005 re-run #3 (participant-clock greeting: calm-host >=3-run pass under 8.0s is the acceptance gate) -> owner in-hands voice re-test"
+  - id: TASK-IG2-COR-01
+    title: "Per-agent budgets with enforcement in Cortex (Paperclip pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 703
+    branch: claude/ig2-task-ig2-cor-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #703 -> 5011fdd594a703b32b20a2a718dee359ed0578e6. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRD-01
+    title: "Agentic inbox for FRIDAY (agentic-inbox ADAPT)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 689
+    branch: claude/ig2-task-ig2-frd-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #689 -> ade8cc5666cdf4c1d9b95b043f15c412e1c50dd3. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRD-02
+    title: "WhatsApp channel gateway for FRIDAY (OpenClaw pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 698
+    branch: claude/ig2-task-ig2-frd-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #698 -> 259152f426e8b669042bf1deb2db137c87131e55. CI green except the validate pair (proven flake family)."
+    next_action: "Owner completes the Meta/WhatsApp setup step -> activation -> production probe"
+  - id: TASK-IG2-FRG-01
+    title: "adopt Karpathy coding principles into Forge guidance"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 674
+    branch: claude/ig2-task-ig2-frg-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #674 -> ee16ef0518fa5573b14d30db701aab2ef19ec283. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRG-02
+    title: "Graphify code-graph step for Forge"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 676
+    branch: claude/ig2-task-ig2-frg-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #676 -> d1dc1df102a305e462346f7cbb333fadd1f9fb82. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRG-03
+    title: "open-code-review supplement for Forge PR review"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 681
+    branch: claude/ig2-task-ig2-frg-03
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #681 -> 62f7df130f5bc3837608d169c9366fffaf7cba03. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRG-04
+    title: "parallel range-chunk downloader (Plexo pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 687
+    branch: claude/ig2-task-ig2-frg-04
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #687 -> aee4d43219e5a117ce1d340640d1358401fb0e53. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRG-06
+    title: "Forge local-business prospecting + auto-website pipeline"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 719
+    branch: claude/ig2-task-ig2-frg-06
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #719 -> 0f866128d79cb41600468fa0e71f1cd483b041c8. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INF-02
+    title: "encrypted-at-rest key vault for Inference provider keys"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 706
+    branch: claude/ig2-task-ig2-inf-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #706 -> 0760f29a37dfb2be3fdc47c0606d1486be89f5e5. CI green except the validate pair (proven flake family). Fleet-layout red proven pre-existing: the job is FAILURE on clean main 545f33a3 as well as on the PR head."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INF-03
+    title: "read-only Inference admin dashboard (health, quota, per-key usage, failovers)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 713
+    branch: claude/ig2-task-ig2-inf-03
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #713 -> 3f67cc3859d0481d764c3f17b6d2345918bb4346. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INF-04
+    title: "rule-based token compression of outbound prompts"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 710
+    branch: claude/ig2-task-ig2-inf-04
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #710 -> 6095fabe8aa3f3fa6a04d33861d67f2dc4031903. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INT-01
+    title: "on-demand camofox sidecar for bot-walled IntelX fetches"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 702
+    branch: claude/ig2-task-ig2-int-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #702 -> 5c657f885e90e317ec086fb1ac6e1afac542f701. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INT-02
+    title: "iterative deep-research loop for IntelX (local-deep-research pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 705
+    branch: claude/ig2-task-ig2-int-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #705 -> ad2f5f044768b7eebe206508cd3f72bc201e2c3c. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INT-03
+    title: "Helix on-demand username lookup for IntelX (ADAPT, bounded)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 718
+    branch: claude/ig2-task-ig2-int-03
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #718 -> cb6777000c178ddf8a1bb8237fcc4514a9d40f16. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INT-04
+    title: "Robin pipeline pattern + untrusted-data hygiene for IntelX (ADAPT)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 722
+    branch: claude/ig2-task-ig2-int-04
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #722 -> 4e81960d8d05bfcf886068cf9166a6e23da91460. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INT-05
+    title: "AI-trending Radar feed for IntelX (BUILD, cluster #45)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 723
+    branch: claude/ig2-task-ig2-int-05
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #723 -> 2e92de63a649b166bea819025fbb3abf6cf2dde9. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-INT-06
+    title: "HaveIBeenPwned breach checks in IntelX OSINT (BUILD, cluster #48)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 731
+    branch: claude/ig2-task-ig2-int-06-rebased
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #731 -> 799c537b339d493a35869335c0730914546d57f9. CI green except the validate pair (proven flake family). Replacement for #727 (conflicted with #718 on IntelX/intelx/osint/__init__.py): union resolution carries both helix and breach-check exports; other files byte-identical to #727 head blobs; #727 closed as superseded."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-LAP-01
+    title: "Escrcpy integration (ADAPT viarotel-org/escrcpy)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 716
+    branch: claude/ig2-task-ig2-lap-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #716 -> fcc7bbc1395b35de1c866da224368db6c7e8022f. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-MEM-01
+    title: "BM25 hybrid recall + capture-compress-inject for Memora (agentmemory ADAPT)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 709
+    branch: claude/ig2-task-ig2-mem-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #709 -> 3bbd3a1d364cb0bc04f9c56635d5e6e60f8d2047. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-MEM-02
+    title: "Skill-learning loop for Memora (Hermes pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 711
+    branch: claude/ig2-task-ig2-mem-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #711 -> ec24563566207ad2bb85a7759ebe40c0f091bc33. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-MEM-03
+    title: "Structured user-model profile in Memora (Hermes pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 712
+    branch: claude/ig2-task-ig2-mem-03
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #712 -> 6ed5fdce0c6f28b7f17783b54ee6beaaf1576a35. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-SEN-01
+    title: "Defensive-only skill pack for Sentinel (Anthropic-Cybersecurity-Skills ADAPT)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 678
+    branch: claude/ig2-task-ig2-sen-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #678 -> f8b1f051980c39ff22792b7b04b5b1007fee640a. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-SEN-02
+    title: "Multi-role defensive audit pipeline for Sentinel (PentAGI pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 684
+    branch: claude/ig2-task-ig2-sen-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #684 -> 24dbf1a20fb4918ae46008199cd9e73d8b63b503. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-SEN-03
+    title: "Audit-finding baseline memorist for Sentinel (PentAGI pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 692
+    branch: claude/ig2-task-ig2-sen-03
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #692 -> 664b6a86dfd94870f826ada6095233dbed2f1ed8. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-SEN-04
+    title: "ELA edited-photo detection for Sentinel (IG cluster #74)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 715
+    branch: claude/ig2-task-ig2-sen-04
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #715 -> 42b70357f29c1dd1eb1eeb187975a74637e78982. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-SEN-05
+    title: "compromised-laptop triage checklist for Sentinel (IG cluster #76)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 717
+    branch: claude/ig2-task-ig2-sen-05
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #717 -> 4087b305a8da319a0ab0f1ca5dc93cb402766b0d. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-SEN-06
+    title: "extortion-mail triage for Sentinel (IG cluster #80)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 721
+    branch: claude/ig2-task-ig2-sen-06
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #721 -> 94bfb2ec93dfe3a89aeaf4ad4fcf1fbd5226a4fd. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-01
+    title: "vectorized parameter-sweep harness for Stratex RD (vectorbt pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 668
+    branch: claude/ig2-task-ig2-str-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #668 -> 2b08d1158e0f3757404c188f0357823eab1dfed7. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-02
+    title: "selective CCXT venue adapter for gap venues (demo/testnet only)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 671
+    branch: claude/ig2-task-ig2-str-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #671 -> 0480df1ae68d7a164b82a6fa164e91686323029b. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-03
+    title: "Vibe-Trading research layer for Stratex (pattern only)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 677
+    branch: claude/ig2-task-ig2-str-03
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #677 -> 302c1f645c5c7db223a91434981b1b23e976f6b6. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-04
+    title: "Walk-forward validation gate for Stratex RD candidates"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 683
+    branch: claude/ig2-task-ig2-str-04
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #683 -> 2a647af4bc02de02ef6e0dda2bd7ae89969c3161. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-05
+    title: "Backtest=live parity harness (one strategy definition, both runners)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 693
+    branch: claude/ig2-task-ig2-str-05
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #693 -> 0247f309fb69b1d9305c38f85e5f6e24da46ed47. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-06
+    title: "Deterministic event-replay log for Stratex demo sessions"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 696
+    branch: claude/ig2-task-ig2-str-06
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #696 -> 33058a9e6a471a0e749e7f07d86c7aed01908b4e. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-07
+    title: "On-chain/whale-flow tracker for Stratex research (free endpoints only)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 675
+    branch: claude/ig2-task-ig2-str-07
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #675 -> 2427182207c110c60ed0e771432fff37b90b4116. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-08
+    title: "DeFi LP/yield monitor (DeFiLlama free API)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 680
+    branch: claude/ig2-task-ig2-str-08
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #680 -> 2dd8426d81f7ac30221c8cf1e53351d55612b4ad. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-09
+    title: "Tax-ready trade-ledger export"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 688
+    branch: claude/ig2-task-ig2-str-09
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #688 -> 978799db68388e77cf1f5d337166ac8464a98832. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-10
+    title: "Free market-data fallback chain"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 691
+    branch: claude/ig2-task-ig2-str-10
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #691 -> 8eef510ebbfe729102e1e02581a14a3a5c68cf30. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-11
+    title: "Economic/earnings calendar feed for Stratex research"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 697
+    branch: claude/ig2-task-ig2-str-11
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #697 -> f20a84c8cf621c97a2a848be00449ecfac82ce27. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-12
+    title: "MCMC/Bayesian strategy-uncertainty modelling for Stratex RD (IG cluster #92)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 725
+    branch: claude/ig2-task-ig2-str-12
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #725 -> caa4c4c29c009248ef9da7ecf0f04dc77b42372d. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-STR-13
+    title: "Box Theory RD candidate, PRE-DECLARED \u2014 no backtest run (IG cluster #101)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 729
+    branch: claude/ig2-task-ig2-str-13
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #729 -> fe4038670ee4dd8645b6df98278a723f0d2553d9. CI green except the validate pair (proven flake family)."
+    next_action: "Run the pre-declared Box Theory backtest under the full RD bar (declaration SHA-256 715b6884fb6a9abe3efec7be90c83e161cf7426aef1dc37629616b3145d013bd frozen at ship; no backtest run yet)"
+  - id: TASK-IG2-VOI-01
+    title: "spoken-English practice mode \u2014 per-sentence corrections with error label + tip"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 726
+    branch: claude/ig2-task-ig2-voi-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #726 -> 545f33a337e5658c393541b4825ef33f5c3ec16d. CI green except the validate pair (proven flake family); voice-regressions red = exactly the 1 known pre-existing failure (job log read directly)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-01
+    title: "Podcastfy-pattern audio-content lane (batch/offline, free TTS)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 670
+    branch: claude/ig2-task-ig2-vyr-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #670 -> 37386ce05f76b0f0e3d8d90fe78de36fd54d9532. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-02
+    title: "OpenMontage-pattern pipeline orchestration (manifests, scored providers, gates)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 673
+    branch: claude/ig2-task-ig2-vyr-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #673 -> 4f99143cbfe7376151176bfc330cf3d2782cbd25. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-03
+    title: "Shorts factory \u2014 batch pattern for VyralX Shorts production"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 679
+    branch: claude/ig2-task-ig2-vyr-03
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #679 -> e004e62ec33d8061f9ace5aaec775c8db201c13c. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-04
+    title: "local-only Shorts generator (AI-Youtube-Shorts-Generator pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 669
+    branch: claude/ig2-task-ig2-vyr-04
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #669 -> 94cfdef0338db581cc010db8a9b4b4ada7596d26. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-05
+    title: "OpenFilm-pattern film pipeline for VyralX"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 672
+    branch: claude/ig2-task-ig2-vyr-05
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #672 -> d53de51ddab9e392541adac1ef4e97223eb2dfca. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-06
+    title: "measured-style editing recipes (cooked pattern, no paid driver)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 682
+    branch: claude/ig2-task-ig2-vyr-06
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #682 -> c76410e4c21a38ae59f0fbc0e55bfbe89239757d. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-07
+    title: "OpenVoice gate \u2014 fleet-infeasible assessment, offline narration integration"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 685
+    branch: claude/ig2-task-ig2-vyr-07
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #685 -> 10279a20a2dffa7c0cd90dfaaf0e0cb6d3afd9e1. CI green except the validate pair (proven flake family)."
+    next_action: "Gate stays closed - generated-footage intake is fleet-infeasible today; revisit when a fleet-feasible route exists"
+  - id: TASK-IG2-VYR-08
+    title: "MoneyPrinterTurbo-pattern short-video assembly plan (VyralX)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 695
+    branch: claude/ig2-task-ig2-vyr-08
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #695 -> f007248d533ca0ac6affededcd7c9feba7d9c2ac. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-09
+    title: "AgentTube-pattern channel automation gates (VyralX)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 701
+    branch: claude/ig2-task-ig2-vyr-09
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #701 -> 48429de72ebe134cb8882b21979287f07b76d98f. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-VYR-10
+    title: "claude-ads-pattern creative audit for VyralX packaging"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 704
+    branch: claude/ig2-task-ig2-vyr-10
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #704 -> 6f52a93508c22dcd6d72f81ca28b4a5acc0e23c2. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-WEB-01
+    title: "adopt diagram-design skill set (MIT) into website/docs tooling"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 686
+    branch: claude/ig2-task-ig2-web-01
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #686 -> ca8feac77e8a42487d8c4b1813a2149b04fcba6f. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-WEB-02
+    title: "leaderboard/ranking pattern for the FRIDAY website (toprank ADAPT)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 690
+    branch: claude/ig2-task-ig2-web-02
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #690 -> 6c5a2a01f2974dc047ee7aa8e3ae2f4173f80e6c. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-WEB-03
+    title: "ULTRON orb visual as an optional website component (orb UI only)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 694
+    branch: claude/ig2-task-ig2-web-03
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #694 -> 1a6de78658ed1609ebf334df7092c247025fdd3f. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-WEB-04
+    title: "live sector heatmap tile view for the Stratex dashboard (OpenTerminal pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 699
+    branch: claude/ig2-task-ig2-web-04
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #699 -> 60b3f1e8590f4005d9cc74d52e3388c8c4d0629d. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-WEB-05
+    title: "Ctrl-K command palette for the Stratex web dashboard (OpenTerminal pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 732
+    branch: claude/ig2-task-ig2-web-05-rebased
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #732 -> b9b7d44feed98171027173f2154a2161f8ce7176. CI green except the validate pair (proven flake family). Replacement for #707 (showed dirty after the Website-UI lane): verified every index.html/style.css line of #707 already on main via #708's stacked branch; #732 adds only the missing Stratex/static/command-palette.js, byte-identical to #707's head blob; #707 closed as superseded."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-WEB-06
+    title: "persisted dashboard widget layouts for Stratex (OpenTerminal pattern)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 708
+    branch: claude/ig2-task-ig2-web-06
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #708 -> 85227a153beaa76f8af8acf05715bc2f6ac423e5. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-WEB-07
+    title: "glass start-page dashboard (GNTD pattern) \u2014 toggleable widgets, additive component"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 720
+    branch: claude/ig2-task-ig2-web-07
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #720 -> 6075867095d2e5131ebe637b03630cff550a8712. CI green except the validate pair (proven flake family)."
+    next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-VOI-014
+    title: "production greeting path \u2014 greeting settles before session start, one greeting owner (D5+D8)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 730
+    branch: claude/task-voi-014
+    evidence: "Voice greeting fix (D5+D8): greeting settles before session start, one greeting owner; board fragment in issue #35 comment 6910242313. MERGED #730 -> 64860f2c557ebb587f09bc29dd7919ea27cb128c. CI green except the validate pair (proven flake family); voice-regressions red = exactly the 1 known pre-existing failure (job log read directly)."
+    next_action: "Fleet CD deploy -> FRD-005 re-run #4 -> owner in-hands voice re-test"
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
