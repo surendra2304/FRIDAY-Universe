@@ -9430,6 +9430,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig2-task-ig2-str-14
     evidence: "IG re-watch Phase 1, Stratex lane (first item). Full browser-watch recovery of reel DZ_aHrWuF49: verbatim subtitle transcript + machine-heard audio cross-checked; all four extraction gaps resolved or declared as conventions in the declaration. Declaration frozen: Stratex/rigorous_backtest/ig/srs_declaration.json SHA-256 7a805046cab849bc15a8194c31ad9f6ff5cbc922c91e428110a7ff0c9791525b. Declaration + registration ONLY in PR #742 - no signal module, no backtest run, no live-trading code touched."
     next_action: "Run the pre-declared SRS backtest under the full RD bar (TSLA 15m, US regular session; declaration SHA-256 7a805046cab849bc15a8194c31ad9f6ff5cbc922c91e428110a7ff0c9791525b frozen at ship; no backtest run yet)"
+  - id: TASK-IG2-STR-16
+    title: "RiskGovernor delta as a research module - per-engine trade-count cap + breach callback (IG item DZ-QETCTygV, package S-15)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 759
+    branch: claude/ig2-task-ig2-str-16
+    evidence: "IG re-watch implementation, Stratex lane (second shift). Browser re-watch of DZ-QETCTygV recovered the RiskGovernor component delta beyond FWD-006: a per-engine trade-count cap plus a breach callback (lane supervisor AUDIT-2 Claim 2 confirmed zero code existed). Shipped as RESEARCH-ONLY Stratex/rigorous_backtest/ig/risk_governor.py with tests (14 tests; ig suite 101 to 115 passed locally, failure set identical to clean main). Default cap fractions mirror the decided FWD-006 package as research-module defaults only; the live daemon does not import this module and no production value changed. The source item's own strategy and its unverified performance claims stay out, as packaged in S-15."
+    next_action: "Coordinator merge queue. Research module only - no deploy and no live wiring; any strategy use of the governor pattern enters through the normal RD pre-declaration and full-bar route."
   - id: TASK-IG2-VOI-01
     title: "spoken-English practice mode \u2014 per-sentence corrections with error label + tip"
     status: IN_REVIEW
