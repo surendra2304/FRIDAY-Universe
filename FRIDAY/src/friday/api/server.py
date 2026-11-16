@@ -3669,13 +3669,29 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _q_words = {_w for _w in _q_words if len(_w) > 3}
         _stop = {"remember", "about", "what", "have", "tell", "does", "your", "you", "when", "where", "which"}
         _q_words -= _stop
+        # TASK-FRD-014 (drill finding): the store holds the SAME fact in
+        # both spellings ("my favorite color is teal." / "My favourite
+        # colour is teal.") from different sessions, so overlap matching
+        # canonicalizes the owner's spelling variants on both sides.
+        # Matching only — stored text and the spoken form stay verbatim.
+        _SPELLING = {"favourite": "favorite", "colour": "color"}
+
+        def _canon_word(word: str) -> str:
+            return _SPELLING.get(word, word)
+
+        def _canon_line(low: str) -> str:
+            for _uk, _us in _SPELLING.items():
+                low = low.replace(_uk, _us)
+            return low
+
+        _q_words = {_canon_word(_w) for _w in _q_words}
 
         def _is_agent_log(low: str) -> bool:
             return " executed " in low or "[agent task" in low or "bundle id" in low or "http 200" in low or "[memora response" in low
 
         def _mem_rank(item: dict[str, Any]) -> tuple[int, int, int]:
             _line = _clean_memory_line(str(item.get("content_text", "")))
-            _low = _line.lower()
+            _low = _canon_line(_line.lower())
             _overlap = sum(1 for w in _q_words if w in _low)
             _personal = 1 if any(p in _low for p in ("my ", "i ", "i'm", "mine", "favorite", "prefer", "boss")) else 0
             _log_penalty = -4 if _is_agent_log(_low) else 0
@@ -3719,7 +3735,7 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                     # the direct-answer composition below keys on it.
                     _top_fact_text = _text
                     _top_full_match = bool(_q_words) and all(
-                        _w in _low for _w in _q_words
+                        _w in _canon_line(_low) for _w in _q_words
                     )
                 if len(_text) > 130:
                     _text = _text[:127].rstrip() + "…"
@@ -3757,9 +3773,11 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             if _sents:
                 _best_sent = max(
                     _sents,
-                    key=lambda _s: sum(1 for _w in _q_words if _w in _s.lower()),
+                    key=lambda _s: sum(
+                        1 for _w in _q_words if _w in _canon_line(_s.lower())
+                    ),
                 )
-                if all(_w in _best_sent.lower() for _w in _q_words):
+                if all(_w in _canon_line(_best_sent.lower()) for _w in _q_words):
                     _fact_sentence = _best_sent
                     _spoken_summary = _spoken_fact_form(_best_sent)
         _meta: dict[str, Any] = {

@@ -153,6 +153,30 @@ def test_recall_marker_style_question(monkeypatch):
     )
 
 
+def test_recall_matches_across_spelling_variants(monkeypatch):
+    # Drill finding (staging brain vs the production store): the same
+    # fact exists in both spellings from different sessions. A British
+    # question must still match the US-spelled fact (and outrank a
+    # British decoy that matches only one content word) — matching is
+    # canonicalized, the spoken form keeps the fact's own spelling.
+    result = _dispatch(
+        monkeypatch,
+        _hits("my favourite constellation is called FRD014PROBE.", TEAL_CLEAN),
+        "What is my favourite colour?",
+    )
+    assert result["metadata"].get("spoken_summary") == (
+        "Your favorite color is teal."
+    )
+    result = _dispatch(
+        monkeypatch,
+        _hits(CHAI, "My favourite colour is teal."),
+        "What is my favorite color?",
+    )
+    assert result["metadata"].get("spoken_summary") == (
+        "Your favourite colour is teal."
+    )
+
+
 # ---------------------------------------------------------------------------
 # Brain side: the remember gate no longer stores the "for me." residue
 # ---------------------------------------------------------------------------
