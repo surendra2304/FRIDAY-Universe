@@ -179,12 +179,13 @@ WATCH_CRYPTO_MARKET_STRUCTURE = WatchDefinition(
     rules=(
         ScoreRule(
             "etf_decision",
-            r"\b(etf|etn)\b.*\b(approv|reject|delay|filing|launch)|\b(approv|reject)s?\b.*\betf\b",
+            r"\b(etf|etn)\b.*\b(approv|reject|delay|filing|launch)|\b(approv|reject).*\betf\b",
             3,
         ),
         ScoreRule(
             "exchange_structure",
             r"\b(delist|delisting|lists?|listing)\b.*\b(binance|coinbase|kraken|exchange)\b|"
+            r"\b(binance|coinbase|kraken|exchange)\b.*\b(delist|delisting|lists?|listing)\b|"
             r"\b(leverage|margin)\b.*\b(change|limit|cap|rule|reduc|increas)",
             3,
         ),
