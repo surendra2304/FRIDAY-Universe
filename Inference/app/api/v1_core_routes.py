@@ -33,6 +33,7 @@ from app.agents.base import Agent
 from app.agents.debate import AgentPanelUnavailable, debate_engine
 from app.agents.registry import agent_registry
 from app.core.astra_profile import astra_profile
+from app.core.config import settings
 from app.core.dag import TaskComplexity
 from app.core.orchestrator import orchestrator
 from app.memory.base import TaskRecord
@@ -1454,7 +1455,7 @@ async def chat_completions(req: ChatCompletionRequest):
                     req.model
                 )
 
-    async def _execute_custom_once(model: str, provider: str) -> UnifiedExecutionResponse:
+    async def _execute_custom_once(model: str, provider: str, timeout_s: float | None = None) -> UnifiedExecutionResponse:
         """TASK-IG-INF-02: serve a custom-endpoint model via the gateway.
 
         UnifiedExecutionRequest.provider is a fixed Literal of built-in
@@ -1475,6 +1476,7 @@ async def chat_completions(req: ChatCompletionRequest):
                     model=model,
                     temperature=exec_temp,
                     max_tokens=exec_tokens,
+                    extra_params={"timeout": timeout_s} if timeout_s is not None else {},
                 ),
                 stage_name="chat_custom_endpoint",
             )
@@ -1506,9 +1508,9 @@ async def chat_completions(req: ChatCompletionRequest):
             served_by_provider=provider,
         )
 
-    async def _execute_once(model: str, provider: str):
+    async def _execute_once(model: str, provider: str, timeout_s: float | None = None):
         if provider.startswith("custom-"):
-            return await _execute_custom_once(model, provider)
+            return await _execute_custom_once(model, provider, timeout_s=timeout_s)
         return await unified_provider_manager.execute(
             UnifiedExecutionRequest(
                 provider=provider,  # type: ignore[arg-type]  # pydantic validates the Literal at runtime
@@ -1518,6 +1520,7 @@ async def chat_completions(req: ChatCompletionRequest):
                 temperature=exec_temp,
                 max_tokens=exec_tokens,
                 fast_lane=True if model == "auto" else False,
+                timeout=timeout_s,
             )
         )
 
@@ -1583,7 +1586,22 @@ async def chat_completions(req: ChatCompletionRequest):
         except Exception:  # noqa: BLE001 - tracking must never break routing
             pass
 
-    res = await _execute_once(attempt_model, attempt_provider)
+    # TASK-INF-010: ONE end-to-end deadline spans the first attempt and the
+    # bounded policy retry below. Before this, every _execute_once ran a
+    # full gateway execution under its own fresh REQUEST_TIMEOUT budget, so
+    # a degraded provider could hold a single HTTP request for ~2x the
+    # gateway budget — measured live 2026-11-16: a 24.3s request ending in
+    # this 503 (FRD-005 re-run evidence), and a 43.9s repro in which the
+    # retry's fresh primary slice alone burned 36.1s on a hanging provider.
+    # Each attempt now receives only the budget that remains.
+    route_deadline = time.monotonic() + float(settings.REQUEST_TIMEOUT or 60.0)
+
+    def _remaining_budget() -> float:
+        return route_deadline - time.monotonic()
+
+    res = await _execute_once(
+        attempt_model, attempt_provider, timeout_s=max(_remaining_budget(), 0.1)
+    )
     _record_attempt_outcome(attempt_model, res)
     if _attempt_failed(res) and req.model != "auto":
         # One bounded policy retry: the best suitable catalogue model
@@ -1596,11 +1614,26 @@ async def chat_completions(req: ChatCompletionRequest):
             req, exclude={req.model.lower(), attempt_model.lower()}
         )
         if retry is not None:
-            retry_res = await _execute_once(retry["model"], retry["provider"])
-            _record_attempt_outcome(retry["model"], retry_res)
-            if not _attempt_failed(retry_res):
-                res = retry_res
-                selection = retry
+            remaining = _remaining_budget()
+            if remaining < 2.0:
+                # TASK-INF-010: no useful gateway pass fits in what is left
+                # of the shared budget. Starting the retry anyway would
+                # either be cut off mid-ladder or (pre-fix) silently open a
+                # second full budget; the first failed result stands.
+                logger.info(
+                    "CHAT: Skipping the policy retry for model '%s': only %.2fs of the "
+                    "shared request budget remains (TASK-INF-010).",
+                    req.model,
+                    remaining,
+                )
+            else:
+                retry_res = await _execute_once(
+                    retry["model"], retry["provider"], timeout_s=remaining
+                )
+                _record_attempt_outcome(retry["model"], retry_res)
+                if not _attempt_failed(retry_res):
+                    res = retry_res
+                    selection = retry
     if _attempt_failed(res):
         # TASK-REL-030: a degraded unified result means NO model answered.
         # The pre-fix handler returned it as HTTP 200 with an empty

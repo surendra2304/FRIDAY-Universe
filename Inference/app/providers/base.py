@@ -33,6 +33,16 @@ class ProviderRequest(BaseModel):
     max_tokens: int | None = Field(default=None, description="Max output tokens to generate")
     response_schema: dict[str, Any] | None = Field(default=None, description="Optional structured JSON schema")
     extra_params: dict[str, Any] = Field(default_factory=dict, description="Provider-specific tuning parameters")
+    deadline_monotonic: float | None = Field(
+        default=None,
+        description=(
+            "Monotonic-clock deadline of the governing gateway request (TASK-INF-010). ModelGateway "
+            "sets this on every call it paces; it is None for direct adapter calls. Adapters must not "
+            "add their own pacing sleeps to a deadline-governed call — the gateway already quarantines "
+            "keys and paces its retries, and an adapter-level sleep is paid again inside every "
+            "fallback rung of the ladder."
+        ),
+    )
 
     @field_validator("messages")
     @classmethod

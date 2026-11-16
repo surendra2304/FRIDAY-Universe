@@ -35,6 +35,13 @@ class OpenAICompatibleProvider(BaseLLMProvider):
     #: cloud providers to preserve existing behaviour (and to be polite to free
     #: tiers), and set to 0.0 for local servers where a busy queue clears in
     #: milliseconds and the delay is pure added latency.
+    #:
+    #: TASK-INF-010: the pause is skipped entirely when the request carries a
+    #: gateway deadline (``request.deadline_monotonic`` is set) — under the
+    #: gateway the pause is paid inside EVERY fallback rung (~4s of pure sleep
+    #: per ladder pass with two OpenAI-compatible rungs), while the gateway's
+    #: own key quarantine already provides the politeness this pause was for.
+    #: Direct adapter calls (no gateway, no deadline) keep the pause.
     transient_cooldown_seconds: float = 2.0
 
     def __init__(
@@ -163,15 +170,23 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             latency = time.perf_counter() - start_time
 
             if response.status_code in (429, 503):
+                # TASK-INF-010: no adapter-level pause on a gateway-governed
+                # call (deadline set) — the gateway owns pacing there; see the
+                # transient_cooldown_seconds note above.
+                cooldown = (
+                    self.transient_cooldown_seconds
+                    if request.deadline_monotonic is None
+                    else 0.0
+                )
                 logger.warning(
                     "%s transient error (%d) encountered on model %s; cooling down for %.1fs",
                     self._provider_name,
                     response.status_code,
                     model,
-                    self.transient_cooldown_seconds,
+                    cooldown,
                 )
-                if self.transient_cooldown_seconds > 0:
-                    await asyncio.sleep(self.transient_cooldown_seconds)
+                if cooldown > 0:
+                    await asyncio.sleep(cooldown)
                 if response.status_code == 429:
                     raise RuntimeError(f"{self._provider_name.capitalize()} rate limit exceeded (HTTP 429).")
                 else:

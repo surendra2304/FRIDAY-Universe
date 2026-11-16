@@ -55,6 +55,15 @@ class UnifiedExecutionRequest(BaseModel):
     no_cache: bool = Field(default=False, description="Bypass L1 cache when fresh inference is required")
     fast_lane: bool = Field(default=False, description="Route to ultra-low latency providers (Groq / Gemini Flash)")
     speculative: bool = Field(default=False, description="Race top providers concurrently for lowest tail latency")
+    timeout: float | None = Field(
+        default=None,
+        description=(
+            "Optional end-to-end budget in seconds for this execution, forwarded to the gateway as "
+            "the provider request's timeout (TASK-INF-010). Callers that retry — e.g. the "
+            "/v1/chat/completions policy retry — pass only their REMAINING budget, so the first "
+            "attempt and the retry share one deadline instead of each running a full fresh budget."
+        ),
+    )
 
 
 class UnifiedExecutionResponse(BaseModel):
@@ -245,6 +254,11 @@ class UnifiedProviderManager:
                 capability = agent.get_primary_model().capability or "general"
             except Exception:  # noqa: BLE001 - capability is advisory
                 capability = "general"
+
+        # TASK-INF-010: forward the caller's budget to the gateway, which
+        # reads it as the request timeout (see _request_timeout_budget).
+        if req.timeout is not None:
+            extra_params["timeout"] = req.timeout
 
         # Build provider request
         messages = [ProviderMessage(role="user", content=req.prompt)]
