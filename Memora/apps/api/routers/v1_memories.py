@@ -135,6 +135,22 @@ def _require_memory_read_access(db: Session, memory_id: str, actor_name: str, pu
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=decision.reason)
     return actor
 
+#: Server-side allowlist for the duplicate-suppression opt-out on
+#: POST /v1/memories. The request field alone never suffices: the opt-out is
+#: honoured only when the AUTHENTICATED caller identity (resolve_agent_selector
+#: binds the body selector to the authenticated principal, so this cannot be
+#: spoofed via the request body) is in this set, decided here on the server.
+#:
+#: The sole in-repo caller is FRIDAY's MemoraClient.correct_fact, which must
+#: mint a DISTINCT candidate record for an intentional correction — even when
+#: its wording is near-identical to the fact it replaces — and then supersedes
+#: every old record. Distinctness is that flow's mechanism, not duplicate
+#: accumulation. Every other caller's field is ignored (and logged below), so
+#: an ordinary fact store can no longer opt out of the service-layer dedupe
+#: per-request. Extending this set is a server code change, never a request.
+DUPLICATE_OPTOUT_ALLOWED_AGENTS = frozenset({"friday"})
+
+
 class MemoryWriteRequest(BaseModel):
     user_id: Optional[str] = Field(default="default_user", max_length=128, description="Identity scope: User ID")
     agent_id: Optional[str] = Field(default=None, max_length=128, description="Identity scope: Calling agent ID")
@@ -162,7 +178,10 @@ class MemoryWriteRequest(BaseModel):
         max_length=64,
         description="Agent handles allowed to read this memory when scope is SHARED",
     )
-    allow_duplicates: bool = Field(default=False)
+    allow_duplicates: bool = Field(
+        default=False,
+        description="Duplicate-suppression opt-out. Honoured only for server-allowlisted caller identities (DUPLICATE_OPTOUT_ALLOWED_AGENTS); ignored for all other callers.",
+    )
 
 class MemoryWriteResponse(BaseModel):
     id: str
@@ -241,6 +260,17 @@ def write_memory_event(
 ):
     calling_agent = resolve_agent_selector(db, actor_name, req.agent_id)
 
+    # The duplicate opt-out is a server decision, not a client one: the
+    # request field counts only for allowlisted authenticated identities.
+    allow_duplicates = bool(req.allow_duplicates) and (
+        (calling_agent or "").strip().lower() in DUPLICATE_OPTOUT_ALLOWED_AGENTS
+    )
+    if req.allow_duplicates and not allow_duplicates:
+        logger.warning(
+            "Ignoring allow_duplicates opt-out from non-allowlisted caller %s on POST /v1/memories",
+            calling_agent,
+        )
+
     def _run_write(session: Session):
         return MemoryWriteService.execute_pipeline(
             db=session,
@@ -266,7 +296,7 @@ def write_memory_event(
             scope=req.scope,
             shared_with=req.shared_with,
             purpose=purpose,
-            allow_duplicates=req.allow_duplicates
+            allow_duplicates=allow_duplicates
         )
 
     #: Session used for audit writes. Replaced when a retry moves the work onto a
