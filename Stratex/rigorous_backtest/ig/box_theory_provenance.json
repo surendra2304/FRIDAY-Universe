@@ -1,0 +1,308 @@
+{
+  "panel": "crypto30",
+  "timeframe": "15m",
+  "months": "2023-10..2026-10",
+  "source": "binance_vision_futures_um_monthly_klines via rigorous_backtest.data_feed.load_dataset",
+  "symbols": {
+    "BTCUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "7b1c3d1c3fbf6e9034c376a162e8ff92d6870cc682258f0e0a4bb609ea328a67",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "SOLUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "b12ccb6984b2cf2b571e633058044994170fdcc267dbd4c3765a1041f8095fcd",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "DOGEUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "04319780e3f0eb870903402eb0d3a7b006ac01f2eab2946a979e18a034cb7d5d",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "ETHUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "4461a568e00a0f684883a06ce1dd8935492d5d10d6481ad1415f1a4b5d69f206",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "BNBUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "56bc4a73a9183b8ac19303f5a91941f82d69bebe29899a162005b40b379bc522",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "XRPUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "c6260fe2cb1d6509fb2bb17cc338e1f4c0bfb58a51786cba1e65cecf0d0c276f",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "LINKUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "ec6e81a16ee62d14cf50dd70bf01e23b3d754cd6e4fe29b2d027180c6d8ad839",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "ADAUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "dd9a638d74414ca60e50b34d856749e60d7df3b333b8b5c502b43af1b8c16afb",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "DOTUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "54b4430f7b1c5ca6b1e14dc18e7c48859c8e3bede5c2c42a56d02908363114b2",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "LTCUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "57e8aa199a4122ced64dd94545cf39f77c8a6402d307a60af0d84f0d90d54661",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "TRXUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "7859a4a9d0d19042bb4c3daf1b244040870eaaa41980be4687d6aa9ec42aab8f",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "AVAXUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "0497e118c25a46120e5e2cb6c45e0568bf7b5c847dccf596403f3f817ed72c7a",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "UNIUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "1c3135295377f0752a295aeeade8a8e9aaa15eb0022e9173ad95e089dac1200d",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "NEARUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "5f15954e87b27a4e6e7c6b45b866a82a59e0afad3cff8ced2bd92260688fe6ae",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "ATOMUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "25c7c1b5b02aa3fce57916271c1a9408ecdff5e91360f63039c33f43382e7c93",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "ETCUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "3caf83828be6a10410a4237d099a1051a8e824a97be5484581479dcae8351545",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "BCHUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "a4d8934d10a2ad916d2a4f1bd051eb6561a9a9fe902a6fd6b29382171a45f14d",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "FILUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "dd8b2e6870726d1e159e2db73c7741f69ac8fbd050c6054b8e7d8568eb4b99e8",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "APTUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "5f5313e40a23aca46fc44245a70f8bfe7f9c8f8d3ee728a534a4e340e6722a31",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "ARBUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "a28f3edc202b4481d918b3a6cbbcb3795786cfa61f4ec4948b3b68c4d506ef65",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "OPUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "6e40d7fd8a8d66e3798e626e3be3f5b022b6bd117df8c200ac8034f7e8394633",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "INJUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "0b8c006a386bc26f09569e8fca7b464960537b776166ad46444eb941cf97af49",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "SUIUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "4f79189b401690c0d334ecd2e23bcc4b95f7d7c93bf5cffe7fd6a509f23ffb60",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "HBARUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "79931c6dfb53dcce03611e48c5f7b340c56541fd966074854a094c48f6de4e10",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "XLMUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "fe93d78492a329be556f26054238530b5ab1d11ccd098e72d45209d7fa35309d",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "ALGOUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "029360afe4ebd5335cb61ee65b8d2a8c61a0b2d606fe932c5d552751905bfce1",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "VETUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "46e9259b2250ab9ecf08f239d5bba71610fe034c8c886e9b24832c53689a86c7",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "SANDUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "7e7758112ae3aadc3b0cac62d1565b0ca76d4d7eb2bc5837546d32abb04da3fb",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "AAVEUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "bf7e34b00642d3265e9d67584338f0de05ae2b3b2475a799798dedaba6ed9f30",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    },
+    "MANAUSDT": {
+      "status": "OK",
+      "rows": 108192,
+      "first_bar_utc": "2023-10-01 00:00:00+00:00",
+      "last_bar_utc": "2026-10-31 23:45:00+00:00",
+      "csv_sha256": "779a167d419c316628c1f7fd5a29f64f428f6cef455b7e056e9c9cec5f1ea681",
+      "missing_bars": 0,
+      "expected_bars": 108192,
+      "n_gap_spans": 0
+    }
+  }
+}
