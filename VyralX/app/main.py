@@ -2424,3 +2424,6 @@ app.include_router(competitor_ads_router, prefix="/api/v1", tags=["IG Corpus Com
 # --- IG Corpus Take Verification Integration (TASK-IG3-VYR-05) ---
 from app.services.take_verification import router as take_verification_router
 app.include_router(take_verification_router, prefix="/api/v1", tags=["IG Corpus Take Verification"])
+# --- IG Corpus Motion Templates Integration (TASK-IG3-VYR-07) ---
+from app.services.motion_templates import router as motion_templates_router
+app.include_router(motion_templates_router, prefix="/api/v1", tags=["IG Corpus Motion Templates"])
