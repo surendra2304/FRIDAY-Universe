@@ -10,6 +10,7 @@ Features:
 
 import asyncio
 import math
+import os
 import threading
 import time
 from collections.abc import AsyncIterator
@@ -111,6 +112,21 @@ def nvidia_rung_enabled() -> bool:
     code itself is untouched — this gate is configuration, not deletion.
     """
     return bool(settings.INFERENCE_NVIDIA_RUNG_ENABLED)
+
+
+def bytez_rung_enabled() -> bool:
+    """Whether the Bytez rung may be attempted (TASK-IG2-INF-01).
+
+    Disabled by default, on the same doctrine as the NVIDIA rung: Bytez's
+    documented $0 tier (≤7B open models, 1 concurrent request) states no
+    recurring free allowance, so its usable free volume is *unproven* until
+    the empirical probe in ``app.providers.bytez_probe`` has measured it
+    across repeated runs. Enable only by setting
+    INFERENCE_BYTEZ_RUNG_ENABLED=true after reading probe reports — and
+    even then Bytez carries no declared quota-ledger limit until an
+    operator declares one from that evidence.
+    """
+    return os.environ.get("INFERENCE_BYTEZ_RUNG_ENABLED", "").strip().lower() in ("1", "true", "yes", "on")
 
 
 def _is_empty_completion(resp: ProviderResponse) -> bool:
@@ -345,7 +361,7 @@ class ModelGateway:
 
     def _initialize_pools(self) -> None:
         """Initialize key pools and rate limiters for all known providers."""
-        all_providers = ["gemini", "groq", "cerebras", "mistral", "openrouter", "cohere", "huggingface", "nvidia"]
+        all_providers = ["gemini", "groq", "cerebras", "mistral", "openrouter", "cohere", "huggingface", "nvidia", "bytez"]
         if settings.LOCAL_ENABLED:
             # Self-hosted tier: keyless, unmetered, and therefore the correct final
             # rung of the fallback ladder. Registered only when enabled so that a
@@ -534,6 +550,31 @@ class ModelGateway:
                 capability=capability,
                 stage_name=stage_name,
                 last_error=rung_disabled,
+                deadline=deadline,
+                skip_local_tier=local_tier_attempted,
+            )
+
+        if prov_name == "bytez" and not bytez_rung_enabled():
+            # TASK-IG2-INF-01: Bytez's free volume is unproven until the
+            # quota probe measures it; the rung stays off by default so no
+            # fleet traffic can silently become credit-metered (paid) spend.
+            bytez_disabled = ProviderUnconfiguredError(
+                "Provider 'bytez' is disabled by configuration "
+                "(INFERENCE_BYTEZ_RUNG_ENABLED is off; TASK-IG2-INF-01 — free-tier "
+                "volume unproven, see app.providers.bytez_probe); skipping without an attempt.",
+                provider=prov_name,
+                model=request.model,
+            )
+            logger.warning(
+                "GATEWAY: Bytez rung is disabled by configuration; "
+                "escalating to the fallback ladder without an attempt."
+            )
+            return await self._execute_dynamic_fallback(
+                failed_provider=prov_name,
+                request=request,
+                capability=capability,
+                stage_name=stage_name,
+                last_error=bytez_disabled,
                 deadline=deadline,
                 skip_local_tier=local_tier_attempted,
             )
@@ -1352,6 +1393,13 @@ class ModelGateway:
             raise ProviderUnconfiguredError(
                 "Provider 'nvidia' is disabled by configuration "
                 "(INFERENCE_NVIDIA_RUNG_ENABLED is off; TASK-REL-047); streaming was not attempted.",
+                provider=prov_name,
+                model=request.model,
+            )
+        if prov_name == "bytez" and not bytez_rung_enabled():
+            raise ProviderUnconfiguredError(
+                "Provider 'bytez' is disabled by configuration "
+                "(INFERENCE_BYTEZ_RUNG_ENABLED is off; TASK-IG2-INF-01); streaming was not attempted.",
                 provider=prov_name,
                 model=request.model,
             )

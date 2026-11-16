@@ -40,7 +40,7 @@ UNIFIED_CACHE_NAMESPACE = "provider.unified"
 class UnifiedExecutionRequest(BaseModel):
     """Universal execution request across all models and agents."""
 
-    provider: Literal["auto", "gemini", "groq", "cerebras", "mistral", "openai", "openrouter", "nvidia", "cohere", "huggingface"] = Field(
+    provider: Literal["auto", "gemini", "groq", "cerebras", "mistral", "openai", "openrouter", "nvidia", "cohere", "huggingface", "bytez"] = Field(
         default="auto", description="Target provider name or 'auto' for intelligent capability matching"
     )
     model: str | None = Field(default=None, min_length=1, max_length=200, description="Optional requested model; policy gateway may substitute and reports the served model")
