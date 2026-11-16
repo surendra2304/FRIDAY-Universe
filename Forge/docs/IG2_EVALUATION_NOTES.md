@@ -70,13 +70,16 @@ context delivery, tool design/MCP, planning artifacts, permissions
 and sandboxing, memory, verification and evals, agent-loop structure.
 The Forge baseline (B10) flagged that this list had *no Forge
 evaluation anywhere*; this section is that evaluation. Cross-check:
-every category has a Forge counterpart today — harness patterns
-(`app/harness/ecc_patterns.py`, `app/harness/workflow.py`), planning
-(`app/planning/plan_to_ship.py`), verification (`app/verification/`
-battery + review passes + the Claudex Loop of TASK-IG2-FRG-08),
-execution sandboxing (`app/execution/`). No pattern family in the
-list is missing from Forge. It stays on the reference shelf as the
-external cross-check catalog for future harness work.
+every category has a counterpart somewhere in the fleet today — on
+the Forge side, harness patterns (`app/harness/ecc_patterns.py`,
+`app/harness/workflow.py`), planning (`app/planning/plan_to_ship.py`),
+verification (`app/verification/` battery + review passes + the
+Claudex Loop of TASK-IG2-FRG-08) and execution sandboxing
+(`app/execution/`); the memory category's counterpart is Memora —
+memory is Memora's remit by design, not Forge's (see §1.7). No
+pattern family in the list is missing from the fleet. It stays on
+the reference shelf as the external cross-check catalog for future
+harness work.
 
 ### 1.7 OpenViking — volcengine/OpenViking — REFERENCE-ONLY (Memora's lane)
 Verified: AGPL-3.0; a context database storing memory, resources and
