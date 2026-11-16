@@ -2517,6 +2517,16 @@ async def entrypoint(ctx: JobContext):
         expires from the watch at _DELIVERY_EXPIRE_S with a journal
         line, so a stranding is never silent twice over.
 
+        TASK-FRD-014: "verbatim" is now literal — both deliveries use
+        a repeat-verbatim instruction (generate_reply with
+        instructions=…, tool_choice="none"), not a user_input asking
+        the model to retell the outcome; the retelling improvised a
+        new answer in FRD-005 re-run #4 (dropping the recalled fact)
+        and its ~20s generation raced the session end and lost.
+        _DELIVERY_GRACE_S stays 12s: proven healthy verbalizations
+        land ≤~4s after a result, so the grace never races one, and
+        the re-run #4 loss was generation time, not the threshold.
+
         Participant rule, deliberately different from the recovery
         triggers in _watch_turns: delivering a settled result is safe
         for ANY listener in the room, so presence here means any
@@ -2533,11 +2543,25 @@ async def entrypoint(ctx: JobContext):
         for entry in late_results:
             if humans_present and sess is not None and not live["closing"]:
                 try:
-                    sess.generate_reply(user_input=(
-                        "Give Surendra the result of his earlier request "
-                        "now, briefly and faithfully, exactly as it came "
-                        f"back: {entry.get('spoken_reply')}"
-                    ))
+                    # TASK-FRD-014: verbatim delivery, not a fresh answer.
+                    # The old user_input framing ("give Surendra the
+                    # result…") made the model COMPOSE a reply — in
+                    # FRD-005 re-run #4 it improvised one that dropped
+                    # the recalled fact entirely. A settled result is
+                    # delivered as-is via a repeat-verbatim instruction
+                    # with tools off. (session.say() cannot do this on
+                    # the Gemini Live session: the installed SDK raises
+                    # unless the realtime model declares supports_say,
+                    # which Google's RealtimeModel does not, and the
+                    # worker carries no TTS — VOI-009.)
+                    sess.generate_reply(
+                        instructions=(
+                            "Say the following text aloud exactly, word "
+                            "for word, adding nothing and leaving "
+                            f"nothing out: {entry.get('spoken_reply')}"
+                        ),
+                        tool_choice="none",
+                    )
                     logger.error(
                         "VOICE delivery watch: late brain result turn=%s "
                         "state=%s delivered into the live session",
@@ -2594,11 +2618,21 @@ async def entrypoint(ctx: JobContext):
                 and turn.get("state") == "listening"
             ):
                 try:
-                    sess.generate_reply(user_input=(
-                        "Before anything else, tell Surendra the outcome "
-                        "of his earlier request, briefly and faithfully: "
-                        f"{record.get('spoken_reply')}"
-                    ))
+                    # TASK-FRD-014: verbatim delivery, not a fresh answer
+                    # (see the late-result site above): the nudge repeats
+                    # the settled spoken_reply word for word under a
+                    # repeat-verbatim instruction with tools off, instead
+                    # of asking the model to retell the outcome — the
+                    # retelling is what dropped the recalled fact and
+                    # burned ~20s racing the session end in re-run #4.
+                    sess.generate_reply(
+                        instructions=(
+                            "Say the following text aloud exactly, word "
+                            "for word, adding nothing and leaving "
+                            f"nothing out: {record.get('spoken_reply')}"
+                        ),
+                        tool_choice="none",
+                    )
                     record["nudged"] = True
                     logger.error(
                         "VOICE delivery watch: result turn=%s state=%s "

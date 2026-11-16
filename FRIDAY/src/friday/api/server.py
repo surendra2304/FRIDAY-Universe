@@ -3654,7 +3654,19 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 logger.debug(f"Memora recall fallback probe skipped in memory fast-path: {_e2}")
         # Rank client-side so the answer leads with what he actually asked
         # about: question-word overlap wins, personal facts beat agent logs.
-        _q_words = {w for w in _clean_memory_line(cmd).split() if len(w) > 3}
+        # TASK-FRD-014: strip punctuation from the question tokens — the old
+        # set kept "color?" verbatim (the token includes the question mark),
+        # so the subject word never substring-matched any stored line and
+        # ranking degenerated to (personal, length) among every
+        # "favorite"-bearing line; the asked-about fact could fall below
+        # the 4-line cap or sort last (proven live 2026-11-16: "What is my
+        # favorite color?" returned the teal fact LAST and cut its clean
+        # duplicate entirely, which is how the voice answer lost 'teal').
+        _q_words = {
+            _w.strip("?!.,;:'\"()")
+            for _w in _clean_memory_line(cmd).split()
+        }
+        _q_words = {_w for _w in _q_words if len(_w) > 3}
         _stop = {"remember", "about", "what", "have", "tell", "does", "your", "you", "when", "where", "which"}
         _q_words -= _stop
 
@@ -3669,9 +3681,26 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             _log_penalty = -4 if _is_agent_log(_low) else 0
             return (_overlap + _personal + _log_penalty, _personal, min(len(_line), 160))
 
+        def _spoken_fact_form(sentence: str) -> str:
+            # TASK-FRD-014: stored facts are first-person ("my favorite
+            # color is teal."); the spoken answer addresses the owner
+            # ("Your favorite color is teal."). Only the leading
+            # possessive is rewritten — the fact itself stays verbatim.
+            _s = sentence.strip()
+            _low_s = _s.lower()
+            if _low_s.startswith("my "):
+                return "Your " + _s[3:]
+            if _low_s.startswith("i'm "):
+                return "You're " + _s[4:]
+            if _low_s.startswith("i "):
+                return "You " + _s[2:]
+            return _s
+
         _ranked = sorted(_hits, key=_mem_rank, reverse=True)
         _lines: list[str] = []
         _seen_mem: set[str] = set()
+        _top_fact_text = ""
+        _top_full_match = False
         for _m in _ranked:
             _text = _clean_memory_line(str(_m.get("content_text", "")))
             _low = _text.lower()
@@ -3684,6 +3713,14 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             _dedupe_key = _low[:60]
             if _text and len(_text) > 6 and _dedupe_key not in _seen_mem:
                 _seen_mem.add(_dedupe_key)
+                if not _lines:
+                    # TASK-FRD-014: remember the leading line (untruncated)
+                    # and whether it matches EVERY question content word —
+                    # the direct-answer composition below keys on it.
+                    _top_fact_text = _text
+                    _top_full_match = bool(_q_words) and all(
+                        _w in _low for _w in _q_words
+                    )
                 if len(_text) > 130:
                     _text = _text[:127].rstrip() + "…"
                 _lines.append(f"• {_text}")
@@ -3698,15 +3735,46 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             )
         if _mem_error:
             _reply = f"My memory service is out of reach right now ({_mem_error}), Boss — I'll be honest: I can't check it this second. Say it again in a moment."
+        # TASK-FRD-014 (D10): a SPECIFIC attribute question ("what is my
+        # favorite color?") whose leading hit matches every question
+        # content word HAS a direct answer — compose it deterministically
+        # and hand it to the voice bridge via spoken_summary (which the
+        # bridge prefers for answered results), instead of leaving the
+        # realtime model to mine the fact out of the bullet list (FRD-005
+        # re-run #4: it spoke "I have your favorite color safely recorded
+        # in my memory" and never said 'teal'). The text reply keeps the
+        # list; only the spoken form becomes the direct answer. Browsing
+        # questions ("what do you remember about me") leave no content
+        # words after stopwords, so they never take this branch.
+        _fact_sentence = ""
+        _spoken_summary: str | None = None
+        if _top_fact_text and _top_full_match and not _mem_error:
+            _sents = [
+                _s.strip()
+                for _s in re.split(r"(?<=[.!?])\s+", _top_fact_text)
+                if _s.strip()
+            ]
+            if _sents:
+                _best_sent = max(
+                    _sents,
+                    key=lambda _s: sum(1 for _w in _q_words if _w in _s.lower()),
+                )
+                if all(_w in _best_sent.lower() for _w in _q_words):
+                    _fact_sentence = _best_sent
+                    _spoken_summary = _spoken_fact_form(_best_sent)
+        _meta: dict[str, Any] = {
+            "fast_path": True,
+            "conversational": True,
+            "memory_recall": True,
+            "remembered_count": len(_lines),
+            "memory_service_error": _mem_error or None,
+        }
+        if _spoken_summary:
+            _meta["spoken_summary"] = _spoken_summary
+            _meta["fact"] = _fact_sentence
         return {
             "reply": _reply,
-            "metadata": {
-                "fast_path": True,
-                "conversational": True,
-                "memory_recall": True,
-                "remembered_count": len(_lines),
-                "memory_service_error": _mem_error or None,
-            },
+            "metadata": _meta,
         }
 
     if _is_remember:
@@ -3736,7 +3804,11 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
         _payload = _payload.strip().lstrip(":, -–").strip()
         # Command residue that is not part of the fact: "remember this boss:
         # X" / "remember this for me: X".
-        _residue = re.match(r"^(?:boss|for me)[\s,:\-]+", _payload, flags=re.IGNORECASE)
+        # TASK-FRD-014: a sentence-final period is residue too — "remember
+        # this for me. My favorite color is teal." used to store the whole
+        # string verbatim ("for me. My favorite color is teal.") because
+        # '.' was not in the follower class (production store, 2026-11-16).
+        _residue = re.match(r"^(?:boss|for me)(?:[\s,:\-]+|\.\s*)", _payload, flags=re.IGNORECASE)
         if _residue:
             _payload = _payload[_residue.end():]
         # A trailing meta-instruction ("Confirm what you stored.") is part of
