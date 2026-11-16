@@ -9449,13 +9449,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #725 -> caa4c4c29c009248ef9da7ecf0f04dc77b42372d. CI green except the validate pair (proven flake family)."
     next_action: "Fleet CD deploy -> production probe"
   - id: TASK-IG2-STR-13
-    title: "Box Theory RD candidate, PRE-DECLARED \u2014 no backtest run (IG cluster #101)"
-    status: IN_REVIEW
+    title: "Box Theory RD candidate \u2014 declared backtest RUN: FAIL, family CLOSED (IG cluster #101)"
+    status: VERIFIED
     owner: muse_ai
     pr: 729
     branch: claude/ig2-task-ig2-str-13
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #729 -> fe4038670ee4dd8645b6df98278a723f0d2553d9. CI green except the validate pair (proven flake family)."
-    next_action: "Run the pre-declared Box Theory backtest under the full RD bar (declaration SHA-256 715b6884fb6a9abe3efec7be90c83e161cf7426aef1dc37629616b3145d013bd frozen at ship; no backtest run yet)"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #729 -> fe4038670ee4dd8645b6df98278a723f0d2553d9. CI green except the validate pair (proven flake family). DECLARED RUN COMPLETE 2026-11-16 (issue #35 comment 6925202981): FAIL - crypto30 @ 15m pooled walk-forward OOS 16,842 trades, expectancy -0.218%/trade, PF 0.805, positive folds 1/5, Bonferroni p = 1.0 at entering floor N = 3,885; 2x-cost shadow PF 0.697; loses gross of costs (PF 0.941); T1-exit sensitivity (disclosure only, not judged) PF 0.806 - the family fails under both exit readings. Declaration + fidelity addendum hashes re-verified from main before the run; forex leg excluded per the declaration's own qualifier (no verified 15m forex data). Full record: Stratex/rigorous_backtest/ig/RESULTS_BOX_THEORY.md + box_theory_results.json + box_theory_provenance.json (this PR)."
+    next_action: "Done. VERIFIED 2026-11-16 (Muse, TASK-IG2-STR-13 landing): the declared backtest ran and FAILED the full bar - the Box Theory family is CLOSED per the declaration's own failing term; nothing promoted, nothing registered for forward testing, nothing trades. Global trial counter stands at 3,891 after this run (entering 3,885 + STR-06's 4 + this run's 2). A future Box variant requires a NEW pre-declaration at the then-current trial floor - no retune is authorised by this record."
   - id: TASK-IG2-STR-17
     title: "BSE/NSE cross-exchange arbitrage concept note - concept only, no declaration, no backtest (IG item DXYCIhsjHKY, package S-25)"
     status: IN_REVIEW
