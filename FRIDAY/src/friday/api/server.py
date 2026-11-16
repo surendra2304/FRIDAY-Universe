@@ -3663,40 +3663,6 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             # store with nothing genuine for the question reaches the
             # honest not-found reply, never a dressed-up list.
             _hits = [h for h in _hits if not _is_unpresentable(h)]
-            if len(_q_words) >= 2 and _hits:
-                # TASK-FRD-014: if NO presentable hit matches every
-                # question content word, the spelling-sensitive search
-                # may have missed the fact entirely (live 2026-11-16:
-                # "What is my favourite colour?" returned 5 hits, none
-                # of them the teal fact the US-spelled query returns).
-                # Retry ONCE with the canonicalized spelling variant of
-                # the question and merge — the same fallback idiom as
-                # the owner-fact probe below, keyed on the miss shape.
-                _any_full = any(
-                    all(
-                        _w in _canon_line(str(_h.get("content_text", "")).lower())
-                        for _w in _q_words
-                    )
-                    for _h in _hits
-                )
-                _variant = _canon_line(raw_cmd[:200].lower())
-                if not _any_full and _variant != raw_cmd[:200].lower():
-                    _more = (
-                        await asyncio.to_thread(_memora.recall_memories, "friday", _variant, limit=10)
-                        or []
-                    )
-                    _seen_texts = {
-                        str(_h.get("content_text", "")) for _h in _hits
-                    }
-                    _hits = _hits + [
-                        _h for _h in _more
-                        if str(_h.get("content_text", "")) not in _seen_texts
-                        and not _is_unpresentable(_h)
-                    ]
-                    logger.info(
-                        "memory recall: spelling-variant retry merged "
-                        f"{len(_hits)} hits for {raw_cmd[:60]!r}"
-                    )
         except Exception as _e:
             _mem_error = f"{type(_e).__name__}"
             logger.debug(f"Memora recall skipped in memory fast-path: {_e}")
@@ -3720,6 +3686,48 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
                 _hits = [h for h in _probe_hits if not _is_unpresentable(h)]
             except Exception as _e2:
                 logger.debug(f"Memora recall fallback probe skipped in memory fast-path: {_e2}")
+        if len(_q_words) >= 2 and not _mem_error:
+            # TASK-FRD-014: if NO presentable hit matches every question
+            # content word, the spelling-sensitive search may have
+            # missed the fact entirely (live 2026-11-16: "What is my
+            # favourite colour?" returned a sparse set — in one probe
+            # every hit filtered out as unpresentable, in another 5
+            # hits with no teal record — while the US-spelled query
+            # returns the fact). Retry ONCE with the canonicalized
+            # spelling variant of the question and merge. Runs after
+            # the FRD-001 probe so the filtered-to-empty shape is
+            # covered too; the same fallback idiom as that probe,
+            # keyed on the miss shape.
+            _any_full = any(
+                all(
+                    _w in _canon_line(str(_h.get("content_text", "")).lower())
+                    for _w in _q_words
+                )
+                for _h in _hits
+            )
+            _variant = _canon_line(raw_cmd[:200].lower())
+            if not _any_full and _variant != raw_cmd[:200].lower():
+                try:
+                    from friday.memory.memora_client import memora_client as _memora_v
+                    from friday.memory.hygiene import is_unpresentable_recall_hit as _is_unpresentable_v
+                    _more = (
+                        await asyncio.to_thread(_memora_v.recall_memories, "friday", _variant, limit=10)
+                        or []
+                    )
+                    _seen_texts = {
+                        str(_h.get("content_text", "")) for _h in _hits
+                    }
+                    _hits = _hits + [
+                        _h for _h in _more
+                        if str(_h.get("content_text", "")) not in _seen_texts
+                        and not _is_unpresentable_v(_h)
+                    ]
+                    logger.info(
+                        "memory recall: spelling-variant retry merged "
+                        f"{len(_hits)} hits for {raw_cmd[:60]!r}"
+                    )
+                except Exception as _e3:
+                    logger.debug(f"Memora spelling-variant retry skipped: {_e3}")
         # Rank client-side so the answer leads with what he actually asked
         # about: question-word overlap wins, personal facts beat agent logs
         # (question words + spelling canonicalization are computed above,
