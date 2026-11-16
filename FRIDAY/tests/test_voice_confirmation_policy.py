@@ -125,6 +125,61 @@ def test_always_confirm_families(text):
 
 
 # ---------------------------------------------------------------------------
+# Classifier: position-closing phrasing is a trade action (always-confirm)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("text", [
+    "Close the position",
+    "Close my TRX position on Stratex",
+    "Close all open positions",
+    "Close out the position",
+    "Exit my TRX short",
+    "Exit the Reliance trade",
+    "Liquidate my holdings",
+    "Flatten everything on Stratex",
+])
+def test_position_closing_requests_confirm(text):
+    cls = policy.classify_request(text)
+    assert cls.category == policy.SENSITIVE, text
+    assert cls.family == "trade", text
+    decision = policy.decide(text)
+    assert decision.verdict == policy.CONFIRM, text
+    assert "Shall I go ahead?" in decision.question, text
+
+
+@pytest.mark.parametrize("text", [
+    "Close the tab",
+    "Close the app",
+    "Close the window on my laptop",
+    "Close Chrome",
+    "Close the file",
+    "Exit full screen",
+])
+def test_benign_close_requests_pass(text):
+    # Desktop homonyms: closing a tab/app/window is laptop control,
+    # not a trade — the gate must not start asking about it.
+    assert policy.decide(text).verdict == policy.ALLOW, text
+
+
+@pytest.mark.parametrize("text", [
+    "Did Stratex close the position?",
+    "What happens if I close the position?",
+])
+def test_questions_about_closing_are_read_only(text):
+    cls = policy.classify_request(text)
+    assert cls.category == policy.READ_ONLY, text
+    assert policy.decide(text).verdict == policy.ALLOW, text
+
+
+def test_gate_blocks_close_position_then_allows_exactly_once():
+    gate = policy.ConfirmationGate(clock=_Clock())
+    text = "Close the position"
+    assert gate.check(text).verdict == policy.CONFIRM
+    assert gate.check(text).verdict == policy.ALLOW
+    assert gate.check(text).verdict == policy.CONFIRM
+
+
+# ---------------------------------------------------------------------------
 # Gate: block once, pass once, expire
 # ---------------------------------------------------------------------------
 
