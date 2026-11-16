@@ -9075,6 +9075,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: task-voi-011-session-build
     evidence: "Forensics: 11-24s build = 1.1-5.1s serial local construction + 5-19s sess.start() tail (loop contention, no SDK await of the Gemini handshake); VOI-008 pool warms an executor only, never a session. Drill (staging, participant clock): greeting median 8.51s base -> 3.80s patched, all patched runs < 8.0s bar; connect-to-key 0.00s x3; unavailable path verified with 0 greeting attempts. CI: voice-regressions exactly the 1 known pre-existing failure (292 passed); validate failure = Futuris repo-root flake family only."
     next_action: "deploy -> FRD-005 re-run"
+  - id: TASK-VOI-012
+    title: "Voice conversational integrity: Gemini Live STT fleet-vocabulary biasing (custom_vocabulary) + pinned AAD turn-taking + post-STT correction map + dropped-turn guard"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 661
+    branch: claude/task-voi-012
+    evidence: "Diagnosis correction (journal-verified): FRD-005 run 20261116-075300 back-half FAILs were slow replies (13-44s) vs scorer windows, not swallowed turns; the real gaps were the STT mishearing itself ('check Stray Kids for me' for Stratex) + no recovery trigger for a turn dropped in listening state. Shipped: input_audio_transcription.custom_vocabulary (16-term fleet roster), pinned realtime_input_config (AAD start/end HIGH, START_OF_ACTIVITY_INTERRUPTS), instruction priming, conservative post-STT correction map (stray kids -> Stratex + 8 non-word mishearings; ordinary words never rewritten), dropped-turn guard (final transcript pending >=30s in listening -> one generate_reply re-ask). Tests: 39 new pass; full voice failure set identical to clean main. Drill (staging, quota-exhausted morning, 2 of 5 sessions excluded): delegation leg PASS on the STT question (byte-identical prompt transcribed 'Stratex', delegation by name; residual failure = Stratex/brain timeout under load, not STT); barge-in PARTIAL (interrupt works; barged-in question not transcribed recognizably under load/quota). MERGED #661 -> 452577ebe2a797941f4a23e9be86576725589010 via clean three-way composition with #660 (GitHub prospective merge + local merge-tree both clean; merged worker carries both feature sets). CI: voice-regressions exactly the 1 known pre-existing failure (292 passed); validate pair = flake family only."
+    next_action: "deploy -> FRD-005 re-run -> owner in-hands voice re-test"
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
