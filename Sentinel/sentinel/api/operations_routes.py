@@ -51,6 +51,7 @@ class DrillRequest(BaseModel):
 class DeployWatchdogReport(BaseModel):
     server: str
     deployed_head: str
+    tree_clean: bool | None = None
 
 
 @operations_router.get("/alerts")
@@ -160,5 +161,6 @@ async def report_deployed_head(request: DeployWatchdogReport) -> dict[str, Any]:
         request.server,
         lambda: request.deployed_head,
         lambda: git_remote_main_head(repo_url),
+        deployed_tree_provider=lambda: request.tree_clean,
     )
     return state.model_dump(mode="json")

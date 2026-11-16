@@ -3,12 +3,12 @@
 
 Run this on a fleet server Sentinel does NOT run on (today: Server 1),
 from a systemd timer or cron. It reads the server's own deployed HEAD
-from its repo checkout and posts it to Sentinel's deploy-watchdog
-ingress; Sentinel compares it against origin/main in its single state
-store and alerts through the operations alert path when divergence
-persists beyond the grace window. The reporter is deliberately dumb:
-no state, no decisions — all logic lives in
-``sentinel.modules.operations.deploy_watchdog``.
+and tracked-tree cleanliness from its repo checkout and posts them to
+Sentinel's deploy-watchdog ingress; Sentinel compares them against
+origin/main in its single state store and alerts through the
+operations alert path when divergence persists beyond the threshold.
+The reporter is deliberately dumb: no state, no decisions — all logic
+lives in ``sentinel.modules.operations.deploy_watchdog``.
 
 Stdlib only, so it runs under the fleet's shared venv or any python3.
 
@@ -45,6 +45,25 @@ def read_checkout_head(checkout: str) -> str | None:
     return sha if out.returncode == 0 and len(sha) >= 7 else None
 
 
+def read_checkout_tree_clean(checkout: str) -> bool | None:
+    """Tracked-tree cleanliness (untracked runtime files don't count)."""
+    try:
+        out = subprocess.run(
+            ["git", "-C", checkout, "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if out.returncode != 0:
+        return None
+    for line in (out.stdout or "").splitlines():
+        if line and not line.startswith("??"):
+            return False
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sentinel-url", required=True, help="Base URL of the Sentinel API")
@@ -58,8 +77,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"deploy-watchdog-report: cannot read HEAD of {args.checkout}", file=sys.stderr)
         return 1
 
+    tree_clean = read_checkout_tree_clean(args.checkout)
     url = args.sentinel_url.rstrip("/") + "/operations/deploy-watchdog/report"
-    payload = json.dumps({"server": args.server, "deployed_head": head}).encode("utf-8")
+    payload = json.dumps(
+        {"server": args.server, "deployed_head": head, "tree_clean": tree_clean}
+    ).encode("utf-8")
     request = urllib.request.Request(
         url, data=payload, headers={"Content-Type": "application/json"}, method="POST"
     )

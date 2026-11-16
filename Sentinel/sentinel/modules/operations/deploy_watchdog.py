@@ -11,17 +11,29 @@ equals origin/main. This module is that check.
 Design
 ------
 - ``DeployWatchdog`` holds per-server divergence state. A server whose
-  deployed HEAD differs from origin/main starts a divergence episode;
-  only when the divergence persists beyond ``grace_seconds`` (default
-  1800s — comfortably beyond one Fleet CD cycle, so a deploy still in
-  flight never alerts) does it raise ONE alert through the existing
-  operations alert path (``AlertEngine.process_delta``, which the API
-  lifespan wires to the shared human channel). When the server returns
-  to main, a recovery delta is emitted and the episode closes.
-- A failed read (git error, network down) yields status UNKNOWN and
-  leaves the episode clock untouched: the watchdog never alerts on
-  missing evidence, and never resets a running episode because a probe
-  hiccupped.
+  deployed HEAD differs from origin/main — or whose tracked working
+  tree is dirty at the current HEAD (the deploy script refuses dirty
+  trees, so a dirty server strands on the next push: the neighbouring
+  D9 vector) — starts a divergence episode; only when the divergence
+  persists beyond the pinned threshold does it raise ONE alert through
+  the existing operations alert path (``AlertEngine.process_delta``,
+  which the API lifespan wires to the shared human channel). When the
+  server returns to main with a clean tree, a recovery delta is emitted
+  and the episode closes.
+- The threshold, pinned concretely (supervisor condition): an alert
+  requires divergence observed on at least two consecutive checks
+  spanning at least ``grace_seconds`` (default 1800s). Fleet CD deploy
+  runs take minutes, so 1800s is beyond one full Fleet CD cycle with
+  wide margin, while a D9 strand is permanent — the detection delay
+  costs nothing against a failure that otherwise waited for a manual
+  audit.
+- The origin/main reference is read fresh at every check
+  (``git ls-remote``). A failed reference read is FAIL-CLOSED: it
+  raises its own alert (deduplicated by the AlertEngine) rather than
+  silently comparing against a stale ref — a watchdog that cannot see
+  main is blind in exactly the way D9 was. A failed deployed-HEAD read
+  yields status UNKNOWN and leaves the episode clock untouched: the
+  watchdog never resets a running episode because a probe hiccupped.
 - HEAD sources are injectable callables. Production sources provided
   here: ``git_checkout_head`` (a server's own checkout, stdlib git CLI)
   and ``git_remote_main_head`` (``git ls-remote`` against the repo).
@@ -93,6 +105,7 @@ class ServerDeployState(BaseModel):
     server: str
     deployed_head: str | None = None
     main_head: str | None = None
+    tree_clean: bool | None = None
     status: DeployStatus = DeployStatus.UNKNOWN
     diverged_since: datetime | None = None
     alerted: bool = False
@@ -175,6 +188,9 @@ class DeployWatchdog:
         # alert path the scheduler's escalation uses (TASK-SEN-008 wiring
         # attaches the human-channel dispatcher in the API lifespan).
         self._sink = alert_sink or alert_engine.process_delta
+        # Fail-closed reference state: True while an origin/main read
+        # failure alert is open (AlertEngine dedup is the second guard).
+        self._reference_alert_open = False
 
     @property
     def grace_seconds(self) -> int:
@@ -201,6 +217,7 @@ class DeployWatchdog:
         server: str,
         deployed_head: str | None,
         main_head: str | None,
+        tree_clean: bool | None = None,
         now: datetime | None = None,
     ) -> ServerDeployState:
         """Fold one observation into the server's state; alert if due."""
@@ -208,6 +225,15 @@ class DeployWatchdog:
         state = self._store.get(server) or ServerDeployState(server=server)
         state.last_checked_at = now
         state.check_count += 1
+
+        if not main_head and deployed_head:
+            # The reference read failed while the deployed read worked:
+            # fail closed — a watchdog that cannot see origin/main is
+            # blind in exactly the way D9 was, so the failure itself
+            # alerts (once; the AlertEngine dedups repeats).
+            self._reference_failed()
+        elif main_head and self._reference_alert_open:
+            self._reference_recovered()
 
         if not deployed_head or not main_head:
             # No evidence: keep any running episode clock untouched.
@@ -222,8 +248,22 @@ class DeployWatchdog:
 
         state.deployed_head = deployed_head
         state.main_head = main_head
+        if tree_clean is not None:
+            state.tree_clean = tree_clean
 
-        if deployed_head == main_head:
+        diverged_reasons: list[str] = []
+        if deployed_head != main_head:
+            diverged_reasons.append(
+                f"deployed HEAD {_short(deployed_head)} != origin/main "
+                f"{_short(main_head)}"
+            )
+        if state.tree_clean is False:
+            diverged_reasons.append(
+                "tracked working tree is dirty (the deploy script "
+                "refuses dirty trees, stranding the next push)"
+            )
+
+        if not diverged_reasons:
             was_alerted = state.alerted
             state.status = DeployStatus.IN_SYNC
             state.diverged_since = None
@@ -235,8 +275,8 @@ class DeployWatchdog:
                     ChangeType.RESOLVED_FINDING,
                     SeverityLevel.LOW,
                     f"Deploy watchdog: {server} is back in sync with "
-                    f"origin/main at {_short(main_head)}; the divergence "
-                    f"episode is closed.",
+                    f"origin/main at {_short(main_head)} with a clean "
+                    f"tree; the divergence episode is closed.",
                     main_head,
                 )
             return state
@@ -254,12 +294,12 @@ class DeployWatchdog:
                 server,
                 ChangeType.NEW_FINDING,
                 SeverityLevel.HIGH,
-                f"Deploy watchdog: {server} deployed HEAD "
-                f"{_short(deployed_head)} has diverged from origin/main "
-                f"{_short(main_head)} since "
-                f"{state.diverged_since.isoformat()} — beyond the "
-                f"{self._grace}s grace window (one Fleet CD cycle). A "
-                f"merged change is not live on this server; check for a "
+                f"Deploy watchdog: {server} has diverged from "
+                f"origin/main since {state.diverged_since.isoformat()} "
+                f"— beyond the {self._grace}s threshold (two consecutive "
+                f"checks spanning more than one Fleet CD cycle). "
+                f"Reason(s): {'; '.join(diverged_reasons)}. A merged "
+                f"change is not live on this server; check for a "
                 f"cancelled or paths-skipped Fleet CD run (defect class "
                 f"D9).",
                 deployed_head,
@@ -269,6 +309,47 @@ class DeployWatchdog:
             state.status = DeployStatus.ALERTED
         self._store.put(state)
         return state
+
+    # -- fail-closed reference handling -------------------------------------
+
+    def _reference_failed(self) -> None:
+        if self._reference_alert_open:
+            return
+        self._reference_alert_open = True
+        try:
+            self._sink(
+                BaselineDelta(
+                    delta_id="delta-deploy-watchdog-reference-unreachable",
+                    target_ref="deploy:reference",
+                    change_type=ChangeType.NEW_FINDING,
+                    severity=SeverityLevel.HIGH,
+                    description=(
+                        "Deploy watchdog: the origin/main reference read "
+                        "failed — divergence checks are blind until the "
+                        "reference recovers (fail-closed, TASK-OBS-004)."
+                    ),
+                )
+            )
+        except Exception as e:  # alerting must never break the check loop
+            logger.error("deploy watchdog reference alert failed: %s", e)
+
+    def _reference_recovered(self) -> None:
+        self._reference_alert_open = False
+        try:
+            self._sink(
+                BaselineDelta(
+                    delta_id="delta-deploy-watchdog-reference-recovered",
+                    target_ref="deploy:reference",
+                    change_type=ChangeType.RESOLVED_FINDING,
+                    severity=SeverityLevel.LOW,
+                    description=(
+                        "Deploy watchdog: the origin/main reference read "
+                        "has recovered; divergence checks are live again."
+                    ),
+                )
+            )
+        except Exception as e:
+            logger.error("deploy watchdog reference recovery failed: %s", e)
 
     def _emit(
         self,
@@ -298,6 +379,7 @@ class DeployWatchdog:
         server: str,
         deployed_provider: Callable[[], str | None],
         main_provider: Callable[[], str | None],
+        deployed_tree_provider: Callable[[], bool | None] | None = None,
         now: datetime | None = None,
     ) -> ServerDeployState:
         """Run one check for a server from two HEAD providers."""
@@ -311,7 +393,14 @@ class DeployWatchdog:
         except Exception as e:
             logger.warning("deploy watchdog: origin/main read failed: %s", e)
             main = None
-        return self.observe(server, deployed, main, now=now)
+        tree_clean: bool | None = None
+        if deployed_tree_provider is not None:
+            try:
+                tree_clean = deployed_tree_provider()
+            except Exception as e:
+                logger.warning("deploy watchdog: tree read failed for %s: %s", server, e)
+                tree_clean = None
+        return self.observe(server, deployed, main, tree_clean=tree_clean, now=now)
 
     def status(self) -> list[ServerDeployState]:
         return self._store.all()
@@ -333,6 +422,30 @@ def git_checkout_head(checkout_path: str) -> str | None:
         return None
     sha = (out.stdout or "").strip()
     return sha if out.returncode == 0 and len(sha) >= 7 else None
+
+
+def git_checkout_tree_clean(checkout_path: str) -> bool | None:
+    """Whether a checkout's TRACKED tree is clean, or None if unreadable.
+
+    Untracked files do not count: the fleet servers carry untracked
+    runtime files as a normal condition, while the deploy script's
+    dirty-tree refusal concerns tracked modifications.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", checkout_path, "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if out.returncode != 0:
+        return None
+    for line in (out.stdout or "").splitlines():
+        if line and not line.startswith("??"):
+            return False
+    return True
 
 
 def git_remote_main_head(repo_url: str, branch: str = "main") -> str | None:
@@ -377,6 +490,7 @@ async def run_deploy_watchdog(
                 server_name,
                 lambda: git_checkout_head(checkout_path),
                 lambda: git_remote_main_head(repo_url),
+                deployed_tree_provider=lambda: git_checkout_tree_clean(checkout_path),
             )
             if state.status in (DeployStatus.DIVERGED, DeployStatus.ALERTED):
                 logger.warning(
@@ -426,6 +540,7 @@ __all__ = [
     "configure_deploy_watchdog",
     "deploy_watchdog",
     "git_checkout_head",
+    "git_checkout_tree_clean",
     "git_remote_main_head",
     "run_deploy_watchdog",
 ]
