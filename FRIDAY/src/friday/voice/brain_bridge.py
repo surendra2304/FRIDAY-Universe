@@ -6,7 +6,9 @@ boss_verified=False. Transport uncertainty is never reported as non-execution.
 """
 from __future__ import annotations
 
+import asyncio
 import os
+import time
 from typing import Any
 
 import httpx
@@ -37,6 +39,30 @@ def _brain_timeout_s() -> float:
 BRAIN_TIMEOUT_S = _brain_timeout_s()
 
 
+# TASK-FRD-011: one voice conversation must not race itself. In FRD-005
+# re-run 20261116-103839 the realtime model issued TWO execute_friday_task
+# calls concurrently (one per queued user utterance); the two brain turns
+# contended at the brain AND at Stratex, both returned the byte-identical
+# timeout answer, and the model spoke it twice (defect D2). The bridge
+# therefore serializes its sends, and a verbatim re-issue of a request
+# whose call just completed (the interruption-retry shape: the SDK
+# cancelled a speech at 10:43:30 in that run and the model re-asked)
+# reuses the completed result inside a short window instead of running
+# a second identical brain turn. Only settled outcomes are reused —
+# confirmation_required must always reach the gate again (the owner's
+# confirmation is what the re-issue carries), and refused/pending are
+# never served from the window.
+def _dedupe_window_s() -> float:
+    try:
+        return float(os.getenv("FRIDAY_VOICE_BRIDGE_DEDUPE_S", "15") or 15)
+    except ValueError:
+        return 15.0
+
+
+DEDUPE_WINDOW_S = _dedupe_window_s()
+_CACHEABLE_STATES = {"answered", "failed"}
+
+
 class VoiceBrainBridge:
     def __init__(self, client: httpx.AsyncClient | None = None,
                  confirmation_gate: Any = None) -> None:
@@ -50,6 +76,20 @@ class VoiceBrainBridge:
             self._gate = _confirmation_policy.gate_from_env()
         else:
             self._gate = None
+        # TASK-FRD-011: send serialization + last-result reuse window.
+        self._send_lock = asyncio.Lock()
+        self._last_key = ""
+        self._last_result: dict[str, Any] | None = None
+        self._last_ts = 0.0
+
+    def _cached_result(self, key: str) -> dict[str, Any] | None:
+        if (
+            self._last_result is not None
+            and key == self._last_key
+            and (time.monotonic() - self._last_ts) <= DEDUPE_WINDOW_S
+        ):
+            return dict(self._last_result)
+        return None
 
     async def execute(self, request: str) -> dict[str, Any]:
         text = (request or "").strip()
@@ -68,6 +108,27 @@ class VoiceBrainBridge:
                     "action_summary": decision.classification.action_summary,
                     "completion_verified": False,
                 }
+        # TASK-FRD-011: the gate above has run for THIS call; only the
+        # send is serialized/reused, so a confirmed re-issue still passes
+        # the gate on its own merits before it can reuse or send.
+        key = " ".join(text.split()).casefold()
+        cached = self._cached_result(key)
+        if cached is not None:
+            return cached
+        async with self._send_lock:
+            # A concurrent identical call may have completed while this
+            # one waited for the lock — reuse its result, never re-send.
+            cached = self._cached_result(key)
+            if cached is not None:
+                return cached
+            result = await self._dispatch(text)
+            if result.get("state") in _CACHEABLE_STATES:
+                self._last_key = key
+                self._last_result = result
+                self._last_ts = time.monotonic()
+            return result
+
+    async def _dispatch(self, text: str) -> dict[str, Any]:
         try:
             if self.client is None:
                 async with httpx.AsyncClient(trust_env=False, follow_redirects=False) as client:

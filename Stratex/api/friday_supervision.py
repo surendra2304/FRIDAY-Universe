@@ -552,7 +552,77 @@ def _ledger_scorecard_block() -> dict[str, Any] | None:
         return None
 
 
+# TASK-FRD-011: status-summary snapshot cache (the TASK-VOI-006 pattern,
+# applied to the trading data itself). A status read used to call the
+# live engine (get_account_balance / get_active_positions / cloud-state
+# load) inline on EVERY request. Measured on production (FRD-005 re-run
+# 20261116-103839 + FRD-011 probes): the execute's wall time was 14 s in
+# the run and 24–90+ s under load, while the handler's own measured
+# execution was only ~4 s of one 24 s sample — the read pays engine and
+# process contention it does not need. The figures a status answer
+# reports (balance, positions, ledger scorecard) change on the engine's
+# own cycle cadence, so the summary is computed once and served from
+# the snapshot: fresh inside the TTL, stale-while-revalidate (one
+# background refresh, single-flight) up to the hard staleness bound —
+# Stratex's own telemetry limit (MAX_TELEMETRY_STALENESS_SECONDS = 60 s,
+# advisory_gate.py) — and computed synchronously beyond it rather than
+# serving ancient money data. The payload's "timestamp" is the
+# snapshot's compute time, so its age is visible, not hidden.
+_STATUS_SUMMARY_TTL_S: float = 10.0
+_STATUS_SUMMARY_MAX_STALE_S: float = 60.0
+_STATUS_SUMMARY_CACHE: dict[str, Any] | None = None
+_STATUS_SUMMARY_TS: float = 0.0
+_STATUS_SUMMARY_LOCK = threading.Lock()
+_STATUS_SUMMARY_REFRESHING = False
+
+
+def _refresh_status_summary() -> None:
+    global _STATUS_SUMMARY_CACHE, _STATUS_SUMMARY_TS, _STATUS_SUMMARY_REFRESHING
+    try:
+        data = _compute_engine_status_summary()
+        with _STATUS_SUMMARY_LOCK:
+            _STATUS_SUMMARY_CACHE = data
+            _STATUS_SUMMARY_TS = time.time()
+    except Exception as exc:
+        logger.debug(f"[FRIDAY_SUPERVISION] status summary refresh failed: {exc}")
+    finally:
+        with _STATUS_SUMMARY_LOCK:
+            _STATUS_SUMMARY_REFRESHING = False
+
+
 def _get_engine_status_summary() -> dict[str, Any]:
+    global _STATUS_SUMMARY_CACHE, _STATUS_SUMMARY_TS, _STATUS_SUMMARY_REFRESHING
+    now = time.time()
+    cache = _STATUS_SUMMARY_CACHE
+    if cache is not None:
+        age = now - _STATUS_SUMMARY_TS
+        if age < _STATUS_SUMMARY_TTL_S:
+            return cache
+        if age < _STATUS_SUMMARY_MAX_STALE_S:
+            with _STATUS_SUMMARY_LOCK:
+                start = not _STATUS_SUMMARY_REFRESHING
+                if start:
+                    _STATUS_SUMMARY_REFRESHING = True
+            if start:
+                try:
+                    threading.Thread(
+                        target=_refresh_status_summary,
+                        daemon=True,
+                        name="stratex-status-summary-refresh",
+                    ).start()
+                except Exception as exc:
+                    with _STATUS_SUMMARY_LOCK:
+                        _STATUS_SUMMARY_REFRESHING = False
+                    logger.debug(f"[FRIDAY_SUPERVISION] status refresh could not start: {exc}")
+            return cache
+    data = _compute_engine_status_summary()
+    with _STATUS_SUMMARY_LOCK:
+        _STATUS_SUMMARY_CACHE = data
+        _STATUS_SUMMARY_TS = time.time()
+    return data
+
+
+def _compute_engine_status_summary() -> dict[str, Any]:
     overlay = get_advisory_overlay()
     pending = overlay.get_pending_recommendations()
 
