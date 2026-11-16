@@ -37,6 +37,10 @@ from friday.tools.builtin.phone_ui_control import (
     PhoneUiDumpTool,
     PhoneUiTaskTool,
 )
+from friday.tools.builtin.escrcpy_control import (
+    EscrcpyAutomationTool,
+    EscrcpyLaunchPlanTool,
+)
 from friday.tools.builtin.browser_tool import BrowserAutomationTool
 from friday.tools.builtin.fleet_dispatch import FleetDispatchTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
@@ -202,6 +206,8 @@ __all__ = [
     "PhoneTypeTextTool",
     "PhoneUiDumpTool",
     "PhoneUiTaskTool",
+    "EscrcpyAutomationTool",
+    "EscrcpyLaunchPlanTool",
     "SwipeScreenTool",
     "TapScreenTool",
     "BrowserAutomationTool",
