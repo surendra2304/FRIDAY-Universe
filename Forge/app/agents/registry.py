@@ -325,19 +325,31 @@ class AgentRegistry:
             cls_type = DeveloperRole
 
         if provider is None:
+            # TASK-FRG-009: resolve through the role provider wiring
+            # (Settings.role_provider; production default is the fleet
+            # Inference gateway, fail-closed). The registry's per-provider
+            # preferred model is passed through as a hint; the wiring owns
+            # provider construction and per-role model aliases.
+            from app.agents.provider_wiring import resolve_role_provider
             from app.core.config import get_settings
-            from app.providers.factory import get_provider
 
             settings = get_settings()
-            target_prov = (provider_type or settings.default_provider or "direct").lower()
+            target_prov = (
+                provider_type
+                or getattr(settings, "role_provider", None)
+                or settings.default_provider
+                or "direct"
+            ).lower()
 
-            # Determine preferred model for this role on the target provider
             cap = self.get_capability(role_name)
-            routed_model = model_name or (cap.get_preferred_model(target_prov) if cap else None)
+            preferred = cap.get_preferred_model(target_prov) if cap else None
 
-            provider = get_provider(
-                provider_name=target_prov,
-                model_name=routed_model,
+            provider = resolve_role_provider(
+                role_name,
+                settings=settings,
+                provider_type=provider_type,
+                model_name=model_name,
+                preferred_model=preferred,
                 **provider_kwargs,
             )
 

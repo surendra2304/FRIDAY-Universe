@@ -48,10 +48,37 @@ class BaseAgent(ABC):
         self.role_name = role_name
         self.display_name = display_name
         self.system_prompt = system_prompt
-        # Interchangeable model provider (DirectProvider, OpenAI, Claude, Gemini, etc.)
-        self.provider = provider or DirectProvider(model_name=f"direct-{role_name}")
+        # Interchangeable model provider (Inference gateway, OpenAI, Claude,
+        # DirectProvider mock, ...). TASK-FRG-009: when no provider is
+        # injected, resolve the configured role provider (production default:
+        # the fleet Inference gateway) instead of silently defaulting to the
+        # deterministic DirectProvider mock — that silent default is what
+        # TASK-FORGE-002 GAP 4 documented and TASK-FRG-004 proved in
+        # production. DirectProvider remains the fallback only when wiring
+        # itself fails; either way a mock provider is detectable from the
+        # instance (provider_wiring.is_mock_provider), so task output can
+        # label the build degraded.
+        if provider is not None:
+            self.provider = provider
+        else:
+            self.provider = self._resolve_default_provider(role_name)
         self.permissions = permissions or DEFAULT_ROLE_PERMISSIONS.get(role_name.lower(), set())
         self.state = AgentState(role_name=role_name)
+
+    @staticmethod
+    def _resolve_default_provider(role_name: str) -> BaseModelProvider:
+        """Resolve the configured provider for a role (TASK-FRG-009)."""
+        try:
+            from app.agents.provider_wiring import resolve_role_provider
+
+            return resolve_role_provider(role_name)
+        except Exception as exc:  # wiring must never break agent construction
+            logger.warning(
+                f"Role provider wiring failed for '{role_name}' ({exc}); "
+                "falling back to the DirectProvider mock (degraded)"
+            )
+            fallback = DirectProvider(model_name=f"direct-{role_name}")
+            return fallback
 
     def set_provider(self, provider: BaseModelProvider) -> None:
         """Dynamically swap the underlying model provider at runtime."""
@@ -75,6 +102,21 @@ class BaseAgent(ABC):
         response = await self.provider.generate(
             prompt=prompt, system_prompt=sys_prompt, temperature=temperature
         )
+        # TASK-FRG-009: a provider that degraded to deterministic mock output
+        # (legacy opt-in fallback) marks its response; record it on the
+        # agent state so the degradation survives into task output instead
+        # of passing as a model-generated success.
+        raw = response.raw_response or {}
+        if raw.get("degraded_fallback"):
+            self.state.scratchpad["provider_degraded"] = True
+            self.state.scratchpad["provider_error"] = raw.get("provider_error")
+            logger.warning(
+                f"Agent '{self.role_name}' received degraded mock output "
+                f"(fallback: {raw.get('degraded_fallback')})"
+            )
+        served_model = raw.get("served_by_model")
+        if served_model:
+            self.state.scratchpad["served_by_model"] = served_model
         self.state.tokens_consumed += response.usage.total_tokens
         self.state.budget_consumed += response.usage.estimated_cost_usd
         self.state.history.append({"prompt": prompt[:200], "response": response.content[:200]})

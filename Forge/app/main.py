@@ -56,6 +56,46 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Ensure runtime directories exist
     settings.ensure_directories()
 
+    # TASK-FRG-009: report how specialist roles are wired at startup. Roles
+    # run on the fleet Inference gateway by default; the deterministic mock
+    # is an explicit test/dev mode and is announced loudly, never silently.
+    try:
+        from app.agents.provider_wiring import describe_role_providers
+
+        wiring = describe_role_providers(settings)
+        if wiring["mock"]:
+            logger.warning(
+                "FORGE ROLES RUNNING ON THE DETERMINISTIC MOCK PROVIDER "
+                f"(role_provider={wiring['role_provider']}): explicit test/dev "
+                "mode — generated output is labelled provider: mock/direct, "
+                "generation degraded."
+            )
+        else:
+            logger.info(
+                f"Forge roles wired to provider '{wiring['role_provider']}' "
+                f"(Inference gateway: {wiring['inference_base_url']})"
+            )
+            try:
+                from app.providers.inference import InferenceProvider
+
+                probe = InferenceProvider(model_name="forge-startup-probe")
+                health = await asyncio.wait_for(probe.health(), timeout=10.0)
+                if health.healthy:
+                    logger.info(f"Inference gateway reachable at startup ({health.message})")
+                else:
+                    logger.warning(
+                        "Inference gateway NOT reachable at startup: "
+                        f"{health.message}. Role generation will fail closed "
+                        "until the gateway recovers."
+                    )
+            except Exception as probe_exc:
+                logger.warning(
+                    f"Inference gateway startup probe failed: {probe_exc}. "
+                    "Role generation will fail closed until the gateway recovers."
+                )
+    except Exception as wiring_exc:
+        logger.warning(f"Role provider wiring report failed: {wiring_exc}")
+
     # Initialize SQLite database schema and optimize PRAGMAs
     await db_manager.init_db()
     await performance_optimizer.optimize_sqlite_pragmas(db_manager)

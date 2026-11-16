@@ -59,6 +59,36 @@ class Settings(BaseSettings):
         description="Default generation temperature",
     )
 
+    # Role provider wiring (TASK-FRG-009). Specialist roles (planner, architect,
+    # developer, ...) obtain their model provider from this setting at
+    # instantiation time via app.agents.provider_wiring. The production default
+    # is the fleet Inference gateway: before this setting existed, roles fell
+    # back to settings.default_provider ("direct") and every role ran on the
+    # deterministic DirectProvider mock in production (TASK-FORGE-002 GAP 4).
+    # "direct" remains available ONLY as an explicitly configured test/dev
+    # mode; task output labels it provider: mock/direct, generation degraded.
+    role_provider: str = Field(
+        default="inference",
+        validation_alias=AliasChoices(
+            "FORGE_ROLE_PROVIDER", "ROLE_PROVIDER", "role_provider"
+        ),
+        description=(
+            "Provider for specialist agent roles: inference (fleet gateway, "
+            "production default), direct (explicit mock test/dev mode), "
+            "openai, or anthropic"
+        ),
+    )
+    role_models: dict[str, str] = Field(
+        default_factory=dict,
+        validation_alias=AliasChoices("FORGE_ROLE_MODELS", "role_models"),
+        description=(
+            "Optional per-role model overrides as a JSON object, "
+            'e.g. {"architect": "forge-architect"}. Roles without an override '
+            "use the role alias forge-<role> on the Inference gateway, which "
+            "the gateway resolves via best-suitable routing."
+        ),
+    )
+
     # API Keys (Optional)
     openai_api_key: str | None = Field(
         default=None,

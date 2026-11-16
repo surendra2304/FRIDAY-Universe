@@ -1,5 +1,12 @@
 """
 Unit tests for InferenceProvider and Agent 2 Inference mesh routing.
+
+TASK-FRG-009: completions now go through the gateway's OpenAI-compatible
+/v1/chat/completions endpoint (per-role alias in, served model + provenance
+out) and the provider fails closed — the deterministic DirectProvider
+fallback survives only as an explicit opt-in whose output is marked
+degraded. These tests stub the provider's transport seams
+(_chat_completion / _fetch_health); the FRG-009 suite covers the wiring.
 """
 
 from __future__ import annotations
@@ -9,15 +16,23 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from pydantic import BaseModel
 
-from app.integrations.ai_universe_client import AIUniverseResponse
 from app.providers.factory import get_provider
-from app.providers.inference import InferenceProvider
+from app.providers.inference import InferenceProvider, InferenceUnavailableError
 
 
 class StructuredOutputDemo(BaseModel):
     name: str
     status: str
     count: int
+
+
+def _chat_body(content: str, model: str = "openai/gpt-oss-120b") -> dict:
+    return {
+        "id": "chatcmpl-unit",
+        "model": model,
+        "choices": [{"message": {"content": content}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 9, "completion_tokens": 11, "total_tokens": 20},
+    }
 
 
 def test_inference_provider_instantiation() -> None:
@@ -43,40 +58,57 @@ def test_factory_resolves_inference_provider() -> None:
 @pytest.mark.asyncio
 async def test_inference_provider_generate_success() -> None:
     provider = InferenceProvider(enable_fallback=False)
-    mock_resp = AIUniverseResponse(
-        answer="def add(a, b): return a + b",
-        confidence=0.98,
-        run_id="run-12345",
-    )
-
-    with patch.object(provider.client, "ask", new=AsyncMock(return_value=mock_resp)):
+    with patch.object(
+        provider,
+        "_chat_completion",
+        new=AsyncMock(return_value=_chat_body("def add(a, b): return a + b")),
+    ):
         resp = await provider.generate("Write an add function")
-        assert resp.content == "def add(a, b): return a + b"
-        assert resp.model == "inference-router"
-        assert resp.raw_response.get("run_id") == "run-12345"
+    assert resp.content == "def add(a, b): return a + b"
+    # The response names the model that actually served, not the alias asked.
+    assert resp.model == "openai/gpt-oss-120b"
+    assert resp.raw_response.get("served_by_model") == "openai/gpt-oss-120b"
+    assert resp.raw_response.get("completion_id") == "chatcmpl-unit"
+
+
+@pytest.mark.asyncio
+async def test_inference_provider_generate_fails_closed() -> None:
+    provider = InferenceProvider(enable_fallback=False)
+    with patch.object(
+        provider,
+        "_chat_completion",
+        new=AsyncMock(side_effect=InferenceUnavailableError("Connection refused")),
+    ):
+        with pytest.raises(InferenceUnavailableError):
+            await provider.generate("Write an add function")
 
 
 @pytest.mark.asyncio
 async def test_inference_provider_fallback_to_direct() -> None:
-    # If Inference gateway fails and fallback is enabled, it falls back to DirectProvider
+    # If Inference gateway fails and fallback is explicitly enabled, it falls
+    # back to DirectProvider — and the response is MARKED as degraded mock
+    # output (TASK-FRG-009), never passed off as a model generation.
     provider = InferenceProvider(enable_fallback=True)
 
     with patch.object(
-        provider.client,
-        "ask",
-        new=AsyncMock(side_effect=RuntimeError("Connection refused to inference:8000")),
+        provider,
+        "_chat_completion",
+        new=AsyncMock(side_effect=InferenceUnavailableError("Connection refused")),
     ):
         resp = await provider.generate("Summarize task")
         assert "[Direct Completion" in resp.content
+        assert resp.raw_response.get("degraded_fallback") == "direct"
 
 
 @pytest.mark.asyncio
 async def test_inference_provider_structured_output_success() -> None:
     provider = InferenceProvider()
     json_data = '```json\n{"name": "Forge", "status": "active", "count": 10}\n```'
-    mock_resp = AIUniverseResponse(answer=json_data, confidence=0.99)
-
-    with patch.object(provider.client, "ask", new=AsyncMock(return_value=mock_resp)):
+    with patch.object(
+        provider,
+        "_chat_completion",
+        new=AsyncMock(return_value=_chat_body(json_data)),
+    ):
         out = await provider.structured_output(
             prompt="Generate status",
             response_model=StructuredOutputDemo,
@@ -89,9 +121,11 @@ async def test_inference_provider_structured_output_success() -> None:
 @pytest.mark.asyncio
 async def test_inference_provider_health_check() -> None:
     provider = InferenceProvider()
-    mock_resp = AIUniverseResponse(answer="pong", confidence=1.0, run_id="ping-test")
-
-    with patch.object(provider.client, "ask", new=AsyncMock(return_value=mock_resp)):
+    with patch.object(
+        provider,
+        "_fetch_health",
+        new=AsyncMock(return_value={"status": "healthy", "providers": ["groq"]}),
+    ):
         health = await provider.health()
         assert health.healthy is True
         assert health.provider_name == "InferenceProvider"
