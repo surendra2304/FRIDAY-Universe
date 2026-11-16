@@ -228,17 +228,54 @@ class SleeveRunner:
         return max(0, min(units, max_units_notional, max_units_margin))
 
     # -- ledger booking ---------------------------------------------------------
-    def _book_close(self, trade_id: str, meta: Dict) -> None:
-        """Book a detected close into the measurement fill ledger."""
+    def _book_close(self, trade_id: str, meta: Dict) -> bool:
+        """Book a detected close into the measurement fill ledger.
+
+        Returns True only when the fill row is actually in the ledger.
+        TASK-STR-FWD-007: this used to swallow every failure into an
+        ERROR log while the caller had ALREADY popped the trade from
+        own_trades — one transient broker-GET failure at close time
+        permanently and silently lost the sleeve-attributed fill. Now
+        the semantics mirror the FX-MR-v4 trader's FWD-004 close path:
+        a close that cannot be booked from broker truth yet returns
+        False, the caller keeps the trade in own_trades as the retry
+        queue, and the unrecorded_close measurement alert latches, so
+        the failure is visible and retried on the next scan instead of
+        vanishing.
+        """
+        try:
+            from measurement import fill_ledger
+        except Exception as exc:  # ledger unavailable: retry next scan
+            logger.error(f"[SLEEVE] fill ledger unavailable: {exc}")
+            return False
+
+        try:
+            if meta.get("order_id") and fill_ledger.fill_exists(
+                order_id=str(meta["order_id"])
+            ):
+                return True  # already booked (idempotent across retries)
+        except Exception as exc:
+            logger.error(
+                f"[SLEEVE] ledger idempotence check failed for trade "
+                f"{trade_id}: {exc}"
+            )
+            return False
         try:
             data = self.adapter._request(
                 "GET", f"/accounts/{self.account_id}/trades/{trade_id}"
             )
             trade = (data or {}).get("trade") or {}
+            if not trade or str(trade.get("state") or "").upper() != "CLOSED":
+                fill_ledger.raise_alert(
+                    "unrecorded_close",
+                    f"sleeve trade {trade_id} ({meta.get('symbol')}) closed "
+                    "but the broker record is unavailable; queued for retry "
+                    "(TASK-STR-FWD-007)",
+                )
+                return False
             realized = float(trade.get("realizedPL") or 0.0)
             exit_price = float(trade.get("averageClosePrice") or trade.get("price") or 0.0)
             exit_time = _rfc3339_to_unix(str(trade.get("closeTime") or ""))
-            from measurement import fill_ledger
 
             row = fill_ledger.append_fill(
                 {
@@ -263,13 +300,30 @@ class SleeveRunner:
                     "entry_order_id": str(meta.get("order_id", "")),
                 }
             )
-            if row is not None:
-                logger.info(
-                    f"[SLEEVE] booked close {meta['symbol']} trade {trade_id} "
-                    f"net=${realized:+.2f} (strategy={STRATEGY_TAG}, sleeve={SLEEVE_TAG})"
+            if row is None:
+                # append_fill already latched the unrecorded_close alert.
+                logger.error(
+                    f"[SLEEVE] close booking REJECTED for trade {trade_id}; "
+                    "kept in own_trades for retry (TASK-STR-FWD-007)"
                 )
+                return False
+            logger.info(
+                f"[SLEEVE] booked close {meta['symbol']} trade {trade_id} "
+                f"net=${realized:+.2f} (strategy={STRATEGY_TAG}, sleeve={SLEEVE_TAG})"
+            )
+            return True
         except Exception as exc:
             logger.error(f"[SLEEVE] close booking FAILED for trade {trade_id}: {exc}")
+            try:
+                fill_ledger.raise_alert(
+                    "unrecorded_close",
+                    f"sleeve close booking failed for trade {trade_id} "
+                    f"({meta.get('symbol')}): {exc}; kept in own_trades "
+                    "for retry (TASK-STR-FWD-007)",
+                )
+            except Exception:
+                pass
+            return False
 
     # -- core scan ------------------------------------------------------------
     def run_once(self) -> Dict:
@@ -305,13 +359,20 @@ class SleeveRunner:
         own: Dict[str, Dict] = state.setdefault("own_trades", {})
 
         # Close detection + booking (runs even while entries are paused).
+        # TASK-STR-FWD-007: book FIRST, pop only after the fill row is in
+        # the ledger. A failed booking keeps the trade in own_trades —
+        # own_trades IS the retry queue (mirrors the FX-MR-v4 trader's
+        # FWD-004 semantics) — so a transient failure at close time can
+        # no longer silently lose the fill.
         trades = self.adapter.open_trades()
         current_ids = {str(t["id"]) for t in trades}
         for tid in list(own):
             if tid not in current_ids:
-                meta = own.pop(tid)
-                if not self.dry_run:
-                    self._book_close(tid, meta)
+                meta = own[tid]
+                if not self.dry_run and not self._book_close(tid, meta):
+                    summary.setdefault("closes_unbooked", []).append(tid)
+                    continue
+                own.pop(tid)
                 summary.setdefault("closes", []).append(tid)
                 state.setdefault("cooldowns", {})[meta["symbol"]] = (
                     time.time() + REENTRY_COOLDOWN_S
