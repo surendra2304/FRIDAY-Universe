@@ -158,31 +158,129 @@ class MultiVenueEngine:
                     self.positions[key] = pos
                     self.position_opened_at[key] = now_ms
                     adopted += 1
-                    # Ownership tag (TASK-STR-PHASE2-001): adopted positions
-                    # predate attribution, so they are tagged UNATTRIBUTED —
-                    # visibly, not silently — for later reconciliation.
-                    try:
-                        from measurement import fill_ledger as _fl
-
-                        _fl.append_position_tag({
-                            "engine": "daemon",
-                            "venue": venue,
-                            "venue_env": getattr(adapter, "base_url", ""),
-                            "symbol": pos.symbol,
-                            "strategy": "UNATTRIBUTED",
-                            "side": pos.side,
-                            "qty": pos.quantity,
-                            "entry_price": pos.entry_price,
-                            "note": "adopted_at_startup",
-                        })
-                    except Exception:
-                        pass
+                    # Ownership tag + attribution (TASK-STR-PHASE2-001,
+                    # TASK-STR-FWD-008): restore from the tag stream when
+                    # this daemon opened the position before the restart;
+                    # tag UNATTRIBUTED only for genuinely foreign ones.
+                    self._tag_adopted_position(venue, adapter, pos)
             except Exception as e:
                 logger.warning(f"[MULTI_VENUE] Adoption failed for {venue}: {e}")
 
         if adopted:
             logger.info(f"[MULTI_VENUE] Adopted {adopted} existing position(s) into tracking")
         return adopted
+
+    def _tag_adopted_position(self, venue: str, adapter: Any, pos: Any) -> None:
+        """Attribution for one adopted position (TASK-STR-FWD-008).
+
+        The pre-fix adoption tagged EVERY adopted position UNATTRIBUTED
+        and never set position_strategy — including positions this same
+        daemon opened before the restart, whose open tags sit in the tag
+        stream. Attribution is in-memory only, so a restart forgot who
+        owned the trade: a broker-side close was then booked by NOBODY
+        (the reconciler's TASK-STR-FWD-007 guard leaves positions with
+        no daemon attribution to an "owning engine" that, for a
+        daemon-opened Binance position, does not exist) and an
+        engine-initiated close booked as UNATTRIBUTED. Live evidence
+        2026-11-16: ichimoku's first forward position (TRXUSDT SHORT,
+        opened by the daemon 16:04Z) was re-tagged UNATTRIBUTED at the
+        16:29Z restart.
+
+        Restore instead, from the tag stream (measurement/fill_ledger):
+          * newest DAEMON tag with a real strategy whose fingerprint
+            (side/qty/entry) matches the broker position -> restore
+            position_strategy / position_timeframe, and append ONE
+            corrective tag carrying the restored strategy — only when
+            the newest tag for the position does not already carry it
+            (e.g. a pre-fix UNATTRIBUTED adoption tag does);
+          * a position the fill ledger already closed -> NO tag (the
+            broker read is stale; re-tagging a closed position is what
+            gave the closed trade-470 sleeve position 31 re-tags);
+          * a position already described by a fingerprint-matching tag
+            -> NO duplicate tag;
+          * anything else (genuinely foreign — another engine sharing
+            the account) keeps the historical behaviour: one
+            UNATTRIBUTED adopted_at_startup tag, visibly, and FWD-007
+            leaves its close to the owning engine.
+        Never raises: tagging must not break adoption.
+        """
+        key = f"{venue}:{pos.symbol}"
+        try:
+            from measurement import fill_ledger as _fl
+
+            side = str(getattr(pos, "side", "") or "")
+            qty = float(getattr(pos, "quantity", 0.0) or 0.0)
+            entry = float(getattr(pos, "entry_price", 0.0) or 0.0)
+
+            own = _fl.attributed_position_tag(
+                venue, pos.symbol, side=side, qty=qty, entry_price=entry,
+                engine="daemon",
+            )
+            if own is not None:
+                strat = str(own.get("strategy") or "")
+                if _fl.position_closed_in_ledger(
+                    venue, pos.symbol, side=side, qty=qty, entry_price=entry,
+                    since_ts=float(own.get("ts") or 0.0),
+                ):
+                    logger.info(
+                        f"[MULTI_VENUE] Adoption: {key} matches daemon tag "
+                        f"{strat} but the fill ledger already closed it; "
+                        "tracked without a new tag"
+                    )
+                    return
+                self.position_strategy[key] = strat
+                timeframe = str(own.get("timeframe") or "")
+                if timeframe:
+                    self.position_timeframe[key] = timeframe
+                latest = _fl.latest_position_tag(
+                    venue, pos.symbol, side=side, qty=qty, entry_price=entry
+                )
+                if latest is None or str(latest.get("strategy") or "") != strat:
+                    _fl.append_position_tag({
+                        "engine": "daemon",
+                        "venue": venue,
+                        "venue_env": getattr(adapter, "base_url", ""),
+                        "symbol": pos.symbol,
+                        "strategy": strat,
+                        "timeframe": timeframe,
+                        "side": pos.side,
+                        "qty": pos.quantity,
+                        "entry_price": pos.entry_price,
+                        "order_id": str(own.get("order_id") or ""),
+                        "note": "adopted_at_startup_attribution_restored",
+                    })
+                logger.info(
+                    f"[MULTI_VENUE] Adoption restored attribution {key} -> {strat}"
+                )
+                return
+
+            if _fl.position_closed_in_ledger(
+                venue, pos.symbol, side=side, qty=qty, entry_price=entry
+            ):
+                logger.info(
+                    f"[MULTI_VENUE] Adoption: {key} already closed in the "
+                    "fill ledger; tracked without a new tag"
+                )
+                return
+
+            if _fl.latest_position_tag(
+                venue, pos.symbol, side=side, qty=qty, entry_price=entry
+            ) is not None:
+                return  # already described in the tag stream; no duplicate
+
+            _fl.append_position_tag({
+                "engine": "daemon",
+                "venue": venue,
+                "venue_env": getattr(adapter, "base_url", ""),
+                "symbol": pos.symbol,
+                "strategy": "UNATTRIBUTED",
+                "side": pos.side,
+                "qty": pos.quantity,
+                "entry_price": pos.entry_price,
+                "note": "adopted_at_startup",
+            })
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------------
     # Balance & Equity

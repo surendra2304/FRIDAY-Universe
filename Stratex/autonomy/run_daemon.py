@@ -983,17 +983,44 @@ class StratexTradingEngine:
                             "untracked_position",
                             f"{k} open at broker but not tracked by the daemon",
                         )
-                        _fl.append_position_tag({
-                            "engine": "daemon",
-                            "venue": venue,
-                            "venue_env": getattr(adapter, "base_url", ""),
-                            "symbol": p.symbol,
-                            "strategy": "UNATTRIBUTED",
-                            "side": p.side,
-                            "qty": p.quantity,
-                            "entry_price": p.entry_price,
-                            "note": "untracked_detected",
-                        })
+                        # TASK-STR-FWD-008: tag only the FIRST sighting.
+                        # The sweep used to append an UNATTRIBUTED tag on
+                        # every pass for the same position — the sleeve's
+                        # USDJPY position collected dozens, including
+                        # re-tags after its close was already booked —
+                        # and it stamped UNATTRIBUTED over positions the
+                        # tag stream already attributes. Skip the write
+                        # when a fingerprint-matching tag already
+                        # describes the position or the fill ledger
+                        # already closed it. The alert above still fires:
+                        # detection is unchanged, only the stream spam
+                        # stops.
+                        try:
+                            _side = str(getattr(p, "side", "") or "")
+                            _qty = float(getattr(p, "quantity", 0.0) or 0.0)
+                            _entry = float(getattr(p, "entry_price", 0.0) or 0.0)
+                            _described = _fl.latest_position_tag(
+                                venue, p.symbol, side=_side, qty=_qty,
+                                entry_price=_entry,
+                            ) is not None
+                            _closed = _fl.position_closed_in_ledger(
+                                venue, p.symbol, side=_side, qty=_qty,
+                                entry_price=_entry,
+                            )
+                        except Exception:
+                            _described, _closed = False, False
+                        if not _described and not _closed:
+                            _fl.append_position_tag({
+                                "engine": "daemon",
+                                "venue": venue,
+                                "venue_env": getattr(adapter, "base_url", ""),
+                                "symbol": p.symbol,
+                                "strategy": "UNATTRIBUTED",
+                                "side": p.side,
+                                "qty": p.quantity,
+                                "entry_price": p.entry_price,
+                                "note": "untracked_detected",
+                            })
                 if sweep_complete and untracked_found == 0:
                     # The condition this sweep raises on is gone; clear
                     # the latch. Before this, nothing ever called

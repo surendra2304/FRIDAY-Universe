@@ -562,6 +562,7 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
         "minimum_required_edge": 0.0005,
         "validated_assets": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "NZDUSD", "EURJPY", "EURGBP"],
         "forward_protocol": True,
+        "forward_venues": ["oanda_practice"],
         "reason": "OANDA venue activation (TASK-STR-FWD-004; owner directive 2026-11-15: Stratex must take trades on each and every venue — OANDA unpaused under measurement). Evidence state, stated plainly: backtest-validated in the oanda_demo programme on real OANDA practice data (2026-11-13 — the strategy class that survived when every trend variant measured net-negative on the FX basket), but it has NO forward record: 0 closed trades. The OANDA engine's 19-trade / -$167.00 lifetime record belongs to SMT-v2 (deleted by TASK-STR-CLEANUP-002), not to this strategy, and must never be attributed to it. The phase-3 forward window is therefore the arbiter: 1% per-trade risk cap, the engine's -3% day-start-NAV daily breaker, max 4 open trades, and the kill criteria (expectancy<0 or PF<1.0 after >=50 closed trades, or strategy drawdown >5% of equity) auto-pause via measurement/forward_guard.py, evaluated by the OANDA engine on its own scan cadence. Entries additionally require this registry entry: the OANDA engine fails closed for any unregistered or non-VALIDATED configuration. PRACTICE account only; live trading prohibited.",
     },
     "sleeve_shock_breakout": {
