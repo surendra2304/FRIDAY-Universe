@@ -42,6 +42,11 @@ from friday.tools.builtin.escrcpy_control import (
     EscrcpyLaunchPlanTool,
 )
 from friday.tools.builtin.lead_gen_tools import LeadGenerateTool
+from friday.tools.builtin.meeting_followup_tools import (
+    MeetingFollowUpCreateTool,
+    MeetingFollowUpDecideTool,
+    MeetingFollowUpListTool,
+)
 from friday.tools.builtin.browser_tool import BrowserAutomationTool
 from friday.tools.builtin.fleet_dispatch import FleetDispatchTool
 from friday.tools.builtin.fleet_status import FleetStatusTool
@@ -211,6 +216,9 @@ __all__ = [
     "EscrcpyAutomationTool",
     "EscrcpyLaunchPlanTool",
     "LeadGenerateTool",
+    "MeetingFollowUpCreateTool",
+    "MeetingFollowUpDecideTool",
+    "MeetingFollowUpListTool",
     "SwipeScreenTool",
     "TapScreenTool",
     "BrowserAutomationTool",
