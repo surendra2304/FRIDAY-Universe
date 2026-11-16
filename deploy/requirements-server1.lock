@@ -1,0 +1,221 @@
+# Server 1 (10.0.0.121) — per-server union lock, CPython 3.12.
+# Agents: FRIDAY, Inference, Memora, Stratex, Futuris, IntelX, Forge
+# (+ FRIDAY-Voice worker, Stratex-Daemon — same venv).
+#
+# Resolved from the agents' manifests (floors) at origin/main 9def8a7a,
+# with two documented input adjustments (see UNION_LOCKS_RESOLUTION.md):
+#   - Stratex manifest taken from PR #835 (google-genai >=2.0.0,<4.0.0).
+#   - VyralX is Server 2; not in this union.
+# Proof (staging, CPython 3.12.3, sources 9def8a7a): fresh-venv install,
+# pip check CLEAN, REL-050 import gate 7/7 PASS with 0 stubs, headline
+# probes 20/20, friday.voice.livekit_worker imports end-to-end.
+# A single-shot resolver pass over all manifests reproduces this set
+# exactly (order-independent). Full evidence: UNION_LOCKS_RESOLUTION.md.
+#
+# Window install (PLAN.md §5): python3.12 -m venv /opt/friday_universe/venv312
+#   venv312/bin/pip install -r deploy/requirements-server1.lock
+#   venv312/bin/pip install -e FRIDAY --no-deps
+# Regenerate on the host interpreter at build time and diff before any
+# unit flip; any delta re-runs the import gate (PLAN.md §5 step 2/3).
+# NOTE: xgboost pulls nvidia-nccl-cu13 (~200MB GPU library, never loaded
+# on this CPU fleet). It is kept so this lock is byte-identical to the
+# gate-proven set; dropping that one line is a coordinator decision
+# (re-run the xgboost probe + Stratex gate afterwards).
+adagio==0.2.6
+aiofiles==25.1.0
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.5
+aiohttp-fast-zlib==0.3.0
+aiosignal==1.4.0
+alembic==1.20.1
+annotated-doc==0.0.6
+annotated-types==0.8.0
+anthropic==1.17.0
+anyio==4.16.0
+APScheduler==3.11.3
+attrs==26.1.0
+av==19.0.2
+beautifulsoup4==4.15.0
+blinker==1.9.0
+ccxt==4.5.92
+certifi==2026.10.23
+cffi==2.0.0
+charset-normalizer==3.4.7
+click==8.5.1
+cloudpickle==3.1.2
+coincurve==21.0.0
+colorama==0.4.6
+colorlog==6.12.0
+coreforecast==0.0.20
+cryptography==50.0.2
+dateparser==1.5.0
+distro==1.9.0
+docstring_parser==0.18.0
+docutils==0.23
+duckduckgo_search==8.1.1
+edge-tts==7.3.1
+eval_type_backport==0.4.0
+fastapi==0.163.1
+filelock==4.2.10
+Flask==3.1.3
+flask-cors==6.0.5
+formulaic==1.2.2
+frozenlist==1.8.0
+fsspec==2026.9.0
+fugue==0.9.9
+google-api-core==2.44.0
+google-auth==2.62.2
+google-cloud-speech==2.41.0
+google-cloud-texttospeech==2.38.0
+google-genai==3.3.0
+googleapis-common-protos==1.76.0
+greenlet==3.5.6
+grpcio==1.85.1
+grpcio-status==1.85.1
+gunicorn==27.0.1
+h11==0.16.0
+h2==4.4.1
+hpack==4.2.0
+httpcore==1.0.9
+httpcore2==2.16.2
+httptools==0.9.0
+httpx==0.28.1
+httpx2==2.16.2
+hyperframe==6.1.0
+icalendar==7.3.0
+id==1.6.1
+idna==3.18
+iniconfig==2.3.1
+interface_meta==2.0.1
+itsdangerous==2.2.0
+jaraco.classes==3.4.0
+jaraco.context==6.1.2
+jaraco.functools==4.6.0
+jeepney==0.9.0
+Jinja2==3.1.6
+jiter==0.19.0
+joblib==1.6.0
+json_repair==0.63.5
+keyring==25.7.0
+livekit==1.2.1
+livekit-agents==1.8.12
+livekit-api==1.2.3
+livekit-blingfire==1.2.0
+livekit-local-inference==0.3.1
+livekit-plugins-google==1.8.12
+livekit-plugins-groq==1.8.12
+livekit-plugins-openai==1.8.12
+livekit-protocol==1.1.32
+lxml==6.1.3
+Mako==1.4.3
+markdown-it-py==4.3.0
+MarkupSafe==3.0.4
+mdurl==0.1.2
+more-itertools==11.2.1
+multidict==6.9.1
+narwhals==2.28.0
+nest-asyncio==1.6.0
+nh3==0.3.7
+numpy==2.5.5
+nvidia-nccl-cu13==2.32.6
+openai==3.51.0
+opentelemetry-api==1.45.2
+opentelemetry-exporter-http-transport==0.66b2
+opentelemetry-exporter-otlp==1.45.2
+opentelemetry-exporter-otlp-common==0.66b2
+opentelemetry-exporter-otlp-proto-common==1.45.2
+opentelemetry-exporter-otlp-proto-grpc==1.45.2
+opentelemetry-exporter-otlp-proto-http==1.45.2
+opentelemetry-proto==1.45.2
+opentelemetry-sdk==1.45.2
+opentelemetry-semantic-conventions==0.66b2
+optuna==5.1.0
+oracledb==26.1.0
+orjson==3.13.0
+packaging==26.3
+pandas==2.3.3
+patsy==1.0.3
+pillow==13.0.0
+pluggy==1.7.0
+portalocker==4.4.2
+primp==2.0.1
+progress==1.6.1
+prometheus_client==0.26.0
+propcache==0.5.2
+proto-plus==1.29.0
+protobuf==7.36.2
+psutil==7.2.2
+pyarrow==26.0.1
+pyasn1==0.6.5
+pyasn1_modules==0.4.2
+pycparser==3.0
+pycryptodome==4.5.0
+pydantic==2.14.3
+pydantic-settings==2.16.3
+pydantic_core==2.50.4
+PyGithub==2.10.0
+Pygments==2.21.0
+PyJWT==2.15.1
+PyNaCl==1.6.2
+pypdf==7.1.0
+pytesseract==0.3.13
+pytest==9.2.0
+pytest-asyncio==1.5.0
+pytest-mock==3.17.0
+python-dateutil==2.9.0.post0
+python-docx==1.2.0
+python-dotenv==1.2.4
+python-multipart==0.0.34
+python_binance==1.0.37
+pytz==2026.6
+PyYAML==6.0.3
+qdrant-client==1.20.0
+readme_renderer==46.0
+recurring-ical-events==3.8.2
+redis==6.4.0
+regex==2026.11.15
+requests==2.34.2
+requests-toolbelt==1.0.0
+rfc3986==2.0.0
+rich==15.0.0
+ruff==0.14.14
+scikit-learn==1.9.1
+scipy==1.18.1
+SecretStorage==3.5.0
+shellingham==1.5.4
+simplefix==1.0.17
+six==1.17.0
+sniffio==1.3.1
+sounddevice==0.5.6
+soupsieve==4.1.1
+SQLAlchemy==2.1.8
+starlette==1.10.0
+static_ffmpeg==3.0
+statsforecast==2.1.1
+statsmodels==0.15.0
+structlog==26.1.0
+tabulate==0.10.0
+tenacity==9.1.4
+threadpoolctl==3.8.0
+tqdm==4.70.1
+triad==1.0.4
+truststore==0.10.5
+twine==7.0.0
+typer==0.29.1
+types-protobuf==7.35.1.20260906
+typing-inspection==0.4.5
+typing_extensions==4.16.0
+tzdata==2026.6
+tzlocal==5.4.5
+urllib3==2.8.0
+utilsforecast==0.2.17
+uvicorn==0.54.0
+uvloop==0.22.1
+watchfiles==1.3.0
+websockets==17.4
+Werkzeug==3.1.9
+wrapt==2.5.2
+x-wr-timezone==2.0.1
+xgboost==3.4.1
+yarl==1.25.1
+zlib-ng==1.0.0
