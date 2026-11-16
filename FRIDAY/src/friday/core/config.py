@@ -127,7 +127,9 @@ class Settings(BaseSettings):
             'FRIDAY_FUTURIS_URL': ['FUTURIS_URL', 'futuris_url', 'FUTURIS_BASE_URL', 'futuris_base_url'],
             'FRIDAY_FUTURIS_API_KEY': ['FUTURIS_API_KEY', 'futuris_api_key'],
             'FRIDAY_MEMORA_URL': ['MEMORA_URL', 'memora_url', 'MEMORA_BASE_URL', 'memora_base_url'],
-            'FRIDAY_MEMORA_API_KEY': ['MEMORA_API_KEY', 'memora_api_key'],
+            # TASK-MEM-005-R1: MEMORA_API_KEY is no longer an alias — FRIDAY's
+            # Memora credential is its own dedicated key only.
+            'FRIDAY_MEMORA_API_KEY': ['memora_api_key'],
             'FRIDAY_SENTINEL_URL': ['SENTINEL_URL', 'sentinel_url', 'SENTINEL_BASE_URL', 'sentinel_base_url', 'FRIDAY_SENTINEL_BASE_URL'],
             'FRIDAY_SENTINEL_API_KEY': ['SENTINEL_API_KEY', 'sentinel_api_key'],
             'FRIDAY_VYRALX_URL': ['VYRALX_URL', 'vyralx_url'],
