@@ -9764,6 +9764,36 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig-friday-local-business
     evidence: "PR #777 (IG FRIDAY Cluster C), supervisor-CONFIRMED: workflows/local_business.py (stdlib-only; missing data -> insufficient_data, never guessed; the appointment-agent prompt builder refuses without a services text and never invents services/prices) plus LocalBusinessTool registered in the production registry. MERGED via union-rebase replacement PR #785 -> merge 5e7338d6f5d6806df77108145c54d5a99a52b3fd (2026-11-16, Merge Runner C; #777 closed as superseded: tools.py + FRD-002 pin union with #772, registry total 97; four non-shared files blob-identical). This board entry was created by Merge Runner C: the implementing PR carried no board entry."
     next_action: "Fleet CD deploy -> production probe: local_business answers through the live agent's production registry."
+  - id: TASK-PRO-002
+    title: "IntelX standing-watch outbox drainer (PRO-001 extension): tail IntelX's watch outbox and deliver alert envelopes via the real NotificationManager path"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-pro-002-intelx-watch-drainer
+    pr: 805
+    contributors: []
+    priority: P1
+    created_at: "2026-11-17T00:03:59+05:30"
+    updated_at: "2026-11-17T00:03:59+05:30"
+    files:
+      - "FRIDAY/src/friday/proactive/intelx_watch.py"
+      - "FRIDAY/src/friday/api/server.py"
+      - "FRIDAY/tests/test_pro002_intelx_watch.py"
+      - "docs/collaboration/WORK_BOARD.yaml"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6925076139"
+    defect: "IntelX standing watches (TASK-INT-007, PR #600, deployed) append alert envelopes (schema intelx.watch_alert/1) to ./data/watches/outbox.jsonl under the delivery contract in IntelX/docs/STANDING_WATCHES.md §4, but nothing reads the outbox — PRO-001 (PR #553) only watches Stratex state files. The moment ENABLE_STANDING_WATCHES is flipped, fired watch alerts would accumulate undelivered: the last mile of the INT-007 design was never built."
+    acceptance:
+      - "A drainer in FRIDAY's PRO-001 watcher family (FRIDAY/src/friday/proactive/intelx_watch.py + one lifespan loop in api/server.py beside _stratex_watch_loop) tails the IntelX outbox (INTELX_WATCH_OUTBOX_PATH override, else the sibling IntelX/data/watches/outbox.jsonl) and posts each envelope through observability.notifications.NotificationManager — never through the in-memory router/bridge stubs."
+      - "Dedupe: the envelope's dedupe_key is delivered at most once, ever — delivered keys persist in the drainer state (persisted after every consumed envelope), so restarts, offset resets and a rebuilt/swapped outbox can never re-deliver; only complete (newline-terminated) lines are consumed, so a writer caught mid-append loses nothing."
+      - "Quiet hours: the envelope's quiet_hours_exempt flag is the policy input (always false from IntelX) — 23:00-07:00 IST holds the alert; held alerts survive restarts and flush as ONE digest at/after 07:00; a failed post is held and retried via the same flush instead of being lost."
+      - "Robustness: silent first-cycle baseline (pre-existing outbox content recorded as seen, never announced); malformed lines (bad JSON, non-object, wrong schema, missing dedupe_key) skipped + logged + counted, never crash the cycle and never wedge the tail; a missing outbox is tolerated and reported, not an error."
+      - "Kill switch FRIDAY_PROACTIVE_INTELX_WATCH env flag, code default OFF (fail-safe, like PRO-001). This task does NOT flip ENABLE_STANDING_WATCHES and does not enable the drainer in production — enablement is a separate coordinator step after this lands."
+      - "Proof: pytest suite FRIDAY/tests/test_pro002_intelx_watch.py (11 tests: delivery, silent baseline, dedupe across restart + duplicate lines, rebuilt-outbox guard, quiet-hours hold/restart/digest, exempt-flag immediate delivery, malformed tolerance, missing-outbox tolerance, partial-line safety, kill switch, failed-post retry) green in CI and in a server-side scratch run on the fleet venv (Python 3.10)."
+    evidence:
+      - "CLAIM: issue #35 comment 6925076139. Design contract read on main 0206c62a: IntelX/docs/STANDING_WATCHES.md §4 (outbox path + INTELX_WATCH_OUTBOX_PATH, envelope schema intelx.watch_alert/1, dedupe_key intelx.watch:<watch_id>:<fp16> stable across restarts, quiet_hours_exempt always false -> PRO-001 quiet hours 23:00-07:00 IST enforce). Producer verified in IntelX/intelx/watches/engine.py (Outbox.append + build_envelope fields match the drainer's expectations exactly)."
+      - "IMPLEMENTATION (PR #805): new FRIDAY/src/friday/proactive/intelx_watch.py (offset tail over complete lines; persisted delivered_keys + held queue in an atomically-replaced JSON state; family alert log; run_cycle never raises); api/server.py +56/-2 (interval constant, intelx_watch_state, _intelx_watch_loop, lifespan task + shutdown list). Branch blobs verified byte-identical to the reviewed local files (6f6c7bf0af / 0c5c5cd7d6 / 421f0a87ab at first commit 0bceb993)."
+      - "TESTS: local pytest in the coordinator sandbox is blocked by the known sandbox write-denial (Python file writes EPERM, tempfile unusable — recorded for prior crews); syntax AST-verified locally. Operative gates: PR #805 CI + a server-side scratch run of the shipped suite on the fleet venv — results posted on issue #35 at completion."
+    blockers: []
+    next_action: "Coordinator: review + merge PR #805 (Fleet CD then deploys; the drainer stays inert — FRIDAY_PROACTIVE_INTELX_WATCH default OFF and ENABLE_STANDING_WATCHES untouched). Enablement is a separate later step, in order: (1) set FRIDAY_PROACTIVE_INTELX_WATCH=on in FRIDAY's production env on Server 1 and restart FRIDAY.service, verify the drain cycle in the journal against an empty/absent outbox; (2) only then flip ENABLE_STANDING_WATCHES on IntelX and watch the first real envelope land as a notification; (3) flip this entry to VERIFIED via a fresh-main board PR with that evidence."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
