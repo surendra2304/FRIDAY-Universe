@@ -471,7 +471,7 @@ class SearchService:
                             # score, confidence, recency, id.
                             return (
                                 -round(item.final_score, 4),
-                                -round(item.record.confidence_score or 0.5, 4),
+                                -round(item.record.confidence, 4),
                                 -(item.record.created_at.timestamp() if item.record.created_at else 0.0),
                                 item.record.id,
                             )
