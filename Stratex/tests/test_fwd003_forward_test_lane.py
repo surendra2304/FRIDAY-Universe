@@ -449,6 +449,13 @@ class _FakeEngine:
     def get_risk_summary(self):
         return {"daily_loss_limit_hit": False, "total_equity": 100_000.0}
 
+    def get_venue_equity(self, venue):
+        # TASK-STR-FWD-006: the daemon sizes on VENUE equity through
+        # this method (MultiVenueEngine.get_venue_equity) and fails
+        # closed when it is unavailable; the fake's venue holds the
+        # full test equity.
+        return 100_000.0
+
     def get_candles(self, venue, symbol, tf, limit):
         return self._candles
 
@@ -556,6 +563,7 @@ def _scan_daemon(fake_engine):
     d.min_confidence = 0.55
     d.min_rr = 1.5
     d.risk_per_trade = 0.01
+    d.max_heat_pct = 0.02  # mirrors __init__ (STRATEX_MAX_HEAT_PCT_PER_STRATEGY default; TASK-STR-FWD-006)
     d.max_position_pct = 0.10
     d.min_stop_pct = 0.005
     d.max_stop_pct = 0.030

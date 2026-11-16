@@ -12,7 +12,10 @@ What one scan (--once) does:
      closes, apply per-instrument cooldowns.
   4. Scan the watchlist with the configured strategy engine
      (STRATEX_OANDA_STRATEGY; default FX-MR-v4 mean reversion).
-  5. Size each entry to 1% account risk, capped by notional (10% equity)
+  5. Size each entry to 0.1% account risk (venue basis — this account
+     IS the venue account), under a 2% aggregate heat cap across this
+     engine's own open trades and the 25%-of-equity notional cap
+     (TASK-STR-FWD-006 decided package; was 1% per trade, no heat cap)
      and free margin, then fire a MARKET order with native SL/TP attached.
   6. Log to data/oanda_demo_trades.csv and notify the owner on Telegram.
 
@@ -78,7 +81,8 @@ logger = get_logger("oanda_demo_trader")
 WATCHLIST = [
     "EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "NZDUSD", "EURJPY", "EURGBP",
 ]
-RISK_PER_TRADE_PCT = 0.01      # 1% of equity risked per trade
+RISK_PER_TRADE_PCT = 0.001     # 0.1% of equity risked per trade (TASK-STR-FWD-006; was 1%)
+MAX_HEAT_PCT = 0.02            # aggregate open-risk heat cap: 2% of equity (TASK-STR-FWD-006)
 MAX_OPEN_TRADES = 4            # concurrent positions across the watchlist
 MAX_NOTIONAL_PCT = 0.25        # notional cap: 25% of equity per position
 MAX_LEVERAGE = 50.0            # OANDA demo margin rate 2% on majors
@@ -290,14 +294,24 @@ class OandaDemoTrader:
         pricing: Dict[str, Dict[str, float]],
         equity: float,
         free_margin: float,
+        risk_budget_usd: Optional[float] = None,
     ) -> int:
-        """Units so that SL hit = RISK_PER_TRADE_PCT of equity (capped)."""
+        """Units so that SL hit = RISK_PER_TRADE_PCT of equity (capped).
+
+        ``risk_budget_usd`` (TASK-STR-FWD-006 heat cap) replaces the
+        plain per-trade risk budget when given: the caller passes the
+        REMAINING aggregate heat budget for this engine's own book.
+        """
         quote = symbol[3:]
         conv = self._quote_to_usd(quote, pricing)
         sl_dist = abs(signal.entry - signal.stop)
         if conv <= 0 or sl_dist <= 0:
             return 0
         risk_usd = equity * RISK_PER_TRADE_PCT
+        if risk_budget_usd is not None:
+            risk_usd = min(risk_usd, float(risk_budget_usd))
+            if risk_usd <= 0:
+                return 0
         units = int(risk_usd / (sl_dist * conv))
         mid = pricing.get(symbol, {}).get("mid", 0) or signal.entry
         if mid <= 0:
@@ -414,6 +428,28 @@ class OandaDemoTrader:
         now = time.time()
         cooldowns = state.get("cooldowns", {})
 
+        # TASK-STR-FWD-006 heat cap: aggregate stop-risk over THIS
+        # engine's own open trades (ownership-scoped, like trade
+        # management — the sleeve leg on the same account carries its
+        # own heat budget). Measured from the broker's live stops.
+        own_ids_now = {str(x) for x in state.get("own_trade_ids", [])}
+        running_heat = 0.0
+        for t in trades:
+            if str(t["id"]) not in own_ids_now:
+                continue
+            stop = float(t.get("stop_loss", 0) or 0)
+            price = float(t.get("price", 0) or 0)
+            if stop > 0 and price > 0:
+                conv_t = self._quote_to_usd(t["instrument"][3:], pricing)
+                if conv_t > 0:
+                    running_heat += (
+                        abs(float(t.get("units", 0) or 0))
+                        * abs(price - stop)
+                        * conv_t
+                    )
+        summary["open_risk_usd"] = round(running_heat, 2)
+        summary["heat_cap_usd"] = round(equity * MAX_HEAT_PCT, 2)
+
         for symbol in WATCHLIST:
             if symbol in open_instruments:
                 continue
@@ -433,7 +469,14 @@ class OandaDemoTrader:
             if not signal.side:
                 continue
 
-            units = self._position_units(symbol, signal, pricing, equity, free_margin)
+            remaining_heat = equity * MAX_HEAT_PCT - running_heat
+            if remaining_heat <= 0:
+                summary.setdefault("heat_capped", []).append(symbol)
+                break
+            units = self._position_units(
+                symbol, signal, pricing, equity, free_margin,
+                risk_budget_usd=remaining_heat,
+            )
             if units < 1:
                 continue
 
@@ -527,8 +570,13 @@ class OandaDemoTrader:
             self._telegram(
                 f"Stratex OANDA demo: {side_word} {units} {symbol} @ {result.price}\n"
                 f"SL {signal.stop:.5f} | {exit_txt}\n"
-                f"Risk 1% of ${equity:,.0f} equity"
+                f"Risk 0.1% of ${equity:,.0f} equity"
             )
+            conv_new = self._quote_to_usd(symbol[3:], pricing)
+            if conv_new > 0:
+                running_heat += (
+                    units * abs(signal.entry - signal.stop) * conv_new
+                )
             open_instruments.add(symbol)
             trades = self.adapter.open_trades()  # refresh count
             if len(trades) >= MAX_OPEN_TRADES:

@@ -16,7 +16,10 @@ FX-MR-v4 engine's pause (STRATEX_OANDA_ENTRIES_PAUSED / its data dir).
 
 Safety rails:
   * Practice account only (the adapter enforces practice-only itself).
-  * 1% of equity risk per trade; 25% notional cap; free-margin gate.
+  * 0.1% of account NAV risk per trade (venue basis — this runner's
+    account IS the venue account) with a 2% aggregate heat cap across
+    the leg's open trades (TASK-STR-FWD-006 decided package); 25%
+    notional cap; free-margin gate.
   * Shared-account daily breaker: account NAV down 3% on the day ->
     no new entries (same basis as the other forward entrants).
   * Sleeve pause: STRATEX_SLEEVE_ENTRIES_PAUSED env or the
@@ -75,7 +78,8 @@ STRATEGY_TAG = "strategy_sleeve_tsmom2_dual"
 SLEEVE_TAG = "best_per_class"
 TIMEFRAME = "1d"
 HISTORY_BARS = 400
-RISK_PER_TRADE_PCT = 0.01      # phase-3 per-trade risk cap
+RISK_PER_TRADE_PCT = 0.001     # phase-3 per-trade risk: 0.1% of NAV (TASK-STR-FWD-006; was 1%)
+MAX_HEAT_PCT = 0.02            # aggregate open-risk heat cap: 2% of NAV (TASK-STR-FWD-006)
 MAX_NOTIONAL_PCT = 0.25        # per-position notional cap (as trader)
 DAILY_LOSS_LIMIT_PCT = 0.03    # shared-account daily breaker
 REENTRY_COOLDOWN_S = 3600      # per-instrument cooldown after a close
@@ -197,7 +201,8 @@ class SleeveRunner:
     def _position_units(self, symbol: str, sl_dist: float,
                         pricing: Dict[str, Dict[str, float]],
                         equity: float, free_margin: float,
-                        margin_rate: float) -> int:
+                        margin_rate: float,
+                        risk_budget_usd: Optional[float] = None) -> int:
         quote = symbol[3:]
         conv = self._quote_to_usd(quote, pricing)
         mid = pricing.get(symbol, {}).get("mid", 0)
@@ -210,6 +215,12 @@ class SleeveRunner:
         # neuter 8 of the 28 judged instruments.)
         notional_per_unit = mid * conv
         risk_usd = equity * RISK_PER_TRADE_PCT
+        if risk_budget_usd is not None:
+            # TASK-STR-FWD-006 heat cap: the caller passes the REMAINING
+            # aggregate heat budget; new size may not exceed it.
+            risk_usd = min(risk_usd, float(risk_budget_usd))
+            if risk_usd <= 0:
+                return 0
         units = int(risk_usd / (sl_dist * conv))
         max_units_notional = int((equity * MAX_NOTIONAL_PCT) / notional_per_unit)
         lev = (1.0 / margin_rate) if margin_rate and margin_rate > 0 else 20.0
@@ -308,6 +319,19 @@ class SleeveRunner:
         summary["own_open_trades"] = len(own)
         summary["account_open_trades"] = len(trades)
 
+        # TASK-STR-FWD-006: publish this leg's mark-to-market so the
+        # daemon's sleeve guard judges the sleeve on closed fills PLUS
+        # unrealized PnL, both components combined (venue basis).
+        state["unrealized_pnl_usd"] = round(
+            sum(
+                float(t.get("unrealized_pl", 0) or 0)
+                for t in trades
+                if str(t["id"]) in own
+            ),
+            4,
+        )
+        state["unrealized_ts"] = time.time()
+
         if self._paused():
             summary["entries_paused"] = True
             logger.info("[SLEEVE] entries paused (sleeve pause) — closes booked only")
@@ -331,6 +355,36 @@ class SleeveRunner:
             summary["error"] = "pricing unavailable"
             self._save_state(state)
             return summary
+
+        # TASK-STR-FWD-006 heat cap: aggregate stop-risk of this leg's
+        # open trades. Entries placed by this runner carry their
+        # committed risk_usd; legacy entries (placed before FWD-006)
+        # are measured from the broker's live stop distance.
+        trades_by_id = {str(t["id"]): t for t in trades}
+
+        def _open_risk_usd() -> float:
+            total = 0.0
+            for tid, meta in own.items():
+                if meta.get("risk_usd") is not None:
+                    total += float(meta["risk_usd"] or 0)
+                    continue
+                t = trades_by_id.get(tid)
+                if not t:
+                    continue
+                stop = float(t.get("stop_loss", 0) or 0)
+                price = float(t.get("price", 0) or 0)
+                u = abs(float(t.get("units", 0) or 0))
+                sym = str(t.get("instrument", ""))
+                conv = (
+                    self._quote_to_usd(sym[3:], pricing) if len(sym) > 3 else 0.0
+                )
+                if stop > 0 and price > 0 and conv > 0:
+                    total += u * abs(price - stop) * conv
+            return total
+
+        running_heat = _open_risk_usd()
+        summary["open_risk_usd"] = round(running_heat, 2)
+        summary["heat_cap_usd"] = round(equity * MAX_HEAT_PCT, 2)
 
         now = time.time()
         cooldowns = state.get("cooldowns", {})
@@ -357,8 +411,13 @@ class SleeveRunner:
             else:
                 stop = mid + sig["sl_dist"]
                 take = mid - sig["tp_dist"]
+            remaining_heat = equity * MAX_HEAT_PCT - running_heat
+            if remaining_heat <= 0:
+                summary.setdefault("heat_capped", []).append(symbol)
+                continue
             units = self._position_units(
-                symbol, sig["sl_dist"], pricing, equity, free_margin, margin_rate
+                symbol, sig["sl_dist"], pricing, equity, free_margin,
+                margin_rate, risk_budget_usd=remaining_heat,
             )
             if units < 1:
                 continue
@@ -391,6 +450,11 @@ class SleeveRunner:
                 continue
             trade_id = str(getattr(result, "trade_id", "") or "")
             if trade_id:
+                committed = (
+                    units
+                    * sig["sl_dist"]
+                    * self._quote_to_usd(symbol[3:], pricing)
+                )
                 own[trade_id] = {
                     "symbol": symbol,
                     "side": sig["side"],
@@ -398,7 +462,10 @@ class SleeveRunner:
                     "entry_price": float(getattr(result, "price", mid) or mid),
                     "entry_time": time.time(),
                     "order_id": str(getattr(result, "order_id", "") or ""),
+                    # Committed stop-risk (TASK-STR-FWD-006 heat cap).
+                    "risk_usd": round(committed, 4),
                 }
+                running_heat += committed
             occupied.add(symbol)
             if len(own) >= MAX_OPEN_TRADES:
                 break
