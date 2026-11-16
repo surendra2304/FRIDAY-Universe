@@ -40,12 +40,14 @@ from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.custom_endpoints import custom_catalog_entries, custom_provider_for_model
 from app.providers.errors import TimeoutError as ProviderTimeoutError
 from app.providers.gateway import model_gateway
+from app.providers.model_servability import model_servability_tracker
 from app.providers.quota_ledger import quota_ledger
 from app.providers.unified_manager import (
     UnifiedExecutionRequest,
     UnifiedExecutionResponse,
     unified_provider_manager,
 )
+
 from app.schemas.v1_models import (
     DebateRequest,
     InferenceAskRequest,
@@ -1179,12 +1181,17 @@ def _ranked_suitable_models(
     and a half-open probe may still succeed. Selection never returns a
     model outside the verified catalogue.
 
-    TASK-IG-INF-01: when ``required_tokens`` is positive, candidates
-    whose declared context window cannot hold the request are dropped
-    next. If NO candidate can hold it, the pool is
-    returned ordered by window size, largest first — the caller gets
-    the best possible holder, and _select_best_suitable discloses the
-    overflow instead of letting the provider truncate in silence.
+    TASK-REL-049 adds the model-level counterpart of the provider
+    filter: servability quarantine (see
+    app.providers.model_servability) drops a model that has stopped
+    serving even while its provider stays healthy, under the same
+    never-empty fallback discipline. TASK-IG-INF-01's context-window
+    fit filter runs last: when ``required_tokens`` is positive,
+    candidates whose declared context window cannot hold the request
+    are dropped; if NO candidate can hold it, the pool is returned
+    ordered by window size, largest first — the caller gets the best
+    possible holder, and _select_best_suitable discloses the overflow
+    instead of letting the provider truncate in silence.
     """
     ranked = MODEL_SUITABILITY.get(task_type) or MODEL_SUITABILITY["chat"]
     excluded = {(item or "").lower() for item in (exclude or set())}
@@ -1199,6 +1206,26 @@ def _ranked_suitable_models(
         if _provider_available(_CATALOG_PROVIDERS[model_id.lower()])
     ]
     pool = healthy or pool
+    # TASK-REL-049: model-level servability overlay. A model quarantined
+    # by the servability tracker (10+ consecutive non-serves — the
+    # gemini-3.8-flash failure shape TASK-INF-005 measured) is dropped
+    # even when its provider is healthy; a quarantined model whose
+    # probe is due keeps its rank position as a half-open trial. If the
+    # overlay would empty the list, the unfiltered pool is kept —
+    # servability, like provider health, is a selection signal, never
+    # by itself a reason to refuse service.
+    visible = [m for m in pool if not model_servability_tracker.is_quarantined(m)]
+    probes = [
+        m
+        for m in pool
+        if model_servability_tracker.is_quarantined(m) and model_servability_tracker.probe_due(m)
+    ]
+    if visible or probes:
+        keep = set(visible) | set(probes)
+        pool = [m for m in pool if m in keep]
+    # TASK-IG-INF-01: context-window fit filter, applied after both
+    # availability overlays so its overflow fallback still returns the
+    # best available holder rather than refusing service.
     if required_tokens > 0 and pool:
         fitting = [
             model_id
@@ -1213,6 +1240,7 @@ def _ranked_suitable_models(
             reverse=True,
         )
     return pool
+
 
 
 def _select_best_suitable(
@@ -1245,6 +1273,22 @@ def _select_best_suitable(
     requested_class = _requested_class(req.model)
     served_class = MODEL_CLASSES.get(chosen.lower(), "standard")
     downgrade = MODEL_CLASS_TIERS[served_class] < MODEL_CLASS_TIERS[requested_class]
+
+    # TASK-REL-049: surface the servability state behind this choice —
+    # the chosen model's own state, whether it is a half-open probe,
+    # and the ranked alternates that were skipped under quarantine
+    # (probe-due quarantined models are candidates, not alternates).
+    ranked = MODEL_SUITABILITY.get(task_type) or MODEL_SUITABILITY["chat"]
+    excluded = {(item or "").lower() for item in (exclude or set())}
+    quarantined_alternates = [
+        model_servability_tracker.selection_view(model_id)
+        for model_id in ranked
+        if model_id.lower() in _CATALOG_PROVIDERS
+        and model_id.lower() != chosen.lower()
+        and model_id.lower() not in excluded
+        and model_servability_tracker.is_quarantined(model_id)
+        and not model_servability_tracker.probe_due(model_id)
+    ]
     record: dict[str, Any] = {
         "model": chosen,
         "provider": _provider_for_model(chosen),
@@ -1253,6 +1297,9 @@ def _select_best_suitable(
         "requested_class": requested_class,
         "served_class": served_class,
         "downgrade": downgrade,
+        "servability": model_servability_tracker.selection_view(chosen),
+        "quarantined_alternates": quarantined_alternates,
+        "probe": model_servability_tracker.is_quarantined(chosen),
         "downgrade_reason": (
             f"requested a {requested_class}-class model; the best available suitable "
             f"model is {chosen} ({served_class}-class)"
@@ -1382,15 +1429,30 @@ async def chat_completions(req: ChatCompletionRequest):
     selection: dict[str, Any] | None = None
     attempt_model = req.model
     attempt_provider = exec_provider
+    # TASK-REL-049: a catalogue model under servability quarantine is
+    # redirected through the same best-suitable selection instead of
+    # being executed into the substitution cascade TASK-INF-005
+    # measured — unless its probe is due, in which case this request
+    # IS the probe and it executes under its own name.
+    named_quarantined = (
+        req.model != "auto"
+        and req.model.lower() in _CATALOG_PROVIDERS
+        and model_servability_tracker.is_quarantined(req.model)
+        and not model_servability_tracker.probe_due(req.model)
+    )
     if (
         req.model != "auto"
-        and req.model.lower() not in _CATALOG_PROVIDERS
         and not _is_custom_model(req.model)
+        and (req.model.lower() not in _CATALOG_PROVIDERS or named_quarantined)
     ):
         selection = _select_best_suitable(req)
         if selection is not None:
             attempt_model = selection["model"]
             attempt_provider = selection["provider"]
+            if named_quarantined:
+                selection["redirected_from_quarantined"] = model_servability_tracker.selection_view(
+                    req.model
+                )
 
     async def _execute_custom_once(model: str, provider: str) -> UnifiedExecutionResponse:
         """TASK-IG-INF-02: serve a custom-endpoint model via the gateway.
@@ -1459,23 +1521,87 @@ async def chat_completions(req: ChatCompletionRequest):
             )
         )
 
+    def _attempt_failed(result) -> bool:
+        # TASK-REL-043 containment: an attempt failed the owner's policy
+        # when the provider stack reports it degraded — OR when it
+        # "succeeded" only by serving a model OUTSIDE the verified
+        # catalogue. The gateway's fallback ladder still contains a
+        # best-free-model rung (observed live 2026-11-15, minutes after
+        # this policy first deployed: the selected gemini-3.8-flash hit
+        # the gateway's request deadline and the ladder served
+        # nvidia/nemotron-3.5-super-vl:free behind HTTP 200 — the exact
+        # substitution the owner banned). Selection at this layer is
+        # therefore paired with containment at this layer: a
+        # non-catalogue serve counts as a failed attempt, is retried
+        # once with the next-best suitable model, and otherwise gets the
+        # honest 503 below — never passed through silently. The 'auto'
+        # policy path is exempt: delegating the choice is its contract.
+        if result.degraded:
+            return True
+        if req.model == "auto":
+            return False
+        served = (result.model_used or "").lower()
+        if served in _CATALOG_PROVIDERS:
+            return False
+        # TASK-IG-INF-02 composition: a custom-endpoint model serving
+        # under its own explicitly requested name is a legitimate
+        # serve, not a ladder breach — containment targets unasked
+        # substitutions, and custom models are addressable only when a
+        # caller names them explicitly.
+        return not (_is_custom_model(req.model) and served == req.model.lower())
+
+    def _record_attempt_outcome(attempted_model: str, result) -> None:
+        # TASK-REL-049: feed the servability tracker from the outcomes
+        # this layer can actually observe (the unified result's
+        # model_used / degraded). Tracking must never break routing, so
+        # failures here are swallowed — fail-open, the same philosophy
+        # as _provider_available.
+        try:
+            usage = result.token_usage or {}
+            if (
+                not result.degraded
+                and usage.get("prompt_tokens", 0) == 0
+                and usage.get("completion_tokens", 0) == 0
+            ):
+                # TASK-INF-005 finding 4's signature: an L1 cache
+                # replay — no live attempt happened, so no outcome is
+                # attributable to any model.
+                return
+            served_model = (result.model_used or "").lower()
+            if attempted_model == "auto":
+                if not result.degraded and served_model in _CATALOG_PROVIDERS:
+                    model_servability_tracker.record_serve(served_model)
+                return
+            if result.degraded:
+                model_servability_tracker.record_outcome(attempted_model, "failed")
+            elif served_model == attempted_model.lower():
+                model_servability_tracker.record_outcome(attempted_model, "served")
+            else:
+                model_servability_tracker.record_outcome(attempted_model, "substituted")
+                if served_model in _CATALOG_PROVIDERS:
+                    model_servability_tracker.record_serve(served_model)
+        except Exception:  # noqa: BLE001 - tracking must never break routing
+            pass
+
     res = await _execute_once(attempt_model, attempt_provider)
-    if res.degraded and req.model != "auto":
+    _record_attempt_outcome(attempt_model, res)
+    if _attempt_failed(res) and req.model != "auto":
         # One bounded policy retry: the best suitable catalogue model
         # that has not been tried yet (for a catalogue request, the
-        # requested model itself is excluded). Only a successful retry
-        # is served; otherwise the first degraded result stands and the
-        # honest 503 below reports it — best-suitable service first,
-        # refusal only when nothing suitable could answer.
+        # requested model itself is excluded). Only a retry that passes
+        # the policy is served; otherwise the first failed result stands
+        # and the honest 503 below reports it — best-suitable service
+        # first, refusal only when nothing suitable could answer.
         retry = _select_best_suitable(
             req, exclude={req.model.lower(), attempt_model.lower()}
         )
         if retry is not None:
             retry_res = await _execute_once(retry["model"], retry["provider"])
-            if not retry_res.degraded:
+            _record_attempt_outcome(retry["model"], retry_res)
+            if not _attempt_failed(retry_res):
                 res = retry_res
                 selection = retry
-    if res.degraded:
+    if _attempt_failed(res):
         # TASK-REL-030: a degraded unified result means NO model answered.
         # The pre-fix handler returned it as HTTP 200 with an empty
         # completion, presenting an infrastructure failure as a successful
@@ -1485,7 +1611,12 @@ async def chat_completions(req: ChatCompletionRequest):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={
                 "error": {
-                    "message": res.error or "No provider could answer this request.",
+                    "message": res.error
+                    or (
+                        "No provider could answer this request."
+                        if res.degraded
+                        else "The request could only be served by a model outside the verified catalogue, which the model-selection policy does not allow."
+                    ),
                     "type": "gateway_error",
                     "code": "provider_degraded",
                 },
@@ -1559,6 +1690,7 @@ async def chat_completions(req: ChatCompletionRequest):
             body["provenance"]["selected_model"] = selection["model"]
             body["provenance"]["downgrade"] = selection["downgrade"]
             body["provenance"]["downgrade_reason"] = selection["downgrade_reason"]
+
             if "context_overflow" in selection:
                 # TASK-IG-INF-01: surface the fit accounting — the
                 # estimated request size, the chosen model's declared
@@ -1569,6 +1701,21 @@ async def chat_completions(req: ChatCompletionRequest):
                 ]
                 body["provenance"]["context_window"] = selection["context_window"]
                 body["provenance"]["context_overflow"] = selection["context_overflow"]
+
+            # TASK-REL-049: the servability state behind the choice —
+            # the chosen model's own state, whether it is a half-open
+            # probe, the ranked alternates skipped under quarantine,
+            # and (when the caller's named model was redirected) the
+            # quarantined state it was redirected away from.
+            body["provenance"]["servability"] = {
+                "chosen": selection["servability"],
+                "quarantined_alternates": selection["quarantined_alternates"],
+                "probe": selection["probe"],
+            }
+            if selection.get("redirected_from_quarantined") is not None:
+                body["provenance"]["servability"]["redirected_from_quarantined"] = selection[
+                    "redirected_from_quarantined"
+                ]
     return body
 
 
