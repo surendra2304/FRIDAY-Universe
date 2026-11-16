@@ -426,6 +426,20 @@ class VerificationEngine:
 
         evidence_list = await self._run_checkers(task_id)
 
+        # TASK-IG2-FRG-10: independent review passes over the settled
+        # workspace (see _run_review_stage). Runs BEFORE the source
+        # integrity stage: the integrity evidence is the battery's seal
+        # and must stay the final stage evidence (a source change made
+        # during ANY stage — review included — must not be stampable as
+        # passing). The review stage only reads the project tree (its
+        # report artifact lands outside it), so the before/after
+        # snapshot comparison below now also covers the review stage.
+        review_evidence = await self._run_review_stage(
+            task_id, paths.project if paths else None
+        )
+        if review_evidence is not None:
+            evidence_list.append(review_evidence)
+
         from app.verification.evidence import CheckCategory
         snapshot_stable = False
         try:
@@ -438,15 +452,6 @@ class VerificationEngine:
             exit_code=0 if snapshot_stable else 1, passed=snapshot_stable,
             stderr="" if snapshot_stable else "Project changed during verification or cannot be fingerprinted; re-run verification on stable regular files.",
         ))
-
-        # TASK-IG2-FRG-10: independent review passes over the settled
-        # workspace (see _run_review_stage). Runs after the integrity
-        # stage so the reviewed files are the fingerprinted ones.
-        review_evidence = await self._run_review_stage(
-            task_id, paths.project if paths else None
-        )
-        if review_evidence is not None:
-            evidence_list.append(review_evidence)
 
         # Evaluate Regression Guard across all check categories against baseline
         baseline_comparison = None
