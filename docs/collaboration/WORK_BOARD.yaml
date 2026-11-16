@@ -9422,6 +9422,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig2-task-ig2-str-13
     evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #729 -> fe4038670ee4dd8645b6df98278a723f0d2553d9. CI green except the validate pair (proven flake family)."
     next_action: "Run the pre-declared Box Theory backtest under the full RD bar (declaration SHA-256 715b6884fb6a9abe3efec7be90c83e161cf7426aef1dc37629616b3145d013bd frozen at ship; no backtest run yet)"
+  - id: TASK-IG2-STR-17
+    title: "BSE/NSE cross-exchange arbitrage concept note - concept only, no declaration, no backtest (IG item DXYCIhsjHKY, package S-25)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 764
+    branch: claude/ig2-task-ig2-str-17
+    evidence: "IG re-watch implementation, Stratex lane (second shift). Docs-only concept note at Stratex/docs/BSE_NSE_ARBITRAGE_CONCEPT.md: the BSE/NSE same-security price-difference concept and its separate Nifty spot/futures illustration (with the item's own corrections: 28 points on 24,366 is about 0.11 percent, and an index is not tradable), the data and feasibility requirements on this fleet (licensed dual-exchange tick data, dual-exchange execution, latency class, two-leg costs, T+1, liquidity asymmetry), and why it is a concept note and not a strategy. Records the feasibility objections and the creator's own retail-infeasibility admissions from the item's record, and accounts for the existing wave-1 paper scanner from the same item (TASK-IG-STR-07 arb_scanner.py, unmodified)."
+    next_action: "Coordinator merge queue. Concept note only - revisit requires BOTH a free licensed dual-exchange tick dataset for a paper study AND a pre-declared RD candidate at the full bar; this note creates no follow-up task."
   - id: TASK-IG2-STR-14
     title: "SRS (School Run Strategy) RD candidate, PRE-DECLARED - no backtest run (IG item DZ_aHrWuF49, unblocked by browser re-watch)"
     status: IN_REVIEW
