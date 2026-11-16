@@ -86,6 +86,9 @@ QUICK_TRIAGE_STEPS: tuple[str, ...] = (
 ESCALATION_STEPS: tuple[str, ...] = (
     "Back up personal files only (documents/photos) to external media — do not restore programs or system images",
     "Preserve evidence: photos of any ransom note / alerts, note times and what was observed",
+    # Source §05 residue (IG full-watch SE-04 / supervisor AUDIT-2):
+    # the one escalation step the wave-2 pass had not carried over.
+    "Report to IT or security if it is a work device",
     "Treat credentials used on this machine as exposed; rotate them from a clean device",
     "Reinstall the operating system from official media before trusting the machine again",
     "Monitor linked accounts (bank, email, cloud) for unfamiliar activity for the next weeks",
