@@ -124,6 +124,18 @@ except (TypeError, ValueError):
 # be honestly inferred from free text (render/publish/project/voiceover need
 # ids and rights confirmations) stay blocked — with the specific reason, not
 # a blanket refusal.
+# TASK-FRD-011: the Stratex task-dispatch budget. Measured on production
+# (FRD-005 re-run 20261116-103839): a Stratex "status" execute normally
+# completes in 0.01–2 s, but took ~14 s when two executes ran concurrently
+# in Stratex's process alongside its own analysis cycle — while this
+# dispatch allowed only 10 s, so the caller's stratex_portfolio tool
+# (budget 45 s) and the voice brain bridge (60 s) never saw the answer
+# and every loaded delegation returned the honest-timeout text instead.
+# 30 s covers the measured worst case with >2x headroom while staying
+# inside both budgets above it. Do not lower it back under the measured
+# worst case without new measurements.
+STRATEX_TASK_TIMEOUT_S = 30.0
+
 _VYRALX_STRUCTURED_ONLY = (
     ("publish", "publish.request",
      "publishing needs a completed render, verified rights confirmations and your explicit approval inside VyralX"),
@@ -1594,7 +1606,7 @@ class FleetClient:
             elif target == "stratex":
                 url = f"{self.stratex_url}/v1/task/execute"
                 headers = {"X-API-Key": self.stratex_key, "Authorization": f"Bearer {self.stratex_key}", "Content-Type": "application/json"}
-                resp = await client.post(url, json=envelope.model_dump(), headers=headers, timeout=10.0)
+                resp = await client.post(url, json=envelope.model_dump(), headers=headers, timeout=STRATEX_TASK_TIMEOUT_S)
                 if resp.status_code in (404, 405):
                     contract_endpoint_used = False
                     alt_url = f"{self.stratex_url}/api/engine-health"
