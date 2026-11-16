@@ -8,6 +8,7 @@ from apps.api.routers.v1_context import router as v1_context_router
 from apps.api.routers.v1_metrics import router as v1_metrics_router
 from apps.api.routers.v1_namespaces import router as v1_namespaces_router
 from apps.api.routers.v1_task import task_router as v1_task_router
+from apps.api.routers.v1_capture import router as v1_capture_router
 from apps.api.routers.v1_events import router as v1_events_router, mesh_router as mesh_events_router
 from apps.api.routers.v1_resilience import router as v1_resilience_router
 from apps.api.routers.v1_collaboration import router as v1_collaboration_router
@@ -33,6 +34,7 @@ __all__ = [
     "v1_metrics_router",
     "v1_namespaces_router",
     "v1_task_router",
+    "v1_capture_router",
     "v1_events_router",
     "mesh_events_router",
     "v1_resilience_router",
