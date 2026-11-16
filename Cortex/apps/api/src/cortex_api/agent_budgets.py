@@ -24,16 +24,41 @@ Semantics
   must not spend unbudgeted quota by accident.
 
 Persistence: the ledger core talks to a ``BudgetStore`` protocol. The
-default store is in-memory (single-process Cortex); production wiring
-should back it with Cortex's Oracle schema (repo rule: no local SQLite
-files for Cortex data) — the protocol is the seam for that.
+production ledger (the module-level ``ledger`` the mounted API and the
+FRIDAY task path share) is backed by ``DatabaseBudgetStore``, which
+persists the state dict in Cortex's own database (the
+``agent_budget_state`` table — repo rule: no local SQLite files for
+Cortex data), so a Cortex restart no longer resets the budgets.
+``BudgetLedger()`` with no store still defaults to the in-memory store
+for library use and tests; ``CORTEX_AGENT_BUDGET_STORE=memory`` forces
+the production instance back to in-memory as an operator escape hatch.
+
+Dispatch path: ``cortex_api.friday_router.process_task_envelope`` — the
+executor behind the FRIDAY Universal Task Protocol endpoint — charges
+every executed envelope to the Cortex budget line through this ledger
+(see that module for the gate). Direct LLM-backed callers report token
+usage through ``POST /api/v1/cortex/budgets/usage``.
+
+Breach alerts: recording an alert in-ledger is not dispatch. The
+production ledger carries a ``WebhookBreachAlertSink`` that delivers
+each breach over Cortex's existing operator escalation channel — the
+``SELF_HEALING_ESCALATION_WEBHOOK`` webhook that
+``cortex_core.resilience.EscalationNotifier`` delivers self-healing
+escalations to — and every delivery outcome (including "no channel
+configured") is recorded on the ledger and exposed via
+``GET /api/v1/cortex/budgets`` instead of vanishing silently.
 """
 from __future__ import annotations
 
+import asyncio
+import logging
 import os
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
+
+logger = logging.getLogger("cortex-agent-budgets")
 
 # The 10 fleet agents (AGENTS.yaml v3.0.0).
 FLEET_AGENTS: tuple[str, ...] = (
@@ -111,8 +136,9 @@ class BudgetStore(Protocol):
 
 
 class InMemoryBudgetStore:
-    """Single-process store (default). See module docstring for the
-    production (Oracle-schema) persistence seam."""
+    """Single-process store (the ``BudgetLedger()`` default). State is
+    lost on restart — see ``DatabaseBudgetStore`` for the durable
+    production backing."""
 
     def __init__(self) -> None:
         self._state: dict[str, Any] = {}
@@ -122,6 +148,224 @@ class InMemoryBudgetStore:
 
     def save(self, state: dict[str, Any]) -> None:
         self._state = state
+
+    def status(self) -> dict[str, Any]:
+        return {"backend": "memory", "durable": False}
+
+
+class DatabaseBudgetStore:
+    """Durable ``BudgetStore`` backed by Cortex's own database.
+
+    Persists the ledger state dict as the single row of
+    ``agent_budget_state`` (``cortex_api.db_models.AgentBudgetStateModel``)
+    through the app's async session factory, so the state lives in the
+    same database as every other Cortex table (Oracle in production).
+
+    The ``BudgetStore`` protocol is synchronous while the engine is
+    async, so all I/O runs on a dedicated daemon thread with its own
+    event loop; callers block on the result with a bounded timeout.
+
+    Degradation is honest, never silent: any failure (database
+    unreachable, table not yet migrated, timeout) is logged, counted in
+    ``status()``, and the store falls back to its in-process mirror so
+    enforcement keeps working — with ``durable`` in the status saying
+    plainly whether the last save actually reached the database.
+    """
+
+    ROW_ID = "agent_budgets"
+
+    def __init__(
+        self,
+        session_factory: Any = None,
+        timeout_seconds: float = 10.0,
+    ) -> None:
+        # session_factory: an async_sessionmaker; None resolves lazily to
+        # cortex_api.config.AsyncSessionLocal (imported on first use so
+        # importing this module never touches the database).
+        self._session_factory = session_factory
+        self._timeout = timeout_seconds
+        self._mirror: dict[str, Any] = {}
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._loop_lock = threading.Lock()
+        self.durable = False
+        self.load_errors = 0
+        self.save_errors = 0
+        self.last_error: str | None = None
+
+    # -- async plumbing ----------------------------------------------------
+    def _factory(self) -> Any:
+        if self._session_factory is not None:
+            return self._session_factory
+        from cortex_api.config import AsyncSessionLocal
+
+        return AsyncSessionLocal
+
+    def _ensure_loop(self) -> asyncio.AbstractEventLoop:
+        if self._loop is None:
+            with self._loop_lock:
+                if self._loop is None:
+                    loop = asyncio.new_event_loop()
+                    thread = threading.Thread(
+                        target=loop.run_forever,
+                        name="cortex-budget-store",
+                        daemon=True,
+                    )
+                    thread.start()
+                    self._loop = loop
+        return self._loop
+
+    def _run(self, coro: Any) -> Any:
+        loop = self._ensure_loop()
+        future = asyncio.run_coroutine_threadsafe(coro, loop)
+        return future.result(timeout=self._timeout)
+
+    async def _load_async(self) -> dict[str, Any]:
+        from cortex_api.db_models import AgentBudgetStateModel
+
+        async with self._factory()() as session:
+            row = await session.get(AgentBudgetStateModel, self.ROW_ID)
+            if row is None or not isinstance(row.state, dict):
+                return {}
+            return dict(row.state)
+
+    async def _save_async(self, state: dict[str, Any]) -> None:
+        from cortex_api.db_models import AgentBudgetStateModel
+
+        async with self._factory()() as session:
+            row = await session.get(AgentBudgetStateModel, self.ROW_ID)
+            if row is None:
+                session.add(AgentBudgetStateModel(id=self.ROW_ID, state=state))
+            else:
+                row.state = state
+            await session.commit()
+
+    # -- BudgetStore protocol ------------------------------------------------
+    def load(self) -> dict[str, Any]:
+        try:
+            state = self._run(self._load_async())
+        except Exception as exc:  # noqa: BLE001 - degradation is the design
+            self.load_errors += 1
+            self.last_error = f"{type(exc).__name__}: {exc}"
+            logger.error(
+                "agent budget store: database load failed (%s); "
+                "falling back to the in-process mirror",
+                self.last_error,
+            )
+            return dict(self._mirror)
+        self._mirror = state
+        self.durable = True
+        self.last_error = None
+        return dict(state)
+
+    def save(self, state: dict[str, Any]) -> None:
+        self._mirror = dict(state)
+        try:
+            self._run(self._save_async(dict(state)))
+        except Exception as exc:  # noqa: BLE001 - never break enforcement
+            self.save_errors += 1
+            self.durable = False
+            self.last_error = f"{type(exc).__name__}: {exc}"
+            logger.error(
+                "agent budget store: database save failed (%s); "
+                "state kept in the in-process mirror only",
+                self.last_error,
+            )
+            return
+        self.durable = True
+        self.last_error = None
+
+    def status(self) -> dict[str, Any]:
+        return {
+            "backend": "database",
+            "durable": self.durable,
+            "load_errors": self.load_errors,
+            "save_errors": self.save_errors,
+            "last_error": self.last_error,
+        }
+
+
+# A breach-alert sink receives the alert dict and returns a delivery
+# record dict (delivered / detail / channel). It must never raise into
+# the ledger; the ledger also guards the call.
+AlertSink = Callable[[dict[str, Any]], "dict[str, Any] | None"]
+
+
+class WebhookBreachAlertSink:
+    """Dispatches budget-breach alerts over Cortex's operator channel.
+
+    The channel is the ``SELF_HEALING_ESCALATION_WEBHOOK`` webhook — the
+    same one ``cortex_core.resilience.EscalationNotifier`` delivers
+    self-healing escalations to — so budget breaches reach the operator
+    wherever Cortex escalations already go. Mirrors the notifier's
+    honesty rule: with no channel configured the delivery record says
+    ``delivered: False`` with the reason instead of pretending.
+    """
+
+    def __init__(
+        self,
+        webhook_url: str | None = None,
+        timeout_seconds: float = 5.0,
+    ) -> None:
+        if webhook_url is None:
+            webhook_url = os.environ.get("SELF_HEALING_ESCALATION_WEBHOOK", "")
+        self.webhook_url = webhook_url.strip() or None
+        self.timeout_seconds = timeout_seconds
+
+    @property
+    def channel(self) -> str:
+        return self.webhook_url or "none"
+
+    def __call__(self, alert: dict[str, Any]) -> dict[str, Any]:
+        record: dict[str, Any] = {
+            "agent": alert.get("agent"),
+            "date": alert.get("date"),
+            "reason": alert.get("reason"),
+            "channel": self.channel,
+        }
+        if self.webhook_url is None:
+            record.update({
+                "delivered": False,
+                "detail": (
+                    "no escalation channel configured "
+                    "(SELF_HEALING_ESCALATION_WEBHOOK is unset)"
+                ),
+            })
+            return record
+        payload = {
+            "subsystem": "agent_budgets",
+            "reason": alert.get("reason"),
+            "agent": alert.get("agent"),
+            "message": alert.get("message"),
+            "alert": alert,
+        }
+        try:
+            import httpx
+
+            # trust_env=False: the escalation webhook is a configured
+            # operator endpoint — ambient HTTP(S)_PROXY variables (CI
+            # sandboxes, egress gateways) must not intercept or break
+            # alert delivery.
+            response = httpx.post(
+                self.webhook_url,
+                json=payload,
+                timeout=self.timeout_seconds,
+                trust_env=False,
+            )
+            delivered = 200 <= response.status_code < 300
+            record.update({
+                "delivered": delivered,
+                "status_code": response.status_code,
+                "detail": (
+                    "delivered" if delivered
+                    else f"channel returned {response.status_code}"
+                ),
+            })
+        except Exception as exc:  # noqa: BLE001 - delivery failure is data
+            record.update({
+                "delivered": False,
+                "detail": f"{type(exc).__name__}: {exc}",
+            })
+        return record
 
 
 @dataclass
@@ -157,17 +401,25 @@ class BudgetLedger:
         budgets: dict[str, AgentBudget] | None = None,
         store: BudgetStore | None = None,
         now_fn: Callable[[], datetime] | None = None,
+        alert_sink: AlertSink | None = None,
     ) -> None:
         self.budgets = budgets if budgets is not None else default_budgets()
         self.store = store if store is not None else InMemoryBudgetStore()
         self._now_fn = now_fn or (lambda: datetime.now(timezone.utc))
-        self._alerts: list[dict[str, Any]] = []
+        self.alert_sink = alert_sink
         stored = self.store.load() or {}
         self._usage: dict[str, _DayUsage] = {
             agent: _DayUsage.from_dict(data)
             for agent, data in stored.get("usage", {}).items()
             if agent in self.budgets
         }
+        # Alert history and delivery outcomes are ledger state too: they
+        # persist with the usage counters so a restart neither loses the
+        # record of a breach nor re-dispatches it.
+        self._alerts: list[dict[str, Any]] = list(stored.get("alerts", []))
+        self._alert_deliveries: list[dict[str, Any]] = list(
+            stored.get("alert_deliveries", [])
+        )
 
     # -- internals ---------------------------------------------------------
     def _today(self) -> str:
@@ -191,7 +443,43 @@ class BudgetLedger:
     def _persist(self) -> None:
         self.store.save({
             "usage": {a: u.as_dict() for a, u in self._usage.items()},
+            "alerts": self._alerts[-50:],
+            "alert_deliveries": self._alert_deliveries[-50:],
         })
+
+    def _dispatch_alert(self, alert: dict[str, Any]) -> None:
+        """Hand a breach alert to the alert sink and record the outcome.
+
+        Dispatch must never break enforcement (the same rule Sentinel's
+        alerting follows): a missing or failing sink produces a delivery
+        record with ``delivered: False`` and the reason, not an exception.
+        """
+        record: dict[str, Any] = {
+            "agent": alert["agent"],
+            "date": alert["date"],
+            "reason": alert["reason"],
+            "at": self._now_fn().isoformat(),
+            "channel": "none",
+            "delivered": False,
+            "detail": "no alert sink configured",
+        }
+        if self.alert_sink is not None:
+            try:
+                result = self.alert_sink(dict(alert))
+                if isinstance(result, dict):
+                    record.update(result)
+                    record.setdefault("at", self._now_fn().isoformat())
+            except Exception as exc:  # noqa: BLE001 - dispatch is best-effort
+                record.update({
+                    "delivered": False,
+                    "detail": f"alert sink raised {type(exc).__name__}: {exc}",
+                })
+                logger.error(
+                    "agent budget breach alert dispatch failed for %s: %s",
+                    alert["agent"], record["detail"],
+                )
+        self._alert_deliveries.append(record)
+        self._alert_deliveries = self._alert_deliveries[-50:]
 
     def _decision(
         self, budget: AgentBudget, usage: _DayUsage, allowed: bool,
@@ -216,7 +504,7 @@ class BudgetLedger:
         usage.paused = True
         if not usage.breach_alerted:
             usage.breach_alerted = True
-            self._alerts.append({
+            alert = {
                 "agent": budget.agent, "date": usage.date, "reason": reason,
                 "tokens_used": usage.tokens_used,
                 "token_budget": budget.daily_token_budget,
@@ -227,7 +515,9 @@ class BudgetLedger:
                     f"({reason}); non-critical work auto-paused until "
                     "UTC day rollover."
                 ),
-            })
+            }
+            self._alerts.append(alert)
+            self._dispatch_alert(alert)
         self._persist()
 
     # -- enforcement -------------------------------------------------------
@@ -302,11 +592,35 @@ class BudgetLedger:
     def alerts(self) -> list[dict[str, Any]]:
         return list(self._alerts)
 
+    def alert_deliveries(self) -> list[dict[str, Any]]:
+        """One record per breach-alert dispatch attempt (oldest first)."""
+        return list(self._alert_deliveries)
+
+    def store_status(self) -> dict[str, Any]:
+        status = getattr(self.store, "status", None)
+        if callable(status):
+            return status()
+        return {"backend": type(self.store).__name__, "durable": False}
+
     def reset_agent(self, agent: str) -> None:
         """Operator override: clear today's usage and unpause an agent."""
         self._budget_for(agent)
         self._usage[agent] = _DayUsage(date=self._today())
         self._persist()
+
+
+def _build_production_ledger() -> BudgetLedger:
+    """The shared production ledger: durable store + dispatching sink.
+
+    ``CORTEX_AGENT_BUDGET_STORE=memory`` is the operator escape hatch
+    back to the in-memory store; anything else uses the database store
+    (which itself degrades to its mirror, loudly, if the database is
+    unreachable — enforcement never depends on the store being up).
+    """
+    sink = WebhookBreachAlertSink()
+    if os.environ.get("CORTEX_AGENT_BUDGET_STORE", "db").strip().lower() == "memory":
+        return BudgetLedger(alert_sink=sink)
+    return BudgetLedger(store=DatabaseBudgetStore(), alert_sink=sink)
 
 
 # ── HTTP surface ─────────────────────────────────────────────────────────
@@ -315,7 +629,7 @@ try:  # pragma: no cover - exercised via the mounted app in integration tests
     from pydantic import BaseModel, Field
 
     router = APIRouter(tags=["Agent Budgets"])
-    ledger = BudgetLedger()
+    ledger = _build_production_ledger()
 
     class UsageRequest(BaseModel):
         agent: str
@@ -325,7 +639,12 @@ try:  # pragma: no cover - exercised via the mounted app in integration tests
 
     @router.get("/api/v1/cortex/budgets")
     async def list_budgets() -> dict[str, Any]:
-        return {"budgets": ledger.all_usage(), "alerts": ledger.alerts()}
+        return {
+            "budgets": ledger.all_usage(),
+            "alerts": ledger.alerts(),
+            "alert_deliveries": ledger.alert_deliveries(),
+            "store": ledger.store_status(),
+        }
 
     @router.get("/api/v1/cortex/budgets/{agent}")
     async def get_budget(agent: str) -> dict[str, Any]:

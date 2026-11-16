@@ -366,3 +366,20 @@ class StrategyPerformanceModel(Base):
     confidence = Column(Float, default=0.0, nullable=False)
     recent_outcomes = Column(JSONB, default=list, nullable=False)
     last_updated_at = Column(UTCDateTime, default=_utcnow, nullable=False)
+
+
+class AgentBudgetStateModel(Base):
+    """Durable state for the per-agent budget ledger (TASK-IG2-COR-01).
+
+    A single row (id ``"agent_budgets"``) holds the whole ledger state
+    dict — per-agent daily usage counters, pause flags, breach alerts
+    and their delivery records — so a Cortex restart no longer resets
+    the budgets. Written and read through
+    ``cortex_api.agent_budgets.DatabaseBudgetStore``.
+    """
+
+    __tablename__ = "agent_budget_state"
+
+    id = Column(String(64), primary_key=True)
+    state = Column(JSONB, default=dict, nullable=False)
+    updated_at = Column(UTCDateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
