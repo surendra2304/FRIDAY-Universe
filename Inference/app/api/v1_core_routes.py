@@ -37,10 +37,15 @@ from app.core.dag import TaskComplexity
 from app.core.orchestrator import orchestrator
 from app.memory.base import TaskRecord
 from app.providers.base import ProviderMessage, ProviderRequest
+from app.providers.custom_endpoints import custom_catalog_entries, custom_provider_for_model
 from app.providers.errors import TimeoutError as ProviderTimeoutError
 from app.providers.gateway import model_gateway
 from app.providers.quota_ledger import quota_ledger
-from app.providers.unified_manager import UnifiedExecutionRequest, unified_provider_manager
+from app.providers.unified_manager import (
+    UnifiedExecutionRequest,
+    UnifiedExecutionResponse,
+    unified_provider_manager,
+)
 from app.schemas.v1_models import (
     DebateRequest,
     InferenceAskRequest,
@@ -901,6 +906,12 @@ def _provider_for_model(model: str) -> str:
     norm_model = (model or "").lower().strip()
     if norm_model in _CATALOG_PROVIDERS:
         return _CATALOG_PROVIDERS[norm_model]
+    # TASK-IG-INF-02: a model owned by an operator-configured custom
+    # endpoint resolves to that endpoint's provider, ahead of the
+    # substring fallbacks (a custom id could contain any substring).
+    custom_provider = custom_provider_for_model(norm_model)
+    if custom_provider:
+        return custom_provider
     if "gemini" in norm_model:
         return "gemini"
     if norm_model.startswith("openai/gpt-oss"):
@@ -921,6 +932,18 @@ def _provider_for_model(model: str) -> str:
     if "cerebras" in norm_model:
         return "cerebras"
     return "groq"
+
+
+def _is_custom_model(model: str) -> bool:
+    """Whether a model id is owned by an enabled TASK-IG-INF-02 custom endpoint.
+
+    Custom models are addressable exactly like catalogue models (the
+    caller named a real, configured route), so best-suitable
+    substitution must not replace them; unlike catalogue models they
+    were never benchmark-admitted, so selection never picks one
+    unasked either.
+    """
+    return custom_provider_for_model((model or "").lower().strip()) is not None
 
 
 # ---------------------------------------------------------------------------
@@ -1257,6 +1280,13 @@ async def list_models() -> dict[str, Any]:
         {"id": entry["id"], "object": "model", "owned_by": entry["owned_by"], "permission": []}
         for entry in MODEL_CATALOG
     ]
+    # TASK-IG-INF-02: operator-configured custom endpoint models are
+    # listed too (owned_by "custom:<name>") so clients can discover the
+    # routes this deployment actually offers.
+    for entry in custom_catalog_entries():
+        configured_models.append(
+            {"id": entry["id"], "object": "model", "owned_by": entry["owned_by"], "permission": []}
+        )
     configured_models.append({"id": "auto", "object": "model", "owned_by": "inference", "permission": []})
     return {"object": "list", "data": configured_models}
 
@@ -1277,7 +1307,11 @@ async def chat_completions(req: ChatCompletionRequest):
 
     if req.stream:
         stream_model = req.model if req.model != "auto" else "openai/gpt-oss-120b"
-        if req.model != "auto" and req.model.lower() not in _CATALOG_PROVIDERS:
+        if (
+            req.model != "auto"
+            and req.model.lower() not in _CATALOG_PROVIDERS
+            and not _is_custom_model(req.model)
+        ):
             # TASK-REL-043: the same best-suitable selection as the
             # non-stream path — a named model the gateway does not have
             # is not forwarded to the streaming gateway either.
@@ -1348,13 +1382,71 @@ async def chat_completions(req: ChatCompletionRequest):
     selection: dict[str, Any] | None = None
     attempt_model = req.model
     attempt_provider = exec_provider
-    if req.model != "auto" and req.model.lower() not in _CATALOG_PROVIDERS:
+    if (
+        req.model != "auto"
+        and req.model.lower() not in _CATALOG_PROVIDERS
+        and not _is_custom_model(req.model)
+    ):
         selection = _select_best_suitable(req)
         if selection is not None:
             attempt_model = selection["model"]
             attempt_provider = selection["provider"]
 
+    async def _execute_custom_once(model: str, provider: str) -> UnifiedExecutionResponse:
+        """TASK-IG-INF-02: serve a custom-endpoint model via the gateway.
+
+        UnifiedExecutionRequest.provider is a fixed Literal of built-in
+        providers, so custom providers cannot ride the unified manager;
+        they execute through model_gateway directly (which owns their
+        key pools, rate limiters and health tracking) and the gateway's
+        ProviderResponse is adapted to the unified shape. A gateway
+        failure becomes a degraded result so the caller's bounded
+        REL-043 retry and honest-503 logic apply unchanged.
+        """
+        started = time.perf_counter()
+        try:
+            resp = await model_gateway.execute(
+                provider,
+                ProviderRequest(
+                    messages=[ProviderMessage(role=m.role, content=m.content) for m in req.messages],
+                    system_instruction=system_instruction,
+                    model=model,
+                    temperature=exec_temp,
+                    max_tokens=exec_tokens,
+                ),
+                stage_name="chat_custom_endpoint",
+            )
+        except Exception as exc:
+            return UnifiedExecutionResponse(
+                provider_used=provider,
+                model_used=model,
+                agent_role="system_architect",
+                content="",
+                latency_ms=(time.perf_counter() - started) * 1000.0,
+                timestamp=time.time(),
+                status="degraded",
+                degraded=True,
+                error=f"{provider}: {exc.__class__.__name__}",
+            )
+        return UnifiedExecutionResponse(
+            provider_used=provider,
+            model_used=resp.model or model,
+            agent_role="system_architect",
+            content=resp.content,
+            latency_ms=(time.perf_counter() - started) * 1000.0,
+            timestamp=time.time(),
+            token_usage={
+                "prompt_tokens": resp.prompt_tokens or 0,
+                "completion_tokens": resp.completion_tokens or 0,
+                "total_tokens": resp.total_tokens or 0,
+            },
+            finish_reason=resp.finish_reason,
+            served_by_provider=provider,
+        )
+
     async def _execute_once(model: str, provider: str):
+        if provider.startswith("custom-"):
+            return await _execute_custom_once(model, provider)
         return await unified_provider_manager.execute(
             UnifiedExecutionRequest(
                 provider=provider,  # type: ignore[arg-type]  # pydantic validates the Literal at runtime

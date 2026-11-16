@@ -35,9 +35,48 @@ _PROVIDER_MAP: dict[str, type[BaseLLMProvider]] = {
 _PROVIDER_CACHE: dict[str, BaseLLMProvider] = {}
 
 
+def _get_custom_provider(normalized_name: str, kwargs: dict) -> BaseLLMProvider:
+    """Build the adapter for a TASK-IG-INF-02 custom endpoint provider.
+
+    The endpoint registry is the only source of truth for these
+    providers: an unknown or disabled ``custom-<name>`` is an error,
+    never a silent fallthrough to a cloud adapter. The endpoint's own
+    key (resolved from its own api_key_env at parse time) is used
+    unless the gateway passes the pool-chosen key explicitly — which
+    is the same value, from the endpoint's own pool.
+    """
+    from app.providers.custom_endpoints import custom_endpoint_by_provider
+    from app.providers.openai_compatible import OpenAICompatibleProvider
+
+    endpoint = custom_endpoint_by_provider(normalized_name)
+    if endpoint is None:
+        raise ValueError(
+            f"Unsupported provider '{normalized_name}'. No enabled custom endpoint "
+            "with that name is configured (see INFERENCE_CUSTOM_ENDPOINTS)."
+        )
+    if not kwargs and normalized_name in _PROVIDER_CACHE:
+        return _PROVIDER_CACHE[normalized_name]
+    key = endpoint.api_key
+    if "api_key" in kwargs:
+        key = kwargs["api_key"]
+    instance = OpenAICompatibleProvider(
+        provider_name=normalized_name,
+        base_url=endpoint.base_url,
+        api_key=key,
+        default_model=endpoint.model_ids[0],
+        supported_models=endpoint.model_ids,
+        timeout=float(kwargs.get("timeout", 60.0)),
+    )
+    if not kwargs:
+        _PROVIDER_CACHE[normalized_name] = instance
+    return instance
+
+
 def get_provider(name: str = "gemini", **kwargs) -> BaseLLMProvider:
     """Returns a singleton or configured instance of the requested LLM provider."""
     normalized_name = name.lower().strip()
+    if normalized_name.startswith("custom-"):
+        return _get_custom_provider(normalized_name, kwargs)
     if normalized_name not in _PROVIDER_MAP:
         raise ValueError(f"Unsupported provider '{name}'. Available: {list(_PROVIDER_MAP.keys())}")
 

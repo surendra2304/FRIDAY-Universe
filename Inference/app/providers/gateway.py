@@ -51,6 +51,15 @@ def provider_has_credentials(prov_name: str) -> bool:
     normalized = prov_name.lower().strip()
     if normalized in KEYLESS_PROVIDERS:
         return True
+    if normalized.startswith("custom-"):
+        # TASK-IG-INF-02: an enabled custom endpoint is servable by
+        # construction — keyed endpoints were disabled at parse time
+        # when their api_key_env was unset, and keyless endpoints are
+        # an explicit operator choice (the `local` semantics). A
+        # disabled or unknown custom name is NOT servable.
+        from app.providers.custom_endpoints import custom_endpoint_by_provider
+
+        return custom_endpoint_by_provider(normalized) is not None
     try:
         return bool(settings.get_provider_keys(normalized))
     except Exception:  # noqa: BLE001 - configuration lookup must never break routing
@@ -324,9 +333,30 @@ class ModelGateway:
             rpm = 10.0 if prov in ("gemini", "cohere") else 20.0
             self.rate_limiters[prov] = ProviderRateLimiter(prov, requests_per_second=rpm / 60.0, max_concurrency=4)
 
+        # TASK-IG-INF-02: operator-configured custom endpoints get their
+        # own pools, keyed ONLY by each endpoint's own api_key_env value —
+        # never via settings.get_provider_keys, which merges the
+        # THIRD_PARTY_* and fallback pools and would break key isolation.
+        from app.providers.custom_endpoints import enabled_custom_endpoints
+
+        for endpoint in enabled_custom_endpoints():
+            keys = [endpoint.api_key] if endpoint.api_key else []
+            self.key_pools[endpoint.provider_name] = KeyPool(endpoint.provider_name, keys)
+            self.rate_limiters[endpoint.provider_name] = ProviderRateLimiter(
+                endpoint.provider_name, requests_per_second=20.0 / 60.0, max_concurrency=4
+            )
+
     def refresh_keys(self) -> None:
         """Reload keys from environment/settings."""
         for prov, pool in self.key_pools.items():
+            if prov.startswith("custom-"):
+                # TASK-IG-INF-02: custom pools are re-resolved from the
+                # endpoint registry, never from the pooled key sets.
+                from app.providers.custom_endpoints import custom_endpoint_by_provider
+
+                endpoint = custom_endpoint_by_provider(prov)
+                pool.set_keys([endpoint.api_key] if endpoint and endpoint.api_key else [])
+                continue
             keys = settings.get_provider_keys(prov)
             pool.set_keys(keys)
 
