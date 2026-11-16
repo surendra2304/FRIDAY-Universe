@@ -9678,6 +9678,22 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     evidence: "Contrast across runs: FRD-005 re-run #5's drill PASSED verbatim delivery for a deterministic-template settled reply (production run 20261116-175800; issue #35 comment 6916834339); in re-run #6 PRODUCTION (run 20261116-200627; comment 6920046514) the delivery watch fired at 25s unverbalized on the recall turn and the session spoke an improvised memory dump - NOT the 205-char settled reply, containing no 'teal', off-question, delivered after the battery windows had closed. Fix direction: extend/harden the verbatim mechanism so model-composed settled replies are also delivered word-for-word, or make the nudge non-substitutable."
     next_action: "Root-cause why the repeat-verbatim instruction was not honored for the model-composed case + fix + regression coverage; acceptance = FRD-005 re-run #7 verbatim leg in production."
+  - id: TASK-IG3-INF-01
+    title: "Free-for-paid substitution table (Inference routing/evaluation knowledge)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 750
+    branch: claude/ig3-inf-01-substitution-table
+    evidence: "PR #750 MERGED -> 4514e03c2129ea6e319bdf26a5eafaecf923f2db (head 90b9ea8be7e37f58340d2d0ff1459625e08e79f6; exactly 1 file added: Inference/docs/FREE_SUBSTITUTION_TABLE.md, +93). The table is verbatim from browser-watched item DTVYncBj6E1 (FULL): Veo 3 $249 -> Sora 2 $0; ElevenLabs $99 -> MiniMax $0; Seedream 4 $39 -> NanoBanana $0; RunwayML $76 -> Wan 2.6 $0; HeyGen $39 -> SadTalker $0; Plus AI $20 -> Gamma AI $0. Each row carries a verification status: four of the six $0 claims are disputed by name in the source's own comments (Sora 2, MiniMax, NanoBanana, Wan 2.6), two are unverified, and ZERO rows are verified capacity. Closes baseline gap B44 (no substitution-table artifact existed); it is the OpenAlternative-style shortlist half of the DTA4DlUEXDH pattern, with the TASK-IG-INF-03 graduation path (named first-party tier -> candidate spec -> serve-check + bench -> admission) written in. Inference supervisor AUDIT-2 reviewed the PR CONFIRMED as claimed (issue #35 comment 6920528733). CI on head: test / secrets-scan / py310 / detect-voice-changes SUCCESS; only the validate pair red (proven flake family). Board entry added by merge runner 15 (finisher) after the merge - the original runner ended before its board round."
+    next_action: "Verify at merge; rows are knowledge, not capacity \u2014 no route adoption without the IG-INF-03 graduation path."
+  - id: TASK-IG3-INF-02
+    title: "Re-watch route evaluations - FreeLLMAPI / OmniRoute / Codex router (no adapters)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 751
+    branch: claude/ig3-inf-02-route-evaluations
+    evidence: "PR #751 MERGED -> 257ec6aad2fb13c03a1c71506a65c6683910aeaa (head 4646ed397674e6b846d4d8e3696340e9f34a75f2; exactly 1 file modified: Inference/docs/CORPUS_DISPOSITIONS.md, +30/-2). Verdicts: NO adapter for any of the three, each with evidence. FreeLLMAPI (I-11): verified externally as self-hosted MIT software (tashfeenahmed/freellmapi), not a hosted route - it pools the user's own first-party free-tier keys behind one OpenAI-compatible /v1 endpoint; the '4B tokens/month' figure is an aggregate of listed free tiers, not a grant; its pattern IS Inference's native baseline (KeyPool/ModelGateway, quota ledger, failover ladder), and any self-hosted instance is already consumable via TASK-IG-INF-02 custom endpoints with zero new code. OmniRoute (I-12): also self-hosted gateway software; security evidence CVE-2026-88062 / GHSA-hf57-cqmx-p4gr (unauthenticated RCE via the custom ACP agent endpoint when requireLogin is off); its one transferable idea, token compression, is already implemented natively (TASK-IG2-INF-04). Codex model-router (I-12): the GitHub URL is truncated in-frame and was never recovered, so the project cannot be identified and cannot become a candidate spec. The PR also corrected the dispositions doc's stale token-compression line. Inference supervisor AUDIT-2 reviewed the PR CONFIRMED as claimed (issue #35 comment 6920528733). CI on head: test / secrets-scan / py310 / detect-voice-changes SUCCESS; only the validate pair red (proven flake family). Board entry added by merge runner 15 (finisher) after the merge."
+    next_action: "Closed on merge \u2014 no adapter work follows."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
