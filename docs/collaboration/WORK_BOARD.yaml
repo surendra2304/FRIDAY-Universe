@@ -9166,6 +9166,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig2-task-ig2-frg-06
     evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #719 -> 0f866128d79cb41600468fa0e71f1cd483b041c8. CI green except the validate pair (proven flake family)."
     next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRG-07
+    title: "Real one-prompt agent-creation flow: prompt -> working, tested, registered agent (supervisor C-1 on A12)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ig2-task-ig2-frg-07
+    evidence: "app/templates/agent_creation.py: deterministic generation of exactly the ONE_PROMPT_AGENT manifest; system prompt = owner prompt verbatim + fleet rules + SkillRegistry fragments of the keyword-derived specialist; checks EXECUTE (manifest exactness, py_compile, subprocess import + tool behaviour incl. path-traversal guard, dead-gateway loud-failure probe — the probe caught httpx 0.28 InvalidURL escaping the HTTPError catch, fixed in the generated code); JSON registry records every attempt as tested/failed with per-file sha256; rebuild-from-stored-prompt is byte-identical. 9/9 new tests pass locally; additive files only."
+    next_action: "Coordinator merge queue"
   - id: TASK-IG2-INF-02
     title: "encrypted-at-rest key vault for Inference provider keys"
     status: IN_REVIEW
