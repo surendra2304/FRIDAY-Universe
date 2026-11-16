@@ -2430,3 +2430,6 @@ app.include_router(motion_templates_router, prefix="/api/v1", tags=["IG Corpus M
 # --- IG Corpus Idea Generator Integration (TASK-IG3-VYR-08) ---
 from app.services.idea_generator import router as idea_generator_router
 app.include_router(idea_generator_router, prefix="/api/v1", tags=["IG Corpus Idea Generator"])
+# --- IG Corpus Production Rules Integration (TASK-IG3-VYR-09) ---
+from app.services.production_rules import router as production_rules_router
+app.include_router(production_rules_router, prefix="/api/v1", tags=["IG Corpus Production Rules"])
