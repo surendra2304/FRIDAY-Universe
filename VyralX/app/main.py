@@ -2415,3 +2415,6 @@ app.include_router(channel_strategy_router, prefix="/api/v1", tags=["IG Corpus S
 # --- IG Corpus Stick-Figure Explainer Integration (TASK-IG3-VYR-02) ---
 from app.services.stick_figure import router as stick_figure_router
 app.include_router(stick_figure_router, prefix="/api/v1", tags=["IG Corpus Stick Figure"])
+# --- IG Corpus Reddit Story Sourcing Integration (TASK-IG3-VYR-03) ---
+from app.services.reddit_trends import router as reddit_trends_router
+app.include_router(reddit_trends_router, prefix="/api/v1", tags=["IG Corpus Reddit Trends"])
