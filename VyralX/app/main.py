@@ -2408,3 +2408,7 @@ app.include_router(retention_router, prefix="/api/v1")
 # --- Real Media & Growth Engines (ClaudeAds, TopRank, OpenHiggsfield, Hyperframes) ---
 from app.services.real_media_routes import router as real_media_router
 app.include_router(real_media_router, prefix="/api/v1/vyralx")
+
+# --- IG Corpus Production Rules Integration (TASK-IG3-VYR-09) ---
+from app.services.production_rules import router as production_rules_router
+app.include_router(production_rules_router, prefix="/api/v1", tags=["IG Corpus Production Rules"])
