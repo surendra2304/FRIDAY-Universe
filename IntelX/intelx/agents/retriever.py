@@ -13,6 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from intelx.agents.base import BaseAgent
 from intelx.agents.scout import SourceCandidate
 from intelx.connectors.files import FileConnector
+from intelx.connectors.social_links import (
+    SocialLinkReader,
+    SocialLinkUnavailable,
+    classify_social_url,
+)
 from intelx.connectors.web import HttpFetchConnector
 from intelx.core.enums import SourceKind, TaskErrorClass
 from intelx.core.errors import (
@@ -112,6 +117,41 @@ class RetrieverAgent(BaseAgent):
         self.file_connector = file_connector or FileConnector(settings=self.settings)
         self._semaphore = asyncio.Semaphore(self.settings.MAX_CONCURRENT_FETCHES)
 
+    async def _social_ingest_plan(
+        self,
+        candidate: SourceCandidate,
+        location: str,
+        domain: str | None,
+    ) -> IngestPlan | None:
+        """Read a social-platform candidate through SocialLinkReader.
+
+        TASK-IG-INT-02 shipped the reader as a library with no caller;
+        this is its production seam in the retriever: YouTube / Reddit /
+        Instagram candidates are extracted verbatim by the reader
+        (oEmbed / old.reddit JSON / JSON-LD) instead of being scraped
+        as generic HTML. Returns None for non-social URLs and whenever
+        the reader cannot extract (blocked, removed, empty) — the
+        caller then falls back to the generic HTTP fetch path with its
+        own snippet/robots fallbacks. Never raises.
+        """
+        if classify_social_url(location) == "web":
+            return None
+        try:
+            doc = await SocialLinkReader().read(location)
+        except SocialLinkUnavailable as exc:
+            logger.info(f"Social link read unavailable for {location}: {exc.reason}")
+            return None
+        if not doc.text.strip():
+            return None
+        return IngestPlan(
+            location=location,
+            raw_bytes=doc.text.encode("utf-8"),
+            content_type="text/plain; format=social-link",
+            kind=SourceKind.WEB,
+            domain=domain,
+            title=doc.title or candidate.title,
+        )
+
     async def _fetch_single(
         self,
         candidate: SourceCandidate,
@@ -174,6 +214,11 @@ class RetrieverAgent(BaseAgent):
                     kind = SourceKind.FILE
                     domain = None
                 else:
+                    social_plan = await self._social_ingest_plan(
+                        candidate, location, parsed.hostname
+                    )
+                    if social_plan is not None:
+                        return social_plan
                     fetch_res = await self.http_connector.fetch(location)
                     if (
                         (not fetch_res.robots_ok or not fetch_res.content)
