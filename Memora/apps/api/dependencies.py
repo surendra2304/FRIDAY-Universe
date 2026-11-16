@@ -2,11 +2,15 @@
 FastAPI Dependencies for Memora API
 """
 import hmac
+import logging
 import os
+import re
 from typing import Optional
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, Request, status
 from core.config import settings
 from storage.relational.session import get_db  # noqa: F401 — re-exported dependency
+
+logger = logging.getLogger(__name__)
 
 AGENT_API_KEY_ENV_VARS = {
     "friday": "FRIDAY_API_KEY",
@@ -23,13 +27,173 @@ AGENT_API_KEY_ENV_VARS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Scoped delegation (TASK-MEM-005-R1)
+#
+# A caller may act for another agent ONLY by authenticating as itself with
+# its own per-agent key and naming the target in the X-On-Behalf-Of header.
+# Memora then grants the request the target's identity for that one call iff
+# the MEMORA_DELEGATIONS policy in Memora's own environment names the
+# (caller, target, scope) triple. The scope is derived from the route and
+# method; routes outside the map reject the header outright (default deny).
+# This replaces the old design in which a delegate had to hold the target's
+# raw key (FRIDAY's env carried every agent's key) or the fleet master key.
+#
+# Policy format (semicolon-separated grants):
+#   MEMORA_DELEGATIONS="friday>stratex:read,learn;friday>intelx:read,learn"
+# ---------------------------------------------------------------------------
+
+DELEGATION_SCOPES = {"read", "learn", "write", "mutate", "events"}
+
+_LEARN_SUFFIXES = ("/learn-outcome", "/learn-experience", "/record-interaction")
+_MUTATE_SUFFIXES = (
+    "/share",
+    "/supersede",
+    "/promote",
+    "/verify",
+    "/relationships",
+    "/forget",
+    "/transition",
+)
+
+
+def delegation_scope_for(method: str, path: str) -> Optional[str]:
+    """Map a request to its delegation scope, or None if delegation is not
+    available on that route at all (the header is then rejected, never
+    silently ignored)."""
+    method = (method or "").upper()
+    path = (path or "").rstrip("/") or "/"
+
+    if path.startswith("/v1/events"):
+        return "events"
+    if path == "/v1/context" and method == "POST":
+        return "read"
+
+    for prefix in ("/v1/memories", "/memories"):
+        if path == prefix or path.startswith(prefix + "/"):
+            rest = path[len(prefix):]
+            if method == "POST" and rest in _LEARN_SUFFIXES:
+                return "learn"
+            if rest == "":
+                if method == "GET":
+                    return "read"
+                if method == "POST":
+                    return "write"
+                return None
+            if rest in ("/search", "/experience") and method == "GET":
+                return "read"
+            if rest == "/query" and method == "POST":
+                return "read"
+            if method == "POST" and any(
+                rest.endswith(suffix) for suffix in _MUTATE_SUFFIXES
+            ):
+                return "mutate"
+            if re.fullmatch(r"/[^/]+/graph", rest) and method == "GET":
+                return "read"
+            if re.fullmatch(r"/[^/]+", rest):
+                if method == "GET":
+                    return "read"
+                if method == "DELETE":
+                    return "mutate"
+            return None
+    return None
+
+
+def delegation_grants() -> dict:
+    """Parse MEMORA_DELEGATIONS into {(caller, target): {scope, ...}}.
+
+    Read from the environment on every call so policy changes need no code
+    deploy and tests can pin policy with monkeypatch. Malformed entries are
+    skipped; an unset/empty policy grants nothing.
+    """
+    grants: dict = {}
+    for entry in os.getenv("MEMORA_DELEGATIONS", "").split(";"):
+        entry = entry.strip()
+        if not entry:
+            continue
+        pair, _, scopes = entry.partition(":")
+        caller, _, target = pair.partition(">")
+        caller = caller.strip().lower()
+        target = target.strip().lower()
+        scope_set = {
+            s.strip().lower() for s in scopes.split(",") if s.strip() in DELEGATION_SCOPES
+        }
+        if caller and target and scope_set:
+            grants.setdefault((caller, target), set()).update(scope_set)
+    return grants
+
+
+def _apply_delegation(
+    principal: str,
+    via_master: bool,
+    x_on_behalf_of: Optional[str],
+    request: Optional[Request],
+) -> str:
+    """Resolve the effective actor for a request.
+
+    Without X-On-Behalf-Of the authenticated principal acts for itself. With
+    it, the principal must hold a policy grant for the target and for the
+    scope of the route being called; every failure is a 403 (fail closed,
+    never a silent fall-back to the caller's own identity, which would mask
+    a misconfigured delegation as a successful self-call).
+    """
+    if not x_on_behalf_of:
+        return principal
+    target = x_on_behalf_of.strip().lower()
+    if target == principal:
+        return principal
+    if via_master:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The master credential cannot delegate; authenticate with the caller's own per-agent key.",
+        )
+    if target not in AGENT_API_KEY_ENV_VARS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Unknown delegation target '{target}'.",
+        )
+    if request is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Delegation requires a request context to scope the grant.",
+        )
+    scope = delegation_scope_for(request.method, request.url.path)
+    if scope is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Delegation is not available on this route.",
+        )
+    if scope not in delegation_grants().get((principal, target), set()):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Agent '{principal}' holds no '{scope}' delegation for '{target}'.",
+        )
+    logger.info(
+        "memora delegation: caller=%s target=%s scope=%s %s %s",
+        principal,
+        target,
+        scope,
+        request.method,
+        request.url.path,
+    )
+    return target
+
+
 def get_actor_header(
+    request: Request,
     x_agent_name: Optional[str] = Header(default=None, alias="X-Agent-Name"),
     x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
     authorization: Optional[str] = Header(default=None, alias="Authorization"),
+    x_on_behalf_of: Optional[str] = Header(default=None, alias="X-On-Behalf-Of"),
 ) -> str:
-    """Return the authenticated agent identity, never an unverified header claim."""
-    return authenticate_agent(x_agent_name, x_api_key, authorization)
+    """Return the authenticated agent identity, never an unverified header claim.
+
+    With a granted X-On-Behalf-Of delegation this is the TARGET agent's
+    identity; the caller was still authenticated with its own key.
+    """
+    return authenticate_agent(
+        x_agent_name, x_api_key, authorization, x_on_behalf_of, request
+    )
 
 def get_purpose_header(
     x_access_purpose: Optional[str] = Header(default=None, alias="X-Access-Purpose")
@@ -138,8 +302,21 @@ def authenticate_agent(
     x_agent_name: Optional[str] = Header(default=None, alias="X-Agent-Name"),
     x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
     authorization: Optional[str] = Header(default=None, alias="Authorization"),
+    x_on_behalf_of: Optional[str] = Header(default=None, alias="X-On-Behalf-Of"),
+    request: Request = None,
 ) -> str:
-    """Authenticate an ecosystem agent using its named service credential."""
+    """Authenticate an ecosystem agent using its named service credential.
+
+    Returns the effective actor: the authenticated agent itself, or — with a
+    granted X-On-Behalf-Of delegation (TASK-MEM-005-R1) — the delegation
+    target. See _apply_delegation.
+    """
+    # Direct (non-FastAPI) callers — unit tests, scripts — invoke this
+    # function without the framework, in which case an unpassed Header
+    # parameter holds its FieldInfo default rather than a string. Normalize
+    # so only a real header value can trigger delegation.
+    if not isinstance(x_on_behalf_of, str):
+        x_on_behalf_of = None
     agent = (x_agent_name or "").strip().lower()
     supplied = x_api_key
     if not supplied and authorization and authorization.lower().startswith("bearer "):
@@ -167,16 +344,21 @@ def authenticate_agent(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"No configured credential for agent '{agent or 'unknown'}'",
             )
-        master_key = os.getenv("MEMORA_MASTER_KEY") or os.getenv("MEMORA_API_KEY")
+        # TASK-MEM-005-R1: the master is MEMORA_MASTER_KEY ONLY. The previous
+        # fallback made MEMORA_API_KEY — the memora identity's own per-agent
+        # key, copied into every agent's env file — a universal impersonation
+        # credential (audit finding F1). MEMORA_API_KEY now authenticates the
+        # memora identity alone, like every other per-agent key.
+        master_key = os.getenv("MEMORA_MASTER_KEY")
         if master_key and hmac.compare_digest(master_key, supplied):
-            return agent or "friday"
+            return _apply_delegation(agent or "friday", True, x_on_behalf_of, request)
         if not hmac.compare_digest(expected, supplied):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid agent credentials")
-        return agent
+        return _apply_delegation(agent, False, x_on_behalf_of, request)
 
     # Opt-in anonymous access exists only for local development and tests.
     if not production and not supplied:
-        return agent or "friday"
+        return _apply_delegation(agent or "friday", False, x_on_behalf_of, request)
     if not agent or not expected or not supplied or not hmac.compare_digest(expected, supplied):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid agent credentials")
-    return agent
+    return _apply_delegation(agent, False, x_on_behalf_of, request)

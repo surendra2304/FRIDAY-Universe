@@ -53,7 +53,11 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.MEMORA_CORS_ORIGINS.split(",") if o.strip()]
 
     def get_memora_api_key(self) -> str:
-        key = self.MEMORA_API_KEY or self.MEMORA_MASTER_KEY
+        # TASK-MEM-005-R1: internal provenance signing prefers the dedicated
+        # MEMORA_MASTER_KEY (held only in Memora's own env, stable across
+        # per-agent key rotations) over the memora identity's own per-agent
+        # key, so rotating MEMORA_API_KEY no longer invalidates provenance.
+        key = self.MEMORA_MASTER_KEY or self.MEMORA_API_KEY
         if not key:
             if str(self.MEMORA_ENV).lower() == "production":
                 raise ValueError(
