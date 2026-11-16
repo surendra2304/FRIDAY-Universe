@@ -160,6 +160,17 @@ class Settings(BaseSettings):
             "installed (post-ARM adoption path)."
         ),
     )
+    FUTURIS_OPENBB_PROVIDER: str = Field(
+        default="yfinance",
+        description=(
+            "TASK-IG-FUT-01: OpenBB provider extension the openbb_sdk "
+            "backbone provider routes through when the SDK is installed "
+            "(post-ARM adoption path). 'yfinance' is the free, keyless "
+            "default. Read only when 'openbb_sdk' is among "
+            "FUTURIS_MARKET_DATA_PROVIDERS; changing it is a config "
+            "change, never a code change."
+        ),
+    )
     NEXUS_API_KEY: str | None = Field(
         default=None,
         description="NEXUS telemetry broker API key",

@@ -124,6 +124,68 @@ def test_to_observations_of_unavailable_is_empty():
     assert to_observations(_down("a")) == []
 
 
+def test_from_settings_threads_openbb_provider():
+    """FUTURIS_OPENBB_PROVIDER reaches the openbb_sdk provider instance:
+    the OpenBB extension is a config switch, not a code edit."""
+
+    class _Settings:
+        FUTURIS_MARKET_DATA_PROVIDERS = "openbb_sdk"
+        FUTURIS_OPENBB_PROVIDER = "fmp"
+
+    backbone = MarketDataBackbone.from_settings(_Settings())
+    (provider,) = backbone.providers
+    assert provider.name == "openbb_sdk"
+    assert provider.obb_provider == "fmp"
+
+
+async def test_backbone_fails_over_past_absent_openbb(monkeypatch):
+    """With the SDK absent, the real openbb_sdk provider degrades to an
+    explicit unavailable and the backbone moves on to real data."""
+    import sys
+
+    from futuris.market_data.providers.openbb_sdk import OpenBBSDKProvider
+
+    monkeypatch.setitem(sys.modules, "openbb", None)
+    backbone = MarketDataBackbone(
+        [OpenBBSDKProvider(), _StubProvider("second", _ok("second"))]
+    )
+    result = await backbone.get_ohlcv("BTCUSDT", START, END, "1d")
+    assert result.status == "ok"
+    assert result.provider == "second"
+    assert any(a.startswith("openbb_sdk") for a in result.attempts)
+
+
+def test_provider_statuses_report_openbb_absent(monkeypatch):
+    import sys
+
+    from futuris.market_data.service import provider_statuses
+
+    monkeypatch.setitem(sys.modules, "openbb", None)
+
+    class _Settings:
+        FUTURIS_MARKET_DATA_PROVIDERS = "yahoo_chart,openbb_sdk"
+
+    statuses = {s.name: s for s in provider_statuses(_Settings())}
+    assert statuses["openbb_sdk"].kind == "sdk"
+    assert statuses["openbb_sdk"].available is False
+    assert "not installed" in (statuses["openbb_sdk"].detail or "")
+    # Network providers never guess availability.
+    assert statuses["yahoo_chart"].kind == "http"
+    assert statuses["yahoo_chart"].available is None
+
+
+def test_provider_statuses_flag_unknown_names():
+    from futuris.market_data.service import provider_statuses
+
+    class _Settings:
+        FUTURIS_MARKET_DATA_PROVIDERS = "nope"
+
+    (status,) = provider_statuses(_Settings())
+    assert status.name == "nope"
+    assert status.available is False
+    assert "registered" in (status.detail or "")
+
+
 def test_package_import_is_cheap_no_openbb_no_pandas():
     """REL-048 discipline: importing the backbone package must not drag
     the OpenBB SDK (or any provider runtime) into the process."""

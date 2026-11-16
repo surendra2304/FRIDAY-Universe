@@ -167,3 +167,167 @@ async def test_openbb_sdk_bad_interval_is_unavailable():
     provider = OpenBBSDKProvider()
     result = await provider.fetch_ohlcv("BTCUSDT", START, END, "3d")
     assert result.status == "unavailable"
+
+
+# The SDK-present contract, exercised through a fake ``openbb`` module:
+# the real SDK cannot be installed on this fleet (measured ~996 MB peak
+# RSS on import), so these tests pin the exact standardization contract
+# the ARM-day install must satisfy -- frames in, backbone bars out, and
+# every failure an explicit unavailable with zero bars.
+
+
+class _FakeOBBject:
+    """Minimal stand-in for an OpenBB OBBject: provider + to_dataframe."""
+
+    def __init__(self, frame, provider: str = "yfinance") -> None:
+        self._frame = frame
+        self.provider = provider
+
+    def to_dataframe(self):
+        return self._frame
+
+
+def _install_fake_openbb(monkeypatch, historical) -> None:
+    import importlib.machinery
+    import types
+
+    module = types.ModuleType("openbb")
+    module.__spec__ = importlib.machinery.ModuleSpec("openbb", loader=None)
+    module.obb = types.SimpleNamespace(
+        equity=types.SimpleNamespace(
+            price=types.SimpleNamespace(historical=historical)
+        )
+    )
+    monkeypatch.setitem(sys.modules, "openbb", module)
+
+
+def _daily_frame():
+    import pandas as pd
+
+    frame = pd.DataFrame(
+        {
+            "open": [100.0, 102.0],
+            "high": [110.0, 112.0],
+            "low": [95.0, 97.0],
+            "close": [105.0, 108.0],
+            "volume": [1000.0, float("nan")],
+        },
+        index=pd.to_datetime(["2026-01-02", "2026-01-05"]),
+    )
+    frame.index.name = "date"
+    return frame
+
+
+def test_openbb_sdk_available_probe(monkeypatch):
+    from futuris.market_data.providers.openbb_sdk import sdk_available
+
+    monkeypatch.setitem(sys.modules, "openbb", None)
+    assert sdk_available() is False
+    _install_fake_openbb(monkeypatch, lambda **kwargs: None)
+    assert sdk_available() is True
+
+
+async def test_openbb_sdk_present_standardizes_bars(monkeypatch):
+    seen: dict = {}
+
+    def historical(**kwargs):
+        seen.update(kwargs)
+        return _FakeOBBject(_daily_frame())
+
+    _install_fake_openbb(monkeypatch, historical)
+    provider = OpenBBSDKProvider()
+    result = await provider.fetch_ohlcv("BTCUSDT", START, END, "1d")
+    assert result.status == "ok"
+    assert result.provider == "openbb_sdk"
+    # Source label carries OpenBB's own provider attribution.
+    assert result.source == "market_data:openbb_sdk:yfinance"
+    assert seen["provider"] == "yfinance"
+    assert seen["interval"] == "1d"
+    assert len(result.bars) == 2
+    first, second = result.bars
+    assert first.symbol == "BTCUSDT" and first.provider_symbol == "BTCUSDT"
+    assert first.close == 105.0 and first.volume == 1000.0
+    assert first.timestamp.tzinfo is not None
+    # NaN volume becomes None -- never a NaN bar field.
+    assert second.volume is None
+
+
+async def test_openbb_sdk_present_intraday_timestamp_frame(monkeypatch):
+    import pandas as pd
+
+    frame = pd.DataFrame(
+        {
+            "open": [100.0],
+            "high": [110.0],
+            "low": [95.0],
+            "close": [105.0],
+            "volume": [1000.0],
+        },
+        index=pd.to_datetime(["2026-01-02T09:30:00"]),
+    )
+    frame.index.name = "timestamp"
+    _install_fake_openbb(monkeypatch, lambda **kwargs: _FakeOBBject(frame))
+    provider = OpenBBSDKProvider()
+    result = await provider.fetch_ohlcv("BTCUSDT", START, END, "1h")
+    assert result.status == "ok"
+    assert len(result.bars) == 1
+    assert result.bars[0].timestamp.hour == 9
+
+
+async def test_openbb_sdk_present_drops_nan_close_rows(monkeypatch):
+    frame = _daily_frame()
+    frame.loc[frame.index[1], "close"] = float("nan")
+    _install_fake_openbb(monkeypatch, lambda **kwargs: _FakeOBBject(frame))
+    provider = OpenBBSDKProvider()
+    result = await provider.fetch_ohlcv("BTCUSDT", START, END, "1d")
+    assert result.status == "ok"
+    # The NaN-close slot is dropped, not standardized into a bar.
+    assert len(result.bars) == 1
+    assert result.bars[0].close == 105.0
+
+
+async def test_openbb_sdk_present_empty_frame_is_unavailable(monkeypatch):
+    frame = _daily_frame().iloc[0:0]
+    _install_fake_openbb(monkeypatch, lambda **kwargs: _FakeOBBject(frame))
+    provider = OpenBBSDKProvider()
+    result = await provider.fetch_ohlcv("BTCUSDT", START, END, "1d")
+    assert result.status == "unavailable"
+    assert result.bars == []
+    assert "no bars" in (result.detail or "")
+
+
+async def test_openbb_sdk_present_fetch_failure_is_unavailable(monkeypatch):
+    def historical(**kwargs):
+        raise RuntimeError("upstream down")
+
+    _install_fake_openbb(monkeypatch, historical)
+    provider = OpenBBSDKProvider()
+    result = await provider.fetch_ohlcv("BTCUSDT", START, END, "1d")
+    assert result.status == "unavailable"
+    assert result.bars == []
+    assert "fetch failed" in (result.detail or "")
+
+
+async def test_openbb_sdk_present_malformed_frame_is_unavailable(monkeypatch):
+    frame = _daily_frame().drop(columns=["close"])
+    _install_fake_openbb(monkeypatch, lambda **kwargs: _FakeOBBject(frame))
+    provider = OpenBBSDKProvider()
+    result = await provider.fetch_ohlcv("BTCUSDT", START, END, "1d")
+    assert result.status == "unavailable"
+    assert result.bars == []
+    assert "malformed" in (result.detail or "")
+
+
+async def test_openbb_sdk_present_uses_configured_obb_provider(monkeypatch):
+    seen: dict = {}
+
+    def historical(**kwargs):
+        seen.update(kwargs)
+        return _FakeOBBject(_daily_frame(), provider="fmp")
+
+    _install_fake_openbb(monkeypatch, historical)
+    provider = OpenBBSDKProvider(obb_provider="fmp")
+    result = await provider.fetch_ohlcv("BTCUSDT", START, END, "1d")
+    assert result.status == "ok"
+    assert seen["provider"] == "fmp"
+    assert result.source == "market_data:openbb_sdk:fmp"

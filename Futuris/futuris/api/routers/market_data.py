@@ -3,6 +3,8 @@
 ``GET /v1/market-data/ohlcv`` is the HTTP face of the Futuris
 market-data backbone -- the interface the Stratex lane consumes for
 standardized, provenance-labelled OHLCV history.
+``GET /v1/market-data/providers`` reports the configured providers'
+local readiness (the data layer's graceful-degradation surface).
 
 Response discipline (FUT-005): when data was really fetched, the payload
 says so (``status="ok"``, ``evidence_class="LIVE"``, the producing
@@ -20,8 +22,8 @@ from pydantic import BaseModel, Field
 
 from futuris.core.enums import EvidenceClass
 from futuris.infra.auth import RequireViewer
-from futuris.market_data.models import OHLCVBar
-from futuris.market_data.service import MarketDataBackbone
+from futuris.market_data.models import OHLCVBar, ProviderStatus
+from futuris.market_data.service import MarketDataBackbone, provider_statuses
 
 router = APIRouter(prefix="/v1/market-data", tags=["Market Data Backbone"])
 
@@ -42,6 +44,25 @@ class MarketDataResponse(BaseModel):
     detail: str | None = None
     attempts: list[str] = Field(default_factory=list)
     fetched_at: datetime
+
+
+@router.get(
+    "/providers",
+    response_model=list[ProviderStatus],
+    summary="Configured backbone providers and local readiness",
+)
+async def get_providers(user: RequireViewer) -> list[ProviderStatus]:
+    """Report which configured providers this host can actually serve.
+
+    The graceful-degradation surface for the data layer: on the current
+    fleet ``openbb_sdk`` reports ``available=false`` (the SDK is not
+    installed -- the post-ARM adoption path) without any fetch being
+    attempted, and network providers report ``available=null`` because
+    their availability is a per-fetch fact. Post-ARM, this endpoint is
+    the runbook's first verification that the switch flipped.
+    """
+    _ = user
+    return provider_statuses()
 
 
 @router.get("/ohlcv", response_model=MarketDataResponse, summary="Standardized OHLCV history")

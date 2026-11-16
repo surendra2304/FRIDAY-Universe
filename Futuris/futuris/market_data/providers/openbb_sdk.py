@@ -20,6 +20,7 @@ memory caps, so:
 
 from __future__ import annotations
 
+import importlib.util
 from datetime import datetime, timezone
 
 UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
@@ -33,6 +34,40 @@ logger = get_logger("futuris.market_data.openbb_sdk")
 #: Backbone interval -> OpenBB interval spelling.
 _INTERVAL_MAP = {"1d": "1d", "1h": "1h", "1wk": "1W", "1mo": "1M", "5m": "5m",
                  "15m": "15m", "30m": "30m", "1m": "1m"}
+
+#: Timestamp column spellings OpenBB frames use after ``reset_index()``:
+#: daily equity frames carry ``date``; intraday frames carry ``timestamp``.
+_TIMESTAMP_COLUMNS = ("date", "timestamp")
+
+
+def sdk_available() -> bool:
+    """True when the OpenBB Platform SDK is installed in this environment.
+
+    Cheap by design: ``find_spec`` locates the package WITHOUT importing
+    it. Importing ``openbb`` builds the application router (measured at
+    ~996 MB peak RSS in ``docs/DATA_BACKBONE_IGFUT01.md``), which is
+    exactly what this probe exists to avoid on the current fleet. The
+    backbone's provider-status surface uses this to report the data
+    layer's absence instead of discovering it per fetch.
+    """
+    try:
+        return importlib.util.find_spec("openbb") is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _as_float(value: object) -> float | None:
+    """Coerce a frame cell to float; None for missing/NaN/unparseable.
+
+    NaN is treated as missing (``f != f``), so a sparse OpenBB frame can
+    never mint a bar out of a NaN close or a NaN volume -- the same
+    drop-null discipline the Yahoo provider applies to its payloads.
+    """
+    try:
+        number = float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    return None if number != number else number
 
 
 class OpenBBSDKProvider(MarketDataProvider):
@@ -96,22 +131,42 @@ class OpenBBSDKProvider(MarketDataProvider):
         source = self.source_label(obb_provider_used)
         bars: list[OHLCVBar] = []
         try:
+            ts_column = next(
+                (c for c in _TIMESTAMP_COLUMNS if c in rows.columns), None
+            )
+            if ts_column is None:
+                return MarketDataResult.unavailable(
+                    symbol=symbol,
+                    interval=interval,
+                    detail=(
+                        "openbb SDK payload malformed: no date/timestamp "
+                        f"column in frame (columns: {list(rows.columns)})"
+                    ),
+                    fetched_at=fetched_at,
+                )
             for _, row in rows.iterrows():
-                ts = row["date"]
+                ts = row[ts_column]
                 ts = ts.to_pydatetime() if hasattr(ts, "to_pydatetime") else ts
                 if ts.tzinfo is None:
                     ts = ts.replace(tzinfo=UTC)
-                volume = row.get("volume")
+                open_ = _as_float(row["open"])
+                high = _as_float(row["high"])
+                low = _as_float(row["low"])
+                close = _as_float(row["close"])
+                if open_ is None or high is None or low is None or close is None:
+                    # Sparse slot (e.g. a holiday row of NaNs): dropped,
+                    # never interpolated -- the backbone's standing rule.
+                    continue
                 bars.append(
                     OHLCVBar(
                         symbol=symbol.upper().strip(),
                         provider_symbol=symbol,
                         timestamp=ts,
-                        open=float(row["open"]),
-                        high=float(row["high"]),
-                        low=float(row["low"]),
-                        close=float(row["close"]),
-                        volume=float(volume) if volume is not None else None,
+                        open=open_,
+                        high=high,
+                        low=low,
+                        close=close,
+                        volume=_as_float(row.get("volume")),
                         provider=self.name,
                         source=source,
                     )

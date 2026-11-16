@@ -101,3 +101,29 @@ class MarketDataResult(BaseModel):
             attempts=attempts or [],
             fetched_at=fetched_at,
         )
+
+
+class ProviderStatus(BaseModel):
+    """Local readiness of one configured backbone provider.
+
+    This is the graceful-degradation surface for the data layer: it lets
+    operators and consumers see that a provider's local precondition is
+    missing (today: the OpenBB SDK is not installed on this fleet)
+    WITHOUT issuing a fetch. ``available`` is True/False only where a
+    cheap local check exists; network providers report ``None`` --
+    their availability is determined per fetch and is never guessed.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., description="Configured provider name.")
+    kind: Literal["http", "sdk"] = Field(
+        ..., description="http = per-fetch network provider; sdk = local SDK provider."
+    )
+    available: bool | None = Field(
+        default=None,
+        description="Local readiness; None when it cannot be checked without a fetch.",
+    )
+    detail: str | None = Field(
+        default=None, description="Why the provider is not locally ready, when it is not."
+    )

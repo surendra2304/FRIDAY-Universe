@@ -116,3 +116,36 @@ Semantics both ways:
    (or lead with `openbb_sdk`).
 4. Re-run the FUT-004/FUT-006 forecast-input scorecards with backbone
    inputs before any forecast path consumes them unattended.
+
+## 7. Host-side completion (2026-11-16, TASK-IG-FUT-01 follow-up)
+
+Everything that could be finished WITHOUT the ARM server is finished,
+so adoption is now a switch-flip, not a build:
+
+* **Config.** The OpenBB provider extension is a setting,
+  `FUTURIS_OPENBB_PROVIDER` (default `yfinance`, free/keyless),
+  threaded through `MarketDataBackbone.from_settings` /
+  `build_provider(..., obb_provider=...)`. Changing the extension on
+  ARM day is an env change, never a code change.
+* **Interface contract, pinned by tests.** The SDK-present path is
+  exercised end-to-end through a fake `openbb` module
+  (`tests/market_data/test_providers.py`): standardization, provider
+  attribution on the source label, daily (`date`) and intraday
+  (`timestamp`) frames, empty frame / fetch exception / malformed
+  frame -> explicit `unavailable` with zero bars, and NaN discipline
+  (a NaN close row is dropped like a Yahoo null slot; a NaN volume
+  becomes `None`). If a future OpenBB release changes these shapes,
+  these tests fail before production does.
+* **Graceful-degradation surface.** `sdk_available()` probes for the
+  SDK with `find_spec` -- it never imports it (the import is the
+  ~996 MB event §2 measured). `GET /v1/market-data/providers` reports
+  every configured provider's local readiness from
+  `provider_statuses()`: `openbb_sdk` shows `available=false` with the
+  reason on this fleet, and network providers report
+  `available=null` (per-fetch fact, never guessed). This endpoint is
+  step 1 of the ARM-day verification: after the install + env flip it
+  must show `available=true`.
+* **Dependency declaration.** The measured v5 set is declared as the
+  `openbb` optional extra in `pyproject.toml`
+  (`pip install 'futuris[openbb]'`). It is deliberately NOT in
+  `requirements.txt`: nothing on the current fleet may install it.
