@@ -105,8 +105,10 @@ class BaseAgent(ABC):
         # TASK-FRG-009: a provider that degraded to deterministic mock output
         # (legacy opt-in fallback) marks its response; record it on the
         # agent state so the degradation survives into task output instead
-        # of passing as a model-generated success.
-        raw = response.raw_response or {}
+        # of passing as a model-generated success. getattr-guarded: provider
+        # doubles (and any response shape without raw metadata) must never
+        # break generation — stamping is disclosure, not a gate.
+        raw = getattr(response, "raw_response", None) or {}
         if raw.get("degraded_fallback"):
             self.state.scratchpad["provider_degraded"] = True
             self.state.scratchpad["provider_error"] = raw.get("provider_error")
