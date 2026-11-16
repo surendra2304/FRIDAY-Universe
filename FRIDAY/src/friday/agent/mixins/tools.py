@@ -143,6 +143,7 @@ from friday.tools.builtin import (
     JobHuntPrepTool,
     JobHuntScanTool,
     JobHuntShortlistTool,
+    LocalBusinessTool,
     StratexPortfolioTool,
     SentinelSecurityTool,
     FuturisForecastTool,
@@ -190,6 +191,11 @@ class ToolExecutionMixin:
             registry.register(JobHuntScanTool())
             registry.register(JobHuntShortlistTool())
             registry.register(JobHuntPrepTool())
+            # IG F-30/F-35: local-business patterns — prospect qualification
+            # plus website-generation and appointment-agent prompt building
+            # (generation only, no outreach). Registered at creation, per
+            # the AUDIT-2 wiring lesson: export-only is not implemented.
+            registry.register(LocalBusinessTool())
             registry.register(StratexPortfolioTool())
             registry.register(SentinelSecurityTool())
             registry.register(FuturisForecastTool())

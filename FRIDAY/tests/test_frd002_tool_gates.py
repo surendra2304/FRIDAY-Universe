@@ -55,4 +55,7 @@ def test_default_registry_tool_names_are_unique():
         f"duplicate tool names registered: {sorted(n for n in set(names) if names.count(n) > 1)}"
     )
     # The full production surface as inventoried by TASK-FRD-002.
-    assert len(names) == 90
+    # 90 at inventory time; 91 on this branch (+ local_business, IG
+    # F-30/F-35). The registry-wiring PR takes it to 96 (+ lead_generate,
+    # escrcpy x2, meeting_followup x3); with both landed the total is 97.
+    assert len(names) == 91
