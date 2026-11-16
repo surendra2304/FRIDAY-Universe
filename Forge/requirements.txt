@@ -1,6 +1,10 @@
+# TASK-SEN-012 (2026-11-15): fleet-shared dependency floors/pins reconciled
+# with the versions SEN-002 probed live in the production venv, so a
+# manifest-driven rebuild cannot regress below the running set.
+# See docs/DEPENDENCY_LOCKS.md.
 # Production dependencies for Forge (Python 3.11+)
-fastapi>=0.110.0,<1.0.0
-uvicorn[standard]>=0.28.0,<1.0.0
+fastapi>=0.161.1,<1.0.0
+uvicorn[standard]>=0.54.0,<1.0.0
 pydantic>=2.6.0,<3.0.0
 pydantic-settings>=2.2.0,<3.0.0
 sqlalchemy[asyncio]>=2.0.0,<3.0.0
@@ -8,7 +12,7 @@ greenlet>=3.0.0,<4.0.0
 oracledb>=2.5.0,<27.0.0
 httpx>=0.27.0,<1.0.0
 redis>=5.0,<7.0
-python-dotenv>=1.0.0,<2.0.0
+python-dotenv>=1.2.4,<2.0.0
 rich>=13.7.0,<16.0.0
 openai>=1.0.0,<4.0.0
 anthropic>=0.20.0,<2.0.0

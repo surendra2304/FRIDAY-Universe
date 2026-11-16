@@ -11,9 +11,10 @@ requires-python = ">=3.11"
 authors = [
     { name = "Surendra", email = "surendra@friday.universe" }
 ]
+# TASK-SEN-012 (2026-11-15): fleet-shared floors reconciled with SEN-002's live-venv probe; see docs/DEPENDENCY_LOCKS.md.
 dependencies = [
-    "fastapi>=0.110.0",
-    "uvicorn[standard]>=0.28.0",
+    "fastapi>=0.161.1",
+    "uvicorn[standard]>=0.54.0",
     "pydantic>=2.6.0",
     "pydantic-settings>=2.2.0",
     "sqlalchemy>=2.0.28",
@@ -23,21 +24,21 @@ dependencies = [
     "redis>=5.0.3",
     # The vector adapter imports qdrant_client lazily, but it is the dense leg of
     # hybrid search and must be present for a real deployment.
-    "qdrant-client>=1.8.0",
+    "qdrant-client>=1.9.0",
     # Turso cloud sync and the mesh envelope path use urllib, but the startup
     # import in apps/api/main.py and scripts use requests directly.
-    "requests>=2.31.0",
+    "requests>=2.34.2",
     # adapters/adapter_config.yaml is loaded with PyYAML.
     "pyyaml>=6.0.1",
     # core/config.py reads .env through pydantic-settings, which needs this.
-    "python-dotenv>=1.0.0",
-    "python-multipart>=0.0.9",
+    "python-dotenv>=1.2.4",
+    "python-multipart>=0.0.32",
     "httpx>=0.27.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.3",
     "pytest-asyncio>=0.23.5",
     "httpx>=0.27.0",
     "ruff>=0.3.0",

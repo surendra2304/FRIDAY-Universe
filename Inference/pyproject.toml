@@ -12,13 +12,14 @@ license = "MIT"
 authors = [
     { name = "Surendra", email = "surendra@example.com" }
 ]
+# TASK-SEN-012 (2026-11-15): fleet-shared floors reconciled with SEN-002's live-venv probe; see docs/DEPENDENCY_LOCKS.md.
 dependencies = [
-    "fastapi>=0.110.0",
-    "uvicorn[standard]>=0.28.0",
+    "fastapi>=0.161.1",
+    "uvicorn[standard]>=0.54.0",
     "pydantic>=2.6.0",
     "pydantic-settings>=2.2.0",
     "httpx>=0.27.0",
-    "python-dotenv>=1.0.1",
+    "python-dotenv>=1.2.4",
     "sqlalchemy>=2.0.28",
     "rich>=13.7.0",
     "typer>=0.12.0",
@@ -27,7 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.3",
     "pytest-asyncio>=0.23.0",
     "mypy>=1.10,<2.0",
     # Test-only: SQLiteMemory is never selected by the runtime factory.

@@ -1,5 +1,9 @@
-fastapi>=0.110.0,<1.0.0
-uvicorn[standard]>=0.28.0,<1.0.0
+# TASK-SEN-012 (2026-11-15): fleet-shared dependency floors/pins reconciled
+# with the versions SEN-002 probed live in the production venv, so a
+# manifest-driven rebuild cannot regress below the running set.
+# See docs/DEPENDENCY_LOCKS.md.
+fastapi>=0.161.1,<1.0.0
+uvicorn[standard]>=0.54.0,<1.0.0
 pydantic>=2.6.0,<3.0.0
 pydantic-settings>=2.2.0,<3.0.0
 sqlalchemy[asyncio]>=2.0.28,<3.0.0
@@ -14,9 +18,9 @@ pandas>=2.2.0
 # TASK-REL-007: hard dependency — futuris/evidence/snapshots.py writes every
 # forecast evidence snapshot with engine="pyarrow". It was declared nowhere,
 # so POST /v1/friday/forecast 500'd with ImportError on any clean install.
-pyarrow>=14.0.0
+pyarrow>=25.0.1
 numpy>=1.26.0
-python-dotenv>=1.0.0
+python-dotenv>=1.2.4
 prometheus-client>=0.20.0
 typer>=0.12.0
 rich>=13.7.0

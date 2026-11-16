@@ -1,9 +1,13 @@
+# TASK-SEN-012 (2026-11-15): fleet-shared dependency floors/pins reconciled
+# with the versions SEN-002 probed live in the production venv, so a
+# manifest-driven rebuild cannot regress below the running set.
+# See docs/DEPENDENCY_LOCKS.md.
 # ==============================================================================
 # FRIDAY Core Production Dependencies (Python 3.11+)
 # Modernized for Oracle Cloud Always Free & Docker Container Mesh (friday_mesh)
 # ==============================================================================
-fastapi>=0.100.0
-uvicorn[standard]>=0.23.0
+fastapi>=0.161.1
+uvicorn[standard]>=0.54.0
 pydantic>=2.5.0
 pydantic-settings>=2.1.0
 httpx>=0.25.0
@@ -27,7 +31,7 @@ python-dotenv>=1.2.4
 duckduckgo-search>=6.0.0
 beautifulsoup4>=4.12.0
 rich>=13.0.0
-pillow>=10.0.0
+pillow>=12.3.0
 psutil>=5.9.0
 icalendar>=5.0.0
 recurring-ical-events>=2.0.0

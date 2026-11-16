@@ -1,19 +1,24 @@
+# TASK-SEN-012 (2026-11-15): fleet-shared dependency floors/pins reconciled
+# with the versions SEN-002 probed live in the production venv, so a
+# manifest-driven rebuild cannot regress below the running set.
+# See docs/DEPENDENCY_LOCKS.md.
 python-binance==1.0.37
 # NOTE: the suite is verified green on pandas 3.x (2026-10-07 hardening pass);
-# requirements.lock pins the exact verified set for reproducible installs.
+# requirements.lock (added by TASK-SEN-012) pins the exact resolved set for
+# reproducible installs; see docs/DEPENDENCY_LOCKS.md.
 pandas>=2.2.0
 numpy>=1.26.0
 scikit-learn>=1.5
 scipy>=1.11.0
 xgboost>=2.0.0
-requests>=2.31.0
-flask>=3.0.0
-flask-cors
-python-dotenv>=1.0.0
+requests>=2.34.2
+flask>=3.1.3
+flask-cors>=6.0.0,<7.0.0
+python-dotenv>=1.2.4
 simplefix>=1.0.17
 statsmodels>=0.14.0
 pyyaml>=6.0
-pytest>=7.0.0
+pytest>=9.0.3
 pytest-asyncio>=1.4.0,<2.0.0
 pytest-mock>=3.10.0
 optuna>=3.6.0
@@ -23,7 +28,7 @@ ccxt>=4.5.6  # Required for Binance unified Demo Trading support
 psutil>=5.9.0
 # Production WSGI server for the dashboard (docs claim it; it was never declared).
 # Dev/run-as-script mode still uses Flask's built-in server via `python dashboard.py`.
-gunicorn>=21.2.0
+gunicorn>=22.0.0
 httpx>=0.27.0
 
 # Direct Gemini provider used by autonomy/ai_advisor.py. The AI-advisor test suite

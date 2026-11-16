@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: SSH and dump
-        uses: appleboy/ssh-action@v1.2.5
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SERVER1_HOST }}
           username: ubuntu

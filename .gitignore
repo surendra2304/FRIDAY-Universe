@@ -122,6 +122,7 @@ FRIDAY_Universe_Workspace_Pack/
 
 # Persistent application state (databases, caches and local runtime artifacts)
 **/.data/
+FRIDAY/.data/
 # Persistent observations created by the research API (not source code)
 FRIDAY/.data/research_api/
 

@@ -1,4 +1,8 @@
+# TASK-SEN-012 (2026-11-15): fleet-shared dependency floors/pins reconciled
+# with the versions SEN-002 probed live in the production venv, so a
+# manifest-driven rebuild cannot regress below the running set.
+# See docs/DEPENDENCY_LOCKS.md.
 # Hosting-interpreter tools invoked by the production verification engine.
 # Install explicitly during deployment; generated code remains sandboxed.
-pytest>=8.3,<9
+pytest>=9.0.3,<10
 ruff>=0.11,<0.15

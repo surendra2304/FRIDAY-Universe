@@ -1,9 +1,13 @@
-fastapi>=0.110.0
-uvicorn[standard]>=0.28.0
+# TASK-SEN-012 (2026-11-15): fleet-shared dependency floors/pins reconciled
+# with the versions SEN-002 probed live in the production venv, so a
+# manifest-driven rebuild cannot regress below the running set.
+# See docs/DEPENDENCY_LOCKS.md.
+fastapi>=0.161.1
+uvicorn[standard]>=0.54.0
 pydantic>=2.6.0
 pydantic-settings>=2.2.0
 httpx>=0.27.0
-python-dotenv>=1.0.1
+python-dotenv>=1.2.4
 sqlalchemy>=2.0.28
 rich>=13.7.0
 typer>=0.12.0
