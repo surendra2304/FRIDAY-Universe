@@ -9166,6 +9166,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig2-task-ig2-frg-06
     evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #719 -> 0f866128d79cb41600468fa0e71f1cd483b041c8. CI green except the validate pair (proven flake family)."
     next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRG-09
+    title: "G-08..G-12 agent-infra evaluation with self-verification against the actual repos"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ig2-task-ig2-frg-09
+    evidence: "Forge/docs/IG2_EVALUATION_NOTES.md: every named item verified against the actual project 2026-11-16 before verdict (identities corroborated by supervisor round-2 audit). Verdicts: Browser Use reference-only (FRIDAY lane; needs Python 3.11+, fleet is 3.10); agentmemory reference-only (Memora's remit); Scientific Agent Skills reference-only (SKILL.md format noted); Diagram Design reference-only (pattern already in VyralX); Anthropic Cybersecurity Skills reference-only (Sentinel's lane; COMMUNITY project not Anthropic PBC; dual-use caution); Awesome Harness Engineering reference-only — B10 gap closed by cross-check, no pattern family missing from Forge; OpenViking reference-only (pattern already in Memora; AGPL caution); affaan-m/ECC already implemented (#734); JCode reference-only (1jehuang/jcode; wave-1 ruling stands); OmniRoute = inference lane I-12; Karpathy/Graphify already implemented (#674/#676); MausBot REJECT as a Forge component; Swiggy Builders Club reference-only (verified real: mcp.swiggy.com, OAuth 2.1+PKCE, app-gated prod; external commerce platform, owner-decision territory). No code adoption resulted — stated plainly in the doc."
+    next_action: "Coordinator merge queue"
   - id: TASK-IG2-INF-02
     title: "encrypted-at-rest key vault for Inference provider keys"
     status: IN_REVIEW
