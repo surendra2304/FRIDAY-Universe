@@ -56,14 +56,15 @@ mentions (SEC, CFTC, MiCA, stablecoin law) +2. Excludes price
 predictions, analyst calls, whale alerts, memecoins.
 *Budget:* 1/poll, 3/day, poll 30 min.
 
-### 2.3 `india_tech_regulatory` — India tech & regulatory news  ·  designed, disabled
+### 2.3 `india_tech_regulatory` — India tech & regulatory news  ·  enabled (live proof passed 2026-11-15/16)
 
 *Owner value.* The owner is India-based: DPDP rules, MeitY actions,
 RBI/SEBI digital rules, UPI changes, and app bans land directly on his
 projects and accounts. Only regulator/structure items pass.
 
 *Sources:* Times of India (the ingester's curated feed), Inc42,
-YourStory — each must be re-verified live before enabling. *Bar
+YourStory — each must be re-verified live before enabling
+(re-verified live 2026-11-17, all three serving fresh items). *Bar
 (score ≥ 3):* a named regulator (MeitY, RBI, SEBI, TRAI, CCI, DPDP) +3;
 payments-structure changes (UPI/NPCI/KYC rule changes) +3; rule-change
 language (draft bill, gazette, ban, licence, compliance) +2. Excludes
@@ -153,8 +154,11 @@ defaults were untouched. Full transcript: issue #35 completion comment.
 * *Claude releases are not covered* until Anthropic offers a feed again
   or a follow-up task adds an HTML watch over their news page. The
   ingester's Anthropic entry carries the same dead URL and 404s today.
-* The two designed watches ship **disabled**; each enables only after
-  its own live proof of the same shape as §5's.
+* The two designed watches shipped **disabled**; each enables only after
+  its own live proof of the same shape as §5's. `india_tech_regulatory`
+  passed its proof 2026-11-15/16 (1 alert + 1 cap-suppressed, dedupe
+  exact, zero false positives) and is now enabled;
+  `crypto_market_structure` remains disabled pending its own proof.
 * Google AI's feed carries a deep archive (2,000+ items) — the baseline
   rule absorbs it, but the first poll is heavier than steady state.
 * Significance is deterministic regex scoring, not a model judgment.
