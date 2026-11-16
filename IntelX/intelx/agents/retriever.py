@@ -97,7 +97,18 @@ class RetrieverAgent(BaseAgent):
     ) -> None:
         super().__init__(role="retriever", name="RetrieverAgent", gateway=gateway)
         self.settings = settings or get_settings()
-        self.http_connector = http_connector or HttpFetchConnector(settings=self.settings)
+        if http_connector is not None:
+            self.http_connector = http_connector
+        else:
+            # TASK-IG2-INT-01: when the operator enabled the camofox sidecar,
+            # bot-walled fetches escalate to it; the wrapper is an inert
+            # pass-through otherwise. An explicitly injected connector is
+            # always used exactly as given.
+            from intelx.connectors.browser_sidecar import maybe_wrap_with_sidecar_fallback
+
+            self.http_connector = maybe_wrap_with_sidecar_fallback(
+                HttpFetchConnector(settings=self.settings)
+            )
         self.file_connector = file_connector or FileConnector(settings=self.settings)
         self._semaphore = asyncio.Semaphore(self.settings.MAX_CONCURRENT_FETCHES)
 
