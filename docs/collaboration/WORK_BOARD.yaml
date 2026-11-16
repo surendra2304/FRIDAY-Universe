@@ -5890,6 +5890,39 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     evidence: "Code-verified per-agent credential-chain table (crew DESIGN.md, from main 0206c62a): FRIDAY _agent_api_key resolved any agent's key and its own chain ended at MEMORA_API_KEY; Stratex scoped client and Futuris/Forge alias chains fell back to MEMORA_API_KEY; VyralX peers presented the MEMORA_API_KEY env value as vyralx; IntelX already own-key; Cortex cross-agent helpers (record_security_decision/record_consultation) have zero callers in the deployed tree; Inference's memora client has no production callers. Local verification: 27/27 plain-python harness checks pass (master split, break-glass, per-agent auth, delegation allow/deny matrix, scope map, policy parser — sandbox pytest is tempfile-denied, CI is the operative gate); Memora FastAPI app constructs (46 routes) with the new dependency signatures; new pytest suite Memora/tests/test_mem005_remediation.py ships in this PR. MERGED in batch 2 (2026-11-17): the trio landed in order — server PR #807 -> c25cccee, FRIDAY client PR #824 -> b8dfe66c, fleet clients PR #826 -> 43b86b08 — and is deployed fleet-wide (S1 == main 2f840d52)."
     blockers: []
     next_action: "Coordinator's serialized live env pass (owed): apply the prepared ENV_CHANGE_SET — Memora's env gains the distinct MEMORA_MASTER_KEY + rotated dedicated registry values + MEMORA_DELEGATIONS + the re-signing step; each agent env gains only its own <AGENT>_MEMORA_API_KEY and loses MEMORA_API_KEY; FLEET_ORCHESTRATOR_MEMORA_API_KEY + FLEET_SUPERVISOR_MEMORA_API_KEY provisioned — Memora first, FRIDAY last, restarts in that order. Then re-run the MEM-005 access matrix (own-key cells identical to the audit; old distributed values 401 at Memora; delegation grants exercised allow+deny): VERIFIED only when the matrix passes. F3/F4 decisions from the W5 entry remain open and are not part of this task."
+  - id: "TASK-MEM-005-R2"
+    title: "Fallback-client key resolution — Futuris (live) + Stratex (identical defect) memora_cloud_fallback must resolve {AGENT}_MEMORA_API_KEY before {AGENT}_API_KEY"
+    status: IN_REVIEW
+    owner: "muse_ai"
+    branch: "claude/task-mem-005-r2-fallback-keys"
+    milestone: "Wave 5 — Memora deep-dive (remediation follow-ups)"
+    files:
+      - "Futuris/futuris/integrations/memora_cloud_fallback.py"
+      - "Futuris/tests/integrations/test_memora_cloud_fallback_keys_futuris.py"
+      - "Stratex/autonomy/memora_cloud_fallback.py"
+      - "Stratex/tests/test_memora_cloud_fallback_keys_stratex.py"
+    claim: "Issue #35 comment 6932892425 (TASK-MEM-005-R2 + R3 claim, muse_ai)."
+    defect: "Follow-up 2 from the MEM-005 live env pass (issue #35 comment 6932759841). The memora_cloud_fallback family was claimed fixed by the #826 fleet-clients PR, but two copies never received the dedicated-key preference: Futuris/futuris/integrations/memora_cloud_fallback.py resolved only {AGENT}_API_KEY (the peer key), so after the env-pass rotation — which moved the live registry value into {AGENT}_MEMORA_API_KEY and left the peer key at its old value — Futuris's event consumer (integrations/memora_event_consumer.py -> read_event_cursor/poll_events) 401s on a ~16s retry loop (events durable, no data loss, cursor does not advance). Stratex/autonomy/memora_cloud_fallback.py carries the identical one-line defect (same wrapper import shape via autonomy/memora_client.py); included in this PR as a flagged scope note. Cortex/Sentinel/Inference copies were re-verified line-by-line as already fixed by #826 (dedicated var first) and are untouched."
+    acceptance:
+      - "With both env vars set, the client presents {AGENT}_MEMORA_API_KEY; with only the peer var set it presents {AGENT}_API_KEY; with only MEMORA_API_KEY set it presents nothing (not-configured error, no request emitted); an explicit constructor api_key still wins."
+      - "New tests pin the resolution order for both fixed copies and fail on pristine main exactly at the dedicated-key-wins case."
+    evidence: "Local A/B (hermetic pytest, stdlib-only, urlopen stubbed): branch 8/8 pass; pristine main 2 failed / 6 passed — the failures are exactly the two dedicated-key-wins tests (one per agent), proving the tests pin this fix. Neighbour suite Futuris/tests/test_memora_event_consumer.py cannot collect in the sandbox (missing structlog) identically on main and branch — environmental, CI is the operative gate. Fix mirrors the #826 pattern and the shared SDK's _agent_memora_key verbatim (dedicated var, then per-agent var; MEMORA_API_KEY never consulted)."
+    blockers: []
+    next_action: "Coordinator merges this PR; Fleet CD deploys; then verify in production that Futuris's event-consumer 401 loop has stopped and its cursor advances (journal + cursor read), and flip to VERIFIED via a fresh-main board PR."
+  - id: "TASK-MEM-005-R3"
+    title: "Memora identity-registry seeding — futuris/sentinel/cortex Agent rows (server-side data fix, no code)"
+    status: VERIFIED
+    owner: "muse_ai"
+    milestone: "Wave 5 — Memora deep-dive (remediation follow-ups)"
+    files: []
+    claim: "Issue #35 comment 6932892425 (TASK-MEM-005-R2 + R3 claim, muse_ai)."
+    defect: "Follow-up 1 from the MEM-005 live env pass (issue #35 comment 6932759841): futuris, sentinel and cortex had no rows in Memora's agents table (7 rows existed, created 2026-10-30 -> 2026-11-15; those three were never registered). POST /v1/memories/query resolves the authenticated actor via IdentityService.get_agent_by_name per request and 403s unregistered actors, so the three agents 403'd as self and as FRIDAY on-behalf-of targets, while GET /v1/memories/search (no registry check) returned 200 with their rotated keys."
+    acceptance:
+      - "agents table holds all 10 fleet identities in tenant 'default' with the same shape as the original 7 registrations, each with its memora://{name}/private agent-private namespace."
+      - "The 4 env-pass matrix cells that failed on registration (futuris/sentinel/cortex query-as-self, FRIDAY OBO -> futuris query) return 200 with the agents' post-rotation credentials."
+    evidence: "Executed 2026-11-17 on S1 via Memora's own IdentityService.register_agent (the production registration path, idempotent): agents 7 -> 10 (futuris 91fba8e8-1050-47b6-b370-54d1c544ecd9, sentinel ebe269e5-14cd-4df1-85b9-3439dc76683a, cortex b017c5eb-46c4-4b58-8c54-beabbac1e676; all tenant default, role worker, null description/parent/scope — mirroring the existing rows), namespaces 9 -> 12. Matrix re-run BEFORE: all 4 cells HTTP 403 'not registered in Memora' (key fingerprints matched the rotation values: futuris 97ca4700, sentinel 3c606cb9, cortex b48ad9e5, friday ee076246; S2-side fingerprints confirmed the registry copies equal the agents' own {AGENT}_MEMORA_API_KEY values). AFTER: all 4 cells HTTP 200. No Memora restart was needed or taken (per-request DB lookup, no cache): Memora ActiveEnterTimestamp unchanged at the env-pass restart 2026-11-17 04:54:11 IST, health 200."
+    blockers: []
+    next_action: "None — complete and production-verified. (Any future agent added to the fleet must be registered in Memora's agents table at provisioning time; the query path deliberately does not auto-register.)"
   - id: TASK-INT-003
     title: "IntelX research depth: fixed-set rubric scoring (source diversity, primary-source ratio, contradiction handling, citation verifiability), fix the weakest proven link, re-score"
     owner: muse_ai
