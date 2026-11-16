@@ -9166,6 +9166,13 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig2-task-ig2-frg-06
     evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #719 -> 0f866128d79cb41600468fa0e71f1cd483b041c8. CI green except the validate pair (proven flake family)."
     next_action: "Fleet CD deploy -> production probe"
+  - id: TASK-IG2-FRG-10
+    title: "C-2 wiring: independent review passes inside the verification battery (production caller)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/ig2-task-ig2-frg-10
+    evidence: "app/verification/engine.py: VerificationEngine gains an 'Independent Review Passes' stage in _verify_task_uncoordinated (after source-integrity, over the settled workspace) calling TASK-IG-FRG-01's run_review_passes; FINDINGS -> failed evidence (named hard failure via report.failure_reasons); configured-but-UNAVAILABLE -> failed evidence (fail closed); unconfigured -> deterministic security review still runs, audit absence disclosed in the evidence stdout as a gate result, never counted as an audit pass. Full ReviewReport persisted as review_passes_report.json artifact. Reviewer models from FORGE_REVIEW_AUTHOR_MODEL/FORGE_REVIEW_REVIEWER_MODEL env or constructor; review_fn built lazily from app.providers for the reviewer model. Production caller: app/api/delegate.py -> verification_engine.verify_task (delegate.py:316/:424). 5/5 new tests exercise the stage THROUGH verify_task (supervisor C-2 bar), incl. |safe template FINDINGS failing the battery and same-model config refused. review_passes.py docstring updated to record the wiring."
+    next_action: "Coordinator merge queue; fleet env decision (set the two FORGE_REVIEW_* models) activates the cross-model leg in production"
   - id: TASK-IG2-INF-02
     title: "encrypted-at-rest key vault for Inference provider keys"
     status: IN_REVIEW
