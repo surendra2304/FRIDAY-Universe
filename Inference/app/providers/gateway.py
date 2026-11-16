@@ -407,6 +407,18 @@ class ModelGateway:
         # configured" into "fallbacks actually run".
         primary_deadline = time.monotonic() + (timeout_budget * settings.PRIMARY_ATTEMPT_FRACTION)
 
+        # TASK-IG2-INF-04: rule-based token compression (OmniRoute pattern),
+        # applied once here — the gateway every path traverses — so every rung
+        # of the ladder sends the compressed prompt. Short prompts bypass
+        # inside the compressor, and a compression failure must never break
+        # serving: any error falls back to the original request.
+        try:
+            from app.providers.token_compression import compress_provider_request
+
+            request = compress_provider_request(request)
+        except Exception:  # noqa: BLE001 - compression must never break serving
+            logger.warning("GATEWAY: Token compression failed; sending the original prompt.")
+
         prov_name = provider_name.lower().strip()
         if prov_name == "litellm":
             from app.providers.gateway_litellm import execute_via_litellm
@@ -1277,6 +1289,15 @@ class ModelGateway:
         prov_name = provider.lower().strip()
         timeout_budget = _request_timeout_budget(request)
         deadline = time.monotonic() + timeout_budget
+
+        # TASK-IG2-INF-04: same compression stage as execute() — streaming
+        # spends the same free-tier quota, so it gets the same savings.
+        try:
+            from app.providers.token_compression import compress_provider_request
+
+            request = compress_provider_request(request)
+        except Exception:  # noqa: BLE001 - compression must never break serving
+            logger.warning("GATEWAY: Token compression failed; streaming the original prompt.")
 
         # TASK-REL-047 guards (same rules as execute()): streaming has no
         # ladder to escalate to, so a guarded provider is refused up front
