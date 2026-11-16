@@ -269,6 +269,29 @@ class SkillLearningService:
                     rewritten = None
                 if rewritten:
                     body = rewritten
+            # Policy compliance, by construction. PROCEDURAL is an
+            # evidence-required type, and when the caller is the Memora
+            # service identity the write pipeline demands verified or
+            # operator-confirmed trust plus at least one evidence
+            # reference — read from the evidence_refs ARGUMENT (or a
+            # provenance "evidence_refs" key), never from this service's
+            # own "evidence_ids" provenance key. The first version of
+            # this loop passed neither, so every draft the service
+            # identity tried to write was refused and the loop could
+            # never draft for its own outcomes. The qualifying outcome
+            # records ARE the evidence: the bucket was tallied from
+            # stored, pipeline-signed records read back in
+            # pattern_stats, and a trigger can only fire with at least
+            # one of them present (>= 1 owner correction, or >=
+            # min_successes successes). The trust label states what the
+            # service actually established — an owner correction among
+            # the evidence is operator-confirmed; a threshold pass over
+            # stored records is service-verified. The pipeline honours
+            # a trust label only from the service principal and forces
+            # "candidate" for everyone else, so for ordinary actors the
+            # existing PROCEDURAL-candidate path applies unchanged.
+            # Either way the draft lands pending_review; activation
+            # still belongs to the review gate alone.
             try:
                 result = MemoryWriteService.execute_pipeline(
                     db,
@@ -277,6 +300,10 @@ class SkillLearningService:
                     tenant_id=tenant_id,
                     memory_type=MemoryType.PROCEDURAL,
                     source=DRAFT_SOURCE,
+                    trust_level=(
+                        "operator_confirmed" if trigger == "owner_correction" else "verified"
+                    ),
+                    evidence_refs=list(bucket["evidence_ids"]),
                     provenance={
                         "pattern": PATTERN_TAG,
                         "pattern_key": key,
