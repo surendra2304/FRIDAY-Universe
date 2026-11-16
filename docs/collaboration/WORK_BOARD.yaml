@@ -9419,6 +9419,14 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig2-task-ig2-str-13
     evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #729 -> fe4038670ee4dd8645b6df98278a723f0d2553d9. CI green except the validate pair (proven flake family)."
     next_action: "Run the pre-declared Box Theory backtest under the full RD bar (declaration SHA-256 715b6884fb6a9abe3efec7be90c83e161cf7426aef1dc37629616b3145d013bd frozen at ship; no backtest run yet)"
+  - id: TASK-IG2-STR-14
+    title: "SRS (School Run Strategy) RD candidate, PRE-DECLARED - no backtest run (IG item DZ_aHrWuF49, unblocked by browser re-watch)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 742
+    branch: claude/ig2-task-ig2-str-14
+    evidence: "IG re-watch Phase 1, Stratex lane (first item). Full browser-watch recovery of reel DZ_aHrWuF49: verbatim subtitle transcript + machine-heard audio cross-checked; all four extraction gaps resolved or declared as conventions in the declaration. Declaration frozen: Stratex/rigorous_backtest/ig/srs_declaration.json SHA-256 7a805046cab849bc15a8194c31ad9f6ff5cbc922c91e428110a7ff0c9791525b. Declaration + registration ONLY in PR #742 - no signal module, no backtest run, no live-trading code touched."
+    next_action: "Run the pre-declared SRS backtest under the full RD bar (TSLA 15m, US regular session; declaration SHA-256 7a805046cab849bc15a8194c31ad9f6ff5cbc922c91e428110a7ff0c9791525b frozen at ship; no backtest run yet)"
   - id: TASK-IG2-VOI-01
     title: "spoken-English practice mode \u2014 per-sentence corrections with error label + tip"
     status: IN_REVIEW
