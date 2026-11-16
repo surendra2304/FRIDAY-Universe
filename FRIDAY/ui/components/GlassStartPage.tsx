@@ -9,10 +9,10 @@
    toggles, background, city, to-dos, notes — persists in
    localStorage via lib/glassWidgets.ts.
 
-   Optional component: it is NOT mounted on the live Halo stage and
-   changes no existing surface. A caller renders it as a standalone
-   start page (e.g. a browser new-tab target or a /start route) and
-   the live design is untouched. All state logic lives in
+   Mounted (IG implementation wave, 2026-11-16): app/start/page.tsx
+   renders it at the /start route, exactly the standalone start-page
+   mounting this component was built for. It is not part of the live
+   Halo stage at / and changes no existing surface. All state logic lives in
    lib/glassWidgets.ts (unit-tested with plain node); this file is
    rendering + the two free, key-less data feeds the widgets need:
    Open-Meteo for weather and OpenStreetMap/Nominatim for the map.

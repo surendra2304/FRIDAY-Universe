@@ -2,6 +2,7 @@
 
 import { Layers } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SplitText from "../reactbits/SplitText";
 import Magnet from "../reactbits/Magnet";
@@ -27,6 +28,8 @@ const ShowcaseSheet = dynamic(() => import("./ShowcaseSheet").then((m) => m.Show
 const TourSheet = dynamic(() => import("./TourSheet").then((m) => m.TourSheet), { ssr: false });
 const CitySheet = dynamic(() => import("./CitySheet").then((m) => m.CitySheet), { ssr: false });
 const EditorialSheet = dynamic(() => import("./EditorialSheet").then((m) => m.EditorialSheet), { ssr: false });
+const RankSheet = dynamic(() => import("./RankSheet").then((m) => m.RankSheet), { ssr: false });
+const OrbSheet = dynamic(() => import("./OrbSheet").then((m) => m.OrbSheet), { ssr: false });
 
 /* ================================================================
    The stage (TASK-WEB-002) — the whole app is this one room.
@@ -43,7 +46,18 @@ const EditorialSheet = dynamic(() => import("./EditorialSheet").then((m) => m.Ed
    halo, or Cmd/Ctrl-K all open the same veil.
    ================================================================ */
 
-type SheetKind = "fleet" | "chronicle" | "pulse" | "life" | "galaxy" | "showcase" | "tour" | "city" | "editorial";
+type SheetKind =
+  | "fleet"
+  | "chronicle"
+  | "pulse"
+  | "life"
+  | "galaxy"
+  | "showcase"
+  | "tour"
+  | "city"
+  | "editorial"
+  | "rank"
+  | "orb";
 
 const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   fleet: { kicker: "The crew, in detail", title: "The Fleet" },
@@ -55,9 +69,12 @@ const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
   tour: { kicker: "New here? Start with the story", title: "The Guided Tour" },
   city: { kicker: "The universe as a place", title: "The City" },
   editorial: { kicker: "The crew, presented properly", title: "The Editorial Edition" },
+  rank: { kicker: "Measured, never typed", title: "The Response Board" },
+  orb: { kicker: "A second face for the voice", title: "The Orb" },
 };
 
 export function Stage() {
+  const router = useRouter();
   const [voicePhase, setVoicePhase] = useState<VoicePhase>("resting");
   const [chatBusy, setChatBusy] = useState(false);
   const [fleet, setFleet] = useState<FleetSnapshot | null>(null);
@@ -222,6 +239,27 @@ export function Stage() {
         run: () => openSheet("editorial"),
       },
       {
+        id: "rank",
+        label: "See who answers fastest",
+        hint: "the fleet ranked by measured response time, re-measured as you watch",
+        keys: "rank ranking leaderboard fastest latency response board toprank speed",
+        run: () => openSheet("rank"),
+      },
+      {
+        id: "orb",
+        label: "Look at the orb",
+        hint: "the voice's second face — it breathes with the live call",
+        keys: "orb face visual voice phase ultrons sphere hologram",
+        run: () => openSheet("orb"),
+      },
+      {
+        id: "start",
+        label: "Open the glass start page",
+        hint: "a start-page dashboard — search, weather, to-dos, notes, map",
+        keys: "start page glass dashboard new tab home widgets weather todo notes",
+        run: () => router.push("/start"),
+      },
+      {
         id: "talk",
         label: callLive ? "End the voice line" : "Start the voice line",
         hint: callLive ? "close the call — the stage stays as it is" : "talk to FRIDAY out loud, hands-free",
@@ -239,7 +277,7 @@ export function Stage() {
         run: () => composerRef.current?.focus(),
       },
     ],
-    [callLive, openSheet, ambienceOn, toggleAmbience],
+    [callLive, openSheet, ambienceOn, toggleAmbience, router],
   );
 
   const agents = fleet?.agents ?? [];
@@ -324,6 +362,8 @@ export function Stage() {
           {sheet === "tour" && <TourSheet onSummon={(kind) => openSheet(kind)} />}
           {sheet === "city" && <CitySheet onSummon={(kind) => openSheet(kind)} />}
           {sheet === "editorial" && <EditorialSheet />}
+          {sheet === "rank" && <RankSheet />}
+          {sheet === "orb" && <OrbSheet phase={stagePhase} />}
         </Sheet>
       )}
     </main>
