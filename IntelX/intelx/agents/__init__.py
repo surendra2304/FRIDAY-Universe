@@ -13,6 +13,12 @@ from intelx.agents.critic import (
     CritiqueReport,
     OverconfidentClaim,
 )
+from intelx.agents.deep_research_loop import (
+    DeepResearchResult,
+    GradedSource,
+    IterativeDeepResearcher,
+    LoopRound,
+)
 from intelx.agents.extractor import (
     ExtractedClaim,
     ExtractedEntity,
@@ -77,6 +83,10 @@ __all__ = [
     "CriticAgent",
     "CritiqueReport",
     "OverconfidentClaim",
+    "IterativeDeepResearcher",
+    "DeepResearchResult",
+    "GradedSource",
+    "LoopRound",
     "SynthesizerAgent",
     "SynthesisResult",
     "SynthesizedFinding",
