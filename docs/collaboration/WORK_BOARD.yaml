@@ -9045,6 +9045,22 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     pr: 652
     branch: claude/task-str-fwd-007
     next_action: "merge -> Fleet CD -> watch trade 470's close land exactly once, under sleeve:best_per_class (one fill-ledger row, engine=oanda_sleeve; no daemon/unknown row, no realized_pnl jump in the daemon heartbeat) -> VERIFIED"
+  - id: TASK-VOI-010
+    title: "Greeting path: recall must not gate FRIDAY's first word (key-only await + async memory delivery)"
+    owner: muse_ai
+    status: IN_REVIEW
+    priority: P1
+    created: 2026-11-15
+    depends_on: []
+    branch: "claude/task-voi-010-rebase"
+    files:
+      - FRIDAY/src/friday/voice/livekit_worker.py
+      - FRIDAY/tests/test_voice_greeting_recall.py
+    defect: "FRD-005's first measured run put the greeting at ~144.5s to first audio under Server-1 load ~4.35. Root cause, measured in the worker: the entrypoint built the voice session only when BOTH the verified-key lookup AND the Memora recall returned (asyncio.gather), so a slow recall (7s budget; 47.4s observed under load in VOI-008) delayed the first word by the full recall duration. Second defect: the key keeper refreshed the verified-key cache only AFTER the 240s TTL lapsed."
+    acceptance: "With a slow or never-resolving recall, the session starts and the greeting plays on the key alone (proven by unit test with a recall that never resolves); a late recall is delivered into the live session (update_instructions / chat context) and journal-logged; keeper refresh happens before TTL expiry; drill on the packaged harness (base vs edited, incl. loaded + unavailable runs) executed with conditions recorded; post-deploy FRD-005 acceptance re-run is the latency verdict."
+    evidence: "PR #634 (rebase finisher; the merge queue had aborted the original package: IG Voice PRs changed the worker, claim marker lost to the bridge hang). Rebase proven mechanically: git merge-file exit 0 zero conflicts; merged-vs-main diff == VOI-010 change set exactly (265 lines); merged-vs-VOI-010 diff == IG change set exactly (74 lines); no behavioural change from the rebase. Tests: new suite 15/15 on the merged worker, 14/15 fail on pristine main; full local voice set zero rebase-unique failures. CI: contracts/test/py310-import/secrets green; voice-regressions 292 passed / 1 pre-existing failure (log-verified); validate pair red on unrelated Futuris repo-root tests (flake family, same on clean main). Drill 2026-11-16 on Server 1 (all 9 runs): mechanism PROVEN live (e1 timing line: connect-to-key 0.69s, recall pending, session built without it); keeper pre-expiry refresh PROVEN live (twice); latency comparison INCONCLUSIVE (load 8-16 during the edit window vs 2-8 for base; base 15.9/18.6/12.9s + loaded no-audio, edit 37.7s + 3x no-audio); unavailable run NOT exercised (agent_join_timeout, zero jobs reached the staged worker). Artifacts on Server 1: /tmp/voi010/ (timelines, worker logs, agent wavs)."
+    next_action: "Coordinator: merge PR #634 on review -> deploy via Fleet CD -> run the drill's production mode (participant10.py friday-voi010-prod1 against the production worker) + the unavailable-path retest + the FRD-005 acceptance re-run -> VERIFIED on that evidence."
+    blockers: []
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
