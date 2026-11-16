@@ -3120,11 +3120,17 @@ async def _dispatch_command(command: str, *, boss_verified: bool = False) -> dic
             _forget_res = {"status": "error"}
         _st = str(_forget_res.get("status", "error"))
         if _st == "deleted":
-            _gone = str(_forget_res.get("content_text", "")).strip()
+            # Never echo the deleted record's text in the confirmation: a
+            # forget reply that restates the content keeps it alive in the
+            # conversation/audit history the owner just asked to clear it
+            # from (post-deploy proofs A, 2026-11-16 — the live reply read
+            # "I've forgotten test code: FRD001-BETA-9."). Confirm the
+            # action and the storage scope only; the receipt metadata
+            # below still carries the record id and status.
             if _forget_res.get("cloud") is False:
-                _reply = f"Removed {_gone or 'that fact'} from the local memory backend, Boss. Shared Memora deletion is not confirmed."
+                _reply = "Removed that fact from the local memory backend, Boss. Shared Memora deletion is not confirmed."
             else:
-                _reply = f"Done, Boss — I've forgotten {_gone or 'that fact'} from shared active memory. The audit history is retained."
+                _reply = "Done, Boss — I've forgotten that fact from shared active memory. The audit history is retained."
         elif _st == "not_found":
             _reply = "I couldn't identify a matching fact to forget, Boss. Tell me the exact words; I haven't selected another memory instead."
         elif _st == "needs_clarification":
