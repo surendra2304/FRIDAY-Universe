@@ -224,7 +224,8 @@ WATCH_INDIA_TECH_REGULATORY = WatchDefinition(
     ),
     sources=(
         # Fetch-verified at design time against the ingester's curated set;
-        # each source must be re-verified live before this watch enables.
+        # re-verified live 2026-11-17 before enabling (all three feeds
+        # serving fresh items).
         FeedSource("https://timesofindia.indiatimes.com/rssfeeds/296589292.cms", "Times of India"),
         FeedSource("https://inc42.com/feed/", "Inc42"),
         FeedSource("https://yourstory.com/feed", "YourStory"),
@@ -254,7 +255,7 @@ WATCH_INDIA_TECH_REGULATORY = WatchDefinition(
     max_alerts_per_day=2,
     baseline_max_age_hours=72,
     poll_interval_seconds=3600,
-    enabled=False,  # designed; enables after its own live proof (design doc §5)
+    enabled=True,  # live proof passed 2026-11-15/16: 1 alert + 1 cap-suppressed, dedupe exact, zero false positives (design doc §5)
 )
 
 WATCHES: dict[str, WatchDefinition] = {

@@ -15,6 +15,7 @@ UTC = timezone.utc  # 3.11+ name: datetime.UTC is timezone.utc
 from pathlib import Path
 
 from intelx.watches.engine import (
+    WATCHES,
     WATCH_AI_MODEL_RELEASES,
     FeedSource,
     WatchService,
@@ -246,6 +247,15 @@ def test_feed_error_does_not_kill_poll(tmp_path: Path) -> None:
     result = poll(make_service(tmp_path, fetcher), fixture_watch())
     assert any("HTTP 500" in e for e in result.errors)
     assert result.fetched == 5  # the healthy feed still processed
+
+
+def test_enabled_watch_set_is_pinned() -> None:
+    # Exactly the watches with a passed live proof may be enabled
+    # (STANDING_WATCHES.md §5). india_tech_regulatory passed its proof
+    # 2026-11-15/16; crypto_market_structure has not, so it stays off.
+    enabled = {w.id for w in WATCHES.values() if w.enabled}
+    assert enabled == {"ai_model_releases", "india_tech_regulatory"}
+    assert WATCHES["crypto_market_structure"].enabled is False
 
 
 def test_outbox_is_jsonl(tmp_path: Path) -> None:
