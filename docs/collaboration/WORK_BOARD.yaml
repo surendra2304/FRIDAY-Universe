@@ -5895,6 +5895,7 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     status: IN_REVIEW
     owner: "muse_ai"
     branch: "claude/task-mem-005-r2-fallback-keys"
+    pr: 862
     milestone: "Wave 5 — Memora deep-dive (remediation follow-ups)"
     files:
       - "Futuris/futuris/integrations/memora_cloud_fallback.py"
