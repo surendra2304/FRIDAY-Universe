@@ -2,7 +2,7 @@
 
 import { Layers } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import SplitText from "../reactbits/SplitText";
 import Magnet from "../reactbits/Magnet";
 import type { VoiceLinkControls, VoicePhase } from "../VoiceCall";
@@ -12,12 +12,14 @@ import { Conversation } from "./Conversation";
 import { Veil, type VeilCommand } from "./Veil";
 import { Sheet } from "./Sheet";
 import { fetchFleet, openActivitySocket, toneFor, type FleetSnapshot } from "@/lib/wire";
+import { getWakeArmedSnapshot, setWakeArmedPref, subscribeWakeArmed } from "@/lib/wakeWord";
 
 /* The voice line (LiveKit) and the three sheets are lazy chunks:
    the stage paints and breathes on the small core bundle, and
    the heavy machinery streams in behind it. The sheets only
    exist when summoned, so they only load when summoned. */
 const VoiceCall = dynamic(() => import("../VoiceCall").then((m) => m.VoiceCall), { ssr: false });
+const WakeListener = dynamic(() => import("./WakeListener").then((m) => m.WakeListener), { ssr: false });
 const FleetSheet = dynamic(() => import("./FleetSheet").then((m) => m.FleetSheet), { ssr: false });
 const ChronicleSheet = dynamic(() => import("./ChronicleSheet").then((m) => m.ChronicleSheet), { ssr: false });
 const PulseSheet = dynamic(() => import("./PulseSheet").then((m) => m.PulseSheet), { ssr: false });
@@ -59,6 +61,11 @@ const SHEET_HEADS: Record<SheetKind, { kicker: string; title: string }> = {
 
 export function Stage() {
   const [voicePhase, setVoicePhase] = useState<VoicePhase>("resting");
+  /* The opt-in wake word (FRIDAY/docs/WAKE_WORD.md): off by default,
+     persisted in localStorage, read through useSyncExternalStore so the
+     server render and the first client render agree on "off". */
+  const wakeArmed = useSyncExternalStore(subscribeWakeArmed, getWakeArmedSnapshot, () => false);
+  const [wakeNote, setWakeNote] = useState<string | null>(null);
   const [chatBusy, setChatBusy] = useState(false);
   const [fleet, setFleet] = useState<FleetSnapshot | null>(null);
   const [fleetOk, setFleetOk] = useState(false);
@@ -232,6 +239,18 @@ export function Stage() {
         },
       },
       {
+        id: "wake",
+        label: wakeArmed ? "Disarm the wake word" : "Arm the wake word",
+        hint: wakeArmed
+          ? "stop listening for “Hey FRIDAY” in this tab"
+          : "start the voice line when you say “Hey FRIDAY” — this tab only",
+        keys: "wake word hey friday hands free always listening",
+        run: () => {
+          setWakeNote(null);
+          setWakeArmedPref(!wakeArmed);
+        },
+      },
+      {
         id: "write",
         label: "Write a message instead",
         hint: "drop the cursor into the composer below the halo",
@@ -239,7 +258,7 @@ export function Stage() {
         run: () => composerRef.current?.focus(),
       },
     ],
-    [callLive, openSheet, ambienceOn, toggleAmbience],
+    [callLive, openSheet, ambienceOn, toggleAmbience, wakeArmed],
   );
 
   const agents = fleet?.agents ?? [];
@@ -308,6 +327,29 @@ export function Stage() {
       </div>
 
       <VoiceCall onPhase={setVoicePhase} linkRef={linkRef} />
+
+      {wakeArmed && !callLive && (
+        <WakeListener
+          enabled
+          onWake={() => linkRef.current?.start()}
+          onBlocked={(reason) => {
+            setWakeArmedPref(false);
+            setWakeNote(
+              reason === "mic-denied"
+                ? "Wake word off — the browser refused microphone access."
+                : "Wake word off — this browser has no speech recognition.",
+            );
+          }}
+        />
+      )}
+      {(wakeArmed || wakeNote) && (
+        <p style={{ textAlign: "center", fontSize: 12, opacity: 0.65, margin: "6px 0 0" }} aria-live="polite">
+          {wakeNote ??
+            (callLive
+              ? "Wake word armed — paused while the line is open."
+              : "Wake word armed — say “Hey FRIDAY” to start the line.")}
+        </p>
+      )}
 
       <Conversation onBusyChange={setChatBusy} composerRef={composerRef} />
 
