@@ -28,7 +28,7 @@ response_cache = SafeResponseCache(
         contextual_ttl_seconds=float(_RUNTIME_CONFIG.resp_cache_contextual_ttl_seconds),
         personalised_ttl_seconds=float(_RUNTIME_CONFIG.resp_cache_personalised_ttl_seconds),
         template_ttl_seconds=float(_RUNTIME_CONFIG.resp_cache_template_ttl_seconds),
-        stochastic_ttl_cap_seconds=float(_RUNTIME_CONFIG.resp_cache_stochastic_ttl_cap_seconds),
+        stochastic_ttl_cap_seconds=float(_RUNTIME_CONFIG.resp_cache_stochastic_cap_ttl_seconds),
         max_entries=_RUNTIME_CONFIG.resp_cache_max_entries,
         policy_version=_RUNTIME_CONFIG.resp_cache_policy_version,
         allow_personalised_storage=_RUNTIME_CONFIG.resp_cache_allow_personalised_storage,
@@ -40,7 +40,7 @@ UNIFIED_CACHE_NAMESPACE = "provider.unified"
 class UnifiedExecutionRequest(BaseModel):
     """Universal execution request across all models and agents."""
 
-    provider: Literal["auto", "gemini", "groq", "cerebras", "mistral", "openai", "openrouter", "nvidia", "cohere", "huggingface"] = Field(
+    provider: Literal["auto", "gemini", "groq", "cerebras", "mistral", "openai", "openrouter", "nvidia", "cohere", "huggingface", "bytez"] = Field(
         default="auto", description="Target provider name or 'auto' for intelligent capability matching"
     )
     model: str | None = Field(default=None, min_length=1, max_length=200, description="Optional requested model; policy gateway may substitute and reports the served model")

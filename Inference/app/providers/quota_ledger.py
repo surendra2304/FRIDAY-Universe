@@ -24,6 +24,12 @@ limits:
   across *all* Groq keys, accounted on a rolling 60-second window.
 * Everything else is **accounted but has no declared limit** (state
   ``no_declared_limit``) — the ledger never invents a limit it was not given.
+* **Bytez** (TASK-IG2-INF-01) is accounted but carries the distinct state
+  ``unproven_free_tier``: its documented $0 tier states no recurring free
+  allowance, so no limit may be declared — and no fleet budget may count
+  on Bytez volume — until the empirical probe in
+  ``app.providers.bytez_probe`` has measured real volume across repeated
+  runs and an operator declares a limit from that evidence.
 
 Warning before exhaustion is the point: a bucket enters ``warning`` at
 :data:`WARN_FRACTION` (default 80%) of its limit and ``exhausted`` at the
@@ -75,6 +81,14 @@ LEDGER_DIR = Path(os.environ.get("INFERENCE_QUOTA_LEDGER_DIR", str(_DEFAULT_LEDG
 
 #: Providers with no metered quota at all (self-hosted / transport shims).
 UNMETERED_PROVIDERS = frozenset({"local", "litellm", "llamacpp", "vllm", "sglang", "ollama"})
+
+#: Providers whose free tier is documented but whose recurring free volume
+#: is UNPROVEN (TASK-IG2-INF-01). Attempts are accounted like any other
+#: provider, but the snapshot state is ``unproven_free_tier`` and no limit
+#: or used-fraction is ever reported for them: nothing may budget against
+#: volume that has not been measured. A provider leaves this set only when
+#: an operator declares a measured limit for it in code.
+UNPROVEN_FREE_TIER_PROVIDERS = frozenset({"bytez"})
 
 OUTCOMES = frozenset({"success", "rate_limited", "unavailable", "timeout", "error"})
 
@@ -401,6 +415,11 @@ class QuotaLedger:
                 entry["state"] = groq["state"]
             elif provider in UNMETERED_PROVIDERS:
                 entry["state"] = "unmetered"
+            elif provider in UNPROVEN_FREE_TIER_PROVIDERS:
+                # TASK-IG2-INF-01: accounted, but no limit exists to measure
+                # against — the free volume is unproven until the Bytez
+                # quota probe measures it and an operator declares a limit.
+                entry["state"] = "unproven_free_tier"
             else:
                 entry["state"] = "no_declared_limit"
 
