@@ -88,6 +88,7 @@ from friday.tools.builtin import (
     LaptopDictateTool,
     LaptopHotkeyTool,
     LaptopListDevicesTool,
+    LaptopLockTool,
     LaptopPcCleanupTool,
     LaptopPcHealthTool,
     LaptopStorageCheckTool,
@@ -243,6 +244,8 @@ class ToolExecutionMixin:
             registry.register(LaptopBrowserTaskTool())
             registry.register(LaptopClickTool())
             registry.register(LaptopRunCommandTool())
+            # TASK-IG-FRD-010: lock the laptop screen (no unlock, by design).
+            registry.register(LaptopLockTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
             # TASK-IG-FRD-004: delegated errands — framework only, approval-gated, dry-run.

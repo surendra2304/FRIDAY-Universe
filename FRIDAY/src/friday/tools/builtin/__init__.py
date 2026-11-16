@@ -101,6 +101,7 @@ from friday.tools.builtin.health_monitor import HealthCheckTool
 from friday.tools.builtin.laptop_control import (
     LaptopClickTool,
     LaptopListDevicesTool,
+    LaptopLockTool,
     LaptopOpenAppTool,
     LaptopOpenUrlTool,
     LaptopRunCommandTool,
@@ -243,6 +244,7 @@ __all__ = [
     "LaptopOpenAppTool",
     "LaptopOpenUrlTool",
     "LaptopRunCommandTool",
+    "LaptopLockTool",
     "LaptopDescribeScreenTool",
     "LaptopScreenshotTool",
     "LaptopDictateTool",

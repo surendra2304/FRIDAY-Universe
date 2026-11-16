@@ -64,6 +64,9 @@ ALLOWED_LAPTOP_COMMANDS = frozenset(
         SHELL_COMMAND,
         "system_info",
         "notify",
+        # TASK-IG-FRD-010: lock only. There is no unlock command, by
+        # design — an agent never handles the owner's OS credentials.
+        "lock_screen",
         # TASK-IG-LAP-03: PC care pack — health report, temp cleanup,
         # hotkeys, storage check/repair (client handlers carry the
         # destructive-action gates; see laptop_pc_care tools).
