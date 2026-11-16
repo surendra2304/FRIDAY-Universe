@@ -13,6 +13,7 @@ class MemoraClient:
     """HTTP adapter for agent containers; it never writes to an agent-local DB.
 
     Agent credentials are resolved by the named principal from its
+    ``<AGENT>_MEMORA_API_KEY`` (dedicated, TASK-MEM-005-R1) or
     ``<AGENT>_API_KEY`` environment variable. ``api_key`` is retained in the
     constructor for compatibility, but is not allowed to authenticate arbitrary
     agent names.
@@ -26,7 +27,7 @@ class MemoraClient:
 
     def _request(self, agent_name: str, path: str, *, method: str = "GET", payload: dict[str, Any] | None = None) -> Any:
         agent = agent_name.strip().lower()
-        key = os.getenv(f"{agent.upper()}_API_KEY")
+        key = os.getenv(f"{agent.upper()}_MEMORA_API_KEY") or os.getenv(f"{agent.upper()}_API_KEY")
         if not key:
             self.last_error = f"{agent.upper()}_API_KEY is not configured"
             return {"status": "error", "cloud": False, "error": self.last_error}

@@ -453,7 +453,9 @@ class MemoraScopedClient:
 
     def __init__(self, base_url: str | None = None, api_key: str | None = None, timeout: float = 4.0):
         self.base_url = (base_url or os.getenv("MEMORA_URL", "http://memora:8000")).rstrip("/")
-        self.api_key = api_key or os.getenv("STRATEX_MEMORA_API_KEY") or os.getenv("MEMORA_API_KEY", "")
+        # TASK-MEM-005-R1: Stratex's own keys only — MEMORA_API_KEY (Memora's
+        # own key / former master fallback) is never a Stratex credential.
+        self.api_key = api_key or os.getenv("STRATEX_MEMORA_API_KEY") or os.getenv("STRATEX_API_KEY", "")
         self.timeout = timeout
 
     def record_scoped_event(
