@@ -100,6 +100,30 @@ exists.
   transform that can degrade answer quality — so if it is ever
   pursued, it needs IG-INF-03-style before/after bench evidence on
   the fixed testset first, and its own task.
+  *Update (2026-11-16, TASK-IG3-INF-02): token compression has
+  since been implemented natively as TASK-IG2-INF-04 (PR #710 —
+  `app/providers/token_compression.py`, wired fail-open into the
+  gateway), so the future-candidate status above is superseded.*
+
+## Re-watch evaluations — 2026-11-16 (TASK-IG3-INF-02)
+
+The full re-watch sent three further Inference items for
+evaluation (package entries I-11 and I-12). Each was evaluated
+against the production baseline above and against the projects'
+own current documentation. **No adapter was built for any of
+them**; the reasons are the deliverable.
+
+| Item | Claim | Verification | Disposition |
+|---|---|---|---|
+| Da-cwtZs1T7 (I-11) | FreeLLMAPI: "4 billion free tokens/month", hundreds of free endpoints, a fallback chain incl. MiniMax 2.5 / Qwen 3 / GPT-OSS 120B / Gemini 2.5 Pro & Flash | FreeLLMAPI is **self-hosted software, not a hosted route** (github.com/tashfeenahmed/freellmapi, MIT): it pools the user's *own* first-party free-tier keys behind one OpenAI-compatible `/v1` endpoint, and the token figure is the aggregate of listed free tiers, not a grant — the project's own docs state it does not generate extra quota. The project scopes itself to personal experimentation, not production; its only paid element is an optional live-catalog subscription ($19/yr), which matches the "Not free 19/month" dispute in the item's comments. The pooling mechanism is Inference's production baseline, in production today. | **No adapter** — there is no hosted endpoint to adapt to, and running a second gateway beside the native one adds an unmaintained hop, not capacity. If an instance is ever run, TASK-IG-INF-02 custom endpoints already consume any OpenAI-compatible endpoint with zero new code. Reference-only, extending the wave-1 DezJrpTRAQh disposition to this second source |
+| DcqsV6Sxg63 (I-12) | OmniRoute README detail: 351 providers, ~1.51B free tokens/month, RTK compression, /v1 API translation, 35 CLI integrations | Also **self-hosted gateway software** (MIT). Repo provenance is inconsistent across records — the item's narrative names diegocousapw/OmniRoute, current project sources name diegosouzapw/OmniRoute, and the wave-1 card above names cheaper-inference/OmniRoute; the discrepancy is recorded, not resolved. The free-token figure is an aggregate of providers' free tiers. An independent hands-on review found the keyless out-of-box path does not serve until credentials are configured. **Security:** CVE-2026-88062 / GHSA-hf57-cqmx-p4gr (disclosed 2026-09-03) — unauthenticated remote code execution via the custom ACP agent endpoint when `requireLogin` is off, in a gateway whose job is to hold every provider key; vendor, NVD and advisory-database reports disagree on which version is fixed. | **No adapter** — the pattern is already native (baseline), and a third-party key-holding gateway with a critical unauthenticated-RCE record does not enter this fleet's request path. Reference-only stands (repo disposition above, updated). Its one transferable idea, token compression, has since been implemented natively (TASK-IG2-INF-04) |
+| Ddlk8oQyOVO (I-12) | "Model Router for Codex": add any model — including free ones — to Codex and avoid weekly limits | The GitHub URL is truncated in-frame and was never recovered, so the project **cannot be identified** — and an unidentifiable project cannot become a candidate spec (IG-INF-03 requires a named provider and a route). What is visible is a client-side Codex CLI configuration tool; the creator's own comment records a bug in a previous version where requests still went to OpenAI instead of the selected model. Editor/CLI surfaces are outside the Inference server scope (wave-2 baseline B42/B43), and the server-side capability such tools rely on — arbitrary OpenAI-compatible endpoints — already exists (TASK-IG-INF-02 + the `/v1` surface). | **Not a candidate; no adapter.** Recorded as evaluated so the item is not re-triaged from scratch |
+
+What would change any of these: the same bar as the free-token
+cluster above — a *named provider's first-party free API tier*
+with published terms appearing behind one of them. That becomes
+a candidate spec and goes through IG-INF-03; it does not become
+an adapter to the intermediary.
 
 ## Summary
 
@@ -109,5 +133,9 @@ exists.
   legitimate need is already served by cross-provider failover).
 - Already-implemented (7 items): verified against named production
   code paths.
-- Repos: FreeLLMAPI and OmniRoute reference-only; one future
-  candidate recorded (token compression, evidence-gated).
+- Repos: FreeLLMAPI and OmniRoute reference-only; the one
+  recorded future candidate (token compression) has since been
+  implemented natively (TASK-IG2-INF-04).
+- Re-watch evaluations (3 items, TASK-IG3-INF-02): FreeLLMAPI
+  second source, OmniRoute README detail, Codex model-router —
+  no adapters built, each for a stated reason.
