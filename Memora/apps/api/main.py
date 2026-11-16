@@ -30,6 +30,7 @@ from apps.api.routers import (
     v1_metrics_router,
     v1_namespaces_router,
     v1_task_router,
+    v1_skills_router,
     v1_events_router,
     mesh_events_router,
     v1_resilience_router,
@@ -112,6 +113,21 @@ async def lifespan(app: FastAPI):
                     service.compile_wiki(persist=True)
                     service.consolidate()
                     logger.info("Memora background consolidation and wiki compile pass completed.")
+                    # TASK-IG2-MEM-02 wiring: the skill-learning loop's
+                    # trigger pass. Drafts are created pending_review
+                    # only — the pass proposes, the review gate disposes.
+                    # Opt out with MEMORA_SKILL_LEARNING_BG=0.
+                    if os.getenv("MEMORA_SKILL_LEARNING_BG", "1").strip().lower() not in {"0", "false", "no"}:
+                        from apps.api.routers.v1_skills import run_evaluation_pass
+                        from storage.relational.session import SessionLocal
+
+                        skill_db = SessionLocal()
+                        try:
+                            summary = run_evaluation_pass(skill_db)
+                            if summary.get("drafted"):
+                                logger.info("Skill-learning pass drafted %s skill(s): %s", summary["drafted"], summary)
+                        finally:
+                            skill_db.close()
                 except asyncio.CancelledError:
                     break
                 except Exception as exc:
@@ -256,6 +272,7 @@ app.include_router(v1_context_router)
 app.include_router(v1_metrics_router)
 app.include_router(v1_namespaces_router)
 app.include_router(v1_task_router)
+app.include_router(v1_skills_router)  # Hermes skill-learning loop (/v1/skills/*)
 app.include_router(v1_events_router)
 app.include_router(mesh_events_router)
 app.include_router(audit_router)
