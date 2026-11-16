@@ -63,6 +63,23 @@ never torn down, and when the ladder is exhausted the user hears the
 honest "unconfirmed" outcome instead of silence. (TASK-VOI-009 removed
 the failover rung: the ladder is Gemini-only now, and the unconfirmed
 outcome is a pre-recorded line — see the REMOVED HISTORY note above.)
+
+TASK-VOI-010 (2026-11-15): the greeting no longer waits for memory
+recall. Since 2026-11-13 the recall and the key resolution ran
+concurrently, but the entrypoint still built the session only when
+BOTH had returned — so a recall that burned its full 7 s budget under
+load (VOI-008's 47.4 s greeting: the recall leg hit its timeout while
+the key was already cached) delayed the first word by the whole
+recall. Now only the verified key gates session construction; the
+recall keeps running in the background and, when it lands, its block
+is folded into the pinned instructions (so every watchdog rebuild
+carries it) and injected into the live session where this
+livekit-agents generation offers a surface. Recall questions remain
+answerable regardless: the session instructions route memory
+requests to execute_friday_task, whose brain recalls from Memora
+itself. The key keeper also refreshes the verified-key cache BEFORE
+it expires, so a job no longer lands in the expired-cache window and
+pays a probe round on its greeting path.
 """
 import asyncio
 import json
@@ -200,6 +217,87 @@ async def _owner_memory_lines_async() -> str:
     except Exception as exc:
         logger.warning("owner memory recall failed in the voice job: %s", exc)
         return ""
+
+
+# ---- TASK-VOI-010: recall must not gate the first word ----
+# The helpers below are the decoupled greeting path's moving parts,
+# kept module-level and capability-based so they are unit-testable
+# with fakes and survive livekit-agents API generations the same way
+# _build_session does. Contract: the entrypoint awaits ONLY the key
+# before building the session; if the recall task has already landed,
+# its block is used exactly as before; if it is still running, the
+# session starts without it and _deliver_memory_when_ready (in the
+# entrypoint) folds the block into the pinned instructions and calls
+# _inject_memory_block when the recall lands.
+
+
+def _memory_block_now(memory_task) -> "tuple[str, bool]":
+    """(block, still_pending) for a recall task at session-build time.
+
+    A finished task yields its block ('' on any failure — the recall
+    helper itself never raises, but a cancelled/failed task must not
+    take the greeting down with it). A running task yields ('', True):
+    the caller starts the session without memory and arranges async
+    delivery instead of waiting."""
+    if memory_task is None:
+        return "", False
+    if not memory_task.done():
+        return "", True
+    try:
+        return memory_task.result() or "", False
+    except Exception:
+        return "", False
+
+
+def _injection_mechanisms(sess, agent) -> list:
+    """Ordered (name, apply) live-session memory-injection surfaces
+    available on this livekit-agents API generation. Pure capability
+    detection — no calls are made here.
+
+    1. ``agent.update_instructions`` — the framework's own instruction
+       update (livekit-agents 1.x Agent); the realtime plugin applies
+       the new instructions to the live session.
+    2. chat-context append — a system message added to the agent's (or
+       session's) chat context is carried into subsequent turns.
+
+    An empty list means this generation exposes neither surface; the
+    caller then relies on the pinned-instructions rebuild path plus
+    the brain bridge, and logs that plainly."""
+    mechanisms = []
+    update = getattr(agent, "update_instructions", None)
+    if callable(update):
+        mechanisms.append(("agent.update_instructions", update))
+    for holder in (agent, sess):
+        chat_ctx = getattr(holder, "chat_ctx", None)
+        add = getattr(chat_ctx, "add_message", None)
+        if callable(add):
+            mechanisms.append(("chat_ctx.add_message", add))
+            break
+    return mechanisms
+
+
+async def _inject_memory_block(sess, agent, block: str, instructions: str) -> "str | None":
+    """Best-effort injection of a late-landed memory block into a live
+    session. Returns the mechanism that accepted it, or None when no
+    surface exists or every surface refused. Never raises: a failed
+    injection degrades to the rebuild/bridge paths, never to a dead
+    or disrupted call."""
+    if not block:
+        return None
+    for name, apply in _injection_mechanisms(sess, agent):
+        try:
+            if name == "agent.update_instructions":
+                result = apply(instructions)
+            else:
+                result = apply(role="system", content=[block])
+            if asyncio.iscoroutine(result):
+                await result
+            return name
+        except Exception as exc:
+            logger.info(
+                "VOICE memory injection via %s failed (non-fatal): %s", name, exc
+            )
+    return None
 
 
 def _voice_tools() -> list:
@@ -550,6 +648,7 @@ _KEY_PROBE_DEADLINE_S = 45.0  # one shared budget for the whole sequential round
 _KEY_PROBE_PER_CANDIDATE_S = 10.0
 _KEY_TENTATIVE_TTL_S = 60.0  # an unjudged candidate is offered for 1 minute
 _KEY_KEEPER_INTERVAL_S = 30.0  # background re-resolution cadence
+_KEY_KEEPER_REFRESH_AHEAD_S = 75.0  # refresh the verified cache this early (TASK-VOI-010)
 _KEY_RESOLUTION_LOCK = threading.Lock()
 # Warm-up coordination (TASK-VOI-003 follow-up): the boot warm-up and a
 # job's provider selection must not race — the first production run had
@@ -584,7 +683,7 @@ def _key_resolution_cooling_down() -> bool:
     return bool(failed_ts) and (time.time() - failed_ts) <= _KEY_NEGATIVE_TTL_S
 
 
-def _resolve_gemini_key_sync() -> "str | None":
+def _resolve_gemini_key_sync(refresh: bool = False) -> "str | None":
     """One blocking resolution round. Runs in a worker thread under the
     single-flight lock — never on a job's event loop.
 
@@ -612,18 +711,28 @@ def _resolve_gemini_key_sync() -> "str | None":
     slow — or errors, and the TASK-VOI-004 recovery ladder rebuilds on
     Gemini. Only a round where every candidate was auth-rejected (or
     no keys exist) is a hard failure and earns the negative cache.
+
+    TASK-VOI-010: ``refresh=True`` is the key keeper's pre-expiry
+    round. It probes DESPITE a still-valid cached key so the cache is
+    renewed before it lapses, and it treats that cached key as the
+    fallback: a failed or inconclusive refresh returns the still-valid
+    key and leaves every cache timestamp untouched — a refresh must
+    never poison the cache it was protecting.
     """
     with _KEY_RESOLUTION_LOCK:
         cached = _cached_gemini_key()
-        if cached:
+        if cached and not refresh:
             return cached
+        refresh_fallback = cached if refresh else None
         tentative = _cached_tentative_key()
-        if tentative:
+        if tentative and not refresh:
             return tentative
         if _key_resolution_cooling_down():
-            return None
+            return refresh_fallback
         keys = _gemini_pool_keys()
         if not keys:
+            if refresh_fallback:
+                return refresh_fallback
             _KEY_CACHE["failed_ts"] = time.time()
             return None
         # The pool orders healthy-first; deduplication guards the
@@ -689,6 +798,16 @@ def _resolve_gemini_key_sync() -> "str | None":
         finally:
             executor.shutdown(wait=False)
         if first_unjudged is not None:
+            if refresh_fallback:
+                # A verified key is still cached and valid; an
+                # unjudged candidate must not displace it, and the
+                # refresh must not stamp tentative bookkeeping over
+                # it (TASK-VOI-010).
+                logger.info(
+                    "gemini key refresh: no candidate verified; "
+                    "keeping the still-valid cached key"
+                )
+                return refresh_fallback
             _KEY_CACHE["tentative_key"] = first_unjudged
             _KEY_CACHE["tentative_ts"] = time.time()
             logger.warning(
@@ -698,6 +817,11 @@ def _resolve_gemini_key_sync() -> "str | None":
                 len(candidates), n_rejected,
             )
             return first_unjudged
+        if refresh_fallback:
+            logger.info(
+                "gemini key refresh: round failed; keeping the still-valid cached key"
+            )
+            return refresh_fallback
         _KEY_CACHE["failed_ts"] = time.time()
         logger.info(
             "gemini key resolution: no valid key among %d candidates", len(candidates)
@@ -1101,6 +1225,7 @@ async def _announce_unavailable(room) -> None:
 
 async def entrypoint(ctx: JobContext):
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    _t_connected = time.time()  # TASK-VOI-010: greeting-timing evidence base
     # Heartbeat truth: a job that hangs anywhere below this line must never
     # read as 'waiting for the first job' again (live lesson 2026-11-13).
     # TASK-VOI-003: status lines carry room + job id so concurrent jobs in
@@ -1123,14 +1248,17 @@ async def entrypoint(ctx: JobContext):
 
     # ---- CONCURRENT resolution (2026-11-13, ZAI Agent 1) ----
     # Owner-memory recall (thread, ≤7s since TASK-VOI-003) and the Gemini
-    # key resolution run AT THE SAME TIME; the session is built with
-    # whatever is resolved when BOTH budgets return (max, not sum). The
-    # serial chain (memory → probe → session → greeting) was the single
-    # biggest cause of the 20-75s time-to-first-audible-word the live
-    # probes measured: the owner heard dead air that long and reasonably
-    # read the line as broken. Key resolution itself is now cached +
-    # single-flight (see _resolve_gemini_key_sync), so on a warm worker
-    # this leg is a dict read.
+    # key resolution START at the same time. TASK-VOI-010: only the key
+    # gates session construction — the pre-fix gather below waited for
+    # BOTH budgets to return (max, not sum), so a recall that burned
+    # its whole 7 s budget under load still delayed the first word by
+    # the full recall even when the key was a cached dict read
+    # (VOI-008's 47.4 s greeting hit exactly this). The recall keeps
+    # running; _deliver_memory_when_ready folds its block into the
+    # pinned instructions and injects it into the live session when it
+    # lands. Key resolution itself is cached + single-flight (see
+    # _resolve_gemini_key_sync), so on a warm worker the one gating leg
+    # is a dict read.
     async def _key_after_warmup() -> "str | None":
         # TASK-VOI-003 follow-up: if this process's boot warm-up is
         # still resolving, let its round land first (bounded 20 s) —
@@ -1148,8 +1276,12 @@ async def entrypoint(ctx: JobContext):
     ctx.room.on("track_subscribed", _on_track_subscribed)
     ctx.room.on("participant_connected", _on_participant_connected)
 
-    # resolved once concurrently, reused on both provider paths
-    _memory_block, _verified_key = await asyncio.gather(_memory_task, _key_task)
+    # TASK-VOI-010: the key alone gates the session. A recall that has
+    # already landed is used exactly as before; a pending one joins
+    # asynchronously via _deliver_memory_when_ready (defined below).
+    _verified_key = await _key_task
+    _t_key_ready = time.time()
+    _memory_block, _memory_pending = _memory_block_now(_memory_task)
     instructions = _instructions(memory_block=_memory_block)
 
     # ---------------- provider selection (pinned for this job) ----------------
@@ -1223,9 +1355,13 @@ async def entrypoint(ctx: JobContext):
     }
     live: dict = {
         "session": None,
+        "agent": None,
         "closing": False,
         "greeting_task": None,
         "watchdog_task": None,
+        # TASK-VOI-010: the async memory-delivery task, when the recall
+        # was still pending at session start.
+        "memory_task": None,
         # TASK-VOI-004 recovery-ladder state: the kind of session
         # currently in use (always "gemini" since TASK-VOI-009), the
         # provider label for status lines, whether a ladder run is in
@@ -1339,6 +1475,7 @@ async def entrypoint(ctx: JobContext):
     async def _start(sess, ag) -> None:
         _wire_session(sess)
         live["session"] = sess
+        live["agent"] = ag
         await sess.start(
             ag,
             room=ctx.room,
@@ -1371,6 +1508,13 @@ async def entrypoint(ctx: JobContext):
         await _announce_unavailable(ctx.room)
         return
     await _start(session, agent)
+    logger.info(
+        "VOICE job timing: connect-to-key %.2fs, key-to-session-started %.2fs, "
+        "recall %s at session start (TASK-VOI-010)",
+        _t_key_ready - _t_connected,
+        time.time() - _t_key_ready,
+        "pending - async delivery armed" if _memory_pending else "landed",
+    )
 
     greeting_enabled = (os.getenv("FRIDAY_VOICE_GREETING") or "1").strip().lower() not in (
         "0", "false", "no",
@@ -1413,6 +1557,10 @@ async def entrypoint(ctx: JobContext):
         # 1) deterministic fixed line — the shipped recording. Playback
         # paces in real time, so when it returns the line has played;
         # the short settle lets it land before the warm greeting layers.
+        logger.info(
+            "VOICE job timing: first fixed-line audio starting %.2fs after connect",
+            time.time() - _t_connected,
+        )
         if await _play_fixed_line(ctx.room, "greeting"):
             logger.info("VOICE fixed-line greeting played (recorded line)")
         else:
@@ -1688,8 +1836,59 @@ async def entrypoint(ctx: JobContext):
             except Exception as exc:
                 logger.warning("VOICE turn watchdog error: %s", exc)
 
+    async def _deliver_memory_when_ready() -> None:
+        """TASK-VOI-010: the decoupled recall's landing.
+
+        The greeting path no longer waits for the owner-memory recall;
+        this task does. When the block lands: (1) fold it into the
+        pinned instructions, so every watchdog rebuild carries the
+        owner's memories; (2) inject it into the live session when
+        this livekit-agents generation offers a surface. A recall that
+        lands after the call has ended updates the pin only — and a
+        recall-dependent question is answerable either way, because
+        the session instructions route memory requests to
+        execute_friday_task, whose brain recalls from Memora itself.
+        """
+        try:
+            block = await _memory_task
+        except Exception:
+            return
+        if not block:
+            return
+        pinned["instructions"] = _instructions(memory_block=block)
+        if live["closing"]:
+            logger.info(
+                "VOICE memory recall landed after the call closed; "
+                "pinned instructions updated only"
+            )
+            return
+        sess = live.get("session")
+        if sess is None:
+            logger.info(
+                "VOICE memory recall landed with no live session; "
+                "pinned instructions updated only"
+            )
+            return
+        mechanism = await _inject_memory_block(
+            sess, live.get("agent"), block, pinned["instructions"]
+        )
+        if mechanism:
+            logger.info(
+                "VOICE memory recall landed late and was injected into "
+                "the live session via %s (%.2fs after connect)",
+                mechanism, time.time() - _t_connected,
+            )
+        else:
+            logger.info(
+                "VOICE memory recall landed late; no live-injection "
+                "surface on this API generation - it rides the pinned "
+                "instructions (next rebuild) and the brain bridge"
+            )
+
     live["greeting_task"] = asyncio.create_task(_greet_when_ready(session))
     live["watchdog_task"] = asyncio.create_task(_watch_turns())
+    if _memory_pending:
+        live["memory_task"] = asyncio.create_task(_deliver_memory_when_ready())
 
     # ---- Clean exit when the owner leaves (2026-11-13, ZAI Agent 1) ----
     # Live probes proved agent pileup in the shared room: every call
@@ -1703,7 +1902,7 @@ async def entrypoint(ctx: JobContext):
             # Mark closing FIRST so the watchdog stops even when there is
             # no live session left to close (TASK-VOI-003).
             live["closing"] = True
-            for task_key in ("greeting_task", "watchdog_task"):
+            for task_key in ("greeting_task", "watchdog_task", "memory_task"):
                 task = live.get(task_key)
                 if task is not None and not task.done():
                     task.cancel()
@@ -1749,14 +1948,27 @@ def _verified_key_remaining_s() -> float:
 
 def _key_keeper_step() -> str:
     """One background key-keeping step (TASK-VOI-005). Returns what it
-    did: 'fresh' (a verified key was already cached), 'cooling' (a
-    failed round is inside its negative-cache window), 'resolved' (this
-    step's round cached a verified key), 'tentative' (only an unjudged
-    candidate is available so far), or 'failed'. All probing goes
-    through the shared single-flight resolver, so the keeper can never
-    multiply probe load against a job's own resolution."""
-    if _cached_gemini_key() is not None:
-        return "fresh"
+    did: 'fresh' (a verified key was already cached with comfortable
+    TTL left), 'refreshed' (TASK-VOI-010: the cached key was near
+    expiry and a pre-expiry round kept a verified key cached),
+    'cooling' (a failed round is inside its negative-cache window),
+    'resolved' (this step's round cached a verified key), 'tentative'
+    (only an unjudged candidate is available so far), or 'failed'.
+    All probing goes through the shared single-flight resolver, so the
+    keeper can never multiply probe load against a job's own
+    resolution."""
+    cached = _cached_gemini_key()
+    if cached is not None:
+        if _verified_key_remaining_s() > _KEY_KEEPER_REFRESH_AHEAD_S:
+            return "fresh"
+        # TASK-VOI-010: refresh BEFORE the cache lapses. The pre-fix
+        # keeper stood down while any verified key was cached and only
+        # re-resolved after the 240 s TTL expired, so a job landing in
+        # the gap (up to one keeper interval past expiry) paid a full
+        # probe round on its own greeting path. _verified_key_
+        # remaining_s was written for exactly this and never wired in.
+        key = _resolve_gemini_key_sync(refresh=True)
+        return "refreshed" if key is not None else "fresh"
     if _key_resolution_cooling_down():
         return "cooling"
     key = _resolve_gemini_key_sync()
@@ -1783,8 +1995,13 @@ def _key_keeper_loop() -> None:
     while True:
         time.sleep(_KEY_KEEPER_INTERVAL_S)
         try:
-            if _key_keeper_step() == "resolved":
+            step = _key_keeper_step()
+            if step == "resolved":
                 logger.info("VOICE key keeper: verified gemini key now cached")
+            elif step == "refreshed":
+                logger.info(
+                    "VOICE key keeper: verified gemini key refreshed before expiry"
+                )
         except Exception as exc:  # the keeper must never die loudly
             logger.info("VOICE key keeper step failed (non-fatal): %s", exc)
 
