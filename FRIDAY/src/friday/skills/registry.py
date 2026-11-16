@@ -59,6 +59,7 @@ class SkillRegistry:
         from friday.skills.builtins.system_health_audit import SystemHealthAuditSkill
         from friday.skills.conversational_ecosystem import ConversationalEcosystemQuery
         from friday.skills.ecosystem_status import EcosystemStatusSkill
+        from friday.skills.english_practice import EnglishPracticeSkill
         from friday.skills.evolution_approval import EvolutionApprovalSkill
         from friday.skills.forge_manager import ForgeManagerSkill
         from friday.skills.futuris_manager import FuturisManagerSkill
@@ -98,6 +99,7 @@ class SkillRegistry:
             NexusOperatorSkill(),
             NexusManagerSkill(),
             ConversationalEcosystemQuery(),
+            EnglishPracticeSkill(),
             HelpSystemSkill(),
             SentinelManagerSkill(),
             IntelXManagerSkill(),
