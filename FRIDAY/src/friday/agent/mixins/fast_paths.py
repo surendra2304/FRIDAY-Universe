@@ -770,8 +770,17 @@ class FastPathMixin:
             low,
         )
         agent_reference = None
+        # TASK-FRD-013: the agent mention must be tied to a TASK reference
+        # (agent↔task co-occurrence, either order, correct or misspelled
+        # name) — exactly what the docstring above always stated. The old
+        # first alternative matched a BARE agent name, so "check the status
+        # of Stratex" (a question about the AGENT — its balance/positions,
+        # served by the fleet/Stratex path) was captured here and answered
+        # from the task ledger ("ledger is empty…", FRD-012 drill run 2).
+        # A bare agent mention is never a ledger reference on its own.
         m = re.search(
             r"\b(?:intelx|stratex|forge|sentinel|cortex|futuris|vyralx|memora|inference)\b"
+            r"[^.?!]*\b(?:task|assignment|job|dispatch|brief)\b"
             r"|\b(?:intelix|sentinal|viralx|vyral|memoria|inferance|futuristic)\b"
             r"[^.?!]*\b(?:task|assignment|job|dispatch|brief)\b"
             r"|\b(?:task|assignment|job|dispatch|brief)\b[^.?!]*"
