@@ -9252,24 +9252,24 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     owner: muse_ai
     pr: 709
     branch: claude/ig2-task-ig2-mem-01
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #709 -> 3bbd3a1d364cb0bc04f9c56635d5e6e60f8d2047. CI green except the validate pair (proven flake family)."
-    next_action: "Fleet CD deploy -> production probe"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #709 -> 3bbd3a1d364cb0bc04f9c56635d5e6e60f8d2047. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #755 -> 61b1ba444f20a7baff9f73c3194948bb2056d8a3 (v1_capture router mounted on the production app: POST /v1/capture/events, POST /v1/capture/compress, GET /v1/capture/context, POST /v1/capture/handoff). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair."
+    next_action: "Fleet CD deploy -> production probe of the new /v1/capture routes (events, compress, context, handoff) on the live Memora service"
   - id: TASK-IG2-MEM-02
     title: "Skill-learning loop for Memora (Hermes pattern)"
     status: IN_REVIEW
     owner: muse_ai
     pr: 711
     branch: claude/ig2-task-ig2-mem-02
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #711 -> ec24563566207ad2bb85a7759ebe40c0f091bc33. CI green except the validate pair (proven flake family)."
-    next_action: "Fleet CD deploy -> production probe"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #711 -> ec24563566207ad2bb85a7759ebe40c0f091bc33. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #758 union-rebased as PR #779 -> 18c624f2b0709728043df7bff43786c4d26fc98c (v1_skills router mounted: /v1/skills/* outcomes/evaluate/stats/drafts/review/active, plus run_evaluation_pass wired into the existing background worker; drafts only, activation stays behind the admin review gate). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair."
+    next_action: "Fleet CD deploy -> production probe of the new /v1/skills routes and the background evaluation pass on the live Memora service"
   - id: TASK-IG2-MEM-03
     title: "Structured user-model profile in Memora (Hermes pattern)"
     status: IN_REVIEW
     owner: muse_ai
     pr: 712
     branch: claude/ig2-task-ig2-mem-03
-    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #712 -> 6ed5fdce0c6f28b7f17783b54ee6beaaf1576a35. CI green except the validate pair (proven flake family)."
-    next_action: "Fleet CD deploy -> production probe"
+    evidence: "IG Repo Wave 2 implementation (coordinator record: ig-repo-wave2/STATE.md). MERGED #712 -> 6ed5fdce0c6f28b7f17783b54ee6beaaf1576a35. CI green except the validate pair (proven flake family). WIRING MERGED 2026-11-16: PR #761 union-rebased as PR #781 -> 92142b94ed71257008d5ac068152f13eaa89a431 (v1_user_model router mounted: /v1/user-model profile/consult/render/field/corrections). Supervisor review CONFIRMED against the pre-registered bar (ig-supervise/memora-review/AUDIT.md). CI on the wiring head green except the validate pair."
+    next_action: "Fleet CD deploy -> production probe of the new /v1/user-model routes (profile, consult, render, field, corrections) on the live Memora service"
   - id: TASK-IG2-SEN-01
     title: "Defensive-only skill pack for Sentinel (Anthropic-Cybersecurity-Skills ADAPT)"
     status: IN_REVIEW
