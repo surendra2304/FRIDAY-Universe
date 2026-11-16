@@ -64,19 +64,45 @@ def test_validation_status_is_not_validated_while_unpromoted(name, raw, registry
     assert raw.get("OOS_VALIDATION_STATUS") != "VALIDATED"
 
 
+def _lane_executable(entry) -> bool:
+    """A FORWARD_TEST entry whose priors are live runtime claims: it is in
+    the executable forward protocol AND has a tradable lane universe."""
+    return (
+        entry.get("status") == "FORWARD_TEST"
+        and entry.get("forward_protocol") is True
+        and bool(entry.get("lane_assets"))
+    )
+
+
 def test_registry_null_out_block_covers_every_entry():
-    """The block that withdraws registry priors must actually run for each entry."""
+    """The block that withdraws registry priors must actually run for each entry.
+
+    TASK-STR-FWD-003 follow-up (2026-11-16): the exemption is scoped to
+    tradability, not to the FORWARD_TEST label. Lane-executable entries
+    keep their judged TASK-STR-RD-002 pooled priors because the daemon's
+    expectancy gate reads them (same reason VALIDATED does). A
+    FORWARD_TEST registration that cannot trade (forward_protocol off,
+    no lane assets, no production module — tsmom2_dual and the RD-003
+    comm7 cells) must be nulled like every other unpromoted entry and
+    must carry the runtime_priors_nulled stamp, so its record can never
+    be silently counted as a live lane entrant.
+    """
     for name, entry in cfg.PRODUCTION_STRATEGY_REGISTRY.items():
         if entry.get("status") == "VALIDATED":
             continue
         assert entry.get("validated_assets") == [], f"{name} kept registry assets"
-        if entry.get("status") == "FORWARD_TEST":
-            # TASK-STR-FWD-003: the null-out block deliberately exempts
-            # the FORWARD_TEST lane — its entries keep their judged
-            # TASK-STR-RD-002 pooled priors because the daemon's
-            # expectancy gate reads them (same reason VALIDATED does).
+        if _lane_executable(entry):
+            assert entry.get("runtime_priors_nulled") is False, (
+                f"{name} is lane-executable but stamped nulled"
+            )
             continue
         assert entry.get("oos_win_rate_prior") is None, f"{name} kept a registry prior"
+        assert entry.get("expected_net_edge_bps") is None, f"{name} kept a registry edge"
+        if entry.get("status") == "FORWARD_TEST":
+            assert entry.get("runtime_priors_nulled") is True, (
+                f"{name} is a non-tradable FORWARD_TEST registration but is "
+                "not stamped runtime_priors_nulled"
+            )
 
 
 def test_no_strategy_raises_its_persistence_gate_to_one():

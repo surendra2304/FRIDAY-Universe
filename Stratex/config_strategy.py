@@ -783,8 +783,37 @@ PRODUCTION_STRATEGY_REGISTRY: dict[str, dict[str, Any]] = {
 # daemon's expectancy gate reads them — but their tradable universe lives
 # under "lane_assets", never "validated_assets": the lane is not a
 # validation, and nothing may mistake it for one.
+# TASK-STR-FWD-003 FOLLOW-UP (2026-11-16): that exemption was scoped to the
+# FORWARD_TEST *label*, so it also covered the lane's non-tradable
+# registrations (tsmom2_dual and the four RD-003 comm7 cells —
+# forward_protocol False, lane_assets empty, no production module). Those
+# records carried live-looking priors/edges in the runtime registry even
+# though they can never execute, indistinguishable from the three
+# executable entrants to any consumer counting registry records. The
+# exemption is now scoped to tradability: only a lane-EXECUTABLE
+# FORWARD_TEST entry (forward_protocol True AND a non-empty lane_assets)
+# keeps its runtime prior/edge. Every FORWARD_TEST entry is stamped
+# "runtime_priors_nulled" so the record itself shows whether its numbers
+# are live runtime claims (False) or withdrawn (True) — visibly nulled,
+# never silently counted. The judged evidence itself is NOT deleted: it
+# stays in the *_STRATEGY config dicts above and in each entry's reason.
+def _lane_executable(_entry: dict[str, Any]) -> bool:
+    return (
+        _entry.get("status") == "FORWARD_TEST"
+        and _entry.get("forward_protocol") is True
+        and bool(_entry.get("lane_assets"))
+    )
+
+
 for _strategy_entry in PRODUCTION_STRATEGY_REGISTRY.values():
-    if _strategy_entry.get("status") not in ("VALIDATED", "FORWARD_TEST"):
-        _strategy_entry["oos_win_rate_prior"] = None
-        _strategy_entry["expected_net_edge_bps"] = None
-        _strategy_entry["validated_assets"] = []
+    if _strategy_entry.get("status") == "FORWARD_TEST":
+        _strategy_entry["runtime_priors_nulled"] = not _lane_executable(
+            _strategy_entry
+        )
+    if _strategy_entry.get("status") == "VALIDATED" or _lane_executable(
+        _strategy_entry
+    ):
+        continue
+    _strategy_entry["oos_win_rate_prior"] = None
+    _strategy_entry["expected_net_edge_bps"] = None
+    _strategy_entry["validated_assets"] = []
