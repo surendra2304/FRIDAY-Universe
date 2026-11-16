@@ -839,26 +839,42 @@ class MemoryService:
         # relational delete below.
         vec_ok = False
         try:
-            from storage.vector.oracle_vector_adapter import oracle_vector_adapter
-            if oracle_vector_adapter.is_oracle_backend():
-                vec_ok = oracle_vector_adapter.delete_embedding(
-                    memory_id, tenant_id=tenant_id, db=db
-                )
-            else:
-                vec_ok = vector_adapter.delete_embedding(memory_id, tenant_id=tenant_id)
+            # TASK-SEN-003: run the sub-store delete inside a SAVEPOINT.
+            # The Oracle branch executes on this caller's session; a
+            # DatabaseError there used to poison the whole transaction
+            # even though the Python error was swallowed below, and the
+            # caller's final commit() then failed with
+            # PendingRollbackError — the hard delete returned 500 and
+            # never converged. Inside begin_nested(), the failure rolls
+            # back only the savepoint and the tombstone honestly records
+            # the degraded flag. (Rebased onto TASK-MEM-006's
+            # _hard_erase_record, so the isolation covers delete_memory,
+            # forget_memory and the retention expiry sweep alike.)
+            with db.begin_nested():
+                from storage.vector.oracle_vector_adapter import oracle_vector_adapter
+                if oracle_vector_adapter.is_oracle_backend():
+                    vec_ok = oracle_vector_adapter.delete_embedding(
+                        memory_id, tenant_id=tenant_id, db=db
+                    )
+                else:
+                    vec_ok = vector_adapter.delete_embedding(memory_id, tenant_id=tenant_id)
         except Exception:
             vec_ok = False
         tombstone.vector_deleted = bool(vec_ok)
 
         # 2. Graph relationship deletion (Requirement 9: multi-store convergence)
         try:
-            from storage.relational.models import MemoryRelationship
-            db.query(MemoryRelationship).filter(
-                or_(
-                    MemoryRelationship.source_memory_id == memory_id,
-                    MemoryRelationship.target_memory_id == memory_id
-                )
-            ).delete(synchronize_session=False)
+            # TASK-SEN-003: same SAVEPOINT isolation as the vector step —
+            # a DatabaseError from this delete must degrade the
+            # tombstone flag, not poison the caller's transaction.
+            with db.begin_nested():
+                from storage.relational.models import MemoryRelationship
+                db.query(MemoryRelationship).filter(
+                    or_(
+                        MemoryRelationship.source_memory_id == memory_id,
+                        MemoryRelationship.target_memory_id == memory_id
+                    )
+                ).delete(synchronize_session=False)
             tombstone.graph_deleted = True
         except Exception:
             tombstone.graph_deleted = False
