@@ -362,7 +362,11 @@ def test_delivery_watch_uses_verbatim_instructions():
     ).read_text()
     # Both delivery sites (late result + unverbalized nudge) repeat the
     # settled spoken_reply under a repeat-verbatim instruction.
-    assert src.count("Say the following text aloud exactly") == 2
+    # TASK-FRD-018: the wording moved into ONE builder both sites call
+    # (so the sites cannot drift apart); the pin follows the builder —
+    # the wording exists exactly once, and both sites call it.
+    assert src.count("Say the following text aloud exactly") == 1
+    assert src.count("_verbatim_delivery_instruction(") >= 3  # def + 2 sites
     assert src.count('tool_choice="none"') >= 2
     # The improvisation prompts are gone.
     assert "Before anything else, tell Surendra the outcome" not in src

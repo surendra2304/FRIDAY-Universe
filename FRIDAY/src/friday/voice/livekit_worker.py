@@ -1346,6 +1346,152 @@ def _result_verbalized(spoken_reply: str, assistant_texts) -> bool:
     return len(overlap) >= 2
 
 
+# ---- TASK-FRD-018: verbatim-delivery gate + verification ----
+# FRD-014 made the watch's delivery a repeat-verbatim generate_reply
+# instruction, and re-run #5's drill repeated a short templated reply
+# word for word. In re-run #6 production the same instruction, carrying
+# a 205-char MODEL-COMPOSED reply, was not honored: the session spoke
+# an invented memory dump instead and the watch recorded success.
+# Root cause (livekit-plugins-google 1.8.11, production model
+# gemini-3.8-live): "3.8" takes no reply placeholder, so the plugin
+# wraps generate_reply instructions in <instructions>…</instructions>
+# and sends them as a USER-ROLE turn — the model experiences the
+# "instruction" as something the user said, mid-conversation, and
+# tool_choice="none" has no per-response existence on this API (the
+# plugin emulates it by rejecting tool calls; re-run #6's journal
+# carries its warning). Compliance is therefore content- and
+# context-dependent: a generative model handed an answer-shaped text
+# as a user turn, with the original question still open and a memory
+# briefing in its system prompt, may answer instead of repeating.
+# session.say() is unavailable (supports_say=False) and the worker
+# carries no other speech synthesizer, so the channel cannot be made
+# deterministic. What CAN be made deterministic is the watch's own
+# discipline, which is what the helpers below pin:
+#   * never fire without the exact settled text (payload gate);
+#   * never record a delivery as delivered without verifying the
+#     actually-spoken item against the settled text, strictly;
+#   * never re-fire after a non-verbatim substitute — silence after
+#     a failed attempt beats a second improvisation risk.
+
+def _verbatim_deliverable(spoken_reply) -> "str | None":
+    """The exact settled text the watch may attempt to deliver, or
+    None when there is no verifiable settled text (missing, not a
+    string, or blank). None means the watch stays silent: a repeat
+    instruction with no text after the colon is one the model can
+    only satisfy by inventing content. (The late-result registry
+    files entries with spoken_reply="" when a brain result lacks
+    one — pre-fix, the late site delivered those unguarded.)"""
+    if not isinstance(spoken_reply, str):
+        return None
+    text = spoken_reply.strip()
+    return text or None
+
+
+def _verbatim_delivery_instruction(text: str) -> str:
+    """The one repeat-verbatim instruction both watch delivery sites
+    send — identical wording by construction, pinned by tests."""
+    return (
+        "Say the following text aloud exactly, word for word, adding "
+        f"nothing and leaving nothing out: {text}"
+    )
+
+
+def _normalize_verbatim(text: str) -> str:
+    """Case/punctuation-insensitive form for the strict match: what
+    was said may differ from the settled text in transcription
+    casing and punctuation, never in wording."""
+    return " ".join(re.findall(r"[a-z0-9]+", (text or "").lower()))
+
+
+def _spoken_matches_settled(settled: str, assistant_texts) -> bool:
+    """STRICT verbatim check for a watch-fired delivery: the settled
+    text was actually spoken, word for word (modulo transcription
+    case/punctuation). Deliberately far stricter than
+    _result_verbalized's substance overlap — a paraphrase that
+    carries the figures is the model's own verbalization, but it is
+    NOT a verbatim delivery, and an improvised substitute (re-run
+    #6's memory dump) must never pass as one. Accepts the settled
+    token sequence appearing contiguously in the spoken items, or as
+    a subsequence with at most a couple of inserted tokens (a
+    transcription filler), never a reordering or a rewrite."""
+    want = _normalize_verbatim(settled)
+    if not want:
+        return False
+    got = _normalize_verbatim(" ".join(assistant_texts or []))
+    if not got:
+        return False
+    if want in got:
+        return True
+    want_tokens = want.split()
+    got_tokens = got.split()
+    if len(got_tokens) > len(want_tokens) + max(2, len(want_tokens) // 10):
+        return False
+    it = iter(got_tokens)
+    return all(any(tok == w for tok in it) for w in want_tokens)
+
+
+def _delivery_action(record, later_texts, now: float) -> str:
+    """One delivery-watch decision for one observed bridge result.
+
+    Returns:
+      "close"              — not a watchable outcome (state filter or
+                             a late result still pending); drop it.
+      "own-verbalized"     — the model spoke the result itself
+                             (substance check); nothing to deliver.
+      "verified"           — a watch-fired delivery was spoken
+                             verbatim (strict check); delivered.
+      "mismatch"           — a watch-fired delivery was followed by
+                             speech that is NOT the settled text:
+                             the settled reply was not delivered.
+      "expire"             — unverbalized past the expiry horizon.
+      "fire"               — grace elapsed, settled text in hand:
+                             deliver it verbatim.
+      "silent-unavailable" — grace elapsed but there is no verifiable
+                             settled text: stay silent, never fire.
+      "wait"               — nothing to decide this pass.
+
+    ``later_texts`` are the assistant items spoken since the record
+    landed — or, for a record the watch already fired on, since the
+    firing (the caller picks the window; a fired record is judged
+    only on what followed its delivery attempt).
+    """
+    state = record.get("state")
+    if state not in ("answered", "failed", "refused", "unconfirmed"):
+        # confirmation_required / pending are conversations, not
+        # outcomes — the model owns them; never nudged.
+        return "close"
+    if record.get("late_pending"):
+        # The real answer is still coming via the late-result
+        # channel; nudging the placeholder would pre-empt it.
+        return "close"
+    settled = record.get("spoken_reply") or ""
+    fired_ts = record.get("fired_ts")
+    if fired_ts:
+        if _spoken_matches_settled(settled, later_texts):
+            return "verified"
+        if later_texts:
+            return "mismatch"
+        if now - float(fired_ts) > _DELIVERY_EXPIRE_S:
+            return "expire"
+        return "wait"
+    if _verbatim_deliverable(settled) is None:
+        # No verifiable settled text: this record can never be
+        # delivered by the watch, whatever the model does — the
+        # verbalized check below would otherwise wave it through as
+        # "nothing distinctive to strand" and hide the gap. It closes
+        # as silent-unavailable at the grace, never as a fire.
+        age = now - float(record.get("ts") or now)
+        return "silent-unavailable" if age >= _DELIVERY_GRACE_S else "wait"
+    if _result_verbalized(settled, later_texts):
+        return "own-verbalized"
+    age = now - float(record.get("ts") or now)
+    if age > _DELIVERY_EXPIRE_S:
+        return "expire"
+    if age >= _DELIVERY_GRACE_S:
+        return "fire" if _verbatim_deliverable(settled) else "silent-unavailable"
+    return "wait"
+
+
 # ---- TASK-VOI-012: post-STT fleet-term correction + dropped-turn guard ----
 # The correction map is the COMPLEMENT layer to the API biasing above:
 # it repairs the text the WORKER consumes — the watchdog's re-ask text
@@ -2558,6 +2704,22 @@ async def entrypoint(ctx: JobContext):
         land ≤~4s after a result, so the grace never races one, and
         the re-run #4 loss was generation time, not the threshold.
 
+        TASK-FRD-018: the instruction is NOT a guarantee on this API
+        surface — for gemini-3.8-live the Google plugin delivers
+        generate_reply instructions as a user-role turn and
+        tool_choice="none" is emulated, not real, so a model-composed
+        settled reply was answered instead of repeated in re-run #6
+        (an improvised memory dump, recorded by the old code as a
+        successful nudge). The watch now (i) fires ONLY with an exact
+        settled text in hand — no text, no fire, the journal says so;
+        (ii) keeps every fired record under watch and verifies the
+        actually-spoken item against the settled text strictly
+        (_spoken_matches_settled): a non-verbatim substitute is
+        journaled as a FAILED delivery and never re-fired. (session
+        .say() still cannot do this: the SDK raises unless the
+        realtime model declares supports_say, which Google's does
+        not, and the worker carries no TTS — VOI-009.)
+
         Participant rule, deliberately different from the recovery
         triggers in _watch_turns: delivering a settled result is safe
         for ANY listener in the room, so presence here means any
@@ -2572,25 +2734,28 @@ async def entrypoint(ctx: JobContext):
         sess = live.get("session")
         humans_present = bool(ctx.room.remote_participants)
         for entry in late_results:
+            deliverable = _verbatim_deliverable(entry.get("spoken_reply"))
+            if deliverable is None:
+                # TASK-FRD-018: no verifiable settled text — the watch
+                # stays silent rather than hand the model an empty
+                # repeat instruction it can only satisfy by inventing
+                # content. The journal is the record.
+                logger.error(
+                    "VOICE delivery watch: late brain result turn=%s "
+                    "state=%s has no settled spoken text; NOT delivered "
+                    "(the watch stays silent rather than improvise)",
+                    entry.get("turn_id"), entry.get("state"),
+                )
+                continue
             if humans_present and sess is not None and not live["closing"]:
                 try:
-                    # TASK-FRD-014: verbatim delivery, not a fresh answer.
-                    # The old user_input framing ("give Surendra the
-                    # result…") made the model COMPOSE a reply — in
-                    # FRD-005 re-run #4 it improvised one that dropped
-                    # the recalled fact entirely. A settled result is
-                    # delivered as-is via a repeat-verbatim instruction
-                    # with tools off. (session.say() cannot do this on
-                    # the Gemini Live session: the installed SDK raises
-                    # unless the realtime model declares supports_say,
-                    # which Google's RealtimeModel does not, and the
-                    # worker carries no TTS — VOI-009.)
+                    # TASK-FRD-014: verbatim delivery, not a fresh
+                    # answer (see the class of failure in the docstring
+                    # above): the settled result is delivered as-is via
+                    # the one repeat-verbatim instruction builder.
                     sess.generate_reply(
-                        instructions=(
-                            "Say the following text aloud exactly, word "
-                            "for word, adding nothing and leaving "
-                            f"nothing out: {entry.get('spoken_reply')}"
-                        ),
+                        instructions=_verbatim_delivery_instruction(
+                            deliverable),
                         tool_choice="none",
                     )
                     logger.error(
@@ -2598,6 +2763,21 @@ async def entrypoint(ctx: JobContext):
                         "state=%s delivered into the live session",
                         entry.get("turn_id"), entry.get("state"),
                     )
+                    # TASK-FRD-018: the delivery is verified like any
+                    # other fired record — registered with the watch
+                    # instead of being trusted on the call alone.
+                    bridge_results.append({
+                        "turn_id": entry.get("turn_id"),
+                        "request": entry.get("request") or "",
+                        "state": entry.get("state"),
+                        "spoken_reply": deliverable,
+                        "late_pending": False,
+                        "ts": time.time(),
+                        "nudged": True,
+                        "done": False,
+                        "fired_ts": time.time(),
+                        "late_delivery": True,
+                    })
                 except Exception as exc:
                     logger.warning(
                         "VOICE delivery watch: late-result delivery "
@@ -2615,25 +2795,39 @@ async def entrypoint(ctx: JobContext):
             if record.get("done"):
                 continue
             state = record.get("state")
-            if state not in ("answered", "failed", "refused", "unconfirmed"):
-                # confirmation_required / pending are conversations,
-                # not outcomes — the model owns them; never nudged.
-                record["done"] = True
-                continue
-            if record.get("late_pending"):
-                # The real answer is still coming via the late-result
-                # channel; nudging the placeholder would pre-empt it.
-                record["done"] = True
-                continue
-            age = now - float(record.get("ts") or now)
+            since = record.get("fired_ts") or record.get("ts") or 0.0
             later_texts = [
                 text for ts, text in turn["assistant_items"]
-                if ts >= float(record.get("ts") or 0.0)
+                if ts >= float(since)
             ]
-            if _result_verbalized(record.get("spoken_reply") or "", later_texts):
+            action = _delivery_action(record, later_texts, now)
+            if action in ("close", "own-verbalized"):
                 record["done"] = True
                 continue
-            if age > _DELIVERY_EXPIRE_S:
+            if action == "verified":
+                logger.error(
+                    "VOICE delivery watch: result turn=%s state=%s "
+                    "delivered verbatim (verified against the settled "
+                    "reply)", record.get("turn_id"), state,
+                )
+                record["done"] = True
+                continue
+            if action == "mismatch":
+                # TASK-FRD-018: the session spoke, but not the settled
+                # text (re-run #6's improvised memory dump). Record
+                # the failure as a failure — and never re-fire: a
+                # second attempt risks a second improvisation, and
+                # silence is the specified fallback.
+                logger.error(
+                    "VOICE delivery watch: result turn=%s state=%s — "
+                    "the session spoke a NON-VERBATIM substitute after "
+                    "the delivery attempt; the settled reply was NOT "
+                    "delivered and will not be re-attempted",
+                    record.get("turn_id"), state,
+                )
+                record["done"] = True
+                continue
+            if action == "expire":
                 logger.error(
                     "VOICE delivery watch: result turn=%s state=%s was "
                     "never verbalized within %.0fs; expiring unverbalized",
@@ -2641,35 +2835,53 @@ async def entrypoint(ctx: JobContext):
                 )
                 record["done"] = True
                 continue
+            if action == "silent-unavailable":
+                logger.error(
+                    "VOICE delivery watch: result turn=%s state=%s has "
+                    "no settled spoken text to deliver; staying silent "
+                    "rather than improvise", record.get("turn_id"), state,
+                )
+                record["done"] = True
+                continue
             if (
-                age >= _DELIVERY_GRACE_S
+                action == "fire"
                 and not record.get("nudged")
                 and humans_present
                 and sess is not None
                 and turn.get("state") == "listening"
             ):
+                deliverable = _verbatim_deliverable(
+                    record.get("spoken_reply"))
+                if deliverable is None:
+                    # _delivery_action already gates on this; the
+                    # re-check keeps the fire site itself incapable of
+                    # sending an empty repeat instruction.
+                    record["done"] = True
+                    continue
                 try:
-                    # TASK-FRD-014: verbatim delivery, not a fresh answer
-                    # (see the late-result site above): the nudge repeats
-                    # the settled spoken_reply word for word under a
-                    # repeat-verbatim instruction with tools off, instead
-                    # of asking the model to retell the outcome — the
-                    # retelling is what dropped the recalled fact and
-                    # burned ~20s racing the session end in re-run #4.
+                    # TASK-FRD-014: verbatim delivery, not a fresh
+                    # answer (see the late-result site above): the
+                    # nudge repeats the settled spoken_reply word for
+                    # word under the repeat-verbatim instruction,
+                    # instead of asking the model to retell the
+                    # outcome — the retelling is what dropped the
+                    # recalled fact and burned ~20s racing the session
+                    # end in re-run #4. TASK-FRD-018: firing starts
+                    # verification, it does not conclude delivery.
                     sess.generate_reply(
-                        instructions=(
-                            "Say the following text aloud exactly, word "
-                            "for word, adding nothing and leaving "
-                            f"nothing out: {record.get('spoken_reply')}"
-                        ),
+                        instructions=_verbatim_delivery_instruction(
+                            deliverable),
                         tool_choice="none",
                     )
                     record["nudged"] = True
+                    record["fired_ts"] = time.time()
                     logger.error(
                         "VOICE delivery watch: result turn=%s state=%s "
                         "unverbalized %.0fs after delivery; nudging the "
-                        "session to speak it", record.get("turn_id"),
-                        state, age,
+                        "session to speak it (delivery will be verified "
+                        "against the settled reply)",
+                        record.get("turn_id"), state,
+                        now - float(record.get("ts") or now),
                     )
                 except Exception as exc:
                     logger.warning(

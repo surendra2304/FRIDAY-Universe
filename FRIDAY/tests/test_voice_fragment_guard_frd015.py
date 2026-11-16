@@ -337,5 +337,7 @@ def test_worker_wires_the_transcript_provider():
     assert 'turn["user_final_seq"] = int(turn.get("user_final_seq") or 0) + 1' in src
     # The delivery watch already exempts unknown states from nudging;
     # "superseded" must stay outside its deliverable set.
-    watch = src.split("def _delivery_watch_step")[1].split("def _watch_turns")[0]
+    # TASK-FRD-018: the set moved from the watch body into the
+    # _delivery_action decision helper; the pin follows it there.
+    watch = src.split("def _delivery_action")[1].split("# ---- TASK-VOI-012")[0]
     assert '"superseded"' not in watch.split("state not in")[1].split(")")[0]
