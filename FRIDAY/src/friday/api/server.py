@@ -1754,7 +1754,7 @@ async def get_agents_supervision() -> dict[str, Any]:
 
 
 @app.get("/api/memory/browser")
-async def get_memory_browser(_: None = Depends(_require_control_access)) -> dict[str, Any]:
+async def get_memory_browser(_: None = Depends(_require_origin_gate)) -> dict[str, Any]:
     """Checklist B12: what-FRIDAY-knows browser — the owner's memory, visible.
 
     Read-only view of the live Memora store for the dashboard: the most
