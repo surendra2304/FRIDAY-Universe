@@ -73,6 +73,49 @@ def test_ordinary_email_is_not_extortion():
     assert result.guidance == []
 
 
+def test_tracking_pixel_detected_and_explained():
+    # SE-01: the classic sextortion mail carrying a 1x1 remote pixel.
+    result = triage_email(
+        subject="I recorded you",
+        body=(
+            "I hacked your computer and recorded you through your webcam "
+            "while you visited adult sites. Pay 1500 dollars in bitcoin to "
+            "my wallet address within 48 hours or else we will release "
+            "the video to all your contacts."
+            '<img src="https://mailstat.example/o/abc123.gif" width="1" height="1">'
+        ),
+    )
+    assert result.category == "SEXTORTION_SCAM"
+    assert result.tracking_pixel is True
+    assert "tracking_pixel_present" in result.signals
+    assert result.as_dict()["tracking_pixel"] is True
+    assert any("tracking pixel" in g for g in result.guidance)
+    assert "Tracking pixel" in result.to_markdown()
+
+
+def test_tracking_path_image_counts_even_at_normal_size():
+    result = triage_email(
+        body='<img src="https://x.example/track/open?id=99" width="300">',
+    )
+    assert result.tracking_pixel is True
+    # A pixel alone never manufactures an extortion verdict.
+    assert result.category == "NOT_EXTORTION"
+    assert result.guidance == []
+
+
+def test_ordinary_remote_image_is_not_a_tracking_pixel():
+    result = triage_email(
+        subject="Your invoice",
+        body=(
+            "Hi, your monthly statement is ready. Total $120 due on the 1st."
+            '<img src="https://cdn.example/logo.png" width="200" height="50">'
+        ),
+    )
+    assert result.tracking_pixel is False
+    assert "tracking_pixel_present" not in result.signals
+    assert result.category == "NOT_EXTORTION"
+
+
 def test_reply_to_mismatch_is_a_named_signal():
     result = triage_email(
         body=(
