@@ -66,6 +66,48 @@ def _loads(value: Any, default: Any) -> Any:
         return default
 
 
+def _loads_graph_payload(value: Any, default: Any, *, field: str, graph_id: str) -> Any:
+    """Parse a task graph's ``nodes``/``edges`` payload, failing loudly.
+
+    TASK-FRG-012: unlike :func:`_loads` (tolerant by design for legacy
+    rows), a graph payload that is present but unparseable must never be
+    silently replaced by an empty graph: the orchestrator reads an empty
+    node set as "completed", which is exactly how CLOB-corrupted graph
+    rows fake-completed production builds after a single DAG node. A
+    corrupt stored graph is a store failure and surfaces as one.
+    """
+    text_value = _as_text(value)
+    if text_value is None or text_value == "":
+        return default
+    try:
+        parsed = json.loads(text_value)
+    except (TypeError, ValueError) as exc:
+        logger.error(
+            "Stored task graph %s has a corrupt %s payload (%d chars): %s",
+            graph_id,
+            field,
+            len(text_value),
+            exc,
+        )
+        raise ValueError(
+            f"Stored task graph '{graph_id}' has a corrupt {field} payload "
+            f"({len(text_value)} chars) and cannot be loaded."
+        ) from exc
+    if not isinstance(parsed, type(default)):
+        logger.error(
+            "Stored task graph %s has a malformed %s payload (expected %s, got %s)",
+            graph_id,
+            field,
+            type(default).__name__,
+            type(parsed).__name__,
+        )
+        raise ValueError(
+            f"Stored task graph '{graph_id}' has a malformed {field} payload "
+            f"(expected {type(default).__name__}, got {type(parsed).__name__})."
+        )
+    return parsed
+
+
 def _text(value: str | None) -> str | None:
     """Normalise optional text for a nullable column.
 
@@ -595,9 +637,13 @@ class StateStore:
                 if not row:
                     return None
 
-                raw_nodes = _loads(row["nodes"], {})
+                raw_nodes = _loads_graph_payload(
+                    row["nodes"], {}, field="nodes", graph_id=row["id"]
+                )
                 nodes = {k: TaskNode(**v) for k, v in raw_nodes.items()}
-                raw_edges = _loads(row["edges"], [])
+                raw_edges = _loads_graph_payload(
+                    row["edges"], [], field="edges", graph_id=row["id"]
+                )
 
                 return TaskGraph(
                     id=row["id"],

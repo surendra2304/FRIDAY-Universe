@@ -343,6 +343,15 @@ class OrchestratorCore:
         graph = await self.store.get_latest_task_graph_for_project(task_id)
         if not graph:
             raise ValueError(f"Task graph for task '{task_id}' not found")
+        if not graph.nodes:
+            # TASK-FRG-012: an existing graph row with zero nodes is store
+            # corruption, never a finished build — ExecutableTaskDAG
+            # treats an empty node set as completed, which is how the
+            # CLOB-corruption drain fake-completed production builds.
+            raise ValueError(
+                f"Task graph '{graph.id}' for task '{task_id}' contains no "
+                "nodes; refusing to treat an empty graph as a completed build."
+            )
 
         dag = ExecutableTaskDAG(graph)
         ready_nodes = dag.get_ready_nodes()
