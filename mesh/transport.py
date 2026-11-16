@@ -28,7 +28,10 @@ class TransportMode(str, Enum):
 
 AGENT_AUTH_MAP = {
     "INFERENCE": ("http://inference:8000", "INFERENCE_API_KEY"),
-    "MEMORA": ("http://memora:8000", "MEMORA_API_KEY"),
+    # TASK-MEM-005-R1: Memora has no shared credential env. The transport
+    # presents the SENDER's own Memora credential (resolved from the
+    # envelope's from_agent in publish); None marks "sender-resolved".
+    "MEMORA": ("http://memora:8000", None),
     "STRATEX": ("http://stratex:8000", "STRATEX_API_KEY"),
     "INTELX": ("http://intelx:8000", "INTELX_API_KEY"),
     "FUTURIS": ("http://futuris:8000", "FUTURIS_API_KEY"),
@@ -38,6 +41,20 @@ AGENT_AUTH_MAP = {
     "FRIDAY": ("http://friday:10000", "FRIDAY_API_KEY"),
     "VYRALX": ("http://vyralx:8000", "VYRALX_API_KEY"),
 }
+
+def _sender_memora_key(from_agent: str) -> str:
+    """Resolve the SENDER's own Memora credential (TASK-MEM-005-R1).
+
+    Mirrors the Memora SDK's _agent_memora_key: the sender's dedicated
+    {SENDER}_MEMORA_API_KEY wins; its per-agent {SENDER}_API_KEY is the
+    transition fallback. MEMORA_API_KEY — Memora's own key — is never a
+    sender credential.
+    """
+    sender = (from_agent or "").upper()
+    if not sender:
+        return ""
+    return (os.getenv(f"{sender}_MEMORA_API_KEY") or os.getenv(f"{sender}_API_KEY") or "").strip()
+
 
 _LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
@@ -161,8 +178,14 @@ class MeshTransport:
         default_url = target_info[0] if target_info else None
         url_env_name = f"{to_agent}_URL"
         url = direct_url or os.getenv(url_env_name) or default_url
-        key_env_name = target_info[1] if target_info else f"{to_agent}_API_KEY"
-        api_key = os.getenv(key_env_name, "").strip()
+        if to_agent == "MEMORA":
+            # TASK-MEM-005-R1: present the sender's own Memora credential,
+            # never the shared MEMORA_API_KEY env var.
+            key_env_name = f"{envelope.from_agent.upper()}_MEMORA_API_KEY"
+            api_key = _sender_memora_key(envelope.from_agent)
+        else:
+            key_env_name = target_info[1] if target_info else f"{to_agent}_API_KEY"
+            api_key = os.getenv(key_env_name, "").strip()
 
         if url:
             endpoint = f"{url.rstrip('/')}/mesh/envelope" if not direct_url else direct_url
