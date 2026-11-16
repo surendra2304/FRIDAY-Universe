@@ -20,8 +20,8 @@ This module makes an owner follow-up a first-class, persistent object:
   file registry is the source of truth; a Memora outage degrades the
   mirror, never the follow-up, and never reports a mirror that did not
   happen.
-- ``due_followups()`` is the sweep surface for the morning brief and the
-  notification path: open follow-ups whose due time has passed (plus
+- ``due_followups()`` is the sweep surface consumed by the
+  ``followup_list`` tool: open follow-ups whose due time has passed (plus
   undated ones older than ``UNDATED_STALE_HOURS``), oldest first. A quiet
   registry returns an empty list — no invented pings.
 - Closing is explicit only: ``complete`` (the owner says it's handled)

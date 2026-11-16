@@ -79,10 +79,13 @@ from friday.tools.builtin import (
     ErrandCreateTool,
     ErrandRunTool,
     ErrandStatusTool,
+    EscrcpyAutomationTool,
+    EscrcpyLaunchPlanTool,
     HealthCheckTool,
     WorkflowTemplateListTool,
     WorkflowTemplateRunTool,
     LifeCalendarTool,
+    LeadGenerateTool,
     KillProcessTool,
     LaptopBrowserTaskTool,
     LaptopClickTool,
@@ -109,6 +112,9 @@ from friday.tools.builtin import (
     ManageVolumeTool,
     ManageWindowsTool,
     MediaControlTool,
+    MeetingFollowUpCreateTool,
+    MeetingFollowUpDecideTool,
+    MeetingFollowUpListTool,
     MemorySearchTool,
     NewsTool,
     OpenApplicationTool,
@@ -250,6 +256,12 @@ class ToolExecutionMixin:
             registry.register(LaptopRunCommandTool())
             # TASK-IG-FRD-010: lock the laptop screen (no unlock, by design).
             registry.register(LaptopLockTool())
+            # TASK-IG2-LAP-01: Escrcpy integration — launch plans and phone
+            # automation over the scrcpy/ADB transport. Registered
+            # 2026-11-16 (IG implementation wave): the tools were exported
+            # from tools/builtin but never reached the live registry.
+            registry.register(EscrcpyLaunchPlanTool())
+            registry.register(EscrcpyAutomationTool())
             registry.register(SystemControlTool())
             registry.register(HealthCheckTool())
             # TASK-IG-FRD-001: goal-loop autonomy (goal + criteria, worked in cycles).
@@ -260,11 +272,23 @@ class ToolExecutionMixin:
             registry.register(ErrandStatusTool())
             registry.register(ErrandApproveTool())
             registry.register(ErrandRunTool())
+            # TASK-IG2-FRD-03: delegated lead generation — scrape a business
+            # directory page into a deduplicated contact table; the table is
+            # the deliverable (no outreach, no dialling). Registered
+            # 2026-11-16 (IG implementation wave) — previously export-only.
+            registry.register(LeadGenerateTool())
             # TASK-IG-FRD-005: ready-made workflow templates.
             registry.register(WorkflowTemplateListTool())
             registry.register(WorkflowTemplateRunTool())
             # TASK-IG-FRD-009: life-in-weeks dot-grid calendar computation.
             registry.register(LifeCalendarTool())
+            # TASK-IG2-FRD-04: post-meeting follow-up automation — turn
+            # meeting notes into tracked follow-ups and decide them.
+            # Registered 2026-11-16 (IG implementation wave) — previously
+            # export-only.
+            registry.register(MeetingFollowUpCreateTool())
+            registry.register(MeetingFollowUpListTool())
+            registry.register(MeetingFollowUpDecideTool())
             registry.register(WriteCodeFileTool())
             registry.register(ReplaceFileContentTool())
             registry.register(RunTestsTool())
