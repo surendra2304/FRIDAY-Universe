@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   fetchAutonomy,
   fetchFleet,
@@ -10,6 +10,7 @@ import {
   type FleetSnapshot,
   type HostTelemetry,
 } from "@/lib/wire";
+import { Reveal } from "./motion";
 
 /* ================================================================
    The Guided Tour, summoned (TASK-IG-WEB-06).
@@ -26,44 +27,15 @@ import {
    number), and a call to action that summons the real layer
    the chapter describes.
 
-   Reveal-on-scroll is a minimal local IntersectionObserver
-   with the same semantics as TASK-IG-WEB-01's shared motion
-   layer (PR #482); that PR had not merged when this branched,
-   so the tour does not depend on it. Swap this local Reveal
-   for motion.tsx's once #482 is on main.
+   Reveal-on-scroll uses TASK-IG-WEB-01's shared motion layer
+   (motion.tsx, PR #482): the chapters rise into view via its
+   Reveal, the same component the fleet sheet uses. This sheet
+   originally carried a local copy because #482 had not merged
+   when it branched; the swap to the shared Reveal was made
+   once #482 was on main (WEB-06 follow-up).
    ================================================================ */
 
 type RoomKind = "fleet" | "chronicle" | "pulse";
-
-function Reveal({ children, className = "" }: { children: ReactNode; className?: string }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
-      el.classList.add("is-in");
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-in");
-            io.unobserve(entry.target);
-          }
-        }
-      },
-      { threshold: 0.18 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return (
-    <div ref={ref} className={`tour-reveal ${className}`}>
-      {children}
-    </div>
-  );
-}
 
 interface Facts {
   fleet: FleetSnapshot | null;

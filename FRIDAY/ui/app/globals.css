@@ -1249,19 +1249,6 @@ button {
   height: 6px;
 }
 
-.tour-reveal {
-  opacity: 0;
-  transform: translateY(16px);
-  transition:
-    opacity 0.6s ease,
-    transform 0.6s ease;
-}
-
-.tour-reveal.is-in {
-  opacity: 1;
-  transform: none;
-}
-
 .tour-chapter {
   padding: 30px 6px 26px;
   border-bottom: 1px solid var(--hair-soft);
@@ -1336,12 +1323,6 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tour-reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-
   .tour-cta {
     transition: none;
   }
