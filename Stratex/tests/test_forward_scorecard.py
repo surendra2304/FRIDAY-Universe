@@ -325,3 +325,60 @@ def test_dual_spelling_fills_match_one_entrant():
     card = fsc.score_entrant(ent, fills, equity_usd=10000.0, now=START + DAY)
     assert card["closed_trades"] == 2
     assert card["net_pnl"] == 10.0
+
+
+# 9. fx_mr_v4 entrant completeness (TASK-STR-FWD-008) -----------------------
+def test_fx_mr_v4_in_default_entrants_with_oanda_practice_venue():
+    # The FALLBACK set must be complete: if the registry import ever
+    # fails on the server, fx_mr_v4 must still be a tracked entrant —
+    # before this it existed only in the registry path, so the fallback
+    # silently dropped it and its closes landed UNREGISTERED.
+    defaults = fsc._normalise(fsc.DEFAULT_ENTRANTS)
+    by_id = {e["id"]: e for e in defaults}
+    assert "fx_mr_v4" in by_id
+    fx = by_id["fx_mr_v4"]
+    assert fx["venues"] == ["oanda_practice"]
+    assert fx["strategies"] == ["strategy_fx_mr_v4", "fx_mr_v4"]
+    assert fx["lane"] == "FORWARD"
+    assert fx["sleeve"] is False
+
+
+def test_registry_fx_mr_v4_venue_is_oanda_practice_not_binance():
+    # The engine writes fills with venue "oanda_practice" (its
+    # VENUE_NAME). The registry entry declares that spelling in
+    # "venue" but (before the fix) had no "forward_venues", so the
+    # resolver defaulted the entrant to binance_futures.
+    registry = {
+        "fx_mr_v4": {
+            "status": "VALIDATED",
+            "forward_protocol": True,
+            "venue": "oanda_practice",
+            "engine": "oanda_demo",
+        },
+    }
+    entrants = fsc._normalise(fsc._entrants_from_registry(registry))
+    assert len(entrants) == 1
+    assert entrants[0]["id"] == "fx_mr_v4"
+    assert entrants[0]["venues"] == ["oanda_practice"]
+    assert entrants[0]["strategies"] == ["strategy_fx_mr_v4", "fx_mr_v4"]
+
+
+def test_registry_forward_venues_field_still_wins_over_venue():
+    registry = {
+        "alpha": {
+            "forward_protocol": True,
+            "venue": "some_venue",
+            "forward_venues": ["explicit_venue"],
+        },
+    }
+    entrants = fsc._normalise(fsc._entrants_from_registry(registry))
+    assert entrants[0]["venues"] == ["explicit_venue"]
+
+
+def test_live_registry_resolves_fx_mr_v4_on_oanda_practice():
+    # Against the real config_strategy registry (the production
+    # resolution path): fx_mr_v4 must arrive with its real venue.
+    entrants = fsc.load_entrants()
+    by_id = {e["id"]: e for e in entrants}
+    assert "fx_mr_v4" in by_id
+    assert by_id["fx_mr_v4"]["venues"] == ["oanda_practice"]

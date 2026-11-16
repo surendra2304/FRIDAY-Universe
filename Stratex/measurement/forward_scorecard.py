@@ -157,6 +157,18 @@ DEFAULT_ENTRANTS: List[Dict[str, Any]] = [
         "venues": ["binance_futures"],
     },
     {
+        # TASK-STR-FWD-004 entrant, mirrored here so the FALLBACK set is
+        # complete too: with only the FWD-002 set below, any failure of
+        # the registry import silently dropped fx_mr_v4 from the
+        # scorecard and its closes landed UNREGISTERED (TASK-STR-FWD-008).
+        "id": "fx_mr_v4",
+        "label": "FX mean-reversion v4 (OANDA practice, 1d) — TASK-STR-FWD-004",
+        "lane": "FORWARD",
+        "strategies": ["strategy_fx_mr_v4", "fx_mr_v4"],
+        "window_start": GLOBAL_FORWARD_START_ISO,
+        "venues": ["oanda_practice"],
+    },
+    {
         "id": "sleeve:best_per_class",
         "label": "Stage-C best-per-class sleeve (multi-venue)",
         "lane": "FORWARD",
@@ -286,7 +298,15 @@ def _entrants_from_registry(registry: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "lane": str(spec.get("forward_lane") or "FORWARD"),
                 "strategies": _ledger_names(str(key), spec),
                 "window_start": str(spec.get("forward_start") or GLOBAL_FORWARD_START_ISO),
-                "venues": list(spec.get("forward_venues") or ["binance_futures"]),
+                # forward_venues wins; an entry that declares its ledger
+                # venue in "venue" (fx_mr_v4: "oanda_practice", the exact
+                # spelling its engine writes on fills) is honoured next —
+                # defaulting a non-Binance entrant to binance_futures
+                # silently mis-venues it (TASK-STR-FWD-008).
+                "venues": list(
+                    spec.get("forward_venues")
+                    or ([str(spec["venue"])] if spec.get("venue") else ["binance_futures"])
+                ),
             }
         )
     for sleeve_name, components in sleeve_groups.items():

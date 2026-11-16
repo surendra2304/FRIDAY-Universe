@@ -353,6 +353,126 @@ def read_position_tags() -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
+# Position attribution lookup (adoption / untracked-sweep guards)
+# ---------------------------------------------------------------------------
+def _tag_matches_position(
+    tag: Dict[str, Any], side: str = "", qty: float = 0.0, entry_price: float = 0.0
+) -> bool:
+    """Fingerprint check: does this tag describe the broker position
+    identified by (side, qty, entry_price)? Dimensions the caller does
+    not assert (0 / "") are not checked, and a zero recorded in the tag
+    does not fail a dimension either — the tag stream's older rows do
+    not all carry every field."""
+    if side and str(tag.get("side") or "").upper() not in ("", str(side).upper()):
+        return False
+    if qty:
+        tag_qty = abs(_finite(tag.get("qty")))
+        if tag_qty and abs(tag_qty - abs(float(qty))) > max(1e-9, abs(float(qty)) * 0.01):
+            return False
+    if entry_price:
+        tag_px = _finite(tag.get("entry_price"))
+        if tag_px and abs(tag_px - float(entry_price)) > abs(float(entry_price)) * 0.001:
+            return False
+    return True
+
+
+def position_tags_for(venue: str, symbol: str) -> List[Dict[str, Any]]:
+    """All tags for one (venue, symbol), oldest first."""
+    rows = [
+        t
+        for t in read_position_tags()
+        if str(t.get("venue") or "") == str(venue)
+        and str(t.get("symbol") or "") == str(symbol)
+    ]
+    rows.sort(key=lambda t: _finite(t.get("ts"), 0.0))
+    return rows
+
+
+def attributed_position_tag(
+    venue: str,
+    symbol: str,
+    side: str = "",
+    qty: float = 0.0,
+    entry_price: float = 0.0,
+    engine: str = "",
+) -> Optional[Dict[str, Any]]:
+    """The newest tag that attributes this broker position to a real
+    strategy — fingerprint-matched, optionally restricted to one engine
+    (the daemon restores only its OWN opens; another engine's position
+    keeps the TASK-STR-FWD-007 treatment: its owner books its closes).
+    None when the stream never attributed the position."""
+    best: Optional[Dict[str, Any]] = None
+    for tag in position_tags_for(venue, symbol):
+        strat = str(tag.get("strategy") or "")
+        if not strat or strat == "UNATTRIBUTED":
+            continue
+        if engine and str(tag.get("engine") or "") != engine:
+            continue
+        if _tag_matches_position(tag, side, qty, entry_price):
+            best = tag
+    return best
+
+
+def latest_position_tag(
+    venue: str,
+    symbol: str,
+    side: str = "",
+    qty: float = 0.0,
+    entry_price: float = 0.0,
+) -> Optional[Dict[str, Any]]:
+    """Newest fingerprint-matching tag for the position (any strategy,
+    including UNATTRIBUTED) — i.e. the stream already describes it."""
+    best: Optional[Dict[str, Any]] = None
+    for tag in position_tags_for(venue, symbol):
+        if _tag_matches_position(tag, side, qty, entry_price):
+            best = tag
+    return best
+
+
+def position_closed_in_ledger(
+    venue: str,
+    symbol: str,
+    side: str = "",
+    qty: float = 0.0,
+    entry_price: float = 0.0,
+    since_ts: float = 0.0,
+) -> bool:
+    """True when the fill ledger already books a close for this position.
+
+    The open reference is ``since_ts`` when given, else the earliest
+    fingerprint-matching tag (falling back to the earliest tag for the
+    symbol): the tag stream is the only open-time record the tag
+    writers have. A fill for the same (venue, symbol) — side too, when
+    known — exiting at/after that reference means the position the
+    tags describe is closed; a broker read still showing it is stale
+    and must not be re-tagged (live evidence 2026-11-16: the closed
+    trade-470 sleeve position collected 31 re-tags after its close).
+    No tags at all -> False: a fill for the symbol alone does not prove
+    THIS position closed."""
+    ref = _finite(since_ts, 0.0)
+    if ref <= 0:
+        tags = position_tags_for(venue, symbol)
+        if not tags:
+            return False
+        ref = _finite(tags[0].get("ts"), 0.0)
+        for tag in tags:
+            if _tag_matches_position(tag, side, qty, entry_price):
+                ref = _finite(tag.get("ts"), 0.0)
+                break
+    for row in read_fills():
+        if str(row.get("venue") or "") != str(venue):
+            continue
+        if str(row.get("symbol") or "") != str(symbol):
+            continue
+        if side and str(row.get("side") or "").upper() not in ("", str(side).upper()):
+            continue
+        exit_time = _finite(row.get("exit_time"), 0.0)
+        if exit_time > 0 and exit_time >= ref:
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Alerts (reconciliation / venue health)
 # ---------------------------------------------------------------------------
 def _load_alerts() -> Dict[str, Any]:
