@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 
 from storage.relational.models import (
     MemoryRecord,
@@ -121,6 +122,14 @@ class MemoryService:
         purpose: Optional[str] = None
     ) -> MemoryRecord:
         from core.memory.pipeline.secret_scanner import SecretScanner
+        # Deferred like the scanner import above: the pipeline package imports
+        # this module, so its helpers cannot be imported at module level.
+        from core.memory.pipeline.deduplication import (
+            compute_content_hash,
+            compute_dedupe_key,
+            extract_subject,
+            find_exact_duplicate,
+        )
 
         SecretScanner.validate_content_safety(memory_in.content_text)
         tenant_id = str(getattr(memory_in, "tenant_id", "default") or "default")
@@ -302,6 +311,31 @@ class MemoryService:
             if memory_in.memory_type == MemoryType.PROCEDURAL:
                 requested_lifecycle = LifecycleState.CANDIDATE
 
+        # Exact-duplicate check (MEM-004 fix), placed after every refusal
+        # above so coalescing only ever applies to a write that would
+        # otherwise succeed. This direct path historically had NO content
+        # dedupe — only the optional idempotency key — and it never populated
+        # content_hash, so re-writing the same fact always inserted a fresh
+        # copy. Same rule as the write pipeline: (tenant, owner, content
+        # hash, provenance subject) identifies the fact; a hit returns the
+        # canonical record. The owner here is already constrained to the
+        # authenticated actor, so the returned record is the caller's own.
+        content_hash = compute_content_hash(memory_in.content_text)
+        dedupe_subject = extract_subject(memory_in.provenance)
+        owner_agent_normalized = normalize_agent_name(owner.name)
+        dedupe_key = compute_dedupe_key(
+            tenant_id, owner_agent_normalized, content_hash, dedupe_subject
+        )
+        existing_exact = find_exact_duplicate(
+            db,
+            tenant_id=tenant_id,
+            owner_agent=owner_agent_normalized,
+            content_hash=content_hash,
+            subject=dedupe_subject,
+        )
+        if existing_exact is not None:
+            return existing_exact
+
         # Create record with the 6-dimension identity scope resolved above.
         record = MemoryRecord(
             tenant_id=tenant_id,
@@ -317,6 +351,8 @@ class MemoryService:
             owner_agent=normalize_agent_name(owner.name),
             memory_type=memory_in.memory_type,
             content_text=memory_in.content_text,
+            content_hash=content_hash,
+            dedupe_key=dedupe_key,
             source=memory_in.source,
             provenance=canonical_provenance,
             confidence=memory_in.confidence,
@@ -333,7 +369,32 @@ class MemoryService:
             entities=memory_in.entities or [],
         )
         db.add(record)
-        db.flush()
+        try:
+            db.flush()
+        except IntegrityError:
+            # A unique index arbitrated a race the pre-insert lookups missed
+            # (the idempotency index, or the dedupe index when a concurrent
+            # identical write won). Adopt the winner when it is one of ours;
+            # anything else is a genuine integrity failure and propagates.
+            db.rollback()
+            winner = None
+            if idemp_key:
+                winner = db.query(MemoryRecord).filter(
+                    MemoryRecord.tenant_id == tenant_id,
+                    MemoryRecord.agent_id == resolved_agent,
+                    MemoryRecord.idempotency_key == idemp_key,
+                ).first()
+            if winner is None:
+                winner = find_exact_duplicate(
+                    db,
+                    tenant_id=tenant_id,
+                    owner_agent=owner_agent_normalized,
+                    content_hash=content_hash,
+                    subject=dedupe_subject,
+                )
+            if winner is None:
+                raise
+            return winner
 
         # SHARED membership rows. A `team-shared` namespace keeps its historical
         # "open to the team" meaning by carrying the `*` sentinel; the namespace
