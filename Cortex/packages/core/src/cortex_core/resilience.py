@@ -22,7 +22,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
+import urllib.parse
 from collections import deque
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
@@ -491,6 +493,81 @@ class SelfHealingLoop:
         }
 
 
+# ── Telegram sendMessage targets ─────────────────────────────────────────────
+# The fleet's proven operator channel is Telegram via the FRIDAY bot, whose
+# Bot API ``sendMessage`` method requires ``chat_id`` and ``text`` — neither
+# exists in the generic escalation payload, so a generic JSON POST to a
+# sendMessage URL is rejected with HTTP 400 (verified locally against the
+# documented parameter handling, TASK-COR-010). When the configured webhook
+# URL is a Telegram sendMessage URL, both delivery paths (this notifier and
+# ``cortex_api.agent_budgets.WebhookBreachAlertSink``) translate the event
+# into Telegram's shape first. The chat id is NOT part of the webhook URL —
+# it comes from the environment at delivery time.
+
+TELEGRAM_CHAT_ID_ENV = "SELF_HEALING_ESCALATION_TELEGRAM_CHAT_ID"
+TELEGRAM_TEXT_LIMIT = 4096
+
+
+def is_telegram_send_message_url(url: str | None) -> bool:
+    """True iff ``url`` targets the Telegram Bot API ``sendMessage`` method."""
+    if not url:
+        return False
+    try:
+        parsed = urllib.parse.urlparse(url)
+    except ValueError:
+        return False
+    if (parsed.hostname or "").lower() != "api.telegram.org":
+        return False
+    return parsed.path.rstrip("/").endswith("/sendMessage")
+
+
+def format_escalation_text(event: dict[str, Any]) -> str:
+    """Compose the human-readable Telegram ``text`` for an escalation event.
+
+    Accepts either producer's shape: the supervisor's escalation dict
+    (``subsystem`` / ``reason`` / ``at``) or the budget sink's payload
+    (``agent`` / ``message`` / ``reason``). Truncated to Telegram's
+    4096-character limit.
+    """
+    lines = ["Cortex escalation"]
+    agent = event.get("agent")
+    if agent:
+        lines.append(f"Agent: {agent}")
+    subsystem = event.get("subsystem")
+    if subsystem:
+        lines.append(f"Subsystem: {subsystem}")
+    message = event.get("message")
+    if message:
+        lines.append(str(message))
+    reason = event.get("reason")
+    if reason and (not message or str(reason) not in str(message)):
+        lines.append(f"Reason: {reason}")
+    at = event.get("at")
+    if at:
+        lines.append(f"At: {at}")
+    text = "\n".join(lines)
+    if len(text) > TELEGRAM_TEXT_LIMIT:
+        text = text[: TELEGRAM_TEXT_LIMIT - 3] + "..."
+    return text
+
+
+def telegram_delivery_payload(event: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+    """Build the ``sendMessage`` body for ``event``.
+
+    Returns ``(payload, None)`` on success or ``(None, detail)`` when the
+    chat id is not configured — the caller records that as
+    ``delivered: False`` with the reason, never a pretend success.
+    """
+    raw = os.environ.get(TELEGRAM_CHAT_ID_ENV, "").strip()
+    if not raw:
+        return None, (
+            "telegram escalation target configured but "
+            f"{TELEGRAM_CHAT_ID_ENV} is unset"
+        )
+    chat_id: Any = int(raw) if raw.lstrip("-").isdigit() else raw
+    return {"chat_id": chat_id, "text": format_escalation_text(event)}, None
+
+
 class EscalationNotifier:
     """Delivers escalations to an operator channel — or says plainly that it could not.
 
@@ -539,11 +616,23 @@ class EscalationNotifier:
             self.deliveries.append(record)
             return record
 
+        payload: dict[str, Any] = escalation
+        if is_telegram_send_message_url(self.webhook_url):
+            payload, error = telegram_delivery_payload(escalation)
+            if payload is None:
+                record.update({"delivered": False, "detail": error})
+                self.deliveries.append(record)
+                return record
+
         import httpx
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-                response = await client.post(self.webhook_url, json=escalation)
+            # trust_env=False, mirroring WebhookBreachAlertSink: the
+            # escalation webhook is a configured operator endpoint —
+            # ambient HTTP(S)_PROXY variables must not intercept or break
+            # alert delivery.
+            async with httpx.AsyncClient(timeout=self.timeout_seconds, trust_env=False) as client:
+                response = await client.post(self.webhook_url, json=payload)
             delivered = 200 <= response.status_code < 300
             record.update(
                 {

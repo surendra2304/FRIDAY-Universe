@@ -9793,6 +9793,30 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/ig-friday-local-business
     evidence: "PR #777 (IG FRIDAY Cluster C), supervisor-CONFIRMED: workflows/local_business.py (stdlib-only; missing data -> insufficient_data, never guessed; the appointment-agent prompt builder refuses without a services text and never invents services/prices) plus LocalBusinessTool registered in the production registry. MERGED via union-rebase replacement PR #785 -> merge 5e7338d6f5d6806df77108145c54d5a99a52b3fd (2026-11-16, Merge Runner C; #777 closed as superseded: tools.py + FRD-002 pin union with #772, registry total 97; four non-shared files blob-identical). This board entry was created by Merge Runner C: the implementing PR carried no board entry."
     next_action: "Fleet CD deploy -> production probe: local_business answers through the live agent's production registry."
+  - id: TASK-COR-010
+    title: "Telegram-shaped payload mode for Cortex's escalation webhook (SELF_HEALING_ESCALATION_WEBHOOK -> FRIDAY bot sendMessage)"
+    status: IN_REVIEW
+    owner: muse_ai
+    branch: claude/task-cor-010
+    prs: [798]
+    contributors: []
+    priority: P1
+    created_at: "2026-11-16T23:50:00+05:30"
+    updated_at: "2026-11-16T23:50:00+05:30"
+    files:
+      - "Cortex/packages/core/src/cortex_core/resilience.py"
+      - "Cortex/apps/api/src/cortex_api/agent_budgets.py"
+      - "Cortex/tests/unit/test_escalation_telegram_mode.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6924583576"
+    defect: "TASK-IG2-COR-01 (PR #770) delivers budget breaches via SELF_HEALING_ESCALATION_WEBHOOK, and cortex_core's EscalationNotifier delivers self-healing escalations to the same URL — but both POST generic JSON ({subsystem, reason, at} / {subsystem, reason, agent, message, alert}). The fleet's proven operator channel is Telegram via the FRIDAY bot (SEN-006 drill ALT-1794845331-1), whose sendMessage method requires chat_id + text. Local test with the REAL classes from main 0206c62a against a stub implementing Telegram's documented parameter handling: both deliveries fail HTTP 400 -> delivered:false. The webhook therefore cannot simply be pointed at the bot's sendMessage URL."
+    acceptance:
+      - "Shared translation in cortex_core.resilience: is_telegram_send_message_url (host api.telegram.org + /sendMessage path only; lookalike hosts rejected), format_escalation_text (both producers' shapes; 4096-char Telegram limit), telegram_delivery_payload (chat id from SELF_HEALING_ESCALATION_TELEGRAM_CHAT_ID at delivery time; numeric ids sent as ints; unset -> (None, reason))."
+      - "EscalationNotifier.deliver and WebhookBreachAlertSink translate before posting when the configured URL is a Telegram sendMessage URL; a missing chat id records delivered:false with the reason and sends nothing; generic-webhook payloads are byte-identical to before. EscalationNotifier's client also gains trust_env=False, mirroring the sink's documented rationale (ambient proxies must not break alert delivery)."
+      - "Tests: Cortex/tests/unit/test_escalation_telegram_mode.py — 20/20 pass on the branch; collection-errors on pristine main (new symbols absent). Neighbour A/B (budgets + budgets-wiring + resilience/cache, sandbox harness): branch 28 passed / 1 failed / 2 errors == pristine main, identical sets (the 1 failure is a sandbox proxy-env httpx quirk in an unrelated peer-transport test; the 2 errors are the conftest api_client fixture absent under --noconftest). Translated payload re-verified against the documented-behaviour stub: 200 ok:true."
+    evidence:
+      - "Compatibility investigation + drill staging: ~/workspace/cortex-drill/ (STATE.md, tmp/compat_test.py, tmp/compat_results.json) — wire payloads captured from the real classes; B1/B2 both HTTP 400 under documented sendMessage handling; controls prove the missing required fields (not the extra fields) cause the rejection."
+    blockers: []
+    next_action: "Merge via merge queue on green CI. THEN (coordinator, separate steps — NOT in this PR): (1) confirm the S2 deploy repair (deployed HEAD 0206c62a + Cortex healthy; PR #770 live), (2) set SELF_HEALING_ESCALATION_WEBHOOK to the FRIDAY bot sendMessage URL + SELF_HEALING_ESCALATION_TELEGRAM_CHAT_ID in Cortex's S2 env and restart Cortex, (3) run the staged live breach drill (~/workspace/cortex-drill/DRILL.md) — only then is COR-01 gap 3 production-verified."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
