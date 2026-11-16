@@ -159,7 +159,15 @@ class TestTaskStatusQueryTool:
 # ---------------------------------------------------------------------------
 
 class TestTaskStatusFastPathMatching:
-    """The fast path fires ONLY on status questions with a receipt or agent+task."""
+    """The fast path fires ONLY on status questions with a receipt or agent+task.
+
+    TASK-FRD-013: a BARE agent mention is not an agent+task reference.
+    "Check the status of Stratex." asks about the AGENT (its balance and
+    positions — the fleet/Stratex path), not about a delegated task; the
+    old bare-name alternative captured it and answered "ledger is empty…"
+    (FRD-012 drill run 2, replay-verified). The gate now requires the
+    agent↔task co-occurrence in every alternative.
+    """
 
     @staticmethod
     def _matches(text: str) -> bool:
@@ -176,6 +184,7 @@ class TestTaskStatusFastPathMatching:
         agent_reference = None
         m = re.search(
             r"\b(?:intelx|stratex|forge|sentinel|cortex|futuris|vyralx|memora|inference)\b"
+            r"[^.?!]*\b(?:task|assignment|job|dispatch|brief)\b"
             r"|\b(?:intelix|sentinal|viralx|vyral|memoria|inferance|futuristic)\b"
             r"[^.?!]*\b(?:task|assignment|job|dispatch|brief)\b"
             r"|\b(?:task|assignment|job|dispatch|brief)\b[^.?!]*"
@@ -203,6 +212,10 @@ class TestTaskStatusFastPathMatching:
             "what's the status of my intelx research brief",
             "task_aaa111bbb222",
             "check on the sentinal dispatch",  # spelling variant still resolves
+            # TASK-FRD-013: agent+task co-occurrence, name-first order
+            "check on the stratex task",
+            "what's the status of the stratex job?",
+            "status of the intelx assignment",
         ],
     )
     def test_status_phrases_fire(self, phrase):
@@ -219,6 +232,16 @@ class TestTaskStatusFastPathMatching:
             "what's IntelX",                           # bare agent question
             "hello friday",                            # greeting
             "update my portfolio",                     # portfolio path
+            # TASK-FRD-013: questions about the AGENT itself belong to the
+            # fleet/Stratex path, never the task ledger — a status word plus
+            # a bare agent name (no task reference) must NOT fire.
+            "check the status of stratex",             # the FRD-012 finding
+            "what is the status of stratex?",
+            "stratex status please",
+            "is stratex done",
+            "check the status of forge",
+            "what is the status of the stratex portfolio?",
+            "what happened to my stratex trade?",      # a trade is not a dispatch task
         ],
     )
     def test_non_status_phrases_do_not_fire(self, phrase):

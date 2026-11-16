@@ -71,6 +71,19 @@ for bp_mod, bp_name in core_blueprints + adapter_blueprints:
     except Exception as e:
         logger.error(f"[DASHBOARD_WARN] Failed to register blueprint {bp_name} from {bp_mod}: {e}")
 
+# TASK-FRD-013: keep the FRIDAY-supervision status snapshot warm from boot.
+# Without the keeper, the first status read after a restart (or any read
+# >60 s after the previous one) pays the full engine-summary compute —
+# including autonomous-engine construction — synchronously on the request
+# thread (63 s on 2026-11-16 13:38 IST vs FRIDAY's 30 s budget). Fails
+# soft: if the keeper cannot start, reads keep the FRD-011 behaviour.
+try:
+    from api.friday_supervision import start_status_summary_keeper
+
+    start_status_summary_keeper()
+except Exception as e:
+    logger.error(f"[DASHBOARD_WARN] Status summary keeper not started: {e}")
+
 
 from api.request_guard import install_request_guards
 from api.validation import query_bool, query_choice, query_symbol, query_text

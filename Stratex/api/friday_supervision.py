@@ -590,6 +590,82 @@ def _refresh_status_summary() -> None:
             _STATUS_SUMMARY_REFRESHING = False
 
 
+# TASK-FRD-013: snapshot keeper. The FRD-011 cache serves reads inside the
+# TTL / SWR window, but a read that arrives cold (no snapshot yet) or past
+# the 60 s hard bound pays _compute_engine_status_summary() SYNCHRONOUSLY —
+# and that compute is unbounded: its first call in a process also constructs
+# the autonomous-engine singleton (full strategy-registry load). Production
+# incident 2026-11-16 13:38 IST: Stratex.service had restarted at 13:26:37
+# (deploy), so the owner's figures question was the FIRST status read in
+# the new process — audit logged 13:38:13, response completed 13:39:16
+# (63 s server-side: registry flood + engine construction inline), while
+# FRIDAY's mesh budget is 30 s → "Stratex could not answer that:
+# ReadTimeout" at calm host load (0.42). A warm process answered the same
+# path in 4 s (12:22). Status questions are sporadic (minutes apart), so
+# the read-driven refresh cadence the cache design assumed never happens.
+# The keeper supplies that cadence instead: started once from dashboard
+# startup, it computes the snapshot immediately and refreshes it every
+# _STATUS_SUMMARY_KEEPER_INTERVAL_S via the same single-flight machinery,
+# so in a running process a read always lands inside the TTL/SWR window
+# and the snapshot never ages past the 60 s telemetry bound (FRD-011's
+# "never serve ancient money data" contract is preserved — the bound is
+# now enforced by cadence, not by making a reader pay the compute).
+_STATUS_SUMMARY_KEEPER_INTERVAL_S: float = 30.0
+_STATUS_SUMMARY_KEEPER_THREAD: threading.Thread | None = None
+_STATUS_SUMMARY_KEEPER_LOCK = threading.Lock()
+
+
+def _keeper_refresh_once() -> bool:
+    """One keeper refresh pass: claim the single-flight slot and refresh.
+
+    Returns True when this pass ran the refresh, False when a refresh was
+    already in flight (the read path's SWR refresh or a previous keeper
+    pass still computing) — the next pass retries.
+    """
+    global _STATUS_SUMMARY_REFRESHING
+    with _STATUS_SUMMARY_LOCK:
+        if _STATUS_SUMMARY_REFRESHING:
+            return False
+        _STATUS_SUMMARY_REFRESHING = True
+    _refresh_status_summary()
+    return True
+
+
+def _status_summary_keeper_loop() -> None:
+    while True:
+        try:
+            _keeper_refresh_once()
+        except Exception as exc:  # the keeper must never die silently
+            logger.debug(f"[FRIDAY_SUPERVISION] status keeper pass failed: {exc}")
+        time.sleep(_STATUS_SUMMARY_KEEPER_INTERVAL_S)
+
+
+def start_status_summary_keeper() -> threading.Thread | None:
+    """Start the snapshot keeper exactly once (idempotent).
+
+    Called from dashboard startup, after the supervision blueprint is
+    registered. Returns the keeper thread, or None when it was already
+    running. Fails soft: a keeper that cannot start leaves the FRD-011
+    read-path behaviour unchanged (first read computes synchronously).
+    """
+    global _STATUS_SUMMARY_KEEPER_THREAD
+    with _STATUS_SUMMARY_KEEPER_LOCK:
+        if _STATUS_SUMMARY_KEEPER_THREAD is not None and _STATUS_SUMMARY_KEEPER_THREAD.is_alive():
+            return None
+        try:
+            thread = threading.Thread(
+                target=_status_summary_keeper_loop,
+                daemon=True,
+                name="stratex-status-summary-keeper",
+            )
+            thread.start()
+        except Exception as exc:
+            logger.debug(f"[FRIDAY_SUPERVISION] status keeper could not start: {exc}")
+            return None
+        _STATUS_SUMMARY_KEEPER_THREAD = thread
+        return thread
+
+
 def _get_engine_status_summary() -> dict[str, Any]:
     global _STATUS_SUMMARY_CACHE, _STATUS_SUMMARY_TS, _STATUS_SUMMARY_REFRESHING
     now = time.time()
