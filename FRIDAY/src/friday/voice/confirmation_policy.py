@@ -123,6 +123,23 @@ _SHARE_POST = re.compile(
     r"\bshare\b[^.?!]{0,40}\b(this|that|it|the (video|reel|post|photo|clip|link))\b"
 )
 
+# Position-closing verbs join the trade family only with a trading
+# object in scope. Bare "close" / "exit" are desktop homonyms —
+# "close the tab", "exit the app" are laptop control and must stay
+# ungated — so, like _SHARE_POST above, the verb alone is not enough:
+# a position / trade / order / holdings noun (or a position direction —
+# "exit my TRX short") must follow within the same clause. "liquidate"
+# and "flatten" are trading idioms with no desktop sense, so they also
+# take the bare quantifiers ("flatten everything", "liquidate all").
+_TRADE_CLOSE = re.compile(
+    r"\b(close|closes|closing|exit|exits|exiting|liquidate|liquidates|"
+    r"liquidating|flatten|flattens|flattening)\b[^.?!]{0,40}"
+    r"\b(positions?|trades?|orders?|holdings?|portfolio|exposure|"
+    r"shorts?|longs?|short|long)\b"
+    r"|\b(liquidate|liquidates|liquidating|flatten|flattens|flattening)\b"
+    r"[^.?!]{0,20}\b(everything|all)\b"
+)
+
 # Memory writes are reversible and owner-serving: remember/recall are
 # never gated. ("don't forget X" is a remember, handled before delete.)
 _REMEMBER = re.compile(r"\b(remember|note|save|store|remind me)\b")
@@ -226,7 +243,9 @@ def classify_request(text: str) -> Classification:
             pattern.search(lowered)
             for fam, pattern in _ALWAYS_CONFIRM_FAMILIES.items()
             if fam != "delete"
-        ) or bool(re.search(r"\b(delete|erase|wipe)\b", lowered))
+        ) or bool(re.search(r"\b(delete|erase|wipe)\b", lowered)) or bool(
+            _TRADE_CLOSE.search(lowered)
+        )
         if not action_present:
             return Classification(WRITE, "memory", False,
                                   ("reversible memory write",),
@@ -239,7 +258,12 @@ def classify_request(text: str) -> Classification:
     # question ABOUT them stays read-only.
     for family, pattern in _ALWAYS_CONFIRM_FAMILIES.items():
         haystack = _DELETE_EXEMPT.sub("", lowered) if family == "delete" else lowered
-        if pattern.search(haystack):
+        hit = pattern.search(haystack)
+        if family == "trade" and not hit:
+            # Position-closing phrasing ("close the position", "flatten
+            # everything") joins the trade family via its scoped pattern.
+            hit = _TRADE_CLOSE.search(haystack)
+        if hit:
             if question:
                 return Classification(READ_ONLY, family, False,
                                       ("question about an action",),
