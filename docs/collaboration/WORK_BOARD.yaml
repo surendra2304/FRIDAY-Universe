@@ -9571,6 +9571,54 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
     branch: claude/task-voi-014
     evidence: "Voice greeting fix (D5+D8): greeting settles before session start, one greeting owner; board fragment in issue #35 comment 6910242313. MERGED #730 -> 64860f2c557ebb587f09bc29dd7919ea27cb128c. CI green except the validate pair (proven flake family); voice-regressions red = exactly the 1 known pre-existing failure (job log read directly)."
     next_action: "Fleet CD deploy -> FRD-005 re-run #4 -> owner in-hands voice re-test"
+  - id: TASK-IG2-FRG-05
+    title: "ECC harness patterns for Forge (ADAPT, OSS core only)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 734
+    branch: claude/ig2-frg-05-fix
+    evidence: "IG Repo Wave 2 implementation. Original #714 HELD by merge runner 11: gitleaks generic-api-key finding on a planted test fixture (Forge/tests/test_ig2_frg05_ecc_harness.py:70, hash-verified synthetic, not a credential). Replacement #734 from main fcfd2dca: fixture changed to an all-zero-tail placeholder of identical shape (still trips Forge's generic_secret_assignment; suite 9/9 local); other files blob-identical to #714 head; no scanner rules/config changed. MERGED #734 -> cc890b75fd5c89715199faaee01b975dbde6ef6b (merge runner 12; CI re-verified on head 69ce8cc0: secrets scan, py310 gate, test pass; only the validate pair red, proven flake family). #714 closed as superseded."
+    next_action: "Fleet CD deploy -> production probe (deploy verification with the wave)"
+  - id: TASK-IG2-INF-01
+    title: "Bytez provider adapter + empirical free-tier quota probe"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 735
+    branch: claude/ig2-inf-01-fix
+    evidence: "IG Repo Wave 2 implementation. Original #700 HELD: py310 import gate \u2014 the PR's unified_manager.py edit renamed RuntimeConfig.resp_cache_stochastic_ttl_cap_seconds to a nonexistent attribute (AttributeError at import; compile_failures=0, no 3.11 idioms). Replacement #735 from main fcfd2dca keeps the correct attribute name; Bytez rung OFF by default; gateway/.env.example auto-merged with INF-04/INF-02 drift; #700's board hunk excluded (it deleted TASK-VOI-013's entry). MERGED #735 -> 267d085ed6ede158b74014801384e3b2cc4bc7d2 (merge runner 12; CI re-verified on head d60ebfea: py310 gate, secrets scan, test pass; only the validate pair red, proven flake family). #700 closed as superseded."
+    next_action: "Fleet CD deploy -> production probe (deploy verification with the wave)"
+  - id: TASK-IG2-FRD-03
+    title: "delegated lead-generation errand (directory -> contact table)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 736
+    branch: claude/ig2-frd-03-fix
+    evidence: "IG Repo Wave 2 implementation. Original #724 HELD: py310 gate + contracts, one root cause \u2014 its builtin/__init__.py carried LAP-01's escrcpy registration without the module in its base (ModuleNotFoundError). Replacement #736 from main fcfd2dca (escrcpy merged via #716) adds only the LeadGenerateTool registration; plus a real dedupe fix: dedupe_leads merged on a single fallback key so relisted businesses duplicated \u2014 the PR's own pagination test failed deterministically (never in a CI selection); now merges on any shared email/phone/name key, 6/6 task tests pass. MERGED #736 -> 90aa4f039010b2d5e9a8aa45fe70d337e57739de (merge runner 12; CI re-verified on head 0548bf64: py310 gate, contracts, test, secrets all pass; only the validate pair red, proven flake family). #724 closed as superseded."
+    next_action: "Fleet CD deploy -> production probe (deploy verification with the wave)"
+  - id: TASK-IG2-FRD-04
+    title: "post-meeting follow-up automation"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 740
+    branch: claude/ig2-frd-04-rebased
+    evidence: "IG Repo Wave 2 implementation. Original #728 HELD: py310 gate + contracts, one root cause \u2014 its builtin/__init__.py carried escrcpy + lead_gen + meeting_followup registrations while escrcpy_control.py and lead_gen_tools.py were absent from its base (ModuleNotFoundError). Replacement #737 from main fcfd2dca added only its own MeetingFollowUp* registration, but conflicted with #736 on builtin/__init__.py once #736 merged first (both register at the same anchors). Merge runner 12 built replacement #740 (branch claude/ig2-frd-04-rebased, head ada1ea49) with union resolution: __init__.py carries BOTH the LeadGenerateTool and MeetingFollowUp* registrations; other files byte-identical to #737 head blobs. MERGED #740 -> beb4b3cf41d4a1accb004726b4a080eb304ca837 (CI on ada1ea49: secrets scan, py310 gate, test pass; only the validate pair red, proven flake family). #737 and #728 closed as superseded."
+    next_action: "Fleet CD deploy -> production probe (deploy verification with the wave)"
+  - id: TASK-FRD-012
+    title: "Brain-to-voice result delivery \u2014 no completed answer strands (FRD-005 D6 + D7)"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 738
+    branch: claude/task-frd-012
+    evidence: "FRD-005 re-run #3 (20261116-120503) journal trace on one clock: D6 = brain turn 76s vs bridge budget 60s \u2014 completed figures answer discarded into a dead stream (stub-reproduced: broken pipe, no record), unconfirmed absorbed unsaid, zero bridge logging; D7 = remember answered in-budget (~27s) but verbalized only after the goodbye (+36.6s) \u2014 settled result unverbalized, nothing noticed. Fixes: turn-id journaling on every bridge hop; foreground budget 60s -> 105s (worst degraded turn 77.48s + ~35%) with 240s httpx hard cap; shielded-send continuation \u2014 honest unconfirmed at the budget, exchange continues in background, settled result filed to a late-result registry + back-fills the FRD-011 reuse cache + delivered into the live session; delivery watch nudges a still-unverbalized settled result once, verbatim, at 12s (expiry 150s journaled); wedge 75s -> 140s, rung prove 100s -> 135s, ladder 300s -> 420s. Drills (branch worker beside production): run 1 under disclosed contention (load 4.12->10.58) delivery mechanics PASS (every result verbalized in-leg, journal-attributable; content failed upstream brain->Stratex/Memora); run 2 calm (load 0.31->3.62) greeting 3.52s, remember 3.00s / recall 6.08s answered, 'teal' spoken before the goodbye \u2014 D7 criterion met in-session; delegation result verbalized (its ledger content replay-proven to be brain intent routing, not delivery). Tests: 18 new FRD-012 tests pass; voice+brain selection branch 582 passed / 4 failed == clean main f725a3b4 564 passed / 4 failed (identical pre-existing failure set); merge-tree vs main fcfd2dca (VOI-014) clean. MERGED #738 -> cf0e3846056da4baeea9b9c66788d51fec0c6a24 (merge runner 12; CI: secrets scan, py310 gate, test pass; validate pair red = flake family; voice-regressions red = exactly the 1 known pre-existing failure, job 133179558360 log-verified)."
+    next_action: "Fleet CD deploy -> FRD-005 re-run #4 (delegation must speak real Stratex figures in-session; remember->recall inside their leg windows) -> owner in-hands voice re-test. The two named follow-ups \u2014 (a) brain intent routing for 'Check the status of Stratex.' and (b) brain->Stratex ReadTimeout at calm load \u2014 were both taken up by TASK-FRD-013 (merged #739)."
+  - id: TASK-FRD-013
+    title: "Brain-side delegation health: Stratex-status intent routing + Stratex status-summary keeper"
+    status: IN_REVIEW
+    owner: muse_ai
+    pr: 739
+    branch: claude/task-frd-013
+    evidence: "Finding A: task-status fast path fired on status word + bare agent name -> 'status of Stratex' answered from the task ledger; gate now requires agent-task co-occurrence (deployed BEFORE matrix 2/8 misrouted; staging AFTER matrix routing 12/12). Finding B: 13:38 IST incident journal-proven \u2014 first status read after a Stratex restart paid 63s of synchronous compute (engine construction) vs FRIDAY's 30s budget; keeper thread (30s cadence, started at dashboard startup) keeps the FRD-011 snapshot inside its TTL/SWR window; A/B at the FleetClient boundary: cold 22.61s vs keeper 1.2-4.2s x3, figures receipt-matched (10792.80 / 0 open / 9 closed / +195.06); figures x3 through the full fixed chain 18.8/3.4/3.2s. Tests vs main: FRIDAY 137->147 passed; Stratex supervision set failure set identical (4 pre-existing). MERGED #739 -> 2289bcb1d86df501ae2eb7cd3b4952099a10eb70 (merge runner 12; CI: secrets scan, py310 gate, test pass; only the validate pair red, proven flake family)."
+    next_action: "Fleet CD deploy -> FRD-005 re-run #4 (joint voice acceptance with FRD-012 + VOI-014) -> owner in-hands voice re-test"
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"
