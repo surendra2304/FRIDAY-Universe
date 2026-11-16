@@ -545,6 +545,13 @@ async def service_status() -> dict[str, Any]:
 
     from futuris.infra.cache import forecast_cache
     from futuris.infra.resilience import peer_circuits
+    from futuris.storage.db import verify_schema
+
+    # TASK-OBS-003: /status previously reported a constant "healthy" and a
+    # hardcoded port 8000 while production binds 8004 — the status verdict
+    # now comes from the same measured storage check /health uses, and the
+    # port from the same PORT env the server launcher binds.
+    storage = await verify_schema()
 
     uptime = round(time.time() - _START_TIME, 2)
     memory_info: dict[str, Any] = {}
@@ -561,12 +568,13 @@ async def service_status() -> dict[str, Any]:
         memory_info = {"note": "process telemetry active"}
 
     return {
-        "status": "healthy",
+        "status": "healthy" if storage["ready"] else "degraded",
         "service": "futuris",
         "role": "Temporal Modeling, Scenario Simulation & Predictive Intelligence",
         "version": __version__,
         "environment": settings.APP_ENV,
-        "port": 8000,
+        "port": int(os.getenv("PORT", "8000")),
+        "storage": storage,
         "uptime_seconds": uptime,
         "observed_at": datetime.now(UTC).isoformat(),
         "memory": memory_info,

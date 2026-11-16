@@ -1080,20 +1080,46 @@ class AndroidActionRequest(BaseModel):
     params: dict[str, Any] = {}
 
 
+def _peers_mesh_state() -> str:
+    """Truthful mesh-connectivity claim for the health payload (TASK-OBS-003).
+
+    "connected" is earned only by evidence: at least one mesh outcome in a
+    COMPLETED/SUCCESS state recorded by this process (the live mesh reported
+    CONFIGURED-BUT-UNVERIFIED with zero observed peer responses while /health
+    claimed "connected" unconditionally). A configured mesh with no observed
+    peer outcome reports "configured_unverified"; a mesh that cannot even be
+    inspected reports "unavailable". Never a hardcoded claim.
+    """
+    try:
+        mesh_status = get_mesh().status()
+    except Exception:
+        return "unavailable"
+    counts = mesh_status.get("state_counts") or {}
+    if counts.get("COMPLETED", 0) > 0 or counts.get("SUCCESS", 0) > 0:
+        return "connected"
+    if mesh_status.get("peers"):
+        return "configured_unverified"
+    return "unavailable"
+
+
 @app.api_route("/api/health", methods=["GET", "HEAD"])
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check() -> dict[str, Any]:
     """Expose system health report verified across all subsystems."""
     rep = build_health_report(["friday", "friday_deep"])
     data = rep.as_dict()
-    data["status"] = "healthy"
+    # TASK-OBS-003: `status` must be the report's own computed verdict. This
+    # handler previously overwrote it with the constant "healthy", so a
+    # degraded import check still surfaced as healthy to every consumer that
+    # reads `status` (including FRIDAY's own fleet classifier vocabulary).
+    data["status"] = rep.overall.value
     # `service` is the TECHNICAL service id the Tier-1 contract tests pin;
     # the owner-facing name lives in `agent`/`canonical_name` ("FRIDAY").
     data["service"] = "friday_core"
     data["agent"] = "FRIDAY"
     data["canonical_name"] = "FRIDAY"
     data["version"] = "2.0.0"
-    data["peers_mesh"] = "connected"
+    data["peers_mesh"] = _peers_mesh_state()
     return data
 
 

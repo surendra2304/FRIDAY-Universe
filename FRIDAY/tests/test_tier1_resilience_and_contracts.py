@@ -38,7 +38,9 @@ def test_health_endpoint_contract(client: TestClient) -> None:
     assert data["version"] == "2.0.0"
     assert data["overall"] == "healthy"
     assert "observed_at" in data
-    assert data["peers_mesh"] == "connected"
+    # TASK-OBS-003: peers_mesh is derived from observed mesh outcomes, not
+    # hardcoded "connected"; a fresh test process has observed none.
+    assert data["peers_mesh"] in {"connected", "configured_unverified", "unavailable"}
 
 
 def test_ready_endpoint_contract(client: TestClient, tmp_path: Path) -> None:

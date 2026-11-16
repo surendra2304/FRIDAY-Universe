@@ -132,7 +132,16 @@ def _start_queue_worker() -> None:
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "vyralx", "version": app.version}
+    # TASK-OBS-003: label this for what it is — process liveness, the fleet
+    # convention every other agent's /health already follows. Dependency
+    # truth lives in /ready (database, ffmpeg, worker, media warehouse).
+    return {
+        "status": "ok",
+        "service": "vyralx",
+        "version": app.version,
+        "evidence_class": "process_liveness",
+        "observed_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @app.get("/ready")
