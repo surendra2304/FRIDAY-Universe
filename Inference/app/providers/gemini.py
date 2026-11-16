@@ -105,6 +105,17 @@ class GeminiProvider(BaseLLMProvider):
     # hard-capped via thinkingConfig.thinkingBudget.
     DEFAULT_THINKING_TOKEN_ALLOWANCE = 1024
     MAX_OUTPUT_TOKENS_CEILING = 65536  # documented per-response output cap
+
+    # TASK-INF-011: measured on S1 (gemini-egress-diag, 2026-11-17), a
+    # tiny prompt to gemini-3.6-flash took 45.3s to first byte with
+    # default thinking and 22.6s with thinkingBudget=0 — the model's
+    # default reasoning adds ~13-23s of latency before any visible
+    # token, which is most of why Gemini blew the gateway's primary
+    # slice and failed over. Flash models therefore default to the
+    # GEMINI_FLASH_THINKING_BUDGET setting (0 = thinking off) instead
+    # of the allowance above. The allowance still governs the Pro
+    # family: Gemini 2.5 Pro cannot think below a 128-token budget,
+    # so sending it 0 would be an unsupported value.
     _THINKING_FAMILIES = ("gemini-3", "gemini-2.5")
     _THINKING_ALIASES = {"gemini-flash-latest", "gemini-pro-latest"}
 
@@ -119,6 +130,26 @@ class GeminiProvider(BaseLLMProvider):
         if "lite" in name:
             return False
         return name in self._THINKING_ALIASES or any(f in name for f in self._THINKING_FAMILIES)
+
+    @staticmethod
+    def _is_flash_model(model: str) -> bool:
+        """True for the Flash generation family (incl. the
+        gemini-flash-latest alias). Flash-Lite also matches this test
+        but never reaches the default plan: _thinks_by_default already
+        excludes it, and its payload stays thinkingConfig-free."""
+        return "flash" in (model or "").lower()
+
+    def _flash_thinking_budget(self) -> int:
+        """The configured default thinking budget for Flash models.
+
+        Settings field GEMINI_FLASH_THINKING_BUDGET (env-tunable),
+        measured default 0 = thinking disabled (TASK-INF-011).
+        Negative or unreadable values clamp to 0 — never guess a
+        positive budget the operator did not set."""
+        try:
+            return max(0, int(settings.GEMINI_FLASH_THINKING_BUDGET))
+        except (TypeError, ValueError):
+            return 0
 
     def _thinking_plan(self, request: ProviderRequest, model: str) -> dict[str, Any] | None:
         """Resolve how this request's thinking is budgeted.
@@ -157,6 +188,20 @@ class GeminiProvider(BaseLLMProvider):
             }
         if not self._thinks_by_default(model):
             return None
+        if self._is_flash_model(model):
+            # TASK-INF-011: Flash defaults to the configured budget
+            # (0 = thinking off; see the measurement note above). The
+            # plan is flagged default_minimal so _build_payload sends
+            # the thinkingConfig even when the caller declared no
+            # max_tokens — otherwise the disable would silently not
+            # apply to exactly the unbounded requests.
+            budget = self._flash_thinking_budget()
+            return {
+                "allowance": budget,
+                "thinking_config": {"thinkingBudget": budget},
+                "explicit": False,
+                "default_minimal": True,
+            }
         return {
             "allowance": self.DEFAULT_THINKING_TOKEN_ALLOWANCE,
             "thinking_config": {"thinkingBudget": self.DEFAULT_THINKING_TOKEN_ALLOWANCE},
@@ -198,9 +243,15 @@ class GeminiProvider(BaseLLMProvider):
                 )
                 if plan["thinking_config"] is not None:
                     payload["generationConfig"]["thinkingConfig"] = plan["thinking_config"]
-        elif plan is not None and plan["explicit"] and plan["thinking_config"] is not None:
+        elif (
+            plan is not None
+            and plan["thinking_config"] is not None
+            and (plan["explicit"] or plan.get("default_minimal"))
+        ):
             # No declared budget to protect, but honour a caller's
-            # explicit thinking configuration.
+            # explicit thinking configuration — and, for Flash models,
+            # the default thinking budget (TASK-INF-011), which must
+            # reach the wire even on unbounded requests.
             payload["generationConfig"]["thinkingConfig"] = plan["thinking_config"]
 
         if request.response_schema:
