@@ -256,7 +256,14 @@ def _execute_store(
             memory_type=mtype,
             source=f"agent:{actor}",
             provenance={"task_id": envelope.task_id, "trace_id": envelope.trace_id},
-            allow_duplicates=True,
+            # No allow_duplicates opt-out (MEM-004 fix): a task store is a
+            # FACT write — the same content re-sent under a new task_id /
+            # trace_id is the same fact, and the pipeline returns the
+            # canonical record (result.duplicate=True, same memory_id)
+            # instead of storing a byte-identical copy. The blanket opt-out
+            # that used to sit here is what filled production with exact
+            # duplicates; occurrence-style writes (skill outcomes, user-model
+            # corrections) opt out inside their own services, deliberately.
         )
     except (SecretDetectedSecurityViolation, PoisonMemoryViolation) as exc:
         # A security rejection is a refusal, not a server fault. Report it in-band

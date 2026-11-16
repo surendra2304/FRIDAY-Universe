@@ -251,6 +251,15 @@ class MemoryRecord(Base):
     )
     content_text: Mapped[str] = mapped_column(Text, nullable=False)
     content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    # Exact-duplicate arbitration key: hash of (tenant_id, owner_agent,
+    # content_hash, provenance subject) — see core.memory.pipeline.
+    # deduplication.compute_dedupe_key. Populated by the two write services;
+    # the unique index below makes the database the final arbiter when two
+    # identical writes race past the services' pre-insert lookup. NULL for
+    # rows written outside the services (direct ORM construction, legacy
+    # rows): NULLs are distinct in SQLite/PostgreSQL/Oracle unique indexes,
+    # so unkeyed rows are never constrained against each other.
+    dedupe_key: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     source: Mapped[str] = mapped_column(String(128), nullable=False, default="unknown")
     provenance: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True, default=dict)
     entities: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True, default=list)
@@ -288,6 +297,10 @@ class MemoryRecord(Base):
         # both SQLite and PostgreSQL unique indexes, so ordinary writes that carry no
         # idempotency key are never constrained against each other.
         Index("uq_memory_idempotency_scope", "tenant_id", "agent_id", "idempotency_key", unique=True),
+        # Exact-duplicate race net (MEM-004 fix). Single-column unique index
+        # on the dedupe key, which already encodes tenant + owner + content +
+        # subject. Rows that carry no key (NULL) never collide.
+        Index("uq_memory_dedupe_key", "dedupe_key", unique=True),
         Index("ix_memory_owner_type", "owner_id", "memory_type"),
         Index("ix_memory_ns_state", "namespace_id", "lifecycle_state"),
         Index("ix_memory_tenant_owner", "tenant_id", "owner_id"),

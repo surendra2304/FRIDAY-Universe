@@ -35,7 +35,12 @@ from core.metrics.collector import metrics_collector
 from core.events.emitter import event_emitter
 from core.memory.pipeline.secret_scanner import SecretScanner
 from core.memory.pipeline.entity_extractor import EntityExtractor
-from core.memory.pipeline.deduplication import DeduplicationEngine
+from core.memory.pipeline.deduplication import (
+    DeduplicationEngine,
+    compute_dedupe_key,
+    extract_subject,
+    find_exact_duplicate,
+)
 from core.memory.pipeline.contradiction_detector import ContradictionDetector
 from core.memory.service import PermissionDeniedError
 from core.security.provenance import compute_memory_signature
@@ -450,6 +455,17 @@ class MemoryWriteService:
             # -------------------------------------------------------------
             normalized_content = " ".join(content_text.strip().split())
             content_hash = hashlib.sha256(normalized_content.encode("utf-8")).hexdigest()
+            # Exact-duplicate identity for this write (MEM-004 fix): the
+            # hygiene pass's grouping rule — tenant + owner + content +
+            # provenance subject. Computed once here; Step 6 looks it up and
+            # Step 9 stores it under the uq_memory_dedupe_key unique index.
+            dedupe_subject = extract_subject(provenance)
+            dedupe_key = compute_dedupe_key(
+                resolved_tenant,
+                normalize_agent_name(actor.name),
+                content_hash,
+                dedupe_subject,
+            )
             step_trace["step_4_normalize_content"] = {
                 "char_count": len(normalized_content),
                 "sha256": content_hash
@@ -617,6 +633,69 @@ class MemoryWriteService:
                 "contradiction_reason": dedup_result.contradiction_reason,
             }
 
+            # Tenant-scoped EXACT-duplicate check (MEM-004 fix). The engine
+            # above only scans the target namespace, so the same fact written
+            # to a different namespace — /v1/task's memora://<actor>/general
+            # vs /v1/memories' memora://<actor>/private — never met its twin.
+            # Production accumulated byte-identical copies that differed only
+            # in per-write provenance volatiles (task_id, trace_id, hmac).
+            # An exact match on (tenant, owner, content hash, subject) is
+            # the same fact wherever it lives: return the canonical record.
+            #
+            # allow_duplicates remains the caller's explicit OCCURRENCE
+            # semantics and exempts this check: the skill learner's outcome
+            # records and the user model's corrections are events, where the
+            # Nth identical write is new evidence, not a copy. Occurrence
+            # writes also stay unkeyed at Step 9, so the unique index never
+            # constrains them. What made production duplicate was never the
+            # flag's existence — it was /v1/task setting it blanketly for
+            # fact stores; that opt-out is removed at the router.
+            exact_existing = (
+                find_exact_duplicate(
+                    db,
+                    tenant_id=resolved_tenant,
+                    owner_agent=normalize_agent_name(actor.name),
+                    content_hash=content_hash,
+                    subject=dedupe_subject,
+                )
+                if not allow_duplicates
+                else None
+            )
+            if exact_existing is not None:
+                read_decision = _require_duplicate_read_access(exact_existing)
+                if share_targets:
+                    cls._apply_record_shares(
+                        db, exact_existing, actor, resolved_tenant, share_targets, purpose
+                    )
+                PolicyEngine.log_audit_decision(
+                    db,
+                    policy_decision,
+                    actor_id=actor.id,
+                    tenant_id=resolved_tenant,
+                )
+                step_trace["step_6_deduplication"] = {
+                    **step_trace["step_6_deduplication"],
+                    "is_duplicate": True,
+                    "duplicate_of_id": exact_existing.id,
+                    "exact_content_hit": True,
+                }
+                step_trace["step_8_apply_policy"] = policy_decision.to_dict()
+                step_trace["duplicate_read_policy"] = read_decision.to_dict()
+                db.commit()
+                db.refresh(exact_existing)
+                metrics_collector.record_write(
+                    success=True,
+                    is_contradiction=False,
+                    latency_ms=(time.time() - start_time) * 1000,
+                    is_duplicate=True,
+                )
+                return MemoryWriteResult(
+                    record=exact_existing,
+                    step_outputs=step_trace,
+                    is_duplicate=True,
+                    duplicate_of_id=exact_existing.id
+                )
+
             if dedup_result.is_duplicate and not allow_duplicates and dedup_result.duplicate_of_id:
                 existing = db.query(MemoryRecord).filter(
                     MemoryRecord.id == dedup_result.duplicate_of_id,
@@ -741,6 +820,10 @@ class MemoryWriteService:
                 memory_type=resolved_type,
                 content_text=normalized_content,
                 content_hash=content_hash,
+                # Occurrence writes (allow_duplicates) carry no key: the
+                # unique index must never turn an evidence event into a
+                # constraint violation. Fact writes are keyed and arbitrated.
+                dedupe_key=None if allow_duplicates else dedupe_key,
                 entities=extracted_entities,
                 source=source,
                 provenance=combined_provenance,
@@ -780,18 +863,35 @@ class MemoryWriteService:
                     "signature_version": "v1",
                 }
             except IntegrityError:
-                # The unique idempotency index is the final arbiter when two
-                # identical requests race past the pre-insert lookup. Roll back
-                # the failed transaction, then adopt the winner if it is now
-                # visible; non-idempotency integrity errors still propagate.
-                if not idempotency_key:
-                    raise
+                # The unique indexes are the final arbiters when two identical
+                # requests race past the pre-insert lookups: the idempotency
+                # index for keyed retries, the dedupe index (MEM-004 fix) for
+                # exact-content re-writes. Roll back the failed transaction,
+                # then adopt the winner if it is now visible; unrelated
+                # integrity errors still propagate.
                 db.rollback()
-                winner = db.query(MemoryRecord).filter(
-                    MemoryRecord.tenant_id == resolved_tenant,
-                    MemoryRecord.agent_id == actor.name,
-                    MemoryRecord.idempotency_key == idempotency_key,
-                ).first()
+                winner = None
+                recovered_via = None
+                if idempotency_key:
+                    winner = db.query(MemoryRecord).filter(
+                        MemoryRecord.tenant_id == resolved_tenant,
+                        MemoryRecord.agent_id == actor.name,
+                        MemoryRecord.idempotency_key == idempotency_key,
+                    ).first()
+                    if winner is not None:
+                        recovered_via = "idempotency_key"
+                if winner is None and not allow_duplicates:
+                    # Occurrence writes carry no dedupe key, so a collision
+                    # can never be theirs to adopt.
+                    winner = find_exact_duplicate(
+                        db,
+                        tenant_id=resolved_tenant,
+                        owner_agent=normalize_agent_name(actor.name),
+                        content_hash=content_hash,
+                        subject=dedupe_subject,
+                    )
+                    if winner is not None:
+                        recovered_via = "dedupe_key"
                 if winner is None:
                     raise
                 read_decision = _require_duplicate_read_access(winner)
@@ -808,7 +908,8 @@ class MemoryWriteService:
                 step_trace["step_6_deduplication"] = {
                     "is_duplicate": True,
                     "duplicate_of_id": winner.id,
-                    "idempotent_hit": True,
+                    "idempotent_hit": recovered_via == "idempotency_key",
+                    "recovered_via": recovered_via,
                     "concurrent_conflict_recovered": True,
                 }
                 step_trace["step_8_apply_policy"] = policy_decision.to_dict()
