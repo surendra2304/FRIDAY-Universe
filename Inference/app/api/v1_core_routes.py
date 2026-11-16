@@ -40,7 +40,7 @@ from app.memory.base import TaskRecord
 from app.providers.base import ProviderMessage, ProviderRequest
 from app.providers.custom_endpoints import custom_catalog_entries, custom_provider_for_model
 from app.providers.errors import TimeoutError as ProviderTimeoutError
-from app.providers.gateway import model_gateway
+from app.providers.gateway import GROQ_PROMPT_TOKEN_LIMIT, model_gateway
 from app.providers.model_servability import model_servability_tracker
 from app.providers.quota_ledger import quota_ledger
 from app.providers.unified_manager import (
@@ -1080,6 +1080,20 @@ def _estimate_context_tokens(req: ChatCompletionRequest) -> int:
     return chars // _CHARS_PER_TOKEN + max(0, int(req.max_tokens or 0))
 
 
+def _estimate_prompt_tokens(req: ChatCompletionRequest) -> int:
+    """Estimated PROMPT tokens, mirroring the gateway's own estimator.
+
+    TASK-INF-012: the gateway's TASK-REL-047 guard estimates prompt
+    tokens as message characters // 4 (app.providers.gateway.
+    estimate_prompt_tokens) and refuses to run an over-limit prompt on
+    Groq. Selection must estimate identically so it can see the same
+    boundary; any drift between the two estimators reopens the gap
+    where selection picks a Groq model the gateway will not execute.
+    """
+    chars = sum(len(msg.content or "") for msg in req.messages)
+    return chars // _CHARS_PER_TOKEN
+
+
 #: Task-type inference hints. Deliberately small and deterministic: the
 #: inference reads only the request's shape (model-id hints, prompt text,
 #: prompt size) — no model call and no heuristics beyond these tables.
@@ -1172,6 +1186,7 @@ def _ranked_suitable_models(
     task_type: str,
     exclude: set[str] | None = None,
     required_tokens: int = 0,
+    groq_over_limit: bool = False,
 ) -> list[str]:
     """Ranked verified-catalogue candidates for a task type, best first.
 
@@ -1193,6 +1208,16 @@ def _ranked_suitable_models(
     ordered by window size, largest first — the caller gets the best
     possible holder, and _select_best_suitable discloses the overflow
     instead of letting the provider truncate in silence.
+
+    TASK-INF-012 adds the Groq size-guard overlay: when
+    ``groq_over_limit`` is set, the request's estimated prompt exceeds
+    the gateway's TASK-REL-047 Groq prompt guard, so Groq-routed
+    candidates are dropped — the gateway would divert them to its
+    catalogue-blind dynamic fallback ladder, whose free-model serve
+    the TASK-REL-043 containment then rejects, turning a servable
+    request into a 503. Under the same never-empty discipline as the
+    other overlays, if dropping Groq empties the pool the unfiltered
+    pool is kept.
     """
     ranked = MODEL_SUITABILITY.get(task_type) or MODEL_SUITABILITY["chat"]
     excluded = {(item or "").lower() for item in (exclude or set())}
@@ -1224,6 +1249,17 @@ def _ranked_suitable_models(
     if visible or probes:
         keep = set(visible) | set(probes)
         pool = [m for m in pool if m in keep]
+    # TASK-INF-012: Groq size-guard overlay. Runs after the
+    # availability overlays and before the fit filter, so the fit
+    # filter's overflow fallback still orders the surviving pool.
+    if groq_over_limit and pool:
+        non_groq = [
+            model_id
+            for model_id in pool
+            if _CATALOG_PROVIDERS[model_id.lower()] != "groq"
+        ]
+        if non_groq:
+            pool = non_groq
     # TASK-IG-INF-01: context-window fit filter, applied after both
     # availability overlays so its overflow fallback still returns the
     # best available holder rather than refusing service.
@@ -1265,8 +1301,20 @@ def _select_best_suitable(
     # that fits exactly as much as a long document does.
     required_tokens = _estimate_context_tokens(req)
     fit_applied = required_tokens > _CONTEXT_FIT_FLOOR_TOKENS
+    # TASK-INF-012: mirror the gateway's TASK-REL-047 Groq prompt-size
+    # guard at selection time. An over-limit prompt whose ranking is
+    # Groq-topped cannot be executed by its pick: the gateway diverts
+    # it to the catalogue-blind dynamic ladder and TASK-REL-043
+    # containment rejects that serve, so the request 503s even though
+    # verified non-Groq models could serve it. Drop Groq candidates
+    # for over-limit prompts (never-empty: see _ranked_suitable_models).
+    prompt_tokens_estimate = _estimate_prompt_tokens(req)
+    groq_over_limit = prompt_tokens_estimate > GROQ_PROMPT_TOKEN_LIMIT
     candidates = _ranked_suitable_models(
-        task_type, exclude=exclude, required_tokens=required_tokens if fit_applied else 0
+        task_type,
+        exclude=exclude,
+        required_tokens=required_tokens if fit_applied else 0,
+        groq_over_limit=groq_over_limit,
     )
     if not candidates:
         return None
@@ -1305,6 +1353,17 @@ def _select_best_suitable(
             f"requested a {requested_class}-class model; the best available suitable "
             f"model is {chosen} ({served_class}-class)"
             if downgrade
+            else None
+        ),
+        # TASK-INF-012: disclose when the Groq size guard shaped this
+        # selection, so provenance shows why a Groq-topped ranking did
+        # not serve its top pick.
+        "groq_size_guard": (
+            {
+                "prompt_tokens_estimate": prompt_tokens_estimate,
+                "limit": GROQ_PROMPT_TOKEN_LIMIT,
+            }
+            if groq_over_limit
             else None
         ),
     }
