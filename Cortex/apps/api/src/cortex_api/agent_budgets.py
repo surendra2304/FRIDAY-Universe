@@ -298,7 +298,10 @@ class WebhookBreachAlertSink:
     self-healing escalations to — so budget breaches reach the operator
     wherever Cortex escalations already go. Mirrors the notifier's
     honesty rule: with no channel configured the delivery record says
-    ``delivered: False`` with the reason instead of pretending.
+    ``delivered: False`` with the reason instead of pretending. When the
+    configured URL is a Telegram ``sendMessage`` URL the payload is
+    translated to ``{chat_id, text}`` first (see
+    ``cortex_core.resilience.telegram_delivery_payload``).
     """
 
     def __init__(
@@ -338,6 +341,18 @@ class WebhookBreachAlertSink:
             "message": alert.get("message"),
             "alert": alert,
         }
+        from cortex_core.resilience import (
+            is_telegram_send_message_url,
+            telegram_delivery_payload,
+        )
+
+        if is_telegram_send_message_url(self.webhook_url):
+            # Telegram's sendMessage needs {chat_id, text}; the generic
+            # payload above is rejected with HTTP 400 (TASK-COR-010).
+            payload, error = telegram_delivery_payload(payload)
+            if payload is None:
+                record.update({"delivered": False, "detail": error})
+                return record
         try:
             import httpx
 
