@@ -172,27 +172,47 @@ class DecisionRecommendationSystem:
         if not self._criteria or not self._alternatives:
             raise HTTPException(400, "Need criteria and alternatives")
 
-        # Calculate weighted scores for each alternative. TASK-COR-003: track
-        # every score cell that falls back to the 0.5 default so the stored
-        # record shows which inputs were actually supplied and which were
-        # defaulted at decision time.
+        # TASK-REL-047 (PR #361) + lead-coordinator ruling 2026-11-16: no
+        # silent defaults. A criterion an alternative was never scored on
+        # used to contribute an invented 0.5 to the weighted score
+        # (TASK-COR-002's controlled probe: a recommendation with confidence
+        # 0.5833 computed from a matrix that was 75% invented cells).
+        # COR-002 first made the output disclose the defaults; the ruling
+        # abolishes them — an incomplete score matrix is rejected outright
+        # with HTTP 422 naming every missing cell. The refusal itself is
+        # appended to the decision log (TASK-COR-003 completeness): the log
+        # records that a recommendation was requested and refused, never a
+        # fabricated decision.
+        missing = [
+            f"{alt.name} / {crit.name}"
+            for alt in self._alternatives.values()
+            for crit in self._criteria.values()
+            if crit.criterion_id not in alt.criteria_scores
+        ]
+        if missing:
+            self._record_rejection(problem_statement, decider, missing)
+            raise HTTPException(
+                422,
+                "Incomplete decision matrix: missing scores for "
+                + ", ".join(missing)
+                + ". Supply a score for every alternative-by-criterion cell "
+                "before requesting a recommendation.",
+            )
+
+        # Calculate weighted scores for each alternative. Completeness is
+        # validated above, so direct indexing is safe — and any future path
+        # that bypasses validation fails loudly instead of inventing a 0.5.
+        # Every cell is still recorded in the recommendation's provenance
+        # (TASK-COR-002) and snapshot (TASK-COR-003); with the gate, the
+        # defaulted-cells list is always empty.
         defaulted_cells: list[str] = []
-        # Calculate weighted scores for each alternative.
-        # TASK-COR-002: a criterion an alternative was never scored on used
-        # to fall back to a silent 0.5 — an invented input that could decide
-        # the ranking (production probe 2026-11-15: 3 of 4 matrix cells were
-        # defaults, yet the output stated confidence 0.5833 with no hint).
-        # The fallback is unchanged, but every cell is now recorded in the
-        # recommendation's provenance as supplied vs engine-defaulted.
         scores = {}
         provenance_inputs = []
         for alt_id, alt in self._alternatives.items():
             total_score = 0.0
             for crit_id, crit in self._criteria.items():
-                if crit_id not in alt.criteria_scores:
-                    defaulted_cells.append(f"{alt_id}:{crit_id}")
                 supplied = crit_id in alt.criteria_scores
-                score = alt.criteria_scores.get(crit_id, 0.5)
+                score = alt.criteria_scores[crit_id]
                 provenance_inputs.append(input_record(
                     f"score[{alt.name}][{crit.name}]",
                     score,
@@ -237,7 +257,7 @@ class DecisionRecommendationSystem:
             # Vary weight by ±20%
             varied_scores = {}
             for alt_id, alt in self._alternatives.items():
-                score = alt.criteria_scores.get(crit_id, 0.5)
+                score = alt.criteria_scores[crit_id]
                 if crit.direction == "minimize":
                     score = 1.0 - score
                 varied_scores[alt_id] = score * crit.weight * 1.2
@@ -303,8 +323,9 @@ class DecisionRecommendationSystem:
                     "confidence = best alternative's weighted score / sum of all "
                     "alternatives' weighted scores. It is a share of total score, "
                     "NOT a calibrated probability of a correct decision. "
-                    "Unscored criterion cells contribute the engine default 0.5 "
-                    "(see defaults_applied)."
+                    "Every score cell was supplied by the caller — incomplete "
+                    "matrices are rejected (HTTP 422), never defaulted "
+                    "(TASK-REL-047)."
                 ),
             ),
         )
@@ -323,6 +344,107 @@ class DecisionRecommendationSystem:
         )
 
         return recommendation
+
+    def _record_rejection(
+        self, problem_statement: str, decider: str, missing: list[str]
+    ) -> Recommendation:
+        """Append a rejected-incomplete record to the decision log.
+
+        TASK-REL-047 ruling (2026-11-16): when recommend() refuses an
+        incomplete matrix (HTTP 422), the refusal itself is a decision-log
+        event (TASK-COR-003 completeness) — what was asked, by whom, and
+        which cells were missing. The record carries NO selection and NO
+        confidence: nothing was decided, and the log must not pretend
+        otherwise. ``missing`` holds the "alternative / criterion" name
+        pairs the 422 detail names.
+        """
+        missing_ids = [
+            f"{alt.alternative_id}:{crit.criterion_id}"
+            for alt in self._alternatives.values()
+            for crit in self._criteria.values()
+            if crit.criterion_id not in alt.criteria_scores
+        ]
+        provenance_inputs = []
+        for alt in self._alternatives.values():
+            for crit in self._criteria.values():
+                if crit.criterion_id in alt.criteria_scores:
+                    provenance_inputs.append(input_record(
+                        f"score[{alt.name}][{crit.name}]",
+                        alt.criteria_scores[crit.criterion_id],
+                        CALLER_SUPPLIED,
+                    ))
+        for crit in self._criteria.values():
+            provenance_inputs.append(input_record(
+                f"weight[{crit.name}]", crit.weight, STORED_STATE))
+        for alt in self._alternatives.values():
+            provenance_inputs.append(input_record(
+                f"risk_score[{alt.name}]", alt.risk_score, STORED_STATE))
+            provenance_inputs.append(input_record(
+                f"return_projection[{alt.name}]", alt.return_projection, STORED_STATE))
+
+        record = Recommendation(
+            recommendation_id=hashlib.md5(
+                f"rec:{problem_statement[:30]}:{time.time()}".encode()
+            ).hexdigest()[:12],
+            problem_statement=problem_statement,
+            best_alternative="",
+            alternatives_ranking=[],
+            confidence=0.0,
+            risk_level="unknown",
+            expected_value=0.0,
+            sensitivity_analysis={},
+            rationale=(
+                "Recommendation refused: incomplete decision matrix — "
+                "missing scores for " + ", ".join(missing) + "."
+            ),
+            stakeholder_impact={},
+            created_at=time.time(),
+            decider=decider,
+            inputs_snapshot={
+                "criteria": [
+                    {
+                        "criterion_id": c.criterion_id,
+                        "name": c.name,
+                        "weight": c.weight,
+                        "direction": c.direction,
+                    }
+                    for c in self._criteria.values()
+                ],
+                "alternatives": [
+                    {
+                        "alternative_id": a.alternative_id,
+                        "name": a.name,
+                        "criteria_scores": dict(a.criteria_scores),
+                        "risk_score": a.risk_score,
+                        "return_projection": a.return_projection,
+                    }
+                    for a in self._alternatives.values()
+                ],
+                "defaulted_cells": [],
+                "missing_cells": missing_ids,
+            },
+            outcome={
+                "status": "rejected_incomplete",
+                "selected": "",
+                "missing_cells": missing,
+                "observed_result": None,
+                "success": None,
+                "recorded_at": None,
+            },
+            provenance=build_provenance(
+                inputs=provenance_inputs,
+                confidence=None,
+                confidence_basis=(
+                    "No confidence is stated: no recommendation was computed. "
+                    "The score matrix was incomplete, so the request was "
+                    "rejected (HTTP 422) instead of being decided from "
+                    "invented default inputs (TASK-REL-047)."
+                ),
+                data_status="incomplete_inputs",
+            ),
+        )
+        self._recommendations.append(record)
+        return record
 
     def record_outcome(
         self, recommendation_id: str, observed_result: object, success: bool | None = None
@@ -529,13 +651,17 @@ async def score_alternative(alt_id: str, payload: dict):
 @router.post("/api/v1/cortex/decision/recommend")
 async def recommend(payload: dict):
     """Generate a decision recommendation."""
+    _require_fields(payload, "problem_statement")
     # TASK-COR-003: record who asked for the decision in the stored record
     # (callers may identify themselves via the optional "decider" field).
+    # Composition note (TASK-REL-047 finisher, 2026-11-16): the stacked
+    # COR-002/COR-003 route edits previously invoked recommend() TWICE per
+    # request — two decision-log records per call, the second without the
+    # decider. Exactly one call now: one request, one log record, whether
+    # the outcome is a decision or a logged 422 rejection.
     rec = decision_system.recommend(
         payload["problem_statement"], decider=str(payload.get("decider") or "api_caller")
     )
-    _require_fields(payload, "problem_statement")
-    rec = decision_system.recommend(payload["problem_statement"])
     return {
         "recommendation_id": rec.recommendation_id,
         "best_alternative": rec.best_alternative,

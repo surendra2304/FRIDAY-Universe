@@ -19,7 +19,8 @@ Every decision/recommendation output carries a ``provenance`` block:
         "confidence": <float or None>,
         "confidence_basis": "<the actual formula/rule behind the number>",
         "data_status": "complete_inputs" | "partial_inputs_defaulted" |
-                       "estimated_from_inputs" | "no_data",
+                       "estimated_from_inputs" | "no_data" |
+                       "incomplete_inputs",
     }
 
 ``source`` semantics:
@@ -32,6 +33,11 @@ Every decision/recommendation output carries a ``provenance`` block:
 - ``derived`` — computed from supplied values by the stated formula.
 - ``stored_state`` — read from state recorded earlier (e.g. a lead score
   stored by a previous call).
+
+``data_status`` value ``incomplete_inputs`` (TASK-REL-047): the request was
+refused because required inputs were missing — e.g. a decision record for a
+recommendation that was rejected with HTTP 422 rather than computed from
+defaults. No default was applied and no confidence is stated.
 """
 from __future__ import annotations
 

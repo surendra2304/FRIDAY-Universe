@@ -6,8 +6,13 @@ outputs were fully traceable. Proven live defects locked by these tests:
 
 1. decision/recommend computed a ranking + confidence from a matrix in
    which 3 of 4 score cells were never supplied (silent 0.5 defaults) and
-   disclosed nothing. The defaults are still applied — but the output must
-   now disclose them (provenance.defaults_applied, data_status).
+   disclosed nothing. COR-002 first required the output to disclose the
+   defaults (provenance.defaults_applied, data_status); TASK-REL-047
+   (lead-coordinator ruling, 2026-11-16) then abolished the defaults
+   themselves — an incomplete matrix is now rejected with HTTP 422 naming
+   every missing cell, and the refusal is stored as a decision record
+   (outcome "rejected_incomplete"). The disclosure machinery remains on
+   every record the engine does produce.
 2. The DEFAULT recommendation strategy (hybrid) HTTP 500'd for every user
    with a profile: hybrid_recommend bound top_k*2 to content_filter's
    `all_items` parameter positionally.
@@ -24,6 +29,10 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+from fastapi import HTTPException
+
+import cortex_api.decision_recommendation_system as drs_module
 from cortex_api.decision_recommendation_system import DecisionRecommendationSystem
 from cortex_api.enhanced_crm import EnhancedCRM
 from cortex_api.predictive_analytics import PredictiveAnalytics
@@ -46,22 +55,43 @@ def _partial_matrix_system() -> DecisionRecommendationSystem:
     return system
 
 
-def test_recommend_discloses_defaulted_cells():
-    rec = _partial_matrix_system().recommend("choose vendor")
-    prov = rec.provenance
-    assert prov, "recommendation must carry a provenance block"
-    assert prov["data_status"] == "partial_inputs_defaulted"
-    # 3 of 4 cells (A/quality, B/cost, B/quality) fell back to the 0.5 default.
-    assert len(prov["defaults_applied"]) == 3
-    assert "score[B][cost]" in prov["defaults_applied"]
-    defaulted = {i["name"]: i for i in prov["inputs_used"] if i["source"] == "engine_default"}
-    assert defaulted["score[B][cost]"]["value"] == 0.5
+def test_recommend_rejects_incomplete_matrix_and_logs_rejection():
+    """TASK-REL-047 ruling (2026-11-16) supersedes the COR-002-era
+    default-and-disclose behaviour for this path: the 1-of-4-cells matrix
+    below used to return a confident recommendation computed from three
+    invented 0.5 defaults (disclosed in provenance after the fact). It is
+    now refused with HTTP 422 naming every missing cell — and the refusal
+    is appended to the decision log as a record with outcome
+    "rejected_incomplete" (TASK-COR-003), so the log shows the request
+    happened without fabricating a decision."""
+    system = _partial_matrix_system()
+    with pytest.raises(HTTPException) as excinfo:
+        system.recommend("choose vendor")
+    assert excinfo.value.status_code == 422
+    detail = excinfo.value.detail
+    # Every missing cell is named; the one supplied cell is not.
+    assert "A / quality" in detail
+    assert "B / cost" in detail
+    assert "B / quality" in detail
+    assert "A / cost" not in detail
+
+    (record,) = system._recommendations
+    assert record.outcome["status"] == "rejected_incomplete"
+    assert record.outcome["missing_cells"] == [
+        "A / quality", "B / cost", "B / quality"]
+    assert record.best_alternative == ""
+    assert record.alternatives_ranking == []
+    assert record.created_at > 0
+    # Nothing was defaulted: the refusal applied no invented inputs, and
+    # it states no confidence — there is no decision to be confident about.
+    prov = record.provenance
+    assert prov, "rejection record must carry a provenance block"
+    assert prov["defaults_applied"] == []
+    assert prov["data_status"] == "incomplete_inputs"
+    assert prov["confidence"] is None
+    assert prov["generated_at"]
     supplied = {i["name"] for i in prov["inputs_used"] if i["source"] == "caller_supplied"}
     assert supplied == {"score[A][cost]"}
-    # Confidence basis must state what the number is (a share, not a probability).
-    assert "NOT a calibrated probability" in prov["confidence_basis"]
-    assert prov["confidence"] == rec.confidence
-    assert prov["generated_at"]
 
 
 def test_recommend_complete_matrix_is_complete_inputs():
@@ -78,6 +108,10 @@ def test_recommend_complete_matrix_is_complete_inputs():
 
 def test_decision_routes_validate_payload_and_return_provenance(api_client, monkeypatch):
     headers = friday_headers(monkeypatch)
+    # Isolate the decision router's module-level singleton: the REL-047
+    # gate makes leftover partial state from other tests fatal (it used to
+    # be silently defaulted), so this test runs against a fresh system.
+    monkeypatch.setattr(drs_module, "decision_system", DecisionRecommendationSystem())
     # Missing criterion_id used to be a KeyError 500 (8/8 production requests).
     bad = api_client.post(
         "/api/v1/cortex/decision/alternatives/whatever/score",
@@ -91,13 +125,11 @@ def test_decision_routes_validate_payload_and_return_provenance(api_client, monk
         json={"name": "cor002_cost", "weight": 2.0, "direction": "minimize"},
         headers=headers,
     ).json()
-    # A second criterion the alternative is never scored on: its cell must
-    # show up in the recommendation's provenance as an engine default.
-    api_client.post(
+    quality = api_client.post(
         "/api/v1/cortex/decision/criteria",
         json={"name": "cor002_quality", "weight": 1.0, "direction": "maximize"},
         headers=headers,
-    )
+    ).json()
     alt = api_client.post(
         "/api/v1/cortex/decision/alternatives",
         json={"name": "cor002_A", "risk_score": 0.3, "return_projection": 0.8},
@@ -109,6 +141,24 @@ def test_decision_routes_validate_payload_and_return_provenance(api_client, monk
         headers=headers,
     )
     assert scored.status_code == 200
+    # TASK-REL-047 ruling: with cor002_quality still unscored the matrix is
+    # incomplete, so the route refuses with 422 naming the missing cell.
+    # (The COR-002-era behaviour returned 200 with the invented 0.5 default
+    # disclosed in provenance.)
+    rec = api_client.post(
+        "/api/v1/cortex/decision/recommend",
+        json={"problem_statement": "cor002 route check"},
+        headers=headers,
+    )
+    assert rec.status_code == 422
+    assert "cor002_A / cor002_quality" in rec.json()["detail"]
+    # Complete the matrix -> the same call succeeds, with provenance.
+    scored = api_client.post(
+        f"/api/v1/cortex/decision/alternatives/{alt['alternative_id']}/score",
+        json={"criterion_id": quality["criterion_id"], "score": 0.7},
+        headers=headers,
+    )
+    assert scored.status_code == 200
     rec = api_client.post(
         "/api/v1/cortex/decision/recommend",
         json={"problem_statement": "cor002 route check"},
@@ -116,7 +166,7 @@ def test_decision_routes_validate_payload_and_return_provenance(api_client, monk
     )
     assert rec.status_code == 200
     body = rec.json()
-    assert body["provenance"]["data_status"] == "partial_inputs_defaulted"
+    assert body["provenance"]["data_status"] == "complete_inputs"
     assert body["alternatives_ranking"], "route must return the ranking it decided from"
 
 
