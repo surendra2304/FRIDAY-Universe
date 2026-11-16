@@ -56,7 +56,7 @@ def test_init_db_stamp_preserves_process_logging(tmp_path, monkeypatch):
             stamped = connection.execute(
                 text("SELECT version_num FROM alembic_version")
             ).scalar_one()
-        assert stamped == "08e9adb56879"
+        assert stamped == "c9d4e7a1b5f2"
 
         # ...and the process logging configuration survived it.
         assert sentinel.disabled is False
