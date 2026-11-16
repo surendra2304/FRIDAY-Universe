@@ -187,11 +187,11 @@ def test_provider_for_model_prefers_custom_ownership(custom_config):
 
 def _stub_gateway_execute(monkeypatch, fail=False):
     from app.providers.base import ProviderResponse
-    from app.providers.gateway import model_gateway
+    from app.providers.gateway import ModelGateway
 
     calls = []
 
-    async def stub(provider_name, request, capability="general", stage_name="general"):
+    async def stub(_self, provider_name, request, capability="general", stage_name="general"):
         calls.append((provider_name, request))
         if fail:
             raise RuntimeError("custom endpoint unreachable (test double)")
@@ -205,14 +205,19 @@ def _stub_gateway_execute(monkeypatch, fail=False):
             finish_reason="stop",
         )
 
-    monkeypatch.setattr(model_gateway, "execute", stub)
+    # Patch the CLASS, not the singleton instance: an instance-level
+    # monkeypatch of a class-defined method restores a bound copy of the
+    # real method onto the instance at teardown, which then shadows any
+    # later class-level patch (e.g. test_unified_manager_cache_scope's
+    # fake gateway) for the rest of the test process.
+    monkeypatch.setattr(ModelGateway, "execute", stub)
     return calls
 
 
 def _stub_unified_degraded(monkeypatch):
-    from app.providers.unified_manager import UnifiedExecutionResponse, unified_provider_manager
+    from app.providers.unified_manager import UnifiedExecutionResponse, UnifiedProviderManager
 
-    async def stub(req):
+    async def stub(_self, req):
         return UnifiedExecutionResponse(
             provider_used=req.provider,
             model_used=req.model or "none",
@@ -226,7 +231,8 @@ def _stub_unified_degraded(monkeypatch):
             error=f"{req.provider}: provider unavailable (test double)",
         )
 
-    monkeypatch.setattr(unified_provider_manager, "execute", stub)
+    # Class-level patch for the same reason as _stub_gateway_execute.
+    monkeypatch.setattr(UnifiedProviderManager, "execute", stub)
 
 
 async def _post_chat(auth, payload):
