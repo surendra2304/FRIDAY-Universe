@@ -756,15 +756,37 @@ class MemoryService:
 
         tenant_id = getattr(record, "tenant_id", "default")
         if hard_delete:
-            tombstone = MemoryService._hard_erase_record(db, record)
-
-            PolicyEngine.log_audit_decision(
+            # TASK-SEN-003 fix-2: write the MEMORY_HARD_DELETED audit row
+            # BEFORE the physical erase, inside the same transaction.
+            # audit_logs.memory_id is an FK to memory_records.id (ON
+            # DELETE SET NULL); the original order — erase first, audit
+            # second — inserted the audit row after its parent was
+            # already deleted inside the transaction, so the audit flush
+            # failed with ORA-02291. log_audit_decision swallows that
+            # flush error, leaving the session poisoned, and the commit
+            # below raised PendingRollbackError (hard DELETE -> HTTP
+            # 500; verified in production after PR #633, whose SAVEPOINT
+            # isolation covers the sub-store deletes but not this audit
+            # write). Written first, the audit row commits atomically
+            # with the erase: if the erase fails, the audit row rolls
+            # back with it and never claims a deletion that did not
+            # happen. The erase then nulls the row's memory_id column
+            # via ON DELETE SET NULL (the schema's designed behaviour),
+            # so the erased id is also preserved in the audit details.
+            audit_entry = PolicyEngine.log_audit_decision(
                 db,
                 PolicyDecision(True, "Hard deleted memory and references across relational, vector, graph, and cache stores.", "MEMORY_HARD_DELETED"),
                 actor_id=actor.id if actor else None,
                 memory_id=memory_id,
                 tenant_id=tenant_id
             )
+            if audit_entry is not None:
+                audit_entry.details = {
+                    **(audit_entry.details or {}),
+                    "memory_id": memory_id,
+                }
+
+            tombstone = MemoryService._hard_erase_record(db, record)
             db.commit()
 
             return {
