@@ -39,6 +39,7 @@
           <div class="connection-state" id="connection-state" data-state="loading"><span class="live-dot"></span><span id="connection-label">Connecting to service</span></div>
           <span class="mode-pill" id="header-mode">Mode unavailable</span>
           <span class="live-clock" id="live-clock">--:--:-- UTC</span>
+          <button class="refresh-button" id="btn-palette" type="button" title="Command palette (Ctrl-K)"><span aria-hidden="true">⌘</span><span>Jump to</span><kbd class="palette-kbd">Ctrl K</kbd></button>
           <button class="refresh-button" id="btn-refresh" type="button"><span class="refresh-icon" aria-hidden="true">↻</span><span>Refresh</span></button>
           <span class="sync-time" id="last-sync-time" aria-live="polite">—</span>
         </div>
@@ -159,6 +160,11 @@
             <div class="market-grid" id="market-scanner-grid" data-state="loading"><div class="section-state">Loading market feed…</div></div>
             <div class="market-footnote" id="market-footnote">Only quotes marked STREAMING by the service are shown.</div>
           </article>
+          <article class="panel full-panel">
+            <div class="panel-heading"><div><p class="eyebrow">SECTOR HEATMAP</p><h2>Sector performance</h2></div><span class="source-tag" id="sector-heatmap-meta">Free daily quotes</span></div>
+            <div class="heatmap-grid" id="sector-heatmap-grid"><div class="section-state">Loading sector heatmap…</div></div>
+            <div class="market-footnote">Daily change per sector, averaged over its priced members. Sectors without a free quote are shown as unavailable — never estimated.</div>
+          </article>
         </section>
 
         <section class="view-panel" id="view-health" data-view-panel="health" hidden>
@@ -174,5 +180,8 @@
     </main>
   </div>
   <script src="/static/app.js?v=9.0.2" defer></script>
+  <script src="/static/heatmap.js?v=1.0.0" defer></script>
+  <script src="/static/command-palette.js?v=1.0.0" defer></script>
+  <script src="/static/layout.js?v=1.0.0" defer></script>
 </body>
 </html>
