@@ -10322,16 +10322,31 @@ task_id_warnings:' key: the first occurrence (line 2330) stranded Arena's stale 
       - "IG full-watch implementation, VyralX lane: B120 scene-assembly evaluation document. On main 2f840d52 via PR #832 (direct merge)."
     next_action: "None — documentation deliverable, merged. Any scene-assembly build that follows from the evaluation gets its own task entry."
   - id: TASK-COR-012
-    title: "Cortex budget-store saves fail across event loops + bot token leaks into journal via httpx request logging"
-    status: IN_PROGRESS
+    title: "Cortex drill findings F1+F2: budget-store saves cross-loop broken (state never persists) + httpx logs leak the Telegram bot token into the journal"
+    status: IN_REVIEW
     owner: muse_ai
-    pr: null
+    branch: claude/task-cor-012
+    prs: [858]
+    contributors: []
     priority: P1
     created_at: "2026-11-17T04:21:00+05:30"
-    defect: "Found by the 2026-11-17 Cortex breach drill (~/workspace/cortex-drill-run2/STATE.md; issue #35 comment 6931766133). (F1) DatabaseBudgetStore._save_async raises 'RuntimeError: got Future attached to a different loop' when saving from the request path — agent_budget_state has 0 rows in production: budget usage, pauses and alerts are in-process only and are lost on restart (loads work; saves do not). (F2) httpx INFO logging printed the full Telegram webhook URL — including the bot token — into Cortex's journal at delivery time: PR #820 (TASK-COR-011) redacted persisted records, not log lines."
+    updated_at: "2026-11-17T04:21:00+05:30"
+    files:
+      - "Cortex/apps/api/src/cortex_api/agent_budgets.py"
+      - "Cortex/apps/api/src/cortex_api/main.py"
+      - "Cortex/packages/core/src/cortex_core/resilience.py"
+      - "Cortex/tests/unit/test_cor012_budget_store_and_log_redaction.py"
+    claim_comment_url: "https://github.com/surendra2304/FRIDAY-Universe/issues/35#issuecomment-6931810852"
+    defect: "Found by the 2026-11-17 production breach drill (issue #35 comment 6931766133). F1: at the drill breach, DatabaseBudgetStore._save_async failed with RuntimeError 'got Future attached to a different loop' (save_errors=1, durable flipped false) and a direct Oracle read showed agent_budget_state has 0 rows — the store runs its I/O on a dedicated thread's loop but borrowed the app's pooled AsyncSessionLocal (QueuePool, connections bound to the app loop), so saves from the request path never persist: usage, pauses, alerts and delivery records are lost on any Cortex restart. Loads happened to work, which masked it. F2: httpx's INFO request logging printed the full SELF_HEALING_ESCALATION_WEBHOOK URL — the Telegram sendMessage URL embedding the bot token — into Cortex's journal at delivery time; PR #820 redacted persisted records (channel_descriptor) but not log lines."
+    acceptance:
+      - "F1 fix: on the default path (no injected session_factory) DatabaseBudgetStore builds its OWN engine — create_async_engine(settings.postgres_dsn, poolclass=NullPool), SQLite connect args mirrored from config.py — plus its own async_sessionmaker, lazily on first use from inside the store-loop coroutines, so every connection opens fresh on the store's loop. Injected-factory behaviour is unchanged (callers own their pooling; the wiring tests already inject NullPool factories)."
+      - "F2 fix: cortex_core.resilience gains redact_secret_urls + SecretUrlRedactionFilter (rewrites a record's message, never drops it; covers the api.telegram.org/bot<token> URL form and bare bot<id>:<token> shapes) and install_secret_url_log_redaction() (idempotent, attaches one shared filter to the httpx and httpcore loggers); cortex_api/main.py installs it at startup right after the workspace-path bootstrap. Both producers (EscalationNotifier, WebhookBreachAlertSink) emit through httpx in this process, so both call sites are covered while non-secret request lines stay intact."
+      - "Tests: Cortex/tests/unit/test_cor012_budget_store_and_log_redaction.py — 7/7 pass on the branch. F1's three tests fail on pristine main (default factory IS AsyncSessionLocal; saves through a loop-bound app-factory stand-in record save_errors; no row written) — the production cross-loop error is modelled by the stand-in because aiosqlite tolerates cross-loop pool reuse locally while the production oracledb driver does not. F2 tests error at collection on main (new symbols absent), the expected feature-PR signature. Neighbour A/B (budgets wiring + production-default + escalation redaction + telegram mode + resilience/cache): branch 47 passed / 7 failed == pristine main, identical failure sets (pre-existing sandbox local-delivery/proxy environment failures)."
     evidence:
-      - "Drill record 2026-11-17: the TASK-COR-010 breach drill re-confirmed the budget-store baseline durable=true / load_errors=0 across a cold restart for LOADS, while the save path failed per F1 (agent_budget_state row count 0 in production) and the delivery journal line carried the unredacted webhook URL per F2."
-    next_action: "Fix PR (crew dispatched 2026-11-17): own engine/session factory for the budget-store thread (F1) + a telegram-URL log-redaction filter for httpx request logging (F2). Post-deploy proof: breach -> restart -> budget state survives with save_errors 0, and the delivery journal lines carry no token."
+      - "Drill record: ~/workspace/cortex-drill-run2/STATE.md + issue #35 comment 6931766133 (breach at 2026-11-16T22:48:19Z; store status after breach {durable: false, save_errors: 1, last_error: RuntimeError cross-loop}; direct Oracle read: agent_budget_state row count 0; journal line with the token-bearing httpx URL at 04:18:19 IST)."
+      - "Crew record: ~/workspace/cor012-fix/STATE.md (diagnosis from origin/main 11a8d843 blobs; repro notes; test + A/B outputs)."
+    blockers: []
+    next_action: "Coordinator: review + merge via the merge queue on green CI (validate-pair flakes excepted). Post-deploy proof (separate step, NOT in this PR): after Fleet CD deploys to Server 2, re-run a controlled breach (POST /api/v1/cortex/budgets/usage against agent Cortex), confirm the store status reads durable=true with save_errors=0, restart Cortex, and confirm the budget state (usage/pause/alert) survives the restart and agent_budget_state holds the row; also grep the post-restart journal for the httpx delivery line and confirm the bot token does not appear (bot*** instead). Then flip this entry VERIFIED via a fresh-main board PR."
 task_id_warnings:
   - id: "WARN-TASK-ID-001"
     severity: "high"

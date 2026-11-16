@@ -23,6 +23,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 import time
 import urllib.parse
 from collections import deque
@@ -588,6 +589,82 @@ def channel_descriptor(webhook_url: str | None) -> str:
     if host == "api.telegram.org":
         return "telegram:api.telegram.org"
     return f"webhook:{host}"
+
+
+# ── Log redaction for secret-bearing URLs ────────────────────────────────────
+# ``channel_descriptor`` keeps webhook URLs out of persisted records, but log
+# lines are a second leak path: httpx's INFO logger prints the full request
+# URL ("HTTP Request: POST https://api.telegram.org/bot<TOKEN>/sendMessage"),
+# and the Telegram URL embeds the bot token. The 2026-11-17 breach drill
+# (TASK-COR-012) caught the token in Cortex's journal this way even though
+# every persisted record was clean. The filter below rewrites log messages
+# before any handler formats them, so the token never reaches a log sink
+# while the rest of the line (method, host, path, status) stays useful.
+
+_TELEGRAM_BOT_URL_RE = re.compile(r"(https?://api\.telegram\.org/bot)[^/\s\"'<>]+")
+_BARE_BOT_TOKEN_RE = re.compile(r"\bbot\d{5,}:[A-Za-z0-9_-]{20,}\b")
+REDACTED_BOT_SEGMENT = "bot***"
+
+
+def redact_secret_urls(text: str) -> str:
+    """Replace Telegram bot tokens in ``text`` with ``bot***``.
+
+    Covers the full sendMessage URL form and a bare ``bot<id>:<token>``
+    segment appearing anywhere else (e.g. inside an exception string).
+    Text without a token is returned unchanged.
+    """
+    text = _TELEGRAM_BOT_URL_RE.sub(r"\1***", text)
+    return _BARE_BOT_TOKEN_RE.sub(REDACTED_BOT_SEGMENT, text)
+
+
+class SecretUrlRedactionFilter(logging.Filter):
+    """Logging filter that redacts bot tokens from a record's message.
+
+    The record is never dropped (``filter`` always returns True); its
+    message is rewritten in place via ``record.getMessage()`` so every
+    downstream handler and formatter sees only the redacted text.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            message = record.getMessage()
+        except Exception:  # noqa: BLE001 - never break logging itself
+            return True
+        redacted = redact_secret_urls(message)
+        if redacted != message:
+            record.msg = redacted
+            record.args = ()
+        return True
+
+
+def install_secret_url_log_redaction(
+    logger_names: tuple[str, ...] = ("httpx", "httpcore"),
+) -> SecretUrlRedactionFilter:
+    """Attach a shared ``SecretUrlRedactionFilter`` to the HTTP client loggers.
+
+    httpx logs every request URL at INFO; httpcore is its transport layer.
+    Both producers of escalation traffic (this module's
+    ``EscalationNotifier`` and ``cortex_api.agent_budgets``'
+    ``WebhookBreachAlertSink``) emit through these loggers in the Cortex
+    API process, whose startup calls this once. Idempotent: repeated calls
+    return the already-installed filter instead of stacking duplicates.
+    """
+    shared: SecretUrlRedactionFilter | None = None
+    for name in logger_names:
+        target = logging.getLogger(name)
+        existing = next(
+            (f for f in target.filters if isinstance(f, SecretUrlRedactionFilter)),
+            None,
+        )
+        if existing is not None:
+            if shared is None:
+                shared = existing
+            continue
+        if shared is None:
+            shared = SecretUrlRedactionFilter()
+        target.addFilter(shared)
+    assert shared is not None  # logger_names is never empty in practice
+    return shared
 
 
 class EscalationNotifier:

@@ -37,6 +37,14 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
+# TASK-COR-012: httpx logs full request URLs at INFO, and the escalation
+# webhook URL (Telegram sendMessage) embeds the bot token — the 2026-11-17
+# breach drill found the token in this process's journal even though
+# persisted delivery records were redacted (PR #820). Redact bot tokens
+# from the httpx/httpcore loggers before anything else can emit through
+# them. The install call sits right after the workspace-path bootstrap
+# below (cortex_core is not importable before it in a source checkout).
+
 # ── Workspace paths (repo-root relative, never CWD relative) ─────────────────
 
 
@@ -62,6 +70,15 @@ if _REPO_ROOT is not None:
         ensure_workspace_paths(_REPO_ROOT)
     except ImportError:  # pragma: no cover - wheel layout without cortex_upgrade
         pass
+
+# TASK-COR-012: install the secret-URL log redaction now that the path
+# bootstrap has made cortex_core importable (see the note at basicConfig).
+try:
+    from cortex_core.resilience import install_secret_url_log_redaction
+
+    install_secret_url_log_redaction()
+except ImportError:  # pragma: no cover - layout without cortex_core
+    pass
 
 from cortex_api.api_keys import provision_api_key  # noqa: E402
 from cortex_api.auth import Role, require_role, verify_friday_token, verify_jwt_token  # noqa: E402
