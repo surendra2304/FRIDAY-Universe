@@ -34,7 +34,8 @@ from app.services import motion_graphics as mg
 
 EXPECTED_TEMPLATES = {"cinematic_short", "original_character_series",
                       "animated_explainer", "character_explainer",
-                      "flyover_segment", "ambient_longform"}
+                      "flyover_segment", "ambient_longform",
+                      "stick_figure_explainer"}
 
 
 def test_registry_loads_and_covers_corpus_formats():

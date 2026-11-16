@@ -2408,3 +2408,7 @@ app.include_router(retention_router, prefix="/api/v1")
 # --- Real Media & Growth Engines (ClaudeAds, TopRank, OpenHiggsfield, Hyperframes) ---
 from app.services.real_media_routes import router as real_media_router
 app.include_router(real_media_router, prefix="/api/v1/vyralx")
+
+# --- IG Corpus Stick-Figure Explainer Integration (TASK-IG3-VYR-02) ---
+from app.services.stick_figure import router as stick_figure_router
+app.include_router(stick_figure_router, prefix="/api/v1", tags=["IG Corpus Stick Figure"])
