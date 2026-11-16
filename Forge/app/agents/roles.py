@@ -206,7 +206,7 @@ class PlannerRole(BaseAgent):
 
 
 def explicit_layout_from_goal(
-    goal: str, requirements: list[str] | None = None
+    goal: str, requirements: list[str] | None = None, *, min_paths: int = 3
 ) -> list[str]:
     """File paths a goal states explicitly, in the order stated.
 
@@ -221,8 +221,18 @@ def explicit_layout_from_goal(
     after which nothing downstream could ever produce the project the
     caller asked for. Extracting the stated paths keeps the manifest
     pointed at the requested project. Returns an empty list when fewer
-    than three paths are stated, so incidental file mentions in prose
-    keep the historical template behaviour.
+    than ``min_paths`` paths are stated, so incidental file mentions in
+    prose keep the historical template behaviour.
+
+    The default threshold of three serves the architect, the original
+    consumer: a one- or two-path mention is not a layout, and the
+    keyword templates should still engage for it. The TASK-FRG-010
+    completeness gate passes ``min_paths=1`` instead: its question is
+    not "what layout did the caller design" but "which modules does
+    this build owe", and a goal that states two modules owes both --
+    with the architect-side threshold, a two-module goal with no
+    manifest computed an empty expected set and the gate stayed silent
+    while the build completed over an empty directory.
     """
     texts = [goal or ""] + [str(r) for r in (requirements or [])]
     path_re = re.compile(
@@ -238,7 +248,7 @@ def explicit_layout_from_goal(
                 continue
             if path not in found:
                 found.append(path)
-    if len(found) < 3:
+    if len(found) < min_paths:
         return []
     return found[:48]
 
