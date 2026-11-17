@@ -582,6 +582,15 @@ async def lifespan(_: FastAPI):
     # TASK-PRO-002: IntelX watch outbox drainer (inert unless the
     # FRIDAY_PROACTIVE_INTELX_WATCH kill switch is enabled).
     intelx_watch_task = asyncio.create_task(_intelx_watch_loop(), name="friday-intelx-watch")
+    # TASK-FRD-023: arm the autonomous goal-execution daemon at boot when
+    # the owner has enabled autonomous mode. Until this block existed, the
+    # daemon's only callers were the manual toggle endpoint (runtime-only,
+    # lost at every restart) and goal submission, so
+    # FRIDAY_AUTONOMOUS_MODE=true in the environment armed nothing and the
+    # daemon had not run since 2026-11-10. The toggle endpoint keeps its
+    # semantics; this only makes the standing owner flag effective at boot.
+    if get_settings().autonomous_mode:
+        await autonomous_daemon.start()
     try:
         yield
     finally:
@@ -600,6 +609,12 @@ async def lifespan(_: FastAPI):
             logger.debug(f"Exception during background task cancellation: {e}")
         telegram_gateway.stop()
         whatsapp_gateway.stop()
+
+        # TASK-FRD-023: stop the goal-execution daemon cleanly (stop()
+        # persists its queue). It is a no-op when the daemon is not
+        # running, so this also covers a daemon armed at runtime through
+        # the toggle endpoint while the boot flag is off.
+        await autonomous_daemon.stop()
 
         try:
             await asyncio.wait_for(fleet_client.aclose(), timeout=3.0)
