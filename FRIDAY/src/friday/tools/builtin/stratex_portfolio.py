@@ -86,14 +86,29 @@ def _format_portfolio(data: dict[str, Any]) -> str:
                 parts.append(f"profit factor {pf:.2f}")
             lines.append(f"- Ledger P&L (recorded fills): {', '.join(parts)}")
             per_strategy = card.get("strategies") if isinstance(card.get("strategies"), dict) else {}
-            for name, stats in list(per_strategy.items())[:6]:
+            # TASK-FRD-021 (supervisor-review fix): filter to the
+            # strategies that actually traded BEFORE applying the
+            # [:6] window. Stratex's real scorecard map also carries
+            # governed zero-trade registry entries (seeded by
+            # measurement.scorecard.build_scorecard); slicing first
+            # let that padding window-hide a trading strategy from
+            # the live render — production's sleeve sat at index 8 —
+            # while the snapshot's ledger-only map rendered it, so
+            # the two paths disagreed. Filtering first keeps both
+            # renders identical; live answers gain the previously
+            # window-hidden lines (truthful recorded fills).
+            renderable = [
+                (name, stats)
+                for name, stats in per_strategy.items()
                 if (
                     isinstance(stats, dict)
                     and isinstance(stats.get("trades"), int)
                     and stats["trades"] > 0
                     and isinstance(stats.get("net_pnl"), (int, float))
-                ):
-                    lines.append(f"    {name}: {stats['trades']} trade(s), net {stats['net_pnl']:+,.2f}")
+                )
+            ]
+            for name, stats in renderable[:6]:
+                lines.append(f"    {name}: {stats['trades']} trade(s), net {stats['net_pnl']:+,.2f}")
         elif isinstance(trades, int):
             lines.append("- Ledger P&L (recorded fills): no closed trades recorded yet")
     lines.append("")

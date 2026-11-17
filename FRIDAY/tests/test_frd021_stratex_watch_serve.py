@@ -16,7 +16,17 @@ Rules pinned here:
 - a fresh snapshot serves WITHOUT any execute round trip;
 - receipt-exactness: snapshot-served figures byte-match the figures
   the live path serves from the same state (keeper baseline shape:
-  balance 10,792.80 / 0 open / 10 closed / net +195.06);
+  balance 10,792.80 / 0 open / 10 closed / net +195.06 / win rate
+  40%). The pin's live side is Stratex's REAL composition — the
+  actual measurement.scorecard.build_scorecard() output, whose
+  strategies map carries the governed zero-trade registry entries
+  and puts the one-trade sleeve beyond the formatter's six-line
+  window — never a hand-grouped model of it (the first version's
+  hand-built payload shared the implementation's wrong assumption
+  and the supervisor review rejected it);
+- the formatter's per-strategy window counts strategies that
+  actually traded: zero-trade padding can never window-hide a
+  trading strategy from either render;
 - a stale heartbeat (>60 s), a missing heartbeat, a missing cloud
   state, a non-RUNNING daemon, or a non-numeric balance all fall
   back to the live dispatch;
@@ -30,6 +40,7 @@ Rules pinned here:
 from __future__ import annotations
 
 import json
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,21 +59,35 @@ from friday.tools.builtin.stratex_portfolio import StratexPortfolioTool
 # fixture world — a synthetic Stratex state dir in the production shape
 # ---------------------------------------------------------------------------
 
-#: Keeper-baseline shape (production, 2026-11-17): 10 fills netting
-#: +195.0598 -> served as 10 closed trades, net +195.06.
+#: Production-shaped fixture (production ledger, 2026-11-17): the
+#: same strategy names and the same totals Stratex's scorecard
+#: serves — LEGACY-UNATTRIBUTED 3 trades / +195.71, bb_reversion
+#: 6 trades / -0.65, strategy_sleeve_tsmom2_dual 1 trade / +0.00
+#: (trade 470, the sleeve's breakeven first forward trade) ->
+#: 10 closed trades, net +195.06, win rate 0.4 (4 wins). The
+#: individual rows are synthetic, so the fixture's profit factor
+#: (6.319) is a FIXTURE number — production's real rows give
+#: 6.445; every other total above is production's own.
 FIXTURE_FILLS: list[dict[str, Any]] = [
-    {"record_type": "FILL", "strategy": "legacy", "symbol": "BTCUSDT",
-     "net_pnl": 100.0, "exit_time": 1763000001.0},
-    {"record_type": "FILL", "strategy": "legacy", "symbol": "ETHUSDT",
-     "net_pnl": 60.0, "exit_time": 1763000002.0},
-    {"record_type": "FILL", "strategy": "legacy", "symbol": "SOLUSDT",
-     "net_pnl": 35.7066, "exit_time": 1763000003.0},
-    *[
-        {"record_type": "FILL", "strategy": "bb_reversion", "symbol": "XRPUSDT",
-         "net_pnl": -0.1078, "exit_time": 1763000010.0 + i}
-        for i in range(6)
-    ],
-    {"record_type": "FILL", "strategy": "stage_c_sleeve", "symbol": "USDJPY",
+    {"record_type": "FILL", "strategy": "LEGACY-UNATTRIBUTED", "symbol": "BTCUSDT",
+     "net_pnl": 150.0, "exit_time": 1763000001.0},
+    {"record_type": "FILL", "strategy": "LEGACY-UNATTRIBUTED", "symbol": "ETHUSDT",
+     "net_pnl": 80.88, "exit_time": 1763000002.0},
+    {"record_type": "FILL", "strategy": "LEGACY-UNATTRIBUTED", "symbol": "SOLUSDT",
+     "net_pnl": -35.17, "exit_time": 1763000003.0},
+    {"record_type": "FILL", "strategy": "bb_reversion", "symbol": "XRPUSDT",
+     "net_pnl": 0.50, "exit_time": 1763000010.0},
+    {"record_type": "FILL", "strategy": "bb_reversion", "symbol": "XRPUSDT",
+     "net_pnl": 0.35, "exit_time": 1763000011.0},
+    {"record_type": "FILL", "strategy": "bb_reversion", "symbol": "XRPUSDT",
+     "net_pnl": -0.50, "exit_time": 1763000012.0},
+    {"record_type": "FILL", "strategy": "bb_reversion", "symbol": "XRPUSDT",
+     "net_pnl": -0.50, "exit_time": 1763000013.0},
+    {"record_type": "FILL", "strategy": "bb_reversion", "symbol": "XRPUSDT",
+     "net_pnl": -0.25, "exit_time": 1763000014.0},
+    {"record_type": "FILL", "strategy": "bb_reversion", "symbol": "XRPUSDT",
+     "net_pnl": -0.25, "exit_time": 1763000015.0},
+    {"record_type": "FILL", "strategy": "strategy_sleeve_tsmom2_dual", "symbol": "USDJPY",
      "net_pnl": 0.0, "exit_time": 1763000020.0},
 ]
 
@@ -82,12 +107,45 @@ def _expected_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _live_payload() -> dict[str, Any]:
-    """Stratex's execute status summary as built from the fixture state
-    (friday_supervision._compute_engine_status_summary shape)."""
-    by_strategy: dict[str, list[dict[str, Any]]] = {}
-    for row in FIXTURE_FILLS:
-        by_strategy.setdefault(str(row.get("strategy") or "UNATTRIBUTED"), []).append(row)
+def _real_live_payload(fills: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """The live payload as Stratex ACTUALLY composes it from the fills.
+
+    The scorecard is Stratex's own generator —
+    Stratex/measurement/scorecard.py ``build_scorecard()`` — whose
+    strategies map is seeded with the governed zero-trade registry
+    entries (config_strategy.PRODUCTION_STRATEGY_REGISTRY, status
+    VALIDATED / OBSERVE_ONLY) and sorted by name; on the production
+    shape that puts the one-trade sleeve at index 8 of 9. The block
+    shaping replicates Stratex/api/friday_supervision.py
+    ``_ledger_scorecard_block()`` field-for-field, and the
+    surrounding fields mirror ``_compute_engine_status_summary()``
+    in the same file (balance/cash from the engine's cloud state,
+    ACTIVE_STRATEGIES empty, TRADING_MODE upper-cased, no halt
+    flags set). The first version of this pin hand-grouped only the
+    ledger strategies — a model sharing the implementation's wrong
+    assumption about the map — and so could not see the sleeve
+    fall outside the formatter's six-line window; the supervisor
+    review rejected it for exactly that.
+    """
+    stratex_dir = Path(__file__).resolve().parents[2] / "Stratex"
+    if str(stratex_dir) not in sys.path:
+        sys.path.insert(0, str(stratex_dir))
+    from measurement import scorecard as _real_scorecard
+
+    card = _real_scorecard.build_scorecard(
+        list(FIXTURE_FILLS if fills is None else fills)
+    )
+    totals = card.get("totals") or {}
+    strategies: dict[str, Any] = {}
+    for name, stats in (card.get("strategies") or {}).items():
+        if not isinstance(stats, dict):
+            continue
+        strategies[str(name)] = {
+            "trades": stats.get("trades"),
+            "net_pnl": stats.get("net_pnl"),
+            "profit_factor": stats.get("profit_factor"),
+            "win_rate": stats.get("win_rate"),
+        }
     return {
         "engine": "Stratex",
         "trading_mode": "PAPER",
@@ -96,12 +154,23 @@ def _live_payload() -> dict[str, Any]:
         "current_positions": [],
         "unrealized_pnl": 0.0,
         "active_strategies": [],
+        "panic_active": False,
+        "kill_switch_active": False,
         "ledger_scorecard": {
-            "totals": _expected_stats(FIXTURE_FILLS),
-            "strategies": {
-                name: _expected_stats(rows)
-                for name, rows in sorted(by_strategy.items())
+            "generated_at": card.get("generated_at"),
+            "source": card.get("source"),
+            "total_fills": card.get("total_fills"),
+            "totals": {
+                "trades": totals.get("trades"),
+                "net_pnl": totals.get("net_pnl"),
+                "win_rate": totals.get("win_rate"),
+                "profit_factor": totals.get("profit_factor"),
+                "expectancy_net_per_trade": totals.get("expectancy_net_per_trade"),
+                "max_drawdown": totals.get("max_drawdown"),
+                "fees": totals.get("fees"),
             },
+            "strategies": strategies,
+            "reset_boundaries": len(card.get("reset_boundaries") or []),
         },
     }
 
@@ -222,7 +291,7 @@ class TestReadStatusSnapshot:
         assert snap.data["current_positions"] == []
         totals = snap.data["ledger_scorecard"]["totals"]
         assert totals == {"trades": 10, "net_pnl": 195.06,
-                          "win_rate": 0.3, "profit_factor": totals["profit_factor"]}
+                          "win_rate": 0.4, "profit_factor": totals["profit_factor"]}
         assert totals["profit_factor"] == _expected_stats(FIXTURE_FILLS)["profit_factor"]
         # The heartbeat's own figures are a pulse, never a source.
         assert snap.data["balance"] != 20560.19
@@ -352,13 +421,28 @@ class TestToolSnapshotServe:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Receipt-exactness: same state, two sources — the figure lines
-        of the composed answers are byte-identical. The ONLY tolerated
-        difference is the header's mode word: the live summary carries
-        Stratex's config TRADING_MODE ("PAPER"), for which FRIDAY has
-        no truthful local source, so the snapshot answer takes the
-        formatter's own default ("demo"). No figure differs."""
+        of the composed answers are byte-identical. The live side is
+        Stratex's REAL composition (the actual build_scorecard()
+        output, registry-seeded map and all), not a hand-built model
+        of it. The ONLY tolerated difference is the header's mode
+        word: the live summary carries Stratex's config TRADING_MODE
+        ("PAPER"), for which FRIDAY has no truthful local source, so
+        the snapshot answer takes the formatter's own default
+        ("demo"). No figure differs."""
         world = _World(tmp_path, monkeypatch)
         world.write_all()
+
+        live_payload = _real_live_payload()
+        # The production composition this pin exists to hold: the real
+        # scorecard map carries the governed zero-trade registry
+        # entries, and the one-trade sleeve sorts BEYOND the
+        # formatter's six-line window — the shape whose live render
+        # silently dropped the sleeve line in the rejected version.
+        served_names = list(live_payload["ledger_scorecard"]["strategies"])
+        assert served_names.index("strategy_sleeve_tsmom2_dual") >= 6, (
+            f"real scorecard map no longer exercises the window: {served_names}"
+        )
+        assert live_payload["ledger_scorecard"]["totals"]["win_rate"] == 0.4
 
         snap_client = _RecordingFleetClient(_MARKER_PAYLOAD)
         snap_result = StratexPortfolioTool(fleet_client=snap_client).execute(
@@ -370,7 +454,7 @@ class TestToolSnapshotServe:
         # tool takes the live path and renders the execute payload
         # Stratex builds from this identical state.
         world.write_heartbeat(age_s=3600.0)
-        live_client = _RecordingFleetClient(_live_payload())
+        live_client = _RecordingFleetClient(live_payload)
         live_result = StratexPortfolioTool(fleet_client=live_client).execute(
             question="how is my portfolio", kind="portfolio"
         )
@@ -381,7 +465,8 @@ class TestToolSnapshotServe:
             "Open positions: none",
             "10 closed trade(s)",
             "net P&L +195.06",
-            "win rate 30%",
+            "win rate 40%",
+            "strategy_sleeve_tsmom2_dual: 1 trade(s), net +0.00",
         ):
             assert literal in snap_result.content
             assert literal in live_result.content
@@ -403,7 +488,7 @@ class TestToolSnapshotServe:
     ) -> None:
         world = _World(tmp_path, monkeypatch)
         world.write_all(age_s=3600.0)
-        client = _RecordingFleetClient(_live_payload())
+        client = _RecordingFleetClient(_real_live_payload())
         tool = StratexPortfolioTool(fleet_client=client)
 
         result = tool.execute(question="how is my portfolio", kind="portfolio")
@@ -422,7 +507,7 @@ class TestToolSnapshotServe:
         world.write_cloud()
         world.write_fills()
         # no heartbeat file at all
-        client = _RecordingFleetClient(_live_payload())
+        client = _RecordingFleetClient(_real_live_payload())
         tool = StratexPortfolioTool(fleet_client=client)
 
         result = tool.execute(question="any open positions", kind="portfolio")
@@ -452,3 +537,69 @@ class TestToolSnapshotServe:
         tool = StratexPortfolioTool(fleet_client=_RecordingFleetClient({}))
         with pytest.raises(AssertionError):
             tool._dispatch("panic", "close everything")
+
+
+# ---------------------------------------------------------------------------
+# the formatter's per-strategy window (supervisor-review regression)
+# ---------------------------------------------------------------------------
+
+
+class TestFormatPortfolioStrategyWindow:
+    """The six-line per-strategy window counts strategies that
+    actually traded. Stratex's real scorecard map interleaves
+    governed zero-trade registry entries; if the window is sliced
+    before the trades>0 filter, that padding consumes the window
+    and a trading strategy beyond it vanishes from the render —
+    on the production map the one-trade sleeve sat at index 8 and
+    the live render silently omitted its (truthful) line while
+    the snapshot's ledger-only map showed it."""
+
+    @staticmethod
+    def _payload(strategies: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "engine": "Stratex",
+            "trading_mode": "PAPER",
+            "balance": 10792.8,
+            "cash_balance": 10792.8,
+            "current_positions": [],
+            "unrealized_pnl": 0.0,
+            "active_strategies": [],
+            "ledger_scorecard": {
+                "totals": {"trades": 10, "net_pnl": 195.06,
+                           "win_rate": 0.4, "profit_factor": 6.319},
+                "strategies": strategies,
+            },
+        }
+
+    def test_zero_trade_padding_cannot_window_hide_a_trading_strategy(self) -> None:
+        zero = {"trades": 0, "net_pnl": 0.0, "win_rate": 0.0, "profit_factor": None}
+        # The production map shape: >6 entries, governed zero-trade
+        # entries ahead of a real one-trade strategy at the tail.
+        live_shaped = {
+            "LEGACY-UNATTRIBUTED": {"trades": 3, "net_pnl": 195.71,
+                                    "win_rate": 0.6667, "profit_factor": 6.564},
+            "adx_ema": dict(zero),
+            "bb_reversion": {"trades": 6, "net_pnl": -0.65,
+                             "win_rate": 0.3333, "profit_factor": 0.567},
+            "dow_effect": dict(zero),
+            "fx_mr_v4": dict(zero),
+            "ichimoku_trend": dict(zero),
+            "sleeve_shock_breakout": dict(zero),
+            "sleeve_tsmom2_dual": dict(zero),
+            "strategy_sleeve_tsmom2_dual": {"trades": 1, "net_pnl": 0.0,
+                                            "win_rate": 0.0, "profit_factor": None},
+        }
+        snapshot_shaped = {
+            name: live_shaped[name]
+            for name in (
+                "LEGACY-UNATTRIBUTED",
+                "bb_reversion",
+                "strategy_sleeve_tsmom2_dual",
+            )
+        }
+
+        live_render = sp._format_portfolio(self._payload(live_shaped))
+        snap_render = sp._format_portfolio(self._payload(snapshot_shaped))
+
+        assert "strategy_sleeve_tsmom2_dual: 1 trade(s), net +0.00" in live_render
+        assert live_render == snap_render
