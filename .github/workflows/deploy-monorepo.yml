@@ -130,43 +130,23 @@ jobs:
 
             SERVER1_AGENTS=("FRIDAY" "Inference" "Memora" "Stratex" "IntelX" "Futuris" "Forge")
             RESTARTED_AGENTS=""
-            for AGENT in "${SERVER1_AGENTS[@]}"; do
-              if echo "$CHANGED_AGENTS" | grep -qw "$AGENT" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-                if [ "$(systemctl show "${AGENT}.service" --property=LoadState --value)" = loaded ]; then
-                  echo "=== Restarting ${AGENT}.service ==="
-                  sudo systemctl restart "${AGENT}.service"
-                  RESTARTED_AGENTS="$RESTARTED_AGENTS $AGENT"
-                  sudo systemctl is-active "${AGENT}.service" || echo "${AGENT} is not running"
-                else
-                  echo "=== ${AGENT}.service not registered yet. Code pulled cleanly. ==="
-                fi
-              fi
-            done
-            
-            # The LiveKit process imports FRIDAY source too; API restart alone
-            # does not load changed voice tools into the running worker.
-            if echo "$CHANGED_AGENTS" | grep -qw "FRIDAY" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              if [ "$(systemctl show FRIDAY-Voice.service --property=LoadState --value)" = loaded ]; then
-                sudo systemctl restart FRIDAY-Voice.service
-                sudo systemctl is-active --quiet FRIDAY-Voice.service
-              fi
+            DEPLOY_FORCE_ALL=0
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              DEPLOY_FORCE_ALL=1
             fi
 
-            if echo "$CHANGED_AGENTS" | grep -qw "Stratex" || echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              if [ "$(systemctl show Stratex-Daemon.service --property=LoadState --value)" = loaded ]; then
-                echo "=== Restarting Stratex-Daemon.service ==="
-                sudo systemctl restart Stratex-Daemon.service
-              fi
-            fi
-
-            # ── Voice worker (2026-11-13): the LiveKit worker is its own unit
-            # (FRIDAY-Voice.service) that the loop above never restarted, so
-            # worker code changes silently stayed unloaded. It also needs the
-            # livekit-plugins-groq package for the WORKING Groq speech path
-            # (the Gemini key on this host is dead — 400 API_KEY_INVALID —
-            # proven by the live-chain probe 2026-11-13: worker joined and
+            # ── Voice worker plugin ensure (2026-11-13; restructured by
+            # TASK-REL-053): the LiveKit worker (FRIDAY-Voice.service) needs
+            # the livekit-plugins-groq package for the WORKING Groq speech
+            # path (the Gemini key on this host is dead — 400 API_KEY_INVALID
+            # — proven by the live-chain probe 2026-11-13: worker joined and
             # published a track but produced ZERO audio frames). Install the
-            # plugin into whatever interpreter runs the unit, then restart it.
+            # plugin into whatever interpreter runs the unit. This step used
+            # to end by restarting the worker — the second of TWO
+            # FRIDAY-Voice restarts per FRIDAY deploy. The restart now
+            # happens exactly once, gated, in FRIDAY-Voice's ordered slot in
+            # the staggered sequence below; this step only ensures the
+            # plugin, before that restart.
             if echo "$CHANGED_AGENTS" | grep -qw "FRIDAY" || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
               if [ "$(systemctl show FRIDAY-Voice.service --property=LoadState --value)" = loaded ]; then
                 echo "=== Voice worker: ensuring livekit-plugins-groq ==="
@@ -190,13 +170,159 @@ jobs:
                 else
                   echo "::warning::FRIDAY-Voice ExecStart not parseable — skipping plugin install"
                 fi
-                echo "=== Restarting FRIDAY-Voice.service ==="
-                sudo systemctl restart FRIDAY-Voice.service
-                sleep 5
-                sudo systemctl is-active FRIDAY-Voice.service || echo "::error::FRIDAY-Voice is not running after restart"
               fi
             fi
 
+            # BEGIN STAGGERED RESTART (TASK-REL-053) — one unit at a time,
+            # each gated on its own health before the next restart is
+            # issued. Until this change Fleet CD restarted every S1 unit
+            # ~10s apart and probed health only afterwards; on this 956MB
+            # host all the cold starts then paged in concurrently, and on
+            # 2026-11-17 FRIDAY — the website's only upstream — took ~23
+            # minutes to bind :10000 while the public site returned 502.
+            # Order is deliberate: light units first, FRIDAY LAST (her
+            # page-in then runs solo, against warm dependencies), and
+            # FRIDAY-Voice after her, exactly once. A gate timeout ABORTS
+            # the deploy: later units are NOT restarted and keep serving
+            # the previous code. This block is extracted and executed by
+            # tests/test_staggered_fleet_deploy.py — keep it free of
+            # GitHub Actions expressions (CHANGED_AGENTS and
+            # DEPLOY_FORCE_ALL are set before it) and keep
+            # restart_and_gate generic; the S2 job gets the same function
+            # with its own unit table in a follow-up PR.
+            _staggered_capture_pre() {
+              # Snapshot the pre-restart liveness markers the non-HTTP
+              # gates compare against (globals keep the call sites short).
+              STG_PRE_HB_PID=""
+              STG_PRE_HB_UPDATED=""
+              STG_PRE_MAIN_PID=""
+              STG_PRE_VOICE_PID=""
+              if [ "$2" = "heartbeat" ]; then
+                STG_PRE_HB_PID="$(grep -o '"pid": [0-9]*' Stratex/state/daemon_heartbeat.json 2>/dev/null | head -1 | sed 's/[^0-9]//g' || true)"
+                STG_PRE_HB_UPDATED="$(grep -o '"updated_at": [0-9]*' Stratex/state/daemon_heartbeat.json 2>/dev/null | head -1 | sed 's/[^0-9]//g' || true)"
+              fi
+              if [ "$2" = "voice" ]; then
+                STG_PRE_MAIN_PID="$(systemctl show "$1" --property=MainPID --value 2>/dev/null || echo 0)"
+                STG_PRE_VOICE_PID="$(grep -o '"pid": [0-9]*' FRIDAY/data/voice_worker_status.json 2>/dev/null | head -1 | sed 's/[^0-9]//g' || true)"
+              fi
+            }
+            _staggered_gate_met() {
+              # $1 unit, $2 gate: a port number (poll HTTP /health), or
+              # "heartbeat" (Stratex-Daemon: its heartbeat file
+              # Stratex/state/daemon_heartbeat.json must carry a NEW pid
+              # with an advanced updated_at — the TASK-STR-FWD-015 pulse
+              # thread re-stamps updated_at every 15s, so a fresh stamp
+              # from a new pid proves the new process is alive), or
+              # "voice" (FRIDAY-Voice: her own registration heartbeat
+              # FRIDAY/data/voice_worker_status.json must show state
+              # "registered" written by the unit's NEW MainPID — the same
+              # file the voice acceptance harness reads as registration
+              # evidence).
+              local unit="$1" gate="$2"
+              case "$gate" in
+                heartbeat)
+                  systemctl is-active --quiet "$unit" || return 1
+                  local hb_pid hb_updated
+                  hb_pid="$(grep -o '"pid": [0-9]*' Stratex/state/daemon_heartbeat.json 2>/dev/null | head -1 | sed 's/[^0-9]//g' || true)"
+                  hb_updated="$(grep -o '"updated_at": [0-9]*' Stratex/state/daemon_heartbeat.json 2>/dev/null | head -1 | sed 's/[^0-9]//g' || true)"
+                  [ -n "$hb_pid" ] && [ "$hb_pid" != "$STG_PRE_HB_PID" ] || return 1
+                  [ -n "$hb_updated" ] || return 1
+                  if [ -n "$STG_PRE_HB_UPDATED" ] && [ "$hb_updated" -le "$STG_PRE_HB_UPDATED" ]; then
+                    return 1
+                  fi
+                  return 0
+                  ;;
+                voice)
+                  systemctl is-active --quiet "$unit" || return 1
+                  local main_pid voice_pid voice_state
+                  main_pid="$(systemctl show "$unit" --property=MainPID --value 2>/dev/null || echo 0)"
+                  [ -n "$main_pid" ] && [ "$main_pid" != "0" ] && [ "$main_pid" != "$STG_PRE_MAIN_PID" ] || return 1
+                  voice_pid="$(grep -o '"pid": [0-9]*' FRIDAY/data/voice_worker_status.json 2>/dev/null | head -1 | sed 's/[^0-9]//g' || true)"
+                  [ "$voice_pid" = "$main_pid" ] && [ "$voice_pid" != "$STG_PRE_VOICE_PID" ] || return 1
+                  voice_state="$(grep -o '"state": "[a-z-]*"' FRIDAY/data/voice_worker_status.json 2>/dev/null | head -1 || true)"
+                  [ "$voice_state" = '"state": "registered"' ] || return 1
+                  return 0
+                  ;;
+                *)
+                  curl -sf -m 5 "http://127.0.0.1:${gate}/health" >/dev/null 2>&1
+                  ;;
+              esac
+            }
+            _staggered_wait() {
+              # $1 unit, $2 gate, $3 probe budget (one probe per 5s). On
+              # timeout: name the unit, state the recovery, and abort the
+              # deploy (exit 1) with every later unit still unrestarted.
+              local unit="$1" gate="$2" probes="$3"
+              local attempt
+              for attempt in $(seq 1 "$probes"); do
+                if _staggered_gate_met "$unit" "$gate"; then
+                  echo "healthy: ${unit} at $(date '+%Y-%m-%dT%H:%M:%S%z')"
+                  return 0
+                fi
+                sleep 5
+              done
+              echo "::error::TASK-REL-053 staggered deploy ABORTED at ${unit}: not healthy within $((probes * 5))s of its restart. Later units were NOT restarted and keep serving the previous code. The checkout on disk is already at the new revision, so a push re-run would compute no changes and restart nothing — RECOVERY: fix the cause, then re-run this workflow via workflow_dispatch (Actions -> FRIDAY Universe Fleet Continuous Deployment -> Run workflow), which forces every restart."
+              exit 1
+            }
+            restart_and_gate() {
+              # $1 unit, $2 gate (port number or kind), $3 probe budget.
+              local unit="$1" gate="$2" probes="$3"
+              _staggered_capture_pre "$unit" "$gate"
+              echo "=== Restarting ${unit} (staggered gate: ${gate}, budget $((probes * 5))s) ==="
+              sudo systemctl restart "$unit"
+              RESTARTED_AGENTS="${RESTARTED_AGENTS:-} ${unit%.service}"
+              _staggered_wait "$unit" "$gate" "$probes"
+            }
+            S1_STAGGERED_ORDER=(
+              "Inference 8001 24"
+              "Memora 8002 24"
+              "Stratex 8003 24"
+              "Stratex-Daemon heartbeat 24"
+              "IntelX 8005 24"
+              "Futuris 8004 24"
+              "Forge 8006 24"
+              "FRIDAY 10000 72"
+              "FRIDAY-Voice voice 24"
+            )
+            for entry in "${S1_STAGGERED_ORDER[@]}"; do
+              read -r stg_name stg_gate stg_probes <<< "$entry"
+              stg_unit="${stg_name}.service"
+              case "$stg_name" in
+                Stratex-Daemon) stg_trigger="Stratex" ;;
+                FRIDAY-Voice) stg_trigger="FRIDAY" ;;
+                *) stg_trigger="$stg_name" ;;
+              esac
+              stg_wanted=0
+              if echo "$CHANGED_AGENTS" | grep -qw "$stg_trigger" || [ "$DEPLOY_FORCE_ALL" = "1" ]; then
+                stg_wanted=1
+              fi
+              if [ "$stg_name" != "FRIDAY-Voice" ] && echo "$CHANGED_AGENTS" | grep -Eqw "mesh|deploy|scripts"; then
+                stg_wanted=1
+              fi
+              if [ "$stg_wanted" = "1" ]; then
+                if [ "$(systemctl show "$stg_unit" --property=LoadState --value)" = loaded ]; then
+                  if [ "$stg_name" = "FRIDAY-Voice" ]; then
+                    # The LiveKit process imports FRIDAY source too; the
+                    # API restart alone does not load changed voice tools
+                    # into the running worker. Her restart stays written
+                    # out in full (a standing test pins the explicit line)
+                    # and happens exactly ONCE — here, in her ordered
+                    # slot, after the plugin-ensure step above — gated by
+                    # the same wait as every other unit.
+                    _staggered_capture_pre "$stg_unit" "$stg_gate"
+                    echo "=== Restarting ${stg_unit} (staggered gate: ${stg_gate}, budget $((stg_probes * 5))s) ==="
+                    sudo systemctl restart FRIDAY-Voice.service
+                    RESTARTED_AGENTS="${RESTARTED_AGENTS:-} FRIDAY-Voice"
+                    _staggered_wait "$stg_unit" "$stg_gate" "$stg_probes"
+                  else
+                    restart_and_gate "$stg_unit" "$stg_gate" "$stg_probes"
+                  fi
+                else
+                  echo "=== ${stg_unit} not registered yet. Code pulled cleanly. ==="
+                fi
+              fi
+            done
+            # END STAGGERED RESTART (TASK-REL-053)
             # ── TASK-OBS-001 post-deploy health gate ─────────────────────────────
             # A unit under Restart=always can sit in a crash loop and still read
             # "active". Probe each restarted agent over HTTP and surface failures
