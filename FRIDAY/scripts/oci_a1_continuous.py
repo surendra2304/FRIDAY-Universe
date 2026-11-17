@@ -32,6 +32,7 @@ from scripts.oci_a1_common import (
     available_capacity,
     find_active_a1,
     has_target_resources,
+    rotate_candidates,
 )
 
 NO_CAPACITY_SECONDS = 60
@@ -87,6 +88,57 @@ def error_delay(status: int | None, code: str) -> int:
     return TRANSIENT_ERROR_SECONDS
 
 
+def _state_file() -> Path | None:
+    """Return the allocator state file path, or None when not configured."""
+    state_directory = os.environ.get("STATE_DIRECTORY", "").strip()
+    if not state_directory:
+        return None
+    return Path(state_directory) / "state.json"
+
+
+def _read_state_document() -> dict[str, Any]:
+    """Read the persisted state document, tolerating absence or corruption."""
+    target = _state_file()
+    if target is None:
+        return {}
+    try:
+        document = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return document if isinstance(document, dict) else {}
+
+
+def load_candidate_cursor() -> int:
+    """Return the persisted launch-candidate rotation cursor (default 0)."""
+    cursor = _read_state_document().get("candidate_cursor")
+    if isinstance(cursor, int) and cursor >= 0:
+        return cursor
+    return 0
+
+
+def persist_candidate_cursor(cursor: int) -> None:
+    """Persist the rotation cursor into the existing state document.
+
+    The cursor only balances fault-domain coverage, so this is best-effort:
+    failures are logged and swallowed — a lost cursor must never break
+    allocation. Mid-cycle this may briefly leave a cursor-only document;
+    the cycle's outcome persist (persist_state) completes it and carries
+    the cursor over.
+    """
+    target = _state_file()
+    if target is None:
+        return
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        document = _read_state_document()
+        document["candidate_cursor"] = cursor
+        temporary = target.parent / "state.json.tmp"
+        temporary.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        temporary.replace(target)
+    except OSError:
+        LOGGER.warning("Could not persist the candidate rotation cursor.")
+
+
 def persist_state(outcome: str, details: dict[str, Any] | None = None) -> None:
     """Atomically persist non-secret progress for service diagnostics."""
     state_directory = os.environ.get("STATE_DIRECTORY", "").strip()
@@ -108,6 +160,11 @@ def persist_state(outcome: str, details: dict[str, Any] | None = None) -> None:
         },
         "details": details or {},
     }
+    # persist_state rewrites the document wholesale; carry the rotation
+    # cursor over so an outcome write never resets fault-domain rotation.
+    cursor = _read_state_document().get("candidate_cursor")
+    if isinstance(cursor, int) and cursor >= 0:
+        document["candidate_cursor"] = cursor
     temporary.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     temporary.replace(target)
 
@@ -140,6 +197,10 @@ class ContinuousAllocator:
         self.target_ocpus = int(os.environ.get("OCI_TARGET_OCPUS", TARGET_OCPUS))
         self.target_memory_gb = int(os.environ.get("OCI_TARGET_MEMORY_GB", TARGET_MEMORY_GB))
         self.retry_seconds = int(os.environ.get("OCI_RETRY_INTERVAL", NO_CAPACITY_SECONDS))
+        # Rotation cursor: index of the first launch candidate the next
+        # cycle should try, resumed from the persisted state document so
+        # a service restart does not reset fault-domain coverage.
+        self.candidate_cursor = load_candidate_cursor()
 
     def connect(self) -> None:
         """Create OCI clients using the VM's Instance Principal identity."""
@@ -162,6 +223,19 @@ class ContinuousAllocator:
         persist_state(outcome, details)
         LOGGER.info("allocator_outcome=%s details=%s", outcome, json.dumps(details, sort_keys=True))
         return AttemptResult(outcome=outcome)
+
+    def _advance_candidate_cursor(self, attempts: int, candidate_count: int) -> None:
+        """Advance the rotation cursor past the candidates just attempted.
+
+        Called at every exit of a launch loop (success, throttle abort, or
+        exhaustion) so the next cycle resumes at the first untried
+        candidate. The per-cycle attempt budget and all backoff delays are
+        unchanged — only which candidates the budget is spent on rotates.
+        """
+        if candidate_count < 1 or attempts < 1:
+            return
+        self.candidate_cursor = (self.candidate_cursor + attempts) % candidate_count
+        persist_candidate_cursor(self.candidate_cursor)
 
     def attempt_once(self) -> AttemptResult:
         """Inspect inventory and attempt allocation once if no target VM exists."""
@@ -292,9 +366,14 @@ class ContinuousAllocator:
                         "capacity_report_unusable", AUTH_OR_CONFIG_ERROR_SECONDS
                     )
                 if hasattr(self.compute, "launch_instance"):
-                    candidate_domains = [None, "FAULT-DOMAIN-1", "FAULT-DOMAIN-2", "FAULT-DOMAIN-3"]
+                    candidate_domains = rotate_candidates(
+                        [None, "FAULT-DOMAIN-1", "FAULT-DOMAIN-2", "FAULT-DOMAIN-3"],
+                        self.candidate_cursor,
+                    )
                     capacity_exhausted = False
+                    attempts = 0
                     for fault_domain in candidate_domains:
+                        attempts += 1
                         launch_details = self.oci.core.models.LaunchInstanceDetails(
                             display_name=TARGET_DISPLAY_NAME,
                             compartment_id=compartment_id,
@@ -351,6 +430,7 @@ class ContinuousAllocator:
                                 state,
                                 fault_domain or "unspecified",
                             )
+                            self._advance_candidate_cursor(attempts, len(candidate_domains))
                             return AttemptResult("launch_accepted", PENDING_INSTANCE_SECONDS)
                         except Exception as exc:
                             if is_capacity_error(exc):
@@ -361,7 +441,10 @@ class ContinuousAllocator:
                                 )
                                 capacity_exhausted = True
                                 continue
+                            self._advance_candidate_cursor(attempts, len(candidate_domains))
                             raise
+                    # Loop exhausted every candidate without a throttle abort.
+                    self._advance_candidate_cursor(attempts, len(candidate_domains))
 
                 self._record(
                     "no_capacity",
@@ -374,7 +457,9 @@ class ContinuousAllocator:
                 )
                 return AttemptResult("no_capacity", self.retry_seconds)
 
-            for candidate in candidates:
+            attempts = 0
+            for candidate in rotate_candidates(candidates, self.candidate_cursor):
+                attempts += 1
                 fault_domain = str(getattr(candidate, "fault_domain", "") or "")
                 launch_details = self.oci.core.models.LaunchInstanceDetails(
                     display_name=TARGET_DISPLAY_NAME,
@@ -433,6 +518,7 @@ class ContinuousAllocator:
                         state,
                         fault_domain or "unspecified",
                     )
+                    self._advance_candidate_cursor(attempts, len(candidates))
                     return AttemptResult("launch_accepted", PENDING_INSTANCE_SECONDS)
                 except Exception as exc:
                     status, code = safe_error(exc)
@@ -442,7 +528,9 @@ class ContinuousAllocator:
                             fault_domain or "unspecified",
                         )
                         continue
+                    self._advance_candidate_cursor(attempts, len(candidates))
                     raise
+            self._advance_candidate_cursor(attempts, len(candidates))
             self._record("launch_capacity_race", retry_seconds=NO_CAPACITY_SECONDS)
             return AttemptResult("launch_capacity_race", NO_CAPACITY_SECONDS)
 
