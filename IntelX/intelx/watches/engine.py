@@ -197,13 +197,37 @@ WATCH_CRYPTO_MARKET_STRUCTURE = WatchDefinition(
         ),
         ScoreRule(
             "venue_incident",
-            r"\b(exchange|binance|coinbase)\b.*\b(halt|insolvency|breach|hack|outage)\b",
+            # Venue set aligned with exchange_structure (kraken included).
+            # Mirrored: event-first wire order ("Hack forces Kraken ...")
+            # fires just as venue-first does. The withdrawal branches are
+            # the D2 fix from the 2026-11-17 shadow proof: a withdrawal
+            # suspension IS a venue incident even when the venue is not a
+            # named one ("Lighter suspends all withdrawals ..." scored 0).
+            # The block stem is closed (block/blocks/blocked/blocking):
+            # block\w* also matched "blockchain" (supervisor F1, PR #876).
+            r"\b(exchange|binance|coinbase|kraken)\b.*\b(halt|insolvency|breach|hack|outage)\b|"
+            r"\b(halt|insolvency|breach|hack|outage)\b.*\b(exchange|binance|coinbase|kraken)\b|"
+            r"\b(suspen\w*|halt\w*|paus\w*|freez\w*|frozen|block(?:s|ed|ing)?)\b[^.]{0,40}\bwithdrawals?\b|"
+            r"\bwithdrawals?\b[^.]{0,40}\b(suspen\w*|halt\w*|paus\w*|freez\w*|frozen|block(?:s|ed|ing)?)\b",
             3,
         ),
     ),
     excludes=(
         r"\bprice (prediction|analysis|target)\b", r"\bcould (reach|hit|soar)\b",
         r"\banalysts? (say|says|predict)\b", r"\bwhale\b", r"\bmemecoin\b",
+        # D1 (shadow proof 2026-11-17): commentary about PAST incidents is
+        # not an incident — the FalconX interview ("Binance hack may push
+        # institutions to outside custody, FalconX exec says") alerted at 3.
+        # Same opinion-guard family as "analysts say" above, plus the AI
+        # watch's interview guard.
+        r"\b(execs?|executives?|ceo|cfo|founders?|co-founders?) (says|say)\b",
+        r"\binterview\b",
+        # D3 (shadow proof 2026-11-17): daily roundups reach score 2 via
+        # summary regulation mentions and sit one keyword from a false
+        # alert; exclude the digest forms outright, as the AI watch
+        # excludes newsletters.
+        r"\b(roundup|recap|newsletter|digest)\b",
+        r"\bwhat happened in crypto today\b",
     ),
     min_score=3,
     max_alerts_per_poll=1,
