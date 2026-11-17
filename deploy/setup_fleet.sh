@@ -263,6 +263,25 @@ MemoryMax=180M
 WantedBy=multi-user.target
 EOF
 
+    # Swap-cap drop-ins (board PR #2 drift fix, 2026-11-17): production
+    # carries MemorySwapMax=192M drop-ins on the three S1 services that
+    # page heavily under memory pressure — FRIDAY (TASK-FRD-005 swap-cap
+    # lane), Stratex-Daemon and IntelX (both 2026-11-17). They were
+    # applied by hand on the live host and existed in NO repo asset, so
+    # a rebuild would silently lose them; they are installed here so a
+    # rebuild reproduces production. Contents are byte-identical to the
+    # live /etc/systemd/system/<unit>.service.d/swapmax.conf files
+    # (read back on Server 1, 2026-11-17; MemorySwapMax=201326592 in
+    # force on all three units). Stratex-Daemon's unit file itself is
+    # not written by this script — only its drop-in is installed here.
+    for swap_unit in FRIDAY Stratex-Daemon IntelX; do
+        sudo install -d "/etc/systemd/system/${swap_unit}.service.d"
+        sudo tee "/etc/systemd/system/${swap_unit}.service.d/swapmax.conf" > /dev/null << EOF
+[Service]
+MemorySwapMax=192M
+EOF
+    done
+
     sudo systemctl daemon-reload
     SERVICES=("FRIDAY" "Inference" "Memora" "Stratex" "Futuris" "IntelX" "Forge")
     for svc in "${SERVICES[@]}"; do
