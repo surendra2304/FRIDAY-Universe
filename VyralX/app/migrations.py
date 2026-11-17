@@ -100,8 +100,19 @@ def _oracle_declaration(declaration: str) -> str:
     # CLOB cannot carry a NOT NULL default of '' on Oracle ('' is NULL).
     if "CLOB" in translated:
         translated = translated.replace("NOT NULL", "").replace("DEFAULT ''", "").strip()
-    if translated.endswith("DEFAULT ''"):
-        translated = translated[: -len("DEFAULT ''")].strip()
+    if "DEFAULT ''" in translated:
+        # '' is NULL on Oracle, so a column declared NOT NULL DEFAULT '' has
+        # no usable default: adding it to a populated table fails with
+        # ORA-01758 (the PR #882 publish_jobs incident — thumbnail_path and
+        # category_id crash-looped the production service). Drop both the
+        # default and the NOT NULL; the column is added nullable and the
+        # application's Python-side defaults supply '' for new rows.
+        translated = translated.replace("NOT NULL", "").replace("DEFAULT ''", "")
+        translated = " ".join(translated.split())
+    if "NOT NULL" in translated and "DEFAULT" not in translated:
+        # A bare NOT NULL column with no default at all cannot be added to a
+        # populated Oracle table either (same ORA-01758). Add it nullable.
+        translated = " ".join(translated.replace("NOT NULL", "").split())
     return translated
 
 
