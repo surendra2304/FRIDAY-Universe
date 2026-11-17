@@ -162,6 +162,16 @@ class Settings(BaseSettings):
     youtube_cookies_file: Path = Path("./data/youtube_cookies.txt")
     youtube_default_privacy: str = "private"
     youtube_category_id: str = "28"
+    # TASK-VYR-014: monetization slots. Affiliate/product links are JSON —
+    # [{"label": "...", "url": "https://..."}] — and are rendered into upload
+    # descriptions (with the mandatory disclosure block) only when set.
+    # Empty default: descriptions stay byte-identical to the current format.
+    affiliate_links_json: str = ""
+    # Real business contact shown in descriptions / media kit. Empty = hidden.
+    business_email: str = ""
+    # Write a cross-post release bundle (Reels/TikTok/Facebook captions +
+    # render copy) next to every produced Short.
+    crosspost_export_enabled: bool = True
     youtube_upload_enabled: bool = False
     youtube_analytics_enabled: bool = False
 
