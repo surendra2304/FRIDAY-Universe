@@ -23,8 +23,10 @@ These tests pin the restructure:
   the line and never precedes an attempted one — unattempted tasks
   are cancelled (notice keeps its no-greeting-first shape), attempted
   tasks are awaited (bounded) so the notice plays after the line.
-- Entrypoint source shape: the launch sits BEFORE ``_built = await
-  _build_task`` (and therefore before ``sess.start()``), and both
+- Entrypoint source shape: the launch sits BEFORE the first
+  session is built (since TASK-VOI-017 (F3) the build runs in-job
+  through ``_make_session``; it was ``_built = await _build_task``
+  before) and therefore before ``sess.start()``, and both
   unavailable branches settle the greeting task before announcing.
 """
 import asyncio
@@ -240,10 +242,10 @@ def test_settle_returns_promptly_when_attempted_line_already_done():
 
 # ---------- entrypoint source shape ----------
 
-def test_entrypoint_launches_greeting_before_the_build_resolves():
+def test_entrypoint_launches_greeting_before_the_first_session_build():
     src = inspect.getsource(w.entrypoint)
     launch_at = src.index('early_greeting["task"] = asyncio.ensure_future(')
-    built_at = src.index("_built = await _build_task")
+    built_at = src.index("session, agent = await _make_session(instructions)")
     start_at = src.index("await _start(session, agent)")
     assert launch_at < built_at < start_at
     # The handle is adopted into the shared live dict for
